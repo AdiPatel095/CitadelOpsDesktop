@@ -1,3 +1,4 @@
+import { useLocale } from '../../i18n/LocaleContext';
 import React, { type HTMLAttributes, type ReactNode } from 'react';
 import { Switch } from './Switch';
 
@@ -28,13 +29,14 @@ export const SettingsToggleRow: React.FC<SettingsToggleRowProps> = ({
   className = '',
   ...props
 }) => {
+  const { t } = useLocale();
   const toneClass = {
     default: 'border-border-base bg-bg-input/35',
     warning: 'border-warning/25 bg-warning/5',
     danger: 'border-error/25 bg-error/5',
   }[tone];
   const iconClass = tone === 'warning' ? 'text-warning' : tone === 'danger' ? 'text-error' : 'text-primary';
-  const accessibleName = ariaLabel ?? (typeof title === 'string' ? title : 'Toggle setting');
+  const accessibleName = ariaLabel ?? (typeof title === 'string' ? title : t('settings.toggle'));
 
   return (
     <div className={`flex items-start justify-between gap-4 rounded-global border px-4 py-3 ${toneClass} ${disabled ? 'opacity-55' : ''} ${className}`} {...props}>

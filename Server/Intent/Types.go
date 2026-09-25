@@ -1,6 +1,7 @@
 package Intent
 
 import (
+	"CitadelDesktop/Server/Localization"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -106,6 +107,7 @@ type ResponseRetryPolicy struct {
 }
 
 type Step struct {
+	NameDescriptor *Localization.Message `json:"nameDescriptor,omitempty"`
 	// Batch is a resolver-only expansion, checkpointed as ordinary sequential steps
 	// before any command is sent. Children cannot contain deferred resolvers.
 	Batch []Step `json:"-"`
@@ -186,16 +188,17 @@ func RebuildOnResume(step Step) Step {
 }
 
 type Plan struct {
-	Intent         string                      `json:"intent"`
-	Effect         Effect                      `json:"effect"`
-	StateRevision  uint64                      `json:"stateRevision"`
-	CatalogVersion string                      `json:"catalogVersion,omitempty"`
-	Dependencies   []State.PartitionDependency `json:"dependencies,omitempty"`
-	Claims         []string                    `json:"claims,omitempty"`
-	Resources      []ResourceKey               `json:"resources,omitempty"`
-	Steps          []Step                      `json:"steps"`
-	Summary        string                      `json:"summary,omitempty"`
-	Admission      *Admission                  `json:"admission,omitempty"`
+	SummaryDescriptor *Localization.Message       `json:"summaryDescriptor,omitempty"`
+	Intent            string                      `json:"intent"`
+	Effect            Effect                      `json:"effect"`
+	StateRevision     uint64                      `json:"stateRevision"`
+	CatalogVersion    string                      `json:"catalogVersion,omitempty"`
+	Dependencies      []State.PartitionDependency `json:"dependencies,omitempty"`
+	Claims            []string                    `json:"claims,omitempty"`
+	Resources         []ResourceKey               `json:"resources,omitempty"`
+	Steps             []Step                      `json:"steps"`
+	Summary           string                      `json:"summary,omitempty"`
+	Admission         *Admission                  `json:"admission,omitempty"`
 }
 
 type Planner func(ctx context.Context, input PlanningContext, arguments json.RawMessage) (Plan, error)
@@ -214,14 +217,15 @@ type AttackModuleDefinition struct {
 }
 
 type Definition struct {
-	Name             string                  `json:"name"`
-	Description      string                  `json:"description"`
-	Effect           Effect                  `json:"effect"`
-	ArgumentsExample json.RawMessage         `json:"argumentsExample,omitempty"`
-	AttackModule     *AttackModuleDefinition `json:"attackModule,omitempty"`
-	Planner          Planner                 `json:"-"`
-	ReadSet          ReadSetResolver         `json:"-"`
-	RequireResources bool                    `json:"-"`
+	DescriptionDescriptor *Localization.Message   `json:"descriptionDescriptor,omitempty"`
+	Name                  string                  `json:"name"`
+	Description           string                  `json:"description"`
+	Effect                Effect                  `json:"effect"`
+	ArgumentsExample      json.RawMessage         `json:"argumentsExample,omitempty"`
+	AttackModule          *AttackModuleDefinition `json:"attackModule,omitempty"`
+	Planner               Planner                 `json:"-"`
+	ReadSet               ReadSetResolver         `json:"-"`
+	RequireResources      bool                    `json:"-"`
 }
 
 type Status string
@@ -257,16 +261,19 @@ const (
 // projection tells clients what happened, what the user can do, and whether an
 // expected automation-lane condition should interrupt them with a toast.
 type FailurePresentation struct {
-	SafetyLock  *State.AutomationSafetyLock `json:"safetyLock,omitempty"`
-	GameOpcode  string                      `json:"gameOpcode,omitempty"`
-	Kind        FailureKind                 `json:"kind"`
-	Message     string                      `json:"message"`
-	Explanation string                      `json:"explanation"`
-	Recovery    string                      `json:"recovery,omitempty"`
-	Severity    FailureSeverity             `json:"severity"`
-	GameCode    *int                        `json:"gameCode,omitempty"`
-	Knowledge   FailureKnowledge            `json:"knowledge,omitempty"`
-	Toast       bool                        `json:"toast"`
+	MessageDescriptor     *Localization.Message       `json:"messageDescriptor,omitempty"`
+	ExplanationDescriptor *Localization.Message       `json:"explanationDescriptor,omitempty"`
+	RecoveryDescriptor    *Localization.Message       `json:"recoveryDescriptor,omitempty"`
+	SafetyLock            *State.AutomationSafetyLock `json:"safetyLock,omitempty"`
+	GameOpcode            string                      `json:"gameOpcode,omitempty"`
+	Kind                  FailureKind                 `json:"kind"`
+	Message               string                      `json:"message"`
+	Explanation           string                      `json:"explanation"`
+	Recovery              string                      `json:"recovery,omitempty"`
+	Severity              FailureSeverity             `json:"severity"`
+	GameCode              *int                        `json:"gameCode,omitempty"`
+	Knowledge             FailureKnowledge            `json:"knowledge,omitempty"`
+	Toast                 bool                        `json:"toast"`
 }
 
 const (

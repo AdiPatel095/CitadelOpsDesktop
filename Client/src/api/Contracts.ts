@@ -1,3 +1,4 @@
+import type { LocalizedMessage } from '../i18n/formatMessage';
 export type APIConnectionStatus = 'Disconnected' | 'Connecting' | 'Connected';
 
 export interface ApplicationUpdateV2 {
@@ -1629,6 +1630,7 @@ export interface AutomationStateV2 {
 	enabled: boolean;
 	status: string;
 	detail?: string;
+	detailDescriptor?: LocalizedMessage;
 	nextCheckAt?: string;
 	lastRunAt?: string;
 	lastOperationId?: string;
@@ -1636,6 +1638,7 @@ export interface AutomationStateV2 {
 	safetyLock?: AutomationSafetyLockV2;
 	metrics?: Record<string, number>;
 	details?: Record<string, string>;
+	detailsDescriptors?: Record<string, LocalizedMessage>;
 	updatedAt: string;
 }
 
@@ -2036,6 +2039,7 @@ export interface KhanTauntStateV2 {
 }
 
 export interface KhanProtectionStateV2 {
+	reasonDescriptor?: LocalizedMessage;
 	active: boolean;
 	castleId?: number;
 	offensiveWallUnits?: number;
@@ -2450,6 +2454,9 @@ export interface IntentReceipt {
 }
 
 export interface IntentFailurePresentation {
+	messageDescriptor?: LocalizedMessage;
+	explanationDescriptor?: LocalizedMessage;
+	recoveryDescriptor?: LocalizedMessage;
 	kind: 'game_rejected' | 'availability' | 'stale_state' | 'timeout' | 'connection' | 'indeterminate' | 'internal' | 'unknown';
 	message: string;
 	explanation: string;
@@ -2488,6 +2495,7 @@ export interface IntentCommandExchange {
 }
 
 export interface IntentDefinition {
+  descriptionDescriptor?: LocalizedMessage;
 	name: string;
 	description: string;
 	effect: 'read' | 'write' | 'launch' | 'external';

@@ -1,3 +1,4 @@
+import {LocalizedText} from "../../i18n/LocalizedText";
 import React from 'react';
 import { Gauge } from 'lucide-react';
 import { Select } from '../../components/ui';
@@ -24,7 +25,7 @@ const HorseTravelBoostSelect: React.FC<HorseTravelBoostSelectProps> = ({
 }) => (
   <label className={className ?? 'block'}>
     <span className="mb-1.5 flex items-center gap-2 text-[10px] font-black uppercase tracking-wider text-text-muted">
-      <Gauge className="h-3.5 w-3.5" /> Horse travel boost
+      <Gauge className="h-3.5 w-3.5" /> <LocalizedText messageKey="ui.settings.components.horseTravelBoostSelect.horse.travel.boost.983830d4" />
     </span>
     <Select
       value={String(value)}

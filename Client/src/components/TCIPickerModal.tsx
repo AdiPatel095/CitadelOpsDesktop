@@ -1,4 +1,9 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useLocale as useStaticLocale } from "../i18n/LocaleContext";
+import { LocalizedText } from "../i18n/LocalizedText";
+import { useLocale } from '../i18n/LocaleContext';
+import { readViewerLocale } from '../i18n/viewerLocaleStore';
+import { officialCatalogGeneration, subscribeOfficialCatalog } from '../i18n/officialMessages';
+import React, { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
 import { Check, ChevronDown, Clock3, Layers3, Minus, Plus, Sparkles } from 'lucide-react';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { Button, CatalogPickerModal, EmptyState, PillSelector } from './ui';
@@ -73,7 +78,7 @@ let setPickerState: React.Dispatch<
 
 export async function showTCIPicker(options: TCIPickerOptions): Promise<TCIPickerResult> {
   try {
-    await fetchConstructionItemsCatalog();
+    await fetchConstructionItemsCatalog(readViewerLocale());
   } catch {
     // Open the picker with its empty-state guidance when the catalog is unavailable.
   }
@@ -91,6 +96,8 @@ interface TCIPickerModalProps {
 }
 
 export const TCIPickerProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const {locale} = useLocale();
+  const generation = useSyncExternalStore(subscribeOfficialCatalog,officialCatalogGeneration,()=>0);
   const [state, setState] = useState<{ isOpen: boolean; options: TCIPickerOptions | null }>({
     isOpen: false,
     options: null,
@@ -106,10 +113,13 @@ export const TCIPickerProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
   useEffect(() => {
     if (!state.isOpen || !state.options) return;
-    fetchConstructionItemsCatalog()
-      .then(setCatalog)
-      .catch(() => setCatalog([]));
-  }, [state.isOpen, state.options]);
+    let active = true;
+    setCatalog([]);
+    fetchConstructionItemsCatalog(locale)
+      .then(items=>{if(active)setCatalog(items);})
+      .catch(()=>{if(active)setCatalog([]);});
+    return ()=>{active=false;};
+  }, [state.isOpen, state.options, locale, generation]);
 
   const handleClose = useCallback((result: TCIPickerResult) => {
     setState({ isOpen: false, options: null });
@@ -137,6 +147,7 @@ type TCICatalogFilter = 'all' | 'selected' | 'short' | 'long';
 const SEVEN_DAYS_SECONDS = 7 * 86_400;
 
 const TCIPickerModal: React.FC<TCIPickerModalProps> = ({ isOpen, options, catalog, onClose }) => {
+  const { t: localizeStatic } = useStaticLocale();
   const {
     mode,
     title,
@@ -317,13 +328,13 @@ const TCIPickerModal: React.FC<TCIPickerModalProps> = ({ isOpen, options, catalo
       resultLabel={visibleItemLabel}
       searchValue={searchQuery}
       onSearchChange={setSearchQuery}
-      searchPlaceholder="Search names, effects, durations, or CIDs…"
+      searchPlaceholder={localizeStatic("ui.components.tCIPickerModal.searchPlaceholder.search.names.effects.durations.or.cids.b60e76e6")}
       shellClassName="picker-shell-tci"
       toolbarClassName="tci-browser-toolbar"
       commandRowClassName="tci-browser-command-row"
       commandExtras={(
         <PillSelector
-          ariaLabel="Catalog filters"
+          ariaLabel={localizeStatic("ui.components.tCIPickerModal.ariaLabel.catalog.filters.10d44ee8")}
           value={catalogFilter}
           onChange={(value) => setCatalogFilter(value as TCICatalogFilter)}
           options={[
@@ -469,6 +480,7 @@ interface TCIBrowserCardProps {
 }
 
 const TCIBrowserCard: React.FC<TCIBrowserCardProps> = ({ item, isSelected, isActive, onActivate, onClick }) => {
+  const { t: localizeStatic } = useStaticLocale();
   const effectLine = formatEffectUpgradeLine(item);
   return (
     <button
@@ -490,13 +502,13 @@ const TCIBrowserCard: React.FC<TCIBrowserCardProps> = ({ item, isSelected, isAct
         <div className="tci-browser-card-art">
           <TCIImage src={item.imageUrl} alt={item.buildingName || item.label} size={84} />
           {isSelected && (
-            <span className="tci-browser-selected-mark" aria-label="Selected">
+            <span className="tci-browser-selected-mark" aria-label={localizeStatic("ui.components.tCIPickerModal.aria-label.selected.57fd7a0c")}>
               <Check aria-hidden="true" />
             </span>
           )}
         </div>
         <div className="tci-browser-card-copy">
-          <h3>{item.label}</h3>
+          <h3 lang={item.nameLocale}>{item.label}</h3>
           <p className="tci-browser-effect line-clamp-2">
             {effectLine || 'No effect description available'}
           </p>
@@ -537,11 +549,12 @@ const TCIDetailPanel: React.FC<TCIDetailPanelProps> = ({
   onFloorStep,
   onCeilingStep,
 }) => {
+  const { t: localizeStatic } = useStaticLocale();
   if (!item) {
     return (
       <aside className="tci-detail-panel tci-detail-panel-empty">
         <Layers3 aria-hidden="true" />
-        <p>Choose a design to inspect its full upgrade chain.</p>
+        <p><LocalizedText messageKey="ui.components.tCIPickerModal.choose.a.design.to.inspect.its.full.35312c7b" /></p>
       </aside>
     );
   }
@@ -557,11 +570,11 @@ const TCIDetailPanel: React.FC<TCIDetailPanelProps> = ({
         </div>
         <div className="tci-detail-heading">
           <span className="tci-detail-kicker">{item.category || 'Timed construction item'}</span>
-          <h3>{item.label}</h3>
+          <h3 lang={item.nameLocale}>{item.label}</h3>
           <div className="tci-detail-badges">
             <span><Clock3 aria-hidden="true" />{durationRangeLabel(item)}</span>
             <span><Layers3 aria-hidden="true" />{item.groupTiers.length} tiers</span>
-            {item.premium && <span><Sparkles aria-hidden="true" />Premium</span>}
+            {item.premium && <span><Sparkles aria-hidden="true" /><LocalizedText messageKey="ui.components.tCIPickerModal.premium.de88c121" /></span>}
           </div>
         </div>
       </div>
@@ -582,12 +595,12 @@ const TCIDetailPanel: React.FC<TCIDetailPanelProps> = ({
       {isSelected && (
         <div className="tci-range-editor">
           <div className="tci-range-editor-heading">
-            <span>Allowed tier range</span>
+            <span><LocalizedText messageKey="ui.components.tCIPickerModal.allowed.tier.range.d6cf09d9" /></span>
             <strong>L{range.floor}–L{range.ceiling}</strong>
           </div>
           <div className="tci-range-editor-controls">
             <TCILevelStepper
-              label="Min"
+              label={localizeStatic("ui.components.tCIPickerModal.label.min.dea79332")}
               value={range.floor}
               decrementDisabled={range.floor <= item.minLevel}
               incrementDisabled={range.floor >= range.ceiling}
@@ -595,7 +608,7 @@ const TCIDetailPanel: React.FC<TCIDetailPanelProps> = ({
               onIncrement={() => onFloorStep(1)}
             />
             <TCILevelStepper
-              label="Max"
+              label={localizeStatic("ui.components.tCIPickerModal.label.max.a1a5936d")}
               value={range.ceiling}
               decrementDisabled={range.ceiling <= range.floor}
               incrementDisabled={range.ceiling >= item.maxLevel}
@@ -607,8 +620,8 @@ const TCIDetailPanel: React.FC<TCIDetailPanelProps> = ({
       )}
 
       <div className="tci-detail-chain-heading">
-        <span>Upgrade chain</span>
-        <small>Official CID and active duration by tier</small>
+        <span><LocalizedText messageKey="ui.components.tCIPickerModal.upgrade.chain.2851d12f" /></span>
+        <small><LocalizedText messageKey="ui.components.tCIPickerModal.official.cid.and.active.duration.by.tier.6a071b0a" /></small>
       </div>
       <div className="tci-detail-chain">
         {item.groupTiers.map((tier, index) => {
@@ -626,12 +639,12 @@ const TCIDetailPanel: React.FC<TCIDetailPanelProps> = ({
                 <div className="tci-detail-tier-copy">
                   <div className="tci-detail-tier-meta">
                     <strong><Clock3 aria-hidden="true" />{formatDuration(tier.durationSeconds)}</strong>
-                    {tier.premium && <span>Premium</span>}
+                    {tier.premium && <span><LocalizedText messageKey="ui.components.tCIPickerModal.premium.de88c121" /></span>}
                     {tier.removalCost > 0 && <span>Removal {tier.removalCost.toLocaleString()}</span>}
                   </div>
                   <p>{tier.effects || 'Same visual design; no translated effect line available.'}</p>
                 </div>
-                {included && <Check className="tci-detail-tier-check" aria-label="Included in selected range" />}
+                {included && <Check className="tci-detail-tier-check" aria-label={localizeStatic("ui.components.tCIPickerModal.aria-label.included.in.selected.range.1b6f1688")} />}
               </article>
               {index < item.groupTiers.length - 1 && (
                 <ChevronDown className="tci-detail-chain-arrow" aria-hidden="true" />

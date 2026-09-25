@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"strings"
 	"testing"
 	"time"
@@ -95,6 +96,55 @@ func TestTowerAttackWaitsForAdmissionThenResolvesFullFlanksFromFreshContext(t *t
 	}
 	if wave.Middle.Units[0] != (attackPair{-1, 0}) {
 		t.Fatalf("tower attack should leave the center empty: %#v", wave.Middle)
+	}
+}
+
+func TestTowerResolvedAttackCoinGateAcceptsNonnegativeCommander(t *testing.T) {
+	for _, commanderID := range []State.CommanderID{0, 5} {
+		t.Run(fmt.Sprint(commanderID), func(t *testing.T) {
+			input := coinGateInput(coinGateGameData(t), 1_000_000)
+			input.State.Castles[1] = State.CastleState{ID: 1, KingdomID: 0, X: 100, Y: 100,
+				Units: State.CastleUnits{Stationed: map[State.UnitID]int64{77: 2_000}}}
+			input.State.Commanders[commanderID] = State.CommanderState{ID: commanderID, Available: true}
+			input.State.Map[0] = map[string]State.MapObservation{"101:100": {
+				KingdomID: 0, X: 101, Y: 100, TypeID: kingdomTowerMapTypeID,
+				TowerVictoryCount: 845, Level: 81, ObservedAt: time.Now().UTC(),
+			}}
+			input.State.AttackDialog = State.AttackDialogState{SourceCastleID: 1, KingdomID: 0,
+				Target: State.AttackDialogTarget{TypeID: kingdomTowerMapTypeID, X: 101, Y: 100}, ObservedAt: time.Now().UTC()}
+			plan, err := planTowerAttack(t.Context(), input, json.RawMessage(`{"sourceCastleId":1,"kingdomId":0,"targetX":101,"targetY":100,"unitId":77}`))
+			if err != nil {
+				t.Fatal(err)
+			}
+			resolved, err := (&Application{}).resolveTowerAttackStep(t.Context(), input, plan.Steps[2].ResolverArguments)
+			if err != nil {
+				t.Fatal(err)
+			}
+			var body struct {
+				Leader *State.CommanderID `json:"LID"`
+				Waves  []attackWave       `json:"A"`
+			}
+			if err := json.Unmarshal(resolved.Command.Payload, &body); err != nil {
+				t.Fatal(err)
+			}
+			if body.Leader == nil || *body.Leader != commanderID || len(body.Waves) == 0 {
+				t.Fatalf("unexpected resolved commander or waves: %+v", body)
+			}
+			// The engine normalizes the resolved command into the final dispatch step.
+			step := Intent.Step{Opcode: resolved.Opcode, Payload: resolved.Command.Payload}
+			if err := newCoinDispatchGate().Validate(coinGateContext("tower"), input, step); err != nil {
+				t.Fatalf("affordable resolved tower attack rejected: %v", err)
+			}
+			input.State.Player.Resources[1] = 0
+			if err := newCoinDispatchGate().Validate(coinGateContext("tower-low"), input, step); !errors.Is(err, Intent.ErrCoinUnavailable) {
+				t.Fatalf("insufficient coins error = %v", err)
+			}
+			input.State.Player.Resources[1] = 1_000_000
+			input.State.DailyAttacks.ConnectionGeneration = 0
+			if err := newCoinDispatchGate().Validate(coinGateContext("tower-stale"), input, step); err == nil || !strings.Contains(err.Error(), "daily attack surcharge") {
+				t.Fatalf("stale daily state error = %v", err)
+			}
+		})
 	}
 }
 

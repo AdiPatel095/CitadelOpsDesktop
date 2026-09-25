@@ -1,0 +1,2080 @@
+{
+  "ui": {
+    "guideButton": "Anleitung",
+    "calendarButton": "Kalender",
+    "recommendedLabel": "Empfohlen",
+    "backToSettings": "Zurück zu den Einstellungen",
+    "backToGuide": "Zurück zur Anleitung",
+    "howToSetUp": "So richtest du es ein",
+    "whatToExpect": "Was dich erwartet",
+    "openFullSizePicture": "Bild in voller Größe öffnen",
+    "illustrativeExample": "Veranschaulichendes Beispiel",
+    "enlargePicture": "Beispielbild vergrößern",
+    "fullSizePicture": "Beispielbild in voller Größe; scrolle, um alle Einstellungen zu sehen",
+    "towerGuideTitle": "Anleitung für Automatische Turmangriffe",
+    "birdGuideTitle": "Anleitung für Automatischen Truppenschutz",
+    "towerGuideIntro": "Folge diesen Schritten, um Automatische Turmangriffe einzurichten; wähle ein Beispielbild aus, um es zu vergrößern.",
+    "birdGuideIntro": "Folge diesen Schritten, um Automatischen Truppenschutz einzurichten; wähle ein Beispielbild aus, um es zu vergrößern.",
+    "towerPreviewTitle": "Beispiel für die Einrichtung von Automatischen Turmangriffen",
+    "birdPreviewTitle": "Beispiel für die Einrichtung von Automatischem Truppenschutz",
+    "stationGuideTitle": "Auto-Station-Anleitung",
+    "stationGuideIntro": "Richten Sie Auto Station mit diesen Schritten ein; wählen Sie das Beispielbild zum Vergrößern aus.",
+    "stationPreviewTitle": "Beispiel zur Auto-Station-Einrichtung",
+    "fortressGuideIntro": "Befolge diese Schritte zur Einrichtung der Festungsautomatisierung; wähle eine Beispieltafel aus, um sie zu vergrößern.",
+    "fortressGuideTitle": "Anleitung zur Festungsautomatisierung",
+    "fortressPreviewTitle": "Einrichtungsbeispiel für die Festungsautomatisierung",
+    "invasionGuideIntro": "Folge diesen Schritten, um automatische Invasionsangriffe einzurichten; wähle ein Beispielbild zur Vergrößerung.",
+    "invasionGuideTitle": "Anleitung für automatische Invasionsangriffe",
+    "invasionPreviewTitle": "Beispiel für die Einrichtung automatischer Invasionsangriffe",
+    "nomadGuideIntro": "Folge diesen Schritten, um Auto Nomaden/Samurai einzurichten; wähle ein Beispielbild zum Vergrößern.",
+    "nomadGuideTitle": "Anleitung für Auto Nomaden/Samurai",
+    "nomadPreviewTitle": "Einrichtungsbeispiel für Auto Nomaden/Samurai",
+    "advisorGuideIntro": "Folge diesen Schritten, um Auto Berater einzurichten; wähle ein Beispielbild zum Vergrößern.",
+    "advisorGuideTitle": "Anleitung für Auto Berater",
+    "advisorPreviewTitle": "Einrichtungsbeispiel für Auto Berater",
+    "khanGuideIntro": "Folge diesen Schritten zum Einrichten von Auto Khan; wähle ein Beispielbild zum Vergrößern.",
+    "khanGuideTitle": "Auto-Khan-Anleitung",
+    "khanPreviewTitle": "Beispiel für Auto-Khan-Einstellungen",
+    "beriGuideIntro": "Befolge diese Schritte für Auto Beri World; wähle ein Beispielpanel zum Vergrößern.",
+    "beriGuideTitle": "Anleitung für Auto Beri World",
+    "beriPreviewTitle": "Beispiel für die Einrichtung von Auto Beri World",
+    "stormGuideIntro": "Folgen Sie diesen Schritten zur Einrichtung von Auto Storm; wählen Sie ein Beispielbild zum Vergrößern.",
+    "stormGuideTitle": "Auto-Storm-Anleitung",
+    "stormPreviewTitle": "Einrichtungsbeispiel für Auto Storm"
+  },
+  "autoTower": {
+    "recommendationIntro": "Diese Empfehlungen gelten für den regelmäßigen Betrieb; prüfe sie vor dem Speichern.",
+    "steps": {
+      "commanders": {
+        "title": "Wähle deine Feldherren",
+        "items": {
+          "commander_assignment": {
+            "label": "Feldherren zuweisen",
+            "description": "Erlaube Automatische Turmangriffe unter „Feldherren“ für die Feldherren, die du verwenden möchtest, und wähle „Zuweisungen speichern“.",
+            "recommendation": "20 Feldherren sind Automatischen Turmangriffen zugewiesen."
+          }
+        }
+      },
+      "general": {
+        "title": "Scans, Tageslimits und Reiseoption festlegen",
+        "items": {
+          "open_settings": {
+            "label": "Einstellungen öffnen",
+            "description": "Öffne „Automatisierung“ und wähle die Einstellungsschaltfläche auf der Karte „Automatische Turmangriffe“."
+          },
+          "authoritative_map_scan_every": {
+            "label": "Verbindlicher Kartenscan · Intervall",
+            "description": "Lege fest, wie oft die Turmliste jeder Burg aktualisiert wird, nämlich alle 1.800 bis 3.600 Sekunden; Angriffe können zwischen den Scans starten.",
+            "recommendation": "1.800 Sekunden (30 Minuten)."
+          },
+          "daily_normal_attack_limit": {
+            "label": "Tageslimit für normale Angriffe",
+            "description": "Bei Erreichen des täglichen Angriffslimits für das gesamte Konto pausiert die Funktion, bis das Spiel es zurücksetzt; 0 hebt das Limit auf.",
+            "recommendation": "3.500 Angriffe pro Tag für das gesamte Konto."
+          },
+          "horse_travel_boost": {
+            "label": "Reisebeschleunigung mit Pferden",
+            "description": "Verwendet die gewählte Reiseoption für jeden Angriff, auch für jeden Treffer einer Beraterfolge, wobei die Geschwindigkeit von den Reisegebäuden der Ausgangsburg abhängt.",
+            "recommendation": "Münzstufe, wo verfügbar, mit ausreichend Münzen."
+          },
+          "travel_feather": {
+            "label": "Reisefeder",
+            "description": "Verwendet die Reisefeder statt einer Pferdestufe für Münzen oder Rubine."
+          },
+          "horse_ship_tier_coins": {
+            "label": "Pferd / Schiff · Münzen",
+            "description": "Gibt Münzen für die Münzreisestufe aus."
+          },
+          "warhorse_fast_ship_tier_rubies": {
+            "label": "Streitross / schnelles Schiff · Rubine",
+            "description": "Gibt bei Auswahl Rubine für die erste Rubinreisestufe aus."
+          },
+          "courser_fastest_ship_tier_rubies": {
+            "label": "Rennpferd / schnellstes Schiff · Rubine",
+            "description": "Gibt bei Auswahl Rubine für die schnellere Rubinreisestufe aus."
+          }
+        },
+        "image": {
+          "alt": "Allgemeine Einstellungen für Automatische Turmangriffe mit fiktiven Daten der Burg „Synthetic Castle“",
+          "caption": "Lege Scanintervall, tägliches Angriffslimit und Reiseoption fest; Berateroptionen erscheinen, wenn sie verfügbar sind."
+        }
+      },
+      "castle": {
+        "title": "Jede Burg einrichten",
+        "items": {
+          "castle_switch": {
+            "label": "Burgschalter",
+            "description": "Aktiviere jede Burg, von der aus Automatische Turmangriffe scannen und angreifen sollen.",
+            "recommendation": "Aktiviere die Burgen, die du regelmäßig verwenden möchtest."
+          },
+          "radius": {
+            "label": "Radius",
+            "description": "Lege fest, wie weit um diese Burg gesucht wird: 1 bis 50 Felder.",
+            "recommendation": "35 Felder."
+          },
+          "choose_troop": {
+            "label": "Truppentyp wählen",
+            "description": "Wähle den stationierten Truppentyp, der beide Angriffsflanken füllen soll; bei zu wenigen Einheiten warten Angriffe.",
+            "recommendation": "Ein stationierter Angriffstruppentyp mit genügend Einheiten für beide Flanken."
+          },
+          "maiden_supported_only": {
+            "label": "Nur mit Jungfrauen-Relikt",
+            "description": "Beschränkt diese Burg auf verfügbare Feldherren mit dem unterstützten Jungfrauen-Relikt.",
+            "recommendation": "Aus, sofern dein gewählter Feldherr nicht über das unterstützte Jungfrauen-Relikt verfügt."
+          }
+        },
+        "image": {
+          "alt": "Burgeinstellungen für Automatische Turmangriffe mit fiktiven Daten der Burg „Synthetic Castle“",
+          "caption": "Aktiviere eine Burg und wähle Radius, Truppentyp und Anforderung an das Jungfrauen-Relikt."
+        }
+      },
+      "advisor": {
+        "title": "Berater bei Bedarf nutzen · falls verfügbar",
+        "items": {
+          "use_advisor_with_time_skips": {
+            "label": "Berater mit Zeitverkürzern verwenden",
+            "description": "Wiederholt Treffer auf einen Turm: zuerst mit einem täglichen Angriff und für jeden weiteren Treffer mit einem Zeitverkürzer von mindestens drei Stunden.",
+            "recommendation": "Aus."
+          },
+          "auto_activate_with_token": {
+            "label": "Automatisch mit Token aktivieren",
+            "description": "Verwendet einen vorhandenen Raubritter-Berater-Token, wenn der Berater inaktiv ist, ohne einen Token zu kaufen oder Rubine auszugeben.",
+            "recommendation": "Aus, solange der Berater ausgeschaltet ist."
+          },
+          "maximum_daily_time_skips": {
+            "label": "Maximale tägliche Zeitverkürzer",
+            "description": "Begrenzt die Zeitverkürzer bestätigter Beraterfolgen, bis der tägliche Angriffszähler des Spiels zurückgesetzt wird; 0 pausiert Beraterangriffe.",
+            "recommendation": "0, solange der Berater ausgeschaltet ist."
+          }
+        }
+      },
+      "finish": {
+        "title": "Zeitplan festlegen, speichern und einschalten",
+        "items": {
+          "calendar": {
+            "label": "Kalender",
+            "description": "Wähle im Kalender, wann Automatische Turmangriffe laufen dürfen; verfügbare Truppen und andere Grenzen gelten weiterhin.",
+            "recommendation": "Deine üblichen Betriebszeiten."
+          },
+          "save_changes": {
+            "label": "Änderungen speichern",
+            "description": "Wähle „Änderungen speichern“, um deine Einstellungen zu übernehmen; das Lesen dieser Anleitung speichert sie nicht."
+          },
+          "auto_towers_switch": {
+            "label": "Schalter für Automatische Turmangriffe",
+            "description": "Aktiviere Automatische Turmangriffe auf der Seite „Automatisierung“, nachdem du deine Einstellungen gespeichert hast, damit die Aufgabe laufen kann.",
+            "recommendation": "Ein, nachdem du deine gewünschten Einstellungen gespeichert hast."
+          }
+        }
+      }
+    },
+    "feature": {
+      "name": "Automatische Turmangriffe",
+      "summary": "Wiederholte Angriffe auf nahe Türme",
+      "description": "Sendet von den gewählten Burgen aus Angriffe auf Raubrittertürme und Türme der Königreiche.",
+      "expectation": "Benötigt genügend Truppen, einen verfügbaren Feldherrn und einen angreifbaren Turm. Die Funktion kann warten, während Truppen zurückkehren oder ein Turmtimer abläuft."
+    }
+  },
+  "autoBird": {
+    "recommendationIntro": "Die empfohlenen Werte gelten für den regelmäßigen Einsatz von Automatischem Truppenschutz; sie dienen als Orientierung und ändern keine gespeicherten Einstellungen.",
+    "steps": {
+      "open": {
+        "title": "Einstellungen für Automatischen Truppenschutz öffnen",
+        "items": {
+          "open_settings": {
+            "label": "Einstellungen öffnen",
+            "description": "Wähle oben in der Kommandozentrale die Einstellungsschaltfläche neben „Automatischer Truppenschutz“."
+          }
+        }
+      },
+      "general": {
+        "title": "Stationierungsdauer und Senderegeln festlegen",
+        "items": {
+          "random_delay_range_min": {
+            "label": "Zufällige Dauer · Minimum",
+            "description": "Lege fest, wie viele Stunden die Truppen mindestens am Bündnisziel bleiben, nachdem die Reise abgeschlossen ist.",
+            "recommendation": "6 Stunden Stationierung am Bündnisziel nach der Ankunft."
+          },
+          "random_delay_range_max": {
+            "label": "Zufällige Dauer · Maximum",
+            "description": "Lege die längste Aufenthaltsdauer am Ziel fest; Automatischer Truppenschutz wählt zufällig eine Dauer zwischen Minimum und Maximum.",
+            "recommendation": "12 Stunden Stationierung am Bündnisziel nach der Ankunft."
+          },
+          "minimum_to_send": {
+            "label": "Mindestmenge zum Senden",
+            "description": "Lege die Mindestgesamtzahl geeigneter Truppen fest, die nach dem Zurückbehalten der Burgreserven verfügbar sein muss; dies ist ein Schwellenwert, nicht die genaue Sendezahl.",
+            "recommendation": "Insgesamt 1.000 geeignete Truppen nach Abzug der Burgreserven; dies ist ein Schwellenwert, keine genaue Sendezahl."
+          },
+          "minimum_rpt_remaining_protection_time": {
+            "label": "Mindest-RPT (verbleibende Schutzzeit)",
+            "description": "Verwende nur Ziele mit mehr als dieser Anzahl verbleibender Schutztage; 0 deaktiviert die Prüfung.",
+            "recommendation": "3 Tage; ein Ziel muss noch mehr als 3 Tage Schutzzeit haben."
+          }
+        },
+        "image": {
+          "alt": "Einstellungen für Automatischen Truppenschutz: Stationierungsdauer, Mindestmenge, Mindest-RPT und Vorlagen",
+          "caption": "Lege Stationierungsdauer und Eignung fest und prüfe vor dem Speichern die Reservevorlage „Alltag“."
+        }
+      },
+      "reserves": {
+        "title": "Truppen auswählen, die in jeder Burg bleiben",
+        "items": {
+          "add_unit": {
+            "label": "Einheit hinzufügen",
+            "description": "Wähle für jede Burg Truppentypen aus, die zu Hause bleiben statt entsendet zu werden; bei einer leeren manuellen Reserve sind nach automatischen Reserven alle geeigneten Truppen verfügbar.",
+            "recommendation": "Wähle die Truppentypen aus, die jede Burg für Verteidigung oder andere regelmäßige Aufgaben benötigt."
+          },
+          "quantity": {
+            "label": "Anzahl",
+            "description": "Lege eine positive Anzahl jedes gewählten Truppentyps fest, die in dieser Burg bleiben soll; 0 reserviert nicht den gesamten Typ.",
+            "recommendation": "Behalte von jedem Truppentyp die Anzahl in der Burg, die für Verteidigung oder andere Aufgaben benötigt wird; prüfe die tatsächlichen Truppenbestände."
+          },
+          "remove_unit": {
+            "label": "Einheit entfernen",
+            "description": "Entferne eine Einheitenkachel, damit dieser Typ in der gewählten Burg nicht länger manuell reserviert wird."
+          },
+          "auto_fortress_reserve": {
+            "label": "Reserve der Festungsautomatisierung",
+            "description": "Wenn die Automatisierung von Festungen hier alle Sturmwölfe sperrt, wird diese automatische Reserve nicht in Vorlagen für Automatischen Truppenschutz gespeichert; nach Ende der Sperre gilt wieder die frühere manuelle Sturmwolf-Anzahl."
+          }
+        },
+        "image": {
+          "alt": "Reservekacheln für Automatischen Truppenschutz einer Burg mit fiktiven Daten der Burg „Example Castle“",
+          "caption": "Reserviere nur die in dieser Burg benötigten Einheiten; Einheit 101 und Einheit 102 sind fiktive Truppenplatzhalter."
+        }
+      },
+      "presets": {
+        "title": "Vorlage speichern und auswählen",
+        "items": {
+          "preset_name": {
+            "label": "Vorlagenname",
+            "description": "Gib einen Namen für eine neue Vorlage ein oder bearbeite den Namen der angewendeten Vorlage, bevor du Änderungen speicherst.",
+            "recommendation": "Verwende einen gut erkennbaren Namen wie „Alltag“."
+          },
+          "load_preset": {
+            "label": "Vorlage laden",
+            "description": "Wähle eine gespeicherte Vorlage aus der Liste oder „Gespeicherte Konfiguration“, um die gespeicherten Einstellungen ohne benannte Vorlage zu nutzen.",
+            "recommendation": "Verwende die gewünschte Alltagsvorlage als Laufzeitstandard: auswählen, „Anwenden“ und dann „Änderungen speichern“."
+          },
+          "apply": {
+            "label": "Anwenden",
+            "description": "Lädt die gewählte Vorlage in diesen Einstellungsentwurf; wähle „Änderungen speichern“, um sie als Laufzeitstandard zu übernehmen."
+          },
+          "save_as_new": {
+            "label": "Als neu speichern",
+            "description": "Speichert die aktuellen Einstellungen sofort als neue benannte Vorlage und wählt sie als Laufzeitstandard aus."
+          },
+          "delete": {
+            "label": "Löschen",
+            "description": "Löscht die gewählte Vorlage nach Bestätigung sofort und entfernt den Laufzeitstandard, falls diese Vorlage ausgewählt war."
+          },
+          "runtime_default": {
+            "label": "Laufzeitstandard",
+            "description": "Der Laufzeitstandard ist die gespeicherte aktive Vorlage oder, wenn keine Vorlage aktiv ist, die gespeicherte Konfiguration."
+          }
+        }
+      },
+      "finish": {
+        "title": "Zeitplan festlegen, speichern und aktivieren",
+        "items": {
+          "calendar": {
+            "label": "Kalender",
+            "description": "Wähle, wann Automatischer Truppenschutz laufen darf, und speichere die Änderungen mit „Zeitplan speichern“.",
+            "recommendation": "Lass den Zeitplan für den laufenden Betrieb ausgeschaltet oder lege übliche Wochenzeiten fest und speichere den Zeitplan."
+          },
+          "specify_preset_per_period": {
+            "label": "Vorlage pro Zeitraum festlegen",
+            "description": "Wähle für einen Kalenderzeitraum eine gespeicherte Vorlage, wenn sie den Laufzeitstandard für diesen Zeitraum ersetzen soll.",
+            "recommendation": "Aus, sofern verschiedene Zeiträume keine unterschiedlichen Reserven benötigen."
+          },
+          "save_changes": {
+            "label": "Änderungen speichern",
+            "description": "Speichere den Einstellungsentwurf und alle angewendeten Vorlagenänderungen; das Lesen dieser Anleitung speichert sie nicht."
+          },
+          "auto_bird_switch": {
+            "label": "Schalter für Automatischen Truppenschutz",
+            "description": "Aktiviere Automatischen Truppenschutz nach dem Speichern oben in der Kommandozentrale, damit die normalen Burgzyklen laufen können.",
+            "recommendation": "Aktiviere Automatischen Truppenschutz nach dem Speichern; der Status in der Kopfzeile zeigt den Zyklus jeder Burg."
+          }
+        }
+      }
+    },
+    "feature": {
+      "name": "Automatischer Truppenschutz",
+      "summary": "Ausgewählte Truppen nach Zeitplan außerhalb der Burg stationieren",
+      "description": "Stationiert regelmäßig entbehrliche Truppen in geeigneten Bündnisburgen und wiederholt den Zyklus nach ihrer Rückkehr.",
+      "expectation": "Wartet, wenn kein geeignetes Ziel oder keine entbehrlichen Truppen verfügbar sind. Das Verlegen von Truppen macht deine Burg nicht unangreifbar."
+    }
+  },
+  "panels": {
+    "towerGeneral": {
+      "title": "Allgemeine Einstellungen",
+      "scan": "Scanintervall: 1.800 Sekunden",
+      "daily": "Tägliches Angriffslimit: 3.500",
+      "travel": "Reisebeschleunigung: Münzstufe",
+      "advisor": "Berater: aus"
+    },
+    "towerCastle": {
+      "title": "Beispielburg",
+      "enabled": "Automatische Turmangriffe: ein",
+      "radius": "Radius: 35 Felder",
+      "troop": "Gewählter Truppentyp: fiktive Angriffseinheit",
+      "maiden": "Nur mit Jungfrauen-Relikt: aus"
+    },
+    "birdGeneral": {
+      "title": "Allgemeine Einstellungen",
+      "min": "Mindestaufenthalt: 6 Stunden",
+      "max": "Höchstaufenthalt: 12 Stunden",
+      "send": "Mindestgesamtzahl geeigneter Truppen nach Reserven: 1.000",
+      "rpt": "Verbleibender Mindestschutz: mehr als 3 Tage",
+      "preset": "Vorlage: Alltagsreserve"
+    },
+    "birdCastle": {
+      "title": "Beispielburg",
+      "unitOne": "Fiktive Einheit 101 reserviert: 80",
+      "unitTwo": "Fiktive Einheit 102 reserviert: 40",
+      "add": "Einheit hinzufügen"
+    },
+    "stationGeneral": {
+      "title": "Beispiel für Auto-Station-Einstellungen",
+      "evacuate": "Evakuieren ab: 1 Minute vor Einschlag",
+      "protection": "Zielschutz: mehr als 3 Tage",
+      "recall": "Zurückrufen, wenn sicher: ein",
+      "gate": "Toröffnung als Rückfalloption: aus",
+      "castle": "Fiktive Beispielburg: 80 Verteidigungstruppen reserviert",
+      "save": "Änderungen speichern und Auto Station einschalten"
+    },
+    "fortressAttack": {
+      "commander": "Feldherr: schnellster geeigneter zugewiesener",
+      "daily": "Tageslimit für normale Angriffe: 0",
+      "title": "Beispiel für Angriffseinstellungen",
+      "travel": "Reisebonus: Reisefeder",
+      "wave": "Eine vollständige Sturmwolf-Welle auf beiden Flanken"
+    },
+    "fortressKingdoms": {
+      "everwinter": "Eisiger Gletscher: ein nach Freischaltung",
+      "peaks": "Feuergipfel: ein nach Freischaltung",
+      "sands": "Brennende Sande: ein nach Freischaltung",
+      "title": "Beispiel für Königreichseinstellungen"
+    },
+    "fortressSupply": {
+      "purchase": "Sturmwölfe pro Sitzung: 5.000",
+      "reserve": "Khan-Tafeln behalten: 25.000",
+      "route": "Versorgung: vom Großen Imperium in aktivierte Königreiche",
+      "skips": "Zeitverkürzer für bestätigte Transfers: ein",
+      "title": "Beispiel für Sturmwolf-Versorgung"
+    },
+    "invasionDifficulty": {
+      "bloodcrow": "Blutkrähen: freigeschalteter geeigneter Schwierigkeitsgrad",
+      "current": "Der aktive Event-Schwierigkeitsgrad bleibt bestehen",
+      "foreign": "Fremde Fürsten: freigeschalteter geeigneter Schwierigkeitsgrad",
+      "title": "Beispiel für Event-Schwierigkeitsgrade"
+    },
+    "invasionFortify": {
+      "currency": "Falls aktiviert: Eventwährung, wenn verfügbar",
+      "enabled": "Jedes Ziel befestigen: aus",
+      "rubies": "Rubine nur bei ausdrücklicher Auswahl",
+      "title": "Beispiel für Zielbefestigung"
+    },
+    "invasionLimits": {
+      "before": "30 Minuten vor Eventende stoppen",
+      "daily": "Tagesgrenze für normale Angriffe: 0",
+      "score": "Punkte: übliche letzte persönliche Belohnung oberhalb von 0",
+      "title": "Beispiel für Punkte- und Stoppgrenzen"
+    },
+    "invasionSetup": {
+      "castle": "Ausgang: übliche Eventburg im Großen Imperium",
+      "preset": "Angriffsvorlage: gespeicherte Eventaufstellung",
+      "title": "Beispiel für Eventangriffe",
+      "travel": "Reiseverstärkung: Reisefeder"
+    },
+    "nomadDifficulty": {
+      "title": "Beispiel für Event-Schwierigkeitsgrade",
+      "active": "Aktives Event: aktuellen Schwierigkeitsgrad übernehmen",
+      "nomad": "Nomaden: freigeschalteter verlässlicher Schwierigkeitsgrad",
+      "samurai": "Samurai: freigeschalteter verlässlicher Schwierigkeitsgrad"
+    },
+    "nomadSetup": {
+      "castle": "Ausgang: übliche Eventburg im Großen Imperium",
+      "travel": "Reisebonus: Reisefeder",
+      "nomadPreset": "Nomaden-Vorlage: gespeicherte Lageraufstellung",
+      "samuraiPreset": "Samurai-Vorlage: gespeicherte Lageraufstellung",
+      "title": "Beispiel für Eventlager-Einstellungen"
+    },
+    "nomadCooldowns": {
+      "clear": "Abklingzeit nach bestätigtem Sieg beenden: Ein",
+      "long": "5 Std. / 24 Std. behalten: Vorrat für andere Aufgaben reserviert",
+      "short": "1 / 5 / 10 / 30 / 60 Min. behalten: jeweils 0 Gegenstände",
+      "title": "Beispiel für Abklingzeiteinstellungen"
+    },
+    "nomadLimits": {
+      "daily": "Zusätzliche Tagesgrenze: 0",
+      "score": "Punkteziel: letzte persönliche Belohnungsstufe",
+      "time": "Vor Eventende stoppen: 30 Minuten",
+      "title": "Beispiel für Stoppregeln"
+    },
+    "nomadTrial": {
+      "coordinates": "Ziel X / Y: im regulären Betrieb ungenutzt",
+      "effect": "Test Ein ersetzt den Eventbetrieb durch einen echten Angriff",
+      "title": "Beispiel für Teststeuerung",
+      "trial": "Vorübergehender Raubritterburgtest: Aus"
+    },
+    "advisorDifficulty": {
+      "active": "Aktives Event: aktuellen Schwierigkeitsgrad übernehmen",
+      "nomad": "Nomaden: freigeschalteter verlässlicher Schwierigkeitsgrad",
+      "samurai": "Samurai: freigeschalteter verlässlicher Schwierigkeitsgrad",
+      "title": "Beispiel für Event-Schwierigkeitsgrade"
+    },
+    "advisorSetup": {
+      "castle": "Ausgang: übliche Eventburg im Großen Imperium",
+      "travel": "Reisebonus: Reisefeder",
+      "preset": "Vorlage: gespeicherte Aufstellung für das aktive Event",
+      "title": "Beispiel für Berater-Angriffseinstellungen"
+    },
+    "advisorActivation": {
+      "locked": "Bei Sperre: Bestätigung über Berater aktivieren öffnen",
+      "paid": "Kostenpflichtige Tokenverwendung oder vom Spiel gemeldete kostenlose Aktivierung bestätigen",
+      "save": "Einstellungen speichern, dann Automatisierungskarte einschalten",
+      "title": "Beispiel für den Aktivierungsablauf"
+    },
+    "advisorOverview": {
+      "progress": "Aktueller Angriff / angeforderte Angriffe",
+      "refresh": "Übersicht für aktuelle Summen aktualisieren",
+      "results": "Siege, Niederlagen, verlorene Einheiten und Werkzeuge",
+      "title": "Beispiel für die Live-Übersicht"
+    },
+    "advisorResources": {
+      "coins": "Gesamte Münzen je Angriff: 500 nur bei ausreichender Deckung",
+      "feathers": "Federn behalten: 0, sofern anderswo nicht benötigt",
+      "rubies": "Rubine je Angriff: 0 mit Reisefeder",
+      "skips": "60 Min. behalten: 0 Gegenstände; 5 Std. und 24 Std. nach Bedarf reservieren",
+      "title": "Beispiel für Ressourcenbudgets"
+    },
+    "advisorSizing": {
+      "actual": "Tatsächlicher Lauf: durch Ressourcen und Zeit begrenzt",
+      "maximum": "Maximale Angriffe: 9.999",
+      "time": "Ungenutzte Eventzeit: 30 Minuten",
+      "title": "Beispiel für die Laufgröße"
+    },
+    "khanCooldowns": {
+      "long": "5-Stunden- und 24-Stunden-Vorrat für andere Aufgaben reservieren",
+      "pause": "Bei zu wenigen nutzbaren Zeitverkürzern pausieren neue Angriffe",
+      "short": "1 Min. / 5 Min. / 10 Min. / 30 Min. / 1 Std. behalten: jeweils 0 Gegenstände",
+      "skip": "Jede Lagerabklingzeit überspringen: ein",
+      "title": "Beispiel für Zeitverkürzerreserven"
+    },
+    "khanLimits": {
+      "daily": "Normale Angriffe pro Tag: 0, keine zusätzliche Grenze",
+      "end": "Neue Angriffe 5 Minuten vor Ereignisende stoppen",
+      "points": "Bei Nomadenpunkten stoppen: 0, deaktiviert",
+      "title": "Beispiel für Stoppgrenzen",
+      "tools": "Verteidigungswerkzeuge auffüllen: ein, wenn gewünscht"
+    },
+    "khanProtection": {
+      "gate": "Haupttore öffnen und Khan an der Grenze pausieren",
+      "outpost": "Außenposten als Quelle: Schutz deaktiviert",
+      "source": "Gilt bei Angriffen aus der Hauptburg",
+      "threshold": "Offensive Mauereinheiten: 1.000",
+      "title": "Beispiel für Hauptburg-Mauerschutz"
+    },
+    "khanRage": {
+      "attacks": "Automatische Lagerangriffe: entsperrt",
+      "booster": "Zeitlich begrenzter Wutpunkte-Booster erforderlich: aus",
+      "chain": "Maximale Wutserie: 0, keine zusätzliche Grenze",
+      "title": "Beispiel für Wutsteuerung",
+      "trigger": "Vergeltung bei voller Wut: ein"
+    },
+    "khanSave": {
+      "defense": "Hauptburgverteidigung vor der Vergeltung prüfen",
+      "enable": "Auto Khan auf der Automatisierungskarte aktivieren",
+      "priority": "Auto Station behandelt Spielerangriffe getrennt",
+      "save": "Einstellungen nach Vorbereitung beider Vorlagen speichern",
+      "title": "Beispiel für Speichern und Aktivieren"
+    },
+    "khanSetup": {
+      "defense": "Verteidigung in: Hauptburg des Großen Imperiums",
+      "presets": "Gespeicherte Khan-Angriffs- und Hauptburg-Verteidigungsvorlagen",
+      "source": "Angriff von: Außenposten im Großen Imperium",
+      "title": "Beispiel für Khan-Einstellungen",
+      "travel": "Reisefeder für schnelle Reisen"
+    },
+    "beriBuilder": {
+      "permissions": "Premium und Abriss: aus, sofern nicht geprüft",
+      "reserves": "Berimond-Ressourcen und Zeitverkürzer reservieren",
+      "stable": "Fraktionsstall: gewählte Stufe 1–5",
+      "target": "Eingebautes exaktes Ziel oder geprüftes eigenes Layout",
+      "title": "Beispiel für optionalen Lagerausbau"
+    },
+    "beriReadiness": {
+      "booster": "Tapferkeitsbooster als Bedingung: optional",
+      "food": "Transfers benötigen Vorlagentruppen mit Nahrungsverbrauch",
+      "preset": "Gespeicherte Truppen- und Werkzeugplätze prüfen",
+      "title": "Beispiel für Turmbereitschaft"
+    },
+    "beriSave": {
+      "calendar": "Kalender für Dauerbetrieb aus",
+      "enable": "Auto Beri über die Automatisierungskarte einschalten",
+      "save": "Einstellungen nach Prüfung des Truppenverhältnisses speichern",
+      "title": "Beispiel für Speichern und Einschalten"
+    },
+    "beriSetup": {
+      "donor": "Spender im Großen Imperium mit benötigten Truppen",
+      "limit": "Tageslimit normale Angriffe: 0 Zusatzlimit",
+      "preset": "Gespeicherte Berimond-Angriffsvorlage",
+      "title": "Beispiel für Angriff und Versorgung",
+      "travel": "Reisefeder für Turmangriffe"
+    },
+    "beriTools": {
+      "ladders": "Sturmleitern: an übliche Angriffe anpassen",
+      "mantlets": "Schutzschilde: an übliche Angriffe anpassen",
+      "rams": "Rammböcke: an übliche Angriffe anpassen",
+      "title": "Beispiel für Werkzeugmindestbestände"
+    },
+    "beriTransfers": {
+      "capacity": "Freie Kapazität: 1; Schwelle: 1",
+      "mix": "Vorlagenverhältnis: 2 Einheiten A zu 1 Einheit B",
+      "next": "Nächste Sendung: bis zu 1 B aus dem Spenderbestand",
+      "stock": "Lagerbestand: 2 A und 0 B",
+      "title": "Beispiel für verhältnismäßige Transfers"
+    },
+    "stormCastle": {
+      "blueprint": "Gespeichertes Ziel aktiv; Pausieren behält es",
+      "capture": "Aktuelle Burg: funktionales Ziel",
+      "decorations": "Dekorationsvorlage: optional",
+      "title": "Beispiel für Sturm-Burg-Zugang",
+      "unlock": "Automatische Freischaltung: ein nach Preisprüfung"
+    },
+    "stormCombat": {
+      "defenders": "Besatzungsverteidiger: ausgewählt oder ein Überlebender",
+      "forts": "Festungen: ausgewählte Stufen 40–80",
+      "islands": "Aquamarin-Inseln: groß und klein",
+      "priority": "Groß, klein, dann Festungen von 80 bis 40",
+      "title": "Beispiel für Festungs- und Inselangriffe"
+    },
+    "stormConstruction": {
+      "harbor": "Hafen: ein, Stufe 1",
+      "resources": "Holz 0; Stein 0; Aquamarin geplant",
+      "spending": "Premium und Abriss: aus",
+      "title": "Beispiel für Bau und Reserven",
+      "transport": "Rohstofftransport: ein"
+    },
+    "stormLuna": {
+      "cost": "Kosten und Kaufobergrenze: schreibgeschützt",
+      "limited": "Begrenzte Ziele vor unbegrenzten Belohnungen",
+      "priority": "Priorität 1, 2, 3; niedriger zuerst",
+      "reserve": "Aquamarin behalten: 0 bei Nutzung des Überschusses",
+      "title": "Beispiel für Luna-Belohnungen"
+    },
+    "stormSave": {
+      "check": "Richtlinienprüfung: 30 Sekunden",
+      "daily": "Tägliche normale Angriffe: 0 zusätzliche Grenze",
+      "map": "Kartenaktualisierung: 2 Stunden, schreibgeschützt",
+      "switch": "Speichern, dann Auto Storm aktivieren",
+      "title": "Beispiel für Speichern und Aktivieren"
+    },
+    "stormTroops": {
+      "averages": "Bestätigte Angriffe seit Reset / 24; Voreinstellungsdurchschnitt nur lesbar",
+      "cap": "Gebundene Truppengrenze: schreibgeschützt",
+      "donors": "Spender: angezeigte Reihenfolge, Teilbestand erlaubt",
+      "minimum": "Mindestens behalten: 1.000 Truppen",
+      "title": "Beispiel für Truppenimport"
+    }
+  },
+  "autoStation": {
+    "recommendationIntro": "Die Empfehlungen gelten für die regelmäßige Nutzung von Auto Station und ändern keine gespeicherten Einstellungen.",
+    "steps": {
+      "open": {
+        "title": "Auto-Station-Einstellungen öffnen",
+        "items": {
+          "open_settings": {
+            "label": "Einstellungen öffnen",
+            "description": "Wählen Sie oben in der Kommandozentrale die Einstellungsschaltfläche neben Auto Station."
+          }
+        }
+      },
+      "general": {
+        "title": "Reaktion auf Angriffe festlegen",
+        "items": {
+          "evacuate_at": {
+            "label": "Evakuieren ab",
+            "description": "Beginnen Sie die Evakuierung so viele Minuten vor dem Einschlag oder sofort, wenn ein Angriff erst innerhalb dieses Zeitfensters erkannt wird.",
+            "recommendation": "1 Minute vor dem Einschlag."
+          },
+          "minimum_bird_days": {
+            "label": "Mindestschutzdauer am Ziel",
+            "description": "Wählen Sie eine Allianzburg mit mehr als dieser Anzahl verbleibender Schutztage; 0 hebt die Mindestdauer auf.",
+            "recommendation": "3 Tage, sodass am Ziel mehr als 3 Tage verbleiben müssen."
+          },
+          "recall_when_clear": {
+            "label": "Zurückrufen, wenn sicher",
+            "description": "Holen Sie stationierte Truppen zurück, sobald der letzte erkannte Angriff vorbei ist und kein weiterer Angriff bevorsteht.",
+            "recommendation": "Für den normalen Betrieb eingeschaltet."
+          },
+          "open_gate_fallback": {
+            "label": "Toröffnung als Rückfalloption",
+            "description": "Wenn Truppen nicht evakuiert werden können, öffnet diese optionale Funktion die Tore der angegriffenen eigenen Burg für sechs Stunden, außer in Berimond.",
+            "recommendation": "Aus, sofern Sie bei gescheiterter Evakuierung keine automatische Toröffnung wünschen."
+          },
+          "protection_mode": {
+            "label": "Gekaufter Schutzmodus",
+            "description": "Während ein gekaufter Schutzmodus vorbereitet oder aktiv ist, verwendet Auto Station auch bei ausgeschalteter Rückfalloption Tore, außer in Berimond."
+          }
+        },
+        "image": {
+          "alt": "Fiktive Auto-Station-Einstellungen mit Evakuierungszeit, Schutztagen, Rückruf, Toroption und Burgreserven",
+          "caption": "Prüfen Sie die vier Reaktionsfelder und die Verteidigungsreserven jeder Burg vor dem Speichern."
+        }
+      },
+      "reserves": {
+        "title": "Truppen für jede Burg zurückbehalten",
+        "items": {
+          "add_troops": {
+            "label": "Truppen hinzufügen",
+            "description": "Wählen Sie Truppentypen, die in der Burg bleiben; ohne Reserve können alle geeigneten Truppen außer Werkzeugen evakuiert werden.",
+            "recommendation": "Behalten Sie die übliche Verteidigungsgarnison zu Hause und lassen Sie übrige Angriffstruppen ziehen."
+          },
+          "quantity": {
+            "label": "Anzahl",
+            "description": "Legen Sie fest, wie viele Truppen jedes gewählten Typs in dieser Burg bleiben; 0 behält keine zurück.",
+            "recommendation": "Verwenden Sie die für die normale Verteidigung dieser Burg benötigte Anzahl."
+          },
+          "edit_defense_troops": {
+            "label": "Verteidigungstruppen bearbeiten",
+            "description": "Öffnen Sie die Truppenauswahl erneut, um Typen oder Mengen der Burgreserve zu ändern."
+          },
+          "remove_defense_troop": {
+            "label": "Verteidigungstrupp entfernen",
+            "description": "Entfernen Sie eine Reservekachel, damit dieser Truppentyp nicht mehr in der Burg zurückbleibt."
+          }
+        }
+      },
+      "finish": {
+        "title": "Auto Station speichern und einschalten",
+        "items": {
+          "save_changes": {
+            "label": "Änderungen speichern",
+            "description": "Speichern Sie Zeitfenster, Schalter und Burgreserven, bevor Sie die Einstellungen verlassen."
+          },
+          "auto_station_switch": {
+            "label": "Auto-Station-Schalter",
+            "description": "Schalten Sie Auto Station nach dem Speichern oben in der Kommandozentrale ein, damit eingehende Spielerangriffe erkannt werden.",
+            "recommendation": "Nach Prüfung Ihrer Reserven für den regelmäßigen Schutz einschalten."
+          }
+        }
+      }
+    },
+    "feature": {
+      "name": "Automatische Truppenstationierung",
+      "summary": "Geeignete Truppen vor einem eingehenden Angriff bewegen",
+      "description": "Bei einem eingehenden Spielerangriff verlegt Auto Station geeignete Truppen zur nächstgelegenen geeigneten Allianzburg im selben Königreich.",
+      "expectation": "Mit aktiviertem Rückruf kehren Truppen nach dem letzten erkannten Angriff zurück, sobald keine Bedrohung mehr besteht; andernfalls bleiben sie nach der Ankunft eine Stunde und kehren dann zurück. Fehlende Ziele, Truppen oder Spielbeschränkungen können die Evakuierung verhindern.",
+      "helper": "Truppen werden bei der nächstgelegenen geeigneten Allianzburg im selben Königreich stationiert; schlägt die Evakuierung fehl, können außerhalb Berimonds die Tore der angegriffenen eigenen Burg schützen."
+    }
+  },
+  "autoFortress": {
+    "feature": {
+      "commanderBadge": "Schnellster verfügbarer Feldherr",
+      "commanderHelp": "Die Automatisierung von Festungen vergleicht passende Reisegeschwindigkeitseffekte aus Ausrüstung, Edelsteinen, Sets und Generälen für jede Zielfestung; weder Relikt 2.0 noch ein Bonus von 100 % sind erforderlich.",
+      "description": "Die Automatisierung von Festungen kauft Sturmwölfe innerhalb der gespeicherten Grenzen, versorgt aktivierte äußere Königreiche und greift bereite Festungen von deren Hauptburgen aus an.",
+      "expectation": "Jeder Angriff benötigt eine bereite Festung, genug Sturmwölfe für beide Flanken und einen geeigneten zugewiesenen Feldherrn; Abklingzeiten oder Lieferverzögerungen können ihn aufhalten.",
+      "name": "Automatisierung von Festungen",
+      "settingsSummary": "Die Automatisierung von Festungen bereitet Sturmwölfe vor und wählt für jede Zielfestung den schnellsten geeigneten zugewiesenen Feldherrn.",
+      "summary": "Sturmwölfe liefern und bereite Festungen angreifen",
+      "travelHelp": "Die Reisefeder ist voreingestellt; deine gespeicherte Reiseoption bleibt erhalten. Der burgspezifische Bonus wird vor dem Angriff erneut ermittelt."
+    },
+    "recommendationIntro": "Die empfohlenen Werte beschreiben die regelmäßige Nutzung der Automatisierung von Festungen; sie dienen nur als Orientierung und ändern keine gespeicherten Einstellungen.",
+    "steps": {
+      "attack": {
+        "image": {
+          "alt": "Anschauliches Beispiel für Angriffs- und Reiseeinstellungen der Festungsautomatisierung",
+          "caption": "Die Automatisierung von Festungen ordnet geeignete zugewiesene Feldherren für jedes Ziel nach Geschwindigkeit und nutzt die gespeicherte Reiseoption."
+        },
+        "items": {
+          "commander_assignment": {
+            "description": "Weise unter Feldherren die Feldherren zu, die die Automatisierung von Festungen verwenden darf, und speichere die Zuweisungen.",
+            "label": "Feldherrenzuweisung",
+            "recommendation": "Weise die Feldherren zu, die du normalerweise für Festungsangriffe verfügbar halten möchtest."
+          },
+          "daily_normal_attack_limit": {
+            "description": "Stoppe die Automatisierung von Festungen beim kontoweiten Tageszähler für normale Angriffe bis zum Zurücksetzen durch das Spiel; 0 setzt keine zusätzliche Grenze.",
+            "label": "Tageslimit für normale Angriffe",
+            "recommendation": "0, sofern du keine zusätzliche Tagesgrenze möchtest."
+          },
+          "fastest_commander": {
+            "description": "Für jede Festung wählt die Automatisierung von Festungen den schnellsten momentan verfügbaren zugewiesenen Feldherrn anhand passender Ausrüstungs-, Edelstein-, Set- und Generalseffekte nach Anwendung der Obergrenzen.",
+            "label": "Schnellster geeigneter Feldherr",
+            "recommendation": "Weder ein Relikt-2.0-Gegenstand noch ein Geschwindigkeitsbonus von 100 % ist erforderlich."
+          },
+          "full_flank_wave": {
+            "description": "Jeder Angriff wartet auf genügend Sturmwölfe, um beide Flanken in einer vollständigen Welle zu füllen.",
+            "label": "Sturmwolf-Flankenwelle"
+          },
+          "horse_travel_boost": {
+            "description": "Wähle die Reiseoption für Festungsangriffe; eine ausdrücklich gespeicherte Münz- oder Rubin-Stufe bleibt ausgewählt.",
+            "label": "Pferde-Reisebonus",
+            "recommendation": "Reisefeder für die schnellste Reise."
+          }
+        },
+        "title": "Angriffe und Reise einstellen"
+      },
+      "finish": {
+        "items": {
+          "auto_fortress_switch": {
+            "description": "Aktiviere die Automatisierung von Festungen nach dem Speichern auf der Automatisierungskarte, um ihre normalen Abläufe zu starten.",
+            "label": "Schalter für die Festungsautomatisierung",
+            "recommendation": "Ein, nachdem du deine gewünschten Einstellungen geprüft und gespeichert hast."
+          },
+          "calendar": {
+            "description": "Nutze den Kalender, um die Laufzeiten der Automatisierung von Festungen einzugrenzen, und wähle für Änderungen „Zeitplan speichern“.",
+            "label": "Kalender",
+            "recommendation": "Aus für einen durchgehenden regelmäßigen Betrieb."
+          },
+          "save_fortress_plan": {
+            "description": "Speichere die Einstellungen für Königreiche, Versorgung und Angriffe, bevor du dieses Fenster verlässt.",
+            "label": "Festungsplan speichern"
+          }
+        },
+        "title": "Zeitplan festlegen, speichern und aktivieren"
+      },
+      "kingdoms": {
+        "image": {
+          "alt": "Anschauliches Beispiel für die Königreichsschalter der Festungsautomatisierung",
+          "caption": "Aktiviere jedes freigeschaltete Königreich, dessen Hauptburg Sturmwölfe erhalten und Festungen angreifen soll."
+        },
+        "items": {
+          "burning_sands": {
+            "description": "Aktiviere Angriffe und Sturmwolf-Lieferungen von deiner eigenen Hauptburg in den Brennenden Sanden, wenn das Königreich freigeschaltet ist.",
+            "label": "Brennende Sande",
+            "recommendation": "Ein, wenn freigeschaltet und einsatzbereit."
+          },
+          "everwinter_glacier": {
+            "description": "Aktiviere Angriffe und Sturmwolf-Lieferungen von deiner eigenen Hauptburg im Eisigen Gletscher, wenn das Königreich freigeschaltet ist.",
+            "label": "Eisiger Gletscher",
+            "recommendation": "Ein, wenn freigeschaltet und einsatzbereit."
+          },
+          "fire_peaks": {
+            "description": "Aktiviere Angriffe und Sturmwolf-Lieferungen von deiner eigenen Hauptburg in den Feuergipfeln, wenn das Königreich freigeschaltet ist.",
+            "label": "Feuergipfel",
+            "recommendation": "Ein, wenn freigeschaltet und einsatzbereit."
+          }
+        },
+        "title": "Festungs-Königreiche auswählen"
+      },
+      "open": {
+        "items": {
+          "open_settings": {
+            "description": "Wähle auf der Automatisierungsseite die Schaltfläche „Einstellungen“ auf der Karte der Festungsautomatisierung.",
+            "label": "Einstellungen öffnen"
+          }
+        },
+        "title": "Einstellungen der Festungsautomatisierung öffnen"
+      },
+      "supply": {
+        "image": {
+          "alt": "Anschauliches Beispiel für Sturmwolf-Käufe und Transfers der Festungsautomatisierung",
+          "caption": "Prüfe das Kauflimit pro Sitzung, die Khan-Tafel-Reserve und die Option für Zeitverkürzer bei bestätigten Transfers."
+        },
+        "items": {
+          "direwolves_per_session": {
+            "description": "Begrenze Sturmwolf-Käufe im Nomadenladen pro Ladensitzung auf Hunderterpakete; 0 deaktiviert Käufe.",
+            "label": "Sturmwölfe pro Sitzung",
+            "recommendation": "5.000 Sturmwölfe pro Sitzung zur günstigsten Preisstufe."
+          },
+          "keep_khan_tablets": {
+            "description": "Beende Sturmwolf-Käufe, bevor dein Bestand an Khan-Tafeln unter diese Reserve fällt.",
+            "label": "Khan-Tafeln behalten",
+            "recommendation": "25.000 Khan-Tafeln behalten."
+          },
+          "supply_route": {
+            "description": "Gekaufte Sturmwölfe treffen in der Hauptburg des Großen Imperiums ein und werden auf aktivierte Königreiche verteilt.",
+            "label": "Sturmwolf-Versorgungsweg"
+          },
+          "use_time_skips": {
+            "description": "Nutze geeignete Zeitverkürzer nur für bestätigte Lieferungen der Festungsautomatisierung und beachte gespeicherte Bestandsreserven.",
+            "label": "Zeitverkürzer für Sturmwolf-Transfers nutzen",
+            "recommendation": "Ein für schnellere Versorgung, wenn deine gespeicherten Zeitverkürzer-Reserven dies erlauben."
+          }
+        },
+        "title": "Sturmwolf-Versorgung einstellen"
+      }
+    }
+  },
+  "autoInvasion": {
+    "feature": {
+      "description": "Auto Invasion greift Fremde Fürsten oder Blutkrähen mit einer gespeicherten Angriffsvorlage an, bis das Punkteziel oder eine andere Stoppgrenze erreicht ist.",
+      "expectation": "Es wartet auf ein aktives Event, geeignete Feldherren und ausreichend Truppen und Werkzeuge; bereits reisende Angriffe können nach dem Stopp neuer Angriffe enden.",
+      "name": "Automatische Invasionsangriffe",
+      "summary": "Greife Fremde Fürsten und Blutkrähen bis zu deinem Punkteziel an"
+    },
+    "recommendationIntro": "Die empfohlenen Werte beschreiben die regelmäßige Nutzung der automatischen Invasionsangriffe; sie dienen als Orientierung und ändern keine gespeicherten Einstellungen.",
+    "steps": {
+      "difficulty": {
+        "image": {
+          "alt": "Illustrative Schwierigkeitsauswahl für Fremde Fürsten und Blutkrähen",
+          "caption": "Wähle für jedes Event einen eigenen freigeschalteten Schwierigkeitsgrad als Rückfalloption."
+        },
+        "items": {
+          "bloodcrow_difficulty": {
+            "description": "Wähle einen freigeschalteten Schwierigkeitsgrad für Blutkrähen, falls im aktuellen Event noch keiner gewählt wurde.",
+            "label": "Schwierigkeitsgrad Blutkrähen",
+            "recommendation": "Nutze den höchsten freigeschalteten Schwierigkeitsgrad, den deine übliche Aufstellung zuverlässig bewältigt."
+          },
+          "difficulty_note": {
+            "description": "Speichere beide Event-Auswahlen; eine Änderung des gespeicherten Werts ersetzt nicht den aktiven Schwierigkeitsgrad.",
+            "label": "Aktueller Schwierigkeitsgrad"
+          },
+          "foreign_lords_difficulty": {
+            "description": "Wähle einen freigeschalteten Schwierigkeitsgrad für Fremde Fürsten, falls im aktuellen Event noch keiner gewählt wurde.",
+            "label": "Schwierigkeitsgrad Fremde Fürsten",
+            "recommendation": "Nutze den höchsten freigeschalteten Schwierigkeitsgrad, den deine übliche Aufstellung zuverlässig bewältigt."
+          }
+        },
+        "title": "Wähle beide Event-Schwierigkeitsgrade"
+      },
+      "finish": {
+        "items": {
+          "auto_invasion_switch": {
+            "description": "Schalte die automatischen Invasionsangriffe nach dem Speichern auf der Automatisierungskarte ein, damit sie bei aktivem Event und verfügbaren Ressourcen laufen.",
+            "label": "Schalter für automatische Invasionsangriffe",
+            "recommendation": "Ein, nachdem du deine gewünschten Einstellungen geprüft und gespeichert hast."
+          },
+          "readiness": {
+            "description": "Die automatischen Invasionsangriffe warten auf ein aktives Event, geeignete Feldherren und genügend Truppen und Werkzeuge.",
+            "label": "Bereitschaft zum Angriff"
+          },
+          "save_settings": {
+            "description": "Speichere Ausgangsburg, Vorlage, Schwierigkeitsgrade, Stoppgrenzen und Befestigungswahl, bevor du diesen Dialog schließt.",
+            "label": "Einstellungen speichern"
+          }
+        },
+        "title": "Speichern und automatische Invasionsangriffe aktivieren"
+      },
+      "fortify": {
+        "image": {
+          "alt": "Illustrative Befestigungseinstellungen für automatische Invasionsangriffe",
+          "caption": "Lass die Befestigung aus, sofern du nicht bewusst verfügbare Eventwährung oder ausdrücklich gewählte Rubine ausgeben willst."
+        },
+        "items": {
+          "fortification_currency": {
+            "description": "Wähle eine vom aktiven Event unterstützte Option; das Spiel bestimmt jeden Preis, und die ausdrückliche Wahl von Rubinen erlaubt Rubinausgaben.",
+            "label": "Währung für Befestigung",
+            "recommendation": "Eventwährung, wenn sie verfügbar und die Befestigung aktiviert ist."
+          },
+          "fortify_each_target": {
+            "description": "Wenn aktiviert, verstärke jede erzeugte gegnerische Burg vor dem Angriff mit der gewählten Währung.",
+            "label": "Jedes Ziel befestigen",
+            "recommendation": "Aus, sofern Befestigung nicht Teil deiner üblichen Eventstrategie ist."
+          }
+        },
+        "title": "Optionale Befestigung der Ziele wählen"
+      },
+      "limits": {
+        "image": {
+          "alt": "Illustrative Punkte- und Stoppgrenzen für automatische Invasionsangriffe",
+          "caption": "Das Punkteziel stoppt neue Starts, während bereits reisende Angriffe noch enden können."
+        },
+        "items": {
+          "daily_attack_limit": {
+            "description": "Stoppe diese Automatisierung bei der kontoweiten täglichen Zahl normaler Angriffe, bis das Spiel sie zurücksetzt; 0 fügt keine Grenze hinzu.",
+            "label": "Tagesgrenze für normale Angriffe",
+            "recommendation": "0, damit das Event-Punkteziel den Lauf steuert."
+          },
+          "minimum_remaining": {
+            "description": "Starte so viele Minuten vor Eventende keine neuen Angriffe mehr.",
+            "label": "Vor Eventende stoppen",
+            "recommendation": "30 Minuten."
+          },
+          "score_target": {
+            "description": "Starte keine neuen Angriffe mehr, sobald die gemeldete Event-Punktzahl dieses Ziel erreicht oder überschreitet.",
+            "label": "Bei Event-Punktzahl stoppen",
+            "recommendation": "Nutze deine übliche letzte persönliche Belohnungsstufe oberhalb von 0."
+          },
+          "travelling_attacks": {
+            "description": "Bereits reisende Angriffe können nach einer Stoppbedingung enden und die endgültige Punktzahl über das Ziel erhöhen.",
+            "label": "Reisende Angriffe"
+          }
+        },
+        "title": "Punkte- und Stoppgrenzen festlegen"
+      },
+      "open": {
+        "image": {
+          "alt": "Illustrative Einstellungen für Ausgangsburg, Vorlage und Reise bei automatischen Invasionsangriffen",
+          "caption": "Wähle eine Ausgangsburg im Großen Imperium und eine gespeicherte Eventvorlage, bevor du die Reiseoption einstellst."
+        },
+        "items": {
+          "attack_preset": {
+            "description": "Wähle eine gespeicherte Angriffsvorlage mit Truppen, Werkzeugen und Aufstellung für Fremde Fürsten oder Blutkrähen.",
+            "label": "Angriffsvorlage",
+            "recommendation": "Erstelle zuerst eine Vorlage für regelmäßige Fremde-Fürsten- oder Blutkrähenangriffe und wähle sie hier aus."
+          },
+          "capacity_note": {
+            "description": "Die Truppen- und Werkzeugzahlen der Vorlage passen sich der Kapazität des gewählten Feldherrn und Ziels an.",
+            "label": "Angriffskapazität"
+          },
+          "horse_travel_boost": {
+            "description": "Wähle für diese Angriffe die Reiseoption mit Feder, Münzen oder Rubinen.",
+            "label": "Reiseverstärkung des Pferds",
+            "recommendation": "Reisefeder für schnelles Reisen."
+          },
+          "open_settings": {
+            "description": "Wähle auf der Automatisierungsseite die Einstellungsschaltfläche der Karte für automatische Invasionsangriffe.",
+            "label": "Einstellungen öffnen"
+          },
+          "source_castle": {
+            "description": "Wähle die Burg im Großen Imperium, die Truppen und Werkzeuge für Eventangriffe stellt.",
+            "label": "Ausgangsburg",
+            "recommendation": "Nutze deine übliche Eventburg mit genügend Truppen und Werkzeugen."
+          }
+        },
+        "title": "Einstellungen für automatische Invasionsangriffe öffnen"
+      }
+    }
+  },
+  "autoNomad": {
+    "steps": {
+      "difficulty": {
+        "items": {
+          "nomad_difficulty": {
+            "recommendation": "Nutze den höchsten freigeschalteten Schwierigkeitsgrad, den deine übliche Aufstellung zuverlässig bewältigt.",
+            "description": "Für den Eventstart einen freigeschalteten Nomaden-Schwierigkeitsgrad wählen.",
+            "label": "Nomaden-Schwierigkeitsgrad"
+          },
+          "samurai_difficulty": {
+            "recommendation": "Nutze den höchsten freigeschalteten Schwierigkeitsgrad, den deine übliche Aufstellung zuverlässig bewältigt.",
+            "description": "Für den Eventstart einen freigeschalteten Samurai-Schwierigkeitsgrad wählen.",
+            "label": "Samurai-Schwierigkeitsgrad"
+          },
+          "active_difficulty": {
+            "description": "Bei einem aktiven Event dessen aktuellen Schwierigkeitsgrad übernehmen, da die Automatisierung bei einer abweichenden gespeicherten Wahl wartet, statt ihn zu ändern.",
+            "label": "Bereits aktives Event"
+          }
+        },
+        "title": "Wähle beide Event-Schwierigkeitsgrade",
+        "image": {
+          "alt": "Beispiel für die Schwierigkeitswahl bei Nomaden und Samurai",
+          "caption": "Für jedes Event einen eigenen freigeschalteten Schwierigkeitsgrad wählen und beim aktiven Event dessen aktuellen Grad übernehmen."
+        }
+      },
+      "finish": {
+        "items": {
+          "auto_nomad_switch": {
+            "recommendation": "Ein, nachdem du deine gewünschten Einstellungen geprüft und gespeichert hast.",
+            "description": "Auto Nomaden/Samurai nach dem Speichern auf der Automatisierungskarte einschalten, damit es bei verfügbarem Event und geeigneten Ressourcen läuft.",
+            "label": "Schalter für Auto Nomaden/Samurai"
+          },
+          "save_settings": {
+            "label": "Einstellungen speichern",
+            "description": "Quelle, Vorlagen, Schwierigkeitsgrade, Stoppgrenzen, Zeitsprungwahl und Teststatus vor dem Schließen dieses Dialogs speichern."
+          },
+          "readiness": {
+            "description": "Die Automatisierung entwickelt Eventlager und wartet auf geeignete Feldherren, Truppen, Werkzeuge und bei aktivierten Zeitsprüngen auf nutzbare Zeitsprünge.",
+            "label": "Bereitschaft für Lagerangriffe"
+          }
+        },
+        "title": "Auto Nomaden/Samurai speichern und einschalten"
+      },
+      "limits": {
+        "image": {
+          "caption": "Das Punkteziel stoppt neue Starts, während bereits reisende Angriffe noch enden können.",
+          "alt": "Beispiel für Punkte- und Stoppgrenzen von Auto Nomaden/Samurai"
+        },
+        "items": {
+          "daily_attack_limit": {
+            "description": "Stoppe diese Automatisierung bei der kontoweiten täglichen Zahl normaler Angriffe, bis das Spiel sie zurücksetzt; 0 fügt keine Grenze hinzu.",
+            "label": "Tageslimit für normale Angriffe",
+            "recommendation": "0, damit das Event-Punkteziel den Lauf steuert."
+          },
+          "minimum_remaining": {
+            "description": "Starte so viele Minuten vor Eventende keine neuen Angriffe mehr.",
+            "label": "Vor Eventende stoppen",
+            "recommendation": "30 Minuten."
+          },
+          "score_target": {
+            "description": "Starte keine neuen Angriffe mehr, sobald die gemeldete Event-Punktzahl dieses Ziel erreicht oder überschreitet.",
+            "label": "Bei Event-Punktzahl stoppen",
+            "recommendation": "Nutze deine übliche letzte persönliche Belohnungsstufe oberhalb von 0."
+          },
+          "travelling_attacks": {
+            "description": "Bereits reisende Angriffe können nach einer Stoppbedingung enden und die endgültige Punktzahl über das Ziel erhöhen.",
+            "label": "Reisende Angriffe"
+          }
+        },
+        "title": "Punkte- und Stoppgrenzen festlegen"
+      },
+      "open": {
+        "items": {
+          "horse_travel_boost": {
+            "label": "Reisebeschleunigung mit Pferden",
+            "recommendation": "Reisefeder für schnelles Reisen.",
+            "description": "Für Lagerangriffe die Reiseoption mit Feder, Münzen oder Rubinen wählen."
+          },
+          "open_settings": {
+            "label": "Einstellungen öffnen",
+            "description": "Auf der Automatisierungsseite die Einstellungsschaltfläche der Auto-Nomaden/Samurai-Karte wählen."
+          },
+          "source_castle": {
+            "label": "Ausgangsburg",
+            "recommendation": "Nutze deine übliche Eventburg mit genügend Truppen und Werkzeugen.",
+            "description": "Die Burg im Großen Imperium wählen, die Truppen und Werkzeuge für Lagerangriffe bereitstellt."
+          },
+          "nomad_preset": {
+            "description": "Eine gespeicherte Angriffsvorlage mit Truppen, Werkzeugen und Aufstellung für Nomadenlager wählen.",
+            "label": "Nomaden-Angriffsvorlage",
+            "recommendation": "Deine reguläre Nomaden-Vorlage erstellen und auswählen."
+          },
+          "samurai_preset": {
+            "description": "Eine gespeicherte Angriffsvorlage mit Truppen, Werkzeugen und Aufstellung für Samurailager wählen.",
+            "label": "Samurai-Angriffsvorlage",
+            "recommendation": "Deine reguläre Samurai-Vorlage erstellen und auswählen."
+          }
+        },
+        "image": {
+          "alt": "Beispiel für Quelle, Vorlagen und Reiseoptionen von Auto Nomaden/Samurai",
+          "caption": "Beide Eventvorlagen erstellen, bevor du die Quellburg und Reiseoption auswählst."
+        },
+        "title": "Einstellungen für Auto Nomaden/Samurai öffnen"
+      },
+      "cooldowns": {
+        "image": {
+          "alt": "Beispiel für Lagerabklingzeiten und Zeitsprungreserven",
+          "caption": "Jeder Behalten-Wert zählt Zeitsprunggegenstände, nicht Minuten Abklingzeit."
+        },
+        "items": {
+          "keep_10m": {
+            "description": "So viele 10-Minuten-Zeitsprünge als Reserve unangetastet lassen.",
+            "label": "10 Min. behalten",
+            "recommendation": "0 für reguläre Lagerläufe."
+          },
+          "keep_1m": {
+            "description": "So viele 1-Minuten-Zeitsprünge als Reserve unangetastet lassen.",
+            "label": "1 Min. behalten",
+            "recommendation": "0 für reguläre Lagerläufe."
+          },
+          "keep_24h": {
+            "description": "So viele 24-Stunden-Zeitsprünge als Reserve unangetastet lassen.",
+            "label": "24 Std. behalten",
+            "recommendation": "Den Vorrat reservieren, den du für Bauten oder andere Aufgaben brauchst."
+          },
+          "keep_30m": {
+            "description": "So viele 30-Minuten-Zeitsprünge als Reserve unangetastet lassen.",
+            "label": "30 Min. behalten",
+            "recommendation": "0 für reguläre Lagerläufe."
+          },
+          "keep_5h": {
+            "description": "So viele 5-Stunden-Zeitsprünge als Reserve unangetastet lassen.",
+            "label": "5 Std. behalten",
+            "recommendation": "Den Vorrat reservieren, den du für Bauten oder andere Aufgaben brauchst."
+          },
+          "keep_5m": {
+            "description": "So viele 5-Minuten-Zeitsprünge als Reserve unangetastet lassen.",
+            "label": "5 Min. behalten",
+            "recommendation": "0 für reguläre Lagerläufe."
+          },
+          "keep_60m": {
+            "description": "So viele 60-Minuten-Zeitsprünge als Reserve unangetastet lassen.",
+            "label": "60 Min. behalten",
+            "recommendation": "0 für reguläre Lagerläufe."
+          },
+          "skip_cooldowns": {
+            "description": "Nach einem bestätigten Lagersieg einen verfügbaren Zeitsprung nutzen, um die Abklingzeit dieses Ziels zu beenden.",
+            "label": "Abklingzeit nach jedem erfolgreichen Angriff beenden",
+            "recommendation": "Für reguläre wiederholte Lagerangriffe einschalten; ausgeschaltet die natürliche Abklingzeit abwarten."
+          }
+        },
+        "title": "Zeitsprünge und Reserven wählen"
+      },
+      "trial": {
+        "image": {
+          "alt": "Beispiel für die Steuerung des vorübergehenden Raubritterburgtests",
+          "caption": "Der Test startet einen echten Angriff und ersetzt bei Aktivierung den normalen Eventbetrieb."
+        },
+        "items": {
+          "rbc_trial": {
+            "description": "Den normalen Eventbetrieb durch einen echten Angriffstest auf eine Raubritterburg mit Nomaden-Vorlage und Zeitsprüngen ersetzen.",
+            "label": "Vorübergehender End-to-End-Test auf Raubritterburg",
+            "recommendation": "Für reguläre Nomaden- oder Samurai-Läufe ausschalten."
+          },
+          "target_x": {
+            "description": "Die horizontale Koordinate der Raubritterburg nur für den vorübergehenden Test eingeben.",
+            "label": "Ziel X",
+            "recommendation": "Bei ausgeschaltetem Test ungenutzt lassen."
+          },
+          "target_y": {
+            "description": "Die vertikale Koordinate der Raubritterburg nur für den vorübergehenden Test eingeben.",
+            "label": "Ziel Y",
+            "recommendation": "Bei ausgeschaltetem Test ungenutzt lassen."
+          },
+          "trial_skips": {
+            "description": "Beim Einschalten des Tests werden auch Zeitsprünge für den Test aktiviert.",
+            "label": "Zeitsprünge im Test"
+          }
+        },
+        "title": "Den vorübergehenden Test für reguläre Läufe ausgeschaltet lassen"
+      }
+    },
+    "feature": {
+      "description": "Auto Nomaden/Samurai entwickelt geeignete Eventlager, wählt das schwächste vollständig entwickelte Lager und greift es mit der für das Event gespeicherten Vorlage wiederholt an, bis eine Stoppgrenze erreicht ist.",
+      "expectation": "Es wartet auf ein aktives Event, geeignete Feldherren, Truppen, Werkzeuge und bei aktivierter Abkürzung nutzbare Zeitsprünge; laufende Angriffe können nach dem Stopp neuer Starts noch enden.",
+      "name": "Auto Nomaden/Samurai",
+      "summary": "Nomaden- oder Samurai-Eventlager entwickeln und angreifen"
+    },
+    "recommendationIntro": "Empfohlene Werte beschreiben den regulären Einsatz von Auto Nomaden/Samurai; sie dienen nur als Orientierung und ändern keine gespeicherten Einstellungen."
+  },
+  "autoAdvisor": {
+    "steps": {
+      "activation": {
+        "items": {
+          "auto_advisor_switch": {
+            "recommendation": "Ein, nachdem du deine gewünschten Einstellungen geprüft und gespeichert hast.",
+            "description": "Aktiviere Auto Berater nach Prüfung der Einstellungen auf der Automatisierungskarte; bei bereits freigeschaltetem Berater kann sofort ein Lauf starten.",
+            "label": "Schalter für Auto Berater"
+          },
+          "save_settings": {
+            "label": "Einstellungen speichern",
+            "description": "Speichere Quellburg, Vorlage, Schwierigkeitsgrade, Laufgröße und Ressourcenbudgets vor dem Schließen dieses Dialogs."
+          },
+          "activate_advisor": {
+            "description": "Ist der Berater gesperrt, öffne mit Berater aktivieren die Bestätigung für das aktuelle Event.",
+            "label": "Berater aktivieren"
+          },
+          "activate_and_spend": {
+            "description": "Sende die bestätigte Aktivierung mit einem zulässigen Event- oder Universal-Berater-Token ab; bei kostenlosem Event steht stattdessen Berater aktivieren.",
+            "label": "Aktivieren und Token ausgeben"
+          },
+          "cancel_activation": {
+            "description": "Schließe die Bestätigung, ohne eine Aktivierung abzusenden oder einen Token auszugeben.",
+            "label": "Aktivierung abbrechen"
+          },
+          "confirm_paid_activation": {
+            "description": "Bestätige, dass die Berateraktivierung einen Event- oder Universal-Token verbrauchen kann, sofern das Spiel das Event nicht als kostenlos meldet.",
+            "label": "Kostenpflichtige Aktivierung bestätigen"
+          }
+        },
+        "image": {
+          "alt": "Beispiel für Speichern und Tokenaktivierung bei Auto Berater",
+          "caption": "Speichern oder Einschalten verbraucht keinen Token; die gesondert bestätigte Aktivierung kann einen verbrauchen."
+        },
+        "title": "Beraterzugang speichern, einschalten und aktivieren"
+      },
+      "difficulty": {
+        "items": {
+          "nomad_difficulty": {
+            "label": "Nomaden-Schwierigkeitsgrad",
+            "recommendation": "Nutze den höchsten freigeschalteten Schwierigkeitsgrad, den deine übliche Aufstellung zuverlässig bewältigt.",
+            "description": "Wähle einen freigeschalteten Nomaden-Schwierigkeitsgrad für den Eventstart."
+          },
+          "samurai_difficulty": {
+            "label": "Samurai-Schwierigkeitsgrad",
+            "recommendation": "Nutze den höchsten freigeschalteten Schwierigkeitsgrad, den deine übliche Aufstellung zuverlässig bewältigt.",
+            "description": "Wähle einen freigeschalteten Samurai-Schwierigkeitsgrad für den Eventstart."
+          },
+          "active_difficulty": {
+            "description": "Übernimm den aktuellen Schwierigkeitsgrad eines aktiven Events; andernfalls wartet die Automatisierung, statt ihn zu ändern.",
+            "label": "Schwierigkeitsgrad des aktiven Events"
+          }
+        },
+        "title": "Wähle beide Event-Schwierigkeitsgrade",
+        "image": {
+          "alt": "Beispiel für die Berater-Schwierigkeitsgrade von Nomaden und Samurai",
+          "caption": "Speichere beide Event-Schwierigkeitsgrade und übernimm den bereits laufenden."
+        }
+      },
+      "open": {
+        "items": {
+          "horse_travel_boost": {
+            "label": "Reisebeschleunigung mit Pferden",
+            "recommendation": "Reisefeder für schnelles Reisen.",
+            "description": "Wähle Feder-, Münz- oder Rubinreiseoption für den Lauf."
+          },
+          "open_settings": {
+            "label": "Einstellungen öffnen",
+            "description": "Wähle auf der Automatisierungsseite die Einstellungsschaltfläche der Auto-Berater-Karte."
+          },
+          "source_castle": {
+            "label": "Ausgangsburg",
+            "recommendation": "Nutze deine übliche Eventburg mit genügend Truppen und Werkzeugen.",
+            "description": "Wähle die Burg im Großen Imperium, die Truppen und Werkzeuge für den Beraterlauf bereitstellt."
+          },
+          "attack_preset": {
+            "description": "Wähle eine gespeicherte Angriffsvorlage, deren Truppen, Werkzeuge und Aufstellung für jeden angeforderten Angriff kopiert werden.",
+            "label": "Berater-Angriffsvorlage",
+            "recommendation": "Erstelle zunächst eine reguläre Vorlage für das aktive Nomaden- oder Samurai-Event und wähle sie dann aus."
+          },
+          "complete_copies": {
+            "description": "Verfügbare Ressourcen und vollständige Vorlagenkopien können den Lauf unter die maximale Angriffszahl begrenzen.",
+            "label": "Vollständige Vorlagenkopien"
+          }
+        },
+        "image": {
+          "alt": "Beispiel für Auto-Berater-Quelle, Vorlage und Reiseoption",
+          "caption": "Wähle eine Quellburg im Großen Imperium und eine gespeicherte Eventvorlage, bevor du die Reiseoption festlegst."
+        },
+        "title": "Auto-Berater-Einstellungen öffnen"
+      },
+      "resources": {
+        "items": {
+          "keep_24h": {
+            "description": "So viele 24-Stunden-Zeitsprünge als Reserve unangetastet lassen.",
+            "label": "24 Std. behalten",
+            "recommendation": "Den Vorrat reservieren, den du für Bauten oder andere Aufgaben brauchst."
+          },
+          "keep_5h": {
+            "description": "So viele 5-Stunden-Zeitsprünge als Reserve unangetastet lassen.",
+            "label": "5 Std. behalten",
+            "recommendation": "Den Vorrat reservieren, den du für Bauten oder andere Aufgaben brauchst."
+          },
+          "keep_60m": {
+            "description": "So viele 60-Minuten-Zeitsprünge als Reserve unangetastet lassen.",
+            "label": "60 Min. behalten",
+            "recommendation": "0 für reguläre Beraterläufe."
+          },
+          "coin_cost": {
+            "description": "Schätze die gesamten Münzkosten je Angriff für die Prüfung vor dem Start, ohne Spielpreise zu ändern.",
+            "label": "Gesamte Münzen je Angriff",
+            "recommendation": "500 nur, wenn es die tatsächlichen Gesamtkosten deckt; sonst einen höheren gemessenen Betrag verwenden."
+          },
+          "keep_coins": {
+            "description": "Schließe diese Zahl Münzen vom Laufbudget aus.",
+            "label": "Münzen behalten",
+            "recommendation": "Behalte dein übliches Budget für Rekrutierung und Bauten."
+          },
+          "keep_feathers": {
+            "description": "Schließe diese Zahl Reisefedern vom Laufbudget aus.",
+            "label": "Federn behalten",
+            "recommendation": "0, sofern du Federn nicht für andere Funktionen reservierst."
+          },
+          "keep_rubies": {
+            "description": "Schließe diese Zahl Rubine vom Laufbudget aus.",
+            "label": "Rubine behalten",
+            "recommendation": "Behalte das für andere Aktivitäten benötigte Guthaben."
+          },
+          "ruby_cost": {
+            "description": "Schätze die Rubinkosten der Reise pro Angriff; bei Rubinreise ist ein positiver Wert erforderlich.",
+            "label": "Rubine je Angriff",
+            "recommendation": "0 mit Reisefeder; bei Rubinreise die tatsächlichen positiven Kosten verwenden."
+          }
+        },
+        "image": {
+          "alt": "Beispiel für Münz-, Rubin-, Feder- und Zeitsprungreserven bei Auto Berater",
+          "caption": "Kostenfelder sind Planungsschätzungen; Behalten-Werte zählen ungenutzte Ressourcen oder Zeitsprunggegenstände."
+        },
+        "title": "Ressourcenbudgets und Reserven festlegen"
+      },
+      "overview": {
+        "image": {
+          "alt": "Beispiel für Beraterfortschritt und Verluste",
+          "caption": "Die Übersicht zeigt Laufstand und Verluste, ohne einen weiteren Lauf zu starten."
+        },
+        "items": {
+          "live_progress": {
+            "description": "Lies in der Übersicht aktuellen und angeforderten Angriff, Siege, Niederlagen sowie verlorene Einheiten und Werkzeuge ab.",
+            "label": "Laufender Beraterlauf"
+          },
+          "no_relaunch": {
+            "description": "Ein abgeschlossener oder abgebrochener Lauf desselben Events wird nicht automatisch erneut gestartet.",
+            "label": "Abgeschlossener oder abgebrochener Lauf"
+          },
+          "refresh_overview": {
+            "description": "Fordere aktuelle Angaben zu Laufstand, Siegen, Niederlagen und Verlusten an.",
+            "label": "Übersicht aktualisieren"
+          }
+        },
+        "title": "Laufenden Beraterlauf prüfen"
+      },
+      "sizing": {
+        "image": {
+          "alt": "Beispiel für Angriffszahl und Eventzeit bei Auto Berater",
+          "caption": "Die angeforderte Zahl wird vor dem Start durch Ressourcen und Eventzeit begrenzt."
+        },
+        "items": {
+          "maximum_attacks": {
+            "description": "Setze eine Obergrenze für Angriffe dieses einen Beraterlaufs; Ressourcen und Restzeit können die tatsächliche Zahl verringern.",
+            "label": "Maximale Angriffe",
+            "recommendation": "9.999, damit verfügbare Ressourcen und Eventzeit die Laufgröße bestimmen."
+          },
+          "minimum_remaining": {
+            "description": "Lass diese Anzahl Minuten bei der Berechnung der Eventzeit vor dem Start ungenutzt.",
+            "label": "Vor Eventende stoppen",
+            "recommendation": "30 Minuten; dies ist kein laufender Abbruch-Timer."
+          }
+        },
+        "title": "Laufgröße und Eventzeit festlegen"
+      }
+    },
+    "feature": {
+      "description": "Auto Berater startet einen Nomaden- oder Samurai-Beraterlauf, dessen Angriffszahl sich nach verfügbaren Ressourcen und verbleibender Eventzeit richtet.",
+      "expectation": "Der Lauf wartet auf eine passende aktive Schwierigkeit und freigeschalteten Beraterzugang; Speichern oder Einschalten verbraucht keinen Token, eine bestätigte Aktivierung möglicherweise schon.",
+      "name": "Auto Berater",
+      "summary": "Einen ressourcengerechten Nomaden- oder Samurai-Beraterlauf starten"
+    },
+    "recommendationIntro": "Empfohlene Werte beschreiben die reguläre Nutzung von Auto Berater; sie dienen nur als Orientierung und ändern keine gespeicherten Einstellungen."
+  },
+  "autoKhan": {
+    "steps": {
+      "cooldowns": {
+        "items": {
+          "keep_10m": {
+            "label": "10 Min. behalten",
+            "description": "Lasse so viele 10-Minuten-Zeitverkürzer unangetastet.",
+            "recommendation": "0 für regelmäßige Khan-Angriffsfolgen."
+          },
+          "keep_1m": {
+            "label": "1 Min. behalten",
+            "description": "Lasse so viele 1-Minuten-Zeitverkürzer unangetastet.",
+            "recommendation": "0 für regelmäßige Khan-Angriffsfolgen."
+          },
+          "keep_24h": {
+            "label": "24 Std. behalten",
+            "recommendation": "Den Vorrat reservieren, den du für Bauten oder andere Aufgaben brauchst.",
+            "description": "Lasse so viele 24-Stunden-Zeitverkürzer unangetastet."
+          },
+          "keep_30m": {
+            "label": "30 Min. behalten",
+            "description": "Lasse so viele 30-Minuten-Zeitverkürzer unangetastet.",
+            "recommendation": "0 für regelmäßige Khan-Angriffsfolgen."
+          },
+          "keep_5h": {
+            "label": "5 Std. behalten",
+            "recommendation": "Den Vorrat reservieren, den du für Bauten oder andere Aufgaben brauchst.",
+            "description": "Lasse so viele 5-Stunden-Zeitverkürzer unangetastet."
+          },
+          "keep_5m": {
+            "label": "5 Min. behalten",
+            "description": "Lasse so viele 5-Minuten-Zeitverkürzer unangetastet.",
+            "recommendation": "0 für regelmäßige Khan-Angriffsfolgen."
+          },
+          "keep_1h": {
+            "description": "Lasse so viele 1-Stunden-Zeitverkürzer unangetastet.",
+            "label": "1 Stunde behalten",
+            "recommendation": "0 für regelmäßige Khan-Angriffsfolgen."
+          },
+          "skip_cooldowns": {
+            "description": "Reserviere und verwende genügend Zeitverkürzer, um Lagerabklingzeiten nach Angriffen zu beenden.",
+            "label": "Jede Khanlager-Abklingzeit überspringen",
+            "recommendation": "Ein; der aktuelle Einstellungsdialog verlangt dies zum Speichern."
+          },
+          "skip_shortage": {
+            "description": "Neue Lagerangriffe pausieren, wenn die nutzbaren Zeitverkürzer die nötige Abklingzeit nicht abdecken.",
+            "label": "Nicht genug nutzbare Zeitverkürzer"
+          }
+        },
+        "image": {
+          "alt": "Illustrative Auto-Khan-Einstellungen für Abklingzeiten und Zeitverkürzerreserven",
+          "caption": "Reservewerte zählen Gegenstände, nicht Minuten."
+        },
+        "title": "Abklingzeiten und Reserven einstellen"
+      },
+      "limits": {
+        "items": {
+          "daily_limit": {
+            "label": "Tageslimit für normale Angriffe",
+            "description": "Stoppe neue Lagerangriffe dieser Automatisierung beim kontoweiten Tageszähler für normale Angriffe; 0 deaktiviert diese Grenze.",
+            "recommendation": "0, wenn du keine kontoweite Grenze brauchst."
+          },
+          "event_end": {
+            "label": "Vor Eventende stoppen",
+            "description": "Stoppe neue Lagerangriffe so viele Minuten vor dem Ende des Ereignisses.",
+            "recommendation": "5 Minuten."
+          },
+          "nomad_points": {
+            "description": "Stoppe bei dieser gemeldeten Punktzahl neue Khanangriffe, rufe ausgehende Khanangriffe zurück und öffne die Haupttore; 0 deaktiviert den Stopp.",
+            "label": "Bei Nomadenpunkten stoppen",
+            "recommendation": "0, außer du willst bei einer gewählten Punktzahl stoppen und schützen."
+          },
+          "replenish_tools": {
+            "description": "Ersetze fehlende Verteidigungswerkzeuge der Vorlage aus geeigneten Angeboten und lehne Rubinkäufe ab.",
+            "label": "Verteidigungswerkzeuge auffüllen",
+            "recommendation": "Ein, wenn du geeignete automatische Käufe möchtest."
+          }
+        },
+        "image": {
+          "alt": "Illustrative Auto-Khan-Einstellungen für Punkte, Werkzeuge und Tagesgrenze",
+          "caption": "Ein positiver Nomadenpunkte-Stopp ruft auch ausgehende Khanangriffe zurück und öffnet die Tore der Hauptburg."
+        },
+        "title": "Punkte-, Vorrats- und Tagesgrenzen festlegen"
+      },
+      "save": {
+        "items": {
+          "save_settings": {
+            "label": "Einstellungen speichern",
+            "description": "Speichere Burgen, Vorlagen, Wutsteuerung, Grenzen, Zeitverkürzerreserven und Schutzeinstellungen."
+          },
+          "enable_switch": {
+            "description": "Aktiviere Auto Khan auf der Automatisierungskarte, nachdem du die Hauptburgverteidigung geprüft hast.",
+            "label": "Auto-Khan-Schalter",
+            "recommendation": "Ein, nachdem Einstellungen gespeichert und die Verteidigung vorbereitet wurden."
+          },
+          "station_priority": {
+            "description": "Auto Station behandelt eingehende Spielerangriffe getrennt von Khanvergeltungen.",
+            "label": "Vorrang von Auto Station"
+          }
+        },
+        "image": {
+          "alt": "Illustrativer Ablauf zum Speichern und Aktivieren von Auto Khan",
+          "caption": "Prüfe die Hauptburgverteidigung, bevor du Khanvergeltungen aktivierst."
+        },
+        "title": "Auto Khan speichern und aktivieren"
+      },
+      "setup": {
+        "items": {
+          "horse_travel_boost": {
+            "label": "Reisebeschleunigung mit Pferden",
+            "recommendation": "Reisefeder für schnelles Reisen.",
+            "description": "Wähle Feder-, Münz- oder Rubinreise für Lagerangriffe."
+          },
+          "open_settings": {
+            "label": "Einstellungen öffnen",
+            "description": "Wähle auf der Automatisierungsseite die Einstellungen der Auto-Khan-Karte."
+          },
+          "attack_from": {
+            "description": "Wähle eine Hauptburg oder einen Außenposten im Großen Imperium als Quelle der Khanlager-Angriffe.",
+            "label": "Angriff von",
+            "recommendation": "Nutze nach Möglichkeit einen Außenposten mit deiner Angriffsarmee."
+          },
+          "camp_attack_preset": {
+            "description": "Wähle eine gespeicherte Angriffsvorlage für regelmäßige Khanlager-Angriffe.",
+            "label": "Lager-Angriffsvorlage",
+            "recommendation": "Erstelle zuerst deine regelmäßige Khan-Angriffsvorlage."
+          },
+          "defend_at": {
+            "description": "Khanvergeltungen treffen die hier angezeigte Hauptburg des Großen Imperiums; dieses Feld ist schreibgeschützt.",
+            "label": "Verteidigung in"
+          },
+          "main_defense_preset": {
+            "description": "Wähle eine gespeicherte Verteidigungsvorlage, die vor Vergeltungen in der Hauptburg erneut angewendet wird.",
+            "label": "Hauptburg-Verteidigungsvorlage",
+            "recommendation": "Erstelle deine regelmäßige Khan-Verteidigungsvorlage und bereite Truppen und Werkzeuge vor."
+          }
+        },
+        "image": {
+          "alt": "Illustrative Auto-Khan-Einstellungen für Burg, Vorlagen und Reise",
+          "caption": "Bereite beide Vorlagen und die Hauptburgverteidigung vor, bevor du die Angriffskette aktivierst."
+        },
+        "title": "Burgen, Vorlagen und Reise auswählen"
+      },
+      "protection": {
+        "image": {
+          "alt": "Illustrativer Schutz der Hauptburgmauer für Auto Khan",
+          "caption": "Der Mauerschutz gilt nur, wenn die Hauptburg als Angriffsquelle dient."
+        },
+        "items": {
+          "offensive_threshold": {
+            "description": "Löse den Schutz der Hauptburg aus, sobald so viele Offensivtruppen an der Mauer stehen würden.",
+            "label": "Grenze für offensive Mauereinheiten",
+            "recommendation": "1.000 offensive Mauereinheiten."
+          },
+          "outpost_source": {
+            "description": "Dieser Mauerschutz ist deaktiviert, wenn ein Außenposten angreift und die Hauptburg getrennt verteidigt.",
+            "label": "Außenposten als Quelle"
+          },
+          "protect_offense": {
+            "description": "Bei Angriffen aus der Hauptburg öffne ihre Tore und pausiere Khan, wenn zu viele Offensivtruppen die Mauer verteidigen würden.",
+            "label": "Offensive Truppen an der Hauptburgmauer schützen",
+            "recommendation": "Ein, wenn die Hauptburg Angriffe liefert."
+          }
+        },
+        "title": "Hauptburgmauer schützen"
+      },
+      "rage": {
+        "image": {
+          "alt": "Illustrative Auto-Khan-Einstellungen für Wut und Angriffsberechtigung",
+          "caption": "Der zeitlich begrenzte Wutpunkte-Booster ist etwas anderes als Wutbanner."
+        },
+        "items": {
+          "lock_automatic_attacks": {
+            "description": "Stoppe neue Lagerangriffe, während Wutverarbeitung, Abklingzeiten und Verteidigung weiterlaufen.",
+            "label": "Automatische Khanangriffe sperren",
+            "recommendation": "Aus für regelmäßige Lagerangriffe."
+          },
+          "max_rage_chain": {
+            "description": "Begrenze die akzeptierten Vergeltungen im aktuellen Ereignis, bevor neue Lagerangriffe stoppen; 0 entfernt die Grenze.",
+            "label": "Maximale Wutserie",
+            "recommendation": "0, wenn du keine Vergeltungsgrenze brauchst."
+          },
+          "rage_booster": {
+            "description": "Erlaube neue automatische Lagerangriffe nur, solange der zeitlich begrenzte Wutpunkte-Booster aktiv ist.",
+            "label": "Wutpunkte-Booster erforderlich",
+            "recommendation": "Aus, außer du willst nur mit Booster angreifen."
+          },
+          "rage_continues": {
+            "description": "Eine Wutseriengrenze stoppt weder Auslösungen bei voller Wut noch Abklingzeiten oder die Wiederherstellung der Verteidigung.",
+            "label": "Wutverarbeitung läuft weiter"
+          },
+          "trigger_full_rage": {
+            "description": "Provoziere eine Khanvergeltung, wenn die Wut voll ist.",
+            "label": "Khan bei voller Wut auslösen",
+            "recommendation": "Ein, wenn die Hauptburg zur Verteidigung bereit ist."
+          }
+        },
+        "title": "Wut und Angriffsberechtigung festlegen"
+      }
+    },
+    "feature": {
+      "description": "Auto Khan greift das Khanlager an, überspringt Abklingzeiten, löst Vergeltungen bei voller Wut aus und hält die Verteidigung der Hauptburg bereit.",
+      "expectation": "Bei festgelegten Grenzen oder Ressourcenmangel pausieren neue Lagerangriffe, während die Hauptburg geschützt wird; eingehende Spielerangriffe bleiben Aufgabe von Auto Station.",
+      "name": "Automatischer Khan",
+      "summary": "Verkette Khanlager-Angriffe und verteidige Vergeltungen in deiner Hauptburg"
+    },
+    "recommendationIntro": "Empfohlene Werte beschreiben die regelmäßige Nutzung von Auto Khan; sie sind Hinweise und ändern gespeicherte Einstellungen nicht."
+  },
+  "autoBeri": {
+    "feature": {
+      "description": "Auto Beri verstärkt dein eigenes Berimond-Lager im Verhältnis der Truppen aus der gewählten Angriffsvorlage und kann danach Türme angreifen, Werkzeuge auffüllen und mit bestätigter Beute bauen.",
+      "expectation": "Transfers warten auf aktuelle Bestände im Lager und beim Spender, gemeldete Kapazität und den Abschluss der vorherigen Sendung; ein kleinerer Spenderbestand kann teilweise gesendet werden, während ein fehlender benötigter Typ die Auffüllung pausiert.",
+      "name": "Automatisierte Berimond-Welt",
+      "summary": "Versorge und betreibe dein Berimond-Lager"
+    },
+    "recommendationIntro": "Die Empfehlungen beschreiben die regelmäßige Nutzung von Auto Beri; sie ändern keine gespeicherten Einstellungen.",
+    "steps": {
+      "builder": {
+        "image": {
+          "alt": "Illustrative Einstellungen für den optionalen Lagerausbau in Auto Beri",
+          "caption": "Eingebautes und gespeichertes Ziel, Erfassungsarten, Stall Stufe 5, Holz- und Steinreserven sowie sieben Zeitverkürzungen."
+        },
+        "items": {
+          "allow_demolition": {
+            "description": "Erlaube, nicht verwaltete Gebäude für das exakte Ziel zu entfernen, wenn sie weder verschoben noch eingelagert werden können.",
+            "label": "Abriss erlauben",
+            "recommendation": "Aus, sofern du die für das Ziel nötigen Entfernungen nicht geprüft hast."
+          },
+          "allow_premium_costs": {
+            "description": "Erlaube geeignete Bauschritte mit Premiumwährung.",
+            "label": "Premiumkosten erlauben",
+            "recommendation": "Aus, sofern du Premiumbau nicht ausdrücklich möchtest."
+          },
+          "auto_beri_builder_lane": {
+            "description": "Baue oder verbessere das aktive Berimond-Lagerziel mit bestätigter zurückgebrachter Beute, ohne Ressourcen aus einem anderen Königreich zu holen.",
+            "label": "Auto-Beri-Bauverwaltung",
+            "recommendation": "Für den regelmäßigen Lagerausbau einschalten, nachdem du die Ausgabeberechtigungen geprüft hast."
+          },
+          "camp_resource_reserves": {
+            "description": "Halte die gewählten Holz- und Steinmengen vom Lagerbau zurück.",
+            "label": "Ressourcenreserven im Lager",
+            "recommendation": "Holz 0 und Stein 0, wenn Überschüsse verwendet werden dürfen."
+          },
+          "construction_time_skip_reserves": {
+            "description": "Lege für 1 Min., 5 Min., 10 Min., 30 Min., 1 Std., 5 Std. und 24 Std. jeweils einzeln fest, wie viele Zeitverkürzungen bleiben sollen.",
+            "label": "Reserven für Bauzeitverkürzer",
+            "recommendation": "Von kurzen Zeitverkürzungen jeweils 0 behalten; den Vorrat für andere Aktivitäten bei 1, 5 und 24 Stunden schützen."
+          },
+          "optional_custom_camp_target": {
+            "description": "Erfasse „Funktional“ für wesentliche Gebäude, „Layout“ für Gebäudeplätze ohne Dekoration oder „Exakt“ für alle unterstützten Details.",
+            "label": "Optionales eigenes Lagerziel",
+            "recommendation": "Verwende das eingebaute Ziel, solange kein geprüftes eigenes Ziel nötig ist."
+          },
+          "stable_target": {
+            "description": "Wähle für das eingebaute Ziel die Stufe des Fraktionsstalls von 1 bis 5.",
+            "label": "Stallziel",
+            "recommendation": "Stufe 5 für den regelmäßigen Eventausbau, sofern Ressourcen reichen."
+          },
+          "use_construction_time_skips": {
+            "description": "Beschleunige einen bestätigten Lagerbau und beachte dabei die gewählten Bauzeitverkürzungsreserven.",
+            "label": "Bauzeitverkürzer verwenden",
+            "recommendation": "Für den regelmäßigen Ausbau einschalten, wenn genügend Zeitverkürzungen vorhanden sind."
+          },
+          "keep_skip_10m": {
+            "description": "Halte so viele 10m-Bauzeitverkürzungen vom Bauen zurück; für den regelmäßigen Gebrauch 0 einstellen.",
+            "label": "10m-Zeitverkürzungen behalten"
+          },
+          "keep_skip_1h": {
+            "description": "Halte so viele 1h-Bauzeitverkürzungen für andere Aktivitäten zurück.",
+            "label": "1h-Zeitverkürzungen behalten"
+          },
+          "keep_skip_1m": {
+            "description": "Halte so viele 1m-Bauzeitverkürzungen vom Bauen zurück; für den regelmäßigen Gebrauch 0 einstellen.",
+            "label": "1m-Zeitverkürzungen behalten"
+          },
+          "keep_skip_24h": {
+            "description": "Halte so viele 24h-Bauzeitverkürzungen für andere Aktivitäten zurück.",
+            "label": "24h-Zeitverkürzungen behalten"
+          },
+          "keep_skip_30m": {
+            "description": "Halte so viele 30m-Bauzeitverkürzungen vom Bauen zurück; für den regelmäßigen Gebrauch 0 einstellen.",
+            "label": "30m-Zeitverkürzungen behalten"
+          },
+          "keep_skip_5h": {
+            "description": "Halte so viele 5h-Bauzeitverkürzungen für andere Aktivitäten zurück.",
+            "label": "5h-Zeitverkürzungen behalten"
+          },
+          "keep_skip_5m": {
+            "description": "Halte so viele 5m-Bauzeitverkürzungen vom Bauen zurück; für den regelmäßigen Gebrauch 0 einstellen.",
+            "label": "5m-Zeitverkürzungen behalten"
+          },
+          "saved_targets": {
+            "description": "Beim Erfassen wird ein geprüftes eigenes Ziel sofort gespeichert und aktiviert; die Auswahl eines anderen gespeicherten Ziels aktiviert es ebenfalls sofort.",
+            "label": "Gespeicherte eigene Ziele"
+          },
+          "stone_reserve": {
+            "description": "Halte diese Menge Lagerstein vom Baubudget zurück; bei verwendbarem Überschuss 0 einstellen.",
+            "label": "Steinreserve"
+          },
+          "use_built_in_default": {
+            "description": "Wechsle sofort zum eingebauten Ziel zurück und behalte gespeicherte eigene Ziele.",
+            "label": "Eingebauten Standard verwenden"
+          },
+          "wood_reserve": {
+            "description": "Halte diese Menge Lagerholz vom Baubudget zurück; bei verwendbarem Überschuss 0 einstellen.",
+            "label": "Holzreserve"
+          }
+        },
+        "title": "Optionalen Lagerausbau wählen"
+      },
+      "readiness": {
+        "image": {
+          "alt": "Illustrative Einstellungen für die Bereitschaft zu Turmangriffen in Auto Beri",
+          "caption": "Status der Booster-Bedingung und Vorlagenaufstellung ohne echte Booster- oder Kundendaten."
+        },
+        "items": {
+          "attack_preset_loadout": {
+            "description": "Prüfe Wellen, Truppen und Werkzeuge der gewählten Vorlage, bevor du Angriffe einschaltest.",
+            "label": "Aufstellung der Angriffsvorlage",
+            "recommendation": "Halte für dein übliches Angriffstempo genügend ausgewählte Truppen und Werkzeuge beim Spender und im Lager bereit."
+          },
+          "only_run_with_a_gallantry_booster": {
+            "description": "Verlange einen aktiven Tapferkeitsbooster, bevor Transfers, Werkzeugkäufe, Lageraufbau, Turmangriffe oder Bauarbeiten weiterlaufen.",
+            "label": "Nur mit Tapferkeitsbooster ausführen",
+            "recommendation": "Ein, wenn alle Auto-Beri-Bereiche vom Booster abhängen sollen."
+          }
+        },
+        "title": "Bereitschaft für Turmangriffe einstellen"
+      },
+      "save": {
+        "image": {
+          "alt": "Illustrative Einstellungen zum Speichern und Einschalten von Auto Beri",
+          "caption": "Prüfliste für gespeicherte Einrichtung, Schalter und optionalen Zeitplan ohne echtes Konto."
+        },
+        "items": {
+          "automation_switch": {
+            "description": "Schalte Auto Beri über die Automatisierungskarte ein, nachdem du Lager, Spendertruppen, Vorlage und optionale Ausgaben geprüft hast.",
+            "label": "Automatisierungsschalter",
+            "recommendation": "Nach der Einrichtung ein."
+          },
+          "calendar": {
+            "description": "Lass den Zeitplan für Dauerbetrieb aus oder lege bei Bedarf übliche Stunden fest und speichere ihn.",
+            "label": "Kalender",
+            "recommendation": "Für laufenden Eventbetrieb aus."
+          },
+          "save_settings": {
+            "description": "Speichere Vorlage, Spender, Transfertakt, Angriffslimits, Werkzeuge und optionale Bauentscheidungen, bevor du die Automatisierung einschaltest.",
+            "label": "Einstellungen speichern"
+          }
+        },
+        "title": "Speichern und einschalten"
+      },
+      "setup": {
+        "image": {
+          "alt": "Illustrative Einstellungen für Angriffe und Versorgung in Auto Beri",
+          "caption": "Gespeicherte Angriffsvorlage, Spenderburg im Großen Imperium, Reisefeder, Angriffsprüfung und Tageslimit."
+        },
+        "items": {
+          "attack_check_interval": {
+            "description": "Lege fest, wie oft Auto Beri nach einem weiteren Turmangriff sucht.",
+            "label": "Prüfintervall für Angriffe",
+            "recommendation": "Behalte das übliche Intervall von 30 Sekunden, sofern du nicht seltener prüfen möchtest."
+          },
+          "attack_preset": {
+            "description": "Wähle eine gespeicherte Berimond-Angriffsformation; Auto Beri nutzt deren Truppenverhältnis für Transfers und Turmangriffe.",
+            "label": "Angriffsvorlage",
+            "recommendation": "Erstelle und wähle zuerst deine übliche Berimond-Vorlage."
+          },
+          "daily_normal_attack_limit": {
+            "description": "Stoppe neue Auto-Beri-Turmangriffe beim kontoweiten Tageszähler für normale Angriffe; 0 entfernt dieses Zusatzlimit.",
+            "label": "Tageslimit für normale Angriffe",
+            "recommendation": "0, sofern du kein kontoweites Limit brauchst."
+          },
+          "horse_travel_boost": {
+            "description": "Wähle für Turmangriffe eine Reise mit Feder, Münzen oder Rubinen.",
+            "label": "Reisebeschleunigung",
+            "recommendation": "Reisefeder für schnelles Reisen ohne Rubinreise."
+          },
+          "open_settings": {
+            "description": "Öffne auf der Automatisierungsseite die Einstellungen der Auto-Beri-Karte.",
+            "label": "Einstellungen öffnen"
+          },
+          "source_castle": {
+            "description": "Wähle die Burg oder den Außenposten im Großen Imperium, von dem die Truppen kommen.",
+            "label": "Spenderburg",
+            "recommendation": "Wähle die Burg mit deiner Angriffsarmee."
+          }
+        },
+        "title": "Angriff und Versorgungsquelle wählen"
+      },
+      "tools": {
+        "image": {
+          "alt": "Illustrative Einstellungen für Lagerwerkzeuge in Auto Beri",
+          "caption": "Die drei Werkzeugmindestbestände und ein eindeutig fiktiver Lagerbestand."
+        },
+        "items": {
+          "battering_rams_minimum": {
+            "description": "Fülle so viele stationierte Rammböcke nach derselben Regel auf.",
+            "label": "Mindestbestand Rammböcke",
+            "recommendation": "Richte dich nach dem Verbrauch deiner üblichen Vorlage."
+          },
+          "mantlets_minimum": {
+            "description": "Fülle so viele stationierte Schutzschilde nach derselben Regel auf.",
+            "label": "Mindestbestand Schutzschilde",
+            "recommendation": "Richte dich nach dem Verbrauch deiner üblichen Vorlage."
+          },
+          "scaling_ladders_minimum": {
+            "description": "Fülle so viele stationierte Sturmleitern im Lager mit geeigneten Münzangeboten auf; 0 lässt sie unverwaltet.",
+            "label": "Mindestbestand Sturmleitern",
+            "recommendation": "Richte dich nach deiner üblichen Vorlage und deinem Angriffstempo."
+          }
+        },
+        "title": "Lagerwerkzeuge erhalten"
+      },
+      "transfers": {
+        "image": {
+          "alt": "Illustrative Einstellungen für verhältnismäßige Truppentransfers in Auto Beri",
+          "caption": "Ein fiktives Vorlagenverhältnis von 2:1, Lagerbestand, freie Kapazität und eine teilweise Sendung eines Truppentyps; die Werte sind Beispiele, keine gespeicherten Vorgaben."
+        },
+        "items": {
+          "check_interval": {
+            "description": "Lege fest, wie oft Auto Beri freie Transferkapazität und beide Burgbestände aktualisiert.",
+            "label": "Prüfintervall",
+            "recommendation": "Behalte das übliche Intervall von 30 Sekunden."
+          },
+          "food_only": {
+            "description": "Nur Vorlagentruppen mit Nahrungsverbrauch können transferiert werden; nicht unterstützte Einheiten oder nicht auflösbare Truppenfamilien pausieren mit Begründung.",
+            "label": "Nur Truppen mit Nahrungsverbrauch"
+          },
+          "minimum_free_capacity": {
+            "description": "Beginne Transfers erst ab diesem gemeldeten freien Platz; eine einzelne anteilige Sendung darf kleiner sein.",
+            "label": "Mindestkapazität frei",
+            "recommendation": "1 freier Truppenplatz für die regelmäßige proportionale Versorgung."
+          },
+          "owned_berimond_camp": {
+            "description": "Auto Beri erkennt dein eigenes Berimond-Lager automatisch; du musst keine Lager-ID eingeben.",
+            "label": "Eigenes Berimond-Lager"
+          },
+          "partial_donor": {
+            "description": "Wenn beim Spender einige Truppen des benötigten Typs vorhanden sind, sendet Auto Beri diese kleinere Menge; ohne diesen Typ wartet es statt einen anderen zu senden.",
+            "label": "Teilbestand beim Spender"
+          },
+          "pending_transfer": {
+            "description": "Auto Beri wartet auf die Ankunft jeder Sendung und aktualisiert den Lagerbestand, bevor es das Vorlagenverhältnis neu berechnet.",
+            "label": "Ausstehender Transfer"
+          },
+          "preset_troop_mix": {
+            "description": "Auto Beri summiert wiederholte Truppenplätze aus den Wellen und dem Hof der gewählten Vorlage und füllt jeweils einen unterrepräsentierten Typ nach.",
+            "label": "Truppenverhältnis der Vorlage"
+          },
+          "troop_transport_skip": {
+            "description": "Wähle die Dauer des Gegenstands, der bei eingeschalteter Transportbeschleunigung verwendet wird.",
+            "label": "Transportzeitverkürzer",
+            "recommendation": "Für bestätigte reguläre Transporte eine Zeitverkürzung von 1 Stunde verwenden."
+          },
+          "use_troop_transport_time_skips": {
+            "description": "Wende den gewählten Zeitverkürzer auf einen bestätigten Transfer an, solange er unterwegs ist.",
+            "label": "Transportzeitverkürzer verwenden",
+            "recommendation": "Für die regelmäßige Lagerversorgung einschalten, wenn dein Vorrat an Zeitverkürzungen es erlaubt."
+          }
+        },
+        "title": "Verhältnismäßige Truppentransfers einstellen"
+      }
+    }
+  },
+  "autoStorm": {
+    "feature": {
+      "description": "Auto Storm kann eine Sturm-Burg öffnen und ausbauen, Festungen und Rohstoffinseln angreifen, Truppen importieren und ausgewählte Luna-Belohnungen kaufen.",
+      "expectation": "Jeder Bereich nutzt aktuelle Spieldaten und Ihre gespeicherten Berechtigungen; Premium-Bau, Angriffe und Käufe bleiben auf Ihre aktivierten Entscheidungen begrenzt.",
+      "name": "Auto Storm",
+      "summary": "Sturm-Burg, Angriffe und Belohnungen verwalten"
+    },
+    "recommendationIntro": "Empfohlene Werte beschreiben den regelmäßigen Einsatz von Auto Storm; sie dienen nur als Orientierung und ändern keine gespeicherten Einstellungen.",
+    "steps": {
+      "castle": {
+        "image": {
+          "alt": "Beispiel für den Zugang zur Sturm-Burg und die Zielerfassung",
+          "caption": "Starter-Auswahl, Erfassungsmodi und optionale Zielaktivierung; kein echter Kauf und kein Konto werden gezeigt."
+        },
+        "items": {
+          "automatic_open": {
+            "description": "Wenn Sturm gesperrt ist, wählen Sie eine verfügbare offizielle Starter-Burg und prüfen den angezeigten Preis, bevor Sie die Freischaltung zulassen.",
+            "label": "Sturm-Burg automatisch öffnen",
+            "recommendation": "Ein, wenn Auto Storm nach Prüfung des Preises eine übliche Starter-Burg öffnen soll."
+          },
+          "blueprint": {
+            "description": "Ein erfasstes Ziel wird sofort gespeichert und aktiviert; Ziel pausieren stoppt den Abgleich, behält gespeicherte Ziele jedoch bei.",
+            "label": "Gespeichertes Ziel",
+            "recommendation": "Für den normalen Bau ein geprüftes funktionales Ziel aktiv lassen."
+          },
+          "capture_castle": {
+            "description": "Wählen Sie Ihre aktuelle Sturm-Burg, bevor Sie ein Bauziel erfassen.",
+            "label": "Sturm-Burg",
+            "recommendation": "Erfassen Sie die Burg, die Sie verwalten möchten."
+          },
+          "combat_only": {
+            "description": "Kämpfe gegen Festungen und Inseln benötigen kein erfasstes Bauziel.",
+            "label": "Kampf ohne Ziel"
+          },
+          "decoration_preset": {
+            "description": "Wenden Sie nach dem Bau optional eine ausgewählte Dekorationsvorlage an.",
+            "label": "Dekorationsvorlage nach dem Bau",
+            "recommendation": "Leer lassen, sofern Sie keine eigene Dekorationsanordnung möchten."
+          },
+          "exact": {
+            "description": "Speichern Sie alle unterstützten Zieldetails für eine genaue Kopie.",
+            "label": "Exakte Erfassung",
+            "recommendation": "Nur nach Prüfung des gesamten Ziels verwenden."
+          },
+          "functional": {
+            "description": "Speichern Sie ein Ziel für grundlegende Sturm-Funktionen, ohne jede Gebäudeposition zu kopieren.",
+            "label": "Funktionale Erfassung",
+            "recommendation": "Funktional für die normale Instandhaltung."
+          },
+          "layout": {
+            "description": "Speichern Sie Gebäudetypen und Positionen ohne Dekorationen.",
+            "label": "Layout-Erfassung",
+            "recommendation": "Nur verwenden, wenn die Gebäudeplatzierung wichtig ist."
+          },
+          "open_settings": {
+            "description": "Öffnen Sie die Auto-Storm-Einstellungen über die Automatisierungskarte.",
+            "label": "Einstellungen öffnen"
+          },
+          "starter_castle": {
+            "description": "Wählen Sie die derzeit verfügbare offizielle Sturm-Starter-Burg für die nächste gesperrte Saison.",
+            "label": "Zu öffnende Burg",
+            "recommendation": "Wählen Sie nach Preisprüfung einen erschwinglichen üblichen Starter."
+          }
+        },
+        "title": "Sturm-Burg öffnen und erfassen"
+      },
+      "combat": {
+        "image": {
+          "alt": "Beispiel für Einstellungen zu Festungs- und Inselangriffen",
+          "caption": "Beispielhafte Aquamarin-Inseln, Festungsstufen, Zielreihenfolge und Besatzungsverteidiger."
+        },
+        "items": {
+          "defenders": {
+            "description": "Wählen Sie Art und Anzahl der Verteidiger einer eroberten Insel; eine leere Liste lässt nach bestätigtem Sieg einen Überlebenden zurück.",
+            "label": "Insel-Verteidigungseinheiten",
+            "recommendation": "Wählen Sie Verteidiger, wenn ein Überlebender für Ihren Plan nicht reicht."
+          },
+          "fort_preset": {
+            "description": "Wählen Sie eine gespeicherte Truppen- und Werkzeugformation für Festungen.",
+            "label": "Festungs-Angriffsvorlage",
+            "recommendation": "Verwenden Sie Ihre übliche Festungsvorlage."
+          },
+          "forts": {
+            "description": "Aktivieren Sie Angriffe auf ausgewählte offizielle Festungsstufen von 40 bis 80.",
+            "label": "Sturm-Festungen",
+            "recommendation": "Ein für Stufen, die Ihre ausgewählte Vorlage zuverlässig bewältigt."
+          },
+          "horse": {
+            "description": "Wählen Sie für Sturm-Angriffe die Reise mit Feder, Münzen oder Rubinen.",
+            "label": "Pferde-Reisebonus",
+            "recommendation": "Reisefeder für schnelle Reisen ohne Rubin-Reise."
+          },
+          "island_preset": {
+            "description": "Wählen Sie eine gespeicherte Truppen- und Werkzeugformation für Inseln.",
+            "label": "Insel-Angriffsvorlage",
+            "recommendation": "Verwenden Sie Ihre übliche Inselvorlage."
+          },
+          "island_resources": {
+            "description": "Wählen Sie, welche Holz-, Stein- oder Aquamarin-Inseln angegriffen werden dürfen.",
+            "label": "Insel-Rohstoffe",
+            "recommendation": "Aquamarin zum Sammeln von Aquamarin auswählen."
+          },
+          "island_sizes": {
+            "description": "Wählen Sie große oder kleine Inseln der ausgewählten Rohstoffe oder beide Größen.",
+            "label": "Inselgrößen",
+            "recommendation": "Groß und klein für regelmäßiges Aquamarin-Sammeln."
+          },
+          "islands": {
+            "description": "Aktivieren Sie die Eroberung von Inseln mit ausgewählten Rohstoffen und Größen.",
+            "label": "Rohstoffinseln",
+            "recommendation": "Ein, wenn Sie Aquamarin von großen und kleinen Inseln möchten."
+          },
+          "minimum_attacks": {
+            "description": "Greifen Sie nur Festungen mit mindestens dieser Anzahl verbleibender Angriffe an.",
+            "label": "Mindestens verbleibende Angriffe",
+            "recommendation": "0 erlaubt jede geeignete Festung."
+          },
+          "priority": {
+            "description": "Ordne aktivierte Insel- und Festungszielgruppen; innerhalb einer Gruppe wird das nächste geeignete Ziel zuerst angegriffen.",
+            "label": "Angriffsziel-Priorität",
+            "recommendation": "Große Inseln, kleine Inseln, dann Festungen von Stufe 80 bis 40 zum Aquamarin-Sammeln."
+          }
+        },
+        "title": "Festungen und Rohstoffinseln auswählen"
+      },
+      "construction": {
+        "image": {
+          "alt": "Beispiel für Bau- und Reserveeinstellungen",
+          "caption": "Rohstofftransport, Ausgabenberechtigungen, Reserven und Hafenstufe als Beispielbedienelemente."
+        },
+        "items": {
+          "demolition": {
+            "description": "Erlauben Sie die zielgenaue Entfernung von Gebäuden, die weder verschoben noch gelagert werden können.",
+            "label": "Abriss erlauben",
+            "recommendation": "Aus, sofern Sie kein geprüftes Layout neu aufbauen."
+          },
+          "donor_reserves": {
+            "description": "Behalten Sie ausgewählte Mengen an Holz, Stein und Aquamarin bei jedem Spender vor dem Rohstofftransport zurück.",
+            "label": "Geschützte Spenderreserven",
+            "recommendation": "Schützen Sie Ihr übliches Bau-Budget für Holz und Stein; Aquamarin 0, wenn ungenutzt."
+          },
+          "harbor_level": {
+            "description": "Wählen Sie die Hafen-Zielstufe 1, 2 oder 3; Stufen 2 und 3 nutzen Premium-Bauwege.",
+            "label": "Hafen-Zielstufe",
+            "recommendation": "Stufe 1, sofern keine Premium-Aufwertung geplant ist."
+          },
+          "harbor": {
+            "description": "Halten Sie den Hafen auf der gewählten Stufe, auch wenn das erfasste Ziel abweicht.",
+            "label": "Hafen ausbauen",
+            "recommendation": "Ein mit Stufe 1 für den normalen Einsatz."
+          },
+          "premium": {
+            "description": "Erlauben Sie geeignete Bauschritte, die Premium-Währung kosten.",
+            "label": "Premium-Kosten erlauben",
+            "recommendation": "Aus, sofern Premium-Bau nicht geplant ist."
+          },
+          "resource_transport": {
+            "description": "Erlauben Sie bestätigte Lieferungen fehlender Baurohstoffe aus Spenderburgen.",
+            "label": "Fehlende Rohstoffe transportieren",
+            "recommendation": "Ein für den regelmäßigen Bau."
+          },
+          "skip_reserves": {
+            "description": "Behalte die gewählte Anzahl von 1-Min.-, 5-Min.-, 10-Min.-, 30-Min.-, 1-Std.-, 5-Std.- und 24-Std.-Gegenständen für Bau und Transporte zurück.",
+            "label": "Zeitverkürzungen in Reserve",
+            "recommendation": "Kurze Zeitverkürzungen auf 0, sofern nicht anderweitig benötigt; 1-Stunden-, 5-Stunden- und 24-Stunden-Vorräte für andere Events zurückhalten."
+          },
+          "storm_reserves": {
+            "description": "Halte die gewählten Mengen Holz, Stein und Aquamarin vom Bauen zurück.",
+            "label": "Ausgabenreserven der Sturm-Burg",
+            "recommendation": "Holz 0 und Stein 0 bei verwendbaren Überschüssen; Aquamarin nach deinem geplanten Belohnungsbudget festlegen."
+          },
+          "time_skips": {
+            "description": "Setze geeignete Zeitverkürzungen für Bau, Ressourcentransporte und Truppentransporte ein und beachte die gewählten Reserven.",
+            "label": "Zeitverkürzungen für Bau und Transporte verwenden",
+            "recommendation": "Ein, wenn Sie den Routinebau beschleunigen möchten."
+          }
+        },
+        "title": "Bau und Rohstoffschutz einstellen"
+      },
+      "luna": {
+        "image": {
+          "alt": "Beispiel für Luna-Belohnungseinstellungen",
+          "caption": "Aquamarinreserve, begrenzte Kaufziele, wiederholbare Belohnungen und Priorität."
+        },
+        "items": {
+          "cost_cap": {
+            "description": "Lesen Sie die vom Spiel gemeldeten Kosten und die Kaufobergrenze jeder Belohnung.",
+            "label": "Kosten und Kaufobergrenze",
+            "recommendation": "Prüfen Sie beide schreibgeschützten Werte vor dem Aktivieren."
+          },
+          "keep_aqua": {
+            "description": "Halten Sie diese Aquamarinmenge von Luna-Käufen zurück.",
+            "label": "Aquamarin behalten",
+            "recommendation": "0, wenn alle Überschüsse für Belohnungen verfügbar sein sollen; andernfalls die geplante Menge reservieren."
+          },
+          "priority": {
+            "description": "Der Laden berücksichtigt Kaufziele mit niedrigeren Nummern zuerst.",
+            "label": "Priorität",
+            "recommendation": "Vergib 1, 2 und 3 in deiner Wunschreihenfolge und setze begrenzte Ziele vor unbegrenzte Belohnungen."
+          },
+          "search": {
+            "description": "Suchen Sie offizielle Luna-Belohnungen vor dem Einrichten eines Kaufs nach Namen.",
+            "label": "Luna-Belohnung suchen",
+            "recommendation": "Suchen Sie nach der Belohnung, die Sie wirklich möchten."
+          },
+          "target_total": {
+            "description": "Legen Sie die gewünschte gesamte Kaufanzahl für eine begrenzte Belohnung fest.",
+            "label": "Ziel gesamt",
+            "recommendation": "Legen Sie nur die Anzahl fest, die Sie kaufen wollen."
+          },
+          "unlimited": {
+            "description": "Kaufen Sie eine geeignete wiederholbare Belohnung weiter, solange Reserve und Shop-Grenze es zulassen.",
+            "label": "Unbegrenzt",
+            "recommendation": "Ein nur für regelmäßig gewünschte wiederholbare Belohnungen."
+          },
+          "use": {
+            "description": "Wählen Sie eine Belohnung aus, damit sie automatisch gekauft werden kann.",
+            "label": "Belohnung verwenden",
+            "recommendation": "Nur gewünschte Belohnungen aktivieren."
+          }
+        },
+        "title": "Luna-Aquamarin-Belohnungen auswählen"
+      },
+      "save": {
+        "image": {
+          "alt": "Beispiel für das Speichern und Aktivieren von Auto Storm",
+          "caption": "Tägliches Angriffslimit, Richtlinienprüfung, schreibgeschützte Kartenaktualisierung und Automatisierungsschalter."
+        },
+        "items": {
+          "daily_limit": {
+            "description": "Stoppen Sie neue Auto-Storm-Angriffe beim kontoübergreifenden täglichen normalen Angriffszähler; 0 entfernt diese zusätzliche Grenze.",
+            "label": "Tägliches Limit normaler Angriffe",
+            "recommendation": "0, sofern Sie keine kontoübergreifende Grenze verwenden."
+          },
+          "enable": {
+            "description": "Aktivieren Sie Auto Storm auf der Automatisierungskarte, sobald die gespeicherten Entscheidungen bereit sind.",
+            "label": "Automatisierungsschalter",
+            "recommendation": "Nach der Einrichtung einschalten."
+          },
+          "map_refresh": {
+            "description": "Lesen Sie das maßgebliche Aktualisierungsintervall der Sturm-Karte.",
+            "label": "Karten-Aktualisierungsintervall",
+            "recommendation": "Das schreibgeschützte Intervall beträgt 2 Stunden; warten Sie nach Änderungen auf einen aktuellen Scan."
+          },
+          "policy_check": {
+            "description": "Legen Sie fest, wie oft Auto Storm Einstellungen und geeignete Aufgaben prüft.",
+            "label": "Richtlinien-Prüfintervall",
+            "recommendation": "Behalten Sie das übliche 30-Sekunden-Intervall bei."
+          },
+          "save": {
+            "description": "Speichern Sie Burg-, Bau-, Kampf-, Truppenimport- und Luna-Einstellungen, bevor Sie die Automatisierung aktivieren.",
+            "label": "Einstellungen speichern",
+            "recommendation": "Speichern Sie nach Prüfung aller Ausgabenberechtigungen."
+          }
+        },
+        "title": "Auto Storm speichern und aktivieren"
+      },
+      "troops": {
+        "image": {
+          "alt": "Beispiel für Truppenimport und schreibgeschützte Schätzwerte",
+          "caption": "Spenderreihenfolge, 1.000 verbleibende Truppen und schreibgeschützte Kapazitätsschätzwerte."
+        },
+        "items": {
+          "attack_history": {
+            "description": "Lies bestätigte Sturmangriffe seit dem Server-Reset geteilt durch 24, nicht einen gleitenden 24-Stunden-Durchschnitt.",
+            "label": "Durchschnittliche Angriffe seit Zurücksetzen",
+            "recommendation": "Prüfen Sie diese schreibgeschützte Schätzung, bevor Sie den Importbedarf ändern."
+          },
+          "committed_cap": {
+            "description": "Lesen Sie die automatisch berechnete Grenze samt stationierten Truppen, Bewegungen, Transporten und Rückkehrern.",
+            "label": "Grenze gebundener Sturm-Truppen",
+            "recommendation": "Prüfen Sie diese schreibgeschützte Grenze vor höheren Importen."
+          },
+          "donors": {
+            "description": "Wählen Sie Spenderburgen in angezeigter Reihenfolge; Teilbestand kann eine kleinere Lieferung bereitstellen.",
+            "label": "Spenderburgen",
+            "recommendation": "Wählen Sie Ihre üblichen Truppenlieferanten in bevorzugter Reihenfolge."
+          },
+          "import": {
+            "description": "Importieren Sie fehlende Angriffs- oder ausgewählte Verteidigungstruppen aus gewählten Spenderburgen nach Sturm.",
+            "label": "Fehlende Truppen importieren",
+            "recommendation": "Ein, wenn Ihre Sturm-Burg regelmäßig Truppen braucht."
+          },
+          "map_coverage": {
+            "description": "Prüfen Sie die Kartenabdeckung, bevor Sie sich auf angezeigte Ziele verlassen.",
+            "label": "Kartenabdeckung",
+            "recommendation": "Warten Sie bei fehlenden Zielen auf aktuelle Abdeckung."
+          },
+          "minimum_kept": {
+            "description": "Halten Sie nach dem Start eines Angriffs mindestens so viele Truppen in Sturm und bewahren die aktivierte Vorlagenmischung.",
+            "label": "Mindestens verbleibende Truppen nach Start",
+            "recommendation": "1.000 Truppen als regelmäßige Reserve, angepasst an Ihre tatsächliche Armee."
+          },
+          "preset_average": {
+            "description": "Lesen Sie den durchschnittlichen Truppenbedarf aktivierter Angriffsvorlagen einschließlich ausgewählter Inselverteidiger.",
+            "label": "Durchschnittliche aktivierte Vorlage",
+            "recommendation": "Vergleichen Sie diese schreibgeschützte Schätzung mit Ihrer Armee."
+          }
+        },
+        "title": "Sturm-Truppen importieren und überwachen"
+      }
+    }
+  }
+}

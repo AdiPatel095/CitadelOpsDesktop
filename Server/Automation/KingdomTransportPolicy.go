@@ -1,6 +1,7 @@
 package Automation
 
 import (
+	"CitadelDesktop/Server/Localization"
 	"encoding/json"
 	"fmt"
 	"sort"
@@ -42,8 +43,8 @@ func ownedKingdomTransportDecision(
 				"owner": owner, "targetKingdomId": workflow.KingdomID,
 			})
 			return Decision{
-				Status:              "ready",
-				Detail:              fmt.Sprintf("Refresh the destination of %s's completed kingdom %d resource shipment", displayName, workflow.KingdomID),
+				Status: "ready",
+				Detail: fmt.Sprintf("Refresh the destination of %s's completed kingdom %d resource shipment", displayName, workflow.KingdomID), DetailDescriptor: Localization.New("server.automation.refresh_the_destination_of.cac6f0f7", "Refresh the destination of {p0}'s completed kingdom {p1} resource shipment", Localization.Params{"p0": fmt.Sprintf("%s", displayName), "p1": fmt.Sprintf("%d", workflow.KingdomID)}),
 				NextCheckAt:         snapshot.Now.Add(2 * time.Second),
 				Request:             &Intent.Request{Name: "resource.kingdom.settle", Arguments: arguments},
 				ReevaluateOnSuccess: true,
@@ -63,12 +64,12 @@ func ownedKingdomTransportDecision(
 			"minimumRemaining": reserve,
 		})
 		return Decision{
-			Status:              "ready",
-			Detail:              fmt.Sprintf("Apply %s to %s's kingdom %d resource shipment", skipID, displayName, pending.KingdomID),
-			NextCheckAt:         snapshot.Now.Add(2 * time.Second),
-			Request:             &Intent.Request{Name: "resource.kingdom.skip", Arguments: arguments},
-			FailureFallback:     &Intent.Request{Name: "resource.logistics.refresh", Arguments: json.RawMessage(`{}`)},
-			FailureDetail:       fmt.Sprintf("Refreshed kingdom transport state after %s's skip did not complete", displayName),
+			Status: "ready",
+			Detail: fmt.Sprintf("Apply %s to %s's kingdom %d resource shipment", skipID, displayName, pending.KingdomID), DetailDescriptor: Localization.New("server.automation.apply_p_to_p.05c73077", "Apply {p0} to {p1}'s kingdom {p2} resource shipment", Localization.Params{"p0": fmt.Sprintf("%s", skipID), "p1": fmt.Sprintf("%s", displayName), "p2": fmt.Sprintf("%d", pending.KingdomID)}),
+			NextCheckAt:     snapshot.Now.Add(2 * time.Second),
+			Request:         &Intent.Request{Name: "resource.kingdom.skip", Arguments: arguments},
+			FailureFallback: &Intent.Request{Name: "resource.logistics.refresh", Arguments: json.RawMessage(`{}`)},
+			FailureDetail:   fmt.Sprintf("Refreshed kingdom transport state after %s's skip did not complete", displayName), FailureDetailDescriptor: Localization.New("server.automation.refreshed_kingdom_transport_state.28e1eb01", "Refreshed kingdom transport state after {p0}'s skip did not complete", Localization.Params{"p0": fmt.Sprintf("%s", displayName)}),
 			ReevaluateOnSuccess: true,
 			ReevaluateOnStale:   true,
 		}, true

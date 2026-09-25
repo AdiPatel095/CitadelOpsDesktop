@@ -1,3 +1,5 @@
+import { useLocale as useStaticLocale } from "../../i18n/LocaleContext";
+import { LocalizedText } from "../../i18n/LocalizedText";
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react';
 import {
   Activity,
@@ -158,6 +160,7 @@ const MetricIcon = ({ definition, className }: { definition: MetricDefinition; c
 };
 
 const PlayerTrackerView = () => {
+  const { t: localizeStatic } = useStaticLocale();
   const { state } = useCitadelAPI();
   const { gameLoggedIn } = useAuth();
   const { troops: troopMetadata, resources: resourceMetadata, currencies: currencyMetadata } = useMetadata();
@@ -429,8 +432,7 @@ const PlayerTrackerView = () => {
       {!current ? (
         <Card>
           <CardContent className="flex min-h-56 items-center justify-center p-8 text-center text-text-muted">
-            Connect the game once to begin collecting player analytics.
-          </CardContent>
+            <LocalizedText messageKey="ui.playerTracker.components.playerTrackerView.connect.the.game.once.to.begin.collecting.eae341bc" /></CardContent>
         </Card>
       ) : (
         <>
@@ -458,7 +460,7 @@ const PlayerTrackerView = () => {
                   </div>
                 </div>
                 <PillSelector
-                  ariaLabel="Player history range"
+                  ariaLabel={localizeStatic("ui.playerTracker.components.playerTrackerView.ariaLabel.player.history.range.74e11cdf")}
                   value={selectedRange}
                   onChange={(value) => setSelectedRange(value as RangeKey)}
                   options={ranges.map((range) => ({ value: range.key, label: range.label }))}
@@ -469,7 +471,7 @@ const PlayerTrackerView = () => {
             <CardContent className="liquid-prominent-header-content p-5 sm:p-6">
               <div className="mb-4 flex flex-wrap gap-2">
                 <PillSelector
-                  ariaLabel="Highlighted player metric"
+                  ariaLabel={localizeStatic("ui.playerTracker.components.playerTrackerView.ariaLabel.highlighted.player.metric.f04dac98")}
                   value={selectedMetric}
                   onChange={(value) => setSelectedMetric(value as MetricKey)}
                   options={highlightMetricDefinitions.map((definition) => ({
@@ -483,11 +485,11 @@ const PlayerTrackerView = () => {
 					<Select
 						value={selectedExtraMetric?.key ?? ''}
 						onChange={setSelectedMetric}
-						placeholder="More metrics"
+						placeholder={localizeStatic("ui.playerTracker.components.playerTrackerView.placeholder.more.metrics.95d53305")}
 						className="w-full sm:w-72"
 						menuGrowToViewport
 						searchable
-						searchPlaceholder="Filter metrics"
+						searchPlaceholder={localizeStatic("ui.playerTracker.components.playerTrackerView.searchPlaceholder.filter.metrics.56d2ae78")}
 						options={extraMetricDefinitions.map((definition) => ({
 							value: definition.key,
 							searchText: `${definition.label} ${definition.shortLabel} ${definition.category} ${definition.key}`,
@@ -510,8 +512,7 @@ const PlayerTrackerView = () => {
                       {formatDate(customWindow.startUnix)} – {formatDate(customWindow.endUnix)}
                     </Badge>
                     <Button variant="ghost" size="sm" onClick={() => setCustomWindow(null)}>
-                      Clear selection
-                    </Button>
+                      <LocalizedText messageKey="common.clearSelection" /></Button>
                   </div>
                 )}
               </div>
@@ -537,7 +538,7 @@ const PlayerTrackerView = () => {
                 <div>
                   <CardTitle className="flex items-center gap-2 text-lg">
                     <Swords className="h-5 w-5" style={{ color: troopMetricDefinition.color }} />
-                    Troop strength
+                    <LocalizedText messageKey="ui.playerTracker.components.playerTrackerView.troop.strength.1a602396" />
                   </CardTitle>
                   <p className="mt-1 text-xs font-medium text-text-muted">
                     {troopFilterLabel(troopTypeFilter, troopRoleFilter, troopFoodFilter, selectedTroopUnitID, troopMetadata)}
@@ -562,7 +563,7 @@ const PlayerTrackerView = () => {
                   </div>
                 </div>
                 <PillSelector
-                  ariaLabel="Troop history range"
+                  ariaLabel={localizeStatic("ui.playerTracker.components.playerTrackerView.ariaLabel.troop.history.range.9279f138")}
                   value={troopRange}
                   onChange={(value) => setTroopRange(value as RangeKey)}
                   options={ranges.map((range) => ({ value: range.key, label: range.label }))}
@@ -574,8 +575,8 @@ const PlayerTrackerView = () => {
               <div className="mb-5 rounded-2xl border border-border-base bg-bg-input/45 p-4">
                 <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
                   <div>
-                    <p className="text-xs font-bold uppercase tracking-[0.18em] text-text-muted">Chart filters</p>
-                    <p className="mt-1 text-xs text-text-muted">Choose one unit, or combine type, role, and food filters.</p>
+                    <p className="text-xs font-bold uppercase tracking-[0.18em] text-text-muted"><LocalizedText messageKey="ui.playerTracker.components.playerTrackerView.chart.filters.e485e1ea" /></p>
+                    <p className="mt-1 text-xs text-text-muted"><LocalizedText messageKey="ui.playerTracker.components.playerTrackerView.choose.one.unit.or.combine.type.role.8c33d737" /></p>
                   </div>
                   {troopFiltersActive && (
                     <Button
@@ -588,8 +589,7 @@ const PlayerTrackerView = () => {
                         setSelectedTroopUnitID(null);
                       }}
                     >
-                      Clear filters
-                    </Button>
+                      <LocalizedText messageKey="ui.playerTracker.components.playerTrackerView.clear.filters.7179ea00" /></Button>
                   )}
                 </div>
                 <div className="flex flex-wrap gap-3">
@@ -604,10 +604,10 @@ const PlayerTrackerView = () => {
                         setTroopFoodFilter('all');
                       }
                     }}
-                    ariaLabel="Troop unit filter"
+                    ariaLabel={localizeStatic("ui.playerTracker.components.playerTrackerView.ariaLabel.troop.unit.filter.5b6d343b")}
                     className="w-full sm:w-80"
                     searchable
-                    searchPlaceholder="Search units"
+                    searchPlaceholder={localizeStatic("ui.playerTracker.components.playerTrackerView.searchPlaceholder.search.units.0750ef41")}
                     menuGrowToViewport
                     options={[
                       { value: 'all', label: 'All units', searchText: 'All units' },
@@ -632,7 +632,7 @@ const PlayerTrackerView = () => {
                     ]}
                   />
                   <PillSelector
-                    ariaLabel="Troop type filter"
+                    ariaLabel={localizeStatic("ui.playerTracker.components.playerTrackerView.ariaLabel.troop.type.filter.a39c77d1")}
                     value={troopTypeFilter}
                     onChange={(value) => {
                       setTroopTypeFilter(value as TypeFilter);
@@ -646,7 +646,7 @@ const PlayerTrackerView = () => {
                     size="body"
                   />
                   <PillSelector
-                    ariaLabel="Troop role filter"
+                    ariaLabel={localizeStatic("ui.playerTracker.components.playerTrackerView.ariaLabel.troop.role.filter.8a09c8f9")}
                     value={troopRoleFilter}
                     onChange={(value) => {
                       setTroopRoleFilter(value as RoleFilter);
@@ -660,7 +660,7 @@ const PlayerTrackerView = () => {
                     size="body"
                   />
                   <PillSelector
-                    ariaLabel="Troop food filter"
+                    ariaLabel={localizeStatic("ui.playerTracker.components.playerTrackerView.ariaLabel.troop.food.filter.be70bd92")}
                     value={troopFoodFilter}
                     onChange={(value) => {
                       setTroopFoodFilter(value as FoodFilter);
@@ -684,12 +684,11 @@ const PlayerTrackerView = () => {
                       {formatDate(troopWindow.startUnix)} – {formatDate(troopWindow.endUnix)}
                     </Badge>
                     <Button variant="ghost" size="sm" onClick={() => setTroopWindow(null)}>
-                      Clear selection
-                    </Button>
+                      <LocalizedText messageKey="common.clearSelection" /></Button>
                   </div>
                 )}
               </div>
-              <div className="mb-3 flex flex-wrap gap-2" aria-label="Troop trend lines">
+              <div className="mb-3 flex flex-wrap gap-2" aria-label={localizeStatic("ui.playerTracker.components.playerTrackerView.aria-label.troop.trend.lines.06fcb89c")}>
                 {troopTrendLines.map((line) => {
                   const legendPoints = line.displayPoints ?? line.points;
                   const latest = legendPoints[legendPoints.length - 1];
@@ -720,13 +719,11 @@ const PlayerTrackerView = () => {
               />
               {troopTrendLines.length > 1 && (
                 <p className="mt-3 text-xs text-text-muted">
-                  Six stacked lines: the five highest-count matching units plus Other. The upper boundary equals the filtered total.
-                </p>
+                  <LocalizedText messageKey="ui.playerTracker.components.playerTrackerView.six.stacked.lines.the.five.highest.count.834a1c2b" /></p>
               )}
               {troopFiltersActive && troopChartPoints.length < 2 && (
                 <p className="mt-3 text-xs leading-5 text-text-muted">
-                  Earlier total-only samples cannot be separated by category. New recorded samples will build this filtered trend.
-                </p>
+                  <LocalizedText messageKey="ui.playerTracker.components.playerTrackerView.earlier.total.only.samples.cannot.be.separated.659a6289" /></p>
               )}
               <div className="mt-3 flex justify-between text-xs text-text-muted">
                 <span>{displayedTroopPoints.length > 0 ? formatDate(displayedTroopPoints[0].timestampUnix) : 'Waiting for history'}</span>
@@ -736,12 +733,12 @@ const PlayerTrackerView = () => {
 
               <div className="mt-7 border-t border-border-base pt-6">
                 <div className="mb-4">
-                  <h3 className="text-base font-semibold text-text-main">Combat composition</h3>
-                  <p className="mt-1 text-sm text-text-muted">Current troops grouped by weapon type and battlefield role.</p>
+                  <h3 className="text-base font-semibold text-text-main"><LocalizedText messageKey="ui.playerTracker.components.playerTrackerView.combat.composition.1e8f82ba" /></h3>
+                  <p className="mt-1 text-sm text-text-muted"><LocalizedText messageKey="ui.playerTracker.components.playerTrackerView.current.troops.grouped.by.weapon.type.and.5d9aa861" /></p>
                 </div>
                 <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
                   <CombatCompositionCard
-                    label="Melee"
+                    label={localizeStatic("ui.playerTracker.components.playerTrackerView.label.melee.2e24eb8a")}
                     value={troopComposition.melee}
                     total={troopComposition.typeClassified}
                     icon={Swords}
@@ -749,7 +746,7 @@ const PlayerTrackerView = () => {
                     barClass="bg-primary"
                   />
                   <CombatCompositionCard
-                    label="Ranged"
+                    label={localizeStatic("ui.playerTracker.components.playerTrackerView.label.ranged.3f0b51a2")}
                     value={troopComposition.ranged}
                     total={troopComposition.typeClassified}
                     icon={Crosshair}
@@ -757,7 +754,7 @@ const PlayerTrackerView = () => {
                     barClass="bg-info"
                   />
                   <CombatCompositionCard
-                    label="Attack"
+                    label={localizeStatic("ui.playerTracker.components.playerTrackerView.label.attack.4cd548f3")}
                     value={troopComposition.attack}
                     total={troopComposition.roleClassified}
                     icon={TrendingUp}
@@ -765,7 +762,7 @@ const PlayerTrackerView = () => {
                     barClass="bg-warning"
                   />
                   <CombatCompositionCard
-                    label="Defense"
+                    label={localizeStatic("ui.playerTracker.components.playerTrackerView.label.defense.6d3b491c")}
                     value={troopComposition.defense}
                     total={troopComposition.roleClassified}
                     icon={Shield}
@@ -775,8 +772,7 @@ const PlayerTrackerView = () => {
                 </div>
                 {(troopComposition.typeClassified < troopComposition.total || troopComposition.roleClassified < troopComposition.total) && (
                   <p className="mt-3 text-xs text-text-muted">
-                    Composition includes troops recognized by the current game metadata; the total trend still includes every tracked troop.
-                  </p>
+                    <LocalizedText messageKey="ui.playerTracker.components.playerTrackerView.composition.includes.troops.recognized.by.the.current.1a5c8e10" /></p>
                 )}
               </div>
             </CardContent>

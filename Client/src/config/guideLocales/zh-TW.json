@@ -1,0 +1,2080 @@
+{
+  "ui": {
+    "guideButton": "指南",
+    "calendarButton": "行事曆",
+    "recommendedLabel": "建議",
+    "backToSettings": "返回設定",
+    "backToGuide": "返回指南",
+    "howToSetUp": "設定方式",
+    "whatToExpect": "預期結果",
+    "openFullSizePicture": "開啟原尺寸圖片",
+    "illustrativeExample": "示意範例",
+    "enlargePicture": "放大範例圖片",
+    "fullSizePicture": "原尺寸範例圖片；捲動以查看所有設定",
+    "towerGuideTitle": "自動攻擊高塔指南",
+    "birdGuideTitle": "部隊自動庇護指南",
+    "towerGuideIntro": "依照以下步驟設定自動攻塔；選取範例圖片即可放大。",
+    "birdGuideIntro": "依照以下步驟設定自動駐軍避險；選取範例圖片即可放大。",
+    "towerPreviewTitle": "自動攻擊高塔設定範例",
+    "birdPreviewTitle": "部隊自動庇護設定範例",
+    "stationGuideTitle": "自動駐軍避險指南",
+    "stationGuideIntro": "依照下列步驟設定自動駐軍避險；選取範例圖片即可放大檢視。",
+    "stationPreviewTitle": "自動駐軍避險設定範例",
+    "fortressGuideIntro": "依照以下步驟設定要塞自動攻擊；選擇範例面板即可放大檢視。",
+    "fortressGuideTitle": "要塞自動攻擊指南",
+    "fortressPreviewTitle": "要塞自動攻擊設定範例",
+    "invasionGuideIntro": "依照這些步驟設定入侵自動攻擊；選擇範例面板即可放大檢視。",
+    "invasionGuideTitle": "入侵自動攻擊指南",
+    "invasionPreviewTitle": "入侵自動攻擊設定範例",
+    "nomadGuideIntro": "按照這些步驟設定自動遊牧武士；選擇範例面板即可放大。",
+    "nomadGuideTitle": "自動遊牧武士指南",
+    "nomadPreviewTitle": "自動遊牧武士設定範例",
+    "advisorGuideIntro": "依照以下步驟設定自動顧問；選擇範例面板即可放大。",
+    "advisorGuideTitle": "自動顧問指南",
+    "advisorPreviewTitle": "自動顧問設定範例",
+    "khanGuideIntro": "依照以下步驟設定自動可汗；選擇範例面板可放大檢視。",
+    "khanGuideTitle": "自動可汗指南",
+    "khanPreviewTitle": "自動可汗設定範例",
+    "beriGuideIntro": "依照這些步驟設定自動貝里蒙德世界；選取範例面板即可放大。",
+    "beriGuideTitle": "自動貝里蒙德世界指南",
+    "beriPreviewTitle": "自動貝里蒙德世界設定範例",
+    "stormGuideIntro": "依照以下步驟設定自動風暴；選取範例面板可放大檢視。",
+    "stormGuideTitle": "自動風暴指南",
+    "stormPreviewTitle": "自動風暴設定範例"
+  },
+  "autoTower": {
+    "recommendationIntro": "以下是日常使用的建議；儲存前請先檢查。",
+    "steps": {
+      "commanders": {
+        "title": "選擇指揮官",
+        "items": {
+          "commander_assignment": {
+            "label": "指揮官指派",
+            "description": "在「指揮官」中，允許想使用的指揮官參與自動攻塔，然後選取「儲存指派」。",
+            "recommendation": "為自動攻塔指派20名指揮官。"
+          }
+        }
+      },
+      "general": {
+        "title": "設定掃描、每日上限與行軍",
+        "items": {
+          "open_settings": {
+            "label": "開啟設定",
+            "description": "開啟「自動化」，然後選取自動攻塔卡片上的設定按鈕。"
+          },
+          "authoritative_map_scan_every": {
+            "label": "權威地圖掃描 · 每隔",
+            "description": "選擇各城堡的塔樓清單更新頻率，範圍為1,800至3,600秒；掃描之間仍可發動攻擊。",
+            "recommendation": "1,800秒（30分鐘）。"
+          },
+          "daily_normal_attack_limit": {
+            "label": "每日一般攻擊上限",
+            "description": "達到整個帳號的每日攻擊上限後暫停，直到遊戲重設計數；設為0則取消上限。",
+            "recommendation": "整個帳號每天3,500次攻擊。"
+          },
+          "horse_travel_boost": {
+            "label": "騎乘行軍加速",
+            "description": "每次攻擊都使用所選的行軍方式，包括顧問連續攻擊中的每次攻擊；速度取決於出發城堡的行軍建築。",
+            "recommendation": "支援時選擇金幣級別，並確保金幣充足。"
+          },
+          "travel_feather": {
+            "label": "行軍羽毛",
+            "description": "使用行軍羽毛，而非消耗金幣或紅寶石的坐騎級別。"
+          },
+          "horse_ship_tier_coins": {
+            "label": "坐騎／船隻級別 · 金幣",
+            "description": "使用金幣行軍級別時消耗金幣。"
+          },
+          "warhorse_fast_ship_tier_rubies": {
+            "label": "戰馬／快船級別 · 紅寶石",
+            "description": "選用第一個紅寶石行軍級別時消耗紅寶石。"
+          },
+          "courser_fastest_ship_tier_rubies": {
+            "label": "駿馬／最快船級別 · 紅寶石",
+            "description": "選用更快的紅寶石行軍級別時消耗紅寶石。"
+          }
+        },
+        "image": {
+          "alt": "使用虛構「合成城堡」資料的自動攻塔一般設定",
+          "caption": "設定掃描間隔、每日攻擊上限及行軍方式；顧問控制項會在可用時顯示。"
+        }
+      },
+      "castle": {
+        "title": "逐座設定城堡",
+        "items": {
+          "castle_switch": {
+            "label": "城堡開關",
+            "description": "啟用要由自動攻塔掃描並發動攻擊的每座城堡。",
+            "recommendation": "啟用平常要使用的城堡。"
+          },
+          "radius": {
+            "label": "半徑",
+            "description": "選擇這座城堡周圍的搜尋範圍，1至50格。",
+            "recommendation": "35格。"
+          },
+          "choose_troop": {
+            "label": "選擇兵種",
+            "description": "選擇駐紮兵種填滿攻擊兩翼；數量不足時攻擊會等待。",
+            "recommendation": "數量足以填滿兩翼的駐紮攻擊兵種。"
+          },
+          "maiden_supported_only": {
+            "label": "僅限受少女聖物支援",
+            "description": "將這座城堡限制為使用擁有受支援少女聖物的可用指揮官。",
+            "recommendation": "除非所選指揮官擁有受支援的少女聖物，否則關閉。"
+          }
+        },
+        "image": {
+          "alt": "使用虛構「合成城堡」資料的自動攻塔城堡設定",
+          "caption": "啟用城堡，並選擇半徑、兵種及少女聖物條件。"
+        }
+      },
+      "advisor": {
+        "title": "視需要使用顧問 · 可用時",
+        "items": {
+          "use_advisor_with_time_skips": {
+            "label": "搭配時間跳躍使用顧問",
+            "description": "反覆攻擊同一座塔：先消耗一次每日攻擊，之後每次額外攻擊消耗一個至少三小時的時間跳躍。",
+            "recommendation": "關閉。"
+          },
+          "auto_activate_with_token": {
+            "label": "使用代幣自動啟用",
+            "description": "顧問未啟用時使用現有的男爵顧問代幣；不會購買代幣或消耗紅寶石。",
+            "recommendation": "顧問關閉時保持關閉。"
+          },
+          "maximum_daily_time_skips": {
+            "label": "每日時間跳躍上限",
+            "description": "限制已確認的顧問連續攻擊所使用的時間跳躍數量，直到遊戲重設每日攻擊計數；設為0會暫停顧問發動攻擊。",
+            "recommendation": "顧問關閉時設為0。"
+          }
+        }
+      },
+      "finish": {
+        "title": "設定時程、儲存並開啟",
+        "items": {
+          "calendar": {
+            "label": "行事曆",
+            "description": "使用行事曆選擇自動攻塔的執行時間；兵力是否可用及其他限制仍然適用。",
+            "recommendation": "平常的執行時間。"
+          },
+          "save_changes": {
+            "label": "儲存變更",
+            "description": "選取「儲存變更」以套用設定；閱讀本指南不會儲存設定。"
+          },
+          "auto_towers_switch": {
+            "label": "自動攻擊高塔開關",
+            "description": "儲存設定後，在「自動化」頁面開啟自動攻塔，任務才能執行。",
+            "recommendation": "儲存所需設定後開啟。"
+          }
+        }
+      }
+    },
+    "feature": {
+      "name": "自動攻擊高塔",
+      "summary": "反覆攻擊附近塔樓",
+      "description": "從所選城堡向強盜男爵塔及王國塔發動攻擊。",
+      "expectation": "需要足夠兵力、可用的指揮官及可攻擊的塔樓。兵力尚未返回或塔樓計時尚未結束時可能需要等待。"
+    }
+  },
+  "autoBird": {
+    "recommendationIntro": "建議值說明自動駐軍避險的日常用法；這些指引不會變更已儲存的設定。",
+    "steps": {
+      "open": {
+        "title": "開啟自動駐軍避險設定",
+        "items": {
+          "open_settings": {
+            "label": "開啟設定",
+            "description": "在指揮中心頂端，選取自動駐軍避險旁的設定按鈕。"
+          }
+        }
+      },
+      "general": {
+        "title": "設定駐紮時間與派遣規則",
+        "items": {
+          "random_delay_range_min": {
+            "label": "隨機延遲範圍 · 最小值",
+            "description": "設定行軍完成後，部隊在聯盟目的地駐紮的最短時數。",
+            "recommendation": "抵達後在聯盟目標駐紮6小時。"
+          },
+          "random_delay_range_max": {
+            "label": "隨機延遲範圍 · 最大值",
+            "description": "設定在目的地駐紮的最長時間；自動駐軍避險會在最小值和最大值之間隨機選擇時長。",
+            "recommendation": "抵達後在聯盟目標駐紮12小時。"
+          },
+          "minimum_to_send": {
+            "label": "最低派遣門檻",
+            "description": "設定城堡保留預備兵後，符合條件的兵力總數必須達到的最低值；這是門檻，並非實際派遣人數。",
+            "recommendation": "城堡保留預備兵後，符合條件的兵力共1,000人；這是門檻，並非確切派遣人數。"
+          },
+          "minimum_rpt_remaining_protection_time": {
+            "label": "最低剩餘保護時間（RPT）",
+            "description": "僅使用剩餘保護天數超過此值的目標；設為0則取消檢查。",
+            "recommendation": "3天；目標的剩餘保護時間必須超過3天。"
+          }
+        },
+        "image": {
+          "alt": "自動駐軍避險的駐紮延遲、最低派遣人數、最低RPT及預設控制項",
+          "caption": "設定駐紮時間與使用條件，儲存前檢查「日常預備兵」預設。"
+        }
+      },
+      "reserves": {
+        "title": "選擇各城堡留守的部隊",
+        "items": {
+          "add_unit": {
+            "label": "新增兵種",
+            "description": "為每座城堡選擇留守而不派遣的兵種；預備兵清單為空時，扣除自動保留兵力後，所有符合條件的部隊均可派遣。",
+            "recommendation": "選擇各城堡用於防禦或其他日常任務的兵種。"
+          },
+          "quantity": {
+            "label": "數量",
+            "description": "為所選的各兵種設定要留守的正數數量；設為0不會保留該兵種的全部部隊。",
+            "recommendation": "按防禦或其他任務需求，留守各兵種所需數量；請核對實際兵力。"
+          },
+          "remove_unit": {
+            "label": "移除兵種",
+            "description": "移除兵種方塊，即停止在所選城堡保留該兵種。"
+          },
+          "auto_fortress_reserve": {
+            "label": "要塞自動化預備兵",
+            "description": "自動要塞鎖定這裡的全部恐狼時，這部分自動保留兵力不會儲存到自動駐軍避險預設中；鎖定結束後，先前手動設定的恐狼數量會恢復。"
+          }
+        },
+        "image": {
+          "alt": "虛構「範例城堡」的自動駐軍避險預備兵方塊",
+          "caption": "只保留這座城堡需要的部隊；兵種101和兵種102是虛構的佔位名稱。"
+        }
+      },
+      "presets": {
+        "title": "儲存並選擇預設",
+        "items": {
+          "preset_name": {
+            "label": "預設名稱",
+            "description": "輸入新預設的名稱，或在儲存變更前編輯已套用預設的名稱。",
+            "recommendation": "使用「日常」等容易辨識的名稱。"
+          },
+          "load_preset": {
+            "label": "載入預設",
+            "description": "從清單中選擇已儲存的預設，或選擇「已儲存設定」，以使用沒有名稱的已儲存設定。",
+            "recommendation": "要將日常預設設為執行預設值：選取該預設，按「套用」，再按「儲存變更」。"
+          },
+          "apply": {
+            "label": "套用",
+            "description": "將所選預設載入目前的設定草稿；選取「儲存變更」才會將其設為執行預設值。"
+          },
+          "save_as_new": {
+            "label": "另存為新預設",
+            "description": "立即將目前設定儲存為新的命名預設，並選為執行預設值。"
+          },
+          "delete": {
+            "label": "刪除",
+            "description": "確認後立即刪除所選預設；若它是執行預設值，也會清除該選擇。"
+          },
+          "runtime_default": {
+            "label": "執行預設值",
+            "description": "執行預設值是已儲存的啟用預設；沒有啟用預設時，則是已儲存設定。"
+          }
+        }
+      },
+      "finish": {
+        "title": "設定時程、儲存並啟用",
+        "items": {
+          "calendar": {
+            "label": "行事曆",
+            "description": "選擇自動駐軍避險的執行時間，然後按「儲存時程」儲存變更。",
+            "recommendation": "持續執行時可關閉時程；也可設定平常的每週時段並儲存時程。"
+          },
+          "specify_preset_per_period": {
+            "label": "按時段指定預設",
+            "description": "若某個行事曆時段需要覆蓋執行預設值，請為該時段選擇已儲存的預設。",
+            "recommendation": "除非不同時段需要不同預備兵，否則關閉。"
+          },
+          "save_changes": {
+            "label": "儲存變更",
+            "description": "儲存設定草稿及已套用預設的變更；閱讀本指南不會儲存這些變更。"
+          },
+          "auto_bird_switch": {
+            "label": "部隊自動庇護開關",
+            "description": "儲存後，在指揮中心頂端開啟自動駐軍避險，以執行各城堡的正常循環。",
+            "recommendation": "儲存後開啟自動駐軍避險；頂端狀態會顯示各城堡的循環。"
+          }
+        }
+      }
+    },
+    "feature": {
+      "name": "部隊自動庇護",
+      "summary": "依時程將選定部隊駐紮在外",
+      "description": "定期將多餘部隊駐紮到符合條件的聯盟城堡，待部隊返回後重複循環。",
+      "expectation": "沒有合適目的地或可派遣的多餘部隊時會等待。調走部隊不會讓城堡無敵。"
+    }
+  },
+  "panels": {
+    "towerGeneral": {
+      "title": "一般設定",
+      "scan": "掃描間隔：1,800秒",
+      "daily": "每日攻擊上限：3,500",
+      "travel": "行軍加速：金幣級別",
+      "advisor": "顧問：關閉"
+    },
+    "towerCastle": {
+      "title": "範例城堡",
+      "enabled": "自動攻擊高塔：開啟",
+      "radius": "半徑：35格",
+      "troop": "所選兵種：虛構的攻擊部隊",
+      "maiden": "僅限受少女聖物支援：關閉"
+    },
+    "birdGeneral": {
+      "title": "一般設定",
+      "min": "最短駐紮：6小時",
+      "max": "最長駐紮：12小時",
+      "send": "保留預備兵後符合條件的最低人數：1,000人",
+      "rpt": "最低剩餘保護時間：超過3天",
+      "preset": "預設：日常預備兵"
+    },
+    "birdCastle": {
+      "title": "範例城堡",
+      "unitOne": "虛構兵種101保留：80",
+      "unitTwo": "虛構兵種102保留：40",
+      "add": "新增兵種"
+    },
+    "stationGeneral": {
+      "title": "自動駐軍避險設定範例",
+      "evacuate": "開始撤離：攻擊抵達前1分鐘",
+      "protection": "目標保護期：超過3天",
+      "recall": "危險解除後召回：開啟",
+      "gate": "備用開門：關閉",
+      "castle": "虛構城堡：預留80名防禦部隊",
+      "save": "儲存變更並啟用自動駐軍避險"
+    },
+    "fortressAttack": {
+      "commander": "指揮官：最快的合格已指派指揮官",
+      "daily": "每日一般攻擊上限：0",
+      "title": "攻擊設定範例",
+      "travel": "行軍加速：旅行羽毛",
+      "wave": "一個完整波次的恐狼填滿兩翼"
+    },
+    "fortressKingdoms": {
+      "everwinter": "永冬冰川：解鎖後開啟",
+      "peaks": "火焰山峰：解鎖後開啟",
+      "sands": "烈焰沙漠：解鎖後開啟",
+      "title": "王國設定範例"
+    },
+    "fortressSupply": {
+      "purchase": "每次工作階段的恐狼數量：5,000",
+      "reserve": "保留可汗石板：25,000",
+      "route": "補給：從大帝國主城堡至已啟用王國",
+      "skips": "確認轉移使用時間加速：開啟",
+      "title": "恐狼補給範例"
+    },
+    "invasionDifficulty": {
+      "bloodcrow": "血鴉：適合的已解鎖難度",
+      "current": "目前活動難度保持不變",
+      "foreign": "異國領主：適合的已解鎖難度",
+      "title": "活動難度範例"
+    },
+    "invasionFortify": {
+      "currency": "開啟時：活動提供的活動貨幣",
+      "enabled": "強化每個目標：關閉",
+      "rubies": "僅在明確選擇時使用紅寶石",
+      "title": "目標強化範例"
+    },
+    "invasionLimits": {
+      "before": "活動結束前30分鐘停止",
+      "daily": "每日一般攻擊上限：0",
+      "score": "分數：平常高於0的最後個人獎勵",
+      "title": "分數和停止限制範例"
+    },
+    "invasionSetup": {
+      "castle": "出發地：大帝國常用活動城堡",
+      "preset": "攻擊預設：已儲存的活動陣型",
+      "title": "活動攻擊設定範例",
+      "travel": "行軍加速：旅行羽毛"
+    },
+    "nomadDifficulty": {
+      "title": "活動難度範例",
+      "active": "活動進行中：符合目前難度",
+      "nomad": "遊牧：已解鎖且能穩定完成的難度",
+      "samurai": "武士：已解鎖且能穩定完成的難度"
+    },
+    "nomadSetup": {
+      "castle": "出發地：大帝國常用活動城堡",
+      "travel": "行軍加速：旅行羽毛",
+      "nomadPreset": "遊牧預設：已儲存的營地陣型",
+      "samuraiPreset": "武士預設：已儲存的營地陣型",
+      "title": "活動營地設定範例"
+    },
+    "nomadCooldowns": {
+      "clear": "確認獲勝後清除冷卻：開",
+      "long": "保留5小時/24小時：用於其他活動的庫存",
+      "short": "保留1/5/10/30/60分鐘：每種0個",
+      "title": "冷卻選項範例"
+    },
+    "nomadLimits": {
+      "daily": "額外每日限制：0",
+      "score": "積分目標：最後一個個人獎勵里程碑",
+      "time": "結束前停止：30分鐘",
+      "title": "停止規則範例"
+    },
+    "nomadTrial": {
+      "coordinates": "目標X/Y：日常運作不使用",
+      "effect": "開啟試驗會以真實攻擊取代活動運作",
+      "title": "試驗控制項範例",
+      "trial": "臨時強盜男爵試驗：關"
+    },
+    "advisorDifficulty": {
+      "active": "活動進行中：符合目前難度",
+      "nomad": "遊牧：已解鎖且能穩定完成的難度",
+      "samurai": "武士：已解鎖且能穩定完成的難度",
+      "title": "活動難度範例"
+    },
+    "advisorSetup": {
+      "castle": "出發地：大帝國常用活動城堡",
+      "travel": "行軍加速：旅行羽毛",
+      "preset": "預設：為目前活動儲存的陣型",
+      "title": "顧問攻擊設定範例"
+    },
+    "advisorActivation": {
+      "locked": "若尚未解鎖：開啟顧問啟用確認視窗",
+      "paid": "確認使用代幣或遊戲顯示的免費啟用",
+      "save": "儲存設定，然後開啟自動化卡片",
+      "title": "啟用流程範例"
+    },
+    "advisorOverview": {
+      "progress": "目前攻擊數 / 要求的攻擊數",
+      "refresh": "重新整理總覽以查看目前總數",
+      "results": "勝場、敗場、損失的單位與工具",
+      "title": "即時總覽範例"
+    },
+    "advisorResources": {
+      "coins": "每次攻擊的全部金幣：僅在足夠時使用500",
+      "feathers": "保留羽毛：其他地方不需要時設為0",
+      "rubies": "每次攻擊的紅寶石：使用行軍羽毛時設為0",
+      "skips": "保留60分鐘道具：0件；依需要保留5小時與24小時道具",
+      "title": "資源預算範例"
+    },
+    "advisorSizing": {
+      "actual": "實際攻擊：受資源與時間限制",
+      "maximum": "最大攻擊數：9,999",
+      "time": "未使用的活動時間：30分鐘",
+      "title": "攻擊規模範例"
+    },
+    "khanCooldowns": {
+      "long": "為其他任務保留5小時／24小時加速道具",
+      "pause": "可用加速道具不足會暫停新攻擊",
+      "short": "保留1分／5分／10分／30分／1小時：每種0件",
+      "skip": "略過每次營地冷卻：開啟",
+      "title": "加速道具保留量範例"
+    },
+    "khanLimits": {
+      "daily": "每日普通攻擊：0，無額外限制",
+      "end": "活動結束前5分鐘停止新攻擊",
+      "points": "達到遊牧者積分時停止：0，關閉",
+      "title": "停止限制範例",
+      "tools": "防禦工具補充：視需要開啟"
+    },
+    "khanProtection": {
+      "gate": "達到門檻時開啟主城城門並暫停可汗",
+      "outpost": "出兵點為前哨站：保護停用",
+      "source": "從主城出兵時適用",
+      "threshold": "城牆進攻兵力：1,000",
+      "title": "主城城牆保護範例"
+    },
+    "khanRage": {
+      "attacks": "自動營地攻擊：未鎖定",
+      "booster": "要求限時怒氣積分增益：關閉",
+      "chain": "最大怒氣連擊數：0，無額外上限",
+      "title": "怒氣控制範例",
+      "trigger": "滿怒反擊：開啟"
+    },
+    "khanSave": {
+      "defense": "反擊前檢查主城防禦",
+      "enable": "在自動化卡片上啟用自動可汗",
+      "priority": "自動避兵另外處理玩家攻擊",
+      "save": "準備好兩套預設後儲存設定",
+      "title": "儲存與啟用流程範例"
+    },
+    "khanSetup": {
+      "defense": "防守地點：大帝國主城",
+      "presets": "已儲存的可汗攻擊與主城防禦預設",
+      "source": "出兵點：大帝國前哨站",
+      "title": "可汗設定範例",
+      "travel": "使用行軍羽毛加快行軍"
+    },
+    "beriBuilder": {
+      "permissions": "高級貨幣與拆除：檢查前關閉",
+      "reserves": "預留貝里蒙德資源與跳過道具",
+      "stable": "派系馬廄：所選等級1至5",
+      "target": "內建指定目標或已檢查的自訂布局",
+      "title": "可選營地建造範例"
+    },
+    "beriReadiness": {
+      "booster": "勇氣增益條件：可選",
+      "food": "運輸需要消耗食物的預設部隊",
+      "preset": "檢查已儲存的部隊與工具欄位",
+      "title": "高塔攻擊準備範例"
+    },
+    "beriSave": {
+      "calendar": "持續運作時關閉行事曆",
+      "enable": "從自動化卡片開啟自動貝里蒙德世界",
+      "save": "檢查兵種比例後儲存設定",
+      "title": "儲存與啟用流程範例"
+    },
+    "beriSetup": {
+      "donor": "有足夠所需部隊的大帝國供應城堡",
+      "limit": "每日一般攻擊：額外上限0",
+      "preset": "已儲存的貝里蒙德攻擊預設",
+      "title": "攻擊與補給設定範例",
+      "travel": "高塔攻擊使用旅行羽毛"
+    },
+    "beriTools": {
+      "ladders": "攀牆梯：依一般攻擊配置",
+      "mantlets": "擋板：依一般攻擊配置",
+      "rams": "攻城槌：依一般攻擊配置",
+      "title": "營地工具最低數量範例"
+    },
+    "beriTransfers": {
+      "capacity": "剩餘容量：1；門檻：1",
+      "mix": "預設比例：2個A單位對1個B單位",
+      "next": "下一批：從供應庫存最多運送1個B",
+      "stock": "營地庫存：2個A、0個B",
+      "title": "按比例運輸範例"
+    },
+    "stormCastle": {
+      "blueprint": "已儲存目標啟用中；暫停後仍保留",
+      "capture": "目前城堡：功能目標",
+      "decorations": "裝飾預設：可選",
+      "title": "風暴城堡開啟範例",
+      "unlock": "自動解鎖：查看價格後開啟"
+    },
+    "stormCombat": {
+      "defenders": "佔領守軍：指定部隊或一名存活者",
+      "forts": "堡壘：所選等級 40–80",
+      "islands": "海藍寶石資源島：大型與小型",
+      "priority": "大型、小型，接著堡壘 80 至 40",
+      "title": "堡壘與資源島攻擊範例"
+    },
+    "stormConstruction": {
+      "harbor": "港口：開啟，等級 1",
+      "resources": "木材0；石材0；計畫的海藍寶石",
+      "spending": "高級建造與拆除：關閉",
+      "title": "建造與保留量範例",
+      "transport": "資源運輸：開啟"
+    },
+    "stormLuna": {
+      "cost": "價格與已購買上限：唯讀",
+      "limited": "限量目標優先於無限量獎勵",
+      "priority": "優先順序 1、2、3；較小數字優先",
+      "reserve": "保留海藍寶石：使用剩餘資源時為 0",
+      "title": "露娜獎勵範例"
+    },
+    "stormSave": {
+      "check": "策略檢查：30 秒",
+      "daily": "每日普通攻擊：額外上限 0",
+      "map": "地圖更新：2 小時，唯讀",
+      "switch": "先儲存，再啟用自動風暴",
+      "title": "儲存與啟用流程範例"
+    },
+    "stormTroops": {
+      "averages": "重置後已確認攻擊數÷24；預設平均值唯讀",
+      "cap": "已占用部隊上限：唯讀",
+      "donors": "供應城堡：依顯示順序，可部分供應",
+      "minimum": "最低保留：1,000 名部隊",
+      "title": "部隊調入範例"
+    }
+  },
+  "autoStation": {
+    "recommendationIntro": "建議值適用於日常使用，僅供參考，不會變更已儲存的設定。",
+    "steps": {
+      "open": {
+        "title": "開啟自動駐軍避險設定",
+        "items": {
+          "open_settings": {
+            "label": "開啟設定",
+            "description": "在指揮中心頂端選取自動駐軍避險旁的設定按鈕。"
+          }
+        }
+      },
+      "general": {
+        "title": "設定攻擊應對方式",
+        "items": {
+          "evacuate_at": {
+            "label": "開始撤離",
+            "description": "在攻擊抵達前指定分鐘數開始撤離；若首次偵測到攻擊時已進入該時間區間，則立即開始。",
+            "recommendation": "攻擊抵達前1分鐘。"
+          },
+          "minimum_bird_days": {
+            "label": "目標最低保護天數",
+            "description": "選擇剩餘保護時間嚴格多於此天數的盟友城堡；設為0則取消最低限制。",
+            "recommendation": "3天，因此目標必須剩餘超過3天的保護時間。"
+          },
+          "recall_when_clear": {
+            "label": "危險解除後召回",
+            "description": "最後一次偵測到的攻擊結束且沒有其他來襲攻擊時，召回駐紮部隊。",
+            "recommendation": "日常使用時開啟。"
+          },
+          "open_gate_fallback": {
+            "label": "開門作為備用方案",
+            "description": "部隊無法撤離時，此選項會在貝里蒙德以外的王國為遭攻擊的己方城堡開門6小時。",
+            "recommendation": "除非希望撤離失敗時自動開門，否則維持關閉。"
+          },
+          "protection_mode": {
+            "label": "已購買的保護模式",
+            "description": "已購買的保護模式正在準備或生效時，即使備用選項關閉，自動駐軍避險仍會在貝里蒙德以外使用城門。"
+          }
+        },
+        "image": {
+          "alt": "展示撤離時間、保護期、召回、城門及城堡預留部隊的虛構設定",
+          "caption": "儲存前檢查四項應對設定與每座城堡的防禦預留部隊。"
+        }
+      },
+      "reserves": {
+        "title": "選擇每座城堡留守的部隊",
+        "items": {
+          "add_troops": {
+            "label": "新增部隊",
+            "description": "選擇留在城堡的部隊類型；預留清單為空時，除了工具以外的所有合格部隊都可撤離。",
+            "recommendation": "保留日常防禦駐軍，讓多餘的攻擊部隊可以移動。"
+          },
+          "quantity": {
+            "label": "數量",
+            "description": "設定每種選定部隊在這座城堡留守的數量；0表示不預留該類型。",
+            "recommendation": "使用這座城堡日常防禦所需的數量。"
+          },
+          "edit_defense_troops": {
+            "label": "編輯防禦部隊",
+            "description": "重新開啟部隊選擇器，修改這座城堡預留部隊的類型或數量。"
+          },
+          "remove_defense_troop": {
+            "label": "移除防禦部隊",
+            "description": "移除預留卡片後，不再將該類型部隊留在城堡。"
+          }
+        }
+      },
+      "finish": {
+        "title": "儲存並啟用自動駐軍避險",
+        "items": {
+          "save_changes": {
+            "label": "儲存變更",
+            "description": "離開設定前儲存時間、開關及每座城堡的預留部隊。"
+          },
+          "auto_station_switch": {
+            "label": "自動駐軍避險開關",
+            "description": "儲存後在指揮中心頂端啟用自動駐軍避險，以監測來襲的玩家攻擊。",
+            "recommendation": "檢查預留部隊後，為日常防護開啟。"
+          }
+        }
+      }
+    },
+    "feature": {
+      "name": "自動駐軍避險",
+      "summary": "在來襲攻擊前移動合格部隊",
+      "description": "玩家攻擊臨近時，自動駐軍避險會將合格部隊移動至同一王國中最近的合適盟友城堡。",
+      "expectation": "開啟召回時，部隊會在最後一次偵測到的攻擊結束且沒有剩餘威脅後返回；否則會在抵達後停留一小時再返回。沒有合適目標或部隊，以及遊戲限制，都可能使撤離失敗。",
+      "helper": "部隊前往同一王國中最近的合格盟友城堡；撤離失敗時，貝里蒙德以外遭攻擊的己方城堡可藉由開門獲得保護。"
+    }
+  },
+  "autoFortress": {
+    "feature": {
+      "commanderBadge": "目前可用的最快指揮官",
+      "commanderHelp": "要塞自動攻擊會針對每座目標要塞比較裝備、寶石、套裝與將軍適用的行軍速度效果；不需要遺物2.0，也沒有100%的最低要求。",
+      "description": "要塞自動攻擊會依已儲存的限制購買恐狼、補給已啟用的外圍王國，並從各王國的主城堡攻擊準備就緒的要塞。",
+      "expectation": "每次攻擊都需要準備就緒的要塞、足以填滿兩翼的恐狼及符合資格的已指派指揮官；冷卻時間或補給延誤可能讓攻擊暫停。",
+      "name": "要塞自動攻擊",
+      "settingsSummary": "要塞自動攻擊會準備恐狼，並為每座目標要塞選擇目前可用且符合資格的最快已指派指揮官。",
+      "summary": "補給恐狼並攻擊準備就緒的要塞",
+      "travelHelp": "旅行羽毛是預設選項；你儲存的行軍選項會保留。出發前會重新計算特定城堡的加速效果。"
+    },
+    "recommendationIntro": "建議值說明要塞自動攻擊的日常用法；僅供參考，不會變更已儲存的設定。",
+    "steps": {
+      "attack": {
+        "image": {
+          "alt": "要塞自動攻擊與行軍設定的示意圖",
+          "caption": "要塞自動攻擊會依目標對符合資格的已指派指揮官排序，並使用已儲存的行軍選項。"
+        },
+        "items": {
+          "commander_assignment": {
+            "description": "在「指揮官」中指派要塞自動攻擊可使用的指揮官，然後儲存指派。",
+            "label": "指揮官指派",
+            "recommendation": "指派你平常希望用於要塞攻擊的指揮官。"
+          },
+          "daily_normal_attack_limit": {
+            "description": "當整個帳號達到每日一般攻擊次數時暫停要塞自動攻擊，直到遊戲重設次數；0表示不增加限制。",
+            "label": "每日一般攻擊上限",
+            "recommendation": "除非需要額外的每日上限，否則設為0。"
+          },
+          "fastest_commander": {
+            "description": "針對每座要塞，系統會在套用上限後，依裝備、寶石、套裝及將軍的適用效果，選擇目前可用的最快已指派指揮官。",
+            "label": "最快的合格指揮官",
+            "recommendation": "不需要遺物2.0物品或100%速度加成。"
+          },
+          "full_flank_wave": {
+            "description": "每次攻擊都會等待恐狼數量足以用一個完整波次填滿兩翼。",
+            "label": "兩翼恐狼波次"
+          },
+          "horse_travel_boost": {
+            "description": "選擇要塞攻擊的行軍選項；明確儲存的金幣或紅寶石等級會維持選取。",
+            "label": "戰馬行軍加速",
+            "recommendation": "選擇旅行羽毛以獲得最快行軍速度。"
+          }
+        },
+        "title": "設定攻擊與行軍"
+      },
+      "finish": {
+        "items": {
+          "auto_fortress_switch": {
+            "description": "儲存後在「自動化」卡片開啟要塞自動攻擊，以啟動正常循環。",
+            "label": "要塞自動攻擊開關",
+            "recommendation": "檢查並儲存預期設定後開啟。"
+          },
+          "calendar": {
+            "description": "使用「行事曆」限制要塞自動攻擊的執行時間，修改後選擇「儲存排程」。",
+            "label": "行事曆",
+            "recommendation": "持續正常運作時關閉。"
+          },
+          "save_fortress_plan": {
+            "description": "離開此視窗前儲存王國、補給及攻擊設定。",
+            "label": "儲存要塞計畫"
+          }
+        },
+        "title": "設定排程、儲存並開啟"
+      },
+      "kingdoms": {
+        "image": {
+          "alt": "要塞自動攻擊三個外圍王國控制項的示意圖",
+          "caption": "啟用每個已解鎖且需要從其主城堡接收恐狼並攻擊要塞的王國。"
+        },
+        "items": {
+          "burning_sands": {
+            "description": "解鎖烈焰沙漠後，從你在該王國的主城堡啟用攻擊及恐狼補給。",
+            "label": "烈焰沙漠",
+            "recommendation": "解鎖並準備好使用時開啟。"
+          },
+          "everwinter_glacier": {
+            "description": "解鎖永冬冰川後，從你在該王國的主城堡啟用攻擊及恐狼補給。",
+            "label": "永冬冰川",
+            "recommendation": "解鎖並準備好使用時開啟。"
+          },
+          "fire_peaks": {
+            "description": "解鎖火焰山峰後，從你在該王國的主城堡啟用攻擊及恐狼補給。",
+            "label": "火焰山峰",
+            "recommendation": "解鎖並準備好使用時開啟。"
+          }
+        },
+        "title": "選擇要塞王國"
+      },
+      "open": {
+        "items": {
+          "open_settings": {
+            "description": "在「自動化」頁面選擇要塞自動攻擊卡片上的設定按鈕。",
+            "label": "開啟設定"
+          }
+        },
+        "title": "開啟要塞自動攻擊設定"
+      },
+      "supply": {
+        "image": {
+          "alt": "要塞自動攻擊恐狼購買及轉移設定的示意圖",
+          "caption": "查看每次工作階段的購買上限、可汗石板保留量，以及確認轉移使用的時間加速選項。"
+        },
+        "items": {
+          "direwolves_per_session": {
+            "description": "將遊牧商店每次工作階段購買的恐狼限制為每批100隻；0表示關閉購買。",
+            "label": "每次工作階段的恐狼數量",
+            "recommendation": "以最低價格等級每次工作階段購買5,000隻恐狼。"
+          },
+          "keep_khan_tablets": {
+            "description": "在可汗石板餘額低於此保留量前停止購買恐狼。",
+            "label": "保留可汗石板",
+            "recommendation": "保留25,000塊可汗石板。"
+          },
+          "supply_route": {
+            "description": "購買的恐狼先抵達大帝國主城堡，再分配至已啟用的王國。",
+            "label": "恐狼補給路線"
+          },
+          "use_time_skips": {
+            "description": "僅對已確認的要塞自動攻擊運輸使用符合資格的時間加速道具，並遵守已儲存的庫存保留量。",
+            "label": "恐狼轉移使用時間加速",
+            "recommendation": "若已儲存的時間加速道具保留量允許，則開啟以加快補給。"
+          }
+        },
+        "title": "設定恐狼補給"
+      }
+    }
+  },
+  "autoInvasion": {
+    "feature": {
+      "description": "入侵自動攻擊會使用已儲存的攻擊預設攻打異國領主或血鴉，直到達到分數目標或其他停止限制。",
+      "expectation": "它會等待進行中的活動、符合資格的指揮官以及足夠的士兵和工具；已在行軍的攻擊可能在停止發起新攻擊後才結束。",
+      "name": "入侵自動攻擊",
+      "summary": "攻打異國領主和血鴉，直到達到你的分數目標"
+    },
+    "recommendationIntro": "建議值說明入侵自動攻擊的日常用法；僅供參考，不會變更已儲存的設定。",
+    "steps": {
+      "difficulty": {
+        "image": {
+          "alt": "異國領主和血鴉難度選擇的示意圖",
+          "caption": "為每種活動分別選擇一個已解鎖的備用難度。"
+        },
+        "items": {
+          "bloodcrow_difficulty": {
+            "description": "選擇一個已解鎖的血鴉難度，以便在目前活動未選擇難度時使用。",
+            "label": "血鴉難度",
+            "recommendation": "使用平常的配置能夠穩定應付的最高已解鎖難度。"
+          },
+          "difficulty_note": {
+            "description": "儲存兩種活動的選擇；修改儲存值不會取代進行中活動的難度。",
+            "label": "目前難度"
+          },
+          "foreign_lords_difficulty": {
+            "description": "選擇一個已解鎖的異國領主難度，以便在目前活動未選擇難度時使用。",
+            "label": "異國領主難度",
+            "recommendation": "使用平常的配置能夠穩定應付的最高已解鎖難度。"
+          }
+        },
+        "title": "選擇兩種活動的難度"
+      },
+      "finish": {
+        "items": {
+          "auto_invasion_switch": {
+            "description": "儲存後在自動化卡片開啟入侵自動攻擊，以便在活動和合格資源可用時運作。",
+            "label": "入侵自動攻擊開關",
+            "recommendation": "檢查並儲存預期設定後開啟。"
+          },
+          "readiness": {
+            "description": "入侵自動攻擊會等待進行中的活動、合格的指揮官以及足夠的士兵和工具。",
+            "label": "攻擊準備狀態"
+          },
+          "save_settings": {
+            "description": "關閉此視窗前儲存出發城堡、預設、難度、停止限制和強化選項。",
+            "label": "儲存設定"
+          }
+        },
+        "title": "儲存並開啟入侵自動攻擊"
+      },
+      "fortify": {
+        "image": {
+          "alt": "入侵自動攻擊強化設定的示意圖",
+          "caption": "除非打算使用可用的活動貨幣或明確選擇的紅寶石，否則保持強化關閉。"
+        },
+        "items": {
+          "fortification_currency": {
+            "description": "選擇目前活動支援的選項；每項價格由遊戲設定，明確選擇紅寶石即允許消耗紅寶石。",
+            "label": "強化貨幣",
+            "recommendation": "強化已開啟且活動提供時使用活動貨幣。"
+          },
+          "fortify_each_target": {
+            "description": "開啟後，在攻擊前使用所選貨幣強化每座生成的敵方城堡。",
+            "label": "強化每個目標",
+            "recommendation": "除非強化屬於你平常的活動策略，否則關閉。"
+          }
+        },
+        "title": "選擇可選的目標強化"
+      },
+      "limits": {
+        "image": {
+          "alt": "入侵自動攻擊分數和停止限制的示意圖",
+          "caption": "分數目標會停止新的出擊，但已經在行軍的攻擊可能結束。"
+        },
+        "items": {
+          "daily_attack_limit": {
+            "description": "當整個帳號達到每日一般攻擊次數時停止此自動化，直到遊戲重設次數；0表示不增加限制。",
+            "label": "每日一般攻擊上限",
+            "recommendation": "設為0，讓活動分數目標控制進程。"
+          },
+          "minimum_remaining": {
+            "description": "在活動結束前指定的分鐘數停止發起新攻擊。",
+            "label": "在活動結束前停止",
+            "recommendation": "30分鐘。"
+          },
+          "score_target": {
+            "description": "當回報的活動分數達到或超過此目標時停止發起新攻擊。",
+            "label": "達到活動分數後停止",
+            "recommendation": "使用你平常最後一個高於0的個人獎勵階段。"
+          },
+          "travelling_attacks": {
+            "description": "已在行軍的攻擊可能在符合停止條件後結束，使最終分數超過目標。",
+            "label": "行軍中的攻擊"
+          }
+        },
+        "title": "設定分數和停止限制"
+      },
+      "open": {
+        "image": {
+          "alt": "入侵自動攻擊的出發城堡、預設和行軍設定示意圖",
+          "caption": "設定行軍選項前，選擇大帝國的出發城堡和已儲存的活動預設。"
+        },
+        "items": {
+          "attack_preset": {
+            "description": "選擇包含攻打異國領主或血鴉的士兵、工具和陣型的已儲存攻擊預設。",
+            "label": "攻擊預設",
+            "recommendation": "先建立平常使用的異國領主或血鴉預設，然後在此選擇。"
+          },
+          "capacity_note": {
+            "description": "預設中的士兵和工具數量會依所選指揮官和目標的容量調整。",
+            "label": "攻擊容量"
+          },
+          "horse_travel_boost": {
+            "description": "為這些攻擊選擇羽毛、金幣或紅寶石行軍選項。",
+            "label": "戰馬行軍加速",
+            "recommendation": "快速行軍建議旅行羽毛。"
+          },
+          "open_settings": {
+            "description": "在自動化頁面選擇入侵自動攻擊卡片上的設定按鈕。",
+            "label": "開啟設定"
+          },
+          "source_castle": {
+            "description": "選擇為活動攻擊提供士兵和工具的大帝國城堡。",
+            "label": "出發城堡",
+            "recommendation": "使用士兵和工具充足的常用活動城堡。"
+          }
+        },
+        "title": "開啟入侵自動攻擊設定"
+      }
+    }
+  },
+  "autoNomad": {
+    "steps": {
+      "difficulty": {
+        "items": {
+          "nomad_difficulty": {
+            "recommendation": "使用平常的配置能夠穩定應付的最高已解鎖難度。",
+            "description": "選擇活動開始時使用的已解鎖遊牧難度。",
+            "label": "遊牧難度"
+          },
+          "samurai_difficulty": {
+            "recommendation": "使用平常的配置能夠穩定應付的最高已解鎖難度。",
+            "description": "選擇活動開始時使用的已解鎖武士難度。",
+            "label": "武士難度"
+          },
+          "active_difficulty": {
+            "description": "如果活動已經開始，請與目前難度一致；不同的已儲存選擇會讓自動化等待，而不會更改活動難度。",
+            "label": "活動已開始"
+          }
+        },
+        "title": "選擇兩種活動的難度",
+        "image": {
+          "alt": "遊牧與武士難度選擇範例",
+          "caption": "為兩個活動分別選擇已解鎖難度，並與目前活動的難度保持一致。"
+        }
+      },
+      "finish": {
+        "items": {
+          "auto_nomad_switch": {
+            "recommendation": "檢查並儲存預期設定後開啟。",
+            "description": "儲存後，在自動化卡片上開啟自動遊牧武士，以便在活動和合格資源可用時執行。",
+            "label": "自動遊牧武士開關"
+          },
+          "save_settings": {
+            "label": "儲存設定",
+            "description": "關閉對話框前，儲存來源、預設、難度、停止限制、時間跳躍選擇和試驗狀態。"
+          },
+          "readiness": {
+            "description": "自動化會升級活動營地，並等待合格的指揮官、士兵、工具，以及開啟時間跳躍時可用的道具。",
+            "label": "營地攻擊準備情況"
+          }
+        },
+        "title": "儲存並開啟自動遊牧武士"
+      },
+      "limits": {
+        "image": {
+          "caption": "分數目標會停止新的出擊，但已經在行軍的攻擊可能結束。",
+          "alt": "自動遊牧武士積分及停止限制範例"
+        },
+        "items": {
+          "daily_attack_limit": {
+            "description": "當整個帳號達到每日一般攻擊次數時停止此自動化，直到遊戲重設次數；0表示不增加限制。",
+            "label": "每日一般攻擊上限",
+            "recommendation": "設為0，讓活動分數目標控制進程。"
+          },
+          "minimum_remaining": {
+            "description": "在活動結束前指定的分鐘數停止發起新攻擊。",
+            "label": "在活動結束前停止",
+            "recommendation": "30分鐘。"
+          },
+          "score_target": {
+            "description": "當回報的活動分數達到或超過此目標時停止發起新攻擊。",
+            "label": "達到活動分數後停止",
+            "recommendation": "使用你平常最後一個高於0的個人獎勵階段。"
+          },
+          "travelling_attacks": {
+            "description": "已在行軍的攻擊可能在符合停止條件後結束，使最終分數超過目標。",
+            "label": "行軍中的攻擊"
+          }
+        },
+        "title": "設定分數和停止限制"
+      },
+      "open": {
+        "items": {
+          "horse_travel_boost": {
+            "label": "騎乘行軍加速",
+            "recommendation": "快速行軍建議旅行羽毛。",
+            "description": "為營地攻擊選擇羽毛、金幣或紅寶石行程選項。"
+          },
+          "open_settings": {
+            "label": "開啟設定",
+            "description": "在自動化頁面選擇自動遊牧武士卡片上的設定按鈕。"
+          },
+          "source_castle": {
+            "label": "出發城堡",
+            "recommendation": "使用士兵和工具充足的常用活動城堡。",
+            "description": "選擇在大帝國中為營地攻擊提供士兵和工具的城堡。"
+          },
+          "nomad_preset": {
+            "description": "為遊牧營地選擇已儲存的攻擊預設，其中包含士兵、工具和陣型。",
+            "label": "遊牧攻擊預設",
+            "recommendation": "建立並選擇日常使用的遊牧預設。"
+          },
+          "samurai_preset": {
+            "description": "為武士營地選擇已儲存的攻擊預設，其中包含士兵、工具和陣型。",
+            "label": "武士攻擊預設",
+            "recommendation": "建立並選擇日常使用的武士預設。"
+          }
+        },
+        "image": {
+          "alt": "自動遊牧武士來源、預設及行程範例",
+          "caption": "選擇來源城堡和行程選項前，先建立兩個活動的攻擊預設。"
+        },
+        "title": "開啟自動遊牧武士設定"
+      },
+      "cooldowns": {
+        "image": {
+          "alt": "營地冷卻和時間跳躍保留量範例",
+          "caption": "每個「保留」數值表示時間跳躍道具的數量，不是冷卻分鐘數。"
+        },
+        "items": {
+          "keep_10m": {
+            "description": "將這麼多10分鐘時間跳躍道具保留不用。",
+            "label": "保留10分鐘",
+            "recommendation": "日常營地輪刷設為0。"
+          },
+          "keep_1m": {
+            "description": "將這麼多1分鐘時間跳躍道具保留不用。",
+            "label": "保留1分鐘",
+            "recommendation": "日常營地輪刷設為0。"
+          },
+          "keep_24h": {
+            "description": "將這麼多24小時時間跳躍道具保留不用。",
+            "label": "保留24小時",
+            "recommendation": "保留建造或其他活動需要的庫存。"
+          },
+          "keep_30m": {
+            "description": "將這麼多30分鐘時間跳躍道具保留不用。",
+            "label": "保留30分鐘",
+            "recommendation": "日常營地輪刷設為0。"
+          },
+          "keep_5h": {
+            "description": "將這麼多5小時時間跳躍道具保留不用。",
+            "label": "保留5小時",
+            "recommendation": "保留建造或其他活動需要的庫存。"
+          },
+          "keep_5m": {
+            "description": "將這麼多5分鐘時間跳躍道具保留不用。",
+            "label": "保留5分鐘",
+            "recommendation": "日常營地輪刷設為0。"
+          },
+          "keep_60m": {
+            "description": "將這麼多60分鐘時間跳躍道具保留不用。",
+            "label": "保留60分鐘",
+            "recommendation": "日常營地輪刷設為0。"
+          },
+          "skip_cooldowns": {
+            "description": "確認戰勝營地後，使用可用的時間跳躍消除該目標的冷卻。",
+            "label": "每次成功攻擊後清除冷卻",
+            "recommendation": "日常重複攻擊營地時開啟；關閉則等待自然冷卻。"
+          }
+        },
+        "title": "選擇時間跳躍及保留量"
+      },
+      "trial": {
+        "image": {
+          "alt": "針對強盜男爵城堡的臨時試驗控制項範例",
+          "caption": "試驗會發起真實攻擊，開啟期間會取代正常的活動運作。"
+        },
+        "items": {
+          "rbc_trial": {
+            "description": "使用遊牧預設和時間跳躍，向一座強盜男爵城堡發起真實試驗攻擊，以取代正常活動運作。",
+            "label": "針對強盜男爵城堡的臨時端對端試驗",
+            "recommendation": "日常遊牧或武士輪刷時關閉。"
+          },
+          "target_x": {
+            "description": "僅在臨時試驗中輸入強盜男爵城堡的橫座標。",
+            "label": "目標X",
+            "recommendation": "試驗關閉時保持不用。"
+          },
+          "target_y": {
+            "description": "僅在臨時試驗中輸入強盜男爵城堡的縱座標。",
+            "label": "目標Y",
+            "recommendation": "試驗關閉時保持不用。"
+          },
+          "trial_skips": {
+            "description": "開啟試驗時也會為試驗開啟時間跳躍。",
+            "label": "試驗時間跳躍"
+          }
+        },
+        "title": "日常輪刷時關閉臨時試驗"
+      }
+    },
+    "feature": {
+      "description": "自動遊牧武士會升級符合條件的活動營地，選擇已完全升級的最弱營地，並用該活動儲存的攻擊預設反覆攻擊，直到達到停止限制。",
+      "expectation": "它會等待進行中的活動、合格的指揮官、士兵、工具，以及啟用清除冷卻時可用的時間跳躍；停止發起新攻擊後，行進中的攻擊仍可能完成。",
+      "name": "自動遊牧武士",
+      "summary": "升級並攻擊遊牧或武士活動營地"
+    },
+    "recommendationIntro": "建議值適用於自動遊牧武士的日常使用，僅供參考，不會更改已儲存的設定。"
+  },
+  "autoAdvisor": {
+    "steps": {
+      "activation": {
+        "items": {
+          "auto_advisor_switch": {
+            "recommendation": "檢查並儲存預期設定後開啟。",
+            "description": "檢查設定後，在自動化卡片開啟自動顧問；已解鎖的顧問可能立即開始一輪攻擊。",
+            "label": "自動顧問開關"
+          },
+          "save_settings": {
+            "label": "儲存設定",
+            "description": "關閉對話框之前，儲存出發城堡、預設、難度、攻擊輪次規模和資源預算。"
+          },
+          "activate_advisor": {
+            "description": "若顧問尚未解鎖，請選擇啟用顧問，開啟目前活動的確認視窗。",
+            "label": "啟用顧問"
+          },
+          "activate_and_spend": {
+            "description": "使用符合資格的活動代幣或通用顧問代幣提交已確認的啟用；免費活動會顯示無需代幣的啟用。",
+            "label": "啟用並消耗代幣"
+          },
+          "cancel_activation": {
+            "description": "關閉確認視窗，不提交啟用或消耗代幣。",
+            "label": "取消啟用"
+          },
+          "confirm_paid_activation": {
+            "description": "確認啟用顧問可能消耗活動代幣或通用代幣，除非遊戲顯示這次活動免費。",
+            "label": "確認付費啟用"
+          }
+        },
+        "image": {
+          "alt": "自動顧問儲存與代幣啟用控制項的示意圖",
+          "caption": "儲存或開啟不會消耗代幣；另外確認的啟用可能消耗代幣。"
+        },
+        "title": "儲存、開啟並啟用顧問權限"
+      },
+      "difficulty": {
+        "items": {
+          "nomad_difficulty": {
+            "label": "遊牧難度",
+            "recommendation": "使用平常的配置能夠穩定應付的最高已解鎖難度。",
+            "description": "選擇活動開始時要設定的已解鎖遊牧難度。"
+          },
+          "samurai_difficulty": {
+            "label": "武士難度",
+            "recommendation": "使用平常的配置能夠穩定應付的最高已解鎖難度。",
+            "description": "選擇活動開始時要設定的已解鎖武士難度。"
+          },
+          "active_difficulty": {
+            "description": "配合已經進行中的活動目前難度，否則自動化會等待而不會修改難度。",
+            "label": "進行中活動的難度"
+          }
+        },
+        "title": "選擇兩種活動的難度",
+        "image": {
+          "alt": "遊牧與武士顧問難度選擇示意圖",
+          "caption": "儲存兩種活動的難度，並與已經進行中的活動難度保持一致。"
+        }
+      },
+      "open": {
+        "items": {
+          "horse_travel_boost": {
+            "label": "騎乘行軍加速",
+            "recommendation": "快速行軍建議旅行羽毛。",
+            "description": "為這輪攻擊選擇羽毛、金幣或紅寶石行軍方式。"
+          },
+          "open_settings": {
+            "label": "開啟設定",
+            "description": "在自動化頁面選擇自動顧問卡片上的設定按鈕。"
+          },
+          "source_castle": {
+            "label": "出發城堡",
+            "recommendation": "使用士兵和工具充足的常用活動城堡。",
+            "description": "選擇為顧問攻擊提供士兵與工具的大帝國城堡。"
+          },
+          "attack_preset": {
+            "description": "選擇已儲存的攻擊預設，系統會為每次要求的攻擊複製其士兵、工具與陣型。",
+            "label": "顧問攻擊預設",
+            "recommendation": "先為目前遊牧或武士活動建立日常使用的預設，再選擇它。"
+          },
+          "complete_copies": {
+            "description": "可用資源與完整預設副本數可能讓實際輪次低於最大攻擊數。",
+            "label": "完整預設副本"
+          }
+        },
+        "image": {
+          "alt": "自動顧問出發城堡、預設與行軍設定示意圖",
+          "caption": "設定行軍前，選擇大帝國的出發城堡與已儲存的活動預設。"
+        },
+        "title": "開啟自動顧問設定"
+      },
+      "resources": {
+        "items": {
+          "keep_24h": {
+            "description": "將這麼多24小時時間跳躍道具保留不用。",
+            "label": "保留24小時",
+            "recommendation": "保留建造或其他活動需要的庫存。"
+          },
+          "keep_5h": {
+            "description": "將這麼多5小時時間跳躍道具保留不用。",
+            "label": "保留5小時",
+            "recommendation": "保留建造或其他活動需要的庫存。"
+          },
+          "keep_60m": {
+            "description": "將這麼多60分鐘時間跳躍道具保留不用。",
+            "label": "保留60分鐘",
+            "recommendation": "日常顧問攻擊設為0。"
+          },
+          "coin_cost": {
+            "description": "估算每次攻擊的全部金幣費用，用於啟動前的負擔能力計算，不會變更遊戲價格。",
+            "label": "每次攻擊的全部金幣",
+            "recommendation": "只有500足以支付實際全部費用時才使用；否則輸入測得的較高總額。"
+          },
+          "keep_coins": {
+            "description": "從攻擊預算中排除指定數量的金幣。",
+            "label": "保留金幣",
+            "recommendation": "保留日常徵兵與建造所需的預算。"
+          },
+          "keep_feathers": {
+            "description": "從攻擊預算中排除指定數量的行軍羽毛。",
+            "label": "保留羽毛",
+            "recommendation": "除非要為其他功能預留羽毛，否則設為0。"
+          },
+          "keep_rubies": {
+            "description": "從攻擊預算中排除指定數量的紅寶石。",
+            "label": "保留紅寶石",
+            "recommendation": "保留其他活動所需的餘額。"
+          },
+          "ruby_cost": {
+            "description": "估算每次攻擊的紅寶石行軍費用；選擇紅寶石行軍時必須填入正數。",
+            "label": "每次攻擊的紅寶石",
+            "recommendation": "使用行軍羽毛時設為0；紅寶石行軍時填入實際正數費用。"
+          }
+        },
+        "image": {
+          "alt": "自動顧問金幣、紅寶石、羽毛與時間跳躍道具保留量示意圖",
+          "caption": "費用欄位是規劃估算值；保留數值代表不會使用的資源或時間跳躍道具。"
+        },
+        "title": "設定資源預算與保留量"
+      },
+      "overview": {
+        "image": {
+          "alt": "自動顧問進度與損失總覽示意圖",
+          "caption": "總覽顯示這輪攻擊的進度與損失，不會開始另一輪。"
+        },
+        "items": {
+          "live_progress": {
+            "description": "在總覽查看目前與要求的攻擊數、勝場、敗場、損失的單位與工具。",
+            "label": "正在進行的顧問攻擊"
+          },
+          "no_relaunch": {
+            "description": "同一活動中完成或取消的一輪攻擊不會自動重新開始。",
+            "label": "完成或取消的攻擊"
+          },
+          "refresh_overview": {
+            "description": "要求更新顧問攻擊進度、勝場、敗場與損失。",
+            "label": "重新整理總覽"
+          }
+        },
+        "title": "查看正在進行的顧問攻擊"
+      },
+      "sizing": {
+        "image": {
+          "alt": "自動顧問攻擊數與活動時間設定示意圖",
+          "caption": "要求的攻擊數在啟動前會受到可用資源與活動時間限制。"
+        },
+        "items": {
+          "maximum_attacks": {
+            "description": "設定這輪顧問攻擊的攻擊數上限；資源與剩餘活動時間可能進一步減少實際攻擊數。",
+            "label": "最大攻擊數",
+            "recommendation": "設為9,999，讓可用資源與活動時間決定攻擊規模。"
+          },
+          "minimum_remaining": {
+            "description": "在啟動前的活動時間計算中，預留指定分鐘數不使用。",
+            "label": "活動結束前停止",
+            "recommendation": "30分鐘；這不是執行期間持續取消攻擊的計時器。"
+          }
+        },
+        "title": "設定攻擊規模與活動時間"
+      }
+    },
+    "feature": {
+      "description": "自動顧問依照可用資源與活動剩餘時間，啟動一輪遊牧或武士顧問攻擊。",
+      "expectation": "這輪攻擊會等待目前活動難度相符且顧問已解鎖；儲存或開啟不會消耗代幣，但確認啟用可能消耗代幣。",
+      "name": "自動顧問",
+      "summary": "依資源規模啟動一輪遊牧或武士顧問攻擊"
+    },
+    "recommendationIntro": "建議數值適用於自動顧問的日常使用，僅供參考，不會變更已儲存的設定。"
+  },
+  "autoKhan": {
+    "steps": {
+      "cooldowns": {
+        "items": {
+          "keep_10m": {
+            "label": "保留10分鐘",
+            "description": "保留這麼多件10分鐘加速道具不使用。",
+            "recommendation": "日常可汗連擊建議設為0。"
+          },
+          "keep_1m": {
+            "label": "保留1分鐘",
+            "description": "保留這麼多件1分鐘加速道具不使用。",
+            "recommendation": "日常可汗連擊建議設為0。"
+          },
+          "keep_24h": {
+            "label": "保留24小時",
+            "recommendation": "保留建造或其他活動需要的庫存。",
+            "description": "保留這麼多件24小時加速道具不使用。"
+          },
+          "keep_30m": {
+            "label": "保留30分鐘",
+            "description": "保留這麼多件30分鐘加速道具不使用。",
+            "recommendation": "日常可汗連擊建議設為0。"
+          },
+          "keep_5h": {
+            "label": "保留5小時",
+            "recommendation": "保留建造或其他活動需要的庫存。",
+            "description": "保留這麼多件5小時加速道具不使用。"
+          },
+          "keep_5m": {
+            "label": "保留5分鐘",
+            "description": "保留這麼多件5分鐘加速道具不使用。",
+            "recommendation": "日常可汗連擊建議設為0。"
+          },
+          "keep_1h": {
+            "description": "保留這麼多件1小時加速道具不使用。",
+            "label": "保留1小時道具",
+            "recommendation": "日常可汗連擊建議設為0。"
+          },
+          "skip_cooldowns": {
+            "description": "保留並使用足夠的加速道具，在攻擊後清除營地冷卻。",
+            "label": "略過每次可汗營地冷卻",
+            "recommendation": "開啟；目前的設定視窗要求啟用此項才能儲存。"
+          },
+          "skip_shortage": {
+            "description": "可用加速道具不足以清除所需冷卻時，會暫停新的營地攻擊。",
+            "label": "可用加速道具不足"
+          }
+        },
+        "image": {
+          "alt": "自動可汗冷卻略過與加速道具保留量示意",
+          "caption": "保留量是道具件數，不是時間分鐘數。"
+        },
+        "title": "設定冷卻略過與保留量"
+      },
+      "limits": {
+        "items": {
+          "daily_limit": {
+            "label": "每日一般攻擊上限",
+            "description": "帳號範圍內的每日普通攻擊次數達到此值時，停止本自動化發動新的營地攻擊；0代表停用此上限。",
+            "recommendation": "不需要帳號範圍上限時設為0。"
+          },
+          "event_end": {
+            "label": "活動結束前停止",
+            "description": "在活動結束前這麼多分鐘停止新的營地攻擊。",
+            "recommendation": "5分鐘。"
+          },
+          "nomad_points": {
+            "description": "當已回報積分達到此值時，停止新的可汗攻擊、召回出發中的攻擊並開啟主城城門；0代表停用此停止條件。",
+            "label": "達到遊牧者積分時停止",
+            "recommendation": "除非想在指定積分停止並啟動保護，否則設為0。"
+          },
+          "replenish_tools": {
+            "description": "從符合條件的商品補充防禦預設短缺的工具，同時排除紅寶石定價的套組。",
+            "label": "補充防禦工具",
+            "recommendation": "希望進行符合條件的自動購買時開啟。"
+          }
+        },
+        "image": {
+          "alt": "自動可汗積分、工具與每日上限示意",
+          "caption": "遊牧者積分停止值大於0時，也會召回出發中的可汗攻擊並開啟主城城門。"
+        },
+        "title": "設定積分、補給和每日限制"
+      },
+      "save": {
+        "items": {
+          "save_settings": {
+            "label": "儲存設定",
+            "description": "儲存所選城堡、預設、怒氣控制、限制、加速道具保留量和保護設定。"
+          },
+          "enable_switch": {
+            "description": "檢查主城防禦後，在自動化卡片上啟用自動可汗。",
+            "label": "自動可汗開關",
+            "recommendation": "儲存並準備好防禦後開啟。"
+          },
+          "station_priority": {
+            "description": "自動避兵獨立處理來襲的玩家攻擊，不與可汗反擊混用。",
+            "label": "自動避兵優先處理"
+          }
+        },
+        "image": {
+          "alt": "自動可汗儲存與啟用流程示意",
+          "caption": "啟用可汗反擊前，先檢查主城防禦。"
+        },
+        "title": "儲存並啟用自動可汗"
+      },
+      "setup": {
+        "items": {
+          "horse_travel_boost": {
+            "label": "騎乘行軍加速",
+            "recommendation": "快速行軍建議旅行羽毛。",
+            "description": "為營地攻擊選擇羽毛、金幣或紅寶石行軍加速。"
+          },
+          "open_settings": {
+            "label": "開啟設定",
+            "description": "在自動化頁面，選擇自動可汗卡片上的設定按鈕。"
+          },
+          "attack_from": {
+            "description": "選擇大帝國的主城或前哨站，作為可汗營地攻擊的出兵點。",
+            "label": "從何處出兵",
+            "recommendation": "有進攻軍隊時，優先使用所在前哨站。"
+          },
+          "camp_attack_preset": {
+            "description": "選擇已儲存的攻擊預設，用於日常可汗營地攻擊。",
+            "label": "營地攻擊預設",
+            "recommendation": "先建立日常可汗攻擊預設。"
+          },
+          "defend_at": {
+            "description": "可汗反擊在此處顯示的大帝國主城防禦；此欄位為唯讀。",
+            "label": "防守地點"
+          },
+          "main_defense_preset": {
+            "description": "選擇已儲存的防禦預設，在反擊前重新套用到主城。",
+            "label": "主城防禦預設",
+            "recommendation": "建立日常可汗防禦預設，並準備相應兵力與工具。"
+          }
+        },
+        "image": {
+          "alt": "自動可汗城堡、預設和行軍設定示意",
+          "caption": "啟用連續攻擊前，準備好兩套預設與主城防禦。"
+        },
+        "title": "選擇城堡、預設和行軍方式"
+      },
+      "protection": {
+        "image": {
+          "alt": "自動可汗主城城牆保護示意",
+          "caption": "僅從主城出兵攻擊時，城牆保護才適用。"
+        },
+        "items": {
+          "offensive_threshold": {
+            "description": "城牆上的進攻兵種達到此數量時，觸發主城保護。",
+            "label": "城牆進攻兵力門檻",
+            "recommendation": "城牆上的進攻兵力1,000。"
+          },
+          "outpost_source": {
+            "description": "從前哨站出兵且主城另外防禦時，此城牆保護會停用。",
+            "label": "出兵點為前哨站"
+          },
+          "protect_offense": {
+            "description": "從主城出兵時，如果過多進攻兵力將被用於守牆，就開啟城門並暫停可汗。",
+            "label": "保護主城城牆上的進攻兵力",
+            "recommendation": "從主城出兵時開啟。"
+          }
+        },
+        "title": "保護主城城牆"
+      },
+      "rage": {
+        "image": {
+          "alt": "自動可汗怒氣與攻擊許可示意",
+          "caption": "限時怒氣積分增益與怒氣旗幟是不同效果。"
+        },
+        "items": {
+          "lock_automatic_attacks": {
+            "description": "停止新的營地攻擊，同時繼續處理怒氣、冷卻與防禦。",
+            "label": "鎖定自動可汗攻擊",
+            "recommendation": "日常營地攻擊建議關閉。"
+          },
+          "max_rage_chain": {
+            "description": "限制目前活動可接受的反擊次數，達到上限後停止新的營地攻擊；0代表取消上限。",
+            "label": "最大怒氣連擊數",
+            "recommendation": "不需要反擊次數上限時設為0。"
+          },
+          "rage_booster": {
+            "description": "只有限時怒氣積分增益生效時，才允許新的自動營地攻擊。",
+            "label": "要求怒氣積分增益",
+            "recommendation": "除非只想在增益期間攻擊，否則關閉。"
+          },
+          "rage_continues": {
+            "description": "怒氣連擊上限不會停止滿怒反擊觸發、冷卻處理或防禦恢復。",
+            "label": "怒氣處理繼續"
+          },
+          "trigger_full_rage": {
+            "description": "怒氣全滿時觸發可汗反擊。",
+            "label": "滿怒時觸發可汗",
+            "recommendation": "主城已準備好防禦時開啟。"
+          }
+        },
+        "title": "設定怒氣和攻擊許可"
+      }
+    },
+    "feature": {
+      "description": "自動可汗會攻擊可汗營地、清除冷卻、在怒氣全滿時觸發反擊，並維持主城防禦。",
+      "expectation": "達到設定限制或資源不足時會暫停新的營地攻擊並保護主城；來襲的玩家攻擊由自動避兵處理。",
+      "name": "自動可汗",
+      "summary": "連續攻擊可汗營地，並在主城抵禦反擊"
+    },
+    "recommendationIntro": "建議值適用於自動可汗的日常使用，僅供參考，不會變更已儲存的設定。"
+  },
+  "autoBeri": {
+    "feature": {
+      "description": "自動貝里蒙德依所選攻擊預設的兵種比例，為你擁有的貝里蒙德營地補充部隊，之後可攻擊高塔、補足工具，並以已確認的戰利品建造。",
+      "expectation": "運輸會等待營地與供應城堡的最新庫存、已回報的容量，以及前一批運兵完成；若供應庫存不足，可送出較少部隊，而缺少必要兵種時則暫停補充。",
+      "name": "自動貝里蒙德世界",
+      "summary": "補給並管理你的貝里蒙德營地"
+    },
+    "recommendationIntro": "建議選項描述自動貝里蒙德的一般使用方式，僅供參考，不會變更已儲存的設定。",
+    "steps": {
+      "builder": {
+        "image": {
+          "alt": "可選營地建造設定示意圖",
+          "caption": "內建與已儲存目標、擷取模式、5級馬廄、木材和石材保留量，以及七種加速時長的範例。"
+        },
+        "items": {
+          "allow_demolition": {
+            "description": "允許清除位於指定目標、無法搬移或存放的非管理建築。",
+            "label": "允許拆除",
+            "recommendation": "檢查目標中將清除的項目以前，建議保持關閉。"
+          },
+          "allow_premium_costs": {
+            "description": "允許符合條件且需花費高級貨幣的建造步驟。",
+            "label": "允許高級貨幣費用",
+            "recommendation": "除非你有意以高級貨幣建造，否則建議關閉。"
+          },
+          "auto_beri_builder_lane": {
+            "description": "使用確認已返回的戰利品建造或升級目前的貝里蒙德營地目標，不從其他王國運入資源。",
+            "label": "自動貝里蒙德建造流程",
+            "recommendation": "檢查支出許可後，為日常營地建造開啟此選項。"
+          },
+          "camp_resource_reserves": {
+            "description": "讓所選數量的木材與石材不投入營地建造。",
+            "label": "營地資源預留量",
+            "recommendation": "若可使用剩餘資源，木材設為0，石材設為0。"
+          },
+          "construction_time_skip_reserves": {
+            "description": "分別設定要保留的1分鐘、5分鐘、10分鐘、30分鐘、1小時、5小時及24小時加速道具數量。",
+            "label": "建造時間跳過道具預留量",
+            "recommendation": "短時間加速各保留0個；將1、5及24小時的庫存留給其他活動。"
+          },
+          "optional_custom_camp_target": {
+            "description": "為必要建築擷取「功能」，為不含裝飾的建築位置擷取「配置」，為所有支援細節擷取「精確」。",
+            "label": "可選的自訂營地目標",
+            "recommendation": "除非需要已檢查的自訂目標，否則使用內建目標。"
+          },
+          "stable_target": {
+            "description": "為內建目標選擇1至5級的陣營馬廄。",
+            "label": "馬廄目標",
+            "recommendation": "資源充足時，日常活動建造建議5級。"
+          },
+          "use_construction_time_skips": {
+            "description": "保留所選的建造加速道具存量，同時加快已確認的營地建造。",
+            "label": "使用建造時間跳過道具",
+            "recommendation": "加速道具充足時，日常建造建議開啟。"
+          },
+          "keep_skip_10m": {
+            "description": "保留此數量的10m建造加速道具；日常使用將保留量設為0。",
+            "label": "保留10m加速道具"
+          },
+          "keep_skip_1h": {
+            "description": "為其他活動保留此數量的1h建造加速道具。",
+            "label": "保留1h加速道具"
+          },
+          "keep_skip_1m": {
+            "description": "保留此數量的1m建造加速道具；日常使用將保留量設為0。",
+            "label": "保留1m加速道具"
+          },
+          "keep_skip_24h": {
+            "description": "為其他活動保留此數量的24h建造加速道具。",
+            "label": "保留24h加速道具"
+          },
+          "keep_skip_30m": {
+            "description": "保留此數量的30m建造加速道具；日常使用將保留量設為0。",
+            "label": "保留30m加速道具"
+          },
+          "keep_skip_5h": {
+            "description": "為其他活動保留此數量的5h建造加速道具。",
+            "label": "保留5h加速道具"
+          },
+          "keep_skip_5m": {
+            "description": "保留此數量的5m建造加速道具；日常使用將保留量設為0。",
+            "label": "保留5m加速道具"
+          },
+          "saved_targets": {
+            "description": "擷取會立即儲存並啟用已檢查的自訂目標；選擇另一個已儲存目標也會立即啟用。",
+            "label": "已儲存的自訂目標"
+          },
+          "stone_reserve": {
+            "description": "這部分營地石材不會用於建造；可使用剩餘資源時設為0。",
+            "label": "石材保留量"
+          },
+          "use_built_in_default": {
+            "description": "立即切換回內建目標，同時保留已儲存的自訂目標。",
+            "label": "使用內建預設目標"
+          },
+          "wood_reserve": {
+            "description": "這部分營地木材不會用於建造；可使用剩餘資源時設為0。",
+            "label": "木材保留量"
+          }
+        },
+        "title": "選擇可選的營地建造設定"
+      },
+      "readiness": {
+        "image": {
+          "alt": "高塔攻擊準備設定示意圖",
+          "caption": "不表示真實增益或客戶資料的增益條件與預設編隊。"
+        },
+        "items": {
+          "attack_preset_loadout": {
+            "description": "啟用攻擊之前，檢查所選預設的波次、部隊和工具。",
+            "label": "攻擊預設編隊",
+            "recommendation": "在供應城堡與營地保留足夠的所選部隊及工具，以維持平常的攻擊節奏。"
+          },
+          "only_run_with_a_gallantry_booster": {
+            "description": "在運輸、購買工具、準備營地、攻擊高塔或建造以前，要求勇氣增益處於生效狀態。",
+            "label": "僅在勇氣增益生效時執行",
+            "recommendation": "如果希望所有自動貝里蒙德流程都受增益條件限制，建議開啟。"
+          }
+        },
+        "title": "設定高塔攻擊準備條件"
+      },
+      "save": {
+        "image": {
+          "alt": "儲存與啟用設定示意圖",
+          "caption": "不顯示真實帳號的設定確認清單、開關和可選行事曆。"
+        },
+        "items": {
+          "automation_switch": {
+            "description": "確認營地、供應部隊、預設與可選花費設定後，從自動化卡片開啟自動貝里蒙德世界。",
+            "label": "自動化開關",
+            "recommendation": "完成設定後開啟。"
+          },
+          "calendar": {
+            "description": "持續運作時讓行事曆保持關閉；若需要時段限制，請設定平常時段並儲存排程。",
+            "label": "行事曆",
+            "recommendation": "活動期間持續運作時，建議關閉。"
+          },
+          "save_settings": {
+            "description": "啟用自動化以前，儲存預設、供應城堡、運輸頻率、攻擊限制、工具及可選建造設定。",
+            "label": "儲存設定"
+          }
+        },
+        "title": "儲存並啟用"
+      },
+      "setup": {
+        "image": {
+          "alt": "攻擊與補給來源設定示意圖",
+          "caption": "已儲存的攻擊預設、大帝國供應城堡、旅行羽毛、攻擊檢查及每日限制。"
+        },
+        "items": {
+          "attack_check_interval": {
+            "description": "設定自動貝里蒙德檢查能否再次攻擊高塔的頻率。",
+            "label": "攻擊檢查間隔",
+            "recommendation": "除非需要減少檢查次數，否則保留一般的30秒間隔。"
+          },
+          "attack_preset": {
+            "description": "選擇已儲存的貝里蒙德攻擊編隊；自動貝里蒙德會將其兵種比例用於運輸與高塔攻擊。",
+            "label": "攻擊預設",
+            "recommendation": "先建立並選擇你平常使用的貝里蒙德預設。"
+          },
+          "daily_normal_attack_limit": {
+            "description": "帳號範圍的每日一般攻擊次數達到上限時，停止新的自動貝里蒙德高塔攻擊；0代表取消這項額外限制。",
+            "label": "每日一般攻擊上限",
+            "recommendation": "除非使用帳號範圍的上限，否則建議設為0。"
+          },
+          "horse_travel_boost": {
+            "description": "為高塔攻擊選擇羽毛、金幣或紅寶石旅行方式。",
+            "label": "馬匹旅行加速",
+            "recommendation": "選用旅行羽毛，可快速移動而不必選擇紅寶石旅行。"
+          },
+          "open_settings": {
+            "description": "在自動化頁面開啟自動貝里蒙德世界卡片的設定。",
+            "label": "開啟設定"
+          },
+          "source_castle": {
+            "description": "選擇供應這些部隊的大帝國城堡或前哨站。",
+            "label": "供應城堡",
+            "recommendation": "選擇駐有你攻擊部隊的城堡。"
+          }
+        },
+        "title": "選擇攻擊與補給來源"
+      },
+      "tools": {
+        "image": {
+          "alt": "營地工具設定示意圖",
+          "caption": "三種工具的最低數量，以及明確為虛構的營地庫存。"
+        },
+        "items": {
+          "battering_rams_minimum": {
+            "description": "依相同規則將駐營攻城槌補充至此數量。",
+            "label": "攻城槌最低數量",
+            "recommendation": "依照平常預設的消耗量設定。"
+          },
+          "mantlets_minimum": {
+            "description": "依相同規則將駐營擋板補充至此數量。",
+            "label": "擋板最低數量",
+            "recommendation": "依照平常預設的消耗量設定。"
+          },
+          "scaling_ladders_minimum": {
+            "description": "使用符合條件的金幣報價，將營地梯子補充至此數量；0代表不管理。",
+            "label": "攀牆梯最低數量",
+            "recommendation": "依照平常預設和攻擊頻率所需數量設定。"
+          }
+        },
+        "title": "維持營地工具"
+      },
+      "transfers": {
+        "image": {
+          "alt": "按比例運輸部隊設定示意圖",
+          "caption": "虛構的2比1預設比例、營地庫存、剩餘容量及單一兵種的部分運送；數值只是範例，並非已儲存的預設值。"
+        },
+        "items": {
+          "check_interval": {
+            "description": "設定自動貝里蒙德重新取得運輸剩餘容量與兩座城堡庫存的頻率。",
+            "label": "檢查間隔",
+            "recommendation": "保留一般的30秒間隔。"
+          },
+          "food_only": {
+            "description": "只能運送消耗食物的預設部隊；不支援的單位或無法判定的兵種家族會顯示原因並暫停。",
+            "label": "僅運送消耗食物的部隊"
+          },
+          "minimum_free_capacity": {
+            "description": "只有已回報的剩餘容量達到此門檻時才開始運輸；單次按比例計算的運量可以更少。",
+            "label": "最低剩餘容量",
+            "recommendation": "日常依比例補充時，建議保留1個部隊空位。"
+          },
+          "owned_berimond_camp": {
+            "description": "自動貝里蒙德會自動找到你擁有的貝里蒙德營地，因此無須輸入營地ID。",
+            "label": "擁有的貝里蒙德營地"
+          },
+          "partial_donor": {
+            "description": "如果供應城堡有部分所需兵種，自動貝里蒙德會少量運送；如果完全沒有，則等待而不改送其他兵種。",
+            "label": "部分供應庫存"
+          },
+          "pending_transfer": {
+            "description": "自動貝里蒙德會等每批運兵抵達並更新營地庫存後，才重新計算預設比例。",
+            "label": "待完成的運輸"
+          },
+          "preset_troop_mix": {
+            "description": "自動貝里蒙德會加總所選預設各波次與庭院中重複的部隊欄位，然後每次補充一種不足的兵種。",
+            "label": "預設兵種比例"
+          },
+          "troop_transport_skip": {
+            "description": "啟用運輸時間跳過時，選擇使用道具的時長。",
+            "label": "部隊運輸跳過道具",
+            "recommendation": "日常已確認的運輸建議使用1小時加速道具。"
+          },
+          "use_troop_transport_time_skips": {
+            "description": "將所選跳過道具套用到仍在途中的已確認運輸。",
+            "label": "使用部隊運輸時間跳過道具",
+            "recommendation": "加速道具庫存允許時，日常營地補給建議開啟。"
+          }
+        },
+        "title": "設定按比例運輸部隊"
+      }
+    }
+  },
+  "autoStorm": {
+    "feature": {
+      "description": "自動風暴可開啟並建設風暴城堡、攻打堡壘與資源島、調入部隊，以及購買指定的露娜獎勵。",
+      "expectation": "每項作業都依據最新遊戲資料與您儲存的許可執行；高級建造、攻擊和購買均受您啟用的選項限制。",
+      "name": "自動風暴",
+      "summary": "管理風暴城堡、攻擊與獎勵"
+    },
+    "recommendationIntro": "建議選項適用於日常使用自動風暴，僅供參考，不會修改已儲存的設定。",
+    "steps": {
+      "castle": {
+        "image": {
+          "alt": "風暴城堡開啟與目標擷取的示意畫面",
+          "caption": "入門城堡選擇、擷取模式及可選的目標啟用；未顯示真實購買或帳號。"
+        },
+        "items": {
+          "automatic_open": {
+            "description": "風暴尚未開啟時，選擇可用的官方入門城堡，並在允許解鎖前查看畫面顯示的價格。",
+            "label": "自動開啟風暴城堡",
+            "recommendation": "若您希望自動風暴在確認價格後開啟常用的入門城堡，建議開啟。"
+          },
+          "blueprint": {
+            "description": "擷取的目標會立即儲存並啟用，而「暫停目標」會停止同步，但保留已儲存的目標。",
+            "label": "已儲存目標",
+            "recommendation": "日常建造建議維持已確認的功能目標啟用。"
+          },
+          "capture_castle": {
+            "description": "擷取建造目標前，先選擇目前的風暴城堡。",
+            "label": "風暴城堡",
+            "recommendation": "擷取您打算管理的城堡。"
+          },
+          "combat_only": {
+            "description": "攻打堡壘與資源島不需要已擷取的建造目標。",
+            "label": "無目標時進行戰鬥"
+          },
+          "decoration_preset": {
+            "description": "可選擇在建造完成後套用指定的裝飾預設。",
+            "label": "建造後的裝飾預設",
+            "recommendation": "除非您需要另外的裝飾配置，否則請留空。"
+          },
+          "exact": {
+            "description": "儲存所有支援的目標細節，以進行精確複製。",
+            "label": "精確擷取",
+            "recommendation": "僅在檢查完整目標後使用。"
+          },
+          "functional": {
+            "description": "儲存基本風暴功能的目標，不複製每棟建築的位置。",
+            "label": "功能擷取",
+            "recommendation": "日常維護建議使用「功能」。"
+          },
+          "layout": {
+            "description": "儲存建築類型與位置，不包含裝飾。",
+            "label": "配置擷取",
+            "recommendation": "僅在建築位置重要時使用。"
+          },
+          "open_settings": {
+            "description": "從自動化卡片開啟自動風暴設定。",
+            "label": "開啟設定"
+          },
+          "starter_castle": {
+            "description": "選擇下一個尚未開啟的賽季所用、目前可選的官方風暴入門城堡。",
+            "label": "要開啟的城堡",
+            "recommendation": "查看價格後，選擇負擔得起的常用入門城堡。"
+          }
+        },
+        "title": "開啟並擷取風暴城堡"
+      },
+      "combat": {
+        "image": {
+          "alt": "自動風暴堡壘與資源島攻擊設定的示意畫面",
+          "caption": "海藍寶石資源島、堡壘等級、目標順序及佔領守軍的範例。"
+        },
+        "items": {
+          "defenders": {
+            "description": "選擇留守已佔領資源島的部隊種類與數量；清單留空時，確認勝利後會留下一名存活者。",
+            "label": "資源島防守部隊",
+            "recommendation": "若一名存活者不足以滿足您的計畫，請選擇守軍。"
+          },
+          "fort_preset": {
+            "description": "選擇用於攻打堡壘的已儲存部隊與工具配置。",
+            "label": "堡壘攻擊預設",
+            "recommendation": "使用您日常攻打堡壘的預設。"
+          },
+          "forts": {
+            "description": "允許攻打所選的官方堡壘等級，範圍為 40 至 80。",
+            "label": "風暴堡壘",
+            "recommendation": "對所選預設能穩定擊敗的等級，建議開啟。"
+          },
+          "horse": {
+            "description": "為風暴攻擊選擇羽毛、金幣或紅寶石旅行方式。",
+            "label": "馬匹旅行加速",
+            "recommendation": "建議使用旅行羽毛加快行程，且不選擇紅寶石旅行。"
+          },
+          "island_preset": {
+            "description": "選擇用於攻打資源島的已儲存部隊與工具配置。",
+            "label": "資源島攻擊預設",
+            "recommendation": "使用您日常攻打資源島的預設。"
+          },
+          "island_resources": {
+            "description": "選擇可攻打的木材、石材或海藍寶石資源島。",
+            "label": "資源島資源",
+            "recommendation": "採集海藍寶石時，請選擇海藍寶石。"
+          },
+          "island_sizes": {
+            "description": "為所選資源島選擇大型、小型或兩種尺寸。",
+            "label": "資源島尺寸",
+            "recommendation": "日常採集海藍寶石時，建議選擇大型與小型。"
+          },
+          "islands": {
+            "description": "允許佔領符合所選資源與尺寸的資源島。",
+            "label": "資源島",
+            "recommendation": "若要從大型與小型資源島取得海藍寶石，建議開啟。"
+          },
+          "minimum_attacks": {
+            "description": "只攻打剩餘攻擊次數至少達到此數值的堡壘。",
+            "label": "最低剩餘攻擊次數",
+            "recommendation": "設為 0 可允許攻打任何符合條件的堡壘。"
+          },
+          "priority": {
+            "description": "排列已啟用的資源島與堡壘目標群組；每組內先攻擊最近的合格目標。",
+            "label": "攻擊目標優先順序",
+            "recommendation": "採集海藍寶石時，建議依大型資源島、小型資源島，再依堡壘等級 80 至 40 排序。"
+          }
+        },
+        "title": "選擇堡壘與資源島"
+      },
+      "construction": {
+        "image": {
+          "alt": "自動風暴建造與保留量設定的示意畫面",
+          "caption": "資源運輸、支出許可、保留量及港口等級的控制項範例。"
+        },
+        "items": {
+          "demolition": {
+            "description": "允許為精確目標拆除無法移動或存放的建築。",
+            "label": "允許拆除",
+            "recommendation": "除非要依據確認過的配置重建，否則建議關閉。"
+          },
+          "donor_reserves": {
+            "description": "運輸資源前，為每座供應城堡保留所選數量的木材、石材與海藍寶石。",
+            "label": "供應城堡保留量",
+            "recommendation": "保留日常建造所需的木材與石材；不使用海藍寶石時設為 0。"
+          },
+          "harbor_level": {
+            "description": "選擇港口等級 1、2 或 3；等級 2 與 3 會使用高級建造路徑。",
+            "label": "港口目標等級",
+            "recommendation": "除非計畫進行高級升級，否則建議等級 1。"
+          },
+          "harbor": {
+            "description": "即使擷取的目標不同，也將港口維持在所選等級。",
+            "label": "升級港口",
+            "recommendation": "日常使用建議開啟並選擇等級 1。"
+          },
+          "premium": {
+            "description": "允許符合條件的建造步驟花費高級貨幣。",
+            "label": "允許高級費用",
+            "recommendation": "除非計畫使用高級建造，否則建議關閉。"
+          },
+          "resource_transport": {
+            "description": "允許從供應城堡運送已確認的建造所缺資源。",
+            "label": "運送缺少的資源",
+            "recommendation": "日常建造建議開啟。"
+          },
+          "skip_reserves": {
+            "description": "為建造與運輸保留所選數量的1分鐘、5分鐘、10分鐘、30分鐘、1小時、5小時及24小時道具。",
+            "label": "保留的時間加速道具",
+            "recommendation": "短時間加速若無其他用途可各留 0 個；1 小時、5 小時及 24 小時則保留供其他活動使用的存量。"
+          },
+          "storm_reserves": {
+            "description": "所選數量的木材、石材及海藍寶石不會用於建造。",
+            "label": "風暴城堡支出保留量",
+            "recommendation": "若可使用剩餘資源，木材0、石材0；海藍寶石依計畫的獎勵預算設定。"
+          },
+          "time_skips": {
+            "description": "在保留所選存量的同時，將合格加速道具用於建造、資源運輸及部隊運輸。",
+            "label": "使用建造與運輸加速道具",
+            "recommendation": "若想加快日常建造，建議開啟。"
+          }
+        },
+        "title": "設定建造與資源保護"
+      },
+      "luna": {
+        "image": {
+          "alt": "自動風暴露娜獎勵設定的示意畫面",
+          "caption": "海藍寶石保留量、限量購買目標、可重複獎勵與優先順序。"
+        },
+        "items": {
+          "cost_cap": {
+            "description": "查看遊戲回報的各項獎勵價格與已購買上限。",
+            "label": "價格與已購買上限",
+            "recommendation": "啟用前請查看這兩項唯讀數值。"
+          },
+          "keep_aqua": {
+            "description": "將此數量的海藍寶石排除於露娜購買之外。",
+            "label": "保留海藍寶石",
+            "recommendation": "若可用所有剩餘海藍寶石購買獎勵，設為 0；否則保留計畫所需數量。"
+          },
+          "priority": {
+            "description": "商店會先考慮數字較小的購買目標。",
+            "label": "優先順序",
+            "recommendation": "依偏好排列1、2、3，並將限量目標放在無限量獎勵之前。"
+          },
+          "search": {
+            "description": "設定購買前，先依名稱搜尋官方露娜獎勵。",
+            "label": "尋找露娜獎勵",
+            "recommendation": "搜尋您真正想要的獎勵。"
+          },
+          "target_total": {
+            "description": "設定限量獎勵希望累計購買的總數。",
+            "label": "目標總數",
+            "recommendation": "只設定您打算購買的數量。"
+          },
+          "unlimited": {
+            "description": "只要保留量與商店上限允許，就繼續購買符合條件的可重複獎勵。",
+            "label": "無限量",
+            "recommendation": "僅對日常需要的可重複獎勵開啟。"
+          },
+          "use": {
+            "description": "選取獎勵，使其符合自動購買條件。",
+            "label": "使用獎勵",
+            "recommendation": "只選取想要的獎勵。"
+          }
+        },
+        "title": "選擇露娜海藍寶石獎勵"
+      },
+      "save": {
+        "image": {
+          "alt": "自動風暴儲存與啟用設定的示意畫面",
+          "caption": "每日攻擊上限、策略檢查、唯讀地圖更新及自動化開關。"
+        },
+        "items": {
+          "daily_limit": {
+            "description": "當全帳號每日普通攻擊次數達到此值時停止新的自動風暴攻擊；0 表示不設定這項額外上限。",
+            "label": "每日普通攻擊上限",
+            "recommendation": "除非您需要全帳號上限，否則建議設為 0。"
+          },
+          "enable": {
+            "description": "已儲存的選項準備妥當後，從自動化卡片啟用自動風暴。",
+            "label": "自動化開關",
+            "recommendation": "完成設定後再開啟。"
+          },
+          "map_refresh": {
+            "description": "查看權威資料所示的風暴地圖更新間隔。",
+            "label": "地圖更新間隔",
+            "recommendation": "唯讀間隔為 2 小時；變更後請等待新的掃描。"
+          },
+          "policy_check": {
+            "description": "設定自動風暴檢查設定與可執行作業的頻率。",
+            "label": "策略檢查間隔",
+            "recommendation": "維持日常使用的 30 秒間隔。"
+          },
+          "save": {
+            "description": "啟用自動化前，先儲存城堡、建造、戰鬥、部隊調入與露娜的選項。",
+            "label": "儲存設定",
+            "recommendation": "確認所有支出許可後再儲存。"
+          }
+        },
+        "title": "儲存並啟用自動風暴"
+      },
+      "troops": {
+        "image": {
+          "alt": "自動風暴部隊調入與唯讀估算的示意畫面",
+          "caption": "供應城堡順序、保留 1,000 名部隊及唯讀容量估算。"
+        },
+        "items": {
+          "attack_history": {
+            "description": "查看伺服器重置以來已確認的風暴攻擊數除以24的結果，而非滾動24小時平均值。",
+            "label": "重置後平均攻擊次數",
+            "recommendation": "變更調入需求前，請查看這項唯讀估算。"
+          },
+          "committed_cap": {
+            "description": "查看自動計算的上限，其中包含駐紮、行軍、運送中與返程部隊。",
+            "label": "風暴已占用部隊上限",
+            "recommendation": "增加調入前，請查看這項唯讀上限。"
+          },
+          "donors": {
+            "description": "依畫面顯示的順序選擇供應城堡；庫存不足時也可提供較少的運送量。",
+            "label": "供應城堡",
+            "recommendation": "依偏好順序選擇日常供應部隊的城堡。"
+          },
+          "import": {
+            "description": "從所選供應城堡將缺少的攻擊部隊或指定守軍調入風暴。",
+            "label": "調入缺少的部隊",
+            "recommendation": "若風暴城堡需定期補充部隊，建議開啟。"
+          },
+          "map_coverage": {
+            "description": "依據畫面顯示的目標前，先查看地圖掃描涵蓋範圍。",
+            "label": "地圖涵蓋範圍",
+            "recommendation": "若目標缺失，請等待新的掃描結果。"
+          },
+          "minimum_kept": {
+            "description": "發動攻擊後，至少在風暴保留此數量的部隊，同時維持已啟用預設的部隊組合。",
+            "label": "出征後最低保留部隊數",
+            "recommendation": "日常保留量可設為 1,000 名部隊，並依實際兵力調整。"
+          },
+          "preset_average": {
+            "description": "查看已啟用攻擊預設平均需要的部隊數，包含所選資源島守軍。",
+            "label": "已啟用預設平均值",
+            "recommendation": "請將這項唯讀估算與現有兵力比較。"
+          }
+        },
+        "title": "調入並監看風暴部隊"
+      }
+    }
+  }
+}

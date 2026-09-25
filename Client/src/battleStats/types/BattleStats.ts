@@ -32,6 +32,8 @@ export interface BattleMetrics {
 }
 
 export interface BattleEffect {
+  /** Client presentation marker for retained legacy resolved text, not an official producer field. */
+  originalText?: boolean;
   definitionId?: number;
   effectTypeId?: number;
   argumentId?: number;

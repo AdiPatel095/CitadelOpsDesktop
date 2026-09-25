@@ -1,6 +1,7 @@
 package Equipment
 
 import (
+	"CitadelDesktop/Server/Localization"
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
@@ -49,7 +50,7 @@ func BuildReconfigurationTransition(
 			continue
 		}
 		if existing, duplicate := gemsByEquipment[gem.EquipmentInstanceID]; duplicate && existing.ID != gem.ID {
-			return ReconfigurationTransition{}, fmt.Errorf("equipment %d has more than one socketed gem", gem.EquipmentInstanceID)
+			return ReconfigurationTransition{}, Localization.WithError(fmt.Errorf("equipment %d has more than one socketed gem", gem.EquipmentInstanceID), Localization.New("server.equipment.equipment_p_has_more.5e522f69", "equipment {p0} has more than one socketed gem", Localization.Params{"p0": fmt.Sprintf("%d", gem.EquipmentInstanceID)}))
 		}
 		gemsByEquipment[gem.EquipmentInstanceID] = gem
 	}
@@ -65,7 +66,7 @@ func BuildReconfigurationTransition(
 		}
 		gem, found := gameState.Inventory.Gems[gemID]
 		if !found {
-			return ReconfigurationTransition{}, fmt.Errorf("gem %d is not in current state", gemID)
+			return ReconfigurationTransition{}, Localization.WithError(fmt.Errorf("gem %d is not in current state", gemID), Localization.New("server.equipment.gem_p_is_not.8a3a97b2", "gem {p0} is not in current state", Localization.Params{"p0": fmt.Sprintf("%d", gemID)}))
 		}
 		if gem.EquipmentInstanceID == destinationEquipmentID {
 			transition.AlreadyAttached[slot] = true
@@ -85,7 +86,7 @@ func BuildReconfigurationTransition(
 	for _, gem := range transition.GemsToDetach {
 		parent, found := gameState.Inventory.Equipment[gem.EquipmentInstanceID]
 		if !found {
-			return ReconfigurationTransition{}, fmt.Errorf("cannot detach gem %d from missing equipment %d", gem.ID, gem.EquipmentInstanceID)
+			return ReconfigurationTransition{}, Localization.WithError(fmt.Errorf("cannot detach gem %d from missing equipment %d", gem.ID, gem.EquipmentInstanceID), Localization.New("server.equipment.cannot_detach_gem_p.f23f6ca4", "cannot detach gem {p0} from missing equipment {p1}", Localization.Params{"p0": fmt.Sprintf("%d", gem.ID), "p1": fmt.Sprintf("%d", gem.EquipmentInstanceID)}))
 		}
 		parentSlot := strconv.Itoa(parent.Slot)
 		transition.DetachCarrierCount[parent.Slot]++
@@ -112,14 +113,14 @@ func QuoteReconfiguration(gameData *GameData.Store, transition ReconfigurationTr
 				return ExtractionQuote{}, err
 			}
 			if quote.MaximumRubySpend > math.MaxInt64-cost {
-				return ExtractionQuote{}, fmt.Errorf("normal gem removal cost exceeds supported ruby range")
+				return ExtractionQuote{}, Localization.WithError(fmt.Errorf("normal gem removal cost exceeds supported ruby range"), Localization.New("server.equipment.normal_gem_removal_cost.2f9ff7f1", "normal gem removal cost exceeds supported ruby range", nil))
 			}
 			quote.RubyExtractionCount++
 			quote.MaximumRubySpend += cost
 		case LoadoutFamilyRelic:
 			quote.RelicExtractionCount++
 		default:
-			return ExtractionQuote{}, fmt.Errorf("gem %d has no verified ordinary or relic classification", gem.ID)
+			return ExtractionQuote{}, Localization.WithError(fmt.Errorf("gem %d has no verified ordinary or relic classification", gem.ID), Localization.New("server.equipment.gem_p_has_no.1fe60e7b", "gem {p0} has no verified ordinary or relic classification", Localization.Params{"p0": fmt.Sprintf("%d", gem.ID)}))
 		}
 	}
 	return quote, nil
@@ -127,42 +128,42 @@ func QuoteReconfiguration(gameData *GameData.Store, transition ReconfigurationTr
 
 func NormalGemRemovalCost(gameData *GameData.Store, gem State.GemInstance) (int64, error) {
 	if gameData == nil {
-		return 0, fmt.Errorf("official game data is unavailable for normal gem %d removal cost", gem.ID)
+		return 0, Localization.WithError(fmt.Errorf("official game data is unavailable for normal gem %d removal cost", gem.ID), Localization.New("server.equipment.official_game_data_is.f36f8830", "official game data is unavailable for normal gem {p0} removal cost", Localization.Params{"p0": fmt.Sprintf("%d", gem.ID)}))
 	}
 	if GemFamily(gem) != LoadoutFamilyOrdinary || gem.DefinitionID <= 0 {
-		return 0, fmt.Errorf("normal gem %d has no valid catalog definition", gem.ID)
+		return 0, Localization.WithError(fmt.Errorf("normal gem %d has no valid catalog definition", gem.ID), Localization.New("server.equipment.normal_gem_p_has.d7b18db3", "normal gem {p0} has no valid catalog definition", Localization.Params{"p0": fmt.Sprintf("%d", gem.ID)}))
 	}
 	gems, err := gameData.Catalog("gems")
 	if err != nil {
-		return 0, fmt.Errorf("official gems catalog is unavailable: %w", err)
+		return 0, Localization.WithError(fmt.Errorf("official gems catalog is unavailable: %w", err), Localization.ErrorContext(Localization.New("server.equipment.official_gems_catalog_is.6eb372f6", "official gems catalog is unavailable", nil), err))
 	}
 	rawGem, found := gems.Find(strconv.FormatInt(int64(gem.DefinitionID), 10))
 	if !found {
-		return 0, fmt.Errorf("normal gem definition %d is missing from official game data", gem.DefinitionID)
+		return 0, Localization.WithError(fmt.Errorf("normal gem definition %d is missing from official game data", gem.DefinitionID), Localization.New("server.equipment.normal_gem_definition_p.03b787fc", "normal gem definition {p0} is missing from official game data", Localization.Params{"p0": fmt.Sprintf("%d", gem.DefinitionID)}))
 	}
 	gemRecord, err := GameData.DecodeRecord(rawGem)
 	if err != nil {
-		return 0, fmt.Errorf("decode normal gem definition %d: %w", gem.DefinitionID, err)
+		return 0, Localization.WithError(fmt.Errorf("decode normal gem definition %d: %w", gem.DefinitionID, err), Localization.ErrorContext(Localization.New("server.equipment.decode_normal_gem_definition.99e88c2f", "decode normal gem definition {p0}", Localization.Params{"p0": fmt.Sprintf("%d", gem.DefinitionID)}), err))
 	}
 	levelID, found := gemRecord.Int64("gemLevelID")
 	if !found || levelID < 0 {
-		return 0, fmt.Errorf("normal gem definition %d has no valid gemLevelID", gem.DefinitionID)
+		return 0, Localization.WithError(fmt.Errorf("normal gem definition %d has no valid gemLevelID", gem.DefinitionID), Localization.New("server.equipment.normal_gem_definition_p.3295e98f", "normal gem definition {p0} has no valid gemLevelID", Localization.Params{"p0": fmt.Sprintf("%d", gem.DefinitionID)}))
 	}
 	levels, err := gameData.Catalog("gemlevels")
 	if err != nil {
-		return 0, fmt.Errorf("official gemlevels catalog is unavailable: %w", err)
+		return 0, Localization.WithError(fmt.Errorf("official gemlevels catalog is unavailable: %w", err), Localization.ErrorContext(Localization.New("server.equipment.official_gemlevels_catalog_is.8b51c41c", "official gemlevels catalog is unavailable", nil), err))
 	}
 	rawLevel, found := levels.Find(strconv.FormatInt(levelID, 10))
 	if !found {
-		return 0, fmt.Errorf("gem level %d is missing from official game data", levelID)
+		return 0, Localization.WithError(fmt.Errorf("gem level %d is missing from official game data", levelID), Localization.New("server.equipment.gem_level_p_is.dd2f4ff7", "gem level {p0} is missing from official game data", Localization.Params{"p0": fmt.Sprintf("%d", levelID)}))
 	}
 	levelRecord, err := GameData.DecodeRecord(rawLevel)
 	if err != nil {
-		return 0, fmt.Errorf("decode gem level %d: %w", levelID, err)
+		return 0, Localization.WithError(fmt.Errorf("decode gem level %d: %w", levelID, err), Localization.ErrorContext(Localization.New("server.equipment.decode_gem_level_p.9a99bb6c", "decode gem level {p0}", Localization.Params{"p0": fmt.Sprintf("%d", levelID)}), err))
 	}
 	cost, found := levelRecord.Int64("removalCostC2")
 	if !found || cost < 0 {
-		return 0, fmt.Errorf("gem level %d has no valid non-negative removalCostC2", levelID)
+		return 0, Localization.WithError(fmt.Errorf("gem level %d has no valid non-negative removalCostC2", levelID), Localization.New("server.equipment.gem_level_p_has.94aaacc8", "gem level {p0} has no valid non-negative removalCostC2", Localization.Params{"p0": fmt.Sprintf("%d", levelID)}))
 	}
 	return cost, nil
 }

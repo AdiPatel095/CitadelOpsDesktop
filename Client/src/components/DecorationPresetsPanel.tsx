@@ -1,3 +1,5 @@
+import { useLocale as useStaticLocale } from "../i18n/LocaleContext";
+import { LocalizedText } from "../i18n/LocalizedText";
 import React, { useEffect, useMemo, useState } from 'react';
 import { Castle, Layers, Play, Save, Sparkles, Trash2 } from 'lucide-react';
 import { useCastleFocus } from '../context/CastleFocusContext';
@@ -23,6 +25,7 @@ interface DecorationPresetDocument {
 const EMPTY_PRESETS: NamedPreset[] = [];
 
 const DecorationPresetsPanel: React.FC = () => {
+  const { t: localizeStatic } = useStaticLocale();
   const { castle } = useCastleFocus();
   const { configuration, submitIntent, cancelOperation, updateConfiguration } = useCitadelAPI();
   const { decorations } = useMetadata();
@@ -167,7 +170,7 @@ const DecorationPresetsPanel: React.FC = () => {
         <div className="min-w-0">
           <div className="flex items-center gap-2 text-[10px] font-bold uppercase text-text-muted">
             <Castle className="h-3.5 w-3.5" strokeWidth={2.25} />
-            Focused castle
+            <LocalizedText messageKey="ui.components.decorationPresetsPanel.focused.castle.808b7d57" />
           </div>
           <div className="mt-1.5 flex min-h-[1.75rem] items-center">
             <CastleFocusHoverPopover
@@ -187,14 +190,14 @@ const DecorationPresetsPanel: React.FC = () => {
           <div className="min-w-0">
             <div className="flex items-center gap-2 text-[10px] font-bold uppercase text-text-muted">
               <Layers className="h-3.5 w-3.5" strokeWidth={2.25} />
-              Saved
+              <LocalizedText messageKey="ui.components.decorationPresetsPanel.saved.b5c120b3" />
             </div>
             <div className="mt-1.5 truncate text-sm font-semibold text-text-main">{presetCountLabel}</div>
           </div>
           <div className="min-w-0">
             <div className="flex items-center gap-2 text-[10px] font-bold uppercase text-text-muted">
               <Sparkles className="h-3.5 w-3.5" strokeWidth={2.25} />
-              Selected
+              <LocalizedText messageKey="ui.components.decorationPresetsPanel.selected.57fd7a0c" />
             </div>
             <div className="mt-1.5 truncate text-sm font-semibold text-text-main">{selectedPlacementLabel}</div>
           </div>
@@ -205,7 +208,7 @@ const DecorationPresetsPanel: React.FC = () => {
         <div className="min-w-0">
           <div className="mb-2 flex items-center gap-2 text-[10px] font-bold uppercase text-text-muted">
             <Save className="h-3.5 w-3.5" strokeWidth={2.25} />
-            Capture current layout
+            <LocalizedText messageKey="ui.components.decorationPresetsPanel.capture.current.layout.3c4df644" />
           </div>
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center 2xl:flex-col 2xl:items-stretch">
             <Input
@@ -214,7 +217,7 @@ const DecorationPresetsPanel: React.FC = () => {
               onKeyDown={(e) => {
                 if (e.key === 'Enter') handleSave();
               }}
-              placeholder="Preset name"
+              placeholder={localizeStatic("common.presetName")}
               className="flex-1"
             />
             <Button
@@ -223,20 +226,18 @@ const DecorationPresetsPanel: React.FC = () => {
               leftIcon={<Save className="h-4 w-4" strokeWidth={2.25} />}
               className="shrink-0 shadow-none hover:shadow-none"
             >
-              Save preset
-            </Button>
+              <LocalizedText messageKey="common.savePreset" /></Button>
           </div>
           {!canUseCastle && (
             <div className="mt-3 text-xs font-medium text-warning">
-              Castle focus required.
-            </div>
+              <LocalizedText messageKey="ui.components.decorationPresetsPanel.castle.focus.required.32b02b71" /></div>
           )}
         </div>
 
         <div className="min-w-0">
           <div className="mb-2 flex items-center gap-2 text-[10px] font-bold uppercase text-text-muted">
             <Layers className="h-3.5 w-3.5" strokeWidth={2.25} />
-            Saved layout
+            <LocalizedText messageKey="ui.components.decorationPresetsPanel.saved.layout.a9d44916" />
           </div>
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
             <Select
@@ -271,14 +272,12 @@ const DecorationPresetsPanel: React.FC = () => {
                 leftIcon={<Trash2 className="h-3.5 w-3.5" strokeWidth={2.25} />}
                 className="shadow-none hover:shadow-none"
               >
-                Delete
-              </Button>
+                <LocalizedText messageKey="game.delete" /></Button>
             </div>
           </div>
           {canUseCastle && !hasPresets && (
             <div className="mt-3 text-xs font-medium text-text-muted">
-              No saved presets for this castle.
-            </div>
+              <LocalizedText messageKey="ui.components.decorationPresetsPanel.no.saved.presets.for.this.castle.d6a709b5" /></div>
           )}
         </div>
       </div>

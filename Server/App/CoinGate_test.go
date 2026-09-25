@@ -395,6 +395,27 @@ func TestAttackCoinCostUsesConnectionGenerationRatherThanSessionStatusTimestamp(
 	}
 }
 
+func TestAttackCoinCostRejectsMalformedCommanderAndFormation(t *testing.T) {
+	for _, test := range []struct{ name, leader, waves string }{
+		{"missing", "", `[{"L":{"U":[[1,10]]}}]`},
+		{"null", `,"LID":null`, `[{"L":{"U":[[1,10]]}}]`},
+		{"negative", `,"LID":-1`, `[{"L":{"U":[[1,10]]}}]`},
+		{"string", `,"LID":"0"`, `[{"L":{"U":[[1,10]]}}]`},
+		{"fraction", `,"LID":0.5`, `[{"L":{"U":[[1,10]]}}]`},
+		{"boolean", `,"LID":false`, `[{"L":{"U":[[1,10]]}}]`},
+		{"empty waves", `,"LID":0`, `[]`},
+		{"empty formation", `,"LID":0`, `[{}]`},
+		{"negative amount", `,"LID":0`, `[{"L":{"U":[[1,-10]]}}]`},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			payload := json.RawMessage(`{"SX":0,"SY":0,"TX":50,"TY":0,"HBW":-1` + test.leader + `,"A":` + test.waves + `}`)
+			if _, err := attackCoinCost(coinGateInput(coinGateGameData(t), 1_000_000), payload); err == nil {
+				t.Fatal("malformed attack accepted")
+			}
+		})
+	}
+}
+
 func coinGateContext(operationID string) context.Context {
 	return Outbound.WithMetadata(context.Background(), Outbound.Metadata{OperationID: operationID})
 }

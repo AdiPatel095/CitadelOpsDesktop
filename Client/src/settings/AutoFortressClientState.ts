@@ -14,7 +14,6 @@ export interface AutoFortressClientStateV1 {
   mapRefreshIntervalSec: number;
   dailyAttackLimit: number;
   horseTravelBoostId: HorseTravelBoostID;
-  minimumCommanderSpeedBonus: 100;
   direwolfPurchaseLimit: number;
   minimumTabletReserve: number;
   useTimeSkips: boolean;
@@ -27,8 +26,7 @@ export const defaultAutoFortressClientState = (): AutoFortressClientStateV1 => (
   checkIntervalSec: 5,
   mapRefreshIntervalSec: 1800,
   dailyAttackLimit: 0,
-  horseTravelBoostId: 1009,
-  minimumCommanderSpeedBonus: 100,
+  horseTravelBoostId: -1,
   direwolfPurchaseLimit: 0,
   minimumTabletReserve: 0,
   useTimeSkips: false,
@@ -51,7 +49,6 @@ export function parseAutoFortressClientState(raw: unknown): AutoFortressClientSt
     mapRefreshIntervalSec: clampInteger(document.mapRefreshIntervalSec, 60, 3600, fallback.mapRefreshIntervalSec),
     dailyAttackLimit: clampInteger(document.dailyAttackLimit, 0, 100_000, 0),
     horseTravelBoostId: parseHorseTravelBoostID(document.horseTravelBoostId ?? fallback.horseTravelBoostId),
-    minimumCommanderSpeedBonus: 100,
     direwolfPurchaseLimit: clampHundreds(document.direwolfPurchaseLimit),
     minimumTabletReserve: clampInteger(document.minimumTabletReserve, 0, Number.MAX_SAFE_INTEGER, 0),
     useTimeSkips: document.useTimeSkips === true,

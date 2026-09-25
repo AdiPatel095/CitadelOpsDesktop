@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"CitadelDesktop/Server/Configuration"
+	"CitadelDesktop/Server/GameData"
 	"CitadelDesktop/Server/State"
 )
 
@@ -29,12 +30,28 @@ func TestAutoBuyerFeastIsolatedFromInvalidAndStaleOtherGoals(t *testing.T) {
 			state.Market.BoostersObservedAt = time.Time{}
 			settings := json.RawMessage(`{"version":1,"sourceCastleId":10,"packages":` + tc.packages + `,"specialists":` + tc.specialists + `,"feast":{"enabled":true,"feastId":0,"minimumRemainingHours":12,"sourceCastleId":10,"minimumFoodReserve":30000}}`)
 			before := string(settings)
-			d, err := NewAutoBuyerPolicy().Evaluate(t.Context(), Snapshot{State: state, GameData: autoBuyerPolicyTestStore(t), Now: now, Configuration: Configuration.Snapshot{Sections: map[string]json.RawMessage{autoBuyerSection: settings}}})
+			language, languageErr := GameData.DecodeLanguage([]byte(`{"Food":"Food","dialog_festival_smallEvent":"Country feast"}`), GameData.LanguageMetadata{Language: "en"})
+			if languageErr != nil {
+				t.Fatal(languageErr)
+			}
+			d, err := NewAutoBuyerPolicy().Evaluate(t.Context(), Snapshot{State: state, GameData: autoBuyerPolicyTestStore(t), Language: language, Now: now, Configuration: Configuration.Snapshot{Sections: map[string]json.RawMessage{autoBuyerSection: settings}}})
 			if err != nil || d.Request == nil || d.Request.Name != "autoBuyer.feast.purchase" {
 				t.Fatalf("feast blocked: %+v %v", d, err)
 			}
 			if tc.invalid && (d.Metrics["invalidGoals"] == 0 || !strings.Contains(d.Detail, "skipped invalid goal")) {
 				t.Fatalf("invalid goal hidden: %+v", d)
+			}
+			if tc.invalid && (d.DetailDescriptor == nil || len(d.DetailDescriptor.Context) < 2 || d.DetailDescriptor.FallbackText != d.Detail || !strings.HasPrefix(d.DetailDescriptor.Key, "server.automation.buyer_")) {
+				t.Fatal("descriptor conceals skipped invalid goal or loses complete raw fallback")
+			}
+			if tc.invalid {
+				unknown, unknownErr := NewAutoBuyerPolicy().Evaluate(t.Context(), Snapshot{State: state, GameData: autoBuyerPolicyTestStore(t), Now: now, Configuration: Configuration.Snapshot{Sections: map[string]json.RawMessage{autoBuyerSection: settings}}})
+				if unknownErr != nil || unknown.DetailDescriptor != nil || unknown.Request == nil || string(unknown.Request.Arguments) != string(d.Request.Arguments) || unknown.Detail != d.Detail {
+					t.Fatalf("mixed provenance hid raw reason or changed purchase: %+v %v", unknown, unknownErr)
+				}
+			}
+			if !tc.invalid && d.DetailDescriptor == nil {
+				t.Fatal("valid decision control lacks descriptor")
 			}
 			if string(settings) != before {
 				t.Fatal("saved goals mutated")
@@ -47,8 +64,8 @@ func TestAutoBuyerIsolationRejectsEveryDuplicateWithoutMutatingSettings(t *testi
 	rule := autoBuyerPackageRule{Enabled: true, ShopID: "master-blacksmith", PackageID: 100, TargetPurchasesPerReset: 1}
 	settings := autoBuyerSettings{Packages: []autoBuyerPackageRule{rule, rule}}
 	metrics := map[string]float64{}
-	filtered, detail := isolateAutoBuyerRules(autoBuyerPolicyTestStore(t), settings, metrics)
-	if detail == "" || metrics["invalidGoals"] != 2 || filtered.Packages[0].Enabled || filtered.Packages[1].Enabled {
+	filtered, detail, descriptor := isolateAutoBuyerRules(autoBuyerPolicyTestStore(t), settings, metrics)
+	if descriptor == nil || detail == "" || metrics["invalidGoals"] != 2 || filtered.Packages[0].Enabled || filtered.Packages[1].Enabled {
 		t.Fatalf("duplicate goals admitted: %+v", filtered)
 	}
 	if !settings.Packages[0].Enabled || !settings.Packages[1].Enabled {

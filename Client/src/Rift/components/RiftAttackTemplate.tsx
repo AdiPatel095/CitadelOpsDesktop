@@ -1,3 +1,5 @@
+import { useLocale as useStaticLocale } from "../../i18n/LocaleContext";
+import { LocalizedText } from "../../i18n/LocalizedText";
 import React, { Suspense, useCallback, useEffect, useMemo, useState } from 'react';
 import { Pencil, Play, SlidersHorizontal, Trash2, Users } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
@@ -132,6 +134,7 @@ function formatCoords(x: number | undefined, y: number | undefined): string {
 }
 
 const RiftAttackTemplate: React.FC = () => {
+  const { t: localizeStatic } = useStaticLocale();
   const { state, configuration, updateConfiguration } = useCitadelAPI();
   const { gameLoggedIn } = useAuth();
   const { castle } = useCastleFocus();
@@ -332,7 +335,7 @@ const RiftAttackTemplate: React.FC = () => {
     <>
       <SectionCard
         variant="solid"
-        title="Captured Rift attacks"
+        title={localizeStatic("ui.rift.components.riftAttackTemplate.title.captured.rift.attacks.8988972c")}
         titleClassName="text-lg text-primary"
         description={(
           <>
@@ -356,8 +359,7 @@ const RiftAttackTemplate: React.FC = () => {
           {launches.length > 0 ? (
             <div className="min-w-0 md:min-w-[13rem]">
               <p className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-text-muted">
-                Replay commander
-              </p>
+                <LocalizedText messageKey="ui.rift.components.riftAttackTemplate.replay.commander.bab0c811" /></p>
               <Select
                 value={commanderMode}
                 options={REPLAY_COMMANDER_OPTIONS}
@@ -386,14 +388,13 @@ const RiftAttackTemplate: React.FC = () => {
             leftIcon={<SlidersHorizontal className="w-3.5 h-3.5" />}
             className="shrink-0"
           >
-            Attack setup
-          </Button>
+            <LocalizedText messageKey="ui.rift.components.riftAttackTemplate.attack.setup.94d9ecc5" /></Button>
         </div>}
       >
         {launches.length === 0 ? (
           <EmptyState
             size="sm"
-            title="No replay templates have been captured yet."
+            title={localizeStatic("ui.rift.components.riftAttackTemplate.title.no.replay.templates.have.been.captured.yet.2678cbd0")}
             description={gameLoggedIn
                 ? 'Launch one castle attack on the Rift in-game. Citadel Ops will capture its commander, formation, and travel time here for reuse.'
                 : 'Connect to the game and launch one castle attack on the Rift to create your first replay template.'}
@@ -404,12 +405,12 @@ const RiftAttackTemplate: React.FC = () => {
             <table className="w-full min-w-[56rem] text-sm">
               <thead>
                 <tr className="border-b border-border-base bg-bg-card/50 text-left text-[10px] uppercase tracking-wider text-text-muted">
-                  <th className="px-3 py-2 font-semibold">Name</th>
-                  <th className="px-3 py-2 font-semibold">Commander</th>
-                  <th className="px-3 py-2 font-semibold">Layout</th>
-                  <th className="px-3 py-2 font-semibold">Travel</th>
-                  <th className="px-3 py-2 font-semibold">Captured</th>
-                  <th className="px-3 py-2 font-semibold text-right">Arrival · Action</th>
+                  <th className="px-3 py-2 font-semibold"><LocalizedText messageKey="ui.rift.components.riftAttackTemplate.name.dcd1d522" /></th>
+                  <th className="px-3 py-2 font-semibold"><LocalizedText messageKey="game.commander" /></th>
+                  <th className="px-3 py-2 font-semibold"><LocalizedText messageKey="ui.rift.components.riftAttackTemplate.layout.a5119091" /></th>
+                  <th className="px-3 py-2 font-semibold"><LocalizedText messageKey="ui.rift.components.riftAttackTemplate.travel.d2b98fb5" /></th>
+                  <th className="px-3 py-2 font-semibold"><LocalizedText messageKey="ui.rift.components.riftAttackTemplate.captured.8a03fa9a" /></th>
+                  <th className="px-3 py-2 font-semibold text-right"><LocalizedText messageKey="ui.rift.components.riftAttackTemplate.arrival.action.2355fb93" /></th>
                 </tr>
               </thead>
               <tbody>
@@ -483,7 +484,7 @@ const RiftAttackTemplate: React.FC = () => {
                               onClick={() => startRename(entry)}
                               disabled={activeActionId != null}
                               className="shrink-0 p-1 rounded-md text-text-muted hover:text-primary hover:bg-bg-card-hover disabled:cursor-not-allowed disabled:opacity-40"
-                              title="Rename template"
+                              title={localizeStatic("ui.rift.components.riftAttackTemplate.title.rename.template.91f36a22")}
                               aria-label={`Rename ${label}`}
                             >
                               <Pencil className="w-3.5 h-3.5" />
@@ -493,7 +494,7 @@ const RiftAttackTemplate: React.FC = () => {
                               onClick={() => handleDelete(entry)}
                               disabled={activeActionId != null}
                               className="shrink-0 p-1 rounded-md text-text-muted hover:text-error hover:bg-error/10 disabled:cursor-not-allowed disabled:opacity-40"
-                              title="Delete template"
+                              title={localizeStatic("ui.rift.components.riftAttackTemplate.title.delete.template.da9a9b35")}
                               aria-label={`Delete ${label}`}
                             >
                               <Trash2 className="w-3.5 h-3.5" />
@@ -510,13 +511,13 @@ const RiftAttackTemplate: React.FC = () => {
                           {commanderStatusMeta.label}
                         </Badge>
                         {commanderMode === 'any' ? (
-                          <p className="mt-1 text-[10px] text-text-muted">Any available overrides this LID</p>
+                          <p className="mt-1 text-[10px] text-text-muted"><LocalizedText messageKey="ui.rift.components.riftAttackTemplate.any.available.overrides.this.lid.384fdbeb" /></p>
                         ) : null}
                       </td>
                       <td className="px-3 py-3 text-text-main">
                         {entry.waveCount ?? 0} wave{(entry.waveCount ?? 0) === 1 ? '' : 's'}
                         {entry.useTravelFeather ? (
-                          <span className="text-text-muted"> · feather</span>
+                          <span className="text-text-muted"> <LocalizedText messageKey="ui.rift.components.riftAttackTemplate.feather.186c0d4d" /></span>
                         ) : null}
                         <p className="text-xs font-mono text-text-muted mt-0.5">
                           {formatCoords(entry.sourceX, entry.sourceY)} → {formatCoords(entry.targetX, entry.targetY)}
@@ -526,7 +527,7 @@ const RiftAttackTemplate: React.FC = () => {
                         {entry.oneWayTTSeconds != null && entry.oneWayTTSeconds > 0 ? (
                           <span className="font-mono">{formatTravelDuration(entry.oneWayTTSeconds)}</span>
                         ) : (
-                          <span className="text-xs">pending success</span>
+                          <span className="text-xs"><LocalizedText messageKey="ui.rift.components.riftAttackTemplate.pending.success.4212c79b" /></span>
                         )}
                       </td>
                       <td className="px-3 py-3 text-text-muted whitespace-nowrap">

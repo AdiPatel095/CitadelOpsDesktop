@@ -71,6 +71,9 @@ func TestFortressAttackBuildsOneFullDirewolfFlankWaveWithoutPremiumBooster(t *te
 	if deferred.Resolver == "" || deferred.CommandDependencies == nil || deferred.CommandDependencies.Opcode != "cra" {
 		t.Fatalf("fortress plan has no guarded CRA resolver: %#v", plan.Steps)
 	}
+	if strings.Contains(string(deferred.ResolverArguments), "minimumCommanderSpeedBonus") {
+		t.Fatalf("legacy speed minimum was propagated into new launch steps: %s", deferred.ResolverArguments)
+	}
 	gameState.AttackDialog = State.AttackDialogState{
 		SourceCastleID: 10, KingdomID: 1, ObservedAt: time.Now().UTC(),
 		Target: State.AttackDialogTarget{TypeID: State.MapTypeKingdomFortress, X: 101, Y: 100, Level: 45},
@@ -730,4 +733,119 @@ func fortressIntentState(now time.Time) State.GameState {
 		"101:100": {KingdomID: 1, X: 101, Y: 100, TypeID: State.MapTypeKingdomFortress, Level: 45, ObservedAt: now},
 	}
 	return gameState
+}
+
+func TestFortressCommanderSelectsFastestAssignedAppliedSpeed(t *testing.T) {
+	now := time.Now().UTC()
+	state := fortressIntentState(now)
+	for id, effect := range map[State.CommanderID]State.EquipmentEffect{
+		6: {DefinitionID: 426, Values: []float64{110}},
+		7: {DefinitionID: 426, Values: []float64{200}},
+		8: {DefinitionID: 426, Values: []float64{300}},
+		9: {DefinitionID: 426, Values: []float64{110}},
+	} {
+		state.Commanders[id] = State.CommanderState{ID: id, Available: id != 7, Equipment: map[string]State.EquipmentInstanceID{"1": State.EquipmentInstanceID(id)}}
+		state.Inventory.Equipment[State.EquipmentInstanceID(id)] = State.EquipmentInstance{ID: State.EquipmentInstanceID(id), Effects: State.EquipmentEffects{effect}}
+	}
+	item := state.Inventory.Equipment[5001]
+	item.Effects[0].Values = []float64{150} // capped at 100 by official metadata
+	state.Inventory.Equipment[5001] = item
+	source := state.Castles[10]
+	target := state.Map[1]["101:100"]
+	context := Intent.PlanningContext{State: state, GameData: fortressIntentGameData(t)}
+	selected, err := fortressCommander(context, []State.CommanderID{9, 7, 6, 5}, source, target)
+	if err != nil || selected != 6 {
+		t.Fatalf("fastest assigned parsed speed = %d err=%v", selected, err)
+	}
+	commander := state.Commanders[6]
+	commander.Available = false
+	state.Commanders[6] = commander
+	context.State = state
+	selected, err = fortressCommander(context, []State.CommanderID{9, 7, 6, 5}, source, target)
+	if err != nil || selected != 9 {
+		t.Fatalf("unavailable commander was selected: %d err=%v", selected, err)
+	}
+	busyID := State.CommanderID(9)
+	returnsAt := now.Add(time.Hour)
+	state.Movements[1] = State.MovementState{ID: 1, SourceCastleID: source.ID, CommanderID: &busyID, ReturnsAt: &returnsAt}
+	context.State = state
+	selected, err = fortressCommander(context, []State.CommanderID{9, 5}, source, target)
+	if err != nil || selected != 5 {
+		t.Fatalf("busy commander was selected: %d err=%v", selected, err)
+	}
+	context.GameData = nil
+	if selected, err = fortressCommander(context, []State.CommanderID{9, 5}, source, target); err == nil {
+		t.Fatalf("missing metadata selected commander %d", selected)
+	}
+}
+
+func TestFortressCommanderHoldsAndFinalFastestRecheck(t *testing.T) {
+	now := time.Now().UTC()
+	state := fortressIntentState(now)
+	state.Commanders[6] = State.CommanderState{ID: 6, Available: false, Equipment: map[string]State.EquipmentInstanceID{"1": 6}}
+	state.Inventory.Equipment[6] = State.EquipmentInstance{ID: 6, Effects: State.EquipmentEffects{{DefinitionID: 426, Values: []float64{120}}}}
+	source, target := state.Castles[10], state.Map[1]["101:100"]
+	holds := newCommanderLaunchHolds()
+	input := Intent.PlanningContext{State: state, GameData: fortressIntentGameData(t), CommanderHolds: holds}
+	assigned := []State.CommanderID{5, 6}
+	selected, err := fortressCommander(input, assigned, source, target)
+	if err != nil || selected != 5 {
+		t.Fatalf("initial plan selection = %d err=%v", selected, err)
+	}
+	// A plan does not hold its own commander before its deferred launch recheck.
+	selected, err = fortressCommander(input, assigned, source, target)
+	if err != nil || selected != 5 || holds.CommanderHeldAt(5, time.Now().UTC()) {
+		t.Fatalf("plan-owned commander became held before launch: %d err=%v", selected, err)
+	}
+	holds.HoldCommanders([]State.CommanderID{5}, now.Add(time.Minute))
+	if selected, err = fortressCommander(input, assigned, source, target); !errors.Is(err, Intent.ErrPlanStale) {
+		t.Fatalf("externally held only eligible commander selected: %d err=%v", selected, err)
+	}
+	commander := state.Commanders[6]
+	commander.Available = true
+	state.Commanders[6] = commander
+	input.State = state
+	selected, err = fortressCommander(input, assigned, source, target)
+	if err != nil || selected != 6 {
+		t.Fatalf("held fastest did not yield to available assigned commander: %d err=%v", selected, err)
+	}
+	// The request pool is an assignment snapshot; an unlisted faster commander cannot enter it.
+	selected, err = fortressCommander(input, []State.CommanderID{5}, source, target)
+	if !errors.Is(err, Intent.ErrPlanStale) {
+		t.Fatalf("held assignment snapshot selected commander %d: %v", selected, err)
+	}
+
+	input.CommanderHolds = nil
+	commander.Available = false
+	state.Commanders[6] = commander
+	state.AttackDialog = State.AttackDialogState{
+		SourceCastleID: 10, KingdomID: 1, ObservedAt: time.Now().UTC(),
+		Target: State.AttackDialogTarget{TypeID: State.MapTypeKingdomFortress, X: 101, Y: 100, Level: 45},
+	}
+	input.State = state
+	request := fortressResolvedAttackRequest{fortressAttackRequest: fortressAttackRequest{
+		SourceCastleID: 10, KingdomID: 1, TargetX: 101, TargetY: 100,
+		CommanderIDs: assigned, HorseTravelBoostID: -1,
+	}, CommanderID: 5}
+	if _, err := buildFortressAttackStep(input, request); err != nil {
+		t.Fatalf("unchanged fastest commander could not build launch: %v", err)
+	}
+	commander.Available = true
+	state.Commanders[6] = commander
+	input.State = state
+	if _, err := buildFortressAttackStep(input, request); !errors.Is(err, Intent.ErrPlanStale) {
+		t.Fatalf("changed fastest commander did not stale prior launch: %v", err)
+	}
+}
+
+func TestAutoFortressInitialConfigurationUsesTravelFeather(t *testing.T) {
+	var settings struct {
+		HorseTravelBoostID int `json:"horseTravelBoostId"`
+	}
+	if err := json.Unmarshal(defaultConfiguration()["automation.autoFortress"], &settings); err != nil {
+		t.Fatal(err)
+	}
+	if settings.HorseTravelBoostID != -1 {
+		t.Fatalf("initial Auto Fortress travel boost = %d, want feather -1", settings.HorseTravelBoostID)
+	}
 }

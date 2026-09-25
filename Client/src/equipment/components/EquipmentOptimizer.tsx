@@ -1,3 +1,6 @@
+import { LocalizedRichText } from "../../i18n/LocalizedRichText";
+import { useLocale as useStaticLocale } from "../../i18n/LocaleContext";
+import { LocalizedText } from "../../i18n/LocalizedText";
 import { useEffect, useMemo, useRef, useState, type DragEvent, type ReactNode } from 'react';
 import {
 	Activity,
@@ -85,6 +88,7 @@ export default function EquipmentOptimizer({
 	candidateEffectIDsByMode: Record<EquipmentTargetProfile['combatMode'], number[]>;
 	disabled: boolean;
 }) {
+  const { t: localizeStatic } = useStaticLocale();
 	const { effects, isLoading } = useMetadata();
 	const [targetID, setTargetID] = useState<string | null>(null);
 	const targetProfiles = useMemo(() => equipmentTargetProfiles(effects), [effects]);
@@ -114,20 +118,17 @@ export default function EquipmentOptimizer({
 				title={(
 					<ModalTitle
 						icon={<Target className="h-5 w-5" />}
-						description="Choose the battle family this relic loadout should optimize for."
+						description={localizeStatic("ui.equipment.components.equipmentOptimizer.description.choose.the.battle.family.this.relic.loadout.9185ee43")}
 					>
-						Reconfiguration target
-					</ModalTitle>
+						<LocalizedText messageKey="ui.equipment.components.equipmentOptimizer.reconfiguration.target.06c7dc57" /></ModalTitle>
 				)}
 			>
 				<div className="space-y-4">
 					<p className="text-sm leading-relaxed text-text-muted">
-						PvP and PvE cover their broadly applicable effects. Event cards add official effects restricted to that target family, and new complete families appear automatically from current game data.
-					</p>
+						<LocalizedText messageKey="ui.equipment.components.equipmentOptimizer.pvp.and.pve.cover.their.broadly.applicable.eb6b01ee" /></p>
 					{isLoading ? (
 						<div className="rounded-global border border-border-base bg-bg-app/35 px-4 py-8 text-center text-sm text-text-muted">
-							Loading official equipment targets…
-						</div>
+							<LocalizedText messageKey="ui.equipment.components.equipmentOptimizer.loading.official.equipment.targets.4e64c51a" /></div>
 					) : (
 						<div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
 							{targetChoices.map((choice) => (
@@ -168,6 +169,7 @@ function TargetProfileCard({
 	disabled: boolean;
 	onSelect: () => void;
 }) {
+  const { t: localizeStatic } = useStaticLocale();
 	const { profile, availableGroups } = choice;
 	const tone = profile.combatMode === 'PvP' ? 'primary' : profile.kind === 'event' ? 'warning' : 'success';
 	return (
@@ -198,7 +200,7 @@ function TargetProfileCard({
 					label={profile.kind === 'event' ? 'Target battle stats' : 'Official scope'}
 					value={profile.kind === 'event' ? profile.officialGroupCount.toLocaleString() : 'Broad'}
 				/>
-				<MetricTile size="sm" label="Usable battle stats" value={availableGroups.toLocaleString()} />
+				<MetricTile size="sm" label={localizeStatic("ui.equipment.components.equipmentOptimizer.label.usable.battle.stats.bd169e1e")} value={availableGroups.toLocaleString()} />
 			</div>
 			<div className="mt-4 text-xs font-black uppercase tracking-wide text-primary">
 				{availableGroups > 0 ? `Configure ${profile.label}` : 'No matching effects available'}
@@ -238,6 +240,7 @@ function EquipmentOptimizerEditor({
 	candidateEffectIDs: number[];
 	disabled: boolean;
 }) {
+  const { t: localizeStatic } = useStaticLocale();
 	const { state, catalogs, configuration, submitIntent, optimizeEquipment, updateConfiguration } = useCitadelAPI();
 	const { effects, troops } = useMetadata();
 	const [priorityProfile, setPriorityProfile] = useState<EquipmentPriorityProfile>({ tier1: [], tier2: [] });
@@ -451,7 +454,7 @@ function EquipmentOptimizerEditor({
 	], [groupsByKey, tier1, tier2]);
 
 	const optimize = async () => {
-		if (!leader || priorities.length === 0 || optimizeInFlight.current) return;
+		if (disabled || !leader || priorities.length === 0 || optimizeInFlight.current) return;
 		optimizeInFlight.current = true;
 		const requestID = ++optimizeRequest.current;
 		const requestSnapshotKey = currentSnapshotKey;
@@ -509,7 +512,7 @@ function EquipmentOptimizerEditor({
 	};
 
 	const apply = async () => {
-		if (!preview || previewStale || applyInFlight.current) return;
+		if (disabled || !preview || previewStale || applyInFlight.current) return;
 		const selected = preview.response.alternatives[selectedAlternative];
 		if (!selected) return;
 		applyInFlight.current = true;
@@ -546,29 +549,26 @@ function EquipmentOptimizerEditor({
 						icon={<Activity className="h-5 w-5" />}
 						description={`${target.label} · Effective Battle Report stat priority`}
 					>
-						Stat Priority &amp; Reconfigure
-					</ModalTitle>
+						<LocalizedText messageKey="ui.equipment.components.equipmentOptimizer.stat.priority.reconfigure.c9997f27" /></ModalTitle>
 				)}
 				maxWidth="5xl"
 				footer={(
 					<>
-						<Button variant="ghost" onClick={closeEditor}>Cancel</Button>
+						<Button variant="ghost" onClick={closeEditor}><LocalizedText messageKey="game.cancel" /></Button>
 						<Button
 							onClick={optimize}
 							disabled={disabled || !leader || priorities.length === 0}
 							isLoading={optimizing}
 							leftIcon={<RefreshCw className="h-4 w-4" />}
 						>
-							Preview Reconfiguration
-						</Button>
+							<LocalizedText messageKey="ui.equipment.components.equipmentOptimizer.preview.reconfiguration.62efee53" /></Button>
 					</>
 				)}
 			>
 				<div className="space-y-4">
 					{priorities.length === 0 && (
 						<p className="rounded-global border border-warning/30 bg-warning/10 px-3 py-2 text-sm text-warning">
-							Add at least one battle stat to preview a loadout.
-						</p>
+							<LocalizedText messageKey="ui.equipment.components.equipmentOptimizer.add.at.least.one.battle.stat.to.7e402aa8" /></p>
 					)}
 					{optimizeError && (
 						<p role="alert" className="rounded-global border border-error/30 bg-error/10 px-3 py-2 text-sm text-error">
@@ -577,7 +577,7 @@ function EquipmentOptimizerEditor({
 					)}
 					<div className="grid gap-3 rounded-global border border-border-base bg-bg-app/45 p-3 sm:grid-cols-[minmax(0,1fr)_auto]">
 						<div className="flex min-w-0 items-start gap-2">
-							<Button size="icon" variant="ghost" onClick={changeTarget} aria-label="Change reconfiguration target" title="Change target">
+							<Button size="icon" variant="ghost" onClick={changeTarget} aria-label={localizeStatic("ui.equipment.components.equipmentOptimizer.aria-label.change.reconfiguration.target.1172fad5")} title={localizeStatic("ui.equipment.components.equipmentOptimizer.title.change.target.36d36e6b")}>
 								<ArrowLeft className="h-4 w-4" />
 							</Button>
 							<div className="min-w-0 flex-1">
@@ -589,7 +589,7 @@ function EquipmentOptimizerEditor({
 							</div>
 						</div>
 						<div className="flex items-center justify-end gap-2 sm:shrink-0">
-							<Button size="icon" variant="ghost" onClick={() => setShowInfo(true)} aria-label="Explain battle stat priority"><Info className="h-4 w-4" /></Button>
+							<Button size="icon" variant="ghost" onClick={() => setShowInfo(true)} aria-label={localizeStatic("ui.equipment.components.equipmentOptimizer.aria-label.explain.battle.stat.priority.20ba9a01")}><Info className="h-4 w-4" /></Button>
 							<Button
 								size="sm"
 								variant="outline"
@@ -597,14 +597,13 @@ function EquipmentOptimizerEditor({
 								disabled={availableGroups.length === 0}
 								leftIcon={<Plus className="h-4 w-4" />}
 							>
-								Add Battle Stat
-							</Button>
+								<LocalizedText messageKey="ui.equipment.components.equipmentOptimizer.add.battle.stat.302ba69c" /></Button>
 						</div>
 					</div>
 
 					<div className="grid gap-4 md:grid-cols-2">
 						<PriorityTier
-							title="Max Stat"
+							title={localizeStatic("ui.equipment.components.equipmentOptimizer.title.max.stat.f25df34f")}
 							tier={1}
 							keys={tier1}
 							groupsByKey={groupsByKey}
@@ -623,7 +622,7 @@ function EquipmentOptimizerEditor({
 							onReorder={reorder}
 						/>
 						<PriorityTier
-							title="Have in Random Slots"
+							title={localizeStatic("ui.equipment.components.equipmentOptimizer.title.have.in.random.slots.d286f8b3")}
 							tier={2}
 							keys={tier2}
 							groupsByKey={groupsByKey}
@@ -645,9 +644,9 @@ function EquipmentOptimizerEditor({
 				</div>
 			</Modal>
 
-			<Modal isOpen={showPicker} onClose={() => setShowPicker(false)} title="Add Effective Battle Stat" maxWidth="3xl">
+			<Modal isOpen={showPicker} onClose={() => setShowPicker(false)} title={localizeStatic("ui.equipment.components.equipmentOptimizer.title.add.effective.battle.stat.9bdc52fe")} maxWidth="3xl">
 				<div className="space-y-3">
-					<Input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search battle stats" leftIcon={<Search className="h-4 w-4" />} />
+					<Input value={search} onChange={(event) => setSearch(event.target.value)} placeholder={localizeStatic("ui.equipment.components.equipmentOptimizer.placeholder.search.battle.stats.6d2a48bf")} leftIcon={<Search className="h-4 w-4" />} />
 					<div className="max-h-[65vh] space-y-4 overflow-y-auto custom-scrollbar">
 						{pickerSections.map((section) => (
 							<section key={`${section.category}:${section.label}`}>
@@ -661,24 +660,24 @@ function EquipmentOptimizerEditor({
 												<span className="block text-sm font-medium text-text-main">{group.label}</span>
 												<span className="mt-0.5 block text-[10px] text-text-muted">{group.effectIDs.length} target-compatible official effect definition{group.effectIDs.length === 1 ? '' : 's'}</span>
 											</span>
-											<Button size="sm" variant="danger" onClick={() => addGroup(group, 1)}>Max Stat</Button>
-											<Button size="sm" variant="outline" onClick={() => addGroup(group, 2)}>Random Slots</Button>
+											<Button size="sm" variant="danger" onClick={() => addGroup(group, 1)}><LocalizedText messageKey="ui.equipment.components.equipmentOptimizer.max.stat.f25df34f" /></Button>
+											<Button size="sm" variant="outline" onClick={() => addGroup(group, 2)}><LocalizedText messageKey="ui.equipment.components.equipmentOptimizer.random.slots.c4c4ae0d" /></Button>
 										</div>
 									))}
 								</div>
 							</section>
 						))}
-						{availableGroups.length === 0 && <p className="py-6 text-center text-sm text-text-muted">No matching unused battle stats.</p>}
+						{availableGroups.length === 0 && <p className="py-6 text-center text-sm text-text-muted"><LocalizedText messageKey="ui.equipment.components.equipmentOptimizer.no.matching.unused.battle.stats.613bcf21" /></p>}
 					</div>
 				</div>
 			</Modal>
 
-			<Modal isOpen={showInfo} onClose={() => setShowInfo(false)} title="How Battle Stat Priority Works" maxWidth="2xl">
+			<Modal isOpen={showInfo} onClose={() => setShowInfo(false)} title={localizeStatic("ui.equipment.components.equipmentOptimizer.title.how.battle.stat.priority.works.5c727707")} maxWidth="2xl">
 				<div className="space-y-3 text-sm text-text-muted">
-						<p>Each draggable row is the same official game-data effect group shown in the Equipment view's Effective Battle Report.</p>
-						<p>When previewing, CitadelOps expands that group into every target-compatible official effect definition. New definitions therefore join their catalog group automatically.</p>
-					<p><span className="font-semibold text-error">Max Stat</span> groups receive the strongest position-decayed score. <span className="font-semibold text-primary">Have in Random Slots</span> groups receive a presence bonus and lower weighted score.</p>
-					<p>The server searches storage plus the selected leader’s current pieces, respects official caps and set bonuses, and never borrows gear from another leader.</p>
+						<p><LocalizedText messageKey="ui.equipment.components.equipmentOptimizer.each.draggable.row.is.the.same.official.8bf29a83" /></p>
+						<p><LocalizedText messageKey="ui.equipment.components.equipmentOptimizer.when.previewing.citadelops.expands.that.group.into.bc9f6b4c" /></p>
+					<p><LocalizedRichText messageKey="ui.rich.equipment.components.equipmentOptimizer.max.stat.groups.receive.the.strongest.position.583645f6" params={{}} tags={{span0: children => <span className="font-semibold text-error">{children}</span>, span1: children => <span className="font-semibold text-primary">{children}</span>}} /></p>
+					<p><LocalizedText messageKey="ui.equipment.components.equipmentOptimizer.the.server.searches.storage.plus.the.selected.09fac1e7" /></p>
 				</div>
 			</Modal>
 
@@ -785,7 +784,7 @@ function PriorityTier({
 						</div>
 					);
 				})}
-				{keys.length === 0 && <p className="py-5 text-center text-xs text-text-muted">Drag battle stats here</p>}
+				{keys.length === 0 && <p className="py-5 text-center text-xs text-text-muted"><LocalizedText messageKey="ui.equipment.components.equipmentOptimizer.drag.battle.stats.here.6d8b8785" /></p>}
 			</div>
 		</div>
 	);
@@ -824,6 +823,7 @@ function OptimizerPreview({
 	optimizing: boolean;
 	optimizeError: string | null;
 }) {
+  const { t: localizeStatic } = useStaticLocale();
 	const selected = preview?.alternatives[selectedAlternative] ?? preview?.proposed ?? null;
 	const effectRows = (() => {
 		if (!preview || !selected) return [];
@@ -873,11 +873,11 @@ function OptimizerPreview({
 		<Modal
 			isOpen={preview != null}
 			onClose={onClose}
-			title="Reconfiguration Preview"
+			title={localizeStatic("ui.equipment.components.equipmentOptimizer.title.reconfiguration.preview.36b7dacc")}
 			maxWidth="5xl"
 			footer={(
 				<>
-					<Button variant="ghost" onClick={onClose} disabled={applying}>Cancel</Button>
+					<Button variant="ghost" onClick={onClose} disabled={applying}><LocalizedText messageKey="game.cancel" /></Button>
 					<Button
 						onClick={onApply}
 						isLoading={applying}
@@ -892,13 +892,13 @@ function OptimizerPreview({
 			{preview && selected && (
 				<div className="space-y-5">
 					<div className="rounded-global border border-warning/40 bg-warning/10 px-3 py-2 text-sm text-warning">
-						<p className="font-semibold">Review extraction costs before applying.</p>
+						<p className="font-semibold"><LocalizedText messageKey="ui.equipment.components.equipmentOptimizer.review.extraction.costs.before.applying.4034bdf3" /></p>
 						{extractionNotices.map((notice) => <p key={notice} className="mt-1 text-xs">{notice}</p>)}
 					</div>
 					{stale && (
 						<div role="alert" className="flex flex-wrap items-center justify-between gap-3 rounded-global border border-warning/40 bg-warning/10 px-3 py-2 text-sm text-warning">
-							<span>Equipment or official metadata changed after this batch was generated. Review a fresh preview before applying.</span>
-							<Button size="sm" variant="outline" onClick={onRegenerate} disabled={applying || optimizing} isLoading={optimizing}>Regenerate</Button>
+							<span><LocalizedText messageKey="ui.equipment.components.equipmentOptimizer.equipment.or.official.metadata.changed.after.this.78ae51fb" /></span>
+							<Button size="sm" variant="outline" onClick={onRegenerate} disabled={applying || optimizing} isLoading={optimizing}><LocalizedText messageKey="ui.equipment.components.equipmentOptimizer.regenerate.1651031b" /></Button>
 						</div>
 					)}
 					{optimizeError && <p role="alert" className="rounded-global border border-error/30 bg-error/10 px-3 py-2 text-sm text-error">{optimizeError}</p>}
@@ -913,7 +913,7 @@ function OptimizerPreview({
 					)}
 					<div>
 						<div className="mb-2 flex items-center justify-between gap-3">
-							<h4 className="text-xs font-bold uppercase tracking-wider text-text-muted">Ranked alternatives</h4>
+							<h4 className="text-xs font-bold uppercase tracking-wider text-text-muted"><LocalizedText messageKey="ui.equipment.components.equipmentOptimizer.ranked.alternatives.3ebb915e" /></h4>
 							<span className="text-xs text-text-muted">{preview.alternatives.filter((alternative) => alternative.useful !== false).length} useful {preview.alternatives.filter((alternative) => alternative.useful !== false).length === 1 ? 'choice' : 'choices'} · {preview.alternatives.length} shown · switching is instant</span>
 						</div>
 						<div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-5">
@@ -932,7 +932,7 @@ function OptimizerPreview({
 						</div>
 					</div>
 					<div className="overflow-hidden rounded-global border border-border-base">
-						<div className="grid grid-cols-[minmax(0,1fr)_6rem_6rem_6rem] bg-bg-card-hover px-3 py-2 text-[10px] font-bold uppercase tracking-wider text-text-muted"><span>Stat</span><span className="text-right">Current total</span><span className="text-right">New total</span><span className="text-right">Difference</span></div>
+						<div className="grid grid-cols-[minmax(0,1fr)_6rem_6rem_6rem] bg-bg-card-hover px-3 py-2 text-[10px] font-bold uppercase tracking-wider text-text-muted"><span><LocalizedText messageKey="ui.equipment.components.equipmentOptimizer.stat.194535a5" /></span><span className="text-right"><LocalizedText messageKey="ui.equipment.components.equipmentOptimizer.current.total.c291c1ae" /></span><span className="text-right"><LocalizedText messageKey="ui.equipment.components.equipmentOptimizer.new.total.02a63a5e" /></span><span className="text-right"><LocalizedText messageKey="ui.equipment.components.equipmentOptimizer.difference.4d280a45" /></span></div>
 						<div className="max-h-80 overflow-y-auto custom-scrollbar">
 							{effectRows.map((row) => (
 								<div key={row.key} className="grid grid-cols-[minmax(0,1fr)_6rem_6rem_6rem] border-t border-border-base/50 px-3 py-2 text-xs">

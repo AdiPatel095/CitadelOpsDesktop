@@ -1,6 +1,7 @@
 package API
 
 import (
+	"CitadelDesktop/Server/Localization"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -18,7 +19,7 @@ const maximumPlayerTrackerResponsePoints = 20_000
 
 func (server *Server) handlePlayerTrackerHistory(writer http.ResponseWriter, request *http.Request) {
 	if server.config.History == nil || server.config.State == nil {
-		writeError(writer, http.StatusServiceUnavailable, "history_unavailable", "Player history is unavailable")
+		writeError(writer, http.StatusServiceUnavailable, "history_unavailable", "Player history is unavailable", Localization.New("server.api.player_history_is_unavailable.3ee991d7", "Player history is unavailable", nil))
 		return
 	}
 	policy := server.playerSamplesRetentionPolicyWithStorage()
@@ -36,7 +37,7 @@ func (server *Server) handlePlayerTrackerHistory(writer http.ResponseWriter, req
 			recordingIntervalSeconds,
 		)
 		if err != nil {
-			writeError(writer, http.StatusInternalServerError, "history_read_failed", err.Error())
+			writeErrorFromError(writer, http.StatusInternalServerError, "history_read_failed", err)
 			return
 		}
 	}
@@ -62,7 +63,7 @@ func (server *Server) handlePlayerTrackerHistory(writer http.ResponseWriter, req
 
 func (server *Server) handlePlayerTrackerRetention(writer http.ResponseWriter, _ *http.Request) {
 	if server.config.Configuration == nil {
-		writeError(writer, http.StatusServiceUnavailable, "configuration_unavailable", "Configuration store is unavailable")
+		writeError(writer, http.StatusServiceUnavailable, "configuration_unavailable", "Configuration store is unavailable", Localization.New("server.api.configuration_store_is_unavailable.623f75fa", "Configuration store is unavailable", nil))
 		return
 	}
 	writer.Header().Set("Cache-Control", "no-store")
@@ -86,42 +87,42 @@ type playerSamplesRetentionApplyRequest struct {
 // effective policy has been applied to PlayerSamples on disk.
 func (server *Server) handlePlayerTrackerRetentionApply(writer http.ResponseWriter, request *http.Request) {
 	if server.config.Configuration == nil {
-		writeError(writer, http.StatusServiceUnavailable, "configuration_unavailable", "Configuration store is unavailable")
+		writeError(writer, http.StatusServiceUnavailable, "configuration_unavailable", "Configuration store is unavailable", Localization.New("server.api.configuration_store_is_unavailable.623f75fa", "Configuration store is unavailable", nil))
 		return
 	}
 	if server.config.History == nil {
-		writeError(writer, http.StatusServiceUnavailable, "history_unavailable", "Player history is unavailable")
+		writeError(writer, http.StatusServiceUnavailable, "history_unavailable", "Player history is unavailable", Localization.New("server.api.player_history_is_unavailable.3ee991d7", "Player history is unavailable", nil))
 		return
 	}
 	var input playerSamplesRetentionApplyRequest
 	decoder := json.NewDecoder(http.MaxBytesReader(writer, request.Body, 16<<10))
 	decoder.DisallowUnknownFields()
 	if err := decoder.Decode(&input); err != nil {
-		writeError(writer, http.StatusBadRequest, "invalid_request", err.Error())
+		writeErrorFromError(writer, http.StatusBadRequest, "invalid_request", err)
 		return
 	}
 	if err := decoder.Decode(&struct{}{}); err != io.EOF {
 		if err == nil {
-			err = fmt.Errorf("retention update must contain exactly one JSON object")
+			err = Localization.WithError(fmt.Errorf("retention update must contain exactly one JSON object"), Localization.New("server.api.retention_update_must_contain.1f5679c7", "retention update must contain exactly one JSON object", nil))
 		}
-		writeError(writer, http.StatusBadRequest, "invalid_request", err.Error())
+		writeErrorFromError(writer, http.StatusBadRequest, "invalid_request", err)
 		return
 	}
 	if input.ExpectedRevision == nil {
-		writeError(writer, http.StatusBadRequest, "invalid_request", "expectedRevision is required")
+		writeError(writer, http.StatusBadRequest, "invalid_request", "expectedRevision is required", Localization.New("server.api.expectedrevision_is_required.d70fc7d0", "expectedRevision is required", nil))
 		return
 	}
 	if input.Retention == nil && input.RecordingIntervalSeconds == nil {
-		writeError(writer, http.StatusBadRequest, "invalid_request", "retention or recordingIntervalSeconds is required")
+		writeError(writer, http.StatusBadRequest, "invalid_request", "retention or recordingIntervalSeconds is required", Localization.New("server.api.retention_or_recordingintervalseconds_is.1929acc3", "retention or recordingIntervalSeconds is required", nil))
 		return
 	}
 	if input.Retention != nil && !History.ValidPlayerSamplesRetention(*input.Retention) {
-		writeError(writer, http.StatusUnprocessableEntity, "history_retention_invalid", "Unknown My Stats retention value")
+		writeError(writer, http.StatusUnprocessableEntity, "history_retention_invalid", "Unknown My Stats retention value", Localization.New("server.api.unknown_my_stats_retention.24bc3955", "Unknown My Stats retention value", nil))
 		return
 	}
 	if input.RecordingIntervalSeconds != nil &&
 		!History.ValidPlayerSamplesRecordingIntervalSeconds(*input.RecordingIntervalSeconds) {
-		writeError(writer, http.StatusUnprocessableEntity, "history_recording_interval_invalid", "Unknown My Stats recording interval")
+		writeError(writer, http.StatusUnprocessableEntity, "history_recording_interval_invalid", "Unknown My Stats recording interval", Localization.New("server.api.unknown_my_stats_recording.daeaf92b", "Unknown My Stats recording interval", nil))
 		return
 	}
 
@@ -143,7 +144,7 @@ func (server *Server) handlePlayerTrackerRetentionApply(writer http.ResponseWrit
 		RecordingIntervalSeconds: requestedIntervalSeconds,
 	})
 	if err != nil {
-		writeError(writer, http.StatusInternalServerError, "history_retention_apply_failed", err.Error())
+		writeErrorFromError(writer, http.StatusInternalServerError, "history_retention_apply_failed", err)
 		return
 	}
 	_, err = server.config.Configuration.UpdateConditional(
@@ -154,10 +155,10 @@ func (server *Server) handlePlayerTrackerRetentionApply(writer http.ResponseWrit
 	)
 	if err != nil {
 		if strings.Contains(err.Error(), "configuration revision changed") {
-			writeError(writer, http.StatusConflict, "history_retention_conflict", err.Error())
+			writeErrorFromError(writer, http.StatusConflict, "history_retention_conflict", err)
 			return
 		}
-		writeError(writer, http.StatusInternalServerError, "history_retention_update_failed", err.Error())
+		writeErrorFromError(writer, http.StatusInternalServerError, "history_retention_update_failed", err)
 		return
 	}
 	var report History.PlayerSamplesRetentionReport
@@ -175,7 +176,7 @@ func (server *Server) handlePlayerTrackerRetentionApply(writer http.ResponseWrit
 			},
 		)
 		if err != nil {
-			writeError(writer, http.StatusInternalServerError, "history_retention_apply_failed", err.Error())
+			writeErrorFromError(writer, http.StatusInternalServerError, "history_retention_apply_failed", err)
 			return
 		}
 		// Derive both response fields from one exact snapshot. If a non-HTTP
@@ -203,7 +204,7 @@ func (server *Server) handlePlayerTrackerRetentionApply(writer http.ResponseWrit
 					)
 				},
 			)
-			writeError(writer, http.StatusConflict, "history_retention_conflict", "My Stats storage policy changed while it was being applied")
+			writeError(writer, http.StatusConflict, "history_retention_conflict", "My Stats storage policy changed while it was being applied", Localization.New("server.api.my_stats_storage_policy.f612e323", "My Stats storage policy changed while it was being applied", nil))
 			return
 		}
 		if report.Retention == currentPolicy.Effective &&
@@ -211,7 +212,7 @@ func (server *Server) handlePlayerTrackerRetentionApply(writer http.ResponseWrit
 			break
 		}
 		if attempt == 2 {
-			writeError(writer, http.StatusConflict, "history_retention_conflict", "My Stats retention did not remain stable while it was being applied")
+			writeError(writer, http.StatusConflict, "history_retention_conflict", "My Stats retention did not remain stable while it was being applied", Localization.New("server.api.my_stats_retention_did.72cab9de", "My Stats retention did not remain stable while it was being applied", nil))
 			return
 		}
 	}
@@ -302,7 +303,7 @@ func (server *Server) handleBattleReportHistory(writer http.ResponseWriter, requ
 
 func (server *Server) handleCloudBattleReportHistory(writer http.ResponseWriter, request *http.Request) {
 	if server.config.CloudReports == nil || server.config.State == nil {
-		writeError(writer, http.StatusServiceUnavailable, "cloud_reports_unavailable", "Cloud battle reports are unavailable")
+		writeError(writer, http.StatusServiceUnavailable, "cloud_reports_unavailable", "Cloud battle reports are unavailable", Localization.New("server.api.cloud_battle_reports_are.df76c987", "Cloud battle reports are unavailable", nil))
 		return
 	}
 	snapshot := server.config.State.ReadOnlyView()
@@ -317,7 +318,7 @@ func (server *Server) handleCloudBattleReportHistory(writer http.ResponseWriter,
 	}
 	reports, err := server.config.CloudReports.FetchReports(request.Context(), query, snapshot.Player.ID)
 	if err != nil {
-		writeError(writer, http.StatusBadGateway, "cloud_reports_fetch_failed", err.Error())
+		writeErrorFromError(writer, http.StatusBadGateway, "cloud_reports_fetch_failed", err)
 		return
 	}
 	writeJSON(writer, http.StatusOK, map[string]any{"reports": reports})
@@ -325,14 +326,14 @@ func (server *Server) handleCloudBattleReportHistory(writer http.ResponseWriter,
 
 func (server *Server) handleBattleReportAnalytics(writer http.ResponseWriter, request *http.Request) {
 	if server.config.ReportAnalytics == nil || server.config.State == nil {
-		writeError(writer, http.StatusServiceUnavailable, "report_analytics_unavailable", "Battle report analytics are unavailable")
+		writeError(writer, http.StatusServiceUnavailable, "report_analytics_unavailable", "Battle report analytics are unavailable", Localization.New("server.api.battle_report_analytics_are.1d336a24", "Battle report analytics are unavailable", nil))
 		return
 	}
 	limit := historyLimit(request, 2000)
 	eventID, _ := strconv.ParseInt(request.URL.Query().Get("eventId"), 10, 64)
 	since, err := optionalHistoryTime(request.URL.Query().Get("since"))
 	if err != nil {
-		writeError(writer, http.StatusBadRequest, "invalid_history_since", err.Error())
+		writeErrorFromError(writer, http.StatusBadRequest, "invalid_history_since", err)
 		return
 	}
 	snapshot := server.config.State.ReadOnlyView()
@@ -346,7 +347,7 @@ func (server *Server) handleBattleReportAnalytics(writer http.ResponseWriter, re
 		Limit:      limit,
 	})
 	if err != nil {
-		writeError(writer, http.StatusInternalServerError, "report_analytics_read_failed", err.Error())
+		writeErrorFromError(writer, http.StatusInternalServerError, "report_analytics_read_failed", err)
 		return
 	}
 	writeJSON(writer, http.StatusOK, map[string]any{"reports": reports})
@@ -355,22 +356,22 @@ func (server *Server) handleBattleReportAnalytics(writer http.ResponseWriter, re
 func (server *Server) handleResourceAggregates(writer http.ResponseWriter, request *http.Request) {
 	writer.Header().Set("Cache-Control", "no-store")
 	if server.config.ReportAnalytics == nil || server.config.State == nil {
-		writeError(writer, http.StatusServiceUnavailable, "resource_aggregates_unavailable", "Feature resource aggregates are unavailable")
+		writeError(writer, http.StatusServiceUnavailable, "resource_aggregates_unavailable", "Feature resource aggregates are unavailable", Localization.New("server.api.feature_resource_aggregates_are.1437032e", "Feature resource aggregates are unavailable", nil))
 		return
 	}
 	viewKey := Reports.ResourceViewKey(strings.TrimSpace(request.URL.Query().Get("view")))
 	if !Reports.ValidResourceViewKey(viewKey) {
-		writeError(writer, http.StatusUnprocessableEntity, "resource_view_invalid", "A valid feature resource view is required")
+		writeError(writer, http.StatusUnprocessableEntity, "resource_view_invalid", "A valid feature resource view is required", Localization.New("server.api.a_valid_feature_resource.f87fe101", "A valid feature resource view is required", nil))
 		return
 	}
 	since, err := optionalHistoryTime(request.URL.Query().Get("since"))
 	if err != nil {
-		writeError(writer, http.StatusBadRequest, "invalid_history_since", err.Error())
+		writeErrorFromError(writer, http.StatusBadRequest, "invalid_history_since", err)
 		return
 	}
 	before, err := optionalHistoryTime(request.URL.Query().Get("before"))
 	if err != nil {
-		writeError(writer, http.StatusBadRequest, "invalid_history_cursor", "before must be an RFC3339 timestamp")
+		writeError(writer, http.StatusBadRequest, "invalid_history_cursor", "before must be an RFC3339 timestamp", Localization.New("server.api.before_must_be_an.26ccb95f", "before must be an RFC3339 timestamp", nil))
 		return
 	}
 	limit := historyLimit(request, 5000)
@@ -385,7 +386,7 @@ func (server *Server) handleResourceAggregates(writer http.ResponseWriter, reque
 		Limit:      limit + 1,
 	})
 	if err != nil {
-		writeError(writer, http.StatusInternalServerError, "resource_aggregates_read_failed", err.Error())
+		writeErrorFromError(writer, http.StatusInternalServerError, "resource_aggregates_read_failed", err)
 		return
 	}
 	response := resourceAggregateResponse{Aggregates: aggregates, SourceBucketSeconds: Reports.ResourceAggregateSourceSeconds}
@@ -410,20 +411,20 @@ func optionalHistoryTime(raw string) (time.Time, error) {
 	}
 	parsed, err := time.Parse(time.RFC3339Nano, raw)
 	if err != nil {
-		return time.Time{}, fmt.Errorf("since must be an RFC3339 timestamp")
+		return time.Time{}, Localization.WithError(fmt.Errorf("since must be an RFC3339 timestamp"), Localization.New("server.api.since_must_be_an.0b73d3e3", "since must be an RFC3339 timestamp", nil))
 	}
 	return parsed.UTC(), nil
 }
 
 func (server *Server) handleRawHistory(writer http.ResponseWriter, request *http.Request, collection string, wrapped bool) {
 	if server.config.History == nil {
-		writeError(writer, http.StatusServiceUnavailable, "history_unavailable", "Report history is unavailable")
+		writeError(writer, http.StatusServiceUnavailable, "history_unavailable", "Report history is unavailable", Localization.New("server.api.report_history_is_unavailable.4a955e49", "Report history is unavailable", nil))
 		return
 	}
 	limit := historyLimit(request, 2000)
 	rows, err := server.config.History.Read(collection, time.Time{}, limit)
 	if err != nil {
-		writeError(writer, http.StatusInternalServerError, "history_read_failed", err.Error())
+		writeErrorFromError(writer, http.StatusInternalServerError, "history_read_failed", err)
 		return
 	}
 	items := make([]json.RawMessage, len(rows))

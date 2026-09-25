@@ -1,9 +1,11 @@
+import {messageLanguageAttributes} from '../i18n/messageLanguage';
+import { useLocale as useStaticLocale } from "../i18n/LocaleContext";
+import { LocalizedText } from "../i18n/LocalizedText";
 import React from 'react';
 import { Icons } from '../components/Icons';
 import { Badge, PageHeader, SectionCard } from '../components/ui';
 import {
   APP_VERSION_CURRENT,
-  PATCH_NOTE_KIND_LABEL,
   PATCH_NOTE_KIND_ORDER,
   PATCH_NOTES_RELEASES,
   type PatchNoteKind,
@@ -21,6 +23,7 @@ const PATCH_NOTE_BADGE_VARIANT: Record<PatchNoteKind, NonNullable<BadgeProps['va
 };
 
 function ReleaseCard({ release, isLatest }: { release: PatchNotesRelease; isLatest: boolean }) {
+  const {t,date,message,locale} = useStaticLocale();
   const groups = PATCH_NOTE_KIND_ORDER
     .map((kind) => ({
       kind,
@@ -34,11 +37,11 @@ function ReleaseCard({ release, isLatest }: { release: PatchNotesRelease; isLate
       title={(
         <>
           <span className="font-mono text-primary">v{release.version}</span>
-          {isLatest && <Badge variant="primary">Current</Badge>}
+          {isLatest && <Badge variant="primary"><LocalizedText messageKey="ui.views.patchNotesView.current.e0d1b682" /></Badge>}
         </>
       )}
-      description={release.subtitle}
-      actions={release.date ? <span className="font-mono text-xs text-text-muted">{release.date}</span> : undefined}
+      description={release.subtitleKey ? <LocalizedText messageKey={release.subtitleKey}/> : release.subtitle}
+      actions={release.date ? <span lang={locale} className="font-mono text-xs text-text-muted">{date(new Date(release.date),{year:'numeric',month:'long',day:'numeric',timeZone:'UTC'})}</span> : undefined}
       titleClassName="text-xl"
       className={
         isLatest
@@ -56,17 +59,17 @@ function ReleaseCard({ release, isLatest }: { release: PatchNotesRelease; isLate
                   variant={PATCH_NOTE_BADGE_VARIANT[group.kind]}
                   className="shrink-0"
                 >
-                  {PATCH_NOTE_KIND_LABEL[group.kind]}
+                  <LocalizedText messageKey={`patchNotes.kind.${group.kind}`}/>
                 </Badge>
-                <span className="text-xs tabular-nums text-text-muted">
-                  {group.items.length} {group.items.length === 1 ? 'change' : 'changes'}
+                <span className="text-xs tabular-nums text-text-muted" {...messageLanguageAttributes(message('patchNotes.changes',{count:group.items.length}))}>
+                  {t('patchNotes.changes',{count:group.items.length})}
                 </span>
               </div>
               <ul className="space-y-3 text-sm leading-relaxed text-text-main">
                 {group.items.map((item, index) => (
                   <li key={`${release.version}-${group.kind}-${index}`} className="flex items-start gap-3">
                     <span aria-hidden="true" className="mt-[0.45rem] h-1.5 w-1.5 shrink-0 rounded-full bg-current opacity-55" />
-                    <span className="min-w-0">{item.text}</span>
+                    <span className="min-w-0"><LocalizedText messageKey={item.textKey}/></span>
                   </li>
                 ))}
               </ul>
@@ -79,11 +82,12 @@ function ReleaseCard({ release, isLatest }: { release: PatchNotesRelease; isLate
 }
 
 const PatchNotesView: React.FC = () => {
+  const { t: localizeStatic } = useStaticLocale();
   return (
     <div className="max-w-3xl mx-auto py-6 pb-16">
       <PageHeader
         className="mb-8"
-        title="Patch Notes"
+        title={localizeStatic("ui.views.patchNotesView.title.patch.notes.e851faa6")}
         icon={<Icons.PatchNotes className="h-7 w-7" />}
         description={<>Summaries of recent updates. You’re on version <span className="font-mono text-text-main">v{APP_VERSION_CURRENT}</span>.</>}
       />
@@ -95,8 +99,7 @@ const PatchNotesView: React.FC = () => {
       </div>
 
       <p className="mt-10 text-xs text-text-muted text-center">
-        Earlier versions will appear here as they’re released.
-      </p>
+        <LocalizedText messageKey="ui.views.patchNotesView.earlier.versions.will.appear.here.as.they.abab933c" /></p>
     </div>
   );
 };

@@ -1,6 +1,7 @@
 package Automation
 
 import (
+	"CitadelDesktop/Server/Localization"
 	"encoding/json"
 	"fmt"
 	"sort"
@@ -44,7 +45,7 @@ func evaluateStrictAutoStormBuild(
 		castle.BuildingQueue.ObservedAt.IsZero() || snapshot.Now.Sub(castle.BuildingQueue.ObservedAt) > autoStormBuildingRefreshAge {
 		return autoStormIntentDecision(snapshot.Now, metrics, "Refresh the Storm castle building state", "building.refresh", map[string]any{
 			"castleId": castle.ID,
-		}), false, "", nil
+		}, Localization.New("server.automation.refresh_the_storm_castle.80be70c1", "Refresh the Storm castle building state", nil)), false, "", nil
 	}
 	catalog, err := snapshot.GameData.BuildingCatalog()
 	if err != nil {
@@ -53,7 +54,7 @@ func evaluateStrictAutoStormBuild(
 	if giftID, found := autoStormExpansionGift(castle, catalog); found {
 		return autoStormIntentDecision(snapshot.Now, metrics, fmt.Sprintf("Collect expansion gift %d before reconciling the Storm layout", giftID), "building.collect_expansion_gift", map[string]any{
 			"castleId": castle.ID, "buildingInstanceId": giftID,
-		}), false, "", nil
+		}, Localization.New("server.automation.collect_expansion_gift_p.e9a012eb", "Collect expansion gift {p0} before reconciling the Storm layout", Localization.Params{"p0": fmt.Sprintf("%d", giftID)})), false, "", nil
 	}
 	profile := autoStormBuildProfile()
 	queueDecision, queueBlocked := autoStormQueueDecision(snapshot, settings, castle, catalog, metrics, profile)
@@ -170,7 +171,7 @@ func evaluateStrictAutoStormBuild(
 			if definition.Storeable != nil && *definition.Storeable {
 				return autoStormIntentDecision(snapshot.Now, metrics, fmt.Sprintf("Store unmanaged %s before arranging the target layout", definition.DisplayName), "building.store", map[string]any{
 					"castleId": castle.ID, "buildingInstanceId": extra.BuildingInstanceID,
-				}), false, "", nil
+				}, Localization.New("server.automation.store_unmanaged_p_before.64960dea", "Store unmanaged {p0} before arranging the target layout", Localization.Params{"p0": fmt.Sprintf("%s", definition.DisplayName)})), false, "", nil
 			}
 			if !settings.Build.AllowDemolition {
 				return nil, false, fmt.Sprintf("Unmanaged %s must be removed before layout moves; enable demolition to allow this action", definition.DisplayName), nil
@@ -180,7 +181,7 @@ func evaluateStrictAutoStormBuild(
 			}
 			return autoStormIntentDecision(snapshot.Now, metrics, fmt.Sprintf("Demolish unmanaged %s before arranging the target layout", definition.DisplayName), "building.demolish", map[string]any{
 				"castleId": castle.ID, "buildingInstanceId": extra.BuildingInstanceID,
-			}), false, "", nil
+			}, Localization.New("server.automation.demolish_unmanaged_p_before.47b57709", "Demolish unmanaged {p0} before arranging the target layout", Localization.Params{"p0": fmt.Sprintf("%s", definition.DisplayName)})), false, "", nil
 		}
 	}
 
@@ -479,7 +480,7 @@ func stormAvailableDecorationTargets(snapshot Snapshot, castle State.CastleState
 	}
 	observedAt := snapshot.State.Inventory.ItemsObservedAt[stormDecorationStorageCollection]
 	if observedAt.IsZero() || snapshot.Now.Sub(observedAt) > stormDecorationStorageMaxAge {
-		decision := autoStormIntentDecision(snapshot.Now, metrics, "Refresh decoration storage before deciding which target decorations are available", "building.storage.refresh", map[string]any{})
+		decision := autoStormIntentDecision(snapshot.Now, metrics, "Refresh decoration storage before deciding which target decorations are available", "building.storage.refresh", map[string]any{}, Localization.New("server.automation.refresh_decoration_storage_before.78be6db4", "Refresh decoration storage before deciding which target decorations are available", nil))
 		return nil, 0, decision
 	}
 	available := map[State.BuildingID]int64{}
@@ -575,7 +576,7 @@ func stormInventoryPlacementAction(snapshot Snapshot, settings autoStormSettings
 			return decision, false, "", nil
 		}
 	}
-	return autoStormIntentDecision(snapshot.Now, metrics, "Refresh decoration storage after its available count changed", "building.storage.refresh", map[string]any{}), false, "", nil
+	return autoStormIntentDecision(snapshot.Now, metrics, "Refresh decoration storage after its available count changed", "building.storage.refresh", map[string]any{}, Localization.New("server.automation.refresh_decoration_storage_after.8e78f1dd", "Refresh decoration storage after its available count changed", nil)), false, "", nil
 }
 
 func stormInitialPlacementAction(snapshot Snapshot, settings autoStormSettings, castle State.CastleState, diff Buildings.TargetDiffResult, metrics map[string]float64, profile autoEventBuildProfile, waitDetail string, allowedStorage []State.BuildingID) (*Decision, bool, string, error) {

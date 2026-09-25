@@ -1,6 +1,7 @@
 package Intent
 
 import (
+	"CitadelDesktop/Server/Localization"
 	"context"
 	"encoding/json"
 	"errors"
@@ -1258,7 +1259,7 @@ func (engine *Engine) executeStep(ctx context.Context, afterRevision uint64, ste
 		resolvedContext := ctx
 		if dependency := step.CommandDependencies; dependency != nil {
 			dependencyStep := Step{
-				Name: step.Name, Opcode: dependency.Opcode, Payload: dependency.Payload,
+				Name: step.Name, NameDescriptor: Localization.Clone(step.NameDescriptor), Opcode: dependency.Opcode, Payload: dependency.Payload,
 				Command: Protocol.Command{Opcode: dependency.Opcode, Payload: dependency.Payload},
 			}
 			var key string
@@ -1748,7 +1749,7 @@ func (engine *Engine) executeStep(ctx context.Context, afterRevision uint64, ste
 
 func (engine *Engine) refreshCoinsAfterDispatch(ctx context.Context) error {
 	step := Step{
-		Name: "Refresh authoritative coin balance", Opcode: "gbd", AwaitOpcode: "gbd",
+		Name: "Refresh authoritative coin balance", NameDescriptor: Localization.New("server.intent.refresh_authoritative_coin_balance.a342e985", "Refresh authoritative coin balance", nil), Opcode: "gbd", AwaitOpcode: "gbd",
 		TimeoutMillis: 10_000, SuccessCodes: []int{0}, ResponseBarrier: ResponseBarrierCommitted,
 		Command: Protocol.Command{Opcode: "gbd", Bare: true},
 	}
@@ -1773,7 +1774,7 @@ func (engine *Engine) executeResponseRetryGuard(ctx context.Context, policy *Res
 		return fmt.Errorf("response retry policy is unavailable")
 	}
 	guard := Step{
-		Name:            "Prepare response retry",
+		Name: "Prepare response retry", NameDescriptor: Localization.New("server.intent.prepare_response_retry.4e3dbd5f", "Prepare response retry", nil),
 		Action:          policy.GuardAction,
 		ActionArguments: append(json.RawMessage(nil), policy.GuardArguments...),
 		DelayMillis:     policy.DelayMillis,

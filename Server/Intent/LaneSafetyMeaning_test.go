@@ -37,6 +37,9 @@ func TestLaneSafetyMeaningPersistsAndRefreshPreservesTimerAndContext(t *testing.
 		if locked.Lock.Meaning != tc.want || strings.Contains(locked.Error(), "op-private") {
 			t.Fatalf("lock=%+v", locked.Lock)
 		}
+		if tc.want != "" && (locked.Lock.MeaningDescriptor == nil || locked.Lock.MeaningDescriptor.FallbackText != tc.want || locked.Lock.DetailDescriptor() == nil) {
+			t.Fatal("known rejection metadata missing")
+		}
 		original := locked.Lock
 		if err := engine.RefreshAutomationLaneLocks(); err != nil {
 			t.Fatal(err)
@@ -46,6 +49,10 @@ func TestLaneSafetyMeaningPersistsAndRefreshPreservesTimerAndContext(t *testing.
 			t.Fatal(err)
 		}
 		after := saved.Automations["test"].SafetyLock
+		if tc.want != "" && (after.MeaningDescriptor == nil || after.DetailDescriptor() == nil) {
+			t.Fatal("persisted descriptor missing")
+		}
+
 		if after.Meaning != tc.want || after.OperationID != "op-private" || !after.ExpiresAt().Equal(original.ExpiresAt()) {
 			t.Fatalf("saved=%+v", after)
 		}
@@ -81,6 +88,10 @@ func TestEUPLockContextUsesUpgradeCostAndGameSetting(t *testing.T) {
 	detail := engine.rubyRejectionContext(request, State.AutomationSafetyLock{Opcode: "eup", Code: 440})
 	if !strings.Contains(detail, "3,100 rubies") || !strings.Contains(detail, "2,500 rubies") {
 		t.Fatal(detail)
+	}
+	raw, descriptor := engine.rubyRejectionPresentation(request, State.AutomationSafetyLock{Opcode: "eup", Code: 440})
+	if descriptor == nil || descriptor.FallbackText != raw || descriptor.Params["cost"] != int64(3100) || descriptor.Params["threshold"] != int64(2500) {
+		t.Fatal("context lost typed source values")
 	}
 	state.Player.RubyConfirmation.Known = false
 	engine.state = State.NewStore(state)

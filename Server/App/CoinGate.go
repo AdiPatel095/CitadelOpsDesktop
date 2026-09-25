@@ -1,6 +1,7 @@
 package App
 
 import (
+	"CitadelDesktop/Server/Localization"
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
@@ -69,16 +70,16 @@ func (gate *coinDispatchGate) Validate(
 	}
 	resourceID, err := officialResourceIDByJSONKey(input.GameData, coinResourceKey)
 	if err != nil {
-		return fmt.Errorf("coin affordability unavailable: %w", err)
+		return Localization.WithError(fmt.Errorf("coin affordability unavailable: %w", err), Localization.ErrorContext(Localization.New("server.app.coin_affordability_unavailable.a3c889be", "coin affordability unavailable", nil), err))
 	}
 	observation, observed := input.State.Player.ResourceObservations[State.ResourceID(resourceID)]
 	if input.State.Session.ConnectionGeneration == 0 || !observed || observation.ObservedAt.IsZero() ||
 		observation.ConnectionGeneration != input.State.Session.ConnectionGeneration {
-		return fmt.Errorf("coin affordability unavailable: current-session authoritative C1 balance is missing")
+		return Localization.WithError(fmt.Errorf("coin affordability unavailable: current-session authoritative C1 balance is missing"), Localization.New("server.app.coin_affordability_unavailable_current.3afa2f9b", "coin affordability unavailable: current-session authoritative C1 balance is missing", nil))
 	}
 	coinBalance := input.State.Player.Resources[State.ResourceID(resourceID)]
 	if coinBalance < 0 || math.IsNaN(coinBalance) || math.IsInf(coinBalance, 0) || coinBalance >= math.Exp2(63) {
-		return fmt.Errorf("coin affordability unavailable: authoritative C1 balance is malformed")
+		return Localization.WithError(fmt.Errorf("coin affordability unavailable: authoritative C1 balance is malformed"), Localization.New("server.app.coin_affordability_unavailable_authoritative.a853c8f4", "coin affordability unavailable: authoritative C1 balance is malformed", nil))
 	}
 	coins := int64(math.Floor(coinBalance))
 	now := time.Now().UTC()
@@ -89,7 +90,7 @@ func (gate *coinDispatchGate) Validate(
 		(gate.watermark.ConnectionGeneration == observation.ConnectionGeneration && observation.ObservedAt.Before(gate.watermark.ObservedAt)) ||
 		(gate.watermark.ConnectionGeneration == observation.ConnectionGeneration && observation.ObservedAt.Equal(gate.watermark.ObservedAt) &&
 			!gate.watermark.ObservedAt.IsZero() && coins != gate.watermarkBalance) {
-		return fmt.Errorf("%w: coin balance snapshot predates the shared affordability gate", Intent.ErrPlanStale)
+		return Localization.WithError(fmt.Errorf("%w: coin balance snapshot predates the shared affordability gate", Intent.ErrPlanStale), Localization.New("server.app.intent_plan_became_stale.e2fabc80", "intent plan became stale before dispatch: coin balance snapshot predates the shared affordability gate", nil))
 	}
 	if observation.ConnectionGeneration > gate.watermark.ConnectionGeneration || observation.ObservedAt.After(gate.watermark.ObservedAt) {
 		gate.watermark = observation
@@ -99,17 +100,17 @@ func (gate *coinDispatchGate) Validate(
 	existing, exists := gate.pending[key]
 	if exists {
 		if existing.amount != cost.amount {
-			return fmt.Errorf("coin affordability unavailable: repeated dispatch changed cost from %d to %d", existing.amount, cost.amount)
+			return Localization.WithError(fmt.Errorf("coin affordability unavailable: repeated dispatch changed cost from %d to %d", existing.amount, cost.amount), Localization.New("server.app.coin_affordability_unavailable_repeated.0b255132", "coin affordability unavailable: repeated dispatch changed cost from {p0} to {p1}", Localization.Params{"p0": existing.amount, "p1": cost.amount}))
 		}
 		if existing.reserve != cost.reserve {
-			return fmt.Errorf("coin affordability unavailable: repeated dispatch changed reserve from %d to %d", existing.reserve, cost.reserve)
+			return Localization.WithError(fmt.Errorf("coin affordability unavailable: repeated dispatch changed reserve from %d to %d", existing.reserve, cost.reserve), Localization.New("server.app.coin_affordability_unavailable_repeated.bded7a41", "coin affordability unavailable: repeated dispatch changed reserve from {p0} to {p1}", Localization.Params{"p0": existing.reserve, "p1": cost.reserve}))
 		}
 	}
 	pending := int64(0)
 	for candidate, debit := range gate.pending {
 		if candidate != key {
 			if debit.amount < 0 || pending > math.MaxInt64-debit.amount {
-				return fmt.Errorf("coin affordability unavailable: pending debit overflowed")
+				return Localization.WithError(fmt.Errorf("coin affordability unavailable: pending debit overflowed"), Localization.New("server.app.coin_affordability_unavailable_pending.c698b690", "coin affordability unavailable: pending debit overflowed", nil))
 			}
 			pending += debit.amount
 		}
@@ -221,7 +222,7 @@ func resolveCoinCost(input Intent.PlanningContext, step Intent.Step) (resolvedCo
 	declared := resolvedCoinCost{}
 	if step.CoinCost != nil {
 		if step.CoinCost.Amount < 0 || step.CoinCost.Reserve < 0 || strings.TrimSpace(step.CoinCost.Source) == "" {
-			return resolvedCoinCost{}, true, fmt.Errorf("coin affordability unavailable: declared cost is malformed")
+			return resolvedCoinCost{}, true, Localization.WithError(fmt.Errorf("coin affordability unavailable: declared cost is malformed"), Localization.New("server.app.coin_affordability_unavailable_declared.6eb67ba9", "coin affordability unavailable: declared cost is malformed", nil))
 		}
 		declared = resolvedCoinCost{
 			amount: step.CoinCost.Amount, reserve: step.CoinCost.Reserve,
@@ -273,7 +274,7 @@ func resolveCoinCost(input Intent.PlanningContext, step Intent.Step) (resolvedCo
 	}
 	if declared.additive {
 		if declared.amount > math.MaxInt64-computed.amount {
-			return resolvedCoinCost{}, true, fmt.Errorf("coin affordability unavailable: combined cost overflowed")
+			return resolvedCoinCost{}, true, Localization.WithError(fmt.Errorf("coin affordability unavailable: combined cost overflowed"), Localization.New("server.app.coin_affordability_unavailable_combined.31db260b", "coin affordability unavailable: combined cost overflowed", nil))
 		}
 		computed.amount += declared.amount
 	} else if declared.amount > computed.amount {
@@ -301,14 +302,14 @@ func shopPackageCoinCost(store *GameData.Store, payload json.RawMessage) (resolv
 		BuyAll    int64 `json:"BA"`
 	}
 	if err := json.Unmarshal(payload, &request); err != nil || request.PackageID <= 0 || request.Amount <= 0 {
-		return resolvedCoinCost{}, fmt.Errorf("resolved shop package purchase is malformed")
+		return resolvedCoinCost{}, Localization.WithError(fmt.Errorf("resolved shop package purchase is malformed"), Localization.New("server.app.resolved_shop_package_purchase.a22dbce5", "resolved shop package purchase is malformed", nil))
 	}
 	unitCost, known, err := officialNumberOrZero(store, "packages", request.PackageID, "packagePriceC1")
 	if err != nil || !known || unitCost < 0 || math.IsNaN(unitCost) || math.IsInf(unitCost, 0) {
-		return resolvedCoinCost{}, fmt.Errorf("official package %d coin price is missing or malformed", request.PackageID)
+		return resolvedCoinCost{}, Localization.WithError(fmt.Errorf("official package %d coin price is missing or malformed", request.PackageID), Localization.New("server.app.official_package_p_coin.0aed854e", "official package {p0} coin price is missing or malformed", Localization.Params{"p0": fmt.Sprintf("%d", request.PackageID)}))
 	}
 	if request.BuyAll != 0 && unitCost > 0 {
-		return resolvedCoinCost{}, fmt.Errorf("coin affordability unavailable: shop package buy-all pricing is not authoritative")
+		return resolvedCoinCost{}, Localization.WithError(fmt.Errorf("coin affordability unavailable: shop package buy-all pricing is not authoritative"), Localization.New("server.app.coin_affordability_unavailable_shop.318c76a1", "coin affordability unavailable: shop package buy-all pricing is not authoritative", nil))
 	}
 	amount, err := checkedCeilProduct(unitCost, request.Amount)
 	if err != nil {
@@ -323,11 +324,11 @@ func kingdomTroopTransferCoinCost(input Intent.PlanningContext, payload json.Raw
 		Items         [][2]int64      `json:"A"`
 	}
 	if err := json.Unmarshal(payload, &request); err != nil || request.TargetKingdom < 0 || len(request.Items) == 0 || input.GameData == nil {
-		return resolvedCoinCost{}, fmt.Errorf("resolved kingdom troop transfer is malformed")
+		return resolvedCoinCost{}, Localization.WithError(fmt.Errorf("resolved kingdom troop transfer is malformed"), Localization.New("server.app.resolved_kingdom_troop_transfer.1dfe18f8", "resolved kingdom troop transfer is malformed", nil))
 	}
 	tax, known := officialNumber(input.GameData, "kingdoms", int64(request.TargetKingdom), "unitTravelTaxRate")
 	if !known || tax < 0 || math.IsNaN(tax) || math.IsInf(tax, 0) {
-		return resolvedCoinCost{}, fmt.Errorf("official kingdom %d unit travel tax is unavailable", request.TargetKingdom)
+		return resolvedCoinCost{}, Localization.WithError(fmt.Errorf("official kingdom %d unit travel tax is unavailable", request.TargetKingdom), Localization.New("server.app.official_kingdom_p_unit.bf259222", "official kingdom {p0} unit travel tax is unavailable", Localization.Params{"p0": request.TargetKingdom}))
 	}
 	catalog, err := input.GameData.Catalog("units")
 	if err != nil {
@@ -336,11 +337,11 @@ func kingdomTroopTransferCoinCost(input Intent.PlanningContext, payload json.Raw
 	total := float64(0)
 	for _, pair := range request.Items {
 		if pair[0] <= 0 || pair[1] <= 0 {
-			return resolvedCoinCost{}, fmt.Errorf("kingdom troop transfer manifest is malformed")
+			return resolvedCoinCost{}, Localization.WithError(fmt.Errorf("kingdom troop transfer manifest is malformed"), Localization.New("server.app.kingdom_troop_transfer_manifest.aeb8bdc2", "kingdom troop transfer manifest is malformed", nil))
 		}
 		raw, found := catalog.Find(strconv.FormatInt(pair[0], 10))
 		if !found {
-			return resolvedCoinCost{}, fmt.Errorf("official transfer item %d is unavailable", pair[0])
+			return resolvedCoinCost{}, Localization.WithError(fmt.Errorf("official transfer item %d is unavailable", pair[0]), Localization.New("server.app.official_transfer_item_p.2ed0e2da", "official transfer item {p0} is unavailable", Localization.Params{"p0": pair[0]}))
 		}
 		record, err := GameData.DecodeRecord(raw)
 		if err != nil {
@@ -356,7 +357,7 @@ func kingdomTroopTransferCoinCost(input Intent.PlanningContext, payload json.Raw
 		unitCost *= tax / 100
 		itemCost := unitCost * float64(pair[1])
 		if itemCost < 0 || math.IsNaN(itemCost) || math.IsInf(itemCost, 0) || total >= math.Exp2(63)-itemCost {
-			return resolvedCoinCost{}, fmt.Errorf("kingdom troop transfer coin cost overflowed")
+			return resolvedCoinCost{}, Localization.WithError(fmt.Errorf("kingdom troop transfer coin cost overflowed"), Localization.New("server.app.kingdom_troop_transfer_coin.e35e81ec", "kingdom troop transfer coin cost overflowed", nil))
 		}
 		total += itemCost
 	}
@@ -369,15 +370,15 @@ func equipmentEnchantCoinCost(input Intent.PlanningContext, payload json.RawMess
 		CostMode int   `json:"C2"`
 	}
 	if err := json.Unmarshal(payload, &request); err != nil || request.ItemID <= 0 || request.CostMode != 0 {
-		return resolvedCoinCost{}, fmt.Errorf("resolved equipment enchantment is malformed")
+		return resolvedCoinCost{}, Localization.WithError(fmt.Errorf("resolved equipment enchantment is malformed"), Localization.New("server.app.resolved_equipment_enchantment_is.e1533dd2", "resolved equipment enchantment is malformed", nil))
 	}
 	item, found := input.State.Inventory.Equipment[State.EquipmentInstanceID(request.ItemID)]
 	if !found || item.Level < 0 {
-		return resolvedCoinCost{}, fmt.Errorf("equipment %d current enchantment level is unavailable", request.ItemID)
+		return resolvedCoinCost{}, Localization.WithError(fmt.Errorf("equipment %d current enchantment level is unavailable", request.ItemID), Localization.New("server.app.equipment_p_current_enchantment.0e51f1ad", "equipment {p0} current enchantment level is unavailable", Localization.Params{"p0": fmt.Sprintf("%d", request.ItemID)}))
 	}
 	value := 10 * math.Round(17*math.Pow(float64(item.Level+1), 1.7))
 	if value < 0 || math.IsNaN(value) || math.IsInf(value, 0) || value >= math.Exp2(63) {
-		return resolvedCoinCost{}, fmt.Errorf("equipment enchantment coin cost overflowed")
+		return resolvedCoinCost{}, Localization.WithError(fmt.Errorf("equipment enchantment coin cost overflowed"), Localization.New("server.app.equipment_enchantment_coin_cost.d508299f", "equipment enchantment coin cost overflowed", nil))
 	}
 	return resolvedCoinCost{amount: int64(value), source: "official base equipment enchantment formula", upperBound: true}, nil
 }
@@ -389,19 +390,19 @@ func relicEnchantCoinCost(input Intent.PlanningContext, payload json.RawMessage)
 		CostMode  int   `json:"C2"`
 	}
 	if err := json.Unmarshal(payload, &request); err != nil || request.ItemID <= 0 || request.CostMode != 0 || request.Equipment < 0 || request.Equipment > 1 {
-		return resolvedCoinCost{}, fmt.Errorf("resolved relic enchantment is malformed")
+		return resolvedCoinCost{}, Localization.WithError(fmt.Errorf("resolved relic enchantment is malformed"), Localization.New("server.app.resolved_relic_enchantment_is.86e31d89", "resolved relic enchantment is malformed", nil))
 	}
 	level := 0
 	if request.Equipment == 1 {
 		item, found := input.State.Inventory.Equipment[State.EquipmentInstanceID(request.ItemID)]
 		if !found {
-			return resolvedCoinCost{}, fmt.Errorf("relic equipment %d is unavailable", request.ItemID)
+			return resolvedCoinCost{}, Localization.WithError(fmt.Errorf("relic equipment %d is unavailable", request.ItemID), Localization.New("server.app.relic_equipment_p_is.71ba6506", "relic equipment {p0} is unavailable", Localization.Params{"p0": fmt.Sprintf("%d", request.ItemID)}))
 		}
 		level = item.Level
 	} else {
 		gem, found := input.State.Inventory.Gems[State.GemInstanceID(request.ItemID)]
 		if !found {
-			return resolvedCoinCost{}, fmt.Errorf("relic gem %d is unavailable", request.ItemID)
+			return resolvedCoinCost{}, Localization.WithError(fmt.Errorf("relic gem %d is unavailable", request.ItemID), Localization.New("server.app.relic_gem_p_is.8e00b8cf", "relic gem {p0} is unavailable", Localization.Params{"p0": fmt.Sprintf("%d", request.ItemID)}))
 		}
 		level = gem.Level
 	}
@@ -411,7 +412,7 @@ func relicEnchantCoinCost(input Intent.PlanningContext, payload json.RawMessage)
 	}
 	cost, known := catalog.Float64ByField("level", strconv.Itoa(level+1), "c1Cost")
 	if !known || cost < 0 || math.IsNaN(cost) || math.IsInf(cost, 0) || cost >= math.Exp2(63) {
-		return resolvedCoinCost{}, fmt.Errorf("official relic enchantment level %d coin cost is unavailable", level+1)
+		return resolvedCoinCost{}, Localization.WithError(fmt.Errorf("official relic enchantment level %d coin cost is unavailable", level+1), Localization.New("server.app.official_relic_enchantment_level.cada5633", "official relic enchantment level {p0} coin cost is unavailable", Localization.Params{"p0": level + 1}))
 	}
 	return resolvedCoinCost{amount: int64(math.Ceil(cost)), source: "official relic enchantment level cost"}, nil
 }
@@ -423,26 +424,26 @@ func gemInsertionCoinCost(input Intent.PlanningContext, payload json.RawMessage)
 		Mode     int   `json:"M"`
 	}
 	if err := json.Unmarshal(payload, &request); err != nil || request.GemID <= 0 || request.Mode != 0 {
-		return resolvedCoinCost{}, fmt.Errorf("resolved gem insertion is malformed")
+		return resolvedCoinCost{}, Localization.WithError(fmt.Errorf("resolved gem insertion is malformed"), Localization.New("server.app.resolved_gem_insertion_is.950f6bd2", "resolved gem insertion is malformed", nil))
 	}
 	level := int64(-1)
 	if request.RelicGem == 1 {
 		if _, found := input.State.Inventory.Gems[State.GemInstanceID(request.GemID)]; !found {
-			return resolvedCoinCost{}, fmt.Errorf("relic gem %d is unavailable", request.GemID)
+			return resolvedCoinCost{}, Localization.WithError(fmt.Errorf("relic gem %d is unavailable", request.GemID), Localization.New("server.app.relic_gem_p_is.8e00b8cf", "relic gem {p0} is unavailable", Localization.Params{"p0": fmt.Sprintf("%d", request.GemID)}))
 		}
 		return resolvedCoinCost{amount: 95_000, source: "official relic gem insertion constant"}, nil
 	} else if request.RelicGem == 0 {
 		levelValue, known := officialNumber(input.GameData, "gems", request.GemID, "gemLevelID")
 		if !known || levelValue < 0 || levelValue != math.Trunc(levelValue) {
-			return resolvedCoinCost{}, fmt.Errorf("official gem %d level is unavailable", request.GemID)
+			return resolvedCoinCost{}, Localization.WithError(fmt.Errorf("official gem %d level is unavailable", request.GemID), Localization.New("server.app.official_gem_p_level.6b6645cf", "official gem {p0} level is unavailable", Localization.Params{"p0": fmt.Sprintf("%d", request.GemID)}))
 		}
 		level = int64(levelValue)
 	} else {
-		return resolvedCoinCost{}, fmt.Errorf("resolved gem insertion kind is malformed")
+		return resolvedCoinCost{}, Localization.WithError(fmt.Errorf("resolved gem insertion kind is malformed"), Localization.New("server.app.resolved_gem_insertion_kind.f92d1f5c", "resolved gem insertion kind is malformed", nil))
 	}
 	cost, known := officialNumber(input.GameData, "gemlevels", level, "insertCostC1")
 	if !known || cost < 0 || math.IsNaN(cost) || math.IsInf(cost, 0) || cost >= math.Exp2(63) {
-		return resolvedCoinCost{}, fmt.Errorf("official gem level %d insertion cost is unavailable", level)
+		return resolvedCoinCost{}, Localization.WithError(fmt.Errorf("official gem level %d insertion cost is unavailable", level), Localization.New("server.app.official_gem_level_p.5af19e33", "official gem level {p0} insertion cost is unavailable", Localization.Params{"p0": level}))
 	}
 	return resolvedCoinCost{amount: int64(math.Ceil(cost)), source: "official base gem insertion level cost", upperBound: true}, nil
 }
@@ -456,19 +457,19 @@ func marketShipmentCoinCost(input Intent.PlanningContext, payload json.RawMessag
 		Goods          [][]any        `json:"G"`
 	}
 	if err := json.Unmarshal(payload, &request); err != nil || request.SourceCastleID <= 0 || len(request.Goods) != 1 || len(request.Goods[0]) < 2 {
-		return resolvedCoinCost{}, fmt.Errorf("resolved market shipment is malformed")
+		return resolvedCoinCost{}, Localization.WithError(fmt.Errorf("resolved market shipment is malformed"), Localization.New("server.app.resolved_market_shipment_is.ca68f454", "resolved market shipment is malformed", nil))
 	}
 	amount, ok := request.Goods[0][1].(float64)
 	if !ok || amount <= 0 || math.IsNaN(amount) || math.IsInf(amount, 0) || amount >= math.Exp2(63) {
-		return resolvedCoinCost{}, fmt.Errorf("resolved market shipment amount is malformed")
+		return resolvedCoinCost{}, Localization.WithError(fmt.Errorf("resolved market shipment amount is malformed"), Localization.New("server.app.resolved_market_shipment_amount.4cb17ef5", "resolved market shipment amount is malformed", nil))
 	}
 	source, found := input.State.Castles[request.SourceCastleID]
 	if !found || input.GameData == nil || !input.State.Market.CaravanLevelLoaded || input.State.Market.ObservedAt.IsZero() {
-		return resolvedCoinCost{}, fmt.Errorf("current official market capacity is unavailable")
+		return resolvedCoinCost{}, Localization.WithError(fmt.Errorf("current official market capacity is unavailable"), Localization.New("server.app.current_official_market_capacity.2683f292", "current official market capacity is unavailable", nil))
 	}
 	market, found := input.State.Market.Castles[source.ID]
 	if !found {
-		return resolvedCoinCost{}, fmt.Errorf("source market state is unavailable")
+		return resolvedCoinCost{}, Localization.WithError(fmt.Errorf("source market state is unavailable"), Localization.New("server.app.source_market_state_is.2cac4cbc", "source market state is unavailable", nil))
 	}
 	effects := make([]GameData.MarketEffect, 0, len(market.AreaEffects))
 	for _, effect := range market.AreaEffects {
@@ -476,17 +477,17 @@ func marketShipmentCoinCost(input Intent.PlanningContext, payload json.RawMessag
 	}
 	capacity, err := input.GameData.MarketCapacity(input.State.Market.CaravanLevel, effects)
 	if err != nil || capacity.CapacityPerBarrow <= 0 {
-		return resolvedCoinCost{}, fmt.Errorf("current official market capacity is unavailable")
+		return resolvedCoinCost{}, Localization.WithError(fmt.Errorf("current official market capacity is unavailable"), Localization.New("server.app.current_official_market_capacity.2683f292", "current official market capacity is unavailable", nil))
 	}
 	barrows := int64(math.Ceil(amount / float64(capacity.CapacityPerBarrow)))
 	if barrows <= 0 {
-		return resolvedCoinCost{}, fmt.Errorf("market shipment barrow count is malformed")
+		return resolvedCoinCost{}, Localization.WithError(fmt.Errorf("market shipment barrow count is malformed"), Localization.New("server.app.market_shipment_barrow_count.7f13f107", "market shipment barrow count is malformed", nil))
 	}
 	distance := math.Hypot(float64(request.TargetX-source.X), float64(request.TargetY-source.Y))
 	logDistance := math.Log(distance+1) / math.Log(2.3)
 	baseValue := math.Ceil(3 * float64(barrows) * logDistance)
 	if math.IsNaN(baseValue) || math.IsInf(baseValue, 0) || baseValue >= math.Exp2(63) {
-		return resolvedCoinCost{}, fmt.Errorf("market shipment coin cost overflowed")
+		return resolvedCoinCost{}, Localization.WithError(fmt.Errorf("market shipment coin cost overflowed"), Localization.New("server.app.market_shipment_coin_cost.e8b41015", "market shipment coin cost overflowed", nil))
 	}
 	horseItems, err := checkedMultiply(barrows, 5, "market horse item count")
 	if err != nil {
@@ -498,14 +499,14 @@ func marketShipmentCoinCost(input Intent.PlanningContext, payload json.RawMessag
 	}
 	base := int64(baseValue)
 	if horse > math.MaxInt64-base {
-		return resolvedCoinCost{}, fmt.Errorf("market shipment coin cost overflowed")
+		return resolvedCoinCost{}, Localization.WithError(fmt.Errorf("market shipment coin cost overflowed"), Localization.New("server.app.market_shipment_coin_cost.e8b41015", "market shipment coin cost overflowed", nil))
 	}
 	return resolvedCoinCost{amount: base + horse, source: "official market and horse travel formula"}, nil
 }
 
 func checkedMultiply(left, right int64, label string) (int64, error) {
 	if left < 0 || right < 0 || left > 0 && right > math.MaxInt64/left {
-		return 0, fmt.Errorf("%s overflowed", label)
+		return 0, Localization.WithError(fmt.Errorf("%s overflowed", label), Localization.New("server.app.p_overflowed.fefe46a5", "{p0} overflowed", Localization.Params{"p0": fmt.Sprintf("%s", label)}))
 	}
 	return left * right, nil
 }
@@ -518,11 +519,11 @@ func spyCoinCost(input Intent.PlanningContext, payload json.RawMessage) (resolve
 		SpyCount       int64          `json:"SC"`
 	}
 	if err := json.Unmarshal(payload, &request); err != nil || request.SourceCastleID <= 0 || request.SpyCount <= 0 {
-		return resolvedCoinCost{}, fmt.Errorf("resolved spy command is malformed")
+		return resolvedCoinCost{}, Localization.WithError(fmt.Errorf("resolved spy command is malformed"), Localization.New("server.app.resolved_spy_command_is.c5139b55", "resolved spy command is malformed", nil))
 	}
 	source, found := input.State.Castles[request.SourceCastleID]
 	if !found {
-		return resolvedCoinCost{}, fmt.Errorf("spy source castle %d is unavailable", request.SourceCastleID)
+		return resolvedCoinCost{}, Localization.WithError(fmt.Errorf("spy source castle %d is unavailable", request.SourceCastleID), Localization.New("server.app.spy_source_castle_p.c95b519d", "spy source castle {p0} is unavailable", Localization.Params{"p0": fmt.Sprintf("%d", request.SourceCastleID)}))
 	}
 	distance := math.Hypot(float64(request.TargetX-source.X), float64(request.TargetY-source.Y))
 	// The live payload does not expose the dialog risk term. The official
@@ -532,7 +533,7 @@ func spyCoinCost(input Intent.PlanningContext, payload json.RawMessage) (resolve
 		value = 0
 	}
 	if math.IsNaN(value) || math.IsInf(value, 0) || value >= math.Exp2(31) {
-		return resolvedCoinCost{}, fmt.Errorf("spy travel cost overflowed")
+		return resolvedCoinCost{}, Localization.WithError(fmt.Errorf("spy travel cost overflowed"), Localization.New("server.app.spy_travel_cost_overflowed.dce03e9d", "spy travel cost overflowed", nil))
 	}
 	return resolvedCoinCost{amount: int64(int32(value)), source: "official maximum-risk spy travel formula", upperBound: true}, nil
 }
@@ -544,13 +545,13 @@ func productionCoinCost(store *GameData.Store, payload json.RawMessage) (resolve
 		Amount       int64 `json:"AMT"`
 	}
 	if err := json.Unmarshal(payload, &request); err != nil || request.DefinitionID <= 0 || request.Amount <= 0 {
-		return resolvedCoinCost{}, fmt.Errorf("resolved production command is malformed")
+		return resolvedCoinCost{}, Localization.WithError(fmt.Errorf("resolved production command is malformed"), Localization.New("server.app.resolved_production_command_is.fdfbb1b8", "resolved production command is malformed", nil))
 	}
 	collection := "units"
 	if request.LineID == 1 {
 		collection = "tools"
 	} else if request.LineID != 0 {
-		return resolvedCoinCost{}, fmt.Errorf("production line %d has no supported coin formula", request.LineID)
+		return resolvedCoinCost{}, Localization.WithError(fmt.Errorf("production line %d has no supported coin formula", request.LineID), Localization.New("server.app.production_line_p_has.58b28c76", "production line {p0} has no supported coin formula", Localization.Params{"p0": fmt.Sprintf("%d", request.LineID)}))
 	}
 	catalogCollection := collection
 	if collection == "tools" {
@@ -572,7 +573,7 @@ func productionCoinCost(store *GameData.Store, payload json.RawMessage) (resolve
 // record or a present malformed cost remains unavailable rather than free.
 func officialNumberOrZero(store *GameData.Store, collection string, id int64, field string) (float64, bool, error) {
 	if store == nil {
-		return 0, false, fmt.Errorf("official game data is unavailable")
+		return 0, false, Localization.WithError(fmt.Errorf("official game data is unavailable"), Localization.New("server.app.official_game_data_is.ff6f65a7", "official game data is unavailable", nil))
 	}
 	catalog, err := store.Catalog(collection)
 	if err != nil {
@@ -580,7 +581,7 @@ func officialNumberOrZero(store *GameData.Store, collection string, id int64, fi
 	}
 	raw, exists := catalog.Find(strconv.FormatInt(id, 10))
 	if !exists {
-		return 0, false, fmt.Errorf("official item %d is unavailable", id)
+		return 0, false, Localization.WithError(fmt.Errorf("official item %d is unavailable", id), Localization.New("server.app.official_item_p_is.df6d7f77", "official item {p0} is unavailable", Localization.Params{"p0": fmt.Sprintf("%d", id)}))
 	}
 	record, err := GameData.DecodeRecord(raw)
 	if err != nil {
@@ -591,7 +592,7 @@ func officialNumberOrZero(store *GameData.Store, collection string, id int64, fi
 	}
 	value, valid := record.Float64(field)
 	if !valid {
-		return 0, false, fmt.Errorf("official item %d %s is malformed", id, field)
+		return 0, false, Localization.WithError(fmt.Errorf("official item %d %s is malformed", id, field), Localization.New("server.app.official_item_p_p.ba61ce01", "official item {p0} {p1} is malformed", Localization.Params{"p0": fmt.Sprintf("%d", id), "p1": fmt.Sprintf("%s", field)}))
 	}
 	return value, true, nil
 }
@@ -602,11 +603,11 @@ func hospitalCoinCost(store *GameData.Store, payload json.RawMessage) (resolvedC
 		Amount int64 `json:"A"`
 	}
 	if err := json.Unmarshal(payload, &request); err != nil || request.UnitID <= 0 || request.Amount <= 0 {
-		return resolvedCoinCost{}, fmt.Errorf("resolved hospital command is malformed")
+		return resolvedCoinCost{}, Localization.WithError(fmt.Errorf("resolved hospital command is malformed"), Localization.New("server.app.resolved_hospital_command_is.0c4240a0", "resolved hospital command is malformed", nil))
 	}
 	unitCost, known := officialNumber(store, "units", request.UnitID, "healingCostC1")
 	if !known || unitCost < 0 || math.IsNaN(unitCost) || math.IsInf(unitCost, 0) {
-		return resolvedCoinCost{}, fmt.Errorf("official unit %d healingCostC1 is missing or malformed", request.UnitID)
+		return resolvedCoinCost{}, Localization.WithError(fmt.Errorf("official unit %d healingCostC1 is missing or malformed", request.UnitID), Localization.New("server.app.official_unit_p_healingcostc.b572772a", "official unit {p0} healingCostC1 is missing or malformed", Localization.Params{"p0": fmt.Sprintf("%d", request.UnitID)}))
 	}
 	amount, err := checkedCeilProduct(unitCost, request.Amount)
 	if err != nil {
@@ -624,11 +625,11 @@ func supportCoinCost(input Intent.PlanningContext, payload json.RawMessage) (res
 		Army           [][2]int64     `json:"A"`
 	}
 	if err := json.Unmarshal(payload, &request); err != nil || request.SourceCastleID <= 0 || len(request.Army) == 0 {
-		return resolvedCoinCost{}, fmt.Errorf("resolved support command is malformed")
+		return resolvedCoinCost{}, Localization.WithError(fmt.Errorf("resolved support command is malformed"), Localization.New("server.app.resolved_support_command_is.aea1c2ff", "resolved support command is malformed", nil))
 	}
 	source, found := input.State.Castles[request.SourceCastleID]
 	if !found {
-		return resolvedCoinCost{}, fmt.Errorf("support source castle %d is unavailable", request.SourceCastleID)
+		return resolvedCoinCost{}, Localization.WithError(fmt.Errorf("support source castle %d is unavailable", request.SourceCastleID), Localization.New("server.app.support_source_castle_p.f83898c1", "support source castle {p0} is unavailable", Localization.Params{"p0": fmt.Sprintf("%d", request.SourceCastleID)}))
 	}
 	items, err := pairAmountSum(request.Army)
 	if err != nil {
@@ -644,7 +645,7 @@ func supportCoinCost(input Intent.PlanningContext, payload json.RawMessage) (res
 		return resolvedCoinCost{}, err
 	}
 	if horse < 0 || base > math.MaxInt64-horse {
-		return resolvedCoinCost{}, fmt.Errorf("support travel cost overflowed")
+		return resolvedCoinCost{}, Localization.WithError(fmt.Errorf("support travel cost overflowed"), Localization.New("server.app.support_travel_cost_overflowed.3b5fc7da", "support travel cost overflowed", nil))
 	}
 	return resolvedCoinCost{amount: base + horse, source: "official support travel formula", upperBound: true}, nil
 }
@@ -653,9 +654,11 @@ func attackCoinCost(input Intent.PlanningContext, payload json.RawMessage) (reso
 	var request struct {
 		attackBody
 		AttackCount int `json:"AAC"`
+		// Commander zero is valid; a pointer distinguishes it from missing or null LID.
+		Leader *State.CommanderID `json:"LID"`
 	}
-	if err := json.Unmarshal(payload, &request); err != nil || request.Leader == 0 || len(request.Waves) == 0 {
-		return resolvedCoinCost{}, fmt.Errorf("resolved attack command is malformed")
+	if err := json.Unmarshal(payload, &request); err != nil || request.Leader == nil || *request.Leader < 0 || len(request.Waves) == 0 {
+		return resolvedCoinCost{}, Localization.WithError(fmt.Errorf("resolved attack command is malformed"), Localization.New("server.app.resolved_attack_command_is.6f3a11d8", "resolved attack command is malformed", nil))
 	}
 	body := request.attackBody
 	items := int64(0)
@@ -664,10 +667,10 @@ func attackCoinCost(input Intent.PlanningContext, payload json.RawMessage) (reso
 			for _, pairs := range [][]attackPair{flank.Units, flank.Tools} {
 				for _, pair := range pairs {
 					if pair[1] < 0 {
-						return resolvedCoinCost{}, fmt.Errorf("attack formation contains a negative amount")
+						return resolvedCoinCost{}, Localization.WithError(fmt.Errorf("attack formation contains a negative amount"), Localization.New("server.app.attack_formation_contains_a.80c483c7", "attack formation contains a negative amount", nil))
 					}
 					if items > math.MaxInt64-pair[1] {
-						return resolvedCoinCost{}, fmt.Errorf("attack item count overflowed")
+						return resolvedCoinCost{}, Localization.WithError(fmt.Errorf("attack item count overflowed"), Localization.New("server.app.attack_item_count_overflowed.f9be1e26", "attack item count overflowed", nil))
 					}
 					items += pair[1]
 				}
@@ -676,10 +679,10 @@ func attackCoinCost(input Intent.PlanningContext, payload json.RawMessage) (reso
 	}
 	for _, pair := range body.SupportTroops {
 		if pair[1] < 0 {
-			return resolvedCoinCost{}, fmt.Errorf("attack support contains a negative amount")
+			return resolvedCoinCost{}, Localization.WithError(fmt.Errorf("attack support contains a negative amount"), Localization.New("server.app.attack_support_contains_a.7a32c8f3", "attack support contains a negative amount", nil))
 		}
 		if items > math.MaxInt64-pair[1] {
-			return resolvedCoinCost{}, fmt.Errorf("attack item count overflowed")
+			return resolvedCoinCost{}, Localization.WithError(fmt.Errorf("attack item count overflowed"), Localization.New("server.app.attack_item_count_overflowed.f9be1e26", "attack item count overflowed", nil))
 		}
 		items += pair[1]
 	}
@@ -690,11 +693,11 @@ func attackCoinCost(input Intent.PlanningContext, payload json.RawMessage) (reso
 	}
 	supportCount := int64(max(body.AttackSupportCount, 0))
 	if items > math.MaxInt64-supportCount {
-		return resolvedCoinCost{}, fmt.Errorf("attack item count overflowed")
+		return resolvedCoinCost{}, Localization.WithError(fmt.Errorf("attack item count overflowed"), Localization.New("server.app.attack_item_count_overflowed.f9be1e26", "attack item count overflowed", nil))
 	}
 	items += supportCount
 	if items <= 0 {
-		return resolvedCoinCost{}, fmt.Errorf("attack formation contains no countable items")
+		return resolvedCoinCost{}, Localization.WithError(fmt.Errorf("attack formation contains no countable items"), Localization.New("server.app.attack_formation_contains_no.9dae800c", "attack formation contains no countable items", nil))
 	}
 	distance := math.Hypot(float64(body.TargetX-body.SourceX), float64(body.TargetY-body.SourceY))
 	base, err := travelBaseCost(distance, items)
@@ -704,13 +707,13 @@ func attackCoinCost(input Intent.PlanningContext, payload json.RawMessage) (reso
 	daily := input.State.DailyAttacks
 	if daily.ObservedAt.IsZero() || daily.ConnectionGeneration != input.State.Session.ConnectionGeneration ||
 		daily.Count < 0 || daily.ServerThreshold < 0 || daily.GrowthRate < 0 || math.IsNaN(daily.GrowthRate) || math.IsInf(daily.GrowthRate, 0) {
-		return resolvedCoinCost{}, fmt.Errorf("current daily attack surcharge state is missing or malformed")
+		return resolvedCoinCost{}, Localization.WithError(fmt.Errorf("current daily attack surcharge state is missing or malformed"), Localization.New("server.app.current_daily_attack_surcharge.7e3bfcfc", "current daily attack surcharge state is missing or malformed", nil))
 	}
 	total := float64(base)
 	if daily.Count > daily.ServerThreshold {
 		factor := math.Exp(daily.GrowthRate*float64(daily.Count-daily.ServerThreshold)) - 1
 		if math.IsInf(factor, 0) || math.IsNaN(factor) {
-			return resolvedCoinCost{}, fmt.Errorf("daily attack surcharge overflowed")
+			return resolvedCoinCost{}, Localization.WithError(fmt.Errorf("daily attack surcharge overflowed"), Localization.New("server.app.daily_attack_surcharge_overflowed.3289b6a1", "daily attack surcharge overflowed", nil))
 		}
 		total = math.Min(factor*float64(base)+float64(base), float64(math.MaxInt32))
 	}
@@ -720,18 +723,18 @@ func attackCoinCost(input Intent.PlanningContext, payload json.RawMessage) (reso
 	}
 	horse := horsePerAttack
 	if total >= math.Exp2(63) || float64(horse) >= math.Exp2(63)-total {
-		return resolvedCoinCost{}, fmt.Errorf("attack travel cost overflowed")
+		return resolvedCoinCost{}, Localization.WithError(fmt.Errorf("attack travel cost overflowed"), Localization.New("server.app.attack_travel_cost_overflowed.99abe0fa", "attack travel cost overflowed", nil))
 	}
 	return resolvedCoinCost{amount: int64(math.Ceil(total)) + horse, source: "official attack travel and daily surcharge formula", upperBound: true}, nil
 }
 
 func travelBaseCost(distance float64, items int64) (int64, error) {
 	if distance < 0 || math.IsNaN(distance) || math.IsInf(distance, 0) || items <= 0 {
-		return 0, fmt.Errorf("travel distance or item count is malformed")
+		return 0, Localization.WithError(fmt.Errorf("travel distance or item count is malformed"), Localization.New("server.app.travel_distance_or_item.59dc9a21", "travel distance or item count is malformed", nil))
 	}
 	value := .6 * float64(items) * math.Log(distance+1) / math.Log(2.3)
 	if math.IsNaN(value) || math.IsInf(value, 0) || value >= math.Exp2(63) {
-		return 0, fmt.Errorf("travel cost overflowed")
+		return 0, Localization.WithError(fmt.Errorf("travel cost overflowed"), Localization.New("server.app.travel_cost_overflowed.05d7a0ab", "travel cost overflowed", nil))
 	}
 	return max(int64(0), int64(math.Ceil(value))), nil
 }
@@ -741,7 +744,7 @@ func horseCoinCost(store *GameData.Store, horseID int64, distance float64, items
 		return 0, nil
 	}
 	if store == nil {
-		return 0, fmt.Errorf("official game data is unavailable for horse %d", horseID)
+		return 0, Localization.WithError(fmt.Errorf("official game data is unavailable for horse %d", horseID), Localization.New("server.app.official_game_data_is.6a718478", "official game data is unavailable for horse {p0}", Localization.Params{"p0": fmt.Sprintf("%d", horseID)}))
 	}
 	catalog, err := store.Catalog("horses")
 	if err != nil {
@@ -749,7 +752,7 @@ func horseCoinCost(store *GameData.Store, horseID int64, distance float64, items
 	}
 	raw, found := catalog.Find(strconv.FormatInt(horseID, 10))
 	if !found {
-		return 0, fmt.Errorf("official horse %d is unavailable", horseID)
+		return 0, Localization.WithError(fmt.Errorf("official horse %d is unavailable", horseID), Localization.New("server.app.official_horse_p_is.74cbc49f", "official horse {p0} is unavailable", Localization.Params{"p0": fmt.Sprintf("%d", horseID)}))
 	}
 	record, err := GameData.DecodeRecord(raw)
 	if err != nil {
@@ -757,12 +760,12 @@ func horseCoinCost(store *GameData.Store, horseID int64, distance float64, items
 	}
 	factor, known := record.Float64("costFactorC1")
 	if !known || factor < 0 || math.IsNaN(factor) || math.IsInf(factor, 0) {
-		return 0, fmt.Errorf("official horse %d costFactorC1 is missing or malformed", horseID)
+		return 0, Localization.WithError(fmt.Errorf("official horse %d costFactorC1 is missing or malformed", horseID), Localization.New("server.app.official_horse_p_costfactorc.9baaa39b", "official horse {p0} costFactorC1 is missing or malformed", Localization.Params{"p0": fmt.Sprintf("%d", horseID)}))
 	}
 	base := math.Ceil(float64(items) * math.Log(distance+1) / math.Log(2.3) * .2)
 	value := factor * base
 	if value >= math.Exp2(63) {
-		return 0, fmt.Errorf("horse travel cost overflowed")
+		return 0, Localization.WithError(fmt.Errorf("horse travel cost overflowed"), Localization.New("server.app.horse_travel_cost_overflowed.0dc61fe5", "horse travel cost overflowed", nil))
 	}
 	return int64(value), nil
 }
@@ -771,7 +774,7 @@ func pairAmountSum(pairs [][2]int64) (int64, error) {
 	total := int64(0)
 	for _, pair := range pairs {
 		if pair[0] <= 0 || pair[1] <= 0 || total > math.MaxInt64-pair[1] {
-			return 0, fmt.Errorf("travel manifest is malformed")
+			return 0, Localization.WithError(fmt.Errorf("travel manifest is malformed"), Localization.New("server.app.travel_manifest_is_malformed.6b3d8628", "travel manifest is malformed", nil))
 		}
 		total += pair[1]
 	}
@@ -781,7 +784,7 @@ func pairAmountSum(pairs [][2]int64) (int64, error) {
 func checkedCeilProduct(unitCost float64, amount int64) (int64, error) {
 	value := unitCost * float64(amount)
 	if amount <= 0 || value < 0 || math.IsNaN(value) || math.IsInf(value, 0) || value >= math.Exp2(63) {
-		return 0, fmt.Errorf("coin cost overflowed")
+		return 0, Localization.WithError(fmt.Errorf("coin cost overflowed"), Localization.New("server.app.coin_cost_overflowed.76559520", "coin cost overflowed", nil))
 	}
 	return int64(math.Ceil(value)), nil
 }

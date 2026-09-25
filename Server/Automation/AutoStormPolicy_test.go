@@ -1226,6 +1226,7 @@ func TestAutoStormShopGroupsDifferentProductsIntoOnePass(t *testing.T) {
 	settings.Aquamarine.Purchases = []autoStormShopPurchase{
 		{PackageID: 245, TargetPurchases: 3, Priority: 1},
 		{PackageID: 3119, TargetPurchases: 2, Priority: 2},
+		{PackageID: 245, TargetPurchases: 999, Priority: 3},
 	}
 
 	decision, complete, detail, err := evaluateAutoStormShop(Snapshot{
@@ -1243,6 +1244,9 @@ func TestAutoStormShopGroupsDifferentProductsIntoOnePass(t *testing.T) {
 	want := []autoStormShopPurchaseLine{{ProductID: 245, Amount: 3}, {ProductID: 3119, Amount: 2}}
 	if !reflect.DeepEqual(request.Purchases, want) {
 		t.Fatalf("multi-product Luna purchases = %#v, want %#v", request.Purchases, want)
+	}
+	if decision.DetailDescriptor == nil || decision.DetailDescriptor.FallbackText != decision.Detail || len(decision.DetailDescriptor.ListParams["purchases"]) != 2 {
+		t.Fatal("missing bound decision list")
 	}
 	if decision.Detail != "Buy 3 x War horn and 2 x Silver Coins from Luna for 28880 Aquamarine" {
 		t.Fatalf("multi-product Luna detail = %q", decision.Detail)
@@ -1399,5 +1403,18 @@ func autoStormTestCastle(id State.CastleID, kingdom State.KingdomID, name string
 			Stationed: map[State.UnitID]int64{}, Traveling: map[State.UnitID]int64{},
 			Hospital: map[State.UnitID]int64{}, SpecialHospital: map[State.UnitID]int64{}, Total: map[State.UnitID]int64{},
 		},
+	}
+}
+
+func TestStormCastleActionDescriptorsDistinguishGeneratedNames(t *testing.T) {
+	for _, kind := range []string{"map", "transport", "import"} {
+		unnamed := stormCastleActionDescriptor(kind, State.CastleState{ID: 12345}, 9)
+		if unnamed == nil || unnamed.Params["id"] != "12345" || !strings.HasSuffix(unnamed.Key, "_id") {
+			t.Fatalf("%s generated identity: %#v", kind, unnamed)
+		}
+		named := stormCastleActionDescriptor(kind, State.CastleState{ID: 12345, Name: " <literal>{castle} "}, 9)
+		if named == nil || named.Params["castle"] != " <literal>{castle} " {
+			t.Fatal("named castle bytes changed")
+		}
 	}
 }

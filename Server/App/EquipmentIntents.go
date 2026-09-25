@@ -1,6 +1,7 @@
 package App
 
 import (
+	"CitadelDesktop/Server/Localization"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -96,7 +97,7 @@ func planEquipmentRefresh(_ context.Context, _ Intent.PlanningContext, arguments
 		return Intent.Plan{}, err
 	}
 	return Intent.Plan{
-		Claims: []string{"game:equipment"}, Summary: "Refresh all equipment state",
+		Claims: []string{"game:equipment"}, Summary: "Refresh all equipment state", SummaryDescriptor: Localization.New("server.app.refresh_all_equipment_state.7ef5e20b", "Refresh all equipment state", nil),
 		Steps: equipmentRefreshSteps(),
 	}, nil
 }
@@ -115,31 +116,31 @@ func planEquipmentEquip(_ context.Context, input Intent.PlanningContext, argumen
 		return Intent.Plan{}, err
 	}
 	if !leader.available {
-		return Intent.Plan{}, fmt.Errorf("commander %d is busy", leader.id)
+		return Intent.Plan{}, Localization.WithError(fmt.Errorf("commander %d is busy", leader.id), Localization.New("server.app.commander_p_is_busy.94a46299", "commander {p0} is busy", Localization.Params{"p0": fmt.Sprintf("%d", leader.id)}))
 	}
 	item, ok := input.State.Inventory.Equipment[request.EquipmentID]
 	if !ok || request.EquipmentID <= 0 {
-		return Intent.Plan{}, fmt.Errorf("equipment %d is not in current storage", request.EquipmentID)
+		return Intent.Plan{}, Localization.WithError(fmt.Errorf("equipment %d is not in current storage", request.EquipmentID), Localization.New("server.app.equipment_p_is_not.1a3f3f4a", "equipment {p0} is not in current storage", Localization.Params{"p0": fmt.Sprintf("%d", request.EquipmentID)}))
 	}
 	if item.WearerKind != "" {
-		return Intent.Plan{}, fmt.Errorf("equipment %d is already worn by %s %d", item.ID, item.WearerKind, item.WearerID)
+		return Intent.Plan{}, Localization.WithError(fmt.Errorf("equipment %d is already worn by %s %d", item.ID, item.WearerKind, item.WearerID), Localization.New("server.app.equipment_p_is_already.08136b11", "equipment {p0} is already worn by {p1} {p2}", Localization.Params{"p0": fmt.Sprintf("%d", item.ID), "p1": fmt.Sprintf("%s", item.WearerKind), "p2": fmt.Sprintf("%d", item.WearerID)}))
 	}
 	if !validBaseSlot(item.Slot) {
-		return Intent.Plan{}, fmt.Errorf("equipment %d uses unsupported slot %d", item.ID, item.Slot)
+		return Intent.Plan{}, Localization.WithError(fmt.Errorf("equipment %d uses unsupported slot %d", item.ID, item.Slot), Localization.New("server.app.equipment_p_uses_unsupported.6300a0fa", "equipment {p0} uses unsupported slot {p1}", Localization.Params{"p0": fmt.Sprintf("%d", item.ID), "p1": item.Slot}))
 	}
 	if expectedEquipmentType(leader.kind) != item.TypeID {
-		return Intent.Plan{}, fmt.Errorf("equipment %d is not compatible with a %s", item.ID, leader.kind)
+		return Intent.Plan{}, Localization.WithError(fmt.Errorf("equipment %d is not compatible with a %s", item.ID, leader.kind), Localization.New("server.app.equipment_p_is_not.1190cbd2", "equipment {p0} is not compatible with a {p1}", Localization.Params{"p0": fmt.Sprintf("%d", item.ID), "p1": fmt.Sprintf("%s", leader.kind)}))
 	}
 	payload, _ := json.Marshal(struct {
 		EquipmentID State.EquipmentInstanceID `json:"EID"`
 		LeaderID    int64                     `json:"LID"`
 		Equip       int                       `json:"E"`
 	}{item.ID, leader.id, 1})
-	steps := []Intent.Step{commandStep("Equip equipment", "eeq", payload, "eeq")}
+	steps := []Intent.Step{commandStep("Equip equipment", "eeq", payload, "eeq", Localization.New("server.app.equip_equipment.3f0d313f", "Equip equipment", nil))}
 	steps = append(steps, equipmentMutationRefreshSteps()...)
 	return Intent.Plan{
 		Claims:  equipmentLeaderClaims(leader),
-		Summary: fmt.Sprintf("Equip item %d on %s %d", item.ID, leader.kind, leader.id), Steps: steps,
+		Summary: fmt.Sprintf("Equip item %d on %s %d", item.ID, leader.kind, leader.id), SummaryDescriptor: Localization.New("server.app.equip_item_p_on.ee744e8c", "Equip item {p0} on {p1} {p2}", Localization.Params{"p0": fmt.Sprintf("%d", item.ID), "p1": fmt.Sprintf("%s", leader.kind), "p2": fmt.Sprintf("%d", leader.id)}), Steps: steps,
 	}, nil
 }
 
@@ -157,30 +158,30 @@ func planEquipmentUnequip(_ context.Context, input Intent.PlanningContext, argum
 		return Intent.Plan{}, err
 	}
 	if !leader.available {
-		return Intent.Plan{}, fmt.Errorf("commander %d is busy", leader.id)
+		return Intent.Plan{}, Localization.WithError(fmt.Errorf("commander %d is busy", leader.id), Localization.New("server.app.commander_p_is_busy.94a46299", "commander {p0} is busy", Localization.Params{"p0": fmt.Sprintf("%d", leader.id)}))
 	}
 	ids := uniqueEquipmentIDs(request.EquipmentIDs)
 	if len(ids) == 0 {
-		return Intent.Plan{}, fmt.Errorf("at least one equipmentId is required")
+		return Intent.Plan{}, Localization.WithError(fmt.Errorf("at least one equipmentId is required"), Localization.New("server.app.at_least_one_equipmentid.04ca4db6", "at least one equipmentId is required", nil))
 	}
 	steps := make([]Intent.Step, 0, len(ids)+2)
 	for _, id := range ids {
 		item, ok := input.State.Inventory.Equipment[id]
 		if !ok || item.WearerKind != leader.kind || item.WearerID != leader.id {
-			return Intent.Plan{}, fmt.Errorf("equipment %d is not worn by %s %d", id, leader.kind, leader.id)
+			return Intent.Plan{}, Localization.WithError(fmt.Errorf("equipment %d is not worn by %s %d", id, leader.kind, leader.id), Localization.New("server.app.equipment_p_is_not.a5f6d4bc", "equipment {p0} is not worn by {p1} {p2}", Localization.Params{"p0": fmt.Sprintf("%d", id), "p1": fmt.Sprintf("%s", leader.kind), "p2": fmt.Sprintf("%d", leader.id)}))
 		}
 		payload, _ := json.Marshal(struct {
 			EquipmentID State.EquipmentInstanceID `json:"EID"`
 			LeaderID    int64                     `json:"LID"`
 			Equip       int                       `json:"E"`
 		}{id, leader.id, 0})
-		step := commandStep(fmt.Sprintf("Unequip equipment %d", id), "eeq", payload, "eeq")
+		step := commandStep(fmt.Sprintf("Unequip equipment %d", id), "eeq", payload, "eeq", Localization.New("server.app.unequip_equipment_p.db1f9e15", "Unequip equipment {p0}", Localization.Params{"p0": fmt.Sprintf("%d", id)}))
 		steps = append(steps, step)
 	}
 	steps = append(steps, equipmentMutationRefreshSteps()...)
 	return Intent.Plan{
 		Claims:  equipmentLeaderClaims(leader),
-		Summary: fmt.Sprintf("Unequip %d item(s) from %s %d", len(ids), leader.kind, leader.id), Steps: steps,
+		Summary: fmt.Sprintf("Unequip %d item(s) from %s %d", len(ids), leader.kind, leader.id), SummaryDescriptor: Localization.New("server.app.unequip_p_item_s.fa77cd88", "Unequip {p0} item(s) from {p1} {p2}", Localization.Params{"p0": fmt.Sprintf("%d", len(ids)), "p1": fmt.Sprintf("%s", leader.kind), "p2": fmt.Sprintf("%d", leader.id)}), Steps: steps,
 	}, nil
 }
 
@@ -199,18 +200,18 @@ func planGemEquip(_ context.Context, input Intent.PlanningContext, arguments jso
 		return Intent.Plan{}, err
 	}
 	if !leader.available {
-		return Intent.Plan{}, fmt.Errorf("commander %d is busy", leader.id)
+		return Intent.Plan{}, Localization.WithError(fmt.Errorf("commander %d is busy", leader.id), Localization.New("server.app.commander_p_is_busy.94a46299", "commander {p0} is busy", Localization.Params{"p0": fmt.Sprintf("%d", leader.id)}))
 	}
 	item, ok := input.State.Inventory.Equipment[request.EquipmentID]
 	if !ok || item.WearerKind != leader.kind || item.WearerID != leader.id {
-		return Intent.Plan{}, fmt.Errorf("equipment %d is not worn by %s %d", request.EquipmentID, leader.kind, leader.id)
+		return Intent.Plan{}, Localization.WithError(fmt.Errorf("equipment %d is not worn by %s %d", request.EquipmentID, leader.kind, leader.id), Localization.New("server.app.equipment_p_is_not.a5f6d4bc", "equipment {p0} is not worn by {p1} {p2}", Localization.Params{"p0": fmt.Sprintf("%d", request.EquipmentID), "p1": fmt.Sprintf("%s", leader.kind), "p2": fmt.Sprintf("%d", leader.id)}))
 	}
 	if leader.gems[strconv.Itoa(item.Slot)] != 0 {
-		return Intent.Plan{}, fmt.Errorf("equipment slot %d already has a gem", item.Slot)
+		return Intent.Plan{}, Localization.WithError(fmt.Errorf("equipment slot %d already has a gem", item.Slot), Localization.New("server.app.equipment_slot_p_already.bc00b10c", "equipment slot {p0} already has a gem", Localization.Params{"p0": item.Slot}))
 	}
 	gem, ok := input.State.Inventory.Gems[request.GemID]
 	if !ok || request.GemID <= 0 || gem.WearerKind != "" {
-		return Intent.Plan{}, fmt.Errorf("relic gem %d is not in current storage", request.GemID)
+		return Intent.Plan{}, Localization.WithError(fmt.Errorf("relic gem %d is not in current storage", request.GemID), Localization.New("server.app.relic_gem_p_is.91b51e57", "relic gem {p0} is not in current storage", Localization.Params{"p0": fmt.Sprintf("%d", request.GemID)}))
 	}
 	payload, _ := json.Marshal(struct {
 		GemID       State.GemInstanceID       `json:"GID"`
@@ -219,11 +220,11 @@ func planGemEquip(_ context.Context, input Intent.PlanningContext, arguments jso
 		Mode        int                       `json:"M"`
 		RelicGem    int                       `json:"RGEM"`
 	}{gem.ID, item.ID, leader.id, 0, 1})
-	steps := []Intent.Step{commandStep("Equip relic gem", "bge", payload, "bge")}
+	steps := []Intent.Step{commandStep("Equip relic gem", "bge", payload, "bge", Localization.New("server.app.equip_relic_gem.353e7fe5", "Equip relic gem", nil))}
 	steps = append(steps, gemMutationRefreshSteps()...)
 	return Intent.Plan{
 		Claims:  equipmentLeaderClaims(leader),
-		Summary: fmt.Sprintf("Socket gem %d into equipment %d", gem.ID, item.ID), Steps: steps,
+		Summary: fmt.Sprintf("Socket gem %d into equipment %d", gem.ID, item.ID), SummaryDescriptor: Localization.New("server.app.socket_gem_p_into.3eb6fbbd", "Socket gem {p0} into equipment {p1}", Localization.Params{"p0": fmt.Sprintf("%d", gem.ID), "p1": fmt.Sprintf("%d", item.ID)}), Steps: steps,
 	}, nil
 }
 
@@ -241,24 +242,24 @@ func planGemUnequip(_ context.Context, input Intent.PlanningContext, arguments j
 		return Intent.Plan{}, err
 	}
 	if !leader.available {
-		return Intent.Plan{}, fmt.Errorf("commander %d is busy", leader.id)
+		return Intent.Plan{}, Localization.WithError(fmt.Errorf("commander %d is busy", leader.id), Localization.New("server.app.commander_p_is_busy.94a46299", "commander {p0} is busy", Localization.Params{"p0": fmt.Sprintf("%d", leader.id)}))
 	}
 	item, ok := input.State.Inventory.Equipment[request.EquipmentID]
 	if !ok || item.WearerKind != leader.kind || item.WearerID != leader.id {
-		return Intent.Plan{}, fmt.Errorf("equipment %d is not worn by %s %d", request.EquipmentID, leader.kind, leader.id)
+		return Intent.Plan{}, Localization.WithError(fmt.Errorf("equipment %d is not worn by %s %d", request.EquipmentID, leader.kind, leader.id), Localization.New("server.app.equipment_p_is_not.a5f6d4bc", "equipment {p0} is not worn by {p1} {p2}", Localization.Params{"p0": fmt.Sprintf("%d", request.EquipmentID), "p1": fmt.Sprintf("%s", leader.kind), "p2": fmt.Sprintf("%d", leader.id)}))
 	}
 	if leader.gems[strconv.Itoa(item.Slot)] == 0 {
-		return Intent.Plan{}, fmt.Errorf("equipment %d has no observed gem", item.ID)
+		return Intent.Plan{}, Localization.WithError(fmt.Errorf("equipment %d has no observed gem", item.ID), Localization.New("server.app.equipment_p_has_no.11dd344e", "equipment {p0} has no observed gem", Localization.Params{"p0": fmt.Sprintf("%d", item.ID)}))
 	}
 	payload, _ := json.Marshal(struct {
 		EquipmentID State.EquipmentInstanceID `json:"EID"`
 		LeaderID    int64                     `json:"LID"`
 	}{item.ID, leader.id})
-	steps := []Intent.Step{commandStep("Unequip gem", "ege", payload, "ege")}
+	steps := []Intent.Step{commandStep("Unequip gem", "ege", payload, "ege", Localization.New("server.app.unequip_gem.ceb0c9e0", "Unequip gem", nil))}
 	steps = append(steps, gemMutationRefreshSteps()...)
 	return Intent.Plan{
 		Claims:  equipmentLeaderClaims(leader),
-		Summary: fmt.Sprintf("Remove the gem from equipment %d", item.ID), Steps: steps,
+		Summary: fmt.Sprintf("Remove the gem from equipment %d", item.ID), SummaryDescriptor: Localization.New("server.app.remove_the_gem_from.8bdadfc4", "Remove the gem from equipment {p0}", Localization.Params{"p0": fmt.Sprintf("%d", item.ID)}), Steps: steps,
 	}, nil
 }
 
@@ -280,15 +281,15 @@ func planEquipmentSwap(_ context.Context, input Intent.PlanningContext, argument
 		return Intent.Plan{}, err
 	}
 	if first.id == second.id {
-		return Intent.Plan{}, fmt.Errorf("select two different %ss", first.kind)
+		return Intent.Plan{}, Localization.WithError(fmt.Errorf("select two different %ss", first.kind), Localization.New("server.app.select_two_different_p.11549cfd", "select two different {p0}s", Localization.Params{"p0": fmt.Sprintf("%s", first.kind)}))
 	}
 	if !first.available || !second.available {
-		return Intent.Plan{}, fmt.Errorf("both commanders must be available")
+		return Intent.Plan{}, Localization.WithError(fmt.Errorf("both commanders must be available"), Localization.New("server.app.both_commanders_must_be.02a3a243", "both commanders must be available", nil))
 	}
 	firstItems := leaderBaseEquipment(first)
 	secondItems := leaderBaseEquipment(second)
 	if len(firstItems)+len(secondItems) == 0 {
-		return Intent.Plan{}, fmt.Errorf("the selected leaders have no base equipment to swap")
+		return Intent.Plan{}, Localization.WithError(fmt.Errorf("the selected leaders have no base equipment to swap"), Localization.New("server.app.the_selected_leaders_have.dcac1c96", "the selected leaders have no base equipment to swap", nil))
 	}
 	steps := make([]Intent.Step, 0, (len(firstItems)+len(secondItems))*2+2)
 	for _, move := range []struct {
@@ -301,7 +302,7 @@ func planEquipmentSwap(_ context.Context, input Intent.PlanningContext, argument
 				LeaderID    int64                     `json:"LID"`
 				Equip       int                       `json:"E"`
 			}{id, move.leader.id, 0})
-			step := commandStep(fmt.Sprintf("Unequip equipment %d", id), "eeq", payload, "eeq")
+			step := commandStep(fmt.Sprintf("Unequip equipment %d", id), "eeq", payload, "eeq", Localization.New("server.app.unequip_equipment_p.db1f9e15", "Unequip equipment {p0}", Localization.Params{"p0": fmt.Sprintf("%d", id)}))
 			steps = append(steps, step)
 		}
 	}
@@ -315,7 +316,7 @@ func planEquipmentSwap(_ context.Context, input Intent.PlanningContext, argument
 				LeaderID    int64                     `json:"LID"`
 				Equip       int                       `json:"E"`
 			}{id, move.leader.id, 1})
-			step := commandStep(fmt.Sprintf("Equip equipment %d", id), "eeq", payload, "eeq")
+			step := commandStep(fmt.Sprintf("Equip equipment %d", id), "eeq", payload, "eeq", Localization.New("server.app.equip_equipment_p.cd4a719e", "Equip equipment {p0}", Localization.Params{"p0": fmt.Sprintf("%d", id)}))
 			steps = append(steps, step)
 		}
 	}
@@ -323,8 +324,8 @@ func planEquipmentSwap(_ context.Context, input Intent.PlanningContext, argument
 	claims := append(equipmentLeaderClaims(first), "leader:"+first.kind+":"+strconv.FormatInt(second.id, 10))
 	return Intent.Plan{
 		Claims:  claims,
-		Summary: fmt.Sprintf("Swap %d base equipment item(s) between %s %d and %s %d", len(firstItems)+len(secondItems), first.kind, first.id, second.kind, second.id),
-		Steps:   steps,
+		Summary: fmt.Sprintf("Swap %d base equipment item(s) between %s %d and %s %d", len(firstItems)+len(secondItems), first.kind, first.id, second.kind, second.id), SummaryDescriptor: Localization.New("server.app.swap_p_base_equipment.d0f1afaf", "Swap {p0} base equipment item(s) between {p1} {p2} and {p3} {p4}", Localization.Params{"p0": len(firstItems) + len(secondItems), "p1": fmt.Sprintf("%s", first.kind), "p2": fmt.Sprintf("%d", first.id), "p3": fmt.Sprintf("%s", second.kind), "p4": fmt.Sprintf("%d", second.id)}),
+		Steps: steps,
 	}, nil
 }
 
@@ -334,21 +335,21 @@ func planEquipmentReconfigure(_ context.Context, input Intent.PlanningContext, a
 		return Intent.Plan{}, err
 	}
 	if request.MaximumRubySpend < 0 {
-		return Intent.Plan{}, fmt.Errorf("maximumRubySpend cannot be negative")
+		return Intent.Plan{}, Localization.WithError(fmt.Errorf("maximumRubySpend cannot be negative"), Localization.New("server.app.maximumrubyspend_cannot_be_negative.e9e10826", "maximumRubySpend cannot be negative", nil))
 	}
 	leader, err := resolveLeader(input.State, request.LeaderKind, request.LeaderID)
 	if err != nil {
 		return Intent.Plan{}, err
 	}
 	if !leader.available {
-		return Intent.Plan{}, fmt.Errorf("commander %d is busy", leader.id)
+		return Intent.Plan{}, Localization.WithError(fmt.Errorf("commander %d is busy", leader.id), Localization.New("server.app.commander_p_is_busy.94a46299", "commander {p0} is busy", Localization.Params{"p0": fmt.Sprintf("%d", leader.id)}))
 	}
 	if leader.kind == "commander" {
 		commanderID := State.CommanderID(leader.id)
 		now := time.Now().UTC()
 		if State.CommanderHasActiveMovementAt(input.State, commanderID, now) ||
 			input.CommanderHolds != nil && input.CommanderHolds.CommanderHeldAt(commanderID, now) {
-			return Intent.Plan{}, fmt.Errorf("commander %d is travelling or reserved for a launch", leader.id)
+			return Intent.Plan{}, Localization.WithError(fmt.Errorf("commander %d is travelling or reserved for a launch", leader.id), Localization.New("server.app.commander_p_is_travelling.ccd4f924", "commander {p0} is travelling or reserved for a launch", Localization.Params{"p0": fmt.Sprintf("%d", leader.id)}))
 		}
 	}
 	if request.SnapshotFingerprint != "" {
@@ -359,7 +360,7 @@ func planEquipmentReconfigure(_ context.Context, input Intent.PlanningContext, a
 			return Intent.Plan{}, fingerprintErr
 		}
 		if fingerprint != request.SnapshotFingerprint {
-			return Intent.Plan{}, fmt.Errorf("%w: equipment changed after this preview was generated", Intent.ErrPlanStale)
+			return Intent.Plan{}, Localization.WithError(fmt.Errorf("%w: equipment changed after this preview was generated", Intent.ErrPlanStale), Localization.New("server.app.intent_plan_became_stale.a370dae3", "intent plan became stale before dispatch: equipment changed after this preview was generated", nil))
 		}
 	}
 	selectedEquipment := map[State.EquipmentInstanceID]struct{}{}
@@ -368,7 +369,7 @@ func planEquipmentReconfigure(_ context.Context, input Intent.PlanningContext, a
 	for _, slot := range []int{1, 2, 3, 4} {
 		id := request.Equipment[strconv.Itoa(slot)]
 		if id <= 0 {
-			return Intent.Plan{}, fmt.Errorf("optimized loadout is missing equipment slot %d", slot)
+			return Intent.Plan{}, Localization.WithError(fmt.Errorf("optimized loadout is missing equipment slot %d", slot), Localization.New("server.app.optimized_loadout_is_missing.696f256d", "optimized loadout is missing equipment slot {p0}", Localization.Params{"p0": slot}))
 		}
 	}
 	for _, slot := range baseEquipmentSlots {
@@ -378,25 +379,25 @@ func planEquipmentReconfigure(_ context.Context, input Intent.PlanningContext, a
 			if slot == 6 {
 				continue
 			}
-			return Intent.Plan{}, fmt.Errorf("optimized loadout is missing equipment slot %d", slot)
+			return Intent.Plan{}, Localization.WithError(fmt.Errorf("optimized loadout is missing equipment slot %d", slot), Localization.New("server.app.optimized_loadout_is_missing.696f256d", "optimized loadout is missing equipment slot {p0}", Localization.Params{"p0": slot}))
 		}
 		item, ok := input.State.Inventory.Equipment[id]
 		if !ok || item.Slot != slot || item.TypeID != expectedEquipmentType(leader.kind) {
-			return Intent.Plan{}, fmt.Errorf("equipment %d is not valid for %s slot %d", id, leader.kind, slot)
+			return Intent.Plan{}, Localization.WithError(fmt.Errorf("equipment %d is not valid for %s slot %d", id, leader.kind, slot), Localization.New("server.app.equipment_p_is_not.22a9f8ed", "equipment {p0} is not valid for {p1} slot {p2}", Localization.Params{"p0": fmt.Sprintf("%d", id), "p1": fmt.Sprintf("%s", leader.kind), "p2": slot}))
 		}
 		if item.WearerKind != "" && (item.WearerKind != leader.kind || item.WearerID != leader.id) {
-			return Intent.Plan{}, fmt.Errorf("equipment %d is worn by another leader", id)
+			return Intent.Plan{}, Localization.WithError(fmt.Errorf("equipment %d is worn by another leader", id), Localization.New("server.app.equipment_p_is_worn.904a7b6e", "equipment {p0} is worn by another leader", Localization.Params{"p0": fmt.Sprintf("%d", id)}))
 		}
 		family := EquipmentDomain.EquipmentFamily(item)
 		if family == EquipmentDomain.LoadoutFamilyUnknown {
-			return Intent.Plan{}, fmt.Errorf("equipment %d has no verified ordinary or relic classification", id)
+			return Intent.Plan{}, Localization.WithError(fmt.Errorf("equipment %d has no verified ordinary or relic classification", id), Localization.New("server.app.equipment_p_has_no.71752bfc", "equipment {p0} has no verified ordinary or relic classification", Localization.Params{"p0": fmt.Sprintf("%d", id)}))
 		}
 		if selectedFamily != EquipmentDomain.LoadoutFamilyUnknown && family != selectedFamily {
-			return Intent.Plan{}, fmt.Errorf("optimized loadout mixes ordinary and relic equipment")
+			return Intent.Plan{}, Localization.WithError(fmt.Errorf("optimized loadout mixes ordinary and relic equipment"), Localization.New("server.app.optimized_loadout_mixes_ordinary.fa5ef964", "optimized loadout mixes ordinary and relic equipment", nil))
 		}
 		selectedFamily = family
 		if _, duplicate := selectedEquipment[id]; duplicate {
-			return Intent.Plan{}, fmt.Errorf("equipment %d appears in more than one slot", id)
+			return Intent.Plan{}, Localization.WithError(fmt.Errorf("equipment %d appears in more than one slot", id), Localization.New("server.app.equipment_p_appears_in.d6369ad6", "equipment {p0} appears in more than one slot", Localization.Params{"p0": fmt.Sprintf("%d", id)}))
 		}
 		selectedEquipment[id] = struct{}{}
 		selectedItems[slot] = item
@@ -406,7 +407,7 @@ func planEquipmentReconfigure(_ context.Context, input Intent.PlanningContext, a
 		return Intent.Plan{}, err
 	}
 	if appearanceRestrictsFamily && appearanceFamily != selectedFamily {
-		return Intent.Plan{}, fmt.Errorf("gemmed appearance item prevents switching between ordinary and relic equipment")
+		return Intent.Plan{}, Localization.WithError(fmt.Errorf("gemmed appearance item prevents switching between ordinary and relic equipment"), Localization.New("server.app.gemmed_appearance_item_prevents.ca61d727", "gemmed appearance item prevents switching between ordinary and relic equipment", nil))
 	}
 	selectedGems := map[State.GemInstanceID]struct{}{}
 	verification := equipmentReconfigureVerification{
@@ -421,21 +422,21 @@ func planEquipmentReconfigure(_ context.Context, input Intent.PlanningContext, a
 		}
 		gem, ok := input.State.Inventory.Gems[id]
 		if !ok {
-			return Intent.Plan{}, fmt.Errorf("gem %d is not in current state", id)
+			return Intent.Plan{}, Localization.WithError(fmt.Errorf("gem %d is not in current state", id), Localization.New("server.app.gem_p_is_not.8a3a97b2", "gem {p0} is not in current state", Localization.Params{"p0": fmt.Sprintf("%d", id)}))
 		}
 		if request.SnapshotFingerprint != "" && !EquipmentDomain.GemMatchesLeaderAndMode(
 			input.State, gem, leader.kind, leader.id, strings.ToLower(strings.TrimSpace(request.CombatMode)),
 		) {
-			return Intent.Plan{}, fmt.Errorf("gem %d is not compatible with this %s %s loadout", id, leader.kind, request.CombatMode)
+			return Intent.Plan{}, Localization.WithError(fmt.Errorf("gem %d is not compatible with this %s %s loadout", id, leader.kind, request.CombatMode), Localization.New("server.app.gem_p_is_not.f7267477", "gem {p0} is not compatible with this {p1} {p2} loadout", Localization.Params{"p0": fmt.Sprintf("%d", id), "p1": fmt.Sprintf("%s", leader.kind), "p2": fmt.Sprintf("%s", request.CombatMode)}))
 		}
 		if !EquipmentDomain.GemMatchesEquipmentFamily(gem, selectedItems[slot]) {
-			return Intent.Plan{}, fmt.Errorf("gem %d does not match equipment %d's ordinary or relic family", id, selectedItems[slot].ID)
+			return Intent.Plan{}, Localization.WithError(fmt.Errorf("gem %d does not match equipment %d's ordinary or relic family", id, selectedItems[slot].ID), Localization.New("server.app.gem_p_does_not.36e0a081", "gem {p0} does not match equipment {p1}'s ordinary or relic family", Localization.Params{"p0": fmt.Sprintf("%d", id), "p1": fmt.Sprintf("%d", selectedItems[slot].ID)}))
 		}
 		if gem.WearerKind != "" && (gem.WearerKind != leader.kind || gem.WearerID != leader.id) {
-			return Intent.Plan{}, fmt.Errorf("gem %d is worn by another leader", id)
+			return Intent.Plan{}, Localization.WithError(fmt.Errorf("gem %d is worn by another leader", id), Localization.New("server.app.gem_p_is_worn.15ca833c", "gem {p0} is worn by another leader", Localization.Params{"p0": fmt.Sprintf("%d", id)}))
 		}
 		if _, duplicate := selectedGems[id]; duplicate {
-			return Intent.Plan{}, fmt.Errorf("gem %d appears in more than one slot", id)
+			return Intent.Plan{}, Localization.WithError(fmt.Errorf("gem %d appears in more than one slot", id), Localization.New("server.app.gem_p_appears_in.88a0ce41", "gem {p0} appears in more than one slot", Localization.Params{"p0": fmt.Sprintf("%d", id)}))
 		}
 		selectedGems[id] = struct{}{}
 		verification.Gems[key] = equipmentReconfigureGemVerification{
@@ -452,10 +453,10 @@ func planEquipmentReconfigure(_ context.Context, input Intent.PlanningContext, a
 	for _, gem := range transition.GemsToDetach {
 		parent, found := input.State.Inventory.Equipment[gem.EquipmentInstanceID]
 		if !found || parent.WearerKind != "" && (parent.WearerKind != leader.kind || parent.WearerID != leader.id) {
-			return Intent.Plan{}, fmt.Errorf("cannot detach gem %d from unavailable equipment %d", gem.ID, gem.EquipmentInstanceID)
+			return Intent.Plan{}, Localization.WithError(fmt.Errorf("cannot detach gem %d from unavailable equipment %d", gem.ID, gem.EquipmentInstanceID), Localization.New("server.app.cannot_detach_gem_p.830edc7b", "cannot detach gem {p0} from unavailable equipment {p1}", Localization.Params{"p0": fmt.Sprintf("%d", gem.ID), "p1": fmt.Sprintf("%d", gem.EquipmentInstanceID)}))
 		}
 		if parent.Extraction != nil && parent.Extraction.GemID == gem.ID {
-			return Intent.Plan{}, fmt.Errorf("%w: gem %d has an unresolved prior ruby extraction attempt", Intent.ErrPlanStale, gem.ID)
+			return Intent.Plan{}, Localization.WithError(fmt.Errorf("%w: gem %d has an unresolved prior ruby extraction attempt", Intent.ErrPlanStale, gem.ID), Localization.New("server.app.intent_plan_became_stale.ac6f7858", "intent plan became stale before dispatch: gem {p1} has an unresolved prior ruby extraction attempt", Localization.Params{"p1": fmt.Sprintf("%d", gem.ID)}))
 		}
 	}
 	quote, err := EquipmentDomain.QuoteReconfiguration(input.GameData, transition)
@@ -466,20 +467,20 @@ func planEquipmentReconfigure(_ context.Context, input Intent.PlanningContext, a
 		request.SnapshotFingerprint, request.Equipment, request.Gems, quote,
 	)
 	if request.QuoteFingerprint != "" && request.QuoteFingerprint != expectedQuoteFingerprint {
-		return Intent.Plan{}, fmt.Errorf("%w: the selected alternative or extraction quote changed", Intent.ErrPlanStale)
+		return Intent.Plan{}, Localization.WithError(fmt.Errorf("%w: the selected alternative or extraction quote changed", Intent.ErrPlanStale), Localization.New("server.app.intent_plan_became_stale.2244c1fa", "intent plan became stale before dispatch: the selected alternative or extraction quote changed", nil))
 	}
 	if quote.MaximumRubySpend > request.MaximumRubySpend {
-		return Intent.Plan{}, fmt.Errorf("ruby extraction quote %d exceeds approved maximumRubySpend %d", quote.MaximumRubySpend, request.MaximumRubySpend)
+		return Intent.Plan{}, Localization.WithError(fmt.Errorf("ruby extraction quote %d exceeds approved maximumRubySpend %d", quote.MaximumRubySpend, request.MaximumRubySpend), Localization.New("server.app.ruby_extraction_quote_p.9c0fc5a0", "ruby extraction quote {p0} exceeds approved maximumRubySpend {p1}", Localization.Params{"p0": quote.MaximumRubySpend, "p1": request.MaximumRubySpend}))
 	}
 	var rubyResourceID State.ResourceID
 	var planningRubyObservedAt time.Time
 	if quote.MaximumRubySpend > 0 {
 		if request.SnapshotFingerprint == "" || request.QuoteFingerprint == "" {
-			return Intent.Plan{}, fmt.Errorf("paid gem extraction requires the exact preview fingerprint and quote")
+			return Intent.Plan{}, Localization.WithError(fmt.Errorf("paid gem extraction requires the exact preview fingerprint and quote"), Localization.New("server.app.paid_gem_extraction_requires.d950bb27", "paid gem extraction requires the exact preview fingerprint and quote", nil))
 		}
 		resourceID, found := input.GameData.ResourceIDForJSONKey("C2")
 		if !found || resourceID <= 0 {
-			return Intent.Plan{}, fmt.Errorf("official ruby resource is unavailable")
+			return Intent.Plan{}, Localization.WithError(fmt.Errorf("official ruby resource is unavailable"), Localization.New("server.app.official_ruby_resource_is.d1b848a8", "official ruby resource is unavailable", nil))
 		}
 		rubyResourceID = State.ResourceID(resourceID)
 		planningRubyObservedAt, err = validateEquipmentRubyAuthority(
@@ -506,7 +507,7 @@ func planEquipmentReconfigure(_ context.Context, input Intent.PlanningContext, a
 			LeaderID    int64                     `json:"LID"`
 			Equip       int                       `json:"E"`
 		}{id, leader.id, 0})
-		step := commandStep(fmt.Sprintf("Clear equipment slot %d", slot), "eeq", payload, "eeq")
+		step := commandStep(fmt.Sprintf("Clear equipment slot %d", slot), "eeq", payload, "eeq", Localization.New("server.app.clear_equipment_slot_p.e6f28390", "Clear equipment slot {p0, number}", Localization.Params{"p0": slot}))
 		steps = append(steps, step)
 	}
 	detachIDs := make([]State.GemInstanceID, 0, len(transition.GemsToDetach))
@@ -542,14 +543,14 @@ func planEquipmentReconfigure(_ context.Context, input Intent.PlanningContext, a
 		parent := input.State.Inventory.Equipment[gem.EquipmentInstanceID]
 		if mountedBySlot[parent.Slot] != parent.ID {
 			if mountedBySlot[parent.Slot] != 0 {
-				return Intent.Plan{}, fmt.Errorf("cannot mount gem carrier %d while slot %d is occupied", parent.ID, parent.Slot)
+				return Intent.Plan{}, Localization.WithError(fmt.Errorf("cannot mount gem carrier %d while slot %d is occupied", parent.ID, parent.Slot), Localization.New("server.app.cannot_mount_gem_carrier.2a426f26", "cannot mount gem carrier {p0} while slot {p1} is occupied", Localization.Params{"p0": fmt.Sprintf("%d", parent.ID), "p1": parent.Slot}))
 			}
 			equipPayload, _ := json.Marshal(struct {
 				EquipmentID State.EquipmentInstanceID `json:"EID"`
 				LeaderID    int64                     `json:"LID"`
 				Equip       int                       `json:"E"`
 			}{parent.ID, leader.id, 1})
-			equipStep := commandStep(fmt.Sprintf("Mount gem carrier %d", parent.ID), "eeq", equipPayload, "eeq")
+			equipStep := commandStep(fmt.Sprintf("Mount gem carrier %d", parent.ID), "eeq", equipPayload, "eeq", Localization.New("server.app.mount_gem_carrier_p.fd01b831", "Mount gem carrier {p0}", Localization.Params{"p0": fmt.Sprintf("%d", parent.ID)}))
 			steps = append(steps, equipStep)
 			mountedBySlot[parent.Slot] = parent.ID
 		}
@@ -557,7 +558,7 @@ func planEquipmentReconfigure(_ context.Context, input Intent.PlanningContext, a
 			EquipmentID State.EquipmentInstanceID `json:"EID"`
 			LeaderID    int64                     `json:"LID"`
 		}{parent.ID, leader.id})
-		detachStep := commandStep(fmt.Sprintf("Detach gem %d", gem.ID), "ege", detachPayload, "ege")
+		detachStep := commandStep(fmt.Sprintf("Detach gem %d", gem.ID), "ege", detachPayload, "ege", Localization.New("server.app.detach_gem_p.3af31498", "Detach gem {p0}", Localization.Params{"p0": fmt.Sprintf("%d", gem.ID)}))
 		if EquipmentDomain.GemFamily(gem) == EquipmentDomain.LoadoutFamilyOrdinary {
 			rubyCost, costErr := EquipmentDomain.NormalGemRemovalCost(input.GameData, gem)
 			if costErr != nil {
@@ -565,7 +566,7 @@ func planEquipmentReconfigure(_ context.Context, input Intent.PlanningContext, a
 			}
 			if rubyCost > 0 {
 				if paidExtractionIndex >= len(paidExtractions) || paidExtractions[paidExtractionIndex].GemID != gem.ID {
-					return Intent.Plan{}, fmt.Errorf("paid extraction schedule changed while planning gem %d", gem.ID)
+					return Intent.Plan{}, Localization.WithError(fmt.Errorf("paid extraction schedule changed while planning gem %d", gem.ID), Localization.New("server.app.paid_extraction_schedule_changed.1abc0eba", "paid extraction schedule changed while planning gem {p0}", Localization.Params{"p0": fmt.Sprintf("%d", gem.ID)}))
 				}
 				dispatch := equipmentExtractionDispatch{
 					Request: request, InitialQuote: quote, GemID: gem.ID, CarrierID: parent.ID,
@@ -578,7 +579,7 @@ func planEquipmentReconfigure(_ context.Context, input Intent.PlanningContext, a
 				}
 				dispatchArguments, encodeErr := json.Marshal(dispatch)
 				if encodeErr != nil {
-					return Intent.Plan{}, fmt.Errorf("encode ruby extraction guard: %w", encodeErr)
+					return Intent.Plan{}, Localization.WithError(fmt.Errorf("encode ruby extraction guard: %w", encodeErr), Localization.ErrorContext(Localization.New("server.app.encode_ruby_extraction_guard.4b62df81", "encode ruby extraction guard", nil), encodeErr))
 				}
 				detachStep.PreDispatchAction, detachStep.PreDispatchArguments = "equipment.reconfigure.extraction.arm", dispatchArguments
 				detachStep.FinalDispatchAction, detachStep.FinalDispatchArguments = "equipment.reconfigure.extraction.dispatch", dispatchArguments
@@ -586,7 +587,7 @@ func planEquipmentReconfigure(_ context.Context, input Intent.PlanningContext, a
 				detachStep.DefinitiveResponseFailureAction, detachStep.DefinitiveResponseFailureArguments = "equipment.reconfigure.extraction.reject", dispatchArguments
 				detachStep.ResponseProjectionFailureIndeterminate = true
 				steps = append(steps, detachStep, Intent.Step{
-					Name: "Confirm paid gem extraction", Action: "equipment.reconfigure.extraction.confirm", ActionArguments: dispatchArguments,
+					Name: "Confirm paid gem extraction", NameDescriptor: Localization.New("server.app.confirm_paid_gem_extraction.6978298e", "Confirm paid gem extraction", nil), Action: "equipment.reconfigure.extraction.confirm", ActionArguments: dispatchArguments,
 				})
 				remainingRubySpend -= rubyCost
 				paidExtractionIndex++
@@ -597,7 +598,7 @@ func planEquipmentReconfigure(_ context.Context, input Intent.PlanningContext, a
 					ExpectedCatalogDigest: catalogDigest,
 				})
 				if encodeErr != nil {
-					return Intent.Plan{}, fmt.Errorf("encode free extraction guard: %w", encodeErr)
+					return Intent.Plan{}, Localization.WithError(fmt.Errorf("encode free extraction guard: %w", encodeErr), Localization.ErrorContext(Localization.New("server.app.encode_free_extraction_guard.104eafc7", "encode free extraction guard", nil), encodeErr))
 				}
 				detachStep.FinalDispatchAction = "equipment.reconfigure.extraction.free.dispatch"
 				detachStep.FinalDispatchArguments = dispatchArguments
@@ -614,7 +615,7 @@ func planEquipmentReconfigure(_ context.Context, input Intent.PlanningContext, a
 			LeaderID    int64                     `json:"LID"`
 			Equip       int                       `json:"E"`
 		}{parent.ID, leader.id, 0})
-		unequipStep := commandStep(fmt.Sprintf("Return gem carrier %d", parent.ID), "eeq", unequipPayload, "eeq")
+		unequipStep := commandStep(fmt.Sprintf("Return gem carrier %d", parent.ID), "eeq", unequipPayload, "eeq", Localization.New("server.app.return_gem_carrier_p.fb53bfd5", "Return gem carrier {p0}", Localization.Params{"p0": fmt.Sprintf("%d", parent.ID)}))
 		steps = append(steps, unequipStep)
 		delete(mountedBySlot, parent.Slot)
 	}
@@ -628,14 +629,14 @@ func planEquipmentReconfigure(_ context.Context, input Intent.PlanningContext, a
 			continue
 		}
 		if mountedBySlot[slot] != 0 {
-			return Intent.Plan{}, fmt.Errorf("equipment slot %d is unexpectedly occupied", slot)
+			return Intent.Plan{}, Localization.WithError(fmt.Errorf("equipment slot %d is unexpectedly occupied", slot), Localization.New("server.app.equipment_slot_p_is.abd7f412", "equipment slot {p0} is unexpectedly occupied", Localization.Params{"p0": slot}))
 		}
 		payload, _ := json.Marshal(struct {
 			EquipmentID State.EquipmentInstanceID `json:"EID"`
 			LeaderID    int64                     `json:"LID"`
 			Equip       int                       `json:"E"`
 		}{id, leader.id, 1})
-		step := commandStep(fmt.Sprintf("Equip optimized slot %d", slot), "eeq", payload, "eeq")
+		step := commandStep(fmt.Sprintf("Equip optimized slot %d", slot), "eeq", payload, "eeq", Localization.New("server.app.equip_optimized_slot_p.f4430f75", "Equip optimized slot {p0, number}", Localization.Params{"p0": slot}))
 		steps = append(steps, step)
 		mountedBySlot[slot] = id
 	}
@@ -658,16 +659,16 @@ func planEquipmentReconfigure(_ context.Context, input Intent.PlanningContext, a
 			Mode        int                       `json:"M"`
 			RelicGem    int                       `json:"RGEM"`
 		}{commandGemID, request.Equipment[strconv.Itoa(slot)], leader.id, 0, relicGem})
-		step := commandStep(fmt.Sprintf("Socket optimized gem in slot %d", slot), "bge", payload, "bge")
+		step := commandStep(fmt.Sprintf("Socket optimized gem in slot %d", slot), "bge", payload, "bge", Localization.New("server.app.socket_optimized_gem_in.2ed4d955", "Socket optimized gem in slot {p0, number}", Localization.Params{"p0": slot}))
 		steps = append(steps, step)
 	}
 	steps = append(steps, equipmentRefreshSteps()...)
 	verificationArguments, err := json.Marshal(verification)
 	if err != nil {
-		return Intent.Plan{}, fmt.Errorf("encode optimized loadout verification: %w", err)
+		return Intent.Plan{}, Localization.WithError(fmt.Errorf("encode optimized loadout verification: %w", err), Localization.ErrorContext(Localization.New("server.app.encode_optimized_loadout_verification.294974c7", "encode optimized loadout verification", nil), err))
 	}
 	steps = append(steps, Intent.Step{
-		Name: "Verify optimized loadout", Action: "equipment.reconfigure.verify", ActionArguments: verificationArguments,
+		Name: "Verify optimized loadout", NameDescriptor: Localization.New("server.app.verify_optimized_loadout.cd2c0935", "Verify optimized loadout", nil), Action: "equipment.reconfigure.verify", ActionArguments: verificationArguments,
 	})
 	claims := equipmentLeaderClaims(leader)
 	if quote.MaximumRubySpend > 0 {
@@ -675,7 +676,7 @@ func planEquipmentReconfigure(_ context.Context, input Intent.PlanningContext, a
 	}
 	return Intent.Plan{
 		Claims:  claims,
-		Summary: fmt.Sprintf("Apply optimized loadout to %s %d", leader.kind, leader.id), Steps: steps,
+		Summary: fmt.Sprintf("Apply optimized loadout to %s %d", leader.kind, leader.id), SummaryDescriptor: Localization.New("server.app.apply_optimized_loadout_to.2ee0e3e8", "Apply optimized loadout to {p0} {p1}", Localization.Params{"p0": fmt.Sprintf("%s", leader.kind), "p1": fmt.Sprintf("%d", leader.id)}), Steps: steps,
 	}, nil
 }
 
@@ -691,7 +692,7 @@ func (application *Application) verifyEquipmentReconfigure(_ context.Context, ar
 	for _, slot := range baseEquipmentSlots {
 		key := strconv.Itoa(slot)
 		if leader.equipment[key] != request.Equipment[key] {
-			return fmt.Errorf("%s %d equipment slot %d did not match the selected loadout", leader.kind, leader.id, slot)
+			return Localization.WithError(fmt.Errorf("%s %d equipment slot %d did not match the selected loadout", leader.kind, leader.id, slot), Localization.New("server.app.p_p_equipment_slot.5aea94a3", "{p0} {p1} equipment slot {p2} did not match the selected loadout", Localization.Params{"p0": fmt.Sprintf("%s", leader.kind), "p1": fmt.Sprintf("%d", leader.id), "p2": slot}))
 		}
 	}
 	for slot := 1; slot <= 4; slot++ {
@@ -702,7 +703,7 @@ func (application *Application) verifyEquipmentReconfigure(_ context.Context, ar
 			continue
 		}
 		if !hasExpected || actualID == 0 {
-			return fmt.Errorf("%s %d gem slot %d did not match the selected loadout", leader.kind, leader.id, slot)
+			return Localization.WithError(fmt.Errorf("%s %d gem slot %d did not match the selected loadout", leader.kind, leader.id, slot), Localization.New("server.app.p_p_gem_slot.46b5d4e8", "{p0} {p1} gem slot {p2} did not match the selected loadout", Localization.Params{"p0": fmt.Sprintf("%s", leader.kind), "p1": fmt.Sprintf("%d", leader.id), "p2": slot}))
 		}
 		if !expected.Normal && actualID == expected.InstanceID {
 			continue
@@ -711,7 +712,7 @@ func (application *Application) verifyEquipmentReconfigure(_ context.Context, ar
 		if !expected.Normal || !found || actualID >= 0 || actual.DefinitionID != expected.DefinitionID ||
 			actual.EquipmentInstanceID != request.Equipment[key] ||
 			actual.WearerKind != leader.kind || actual.WearerID != leader.id {
-			return fmt.Errorf("%s %d gem slot %d did not match the selected loadout", leader.kind, leader.id, slot)
+			return Localization.WithError(fmt.Errorf("%s %d gem slot %d did not match the selected loadout", leader.kind, leader.id, slot), Localization.New("server.app.p_p_gem_slot.46b5d4e8", "{p0} {p1} gem slot {p2} did not match the selected loadout", Localization.Params{"p0": fmt.Sprintf("%s", leader.kind), "p1": fmt.Sprintf("%d", leader.id), "p2": slot}))
 		}
 	}
 	return nil
@@ -723,14 +724,14 @@ func (application *Application) validateFreeEquipmentExtractionDispatch(_ contex
 		return err
 	}
 	if application == nil || application.State == nil || application.GameData == nil {
-		return fmt.Errorf("equipment extraction state is unavailable")
+		return Localization.WithError(fmt.Errorf("equipment extraction state is unavailable"), Localization.New("server.app.equipment_extraction_state_is.4cf9ca3d", "equipment extraction state is unavailable", nil))
 	}
 	gameData, ready := application.GameData.Current()
 	if !ready || gameData == nil {
-		return fmt.Errorf("official game data is unavailable")
+		return Localization.WithError(fmt.Errorf("official game data is unavailable"), Localization.New("server.app.official_game_data_is.ff6f65a7", "official game data is unavailable", nil))
 	}
 	if arguments.ExpectedCatalogDigest == "" || gameData.Metadata().DigestSHA256 != arguments.ExpectedCatalogDigest {
-		return fmt.Errorf("%w: official gem removal prices changed", Intent.ErrPlanStale)
+		return Localization.WithError(fmt.Errorf("%w: official gem removal prices changed", Intent.ErrPlanStale), Localization.New("server.app.intent_plan_became_stale.d7d59275", "intent plan became stale before dispatch: official gem removal prices changed", nil))
 	}
 	gameState := application.State.ReadOnlyView()
 	leader, err := resolveLeader(gameState, arguments.LeaderKind, arguments.LeaderID)
@@ -738,21 +739,21 @@ func (application *Application) validateFreeEquipmentExtractionDispatch(_ contex
 		return err
 	}
 	if !leader.available {
-		return fmt.Errorf("%w: commander became unavailable before gem extraction", Intent.ErrPlanStale)
+		return Localization.WithError(fmt.Errorf("%w: commander became unavailable before gem extraction", Intent.ErrPlanStale), Localization.New("server.app.intent_plan_became_stale.f2f8e02a", "intent plan became stale before dispatch: commander became unavailable before gem extraction", nil))
 	}
 	gem, found := gameState.Inventory.Gems[arguments.GemID]
 	if !found || gem.EquipmentInstanceID != arguments.CarrierID || gem.DefinitionID != arguments.DefinitionID ||
 		gem.Level != arguments.Level || EquipmentDomain.GemFamily(gem) != EquipmentDomain.LoadoutFamilyOrdinary {
-		return fmt.Errorf("%w: normal gem %d is no longer on carrier %d", Intent.ErrPlanStale, arguments.GemID, arguments.CarrierID)
+		return Localization.WithError(fmt.Errorf("%w: normal gem %d is no longer on carrier %d", Intent.ErrPlanStale, arguments.GemID, arguments.CarrierID), Localization.New("server.app.intent_plan_became_stale.5aff6d7d", "intent plan became stale before dispatch: normal gem {p1} is no longer on carrier {p2}", Localization.Params{"p1": fmt.Sprintf("%d", arguments.GemID), "p2": fmt.Sprintf("%d", arguments.CarrierID)}))
 	}
 	carrier, found := gameState.Inventory.Equipment[arguments.CarrierID]
 	if !found || carrier.WearerKind != leader.kind || carrier.WearerID != leader.id ||
 		leader.equipment[strconv.Itoa(carrier.Slot)] != carrier.ID {
-		return fmt.Errorf("%w: gem carrier %d is not mounted on the selected leader", Intent.ErrPlanStale, arguments.CarrierID)
+		return Localization.WithError(fmt.Errorf("%w: gem carrier %d is not mounted on the selected leader", Intent.ErrPlanStale, arguments.CarrierID), Localization.New("server.app.intent_plan_became_stale.8648c909", "intent plan became stale before dispatch: gem carrier {p1} is not mounted on the selected leader", Localization.Params{"p1": fmt.Sprintf("%d", arguments.CarrierID)}))
 	}
 	cost, costErr := EquipmentDomain.NormalGemRemovalCost(gameData, gem)
 	if costErr != nil || cost != 0 {
-		return fmt.Errorf("%w: official removal price changed for gem %d", Intent.ErrPlanStale, gem.ID)
+		return Localization.WithError(fmt.Errorf("%w: official removal price changed for gem %d", Intent.ErrPlanStale, gem.ID), Localization.New("server.app.intent_plan_became_stale.4cb8c375", "intent plan became stale before dispatch: official removal price changed for gem {p1}", Localization.Params{"p1": fmt.Sprintf("%d", gem.ID)}))
 	}
 	return nil
 }
@@ -765,24 +766,24 @@ func validateEquipmentRubyAuthority(
 	requireAfter time.Time,
 ) (time.Time, error) {
 	if resourceID <= 0 || required < 0 {
-		return time.Time{}, fmt.Errorf("ruby extraction authority is invalid")
+		return time.Time{}, Localization.WithError(fmt.Errorf("ruby extraction authority is invalid"), Localization.New("server.app.ruby_extraction_authority_is.15b19d4a", "ruby extraction authority is invalid", nil))
 	}
 	if !gameState.Session.LoggedIn || !gameState.Session.SocketReady || gameState.Session.ConnectionGeneration == 0 {
-		return time.Time{}, fmt.Errorf("%w: game session is unavailable for ruby extraction", Intent.ErrPlanStale)
+		return time.Time{}, Localization.WithError(fmt.Errorf("%w: game session is unavailable for ruby extraction", Intent.ErrPlanStale), Localization.New("server.app.intent_plan_became_stale.3a7eb5ec", "intent plan became stale before dispatch: game session is unavailable for ruby extraction", nil))
 	}
 	observation, found := gameState.Player.ResourceObservations[resourceID]
 	if !found || observation.ObservedAt.IsZero() || observation.ConnectionGeneration != gameState.Session.ConnectionGeneration ||
 		!gameState.Session.ChangedAt.IsZero() && observation.ObservedAt.Before(gameState.Session.ChangedAt) ||
 		observation.ObservedAt.After(now.Add(5*time.Second)) || now.Sub(observation.ObservedAt) > equipmentRubyFreshness ||
 		!requireAfter.IsZero() && !observation.ObservedAt.After(requireAfter) {
-		return time.Time{}, fmt.Errorf("%w: a fresh current-session ruby balance is unavailable", Intent.ErrPlanStale)
+		return time.Time{}, Localization.WithError(fmt.Errorf("%w: a fresh current-session ruby balance is unavailable", Intent.ErrPlanStale), Localization.New("server.app.intent_plan_became_stale.8eb2bf6c", "intent plan became stale before dispatch: a fresh current-session ruby balance is unavailable", nil))
 	}
 	value, found := gameState.Player.Resources[resourceID]
 	if !found || math.IsNaN(value) || math.IsInf(value, 0) || value < 0 {
-		return time.Time{}, fmt.Errorf("ruby balance is unavailable")
+		return time.Time{}, Localization.WithError(fmt.Errorf("ruby balance is unavailable"), Localization.New("server.app.ruby_balance_is_unavailable.f542080d", "ruby balance is unavailable", nil))
 	}
 	if int64(math.Floor(value)) < required {
-		return time.Time{}, fmt.Errorf("%w: ruby balance cannot cover the remaining %d-ruby extraction ceiling", Intent.ErrPlanStale, required)
+		return time.Time{}, Localization.WithError(fmt.Errorf("%w: ruby balance cannot cover the remaining %d-ruby extraction ceiling", Intent.ErrPlanStale, required), Localization.New("server.app.intent_plan_became_stale.3cdc102a", "intent plan became stale before dispatch: ruby balance cannot cover the remaining {p1, number}-ruby extraction ceiling", Localization.Params{"p1": required}))
 	}
 	return observation.ObservedAt, nil
 }
@@ -793,14 +794,14 @@ func (application *Application) validateEquipmentExtractionDispatch(
 	requireMarker bool,
 ) error {
 	if application == nil || application.State == nil || application.GameData == nil {
-		return fmt.Errorf("equipment extraction state is unavailable")
+		return Localization.WithError(fmt.Errorf("equipment extraction state is unavailable"), Localization.New("server.app.equipment_extraction_state_is.4cf9ca3d", "equipment extraction state is unavailable", nil))
 	}
 	gameData, ready := application.GameData.Current()
 	if !ready || gameData == nil {
-		return fmt.Errorf("official game data is unavailable")
+		return Localization.WithError(fmt.Errorf("official game data is unavailable"), Localization.New("server.app.official_game_data_is.ff6f65a7", "official game data is unavailable", nil))
 	}
 	if arguments.ExpectedCatalogDigest == "" || gameData.Metadata().DigestSHA256 != arguments.ExpectedCatalogDigest {
-		return fmt.Errorf("%w: official gem removal prices changed", Intent.ErrPlanStale)
+		return Localization.WithError(fmt.Errorf("%w: official gem removal prices changed", Intent.ErrPlanStale), Localization.New("server.app.intent_plan_became_stale.d7d59275", "intent plan became stale before dispatch: official gem removal prices changed", nil))
 	}
 	quote := arguments.InitialQuote
 	quote.Fingerprint = ""
@@ -809,58 +810,58 @@ func (application *Application) validateEquipmentExtractionDispatch(
 	)
 	if arguments.Request.QuoteFingerprint == "" || arguments.Request.QuoteFingerprint != expectedQuoteFingerprint ||
 		quote.MaximumRubySpend <= 0 || quote.MaximumRubySpend > arguments.Request.MaximumRubySpend {
-		return fmt.Errorf("%w: selected extraction quote is no longer authorized", Intent.ErrPlanStale)
+		return Localization.WithError(fmt.Errorf("%w: selected extraction quote is no longer authorized", Intent.ErrPlanStale), Localization.New("server.app.intent_plan_became_stale.7d890214", "intent plan became stale before dispatch: selected extraction quote is no longer authorized", nil))
 	}
 	if len(arguments.RemainingPaidExtractions) == 0 ||
 		arguments.RemainingPaidExtractions[0].GemID != arguments.GemID ||
 		arguments.RemainingPaidExtractions[0].CarrierID != arguments.CarrierID ||
 		arguments.RemainingPaidExtractions[0].RubyCost != arguments.RubyCost {
-		return fmt.Errorf("%w: paid extraction schedule changed", Intent.ErrPlanStale)
+		return Localization.WithError(fmt.Errorf("%w: paid extraction schedule changed", Intent.ErrPlanStale), Localization.New("server.app.intent_plan_became_stale.76999187", "intent plan became stale before dispatch: paid extraction schedule changed", nil))
 	}
 	gameState := application.State.ReadOnlyView()
 	if arguments.ExpectedConnectionGeneration == 0 || gameState.Session.ConnectionGeneration != arguments.ExpectedConnectionGeneration {
-		return fmt.Errorf("%w: game session changed before ruby extraction", Intent.ErrPlanStale)
+		return Localization.WithError(fmt.Errorf("%w: game session changed before ruby extraction", Intent.ErrPlanStale), Localization.New("server.app.intent_plan_became_stale.a9a68905", "intent plan became stale before dispatch: game session changed before ruby extraction", nil))
 	}
 	leader, err := resolveLeader(gameState, arguments.Request.LeaderKind, arguments.Request.LeaderID)
 	if err != nil {
 		return err
 	}
 	if !leader.available {
-		return fmt.Errorf("%w: commander became unavailable before ruby extraction", Intent.ErrPlanStale)
+		return Localization.WithError(fmt.Errorf("%w: commander became unavailable before ruby extraction", Intent.ErrPlanStale), Localization.New("server.app.intent_plan_became_stale.4a14fe85", "intent plan became stale before dispatch: commander became unavailable before ruby extraction", nil))
 	}
 	remaining := int64(0)
 	for index, expected := range arguments.RemainingPaidExtractions {
 		gem, found := gameState.Inventory.Gems[expected.GemID]
 		if !found || gem.EquipmentInstanceID != expected.CarrierID || gem.DefinitionID != expected.DefinitionID ||
 			gem.Level != expected.Level || EquipmentDomain.GemFamily(gem) != EquipmentDomain.LoadoutFamilyOrdinary {
-			return fmt.Errorf("%w: normal gem %d is no longer on carrier %d", Intent.ErrPlanStale, expected.GemID, expected.CarrierID)
+			return Localization.WithError(fmt.Errorf("%w: normal gem %d is no longer on carrier %d", Intent.ErrPlanStale, expected.GemID, expected.CarrierID), Localization.New("server.app.intent_plan_became_stale.5aff6d7d", "intent plan became stale before dispatch: normal gem {p1} is no longer on carrier {p2}", Localization.Params{"p1": fmt.Sprintf("%d", expected.GemID), "p2": fmt.Sprintf("%d", expected.CarrierID)}))
 		}
 		carrier, found := gameState.Inventory.Equipment[expected.CarrierID]
 		if !found {
-			return fmt.Errorf("%w: gem carrier %d is unavailable", Intent.ErrPlanStale, expected.CarrierID)
+			return Localization.WithError(fmt.Errorf("%w: gem carrier %d is unavailable", Intent.ErrPlanStale, expected.CarrierID), Localization.New("server.app.intent_plan_became_stale.7ec3ac07", "intent plan became stale before dispatch: gem carrier {p1} is unavailable", Localization.Params{"p1": fmt.Sprintf("%d", expected.CarrierID)}))
 		}
 		if index == 0 {
 			if carrier.WearerKind != leader.kind || carrier.WearerID != leader.id ||
 				leader.equipment[strconv.Itoa(carrier.Slot)] != carrier.ID {
-				return fmt.Errorf("%w: current gem carrier %d is not mounted on the selected leader", Intent.ErrPlanStale, expected.CarrierID)
+				return Localization.WithError(fmt.Errorf("%w: current gem carrier %d is not mounted on the selected leader", Intent.ErrPlanStale, expected.CarrierID), Localization.New("server.app.intent_plan_became_stale.545c9a4c", "intent plan became stale before dispatch: current gem carrier {p1} is not mounted on the selected leader", Localization.Params{"p1": fmt.Sprintf("%d", expected.CarrierID)}))
 			}
 		} else if carrier.WearerKind != "" && (carrier.WearerKind != leader.kind || carrier.WearerID != leader.id) {
-			return fmt.Errorf("%w: future gem carrier %d is unavailable", Intent.ErrPlanStale, expected.CarrierID)
+			return Localization.WithError(fmt.Errorf("%w: future gem carrier %d is unavailable", Intent.ErrPlanStale, expected.CarrierID), Localization.New("server.app.intent_plan_became_stale.b512c7c7", "intent plan became stale before dispatch: future gem carrier {p1} is unavailable", Localization.Params{"p1": fmt.Sprintf("%d", expected.CarrierID)}))
 		}
 		cost, costErr := EquipmentDomain.NormalGemRemovalCost(gameData, gem)
 		if costErr != nil || cost != expected.RubyCost || remaining > math.MaxInt64-cost {
-			return fmt.Errorf("%w: official removal price changed for gem %d", Intent.ErrPlanStale, gem.ID)
+			return Localization.WithError(fmt.Errorf("%w: official removal price changed for gem %d", Intent.ErrPlanStale, gem.ID), Localization.New("server.app.intent_plan_became_stale.4cb8c375", "intent plan became stale before dispatch: official removal price changed for gem {p1}", Localization.Params{"p1": fmt.Sprintf("%d", gem.ID)}))
 		}
 		remaining += cost
 	}
 	if remaining != arguments.ExpectedRemainingRubySpend || remaining <= 0 {
-		return fmt.Errorf("%w: remaining ruby extraction quote changed", Intent.ErrPlanStale)
+		return Localization.WithError(fmt.Errorf("%w: remaining ruby extraction quote changed", Intent.ErrPlanStale), Localization.New("server.app.intent_plan_became_stale.46638e5f", "intent plan became stale before dispatch: remaining ruby extraction quote changed", nil))
 	}
 	currentCarrier := gameState.Inventory.Equipment[arguments.CarrierID]
 	operationID := strings.TrimSpace(metadata.OperationID)
 	responseToken := strings.TrimSpace(metadata.ResponseToken)
 	if operationID == "" {
-		return fmt.Errorf("ruby extraction operation identity is unavailable")
+		return Localization.WithError(fmt.Errorf("ruby extraction operation identity is unavailable"), Localization.New("server.app.ruby_extraction_operation_identity.5224336a", "ruby extraction operation identity is unavailable", nil))
 	}
 	if requireMarker {
 		expected := arguments.RemainingPaidExtractions[0]
@@ -869,10 +870,10 @@ func (application *Application) validateEquipmentExtractionDispatch(
 			marker.DefinitionID != expected.DefinitionID || marker.Level != expected.Level ||
 			marker.OperationID != operationID || marker.ConnectionGeneration != arguments.ExpectedConnectionGeneration ||
 			marker.ResponseToken != responseToken {
-			return fmt.Errorf("%w: ruby extraction dispatch marker changed", Intent.ErrPlanStale)
+			return Localization.WithError(fmt.Errorf("%w: ruby extraction dispatch marker changed", Intent.ErrPlanStale), Localization.New("server.app.intent_plan_became_stale.013ea596", "intent plan became stale before dispatch: ruby extraction dispatch marker changed", nil))
 		}
 	} else if currentCarrier.Extraction != nil {
-		return fmt.Errorf("%w: gem %d has an unresolved prior ruby extraction attempt", Intent.ErrPlanStale, arguments.GemID)
+		return Localization.WithError(fmt.Errorf("%w: gem %d has an unresolved prior ruby extraction attempt", Intent.ErrPlanStale, arguments.GemID), Localization.New("server.app.intent_plan_became_stale.ac6f7858", "intent plan became stale before dispatch: gem {p1} has an unresolved prior ruby extraction attempt", Localization.Params{"p1": fmt.Sprintf("%d", arguments.GemID)}))
 	}
 	requireAfter := time.Time{}
 	if arguments.RequireNewRubyObservation {
@@ -897,7 +898,7 @@ func (application *Application) armEquipmentExtraction(ctx context.Context, raw 
 		carrier, found := gameState.Inventory.Equipment[arguments.CarrierID]
 		gem, gemFound := gameState.Inventory.Gems[arguments.GemID]
 		if !found || !gemFound || gem.EquipmentInstanceID != carrier.ID || carrier.Extraction != nil {
-			return nil, false, fmt.Errorf("%w: gem carrier changed before ruby extraction", Intent.ErrPlanStale)
+			return nil, false, Localization.WithError(fmt.Errorf("%w: gem carrier changed before ruby extraction", Intent.ErrPlanStale), Localization.New("server.app.intent_plan_became_stale.2fe09a07", "intent plan became stale before dispatch: gem carrier changed before ruby extraction", nil))
 		}
 		carrier.Extraction = &State.GemExtractionAttempt{
 			GemID: arguments.GemID, DefinitionID: arguments.RemainingPaidExtractions[0].DefinitionID,
@@ -927,7 +928,7 @@ func (application *Application) finalizeEquipmentExtractionDispatch(ctx context.
 	event, err := application.State.ApplyComponents(State.Components(State.ComponentInventory), func(gameState *State.GameState) ([]string, bool, error) {
 		carrier := gameState.Inventory.Equipment[arguments.CarrierID]
 		if carrier.Extraction == nil || carrier.Extraction.OperationID != operationID {
-			return nil, false, fmt.Errorf("%w: ruby extraction dispatch marker changed", Intent.ErrPlanStale)
+			return nil, false, Localization.WithError(fmt.Errorf("%w: ruby extraction dispatch marker changed", Intent.ErrPlanStale), Localization.New("server.app.intent_plan_became_stale.013ea596", "intent plan became stale before dispatch: ruby extraction dispatch marker changed", nil))
 		}
 		if !carrier.Extraction.DispatchedAt.IsZero() {
 			return nil, false, nil
@@ -969,7 +970,7 @@ func (application *Application) clearEquipmentExtractionMarker(ctx context.Conte
 		}
 		if requireDetached {
 			if gem, gemFound := gameState.Inventory.Gems[arguments.GemID]; gemFound && gem.EquipmentInstanceID == carrier.ID {
-				return nil, false, fmt.Errorf("%w: paid gem extraction was not authoritatively observed", Intent.ErrPlanStale)
+				return nil, false, Localization.WithError(fmt.Errorf("%w: paid gem extraction was not authoritatively observed", Intent.ErrPlanStale), Localization.New("server.app.intent_plan_became_stale.4e3a954a", "intent plan became stale before dispatch: paid gem extraction was not authoritatively observed", nil))
 			}
 		}
 		carrier.Extraction = nil
@@ -1001,7 +1002,7 @@ func (application *Application) planEquipmentUpgrade(_ context.Context, input In
 	}
 	request.ItemKind = strings.ToLower(strings.TrimSpace(request.ItemKind))
 	if request.TargetLevel < 1 || request.TargetLevel > maxEquipmentUpgradeLevel {
-		return Intent.Plan{}, fmt.Errorf("targetLevel must be between 1 and %d", maxEquipmentUpgradeLevel)
+		return Intent.Plan{}, Localization.WithError(fmt.Errorf("targetLevel must be between 1 and %d", maxEquipmentUpgradeLevel), Localization.New("server.app.targetlevel_must_be_between.88afe620", "targetLevel must be between 1 and {p0}", Localization.Params{"p0": maxEquipmentUpgradeLevel}))
 	}
 	currentLevel := 0
 	maximumLevel := maxEquipmentUpgradeLevel
@@ -1014,12 +1015,12 @@ func (application *Application) planEquipmentUpgrade(_ context.Context, input In
 	case "equipment":
 		item, ok := input.State.Inventory.Equipment[State.EquipmentInstanceID(request.ItemID)]
 		if !ok || request.ItemID <= 0 {
-			return Intent.Plan{}, fmt.Errorf("equipment %d is not in current state", request.ItemID)
+			return Intent.Plan{}, Localization.WithError(fmt.Errorf("equipment %d is not in current state", request.ItemID), Localization.New("server.app.equipment_p_is_not.eacf0b7b", "equipment {p0} is not in current state", Localization.Params{"p0": fmt.Sprintf("%d", request.ItemID)}))
 		}
 		var supported bool
 		maximumLevel, relicUpgrade, supported = equipmentUpgradeLevelCap(item)
 		if !supported {
-			return Intent.Plan{}, fmt.Errorf("equipment %d has an unsupported or unverified enchantment type", request.ItemID)
+			return Intent.Plan{}, Localization.WithError(fmt.Errorf("equipment %d has an unsupported or unverified enchantment type", request.ItemID), Localization.New("server.app.equipment_p_has_an.776d0317", "equipment {p0} has an unsupported or unverified enchantment type", Localization.Params{"p0": fmt.Sprintf("%d", request.ItemID)}))
 		}
 		currentLevel = item.Level
 		wearerKind, wearerID = item.WearerKind, item.WearerID
@@ -1039,14 +1040,14 @@ func (application *Application) planEquipmentUpgrade(_ context.Context, input In
 	case "gem":
 		gem, ok := input.State.Inventory.Gems[State.GemInstanceID(request.ItemID)]
 		if !ok || request.ItemID <= 0 {
-			return Intent.Plan{}, fmt.Errorf("relic gem %d is not in current state", request.ItemID)
+			return Intent.Plan{}, Localization.WithError(fmt.Errorf("relic gem %d is not in current state", request.ItemID), Localization.New("server.app.relic_gem_p_is.2c5b94be", "relic gem {p0} is not in current state", Localization.Params{"p0": fmt.Sprintf("%d", request.ItemID)}))
 		}
 		currentLevel = gem.Level
 		wearerKind, wearerID = gem.WearerKind, gem.WearerID
 		if wearerKind == "" && gem.EquipmentInstanceID != 0 {
 			carrier, found := input.State.Inventory.Equipment[gem.EquipmentInstanceID]
 			if !found {
-				return Intent.Plan{}, fmt.Errorf("relic gem %d references missing equipment %d", request.ItemID, gem.EquipmentInstanceID)
+				return Intent.Plan{}, Localization.WithError(fmt.Errorf("relic gem %d references missing equipment %d", request.ItemID, gem.EquipmentInstanceID), Localization.New("server.app.relic_gem_p_references.4b542572", "relic gem {p0} references missing equipment {p1}", Localization.Params{"p0": fmt.Sprintf("%d", request.ItemID), "p1": fmt.Sprintf("%d", gem.EquipmentInstanceID)}))
 			}
 			wearerKind, wearerID = carrier.WearerKind, carrier.WearerID
 		}
@@ -1056,13 +1057,13 @@ func (application *Application) planEquipmentUpgrade(_ context.Context, input In
 			Equipment int   `json:"EQ"`
 		}{0, request.ItemID, 0})
 	default:
-		return Intent.Plan{}, fmt.Errorf("itemKind must be equipment or gem")
+		return Intent.Plan{}, Localization.WithError(fmt.Errorf("itemKind must be equipment or gem"), Localization.New("server.app.itemkind_must_be_equipment.f68f1395", "itemKind must be equipment or gem", nil))
 	}
 	if request.TargetLevel > maximumLevel {
-		return Intent.Plan{}, fmt.Errorf("targetLevel cannot exceed %d for this %s", maximumLevel, request.ItemKind)
+		return Intent.Plan{}, Localization.WithError(fmt.Errorf("targetLevel cannot exceed %d for this %s", maximumLevel, request.ItemKind), Localization.New("server.app.targetlevel_cannot_exceed_p.c4bd25e9", "targetLevel cannot exceed {p0} for this {p1}", Localization.Params{"p0": maximumLevel, "p1": fmt.Sprintf("%s", request.ItemKind)}))
 	}
 	if request.TargetLevel <= currentLevel {
-		return Intent.Plan{}, fmt.Errorf("targetLevel must be above current level %d", currentLevel)
+		return Intent.Plan{}, Localization.WithError(fmt.Errorf("targetLevel must be above current level %d", currentLevel), Localization.New("server.app.targetlevel_must_be_above.b6cddad0", "targetLevel must be above current level {p0}", Localization.Params{"p0": currentLevel}))
 	}
 	claims, err := equipmentUpgradeClaims(input.State, request.ItemKind, request.ItemID, wearerKind, wearerID)
 	if err != nil {
@@ -1078,10 +1079,10 @@ func (application *Application) planEquipmentUpgrade(_ context.Context, input In
 		steps = append(steps, equipmentUpgradeContextStep())
 	}
 	for level := currentLevel + 1; level <= request.TargetLevel; level++ {
-		guard := Intent.Step{Name: "Verify coin reserve", Action: "equipment.verify_coin_reserve", DelayMillis: delay}
+		guard := Intent.Step{Name: "Verify coin reserve", NameDescriptor: Localization.New("server.app.verify_coin_reserve.47ce334b", "Verify coin reserve", nil), Action: "equipment.verify_coin_reserve", DelayMillis: delay}
 		steps = append(steps, Intent.RebuildOnResume(guard))
 		upgradeStep := Intent.Step{
-			Name: fmt.Sprintf("Upgrade %s to level %d", request.ItemKind, level), Opcode: upgradeOpcode, Payload: payload,
+			Name: fmt.Sprintf("Upgrade %s to level %d", request.ItemKind, level), NameDescriptor: Localization.New("server.app.upgrade_p_to_level.b3b197bd", "Upgrade {p0} to level {p1}", Localization.Params{"p0": fmt.Sprintf("%s", request.ItemKind), "p1": level}), Opcode: upgradeOpcode, Payload: payload,
 			AwaitOpcode: upgradeOpcode, TimeoutMillis: 8_000, SuccessCodes: []int{0},
 			// The game commits its separate coin/currency updates before returning
 			// 227 for a consumed failed roll. Recheck the reserve, then repeat this
@@ -1099,8 +1100,8 @@ func (application *Application) planEquipmentUpgrade(_ context.Context, input In
 	steps = append(steps, equipmentRefreshSteps()...)
 	return Intent.Plan{
 		Claims:  claims,
-		Summary: fmt.Sprintf("Upgrade %s %d from level %d to %d", request.ItemKind, request.ItemID, currentLevel, request.TargetLevel),
-		Steps:   steps,
+		Summary: fmt.Sprintf("Upgrade %s %d from level %d to %d", request.ItemKind, request.ItemID, currentLevel, request.TargetLevel), SummaryDescriptor: Localization.New("server.app.upgrade_p_p_from.255b5cef", "Upgrade {p0} {p1} from level {p2} to {p3}", Localization.Params{"p0": fmt.Sprintf("%s", request.ItemKind), "p1": fmt.Sprintf("%d", request.ItemID), "p2": currentLevel, "p3": request.TargetLevel}),
+		Steps: steps,
 	}, nil
 }
 
@@ -1156,17 +1157,17 @@ func equipmentUpgradeClaims(
 	case "commander":
 		commander, found := gameState.Commanders[State.CommanderID(wearerID)]
 		if !found {
-			return nil, fmt.Errorf("%s %d is worn by commander %d, which is missing from current state", itemKind, itemID, wearerID)
+			return nil, Localization.WithError(fmt.Errorf("%s %d is worn by commander %d, which is missing from current state", itemKind, itemID, wearerID), Localization.New("server.app.p_p_is_worn.92345228", "{p0} {p1} is worn by commander {p2}, which is missing from current state", Localization.Params{"p0": fmt.Sprintf("%s", itemKind), "p1": fmt.Sprintf("%d", itemID), "p2": fmt.Sprintf("%d", wearerID)}))
 		}
 		if !commander.Available || State.CommanderHasActiveMovementAt(gameState, commander.ID, time.Now().UTC()) {
-			return nil, fmt.Errorf("%s %d cannot be upgraded while commander %d is travelling", itemKind, itemID, wearerID)
+			return nil, Localization.WithError(fmt.Errorf("%s %d cannot be upgraded while commander %d is travelling", itemKind, itemID, wearerID), Localization.New("server.app.p_p_cannot_be.b88d1a3d", "{p0} {p1} cannot be upgraded while commander {p2} is travelling", Localization.Params{"p0": fmt.Sprintf("%s", itemKind), "p1": fmt.Sprintf("%d", itemID), "p2": fmt.Sprintf("%d", wearerID)}))
 		}
 	case "castellan":
 		if _, found := gameState.Castellans[State.CastellanID(wearerID)]; !found {
-			return nil, fmt.Errorf("%s %d is worn by castellan %d, which is missing from current state", itemKind, itemID, wearerID)
+			return nil, Localization.WithError(fmt.Errorf("%s %d is worn by castellan %d, which is missing from current state", itemKind, itemID, wearerID), Localization.New("server.app.p_p_is_worn.7e1d0e6a", "{p0} {p1} is worn by castellan {p2}, which is missing from current state", Localization.Params{"p0": fmt.Sprintf("%s", itemKind), "p1": fmt.Sprintf("%d", itemID), "p2": fmt.Sprintf("%d", wearerID)}))
 		}
 	default:
-		return nil, fmt.Errorf("%s %d has unsupported wearer kind %q", itemKind, itemID, wearerKind)
+		return nil, Localization.WithError(fmt.Errorf("%s %d has unsupported wearer kind %q", itemKind, itemID, wearerKind), Localization.New("server.app.p_p_has_unsupported.f708acb2", "{p0} {p1} has unsupported wearer kind {p2}", Localization.Params{"p0": fmt.Sprintf("%s", itemKind), "p1": fmt.Sprintf("%d", itemID), "p2": fmt.Sprintf("%q", wearerKind)}))
 	}
 	claims = append(claims, "leader:"+wearerKind+":"+strconv.FormatInt(wearerID, 10))
 	return claims, nil
@@ -1184,7 +1185,7 @@ func planEquipmentSell(_ context.Context, input Intent.PlanningContext, argument
 	}
 	request.Category = strings.ToLower(strings.TrimSpace(request.Category))
 	if request.KeepStars < 0 || request.KeepStars > 42 {
-		return Intent.Plan{}, fmt.Errorf("keepStars must be between 0 and 42")
+		return Intent.Plan{}, Localization.WithError(fmt.Errorf("keepStars must be between 0 and 42"), Localization.New("server.app.keepstars_must_be_between.e4fc6134", "keepStars must be between 0 and 42", nil))
 	}
 	steps := []Intent.Step{}
 	count := 0
@@ -1208,12 +1209,12 @@ func planEquipmentSell(_ context.Context, input Intent.PlanningContext, argument
 				Extra       int                       `json:"EX"`
 				FilterID    int                       `json:"LFID"`
 			}{id, -1, 0, -1})
-			step := commandStep(fmt.Sprintf("Sell equipment %d", id), "seq", payload, "seq")
+			step := commandStep(fmt.Sprintf("Sell equipment %d", id), "seq", payload, "seq", Localization.New("server.app.sell_equipment_p.7101a2a7", "Sell equipment {p0}", Localization.Params{"p0": fmt.Sprintf("%d", id)}))
 			steps = append(steps, step)
 		}
 		count = len(ids)
 		if count > 0 {
-			steps = append(steps, commandStep("Refresh equipment storage", "gei", json.RawMessage(`{}`), "gei"))
+			steps = append(steps, commandStep("Refresh equipment storage", "gei", json.RawMessage(`{}`), "gei", Localization.New("server.app.refresh_equipment_storage.ac2d5167", "Refresh equipment storage", nil)))
 		}
 	case "non_relic_gems":
 		if err := requireRecentEquipmentSnapshot(input.State, "ggm"); err != nil {
@@ -1233,13 +1234,13 @@ func planEquipmentSell(_ context.Context, input Intent.PlanningContext, argument
 					RelicGem int         `json:"RGEM"`
 					FilterID int         `json:"LFID"`
 				}{id, 0, -1})
-				step := commandStep(fmt.Sprintf("Sell gem %d", id), "sge", payload, "sge")
+				step := commandStep(fmt.Sprintf("Sell gem %d", id), "sge", payload, "sge", Localization.New("server.app.sell_gem_p.a179cdcd", "Sell gem {p0}", Localization.Params{"p0": fmt.Sprintf("%d", id)}))
 				steps = append(steps, step)
 				count++
 			}
 		}
 		if count > 0 {
-			steps = append(steps, commandStep("Refresh gem storage", "ggm", json.RawMessage(`{}`), "ggm"))
+			steps = append(steps, commandStep("Refresh gem storage", "ggm", json.RawMessage(`{}`), "ggm", Localization.New("server.app.refresh_gem_storage.10edb39b", "Refresh gem storage", nil)))
 		}
 	case "relic1_gems", "relic2_gems":
 		if err := requireRecentEquipmentSnapshot(input.State, "ggm"); err != nil {
@@ -1258,18 +1259,18 @@ func planEquipmentSell(_ context.Context, input Intent.PlanningContext, argument
 				RelicGem int                 `json:"RGEM"`
 				FilterID int                 `json:"LFID"`
 			}{id, 1, -1})
-			step := commandStep(fmt.Sprintf("Sell relic gem %d", id), "sge", payload, "sge")
+			step := commandStep(fmt.Sprintf("Sell relic gem %d", id), "sge", payload, "sge", Localization.New("server.app.sell_relic_gem_p.30592411", "Sell relic gem {p0}", Localization.Params{"p0": fmt.Sprintf("%d", id)}))
 			steps = append(steps, step)
 		}
 		count = len(ids)
 		if count > 0 {
-			steps = append(steps, commandStep("Refresh gem storage", "ggm", json.RawMessage(`{}`), "ggm"))
+			steps = append(steps, commandStep("Refresh gem storage", "ggm", json.RawMessage(`{}`), "ggm", Localization.New("server.app.refresh_gem_storage.10edb39b", "Refresh gem storage", nil)))
 		}
 	default:
-		return Intent.Plan{}, fmt.Errorf("unknown equipment sale category %q", request.Category)
+		return Intent.Plan{}, Localization.WithError(fmt.Errorf("unknown equipment sale category %q", request.Category), Localization.New("server.app.unknown_equipment_sale_category.fdc283b8", "unknown equipment sale category {p0}", Localization.Params{"p0": fmt.Sprintf("%q", request.Category)}))
 	}
 	return Intent.Plan{
-		Claims: []string{"game:equipment"}, Summary: fmt.Sprintf("Sell %d item(s) from %s", count, request.Category), Steps: steps,
+		Claims: []string{"game:equipment"}, Summary: fmt.Sprintf("Sell %d item(s) from %s", count, request.Category), SummaryDescriptor: Localization.New("server.app.sell_p_item_s.cde0ecb8", "Sell {p0} item(s) from {p1}", Localization.Params{"p0": count, "p1": fmt.Sprintf("%s", request.Category)}), Steps: steps,
 	}, nil
 }
 
@@ -1280,7 +1281,7 @@ func (application *Application) verifyEquipmentCoinReserve(_ context.Context, _ 
 	}
 	coins := application.State.ReadOnlyView().Player.Resources[State.ResourceID(1)]
 	if coins <= threshold {
-		return fmt.Errorf("coins under upgrade reserve (%.0f <= %.0f)", coins, threshold)
+		return Localization.WithError(fmt.Errorf("coins under upgrade reserve (%.0f <= %.0f)", coins, threshold), Localization.New("server.app.coins_under_upgrade_reserve.0eb8b000", "coins under upgrade reserve ({p0} <= {p1})", Localization.Params{"p0": coins, "p1": threshold}))
 	}
 	return nil
 }
@@ -1312,23 +1313,23 @@ func (application *Application) equipmentUpgradeSettings() (float64, int) {
 
 func equipmentRefreshSteps() []Intent.Step {
 	return []Intent.Step{
-		commandStep("Refresh gem storage", "ggm", json.RawMessage(`{}`), "ggm"),
-		commandStep("Refresh equipment storage", "gei", json.RawMessage(`{}`), "gei"),
-		commandStep("Refresh leader loadouts", "gli", json.RawMessage(`{}`), "gli"),
+		commandStep("Refresh gem storage", "ggm", json.RawMessage(`{}`), "ggm", Localization.New("server.app.refresh_gem_storage.10edb39b", "Refresh gem storage", nil)),
+		commandStep("Refresh equipment storage", "gei", json.RawMessage(`{}`), "gei", Localization.New("server.app.refresh_equipment_storage.ac2d5167", "Refresh equipment storage", nil)),
+		commandStep("Refresh leader loadouts", "gli", json.RawMessage(`{}`), "gli", Localization.New("server.app.refresh_leader_loadouts.7ebc7385", "Refresh leader loadouts", nil)),
 	}
 }
 
 func equipmentMutationRefreshSteps() []Intent.Step {
 	return []Intent.Step{
-		commandStep("Refresh leader loadouts", "gli", json.RawMessage(`{}`), "gli"),
-		commandStep("Refresh equipment storage", "gei", json.RawMessage(`{}`), "gei"),
+		commandStep("Refresh leader loadouts", "gli", json.RawMessage(`{}`), "gli", Localization.New("server.app.refresh_leader_loadouts.7ebc7385", "Refresh leader loadouts", nil)),
+		commandStep("Refresh equipment storage", "gei", json.RawMessage(`{}`), "gei", Localization.New("server.app.refresh_equipment_storage.ac2d5167", "Refresh equipment storage", nil)),
 	}
 }
 
 func gemMutationRefreshSteps() []Intent.Step {
 	return []Intent.Step{
-		commandStep("Refresh leader loadouts", "gli", json.RawMessage(`{}`), "gli"),
-		commandStep("Refresh gem storage", "ggm", json.RawMessage(`{}`), "ggm"),
+		commandStep("Refresh leader loadouts", "gli", json.RawMessage(`{}`), "gli", Localization.New("server.app.refresh_leader_loadouts.7ebc7385", "Refresh leader loadouts", nil)),
+		commandStep("Refresh gem storage", "ggm", json.RawMessage(`{}`), "ggm", Localization.New("server.app.refresh_gem_storage.10edb39b", "Refresh gem storage", nil)),
 	}
 }
 
@@ -1338,17 +1339,17 @@ func resolveLeader(gameState State.GameState, kind string, id int64) (resolvedLe
 	case "commander":
 		leader, ok := gameState.Commanders[State.CommanderID(id)]
 		if !ok {
-			return resolvedLeader{}, fmt.Errorf("commander %d is not in current state", id)
+			return resolvedLeader{}, Localization.WithError(fmt.Errorf("commander %d is not in current state", id), Localization.New("server.app.commander_p_is_not.7a3d451e", "commander {p0} is not in current state", Localization.Params{"p0": fmt.Sprintf("%d", id)}))
 		}
 		return resolvedLeader{kind: kind, id: id, available: leader.Available, equipment: leader.Equipment, gems: leader.Gems}, nil
 	case "castellan":
 		leader, ok := gameState.Castellans[State.CastellanID(id)]
 		if !ok {
-			return resolvedLeader{}, fmt.Errorf("castellan %d is not in current state", id)
+			return resolvedLeader{}, Localization.WithError(fmt.Errorf("castellan %d is not in current state", id), Localization.New("server.app.castellan_p_is_not.cce883a3", "castellan {p0} is not in current state", Localization.Params{"p0": fmt.Sprintf("%d", id)}))
 		}
 		return resolvedLeader{kind: kind, id: id, available: true, equipment: leader.Equipment, gems: leader.Gems}, nil
 	default:
-		return resolvedLeader{}, fmt.Errorf("leaderKind must be commander or castellan")
+		return resolvedLeader{}, Localization.WithError(fmt.Errorf("leaderKind must be commander or castellan"), Localization.New("server.app.leaderkind_must_be_commander.eb1dcd4c", "leaderKind must be commander or castellan", nil))
 	}
 }
 
@@ -1401,7 +1402,7 @@ func leaderBaseEquipment(leader resolvedLeader) []State.EquipmentInstanceID {
 
 func requireRecentEquipmentSnapshot(gameState State.GameState, opcode string) error {
 	if !EquipmentDomain.StorageSnapshotFresh(gameState, opcode, time.Now()) {
-		return fmt.Errorf("%s storage is stale; run equipment.refresh before selling", opcode)
+		return Localization.WithError(fmt.Errorf("%s storage is stale; run equipment.refresh before selling", opcode), Localization.New("server.app.p_storage_is_stale.6f231cc7", "{p0} storage is stale; run equipment.refresh before selling", Localization.Params{"p0": fmt.Sprintf("%s", opcode)}))
 	}
 	return nil
 }

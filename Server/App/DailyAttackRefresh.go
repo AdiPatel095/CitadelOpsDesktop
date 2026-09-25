@@ -1,6 +1,7 @@
 package App
 
 import (
+	"CitadelDesktop/Server/Localization"
 	"context"
 	"encoding/json"
 
@@ -8,11 +9,11 @@ import (
 )
 
 func planDailyAttackRefresh(_ context.Context, _ Intent.PlanningContext, _ json.RawMessage) (Intent.Plan, error) {
-	step := commandStep("Refresh daily attack count", "gai", json.RawMessage(`{}`), "gai")
+	step := commandStep("Refresh daily attack count", "gai", json.RawMessage(`{}`), "gai", Localization.New("server.app.refresh_daily_attack_count.bab966dc", "Refresh daily attack count", nil))
 	step.ResponseBarrier = Intent.ResponseBarrierCommitted
 	return Intent.Plan{
 		Claims:  []string{"game:daily-attacks"},
-		Summary: "Refresh daily attack count",
-		Steps:   []Intent.Step{step},
+		Summary: "Refresh daily attack count", SummaryDescriptor: Localization.New("server.app.refresh_daily_attack_count.bab966dc", "Refresh daily attack count", nil),
+		Steps: []Intent.Step{step},
 	}, nil
 }

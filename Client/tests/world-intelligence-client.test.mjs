@@ -106,7 +106,7 @@ test('current Storm metrics remain the complete default beside dated history', a
 	]);
 	assert.match(source, /metric: stormBoard\.metric, limit: 5_000/);
 	assert.match(source, /const defaultRunKey = selectedEvent\?\.publicBoard\s*\? stormRunKey/);
-	assert.match(source, /label: 'Live Storm metrics'/);
+	assert.match(source, /label:\s*localizeStatic\('events\.liveStorm'\)/);
 	assert.match(source, /stormGroup\.publicBoard = publicBoard/);
 	assert.match(source, /if \(!previous \|\| worldUpdate\.eventRunsRevision > previous\.eventRunsRevision\)/);
 	assert.match(source, /if \(!previous \|\| worldUpdate\.rankingsRevision > previous\.rankingsRevision\)/);

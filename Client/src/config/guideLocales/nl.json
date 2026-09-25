@@ -1,0 +1,2080 @@
+{
+  "ui": {
+    "guideButton": "Handleiding",
+    "calendarButton": "Kalender",
+    "recommendedLabel": "Aanbevolen",
+    "backToSettings": "Terug naar instellingen",
+    "backToGuide": "Terug naar handleiding",
+    "howToSetUp": "Zo stel je het in",
+    "whatToExpect": "Wat je kunt verwachten",
+    "openFullSizePicture": "Afbeelding op volledig formaat openen",
+    "illustrativeExample": "Illustratief voorbeeld",
+    "enlargePicture": "Voorbeeldafbeelding vergroten",
+    "fullSizePicture": "Voorbeeldafbeelding op volledig formaat; scrol om alle instellingen te bekijken",
+    "towerGuideTitle": "Handleiding voor Automatische torenaanvallen",
+    "birdGuideTitle": "Handleiding voor Automatisch onderbrengen van troepen",
+    "towerGuideIntro": "Volg deze stappen om Automatische torenaanvallen in te stellen; selecteer een voorbeeldafbeelding om deze te vergroten.",
+    "birdGuideIntro": "Volg deze stappen om Automatisch onderbrengen van troepen in te stellen; selecteer een voorbeeldafbeelding om deze te vergroten.",
+    "towerPreviewTitle": "Voorbeeld van de instellingen voor Automatische torenaanvallen",
+    "birdPreviewTitle": "Voorbeeld van de instellingen voor Automatisch onderbrengen van troepen",
+    "stationGuideTitle": "Gids voor automatische troepenopvang",
+    "stationGuideIntro": "Volg deze stappen om automatische troepenopvang in te stellen; selecteer de voorbeeldafbeelding om deze te vergroten.",
+    "stationPreviewTitle": "Voorbeeld van automatische troepenopvang",
+    "fortressGuideIntro": "Volg deze stappen om de fortautomatisering in te stellen; selecteer een voorbeeldpaneel om het te vergroten.",
+    "fortressGuideTitle": "Gids voor fortautomatisering",
+    "fortressPreviewTitle": "Voorbeeld van fortautomatisering instellen",
+    "invasionGuideIntro": "Volg deze stappen om automatische invasieaanvallen in te stellen; selecteer een voorbeeldpaneel om het te vergroten.",
+    "invasionGuideTitle": "Gids voor automatische invasieaanvallen",
+    "invasionPreviewTitle": "Voorbeeld van het instellen van automatische invasieaanvallen",
+    "nomadGuideIntro": "Volg deze stappen om Auto Nomaden/Samoerai in te stellen; selecteer een voorbeeldpaneel om het te vergroten.",
+    "nomadGuideTitle": "Gids voor Auto Nomaden/Samoerai",
+    "nomadPreviewTitle": "Instelvoorbeeld voor Auto Nomaden/Samoerai",
+    "advisorGuideIntro": "Volg deze stappen om Auto Adviseur in te stellen; selecteer een voorbeeldpaneel om het te vergroten.",
+    "advisorGuideTitle": "Gids voor Auto Adviseur",
+    "advisorPreviewTitle": "Instelvoorbeeld voor Auto Adviseur",
+    "khanGuideIntro": "Volg deze stappen om Automatische Khan in te stellen; kies een voorbeeldpaneel om het te vergroten.",
+    "khanGuideTitle": "Handleiding voor Automatische Khan",
+    "khanPreviewTitle": "Voorbeeld van Automatische Khan-instelling",
+    "beriGuideIntro": "Volg deze stappen om Auto Beri in te stellen; selecteer een voorbeeldpaneel om het te vergroten.",
+    "beriGuideTitle": "Handleiding Auto Beri",
+    "beriPreviewTitle": "Voorbeeldinstellingen Auto Beri",
+    "stormGuideIntro": "Volg deze stappen om Auto Storm in te stellen; selecteer een voorbeeldpaneel om het te vergroten.",
+    "stormGuideTitle": "Auto Storm-handleiding",
+    "stormPreviewTitle": "Voorbeeldinstellingen voor Auto Storm"
+  },
+  "autoTower": {
+    "recommendationIntro": "Dit zijn aanbevelingen voor regelmatig gebruik; controleer ze voordat je opslaat.",
+    "steps": {
+      "commanders": {
+        "title": "Kies je commandanten",
+        "items": {
+          "commander_assignment": {
+            "label": "Commandanten toewijzen",
+            "description": "Sta Automatische torenaanvallen bij Commandanten toe voor de commandanten die je wilt gebruiken en selecteer Toewijzingen opslaan.",
+            "recommendation": "20 commandanten toegewezen aan Automatische torenaanvallen."
+          }
+        }
+      },
+      "general": {
+        "title": "Stel scans, daglimieten en reizen in",
+        "items": {
+          "open_settings": {
+            "label": "Instellingen openen",
+            "description": "Open Automatisering en selecteer de instellingenknop op de kaart Automatische torenaanvallen."
+          },
+          "authoritative_map_scan_every": {
+            "label": "Scan van de gezaghebbende kaart · Interval",
+            "description": "Kies hoe vaak de torenlijst van elk kasteel wordt vernieuwd, tussen 1.800 en 3.600 seconden; aanvallen kunnen tussen scans vertrekken.",
+            "recommendation": "1.800 seconden (30 minuten)."
+          },
+          "daily_normal_attack_limit": {
+            "label": "Daglimiet voor normale aanvallen",
+            "description": "Pauzeert bij de dagelijkse aanvalslimiet voor je hele account totdat het spel deze reset; 0 heft de limiet op.",
+            "recommendation": "3.500 aanvallen per dag voor het hele account."
+          },
+          "horse_travel_boost": {
+            "label": "Reisversnelling met paarden",
+            "description": "Gebruikt je gekozen reisoptie voor elke aanval, inclusief elke treffer in een adviseursreeks; de snelheid hangt af van de reisgebouwen van het vertrekkasteel.",
+            "recommendation": "Muntniveau waar beschikbaar, met voldoende munten."
+          },
+          "travel_feather": {
+            "label": "Reisveer",
+            "description": "Gebruikt de reisveer in plaats van een paardenniveau met munten of robijnen."
+          },
+          "horse_ship_tier_coins": {
+            "label": "Paard / schip · munten",
+            "description": "Besteedt munten aan het reisniveau met munten."
+          },
+          "warhorse_fast_ship_tier_rubies": {
+            "label": "Oorlogspaard / snel schip · robijnen",
+            "description": "Besteedt robijnen aan het eerste reisniveau met robijnen wanneer dit is gekozen."
+          },
+          "courser_fastest_ship_tier_rubies": {
+            "label": "Renpaard / snelste schip · robijnen",
+            "description": "Besteedt robijnen aan het snellere reisniveau met robijnen wanneer dit is gekozen."
+          }
+        },
+        "image": {
+          "alt": "Algemene instellingen voor Automatische torenaanvallen met fictieve gegevens van Synthetic Castle",
+          "caption": "Stel het scaninterval, de dagelijkse aanvalslimiet en de reisoptie in; adviseursopties verschijnen wanneer beschikbaar."
+        }
+      },
+      "castle": {
+        "title": "Stel elk kasteel in",
+        "items": {
+          "castle_switch": {
+            "label": "Kasteelschakelaar",
+            "description": "Schakel elk kasteel in van waaruit Automatische torenaanvallen moeten scannen en aanvallen.",
+            "recommendation": "Schakel de kastelen in die je regelmatig wilt gebruiken."
+          },
+          "radius": {
+            "label": "Straal",
+            "description": "Kies hoe ver rond dit kasteel wordt gezocht, van 1 tot 50 velden.",
+            "recommendation": "35 velden."
+          },
+          "choose_troop": {
+            "label": "Kies troep",
+            "description": "Kies de gestationeerde troep waarmee beide aanvalsflanken worden gevuld; aanvallen wachten als er te weinig eenheden zijn.",
+            "recommendation": "Een gestationeerde aanvalstroep met genoeg eenheden voor beide flanken."
+          },
+          "maiden_supported_only": {
+            "label": "Alleen met jonkvrouwenrelikwie",
+            "description": "Beperkt dit kasteel tot beschikbare commandanten met het ondersteunde jonkvrouwenrelikwie.",
+            "recommendation": "Uit, tenzij je gekozen commandant het ondersteunde jonkvrouwenrelikwie heeft."
+          }
+        },
+        "image": {
+          "alt": "Kasteelinstellingen voor Automatische torenaanvallen met fictieve gegevens van Synthetic Castle",
+          "caption": "Schakel een kasteel in en kies de straal, troep en vereiste voor het jonkvrouwenrelikwie."
+        }
+      },
+      "advisor": {
+        "title": "Gebruik de adviseur indien gewenst · indien beschikbaar",
+        "items": {
+          "use_advisor_with_time_skips": {
+            "label": "Adviseur gebruiken met tijdversnellers",
+            "description": "Herhaalt treffers op één toren: eerst met één dagelijkse aanval en daarna met één tijdversneller van minstens drie uur per extra treffer.",
+            "recommendation": "Uit."
+          },
+          "auto_activate_with_token": {
+            "label": "Automatisch activeren met fiche",
+            "description": "Gebruikt een beschikbaar baronnenadviseursfiche als de adviseur inactief is, zonder een fiche te kopen of robijnen uit te geven.",
+            "recommendation": "Uit zolang de adviseur uit staat."
+          },
+          "maximum_daily_time_skips": {
+            "label": "Maximaal aantal tijdversnellers per dag",
+            "description": "Beperkt de tijdversnellers die bevestigde adviseursreeksen gebruiken totdat de dagelijkse aanvalsteller van het spel wordt gereset; 0 pauzeert aanvallen van de adviseur.",
+            "recommendation": "0 zolang de adviseur uit staat."
+          }
+        }
+      },
+      "finish": {
+        "title": "Stel het schema in, sla op en schakel in",
+        "items": {
+          "calendar": {
+            "label": "Kalender",
+            "description": "Gebruik de kalender om te kiezen wanneer Automatische torenaanvallen mogen draaien; de beschikbaarheid van troepen en andere limieten blijven gelden.",
+            "recommendation": "Je gebruikelijke actieve uren."
+          },
+          "save_changes": {
+            "label": "Wijzigingen opslaan",
+            "description": "Selecteer Wijzigingen opslaan om je instellingen toe te passen; deze handleiding lezen slaat ze niet op."
+          },
+          "auto_towers_switch": {
+            "label": "Schakelaar voor Automatische torenaanvallen",
+            "description": "Schakel Automatische torenaanvallen op de pagina Automatisering in nadat je de instellingen hebt opgeslagen, zodat de taak kan draaien.",
+            "recommendation": "Aan na het opslaan van de gewenste instellingen."
+          }
+        }
+      }
+    },
+    "feature": {
+      "name": "Automatische torenaanvallen",
+      "summary": "Herhaal aanvallen op nabije torens",
+      "description": "Verstuurt aanvallen naar roofbaronnen- en koninkrijkstorens vanuit de kastelen die je kiest.",
+      "expectation": "Er zijn genoeg troepen, een beschikbare commandant en een aanvalsgerede toren nodig. De taak kan wachten tot troepen terugkeren of de timer van een toren afloopt."
+    }
+  },
+  "autoBird": {
+    "recommendationIntro": "De aanbevolen waarden beschrijven regelmatig gebruik van Automatisch onderbrengen van troepen; ze zijn richtlijnen en wijzigen opgeslagen instellingen niet.",
+    "steps": {
+      "open": {
+        "title": "Open de instellingen voor Automatisch onderbrengen van troepen",
+        "items": {
+          "open_settings": {
+            "label": "Instellingen openen",
+            "description": "Selecteer bovenaan het commandocentrum de instellingenknop naast Automatisch onderbrengen van troepen."
+          }
+        }
+      },
+      "general": {
+        "title": "Stel stationeringstijd en verzendregels in",
+        "items": {
+          "random_delay_range_min": {
+            "label": "Willekeurige duur · Minimum",
+            "description": "Stel het kleinste aantal uren in dat troepen op de bondgenootschapsbestemming blijven nadat de reis is voltooid.",
+            "recommendation": "6 uur gestationeerd bij het bondgenootschapsdoel na aankomst."
+          },
+          "random_delay_range_max": {
+            "label": "Willekeurige duur · Maximum",
+            "description": "Stel de langste verblijfsduur op de bestemming in; Automatisch onderbrengen van troepen kiest willekeurig een duur tussen Minimum en Maximum.",
+            "recommendation": "12 uur gestationeerd bij het bondgenootschapsdoel na aankomst."
+          },
+          "minimum_to_send": {
+            "label": "Minimum om te verzenden",
+            "description": "Stel het minimale totaal aan geschikte troepen in dat nodig is nadat de kasteelreserves thuis zijn gehouden; dit is een drempel, niet het exacte aantal dat wordt verzonden.",
+            "recommendation": "In totaal 1.000 geschikte troepen na het thuis houden van kasteelreserves; dit is een drempel, geen exact verzendaantal."
+          },
+          "minimum_rpt_remaining_protection_time": {
+            "label": "Minimale RPT (resterende beschermingstijd)",
+            "description": "Gebruik doelen met meer dan dit aantal resterende beschermingsdagen; 0 schakelt de controle uit.",
+            "recommendation": "3 dagen; een doel moet strikt meer dan 3 dagen beschermingstijd over hebben."
+          }
+        },
+        "image": {
+          "alt": "Instellingen voor Automatisch onderbrengen van troepen: stationeringsduur, verzendminimum, minimale RPT en voorinstellingen",
+          "caption": "Stel stationeringsduur en geschiktheid in en controleer de reserveringsvoorinstelling Dagelijks voordat je opslaat."
+        }
+      },
+      "reserves": {
+        "title": "Kies welke troepen in elk kasteel blijven",
+        "items": {
+          "add_unit": {
+            "label": "Eenheid toevoegen",
+            "description": "Kies per kasteel welke troepensoorten thuisblijven in plaats van te worden verzonden; met een lege handmatige reserve blijven alle geschikte troepen na automatische reserves beschikbaar.",
+            "recommendation": "Kies de troepensoorten die elk kasteel nodig heeft voor verdediging of andere vaste taken."
+          },
+          "quantity": {
+            "label": "Aantal",
+            "description": "Stel een positief aantal van elke gekozen troep in dat in dit kasteel blijft; 0 reserveert niet de hele soort.",
+            "recommendation": "Houd van elke troepensoort het aantal thuis dat dit kasteel nodig heeft voor verdediging of andere taken; controleer de werkelijke aantallen."
+          },
+          "remove_unit": {
+            "label": "Eenheid verwijderen",
+            "description": "Verwijder een eenheidstegel om die soort niet langer in het geselecteerde kasteel te reserveren."
+          },
+          "auto_fortress_reserve": {
+            "label": "Reserve van Automatisering van vestingen",
+            "description": "Wanneer Automatisering van vestingen hier alle woeste wolven vastzet, wordt deze automatische reserve niet opgeslagen in voorinstellingen voor Automatisch onderbrengen van troepen; het eerdere handmatige aantal woeste wolven keert terug zodra de blokkering eindigt."
+          }
+        },
+        "image": {
+          "alt": "Reservetegels voor Automatisch onderbrengen van troepen in het fictieve kasteel Example Castle",
+          "caption": "Reserveer alleen de eenheden die dit kasteel nodig heeft; Eenheid 101 en Eenheid 102 zijn fictieve troepvoorbeelden."
+        }
+      },
+      "presets": {
+        "title": "Sla een voorinstelling op en selecteer deze",
+        "items": {
+          "preset_name": {
+            "label": "Naam van voorinstelling",
+            "description": "Voer een naam in voor een nieuwe voorinstelling of wijzig de naam van de toegepaste voorinstelling voordat je wijzigingen opslaat.",
+            "recommendation": "Gebruik een herkenbare naam zoals Dagelijks."
+          },
+          "load_preset": {
+            "label": "Voorinstelling laden",
+            "description": "Kies een opgeslagen voorinstelling in de lijst of kies Opgeslagen configuratie om de opgeslagen instellingen zonder benoemde voorinstelling te gebruiken.",
+            "recommendation": "Gebruik de gewenste dagelijkse voorinstelling als standaard tijdens uitvoering: selecteer deze, kies Toepassen en daarna Wijzigingen opslaan."
+          },
+          "apply": {
+            "label": "Toepassen",
+            "description": "Laadt de gekozen voorinstelling in deze conceptinstellingen; selecteer Wijzigingen opslaan om deze als standaard tijdens uitvoering vast te leggen."
+          },
+          "save_as_new": {
+            "label": "Opslaan als nieuw",
+            "description": "Slaat de huidige instellingen onmiddellijk op als een nieuwe benoemde voorinstelling en selecteert deze als standaard tijdens uitvoering."
+          },
+          "delete": {
+            "label": "Verwijderen",
+            "description": "Verwijdert na bevestiging onmiddellijk de geselecteerde voorinstelling en wist de standaard tijdens uitvoering als die geselecteerd was."
+          },
+          "runtime_default": {
+            "label": "Standaard tijdens uitvoering",
+            "description": "De standaard tijdens uitvoering is de opgeslagen actieve voorinstelling, of de opgeslagen configuratie wanneer geen voorinstelling actief is."
+          }
+        }
+      },
+      "finish": {
+        "title": "Stel het schema in, sla op en schakel in",
+        "items": {
+          "calendar": {
+            "label": "Kalender",
+            "description": "Kies wanneer Automatisch onderbrengen van troepen mag draaien en selecteer Schema opslaan om je wijzigingen te bewaren.",
+            "recommendation": "Laat het schema uit voor doorlopend gebruik of stel je gebruikelijke wekelijkse uren in en sla het schema op."
+          },
+          "specify_preset_per_period": {
+            "label": "Voorinstelling per periode opgeven",
+            "description": "Kies een opgeslagen voorinstelling voor een kalenderperiode wanneer die de standaard tijdens uitvoering moet vervangen.",
+            "recommendation": "Uit, tenzij verschillende perioden verschillende reserves nodig hebben."
+          },
+          "save_changes": {
+            "label": "Wijzigingen opslaan",
+            "description": "Sla de conceptinstellingen en toegepaste wijzigingen aan voorinstellingen op; deze handleiding lezen slaat ze niet op."
+          },
+          "auto_bird_switch": {
+            "label": "Schakelaar voor Automatisch onderbrengen van troepen",
+            "description": "Schakel Automatisch onderbrengen van troepen bovenaan het commandocentrum in na het opslaan om de normale kasteelcycli toe te staan.",
+            "recommendation": "Schakel Automatisch onderbrengen van troepen in na het opslaan; de status in de kop toont de cyclus van elk kasteel."
+          }
+        }
+      }
+    },
+    "feature": {
+      "name": "Automatisch onderbrengen van troepen",
+      "summary": "Stationeer geselecteerde troepen volgens een schema buiten het kasteel",
+      "description": "Stationeert regelmatig beschikbare troepen in geschikte bondgenootschapskastelen en herhaalt de cyclus wanneer ze terugkeren.",
+      "expectation": "Wacht als er geen geschikt doel of geen beschikbare troepen zijn. Troepen verplaatsen maakt je kasteel niet onkwetsbaar."
+    }
+  },
+  "panels": {
+    "towerGeneral": {
+      "title": "Algemene instellingen",
+      "scan": "Scaninterval: 1.800 seconden",
+      "daily": "Dagelijkse aanvalslimiet: 3.500",
+      "travel": "Reisversnelling: muntniveau",
+      "advisor": "Adviseur: uit"
+    },
+    "towerCastle": {
+      "title": "Voorbeeldkasteel",
+      "enabled": "Automatische torenaanvallen: aan",
+      "radius": "Straal: 35 velden",
+      "troop": "Gekozen troep: fictieve aanvalseenheid",
+      "maiden": "Alleen met jonkvrouwenrelikwie: uit"
+    },
+    "birdGeneral": {
+      "title": "Algemene instellingen",
+      "min": "Minimaal verblijf: 6 uur",
+      "max": "Maximaal verblijf: 12 uur",
+      "send": "Minimaal geschikt totaal na reserves: 1.000 troepen",
+      "rpt": "Minimale resterende bescherming: meer dan 3 dagen",
+      "preset": "Voorinstelling: dagelijkse reserve"
+    },
+    "birdCastle": {
+      "title": "Voorbeeldkasteel",
+      "unitOne": "Fictieve eenheid 101 gereserveerd: 80",
+      "unitTwo": "Fictieve eenheid 102 gereserveerd: 40",
+      "add": "Eenheid toevoegen"
+    },
+    "stationGeneral": {
+      "title": "Voorbeeld van opvanginstellingen",
+      "evacuate": "Evacueren bij: 1 minuut vóór inslag",
+      "protection": "Doelbescherming: meer dan 3 dagen",
+      "recall": "Terugroepen wanneer veilig: aan",
+      "gate": "Poorten openen als uitwijkoptie: uit",
+      "castle": "Fictief voorbeeldkasteel: 80 verdedigingstroepen gereserveerd",
+      "save": "Sla wijzigingen op en schakel automatische opvang in"
+    },
+    "fortressAttack": {
+      "commander": "Bevelhebber: snelste geschikte toegewezen bevelhebber",
+      "daily": "Dagelijkse limiet voor normale aanvallen: 0",
+      "title": "Voorbeeld van aanvalsinstellingen",
+      "travel": "Reisversnelling: reisveer",
+      "wave": "Eén volledige schrikwolvengolf over beide flanken"
+    },
+    "fortressKingdoms": {
+      "everwinter": "Eeuwige IJsgletsjer: aan wanneer ontgrendeld",
+      "peaks": "Vuurpieken: aan wanneer ontgrendeld",
+      "sands": "Brandende Woestijn: aan wanneer ontgrendeld",
+      "title": "Voorbeeld van rijksinstellingen"
+    },
+    "fortressSupply": {
+      "purchase": "Schrikwolven per sessie: 5.000",
+      "reserve": "Khan-tabletten bewaren: 25.000",
+      "route": "Bevoorrading: hoofdkasteel van het Grote Rijk naar ingeschakelde rijken",
+      "skips": "Tijdversnellers voor bevestigde transfers: aan",
+      "title": "Voorbeeld van schrikwolvenbevoorrading"
+    },
+    "invasionDifficulty": {
+      "bloodcrow": "Bloedkraaien: geschikte ontgrendelde moeilijkheid",
+      "current": "De moeilijkheid van het actieve evenement blijft bestaan",
+      "foreign": "Buitenlandse Heren: geschikte ontgrendelde moeilijkheid",
+      "title": "Voorbeeld van evenementmoeilijkheden"
+    },
+    "invasionFortify": {
+      "currency": "Indien ingeschakeld: evenementvaluta wanneer beschikbaar",
+      "enabled": "Elk doel versterken: uit",
+      "rubies": "Robijnen alleen wanneer uitdrukkelijk gekozen",
+      "title": "Voorbeeld van doelversterking"
+    },
+    "invasionLimits": {
+      "before": "Stop 30 minuten vóór het evenement eindigt",
+      "daily": "Dagelijkse limiet voor normale aanvallen: 0",
+      "score": "Punten: gebruikelijke laatste persoonlijke beloning boven 0",
+      "title": "Voorbeeld van punten- en stopgrenzen"
+    },
+    "invasionSetup": {
+      "castle": "Vertrek: gebruikelijke evenementburcht in het Grote Rijk",
+      "preset": "Aanvalsvoorinstelling: opgeslagen evenementopstelling",
+      "title": "Voorbeeld van evenementaanval",
+      "travel": "Reisversnelling: Reisveer"
+    },
+    "nomadDifficulty": {
+      "title": "Voorbeeld van evenementmoeilijkheden",
+      "active": "Actief evenement: volg de huidige moeilijkheid",
+      "nomad": "Nomaden: vrijgespeelde betrouwbare moeilijkheid",
+      "samurai": "Samoerai: vrijgespeelde betrouwbare moeilijkheid"
+    },
+    "nomadSetup": {
+      "castle": "Vertrek: gebruikelijke evenementburcht in het Grote Rijk",
+      "travel": "Reisversnelling: reisveer",
+      "nomadPreset": "Nomadenopstelling: opgeslagen kampformatie",
+      "samuraiPreset": "Samoeraiopstelling: opgeslagen kampformatie",
+      "title": "Voorbeeld van evenementkampinstellingen"
+    },
+    "nomadCooldowns": {
+      "clear": "Wachttijd na bevestigde overwinning opheffen: aan",
+      "long": "Bewaar 5 uur / 24 uur: voorraad voor andere activiteiten",
+      "short": "Bewaar 1 / 5 / 10 / 30 / 60 min: telkens 0 voorwerpen",
+      "title": "Voorbeeld van wachttijdkeuzes"
+    },
+    "nomadLimits": {
+      "daily": "Extra daglimiet: 0",
+      "score": "Scoredoel: laatste persoonlijke beloningsmijlpaal",
+      "time": "Stop voor einde: 30 minuten",
+      "title": "Voorbeeld van stopregels"
+    },
+    "nomadTrial": {
+      "coordinates": "Doel X / Y: ongebruikt bij gewone werking",
+      "effect": "Test aan vervangt het evenement door een echte aanval",
+      "title": "Voorbeeld van testbediening",
+      "trial": "Tijdelijke roofriddertest: uit"
+    },
+    "advisorDifficulty": {
+      "active": "Actief evenement: volg de huidige moeilijkheid",
+      "nomad": "Nomaden: vrijgespeelde betrouwbare moeilijkheid",
+      "samurai": "Samoerai: vrijgespeelde betrouwbare moeilijkheid",
+      "title": "Voorbeeld van evenementmoeilijkheden"
+    },
+    "advisorSetup": {
+      "castle": "Vertrek: gebruikelijke evenementburcht in het Grote Rijk",
+      "travel": "Reisversnelling: reisveer",
+      "preset": "Opstelling: opgeslagen formatie voor actief evenement",
+      "title": "Voorbeeld van Adviseur-aanvalsinstellingen"
+    },
+    "advisorActivation": {
+      "locked": "Bij vergrendeling: bevestiging Adviseur activeren openen",
+      "paid": "Betaald tokengebruik of door het spel gemelde gratis activering bevestigen",
+      "save": "Instellingen opslaan en daarna Automatiseringskaart inschakelen",
+      "title": "Voorbeeld van activeringsverloop"
+    },
+    "advisorOverview": {
+      "progress": "Huidige aanval / gevraagde aanvallen",
+      "refresh": "Overzicht vernieuwen voor actuele totalen",
+      "results": "Overwinningen, nederlagen, verloren eenheden en gereedschap",
+      "title": "Voorbeeld van liveoverzicht"
+    },
+    "advisorResources": {
+      "coins": "Totale munten per aanval: 500 alleen als voldoende",
+      "feathers": "Veren bewaren: 0 tenzij elders nodig",
+      "rubies": "Robijnen per aanval: 0 met Reisveer",
+      "skips": "60 min bewaren: 0 voorwerpen; 5 uur en 24 uur zo nodig reserveren",
+      "title": "Voorbeeld van middelenbudgetten"
+    },
+    "advisorSizing": {
+      "actual": "Werkelijke reeks: begrensd door middelen en tijd",
+      "maximum": "Maximumaantal aanvallen: 9.999",
+      "time": "Ongebruikte evenementtijd: 30 minuten",
+      "title": "Voorbeeld van reeksomvang"
+    },
+    "khanCooldowns": {
+      "long": "Reserveer 5-uurs- en 24-uursversnellers voor andere taken",
+      "pause": "Nieuwe aanvallen pauzeren bij te weinig bruikbare versnellers",
+      "short": "Bewaar 1 min / 5 min / 10 min / 30 min / 1 uur: elk 0 voorwerpen",
+      "skip": "Elke kampwachttijd overslaan: aan",
+      "title": "Voorbeeld van tijdversnellerreserves"
+    },
+    "khanLimits": {
+      "daily": "Normale aanvallen per dag: 0, geen extra limiet",
+      "end": "Stop nieuwe aanvallen 5 minuten voor het einde",
+      "points": "Stop bij Nomadenpunten: 0, uitgeschakeld",
+      "title": "Voorbeeld van stoplimieten",
+      "tools": "Verdedigingsgereedschap aanvullen: aan indien gewenst"
+    },
+    "khanProtection": {
+      "gate": "Open hoofdpoorten en pauzeer Khan bij de drempel",
+      "outpost": "Buitenpost als bron: bescherming uit",
+      "source": "Geldt bij aanvallen uit het hoofdkasteel",
+      "threshold": "Offensieve muureenheden: 1.000",
+      "title": "Voorbeeld van hoofdmuurbescherming"
+    },
+    "khanRage": {
+      "attacks": "Automatische kampaanvallen: niet vergrendeld",
+      "booster": "Tijdelijke Woedepuntenboost vereist: uit",
+      "chain": "Maximale woedeketen: 0, geen extra limiet",
+      "title": "Voorbeeld van woedebediening",
+      "trigger": "Vergelding bij volle woede: aan"
+    },
+    "khanSave": {
+      "defense": "Controleer de hoofdverdediging voor vergelding",
+      "enable": "Schakel Automatische Khan in op de Automatisering-kaart",
+      "priority": "Automatisch Stationeren behandelt spelersaanvallen apart",
+      "save": "Sla instellingen op na voorbereiding van beide sjablonen",
+      "title": "Voorbeeld van opslaan en inschakelen"
+    },
+    "khanSetup": {
+      "defense": "Verdedigen bij: hoofdkasteel in het Grote Rijk",
+      "presets": "Opgeslagen Khan-aanvals- en hoofdverdedigingssjablonen",
+      "source": "Aanvallen vanuit: buitenpost in het Grote Rijk",
+      "title": "Voorbeeld van Khan-instelling",
+      "travel": "Reisveer voor snel reizen"
+    },
+    "beriBuilder": {
+      "permissions": "Premium en sloop: uit tenzij gecontroleerd",
+      "reserves": "Reserveer Berimond-grondstoffen en tijdoverslagen",
+      "stable": "Factiestal: gekozen niveau 1–5",
+      "target": "Ingebouwd exact doel of gecontroleerde eigen indeling",
+      "title": "Voorbeeld van optionele kampbouw"
+    },
+    "beriReadiness": {
+      "booster": "Dapperheidsbooster als voorwaarde: optioneel",
+      "food": "Transport vereist voorinstellingstroepen met Voedsel",
+      "preset": "Controleer opgeslagen troepen- en gereedschapsplaatsen",
+      "title": "Voorbeeld van torengereedheid"
+    },
+    "beriSave": {
+      "calendar": "Kalender uit voor doorlopend gebruik",
+      "enable": "Schakel Auto Beri in op de Automatisering-kaart",
+      "save": "Sla op na controle van de troepenverhouding",
+      "title": "Voorbeeld van opslaan en inschakelen"
+    },
+    "beriSetup": {
+      "donor": "Donor in het Grote Rijk met benodigde troepen",
+      "limit": "Dagelijkse normale aanvallen: 0 extra limiet",
+      "preset": "Opgeslagen Berimond-aanvalsvoorinstelling",
+      "title": "Voorbeeld van aanval en bevoorrading",
+      "travel": "Reisveer voor torenaanvallen"
+    },
+    "beriTools": {
+      "ladders": "Ladders: afgestemd op gewone aanvallen",
+      "mantlets": "Schilden: afgestemd op gewone aanvallen",
+      "rams": "Stormrammen: afgestemd op gewone aanvallen",
+      "title": "Voorbeeld van minimale gereedschapsvoorraad"
+    },
+    "beriTransfers": {
+      "capacity": "Vrije capaciteit: 1; drempel: 1",
+      "mix": "Voorinstellingsverhouding: 2 eenheden A per 1 eenheid B",
+      "next": "Volgende zending: maximaal 1 B uit donorvoorraad",
+      "stock": "Kampvoorraad: 2 A en 0 B",
+      "title": "Voorbeeld van evenredig transport"
+    },
+    "stormCastle": {
+      "blueprint": "Opgeslagen doel actief; pauzeren bewaart het",
+      "capture": "Huidig kasteel: Functioneel doel",
+      "decorations": "Decoratiepreset: optioneel",
+      "title": "Voorbeeld van Stormkasteeltoegang",
+      "unlock": "Automatische opening: aan na prijscontrole"
+    },
+    "stormCombat": {
+      "defenders": "Bezettingsverdedigers: gekozen of één overlevende",
+      "forts": "Forten: gekozen niveaus 40–80",
+      "islands": "Aquamarijneilanden: groot en klein",
+      "priority": "Groot, klein, dan forten van 80 tot 40",
+      "title": "Voorbeeld van fort- en eilandaanvallen"
+    },
+    "stormConstruction": {
+      "harbor": "Haven: aan, niveau 1",
+      "resources": "Hout 0; steen 0; aquamarijn gepland",
+      "spending": "Premium en sloop: uit",
+      "title": "Voorbeeld van bouw en reserves",
+      "transport": "Grondstoftransport: aan"
+    },
+    "stormLuna": {
+      "cost": "Kosten en aankooplimiet: alleen lezen",
+      "limited": "Beperkte doelen vóór onbeperkte beloningen",
+      "priority": "Prioriteit 1, 2, 3; lager eerst",
+      "reserve": "Aquamarijn bewaren: 0 bij gebruik van overschot",
+      "title": "Voorbeeld van Luna-beloningen"
+    },
+    "stormSave": {
+      "check": "Beleidscontrole: 30 seconden",
+      "daily": "Dagelijkse gewone aanvallen: 0 extra limiet",
+      "map": "Kaartvernieuwing: 2 uur, alleen lezen",
+      "switch": "Opslaan en dan Auto Storm inschakelen",
+      "title": "Voorbeeld van opslaan en inschakelen"
+    },
+    "stormTroops": {
+      "averages": "Bevestigde aanvallen sinds reset / 24; presetgemiddelde alleen lezen",
+      "cap": "Limiet gebonden troepen: alleen lezen",
+      "donors": "Donors: getoonde volgorde, deelvoorraad toegestaan",
+      "minimum": "Minimum bewaard: 1.000 troepen",
+      "title": "Voorbeeld van troepenimport"
+    }
+  },
+  "autoStation": {
+    "recommendationIntro": "Deze aanbevelingen zijn voor regelmatig gebruik en wijzigen geen opgeslagen instellingen.",
+    "steps": {
+      "open": {
+        "title": "Open de instellingen voor automatische troepenopvang",
+        "items": {
+          "open_settings": {
+            "label": "Instellingen openen",
+            "description": "Selecteer bovenaan het commandocentrum de instellingenknop naast automatische troepenopvang."
+          }
+        }
+      },
+      "general": {
+        "title": "Stel de reactie op aanvallen in",
+        "items": {
+          "evacuate_at": {
+            "label": "Evacueren bij",
+            "description": "Begin zoveel minuten vóór de inslag met evacueren, of meteen als een aanval binnen dit tijdvenster wordt ontdekt.",
+            "recommendation": "1 minuut vóór de inslag."
+          },
+          "minimum_bird_days": {
+            "label": "Minimale beschermingsdagen op doel",
+            "description": "Kies een bondgenootschappelijk kasteel met meer dan dit aantal resterende beschermingsdagen; 0 schakelt het minimum uit.",
+            "recommendation": "3 dagen, zodat het doel meer dan 3 dagen over heeft."
+          },
+          "recall_when_clear": {
+            "label": "Terugroepen wanneer veilig",
+            "description": "Haal gestationeerde troepen terug wanneer de laatste ontdekte aanval voorbij is en er geen nieuwe aanval nadert.",
+            "recommendation": "Aan voor normaal gebruik."
+          },
+          "open_gate_fallback": {
+            "label": "Poorten openen als uitwijkoptie",
+            "description": "Als troepen niet kunnen evacueren, opent deze optie zes uur lang de poorten van het aangevallen eigen kasteel, behalve in Berimond.",
+            "recommendation": "Uit, tenzij u automatische poortopening wilt wanneer evacuatie mislukt."
+          },
+          "protection_mode": {
+            "label": "Gekochte beschermingsmodus",
+            "description": "Wanneer een gekochte beschermingsmodus wordt voorbereid of actief is, gebruikt automatische opvang de poorten zelfs als de uitwijkoptie uit staat, behalve in Berimond."
+          }
+        },
+        "image": {
+          "alt": "Fictieve opvanginstellingen met evacuatietijd, bescherming, terugroepactie, poorten en kasteelreserves",
+          "caption": "Controleer de vier reactieopties en de verdedigingsreserves van elk kasteel voordat u opslaat."
+        }
+      },
+      "reserves": {
+        "title": "Kies troepen die in elk kasteel blijven",
+        "items": {
+          "add_troops": {
+            "label": "Troepen toevoegen",
+            "description": "Kies troepensoorten die in het kasteel blijven; zonder reserve kunnen alle geschikte troepen behalve gereedschap evacueren.",
+            "recommendation": "Houd de gebruikelijke verdedigingsbezetting thuis en laat overtollige aanvalstroepen vertrekken."
+          },
+          "quantity": {
+            "label": "Aantal",
+            "description": "Stel in hoeveel troepen van elke gekozen soort in dit kasteel blijven; 0 reserveert er geen.",
+            "recommendation": "Gebruik het aantal dat dit kasteel voor normale verdediging nodig heeft."
+          },
+          "edit_defense_troops": {
+            "label": "Verdedigingstroepen bewerken",
+            "description": "Open de troepenkiezer opnieuw om soorten of aantallen in de kasteelreserve te wijzigen."
+          },
+          "remove_defense_troop": {
+            "label": "Verdedigingstroep verwijderen",
+            "description": "Verwijder een reservetegel om die troepensoort niet langer in het kasteel te houden."
+          }
+        }
+      },
+      "finish": {
+        "title": "Sla op en schakel automatische opvang in",
+        "items": {
+          "save_changes": {
+            "label": "Wijzigingen opslaan",
+            "description": "Sla het tijdvenster, de schakelaars en de reserves per kasteel op voordat u de instellingen verlaat."
+          },
+          "auto_station_switch": {
+            "label": "Schakelaar voor automatische opvang",
+            "description": "Schakel automatische opvang na het opslaan bovenaan het commandocentrum in om inkomende spelersaanvallen te bewaken.",
+            "recommendation": "Aan voor regelmatige bescherming nadat u de reserves hebt gecontroleerd."
+          }
+        }
+      }
+    },
+    "feature": {
+      "name": "Automatische troepenopvang",
+      "summary": "Verplaats geschikte troepen vóór een inkomende aanval",
+      "description": "Wanneer een spelersaanval nadert, verplaatst automatische troepenopvang geschikte troepen naar het dichtstbijzijnde geschikte bondgenootschappelijke kasteel in hetzelfde koninkrijk.",
+      "expectation": "Met terugroepen ingeschakeld keren troepen na de laatste ontdekte aanval terug zodra er geen dreiging meer is; anders blijven ze na aankomst één uur en keren dan terug. Zonder doel of troepen, of door spelbeperkingen, kan evacuatie mislukken.",
+      "helper": "Troepen gaan naar het dichtstbijzijnde geschikte bondgenootschappelijke kasteel in hetzelfde koninkrijk; bij mislukte evacuatie kunnen de poorten van het aangevallen eigen kasteel buiten Berimond bescherming bieden."
+    }
+  },
+  "autoFortress": {
+    "feature": {
+      "commanderBadge": "Snelste beschikbare bevelhebber",
+      "commanderHelp": "De fortautomatisering vergelijkt voor elk doelfort de toepasselijke reissnelheidseffecten van uitrusting, edelstenen, sets en generaals; een Relikwie 2.0 of minimum van 100% is niet vereist.",
+      "description": "De fortautomatisering koopt schrikwolven binnen de opgeslagen grenzen, bevoorraadt ingeschakelde buitenrijken en valt gereedstaande forten aan vanuit hun hoofdkastelen.",
+      "expectation": "Elke aanval vereist een gereedstaand fort, genoeg schrikwolven voor beide flanken en een geschikte toegewezen bevelhebber; wachttijden of vertragingen in de bevoorrading kunnen de aanval onderbreken.",
+      "name": "Fortautomatisering",
+      "settingsSummary": "De fortautomatisering bereidt schrikwolven voor en kiest voor elk doelfort de snelste geschikte toegewezen bevelhebber.",
+      "summary": "Bevoorraad schrikwolven en val gereedstaande forten aan",
+      "travelHelp": "De reisveer is standaard; je opgeslagen reiskeuze blijft behouden. De kasteelspecifieke versnelling wordt vóór vertrek opnieuw bepaald."
+    },
+    "recommendationIntro": "De aanbevolen waarden beschrijven normaal gebruik van de fortautomatisering; ze zijn richtlijnen en veranderen opgeslagen instellingen niet.",
+    "steps": {
+      "attack": {
+        "image": {
+          "alt": "Illustratief voorbeeld van aanvals- en reisinstellingen voor fortautomatisering",
+          "caption": "De fortautomatisering rangschikt geschikte toegewezen bevelhebbers per doelwit en gebruikt de opgeslagen reiskeuze."
+        },
+        "items": {
+          "commander_assignment": {
+            "description": "Wijs onder Bevelhebbers de bevelhebbers toe die de fortautomatisering mag gebruiken en sla de toewijzingen op.",
+            "label": "Bevelhebbers toewijzen",
+            "recommendation": "Wijs de bevelhebbers toe die je gewoonlijk voor fortaanvallen beschikbaar wilt houden."
+          },
+          "daily_normal_attack_limit": {
+            "description": "Stop de fortautomatisering bij dit accountbrede dagelijkse aantal normale aanvallen totdat het spel de teller terugzet; 0 voegt geen limiet toe.",
+            "label": "Dagelijkse limiet voor normale aanvallen",
+            "recommendation": "0, tenzij je een extra dagelijkse limiet wilt."
+          },
+          "fastest_commander": {
+            "description": "Voor elk fort kiest de fortautomatisering de snelste momenteel beschikbare toegewezen bevelhebber op basis van toepasselijke effecten van uitrusting, edelstenen, sets en generaals na plafonds.",
+            "label": "Snelste geschikte bevelhebber",
+            "recommendation": "Een Relikwie 2.0 of snelheidsbonus van 100% is niet vereist."
+          },
+          "full_flank_wave": {
+            "description": "Elke aanval wacht op genoeg schrikwolven om beide flanken met één volledige golf te vullen.",
+            "label": "Schrikwolvengolf op beide flanken"
+          },
+          "horse_travel_boost": {
+            "description": "Kies de reisoptie voor fortaanvallen; een uitdrukkelijk opgeslagen munt- of robijnniveau blijft geselecteerd.",
+            "label": "Reisversnelling voor paarden",
+            "recommendation": "Reisveer voor de snelste reis."
+          }
+        },
+        "title": "Stel aanvallen en reizen in"
+      },
+      "finish": {
+        "items": {
+          "auto_fortress_switch": {
+            "description": "Schakel de fortautomatisering na het opslaan in op de Automatisering-kaart om de normale cycli te starten.",
+            "label": "Schakelaar voor fortautomatisering",
+            "recommendation": "Aan nadat je de gewenste instellingen hebt gecontroleerd en opgeslagen."
+          },
+          "calendar": {
+            "description": "Gebruik Kalender om de tijden voor fortautomatisering te beperken en kies Schema opslaan na wijzigingen.",
+            "label": "Kalender",
+            "recommendation": "Uit voor doorlopend normaal gebruik."
+          },
+          "save_fortress_plan": {
+            "description": "Sla de instellingen voor rijken, bevoorrading en aanvallen op voordat je dit venster sluit.",
+            "label": "Fortplan opslaan"
+          }
+        },
+        "title": "Stel het schema in, sla op en schakel in"
+      },
+      "kingdoms": {
+        "image": {
+          "alt": "Illustratief voorbeeld van de bediening voor de drie buitenrijken van fortautomatisering",
+          "caption": "Schakel elk ontgrendeld rijk in waarvan het hoofdkasteel schrikwolven moet ontvangen en forten moet aanvallen."
+        },
+        "items": {
+          "burning_sands": {
+            "description": "Schakel aanvallen en schrikwolvenbevoorrading vanuit je hoofdkasteel in de Brandende Woestijn in wanneer dit rijk is ontgrendeld.",
+            "label": "Brandende Woestijn",
+            "recommendation": "Aan wanneer ontgrendeld en klaar voor gebruik."
+          },
+          "everwinter_glacier": {
+            "description": "Schakel aanvallen en schrikwolvenbevoorrading vanuit je hoofdkasteel in de Eeuwige IJsgletsjer in wanneer dit rijk is ontgrendeld.",
+            "label": "Eeuwige IJsgletsjer",
+            "recommendation": "Aan wanneer ontgrendeld en klaar voor gebruik."
+          },
+          "fire_peaks": {
+            "description": "Schakel aanvallen en schrikwolvenbevoorrading vanuit je hoofdkasteel in de Vuurpieken in wanneer dit rijk is ontgrendeld.",
+            "label": "Vuurpieken",
+            "recommendation": "Aan wanneer ontgrendeld en klaar voor gebruik."
+          }
+        },
+        "title": "Kies fort-rijken"
+      },
+      "open": {
+        "items": {
+          "open_settings": {
+            "description": "Selecteer op de pagina Automatisering de instellingenknop op de kaart Fortautomatisering.",
+            "label": "Instellingen openen"
+          }
+        },
+        "title": "Open de instellingen voor fortautomatisering"
+      },
+      "supply": {
+        "image": {
+          "alt": "Illustratief voorbeeld van de aankoop- en transferinstellingen voor schrikwolven",
+          "caption": "Controleer het aankoopp plafond per sessie, de reserve van Khan-tabletten en de keuze voor tijdversnellers bij bevestigde transfers."
+        },
+        "items": {
+          "direwolves_per_session": {
+            "description": "Beperk aankopen van schrikwolven in de Nomadenwinkel tot partijen van 100 per winkelsessie; 0 schakelt aankopen uit.",
+            "label": "Schrikwolven per sessie",
+            "recommendation": "5.000 schrikwolven per sessie in de goedkoopste prijsklasse."
+          },
+          "keep_khan_tablets": {
+            "description": "Stop aankopen van schrikwolven voordat je saldo Khan-tabletten onder deze reserve daalt.",
+            "label": "Khan-tabletten bewaren",
+            "recommendation": "Bewaar 25.000 Khan-tabletten."
+          },
+          "supply_route": {
+            "description": "Gekochte schrikwolven komen aan in het hoofdkasteel van het Grote Rijk en worden over de ingeschakelde rijken verdeeld.",
+            "label": "Bevoorradingsroute voor schrikwolven"
+          },
+          "use_time_skips": {
+            "description": "Gebruik geschikte tijdversnellers alleen voor bevestigde transporten van fortautomatisering en respecteer de opgeslagen voorraadreserves.",
+            "label": "Tijdversnellers gebruiken voor schrikwolventransfers",
+            "recommendation": "Aan voor snellere bevoorrading als je opgeslagen reserves voor tijdversnellers dit toelaten."
+          }
+        },
+        "title": "Stel schrikwolvenbevoorrading in"
+      }
+    }
+  },
+  "autoInvasion": {
+    "feature": {
+      "description": "Automatische invasieaanvallen vallen Buitenlandse Heren of Bloedkraaien aan met een opgeslagen aanvalsvoorinstelling totdat het puntendoel of een andere stopgrens is bereikt.",
+      "expectation": "Ze wachten op een actief evenement, geschikte bevelhebbers en voldoende troepen en werktuigen; al reizende aanvallen kunnen eindigen nadat nieuwe aanvallen zijn gestopt.",
+      "name": "Automatische invasieaanvallen",
+      "summary": "Val Buitenlandse Heren en Bloedkraaien aan tot je puntendoel"
+    },
+    "recommendationIntro": "De aanbevolen waarden beschrijven normaal gebruik van automatische invasieaanvallen; ze zijn richtlijnen en veranderen opgeslagen instellingen niet.",
+    "steps": {
+      "difficulty": {
+        "image": {
+          "alt": "Illustratieve moeilijkheidskeuzes voor Buitenlandse Heren en Bloedkraaien",
+          "caption": "Kies voor elk evenement een aparte ontgrendelde moeilijkheid als reserve."
+        },
+        "items": {
+          "bloodcrow_difficulty": {
+            "description": "Kies een ontgrendelde moeilijkheid voor Bloedkraaien als voor het huidige evenement nog geen moeilijkheid is gekozen.",
+            "label": "Moeilijkheid Bloedkraaien",
+            "recommendation": "Gebruik de hoogste ontgrendelde moeilijkheid die je gebruikelijke opstelling betrouwbaar aankan."
+          },
+          "difficulty_note": {
+            "description": "Sla beide evenementkeuzes op; een gewijzigde opgeslagen waarde vervangt de actieve moeilijkheid niet.",
+            "label": "Huidige moeilijkheid"
+          },
+          "foreign_lords_difficulty": {
+            "description": "Kies een ontgrendelde moeilijkheid voor Buitenlandse Heren als voor het huidige evenement nog geen moeilijkheid is gekozen.",
+            "label": "Moeilijkheid Buitenlandse Heren",
+            "recommendation": "Gebruik de hoogste ontgrendelde moeilijkheid die je gebruikelijke opstelling betrouwbaar aankan."
+          }
+        },
+        "title": "Kies de moeilijkheid voor beide evenementen"
+      },
+      "finish": {
+        "items": {
+          "auto_invasion_switch": {
+            "description": "Schakel automatische invasieaanvallen na het opslaan in op de Automatisering-kaart om ze te laten lopen wanneer een evenement en geschikte middelen beschikbaar zijn.",
+            "label": "Schakelaar voor automatische invasieaanvallen",
+            "recommendation": "Aan na controle en opslag van je gewenste instellingen."
+          },
+          "readiness": {
+            "description": "Automatische invasieaanvallen wachten op een actief evenement, geschikte bevelhebbers en voldoende troepen en werktuigen.",
+            "label": "Gereedheid voor aanvallen"
+          },
+          "save_settings": {
+            "description": "Sla de vertrekburcht, voorinstelling, moeilijkheden, stopgrenzen en versterkingskeuze op voordat je dit venster sluit.",
+            "label": "Instellingen opslaan"
+          }
+        },
+        "title": "Sla op en schakel automatische invasieaanvallen in"
+      },
+      "fortify": {
+        "image": {
+          "alt": "Illustratieve versterkingsinstellingen voor automatische invasieaanvallen",
+          "caption": "Laat versterken uit tenzij je een beschikbare evenementvaluta of uitdrukkelijk gekozen robijnen wilt uitgeven."
+        },
+        "items": {
+          "fortification_currency": {
+            "description": "Kies een optie die het actieve evenement ondersteunt; het spel bepaalt elke prijs en een uitdrukkelijke keuze voor robijnen staat robijnuitgaven toe.",
+            "label": "Valuta voor versterking",
+            "recommendation": "Evenementvaluta wanneer beschikbaar en versterken ingeschakeld is."
+          },
+          "fortify_each_target": {
+            "description": "Versterk, indien ingeschakeld, elk gegenereerd vijandelijk kasteel vóór de aanval met de gekozen valuta.",
+            "label": "Elk doel versterken",
+            "recommendation": "Uit tenzij versterken deel is van je gebruikelijke evenementstrategie."
+          }
+        },
+        "title": "Kies optionele versterking van doelen"
+      },
+      "limits": {
+        "image": {
+          "alt": "Illustratief voorbeeld van punten- en stopgrenzen voor automatische invasieaanvallen",
+          "caption": "Het puntendoel stopt nieuwe vertrekken, maar al reizende aanvallen kunnen nog eindigen."
+        },
+        "items": {
+          "daily_attack_limit": {
+            "description": "Stop deze automatisering bij het accountbrede dagelijkse aantal normale aanvallen tot het spel het terugzet; 0 voegt geen grens toe.",
+            "label": "Dagelijkse limiet voor normale aanvallen",
+            "recommendation": "0 zodat het puntendoel van het evenement de reeks bepaalt."
+          },
+          "minimum_remaining": {
+            "description": "Begin zo veel minuten vóór het evenement eindigt geen nieuwe aanvallen meer.",
+            "label": "Stop vóór het evenement eindigt",
+            "recommendation": "30 minuten."
+          },
+          "score_target": {
+            "description": "Begin geen nieuwe aanvallen zodra de gemelde evenementpunten dit doel bereiken of overschrijden.",
+            "label": "Stop bij evenementpunten",
+            "recommendation": "Gebruik je gebruikelijke laatste persoonlijke beloningsmijlpaal boven 0."
+          },
+          "travelling_attacks": {
+            "description": "Al reizende aanvallen kunnen na een stopvoorwaarde eindigen en het eindtotaal boven het doel brengen.",
+            "label": "Reizende aanvallen"
+          }
+        },
+        "title": "Stel punten- en stopgrenzen in"
+      },
+      "open": {
+        "image": {
+          "alt": "Illustratieve instellingen voor vertrekburcht, voorinstelling en reis van automatische invasieaanvallen",
+          "caption": "Kies een vertrekburcht in het Grote Rijk en een opgeslagen evenementvoorinstelling voordat je de reisoptie kiest."
+        },
+        "items": {
+          "attack_preset": {
+            "description": "Selecteer een opgeslagen aanvalsvoorinstelling met troepen, werktuigen en opstelling voor Buitenlandse Heren of Bloedkraaien.",
+            "label": "Aanvalsvoorinstelling",
+            "recommendation": "Maak eerst een gebruikelijke voorinstelling voor Buitenlandse Heren of Bloedkraaien en selecteer die hier."
+          },
+          "capacity_note": {
+            "description": "De aantallen troepen en werktuigen uit de voorinstelling passen zich aan de capaciteit van de gekozen bevelhebber en het doel aan.",
+            "label": "Aanvalscapaciteit"
+          },
+          "horse_travel_boost": {
+            "description": "Kies voor deze aanvallen een reisoptie met veer, munten of robijnen.",
+            "label": "Reisversnelling voor paarden",
+            "recommendation": "Reisveer voor snel reizen."
+          },
+          "open_settings": {
+            "description": "Selecteer op de pagina Automatisering de instellingenknop op de kaart voor automatische invasieaanvallen.",
+            "label": "Instellingen openen"
+          },
+          "source_castle": {
+            "description": "Kies het kasteel in het Grote Rijk dat troepen en werktuigen voor evenementaanvallen levert.",
+            "label": "Vertrekburcht",
+            "recommendation": "Gebruik je gebruikelijke evenementburcht met voldoende troepen en werktuigen."
+          }
+        },
+        "title": "Open de instellingen voor automatische invasieaanvallen"
+      }
+    }
+  },
+  "autoNomad": {
+    "steps": {
+      "difficulty": {
+        "items": {
+          "nomad_difficulty": {
+            "recommendation": "Gebruik de hoogste ontgrendelde moeilijkheid die je gebruikelijke opstelling betrouwbaar aankan.",
+            "description": "Kies een vrijgespeelde nomadenmoeilijkheid voor de start van het evenement.",
+            "label": "Nomadenmoeilijkheid"
+          },
+          "samurai_difficulty": {
+            "recommendation": "Gebruik de hoogste ontgrendelde moeilijkheid die je gebruikelijke opstelling betrouwbaar aankan.",
+            "description": "Kies een vrijgespeelde samoeraimoeilijkheid voor de start van het evenement.",
+            "label": "Samoeraimoeilijkheid"
+          },
+          "active_difficulty": {
+            "description": "Volg bij een actief evenement de huidige moeilijkheid, want met een andere opgeslagen keuze wacht de automatisering in plaats van die te wijzigen.",
+            "label": "Al actief evenement"
+          }
+        },
+        "title": "Kies de moeilijkheid voor beide evenementen",
+        "image": {
+          "alt": "Voorbeeld van nomaden- en samoeraimoeilijkheden",
+          "caption": "Kies voor elk evenement een afzonderlijk vrijgespeeld moeilijkheidsniveau en volg dat van het actieve evenement."
+        }
+      },
+      "finish": {
+        "items": {
+          "auto_nomad_switch": {
+            "recommendation": "Aan nadat je de gewenste instellingen hebt gecontroleerd en opgeslagen.",
+            "description": "Zet Auto Nomaden/Samoerai na het opslaan aan op de Automatiseringskaart om te draaien wanneer er een evenement en geschikte middelen zijn.",
+            "label": "Schakelaar Auto Nomaden/Samoerai"
+          },
+          "save_settings": {
+            "label": "Instellingen opslaan",
+            "description": "Sla bron, aanvalsopstellingen, moeilijkheden, stopgrenzen, tijdsprongen en teststatus op voordat je dit venster sluit."
+          },
+          "readiness": {
+            "description": "De automatisering verbetert evenementenkampen en wacht op geschikte commandanten, troepen, gereedschap en bruikbare tijdsprongen als die zijn ingeschakeld.",
+            "label": "Gereedheid voor kampaanvallen"
+          }
+        },
+        "title": "Auto Nomaden/Samoerai opslaan en inschakelen"
+      },
+      "limits": {
+        "image": {
+          "caption": "Het puntendoel stopt nieuwe vertrekken, maar al reizende aanvallen kunnen nog eindigen.",
+          "alt": "Voorbeeld van score- en stopgrenzen van Auto Nomaden/Samoerai"
+        },
+        "items": {
+          "daily_attack_limit": {
+            "description": "Stop deze automatisering bij het accountbrede dagelijkse aantal normale aanvallen tot het spel het terugzet; 0 voegt geen grens toe.",
+            "label": "Daglimiet voor normale aanvallen",
+            "recommendation": "0 zodat het puntendoel van het evenement de reeks bepaalt."
+          },
+          "minimum_remaining": {
+            "description": "Begin zo veel minuten vóór het evenement eindigt geen nieuwe aanvallen meer.",
+            "label": "Stop vóór het evenement eindigt",
+            "recommendation": "30 minuten."
+          },
+          "score_target": {
+            "description": "Begin geen nieuwe aanvallen zodra de gemelde evenementpunten dit doel bereiken of overschrijden.",
+            "label": "Stop bij evenementpunten",
+            "recommendation": "Gebruik je gebruikelijke laatste persoonlijke beloningsmijlpaal boven 0."
+          },
+          "travelling_attacks": {
+            "description": "Al reizende aanvallen kunnen na een stopvoorwaarde eindigen en het eindtotaal boven het doel brengen.",
+            "label": "Reizende aanvallen"
+          }
+        },
+        "title": "Stel punten- en stopgrenzen in"
+      },
+      "open": {
+        "items": {
+          "horse_travel_boost": {
+            "label": "Reisversnelling met paarden",
+            "recommendation": "Reisveer voor snel reizen.",
+            "description": "Kies voor kampaanvallen de reisoptie met veer, munten of robijnen."
+          },
+          "open_settings": {
+            "label": "Instellingen openen",
+            "description": "Kies op de pagina Automatisering de instellingenknop op de kaart Auto Nomaden/Samoerai."
+          },
+          "source_castle": {
+            "label": "Vertrekburcht",
+            "recommendation": "Gebruik je gebruikelijke evenementburcht met voldoende troepen en werktuigen.",
+            "description": "Kies de burcht in het Grote Rijk die troepen en gereedschap levert voor kampaanvallen."
+          },
+          "nomad_preset": {
+            "description": "Kies een opgeslagen aanvalsopstelling met troepen, gereedschap en formatie voor nomadenkampen.",
+            "label": "Nomadenaanvalsopstelling",
+            "recommendation": "Maak en kies je gebruikelijke nomadenopstelling."
+          },
+          "samurai_preset": {
+            "description": "Kies een opgeslagen aanvalsopstelling met troepen, gereedschap en formatie voor samoeraikampen.",
+            "label": "Samoeraiaanvalsopstelling",
+            "recommendation": "Maak en kies je gebruikelijke samoeraiopstelling."
+          }
+        },
+        "image": {
+          "alt": "Voorbeeld van bron, aanvalsopstellingen en reizen van Auto Nomaden/Samoerai",
+          "caption": "Maak beide evenementaanvalsopstellingen voordat je de bronburcht en reisoptie kiest."
+        },
+        "title": "Open de instellingen voor Auto Nomaden/Samoerai"
+      },
+      "cooldowns": {
+        "image": {
+          "alt": "Voorbeeld van kampwachttijden en tijdsprongreserves",
+          "caption": "Elke bewaargewaarde telt tijdsprongvoorwerpen, geen minuten wachttijd."
+        },
+        "items": {
+          "keep_10m": {
+            "description": "Bewaar dit aantal tijdsprongen van 10 min ongebruikt als reserve.",
+            "label": "Bewaar 10 min",
+            "recommendation": "0 voor gewone kamprondes."
+          },
+          "keep_1m": {
+            "description": "Bewaar dit aantal tijdsprongen van 1 min ongebruikt als reserve.",
+            "label": "Bewaar 1 min",
+            "recommendation": "0 voor gewone kamprondes."
+          },
+          "keep_24h": {
+            "description": "Bewaar dit aantal tijdsprongen van 24 uur ongebruikt als reserve.",
+            "label": "Bewaar 24 uur",
+            "recommendation": "Reserveer de voorraad die je nodig hebt voor bouwen of andere activiteiten."
+          },
+          "keep_30m": {
+            "description": "Bewaar dit aantal tijdsprongen van 30 min ongebruikt als reserve.",
+            "label": "Bewaar 30 min",
+            "recommendation": "0 voor gewone kamprondes."
+          },
+          "keep_5h": {
+            "description": "Bewaar dit aantal tijdsprongen van 5 uur ongebruikt als reserve.",
+            "label": "Bewaar 5 uur",
+            "recommendation": "Reserveer de voorraad die je nodig hebt voor bouwen of andere activiteiten."
+          },
+          "keep_5m": {
+            "description": "Bewaar dit aantal tijdsprongen van 5 min ongebruikt als reserve.",
+            "label": "Bewaar 5 min",
+            "recommendation": "0 voor gewone kamprondes."
+          },
+          "keep_60m": {
+            "description": "Bewaar dit aantal tijdsprongen van 60 min ongebruikt als reserve.",
+            "label": "Bewaar 60 min",
+            "recommendation": "0 voor gewone kamprondes."
+          },
+          "skip_cooldowns": {
+            "description": "Gebruik na een bevestigde overwinning op een kamp een beschikbare tijdsprong om de wachttijd van dat doel op te heffen.",
+            "label": "Hef wachttijd na elke geslaagde aanval op",
+            "recommendation": "Aan voor gewone herhaalde kampaanvallen; uit om de natuurlijke wachttijd af te wachten."
+          }
+        },
+        "title": "Kies tijdsprongen en reserves"
+      },
+      "trial": {
+        "image": {
+          "alt": "Voorbeeld van de tijdelijke test tegen een roofridderburcht",
+          "caption": "De test start een echte aanval en vervangt de normale evenementwerking zolang hij aanstaat."
+        },
+        "items": {
+          "rbc_trial": {
+            "description": "Vervang de normale evenementwerking door een echte aanvalstest op één roofridderburcht met de nomadenopstelling en tijdsprongen.",
+            "label": "Tijdelijke volledige test tegen een roofridderburcht",
+            "recommendation": "Uit voor gewone nomaden- of samoeraiacties."
+          },
+          "target_x": {
+            "description": "Voer de horizontale coördinaat van de roofridderburcht alleen voor de tijdelijke test in.",
+            "label": "Doel X",
+            "recommendation": "Laat ongebruikt zolang de test uitstaat."
+          },
+          "target_y": {
+            "description": "Voer de verticale coördinaat van de roofridderburcht alleen voor de tijdelijke test in.",
+            "label": "Doel Y",
+            "recommendation": "Laat ongebruikt zolang de test uitstaat."
+          },
+          "trial_skips": {
+            "description": "Als je de test inschakelt, worden ook de tijdsprongen voor de test ingeschakeld.",
+            "label": "Tijdsprongen voor de test"
+          }
+        },
+        "title": "Laat de tijdelijke test uit voor gewone acties"
+      }
+    },
+    "feature": {
+      "description": "Auto Nomaden/Samoerai verbetert geschikte evenementenkampen, kiest het zwakste volledig verbeterde kamp en valt dit met de opgeslagen evenementaanvalsopstelling herhaaldelijk aan totdat een stopgrens is bereikt.",
+      "expectation": "Het wacht op een actief evenement, geschikte commandanten, troepen, gereedschap en bruikbare tijdsprongen als het opheffen van wachttijden aanstaat; aanvallen onderweg kunnen na het stoppen van nieuwe aanvallen nog afronden.",
+      "name": "Auto Nomaden/Samoerai",
+      "summary": "Nomaden- of samoeraikampen verbeteren en aanvallen"
+    },
+    "recommendationIntro": "Aanbevolen waarden beschrijven normaal gebruik van Auto Nomaden/Samoerai; ze zijn advies en wijzigen opgeslagen instellingen niet."
+  },
+  "autoAdvisor": {
+    "steps": {
+      "activation": {
+        "items": {
+          "auto_advisor_switch": {
+            "recommendation": "Aan nadat je de gewenste instellingen hebt gecontroleerd en opgeslagen.",
+            "description": "Schakel Auto Adviseur na controle in op de Automatiseringskaart; bij een al vrijgespeelde Adviseur kan direct een reeks starten.",
+            "label": "Schakelaar Auto Adviseur"
+          },
+          "save_settings": {
+            "label": "Instellingen opslaan",
+            "description": "Sla bron, opstelling, moeilijkheden, reeksomvang en middelenbudgetten op voordat je dit venster sluit."
+          },
+          "activate_advisor": {
+            "description": "Is de Adviseur vergrendeld, kies Adviseur activeren om de bevestiging voor het huidige evenement te openen.",
+            "label": "Adviseur activeren"
+          },
+          "activate_and_spend": {
+            "description": "Verstuur de bevestigde activering met een geschikt evenementtoken of universeel Adviseurtoken; bij een gratis evenement staat er in plaats daarvan Adviseur activeren.",
+            "label": "Activeren en token besteden"
+          },
+          "cancel_activation": {
+            "description": "Sluit de bevestiging zonder activering te versturen of een token te besteden.",
+            "label": "Activering annuleren"
+          },
+          "confirm_paid_activation": {
+            "description": "Bevestig dat activering van de Adviseur een evenement- of universeel token kan kosten, tenzij het spel dit evenement als gratis meldt.",
+            "label": "Betaalde activering bevestigen"
+          }
+        },
+        "image": {
+          "alt": "Voorbeeld van opslaan en tokenactivering van Auto Adviseur",
+          "caption": "Opslaan of inschakelen kost geen token; de apart bevestigde activering kan er één kosten."
+        },
+        "title": "Toegang tot Adviseur opslaan, inschakelen en activeren"
+      },
+      "difficulty": {
+        "items": {
+          "nomad_difficulty": {
+            "label": "Nomadenmoeilijkheid",
+            "recommendation": "Gebruik de hoogste ontgrendelde moeilijkheid die je gebruikelijke opstelling betrouwbaar aankan.",
+            "description": "Kies een vrijgespeelde Nomadenmoeilijkheid voor het begin van dat evenement."
+          },
+          "samurai_difficulty": {
+            "label": "Samoeraimoeilijkheid",
+            "recommendation": "Gebruik de hoogste ontgrendelde moeilijkheid die je gebruikelijke opstelling betrouwbaar aankan.",
+            "description": "Kies een vrijgespeelde Samoeraimoeilijkheid voor het begin van dat evenement."
+          },
+          "active_difficulty": {
+            "description": "Volg de huidige moeilijkheid van een actief evenement, anders wacht de automatisering in plaats van die te veranderen.",
+            "label": "Moeilijkheid van actief evenement"
+          }
+        },
+        "title": "Kies de moeilijkheid voor beide evenementen",
+        "image": {
+          "alt": "Voorbeeld van de moeilijkheden van de Nomaden- en Samoerai-Adviseur",
+          "caption": "Sla beide evenementmoeilijkheden op en volg die van het al lopende evenement."
+        }
+      },
+      "open": {
+        "items": {
+          "horse_travel_boost": {
+            "label": "Reisversnelling met paarden",
+            "recommendation": "Reisveer voor snel reizen.",
+            "description": "Kies de reisoptie met veer, munten of robijnen voor de reeks."
+          },
+          "open_settings": {
+            "label": "Instellingen openen",
+            "description": "Kies op de pagina Automatisering de instellingenknop van de Auto-Adviseurkaart."
+          },
+          "source_castle": {
+            "label": "Vertrekburcht",
+            "recommendation": "Gebruik je gebruikelijke evenementburcht met voldoende troepen en werktuigen.",
+            "description": "Kies de burcht in het Grote Rijk die troepen en gereedschap voor de Adviseurreeks levert."
+          },
+          "attack_preset": {
+            "description": "Kies een opgeslagen aanvalsopstelling waarvan troepen, gereedschap en formatie voor elke gevraagde aanval worden gekopieerd.",
+            "label": "Adviseur-aanvalsopstelling",
+            "recommendation": "Maak eerst een gewone opstelling voor het actieve Nomaden- of Samoerai-evenement en kies die daarna."
+          },
+          "complete_copies": {
+            "description": "Beschikbare middelen en volledige kopieën van de opstelling kunnen de reeks onder het maximumaantal aanvallen brengen.",
+            "label": "Volledige kopieën van de opstelling"
+          }
+        },
+        "image": {
+          "alt": "Voorbeeld van bron, opstelling en reizen van Auto Adviseur",
+          "caption": "Kies een bronburcht in het Grote Rijk en een opgeslagen evenementopstelling voordat je de reisoptie instelt."
+        },
+        "title": "Instellingen van Auto Adviseur openen"
+      },
+      "resources": {
+        "items": {
+          "keep_24h": {
+            "description": "Bewaar dit aantal tijdsprongen van 24 uur ongebruikt als reserve.",
+            "label": "Bewaar 24 uur",
+            "recommendation": "Reserveer de voorraad die je nodig hebt voor bouwen of andere activiteiten."
+          },
+          "keep_5h": {
+            "description": "Bewaar dit aantal tijdsprongen van 5 uur ongebruikt als reserve.",
+            "label": "Bewaar 5 uur",
+            "recommendation": "Reserveer de voorraad die je nodig hebt voor bouwen of andere activiteiten."
+          },
+          "keep_60m": {
+            "description": "Bewaar dit aantal tijdsprongen van 60 min ongebruikt als reserve.",
+            "label": "Bewaar 60 min",
+            "recommendation": "0 voor gewone Adviseurreeksen."
+          },
+          "coin_cost": {
+            "description": "Schat de totale muntkosten per aanval voor de toets vóór de start, zonder spelprijzen te veranderen.",
+            "label": "Totale munten per aanval",
+            "recommendation": "500 alleen als dit de werkelijke totale kosten dekt; gebruik anders een hoger gemeten totaal."
+          },
+          "keep_coins": {
+            "description": "Sluit dit aantal munten uit van het reeksbudget.",
+            "label": "Munten bewaren",
+            "recommendation": "Bewaar je gewone budget voor werving en bouw."
+          },
+          "keep_feathers": {
+            "description": "Sluit dit aantal reisveren uit van het reeksbudget.",
+            "label": "Veren bewaren",
+            "recommendation": "0 tenzij je veren voor andere functies reserveert."
+          },
+          "keep_rubies": {
+            "description": "Sluit dit aantal robijnen uit van het reeksbudget.",
+            "label": "Robijnen bewaren",
+            "recommendation": "Bewaar het saldo dat je voor andere activiteiten nodig hebt."
+          },
+          "ruby_cost": {
+            "description": "Schat de robijnkosten voor reizen per aanval; bij robijnreizen is een positief getal nodig.",
+            "label": "Robijnen per aanval",
+            "recommendation": "0 met Reisveer; gebruik de werkelijke positieve kosten voor robijnreizen."
+          }
+        },
+        "image": {
+          "alt": "Voorbeeld van munten-, robijnen-, veren- en tijdsprongreserves in Auto Adviseur",
+          "caption": "Kostenvelden zijn planningsschattingen; bewaarwaarden tellen ongebruikte middelen of tijdsprongvoorwerpen."
+        },
+        "title": "Middelenbudgetten en reserves instellen"
+      },
+      "overview": {
+        "image": {
+          "alt": "Voorbeeld van voortgang en verliezen van de Adviseur",
+          "caption": "Het overzicht toont voortgang en verliezen zonder een nieuwe reeks te starten."
+        },
+        "items": {
+          "live_progress": {
+            "description": "Lees in het overzicht huidige en gevraagde aanvallen, overwinningen, nederlagen en verloren eenheden en gereedschap.",
+            "label": "Lopende Adviseurreeks"
+          },
+          "no_relaunch": {
+            "description": "Een voltooide of geannuleerde reeks van hetzelfde evenement start niet vanzelf opnieuw.",
+            "label": "Voltooide of geannuleerde reeks"
+          },
+          "refresh_overview": {
+            "description": "Vraag actuele gegevens over voortgang, overwinningen, nederlagen en verliezen op.",
+            "label": "Overzicht vernieuwen"
+          }
+        },
+        "title": "Lopende Adviseurreeks bekijken"
+      },
+      "sizing": {
+        "image": {
+          "alt": "Voorbeeld van aanvalsaantal en evenementtijd in Auto Adviseur",
+          "caption": "Het gevraagde aantal wordt vóór de start begrensd door middelen en evenementtijd."
+        },
+        "items": {
+          "maximum_attacks": {
+            "description": "Stel een bovengrens in voor aanvallen van deze ene Adviseurreeks; middelen en resterende tijd kunnen het echte aantal verlagen.",
+            "label": "Maximumaantal aanvallen",
+            "recommendation": "9.999 zodat beschikbare middelen en evenementtijd de reeksomvang bepalen."
+          },
+          "minimum_remaining": {
+            "description": "Laat dit aantal minuten ongebruikt in de berekening van de evenementtijd vóór de start.",
+            "label": "Stop voor einde evenement",
+            "recommendation": "30 minuten; dit is geen doorlopende annuleertimer."
+          }
+        },
+        "title": "Reeksomvang en evenementtijd instellen"
+      }
+    },
+    "feature": {
+      "description": "Auto Adviseur start één reeks Nomaden- of Samoerai-aanvallen van de Adviseur, waarvan de grootte afhangt van beschikbare middelen en resterende evenementtijd.",
+      "expectation": "De reeks wacht op een passende actieve moeilijkheid en vrijgespeelde toegang tot de Adviseur; opslaan of inschakelen kost geen token, maar een bevestigde activering mogelijk wel.",
+      "name": "Auto Adviseur",
+      "summary": "Start één Nomaden- of Samoerai-Adviseurreeks naar beschikbare middelen"
+    },
+    "recommendationIntro": "Aanbevolen waarden beschrijven gewoon gebruik van Auto Adviseur; ze zijn advies en veranderen opgeslagen instellingen niet."
+  },
+  "autoKhan": {
+    "steps": {
+      "cooldowns": {
+        "items": {
+          "keep_10m": {
+            "label": "Bewaar 10 min",
+            "description": "Houd zoveel tijdversnellers van 10 min ongebruikt.",
+            "recommendation": "0 voor normale Khan-reeksen."
+          },
+          "keep_1m": {
+            "label": "Bewaar 1 min",
+            "description": "Houd zoveel tijdversnellers van 1 min ongebruikt.",
+            "recommendation": "0 voor normale Khan-reeksen."
+          },
+          "keep_24h": {
+            "label": "Bewaar 24 uur",
+            "recommendation": "Reserveer de voorraad die je nodig hebt voor bouwen of andere activiteiten.",
+            "description": "Houd zoveel tijdversnellers van 24 uur ongebruikt."
+          },
+          "keep_30m": {
+            "label": "Bewaar 30 min",
+            "description": "Houd zoveel tijdversnellers van 30 min ongebruikt.",
+            "recommendation": "0 voor normale Khan-reeksen."
+          },
+          "keep_5h": {
+            "label": "Bewaar 5 uur",
+            "recommendation": "Reserveer de voorraad die je nodig hebt voor bouwen of andere activiteiten.",
+            "description": "Houd zoveel tijdversnellers van 5 uur ongebruikt."
+          },
+          "keep_5m": {
+            "label": "Bewaar 5 min",
+            "description": "Houd zoveel tijdversnellers van 5 min ongebruikt.",
+            "recommendation": "0 voor normale Khan-reeksen."
+          },
+          "keep_1h": {
+            "description": "Houd zoveel tijdversnellers van 1 uur ongebruikt.",
+            "label": "Bewaar 1 uur",
+            "recommendation": "0 voor normale Khan-reeksen."
+          },
+          "skip_cooldowns": {
+            "description": "Reserveer en gebruik genoeg tijdversnellers om kampwachttijden na aanvallen te wissen.",
+            "label": "Elke Khan-kampwachttijd overslaan",
+            "recommendation": "Aan; het huidige instellingenvenster vereist dit om op te slaan."
+          },
+          "skip_shortage": {
+            "description": "Nieuwe kampaanvallen pauzeren als bruikbare tijdversnellers de benodigde wachttijd niet kunnen dekken.",
+            "label": "Onvoldoende bruikbare tijdversnellers"
+          }
+        },
+        "image": {
+          "alt": "Illustratieve instellingen voor het overslaan van wachttijden en tijdversnellerreserves van Automatische Khan",
+          "caption": "Reservewaarden tellen voorwerpen, geen minuten."
+        },
+        "title": "Wachttijden en reserves instellen"
+      },
+      "limits": {
+        "items": {
+          "daily_limit": {
+            "label": "Daglimiet voor normale aanvallen",
+            "description": "Stop nieuwe kampaanvallen van deze automatisering bij het accountbrede dagtotaal van normale aanvallen; 0 schakelt deze limiet uit.",
+            "recommendation": "0 tenzij je een accountbrede limiet nodig hebt."
+          },
+          "event_end": {
+            "label": "Stop voor einde evenement",
+            "description": "Stop nieuwe kampaanvallen dit aantal minuten voor het einde van het evenement.",
+            "recommendation": "5 minuten."
+          },
+          "nomad_points": {
+            "description": "Stop bij deze gemelde score nieuwe Khan-aanvallen, roep vertrokken Khan-aanvallen terug en open de hoofdpoorten; 0 schakelt deze stop uit.",
+            "label": "Stop bij Nomadenpunten",
+            "recommendation": "0 tenzij je bij een gekozen score wilt stoppen en beschermen."
+          },
+          "replenish_tools": {
+            "description": "Vervang ontbrekend gereedschap uit het verdedigingssjabloon via geschikte aanbiedingen en wijs pakketten met robijnprijzen af.",
+            "label": "Verdedigingsgereedschap aanvullen",
+            "recommendation": "Aan als je geschikte automatische aankopen wilt."
+          }
+        },
+        "image": {
+          "alt": "Illustratieve instellingen voor punten, gereedschap en daglimiet van Automatische Khan",
+          "caption": "Een positieve stop bij Nomadenpunten haalt ook uitgaande Khan-aanvallen terug en opent de poorten van het hoofdkasteel."
+        },
+        "title": "Punten-, voorraad- en daglimieten instellen"
+      },
+      "save": {
+        "items": {
+          "save_settings": {
+            "label": "Instellingen opslaan",
+            "description": "Sla gekozen kastelen, sjablonen, woedebediening, limieten, tijdversnellerreserves en bescherming op."
+          },
+          "enable_switch": {
+            "description": "Activeer Automatische Khan op de Automatisering-kaart nadat je de hoofdverdediging hebt gecontroleerd.",
+            "label": "Schakelaar voor Automatische Khan",
+            "recommendation": "Aan nadat de instellingen zijn opgeslagen en de verdediging is voorbereid."
+          },
+          "station_priority": {
+            "description": "Automatisch Stationeren behandelt inkomende spelersaanvallen los van Khan-vergeldingen.",
+            "label": "Prioriteit van Automatisch Stationeren"
+          }
+        },
+        "image": {
+          "alt": "Illustratief verloop van opslaan en activeren van Automatische Khan",
+          "caption": "Controleer de verdediging van het hoofdkasteel voordat je Khan-vergeldingen activeert."
+        },
+        "title": "Automatische Khan opslaan en inschakelen"
+      },
+      "setup": {
+        "items": {
+          "horse_travel_boost": {
+            "label": "Reisversnelling met paarden",
+            "recommendation": "Reisveer voor snel reizen.",
+            "description": "Kies reizen met veren, munten of robijnen voor kampaanvallen."
+          },
+          "open_settings": {
+            "label": "Instellingen openen",
+            "description": "Kies op de pagina Automatisering de instellingenknop op de kaart Automatische Khan."
+          },
+          "attack_from": {
+            "description": "Kies een hoofdkasteel of buitenpost in het Grote Rijk die de Khan-kampaanvallen levert.",
+            "label": "Aanvallen vanuit",
+            "recommendation": "Gebruik zo mogelijk een buitenpost met je aanvalsleger."
+          },
+          "camp_attack_preset": {
+            "description": "Kies een opgeslagen aanvalssjabloon voor normale Khan-kampaanvallen.",
+            "label": "Sjabloon voor kampaanval",
+            "recommendation": "Maak eerst je gewone Khan-aanvalssjabloon."
+          },
+          "defend_at": {
+            "description": "Khan-vergeldingen worden verdedigd bij het hier getoonde hoofdkasteel in het Grote Rijk; dit veld is alleen-lezen.",
+            "label": "Verdedigen bij"
+          },
+          "main_defense_preset": {
+            "description": "Kies een opgeslagen verdedigingssjabloon dat voor vergeldingen opnieuw op het hoofdkasteel wordt toegepast.",
+            "label": "Sjabloon voor hoofdverdediging",
+            "recommendation": "Maak je gewone Khan-verdedigingssjabloon en bereid troepen en gereedschap voor."
+          }
+        },
+        "image": {
+          "alt": "Illustratieve kasteel-, sjabloon- en reisinstellingen van Automatische Khan",
+          "caption": "Bereid beide sjablonen en de hoofdverdediging voor voordat je de aanvalsketen activeert."
+        },
+        "title": "Kastelen, sjablonen en reizen kiezen"
+      },
+      "protection": {
+        "image": {
+          "alt": "Illustratieve bescherming van de muur van het hoofdkasteel voor Automatische Khan",
+          "caption": "Deze muurbescherming geldt alleen als het hoofdkasteel aanvallen verzendt."
+        },
+        "items": {
+          "offensive_threshold": {
+            "description": "Activeer die bescherming wanneer dit aantal offensieve eenheden op de muur wordt bereikt.",
+            "label": "Drempel voor offensieve muureenheden",
+            "recommendation": "1.000 offensieve muureenheden."
+          },
+          "outpost_source": {
+            "description": "Deze bescherming is uitgeschakeld als een buitenpost aanvallen verzendt en het hoofdkasteel apart verdedigt.",
+            "label": "Buitenpost als bron"
+          },
+          "protect_offense": {
+            "description": "Open bij aanvallen uit het hoofdkasteel de poorten en pauzeer Khan als te veel offensieve troepen de muur zouden verdedigen.",
+            "label": "Offensieve troepen op de hoofdmuur beschermen",
+            "recommendation": "Aan als het hoofdkasteel de aanvallen levert."
+          }
+        },
+        "title": "De muur van het hoofdkasteel beschermen"
+      },
+      "rage": {
+        "image": {
+          "alt": "Illustratieve woede- en aanvalsinstellingen van Automatische Khan",
+          "caption": "De tijdelijke Woedepuntenboost is iets anders dan woedevlaggen."
+        },
+        "items": {
+          "lock_automatic_attacks": {
+            "description": "Stop nieuwe kampaanvallen terwijl woedeverwerking, wachttijden en verdediging doorgaan.",
+            "label": "Automatische Khan-aanvallen vergrendelen",
+            "recommendation": "Uit voor normale kampaanvallen."
+          },
+          "max_rage_chain": {
+            "description": "Beperk het aantal aanvaarde vergeldingen in het huidige evenement voordat nieuwe kampaanvallen stoppen; 0 heft deze limiet op.",
+            "label": "Maximale woedeketen",
+            "recommendation": "0 tenzij je vergeldingen wilt begrenzen."
+          },
+          "rage_booster": {
+            "description": "Sta nieuwe automatische kampaanvallen alleen toe terwijl de tijdelijke Woedepuntenboost actief is.",
+            "label": "Woedepuntenboost vereisen",
+            "recommendation": "Uit tenzij je alleen met boost wilt aanvallen."
+          },
+          "rage_continues": {
+            "description": "Een woedeketenlimiet stopt noch het uitlokken bij volle woede, noch de wachttijden of het herstel van de verdediging.",
+            "label": "Woedeverwerking gaat door"
+          },
+          "trigger_full_rage": {
+            "description": "Lok een Khan-vergelding uit wanneer de woede vol is.",
+            "label": "Khan uitlokken bij volle woede",
+            "recommendation": "Aan wanneer het hoofdkasteel klaar is om te verdedigen."
+          }
+        },
+        "title": "Woede en aanvalsrechten instellen"
+      }
+    },
+    "feature": {
+      "description": "Automatische Khan valt het Khan-kamp aan, wist wachttijden, lokt vergelding uit bij volle woede en onderhoudt de verdediging van het hoofdkasteel.",
+      "expectation": "Nieuwe kampaanvallen pauzeren bij ingestelde limieten of tekort aan middelen terwijl het hoofdkasteel beschermd wordt; inkomende spelersaanvallen blijven de taak van Automatisch Stationeren.",
+      "name": "Automatische Khan",
+      "summary": "Schakel Khan-kampaanvallen aaneen en verdedig vergelding bij je hoofdkasteel"
+    },
+    "recommendationIntro": "Aanbevolen waarden beschrijven normaal gebruik van Automatische Khan; ze zijn richtlijnen en wijzigen opgeslagen instellingen niet."
+  },
+  "autoBeri": {
+    "feature": {
+      "description": "Auto Beri versterkt je eigen Berimond-kamp volgens de troepenverhouding van de gekozen aanvalsvoorinstelling en kan daarna torens aanvallen, gereedschap aanvullen en bouwen met bevestigde buit.",
+      "expectation": "Transporten wachten op actuele voorraden in kamp en donorkasteel, gemelde capaciteit en afhandeling van de vorige zending; een gedeeltelijke donorvoorraad kan een kleinere zending opleveren, terwijl een ontbrekend benodigd type de aanvulling pauzeert.",
+      "name": "Automatisch Berimond-beheer",
+      "summary": "Bevoorraad en beheer je Berimond-kamp"
+    },
+    "recommendationIntro": "De aanbevelingen beschrijven normaal gebruik van Auto Beri en veranderen geen opgeslagen instellingen.",
+    "steps": {
+      "builder": {
+        "image": {
+          "alt": "Illustratieve instellingen voor optionele kampbouw in Auto Beri",
+          "caption": "Ingebouwd en opgeslagen doel, vastlegmodi, stal niveau 5, hout- en steenreserves en zeven versnellingstijden."
+        },
+        "items": {
+          "allow_demolition": {
+            "description": "Sta het verwijderen toe van onbeheerde gebouwen die voor het exacte doel niet verplaatst of opgeslagen kunnen worden.",
+            "label": "Sloop toestaan",
+            "recommendation": "Uit, tenzij je de beoogde verwijderingen hebt nagekeken."
+          },
+          "allow_premium_costs": {
+            "description": "Sta geschikte bouwstappen toe die premiumvaluta uitgeven.",
+            "label": "Premiumkosten toestaan",
+            "recommendation": "Uit, tenzij je uitdrukkelijk premiumbouw wilt."
+          },
+          "auto_beri_builder_lane": {
+            "description": "Bouw of verbeter het actieve Berimond-kampdoel met bevestigde teruggebrachte buit, zonder grondstoffen uit een ander koninkrijk aan te voeren.",
+            "label": "Auto-Beri-bouwbeheer",
+            "recommendation": "Aan voor gewone kampbouw nadat je de uitgaverechten hebt nagekeken."
+          },
+          "camp_resource_reserves": {
+            "description": "Houd de gekozen hoeveelheden hout en steen buiten de kampbouw.",
+            "label": "Kampgrondstoffen reserveren",
+            "recommendation": "Hout 0 en steen 0 als overschotten gebruikt mogen worden."
+          },
+          "construction_time_skip_reserves": {
+            "description": "Stel afzonderlijk in hoeveel versnellers van 1 min, 5 min, 10 min, 30 min, 1 uur, 5 uur en 24 uur je bewaart.",
+            "label": "Bouwtijdoverslagen reserveren",
+            "recommendation": "Bewaar 0 van elke korte versneller; reserveer je voorraad van 1, 5 en 24 uur voor andere activiteiten."
+          },
+          "optional_custom_camp_target": {
+            "description": "Leg Functioneel vast voor essentiële gebouwen, Indeling voor gebouwposities zonder decoraties of Exact voor alle ondersteunde details.",
+            "label": "Optioneel eigen kampdoel",
+            "recommendation": "Gebruik het ingebouwde doel tenzij je een nagekeken eigen doel nodig hebt."
+          },
+          "stable_target": {
+            "description": "Kies stalniveau 1 tot en met 5 voor het ingebouwde doel.",
+            "label": "Doelniveau stal",
+            "recommendation": "Niveau 5 voor gewone evenementbouw als je genoeg grondstoffen hebt."
+          },
+          "use_construction_time_skips": {
+            "description": "Versnel een bevestigde kampbouwtimer terwijl je de gekozen bouwversnellingsreserves behoudt.",
+            "label": "Bouwtijdoverslagen gebruiken",
+            "recommendation": "Aan voor gewone bouw als je voorraad versnellers dit toelaat."
+          },
+          "keep_skip_10m": {
+            "description": "Houd dit aantal bouwversnellers van 10m apart; zet de reserve op 0 voor gewoon gebruik.",
+            "label": "10m-versnellers bewaren"
+          },
+          "keep_skip_1h": {
+            "description": "Reserveer dit aantal bouwversnellers van 1h voor andere activiteiten.",
+            "label": "1h-versnellers bewaren"
+          },
+          "keep_skip_1m": {
+            "description": "Houd dit aantal bouwversnellers van 1m apart; zet de reserve op 0 voor gewoon gebruik.",
+            "label": "1m-versnellers bewaren"
+          },
+          "keep_skip_24h": {
+            "description": "Reserveer dit aantal bouwversnellers van 24h voor andere activiteiten.",
+            "label": "24h-versnellers bewaren"
+          },
+          "keep_skip_30m": {
+            "description": "Houd dit aantal bouwversnellers van 30m apart; zet de reserve op 0 voor gewoon gebruik.",
+            "label": "30m-versnellers bewaren"
+          },
+          "keep_skip_5h": {
+            "description": "Reserveer dit aantal bouwversnellers van 5h voor andere activiteiten.",
+            "label": "5h-versnellers bewaren"
+          },
+          "keep_skip_5m": {
+            "description": "Houd dit aantal bouwversnellers van 5m apart; zet de reserve op 0 voor gewoon gebruik.",
+            "label": "5m-versnellers bewaren"
+          },
+          "saved_targets": {
+            "description": "Vastleggen slaat een nagekeken eigen doel meteen op en activeert het; een ander opgeslagen doel kiezen activeert ook meteen.",
+            "label": "Opgeslagen eigen doelen"
+          },
+          "stone_reserve": {
+            "description": "Houd deze hoeveelheid kampsteen buiten bouwuitgaven; gebruik 0 als het overschot besteed mag worden.",
+            "label": "Steenreserve"
+          },
+          "use_built_in_default": {
+            "description": "Schakel meteen terug naar het ingebouwde doel en behoud opgeslagen eigen doelen.",
+            "label": "Ingebouwde standaard gebruiken"
+          },
+          "wood_reserve": {
+            "description": "Houd deze hoeveelheid kamphout buiten bouwuitgaven; gebruik 0 als het overschot besteed mag worden.",
+            "label": "Houtreserve"
+          }
+        },
+        "title": "Kies optionele kampbouw"
+      },
+      "readiness": {
+        "image": {
+          "alt": "Illustratieve instellingen voor gereedheid voor Auto-Beri-torenaanvallen",
+          "caption": "Status van de boostervoorwaarde en voorinstellingsopstelling, zonder echte booster of klantgegevens."
+        },
+        "items": {
+          "attack_preset_loadout": {
+            "description": "Controleer de golven, troepen en gereedschappen van de gekozen voorinstelling voordat je aanvallen inschakelt.",
+            "label": "Opstelling aanvalsvoorinstelling",
+            "recommendation": "Houd voor je gebruikelijke aanvalstempo voldoende gekozen troepen en gereedschappen bij donor en kamp."
+          },
+          "only_run_with_a_gallantry_booster": {
+            "description": "Vereis een actieve Dapperheidsbooster voordat transport, gereedschapaankopen, kampvoorbereiding, torenaanvallen of bouw doorgaan.",
+            "label": "Alleen met Dapperheidsbooster uitvoeren",
+            "recommendation": "Aan als alle Auto-Beri-onderdelen van de booster moeten afhangen."
+          }
+        },
+        "title": "Bereid torenaanvallen voor"
+      },
+      "save": {
+        "image": {
+          "alt": "Illustratieve instellingen voor Auto Beri opslaan en inschakelen",
+          "caption": "Voorbereidingslijst, schakelaar en optioneel rooster zonder echte accountgegevens."
+        },
+        "items": {
+          "automation_switch": {
+            "description": "Schakel Auto Beri in op de Automatisering-kaart nadat je kamp, donortroepen, voorinstelling en optionele uitgaven hebt gecontroleerd.",
+            "label": "Automatiseringsschakelaar",
+            "recommendation": "Aan na het instellen."
+          },
+          "calendar": {
+            "description": "Laat het rooster uit voor doorlopend gebruik of stel zo nodig je gebruikelijke uren in en sla het op.",
+            "label": "Kalender",
+            "recommendation": "Uit voor doorlopend evenementgebruik."
+          },
+          "save_settings": {
+            "description": "Sla voorinstelling, donor, transportsnelheid, aanvalslimieten, gereedschap en optionele bouwkeuzes op voordat je de automatisering inschakelt.",
+            "label": "Instellingen opslaan"
+          }
+        },
+        "title": "Opslaan en inschakelen"
+      },
+      "setup": {
+        "image": {
+          "alt": "Illustratieve Auto-Beri-instellingen voor aanval en bevoorrading",
+          "caption": "Opgeslagen aanvalsvoorinstelling, donorkasteel in het Grote Rijk, Reisveer, aanvalscontrole en daglimiet."
+        },
+        "items": {
+          "attack_check_interval": {
+            "description": "Stel in hoe vaak Auto Beri naar een volgende torenaanval zoekt.",
+            "label": "Controle-interval aanvallen",
+            "recommendation": "Houd het gebruikelijke interval van 30 seconden aan tenzij je minder controles wilt."
+          },
+          "attack_preset": {
+            "description": "Kies een opgeslagen Berimond-aanvalsformatie; Auto Beri gebruikt de troepenverhouding voor transport en torenaanvallen.",
+            "label": "Aanvalsvoorinstelling",
+            "recommendation": "Maak en kies eerst je gebruikelijke Berimond-voorinstelling."
+          },
+          "daily_normal_attack_limit": {
+            "description": "Stop nieuwe Auto-Beri-torenaanvallen zodra de accountbrede dagelijkse teller voor normale aanvallen deze limiet bereikt; 0 verwijdert deze extra limiet.",
+            "label": "Daglimiet normale aanvallen",
+            "recommendation": "0, tenzij je een accountbrede limiet gebruikt."
+          },
+          "horse_travel_boost": {
+            "description": "Kies voor torenaanvallen reizen met veer, munten of robijnen.",
+            "label": "Reisversnelling",
+            "recommendation": "Reisveer voor snel reizen zonder robijnreis te kiezen."
+          },
+          "open_settings": {
+            "description": "Open op de pagina Automatisering de instellingen van de Auto-Beri-kaart.",
+            "label": "Instellingen openen"
+          },
+          "source_castle": {
+            "description": "Kies het kasteel of de buitenpost in het Grote Rijk die deze troepen levert.",
+            "label": "Donorkasteel",
+            "recommendation": "Kies het kasteel met je aanvalsleger."
+          }
+        },
+        "title": "Kies aanval en bevoorradingsbron"
+      },
+      "tools": {
+        "image": {
+          "alt": "Illustratieve instellingen voor Auto-Beri-kampgereedschap",
+          "caption": "De drie minimale gereedschapsvoorraden en een duidelijk fictieve kampinventaris."
+        },
+        "items": {
+          "battering_rams_minimum": {
+            "description": "Vul zoveel gestationeerde stormrammen aan volgens dezelfde regel.",
+            "label": "Minimum stormrammen",
+            "recommendation": "Stem af op je gebruikelijke voorinstelling."
+          },
+          "mantlets_minimum": {
+            "description": "Vul zoveel gestationeerde schilden aan volgens dezelfde regel.",
+            "label": "Minimum schilden",
+            "recommendation": "Stem af op je gebruikelijke voorinstelling."
+          },
+          "scaling_ladders_minimum": {
+            "description": "Vul zoveel gestationeerde ladders in het kamp aan via geschikte muntaanbiedingen; 0 laat ze onbeheerd.",
+            "label": "Minimum ladders",
+            "recommendation": "Stem af op je gebruikelijke voorinstelling en aanvalstempo."
+          }
+        },
+        "title": "Onderhoud kampgereedschap"
+      },
+      "transfers": {
+        "image": {
+          "alt": "Illustratieve instellingen voor evenredig Auto-Beri-troepentransport",
+          "caption": "Fictieve verhouding 2:1, kampvoorraad, vrije capaciteit en een gedeeltelijke zending van één type; de waarden zijn voorbeelden, geen opgeslagen standaarden."
+        },
+        "items": {
+          "check_interval": {
+            "description": "Stel in hoe vaak Auto Beri de vrije transportcapaciteit en beide kasteelvoorraden vernieuwt.",
+            "label": "Controle-interval",
+            "recommendation": "Houd het gebruikelijke interval van 30 seconden aan."
+          },
+          "food_only": {
+            "description": "Alleen voorinstellingstroepen die Voedsel gebruiken kunnen worden vervoerd; niet-ondersteunde eenheden of onopgeloste troepenfamilies pauzeren met een reden.",
+            "label": "Alleen troepen met Voedsel vervoeren"
+          },
+          "minimum_free_capacity": {
+            "description": "Begin transport pas wanneer de gemelde vrije capaciteit deze drempel bereikt; een enkele evenredige zending mag kleiner zijn.",
+            "label": "Minimale vrije capaciteit",
+            "recommendation": "1 vrije troepenplaats voor gewone evenredige bevoorrading."
+          },
+          "owned_berimond_camp": {
+            "description": "Auto Beri vindt je eigen Berimond-kamp automatisch, dus je hoeft geen kamp-ID in te voeren.",
+            "label": "Eigen Berimond-kamp"
+          },
+          "partial_donor": {
+            "description": "Heeft de donor een deel van het benodigde troepentype, dan stuurt Auto Beri die kleinere hoeveelheid; zonder dat type wacht het in plaats van een ander type te sturen.",
+            "label": "Gedeeltelijke donorvoorraad"
+          },
+          "pending_transfer": {
+            "description": "Auto Beri wacht tot elke zending aankomt en vernieuwt de kampvoorraad voordat het de voorinstellingsverhouding opnieuw berekent.",
+            "label": "Lopend transport"
+          },
+          "preset_troop_mix": {
+            "description": "Auto Beri telt herhaalde troepenplaatsen uit de golven en binnenplaats van de gekozen voorinstelling op en vult telkens één ondervertegenwoordigd type aan.",
+            "label": "Troepenverhouding van voorinstelling"
+          },
+          "troop_transport_skip": {
+            "description": "Kies de duur van het item dat wordt gebruikt wanneer transportversnelling aanstaat.",
+            "label": "Transporttijdoverslag",
+            "recommendation": "Gebruik de versneller van 1 uur voor gewone bevestigde transporten."
+          },
+          "use_troop_transport_time_skips": {
+            "description": "Pas de gekozen tijdoverslag toe op een bevestigd transport terwijl het onderweg is.",
+            "label": "Transporttijdoverslagen gebruiken",
+            "recommendation": "Aan voor gewone kampbevoorrading als je voorraad versnellers dit toelaat."
+          }
+        },
+        "title": "Stel evenredig troepentransport in"
+      }
+    }
+  },
+  "autoStorm": {
+    "feature": {
+      "description": "Auto Storm kan een Stormkasteel openen en bouwen, forten en grondstofeilanden aanvallen, troepen importeren en gekozen Luna-beloningen kopen.",
+      "expectation": "Elke taak gebruikt actuele spelgegevens en je opgeslagen toestemmingen; premium bouw, aanvallen en aankopen blijven beperkt tot de keuzes die je inschakelt.",
+      "name": "Auto Storm",
+      "summary": "Beheer je Stormkasteel, aanvallen en beloningen"
+    },
+    "recommendationIntro": "Aanbevolen keuzes beschrijven normaal gebruik van Auto Storm; ze zijn advies en veranderen opgeslagen instellingen niet.",
+    "steps": {
+      "castle": {
+        "image": {
+          "alt": "Voorbeeld van toegang tot het Stormkasteel en doelvastlegging",
+          "caption": "Startkasteel, vastlegmodi en optionele doelactivering; geen echte aankoop of accountgegevens worden getoond."
+        },
+        "items": {
+          "automatic_open": {
+            "description": "Als Storm vergrendeld is, kies je een beschikbaar officieel startkasteel en controleer je de getoonde prijs voordat je ontgrendeling toestaat.",
+            "label": "Stormkasteel automatisch openen",
+            "recommendation": "Aan als Auto Storm na prijscontrole een gebruikelijk startkasteel mag openen."
+          },
+          "blueprint": {
+            "description": "Een vastgelegd doel wordt meteen opgeslagen en geactiveerd; Doel pauzeren stopt de afstemming maar bewaart opgeslagen doelen.",
+            "label": "Opgeslagen doel",
+            "recommendation": "Houd een gecontroleerd Functioneel doel actief voor gewoon bouwwerk."
+          },
+          "capture_castle": {
+            "description": "Selecteer je huidige Stormkasteel voordat je een bouwdoel vastlegt.",
+            "label": "Stormkasteel",
+            "recommendation": "Leg het kasteel vast dat je wilt beheren."
+          },
+          "combat_only": {
+            "description": "Gevechten tegen forten en eilanden vereisen geen vastgelegd bouwdoel.",
+            "label": "Gevecht zonder doel"
+          },
+          "decoration_preset": {
+            "description": "Pas na de bouw eventueel een gekozen decoratiepreset toe.",
+            "label": "Decoratiepreset na de bouw",
+            "recommendation": "Laat leeg tenzij je een aparte decoratie-indeling wilt."
+          },
+          "exact": {
+            "description": "Sla alle ondersteunde doeldetails op voor een exacte kopie.",
+            "label": "Exact vastleggen",
+            "recommendation": "Alleen gebruiken nadat je het hele doel hebt bekeken."
+          },
+          "functional": {
+            "description": "Sla een doel op voor essentiële Stormfuncties zonder elke gebouwpositie te kopiëren.",
+            "label": "Functioneel vastleggen",
+            "recommendation": "Functioneel voor gewoon onderhoud."
+          },
+          "layout": {
+            "description": "Sla gebouwtypen en posities op zonder decoraties.",
+            "label": "Indeling vastleggen",
+            "recommendation": "Alleen gebruiken als de plaatsing van gebouwen belangrijk is."
+          },
+          "open_settings": {
+            "description": "Open de Auto Storm-instellingen via de Automatiseringskaart.",
+            "label": "Instellingen openen"
+          },
+          "starter_castle": {
+            "description": "Kies het momenteel beschikbare officiële Storm-startkasteel voor het volgende vergrendelde seizoen.",
+            "label": "Te openen kasteel",
+            "recommendation": "Kies na prijscontrole een betaalbaar gebruikelijk startkasteel."
+          }
+        },
+        "title": "Open en leg je Stormkasteel vast"
+      },
+      "combat": {
+        "image": {
+          "alt": "Voorbeeld van fort- en eilandaanvalinstellingen",
+          "caption": "Voorbeeld van aquamarijneilanden, fortniveaus, doelvolgorde en bezettingsverdedigers."
+        },
+        "items": {
+          "defenders": {
+            "description": "Kies soorten en aantallen verdedigers voor een veroverd eiland; een lege lijst laat na een bevestigde overwinning één overlevende achter.",
+            "label": "Eilandverdedigingseenheden",
+            "recommendation": "Kies verdedigers als één overlevende niet genoeg is voor je plan."
+          },
+          "fort_preset": {
+            "description": "Kies een opgeslagen troepen- en werktuigformatie voor forten.",
+            "label": "Fortaanvalpreset",
+            "recommendation": "Gebruik je gebruikelijke fortpreset."
+          },
+          "forts": {
+            "description": "Schakel aanvallen op geselecteerde officiële fortniveaus van 40 tot 80 in.",
+            "label": "Stormforten",
+            "recommendation": "Aan voor niveaus die je gekozen preset betrouwbaar aankan."
+          },
+          "horse": {
+            "description": "Kies veer-, munt- of robijnreizen voor Stormaanvallen.",
+            "label": "Reisboost voor paarden",
+            "recommendation": "Reisveer voor snel reizen zonder robijnreizen te kiezen."
+          },
+          "island_preset": {
+            "description": "Kies een opgeslagen troepen- en werktuigformatie voor eilanden.",
+            "label": "Eilandaanvalpreset",
+            "recommendation": "Gebruik je gebruikelijke eilandpreset."
+          },
+          "island_resources": {
+            "description": "Kies welke hout-, steen- of aquamarijneilanden aangevallen mogen worden.",
+            "label": "Eilandgrondstoffen",
+            "recommendation": "Selecteer aquamarijn om die te verzamelen."
+          },
+          "island_sizes": {
+            "description": "Kies grote, kleine of beide eilandgroottes voor de gekozen grondstoffen.",
+            "label": "Eilandgroottes",
+            "recommendation": "Groot en klein voor gewone aquamarijnverzameling."
+          },
+          "islands": {
+            "description": "Schakel de verovering in van eilanden met de gekozen grondstoffen en groottes.",
+            "label": "Grondstofeilanden",
+            "recommendation": "Aan als je aquamarijn van grote en kleine eilanden wilt."
+          },
+          "minimum_attacks": {
+            "description": "Val alleen forten aan met minstens dit aantal resterende aanvallen.",
+            "label": "Minimaal resterende aanvallen",
+            "recommendation": "0 staat elk geschikt fort toe."
+          },
+          "priority": {
+            "description": "Rangschik ingeschakelde eiland- en fortdoelgroepen; binnen elke groep gaat het dichtstbijzijnde geschikte doel eerst.",
+            "label": "Aanvalsdoelprioriteit",
+            "recommendation": "Grote eilanden, kleine eilanden en dan forten van niveau 80 tot 40 voor aquamarijn."
+          }
+        },
+        "title": "Kies forten en grondstofeilanden"
+      },
+      "construction": {
+        "image": {
+          "alt": "Voorbeeld van bouw- en reserve-instellingen",
+          "caption": "Grondstoftransport, uitgaverechten, reserves en havenniveau als voorbeeldbediening."
+        },
+        "items": {
+          "demolition": {
+            "description": "Sta nauwkeurige verwijdering toe van gebouwen die niet verplaatst of opgeslagen kunnen worden.",
+            "label": "Sloop toestaan",
+            "recommendation": "Uit tenzij je een gecontroleerde indeling opnieuw opbouwt."
+          },
+          "donor_reserves": {
+            "description": "Bewaar gekozen hoeveelheden hout, steen en aquamarijn bij elke donor vóór grondstoftransport.",
+            "label": "Beschermde donorreserves",
+            "recommendation": "Bescherm je gewone bouwbudget voor hout en steen; aquamarijn 0 als ongebruikt."
+          },
+          "harbor_level": {
+            "description": "Kies havendoelniveau 1, 2 of 3; niveaus 2 en 3 gebruiken premium bouwpaden.",
+            "label": "Havendoelniveau",
+            "recommendation": "Niveau 1 tenzij premium upgrades gepland zijn."
+          },
+          "harbor": {
+            "description": "Houd de haven op het gekozen niveau, ook als het vastgelegde doel afwijkt.",
+            "label": "Haven upgraden",
+            "recommendation": "Aan met niveau 1 voor normaal gebruik."
+          },
+          "premium": {
+            "description": "Sta geschikte bouwstappen toe die premium valuta kosten.",
+            "label": "Premium kosten toestaan",
+            "recommendation": "Uit tenzij premium bouw gepland is."
+          },
+          "resource_transport": {
+            "description": "Sta bevestigde leveringen van ontbrekende bouwgrondstoffen uit donorkastelen toe.",
+            "label": "Ontbrekende grondstoffen vervoeren",
+            "recommendation": "Aan voor gewone bouw."
+          },
+          "skip_reserves": {
+            "description": "Bewaar het gekozen aantal voorwerpen van 1 min, 5 min, 10 min, 30 min, 1 uur, 5 uur en 24 uur voor bouw en transport.",
+            "label": "Tijdsprongen in reserve",
+            "recommendation": "Houd korte sprongen op 0 tenzij elders nodig; reserveer je voorraad van 1, 5 en 24 uur voor andere evenementen."
+          },
+          "storm_reserves": {
+            "description": "Houd de gekozen hoeveelheden hout, steen en aquamarijn buiten de bouw.",
+            "label": "Bouwuitgavenreserves van Stormkasteel",
+            "recommendation": "Hout 0 en steen 0 als overschotten besteed mogen worden; stel aquamarijn in op je geplande beloningsbudget."
+          },
+          "time_skips": {
+            "description": "Gebruik geschikte versnellers voor bouw, grondstoffentransport en troepentransport met behoud van de gekozen reserves.",
+            "label": "Versnellers voor bouw en transport gebruiken",
+            "recommendation": "Aan als je gewone bouw wilt versnellen."
+          }
+        },
+        "title": "Stel bouw en grondstofbescherming in"
+      },
+      "luna": {
+        "image": {
+          "alt": "Voorbeeld van Luna-beloningsinstellingen",
+          "caption": "Aquamarijnreserve, beperkte aankoopdoelen, herhaalbare beloningen en prioriteit."
+        },
+        "items": {
+          "cost_cap": {
+            "description": "Lees de spelkosten en aankooplimiet van elke beloning.",
+            "label": "Kosten en aankooplimiet",
+            "recommendation": "Controleer beide alleen-lezenwaarden voordat je inschakelt."
+          },
+          "keep_aqua": {
+            "description": "Houd deze hoeveelheid aquamarijn buiten Luna-aankopen.",
+            "label": "Aquamarijn bewaren",
+            "recommendation": "0 als alle overschotten naar beloningen mogen; reserveer anders je geplande hoeveelheid."
+          },
+          "priority": {
+            "description": "De winkel behandelt aankoopdoelen met lagere nummers eerst.",
+            "label": "Prioriteit",
+            "recommendation": "Geef 1, 2 en 3 in de gewenste volgorde en plaats beperkte doelen vóór onbeperkte beloningen."
+          },
+          "search": {
+            "description": "Zoek officiële Luna-beloningen op naam voordat je een aankoop instelt.",
+            "label": "Luna-beloning zoeken",
+            "recommendation": "Zoek de beloning die je echt wilt."
+          },
+          "target_total": {
+            "description": "Stel het gewenste totale aantal aankopen voor een beperkte beloning in.",
+            "label": "Gewenst totaal",
+            "recommendation": "Stel alleen het aantal in dat je wilt kopen."
+          },
+          "unlimited": {
+            "description": "Blijf een geschikte herhaalbare beloning kopen zolang reserve en winkellimiet het toelaten.",
+            "label": "Onbeperkt",
+            "recommendation": "Aan alleen voor herhaalbare beloningen die je regelmatig wilt."
+          },
+          "use": {
+            "description": "Selecteer een beloning om automatisch kopen toe te staan.",
+            "label": "Beloning gebruiken",
+            "recommendation": "Schakel alleen gewenste beloningen in."
+          }
+        },
+        "title": "Kies Luna-beloningen voor aquamarijn"
+      },
+      "save": {
+        "image": {
+          "alt": "Voorbeeld van Auto Storm opslaan en inschakelen",
+          "caption": "Dagelijkse aanvalslimiet, beleidscontrole, alleen-lezen kaartvernieuwing en automatiseringsschakelaar."
+        },
+        "items": {
+          "daily_limit": {
+            "description": "Stop nieuwe Auto Storm-aanvallen bij het accountbrede dagelijkse aantal gewone aanvallen; 0 verwijdert deze extra limiet.",
+            "label": "Dagelijkse limiet gewone aanvallen",
+            "recommendation": "0 tenzij je een accountbrede limiet gebruikt."
+          },
+          "enable": {
+            "description": "Schakel Auto Storm in op de Automatiseringskaart zodra opgeslagen keuzes klaar zijn.",
+            "label": "Automatiseringsschakelaar",
+            "recommendation": "Aan na instellen."
+          },
+          "map_refresh": {
+            "description": "Lees het gezaghebbende interval voor vernieuwing van de Stormkaart.",
+            "label": "Kaartvernieuwingsinterval",
+            "recommendation": "Het alleen-lezeninterval is 2 uur; wacht na wijzigingen op een nieuwe scan."
+          },
+          "policy_check": {
+            "description": "Stel in hoe vaak Auto Storm instellingen en geschikte taken controleert.",
+            "label": "Beleidscontrole-interval",
+            "recommendation": "Houd het gebruikelijke interval van 30 seconden."
+          },
+          "save": {
+            "description": "Sla kasteel-, bouw-, gevechts-, troepenimport- en Luna-keuzes op voordat je automatisering inschakelt.",
+            "label": "Instellingen opslaan",
+            "recommendation": "Sla op na controle van alle uitgaverechten."
+          }
+        },
+        "title": "Sla Auto Storm op en schakel het in"
+      },
+      "troops": {
+        "image": {
+          "alt": "Voorbeeld van troepenimport en alleen-lezen schattingen",
+          "caption": "Donorvolgorde, 1.000 bewaarde troepen en alleen-lezen capaciteitsschattingen."
+        },
+        "items": {
+          "attack_history": {
+            "description": "Lees bevestigde Storm-aanvallen sinds de serverreset gedeeld door 24, niet een voortschrijdend gemiddelde over 24 uur.",
+            "label": "Gemiddelde aanvallen sinds reset",
+            "recommendation": "Bekijk deze alleen-lezen schatting voordat je importbehoeften wijzigt."
+          },
+          "committed_cap": {
+            "description": "Lees de automatisch berekende limiet inclusief gestationeerde troepen, bewegingen, onderweg zijnde en terugkerende troepen.",
+            "label": "Limiet gebonden Stormtroepen",
+            "recommendation": "Bekijk deze alleen-lezen limiet voordat je meer importeert."
+          },
+          "donors": {
+            "description": "Kies donorkastelen in getoonde volgorde; een gedeeltelijke voorraad kan een kleinere levering geven.",
+            "label": "Donorkastelen",
+            "recommendation": "Selecteer je gewone troepenleveranciers in gewenste volgorde."
+          },
+          "import": {
+            "description": "Importeer ontbrekende aanvals- of gekozen verdedigingstroepen uit donorkastelen naar Storm.",
+            "label": "Ontbrekende troepen importeren",
+            "recommendation": "Aan als je Stormkasteel regelmatig troepen nodig heeft."
+          },
+          "map_coverage": {
+            "description": "Bekijk kaartdekking voordat je op weergegeven doelen vertrouwt.",
+            "label": "Kaartdekking",
+            "recommendation": "Wacht op actuele dekking als doelen ontbreken."
+          },
+          "minimum_kept": {
+            "description": "Houd na lancering van een aanval minstens zoveel troepen in Storm en behoud de mix van ingeschakelde presets.",
+            "label": "Minimum troepen over na lancering",
+            "recommendation": "1.000 troepen als normale reserve, aangepast aan je werkelijke leger."
+          },
+          "preset_average": {
+            "description": "Lees de gemiddelde troepenbehoefte van ingeschakelde aanvalspresets, inclusief gekozen eilandverdedigers.",
+            "label": "Gemiddelde ingeschakelde preset",
+            "recommendation": "Vergelijk deze alleen-lezen schatting met je leger."
+          }
+        },
+        "title": "Importeer en bewaak Stormtroepen"
+      }
+    }
+  }
+}

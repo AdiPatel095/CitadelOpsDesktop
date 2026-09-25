@@ -1,3 +1,5 @@
+import { useLocale as useStaticLocale } from "../../i18n/LocaleContext";
+import { LocalizedText } from "../../i18n/LocalizedText";
 import React, { useEffect, useMemo, useState } from 'react';
 import { CalendarDays, FastForward, Truck, Wheat } from 'lucide-react';
 import { Button, ChoiceChipGroup, Input, SettingsModal, SettingsToggleRow } from '../../components/ui';
@@ -23,6 +25,7 @@ export const AutoFoodBalanceSettingsModal: React.FC<AutoFoodBalanceSettingsModal
   onClose,
   onOpenFeatureSchedule,
 }) => {
+  const { t: localizeStatic } = useStaticLocale();
   const { configuration, updateConfiguration } = useCitadelAPI();
   const saved = useMemo(
     () => parseAutoFoodBalanceSettings(configurationSection(configuration, 'automation.autoFoodBalance')),
@@ -54,9 +57,9 @@ export const AutoFoodBalanceSettingsModal: React.FC<AutoFoodBalanceSettingsModal
       isOpen={isOpen}
       onClose={onClose}
       maxWidth="lg"
-      title="Auto Food Balance"
+      title={localizeStatic("ui.settings.components.autoFoodBalanceSettingsModal.title.auto.food.balance.c200b4fa")}
       icon={<Wheat className="h-5 w-5" />}
-      description="Maintains Food, Honey, Mead, and Beef reserves across every owned castle."
+      description={localizeStatic("ui.settings.components.autoFoodBalanceSettingsModal.description.maintains.food.honey.mead.and.beef.reserves.3c47f1fd")}
       titleTrailing={(
             <Button
             variant="outline"
@@ -73,41 +76,39 @@ export const AutoFoodBalanceSettingsModal: React.FC<AutoFoodBalanceSettingsModal
     >
       <div className="space-y-5">
         <p className="text-sm text-text-muted">
-          Before sending resources, CitadelOps refreshes each castle’s food state so troop consumption, brewery inputs, and equipped bonuses are current. It ranks donors by net surplus, requires enough protected storage to fill the destination, then uses market barrows or allowed kingdom transport.
-        </p>
+          <LocalizedText messageKey="ui.settings.components.autoFoodBalanceSettingsModal.before.sending.resources.citadelops.refreshes.each.castle.1110c8f5" /></p>
 
         <div className="grid gap-4 sm:grid-cols-2">
-          <NumberField label="Polling interval" value={settings.checkIntervalSec} min={30} max={3600} suffix="seconds" onChange={(value) => setNumber('checkIntervalSec', value)} />
-          <NumberField label="Minimum kingdom shipment" value={settings.minimumShipmentSize} min={1} max={Number.MAX_SAFE_INTEGER} onChange={(value) => setNumber('minimumShipmentSize', value)} />
-          <NumberField label="Minimum Storm delivery" value={settings.minimumStormShipmentSize} min={10_000} max={Number.MAX_SAFE_INTEGER} onChange={(value) => setNumber('minimumStormShipmentSize', value)} />
-          <NumberField label="Donor reserve" value={settings.minimumSourceReserve} min={0} max={Number.MAX_SAFE_INTEGER} onChange={(value) => setNumber('minimumSourceReserve', value)} />
-          <NumberField label="Coin reserve" value={settings.minimumCoinReserve} min={0} max={Number.MAX_SAFE_INTEGER} onChange={(value) => setNumber('minimumCoinReserve', value)} />
+          <NumberField label={localizeStatic("ui.settings.components.autoFoodBalanceSettingsModal.label.polling.interval.f0059325")} value={settings.checkIntervalSec} min={30} max={3600} suffix="seconds" onChange={(value) => setNumber('checkIntervalSec', value)} />
+          <NumberField label={localizeStatic("ui.settings.components.autoFoodBalanceSettingsModal.label.minimum.kingdom.shipment.60e2c3d8")} value={settings.minimumShipmentSize} min={1} max={Number.MAX_SAFE_INTEGER} onChange={(value) => setNumber('minimumShipmentSize', value)} />
+          <NumberField label={localizeStatic("ui.settings.components.autoFoodBalanceSettingsModal.label.minimum.storm.delivery.8340a87c")} value={settings.minimumStormShipmentSize} min={10_000} max={Number.MAX_SAFE_INTEGER} onChange={(value) => setNumber('minimumStormShipmentSize', value)} />
+          <NumberField label={localizeStatic("ui.settings.components.autoFoodBalanceSettingsModal.label.donor.reserve.6e8205ec")} value={settings.minimumSourceReserve} min={0} max={Number.MAX_SAFE_INTEGER} onChange={(value) => setNumber('minimumSourceReserve', value)} />
+          <NumberField label={localizeStatic("ui.settings.components.autoFoodBalanceSettingsModal.label.coin.reserve.06dee9e3")} value={settings.minimumCoinReserve} min={0} max={Number.MAX_SAFE_INTEGER} onChange={(value) => setNumber('minimumCoinReserve', value)} />
         </div>
 
         <p className="text-xs text-text-muted">
-          Storm Food and Mead wait until the configured delivery threshold is available after the kingdom-transport toll. The minimum is 10,000.
-        </p>
+          <LocalizedText messageKey="ui.settings.components.autoFoodBalanceSettingsModal.storm.food.and.mead.wait.until.the.1090dfc3" /></p>
 
         <div className="rounded-global border border-border-base bg-bg-card/40 p-4">
           <HorseTravelBoostSelect
             value={settings.horseTravelBoostId}
             onChange={(horseTravelBoostId) => setSettings((current) => ({ ...current, horseTravelBoostId }))}
             negativeOneLabel="No horse boost · HBW -1"
-            description="Applied to every Auto Food market-barrow shipment. Coin and ruby horses are used only when explicitly selected."
+            description={localizeStatic("ui.settings.components.autoFoodBalanceSettingsModal.description.applied.to.every.auto.food.market.barrow.76bf87ca")}
           />
         </div>
 
         <SettingsToggleRow
-          title="Allow kingdom transport"
-          description="Allow the highest eligible donor to use kingdom transport when it is in another kingdom."
+          title={localizeStatic("ui.settings.components.autoFoodBalanceSettingsModal.title.allow.kingdom.transport.dfd413bf")}
+          description={localizeStatic("ui.settings.components.autoFoodBalanceSettingsModal.description.allow.the.highest.eligible.donor.to.use.59e691cf")}
           icon={<Truck className="h-4 w-4" />}
           checked={settings.autoKingdomTransport}
           onChange={(checked) => setSettings((current) => ({ ...current, autoKingdomTransport: checked }))}
         />
 
         <SettingsToggleRow
-          title="Use transport time skips"
-          description="Apply selected skips one command at a time, waiting for each confirmed response until the shipment arrives."
+          title={localizeStatic("ui.settings.components.autoFoodBalanceSettingsModal.title.use.transport.time.skips.9d4e14fe")}
+          description={localizeStatic("ui.settings.components.autoFoodBalanceSettingsModal.description.apply.selected.skips.one.command.at.a.12767303")}
           icon={<FastForward className="h-4 w-4" />}
           checked={settings.useKingdomTimeSkips}
           disabled={!settings.autoKingdomTransport}
@@ -117,11 +118,11 @@ export const AutoFoodBalanceSettingsModal: React.FC<AutoFoodBalanceSettingsModal
         {settings.useKingdomTimeSkips && settings.autoKingdomTransport && (
           <div className="space-y-3 rounded-global border border-border-base bg-bg-input/35 p-4">
             <div>
-              <div className="text-xs font-bold uppercase tracking-wider text-text-muted">Allowed transport skips</div>
+              <div className="text-xs font-bold uppercase tracking-wider text-text-muted"><LocalizedText messageKey="ui.settings.components.autoFoodBalanceSettingsModal.allowed.transport.skips.73eba8a9" /></div>
               <ChoiceChipGroup
                 className="mt-2"
                 size="sm"
-                ariaLabel="Allowed Auto Food transport time skips"
+                ariaLabel={localizeStatic("ui.settings.components.autoFoodBalanceSettingsModal.ariaLabel.allowed.auto.food.transport.time.skips.f5271cb4")}
                 options={AUTO_FOOD_BALANCE_TIME_SKIPS.map((skip) => ({ value: skip.id, label: skip.label }))}
                 selected={settings.allowedTimeSkips}
                 onToggle={(skipID) => setSettings((current) => parseAutoFoodBalanceSettings({
@@ -159,8 +160,7 @@ export const AutoFoodBalanceSettingsModal: React.FC<AutoFoodBalanceSettingsModal
             )}
 
             <p className="text-[11px] leading-relaxed text-text-muted">
-              CitadelOps prefers the smallest selected skip that completes a shipment, then the largest selected partial skip. The amounts above are always kept in reserve.
-            </p>
+              <LocalizedText messageKey="ui.settings.components.autoFoodBalanceSettingsModal.citadelops.prefers.the.smallest.selected.skip.that.a106f6cf" /></p>
           </div>
         )}
 

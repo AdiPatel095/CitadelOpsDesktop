@@ -1,6 +1,7 @@
 package Automation
 
 import (
+	"CitadelDesktop/Server/Localization"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -79,7 +80,7 @@ func (*AutoNomadPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision
 		TimeSkipReserve: map[string]int64{}, HorseTravelBoostID: -1,
 	}
 	if !decodeSection(snapshot.Configuration, "automation.autoNomad", &settings) {
-		return nomadWaiting(snapshot.Now, "Auto Nomad/Samurai is not configured"), nil
+		return nomadWaiting(snapshot.Now, "Auto Nomad/Samurai is not configured", Localization.New("server.automation.auto_nomad_samurai_is.ee6bec27", "Auto Nomad/Samurai is not configured", nil)), nil
 	}
 	settings.LegacyPresetID = strings.TrimSpace(settings.LegacyPresetID)
 	settings.NomadPresetID = strings.TrimSpace(settings.NomadPresetID)
@@ -92,17 +93,17 @@ func (*AutoNomadPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision
 	}
 	settings.RBCTest.RunID = strings.TrimSpace(settings.RBCTest.RunID)
 	if !validHorseTravelBoostID(settings.HorseTravelBoostID) {
-		return nomadWaiting(snapshot.Now, "Choose a supported horse travel boost"), nil
+		return nomadWaiting(snapshot.Now, "Choose a supported horse travel boost", Localization.New("server.automation.choose_a_supported_horse.0d7016a8", "Choose a supported horse travel boost", nil)), nil
 	}
 	if settings.RBCTest.Enabled {
 		return evaluateAutoNomadRBCTest(snapshot, settings)
 	}
 	if settings.SourceCastleID <= 0 || settings.NomadPresetID == "" || settings.SamuraiPresetID == "" || settings.ScoreTarget <= 0 ||
 		settings.NomadDifficultyID <= 0 || settings.SamuraiDifficultyID <= 0 {
-		return nomadWaiting(snapshot.Now, "Choose a source castle, both event attack presets, both event difficulties, and score target"), nil
+		return nomadWaiting(snapshot.Now, "Choose a source castle, both event attack presets, both event difficulties, and score target", Localization.New("server.automation.choose_a_source_castle.cff912fd", "Choose a source castle, both event attack presets, both event difficulties, and score target", nil)), nil
 	}
 	if invalidTimeSkipReserve(settings.TimeSkipReserve) {
-		return nomadWaiting(snapshot.Now, "Time-skip reserves cannot be negative"), nil
+		return nomadWaiting(snapshot.Now, "Time-skip reserves cannot be negative", Localization.New("server.automation.time_skip_reserves_cannot.50272547", "Time-skip reserves cannot be negative", nil)), nil
 	}
 
 	score, found := activeNomadEventScore(snapshot.State, snapshot.Now)
@@ -112,24 +113,24 @@ func (*AutoNomadPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision
 		); locked {
 			return decision, nil
 		}
-		return nomadWaiting(snapshot.Now, "No Nomad or Samurai scalable event is active"), nil
+		return nomadWaiting(snapshot.Now, "No Nomad or Samurai scalable event is active", Localization.New("server.automation.no_nomad_or_samurai.3c6ba69d", "No Nomad or Samurai scalable event is active", nil)), nil
 	}
 	targetTypeID, _ := nomadTargetType(score.EventID)
 	difficultyID := configuredNomadDifficulty(settings, score.EventID)
 	if snapshot.GameData == nil {
-		return nomadWaiting(snapshot.Now, "Official event data is unavailable"), nil
+		return nomadWaiting(snapshot.Now, "Official event data is unavailable", Localization.New("server.automation.official_event_data_is.0f24e54e", "Official event data is unavailable", nil)), nil
 	}
 	difficulty, valid := snapshot.GameData.ScalableEvent(score.EventID, difficultyID)
 	if !valid {
-		return nomadWaiting(snapshot.Now, fmt.Sprintf("Difficulty %d is not valid for event %d", difficultyID, score.EventID)), nil
+		return nomadWaiting(snapshot.Now, fmt.Sprintf("Difficulty %d is not valid for event %d", difficultyID, score.EventID), Localization.New("server.automation.difficulty_p_is_not.f22bcf4d", "Difficulty {p0} is not valid for event {p1}", Localization.Params{"p0": fmt.Sprintf("%d", difficultyID), "p1": fmt.Sprintf("%d", score.EventID)})), nil
 	}
 	if difficulty.IsLocked && (difficulty.UnlockAchievementID <= 0 || !snapshot.State.Player.Achievements.Completed[difficulty.UnlockAchievementID]) {
-		return nomadWaiting(snapshot.Now, fmt.Sprintf("Difficulty %d is not unlocked by this player's achievements", difficultyID)), nil
+		return nomadWaiting(snapshot.Now, fmt.Sprintf("Difficulty %d is not unlocked by this player's achievements", difficultyID), Localization.New("server.automation.difficulty_p_is_not.5a798be9", "Difficulty {p0} is not unlocked by this player's achievements", Localization.Params{"p0": fmt.Sprintf("%d", difficultyID)})), nil
 	}
 	if score.DifficultyID <= 0 {
 		arguments, _ := json.Marshal(map[string]any{"eventId": score.EventID, "difficultyId": difficultyID})
 		return Decision{
-			Status: "ready", Detail: fmt.Sprintf("Start %s at difficulty %d", nomadEventName(score.EventID), difficultyID),
+			Status: "ready", Detail: fmt.Sprintf("Start %s at difficulty %d", nomadEventName(score.EventID), difficultyID), DetailDescriptor: nomadEventDescriptor(score.EventID, "nomad_start", Localization.Params{"difficulty": fmt.Sprint(difficultyID)}),
 			NextCheckAt: snapshot.Now.Add(2 * time.Second),
 			Request:     &Intent.Request{Name: "nomad.difficulty.select", Arguments: arguments}, ReevaluateOnSuccess: true,
 		}, nil
@@ -138,28 +139,28 @@ func (*AutoNomadPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision
 		return nomadWaiting(snapshot.Now, fmt.Sprintf(
 			"The active %s run already uses difficulty %d; configured difficulty %d applies to the next run",
 			nomadEventName(score.EventID), score.DifficultyID, difficultyID,
-		)), nil
+		), nomadEventDescriptor(score.EventID, "nomad_difficulty", Localization.Params{"current": fmt.Sprint(score.DifficultyID), "configured": fmt.Sprint(difficultyID)})), nil
 	}
 	if score.PlayerScore >= settings.ScoreTarget {
 		return Decision{
-			Status: "complete", Detail: fmt.Sprintf("Score target reached: %d / %d", score.PlayerScore, settings.ScoreTarget),
+			Status: "complete", Detail: fmt.Sprintf("Score target reached: %d / %d", score.PlayerScore, settings.ScoreTarget), DetailDescriptor: Localization.New("server.automation.score_target_reached_p.31fd0a58", "Score target reached: {p0} / {p1}", Localization.Params{"p0": score.PlayerScore, "p1": settings.ScoreTarget}),
 			NextCheckAt: snapshot.Now.Add(policyInterval(settings.CheckIntervalSec, 30)),
 			Metrics:     map[string]float64{"score": float64(score.PlayerScore), "scoreTarget": float64(settings.ScoreTarget)},
 		}, nil
 	}
 	if remaining := invasionEventRemaining(score, snapshot.Now); remaining >= 0 && remaining <= max(0, settings.MinimumRemainingSec) {
 		return Decision{
-			Status: "idle", Detail: fmt.Sprintf("Event has %d seconds remaining; no new attacks will launch", remaining),
+			Status: "idle", Detail: fmt.Sprintf("Event has %d seconds remaining; no new attacks will launch", remaining), DetailDescriptor: Localization.New("server.automation.event_has_p_seconds.78b2a478", "Event has {p0} seconds remaining; no new attacks will launch", Localization.Params{"p0": remaining}),
 			NextCheckAt: snapshot.Now.Add(policyInterval(settings.CheckIntervalSec, 30)),
 		}, nil
 	}
 
 	source, exists := snapshot.State.Castles[settings.SourceCastleID]
 	if !exists {
-		return nomadWaiting(snapshot.Now, fmt.Sprintf("Source castle %d is unavailable", settings.SourceCastleID)), nil
+		return nomadWaiting(snapshot.Now, fmt.Sprintf("Source castle %d is unavailable", settings.SourceCastleID), Localization.New("server.automation.source_castle_p_is.10eb5b8b", "Source castle {p0} is unavailable", Localization.Params{"p0": fmt.Sprintf("%d", settings.SourceCastleID)})), nil
 	}
 	if source.KingdomID != 0 {
-		return nomadWaiting(snapshot.Now, "Nomad and Samurai camp attacks require a Great Empire castle"), nil
+		return nomadWaiting(snapshot.Now, "Nomad and Samurai camp attacks require a Great Empire castle", Localization.New("server.automation.nomad_and_samurai_camp.45e6a237", "Nomad and Samurai camp attacks require a Great Empire castle", nil)), nil
 	}
 	document, err := AttackPresets.Decode(snapshot.Configuration.Sections[AttackPresets.ConfigurationSection])
 	if err != nil {
@@ -167,11 +168,11 @@ func (*AutoNomadPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision
 	}
 	preset, exists := AttackPresets.Find(document, configuredNomadPresetID(settings, score.EventID))
 	if !exists {
-		return nomadWaiting(snapshot.Now, fmt.Sprintf("The selected %s attack preset no longer exists", nomadEventName(score.EventID))), nil
+		return nomadWaiting(snapshot.Now, fmt.Sprintf("The selected %s attack preset no longer exists", nomadEventName(score.EventID)), nomadEventDescriptor(score.EventID, "nomad_missing_preset", nil)), nil
 	}
 	progression := snapshot.GameData.EventCampProgression(score.EventID, score.DifficultyID, targetTypeID)
 	if len(progression) == 0 {
-		return nomadWaiting(snapshot.Now, "Official regular-camp progression data is unavailable"), nil
+		return nomadWaiting(snapshot.Now, "Official regular-camp progression data is unavailable", Localization.New("server.automation.official_regular_camp_progression.7152239d", "Official regular-camp progression data is unavailable", nil)), nil
 	}
 	maximumVictoryCount := progression[len(progression)-1].VictoryCount
 	metrics := map[string]float64{
@@ -193,7 +194,7 @@ func (*AutoNomadPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision
 				"kingdomId": locked.KingdomID, "x1": locked.X, "y1": locked.Y, "x2": locked.X, "y2": locked.Y,
 			})
 			return Decision{
-				Status: "ready", Detail: fmt.Sprintf("Refresh locked camp %d:%d immediately after its confirmed victory", locked.X, locked.Y),
+				Status: "ready", Detail: fmt.Sprintf("Refresh locked camp %d:%d immediately after its confirmed victory", locked.X, locked.Y), DetailDescriptor: Localization.New("server.automation.refresh_locked_camp_p.bd972970", "Refresh locked camp {p0}:{p1} immediately after its confirmed victory", Localization.Params{"p0": locked.X, "p1": locked.Y}),
 				NextCheckAt: snapshot.Now.Add(time.Second), Metrics: metrics,
 				Request: &Intent.Request{Name: "map.query", Arguments: arguments}, ReevaluateOnSuccess: true,
 			}, nil
@@ -205,12 +206,12 @@ func (*AutoNomadPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision
 				metrics["cooldownRemaining"] = float64(remaining)
 				if !settings.SkipCooldowns {
 					return Decision{
-						Status: "waiting", Detail: fmt.Sprintf("Locked camp cooldown has %d seconds remaining; time skips are disabled", remaining),
+						Status: "waiting", Detail: fmt.Sprintf("Locked camp cooldown has %d seconds remaining; time skips are disabled", remaining), DetailDescriptor: Localization.New("server.automation.locked_camp_cooldown_has.05d74678", "Locked camp cooldown has {p0} seconds remaining; time skips are disabled", Localization.Params{"p0": remaining}),
 						NextCheckAt: snapshot.Now.Add(time.Duration(remaining) * time.Second), Metrics: metrics,
 					}, nil
 				}
 				return Decision{
-					Status: "ready", Detail: fmt.Sprintf("Clear locked camp %d:%d before the next chained arrival", locked.X, locked.Y),
+					Status: "ready", Detail: fmt.Sprintf("Clear locked camp %d:%d before the next chained arrival", locked.X, locked.Y), DetailDescriptor: Localization.New("server.automation.clear_locked_camp_p.79792b0c", "Clear locked camp {p0}:{p1} before the next chained arrival", Localization.Params{"p0": locked.X, "p1": locked.Y}),
 					NextCheckAt: snapshot.Now.Add(time.Second), Metrics: metrics,
 					Request: &Intent.Request{
 						Name: "nomad.cooldown.minute_skip", Arguments: nomadMinuteSkipArguments(observation, settings.TimeSkipReserve),
@@ -227,7 +228,7 @@ func (*AutoNomadPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision
 			"sourceCastleId": source.ID, "radius": fixedNomadRadius, "scanStartedAt": snapshot.Now,
 		})
 		return Decision{
-			Status: "ready", Detail: fmt.Sprintf("Discover the four %s camps around %s", nomadEventName(score.EventID), invasionCastleName(source)),
+			Status: "ready", Detail: fmt.Sprintf("Discover the four %s camps around %s", nomadEventName(score.EventID), invasionCastleName(source)), DetailDescriptor: nomadDiscoverDescriptor(score.EventID, source),
 			NextCheckAt: snapshot.Now.Add(2 * time.Second), Metrics: metrics,
 			Request: &Intent.Request{Name: "nomad.map.scan", Arguments: arguments}, ReevaluateOnSuccess: true,
 		}, nil
@@ -237,7 +238,7 @@ func (*AutoNomadPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision
 	metrics["knownCamps"] = float64(len(camps))
 	if len(camps) < nomadCampCount {
 		return Decision{
-			Status: "waiting", Detail: fmt.Sprintf("Found %d of the expected %d regular camps", len(camps), nomadCampCount),
+			Status: "waiting", Detail: fmt.Sprintf("Found %d of the expected %d regular camps", len(camps), nomadCampCount), DetailDescriptor: Localization.New("server.automation.found_p_of_the.41ee06ca", "Found {p0, number} of the expected {p1, number} regular camps", Localization.Params{"p0": len(camps), "p1": nomadCampCount}),
 			NextCheckAt: lastScan.Add(refreshInterval), Metrics: metrics,
 		}, nil
 	}
@@ -247,7 +248,7 @@ func (*AutoNomadPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision
 			"kingdomId": pending.KingdomID, "x1": pending.X, "y1": pending.Y, "x2": pending.X, "y2": pending.Y,
 		})
 		return Decision{
-			Status: "ready", Detail: fmt.Sprintf("Refresh camp %d:%d after its confirmed victory", pending.X, pending.Y),
+			Status: "ready", Detail: fmt.Sprintf("Refresh camp %d:%d after its confirmed victory", pending.X, pending.Y), DetailDescriptor: Localization.New("server.automation.refresh_camp_p_p.222785f7", "Refresh camp {p0}:{p1} after its confirmed victory", Localization.Params{"p0": pending.X, "p1": pending.Y}),
 			NextCheckAt: snapshot.Now.Add(2 * time.Second), Metrics: metrics,
 			Request: &Intent.Request{Name: "map.query", Arguments: arguments}, ReevaluateOnSuccess: true,
 		}, nil
@@ -274,12 +275,12 @@ func (*AutoNomadPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision
 			if settings.SkipCooldowns {
 				if responseGatedDungeonCooldownCount(snapshot.State, settings.TimeSkipReserve, int64(remaining)) < 1 {
 					return Decision{
-						Status: "waiting", Detail: fmt.Sprintf("Available time skips cannot clear camp %d:%d while preserving reserves", target.Observation.X, target.Observation.Y),
+						Status: "waiting", Detail: fmt.Sprintf("Available time skips cannot clear camp %d:%d while preserving reserves", target.Observation.X, target.Observation.Y), DetailDescriptor: Localization.New("server.automation.available_time_skips_cannot.54f66fa7", "Available time skips cannot clear camp {p0}:{p1} while preserving reserves", Localization.Params{"p0": target.Observation.X, "p1": target.Observation.Y}),
 						NextCheckAt: snapshot.Now.Add(policyInterval(settings.CheckIntervalSec, 30)), Metrics: metrics,
 					}, nil
 				}
 				return Decision{
-					Status: "ready", Detail: fmt.Sprintf("Clear camp %d:%d cooldown and continue leveling the four camps", target.Observation.X, target.Observation.Y),
+					Status: "ready", Detail: fmt.Sprintf("Clear camp %d:%d cooldown and continue leveling the four camps", target.Observation.X, target.Observation.Y), DetailDescriptor: Localization.New("server.automation.clear_camp_p_p.d9a4cfcd", "Clear camp {p0}:{p1} cooldown and continue leveling the four camps", Localization.Params{"p0": target.Observation.X, "p1": target.Observation.Y}),
 					NextCheckAt: snapshot.Now.Add(time.Second), Metrics: metrics,
 					Request: &Intent.Request{
 						Name: "nomad.cooldown.minute_skip", Arguments: nomadMinuteSkipArguments(target.Observation, settings.TimeSkipReserve),
@@ -287,7 +288,7 @@ func (*AutoNomadPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision
 				}, nil
 			}
 			return Decision{
-				Status: "waiting", Detail: fmt.Sprintf("Camp %d:%d is available in %d seconds", target.Observation.X, target.Observation.Y, remaining),
+				Status: "waiting", Detail: fmt.Sprintf("Camp %d:%d is available in %d seconds", target.Observation.X, target.Observation.Y, remaining), DetailDescriptor: Localization.New("server.automation.camp_p_p_is.257360a1", "Camp {p0}:{p1} is available in {p2} seconds", Localization.Params{"p0": target.Observation.X, "p1": target.Observation.Y, "p2": remaining}),
 				NextCheckAt: snapshot.Now.Add(time.Duration(remaining) * time.Second), Metrics: metrics,
 			}, nil
 		}
@@ -301,7 +302,7 @@ func (*AutoNomadPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision
 			if decision, refresh := generalSkillsRefreshDecision(err, snapshot.Now, metrics); refresh {
 				return decision, nil
 			}
-			return nomadWaiting(snapshot.Now, fmt.Sprintf("Cannot calculate %s inventory requirements: %v", preset.Name, err)), nil
+			return nomadWaiting(snapshot.Now, fmt.Sprintf("Cannot calculate %s inventory requirements: %v", preset.Name, err), Localization.New("server.automation.cannot_calculate_p_inventory.bb3a1f4b", "Cannot calculate {p0} inventory requirements: {p1}", Localization.Params{"p0": fmt.Sprintf("%s", preset.Name), "p1": fmt.Sprintf("%v", err)})), nil
 		}
 		metrics["presetCopies"] = float64(len(launchCommanders))
 		if len(launchCommanders) == 0 {
@@ -309,7 +310,7 @@ func (*AutoNomadPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision
 		}
 		if err := validateAutoNomadToolCompatibility(limitedPreset, snapshot.GameData, score, target); err != nil {
 			return Decision{
-				Status: "gated", Detail: err.Error(),
+				Status: "gated", Detail: err.Error(), DetailDescriptor: Localization.FromError(err),
 				NextCheckAt: snapshot.Now.Add(policyInterval(settings.CheckIntervalSec, 30)), Metrics: metrics,
 			}, nil
 		}
@@ -327,14 +328,14 @@ func (*AutoNomadPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision
 			"defenseScore": nomadCampDefenseScore(weakest), "eventEndsAt": nomadEventEndsAt(score),
 		})
 		return Decision{
-			Status: "ready", Detail: fmt.Sprintf("Lock weakest maxed camp at %d:%d", weakest.Observation.X, weakest.Observation.Y),
+			Status: "ready", Detail: fmt.Sprintf("Lock weakest maxed camp at %d:%d", weakest.Observation.X, weakest.Observation.Y), DetailDescriptor: Localization.New("server.automation.lock_weakest_maxed_camp.31f97bb8", "Lock weakest maxed camp at {p0}:{p1}", Localization.Params{"p0": weakest.Observation.X, "p1": weakest.Observation.Y}),
 			NextCheckAt: snapshot.Now.Add(time.Second), Metrics: metrics,
 			Request: &Intent.Request{Name: "nomad.target.lock", Arguments: arguments}, ReevaluateOnSuccess: true,
 		}, nil
 	}
 	target, found := lockedNomadCandidate(*locked, camps)
 	if !found {
-		return nomadWaiting(snapshot.Now, "The locked camp is no longer present in the fresh four-camp scan"), nil
+		return nomadWaiting(snapshot.Now, "The locked camp is no longer present in the fresh four-camp scan", Localization.New("server.automation.the_locked_camp_is.0b79667c", "The locked camp is no longer present in the fresh four-camp scan", nil)), nil
 	}
 	metrics["lockedTargetX"] = float64(target.Observation.X)
 	metrics["lockedTargetY"] = float64(target.Observation.Y)
@@ -343,13 +344,13 @@ func (*AutoNomadPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision
 	if remainingCooldown > 0 {
 		if !settings.SkipCooldowns {
 			return Decision{
-				Status: "waiting", Detail: fmt.Sprintf("Locked camp cooldown has %d seconds remaining; time skips are disabled", remainingCooldown),
+				Status: "waiting", Detail: fmt.Sprintf("Locked camp cooldown has %d seconds remaining; time skips are disabled", remainingCooldown), DetailDescriptor: Localization.New("server.automation.locked_camp_cooldown_has.05d74678", "Locked camp cooldown has {p0} seconds remaining; time skips are disabled", Localization.Params{"p0": remainingCooldown}),
 				NextCheckAt: snapshot.Now.Add(time.Duration(remainingCooldown) * time.Second), Metrics: metrics,
 			}, nil
 		}
 		arguments := nomadMinuteSkipArguments(target.Observation, settings.TimeSkipReserve)
 		return Decision{
-			Status: "ready", Detail: fmt.Sprintf("Apply a time skip to locked camp %d:%d", target.Observation.X, target.Observation.Y),
+			Status: "ready", Detail: fmt.Sprintf("Apply a time skip to locked camp %d:%d", target.Observation.X, target.Observation.Y), DetailDescriptor: Localization.New("server.automation.apply_a_time_skip.3c3d0fb5", "Apply a time skip to locked camp {p0}:{p1}", Localization.Params{"p0": target.Observation.X, "p1": target.Observation.Y}),
 			NextCheckAt: snapshot.Now.Add(2 * time.Second), Metrics: metrics,
 			Request:             &Intent.Request{Name: "nomad.cooldown.minute_skip", Arguments: arguments},
 			ReevaluateOnSuccess: true, ReevaluateOnStale: true,
@@ -373,7 +374,7 @@ func (*AutoNomadPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision
 		metrics["usableCooldownSkips"] = float64(usableSkips)
 		if usableSkips < 1 {
 			return Decision{
-				Status: "waiting", Detail: "No confirmed cooldown skip is available above the configured reserve for another locked-camp attack",
+				Status: "waiting", Detail: "No confirmed cooldown skip is available above the configured reserve for another locked-camp attack", DetailDescriptor: Localization.New("server.automation.no_confirmed_cooldown_skip.05c866df", "No confirmed cooldown skip is available above the configured reserve for another locked-camp attack", nil),
 				NextCheckAt: snapshot.Now.Add(policyInterval(settings.CheckIntervalSec, 30)), Metrics: metrics,
 			}, nil
 		}
@@ -387,7 +388,7 @@ func (*AutoNomadPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision
 		if decision, refresh := generalSkillsRefreshDecision(err, snapshot.Now, metrics); refresh {
 			return decision, nil
 		}
-		return nomadWaiting(snapshot.Now, fmt.Sprintf("Cannot calculate %s inventory requirements: %v", preset.Name, err)), nil
+		return nomadWaiting(snapshot.Now, fmt.Sprintf("Cannot calculate %s inventory requirements: %v", preset.Name, err), Localization.New("server.automation.cannot_calculate_p_inventory.bb3a1f4b", "Cannot calculate {p0} inventory requirements: {p1}", Localization.Params{"p0": fmt.Sprintf("%s", preset.Name), "p1": fmt.Sprintf("%v", err)})), nil
 	}
 	metrics["presetCopies"] = float64(len(launchCommanders))
 	if len(launchCommanders) == 0 {
@@ -395,7 +396,7 @@ func (*AutoNomadPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision
 	}
 	if err := validateAutoNomadToolCompatibility(limitedPreset, snapshot.GameData, score, target); err != nil {
 		return Decision{
-			Status: "gated", Detail: err.Error(),
+			Status: "gated", Detail: err.Error(), DetailDescriptor: Localization.FromError(err),
 			NextCheckAt: snapshot.Now.Add(policyInterval(settings.CheckIntervalSec, 30)), Metrics: metrics,
 		}, nil
 	}
@@ -419,19 +420,19 @@ func nomadSequentialArrivalDecision(
 	if !block.ArrivesAt.IsZero() {
 		metrics["sequentialArrivalAt"] = float64(block.ArrivesAt.Unix())
 	}
-	refreshMovements := func(detail string) (Decision, bool) {
+	refreshMovements := func(detail string, descriptors ...*Localization.Message) (Decision, bool) {
 		return Decision{
-			Status: "ready", Detail: detail,
+			Status: "ready", Detail: detail, DetailDescriptor: Localization.First(descriptors),
 			NextCheckAt: snapshot.Now.Add(State.NomadSequentialArrivalGuardHorizon), Metrics: metrics,
 			Request: &Intent.Request{Name: "game.refresh_movements", Arguments: json.RawMessage(`{}`)}, ReevaluateOnSuccess: true,
 		}, true
 	}
-	refreshTarget := func(detail string) (Decision, bool) {
+	refreshTarget := func(detail string, descriptors ...*Localization.Message) (Decision, bool) {
 		arguments, _ := json.Marshal(map[string]any{
 			"kingdomId": target.KingdomID, "x1": target.X, "y1": target.Y, "x2": target.X, "y2": target.Y,
 		})
 		return Decision{
-			Status: "ready", Detail: detail,
+			Status: "ready", Detail: detail, DetailDescriptor: Localization.First(descriptors),
 			NextCheckAt: snapshot.Now.Add(State.NomadSequentialArrivalGuardHorizon), Metrics: metrics,
 			Request: &Intent.Request{Name: "map.query", Arguments: arguments}, ReevaluateOnSuccess: true,
 		}, true
@@ -440,24 +441,24 @@ func nomadSequentialArrivalDecision(
 	if block.Unknown {
 		movementObservedAt := snapshot.State.MovementSnapshot.ObservedAt
 		if movementObservedAt.IsZero() || !block.LaunchedAt.IsZero() && movementObservedAt.Before(block.LaunchedAt) {
-			return refreshMovements(fmt.Sprintf("Refresh movements before resolving unknown arrival timing at camp %d:%d", target.X, target.Y))
+			return refreshMovements(fmt.Sprintf("Refresh movements before resolving unknown arrival timing at camp %d:%d", target.X, target.Y), Localization.New("server.automation.nomad_arrival.edc03cb7", "Refresh movements before resolving unknown arrival timing at camp {x}:{y}", Localization.Params{"x": target.X, "y": target.Y}))
 		}
 		if block.Live {
 			if snapshot.Now.Sub(movementObservedAt) >= retryInterval {
-				return refreshMovements(fmt.Sprintf("Recheck the unknown-timing movement approaching camp %d:%d", target.X, target.Y))
+				return refreshMovements(fmt.Sprintf("Recheck the unknown-timing movement approaching camp %d:%d", target.X, target.Y), Localization.New("server.automation.nomad_arrival.9ecd80bc", "Recheck the unknown-timing movement approaching camp {x}:{y}", Localization.Params{"x": target.X, "y": target.Y}))
 			}
 			return Decision{
-				Status: "waiting", Detail: fmt.Sprintf("Camp %d:%d has an in-flight attack with unknown arrival timing", target.X, target.Y),
+				Status: "waiting", Detail: fmt.Sprintf("Camp %d:%d has an in-flight attack with unknown arrival timing", target.X, target.Y), DetailDescriptor: Localization.New("server.automation.camp_p_p_has.3246e170", "Camp {p0}:{p1} has an in-flight attack with unknown arrival timing", Localization.Params{"p0": target.X, "p1": target.Y}),
 				NextCheckAt: movementObservedAt.Add(retryInterval), Metrics: metrics,
 			}, true
 		}
-		return refreshTarget(fmt.Sprintf("Confirm camp %d:%d after its unknown-timing movement disappeared", target.X, target.Y))
+		return refreshTarget(fmt.Sprintf("Confirm camp %d:%d after its unknown-timing movement disappeared", target.X, target.Y), Localization.New("server.automation.nomad_arrival.addd8495", "Confirm camp {x}:{y} after its unknown-timing movement disappeared", Localization.Params{"x": target.X, "y": target.Y}))
 	}
 
 	settlementAt := block.ArrivesAt.Add(State.NomadSequentialArrivalGuardHorizon)
 	if snapshot.Now.Before(settlementAt) {
 		return Decision{
-			Status: "waiting", Detail: fmt.Sprintf("Wait for the prior camp %d:%d arrival to settle", target.X, target.Y),
+			Status: "waiting", Detail: fmt.Sprintf("Wait for the prior camp %d:%d arrival to settle", target.X, target.Y), DetailDescriptor: Localization.New("server.automation.wait_for_the_prior.12120686", "Wait for the prior camp {p0}:{p1} arrival to settle", Localization.Params{"p0": target.X, "p1": target.Y}),
 			NextCheckAt: settlementAt, Metrics: metrics,
 		}, true
 	}
@@ -468,14 +469,14 @@ func nomadSequentialArrivalDecision(
 		settlementObservedAt = cooldown.CooldownObservedAt
 	}
 	if settlementObservedAt.Before(settlementAt) {
-		return refreshTarget(fmt.Sprintf("Confirm camp %d:%d after the prior arrival", target.X, target.Y))
+		return refreshTarget(fmt.Sprintf("Confirm camp %d:%d after the prior arrival", target.X, target.Y), Localization.New("server.automation.nomad_arrival.5e4f1edc", "Confirm camp {x}:{y} after the prior arrival", Localization.Params{"x": target.X, "y": target.Y}))
 	}
 	if block.Live && (snapshot.State.MovementSnapshot.ObservedAt.Before(settlementObservedAt) ||
 		snapshot.Now.Sub(snapshot.State.MovementSnapshot.ObservedAt) >= State.NomadSequentialArrivalGuardHorizon) {
-		return refreshMovements(fmt.Sprintf("Confirm the prior movement to camp %d:%d has cleared", target.X, target.Y))
+		return refreshMovements(fmt.Sprintf("Confirm the prior movement to camp %d:%d has cleared", target.X, target.Y), Localization.New("server.automation.nomad_arrival.d0314c3b", "Confirm the prior movement to camp {x}:{y} has cleared", Localization.Params{"x": target.X, "y": target.Y}))
 	}
 	return Decision{
-		Status: "waiting", Detail: fmt.Sprintf("Camp %d:%d is still settling after the prior arrival", target.X, target.Y),
+		Status: "waiting", Detail: fmt.Sprintf("Camp %d:%d is still settling after the prior arrival", target.X, target.Y), DetailDescriptor: Localization.New("server.automation.camp_p_p_is.9eba4a9c", "Camp {p0}:{p1} is still settling after the prior arrival", Localization.Params{"p0": target.X, "p1": target.Y}),
 		NextCheckAt: snapshot.Now.Add(State.NomadSequentialArrivalGuardHorizon), Metrics: metrics,
 	}, true
 }
@@ -555,8 +556,8 @@ func nomadEventName(eventID int64) string {
 	return "Nomad"
 }
 
-func nomadWaiting(now time.Time, detail string) Decision {
-	return Decision{Status: "waiting", Detail: detail, NextCheckAt: now.Add(30 * time.Second)}
+func nomadWaiting(now time.Time, detail string, descriptors ...*Localization.Message) Decision {
+	return Decision{Status: "waiting", Detail: detail, DetailDescriptor: Localization.First(descriptors), NextCheckAt: now.Add(30 * time.Second)}
 }
 
 func nomadMapRefreshInterval(value int) time.Duration {
@@ -881,17 +882,19 @@ func autoNomadCapacityLimitedPreset(
 		},
 	})
 	if err != nil {
-		return AttackPresets.Preset{}, fmt.Errorf("resolve Nomad/Samurai camp attack capacity: %w", err)
+		return AttackPresets.Preset{}, Localization.WithError(fmt.Errorf("resolve Nomad/Samurai camp attack capacity: %w", err), Localization.ErrorContext(Localization.New("server.automation.resolve_nomad_samurai_camp.45e1ec2d", "resolve Nomad/Samurai camp attack capacity", nil), err))
 	}
 	return AttackPresets.LimitToCapacity(preset, capacity), nil
 }
 
 func nomadCommanderWaiting(now time.Time, restricted bool, metrics map[string]float64) Decision {
 	detail := "No commander is currently available"
+	var detailLocalizationMessage *Localization.Message = Localization.New("server.automation.no_commander_is_currently.25dd6b1e", "No commander is currently available", nil)
 	if restricted {
 		detail = "No assigned Auto Nomad/Samurai commander is currently available"
+		detailLocalizationMessage = Localization.New("server.automation.no_assigned_auto_nomad.7d05ab44", "No assigned Auto Nomad/Samurai commander is currently available", nil)
 	}
-	return Decision{Status: "waiting", Detail: detail, NextCheckAt: now.Add(30 * time.Second), Metrics: metrics}
+	return Decision{Status: "waiting", Detail: detail, DetailDescriptor: Localization.Clone(detailLocalizationMessage), NextCheckAt: now.Add(30 * time.Second), Metrics: metrics}
 }
 
 func nomadPresetWaiting(
@@ -903,16 +906,16 @@ func nomadPresetWaiting(
 ) Decision {
 	if itemID, required, available, found, err := invasionPresetShortage(preset, source, gameData); err != nil {
 		return Decision{
-			Status: "waiting", Detail: "Cannot resolve preset troop families: " + err.Error(),
+			Status: "waiting", Detail: "Cannot resolve preset troop families: " + err.Error(), DetailDescriptor: Localization.ErrorContext(Localization.New("server.automation.cannot_resolve_preset_troop.42b6f5a4", "Cannot resolve preset troop families", nil), err),
 			NextCheckAt: now.Add(30 * time.Second), Metrics: metrics,
 		}
 	} else if found {
 		return Decision{
-			Status: "waiting", Detail: fmt.Sprintf("Preset needs %d of item %d; source castle has %d", required, itemID, available),
+			Status: "waiting", Detail: fmt.Sprintf("Preset needs %d of item %d; source castle has %d", required, itemID, available), DetailDescriptor: Localization.New("server.automation.preset_needs_p_of.e2c90e67", "Preset needs {p0} of item {p1}; source castle has {p2}", Localization.Params{"p0": required, "p1": fmt.Sprintf("%d", itemID), "p2": available}),
 			NextCheckAt: now.Add(30 * time.Second), Metrics: metrics,
 		}
 	}
-	return Decision{Status: "waiting", Detail: "The selected preset has no launchable troops", NextCheckAt: now.Add(30 * time.Second), Metrics: metrics}
+	return Decision{Status: "waiting", Detail: "The selected preset has no launchable troops", DetailDescriptor: Localization.New("server.automation.the_selected_preset_has.d5925ae9", "The selected preset has no launchable troops", nil), NextCheckAt: now.Add(30 * time.Second), Metrics: metrics}
 }
 
 func nomadAttackDecision(
@@ -941,11 +944,13 @@ func nomadAttackDecision(
 	})
 	detail := fmt.Sprintf("Level camp %d:%d from victory count %d/%d with %s", target.Observation.X, target.Observation.Y,
 		target.Observation.EventCampVictoryCount, maximumVictoryCount, preset.Name)
+	var detailLocalizationMessage *Localization.Message = Localization.New("server.automation.level_camp_p_p.9c5e4ec7", "Level camp {p0}:{p1} from victory count {p2, number}/{p3, number} with {p4}", Localization.Params{"p0": target.Observation.X, "p1": target.Observation.Y, "p2": target.Observation.EventCampVictoryCount, "p3": maximumVictoryCount, "p4": fmt.Sprintf("%s", preset.Name)})
 	if mode == "chain" {
 		detail = fmt.Sprintf("Chain %d attacks into locked camp %d:%d with %s", len(commanderIDs), target.Observation.X, target.Observation.Y, preset.Name)
+		detailLocalizationMessage = Localization.New("server.automation.chain_p_attacks_into.1924dfde", "Chain {p0} attacks into locked camp {p1}:{p2} with {p3}", Localization.Params{"p0": fmt.Sprintf("%d", len(commanderIDs)), "p1": target.Observation.X, "p2": target.Observation.Y, "p3": fmt.Sprintf("%s", preset.Name)})
 	}
 	return Decision{
-		Status: "ready", Detail: detail, NextCheckAt: now.Add(2 * time.Second), Metrics: metrics,
+		Status: "ready", Detail: detail, DetailDescriptor: Localization.Clone(detailLocalizationMessage), NextCheckAt: now.Add(2 * time.Second), Metrics: metrics,
 		Request:             &Intent.Request{Name: "nomad.camp.attack", Arguments: arguments},
 		ReevaluateOnSuccess: true, ReevaluateOnStale: true,
 	}
@@ -954,20 +959,20 @@ func nomadAttackDecision(
 func evaluateAutoNomadRBCTest(snapshot Snapshot, settings autoNomadSettings) (Decision, error) {
 	trial := settings.RBCTest
 	if settings.SourceCastleID <= 0 || settings.NomadPresetID == "" || trial.RunID == "" || trial.TargetX < 0 || trial.TargetY < 0 {
-		return nomadWaiting(snapshot.Now, "RBC trial requires a source, Nomad preset, target, and run id"), nil
+		return nomadWaiting(snapshot.Now, "RBC trial requires a source, Nomad preset, target, and run id", Localization.New("server.automation.rbc_trial_requires_a.16a4ead8", "RBC trial requires a source, Nomad preset, target, and run id", nil)), nil
 	}
 	if !settings.SkipCooldowns {
-		return nomadWaiting(snapshot.Now, "Enable cooldown time skips before starting the RBC trial"), nil
+		return nomadWaiting(snapshot.Now, "Enable cooldown time skips before starting the RBC trial", Localization.New("server.automation.enable_cooldown_time_skips.9f102521", "Enable cooldown time skips before starting the RBC trial", nil)), nil
 	}
 	if invalidTimeSkipReserve(settings.TimeSkipReserve) {
-		return nomadWaiting(snapshot.Now, "RBC trial time-skip reserves cannot be negative"), nil
+		return nomadWaiting(snapshot.Now, "RBC trial time-skip reserves cannot be negative", Localization.New("server.automation.rbc_trial_time_skip.0f787256", "RBC trial time-skip reserves cannot be negative", nil)), nil
 	}
 	if snapshot.GameData == nil {
-		return nomadWaiting(snapshot.Now, "Official game data is unavailable"), nil
+		return nomadWaiting(snapshot.Now, "Official game data is unavailable", Localization.New("server.automation.official_game_data_is.c5e55e7e", "Official game data is unavailable", nil)), nil
 	}
 	source, exists := snapshot.State.Castles[settings.SourceCastleID]
 	if !exists || source.KingdomID != 0 {
-		return nomadWaiting(snapshot.Now, "RBC trial source must be an available Great Empire castle"), nil
+		return nomadWaiting(snapshot.Now, "RBC trial source must be an available Great Empire castle", Localization.New("server.automation.rbc_trial_source_must.ab8363f4", "RBC trial source must be an available Great Empire castle", nil)), nil
 	}
 	document, err := AttackPresets.Decode(snapshot.Configuration.Sections[AttackPresets.ConfigurationSection])
 	if err != nil {
@@ -975,11 +980,11 @@ func evaluateAutoNomadRBCTest(snapshot Snapshot, settings autoNomadSettings) (De
 	}
 	preset, exists := AttackPresets.Find(document, settings.NomadPresetID)
 	if !exists {
-		return nomadWaiting(snapshot.Now, "The selected Nomad preset for the RBC trial no longer exists"), nil
+		return nomadWaiting(snapshot.Now, "The selected Nomad preset for the RBC trial no longer exists", Localization.New("server.automation.the_selected_nomad_preset.2b28213d", "The selected Nomad preset for the RBC trial no longer exists", nil)), nil
 	}
 	target, exists := snapshot.State.LookupMapObservation(source.KingdomID, fmt.Sprintf("%d:%d", trial.TargetX, trial.TargetY))
 	if !exists || target.TypeID != kingdomTowerMapTypeID {
-		return nomadRBCTestMapRefresh(snapshot.Now, source.KingdomID, trial.TargetX, trial.TargetY, "Discover the configured RBC trial target", nil), nil
+		return nomadRBCTestMapRefresh(snapshot.Now, source.KingdomID, trial.TargetX, trial.TargetY, "Discover the configured RBC trial target", nil, Localization.New("server.automation.discover_the_configured_rbc.b729db9f", "Discover the configured RBC trial target", nil)), nil
 	}
 	metrics := map[string]float64{"targetX": float64(target.X), "targetY": float64(target.Y)}
 	dailyAllowance, blocked := dailyAttackLimitAllowance(
@@ -991,19 +996,19 @@ func evaluateAutoNomadRBCTest(snapshot Snapshot, settings autoNomadSettings) (De
 	test := snapshot.State.NomadCamps.RBCTest
 	activeTest := test != nil && test.RunID == trial.RunID
 	if !activeTest && (target.ObservedAt.IsZero() || snapshot.Now.Sub(target.ObservedAt) >= 30*time.Second) {
-		return nomadRBCTestMapRefresh(snapshot.Now, source.KingdomID, target.X, target.Y, "Refresh the RBC trial target before launch", metrics), nil
+		return nomadRBCTestMapRefresh(snapshot.Now, source.KingdomID, target.X, target.Y, "Refresh the RBC trial target before launch", metrics, Localization.New("server.automation.refresh_the_rbc_trial.ddbe87a6", "Refresh the RBC trial target before launch", nil)), nil
 	}
 	key := towerTargetKey(target.KingdomID, target.X, target.Y)
 	if cooldown, found := snapshot.State.LookupTowerCooldown(key); found && cooldown.PendingCooldownRefresh &&
 		(!activeTest || cooldown.LastSuccessfulBattleAt.After(test.StartedAt)) {
 		return nomadRBCTestMapRefresh(snapshot.Now, target.KingdomID, target.X, target.Y,
-			fmt.Sprintf("Refresh RBC %d:%d immediately after confirmed hit %d", target.X, target.Y, test.VictoriesConfirmed), metrics), nil
+			fmt.Sprintf("Refresh RBC %d:%d immediately after confirmed hit %d", target.X, target.Y, test.VictoriesConfirmed), metrics, Localization.New("server.automation.refresh_rbc_p_p.1e47eedd", "Refresh RBC {p0}:{p1} immediately after confirmed hit {p2, number}", Localization.Params{"p0": target.X, "p1": target.Y, "p2": test.VictoriesConfirmed})), nil
 	}
 	remaining := towerCooldownRemaining(target, snapshot.Now)
 	metrics["cooldownRemaining"] = float64(remaining)
 	if remaining > 0 {
 		return Decision{
-			Status: "ready", Detail: fmt.Sprintf("Clear RBC %d:%d cooldown before the next trial arrival", target.X, target.Y),
+			Status: "ready", Detail: fmt.Sprintf("Clear RBC %d:%d cooldown before the next trial arrival", target.X, target.Y), DetailDescriptor: Localization.New("server.automation.clear_rbc_p_p.fd84af6b", "Clear RBC {p0}:{p1} cooldown before the next trial arrival", Localization.Params{"p0": target.X, "p1": target.Y}),
 			NextCheckAt: snapshot.Now.Add(time.Second), Metrics: metrics,
 			Request: &Intent.Request{
 				Name: "nomad.cooldown.minute_skip", Arguments: nomadMinuteSkipArguments(target, settings.TimeSkipReserve),
@@ -1018,7 +1023,7 @@ func evaluateAutoNomadRBCTest(snapshot Snapshot, settings autoNomadSettings) (De
 		metrics["cooldownsSkipped"] = float64(test.CooldownsSkipped)
 		if test.SafetyError != "" {
 			return Decision{
-				Status: "blocked", Detail: "RBC trial stopped on unsafe arrival order: " + test.SafetyError,
+				Status: "blocked", Detail: "RBC trial stopped on unsafe arrival order: " + test.SafetyError, DetailDescriptor: Localization.Join(Localization.New("server.automation.rbc_arrival_order.stopped", "RBC trial stopped on unsafe arrival order", nil), test.SafetyErrorDescriptor),
 				NextCheckAt: snapshot.Now.Add(30 * time.Second), Metrics: metrics,
 			}, nil
 		}
@@ -1030,7 +1035,7 @@ func evaluateAutoNomadRBCTest(snapshot Snapshot, settings autoNomadSettings) (De
 	usableSkips := max(0, availableSkips-outstandingCooldownSkips)
 	presetCopies, err := availablePresetCopies(preset, source, snapshot.GameData, len(available))
 	if err != nil {
-		return nomadWaiting(snapshot.Now, "Cannot resolve RBC preset troop families: "+err.Error()), nil
+		return nomadWaiting(snapshot.Now, "Cannot resolve RBC preset troop families: "+err.Error(), Localization.ErrorContext(Localization.New("server.automation.cannot_resolve_rbc_preset.28442d42", "Cannot resolve RBC preset troop families", nil), err)), nil
 	}
 	chainSize := min(len(available), presetCopies)
 	if int64(chainSize) > usableSkips {
@@ -1048,7 +1053,7 @@ func evaluateAutoNomadRBCTest(snapshot Snapshot, settings autoNomadSettings) (De
 			Status: "waiting", Detail: fmt.Sprintf(
 				"No resource-backed RBC attack is ready now (%d commanders, %d complete preset copies, %d usable cooldown skips, %d committed to launched hits)",
 				len(available), presetCopies, usableSkips, outstandingCooldownSkips,
-			),
+			), DetailDescriptor: Localization.New("server.automation.no_resource_backed_rbc.8afe1e05", "No resource-backed RBC attack is ready now ({p0} commanders, {p1} complete preset copies, {p2} usable cooldown skips, {p3} committed to launched hits)", Localization.Params{"p0": len(available), "p1": presetCopies, "p2": usableSkips, "p3": outstandingCooldownSkips}),
 			NextCheckAt: snapshot.Now.Add(30 * time.Second), Metrics: metrics,
 		}, nil
 	}
@@ -1062,7 +1067,7 @@ func evaluateAutoNomadRBCTest(snapshot Snapshot, settings autoNomadSettings) (De
 		"horseTravelBoostId": settings.HorseTravelBoostID, "dailyAttackLimit": settings.DailyAttackLimit,
 	})
 	return Decision{
-		Status: "ready", Detail: fmt.Sprintf("Launch resource-sized %d-hit Auto Camp trial at RBC %d:%d", chainSize, target.X, target.Y),
+		Status: "ready", Detail: fmt.Sprintf("Launch resource-sized %d-hit Auto Camp trial at RBC %d:%d", chainSize, target.X, target.Y), DetailDescriptor: Localization.New("server.automation.launch_resource_sized_p.0eb97116", "Launch resource-sized {p0}-hit Auto Camp trial at RBC {p1}:{p2}", Localization.Params{"p0": chainSize, "p1": target.X, "p2": target.Y}),
 		NextCheckAt: snapshot.Now.Add(2 * time.Second), Metrics: metrics,
 		Request: &Intent.Request{Name: "nomad.rbc_test.attack", Arguments: arguments}, ReevaluateOnSuccess: true,
 	}, nil
@@ -1074,10 +1079,10 @@ func nomadRBCTestMapRefresh(
 	x, y int,
 	detail string,
 	metrics map[string]float64,
-) Decision {
+	descriptors ...*Localization.Message) Decision {
 	arguments, _ := json.Marshal(map[string]any{"kingdomId": kingdomID, "x1": x, "y1": y, "x2": x, "y2": y})
 	return Decision{
-		Status: "ready", Detail: detail, NextCheckAt: now.Add(time.Second), Metrics: metrics,
+		Status: "ready", Detail: detail, DetailDescriptor: Localization.First(descriptors), NextCheckAt: now.Add(time.Second), Metrics: metrics,
 		Request: &Intent.Request{Name: "map.query", Arguments: arguments}, ReevaluateOnSuccess: true,
 	}
 }

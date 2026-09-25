@@ -1,6 +1,7 @@
 package App
 
 import (
+	"CitadelDesktop/Server/Localization"
 	"context"
 	"encoding/json"
 	"errors"
@@ -159,11 +160,11 @@ type statePersistenceRequest struct {
 
 func New(ctx context.Context, config Config) (*Application, error) {
 	if config.DataDir == "" {
-		return nil, fmt.Errorf("application data directory is required")
+		return nil, Localization.WithError(fmt.Errorf("application data directory is required"), Localization.New("server.app.application_data_directory_is.85ca97b1", "application data directory is required", nil))
 	}
 	if !config.BackgroundOnly &&
 		((config.PrivateMetricsClient != nil && config.PrivateMetricsClient.Enabled()) || config.PrivateMetricsPlacement != nil) {
-		return nil, fmt.Errorf("private metrics publishing requires hosted background mode")
+		return nil, Localization.WithError(fmt.Errorf("private metrics publishing requires hosted background mode"), Localization.New("server.app.private_metrics_publishing_requires.de36212f", "private metrics publishing requires hosted background mode", nil))
 	}
 	profileLease, err := RuntimeKernel.AcquireProfileLease(config.DataDir)
 	if err != nil {
@@ -180,7 +181,7 @@ func New(ctx context.Context, config Config) (*Application, error) {
 		return nil, err
 	}
 	if err := removeRetiredBattleResearchConfiguration(configuration); err != nil {
-		return nil, fmt.Errorf("remove retired Experimental Battle Research settings: %w", err)
+		return nil, Localization.WithError(fmt.Errorf("remove retired Experimental Battle Research settings: %w", err), Localization.ErrorContext(Localization.New("server.app.remove_retired_experimental_battle.47320b39", "remove retired Experimental Battle Research settings", nil), err))
 	}
 	history, err := History.Open(config.DataDir)
 	if err != nil {
@@ -199,7 +200,7 @@ func New(ctx context.Context, config Config) (*Application, error) {
 			startupErr = gameData.Initialize(ctx)
 		}
 	} else if _, ready := gameData.Current(); !ready {
-		startupErr = errors.Join(startupErr, fmt.Errorf("shared official game data is not initialized"))
+		startupErr = errors.Join(startupErr, Localization.WithError(fmt.Errorf("shared official game data is not initialized"), Localization.New("server.app.shared_official_game_data.0942a417", "shared official game data is not initialized", nil)))
 	}
 
 	initial := State.NewGameState()
@@ -208,7 +209,7 @@ func New(ctx context.Context, config Config) (*Application, error) {
 	} else if !os.IsNotExist(recoveryErr) {
 		// An unreadable profile may contain an active safety lock. Never start
 		// automation from empty state and overwrite that evidence.
-		return nil, fmt.Errorf("recover durable account state: %w", recoveryErr)
+		return nil, Localization.WithError(fmt.Errorf("recover durable account state: %w", recoveryErr), Localization.ErrorContext(Localization.New("server.app.recover_durable_account_state.1eb09389", "recover durable account state", nil), recoveryErr))
 	}
 	if current, ready := gameData.Current(); ready {
 		initial.CatalogVersion = current.Metadata().ItemVersion
@@ -223,14 +224,14 @@ func New(ctx context.Context, config Config) (*Application, error) {
 	if registry == nil {
 		registry = Ingest.NewRegistry()
 		if err := Ingest.RegisterCoreReducers(registry); err != nil {
-			return nil, fmt.Errorf("register protocol reducers: %w", err)
+			return nil, Localization.WithError(fmt.Errorf("register protocol reducers: %w", err), Localization.ErrorContext(Localization.New("server.app.register_protocol_reducers.803a416c", "register protocol reducers", nil), err))
 		}
 	}
 	ingest := Ingest.NewPipeline(state, gameData, registry)
 	ingest.SetProfileID(profileLease.ProfileID)
 	telemetry := Telemetry.NewStore(5000)
 	if telemetryErr := telemetry.SetDataDir(config.DataDir); telemetryErr != nil {
-		startupErr = errors.Join(startupErr, fmt.Errorf("initialize logger: %w", telemetryErr))
+		startupErr = errors.Join(startupErr, Localization.WithError(fmt.Errorf("initialize logger: %w", telemetryErr), Localization.ErrorContext(Localization.New("server.app.initialize_logger.453e61ce", "initialize logger", nil), telemetryErr)))
 	}
 	ingest.SetTelemetry(telemetry)
 	transport := config.Transport
@@ -288,7 +289,7 @@ func New(ctx context.Context, config Config) (*Application, error) {
 	intents.SetCommanderHolds(newCommanderLaunchHolds())
 	operationStore, err := Intent.OpenOperationStore(config.DataDir)
 	if err != nil {
-		return nil, fmt.Errorf("open intent operation store: %w", err)
+		return nil, Localization.WithError(fmt.Errorf("open intent operation store: %w", err), Localization.ErrorContext(Localization.New("server.app.open_intent_operation_store.1034b32d", "open intent operation store", nil), err))
 	}
 	closeOperationStore := true
 	defer func() {
@@ -297,11 +298,11 @@ func New(ctx context.Context, config Config) (*Application, error) {
 		}
 	}()
 	if err := intents.SetOperationStore(ctx, operationStore); err != nil {
-		return nil, fmt.Errorf("recover intent operations: %w", err)
+		return nil, Localization.WithError(fmt.Errorf("recover intent operations: %w", err), Localization.ErrorContext(Localization.New("server.app.recover_intent_operations.9d357f70", "recover intent operations", nil), err))
 	}
 	reportStore, err := Reports.OpenSQLiteStore(config.DataDir)
 	if err != nil {
-		return nil, fmt.Errorf("open report analytics store: %w", err)
+		return nil, Localization.WithError(fmt.Errorf("open report analytics store: %w", err), Localization.ErrorContext(Localization.New("server.app.open_report_analytics_store.d17d5d65", "open report analytics store", nil), err))
 	}
 	closeReportStore := true
 	defer func() {
@@ -310,16 +311,16 @@ func New(ctx context.Context, config Config) (*Application, error) {
 		}
 	}()
 	if err := Reports.BackfillBattleHistory(ctx, history, reportStore, initial); err != nil {
-		return nil, fmt.Errorf("backfill report analytics: %w", err)
+		return nil, Localization.WithError(fmt.Errorf("backfill report analytics: %w", err), Localization.ErrorContext(Localization.New("server.app.backfill_report_analytics.5f079728", "backfill report analytics", nil), err))
 	}
 	if _, err := Reports.CompactBattleHistory(history); err != nil {
-		return nil, fmt.Errorf("compact local battle report outbox: %w", err)
+		return nil, Localization.WithError(fmt.Errorf("compact local battle report outbox: %w", err), Localization.ErrorContext(Localization.New("server.app.compact_local_battle_report.d6c15e1c", "compact local battle report outbox", nil), err))
 	}
 	if _, err := Reports.BackfillCloudOutbox(ctx, history, reportStore, initial); err != nil {
-		return nil, fmt.Errorf("backfill cloud battle report outbox: %w", err)
+		return nil, Localization.WithError(fmt.Errorf("backfill cloud battle report outbox: %w", err), Localization.ErrorContext(Localization.New("server.app.backfill_cloud_battle_report.38509104", "backfill cloud battle report outbox", nil), err))
 	}
 	if err := restoreRecentAutoStormLaunchHistory(ctx, state, reportStore); err != nil {
-		return nil, fmt.Errorf("restore recent Auto Storm launch history: %w", err)
+		return nil, Localization.WithError(fmt.Errorf("restore recent Auto Storm launch history: %w", err), Localization.ErrorContext(Localization.New("server.app.restore_recent_auto_storm.4c619011", "restore recent Auto Storm launch history", nil), err))
 	}
 	worldIntelClient := config.WorldIntelClient
 	if worldIntelClient == nil {
@@ -335,7 +336,7 @@ func New(ctx context.Context, config Config) (*Application, error) {
 			Placement: config.PrivateMetricsPlacement,
 		})
 		if err != nil {
-			return nil, fmt.Errorf("initialize private metrics publisher: %w", err)
+			return nil, Localization.WithError(fmt.Errorf("initialize private metrics publisher: %w", err), Localization.ErrorContext(Localization.New("server.app.initialize_private_metrics_publisher.b0796171", "initialize private metrics publisher", nil), err))
 		}
 		if config.PrivateMetricsClient.CheckpointsEnabled() {
 			checkpointPublisher, err = PrivateMetrics.NewCheckpointPublisher(PrivateMetrics.CheckpointPublisherConfig{
@@ -343,7 +344,7 @@ func New(ctx context.Context, config Config) (*Application, error) {
 				Intents: intents, Client: config.PrivateMetricsClient, Placement: config.PrivateMetricsPlacement,
 			})
 			if err != nil {
-				return nil, fmt.Errorf("initialize dashboard checkpoint publisher: %w", err)
+				return nil, Localization.WithError(fmt.Errorf("initialize dashboard checkpoint publisher: %w", err), Localization.ErrorContext(Localization.New("server.app.initialize_dashboard_checkpoint_publisher.db9f6578", "initialize dashboard checkpoint publisher", nil), err))
 			}
 		}
 	}
@@ -573,7 +574,7 @@ func (application *Application) SetPrivateMetricsPlacement(placement *PrivateMet
 		if placement == nil {
 			return nil
 		}
-		return fmt.Errorf("private metrics publisher is unavailable")
+		return Localization.WithError(fmt.Errorf("private metrics publisher is unavailable"), Localization.New("server.app.private_metrics_publisher_is.ccdc1d0d", "private metrics publisher is unavailable", nil))
 	}
 	if err := application.PrivateMetrics.SetPlacement(placement); err != nil {
 		return err
@@ -629,8 +630,8 @@ func (application *Application) recordIntentLog(receipt Intent.Receipt) {
 		return
 	}
 	for _, activity := range featureActivities(receipt) {
-		application.Telemetry.RecordFeatureActivity(
-			receipt.Actor, receipt.Intent, activity.severity, activity.event, activity.detail,
+		application.Telemetry.RecordFeatureActivityMessage(
+			receipt.Actor, receipt.Intent, activity.severity, activity.event, activity.detail, activity.descriptor,
 		)
 	}
 }
@@ -756,7 +757,7 @@ func (application *Application) saveStateEvent(ctx context.Context, event State.
 	select {
 	case application.statePersistence <- request:
 	case <-application.statePersistenceDone:
-		return fmt.Errorf("state persistence worker is stopped")
+		return Localization.WithError(fmt.Errorf("state persistence worker is stopped"), Localization.New("server.app.state_persistence_worker_is.68887613", "state persistence worker is stopped", nil))
 	case <-ctx.Done():
 		return ctx.Err()
 	}
@@ -764,7 +765,7 @@ func (application *Application) saveStateEvent(ctx context.Context, event State.
 	case err := <-request.result:
 		return err
 	case <-application.statePersistenceDone:
-		return fmt.Errorf("state persistence worker stopped before revision %d was durable", event.Revision)
+		return Localization.WithError(fmt.Errorf("state persistence worker stopped before revision %d was durable", event.Revision), Localization.New("server.app.state_persistence_worker_stopped.4e353ae5", "state persistence worker stopped before revision {p0} was durable", Localization.Params{"p0": event.Revision}))
 	case <-ctx.Done():
 		return ctx.Err()
 	}
@@ -780,7 +781,7 @@ func (application *Application) PersistenceError() error {
 		reportErr = application.ReportStore.LastError()
 	}
 	if reportErr != nil {
-		reportErr = fmt.Errorf("report analytics persistence: %w", reportErr)
+		reportErr = Localization.WithError(fmt.Errorf("report analytics persistence: %w", reportErr), Localization.ErrorContext(Localization.New("server.app.report_analytics_persistence.bc9d3420", "report analytics persistence", nil), reportErr))
 	}
 	return errors.Join(actionErr, reportErr)
 }
@@ -801,10 +802,10 @@ func (application *Application) actionPersistenceError() error {
 		operationErr = application.Intents.PersistenceError()
 	}
 	if stateErr != nil {
-		stateErr = fmt.Errorf("state snapshot persistence: %w", stateErr)
+		stateErr = Localization.WithError(fmt.Errorf("state snapshot persistence: %w", stateErr), Localization.ErrorContext(Localization.New("server.app.state_snapshot_persistence.d210ebcb", "state snapshot persistence", nil), stateErr))
 	}
 	if operationErr != nil {
-		operationErr = fmt.Errorf("operation journal persistence: %w", operationErr)
+		operationErr = Localization.WithError(fmt.Errorf("operation journal persistence: %w", operationErr), Localization.ErrorContext(Localization.New("server.app.operation_journal_persistence.a22b1ecd", "operation journal persistence", nil), operationErr))
 	}
 	return errors.Join(stateErr, worldMapErr, operationErr)
 }
@@ -952,27 +953,27 @@ func (application *Application) registerCoreIntents() error {
 
 	definitions := []Intent.Definition{
 		{
-			Name: "automation.safety.clear", Description: "Clear a reviewed lane safety incident", Effect: Intent.EffectWrite,
-			Planner: actionPlanner("automation.safety.clear", "automation-safety", "Clear reviewed lane safety lock"),
+			Name: "automation.safety.clear", Description: "Clear a reviewed lane safety incident", DescriptionDescriptor: Localization.New("server.intent.description.fd4caae5", "Clear a reviewed lane safety incident", nil), Effect: Intent.EffectWrite,
+			Planner: actionPlanner("automation.safety.clear", "automation-safety", "Clear reviewed lane safety lock", Localization.New("server.app.clear_reviewed_lane_safety.ab5b3bd7", "Clear reviewed lane safety lock", nil)),
 		},
 		{
-			Name: "session.start", Description: "Start the configured game session adapter", Effect: Intent.EffectExternal,
-			Planner: actionPlanner("session.start", "session", "Start the game session"),
+			Name: "session.start", Description: "Start the configured game session adapter", DescriptionDescriptor: Localization.New("server.intent.description.cc692397", "Start the configured game session adapter", nil), Effect: Intent.EffectExternal,
+			Planner: actionPlanner("session.start", "session", "Start the game session", Localization.New("server.app.start_the_game_session.29f0589e", "Start the game session", nil)),
 		},
 		{
-			Name: "session.reconnect", Description: "Reconnect the game session now, bypassing a scheduled retry, cooldown wait, or login park", Effect: Intent.EffectExternal,
-			Planner: actionPlanner("session.reconnect", "session", "Reconnect the game session now"),
+			Name: "session.reconnect", Description: "Reconnect the game session now, bypassing a scheduled retry, cooldown wait, or login park", DescriptionDescriptor: Localization.New("server.intent.description.18923c33", "Reconnect the game session now, bypassing a scheduled retry, cooldown wait, or login park", nil), Effect: Intent.EffectExternal,
+			Planner: actionPlanner("session.reconnect", "session", "Reconnect the game session now", Localization.New("server.app.reconnect_the_game_session.19b7c5b5", "Reconnect the game session now", nil)),
 		},
 		{
-			Name: "session.stop", Description: "Stop the active game session", Effect: Intent.EffectExternal,
-			Planner: actionPlanner("session.stop", "session", "Stop the game session"),
+			Name: "session.stop", Description: "Stop the active game session", DescriptionDescriptor: Localization.New("server.intent.description.6532e53e", "Stop the active game session", nil), Effect: Intent.EffectExternal,
+			Planner: actionPlanner("session.stop", "session", "Stop the game session", Localization.New("server.app.stop_the_game_session.e5c7c3b2", "Stop the game session", nil)),
 		},
 		{
-			Name: "session.background.prepare", Description: "Validate and authorize the protected saved login for Background mode", Effect: Intent.EffectWrite,
-			Planner: actionPlanner("session.background.prepare", "session", "Prepare the saved login for Background mode"),
+			Name: "session.background.prepare", Description: "Validate and authorize the protected saved login for Background mode", DescriptionDescriptor: Localization.New("server.intent.description.21a5d0c3", "Validate and authorize the protected saved login for Background mode", nil), Effect: Intent.EffectWrite,
+			Planner: actionPlanner("session.background.prepare", "session", "Prepare the saved login for Background mode", Localization.New("server.app.prepare_the_saved_login.110e36e6", "Prepare the saved login for Background mode", nil)),
 		},
 		{
-			Name: "session.select_browser", Description: "Select the CDP-capable Chromium browser used for game sessions", Effect: Intent.EffectExternal,
+			Name: "session.select_browser", Description: "Select the CDP-capable Chromium browser used for game sessions", DescriptionDescriptor: Localization.New("server.intent.description.1d805c26", "Select the CDP-capable Chromium browser used for game sessions", nil), Effect: Intent.EffectExternal,
 			Planner: func(_ context.Context, _ Intent.PlanningContext, arguments json.RawMessage) (Intent.Plan, error) {
 				preference, err := browserPreference(arguments)
 				if err != nil {
@@ -988,19 +989,19 @@ func (application *Application) registerCoreIntents() error {
 				}
 				canonical, _ := json.Marshal(map[string]string{"browser": selected})
 				return Intent.Plan{
-					Claims: []string{"session"}, Summary: fmt.Sprintf("Use %s for game sessions", candidate.Name),
+					Claims: []string{"session"}, Summary: fmt.Sprintf("Use %s for game sessions", candidate.Name), SummaryDescriptor: Localization.New("server.app.use_p_for_game.fc0d9888", "Use {p0} for game sessions", Localization.Params{"p0": fmt.Sprintf("%s", candidate.Name)}),
 					Steps: []Intent.Step{{
-						Name: "Select browser", Action: "session.select_browser", ActionArguments: canonical,
+						Name: "Select browser", NameDescriptor: Localization.New("server.app.select_browser.dd56ef5e", "Select browser", nil), Action: "session.select_browser", ActionArguments: canonical,
 					}},
 				}, nil
 			},
 		},
 		{
-			Name: "game.ui.close", Description: "Close dismissible dialogs, panels, attack panels, and contextual menus in the live game", Effect: Intent.EffectExternal,
-			Planner: actionPlanner("game.ui.close", "game-ui", "Close the active game UI"),
+			Name: "game.ui.close", Description: "Close dismissible dialogs, panels, attack panels, and contextual menus in the live game", DescriptionDescriptor: Localization.New("server.intent.description.09094736", "Close dismissible dialogs, panels, attack panels, and contextual menus in the live game", nil), Effect: Intent.EffectExternal,
+			Planner: actionPlanner("game.ui.close", "game-ui", "Close the active game UI", Localization.New("server.app.close_the_active_game.09e0984e", "Close the active game UI", nil)),
 		},
 		{
-			Name: "config.update", Description: "Atomically update one versioned user-configuration section", Effect: Intent.EffectWrite,
+			Name: "config.update", Description: "Atomically update one versioned user-configuration section", DescriptionDescriptor: Localization.New("server.intent.description.e0f16148", "Atomically update one versioned user-configuration section", nil), Effect: Intent.EffectWrite,
 			Planner: func(_ context.Context, _ Intent.PlanningContext, arguments json.RawMessage) (Intent.Plan, error) {
 				update, err := decodeConfigurationUpdate(arguments)
 				if err != nil {
@@ -1009,24 +1010,24 @@ func (application *Application) registerCoreIntents() error {
 				canonical, _ := json.Marshal(update)
 				return Intent.Plan{
 					Claims:  []string{"configuration:" + update.Section},
-					Summary: fmt.Sprintf("Update %s configuration", update.Section),
+					Summary: fmt.Sprintf("Update %s configuration", update.Section), SummaryDescriptor: Localization.New("server.app.update_p_configuration.94613bbf", "Update {p0} configuration", Localization.Params{"p0": fmt.Sprintf("%s", update.Section)}),
 					Steps: []Intent.Step{{
-						Name: "Save configuration", Action: "config.update", ActionArguments: canonical,
+						Name: "Save configuration", NameDescriptor: Localization.New("server.app.save_configuration.b2b158f2", "Save configuration", nil), Action: "config.update", ActionArguments: canonical,
 					}},
 				}, nil
 			},
 		},
 		{
-			Name: "game_data.refresh", Description: "Refresh the official versioned game-data snapshot", Effect: Intent.EffectExternal,
-			Planner: actionPlanner("game_data.refresh", "game-data", "Refresh official game data"),
+			Name: "game_data.refresh", Description: "Refresh the official versioned game-data snapshot", DescriptionDescriptor: Localization.New("server.intent.description.cec773aa", "Refresh the official versioned game-data snapshot", nil), Effect: Intent.EffectExternal,
+			Planner: actionPlanner("game_data.refresh", "game-data", "Refresh official game data", Localization.New("server.app.refresh_official_game_data.08d8de5a", "Refresh official game data", nil)),
 		},
 		{
-			Name: "app.update.check", Description: "Check the trusted CitadelOps release endpoint for a newer application version", Effect: Intent.EffectRead,
-			Planner: actionPlanner("app.update.check", "application-update", "Check for a CitadelOps update"),
+			Name: "app.update.check", Description: "Check the trusted CitadelOps release endpoint for a newer application version", DescriptionDescriptor: Localization.New("server.intent.description.53237709", "Check the trusted CitadelOps release endpoint for a newer application version", nil), Effect: Intent.EffectRead,
+			Planner: actionPlanner("app.update.check", "application-update", "Check for a CitadelOps update", Localization.New("server.app.check_for_a_citadelops.0e65e959", "Check for a CitadelOps update", nil)),
 		},
 		{
-			Name: "app.update.install", Description: "Download and atomically install the checked platform-specific CitadelOps release", Effect: Intent.EffectExternal,
-			Planner: actionPlanner("app.update.install", "application-update", "Install the checked CitadelOps update"),
+			Name: "app.update.install", Description: "Download and atomically install the checked platform-specific CitadelOps release", DescriptionDescriptor: Localization.New("server.intent.description.d8af18aa", "Download and atomically install the checked platform-specific CitadelOps release", nil), Effect: Intent.EffectExternal,
+			Planner: actionPlanner("app.update.install", "application-update", "Install the checked CitadelOps update", Localization.New("server.app.install_the_checked_citadelops.91ec953f", "Install the checked CitadelOps update", nil)),
 		},
 	}
 	for _, definition := range definitions {
@@ -1040,7 +1041,7 @@ func (application *Application) registerCoreIntents() error {
 func (application *Application) scheduleOperation(_ context.Context, arguments json.RawMessage) error {
 	var request Scheduling.Request
 	if err := decodeIntentArguments(arguments, &request); err != nil {
-		return fmt.Errorf("decode scheduled operation: %w", err)
+		return Localization.WithError(fmt.Errorf("decode scheduled operation: %w", err), Localization.ErrorContext(Localization.New("server.app.decode_scheduled_operation.5b452ece", "decode scheduled operation", nil), err))
 	}
 	return application.Scheduler.Schedule(request)
 }
@@ -1050,7 +1051,7 @@ func (application *Application) cancelOperation(_ context.Context, arguments jso
 		ID string `json:"id"`
 	}
 	if err := decodeIntentArguments(arguments, &request); err != nil {
-		return fmt.Errorf("decode scheduled-operation cancellation: %w", err)
+		return Localization.WithError(fmt.Errorf("decode scheduled-operation cancellation: %w", err), Localization.ErrorContext(Localization.New("server.app.decode_scheduled_operation_cancellation.f2f63ac8", "decode scheduled-operation cancellation", nil), err))
 	}
 	return application.Scheduler.Cancel(request.ID)
 }
@@ -1064,7 +1065,7 @@ func (application *Application) refreshGameData(ctx context.Context) error {
 
 func refreshGameDataStore(ctx context.Context, state *State.Store, gameData *GameData.Manager) error {
 	if state == nil || gameData == nil {
-		return fmt.Errorf("official game data is unavailable")
+		return Localization.WithError(fmt.Errorf("official game data is unavailable"), Localization.New("server.app.official_game_data_is.ff6f65a7", "official game data is unavailable", nil))
 	}
 	if err := gameData.Refresh(ctx); err != nil {
 		return err
@@ -1076,18 +1077,18 @@ func refreshGameDataStore(ctx context.Context, state *State.Store, gameData *Gam
 // this account without downloading or decoding the catalog again.
 func (application *Application) SynchronizeGameData() error {
 	if application == nil {
-		return fmt.Errorf("application is unavailable")
+		return Localization.WithError(fmt.Errorf("application is unavailable"), Localization.New("server.app.application_is_unavailable.eed006de", "application is unavailable", nil))
 	}
 	return synchronizeGameDataStore(application.State, application.GameData)
 }
 
 func synchronizeGameDataStore(state *State.Store, gameData *GameData.Manager) error {
 	if state == nil || gameData == nil {
-		return fmt.Errorf("official game data is unavailable")
+		return Localization.WithError(fmt.Errorf("official game data is unavailable"), Localization.New("server.app.official_game_data_is.ff6f65a7", "official game data is unavailable", nil))
 	}
 	current, ok := gameData.Current()
 	if !ok {
-		return fmt.Errorf("official game data did not produce a snapshot")
+		return Localization.WithError(fmt.Errorf("official game data did not produce a snapshot"), Localization.New("server.app.official_game_data_did.bc1853fe", "official game data did not produce a snapshot", nil))
 	}
 	version := current.Metadata().ItemVersion
 	languageVersion := current.Metadata().LanguageVersion
@@ -1108,12 +1109,12 @@ func synchronizeGameDataStore(state *State.Store, gameData *GameData.Manager) er
 	return err
 }
 
-func actionPlanner(action string, claim string, summary string) Intent.Planner {
+func actionPlanner(action string, claim string, summary string, descriptors ...*Localization.Message) Intent.Planner {
 	return func(_ context.Context, _ Intent.PlanningContext, arguments json.RawMessage) (Intent.Plan, error) {
 		return Intent.Plan{
-			Claims: []string{claim}, Summary: summary,
+			Claims: []string{claim}, Summary: summary, SummaryDescriptor: Localization.First(descriptors),
 			Steps: []Intent.Step{{
-				Name: summary, Action: action,
+				Name: summary, NameDescriptor: Localization.First(descriptors), Action: action,
 				ActionArguments: append(json.RawMessage(nil), arguments...),
 			}},
 		}, nil
@@ -1131,11 +1132,11 @@ func browserPreference(arguments json.RawMessage) (string, error) {
 		Browser string `json:"browser"`
 	}
 	if err := json.Unmarshal(arguments, &input); err != nil {
-		return "", fmt.Errorf("decode browser selection: %w", err)
+		return "", Localization.WithError(fmt.Errorf("decode browser selection: %w", err), Localization.ErrorContext(Localization.New("server.app.decode_browser_selection.5cd1812d", "decode browser selection", nil), err))
 	}
 	input.Browser = strings.TrimSpace(input.Browser)
 	if input.Browser == "" {
-		return "", fmt.Errorf("browser is required")
+		return "", Localization.WithError(fmt.Errorf("browser is required"), Localization.New("server.app.browser_is_required.24d5c322", "browser is required", nil))
 	}
 	return input.Browser, nil
 }
@@ -1150,18 +1151,18 @@ type configurationUpdate struct {
 func decodeConfigurationUpdate(arguments json.RawMessage) (configurationUpdate, error) {
 	var input configurationUpdate
 	if err := json.Unmarshal(arguments, &input); err != nil {
-		return input, fmt.Errorf("decode configuration update: %w", err)
+		return input, Localization.WithError(fmt.Errorf("decode configuration update: %w", err), Localization.ErrorContext(Localization.New("server.app.decode_configuration_update.5b6a4490", "decode configuration update", nil), err))
 	}
 	input.Section = strings.TrimSpace(input.Section)
 	if input.Section == Reports.BattleResearchConfigurationSection {
-		return input, fmt.Errorf("Experimental Battle Research settings have been removed")
+		return input, Localization.WithError(fmt.Errorf("Experimental Battle Research settings have been removed"), Localization.New("server.app.experimental_battle_research_settings.878d9340", "Experimental Battle Research settings have been removed", nil))
 	}
 	if err := Configuration.Validate(input.Section, input.Value); err != nil {
 		return input, err
 	}
 	if input.ExpectedValue != nil {
 		if err := Configuration.Validate(input.Section, *input.ExpectedValue); err != nil {
-			return input, fmt.Errorf("expected configuration value: %w", err)
+			return input, Localization.WithError(fmt.Errorf("expected configuration value: %w", err), Localization.ErrorContext(Localization.New("server.app.expected_configuration_value.c71676bc", "expected configuration value", nil), err))
 		}
 	}
 	return input, nil
@@ -1189,13 +1190,13 @@ func defaultConfiguration() map[string]json.RawMessage {
 		"automation.enabled":                      json.RawMessage(`{}`),
 		"automation.autoEquipmentCleanup":         json.RawMessage(`{"version":1,"checkIntervalSec":60}`),
 		"automation.recruitTroops":                json.RawMessage(`{"version":1,"mode":"global","checkIntervalSec":300,"recruitLevel10OnTitleLoss":false,"globalItems":[],"castles":{}}`),
-		"automation.autoBeriWorld":                json.RawMessage(`{"minTroopsToTransfer":1,"beriCastleId":0,"transferTroopId":0,"sourceCastleId":0,"wireCastleId":-1,"troopSpaceCheckIntervalSec":30,"presetId":"","attackCheckIntervalSec":30,"dailyAttackLimit":0,"horseTravelBoostId":-1,"toolMinimums":{"611":0,"614":0,"620":0},"build":{"enabled":false,"stableLevel":5,"allowPremium":false,"allowDemolition":false,"allowTimeSkips":false,"resourceReserves":{},"timeSkipReserve":{}},"requireActiveGallantryBooster":false,"useTroopTransportTimeSkips":false,"troopTransportTimeSkipId":"MS5"}`),
+		"automation.autoBeriWorld":                json.RawMessage(`{"minTroopsToTransfer":1,"sourceCastleId":0,"troopSpaceCheckIntervalSec":30,"presetId":"","attackCheckIntervalSec":30,"dailyAttackLimit":0,"horseTravelBoostId":-1,"toolMinimums":{"611":0,"614":0,"620":0},"build":{"enabled":false,"stableLevel":5,"allowPremium":false,"allowDemolition":false,"allowTimeSkips":false,"resourceReserves":{},"timeSkipReserve":{}},"requireActiveGallantryBooster":false,"useTroopTransportTimeSkips":false,"troopTransportTimeSkipId":"MS5"}`),
 		"automation.autoBeriWorldBlueprints":      json.RawMessage(`{"version":1,"blueprints":{}}`),
 		"automation.commanderFeatures":            json.RawMessage(`{"version":2,"assignments":{},"requirements":{}}`),
 		"automation.autoFoodBalance":              json.RawMessage(`{"checkIntervalSec":60,"stateRefreshIntervalSec":900,"logisticsRefreshIntervalSec":300,"safetyHours":8,"sourceSafetyHours":24,"minimumShipmentSize":1000,"minimumStormShipmentSize":10000,"minimumSourceReserve":1000,"minimumCoinReserve":0,"autoKingdomTransport":true,"useKingdomTimeSkips":false,"allowedTimeSkips":[],"timeSkipReserve":{},"horseTravelBoostId":-1}`),
 		"automation.autoBird":                     json.RawMessage(`{"version":2,"activePresetId":null,"ignoreSettings":{"settings":{},"minDelay":6,"maxDelay":12,"minSend":0,"minRPTDays":3},"presets":{"version":1,"lastSelectedPresetId":null,"presets":[]}}`),
 		"automation.autoTowers":                   json.RawMessage(`{"version":4,"checkIntervalSec":30,"mapRefreshIntervalSec":1800,"dailyAttackLimit":0,"horseTravelBoostId":-1,"useAdvisor":false,"autoActivateAdvisor":false,"maximumDailyTimeSkips":0,"castles":{}}`),
-		"automation.autoFortress":                 json.RawMessage(`{"version":1,"checkIntervalSec":5,"mapRefreshIntervalSec":1800,"dailyAttackLimit":0,"horseTravelBoostId":1009,"minimumCommanderSpeedBonus":100,"direwolfPurchaseLimit":0,"minimumTabletReserve":0,"useTimeSkips":false,"timeSkipReserve":{},"kingdoms":{"1":{"enabled":false},"2":{"enabled":false},"3":{"enabled":false}}}`),
+		"automation.autoFortress":                 json.RawMessage(`{"version":1,"checkIntervalSec":5,"mapRefreshIntervalSec":1800,"dailyAttackLimit":0,"horseTravelBoostId":-1,"direwolfPurchaseLimit":0,"minimumTabletReserve":0,"useTimeSkips":false,"timeSkipReserve":{},"kingdoms":{"1":{"enabled":false},"2":{"enabled":false},"3":{"enabled":false}}}`),
 		"automation.autoInvasion":                 json.RawMessage(`{"version":1,"sourceCastleId":0,"presetId":"","foreignLordsDifficultyId":0,"bloodcrowDifficultyId":0,"scoreTarget":0,"minimumRemainingSec":1800,"checkIntervalSec":30,"mapRefreshIntervalSec":300,"dailyAttackLimit":0,"fortifyCurrency":"","horseTravelBoostId":-1}`),
 		"automation.autoNomad":                    json.RawMessage(`{"version":5,"sourceCastleId":0,"nomadPresetId":"","samuraiPresetId":"","nomadDifficultyId":0,"samuraiDifficultyId":0,"scoreTarget":0,"minimumRemainingSec":1800,"checkIntervalSec":30,"mapRefreshIntervalSec":300,"dailyAttackLimit":0,"skipCooldowns":false,"timeSkipReserve":{},"rbcTest":{"enabled":false,"runId":"","targetX":0,"targetY":0},"horseTravelBoostId":-1}`),
 		"automation.autoAdvisor":                  json.RawMessage(`{"version":1,"sourceCastleId":0,"presetId":"","nomadDifficultyId":0,"samuraiDifficultyId":0,"maxAttackCount":9999,"minimumRemainingSec":1800,"coinCostPerAttack":500,"minimumCoinReserve":0,"rubyCostPerAttack":0,"minimumRubyReserve":0,"minimumFeatherReserve":0,"timeSkipReserve":{},"checkIntervalSec":30,"mapRefreshIntervalSec":300,"horseTravelBoostId":-1}`),

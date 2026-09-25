@@ -1,0 +1,18 @@
+import fs from 'node:fs';
+import crypto from 'node:crypto';
+import path from 'node:path';
+const [file]=process.argv.slice(2);
+if(!file)throw new Error('Pass an explicitly authored module JSON path');
+const source=JSON.parse(fs.readFileSync(new URL('../localization/ui.en.json',import.meta.url),'utf8'));
+const locale=path.basename(file).split('.').at(-2);
+const authored=JSON.parse(fs.readFileSync(file,'utf8'));
+const entries=Object.fromEntries(Object.entries(authored).map(([key,value])=>[Object.hasOwn(source,key)?key:`ui.equipment.components.equipmentModals.${key}`,value]));
+for(const [key,value] of Object.entries(entries))if(!Object.hasOwn(source,key)||typeof value!=='string'||!value.trim())throw new Error(`Invalid authored entry ${key}`);
+const target=new URL(`../src/i18n/catalogs/${locale}.json`,import.meta.url);
+const current=JSON.parse(fs.readFileSync(target,'utf8'));
+fs.writeFileSync(target,JSON.stringify({...current,...entries},null,2)+'\n');
+const provenancePath=new URL('../localization/module-authorship.json',import.meta.url);
+const provenance=fs.existsSync(provenancePath)?JSON.parse(fs.readFileSync(provenancePath,'utf8')):{};
+provenance[path.basename(file)]={method:'direct-model-authored',linguisticReview:'pending',translationHashes:Object.fromEntries(Object.entries(entries).map(([key,value])=>[key,crypto.createHash('sha256').update(value).digest('hex')])),sourceHashes:Object.fromEntries(Object.keys(entries).map(key=>[key,crypto.createHash('sha256').update(source[key]).digest('hex')]))};
+fs.writeFileSync(provenancePath,JSON.stringify(provenance,null,2)+'\n');
+console.log(JSON.stringify({locale,authored:Object.keys(entries).length}));

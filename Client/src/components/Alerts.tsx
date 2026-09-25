@@ -1,3 +1,7 @@
+import { parseMessageDescriptor } from '../i18n/messageDescriptor';
+import { useLocalizedMessages } from '../i18n/useLocalizedMessages';
+import { messageLanguageAttributes } from '../i18n/messageLanguage';
+import { useLocale as useStaticLocale } from "../i18n/LocaleContext";
 import { useEffect, useRef, useState } from 'react';
 import { Icons } from './Icons';
 import { Notifications, notificationDurationMs, type AppNotification } from './Notifications';
@@ -28,6 +32,7 @@ export const Alerts = () => {
 };
 
 const AlertItem = ({ alert, onDismiss }: { alert: AppNotification; onDismiss: () => void }) => {
+  const { t: localizeStatic } = useStaticLocale();
   const [isExiting, setIsExiting] = useState(false);
   const exitTimer = useRef<number | null>(null);
 
@@ -49,6 +54,7 @@ const AlertItem = ({ alert, onDismiss }: { alert: AppNotification; onDismiss: ()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [alert.category, alert.id, alert.persistent, alert.revision]);
 
+  const localized = useLocalizedMessages([{descriptor:parseMessageDescriptor(alert.messageDescriptor),legacyText:alert.message},...(alert.lines ?? []).map((line,index)=>({descriptor:parseMessageDescriptor(alert.lineDescriptors?.[index]),legacyText:line})),{descriptor:parseMessageDescriptor(alert.action?.labelDescriptor),legacyText:alert.action?.label ?? ''}]);
   const style = alertStyles(alert.category);
   const hasLines = Boolean(alert.lines?.length);
 
@@ -59,10 +65,10 @@ const AlertItem = ({ alert, onDismiss }: { alert: AppNotification; onDismiss: ()
     >
       <div className="mt-0.5 shrink-0">{style.icon}</div>
       <div className={`flex min-w-0 flex-1 flex-col gap-2 text-sm ${style.text} ${hasLines ? 'max-h-[min(70vh,28rem)] overflow-y-auto pr-1' : ''}`}>
-        <div className="leading-snug">{alert.message}</div>
+        <div className="leading-snug" {...messageLanguageAttributes(localized[0])}>{localized[0].text}</div>
         {hasLines && (
           <ul className={`mt-0.5 list-inside list-disc space-y-1.5 pl-0.5 text-[13px] font-normal ${style.list}`}>
-            {alert.lines?.map((line, index) => <li key={`${line}-${index}`}>{line}</li>)}
+            {alert.lines?.map((line, index) => <li key={`${line}-${index}`} {...messageLanguageAttributes(localized[index+1])}>{localized[index+1].text}</li>)}
           </ul>
         )}
         {alert.action && (
@@ -71,7 +77,7 @@ const AlertItem = ({ alert, onDismiss }: { alert: AppNotification; onDismiss: ()
             onClick={alert.action.onClick}
             className={`self-start rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors ${style.border} hover:bg-white/10`}
           >
-            {alert.action.label}
+            <span {...messageLanguageAttributes(localized[localized.length-1])}>{localized[localized.length-1].text}</span>
           </button>
         )}
       </div>
@@ -79,7 +85,7 @@ const AlertItem = ({ alert, onDismiss }: { alert: AppNotification; onDismiss: ()
         type="button"
         onClick={handleDismiss}
         className={`shrink-0 rounded-lg p-1 opacity-70 transition-colors hover:bg-white/10 hover:opacity-100 ${style.text}`}
-        aria-label="Dismiss"
+        aria-label={localizeStatic("ui.components.alerts.aria-label.dismiss.48845bff")}
       >
         <Icons.X className="h-4 w-4" />
       </button>

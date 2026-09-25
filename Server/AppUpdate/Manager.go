@@ -74,6 +74,23 @@ type versionResponse struct {
 	LinuxAMD64SHA256 string `json:"linuxAmd64Sha256"`
 }
 
+type releaseManifestArtifact struct {
+	Object string `json:"object"`
+	SHA256 string `json:"sha256"`
+}
+
+type releaseManifest struct {
+	SchemaVersion    int    `json:"schemaVersion"`
+	Version          string `json:"version"`
+	SourceRevision   string `json:"sourceRevision"`
+	DesktopArtifacts struct {
+		Windows    releaseManifestArtifact `json:"windows"`
+		MacOSARM64 releaseManifestArtifact `json:"macosArm64"`
+		MacOSAMD64 releaseManifestArtifact `json:"macosAmd64"`
+		LinuxAMD64 releaseManifestArtifact `json:"linuxAmd64"`
+	} `json:"desktopArtifacts"`
+}
+
 func NewManager(config Config) *Manager {
 	config.CurrentVersion = normalizeVersion(config.CurrentVersion)
 	if config.Endpoint == "" {
@@ -179,7 +196,10 @@ func (manager *Manager) Check(ctx context.Context) error {
 			return manager.fail("check", fmt.Errorf("version response must provide the artifact URL and SHA-256 together"))
 		}
 		if !hasURL {
-			return manager.fail("check", fmt.Errorf("version response has no artifact URL and SHA-256 for this platform"))
+			downloadURL, expectedSHA, err = manager.manifestArtifact(checkContext, latest.Version)
+			if err != nil {
+				return manager.fail("check", err)
+			}
 		}
 		if err := manager.validateDownloadURL(downloadURL); err != nil {
 			return manager.fail("check", err)
@@ -284,6 +304,64 @@ func (manager *Manager) platformArtifact(response versionResponse) (string, stri
 	return artifactURL, checksum
 }
 
+func (manager *Manager) manifestArtifact(ctx context.Context, version string) (string, string, error) {
+	manifestURL := strings.TrimRight(strings.TrimSpace(manager.config.DownloadBaseURL), "/") + "/releases/latest.json"
+	if err := manager.validateDownloadURL(manifestURL); err != nil {
+		return "", "", fmt.Errorf("release manifest URL is invalid: %w", err)
+	}
+	request, err := http.NewRequestWithContext(ctx, http.MethodGet, manifestURL, nil)
+	if err != nil {
+		return "", "", fmt.Errorf("create release manifest request: %w", err)
+	}
+	response, err := manager.artifactHTTPClient().Do(request)
+	if err != nil {
+		return "", "", fmt.Errorf("fetch release manifest: %w", err)
+	}
+	defer response.Body.Close()
+	if response.StatusCode != http.StatusOK {
+		return "", "", fmt.Errorf("release manifest returned HTTP %d", response.StatusCode)
+	}
+	if err := manager.validateDownloadURL(response.Request.URL.String()); err != nil {
+		return "", "", fmt.Errorf("release manifest redirect is invalid: %w", err)
+	}
+	raw, err := io.ReadAll(io.LimitReader(response.Body, (1<<20)+1))
+	if err != nil {
+		return "", "", fmt.Errorf("read release manifest: %w", err)
+	}
+	if len(raw) > 1<<20 {
+		return "", "", fmt.Errorf("release manifest exceeds 1 MiB")
+	}
+	var manifest releaseManifest
+	if err := json.Unmarshal(raw, &manifest); err != nil {
+		return "", "", fmt.Errorf("decode release manifest: %w", err)
+	}
+	if manifest.SchemaVersion != 1 && manifest.SchemaVersion != 2 {
+		return "", "", fmt.Errorf("release manifest schema is unsupported")
+	}
+	if normalizeVersion(manifest.Version) != version {
+		return "", "", fmt.Errorf("release manifest version does not match the version endpoint")
+	}
+	if !isLowerHex(manifest.SourceRevision, 40) {
+		return "", "", fmt.Errorf("release manifest source revision is invalid")
+	}
+	artifact := manifestArtifactForPlatform(manifest, runtime.GOOS, runtime.GOARCH)
+	if strings.TrimSpace(artifact.Object) == "" {
+		return "", "", fmt.Errorf("release manifest has no artifact for %s/%s", runtime.GOOS, runtime.GOARCH)
+	}
+	artifactURL, err := resolveArtifactURL(manager.config.DownloadBaseURL, artifact.Object)
+	if err != nil {
+		return "", "", err
+	}
+	if err := manager.validateDownloadURL(artifactURL); err != nil {
+		return "", "", err
+	}
+	checksum, err := normalizeSHA256(artifact.SHA256)
+	if err != nil {
+		return "", "", err
+	}
+	return artifactURL, checksum, nil
+}
+
 func (manager *Manager) artifactHTTPClient() *http.Client {
 	client := *manager.config.Client
 	existingCheckRedirect := client.CheckRedirect
@@ -300,6 +378,40 @@ func (manager *Manager) artifactHTTPClient() *http.Client {
 		return nil
 	}
 	return &client
+}
+
+func manifestArtifactForPlatform(manifest releaseManifest, goos string, goarch string) releaseManifestArtifact {
+	switch goos + "/" + goarch {
+	case "windows/amd64":
+		return manifest.DesktopArtifacts.Windows
+	case "darwin/arm64":
+		return manifest.DesktopArtifacts.MacOSARM64
+	case "darwin/amd64":
+		return manifest.DesktopArtifacts.MacOSAMD64
+	case "linux/amd64":
+		return manifest.DesktopArtifacts.LinuxAMD64
+	default:
+		return releaseManifestArtifact{}
+	}
+}
+
+func resolveArtifactURL(baseURL string, object string) (string, error) {
+	object = strings.TrimSpace(object)
+	if object == "" || path.Base(object) != object || strings.Contains(object, "\\") || strings.Contains(object, "%") {
+		return "", fmt.Errorf("release manifest artifact object is invalid")
+	}
+	if object == "." || object == ".." {
+		return "", fmt.Errorf("release manifest artifact object is invalid")
+	}
+	base, err := url.Parse(strings.TrimRight(strings.TrimSpace(baseURL), "/") + "/")
+	if err != nil {
+		return "", fmt.Errorf("application update base URL is invalid")
+	}
+	reference, err := url.Parse(object)
+	if err != nil || reference.IsAbs() || reference.Host != "" || reference.RawQuery != "" || reference.Fragment != "" {
+		return "", fmt.Errorf("release manifest artifact object is invalid")
+	}
+	return base.ResolveReference(reference).String(), nil
 }
 
 func (manager *Manager) validateDownloadURL(raw string) error {

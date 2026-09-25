@@ -1,6 +1,7 @@
 package Automation
 
 import (
+	"CitadelDesktop/Server/Localization"
 	"encoding/json"
 	"fmt"
 	"sort"
@@ -92,10 +93,10 @@ func resolvePolicyHorseTravelBoost(
 	}
 	tier, selected := GameData.HorseTravelBoostTierForSelection(value)
 	if !selected {
-		return fmt.Errorf("horseTravelBoostId must be -1, 1007, 1008, or 1009")
+		return Localization.WithError(fmt.Errorf("horseTravelBoostId must be -1, 1007, 1008, or 1009"), Localization.New("server.automation.horsetravelboostid_must_be_or.12adeec0", "horseTravelBoostId must be -1, 1007, 1008, or 1009", nil))
 	}
 	if gameData == nil {
-		return fmt.Errorf("official game data is unavailable")
+		return Localization.WithError(fmt.Errorf("official game data is unavailable"), Localization.New("server.automation.official_game_data_is.ff6f65a7", "official game data is unavailable", nil))
 	}
 	_, err := gameData.ResolveHorseTravelBoost(castle, tier)
 	return err
@@ -157,14 +158,14 @@ func dailyAttackLimitAllowance(
 	}
 	if limit < 0 {
 		return 0, &Decision{
-			Status: "waiting", Detail: "Daily attack limit cannot be negative",
+			Status: "waiting", Detail: "Daily attack limit cannot be negative", DetailDescriptor: Localization.New("server.automation.daily_attack_limit_cannot.dc8c30b7", "Daily attack limit cannot be negative", nil),
 			NextCheckAt: snapshot.Now.Add(interval), Metrics: metrics,
 		}
 	}
 	attacks := snapshot.State.DailyAttacks
 	if attacks.ObservedAt.IsZero() {
 		return 0, &Decision{
-			Status: "waiting", Detail: "Waiting for the server daily attack count before queuing another attack",
+			Status: "waiting", Detail: "Waiting for the server daily attack count before queuing another attack", DetailDescriptor: Localization.New("server.automation.waiting_for_the_server.8cf9f071", "Waiting for the server daily attack count before queuing another attack", nil),
 			NextCheckAt: snapshot.Now.Add(interval), Metrics: metrics,
 		}
 	}
@@ -179,7 +180,7 @@ func dailyAttackLimitAllowance(
 			Detail: fmt.Sprintf(
 				"Daily attack limit reached: %d / %d; normal attacks resume when the server count resets",
 				attacks.Count, limit,
-			),
+			), DetailDescriptor: Localization.New("server.automation.daily_attack_limit_reached.508c0d43", "Daily attack limit reached: {p0} / {p1}; normal attacks resume when the server count resets", Localization.Params{"p0": attacks.Count, "p1": limit}),
 			NextCheckAt: snapshot.Now.Add(interval), Metrics: metrics,
 		}
 	}

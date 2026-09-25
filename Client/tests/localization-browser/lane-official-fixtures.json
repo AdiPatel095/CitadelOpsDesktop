@@ -1,0 +1,12 @@
+{
+  "de": {
+    "url": "https://langserv.public.ggs-ep.com/12@4360/de/*",
+    "sha256": "bad8bf1a3eeb498491d248b2610878ba48b09409b0f3eee195e0ad0a2c872bef",
+    "errorCode_90": "Sie müssen mindestens 4 Sekunden zwischen den Angriffen warten."
+  },
+  "ar": {
+    "url": "https://langserv.public.ggs-ep.com/12@4360/ar/*",
+    "sha256": "76c3ff9c372b5a947f5f8e34912ad6d260a6226b5d47957bf84a639960157ae7",
+    "errorCode_90": "يجب أن تنتظر على الأقل 4 ثوانٍ بين الهجمات."
+  }
+}

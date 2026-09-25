@@ -94,14 +94,25 @@ func TestOpenMigratesLegacy138Configuration(t *testing.T) {
 
 	beri := decodeTestSection[struct {
 		Minimum  int64 `json:"minTroopsToTransfer"`
-		CastleID int64 `json:"beriCastleId"`
-		UnitID   int64 `json:"transferTroopId"`
 		SourceID int64 `json:"sourceCastleId"`
-		WireID   int64 `json:"wireCastleId"`
 		Interval int   `json:"troopSpaceCheckIntervalSec"`
 	}](t, store, "automation.autoBeriWorld")
-	if beri.Minimum != 250 || beri.CastleID != 81 || beri.UnitID != 216 || beri.SourceID != 20 || beri.WireID != -1 || beri.Interval != 45 {
+	if beri.Minimum != 250 || beri.SourceID != 20 || beri.Interval != 45 {
 		t.Fatalf("unexpected Berimond migration: %+v", beri)
+	}
+	var migrated map[string]any
+	section, _ := store.Section("automation.autoBeriWorld")
+	if err := json.Unmarshal(section, &migrated); err != nil {
+		t.Fatal(err)
+	}
+	if _, present := migrated["beriCastleId"]; present {
+		t.Fatal("legacy camp ID was serialized")
+	}
+	if _, present := migrated["wireCastleId"]; present {
+		t.Fatal("legacy KUT CID was serialized")
+	}
+	if _, present := migrated["transferTroopId"]; present {
+		t.Fatal("legacy transfer troop ID was serialized")
 	}
 
 	for name, contents := range legacyFiles {

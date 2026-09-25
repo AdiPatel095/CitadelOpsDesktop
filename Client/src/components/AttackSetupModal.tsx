@@ -1,3 +1,5 @@
+import { useLocale as useStaticLocale } from "../i18n/LocaleContext";
+import { LocalizedText } from "../i18n/LocalizedText";
 import React, { useEffect, useId, useMemo, useState } from 'react';
 import {
   ChevronDown,
@@ -114,6 +116,7 @@ const AttackSetupModal: React.FC<AttackSetupModalProps> = ({
   onClose,
   onSave,
 }) => {
+  const { t: localizeStatic } = useStaticLocale();
   const { state } = useCitadelAPI();
   const { troops, tools, unitsLoading: isMetadataLoading, unitsError } = useMetadata();
   const [draft, setDraft] = useState<AttackSetupDraft>(() => normalizeDraft(initialDraft));
@@ -267,16 +270,15 @@ const AttackSetupModal: React.FC<AttackSetupModalProps> = ({
             </span>
           )}
         >
-          Attack preset
-        </ModalTitle>
+          <LocalizedText messageKey="ui.components.attackSetupModal.attack.preset.407b93e9" /></ModalTitle>
       }
       footer={
         <div className="flex w-full flex-wrap items-center justify-between gap-3">
           <div className="text-xs text-text-muted">
             {unitsError ? (
-              <span className="font-semibold text-error">Troop and tool metadata is unavailable; save will unlock after the automatic retry.</span>
+              <span className="font-semibold text-error"><LocalizedText messageKey="ui.components.attackSetupModal.troop.and.tool.metadata.is.unavailable.save.cea697a4" /></span>
             ) : isMetadataLoading ? (
-              <span className="font-semibold text-text-muted">Loading official troop and tool metadata before save.</span>
+              <span className="font-semibold text-text-muted"><LocalizedText messageKey="ui.components.attackSetupModal.loading.official.troop.and.tool.metadata.before.6bf96435" /></span>
             ) : toolLimitIssues.length > 0 ? (
               <span className="font-semibold text-error">
                 {toolLimitIssues.length} tool section limit{toolLimitIssues.length === 1 ? '' : 's'} must be resolved
@@ -293,7 +295,7 @@ const AttackSetupModal: React.FC<AttackSetupModalProps> = ({
             )}
           </div>
           <div className="flex items-center gap-2">
-            <Button variant="ghost" onClick={onClose} disabled={isSaving}>Cancel</Button>
+            <Button variant="ghost" onClick={onClose} disabled={isSaving}><LocalizedText messageKey="game.cancel" /></Button>
             <Button variant="primary" onClick={handleSave} disabled={!canSave} isLoading={isSaving}>
               {isSaving ? 'Saving preset' : 'Save preset'}
             </Button>
@@ -314,8 +316,7 @@ const AttackSetupModal: React.FC<AttackSetupModalProps> = ({
                 {targetType === 'pvp' ? 'PvP tool limits' : 'PvE tool limits'}
               </div>
               <p className="mt-0.5 text-xs text-text-muted">
-                Each wave is checked independently. The server checks the actual target again before CRA is sent.
-              </p>
+                <LocalizedText messageKey="ui.components.attackSetupModal.each.wave.is.checked.independently.the.server.1e4831ee" /></p>
             </div>
             <div className="flex flex-wrap items-center gap-2">
               <Badge variant="outline" className="normal-case tracking-normal">Left {toolLimits.L}</Badge>
@@ -328,41 +329,39 @@ const AttackSetupModal: React.FC<AttackSetupModalProps> = ({
         {allowTroopFamilyMode ? (
           <section className="flex flex-wrap items-center justify-between gap-4 rounded-global border border-primary/25 bg-primary/8 px-4 py-3">
             <div className="min-w-0 flex-1">
-              <div className="text-sm font-black text-text-main">Use whole troop families</div>
+              <div className="text-sm font-black text-text-main"><LocalizedText messageKey="ui.components.attackSetupModal.use.whole.troop.families.b9bd7e5a" /></div>
               <p className="mt-0.5 text-xs leading-relaxed text-text-muted">
-                Treat each selected troop as a family anchor. At launch, CitadelOps uses the highest owned tier first,
-                keeps partial higher-tier fills, then fills the remaining capacity with lower tiers from the same official family.
-              </p>
+                <LocalizedText messageKey="ui.components.attackSetupModal.treat.each.selected.troop.as.a.family.60aa474a" /></p>
             </div>
             <Switch
               checked={Boolean(draft.useTroopFamilies)}
               onChange={(useTroopFamilies) => setDraft((current) => ({ ...current, useTroopFamilies }))}
-              ariaLabel="Use whole troop families in this attack preset"
+              ariaLabel={localizeStatic("ui.components.attackSetupModal.ariaLabel.use.whole.troop.families.in.this.attack.c1deb650")}
             />
           </section>
         ) : null}
 
         <section className="grid gap-3 rounded-global border border-border-base bg-bg-card/65 p-3 shadow-[var(--shadow-raised)] lg:grid-cols-[minmax(15rem,1.4fr)_auto_auto] lg:items-end">
           <label className="block min-w-0">
-            <span className="mb-1.5 block text-[11px] font-black uppercase tracking-wider text-text-muted">Preset name</span>
+            <span className="mb-1.5 block text-[11px] font-black uppercase tracking-wider text-text-muted"><LocalizedText messageKey="common.presetName" /></span>
             <Input
               value={draft.name}
               onChange={(event) => setDraft((current) => ({ ...current, name: event.target.value }))}
-              placeholder="e.g. RBC — 5 wave ranged"
+              placeholder={localizeStatic("ui.components.attackSetupModal.placeholder.e.g.rbc.5.wave.ranged.9a9be634")}
               maxLength={80}
               className="font-semibold"
             />
           </label>
 
           <div>
-            <span className="mb-1.5 block text-[11px] font-black uppercase tracking-wider text-text-muted">Waves</span>
+            <span className="mb-1.5 block text-[11px] font-black uppercase tracking-wider text-text-muted"><LocalizedText messageKey="ui.components.attackSetupModal.waves.ad5b8321" /></span>
             <div className="flex items-center gap-2">
               <Button
                 variant="secondary"
                 size="icon"
                 onClick={() => setWaveCount(draft.waves.length - 1)}
                 disabled={draft.waves.length <= 1}
-                title="Remove last wave"
+                title={localizeStatic("ui.components.attackSetupModal.title.remove.last.wave.99e9f782")}
               >
                 <Minus className="h-4 w-4" />
               </Button>
@@ -373,14 +372,14 @@ const AttackSetupModal: React.FC<AttackSetupModalProps> = ({
                 value={draft.waves.length}
                 onChange={(event) => setWaveCount(Number(event.target.value))}
                 className="w-16 text-center font-mono font-bold"
-                aria-label="Wave count"
+                aria-label={localizeStatic("ui.components.attackSetupModal.aria-label.wave.count.17eaea44")}
               />
               <Button
                 variant="secondary"
                 size="icon"
                 onClick={() => setWaveCount(draft.waves.length + 1)}
                 disabled={draft.waves.length >= MAX_WAVES}
-                title="Add wave"
+                title={localizeStatic("ui.components.attackSetupModal.title.add.wave.47a3b886")}
               >
                 <Plus className="h-4 w-4" />
               </Button>
@@ -388,13 +387,13 @@ const AttackSetupModal: React.FC<AttackSetupModalProps> = ({
           </div>
 
           <div className="grid grid-cols-3 gap-2">
-            <MetricTile size="sm" className="min-w-[4.75rem]" label="Waves" value={draft.waves.length.toLocaleString()} />
-            <MetricTile size="sm" className="min-w-[4.75rem]" label="Troops" value={totals.troops.toLocaleString()} />
-            <MetricTile size="sm" className="min-w-[4.75rem]" label="Tools" value={totals.tools.toLocaleString()} />
+            <MetricTile size="sm" className="min-w-[4.75rem]" label={localizeStatic("ui.components.attackSetupModal.label.waves.ad5b8321")} value={draft.waves.length.toLocaleString()} />
+            <MetricTile size="sm" className="min-w-[4.75rem]" label={localizeStatic("ui.components.attackSetupModal.label.troops.5d47e163")} value={totals.troops.toLocaleString()} />
+            <MetricTile size="sm" className="min-w-[4.75rem]" label={localizeStatic("game.tools")} value={totals.tools.toLocaleString()} />
           </div>
         </section>
 
-        <section className="flex flex-col gap-4" aria-label="Attack waves">
+        <section className="flex flex-col gap-4" aria-label={localizeStatic("ui.components.attackSetupModal.aria-label.attack.waves.d53463d4")}>
           {draft.waves.map((wave, waveIndex) => (
             <WaveEditorCard
               key={waveIndex}
@@ -528,7 +527,7 @@ const AttackSetupModal: React.FC<AttackSetupModalProps> = ({
               {inventoryPolicy === 'advisory' ? 'Current account inventory is lower than this preset' : 'Preset exceeds available inventory'}
             </div>
             {inventoryPolicy === 'advisory' ? (
-              <p className="mb-2 text-xs font-medium text-text-muted">The preset can still be saved. Live inventory will be validated before an attack launches.</p>
+              <p className="mb-2 text-xs font-medium text-text-muted"><LocalizedText messageKey="ui.components.attackSetupModal.the.preset.can.still.be.saved.live.441f66d8" /></p>
             ) : null}
             <div className="flex flex-wrap gap-2">
               {inventoryIssues.map((issue) => {
@@ -545,10 +544,9 @@ const AttackSetupModal: React.FC<AttackSetupModalProps> = ({
 
         {toolLimitIssues.length > 0 ? (
           <section className="rounded-global border border-error/30 bg-error/8 p-3 text-sm text-error">
-            <div className="mb-2 font-black">Preset exceeds the selected target type’s tool limits</div>
+            <div className="mb-2 font-black"><LocalizedText messageKey="ui.components.attackSetupModal.preset.exceeds.the.selected.target.type.s.0743a51a" /></div>
             <p className="mb-2 text-xs font-medium text-text-muted">
-              Reduce tools in each listed section before saving. Limits apply separately to every wave.
-            </p>
+              <LocalizedText messageKey="ui.components.attackSetupModal.reduce.tools.in.each.listed.section.before.956aaf74" /></p>
             <div className="flex flex-wrap gap-2">
               {toolLimitIssues.slice(0, 12).map((issue) => (
                 <span
@@ -606,6 +604,7 @@ const WaveEditorCard: React.FC<WaveEditorCardProps> = ({
   onPickTroop,
   onPickTool,
 }) => {
+  const { t: localizeStatic } = useStaticLocale();
   const waveTotals = summarizeWave(wave);
   const [isOpen, setIsOpen] = useState(true);
   const contentId = useId();
@@ -653,7 +652,7 @@ const WaveEditorCard: React.FC<WaveEditorCardProps> = ({
             className="h-8 w-8 rounded-full !p-0"
             onClick={onDuplicate}
             disabled={waveCount >= MAX_WAVES}
-            title="Duplicate wave"
+            title={localizeStatic("ui.components.attackSetupModal.title.duplicate.wave.2065f71e")}
             aria-label={`Duplicate Wave ${waveIndex + 1}`}
           >
             <Copy className="h-3.5 w-3.5" />
@@ -663,7 +662,7 @@ const WaveEditorCard: React.FC<WaveEditorCardProps> = ({
             size="icon"
             className="h-8 w-8 rounded-full !p-0 hover:!text-error"
             onClick={onClear}
-            title="Clear wave"
+            title={localizeStatic("ui.components.attackSetupModal.title.clear.wave.b1d53a3c")}
             aria-label={`Clear Wave ${waveIndex + 1}`}
           >
             <Eraser className="h-3.5 w-3.5" />
@@ -676,7 +675,7 @@ const WaveEditorCard: React.FC<WaveEditorCardProps> = ({
           <div className="grid gap-1">
             <FormationRow
               kind="tool"
-              label="Tools"
+              label={localizeStatic("game.tools")}
               wave={wave}
               items={toolItems}
               stock={toolStock}
@@ -687,7 +686,7 @@ const WaveEditorCard: React.FC<WaveEditorCardProps> = ({
             />
             <FormationRow
               kind="troop"
-              label="Troops"
+              label={localizeStatic("ui.components.attackSetupModal.label.troops.5d47e163")}
               divided
               wave={wave}
               items={troopItems}
@@ -732,6 +731,7 @@ const CourtyardSupportCard: React.FC<CourtyardSupportCardProps> = ({
   onPickTroop,
   onPickTool,
 }) => {
+  const { t: localizeStatic } = useStaticLocale();
   const kindIsTroop = activeKind === 'troop';
   const slots = kindIsTroop ? support.troops : support.tools;
   const items = kindIsTroop ? troopItems : toolItems;
@@ -749,8 +749,8 @@ const CourtyardSupportCard: React.FC<CourtyardSupportCardProps> = ({
           </span>
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-2">
-              <h3 className="m-0 text-base font-black text-text-main">Courtyard support wave</h3>
-              <Badge variant="warning" className="normal-case tracking-normal">Optional</Badge>
+              <h3 className="m-0 text-base font-black text-text-main"><LocalizedText messageKey="ui.components.attackSetupModal.courtyard.support.wave.e3bdc7ec" /></h3>
+              <Badge variant="warning" className="normal-case tracking-normal"><LocalizedText messageKey="ui.components.attackSetupModal.optional.59be7133" /></Badge>
             </div>
             <p className="mt-1 text-xs text-text-muted">
               Add up to {COURTYARD_TROOP_SLOTS} extra troops and {COURTYARD_TOOL_SLOTS} one-use Sceat support tools.
@@ -760,7 +760,7 @@ const CourtyardSupportCard: React.FC<CourtyardSupportCardProps> = ({
 
         <div className="flex flex-wrap items-center justify-end gap-2">
           <PillSelector
-            ariaLabel="Courtyard support item type"
+            ariaLabel={localizeStatic("ui.components.attackSetupModal.ariaLabel.courtyard.support.item.type.94aaaf91")}
             value={activeKind}
             onChange={(value) => onChangeKind(value as InventoryKind)}
             options={[
@@ -769,13 +769,13 @@ const CourtyardSupportCard: React.FC<CourtyardSupportCardProps> = ({
             ]}
             size="header"
           />
-          <MetricTile size="sm" className="min-w-[4.75rem]" label="Troops" value={troopTotal.toLocaleString()} />
-          <MetricTile size="sm" className="min-w-[4.75rem]" label="Tools" value={toolTotal.toLocaleString()} />
+          <MetricTile size="sm" className="min-w-[4.75rem]" label={localizeStatic("ui.components.attackSetupModal.label.troops.5d47e163")} value={troopTotal.toLocaleString()} />
+          <MetricTile size="sm" className="min-w-[4.75rem]" label={localizeStatic("game.tools")} value={toolTotal.toLocaleString()} />
         </div>
       </CardHeader>
 
       <CardContent className="liquid-prominent-header-content p-3">
-        <section className="overflow-hidden rounded-global border border-border-base bg-bg-app/42" aria-label="Courtyard support formation">
+        <section className="overflow-hidden rounded-global border border-border-base bg-bg-app/42" aria-label={localizeStatic("ui.components.attackSetupModal.aria-label.courtyard.support.formation.4cfd524c")}>
           <div className="overflow-x-auto p-3 custom-scrollbar">
             <div className={`mx-auto flex w-max items-start justify-center gap-2 ${kindIsTroop ? 'min-w-[46rem]' : 'min-w-[18rem]'}`}>
               {slots.map((slot, slotIndex) => (
@@ -805,8 +805,7 @@ const CourtyardSupportCard: React.FC<CourtyardSupportCardProps> = ({
         </section>
         {!kindIsTroop && toolItems.length === 0 ? (
           <p className="mt-3 text-xs font-medium text-text-muted">
-            No Sceat attack support tools are available in this inventory.
-          </p>
+            <LocalizedText messageKey="ui.components.attackSetupModal.no.sceat.attack.support.tools.are.available.eae37425" /></p>
         ) : null}
       </CardContent>
     </Card>
@@ -1032,7 +1031,7 @@ const InventorySlotCard: React.FC<InventorySlotCardProps> = ({
           <span className="mt-1.5 flex h-7 items-center text-center text-[10px] font-bold leading-[1.05] text-text-muted">
             Empty {itemKindLabel} slot
           </span>
-          <span className="mt-1 font-mono text-[9px] leading-none text-text-muted">Available</span>
+          <span className="mt-1 font-mono text-[9px] leading-none text-text-muted"><LocalizedText messageKey="ui.components.attackSetupModal.available.e6744473" /></span>
         </>
       )}
     </div>

@@ -45,6 +45,12 @@ func TestSafetyRefreshPersistsLegacyExpiryAndWhitelistWithoutReset(t *testing.T)
 		if lock.Active(now) != wantActive {
 			t.Fatalf("%s active=%v", lane, lock.Active(now))
 		}
+		if !wantActive {
+			detail := loaded.Automations[lane]
+			if detail.DetailDescriptor == nil || detail.DetailDescriptor.Key != "server.intent.safety_lock_released" || detail.DetailDescriptor.FallbackText != detail.Detail || detail.LastErrorDescriptor != nil {
+				t.Fatal("release descriptor missing or stale")
+			}
+		}
 		if !wantActive && (lock.ReviewedBy == "" || lock.ClearedAt.IsZero() || loaded.Automations[lane].Status == "gated") {
 			t.Fatalf("release not audited: %#v", loaded.Automations[lane])
 		}

@@ -1,6 +1,7 @@
 package State
 
 import (
+	"CitadelDesktop/Server/Localization"
 	"encoding/json"
 	"math"
 	"sort"
@@ -1376,6 +1377,7 @@ const (
 )
 
 type StationingOperation struct {
+	StatusDetailDescriptor *Localization.Message `json:"statusDetailDescriptor,omitempty"`
 	// Runtime castle controls use a separate autoBirdControl record so clearing
 	// cycle tracking cannot accidentally remove a user's pause.
 	Paused          bool       `json:"paused,omitempty"`
@@ -1804,21 +1806,22 @@ type NomadRBCTestLaunch struct {
 }
 
 type NomadRBCTestState struct {
-	RunID                 string               `json:"runId"`
-	SourceCastleID        CastleID             `json:"sourceCastleId"`
-	KingdomID             KingdomID            `json:"kingdomId"`
-	TargetX               int                  `json:"targetX"`
-	TargetY               int                  `json:"targetY"`
-	ExpectedAttacks       int                  `json:"expectedAttacks"`
-	AttacksLaunched       int                  `json:"attacksLaunched"`
-	VictoriesConfirmed    int                  `json:"victoriesConfirmed"`
-	CooldownsSkipped      int                  `json:"cooldownsSkipped"`
-	Launches              []NomadRBCTestLaunch `json:"launches"`
-	LastReportID          int64                `json:"lastReportId,omitempty"`
-	SafetyError           string               `json:"safetyError,omitempty"`
-	StartedAt             time.Time            `json:"startedAt"`
-	LastChainLaunchedAt   time.Time            `json:"lastChainLaunchedAt,omitempty"`
-	LastCooldownSkippedAt time.Time            `json:"lastCooldownSkippedAt,omitempty"`
+	RunID                 string                `json:"runId"`
+	SourceCastleID        CastleID              `json:"sourceCastleId"`
+	KingdomID             KingdomID             `json:"kingdomId"`
+	TargetX               int                   `json:"targetX"`
+	TargetY               int                   `json:"targetY"`
+	ExpectedAttacks       int                   `json:"expectedAttacks"`
+	AttacksLaunched       int                   `json:"attacksLaunched"`
+	VictoriesConfirmed    int                   `json:"victoriesConfirmed"`
+	CooldownsSkipped      int                   `json:"cooldownsSkipped"`
+	Launches              []NomadRBCTestLaunch  `json:"launches"`
+	LastReportID          int64                 `json:"lastReportId,omitempty"`
+	SafetyError           string                `json:"safetyError,omitempty"`
+	SafetyErrorDescriptor *Localization.Message `json:"safetyErrorDescriptor,omitempty"`
+	StartedAt             time.Time             `json:"startedAt"`
+	LastChainLaunchedAt   time.Time             `json:"lastChainLaunchedAt,omitempty"`
+	LastCooldownSkippedAt time.Time             `json:"lastCooldownSkippedAt,omitempty"`
 }
 
 type NomadCampState struct {
@@ -1893,13 +1896,14 @@ type KhanTauntState struct {
 }
 
 type KhanProtectionState struct {
-	Active                 bool      `json:"active"`
-	CastleID               CastleID  `json:"castleId,omitempty"`
-	OffensiveWallUnits     int64     `json:"offensiveWallUnits,omitempty"`
-	OffensiveUnitThreshold int64     `json:"offensiveUnitThreshold,omitempty"`
-	TriggeredAt            time.Time `json:"triggeredAt,omitempty"`
-	GateOpenUntil          time.Time `json:"gateOpenUntil,omitempty"`
-	Reason                 string    `json:"reason,omitempty"`
+	Active                 bool                  `json:"active"`
+	CastleID               CastleID              `json:"castleId,omitempty"`
+	OffensiveWallUnits     int64                 `json:"offensiveWallUnits,omitempty"`
+	OffensiveUnitThreshold int64                 `json:"offensiveUnitThreshold,omitempty"`
+	TriggeredAt            time.Time             `json:"triggeredAt,omitempty"`
+	GateOpenUntil          time.Time             `json:"gateOpenUntil,omitempty"`
+	Reason                 string                `json:"reason,omitempty"`
+	ReasonDescriptor       *Localization.Message `json:"reasonDescriptor,omitempty"`
 }
 
 type KhanCooldownMSDState struct {
@@ -1957,6 +1961,7 @@ type KhanState struct {
 	LastCooldownSkippedAt         time.Time                         `json:"lastCooldownSkippedAt,omitempty"`
 	LastDefenseToolPurchaseAt     time.Time                         `json:"lastDefenseToolPurchaseAt,omitempty"`
 	SafetyError                   string                            `json:"safetyError,omitempty"`
+	SafetyErrorDescriptor         *Localization.Message             `json:"safetyErrorDescriptor,omitempty"`
 	Protection                    KhanProtectionState               `json:"protection"`
 	CooldownReports               map[int64]KhanCooldownReportState `json:"cooldownReports"`
 	CooldownReportVersion         int                               `json:"cooldownReportVersion"`
@@ -2114,19 +2119,23 @@ type DailyAttackState struct {
 }
 
 type AutomationState struct {
-	SafetyLock         AutomationSafetyLock `json:"safetyLock,omitempty"`
-	ID                 string               `json:"id"`
-	Enabled            bool                 `json:"enabled"`
-	Status             string               `json:"status"`
-	Detail             string               `json:"detail,omitempty"`
-	NextCheckAt        *time.Time           `json:"nextCheckAt,omitempty"`
-	LastRunAt          *time.Time           `json:"lastRunAt,omitempty"`
-	LastOperationID    string               `json:"lastOperationId,omitempty"`
-	LastError          string               `json:"lastError,omitempty"`
-	Metrics            map[string]float64   `json:"metrics,omitempty"`
-	Details            map[string]string    `json:"details,omitempty"`
-	OperationalCursors map[string]int       `json:"operationalCursors,omitempty"`
-	UpdatedAt          time.Time            `json:"updatedAt"`
+	DetailTranslationStatus string                           `json:"detailTranslationStatus"`
+	DetailDescriptor        *Localization.Message            `json:"detailDescriptor,omitempty"`
+	LastErrorDescriptor     *Localization.Message            `json:"lastErrorDescriptor,omitempty"`
+	SafetyLock              AutomationSafetyLock             `json:"safetyLock,omitempty"`
+	ID                      string                           `json:"id"`
+	Enabled                 bool                             `json:"enabled"`
+	Status                  string                           `json:"status"`
+	Detail                  string                           `json:"detail,omitempty"`
+	NextCheckAt             *time.Time                       `json:"nextCheckAt,omitempty"`
+	LastRunAt               *time.Time                       `json:"lastRunAt,omitempty"`
+	LastOperationID         string                           `json:"lastOperationId,omitempty"`
+	LastError               string                           `json:"lastError,omitempty"`
+	Metrics                 map[string]float64               `json:"metrics,omitempty"`
+	Details                 map[string]string                `json:"details,omitempty"`
+	DetailsDescriptors      map[string]*Localization.Message `json:"detailsDescriptors,omitempty"`
+	OperationalCursors      map[string]int                   `json:"operationalCursors,omitempty"`
+	UpdatedAt               time.Time                        `json:"updatedAt"`
 }
 
 type GameState struct {

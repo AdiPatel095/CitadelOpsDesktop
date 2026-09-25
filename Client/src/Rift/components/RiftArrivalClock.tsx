@@ -1,3 +1,5 @@
+import { useLocale as useStaticLocale } from "../../i18n/LocaleContext";
+import { LocalizedText } from "../../i18n/LocalizedText";
 import React, { useEffect, useMemo, useState } from 'react';
 import { Clock, Minus, Plus } from 'lucide-react';
 import { Button } from '../../components/ui';
@@ -20,6 +22,7 @@ interface RiftArrivalClockProps {
 }
 
 const RiftArrivalClock: React.FC<RiftArrivalClockProps> = ({ entry, offsetMinutes, onOffsetChange }) => {
+  const { t: localizeStatic } = useStaticLocale();
   const [nowMs, setNowMs] = useState(() => Date.now());
 
   useEffect(() => {
@@ -41,9 +44,8 @@ const RiftArrivalClock: React.FC<RiftArrivalClockProps> = ({ entry, offsetMinute
 
   if (minUnix == null || arriveAtUnix == null) {
     return (
-      <span className="text-xs text-text-muted whitespace-nowrap" title="Complete a successful feather launch to unlock timing">
-        No TT yet
-      </span>
+      <span className="text-xs text-text-muted whitespace-nowrap" title={localizeStatic("ui.rift.components.riftArrivalClock.title.complete.a.successful.feather.launch.to.unlock.e783a7a8")}>
+        <LocalizedText messageKey="ui.rift.components.riftArrivalClock.no.tt.yet.52ed44fe" /></span>
     );
   }
 
@@ -59,7 +61,7 @@ const RiftArrivalClock: React.FC<RiftArrivalClockProps> = ({ entry, offsetMinute
           disabled={atEarliest}
           onClick={() => onOffsetChange(stepArrivalOffsetMinutes(offsetMinutes, -1))}
           title={atEarliest ? 'Already at earliest feather arrival' : '−1 min from earliest'}
-          aria-label="Decrease offset by one minute"
+          aria-label={localizeStatic("ui.rift.components.riftArrivalClock.aria-label.decrease.offset.by.one.minute.177335cb")}
         >
           <Minus className="h-3.5 w-3.5" />
         </Button>
@@ -85,8 +87,8 @@ const RiftArrivalClock: React.FC<RiftArrivalClockProps> = ({ entry, offsetMinute
           size="sm"
           className="h-8 w-8 p-0"
           onClick={() => onOffsetChange(stepArrivalOffsetMinutes(offsetMinutes, 1))}
-          title="+1 min after earliest (minute boundary)"
-          aria-label="Increase offset by one minute"
+          title={localizeStatic("ui.rift.components.riftArrivalClock.title.1.min.after.earliest.minute.boundary.e4303f0b")}
+          aria-label={localizeStatic("ui.rift.components.riftArrivalClock.aria-label.increase.offset.by.one.minute.983ca39a")}
         >
           <Plus className="h-3.5 w-3.5" />
         </Button>

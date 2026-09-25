@@ -1,0 +1,2080 @@
+{
+  "ui": {
+    "guideButton": "Vejledning",
+    "calendarButton": "Kalender",
+    "recommendedLabel": "Anbefalet",
+    "backToSettings": "Tilbage til indstillinger",
+    "backToGuide": "Tilbage til vejledning",
+    "howToSetUp": "Sådan indstiller du det",
+    "whatToExpect": "Hvad du kan forvente",
+    "openFullSizePicture": "Åbn billede i fuld størrelse",
+    "illustrativeExample": "Illustrativt eksempel",
+    "enlargePicture": "Forstør eksempelbilledet",
+    "fullSizePicture": "Eksempelbillede i fuld størrelse; rul for at se alle indstillinger",
+    "towerGuideTitle": "Vejledning til Automatiske tårnangreb",
+    "birdGuideTitle": "Vejledning til Automatisk sikring af tropper i ly",
+    "towerGuideIntro": "Følg disse trin for at indstille Automatiske tårnangreb; vælg et eksempelbillede for at forstørre det.",
+    "birdGuideIntro": "Følg disse trin for at indstille Automatisk sikring af tropper i ly; vælg et eksempelbillede for at forstørre det.",
+    "towerPreviewTitle": "Eksempel på opsætning af Automatiske tårnangreb",
+    "birdPreviewTitle": "Eksempel på opsætning af Automatisk sikring af tropper i ly",
+    "stationGuideTitle": "Guide til automatisk troppebeskyttelse",
+    "stationGuideIntro": "Følg disse trin for at indstille automatisk troppebeskyttelse; vælg eksempelbilledet for at forstørre det.",
+    "stationPreviewTitle": "Eksempel på indstilling af troppebeskyttelse",
+    "fortressGuideIntro": "Følg trinene for at indstille automatisk fæstningsangreb; vælg et eksempelpanel for at forstørre det.",
+    "fortressGuideTitle": "Guide til automatisk fæstningsangreb",
+    "fortressPreviewTitle": "Eksempel på opsætning af automatisk fæstningsangreb",
+    "invasionGuideIntro": "Følg disse trin for at indstille automatiske invasionsangreb; vælg et eksempelpanel for at forstørre det.",
+    "invasionGuideTitle": "Guide til automatiske invasionsangreb",
+    "invasionPreviewTitle": "Eksempel på opsætning af automatiske invasionsangreb",
+    "nomadGuideIntro": "Følg disse trin for at opsætte Auto Nomader/Samuraier; vælg et eksempelpanel for at forstørre det.",
+    "nomadGuideTitle": "Guide til Auto Nomader/Samuraier",
+    "nomadPreviewTitle": "Opsætningseksempel til Auto Nomader/Samuraier",
+    "advisorGuideIntro": "Følg disse trin for at indstille Auto Rådgiver; vælg et eksempelpanel for at forstørre det.",
+    "advisorGuideTitle": "Guide til Auto Rådgiver",
+    "advisorPreviewTitle": "Opsætningseksempel til Auto Rådgiver",
+    "khanGuideIntro": "Følg disse trin for at indstille Automatisk Khan; vælg et eksempelpanel for at forstørre det.",
+    "khanGuideTitle": "Vejledning til Automatisk Khan",
+    "khanPreviewTitle": "Eksempel på Automatisk Khan-opsætning",
+    "beriGuideIntro": "Følg disse trin for at indstille Auto Beri; vælg et eksempelpanel for at forstørre det.",
+    "beriGuideTitle": "Vejledning til Auto Beri",
+    "beriPreviewTitle": "Eksempel på Auto-Beri-opsætning",
+    "stormGuideIntro": "Følg disse trin for at indstille Auto Storm; vælg et eksempelpanel for at forstørre det.",
+    "stormGuideTitle": "Auto Storm-vejledning",
+    "stormPreviewTitle": "Eksempel på opsætning af Auto Storm"
+  },
+  "autoTower": {
+    "recommendationIntro": "Disse anbefalinger gælder almindelig brug; gennemgå dem, før du gemmer.",
+    "steps": {
+      "commanders": {
+        "title": "Vælg dine kommandører",
+        "items": {
+          "commander_assignment": {
+            "label": "Tildeling af kommandører",
+            "description": "Tillad Automatiske tårnangreb under Kommandører for de kommandører, du vil bruge, og vælg Gem tildelinger.",
+            "recommendation": "20 kommandører tildelt Automatiske tårnangreb."
+          }
+        }
+      },
+      "general": {
+        "title": "Indstil scanning, dagsgrænser og rejse",
+        "items": {
+          "open_settings": {
+            "label": "Åbn indstillinger",
+            "description": "Åbn Automatisering, og vælg indstillingsknappen på kortet Automatiske tårnangreb."
+          },
+          "authoritative_map_scan_every": {
+            "label": "Autoritativ kortscanning · Interval",
+            "description": "Vælg, hvor ofte hvert slots tårnliste opdateres, fra 1.800 til 3.600 sekunder; angreb kan starte mellem scanninger.",
+            "recommendation": "1.800 sekunder (30 minutter)."
+          },
+          "daily_normal_attack_limit": {
+            "label": "Daglig grænse for normale angreb",
+            "description": "Sætter på pause ved den daglige angrebsgrænse for hele kontoen, indtil spillet nulstiller den; 0 fjerner grænsen.",
+            "recommendation": "3.500 angreb om dagen for hele kontoen."
+          },
+          "horse_travel_boost": {
+            "label": "Rejseboost med hest",
+            "description": "Bruger den valgte rejsemulighed til hvert angreb, også hvert slag i en rådgiversekvens; hastigheden afhænger af rejsebygningerne på afgangsslottet.",
+            "recommendation": "Møntniveau, hvor det understøttes, med nok mønter."
+          },
+          "travel_feather": {
+            "label": "Rejsefjer",
+            "description": "Bruger rejsefjeren i stedet for et hesteniveau med mønter eller rubiner."
+          },
+          "horse_ship_tier_coins": {
+            "label": "Hest / skib · mønter",
+            "description": "Bruger mønter på rejseniveauet med mønter."
+          },
+          "warhorse_fast_ship_tier_rubies": {
+            "label": "Krigshest / hurtigt skib · rubiner",
+            "description": "Bruger rubiner på det første rubinniveau for rejse, når det vælges."
+          },
+          "courser_fastest_ship_tier_rubies": {
+            "label": "Væddeløbshest / hurtigste skib · rubiner",
+            "description": "Bruger rubiner på det hurtigere rubinniveau for rejse, når det vælges."
+          }
+        },
+        "image": {
+          "alt": "Generelle indstillinger for Automatiske tårnangreb med fiktive data fra Synthetic Castle",
+          "caption": "Indstil scanningsinterval, daglig angrebsgrænse og rejsemulighed; rådgiverindstillinger vises, når de er tilgængelige."
+        }
+      },
+      "castle": {
+        "title": "Indstil hvert slot",
+        "items": {
+          "castle_switch": {
+            "label": "Slotskontakt",
+            "description": "Aktivér hvert slot, som Automatiske tårnangreb skal scanne og angribe fra.",
+            "recommendation": "Aktivér de slotte, du vil bruge regelmæssigt."
+          },
+          "radius": {
+            "label": "Radius",
+            "description": "Vælg, hvor langt der søges omkring dette slot, fra 1 til 50 felter.",
+            "recommendation": "35 felter."
+          },
+          "choose_troop": {
+            "label": "Vælg trop",
+            "description": "Vælg den stationerede trop, som skal fylde begge angrebsflanker; angreb venter, hvis der er for få enheder.",
+            "recommendation": "En stationeret angrebstrop med nok enheder til begge flanker."
+          },
+          "maiden_supported_only": {
+            "label": "Kun med jomfrurelikvie",
+            "description": "Begrænser dette slot til tilgængelige kommandører med det understøttede jomfrurelikvie.",
+            "recommendation": "Fra, medmindre din valgte kommandør har det understøttede jomfrurelikvie."
+          }
+        },
+        "image": {
+          "alt": "Slotsindstillinger for Automatiske tårnangreb med fiktive data fra Synthetic Castle",
+          "caption": "Aktivér et slot, og vælg radius, trop og krav om jomfrurelikvie."
+        }
+      },
+      "advisor": {
+        "title": "Brug rådgiveren efter behov · når tilgængelig",
+        "items": {
+          "use_advisor_with_time_skips": {
+            "label": "Brug rådgiver med tidsforkortere",
+            "description": "Gentager slag mod ét tårn med først ét dagligt angreb og derefter én tidsforkorter på mindst tre timer pr. ekstra slag.",
+            "recommendation": "Fra."
+          },
+          "auto_activate_with_token": {
+            "label": "Aktivér automatisk med token",
+            "description": "Bruger en tilgængelig baronrådgiver-token, når rådgiveren er inaktiv, uden at købe en token eller bruge rubiner.",
+            "recommendation": "Fra, mens rådgiveren er slået fra."
+          },
+          "maximum_daily_time_skips": {
+            "label": "Maksimalt antal daglige tidsforkortere",
+            "description": "Begrænser tidsforkortere brugt af bekræftede rådgiversekvenser, indtil spillets daglige angrebstæller nulstilles; 0 sætter rådgiverangreb på pause.",
+            "recommendation": "0, mens rådgiveren er slået fra."
+          }
+        }
+      },
+      "finish": {
+        "title": "Indstil kalenderen, gem og slå til",
+        "items": {
+          "calendar": {
+            "label": "Kalender",
+            "description": "Brug kalenderen til at vælge, hvornår Automatiske tårnangreb må køre; tilgængelige tropper og andre grænser gælder stadig.",
+            "recommendation": "Dine sædvanlige aktive timer."
+          },
+          "save_changes": {
+            "label": "Gem ændringer",
+            "description": "Vælg Gem ændringer for at anvende dine indstillinger; denne vejledning gemmer dem ikke."
+          },
+          "auto_towers_switch": {
+            "label": "Kontakt til Automatiske tårnangreb",
+            "description": "Slå Automatiske tårnangreb til på siden Automatisering, efter du har gemt indstillingerne, så opgaven kan køre.",
+            "recommendation": "Til efter at have gemt de ønskede indstillinger."
+          }
+        }
+      }
+    },
+    "feature": {
+      "name": "Automatiske tårnangreb",
+      "summary": "Gentag angreb på nærliggende tårne",
+      "description": "Sender angreb mod røverbaron- og kongerigetårne fra de slotte, du vælger.",
+      "expectation": "Det kræver nok tropper, en tilgængelig kommandør og et tårn, der kan angribes. Opgaven kan vente på hjemvendende tropper eller et tårns nedtælling."
+    }
+  },
+  "autoBird": {
+    "recommendationIntro": "De anbefalede værdier beskriver almindelig brug af Automatisk sikring af tropper i ly; de er vejledende og ændrer ikke gemte indstillinger.",
+    "steps": {
+      "open": {
+        "title": "Åbn indstillinger for Automatisk sikring af tropper i ly",
+        "items": {
+          "open_settings": {
+            "label": "Åbn indstillinger",
+            "description": "Vælg indstillingsknappen ved siden af Automatisk sikring af tropper i ly øverst i kommandocentret."
+          }
+        }
+      },
+      "general": {
+        "title": "Indstil stationeringstid og regler for udsendelse",
+        "items": {
+          "random_delay_range_min": {
+            "label": "Tilfældig varighed · Min",
+            "description": "Indstil det mindste antal timer, tropperne bliver ved alliancemålet, efter rejsen er afsluttet.",
+            "recommendation": "6 timers stationering ved alliancemålet efter ankomst."
+          },
+          "random_delay_range_max": {
+            "label": "Tilfældig varighed · Maks",
+            "description": "Indstil det længste ophold ved målet; Automatisk sikring af tropper i ly vælger en tilfældig varighed mellem Min og Maks.",
+            "recommendation": "12 timers stationering ved alliancemålet efter ankomst."
+          },
+          "minimum_to_send": {
+            "label": "Minimum for udsendelse",
+            "description": "Indstil det mindste samlede antal egnede tropper, der kræves, efter slotsreserverne bliver hjemme; det er en tærskel, ikke det præcise antal, der sendes.",
+            "recommendation": "1.000 egnede tropper i alt, efter slotsreserverne bliver hjemme; det er en tærskel, ikke en præcis udsendelsesmængde."
+          },
+          "minimum_rpt_remaining_protection_time": {
+            "label": "Minimum RPT (resterende beskyttelsestid)",
+            "description": "Brug mål med mere end dette antal dages beskyttelse tilbage; 0 fjerner kontrollen.",
+            "recommendation": "3 dage; et mål skal have strengt mere end 3 dages beskyttelse tilbage."
+          }
+        },
+        "image": {
+          "alt": "Indstillinger for Automatisk sikring af tropper i ly: stationeringstid, minimumsudsendelse, minimum RPT og forudindstillinger",
+          "caption": "Indstil stationeringstid og egnethed, og gennemgå reserveforudindstillingen Hverdag, før du gemmer."
+        }
+      },
+      "reserves": {
+        "title": "Vælg tropper, der skal blive på hvert slot",
+        "items": {
+          "add_unit": {
+            "label": "Tilføj enhed",
+            "description": "Vælg på hvert slot de troppetyper, der skal blive hjemme i stedet for at blive sendt; en tom manuel reserve efterlader alle egnede tropper tilgængelige efter automatiske reserver.",
+            "recommendation": "Vælg de troppetyper, hvert slot behøver til forsvar eller andre faste opgaver."
+          },
+          "quantity": {
+            "label": "Antal",
+            "description": "Indstil et positivt antal af hver valgt trop, der skal blive på slottet; 0 reserverer ikke hele typen.",
+            "recommendation": "Behold det antal af hver troppetype, som slottet behøver til forsvar eller andre opgaver; kontrollér de faktiske troppeantal."
+          },
+          "remove_unit": {
+            "label": "Fjern enhed",
+            "description": "Fjern en enhedsflise for at stoppe reservation af den type på det valgte slot."
+          },
+          "auto_fortress_reserve": {
+            "label": "Reserve til Automatisering af fæstninger",
+            "description": "Når Automatisering af fæstninger låser alle skrækulve her, gemmes denne automatiske reserve ikke i forudindstillinger for Automatisk sikring af tropper i ly, og det tidligere manuelle antal skrækulve vender tilbage, når låsen ophører."
+          }
+        },
+        "image": {
+          "alt": "Reservefliser til Automatisk sikring af tropper i ly for det fiktive slot Example Castle",
+          "caption": "Reservér kun de enheder, slottet behøver; Enhed 101 og Enhed 102 er fiktive troppeeksempler."
+        }
+      },
+      "presets": {
+        "title": "Gem og vælg en forudindstilling",
+        "items": {
+          "preset_name": {
+            "label": "Navn på forudindstilling",
+            "description": "Indtast et navn til en ny forudindstilling, eller redigér navnet på den anvendte forudindstilling, før du gemmer ændringer.",
+            "recommendation": "Brug et genkendeligt navn som Hverdag."
+          },
+          "load_preset": {
+            "label": "Indlæs forudindstilling",
+            "description": "Vælg en gemt forudindstilling på listen, eller vælg Gemt konfiguration for at bruge de gemte indstillinger uden en navngivet forudindstilling.",
+            "recommendation": "Brug den ønskede hverdagsforudindstilling som standard under kørsel: vælg den, tryk Anvend, og vælg derefter Gem ændringer."
+          },
+          "apply": {
+            "label": "Anvend",
+            "description": "Indlæser den valgte forudindstilling i dette indstillingsudkast; vælg Gem ændringer for at gøre den til standard under kørsel."
+          },
+          "save_as_new": {
+            "label": "Gem som ny",
+            "description": "Gemmer straks de aktuelle indstillinger som en ny navngivet forudindstilling og vælger den som standard under kørsel."
+          },
+          "delete": {
+            "label": "Slet",
+            "description": "Sletter efter bekræftelse straks den valgte forudindstilling og rydder standarden under kørsel, hvis den var valgt."
+          },
+          "runtime_default": {
+            "label": "Standard under kørsel",
+            "description": "Standarden under kørsel er den gemte aktive forudindstilling eller den gemte konfiguration, når ingen forudindstilling er aktiv."
+          }
+        }
+      },
+      "finish": {
+        "title": "Indstil kalenderen, gem og aktivér",
+        "items": {
+          "calendar": {
+            "label": "Kalender",
+            "description": "Vælg, hvornår Automatisk sikring af tropper i ly må køre, og vælg Gem kalender for at gemme ændringerne.",
+            "recommendation": "Lad kalenderen være slået fra ved løbende drift, eller indstil dine sædvanlige ugentlige timer, og gem kalenderen."
+          },
+          "specify_preset_per_period": {
+            "label": "Angiv forudindstilling pr. periode",
+            "description": "Vælg en gemt forudindstilling for en kalenderperiode, hvis perioden skal tilsidesætte standarden under kørsel.",
+            "recommendation": "Fra, medmindre forskellige perioder kræver forskellige reserver."
+          },
+          "save_changes": {
+            "label": "Gem ændringer",
+            "description": "Gem indstillingsudkastet og anvendte ændringer i forudindstillinger; læsning af denne vejledning gemmer dem ikke."
+          },
+          "auto_bird_switch": {
+            "label": "Kontakt til Automatisk sikring af tropper i ly",
+            "description": "Slå Automatisk sikring af tropper i ly til øverst i kommandocentret efter lagring for at tillade de normale slotscyklusser.",
+            "recommendation": "Slå Automatisk sikring af tropper i ly til efter lagring; status i sidehovedet viser hvert slots cyklus."
+          }
+        }
+      }
+    },
+    "feature": {
+      "name": "Automatisk sikring af tropper i ly",
+      "summary": "Stationér udvalgte tropper andre steder efter en kalender",
+      "description": "Stationerer jævnligt disponible tropper på egnede allianceslotte og gentager cyklussen, når de vender tilbage.",
+      "expectation": "Venter, hvis der ikke er noget egnet mål eller disponible tropper. Flytning af tropper gør ikke dit slot usårligt."
+    }
+  },
+  "panels": {
+    "towerGeneral": {
+      "title": "Generelle indstillinger",
+      "scan": "Scanningsinterval: 1.800 sekunder",
+      "daily": "Daglig angrebsgrænse: 3.500",
+      "travel": "Rejseboost: møntniveau",
+      "advisor": "Rådgiver: fra"
+    },
+    "towerCastle": {
+      "title": "Eksempelslot",
+      "enabled": "Automatiske tårnangreb: til",
+      "radius": "Radius: 35 felter",
+      "troop": "Valgt trop: fiktiv angrebsenhed",
+      "maiden": "Kun med jomfrurelikvie: fra"
+    },
+    "birdGeneral": {
+      "title": "Generelle indstillinger",
+      "min": "Mindste ophold: 6 timer",
+      "max": "Længste ophold: 12 timer",
+      "send": "Mindste egnede total efter reserver: 1.000 tropper",
+      "rpt": "Mindste resterende beskyttelse: mere end 3 dage",
+      "preset": "Forudindstilling: hverdagsreserve"
+    },
+    "birdCastle": {
+      "title": "Eksempelslot",
+      "unitOne": "Fiktiv enhed 101 reserveret: 80",
+      "unitTwo": "Fiktiv enhed 102 reserveret: 40",
+      "add": "Tilføj enhed"
+    },
+    "stationGeneral": {
+      "title": "Eksempel på indstillinger",
+      "evacuate": "Evakuér ved: 1 minut før nedslag",
+      "protection": "Målbeskyttelse: mere end 3 dage",
+      "recall": "Kald tilbage, når der er sikkert: til",
+      "gate": "Åbn porte som reserve: fra",
+      "castle": "Fiktivt slot: 80 forsvarstropper reserveret",
+      "save": "Gem ændringer, og aktivér troppebeskyttelse"
+    },
+    "fortressAttack": {
+      "commander": "Kommandør: hurtigste kvalificerede tildelte",
+      "daily": "Daglig grænse for normale angreb: 0",
+      "title": "Eksempel på angrebsindstillinger",
+      "travel": "Rejseforstærkning: Rejsefjer",
+      "wave": "Én fuld bølge af skrækwulve på begge flanker"
+    },
+    "fortressKingdoms": {
+      "everwinter": "Evigvinterens Gletsjer: til, når låst op",
+      "peaks": "Ildtoppene: til, når låst op",
+      "sands": "Det Brændende Sand: til, når låst op",
+      "title": "Eksempel på kongerigeindstillinger"
+    },
+    "fortressSupply": {
+      "purchase": "Skrækwulve pr. session: 5.000",
+      "reserve": "Behold Khan-tavler: 25.000",
+      "route": "Forsyning: hovedborgen i Det Store Imperium til aktiverede kongeriger",
+      "skips": "Tidsbesparelser til bekræftede overførsler: til",
+      "title": "Eksempel på forsyning af skrækwulve"
+    },
+    "invasionDifficulty": {
+      "bloodcrow": "Blodkrager: passende oplåst sværhedsgrad",
+      "current": "Den aktive begivenheds sværhedsgrad bevares",
+      "foreign": "Fremmede herrer: passende oplåst sværhedsgrad",
+      "title": "Eksempel på begivenheders sværhedsgrad"
+    },
+    "invasionFortify": {
+      "currency": "Hvis aktiveret: begivenhedsvaluta, når den tilbydes",
+      "enabled": "Forstærk hvert mål: fra",
+      "rubies": "Rubiner kun efter udtrykkeligt valg",
+      "title": "Eksempel på forstærkning af mål"
+    },
+    "invasionLimits": {
+      "before": "Stop 30 minutter før begivenheden slutter",
+      "daily": "Daglig grænse for normale angreb: 0",
+      "score": "Point: normal sidste personlig belønning over 0",
+      "title": "Eksempel på point- og stopgrænser"
+    },
+    "invasionSetup": {
+      "castle": "Udgang: normal begivenhedsborg i Det Store Imperium",
+      "preset": "Angrebsopsætning: gemt begivenhedsformation",
+      "title": "Eksempel på opsætning af begivenhedsangreb",
+      "travel": "Rejseforstærkning: Rejsefjer"
+    },
+    "nomadDifficulty": {
+      "title": "Eksempel på begivenheders sværhedsgrad",
+      "active": "Aktivt event: match nuværende sværhedsgrad",
+      "nomad": "Nomader: oplåst pålidelig sværhedsgrad",
+      "samurai": "Samuraier: oplåst pålidelig sværhedsgrad"
+    },
+    "nomadSetup": {
+      "castle": "Udgang: normal begivenhedsborg i Det Store Imperium",
+      "travel": "Rejseforstærkning: Rejsefjer",
+      "nomadPreset": "Nomadeopsætning: gemt lejrformation",
+      "samuraiPreset": "Samuraiopsætning: gemt lejrformation",
+      "title": "Eksempel på eventlejrindstillinger"
+    },
+    "nomadCooldowns": {
+      "clear": "Fjern ventetid efter bekræftet sejr: til",
+      "long": "Behold 5 timer / 24 timer: beholdning til andre aktiviteter",
+      "short": "Behold 1 / 5 / 10 / 30 / 60 min: 0 genstande af hver",
+      "title": "Eksempel på ventetidsvalg"
+    },
+    "nomadLimits": {
+      "daily": "Ekstra daglig grænse: 0",
+      "score": "Pointmål: sidste personlige belønningsmilepæl",
+      "time": "Stop før slut: 30 minutter",
+      "title": "Eksempel på stopregler"
+    },
+    "nomadTrial": {
+      "coordinates": "Mål X / Y: ubrugt i almindelig drift",
+      "effect": "Prøve til erstatter eventdrift med ægte angreb",
+      "title": "Eksempel på prøveindstillinger",
+      "trial": "Midlertidig røverbaronprøve: fra"
+    },
+    "advisorDifficulty": {
+      "active": "Aktivt event: match nuværende sværhedsgrad",
+      "nomad": "Nomader: oplåst pålidelig sværhedsgrad",
+      "samurai": "Samuraier: oplåst pålidelig sværhedsgrad",
+      "title": "Eksempel på begivenheders sværhedsgrad"
+    },
+    "advisorSetup": {
+      "castle": "Udgang: normal begivenhedsborg i Det Store Imperium",
+      "travel": "Rejseforstærkning: Rejsefjer",
+      "preset": "Opsætning: gemt formation til aktivt event",
+      "title": "Eksempel på Rådgiverens angrebsindstillinger"
+    },
+    "advisorActivation": {
+      "locked": "Hvis låst: åbn bekræftelsen Aktivér Rådgiver",
+      "paid": "Bekræft betalt tokenbrug eller gratis aktivering meldt af spillet",
+      "save": "Gem indstillinger, og slå derefter automatiseringskortet til",
+      "title": "Eksempel på aktiveringsforløb"
+    },
+    "advisorOverview": {
+      "progress": "Aktuelt angreb / ønskede angreb",
+      "refresh": "Opdatér oversigten for aktuelle totaler",
+      "results": "Sejre, nederlag, tabte enheder og redskaber",
+      "title": "Eksempel på liveoversigt"
+    },
+    "advisorResources": {
+      "coins": "Samlede mønter pr. angreb: 500 kun hvis tilstrækkeligt",
+      "feathers": "Behold fjer: 0, medmindre de behøves andetsteds",
+      "rubies": "Rubiner pr. angreb: 0 med Rejsefjer",
+      "skips": "Behold 60 min: 0 genstande; reserver 5 timer og 24 timer efter behov",
+      "title": "Eksempel på ressourcebudgetter"
+    },
+    "advisorSizing": {
+      "actual": "Faktisk række: begrænset af ressourcer og tid",
+      "maximum": "Maksimale angreb: 9.999",
+      "time": "Ubrugt eventtid: 30 minutter",
+      "title": "Eksempel på rækkestørrelse"
+    },
+    "khanCooldowns": {
+      "long": "Reserver 5-timers og 24-timers forkortere til andre opgaver",
+      "pause": "Nye angreb pauses, hvis der mangler brugbare forkortere",
+      "short": "Behold 1 min / 5 min / 10 min / 30 min / 1 time: 0 genstande af hver",
+      "skip": "Spring hver lejrventetid over: til",
+      "title": "Eksempel på tidsforkorterreserver"
+    },
+    "khanLimits": {
+      "daily": "Normale angreb pr. dag: 0, ingen ekstra grænse",
+      "end": "Stop nye angreb 5 minutter før begivenhedens slutning",
+      "points": "Stop ved nomadepoint: 0, slået fra",
+      "title": "Eksempel på stopgrænser",
+      "tools": "Genopfyld forsvarsværktøjer: til, hvis ønsket"
+    },
+    "khanProtection": {
+      "gate": "Åbn hovedportene, og paus Khan ved grænsen",
+      "outpost": "Forpost som kilde: beskyttelse slået fra",
+      "source": "Gælder angreb fra hovedborgen",
+      "threshold": "Offensive murenheder: 1.000",
+      "title": "Eksempel på hovedmursbeskyttelse"
+    },
+    "khanRage": {
+      "attacks": "Automatiske lejrangreb: låst op",
+      "booster": "Tidsbegrænset raseri-pointbooster påkrævet: fra",
+      "chain": "Maksimal raserikæde: 0, ingen ekstra grænse",
+      "title": "Eksempel på raserikontrol",
+      "trigger": "Gengældelse ved fuldt raseri: til"
+    },
+    "khanSave": {
+      "defense": "Kontrollér hovedborgens forsvar før gengældelse",
+      "enable": "Aktivér Automatisk Khan på kortet Automatisering",
+      "priority": "Automatisk Stationering håndterer spillerangreb separat",
+      "save": "Gem indstillinger, når begge skabeloner er forberedt",
+      "title": "Eksempel på gem og aktivér"
+    },
+    "khanSetup": {
+      "defense": "Forsvar ved: hovedborg i Det Store Rige",
+      "presets": "Gemte Khan-angrebs- og hovedforsvarsskabeloner",
+      "source": "Angrib fra: forpost i Det Store Rige",
+      "title": "Eksempel på Khan-opsætning",
+      "travel": "Rejsefjer for hurtig rejse"
+    },
+    "beriBuilder": {
+      "permissions": "Premium og nedrivning: fra, medmindre gennemgået",
+      "reserves": "Reserver Berimond-ressourcer og tidskip",
+      "stable": "Fraktionsstald: valgt niveau 1–5",
+      "target": "Indbygget præcist mål eller gennemgået eget layout",
+      "title": "Eksempel på valgfrit lejrbyggeri"
+    },
+    "beriReadiness": {
+      "booster": "Tapperhedsboosterkrav: valgfrit",
+      "food": "Overførsler kræver forudindstillingstropper, der bruger Mad",
+      "preset": "Gennemgå gemte pladser til tropper og værktøjer",
+      "title": "Eksempel på tårnberedskab"
+    },
+    "beriSave": {
+      "calendar": "Kalender fra ved løbende drift",
+      "enable": "Slå Auto Beri til på Automatiseringskortet",
+      "save": "Gem indstillinger efter kontrol af troppeforhold",
+      "title": "Eksempel på at gemme og aktivere"
+    },
+    "beriSetup": {
+      "donor": "Donor i Det Store Imperium med nødvendige tropper",
+      "limit": "Daglige normale angreb: 0 ekstra grænse",
+      "preset": "Gemt Berimond-angrebsforudindstilling",
+      "title": "Eksempel på angreb og forsyning",
+      "travel": "Rejsefjer til tårnangreb"
+    },
+    "beriTools": {
+      "ladders": "Stiger: tilpas til normale angreb",
+      "mantlets": "Skjolde: tilpas til normale angreb",
+      "rams": "Stormbukke: tilpas til normale angreb",
+      "title": "Eksempel på mindstelager for værktøjer"
+    },
+    "beriTransfers": {
+      "capacity": "Fri kapacitet: 1; grænse: 1",
+      "mix": "Forudindstillingsforhold: 2 enheder A til 1 enhed B",
+      "next": "Næste forsendelse: op til 1 B fra donorlagret",
+      "stock": "Lejrlager: 2 A og 0 B",
+      "title": "Eksempel på forholdsmæssige overførsler"
+    },
+    "stormCastle": {
+      "blueprint": "Gemt mål aktivt; pause bevarer det",
+      "capture": "Nuværende slot: Funktionelt mål",
+      "decorations": "Dekorationsforudindstilling: valgfri",
+      "title": "Eksempel på adgang til Storm-slot",
+      "unlock": "Automatisk åbning: til efter pristjek"
+    },
+    "stormCombat": {
+      "defenders": "Besættelsesforsvarere: valgte eller én overlevende",
+      "forts": "Forter: valgte niveauer 40–80",
+      "islands": "Akvamarinøer: store og små",
+      "priority": "Store, små, derefter forter fra 80 til 40",
+      "title": "Eksempel på fort- og øangreb"
+    },
+    "stormConstruction": {
+      "harbor": "Havn: til, niveau 1",
+      "resources": "Træ 0; sten 0; akvamarin planlagt",
+      "spending": "Premium og nedrivning: fra",
+      "title": "Eksempel på byggeri og reserver",
+      "transport": "Ressourcetransport: til"
+    },
+    "stormLuna": {
+      "cost": "Pris og købsgrænse: skrivebeskyttet",
+      "limited": "Begrænsede mål før ubegrænsede belønninger",
+      "priority": "Prioritet 1, 2, 3; laveste først",
+      "reserve": "Behold akvamarin: 0 ved brug af overskud",
+      "title": "Eksempel på Luna-belønninger"
+    },
+    "stormSave": {
+      "check": "Politik-tjek: 30 sekunder",
+      "daily": "Daglige normale angreb: 0 ekstra grænse",
+      "map": "Kortopdatering: 2 timer, skrivebeskyttet",
+      "switch": "Gem, og slå derefter Auto Storm til",
+      "title": "Eksempel på gem-og-slå-til-forløb"
+    },
+    "stormTroops": {
+      "averages": "Bekræftede angreb siden nulstilling / 24; forudindstillingens gennemsnit kun til læsning",
+      "cap": "Grænse for bundne tropper: skrivebeskyttet",
+      "donors": "Donorer: vist rækkefølge, delvis beholdning tilladt",
+      "minimum": "Minimum beholdt: 1.000 tropper",
+      "title": "Eksempel på troppeimport"
+    }
+  },
+  "autoStation": {
+    "recommendationIntro": "Anbefalingerne gælder almindelig brug og ændrer ikke gemte indstillinger.",
+    "steps": {
+      "open": {
+        "title": "Åbn indstillinger for troppebeskyttelse",
+        "items": {
+          "open_settings": {
+            "label": "Åbn indstillinger",
+            "description": "Vælg indstillingsknappen ved siden af automatisk troppebeskyttelse øverst i kommandocentralen."
+          }
+        }
+      },
+      "general": {
+        "title": "Indstil reaktion på angreb",
+        "items": {
+          "evacuate_at": {
+            "label": "Evakuér ved",
+            "description": "Start evakueringen dette antal minutter før nedslaget, eller straks hvis et angreb først opdages inden for tidsvinduet.",
+            "recommendation": "1 minut før nedslaget."
+          },
+          "minimum_bird_days": {
+            "label": "Mindste beskyttelsesdage på målet",
+            "description": "Vælg et alliance-slot med mere end dette antal beskyttelsesdage tilbage; 0 fjerner minimumskravet.",
+            "recommendation": "3 dage, så målet skal have mere end 3 dage tilbage."
+          },
+          "recall_when_clear": {
+            "label": "Kald tilbage, når der er sikkert",
+            "description": "Hent udstationerede tropper hjem, når det sidste registrerede angreb er passeret, og ingen nye angreb nærmer sig.",
+            "recommendation": "Til ved normal brug."
+          },
+          "open_gate_fallback": {
+            "label": "Åbn porte som reserve",
+            "description": "Hvis tropper ikke kan evakueres, åbner dette tilvalg portene i det angrebne ejede slot i seks timer, undtagen i Berimond.",
+            "recommendation": "Fra, medmindre du ønsker automatisk portåbning, når evakuering mislykkes."
+          },
+          "protection_mode": {
+            "label": "Købt beskyttelsestilstand",
+            "description": "Når købt beskyttelsestilstand forberedes eller er aktiv, bruger troppebeskyttelsen porte selv med reservevalget slået fra, undtagen i Berimond."
+          }
+        },
+        "image": {
+          "alt": "Fiktive indstillinger med evakueringstid, beskyttelse, hjemkaldelse, porte og slotsreserver",
+          "caption": "Gennemgå de fire reaktionsindstillinger og hvert slots forsvarsreserver, før du gemmer."
+        }
+      },
+      "reserves": {
+        "title": "Vælg tropper, der skal blive i hvert slot",
+        "items": {
+          "add_troops": {
+            "label": "Tilføj tropper",
+            "description": "Vælg troppetyper, der skal blive i slottet; uden reserve kan alle egnede tropper undtagen værktøjer evakueres.",
+            "recommendation": "Behold den sædvanlige forsvarsgarnison hjemme, og lad overskydende angrebstropper rejse."
+          },
+          "quantity": {
+            "label": "Antal",
+            "description": "Angiv hvor mange tropper af hver valgt type der bliver i slottet; 0 reserverer ingen.",
+            "recommendation": "Brug det antal, slottet behøver til almindeligt forsvar."
+          },
+          "edit_defense_troops": {
+            "label": "Rediger forsvarstropper",
+            "description": "Åbn troppevælgeren igen for at ændre typer eller antal i slottets reserve."
+          },
+          "remove_defense_troop": {
+            "label": "Fjern forsvarstrop",
+            "description": "Fjern en reservebrik for ikke længere at holde den troppetype i slottet."
+          }
+        }
+      },
+      "finish": {
+        "title": "Gem og aktivér troppebeskyttelse",
+        "items": {
+          "save_changes": {
+            "label": "Gem ændringer",
+            "description": "Gem tidsvinduet, kontakterne og reserverne for hvert slot, før du forlader indstillingerne."
+          },
+          "auto_station_switch": {
+            "label": "Kontakt til troppebeskyttelse",
+            "description": "Aktivér troppebeskyttelse øverst i kommandocentralen efter at have gemt for at holde øje med indkommende spillerangreb.",
+            "recommendation": "Til for almindelig beskyttelse, når du har gennemgået reserverne."
+          }
+        }
+      }
+    },
+    "feature": {
+      "name": "Automatisk troppebeskyttelse",
+      "summary": "Flyt egnede tropper før et indkommende angreb",
+      "description": "Når et spillerangreb nærmer sig, flytter automatisk troppebeskyttelse egnede tropper til det nærmeste egnede allianceslot i samme kongerige.",
+      "expectation": "Med hjemkaldelse slået til vender tropper tilbage efter det sidste registrerede angreb, når ingen trussel er tilbage; ellers bliver de en time efter ankomst og vender så hjem. Manglende mål, tropper eller spilbegrænsninger kan forhindre evakuering.",
+      "helper": "Tropper stationeres i det nærmeste egnede allianceslot i samme kongerige; hvis evakuering mislykkes, kan portene i det angrebne ejede slot beskytte uden for Berimond."
+    }
+  },
+  "autoFortress": {
+    "feature": {
+      "commanderBadge": "Hurtigste tilgængelige kommandør",
+      "commanderHelp": "Automatisk fæstningsangreb sammenligner relevante rejsehastighedseffekter fra udstyr, ædelsten, sæt og generaler for hver målfæstning; Relikvie 2.0 og mindst 100 % kræves ikke.",
+      "description": "Automatisk fæstningsangreb køber skrækwulve inden for gemte grænser, forsyner aktiverede ydre kongeriger og angriber fæstninger, der er klar, fra deres hovedborge.",
+      "expectation": "Hvert angreb kræver en fæstning, der er klar, nok skrækwulve til begge flanker og en kvalificeret tildelt kommandør; nedkøling eller forsinket forsyning kan sætte det på pause.",
+      "name": "Automatisk fæstningsangreb",
+      "settingsSummary": "Automatisk fæstningsangreb forbereder skrækwulve og vælger den hurtigste kvalificerede tildelte kommandør for hver målfæstning.",
+      "summary": "Forsyn skrækwulve, og angrib fæstninger, der er klar",
+      "travelHelp": "Rejsefjeren er standard; dit gemte rejsevalg bevares. Den borgspecifikke rejseforstærkning beregnes igen før afsendelse."
+    },
+    "recommendationIntro": "De anbefalede værdier beskriver almindelig brug af automatisk fæstningsangreb; de er vejledning og ændrer ikke gemte indstillinger.",
+    "steps": {
+      "attack": {
+        "image": {
+          "alt": "Illustrativt eksempel på angrebs- og rejseindstillinger for automatisk fæstningsangreb",
+          "caption": "Automatisk fæstningsangreb rangerer kvalificerede tildelte kommandører for hvert mål og bruger det gemte rejsevalg."
+        },
+        "items": {
+          "commander_assignment": {
+            "description": "Tildel under Kommandører de kommandører, som automatisk fæstningsangreb må bruge, og gem tildelingerne.",
+            "label": "Tildeling af kommandører",
+            "recommendation": "Tildel de kommandører, som du normalt vil have til rådighed til fæstningsangreb."
+          },
+          "daily_normal_attack_limit": {
+            "description": "Stop automatisk fæstningsangreb ved kontoens daglige antal normale angreb, indtil spillet nulstiller det; 0 tilføjer ingen grænse.",
+            "label": "Daglig grænse for normale angreb",
+            "recommendation": "0, medmindre du ønsker en ekstra daglig grænse."
+          },
+          "fastest_commander": {
+            "description": "For hver fæstning vælger automatiseringen den hurtigste aktuelt tilgængelige tildelte kommandør ud fra relevante effekter fra udstyr, ædelsten, sæt og generaler efter begrænsninger.",
+            "label": "Hurtigste kvalificerede kommandør",
+            "recommendation": "En Relikvie 2.0-genstand eller 100 % hastighedsbonus er ikke påkrævet."
+          },
+          "full_flank_wave": {
+            "description": "Hvert angreb venter på nok skrækwulve til at fylde begge flanker i én fuld bølge.",
+            "label": "Skrækwulvebølge på begge flanker"
+          },
+          "horse_travel_boost": {
+            "description": "Vælg rejsemuligheden for fæstningsangreb; et udtrykkeligt gemt mønt- eller rubinniveau forbliver valgt.",
+            "label": "Hestens rejseforstærkning",
+            "recommendation": "Rejsefjer giver den hurtigste rejse."
+          }
+        },
+        "title": "Indstil angreb og rejse"
+      },
+      "finish": {
+        "items": {
+          "auto_fortress_switch": {
+            "description": "Slå automatisk fæstningsangreb til på Automatisering-kortet efter at have gemt for at starte de normale cyklusser.",
+            "label": "Kontakt til automatisk fæstningsangreb",
+            "recommendation": "Til efter gennemgang og lagring af de ønskede indstillinger."
+          },
+          "calendar": {
+            "description": "Brug Kalender til at begrænse, hvornår automatisk fæstningsangreb kan køre, og vælg Gem tidsplan ved ændringer.",
+            "label": "Kalender",
+            "recommendation": "Fra ved uafbrudt almindelig drift."
+          },
+          "save_fortress_plan": {
+            "description": "Gem indstillingerne for kongeriger, forsyning og angreb, før du lukker dialogen.",
+            "label": "Gem fæstningsplan"
+          }
+        },
+        "title": "Indstil tidsplanen, gem, og slå til"
+      },
+      "kingdoms": {
+        "image": {
+          "alt": "Illustrativt eksempel på automatisk fæstningsangrebs kontroller for de tre ydre kongeriger",
+          "caption": "Aktivér hvert oplåst kongerige, hvis hovedborg skal modtage skrækwulve og angribe fæstninger."
+        },
+        "items": {
+          "burning_sands": {
+            "description": "Aktivér angreb og forsyning af skrækwulve fra din hovedborg i Det Brændende Sand, når kongeriget er låst op.",
+            "label": "Det Brændende Sand",
+            "recommendation": "Til, når det er låst op og klar til brug."
+          },
+          "everwinter_glacier": {
+            "description": "Aktivér angreb og forsyning af skrækwulve fra din hovedborg i Evigvinterens Gletsjer, når kongeriget er låst op.",
+            "label": "Evigvinterens Gletsjer",
+            "recommendation": "Til, når det er låst op og klar til brug."
+          },
+          "fire_peaks": {
+            "description": "Aktivér angreb og forsyning af skrækwulve fra din hovedborg i Ildtoppene, når kongeriget er låst op.",
+            "label": "Ildtoppene",
+            "recommendation": "Til, når det er låst op og klar til brug."
+          }
+        },
+        "title": "Vælg fæstningskongeriger"
+      },
+      "open": {
+        "items": {
+          "open_settings": {
+            "description": "På siden Automatisering skal du vælge indstillingsknappen på kortet for automatisk fæstningsangreb.",
+            "label": "Åbn indstillinger"
+          }
+        },
+        "title": "Åbn indstillinger for automatisk fæstningsangreb"
+      },
+      "supply": {
+        "image": {
+          "alt": "Illustrativt eksempel på køb og overførsel af skrækwulve i automatisk fæstningsangreb",
+          "caption": "Gennemgå købsloftet pr. session, reserven af Khan-tavler og tidsbesparelser til bekræftede overførsler."
+        },
+        "items": {
+          "direwolves_per_session": {
+            "description": "Begræns køb af skrækwulve i nomadebutikken til partier på 100 pr. butikssession; 0 slår køb fra.",
+            "label": "Skrækwulve pr. session",
+            "recommendation": "5.000 skrækwulve pr. session til den billigste pris."
+          },
+          "keep_khan_tablets": {
+            "description": "Stop med at købe skrækwulve, før beholdningen af Khan-tavler falder under denne reserve.",
+            "label": "Behold Khan-tavler",
+            "recommendation": "Behold 25.000 Khan-tavler."
+          },
+          "supply_route": {
+            "description": "Købte skrækwulve ankommer til hovedborgen i Det Store Imperium og fordeles til aktiverede kongeriger.",
+            "label": "Forsyningsrute for skrækwulve"
+          },
+          "use_time_skips": {
+            "description": "Brug kun egnede tidsbesparelser til bekræftede forsendelser fra automatisk fæstningsangreb, og overhold gemte lagerreserver.",
+            "label": "Brug tidsbesparelser til overførsel af skrækwulve",
+            "recommendation": "Til for hurtigere forsyning, når dine gemte reserver af tidsbesparelser tillader det."
+          }
+        },
+        "title": "Indstil forsyning af skrækwulve"
+      }
+    }
+  },
+  "autoInvasion": {
+    "feature": {
+      "description": "Automatiske invasionsangreb angriber fremmede herrer eller blodkrager med en gemt angrebsopsætning, indtil pointmålet eller en anden stopgrænse nås.",
+      "expectation": "De venter på en aktiv begivenhed, egnede kommandører og nok tropper og værktøjer; angreb, der allerede er undervejs, kan afsluttes efter stop for nye angreb.",
+      "name": "Automatiske invasionsangreb",
+      "summary": "Angrib fremmede herrer og blodkrager frem mod dit pointmål"
+    },
+    "recommendationIntro": "De anbefalede værdier beskriver almindelig brug af automatiske invasionsangreb; de er vejledning og ændrer ikke gemte indstillinger.",
+    "steps": {
+      "difficulty": {
+        "image": {
+          "alt": "Illustrative sværhedsvalg for fremmede herrer og blodkrager",
+          "caption": "Vælg en særskilt oplåst reserve-sværhedsgrad for hver begivenhed."
+        },
+        "items": {
+          "bloodcrow_difficulty": {
+            "description": "Vælg en oplåst sværhedsgrad for blodkrager, som bruges, når den aktuelle begivenhed ikke har nogen valgt.",
+            "label": "Sværhedsgrad for blodkrager",
+            "recommendation": "Brug den højeste oplåste sværhedsgrad, som din normale opsætning klarer pålideligt."
+          },
+          "difficulty_note": {
+            "description": "Gem begge begivenhedsvalg; ændring af en gemt værdi erstatter ikke den aktive begivenheds sværhedsgrad.",
+            "label": "Aktuel sværhedsgrad"
+          },
+          "foreign_lords_difficulty": {
+            "description": "Vælg en oplåst sværhedsgrad for fremmede herrer, som bruges, når den aktuelle begivenhed ikke har nogen valgt.",
+            "label": "Sværhedsgrad for fremmede herrer",
+            "recommendation": "Brug den højeste oplåste sværhedsgrad, som din normale opsætning klarer pålideligt."
+          }
+        },
+        "title": "Vælg begge begivenheders sværhedsgrad"
+      },
+      "finish": {
+        "items": {
+          "auto_invasion_switch": {
+            "description": "Slå automatiske invasionsangreb til på Automatisering-kortet efter lagring, så de kører, når en begivenhed og egnede ressourcer er tilgængelige.",
+            "label": "Kontakt til automatiske invasionsangreb",
+            "recommendation": "Til efter kontrol og lagring af de ønskede indstillinger."
+          },
+          "readiness": {
+            "description": "Automatiske invasionsangreb venter på en aktiv begivenhed, egnede kommandører og tilstrækkeligt med tropper og værktøjer.",
+            "label": "Klar til angreb"
+          },
+          "save_settings": {
+            "description": "Gem udgangsborg, opsætning, sværhedsgrader, stopgrænser og forstærkningsvalg, før du lukker dialogen.",
+            "label": "Gem indstillinger"
+          }
+        },
+        "title": "Gem og aktivér automatiske invasionsangreb"
+      },
+      "fortify": {
+        "image": {
+          "alt": "Illustrative forstærkningsindstillinger for automatiske invasionsangreb",
+          "caption": "Lad forstærkning være slået fra, medmindre du vil bruge tilgængelig begivenhedsvaluta eller udtrykkeligt valgte rubiner."
+        },
+        "items": {
+          "fortification_currency": {
+            "description": "Vælg en mulighed, som den aktive begivenhed understøtter; spillet bestemmer hver pris, og et udtrykkeligt valg af rubiner tillader rubinforbrug.",
+            "label": "Valuta til forstærkning",
+            "recommendation": "Begivenhedsvaluta, når den tilbydes og forstærkning er slået til."
+          },
+          "fortify_each_target": {
+            "description": "Hvis det er aktiveret, forstærkes hvert genereret fjendtligt slot før angrebet med den valgte valuta.",
+            "label": "Forstærk hvert mål",
+            "recommendation": "Fra, medmindre forstærkning er del af din normale begivenhedsstrategi."
+          }
+        },
+        "title": "Vælg valgfri forstærkning af mål"
+      },
+      "limits": {
+        "image": {
+          "alt": "Illustrativt eksempel på point- og stopgrænser for automatiske invasionsangreb",
+          "caption": "Pointmålet stopper nye starter, men angreb, der allerede rejser, kan stadig afsluttes."
+        },
+        "items": {
+          "daily_attack_limit": {
+            "description": "Stop denne automatisering ved kontoens daglige antal normale angreb, indtil spillet nulstiller det; 0 tilføjer ingen grænse.",
+            "label": "Daglig grænse for normale angreb",
+            "recommendation": "0, så begivenhedens pointmål styrer forløbet."
+          },
+          "minimum_remaining": {
+            "description": "Start ikke flere nye angreb dette antal minutter før begivenheden slutter.",
+            "label": "Stop før begivenheden slutter",
+            "recommendation": "30 minutter."
+          },
+          "score_target": {
+            "description": "Start ikke nye angreb, når de rapporterede begivenhedspoint når eller overstiger målet.",
+            "label": "Stop ved begivenhedspoint",
+            "recommendation": "Brug din normale sidste milepæl for personlig belønning over 0."
+          },
+          "travelling_attacks": {
+            "description": "Angreb, der allerede rejser, kan afsluttes efter en stopbetingelse og løfte slutpointene over målet.",
+            "label": "Angreb undervejs"
+          }
+        },
+        "title": "Indstil point- og stopgrænser"
+      },
+      "open": {
+        "image": {
+          "alt": "Illustrative indstillinger for udgangsborg, opsætning og rejse ved automatiske invasionsangreb",
+          "caption": "Vælg en udgangsborg i Det Store Imperium og en gemt begivenhedsopsætning, før du vælger rejsemulighed."
+        },
+        "items": {
+          "attack_preset": {
+            "description": "Vælg en gemt angrebsopsætning med tropper, værktøjer og formation mod fremmede herrer eller blodkrager.",
+            "label": "Angrebsopsætning",
+            "recommendation": "Opret først en normal opsætning mod fremmede herrer eller blodkrager, og vælg den her."
+          },
+          "capacity_note": {
+            "description": "Opsætningens antal tropper og værktøjer tilpasses den valgte kommandørs og målets kapacitet.",
+            "label": "Angrebskapacitet"
+          },
+          "horse_travel_boost": {
+            "description": "Vælg rejsemuligheden med fjer, mønter eller rubiner til disse angreb.",
+            "label": "Hestens rejseforstærkning",
+            "recommendation": "Rejsefjer til hurtig rejse."
+          },
+          "open_settings": {
+            "description": "På siden Automatisering vælger du indstillingsknappen på kortet for automatiske invasionsangreb.",
+            "label": "Åbn indstillinger"
+          },
+          "source_castle": {
+            "description": "Vælg borgen i Det Store Imperium, som leverer tropper og værktøjer til begivenhedsangreb.",
+            "label": "Udgangsborg",
+            "recommendation": "Brug din normale begivenhedsborg med nok tropper og værktøjer."
+          }
+        },
+        "title": "Åbn indstillinger for automatiske invasionsangreb"
+      }
+    }
+  },
+  "autoNomad": {
+    "steps": {
+      "difficulty": {
+        "items": {
+          "nomad_difficulty": {
+            "recommendation": "Brug den højeste oplåste sværhedsgrad, som din normale opsætning klarer pålideligt.",
+            "description": "Vælg en oplåst nomadesværhedsgrad ved eventstart.",
+            "label": "Nomadesværhedsgrad"
+          },
+          "samurai_difficulty": {
+            "recommendation": "Brug den højeste oplåste sværhedsgrad, som din normale opsætning klarer pålideligt.",
+            "description": "Vælg en oplåst samuraisværhedsgrad ved eventstart.",
+            "label": "Samuraisværhedsgrad"
+          },
+          "active_difficulty": {
+            "description": "Ved et aktivt event skal du matche den nuværende sværhedsgrad, da et andet gemt valg får automatiseringen til at vente frem for at ændre den.",
+            "label": "Allerede aktivt event"
+          }
+        },
+        "title": "Vælg begge begivenheders sværhedsgrad",
+        "image": {
+          "alt": "Eksempel på nomade- og samuraisværhedsgrader",
+          "caption": "Vælg en særskilt oplåst sværhedsgrad for hvert event og match det aktive events grad."
+        }
+      },
+      "finish": {
+        "items": {
+          "auto_nomad_switch": {
+            "recommendation": "Til efter gennemgang og lagring af de ønskede indstillinger.",
+            "description": "Slå Auto Nomader/Samuraier til på automatiseringskortet efter lagring, så det kører, når event og egnede ressourcer er til rådighed.",
+            "label": "Kontakt til Auto Nomader/Samuraier"
+          },
+          "save_settings": {
+            "label": "Gem indstillinger",
+            "description": "Gem kilde, opsætninger, sværhedsgrader, stopgrænser, tidsspringsvalg og teststatus, før du lukker denne dialog."
+          },
+          "readiness": {
+            "description": "Automatiseringen opgraderer eventlejre og venter på egnede kommandører, tropper, redskaber og brugbare tidsspring, når de er slået til.",
+            "label": "Klar til lejrangreb"
+          }
+        },
+        "title": "Gem og slå Auto Nomader/Samuraier til"
+      },
+      "limits": {
+        "image": {
+          "caption": "Pointmålet stopper nye starter, men angreb, der allerede rejser, kan stadig afsluttes.",
+          "alt": "Eksempel på point- og stopgrænser for Auto Nomader/Samuraier"
+        },
+        "items": {
+          "daily_attack_limit": {
+            "description": "Stop denne automatisering ved kontoens daglige antal normale angreb, indtil spillet nulstiller det; 0 tilføjer ingen grænse.",
+            "label": "Daglig grænse for normale angreb",
+            "recommendation": "0, så begivenhedens pointmål styrer forløbet."
+          },
+          "minimum_remaining": {
+            "description": "Start ikke flere nye angreb dette antal minutter før begivenheden slutter.",
+            "label": "Stop før begivenheden slutter",
+            "recommendation": "30 minutter."
+          },
+          "score_target": {
+            "description": "Start ikke nye angreb, når de rapporterede begivenhedspoint når eller overstiger målet.",
+            "label": "Stop ved begivenhedspoint",
+            "recommendation": "Brug din normale sidste milepæl for personlig belønning over 0."
+          },
+          "travelling_attacks": {
+            "description": "Angreb, der allerede rejser, kan afsluttes efter en stopbetingelse og løfte slutpointene over målet.",
+            "label": "Angreb undervejs"
+          }
+        },
+        "title": "Indstil point- og stopgrænser"
+      },
+      "open": {
+        "items": {
+          "horse_travel_boost": {
+            "label": "Rejseboost med hest",
+            "recommendation": "Rejsefjer til hurtig rejse.",
+            "description": "Vælg rejsemulighed med fjer, mønter eller rubiner til lejrangreb."
+          },
+          "open_settings": {
+            "label": "Åbn indstillinger",
+            "description": "På siden Automatisering vælges indstillingsknappen på kortet Auto Nomader/Samuraier."
+          },
+          "source_castle": {
+            "label": "Udgangsborg",
+            "recommendation": "Brug din normale begivenhedsborg med nok tropper og værktøjer.",
+            "description": "Vælg borgen i Det Store Rige, der leverer tropper og redskaber til lejrangreb."
+          },
+          "nomad_preset": {
+            "description": "Vælg en gemt angrebsopsætning med tropper, redskaber og formation til nomadelejre.",
+            "label": "Nomadeangrebsopsætning",
+            "recommendation": "Opret og vælg din almindelige nomadeopsætning."
+          },
+          "samurai_preset": {
+            "description": "Vælg en gemt angrebsopsætning med tropper, redskaber og formation til samurailejre.",
+            "label": "Samuraiangrebsopsætning",
+            "recommendation": "Opret og vælg din almindelige samuraiopsætning."
+          }
+        },
+        "image": {
+          "alt": "Eksempel på kilde, opsætninger og rejse for Auto Nomader/Samuraier",
+          "caption": "Opret begge eventopsætninger, før du vælger kildeborg og rejsemulighed."
+        },
+        "title": "Åbn indstillinger for Auto Nomader/Samuraier"
+      },
+      "cooldowns": {
+        "image": {
+          "alt": "Eksempel på lejrventetider og reserver af tidsspring",
+          "caption": "Hver behold-værdi tæller tidsspringsgenstande, ikke minutters ventetid."
+        },
+        "items": {
+          "keep_10m": {
+            "description": "Behold dette antal tidsspring på 10 min ubrugt som reserve.",
+            "label": "Behold 10 min",
+            "recommendation": "0 til almindelige lejrrunder."
+          },
+          "keep_1m": {
+            "description": "Behold dette antal tidsspring på 1 min ubrugt som reserve.",
+            "label": "Behold 1 min",
+            "recommendation": "0 til almindelige lejrrunder."
+          },
+          "keep_24h": {
+            "description": "Behold dette antal tidsspring på 24 timer ubrugt som reserve.",
+            "label": "Behold 24 timer",
+            "recommendation": "Reserver den beholdning, du skal bruge til byggeri eller andre aktiviteter."
+          },
+          "keep_30m": {
+            "description": "Behold dette antal tidsspring på 30 min ubrugt som reserve.",
+            "label": "Behold 30 min",
+            "recommendation": "0 til almindelige lejrrunder."
+          },
+          "keep_5h": {
+            "description": "Behold dette antal tidsspring på 5 timer ubrugt som reserve.",
+            "label": "Behold 5 timer",
+            "recommendation": "Reserver den beholdning, du skal bruge til byggeri eller andre aktiviteter."
+          },
+          "keep_5m": {
+            "description": "Behold dette antal tidsspring på 5 min ubrugt som reserve.",
+            "label": "Behold 5 min",
+            "recommendation": "0 til almindelige lejrrunder."
+          },
+          "keep_60m": {
+            "description": "Behold dette antal tidsspring på 60 min ubrugt som reserve.",
+            "label": "Behold 60 min",
+            "recommendation": "0 til almindelige lejrrunder."
+          },
+          "skip_cooldowns": {
+            "description": "Efter en bekræftet sejr over en lejr bruges et tilgængeligt tidsspring til at fjerne målets ventetid.",
+            "label": "Fjern ventetid efter hvert vellykket angreb",
+            "recommendation": "Slå til ved almindelige gentagne lejrangreb; slå fra for at vente på naturlige ventetider."
+          }
+        },
+        "title": "Vælg tidsspring og reserver"
+      },
+      "trial": {
+        "image": {
+          "alt": "Eksempel på midlertidig prøve mod røverbaronborg",
+          "caption": "Prøven starter et ægte angreb og erstatter normal eventdrift, mens den er slået til."
+        },
+        "items": {
+          "rbc_trial": {
+            "description": "Erstat normal eventdrift med et ægte angrebsforsøg mod én røverbaronborg ved hjælp af nomadeopsætningen og tidsspring.",
+            "label": "Midlertidig fuld prøve mod røverbaronborg",
+            "recommendation": "Slået fra ved almindelige nomade- eller samuraikørsler."
+          },
+          "target_x": {
+            "description": "Angiv kun røverbaronborgens vandrette koordinat til den midlertidige prøve.",
+            "label": "Mål X",
+            "recommendation": "Lad stå ubrugt, når prøven er slået fra."
+          },
+          "target_y": {
+            "description": "Angiv kun røverbaronborgens lodrette koordinat til den midlertidige prøve.",
+            "label": "Mål Y",
+            "recommendation": "Lad stå ubrugt, når prøven er slået fra."
+          },
+          "trial_skips": {
+            "description": "Når prøven slås til, aktiveres tidsspring også for prøven.",
+            "label": "Tidsspring til prøven"
+          }
+        },
+        "title": "Lad den midlertidige prøve være slået fra ved almindelige kørsler"
+      }
+    },
+    "feature": {
+      "description": "Auto Nomader/Samuraier opgraderer egnede eventlejre, vælger den svageste fuldt opgraderede lejr og angriber den gentagne gange med eventets gemte angrebsopsætning, indtil en stopgrænse nås.",
+      "expectation": "Den venter på et aktivt event, egnede kommandører, tropper, redskaber og brugbare tidsspring, når ventetider ryddes; angreb undervejs kan afsluttes efter stop for nye angreb.",
+      "name": "Auto Nomader/Samuraier",
+      "summary": "Opgrader og angrib nomade- eller samurailejre"
+    },
+    "recommendationIntro": "Anbefalede værdier beskriver almindelig brug af Auto Nomader/Samuraier; de er vejledning og ændrer ikke gemte indstillinger."
+  },
+  "autoAdvisor": {
+    "steps": {
+      "activation": {
+        "items": {
+          "auto_advisor_switch": {
+            "recommendation": "Til efter gennemgang og lagring af de ønskede indstillinger.",
+            "description": "Slå Auto Rådgiver til på automatiseringskortet efter gennemgang af indstillingerne; en allerede oplåst Rådgiver kan starte en række straks.",
+            "label": "Kontakt til Auto Rådgiver"
+          },
+          "save_settings": {
+            "label": "Gem indstillinger",
+            "description": "Gem kilde, opsætning, sværhedsgrader, rækkestørrelse og ressourcebudgetter, før du lukker dialogen."
+          },
+          "activate_advisor": {
+            "description": "Hvis Rådgiveren er låst, skal du vælge Aktivér Rådgiver for at åbne bekræftelsen for det aktuelle event.",
+            "label": "Aktivér Rådgiver"
+          },
+          "activate_and_spend": {
+            "description": "Send bekræftet aktivering med en gyldig eventtoken eller universel Rådgivertoken; et gratis event viser i stedet Aktivér Rådgiver.",
+            "label": "Aktivér og brug token"
+          },
+          "cancel_activation": {
+            "description": "Luk bekræftelsen uden at sende aktivering eller bruge en token.",
+            "label": "Annullér aktivering"
+          },
+          "confirm_paid_activation": {
+            "description": "Bekræft, at aktivering af Rådgiveren kan bruge en event- eller universel token, medmindre spillet melder dette event gratis.",
+            "label": "Bekræft betalt aktivering"
+          }
+        },
+        "image": {
+          "alt": "Eksempel på lagring og tokenaktivering i Auto Rådgiver",
+          "caption": "Lagring eller aktivering bruger ingen token; særskilt bekræftet oplåsning kan bruge en."
+        },
+        "title": "Gem, slå til og aktivér adgang til Rådgiveren"
+      },
+      "difficulty": {
+        "items": {
+          "nomad_difficulty": {
+            "label": "Nomadesværhedsgrad",
+            "recommendation": "Brug den højeste oplåste sværhedsgrad, som din normale opsætning klarer pålideligt.",
+            "description": "Vælg en oplåst nomadesværhedsgrad til starten af dette event."
+          },
+          "samurai_difficulty": {
+            "label": "Samuraisværhedsgrad",
+            "recommendation": "Brug den højeste oplåste sværhedsgrad, som din normale opsætning klarer pålideligt.",
+            "description": "Vælg en oplåst samuraisværhedsgrad til starten af dette event."
+          },
+          "active_difficulty": {
+            "description": "Match det aktive events nuværende sværhedsgrad, ellers venter automatiseringen frem for at ændre den.",
+            "label": "Aktivt events sværhedsgrad"
+          }
+        },
+        "title": "Vælg begge begivenheders sværhedsgrad",
+        "image": {
+          "alt": "Eksempel på nomade- og samurairådgiverens sværhedsgrader",
+          "caption": "Gem begge eventsværhedsgrader, og match den, der allerede er aktiv."
+        }
+      },
+      "open": {
+        "items": {
+          "horse_travel_boost": {
+            "label": "Rejseboost med hest",
+            "recommendation": "Rejsefjer til hurtig rejse.",
+            "description": "Vælg fjer-, mønt- eller rubinrejse til rækken."
+          },
+          "open_settings": {
+            "label": "Åbn indstillinger",
+            "description": "Vælg indstillingsknappen på Auto Rådgiver-kortet på siden Automatisering."
+          },
+          "source_castle": {
+            "label": "Udgangsborg",
+            "recommendation": "Brug din normale begivenhedsborg med nok tropper og værktøjer.",
+            "description": "Vælg borgen i Det Store Rige, der leverer tropper og redskaber til Rådgiverrækken."
+          },
+          "attack_preset": {
+            "description": "Vælg en gemt angrebsopsætning, hvis tropper, redskaber og formation kopieres til hvert ønsket angreb.",
+            "label": "Rådgiverens angrebsopsætning",
+            "recommendation": "Opret først en almindelig opsætning til det aktive nomade- eller samuraievent, og vælg den derefter."
+          },
+          "complete_copies": {
+            "description": "Tilgængelige ressourcer og fulde kopier af opsætningen kan begrænse rækken til færre end det maksimale antal angreb.",
+            "label": "Fulde kopier af opsætningen"
+          }
+        },
+        "image": {
+          "alt": "Eksempel på kilde, opsætning og rejse i Auto Rådgiver",
+          "caption": "Vælg en kildeborg i Det Store Rige og en gemt eventopsætning, før du indstiller rejsen."
+        },
+        "title": "Åbn indstillinger for Auto Rådgiver"
+      },
+      "resources": {
+        "items": {
+          "keep_24h": {
+            "description": "Behold dette antal tidsspring på 24 timer ubrugt som reserve.",
+            "label": "Behold 24 timer",
+            "recommendation": "Reserver den beholdning, du skal bruge til byggeri eller andre aktiviteter."
+          },
+          "keep_5h": {
+            "description": "Behold dette antal tidsspring på 5 timer ubrugt som reserve.",
+            "label": "Behold 5 timer",
+            "recommendation": "Reserver den beholdning, du skal bruge til byggeri eller andre aktiviteter."
+          },
+          "keep_60m": {
+            "description": "Behold dette antal tidsspring på 60 min ubrugt som reserve.",
+            "label": "Behold 60 min",
+            "recommendation": "0 til almindelige Rådgiverrækker."
+          },
+          "coin_cost": {
+            "description": "Skøn de samlede møntomkostninger pr. angreb til kontrollen før start uden at ændre spillets priser.",
+            "label": "Samlede mønter pr. angreb",
+            "recommendation": "500 kun hvis det dækker den faktiske fulde pris; brug ellers et højere målt beløb."
+          },
+          "keep_coins": {
+            "description": "Undtag dette antal mønter fra rækkens budget.",
+            "label": "Behold mønter",
+            "recommendation": "Behold dit almindelige budget til rekruttering og byggeri."
+          },
+          "keep_feathers": {
+            "description": "Undtag dette antal rejsefjer fra rækkens budget.",
+            "label": "Behold fjer",
+            "recommendation": "0, medmindre du reserverer fjer til andre funktioner."
+          },
+          "keep_rubies": {
+            "description": "Undtag dette antal rubiner fra rækkens budget.",
+            "label": "Behold rubiner",
+            "recommendation": "Behold den saldo, du har brug for til andre aktiviteter."
+          },
+          "ruby_cost": {
+            "description": "Skøn rubinomkostningen pr. angreb for rejse; et positivt tal kræves ved rubinrejse.",
+            "label": "Rubiner pr. angreb",
+            "recommendation": "0 med Rejsefjer; brug den faktiske positive pris ved rubinrejse."
+          }
+        },
+        "image": {
+          "alt": "Eksempel på mønt-, rubin-, fjer- og tidsspringsreserver i Auto Rådgiver",
+          "caption": "Omkostningsfelter er planlægningsskøn; behold-værdier tæller ubrugte ressourcer eller tidsspringsgenstande."
+        },
+        "title": "Indstil ressourcebudgetter og reserver"
+      },
+      "overview": {
+        "image": {
+          "alt": "Eksempel på Rådgiverens fremdrift og tab",
+          "caption": "Oversigten viser fremdrift og tab uden at starte en ny række."
+        },
+        "items": {
+          "live_progress": {
+            "description": "Læs aktuelt og ønsket angreb, sejre, nederlag samt tabte enheder og redskaber i oversigten.",
+            "label": "Løbende Rådgiverrække"
+          },
+          "no_relaunch": {
+            "description": "En afsluttet eller annulleret række for samme event startes ikke automatisk igen.",
+            "label": "Afsluttet eller annulleret række"
+          },
+          "refresh_overview": {
+            "description": "Bed om opdaterede oplysninger om rækkens fremdrift, sejre, nederlag og tab.",
+            "label": "Opdatér oversigt"
+          }
+        },
+        "title": "Gennemgå den løbende Rådgiverrække"
+      },
+      "sizing": {
+        "image": {
+          "alt": "Eksempel på angrebsantal og eventtid i Auto Rådgiver",
+          "caption": "Det ønskede antal begrænses før start af ressourcer og eventtid."
+        },
+        "items": {
+          "maximum_attacks": {
+            "description": "Sæt en øvre grænse for angreb i denne ene Rådgiverrække; ressourcer og resterende tid kan mindske det faktiske antal.",
+            "label": "Maksimale angreb",
+            "recommendation": "9.999, så ressourcer og eventtid bestemmer rækkens størrelse."
+          },
+          "minimum_remaining": {
+            "description": "Lad dette antal minutter være ubrugt i beregningen af eventtid før start.",
+            "label": "Stop før eventets slutning",
+            "recommendation": "30 minutter; det er ikke en løbende annulleringstimer."
+          }
+        },
+        "title": "Indstil rækkestørrelse og eventtid"
+      }
+    },
+    "feature": {
+      "description": "Auto Rådgiver starter én nomade- eller samurairådgiverangrebsrække, hvis størrelse bestemmes af tilgængelige ressourcer og resterende eventtid.",
+      "expectation": "Rækken venter på matchende aktiv sværhedsgrad og oplåst adgang til Rådgiveren; lagring eller aktivering bruger ingen token, men bekræftet oplåsning kan gøre det.",
+      "name": "Auto Rådgiver",
+      "summary": "Start én ressourcetilpasset nomade- eller samurairådgiverrække"
+    },
+    "recommendationIntro": "Anbefalede værdier beskriver almindelig brug af Auto Rådgiver; de er vejledning og ændrer ikke gemte indstillinger."
+  },
+  "autoKhan": {
+    "steps": {
+      "cooldowns": {
+        "items": {
+          "keep_10m": {
+            "label": "Behold 10 min",
+            "description": "Behold så mange tidsforkortere på 10 min ubrugt.",
+            "recommendation": "0 for almindelige Khan-kæder."
+          },
+          "keep_1m": {
+            "label": "Behold 1 min",
+            "description": "Behold så mange tidsforkortere på 1 min ubrugt.",
+            "recommendation": "0 for almindelige Khan-kæder."
+          },
+          "keep_24h": {
+            "label": "Behold 24 timer",
+            "recommendation": "Reserver den beholdning, du skal bruge til byggeri eller andre aktiviteter.",
+            "description": "Behold så mange tidsforkortere på 24 timer ubrugt."
+          },
+          "keep_30m": {
+            "label": "Behold 30 min",
+            "description": "Behold så mange tidsforkortere på 30 min ubrugt.",
+            "recommendation": "0 for almindelige Khan-kæder."
+          },
+          "keep_5h": {
+            "label": "Behold 5 timer",
+            "recommendation": "Reserver den beholdning, du skal bruge til byggeri eller andre aktiviteter.",
+            "description": "Behold så mange tidsforkortere på 5 timer ubrugt."
+          },
+          "keep_5m": {
+            "label": "Behold 5 min",
+            "description": "Behold så mange tidsforkortere på 5 min ubrugt.",
+            "recommendation": "0 for almindelige Khan-kæder."
+          },
+          "keep_1h": {
+            "description": "Behold så mange tidsforkortere på 1 time ubrugt.",
+            "label": "Behold 1 time",
+            "recommendation": "0 for almindelige Khan-kæder."
+          },
+          "skip_cooldowns": {
+            "description": "Reserver og brug nok tidsforkortere til at fjerne lejrens ventetider efter angreb.",
+            "label": "Spring hver Khan-lejrventetid over",
+            "recommendation": "Til; den nuværende indstillingsdialog kræver dette for at gemme."
+          },
+          "skip_shortage": {
+            "description": "Nye lejrangreb pauses, hvis brugbare tidsforkortere ikke kan dække den nødvendige ventetid.",
+            "label": "For få brugbare tidsforkortere"
+          }
+        },
+        "image": {
+          "alt": "Illustration af spring over ventetider og reserver af tidsforkortere i Automatisk Khan",
+          "caption": "Reserverne tæller genstande, ikke minutter."
+        },
+        "title": "Indstil ventetider og reserver"
+      },
+      "limits": {
+        "items": {
+          "daily_limit": {
+            "label": "Daglig grænse for normale angreb",
+            "description": "Stop nye lejrangreb i denne automatisering ved kontoens samlede dagstæller for normale angreb; 0 slår grænsen fra.",
+            "recommendation": "0, medmindre du behøver en grænse for hele kontoen."
+          },
+          "event_end": {
+            "label": "Stop før eventets slutning",
+            "description": "Stop nye lejrangreb dette antal minutter før begivenheden slutter.",
+            "recommendation": "5 minutter."
+          },
+          "nomad_points": {
+            "description": "Ved denne registrerede score stoppes nye Khan-angreb, udgående angreb kaldes tilbage, og hovedportene åbnes; 0 slår stoppet fra.",
+            "label": "Stop ved nomadepoint",
+            "recommendation": "0, medmindre du vil stoppe og beskytte ved en valgt score."
+          },
+          "replenish_tools": {
+            "description": "Erstat manglende værktøjer i forsvarsskabelonen fra egnede tilbud, og afvis pakker prissat i rubiner.",
+            "label": "Genopfyld forsvarsværktøjer",
+            "recommendation": "Til, hvis du ønsker egnede automatiske køb."
+          }
+        },
+        "image": {
+          "alt": "Illustration af point, værktøjer og dagsgrænse for Automatisk Khan",
+          "caption": "Et positivt stop ved nomadepoint kalder også udgående Khan-angreb tilbage og åbner hovedborgens porte."
+        },
+        "title": "Indstil point-, forsynings- og dagsgrænser"
+      },
+      "save": {
+        "items": {
+          "save_settings": {
+            "label": "Gem indstillinger",
+            "description": "Gem valgte borge, skabeloner, raserikontrol, grænser, reserver af tidsforkortere og beskyttelse."
+          },
+          "enable_switch": {
+            "description": "Aktivér Automatisk Khan på kortet Automatisering, efter du har kontrolleret hovedborgens forsvar.",
+            "label": "Kontakt for Automatisk Khan",
+            "recommendation": "Til efter at have gemt og forberedt forsvaret."
+          },
+          "station_priority": {
+            "description": "Automatisk Stationering håndterer indkommende spillerangreb separat fra Khan-gengældelser.",
+            "label": "Automatisk Stationering har forrang"
+          }
+        },
+        "image": {
+          "alt": "Illustration af at gemme og aktivere Automatisk Khan",
+          "caption": "Kontrollér hovedborgens forsvar, før du aktiverer Khan-gengældelser."
+        },
+        "title": "Gem og aktivér Automatisk Khan"
+      },
+      "setup": {
+        "items": {
+          "horse_travel_boost": {
+            "label": "Rejseboost med hest",
+            "recommendation": "Rejsefjer til hurtig rejse.",
+            "description": "Vælg rejse med fjer, mønter eller rubiner til lejrangreb."
+          },
+          "open_settings": {
+            "label": "Åbn indstillinger",
+            "description": "På siden Automatisering vælges indstillingsknappen på kortet Automatisk Khan."
+          },
+          "attack_from": {
+            "description": "Vælg en hovedborg eller forpost i Det Store Rige, som leverer Khan-lejrangrebene.",
+            "label": "Angrib fra",
+            "recommendation": "Brug en forpost med din angrebshær, når den findes."
+          },
+          "camp_attack_preset": {
+            "description": "Vælg en gemt angrebsskabelon til almindelige Khan-lejrangreb.",
+            "label": "Lejrangrebsskabelon",
+            "recommendation": "Opret først din almindelige Khan-angrebsskabelon."
+          },
+          "defend_at": {
+            "description": "Khan-gengældelser forsvares ved den viste hovedborg i Det Store Rige; feltet kan ikke redigeres.",
+            "label": "Forsvar ved"
+          },
+          "main_defense_preset": {
+            "description": "Vælg en gemt forsvarsskabelon, der anvendes igen på hovedborgen før gengældelser.",
+            "label": "Hovedborgens forsvarsskabelon",
+            "recommendation": "Opret din almindelige Khan-forsvarsskabelon, og forbered tropper og værktøjer."
+          }
+        },
+        "image": {
+          "alt": "Illustration af borg, skabeloner og rejse for Automatisk Khan",
+          "caption": "Forbered begge skabeloner og hovedborgens forsvar, før du aktiverer angrebskæden."
+        },
+        "title": "Vælg borge, skabeloner og rejse"
+      },
+      "protection": {
+        "image": {
+          "alt": "Illustration af beskyttelse af hovedborgens mur for Automatisk Khan",
+          "caption": "Denne murbeskyttelse gælder kun, når angreb udgår fra hovedborgen."
+        },
+        "items": {
+          "offensive_threshold": {
+            "description": "Udløs beskyttelsen, når offensive enheder på muren når dette antal.",
+            "label": "Grænse for offensive murenheder",
+            "recommendation": "1.000 offensive murenheder."
+          },
+          "outpost_source": {
+            "description": "Beskyttelsen slås fra, når en forpost leverer angrebene, og hovedborgen forsvares separat.",
+            "label": "Forpost som kilde"
+          },
+          "protect_offense": {
+            "description": "Når du angriber fra hovedborgen, åbnes portene og Khan pauses, hvis for mange offensive tropper ville forsvare muren.",
+            "label": "Beskyt offensive tropper på hovedborgens mur",
+            "recommendation": "Til, når hovedborgen leverer angrebene."
+          }
+        },
+        "title": "Beskyt hovedborgens mur"
+      },
+      "rage": {
+        "image": {
+          "alt": "Illustration af raseri og angrebstilladelser for Automatisk Khan",
+          "caption": "Den tidsbegrænsede raseri-pointbooster er adskilt fra raseribannere."
+        },
+        "items": {
+          "lock_automatic_attacks": {
+            "description": "Stop nye lejrangreb, mens raseri, ventetider og forsvar fortsætter.",
+            "label": "Lås automatiske Khan-angreb",
+            "recommendation": "Fra ved almindelige lejrangreb."
+          },
+          "max_rage_chain": {
+            "description": "Begræns accepterede gengældelser i den aktuelle begivenhed, før nye lejrangreb stopper; 0 fjerner grænsen.",
+            "label": "Maksimal raserikæde",
+            "recommendation": "0, medmindre du behøver en grænse for gengældelser."
+          },
+          "rage_booster": {
+            "description": "Tillad kun nye automatiske lejrangreb, mens den tidsbegrænsede raseri-pointbooster er aktiv.",
+            "label": "Kræv raseri-pointbooster",
+            "recommendation": "Fra, medmindre du kun vil angribe med booster."
+          },
+          "rage_continues": {
+            "description": "En grænse for raserikæden stopper ikke udløsning ved fuldt raseri, ventetider eller genopretning af forsvar.",
+            "label": "Raseriarbejde fortsætter"
+          },
+          "trigger_full_rage": {
+            "description": "Fremkald en Khan-gengældelse, når raseriet er fuldt.",
+            "label": "Udløs Khan ved fuldt raseri",
+            "recommendation": "Til, når hovedborgen er klar til at forsvare sig."
+          }
+        },
+        "title": "Indstil raseri og angrebstilladelser"
+      }
+    },
+    "feature": {
+      "description": "Automatisk Khan angriber Khan-lejren, fjerner ventetider, udløser gengældelse ved fuldt raseri og opretholder forsvaret af hovedborgen.",
+      "expectation": "Nye lejrangreb pauses ved de valgte grænser eller mangel på ressourcer, mens hovedborgen beskyttes; indkommende spillerangreb hører til Automatisk Stationering.",
+      "name": "Automatisk Khan",
+      "summary": "Kæd Khan-lejrangreb sammen, og forsvar gengældelsen ved din hovedborg"
+    },
+    "recommendationIntro": "Anbefalede værdier beskriver almindelig brug af Automatisk Khan; de er vejledning og ændrer ikke gemte indstillinger."
+  },
+  "autoBeri": {
+    "feature": {
+      "description": "Auto Beri forstærker din ejede Berimond-lejr efter troppeforholdet i den valgte angrebsforudindstilling og kan derefter angribe tårne, fylde værktøjer op og bygge med bekræftet bytte.",
+      "expectation": "Overførsler venter på friske lagre i lejr og donerborg, oplyst kapacitet og afslutning af tidligere forsendelser; delvist donorlager kan give en mindre forsendelse, mens en manglende nødvendig type sætter opfyldning på pause.",
+      "name": "Automatisk Berimond",
+      "summary": "Forsyn og driv din Berimond-lejr"
+    },
+    "recommendationIntro": "Anbefalingerne beskriver normal brug af Auto Beri og ændrer ikke gemte indstillinger.",
+    "steps": {
+      "builder": {
+        "image": {
+          "alt": "Illustrative indstillinger for valgfrit lejrbyggeri i Auto Beri",
+          "caption": "Indbygget og gemt mål, optagelsestilstande, stald niveau 5, træ- og stenreserver samt syv tidsforkortelser."
+        },
+        "items": {
+          "allow_demolition": {
+            "description": "Tillad at fjerne ikke-styrede bygninger, som ikke kan flyttes eller opbevares, for at nå det præcise mål.",
+            "label": "Tillad nedrivning",
+            "recommendation": "Fra, medmindre du har gennemgået de planlagte fjernelser."
+          },
+          "allow_premium_costs": {
+            "description": "Tillad egnede byggetrin, der bruger premiumvaluta.",
+            "label": "Tillad premiumomkostninger",
+            "recommendation": "Fra, medmindre du bevidst ønsker premiumbyggeri."
+          },
+          "auto_beri_builder_lane": {
+            "description": "Byg eller opgrader det aktive Berimond-lejrmål med bekræftet hjemvendt bytte uden at hente ressourcer fra et andet kongerige.",
+            "label": "Auto-Beri-byggeri",
+            "recommendation": "Til ved almindeligt lejrbyggeri, når du har gennemgået tilladelser til forbrug."
+          },
+          "camp_resource_reserves": {
+            "description": "Hold de valgte mængder træ og sten uden for lejrbyggeri.",
+            "label": "Ressourcereserver i lejren",
+            "recommendation": "Træ 0 og sten 0, hvis overskud må bruges."
+          },
+          "construction_time_skip_reserves": {
+            "description": "Angiv særskilt, hvor mange tidsforkortelser på 1 min, 5 min, 10 min, 30 min, 1 time, 5 timer og 24 timer der skal gemmes.",
+            "label": "Reserver til byggetidskip",
+            "recommendation": "Behold 0 af hver kort tidsforkortelse; reservér beholdningen på 1, 5 og 24 timer til andre aktiviteter."
+          },
+          "optional_custom_camp_target": {
+            "description": "Optag Funktionel til nødvendige bygninger, Layout til bygningernes placering uden dekorationer eller Præcis til alle understøttede detaljer.",
+            "label": "Valgfrit tilpasset lejrmål",
+            "recommendation": "Brug det indbyggede mål, medmindre du behøver et gennemgået eget mål."
+          },
+          "stable_target": {
+            "description": "Vælg fraktionsstaldens niveau fra 1 til 5 for det indbyggede mål.",
+            "label": "Staldmål",
+            "recommendation": "Niveau 5 til almindeligt eventbyggeri, hvis ressourcerne rækker."
+          },
+          "use_construction_time_skips": {
+            "description": "Fremskynd et bekræftet lejrbyggeri, mens de valgte reserver af byggetidsforkortelser bevares.",
+            "label": "Brug byggetidskip",
+            "recommendation": "Til ved almindeligt byggeri, hvis du har nok tidsforkortelser."
+          },
+          "keep_skip_10m": {
+            "description": "Hold dette antal byggetidsforkortelser på 10m tilbage; sæt reserven til 0 ved almindelig brug.",
+            "label": "Behold tidsforkortelser på 10m"
+          },
+          "keep_skip_1h": {
+            "description": "Reservér dette antal byggetidsforkortelser på 1h til andre aktiviteter.",
+            "label": "Behold tidsforkortelser på 1h"
+          },
+          "keep_skip_1m": {
+            "description": "Hold dette antal byggetidsforkortelser på 1m tilbage; sæt reserven til 0 ved almindelig brug.",
+            "label": "Behold tidsforkortelser på 1m"
+          },
+          "keep_skip_24h": {
+            "description": "Reservér dette antal byggetidsforkortelser på 24h til andre aktiviteter.",
+            "label": "Behold tidsforkortelser på 24h"
+          },
+          "keep_skip_30m": {
+            "description": "Hold dette antal byggetidsforkortelser på 30m tilbage; sæt reserven til 0 ved almindelig brug.",
+            "label": "Behold tidsforkortelser på 30m"
+          },
+          "keep_skip_5h": {
+            "description": "Reservér dette antal byggetidsforkortelser på 5h til andre aktiviteter.",
+            "label": "Behold tidsforkortelser på 5h"
+          },
+          "keep_skip_5m": {
+            "description": "Hold dette antal byggetidsforkortelser på 5m tilbage; sæt reserven til 0 ved almindelig brug.",
+            "label": "Behold tidsforkortelser på 5m"
+          },
+          "saved_targets": {
+            "description": "Optagelse gemmer og aktiverer straks et gennemgået eget mål; valg af et andet gemt mål aktiverer det også straks.",
+            "label": "Gemte egne mål"
+          },
+          "stone_reserve": {
+            "description": "Hold denne mængde lejrsten uden for byggeforbruget; brug 0, hvis overskuddet må bruges.",
+            "label": "Stenreserve"
+          },
+          "use_built_in_default": {
+            "description": "Skift straks tilbage til det indbyggede mål, og behold gemte egne mål.",
+            "label": "Brug indbygget standard"
+          },
+          "wood_reserve": {
+            "description": "Hold denne mængde lejrtræ uden for byggeforbruget; brug 0, hvis overskuddet må bruges.",
+            "label": "Træreserve"
+          }
+        },
+        "title": "Vælg valgfrit lejrbyggeri"
+      },
+      "readiness": {
+        "image": {
+          "alt": "Illustrative indstillinger for klargøring til Auto-Beri-tårnangreb",
+          "caption": "Boosterkrav og forudindstillingens opstilling uden aktive boostere eller rigtige kundedata."
+        },
+        "items": {
+          "attack_preset_loadout": {
+            "description": "Gennemgå den valgte forudindstillings bølger, tropper og værktøjer, før angreb aktiveres.",
+            "label": "Angrebsforudindstillingens opstilling",
+            "recommendation": "Hold nok af hver valgt troppe og hvert værktøj hos donor og i lejren til dit normale angrebstempo."
+          },
+          "only_run_with_a_gallantry_booster": {
+            "description": "Kræv en aktiv Tapperhedsbooster, før overførsler, værktøjskøb, lejrforberedelse, tårnangreb eller byggeri fortsætter.",
+            "label": "Kør kun med Tapperhedsbooster",
+            "recommendation": "Til, hvis alle Auto-Beri-dele skal kræve boosteren."
+          }
+        },
+        "title": "Klargør tårnangreb"
+      },
+      "save": {
+        "image": {
+          "alt": "Illustrative indstillinger for at gemme og aktivere Auto Beri",
+          "caption": "Tjekliste, kontakt og valgfri kalender uden en rigtig konto."
+        },
+        "items": {
+          "automation_switch": {
+            "description": "Slå Auto Beri til på Automatiseringskortet efter at have gennemgået lejr, donortropper, forudindstilling og valgfrie udgifter.",
+            "label": "Automatiseringskontakt",
+            "recommendation": "Til efter opsætning."
+          },
+          "calendar": {
+            "description": "Lad kalenderen være fra ved løbende drift, eller indstil og gem dine sædvanlige timer, hvis du behøver et tidsvindue.",
+            "label": "Kalender",
+            "recommendation": "Fra ved løbende begivenhedsdrift."
+          },
+          "save_settings": {
+            "description": "Gem forudindstilling, donor, overførselstempo, angrebsgrænser, værktøjer og valgfrit byggeri, før automatiseringen aktiveres.",
+            "label": "Gem indstillinger"
+          }
+        },
+        "title": "Gem og aktivér"
+      },
+      "setup": {
+        "image": {
+          "alt": "Illustrative Auto-Beri-indstillinger for angreb og forsyning",
+          "caption": "Gemt angrebsforudindstilling, donorborg i Det Store Imperium, Rejsefjer, angrebskontrol og dagsgrænse."
+        },
+        "items": {
+          "attack_check_interval": {
+            "description": "Angiv, hvor ofte Auto Beri leder efter et nyt tårnangreb.",
+            "label": "Interval for angrebskontrol",
+            "recommendation": "Behold det sædvanlige interval på 30 sekunder, medmindre du ønsker færre kontroller."
+          },
+          "attack_preset": {
+            "description": "Vælg en gemt Berimond-angrebsformation; Auto Beri bruger dens troppeforhold til overførsler og tårnangreb.",
+            "label": "Angrebsforudindstilling",
+            "recommendation": "Opret og vælg først din sædvanlige Berimond-forudindstilling."
+          },
+          "daily_normal_attack_limit": {
+            "description": "Stop nye Auto-Beri-tårnangreb, når kontoens daglige antal normale angreb når denne grænse; 0 fjerner den ekstra grænse.",
+            "label": "Daglig grænse for normale angreb",
+            "recommendation": "0, medmindre du bruger en grænse for hele kontoen."
+          },
+          "horse_travel_boost": {
+            "description": "Vælg rejse med fjer, mønter eller rubiner til tårnangreb.",
+            "label": "Rejseboost",
+            "recommendation": "Rejsefjer for hurtig rejse uden at vælge rubiner."
+          },
+          "open_settings": {
+            "description": "Åbn indstillingerne på Auto-Beri-kortet på siden Automatisering.",
+            "label": "Åbn indstillinger"
+          },
+          "source_castle": {
+            "description": "Vælg borgen eller forposten i Det Store Imperium, som leverer tropperne.",
+            "label": "Donorborg",
+            "recommendation": "Vælg borgen med din angrebshær."
+          }
+        },
+        "title": "Vælg angreb og forsyningskilde"
+      },
+      "tools": {
+        "image": {
+          "alt": "Illustrative indstillinger for lejrens Auto-Beri-værktøjer",
+          "caption": "De tre mindstelagre af værktøjer og et tydeligt opdigtet lejrlager."
+        },
+        "items": {
+          "battering_rams_minimum": {
+            "description": "Fyld dette antal stationerede stormbukke op efter samme regel.",
+            "label": "Mindste antal stormbukke",
+            "recommendation": "Tilpas til dit sædvanlige forbrug i forudindstillingen."
+          },
+          "mantlets_minimum": {
+            "description": "Fyld dette antal stationerede skjolde op efter samme regel.",
+            "label": "Mindste antal skjolde",
+            "recommendation": "Tilpas til dit sædvanlige forbrug i forudindstillingen."
+          },
+          "scaling_ladders_minimum": {
+            "description": "Fyld dette antal stationerede stiger i lejren op via egnede mønttilbud; 0 lader dem være ustyrede.",
+            "label": "Mindste antal stiger",
+            "recommendation": "Tilpas til din sædvanlige forudindstilling og angrebstempo."
+          }
+        },
+        "title": "Vedligehold lejrens værktøjer"
+      },
+      "transfers": {
+        "image": {
+          "alt": "Illustrative indstillinger for forholdsmæssige Auto-Beri-troppeoverførsler",
+          "caption": "Opdigtet forhold 2:1, lejrlager, fri kapacitet og én delvis forsendelse af én type; værdierne er eksempler og ikke gemte standarder."
+        },
+        "items": {
+          "check_interval": {
+            "description": "Angiv, hvor ofte Auto Beri opdaterer fri overførselskapacitet og begge borglagre.",
+            "label": "Kontrolinterval",
+            "recommendation": "Behold det sædvanlige interval på 30 sekunder."
+          },
+          "food_only": {
+            "description": "Kun forudindstillingens tropper, som bruger Mad, kan overføres; ikke-understøttede enheder eller uafklarede troppefamilier sættes på pause med en begrundelse.",
+            "label": "Kun overførsel af tropper, der bruger Mad"
+          },
+          "minimum_free_capacity": {
+            "description": "Start først overførsler, når den oplyste frie kapacitet når denne grænse; en enkelt forholdsmæssig forsendelse kan være mindre.",
+            "label": "Mindste frie kapacitet",
+            "recommendation": "1 ledig troppeplads til almindelig forholdsmæssig forsyning."
+          },
+          "owned_berimond_camp": {
+            "description": "Auto Beri finder automatisk din ejede Berimond-lejr, så du skal ikke indtaste et lejr-id.",
+            "label": "Ejet Berimond-lejr"
+          },
+          "partial_donor": {
+            "description": "Hvis donor har nogle af den nødvendige troppetype, sender Auto Beri den mindre mængde; hvis donor ingen har, venter den frem for at sende en anden type.",
+            "label": "Delvist donorlager"
+          },
+          "pending_transfer": {
+            "description": "Auto Beri venter på hver forsendelses ankomst og opdaterer lejrlageret, før forudindstillingens forhold beregnes igen.",
+            "label": "Afventende overførsel"
+          },
+          "preset_troop_mix": {
+            "description": "Auto Beri lægger gentagne troppepladser fra den valgte forudindstillings bølger og gård sammen og fylder én underrepræsenteret type op ad gangen.",
+            "label": "Forudindstillingens troppeforhold"
+          },
+          "troop_transport_skip": {
+            "description": "Vælg varigheden af genstanden, der bruges, når transportskip er slået til.",
+            "label": "Transporttidskip",
+            "recommendation": "Brug tidsforkortelsen på 1 time til almindelige bekræftede overførsler."
+          },
+          "use_troop_transport_time_skips": {
+            "description": "Brug det valgte skip på en bekræftet overførsel, mens den stadig er undervejs.",
+            "label": "Brug transporttidskip",
+            "recommendation": "Til ved almindelig lejrforsyning, hvis beholdningen af tidsforkortelser rækker."
+          }
+        },
+        "title": "Indstil forholdsmæssige troppeoverførsler"
+      }
+    }
+  },
+  "autoStorm": {
+    "feature": {
+      "description": "Auto Storm kan åbne og bygge et Storm-slot, angribe forter og ressourceøer, importere tropper og købe udvalgte Luna-belønninger.",
+      "expectation": "Hver funktion bruger friske spildata og dine gemte tilladelser; premiumbyggeri, angreb og køb begrænses af de valg, du slår til.",
+      "name": "Auto Storm",
+      "summary": "Styr dit Storm-slot, angreb og belønninger"
+    },
+    "recommendationIntro": "Anbefalingerne beskriver normal brug af Auto Storm; de er vejledning og ændrer ikke gemte indstillinger.",
+    "steps": {
+      "castle": {
+        "image": {
+          "alt": "Eksempel på adgang til Storm-slot og registrering af mål",
+          "caption": "Valg af startslot, registreringstilstande og valgfri aktivering af mål; der vises intet rigtigt køb eller konto."
+        },
+        "items": {
+          "automatic_open": {
+            "description": "Når Storm er låst, skal du vælge et tilgængeligt officielt startslot og kontrollere den viste pris, før du tillader oplåsning.",
+            "label": "Åbn Storm-slottet automatisk",
+            "recommendation": "Til, hvis Auto Storm skal åbne et almindeligt startslot, efter du har kontrolleret prisen."
+          },
+          "blueprint": {
+            "description": "Et registreret mål gemmes og aktiveres straks; Sæt mål på pause stopper afstemning, men beholder gemte mål.",
+            "label": "Gemt mål",
+            "recommendation": "Hold et gennemgået Funktionelt mål aktivt til almindeligt byggeri."
+          },
+          "capture_castle": {
+            "description": "Vælg dit aktuelle Storm-slot, før du registrerer et byggemål.",
+            "label": "Storm-slot",
+            "recommendation": "Registrer det slot, du vil styre."
+          },
+          "combat_only": {
+            "description": "Kamp mod forter og øer kræver ikke et registreret byggemål.",
+            "label": "Kamp uden mål"
+          },
+          "decoration_preset": {
+            "description": "Anvend eventuelt en valgt dekorationsforudindstilling efter byggeriet.",
+            "label": "Dekorationsforudindstilling efter byggeri",
+            "recommendation": "Lad være tom, medmindre du vil have en særskilt dekorationsplan."
+          },
+          "exact": {
+            "description": "Gem alle understøttede måldetaljer til en nøjagtig kopi.",
+            "label": "Nøjagtig registrering",
+            "recommendation": "Brug kun efter gennemgang af hele målet."
+          },
+          "functional": {
+            "description": "Gem et mål for Storms nødvendige funktioner uden at kopiere alle bygningspositioner.",
+            "label": "Funktionel registrering",
+            "recommendation": "Funktionel til normal vedligeholdelse."
+          },
+          "layout": {
+            "description": "Gem bygningstyper og placeringer uden dekorationer.",
+            "label": "Registrering af layout",
+            "recommendation": "Brug kun, når placeringen af bygninger er vigtig."
+          },
+          "open_settings": {
+            "description": "Åbn Auto Storm-indstillinger fra kortet Automatisering.",
+            "label": "Åbn indstillinger"
+          },
+          "starter_castle": {
+            "description": "Vælg det aktuelt tilgængelige officielle Storm-startslot til næste låste sæson.",
+            "label": "Slot, der skal åbnes",
+            "recommendation": "Vælg et almindeligt startslot, du har råd til, efter pristjek."
+          }
+        },
+        "title": "Åbn og registrer dit Storm-slot"
+      },
+      "combat": {
+        "image": {
+          "alt": "Eksempel på indstillinger for fort- og øangreb",
+          "caption": "Eksempler på akvamarinøer, fortniveauer, målrækkefølge og besættelsesforsvarere."
+        },
+        "items": {
+          "defenders": {
+            "description": "Vælg typer og antal forsvarere på en erobret ø; en tom liste efterlader én overlevende efter bekræftet sejr.",
+            "label": "Øforsvarsenheder",
+            "recommendation": "Vælg forsvarere, hvis én overlevende ikke er nok til din plan."
+          },
+          "fort_preset": {
+            "description": "Vælg en gemt troppe- og redskabsformation til forter.",
+            "label": "Angrebsforudindstilling til forter",
+            "recommendation": "Brug din sædvanlige fortforudindstilling."
+          },
+          "forts": {
+            "description": "Slå angreb på valgte officielle fortniveauer fra 40 til 80 til.",
+            "label": "Storm-forter",
+            "recommendation": "Til for niveauer, som din valgte forudindstilling kan slå pålideligt."
+          },
+          "horse": {
+            "description": "Vælg rejse med fjer, mønter eller rubiner til Storm-angreb.",
+            "label": "Hesterejsebonus",
+            "recommendation": "Rejsefjer til hurtig rejse uden at vælge rubinrejse."
+          },
+          "island_preset": {
+            "description": "Vælg en gemt troppe- og redskabsformation til øer.",
+            "label": "Angrebsforudindstilling til øer",
+            "recommendation": "Brug din sædvanlige øforudindstilling."
+          },
+          "island_resources": {
+            "description": "Vælg, hvilke træ-, sten- eller akvamarinøer der må angribes.",
+            "label": "Øressourcer",
+            "recommendation": "Vælg akvamarin for at samle akvamarin."
+          },
+          "island_sizes": {
+            "description": "Vælg store, små eller begge størrelser af de valgte ressourceøer.",
+            "label": "Østørrelser",
+            "recommendation": "Store og små til normal akvamarinindsamling."
+          },
+          "islands": {
+            "description": "Slå erobring af øer med valgte ressourcer og størrelser til.",
+            "label": "Ressourceøer",
+            "recommendation": "Til, hvis du vil have akvamarin fra store og små øer."
+          },
+          "minimum_attacks": {
+            "description": "Angrib kun forter med mindst dette antal angreb tilbage.",
+            "label": "Mindste antal tilbageværende angreb",
+            "recommendation": "0 tillader alle egnede forter."
+          },
+          "priority": {
+            "description": "Rangér aktiverede ø- og fortmålgrupper; inden for hver gruppe angribes det nærmeste egnede mål først.",
+            "label": "Angrebsmålsprioritet",
+            "recommendation": "Store øer, små øer og dernæst forter fra niveau 80 til 40 til akvamarinindsamling."
+          }
+        },
+        "title": "Vælg forter og ressourceøer"
+      },
+      "construction": {
+        "image": {
+          "alt": "Eksempel på bygge- og reserveindstillinger",
+          "caption": "Ressourcetransport, tilladelser til forbrug, reserver og havneniveau som illustrative felter."
+        },
+        "items": {
+          "demolition": {
+            "description": "Tillad præcis fjernelse af bygninger, der ikke kan flyttes eller opbevares.",
+            "label": "Tillad nedrivning",
+            "recommendation": "Fra, medmindre du genopbygger et gennemgået layout."
+          },
+          "donor_reserves": {
+            "description": "Behold valgte mængder træ, sten og akvamarin hos hver donor før ressourcetransport.",
+            "label": "Beskyttede donorreserver",
+            "recommendation": "Beskyt dit normale budget af træ og sten til byggeri; akvamarin 0, når den ikke bruges."
+          },
+          "harbor_level": {
+            "description": "Vælg havnens målniveau 1, 2 eller 3; niveau 2 og 3 bruger premiumbyggeveje.",
+            "label": "Havnens målniveau",
+            "recommendation": "Niveau 1, medmindre premiumopgraderinger er planlagt."
+          },
+          "harbor": {
+            "description": "Hold havnen på det valgte niveau, selv om det registrerede mål afviger.",
+            "label": "Opgradér havn",
+            "recommendation": "Til med niveau 1 til normal brug."
+          },
+          "premium": {
+            "description": "Tillad egnede byggeskridt, der bruger premiumvaluta.",
+            "label": "Tillad premiumomkostninger",
+            "recommendation": "Fra, medmindre premiumbyggeri er planlagt."
+          },
+          "resource_transport": {
+            "description": "Tillad bekræftede forsendelser af manglende byggeressourcer fra donorslotte.",
+            "label": "Transportér manglende ressourcer",
+            "recommendation": "Til ved almindeligt byggeri."
+          },
+          "skip_reserves": {
+            "description": "Behold det valgte antal genstande på 1 min, 5 min, 10 min, 30 min, 1 time, 5 timer og 24 timer til byggeri og transport.",
+            "label": "Tidsforkortelser i reserve",
+            "recommendation": "Behold 0 af de korte, medmindre de bruges andetsteds; reservér dine 1 t-, 5 t- og 24 t-genstande til andre begivenheder."
+          },
+          "storm_reserves": {
+            "description": "Hold de valgte mængder træ, sten og akvamarin uden for byggeri.",
+            "label": "Storm-slottets forbrugsreserver",
+            "recommendation": "Træ 0 og sten 0, hvis overskud må bruges; sæt akvamarin efter dit planlagte belønningsbudget."
+          },
+          "time_skips": {
+            "description": "Brug egnede tidsforkortelser til byggeri, ressource- og troppetransport, mens de valgte reserver bevares.",
+            "label": "Brug tidsforkortelser til byggeri og transport",
+            "recommendation": "Til, hvis du vil fremskynde normalt byggeri."
+          }
+        },
+        "title": "Indstil byggeri og ressourcebeskyttelse"
+      },
+      "luna": {
+        "image": {
+          "alt": "Eksempel på Luna-belønningsindstillinger",
+          "caption": "Akvamarinreserve, begrænsede købsmål, gentagelige belønninger og prioritet."
+        },
+        "items": {
+          "cost_cap": {
+            "description": "Læs spillets oplyste pris og købsgrænse for hver belønning.",
+            "label": "Pris og købsgrænse",
+            "recommendation": "Kontrollér begge skrivebeskyttede værdier før aktivering."
+          },
+          "keep_aqua": {
+            "description": "Hold denne mængde akvamarin uden for Luna-køb.",
+            "label": "Behold akvamarin",
+            "recommendation": "0, hvis hele overskuddet må bruges på belønninger; ellers reservér den planlagte mængde."
+          },
+          "priority": {
+            "description": "Butikken behandler købsmål med lavere numre først.",
+            "label": "Prioritet",
+            "recommendation": "Tildel 1, 2 og 3 i din foretrukne rækkefølge med begrænsede mål før ubegrænsede belønninger."
+          },
+          "search": {
+            "description": "Søg officielle Luna-belønninger efter navn, før du opsætter et køb.",
+            "label": "Find en Luna-belønning",
+            "recommendation": "Søg efter den belønning, du faktisk ønsker."
+          },
+          "target_total": {
+            "description": "Indstil det ønskede samlede antal køb af en begrænset belønning.",
+            "label": "Ønsket samlet antal",
+            "recommendation": "Indstil kun det antal, du vil købe."
+          },
+          "unlimited": {
+            "description": "Bliv ved med at købe en egnet gentagelig belønning, så længe reserve og butiksgrænse tillader det.",
+            "label": "Ubegrænset",
+            "recommendation": "Til kun for gentagelige belønninger, du regelmæssigt ønsker."
+          },
+          "use": {
+            "description": "Vælg en belønning for at tillade automatisk køb.",
+            "label": "Brug belønning",
+            "recommendation": "Slå kun ønskede belønninger til."
+          }
+        },
+        "title": "Vælg Luna-belønninger for akvamarin"
+      },
+      "save": {
+        "image": {
+          "alt": "Eksempel på at gemme og slå Auto Storm til",
+          "caption": "Daglig angrebsgrænse, politik-tjek, skrivebeskyttet kortopdatering og automatiseringskontakt."
+        },
+        "items": {
+          "daily_limit": {
+            "description": "Stop nye Auto Storm-angreb ved kontoens daglige antal normale angreb; 0 fjerner denne ekstra grænse.",
+            "label": "Daglig grænse for normale angreb",
+            "recommendation": "0, medmindre du bruger en grænse for hele kontoen."
+          },
+          "enable": {
+            "description": "Slå Auto Storm til på Automatisering-kortet, når de gemte valg er klar.",
+            "label": "Automatiseringskontakt",
+            "recommendation": "Slå til efter opsætning."
+          },
+          "map_refresh": {
+            "description": "Læs det officielle opdateringsinterval for Storm-kortet.",
+            "label": "Kortets opdateringsinterval",
+            "recommendation": "Det skrivebeskyttede interval er 2 timer; vent på en frisk scanning efter ændringer."
+          },
+          "policy_check": {
+            "description": "Indstil, hvor ofte Auto Storm tjekker indstillinger og egnede opgaver.",
+            "label": "Interval for politik-tjek",
+            "recommendation": "Behold det sædvanlige interval på 30 sekunder."
+          },
+          "save": {
+            "description": "Gem valg af slot, byggeri, kamp, troppeimport og Luna, før du slår automatisering til.",
+            "label": "Gem indstillinger",
+            "recommendation": "Gem efter at have gennemgået alle tilladelser til forbrug."
+          }
+        },
+        "title": "Gem og slå Auto Storm til"
+      },
+      "troops": {
+        "image": {
+          "alt": "Eksempel på troppeimport og skrivebeskyttede overslag",
+          "caption": "Donorrækkefølge, 1.000 beholdte tropper og skrivebeskyttede kapacitetsoverslag."
+        },
+        "items": {
+          "attack_history": {
+            "description": "Læs bekræftede Storm-angreb siden serverens nulstilling divideret med 24, ikke et rullende 24-timersgennemsnit.",
+            "label": "Gennemsnitlige angreb siden nulstilling",
+            "recommendation": "Gennemgå dette skrivebeskyttede overslag, før du ændrer behovet for import."
+          },
+          "committed_cap": {
+            "description": "Læs den automatisk beregnede grænse med stationerede tropper, bevægelser, transit og returer.",
+            "label": "Grænse for bundne Storm-tropper",
+            "recommendation": "Gennemgå denne skrivebeskyttede grænse, før du øger importen."
+          },
+          "donors": {
+            "description": "Vælg donorslotte i vist rækkefølge; delvis beholdning kan give en mindre forsendelse.",
+            "label": "Donorslotte",
+            "recommendation": "Vælg dine sædvanlige troppeleverandører i foretrukken rækkefølge."
+          },
+          "import": {
+            "description": "Importér manglende angrebs- eller valgte forsvarstropper til Storm fra donorslotte.",
+            "label": "Importér manglende tropper",
+            "recommendation": "Til, hvis dit Storm-slot har brug for regelmæssig troppeforsyning."
+          },
+          "map_coverage": {
+            "description": "Gennemgå kortdækning, før du stoler på viste mål.",
+            "label": "Kortdækning",
+            "recommendation": "Vent på frisk dækning, hvis mål mangler."
+          },
+          "minimum_kept": {
+            "description": "Behold mindst dette antal tropper i Storm efter et angreb er startet, og bevar blandingen af aktiverede forudindstillinger.",
+            "label": "Mindste antal tropper beholdt efter start",
+            "recommendation": "1.000 tropper som normal reserve, tilpasset din faktiske hær."
+          },
+          "preset_average": {
+            "description": "Læs det gennemsnitlige troppebehov for aktiverede angrebsforudindstillinger, inklusive valgte øforsvarere.",
+            "label": "Gennemsnitlig aktiveret forudindstilling",
+            "recommendation": "Sammenlign dette skrivebeskyttede overslag med din hær."
+          }
+        },
+        "title": "Importér og overvåg Storm-tropper"
+      }
+    }
+  }
+}

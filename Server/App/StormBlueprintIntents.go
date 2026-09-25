@@ -1,6 +1,7 @@
 package App
 
 import (
+	"CitadelDesktop/Server/Localization"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -37,12 +38,12 @@ func (application *Application) registerStormBlueprintIntents() error {
 	}
 	for _, definition := range []Intent.Definition{
 		{
-			Name: "storm.blueprint.save", Description: "Preflight and save one durable Storm castle blueprint without replacing other capture modes", Effect: Intent.EffectWrite,
+			Name: "storm.blueprint.save", Description: "Preflight and save one durable Storm castle blueprint without replacing other capture modes", DescriptionDescriptor: Localization.New("server.intent.description.047d42e6", "Preflight and save one durable Storm castle blueprint without replacing other capture modes", nil), Effect: Intent.EffectWrite,
 			ArgumentsExample: json.RawMessage(`{"target":{"version":1,"castleId":5358,"kingdomId":4,"mode":"functional","ground":[],"buildings":[],"fixed":[],"summary":{}},"policy":{"allowPremium":false,"resourceReserves":{}}}`),
 			Planner:          planStormBlueprintSave,
 		},
 		{
-			Name: "storm.blueprint.activate", Description: "Activate a saved Storm blueprint or pause blueprint reconciliation without deleting it", Effect: Intent.EffectWrite,
+			Name: "storm.blueprint.activate", Description: "Activate a saved Storm blueprint or pause blueprint reconciliation without deleting it", DescriptionDescriptor: Localization.New("server.intent.description.d747fb0d", "Activate a saved Storm blueprint or pause blueprint reconciliation without deleting it", nil), Effect: Intent.EffectWrite,
 			ArgumentsExample: json.RawMessage(`{"id":"storm-functional"}`), Planner: planStormBlueprintActivate,
 		},
 	} {
@@ -63,7 +64,7 @@ func planStormBlueprintSave(
 		return Intent.Plan{}, err
 	}
 	if request.Target.KingdomID != State.KingdomID(GameData.StormKingdomID) {
-		return Intent.Plan{}, fmt.Errorf("Storm blueprint must target kingdom %d", GameData.StormKingdomID)
+		return Intent.Plan{}, Localization.WithError(fmt.Errorf("Storm blueprint must target kingdom %d", GameData.StormKingdomID), Localization.New("server.app.storm_blueprint_must_target.5a092177", "Storm blueprint must target kingdom {p0}", Localization.Params{"p0": fmt.Sprintf("%d", GameData.StormKingdomID)}))
 	}
 	diff, err := Buildings.CompileBlueprintDiff(input.State, input.GameData, Buildings.BlueprintDiffRequest{
 		Target: request.Target, Policy: request.Policy,
@@ -79,7 +80,7 @@ func planStormBlueprintSave(
 				break
 			}
 		}
-		return Intent.Plan{}, fmt.Errorf("%s", message)
+		return Intent.Plan{}, Localization.WithError(fmt.Errorf("%s", message), Localization.New("server.app.p.8af35f19", "{p0}", Localization.Params{"p0": fmt.Sprintf("%s", message)}))
 	}
 	now := time.Now().UTC()
 	blueprint := Buildings.StormBlueprint{
@@ -92,9 +93,9 @@ func planStormBlueprintSave(
 		Summary: fmt.Sprintf(
 			"Save and activate %s for Storm castle %d (%d targets, %d planned actions)",
 			blueprint.Name, blueprint.Target.CastleID, diff.TargetCount, diff.ActionCount,
-		),
+		), SummaryDescriptor: Localization.New("server.app.save_and_activate_p.ea88e1ae", "Save and activate {p0} for Storm castle {p1} ({p2} targets, {p3} planned actions)", Localization.Params{"p0": fmt.Sprintf("%s", blueprint.Name), "p1": fmt.Sprintf("%d", blueprint.Target.CastleID), "p2": diff.TargetCount, "p3": diff.ActionCount}),
 		Steps: []Intent.Step{{
-			Name: "Save Storm blueprint", Action: "storm.blueprint.save", ActionArguments: canonical,
+			Name: "Save Storm blueprint", NameDescriptor: Localization.New("server.app.save_storm_blueprint.4393b80d", "Save Storm blueprint", nil), Action: "storm.blueprint.save", ActionArguments: canonical,
 		}},
 	}, nil
 }
@@ -106,7 +107,7 @@ func (application *Application) saveStormBlueprint(_ context.Context, arguments 
 	}
 	input.Blueprint.ID = strings.TrimSpace(input.Blueprint.ID)
 	if input.Blueprint.ID == "" {
-		return fmt.Errorf("Storm blueprint id is required")
+		return Localization.WithError(fmt.Errorf("Storm blueprint id is required"), Localization.New("server.app.storm_blueprint_id_is.988208bb", "Storm blueprint id is required", nil))
 	}
 	raw, _ := application.Configuration.Section(Buildings.StormBlueprintConfigurationSection)
 	document, err := Buildings.DecodeStormBlueprintDocument(raw, nil)
@@ -142,14 +143,16 @@ func planStormBlueprintActivate(
 	request.ID = strings.TrimSpace(request.ID)
 	canonical, _ := json.Marshal(request)
 	summary := "Pause Storm blueprint reconciliation"
+	var summaryLocalizationMessage *Localization.Message = Localization.New("server.app.pause_storm_blueprint_reconciliation.8dcb6d0d", "Pause Storm blueprint reconciliation", nil)
 	if request.ID != "" {
 		summary = fmt.Sprintf("Activate Storm blueprint %s", request.ID)
+		summaryLocalizationMessage = Localization.New("server.app.activate_storm_blueprint_p.73ea1671", "Activate Storm blueprint {p0}", Localization.Params{"p0": fmt.Sprintf("%s", request.ID)})
 	}
 	return Intent.Plan{
 		Claims:  []string{"configuration:" + Buildings.StormBlueprintConfigurationSection},
-		Summary: summary,
+		Summary: summary, SummaryDescriptor: Localization.Clone(summaryLocalizationMessage),
 		Steps: []Intent.Step{{
-			Name: "Select Storm blueprint", Action: "storm.blueprint.activate", ActionArguments: canonical,
+			Name: "Select Storm blueprint", NameDescriptor: Localization.New("server.app.select_storm_blueprint.eea7a3ce", "Select Storm blueprint", nil), Action: "storm.blueprint.activate", ActionArguments: canonical,
 		}},
 	}, nil
 }
@@ -167,7 +170,7 @@ func (application *Application) activateStormBlueprint(_ context.Context, argume
 	}
 	if request.ID != "" {
 		if _, exists := document.Blueprints[request.ID]; !exists {
-			return fmt.Errorf("Storm blueprint %q does not exist", request.ID)
+			return Localization.WithError(fmt.Errorf("Storm blueprint %q does not exist", request.ID), Localization.New("server.app.storm_blueprint_p_does.9a259c66", "Storm blueprint {p0} does not exist", Localization.Params{"p0": fmt.Sprintf("%q", request.ID)}))
 		}
 	}
 	document.ActiveID = request.ID

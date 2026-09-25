@@ -45,3 +45,21 @@ func TestRubyUpgradeConfirmationBoundaryAndSessionAuthority(t *testing.T) {
 		t.Fatal("persisted authority")
 	}
 }
+
+func TestRubyBlockerDescriptorsUseTypedAmounts(t *testing.T) {
+	state := State.NewGameState()
+	malformed := RubyUpgradeBlocker(state, []CostStatus{{Premium: true, Required: -1}})
+	if malformed.MessageDescriptor == nil || malformed.MessageDescriptor.FallbackText != malformed.Message {
+		t.Fatal("malformed cost lacks bound descriptor")
+	}
+	unknown := RubyUpgradeBlocker(state, []CostStatus{{Premium: true, Required: 3100}})
+	if unknown.MessageDescriptor == nil || unknown.MessageDescriptor.Params["cost"] != int64(3100) || unknown.MessageDescriptor.Params["threshold"] != nil {
+		t.Fatal("unknown setting invented threshold")
+	}
+	state.Session = State.SessionState{Generation: 1, LoggedIn: true, SocketReady: true}
+	state.Player.RubyConfirmation = State.RubyConfirmationState{Known: true, Amount: 2500, Generation: 1}
+	known := RubyUpgradeBlocker(state, []CostStatus{{Premium: true, Required: 3100}})
+	if known.MessageDescriptor == nil || known.MessageDescriptor.Params["cost"] != int64(3100) || known.MessageDescriptor.Params["threshold"] != int64(2500) || known.MessageDescriptor.FallbackText != known.Message {
+		t.Fatal("typed cost/threshold or raw binding lost")
+	}
+}

@@ -1,3 +1,8 @@
+import { LocalizedRichText } from "../i18n/LocalizedRichText";
+import { useLocale as useStaticLocale } from "../i18n/LocaleContext";
+import { LocalizedText } from "../i18n/LocalizedText";
+import { useLocalizedErrorState } from '../i18n/useLocalizedErrorState';
+import { useLocale } from '../i18n/LocaleContext';
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import {
 	ArrowDown,
@@ -134,11 +139,11 @@ function retentionOptionLabel(
 	return `${option.label} — ${recordings.toLocaleString()} recordings · ~${formatStorageBytes(recordings * bytesPerRecording)}`;
 }
 
-function retentionLabel(value: string): string {
+function retentionLabel(value: string, locale = 'en'): string {
 	if (value === 'none') return 'No history';
 	if (value === 'unlimited') return 'Unlimited';
 	const days = retentionDays(value);
-	return days == null ? value : `${days.toLocaleString()} ${days === 1 ? 'day' : 'days'}`;
+	return days == null ? value : new Intl.NumberFormat(locale, {style:'unit',unit:'day',unitDisplay:'long'}).format(days);
 }
 
 function allowedPlayerHistoryOptions(policy: PlayerHistoryRetentionV1 | null): PlayerHistoryRetentionOptionV1[] {
@@ -169,6 +174,8 @@ function isRetentionReduction(
 }
 
 const SettingsView: React.FC = () => {
+  const { t: localizeStatic } = useStaticLocale();
+  const { t, locale } = useLocale();
 	const {
 		state,
 		configuration,
@@ -188,9 +195,9 @@ const SettingsView: React.FC = () => {
 	const [attackPriorityDropTargetID, setAttackPriorityDropTargetID] = useState<string | null>(null);
 	const [browserInventory, setBrowserInventory] = useState<BrowserInventory | null>(null);
 	const [browserSelectionPending, setBrowserSelectionPending] = useState(false);
-	const [browserSelectionError, setBrowserSelectionError] = useState('');
+	const [browserSelectionError, setBrowserSelectionError] = useLocalizedErrorState('');
 	const [connectionModePending, setConnectionModePending] = useState(false);
-	const [connectionModeError, setConnectionModeError] = useState('');
+	const [connectionModeError, setConnectionModeError] = useLocalizedErrorState('');
 	const [backgroundLogin, setBackgroundLogin] = useState<BackgroundLoginStatus | null>(null);
 	const [backgroundUsername, setBackgroundUsername] = useState('');
 	const [backgroundPassword, setBackgroundPassword] = useState('');
@@ -207,20 +214,20 @@ const SettingsView: React.FC = () => {
 		return () => { cancelled = true; };
 	}, []);
 	const [backgroundLoginPending, setBackgroundLoginPending] = useState(false);
-	const [backgroundLoginError, setBackgroundLoginError] = useState('');
+	const [backgroundLoginError, setBackgroundLoginError] = useLocalizedErrorState('');
 	const [backgroundLoginMessage, setBackgroundLoginMessage] = useState('');
 	const [customBrowserPath, setCustomBrowserPath] = useState('');
 	const [relogDelayMinutes, setRelogDelayMinutes] = useState('5');
-	const [relogDelayError, setRelogDelayError] = useState('');
-	const [settingsSaveError, setSettingsSaveError] = useState('');
+	const [relogDelayError, setRelogDelayError] = useLocalizedErrorState('');
+	const [settingsSaveError, setSettingsSaveError] = useLocalizedErrorState('');
 	const settingsFileInputRef = useRef<HTMLInputElement>(null);
 	const [settingsTransferPending, setSettingsTransferPending] = useState<'export' | 'import' | null>(null);
-	const [settingsTransferError, setSettingsTransferError] = useState('');
+	const [settingsTransferError, setSettingsTransferError] = useLocalizedErrorState('');
 	const [settingsTransferStatus, setSettingsTransferStatus] = useState('');
 	const [playerHistoryRetention, setPlayerHistoryRetention] = useState<PlayerHistoryRetentionV1 | null>(null);
 	const [playerHistoryRetentionLoading, setPlayerHistoryRetentionLoading] = useState(true);
 	const [playerHistoryRetentionPending, setPlayerHistoryRetentionPending] = useState(false);
-	const [playerHistoryRetentionError, setPlayerHistoryRetentionError] = useState('');
+	const [playerHistoryRetentionError, setPlayerHistoryRetentionError] = useLocalizedErrorState('');
 	const [playerHistoryRetentionStatus, setPlayerHistoryRetentionStatus] = useState('');
 	const [playerHistoryDaysDraft, setPlayerHistoryDaysDraft] = useState('30');
 	const schedulerConfiguration = useMemo(
@@ -253,7 +260,7 @@ const SettingsView: React.FC = () => {
 	const playerHistoryMaximumLabel = playerHistoryRetention?.options.find(
 		(option) => option.value === playerHistoryRetention.maximum,
 	)?.label ?? (playerHistoryRetention?.maximumDays != null
-		? `${playerHistoryRetention.maximumDays.toLocaleString()} days`
+		? `${playerHistoryRetention.maximumDays.toLocaleString(locale)} days`
 		: playerHistoryRetention?.maximum);
 	const playerHistoryBytesPerRecording = Math.max(
 		1,
@@ -287,7 +294,7 @@ const SettingsView: React.FC = () => {
 			})
 			.catch((error) => {
 				if (active) {
-					setPlayerHistoryRetentionError(error instanceof Error ? error.message : 'Could not load My Stats storage options');
+					setPlayerHistoryRetentionError(error instanceof Error ? error : 'Could not load My Stats storage options');
 				}
 			})
 			.finally(() => {
@@ -313,7 +320,7 @@ const SettingsView: React.FC = () => {
 				if (active) setBrowserInventory(inventory);
 			})
 			.catch((error) => {
-				if (active) setBrowserSelectionError(error instanceof Error ? error.message : 'Could not discover browsers');
+				if (active) setBrowserSelectionError(error instanceof Error ? error : 'Could not discover browsers');
 			});
 		return () => {
 			active = false;
@@ -330,7 +337,7 @@ const SettingsView: React.FC = () => {
 			})
 			.catch((error) => {
 				if (active) {
-					setBackgroundLoginError(error instanceof Error ? error.message : 'Could not read the saved background login');
+					setBackgroundLoginError(error instanceof Error ? error : 'Could not read the saved background login');
 				}
 			});
 		return () => {
@@ -403,7 +410,7 @@ const SettingsView: React.FC = () => {
       upgradeEreDelayMs: parseInt(ereDelayMs ?? upgradeEreDelayMs, 10),
       upgradeCoinThreshold: parseFloat(coinThreshold ?? upgradeCoinThreshold),
 		}).catch((error) => {
-			setSettingsSaveError(error instanceof Error ? error.message : 'Could not save settings');
+			setSettingsSaveError(error instanceof Error ? error : 'Could not save settings');
 		});
   };
 
@@ -455,7 +462,7 @@ const SettingsView: React.FC = () => {
 			mode,
 		})
 			.catch((error) => {
-				setConnectionModeError(error instanceof Error ? error.message : 'Could not save the game connection mode');
+				setConnectionModeError(error instanceof Error ? error : 'Could not save the game connection mode');
 			})
 			.finally(() => setConnectionModePending(false));
 	};
@@ -467,7 +474,7 @@ const SettingsView: React.FC = () => {
 		void submitIntent('session.background.prepare')
 			.then(() => submitIntent('session.start'))
 			.catch((error) => {
-				setConnectionModeError(error instanceof Error ? error.message : 'Could not re-enable the saved game login');
+				setConnectionModeError(error instanceof Error ? error : 'Could not re-enable the saved game login');
 			})
 			.finally(() => setConnectionModePending(false));
 	};
@@ -481,7 +488,7 @@ const SettingsView: React.FC = () => {
 				setBrowserInventory(await CitadelAPI.getBrowsers());
 			})
 			.catch((error) => {
-				setBrowserSelectionError(error instanceof Error ? error.message : 'Could not select browser');
+				setBrowserSelectionError(error instanceof Error ? error : 'Could not select browser');
 			})
 			.finally(() => setBrowserSelectionPending(false));
 	};
@@ -511,7 +518,7 @@ const SettingsView: React.FC = () => {
 				setBackgroundLoginMessage('Background login saved. Start Bot can now connect without opening Full application mode.');
 			})
 			.catch((error) => {
-				setBackgroundLoginError(error instanceof Error ? error.message : 'Could not save the background login');
+				setBackgroundLoginError(error instanceof Error ? error : 'Could not save the background login');
 			})
 			.finally(() => setBackgroundLoginPending(false));
 	};
@@ -531,7 +538,7 @@ const SettingsView: React.FC = () => {
 			...reconnectConfiguration,
 			relogDelaySec: minutes * 60,
 		}).catch((error) => {
-			setRelogDelayError(error instanceof Error ? error.message : 'Could not save the relog delay');
+			setRelogDelayError(error instanceof Error ? error : 'Could not save the relog delay');
 		});
 	};
 
@@ -608,7 +615,7 @@ const SettingsView: React.FC = () => {
 				...rankedAttackPriorities(featureIDs),
 			},
 		}).catch((error) => {
-			setSettingsSaveError(error instanceof Error ? error.message : 'Could not save attack priorities');
+			setSettingsSaveError(error instanceof Error ? error : 'Could not save attack priorities');
 		});
 	};
 
@@ -653,10 +660,10 @@ const SettingsView: React.FC = () => {
 		if (!retentionChanged && !intervalChanged) return;
 		if (retentionChanged && playerHistoryRetention?.maximumDays != null && Number.isFinite(nextMagnitude)
 			&& nextMagnitude > playerHistoryRetention.maximumDays * 24) {
-			setPlayerHistoryRetentionError(`Hosted My Stats history is capped at ${playerHistoryRetention.maximumDays.toLocaleString()} days.`);
+			setPlayerHistoryRetentionError(`Hosted My Stats history is capped at ${playerHistoryRetention.maximumDays.toLocaleString(locale)} days.`);
 			return;
 		}
-		const nextLabel = nextOption?.label ?? retentionLabel(nextRetention);
+		const nextLabel = nextOption?.label ?? retentionLabel(nextRetention, locale);
 		const reducing = isRetentionReduction(
 			activePlayerHistoryRetention || playerHistoryRetention?.effective || '',
 			nextRetention,
@@ -732,7 +739,7 @@ const SettingsView: React.FC = () => {
 	const applyPlayerHistoryDays = () => {
 		if (!playerHistoryDaysValid) {
 			setPlayerHistoryRetentionError(playerHistoryRetention?.maximumDays != null
-				? `Enter a whole number from 1 to ${playerHistoryRetention.maximumDays.toLocaleString()} days.`
+				? `Enter a whole number from 1 to ${playerHistoryRetention.maximumDays.toLocaleString(locale)} days.`
 				: 'Enter a positive whole-number day limit.');
 			return;
 		}
@@ -750,7 +757,7 @@ const SettingsView: React.FC = () => {
 			const preferenceCount = Object.keys(bundle.clientPreferences ?? {}).length;
 			setSettingsTransferStatus(`Exported ${sectionCount} settings sections and ${preferenceCount} local preferences.`);
 		} catch (error) {
-			setSettingsTransferError(error instanceof Error ? error.message : 'Could not export settings.');
+			setSettingsTransferError(error instanceof Error ? error : 'Could not export settings.');
 		} finally {
 			setSettingsTransferPending(null);
 		}
@@ -783,7 +790,7 @@ const SettingsView: React.FC = () => {
 			);
 			window.setTimeout(() => window.location.reload(), 800);
 		} catch (error) {
-			setSettingsTransferError(error instanceof Error ? error.message : 'Could not import settings.');
+			setSettingsTransferError(error instanceof Error ? error : 'Could not import settings.');
 			setSettingsTransferPending(null);
 		}
 	};
@@ -792,24 +799,23 @@ const SettingsView: React.FC = () => {
     <div className="space-y-6 max-w-4xl mx-auto pb-12">
       <PageHeader
         className="mb-6"
-        title="System Settings"
-        description="Configure system behaviors, attack scheduling, and portable app preferences."
+        title={t('settings.system')}
+        description={localizeStatic("ui.views.settingsView.description.configure.system.behaviors.attack.scheduling.and.portable.1c54a3d3")}
       />
 
       <div className="grid grid-cols-1 gap-6">
 		<SectionCard
 			variant="solid"
-			title="Settings Import & Export"
-			description="Move your CitadelOps setup between installations with one JSON file."
+			title={t('settings.transfer')}
+			description={localizeStatic("ui.views.settingsView.description.move.your.citadelops.setup.between.installations.with.75d6d027")}
 			icon={<span className="flex h-8 w-8 items-center justify-center rounded-lg bg-violet-500/10"><FileJson className="h-4 w-4 text-violet-400" /></span>}
 			contentClassName="p-6 space-y-5"
 		>
 			<div className="grid gap-4 sm:grid-cols-2">
 				<div className="rounded-global border border-border-base bg-bg-app/35 p-4">
-					<h3 className="text-sm font-semibold text-text-main">Export this setup</h3>
+					<h3 className="text-sm font-semibold text-text-main"><LocalizedText messageKey="ui.views.settingsView.export.this.setup.83b56584" /></h3>
 					<p className="mt-1 text-xs leading-relaxed text-text-muted">
-						Downloads automation settings, enabled states, schedules, priorities, presets, and portable interface preferences.
-					</p>
+						<LocalizedText messageKey="ui.views.settingsView.downloads.automation.settings.enabled.states.schedules.priorities.a82b9eaf" /></p>
 					<Button
 						type="button"
 						variant="secondary"
@@ -819,14 +825,13 @@ const SettingsView: React.FC = () => {
 						disabled={settingsTransferPending != null}
 						onClick={() => void exportSettings()}
 					>
-						Export settings
+						{t('settings.export')}
 					</Button>
 				</div>
 				<div className="rounded-global border border-border-base bg-bg-app/35 p-4">
-					<h3 className="text-sm font-semibold text-text-main">Import another setup</h3>
+					<h3 className="text-sm font-semibold text-text-main"><LocalizedText messageKey="ui.views.settingsView.import.another.setup.bdb5d4dc" /></h3>
 					<p className="mt-1 text-xs leading-relaxed text-text-muted">
-						Validates the complete file before replacing matching settings on this installation.
-					</p>
+						<LocalizedText messageKey="ui.views.settingsView.validates.the.complete.file.before.replacing.matching.66a84281" /></p>
 					<input
 						ref={settingsFileInputRef}
 						type="file"
@@ -843,22 +848,20 @@ const SettingsView: React.FC = () => {
 						disabled={settingsTransferPending != null}
 						onClick={() => settingsFileInputRef.current?.click()}
 					>
-						Import settings
+						{t('settings.import')}
 					</Button>
 				</div>
 			</div>
 			<div className="rounded-global border border-warning/25 bg-warning/5 px-4 py-3 text-xs leading-relaxed text-text-muted">
-				Imported enabled automations and schedules take effect immediately. Login credentials, browser selection,
-				logs, reports, My Stats history and its storage preference, and live game state stay on this computer and are never included.
-			</div>
+				<LocalizedText messageKey="ui.views.settingsView.imported.enabled.automations.and.schedules.take.effect.31528547" /></div>
 			{settingsTransferError && <p role="alert" className="text-xs font-medium text-error">{settingsTransferError}</p>}
 			{settingsTransferStatus && <p role="status" className="text-xs font-medium text-success">{settingsTransferStatus}</p>}
 			</SectionCard>
 
 				<SectionCard
 					variant="solid"
-					title="My Stats Storage"
-					description="Choose how often My Stats is recorded, set its day limit, and preview local disk use."
+					title={t('settings.history')}
+					description={localizeStatic("ui.views.settingsView.description.choose.how.often.my.stats.is.recorded.bcad35a3")}
 				icon={<span className="flex h-8 w-8 items-center justify-center rounded-lg bg-cyan-500/10"><HardDrive className="h-4 w-4 text-cyan-400" /></span>}
 				actions={playerHistoryRetention == null ? undefined : (
 					<Badge variant={playerHistoryRetention.hosted ? 'warning' : 'secondary'}>
@@ -870,8 +873,7 @@ const SettingsView: React.FC = () => {
 					<div className="grid gap-4 lg:grid-cols-3">
 						<div>
 						<label className="mb-1.5 block text-[10px] font-bold uppercase tracking-wider text-text-muted">
-							Retention quick choices
-					</label>
+							<LocalizedText messageKey="ui.views.settingsView.retention.quick.choices.dc7e675a" /></label>
 					<Select
 						value={selectedPlayerHistoryRetention}
 						options={playerHistoryRetentionOptions.map((option) => ({
@@ -887,11 +889,11 @@ const SettingsView: React.FC = () => {
 						placeholder={playerHistoryRetentionLoading
 							? 'Loading storage options…'
 							: activePlayerHistoryRetention
-								? `Custom: ${retentionLabel(activePlayerHistoryRetention)}`
+								? `Custom: ${retentionLabel(activePlayerHistoryRetention, locale)}`
 								: 'Storage options unavailable'}
 						icon={<HardDrive className="h-4 w-4" />}
 						disabled={playerHistoryRetentionLoading || playerHistoryRetentionPending || playerHistoryRetentionOptions.length === 0}
-						ariaLabel="My Stats saved history window"
+						ariaLabel={localizeStatic("ui.views.settingsView.ariaLabel.my.stats.saved.history.window.c06cf1f6")}
 					/>
 					{selectedPlayerHistoryRetentionOption?.description && (
 						<p className="mt-2 text-xs leading-relaxed text-text-muted">{selectedPlayerHistoryRetentionOption.description}</p>
@@ -900,8 +902,7 @@ const SettingsView: React.FC = () => {
 
 					<div>
 						<label htmlFor="player-history-days" className="mb-1.5 block text-[10px] font-bold uppercase tracking-wider text-text-muted">
-							Custom day limit
-						</label>
+							<LocalizedText messageKey="ui.views.settingsView.custom.day.limit.0cbda40f" /></label>
 						<div className="flex flex-col gap-2 sm:flex-row">
 							<Input
 								id="player-history-days"
@@ -913,7 +914,7 @@ const SettingsView: React.FC = () => {
 								value={playerHistoryDaysDraft}
 								onChange={(event) => setPlayerHistoryDaysDraft(event.target.value)}
 								disabled={playerHistoryRetentionLoading || playerHistoryRetentionPending}
-								aria-label="Custom My Stats retention days"
+								aria-label={localizeStatic("ui.views.settingsView.aria-label.custom.my.stats.retention.days.1baed733")}
 							/>
 							<Button
 								type="button"
@@ -922,41 +923,38 @@ const SettingsView: React.FC = () => {
 								onClick={applyPlayerHistoryDays}
 								disabled={playerHistoryRetentionLoading || playerHistoryRetentionPending || !playerHistoryDaysValid}
 							>
-								Apply days
-							</Button>
+								<LocalizedText messageKey="ui.views.settingsView.apply.days.fa368de9" /></Button>
 						</div>
 						<p className="mt-2 text-xs leading-relaxed text-text-muted">
 							{playerHistoryDaysValid
-								? `${projectedPlayerHistoryRecordings.toLocaleString()} recordings at the selected cadence · approximately ${formatStorageBytes(projectedPlayerHistoryRecordings * playerHistoryBytesPerRecording)}`
+								? `${projectedPlayerHistoryRecordings.toLocaleString(locale)} recordings at the selected cadence · approximately ${formatStorageBytes(projectedPlayerHistoryRecordings * playerHistoryBytesPerRecording)}`
 								: playerHistoryRetention?.maximumDays != null
-									? `Enter 1–${playerHistoryRetention.maximumDays.toLocaleString()} whole days.`
+									? `Enter 1–${playerHistoryRetention.maximumDays.toLocaleString(locale)} whole days.`
 									: 'Enter a positive whole-number day limit.'}
 							</p>
 						</div>
 
 						<div>
 							<label className="mb-1.5 block text-[10px] font-bold uppercase tracking-wider text-text-muted">
-								Record My Stats every
-							</label>
+								<LocalizedText messageKey="ui.views.settingsView.record.my.stats.every.69b1cdde" /></label>
 							<Select
 								value={String(playerHistoryRecordingIntervalSeconds)}
 								options={(playerHistoryRetention?.recordingIntervalOptions ?? []).map((option) => ({
 									value: String(option.seconds),
-									label: `${option.label} — ${option.recordingsPerDay.toLocaleString()}/day · ~${formatStorageBytes(option.recordingsPerDay * playerHistoryBytesPerRecording)}/day`,
+									label: `${option.label} — ${option.recordingsPerDay.toLocaleString(locale)}/day · ~${formatStorageBytes(option.recordingsPerDay * playerHistoryBytesPerRecording)}/day`,
 									searchText: `${option.label} ${option.seconds}`,
 								}))}
 								onChange={selectPlayerHistoryRecordingInterval}
 								placeholder={playerHistoryRetentionLoading ? 'Loading frequencies…' : 'Recording frequencies unavailable'}
 								icon={<HardDrive className="h-4 w-4" />}
 								disabled={playerHistoryRetentionLoading || playerHistoryRetentionPending || !playerHistoryRetention?.recordingIntervalOptions?.length}
-								ariaLabel="My Stats recording frequency"
+								ariaLabel={localizeStatic("ui.views.settingsView.ariaLabel.my.stats.recording.frequency.80e99156")}
 							/>
 							<p className="mt-2 text-xs leading-relaxed text-text-muted">
-								Snapshots state already available in CitadelOps; it does not send additional game scan commands.
-							</p>
+								<LocalizedText messageKey="ui.views.settingsView.snapshots.state.already.available.in.citadelops.it.83098a5f" /></p>
 						</div>
 					</div>
-					{playerHistoryRetentionPending && <p role="status" className="text-xs font-medium text-warning">Updating saved history policy…</p>}
+					{playerHistoryRetentionPending && <p role="status" className="text-xs font-medium text-warning"><LocalizedText messageKey="ui.views.settingsView.updating.saved.history.policy.ed12bb26" /></p>}
 
 				{playerHistoryRetention?.hosted && (
 					<div className="rounded-global border border-warning/25 bg-warning/5 px-4 py-3 text-xs leading-relaxed text-text-muted">
@@ -965,59 +963,47 @@ const SettingsView: React.FC = () => {
 					</div>
 				)}
 				{playerHistoryRetention && !playerHistoryRetention.hosted && (
-					<div className="rounded-global border border-cyan-400/20 bg-cyan-400/5 px-4 py-3 text-xs leading-relaxed text-text-muted">
-						Local desktop mode applies this policy directly to <code>History/PlayerSamples.jsonl</code>. Feature Stats aggregates remain in <code>Runtime/Reports.sqlite</code>.{' '}
-						Neither dataset is published to the hosted private-metrics backend; World Intelligence and report sharing remain separate features.
-					</div>
+					<div className="rounded-global border border-cyan-400/20 bg-cyan-400/5 px-4 py-3 text-xs leading-relaxed text-text-muted"><LocalizedRichText messageKey="ui.rich.views.settingsView.local.desktop.mode.applies.this.policy.directly.d237d204" params={{"codeText0":"History/PlayerSamples.jsonl","codeText1":"Runtime/Reports.sqlite"}} tags={{code0: children => <code>{children}</code>, code1: children => <code>{children}</code>}} /></div>
 				)}
 
 					<div className="grid gap-3 md:grid-cols-3">
 						<div className="rounded-global border border-border-base bg-bg-app/35 p-3">
-							<p className="text-xs font-bold text-text-main">Selected cadence throughout</p>
+							<p className="text-xs font-bold text-text-main"><LocalizedText messageKey="ui.views.settingsView.selected.cadence.throughout.4aa0f3fb" /></p>
 							<p className="mt-1 text-[11px] leading-relaxed text-text-muted">
 								Keeps at most one recording every {recordingIntervalLabel(playerHistoryRecordingIntervalSeconds)} across the complete selected window.
 							</p>
 					</div>
 					<div className="rounded-global border border-border-base bg-bg-app/35 p-3">
-						<p className="text-xs font-bold text-text-main">Current saved limit</p>
+						<p className="text-xs font-bold text-text-main"><LocalizedText messageKey="ui.views.settingsView.current.saved.limit.d3d03c64" /></p>
 						<p className="mt-1 text-[11px] leading-relaxed text-text-muted">
 							{playerHistoryRetention == null
 								? 'Loading the saved policy…'
 								: activePlayerHistoryRecordings == null
 								? activePlayerHistoryRetention === 'none'
 									? 'History storage is off.'
-									: `Unlimited, growing by up to ${playerHistoryRecordingsPerDay.toLocaleString()} recordings per day · approximately ${formatStorageBytes(playerHistoryRecordingsPerDay * playerHistoryBytesPerRecording)}/day.`
-								: `${activePlayerHistoryRecordings.toLocaleString()} recordings · approximately ${formatStorageBytes(activePlayerHistoryRecordings * playerHistoryBytesPerRecording)}`}
+									: `Unlimited, growing by up to ${playerHistoryRecordingsPerDay.toLocaleString(locale)} recordings per day · approximately ${formatStorageBytes(playerHistoryRecordingsPerDay * playerHistoryBytesPerRecording)}/day.`
+								: `${activePlayerHistoryRecordings.toLocaleString(locale)} recordings · approximately ${formatStorageBytes(activePlayerHistoryRecordings * playerHistoryBytesPerRecording)}`}
 						</p>
 					</div>
 					<div className="rounded-global border border-border-base bg-bg-app/35 p-3">
-						<p className="text-xs font-bold text-text-main">Current history file</p>
+						<p className="text-xs font-bold text-text-main"><LocalizedText messageKey="ui.views.settingsView.current.history.file.82597ba4" /></p>
 						<p className="mt-1 text-[11px] leading-relaxed text-text-muted">
 							{formatStorageBytes(Number(playerHistoryRetention?.storage?.currentBytes) || 0)} now · ~{formatStorageBytes(playerHistoryBytesPerRecording)} per recording
 						</p>
 					</div>
 				</div>
 
-				<p className="text-[11px] leading-relaxed text-text-muted">
-					My Stats uses this profile's <code>History/PlayerSamples.jsonl</code> file, not SQLite. Estimates use saved rows or the current sample shape; troop and currency counts can change the actual size.{' '}
-					Finite-window maintenance rewrites the file safely and can briefly require roughly twice the displayed retained size.{' '}
-					Choosing a more frequent cadence affects future recordings; choosing a less-frequent cadence permanently compacts existing intermediate points.{' '}
-					Turning storage off removes saved history but keeps current live values available while CitadelOps is running.{' '}
-					Reducing the window permanently removes older points. Increasing it later cannot restore points already deleted.{' '}
-					This setting does not affect logs, reports, World Intelligence, or live game state.
-				</p>
+				<p className="text-[11px] leading-relaxed text-text-muted"><LocalizedRichText messageKey="ui.rich.views.settingsView.my.stats.uses.this.profile.s.codetext0.6d76bd61" params={{"codeText0":"History/PlayerSamples.jsonl"}} tags={{code0: children => <code>{children}</code>}} /></p>
 				{playerHistoryRetentionError && <p role="alert" className="text-xs font-medium text-error">{playerHistoryRetentionError}</p>}
 				{playerHistoryRetentionStatus && <p role="status" className="text-xs font-medium text-success">{playerHistoryRetentionStatus}</p>}
 			</SectionCard>
 
-		<SectionCard variant="solid" title="Game Connection" icon={<span className="flex h-8 w-8 items-center justify-center rounded-lg bg-sky-500/10"><Icons.Monitor className="h-4 w-4 text-sky-400" /></span>} contentClassName="p-6 space-y-6">
+		<SectionCard variant="solid" title={localizeStatic("ui.views.settingsView.title.game.connection.064c1922")} icon={<span className="flex h-8 w-8 items-center justify-center rounded-lg bg-sky-500/10"><Icons.Monitor className="h-4 w-4 text-sky-400" /></span>} contentClassName="p-6 space-y-6">
 			<div>
-				<h3 className="text-sm font-semibold text-text-main">How CitadelOps connects</h3>
+				<h3 className="text-sm font-semibold text-text-main"><LocalizedText messageKey="ui.views.settingsView.how.citadelops.connects.99c1207b" /></h3>
 				<p className="mt-1 max-w-3xl text-xs leading-relaxed text-text-muted">
-					Choose whether CitadelOps opens the complete game or connects quietly in the background.
-					The saved choice is used the next time CitadelOps starts.
-				</p>
-				<div role="radiogroup" aria-label="Game connection mode" className="mt-4 grid gap-3 lg:grid-cols-2">
+					<LocalizedText messageKey="ui.views.settingsView.choose.whether.citadelops.opens.the.complete.game.3f2218c1" /></p>
+				<div role="radiogroup" aria-label={localizeStatic("ui.views.settingsView.aria-label.game.connection.mode.ab5b4380")} className="mt-4 grid gap-3 lg:grid-cols-2">
 					<button
 						type="button"
 						role="radio"
@@ -1036,15 +1022,14 @@ const SettingsView: React.FC = () => {
 							</span>
 							<span className="min-w-0 flex-1">
 								<span className="flex items-center justify-between gap-2">
-									<span className="text-sm font-semibold text-text-main">Full application</span>
+									<span className="text-sm font-semibold text-text-main"><LocalizedText messageKey="ui.views.settingsView.full.application.fa267867" /></span>
 									{configuredConnectionMode === 'full' && <CheckCircle2 className="h-4 w-4 shrink-0 text-primary" />}
 								</span>
 								<span className="mt-1 block text-xs leading-relaxed text-text-muted">
-									Opens the game tab so you can play along, watch actions happen, and use the complete game interface.
-								</span>
+									<LocalizedText messageKey="ui.views.settingsView.opens.the.game.tab.so.you.can.2c67b74b" /></span>
 								<span className="mt-3 flex items-start gap-2 rounded-lg border border-warning/20 bg-warning/5 px-3 py-2 text-[11px] leading-relaxed text-warning">
 									<TriangleAlert className="mt-0.5 h-3.5 w-3.5 shrink-0" />
-									Uses considerably more processor and memory resources and may make your computer feel slower.
+									<LocalizedText messageKey="ui.views.settingsView.uses.considerably.more.processor.and.memory.resources.fed03b83" />
 								</span>
 							</span>
 						</div>
@@ -1068,15 +1053,13 @@ const SettingsView: React.FC = () => {
 							</span>
 							<span className="min-w-0 flex-1">
 								<span className="flex items-center justify-between gap-2">
-									<span className="text-sm font-semibold text-text-main">Background only</span>
+									<span className="text-sm font-semibold text-text-main"><LocalizedText messageKey="ui.views.settingsView.background.only.49a3e804" /></span>
 									{configuredConnectionMode === 'background' && <CheckCircle2 className="h-4 w-4 shrink-0 text-primary" />}
 								</span>
 								<span className="mt-1 block text-xs leading-relaxed text-text-muted">
-									Connects directly to the game server without opening Chromium or a game tab. Automations and live state continue with much lower resource use.
-								</span>
+									<LocalizedText messageKey="ui.views.settingsView.connects.directly.to.the.game.server.without.6d3b673e" /></span>
 				<span className="mt-3 block text-[11px] leading-relaxed text-text-muted">
-					Uses the login and server selection saved on this computer, then derives the current client build and remaining WebSocket handshake automatically.
-				</span>
+					<LocalizedText messageKey="ui.views.settingsView.uses.the.login.and.server.selection.saved.f7efcfc1" /></span>
 							</span>
 						</div>
 					</button>
@@ -1087,13 +1070,12 @@ const SettingsView: React.FC = () => {
 						Restart CitadelOps to use {configuredConnectionMode === 'full' ? 'Full application' : 'Background only'} mode.
 					</p>
 				) : (
-					<p className="mt-3 text-xs text-text-muted">Connection mode changes are applied after restarting CitadelOps.</p>
+					<p className="mt-3 text-xs text-text-muted"><LocalizedText messageKey="ui.views.settingsView.connection.mode.changes.are.applied.after.restarting.f4d4feb1" /></p>
 				)}
 				{backgroundLoginNeedsReauthorization && (
 					<div className="mt-3 flex flex-wrap items-center gap-3 rounded-lg border border-warning/25 bg-warning/5 px-3 py-2.5">
 						<p className="min-w-0 flex-1 text-xs leading-relaxed text-warning">
-							The protected saved login is present but disabled. Re-enable it explicitly to retry Background mode without exposing or re-entering the saved password.
-						</p>
+							<LocalizedText messageKey="ui.views.settingsView.the.protected.saved.login.is.present.but.11f6025c" /></p>
 						<Button type="button" variant="secondary" disabled={connectionModePending} onClick={reauthorizeBackgroundLogin}>
 							{connectionModePending ? 'Re-enabling…' : 'Re-enable saved login'}
 						</Button>
@@ -1104,11 +1086,9 @@ const SettingsView: React.FC = () => {
 					<form onSubmit={saveBackgroundLogin} className="mt-5 rounded-global border border-border-base bg-bg-app/45 p-4">
 						<div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
 							<div>
-								<h3 className="text-sm font-semibold text-text-main">Background game login</h3>
+								<h3 className="text-sm font-semibold text-text-main"><LocalizedText messageKey="ui.views.settingsView.background.game.login.97fc68bf" /></h3>
 								<p className="mt-1 max-w-3xl text-xs leading-relaxed text-text-muted">
-									Enter the login and server explicitly. The server code determines the official WebSocket address;
-									CitadelOps derives only the remaining non-secret handshake values.
-								</p>
+									<LocalizedText messageKey="ui.views.settingsView.enter.the.login.and.server.explicitly.the.06cfa482" /></p>
 							</div>
 							{backgroundLogin?.configured && (
 								<span className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-success/25 bg-success/10 px-2.5 py-1 text-[11px] font-semibold text-success">
@@ -1120,7 +1100,7 @@ const SettingsView: React.FC = () => {
 						<div className="mt-4 grid gap-3 lg:grid-cols-3">
 							<div>
 								<label htmlFor="background-login-username" className="mb-1.5 block text-[10px] font-bold uppercase tracking-wider text-text-muted">
-									Username
+									{t('settings.username')}
 								</label>
 								<Input
 									id="background-login-username"
@@ -1128,13 +1108,13 @@ const SettingsView: React.FC = () => {
 									autoComplete="username"
 									value={backgroundUsername}
 									onChange={(event) => setBackgroundUsername(event.target.value)}
-									placeholder="Game username"
+									placeholder={localizeStatic("ui.views.settingsView.placeholder.game.username.2867263d")}
 									disabled={backgroundLoginPending}
 								/>
 							</div>
 							<div>
 								<label htmlFor="background-login-password" className="mb-1.5 block text-[10px] font-bold uppercase tracking-wider text-text-muted">
-									Password
+									{t('settings.password')}
 								</label>
 								<Input
 									id="background-login-password"
@@ -1143,13 +1123,13 @@ const SettingsView: React.FC = () => {
 									autoComplete="current-password"
 									value={backgroundPassword}
 									onChange={(event) => setBackgroundPassword(event.target.value)}
-									placeholder="Game password"
+									placeholder={localizeStatic("ui.views.settingsView.placeholder.game.password.3ad08cdb")}
 									disabled={backgroundLoginPending}
 								/>
 							</div>
 							<div>
 								<label htmlFor="background-login-server" className="mb-1.5 block text-[10px] font-bold uppercase tracking-wider text-text-muted">
-									Server
+									{t('settings.server')}
 								</label>
 								<Input
 									id="background-login-server"
@@ -1181,11 +1161,10 @@ const SettingsView: React.FC = () => {
 								isLoading={backgroundLoginPending}
 								disabled={backgroundLoginPending || !backgroundUsername.trim() || !backgroundPassword || !backgroundServer.trim()}
 							>
-								Save background login
+								{t('settings.backgroundLogin')}
 							</Button>
 							<p className="text-[11px] leading-relaxed text-text-muted">
-								Saved only in this profile's protected session file and excluded from settings exports and operation receipts.
-							</p>
+								<LocalizedText messageKey="ui.views.settingsView.saved.only.in.this.profile.s.protected.0d908c1f" /></p>
 						</div>
 						{backgroundLoginError && <p role="alert" className="mt-3 text-xs font-medium text-error">{backgroundLoginError}</p>}
 						{backgroundLoginMessage && <p role="status" className="mt-3 text-xs font-medium text-success">{backgroundLoginMessage}</p>}
@@ -1195,17 +1174,14 @@ const SettingsView: React.FC = () => {
 
 			<div className="border-t border-border-base pt-5">
 				<div>
-					<h3 className="text-sm font-semibold text-text-main mb-1">Full application browser</h3>
+					<h3 className="text-sm font-semibold text-text-main mb-1"><LocalizedText messageKey="ui.views.settingsView.full.application.browser.59914007" /></h3>
 						<p className="text-xs text-text-muted mb-4">
-							Full application mode starts with your system-default compatible Chromium browser, or the only compatible
-							browser when one is installed. A saved choice is used after the next app restart, with a
-							dedicated CitadelOps profile that leaves your normal browser profile untouched.
-						</p>
+							<LocalizedText messageKey="ui.views.settingsView.full.application.mode.starts.with.your.system.37c8df4c" /></p>
 					</div>
 
 				<div className="w-full sm:max-w-[520px]">
 					<label className="block text-[10px] font-bold text-text-muted uppercase tracking-wider mb-1.5">
-						Browser
+						{t('settings.browser')}
 					</label>
 						<Select
 							value={selectedBrowserID}
@@ -1233,14 +1209,13 @@ const SettingsView: React.FC = () => {
 					)}
 						<div className="mt-4 border-t border-border-base pt-4">
 						<label className="block text-[10px] font-bold text-text-muted uppercase tracking-wider mb-1.5">
-							Custom Chromium executable
-						</label>
+							<LocalizedText messageKey="ui.views.settingsView.custom.chromium.executable.45aa9d3d" /></label>
 						<div className="flex flex-col gap-2 sm:flex-row">
 							<Input
-								aria-label="Custom Chromium executable"
+								aria-label={localizeStatic("ui.views.settingsView.aria-label.custom.chromium.executable.45aa9d3d")}
 								value={customBrowserPath}
 								onChange={(event) => setCustomBrowserPath(event.target.value)}
-								placeholder="Absolute path or executable command"
+								placeholder={localizeStatic("ui.views.settingsView.placeholder.absolute.path.or.executable.command.9d0d4eeb")}
 								className="font-mono"
 								disabled={browserSelectionPending}
 							/>
@@ -1250,23 +1225,19 @@ const SettingsView: React.FC = () => {
 								disabled={browserSelectionPending || !customBrowserPath.trim()}
 								className="shrink-0"
 							>
-								Use executable
+								{t('settings.useExecutable')}
 							</Button>
 						</div>
 							<p className="mt-2 text-xs text-text-muted">
-								Use this for Chromium-based builds that are not detected automatically.
-							</p>
+								<LocalizedText messageKey="ui.views.settingsView.use.this.for.chromium.based.builds.that.0d03b8ba" /></p>
 						</div>
 						<div className="mt-4 border-t border-border-base pt-4">
-							<h3 className="text-sm font-semibold text-text-main">Relog Attempt Delay</h3>
+							<h3 className="text-sm font-semibold text-text-main"><LocalizedText messageKey="ui.views.settingsView.relog.attempt.delay.bf7a1223" /></h3>
 							<p className="mt-1 text-xs leading-relaxed text-text-muted">
-								Wait this long after an automatic socket loss, or after a game login cooldown ends,
-								before reconnecting and attempting the saved login again.
-							</p>
+								<LocalizedText messageKey="ui.views.settingsView.wait.this.long.after.an.automatic.socket.c8fdd01d" /></p>
 							<div className="mt-3 w-full sm:max-w-[200px]">
 								<label htmlFor="relog-attempt-delay" className="block text-[10px] font-bold text-text-muted uppercase tracking-wider mb-1.5">
-									Delay (Minutes)
-								</label>
+									<LocalizedText messageKey="ui.views.settingsView.delay.minutes.49afca6d" /></label>
 								<Input
 									id="relog-attempt-delay"
 									type="number"
@@ -1277,32 +1248,29 @@ const SettingsView: React.FC = () => {
 									onChange={(event) => setRelogDelayMinutes(event.target.value)}
 									onBlur={saveRelogDelay}
 									className="font-mono"
-									rightIcon={<span className="text-xs">min</span>}
+									rightIcon={<span className="text-xs"><LocalizedText messageKey="ui.views.settingsView.min.1f6fa6f6" /></span>}
 								/>
 							</div>
-							<p className="mt-2 text-xs text-text-muted">Default: 5 minutes. Allowed range: 1 minute to 24 hours.</p>
+							<p className="mt-2 text-xs text-text-muted"><LocalizedText messageKey="ui.views.settingsView.default.5.minutes.allowed.range.1.minute.f05366bb" /></p>
 							{relogDelayError && <p role="alert" className="mt-2 text-xs font-medium text-error">{relogDelayError}</p>}
 						</div>
 					</div>
 				</div>
 		</SectionCard>
 
-        <SectionCard variant="solid" title="Attack Scheduler" icon={<span className="flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-500/10"><Icons.Activity className="h-4 w-4 text-indigo-400" /></span>} contentClassName="p-6 space-y-8">
+        <SectionCard variant="solid" title={localizeStatic("ui.views.settingsView.title.attack.scheduler.b3c5e8d8")} icon={<span className="flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-500/10"><Icons.Activity className="h-4 w-4 text-indigo-400" /></span>} contentClassName="p-6 space-y-8">
 			{settingsSaveError && <p className="text-xs text-error">{settingsSaveError}</p>}
             <div className="space-y-4">
               <div>
-                <h3 className="text-sm font-semibold text-text-main mb-1">Random Attack Timer Range</h3>
+                <h3 className="text-sm font-semibold text-text-main mb-1"><LocalizedText messageKey="ui.views.settingsView.random.attack.timer.range.b8e88f73" /></h3>
                 <p className="text-xs text-text-muted mb-4">
-                  Set the minimum and maximum delay (in seconds) between sent attacks.
-                  Minimum allowed value is 4.0s to avoid rate limiting.
-                </p>
+                  <LocalizedText messageKey="ui.views.settingsView.set.the.minimum.and.maximum.delay.in.da041c17" /></p>
               </div>
 
               <div className="flex flex-col sm:flex-row sm:items-center gap-4">
                 <div className="relative flex-1 w-full sm:max-w-[200px]">
                   <label htmlFor="min-attack-delay" className="block text-[10px] font-bold text-text-muted uppercase tracking-wider mb-1.5">
-                    Min Delay (Sec)
-                  </label>
+                    <LocalizedText messageKey="ui.views.settingsView.min.delay.sec.aa48b238" /></label>
                   <Input
 					id="min-attack-delay"
                     type="number"
@@ -1320,8 +1288,7 @@ const SettingsView: React.FC = () => {
 
                 <div className="relative flex-1 w-full sm:max-w-[200px]">
                   <label htmlFor="max-attack-delay" className="block text-[10px] font-bold text-text-muted uppercase tracking-wider mb-1.5">
-                    Max Delay (Sec)
-                  </label>
+                    <LocalizedText messageKey="ui.views.settingsView.max.delay.sec.4ad0aba4" /></label>
                   <Input
 					id="max-attack-delay"
                     type="number"
@@ -1341,13 +1308,12 @@ const SettingsView: React.FC = () => {
 
 			<div className="space-y-4">
 				<div>
-					<h3 className="text-sm font-semibold text-text-main mb-1">Automated Attack Priority</h3>
+					<h3 className="text-sm font-semibold text-text-main mb-1"><LocalizedText messageKey="ui.views.settingsView.automated.attack.priority.11e13bd6" /></h3>
 					<p className="text-xs text-text-muted mb-4">
-						Drag modules into priority order, highest first. Waiting time gradually raises older work; manual and scheduled attacks retain protected priority.
-					</p>
+						<LocalizedText messageKey="ui.views.settingsView.drag.modules.into.priority.order.highest.first.631d17d1" /></p>
 				</div>
 
-				<div className="space-y-2" role="list" aria-label="Automated attack priority order">
+				<div className="space-y-2" role="list" aria-label={localizeStatic("ui.views.settingsView.aria-label.automated.attack.priority.order.91577830")}>
 					{orderedAttackPriorityFeatures.map((feature, index) => (
 						<div
 							key={feature.id}
@@ -1416,18 +1382,16 @@ const SettingsView: React.FC = () => {
 
         </SectionCard>
 
-        <SectionCard variant="solid" title="Equipment Upgrades" icon={<span className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-500/10"><Icons.Shield className="h-4 w-4 text-emerald-400" /></span>} contentClassName="p-6 space-y-4">
+        <SectionCard variant="solid" title={localizeStatic("ui.views.settingsView.title.equipment.upgrades.c92efd82")} icon={<span className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-500/10"><Icons.Shield className="h-4 w-4 text-emerald-400" /></span>} contentClassName="p-6 space-y-4">
             <div>
-              <h3 className="text-sm font-semibold text-text-main mb-1">Upgrade Step Delay</h3>
+              <h3 className="text-sm font-semibold text-text-main mb-1"><LocalizedText messageKey="ui.views.settingsView.upgrade.step.delay.8a021bb3" /></h3>
               <p className="text-xs text-text-muted mb-4">
-                Pause between each enchant command when bulk-upgrading equipment or gems (10–5000 ms).
-              </p>
+                <LocalizedText messageKey="ui.views.settingsView.pause.between.each.enchant.command.when.bulk.79cb327f" /></p>
             </div>
 
             <div className="relative flex-1 w-full sm:max-w-[200px]">
               <label htmlFor="upgrade-step-delay" className="block text-[10px] font-bold text-text-muted uppercase tracking-wider mb-1.5">
-                Delay (ms)
-              </label>
+                <LocalizedText messageKey="ui.views.settingsView.delay.ms.199702c3" /></label>
               <Input
 				id="upgrade-step-delay"
                 type="number"
@@ -1438,20 +1402,19 @@ const SettingsView: React.FC = () => {
                 onChange={(e) => setUpgradeEreDelayMs(e.target.value)}
                 onBlur={handleUpgradeDelayBlur}
                 className="font-mono"
-                rightIcon={<span className="text-xs">ms</span>}
+                rightIcon={<span className="text-xs"><LocalizedText messageKey="ui.views.settingsView.ms.f785c3ce" /></span>}
               />
             </div>
 
             <div>
-              <h3 className="text-sm font-semibold text-text-main mb-1">Coin Reserve Threshold</h3>
+              <h3 className="text-sm font-semibold text-text-main mb-1"><LocalizedText messageKey="ui.views.settingsView.coin.reserve.threshold.6b825237" /></h3>
               <p className="text-xs text-text-muted mb-4">
-                Block equipment and gem upgrades when your coin balance is at or below this reserve.
-              </p>
+                <LocalizedText messageKey="ui.views.settingsView.block.equipment.and.gem.upgrades.when.your.22ba7ede" /></p>
             </div>
 
             <div className="relative flex-1 w-full sm:max-w-[200px]">
               <label htmlFor="upgrade-coin-reserve" className="block text-[10px] font-bold text-text-muted uppercase tracking-wider mb-1.5">
-                Minimum Coins
+                {t('settings.minimumCoins')}
               </label>
               <Input
 				id="upgrade-coin-reserve"
@@ -1464,7 +1427,7 @@ const SettingsView: React.FC = () => {
                 className="font-mono"
               />
               <p className="mt-2 text-xs text-text-muted">
-                Reserve: <span className="font-mono font-semibold text-text-main">{parsedCoinThreshold.toLocaleString()}</span> coins
+                Reserve: <span className="font-mono font-semibold text-text-main">{parsedCoinThreshold.toLocaleString(locale)}</span> coins
               </p>
             </div>
         </SectionCard>
