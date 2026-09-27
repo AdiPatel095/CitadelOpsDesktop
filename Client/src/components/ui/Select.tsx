@@ -198,6 +198,7 @@ export const Select: React.FC<SelectProps> = ({
                       event.stopPropagation();
                       setIsOpen(false);
                       setSearchQuery('');
+                      containerRef.current?.querySelector<HTMLButtonElement>('button')?.focus();
                     }}
                     placeholder={searchPlaceholder}
                     aria-label={searchPlaceholder}

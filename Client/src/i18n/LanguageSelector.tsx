@@ -7,10 +7,10 @@ export function LanguageSelector() {
   const {preference,setLocale,t,messageLocale} = useLocale();
   return <SectionCard title={<span lang={messageLocale}>{t('locale.select')}</span>}
     description={<span lang={messageLocale}>{t('locale.help')}</span>} contentClassName="p-6 space-y-3">
-    <Select closeOnScroll={false} ariaLabel={t('locale.select')} value={preference}
+    <Select searchable searchPlaceholder={t('locale.select')} closeOnScroll={false} ariaLabel={t('locale.select')} value={preference}
       options={[
-        {value:'auto',label:<span lang={messageLocale}>{t('locale.automatic')}</span>},
-        ...locales.map(item => ({value:item.code,label:<span lang={item.code} dir={item.direction}>{item.nativeName}</span>})),
+        {value:'auto',searchText:t('locale.automatic'),label:<span lang={messageLocale}>{t('locale.automatic')}</span>},
+        ...locales.map(item => ({value:item.code,searchText:item.nativeName,label:<span lang={item.code} dir={item.direction}>{item.nativeName}</span>})),
       ]}
       onChange={value => { const next = value === 'auto' ? 'auto' : normalizeLocale(value); if (next) setLocale(next); }} />
     <p lang={messageLocale} className="text-xs text-text-muted">{t('locale.coverage')}</p>
