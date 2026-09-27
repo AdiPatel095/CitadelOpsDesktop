@@ -302,5 +302,7 @@
   "automation.rate": "{state, select, loading {Indlæser frekvens} unavailable {Frekvens utilgængelig} other {Angreb / time: {count, number}}}",
   "automation.rateTitle": "{state, select, loading {Indlæser den aktuelle angrebsfrekvens for {feature}.} unavailable {Den aktuelle angrebsfrekvens for {feature} er utilgængelig.} other {Angreb startet af {feature} inden for de seneste 60 minutter: {count, number}.}}",
   "automation.daily": "{state, select, loading {Indlæser dagligt antal} unavailable {Dagligt antal utilgængeligt} other {{count, number} siden nulstilling}}",
-  "automation.dailyTitle": "{state, select, loading {Indlæser det aktuelle daglige antal angreb for {feature}.} unavailable {Det daglige antal angreb for {feature} er utilgængeligt, indtil en servernulstilling er observeret.} dated {Bekræftede angreb startet af {feature}, siden serverens daglige tællesession begyndte {date}: {count, number}.} other {Bekræftede angreb startet af {feature} i serverens aktuelle daglige tællesession: {count, number}.}}"
+  "automation.dailyTitle": "{state, select, loading {Indlæser det aktuelle daglige antal angreb for {feature}.} unavailable {Det daglige antal angreb for {feature} er utilgængeligt, indtil en servernulstilling er observeret.} dated {Bekræftede angreb startet af {feature}, siden serverens daglige tællesession begyndte {date}: {count, number}.} other {Bekræftede angreb startet af {feature} i serverens aktuelle daglige tællesession: {count, number}.}}",
+  "locale.automatic": "Automatisk (enhedens sprog)",
+  "locale.help": "Vælg visningssprog, eller følg din enhed. Dette ændrer ikke spillets sprog."
 }

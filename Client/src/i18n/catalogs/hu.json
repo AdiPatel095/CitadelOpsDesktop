@@ -302,5 +302,7 @@
   "automation.rate": "{state, select, loading {Gyakoriság betöltése} unavailable {Gyakoriság nem elérhető} other {Támadások / óra: {count, number}}}",
   "automation.rateTitle": "{state, select, loading {A(z) {feature} aktuális támadási gyakoriságának betöltése.} unavailable {A(z) {feature} aktuális támadási gyakorisága nem érhető el.} other {A(z) {feature} által az elmúlt 60 percben indított támadások: {count, number}.}}",
   "automation.daily": "{state, select, loading {Napi szám betöltése} unavailable {Napi szám nem elérhető} other {{count, number} a nullázás óta}}",
-  "automation.dailyTitle": "{state, select, loading {A(z) {feature} aktuális napi munkamenetének támadásszáma betöltődik.} unavailable {A(z) {feature} napi támadásszáma nem érhető el, amíg nem észlelhető szervernullázás.} dated {A(z) {feature} által a szerver napi számlálási munkamenetének {date} kezdetétől indított megerősített támadások: {count, number}.} other {A(z) {feature} által a szerver aktuális napi számlálási munkamenetében indított megerősített támadások: {count, number}.}}"
+  "automation.dailyTitle": "{state, select, loading {A(z) {feature} aktuális napi munkamenetének támadásszáma betöltődik.} unavailable {A(z) {feature} napi támadásszáma nem érhető el, amíg nem észlelhető szervernullázás.} dated {A(z) {feature} által a szerver napi számlálási munkamenetének {date} kezdetétől indított megerősített támadások: {count, number}.} other {A(z) {feature} által a szerver aktuális napi számlálási munkamenetében indított megerősített támadások: {count, number}.}}",
+  "locale.automatic": "Automatikus (eszköz nyelve)",
+  "locale.help": "Válaszd ki a megjelenítés nyelvét, vagy kövesd az eszköz nyelvét. Ez nem változtatja meg a játék nyelvét."
 }

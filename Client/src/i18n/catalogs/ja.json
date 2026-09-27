@@ -302,5 +302,7 @@
   "automation.rate": "{state, select, loading {頻度を読み込み中} unavailable {頻度を取得できません} other {攻撃数 / 時間：{count, number}}}",
   "automation.rateTitle": "{state, select, loading {{feature}の現在の攻撃頻度を読み込み中です。} unavailable {{feature}の現在の攻撃頻度を取得できません。} other {過去60分間に{feature}が開始した攻撃数：{count, number}。}}",
   "automation.daily": "{state, select, loading {日次件数を読み込み中} unavailable {日次件数を取得できません} other {リセット後{count, number}回}}",
-  "automation.dailyTitle": "{state, select, loading {{feature}の現在の日次セッションの攻撃数を読み込み中です。} unavailable {サーバーのリセットが観測されるまで、{feature}の日次攻撃数は取得できません。} dated {サーバーの日次集計セッションが{date}に開始されてから{feature}が開始した確認済み攻撃数：{count, number}。} other {サーバーの現在の日次集計セッション中に{feature}が開始した確認済み攻撃数：{count, number}。}}"
+  "automation.dailyTitle": "{state, select, loading {{feature}の現在の日次セッションの攻撃数を読み込み中です。} unavailable {サーバーのリセットが観測されるまで、{feature}の日次攻撃数は取得できません。} dated {サーバーの日次集計セッションが{date}に開始されてから{feature}が開始した確認済み攻撃数：{count, number}。} other {サーバーの現在の日次集計セッション中に{feature}が開始した確認済み攻撃数：{count, number}。}}",
+  "locale.automatic": "自動（端末の言語）",
+  "locale.help": "表示言語を選択するか、端末の言語に従います。ゲームの言語は変更されません。"
 }

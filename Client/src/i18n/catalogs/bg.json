@@ -302,5 +302,7 @@
   "automation.rate": "{state, select, loading {Зареждане на честотата} unavailable {Честотата е недостъпна} other {Атаки / час: {count, number}}}",
   "automation.rateTitle": "{state, select, loading {Зареждане на текущата честота на атаки на {feature}.} unavailable {Текущата честота на атаки на {feature} е недостъпна.} other {Атаки, започнати от {feature} през последните 60 минути: {count, number}.}}",
   "automation.daily": "{state, select, loading {Зареждане на дневния брой} unavailable {Дневният брой е недостъпен} other {{count, number} след нулирането}}",
-  "automation.dailyTitle": "{state, select, loading {Зареждане на броя атаки на {feature} в текущата дневна сесия.} unavailable {Дневният брой атаки на {feature} е недостъпен, докато не бъде наблюдавано нулиране на сървъра.} dated {Потвърдени атаки, започнати от {feature} от началото на дневната сесия за броене на сървъра в {date}: {count, number}.} other {Потвърдени атаки, започнати от {feature} в текущата дневна сесия за броене на сървъра: {count, number}.}}"
+  "automation.dailyTitle": "{state, select, loading {Зареждане на броя атаки на {feature} в текущата дневна сесия.} unavailable {Дневният брой атаки на {feature} е недостъпен, докато не бъде наблюдавано нулиране на сървъра.} dated {Потвърдени атаки, започнати от {feature} от началото на дневната сесия за броене на сървъра в {date}: {count, number}.} other {Потвърдени атаки, започнати от {feature} в текущата дневна сесия за броене на сървъра: {count, number}.}}",
+  "locale.automatic": "Автоматично (език на устройството)",
+  "locale.help": "Изберете език на интерфейса или следвайте устройството си. Това не променя езика на играта."
 }

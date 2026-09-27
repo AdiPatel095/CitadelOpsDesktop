@@ -302,5 +302,7 @@
   "automation.rate": "{state, select, loading {A carregar ritmo} unavailable {Ritmo indisponível} other {Ataques / h: {count, number}}}",
   "automation.rateTitle": "{state, select, loading {A carregar o ritmo de ataque atual de {feature}.} unavailable {O ritmo de ataque atual de {feature} está indisponível.} other {Ataques lançados por {feature} nos últimos 60 minutos: {count, number}.}}",
   "automation.daily": "{state, select, loading {A carregar total diário} unavailable {Total diário indisponível} other {{count, number} desde a reposição}}",
-  "automation.dailyTitle": "{state, select, loading {A carregar a contagem de ataques de {feature} da sessão diária atual.} unavailable {A contagem diária de ataques de {feature} está indisponível até ser observada uma reposição do servidor.} dated {Ataques confirmados lançados por {feature} desde o início da sessão de contagem diária do servidor em {date}: {count, number}.} other {Ataques confirmados lançados por {feature} na sessão de contagem diária atual do servidor: {count, number}.}}"
+  "automation.dailyTitle": "{state, select, loading {A carregar a contagem de ataques de {feature} da sessão diária atual.} unavailable {A contagem diária de ataques de {feature} está indisponível até ser observada uma reposição do servidor.} dated {Ataques confirmados lançados por {feature} desde o início da sessão de contagem diária do servidor em {date}: {count, number}.} other {Ataques confirmados lançados por {feature} na sessão de contagem diária atual do servidor: {count, number}.}}",
+  "locale.automatic": "Automático (idioma do dispositivo)",
+  "locale.help": "Escolha o idioma da interface ou siga o dispositivo. Isso não altera o idioma do jogo."
 }

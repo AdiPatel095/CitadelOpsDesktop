@@ -302,5 +302,7 @@
   "automation.rate": "{state, select, loading {جارٍ تحميل المعدل} unavailable {المعدل غير متاح} other {الهجمات / ساعة: {count, number}}}",
   "automation.rateTitle": "{state, select, loading {جارٍ تحميل معدل الهجوم الحالي لـ {feature}.} unavailable {معدل الهجوم الحالي لـ {feature} غير متاح.} other {الهجمات التي أطلقها {feature} خلال آخر 60 دقيقة: {count, number}.}}",
   "automation.daily": "{state, select, loading {جارٍ تحميل العدد اليومي} unavailable {العدد اليومي غير متاح} other {{count, number} منذ إعادة التعيين}}",
-  "automation.dailyTitle": "{state, select, loading {جارٍ تحميل عدد هجمات {feature} في الجلسة اليومية الحالية.} unavailable {عدد هجمات {feature} اليومي غير متاح حتى تتم ملاحظة إعادة تعيين الخادم.} dated {الهجمات المؤكدة التي أطلقها {feature} منذ بدء جلسة العد اليومية للخادم في {date}: {count, number}.} other {الهجمات المؤكدة التي أطلقها {feature} في جلسة العد اليومية الحالية للخادم: {count, number}.}}"
+  "automation.dailyTitle": "{state, select, loading {جارٍ تحميل عدد هجمات {feature} في الجلسة اليومية الحالية.} unavailable {عدد هجمات {feature} اليومي غير متاح حتى تتم ملاحظة إعادة تعيين الخادم.} dated {الهجمات المؤكدة التي أطلقها {feature} منذ بدء جلسة العد اليومية للخادم في {date}: {count, number}.} other {الهجمات المؤكدة التي أطلقها {feature} في جلسة العد اليومية الحالية للخادم: {count, number}.}}",
+  "locale.automatic": "تلقائي (لغة الجهاز)",
+  "locale.help": "اختر لغة العرض أو اتبع لغة جهازك. لن يغيّر ذلك لغة اللعبة."
 }

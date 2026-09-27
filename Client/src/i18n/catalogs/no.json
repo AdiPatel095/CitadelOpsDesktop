@@ -302,5 +302,7 @@
   "automation.rate": "{state, select, loading {Laster frekvens} unavailable {Frekvens utilgjengelig} other {Angrep / time: {count, number}}}",
   "automation.rateTitle": "{state, select, loading {Laster gjeldende angrepsfrekvens for {feature}.} unavailable {Gjeldende angrepsfrekvens for {feature} er utilgjengelig.} other {Angrep startet av {feature} de siste 60 minuttene: {count, number}.}}",
   "automation.daily": "{state, select, loading {Laster daglig antall} unavailable {Daglig antall utilgjengelig} other {{count, number} siden nullstilling}}",
-  "automation.dailyTitle": "{state, select, loading {Laster gjeldende daglige angrepstall for {feature}.} unavailable {Det daglige angrepstallet for {feature} er utilgjengelig til en servernullstilling er observert.} dated {Bekreftede angrep startet av {feature} siden serverens daglige telleøkt startet {date}: {count, number}.} other {Bekreftede angrep startet av {feature} i serverens gjeldende daglige telleøkt: {count, number}.}}"
+  "automation.dailyTitle": "{state, select, loading {Laster gjeldende daglige angrepstall for {feature}.} unavailable {Det daglige angrepstallet for {feature} er utilgjengelig til en servernullstilling er observert.} dated {Bekreftede angrep startet av {feature} siden serverens daglige telleøkt startet {date}: {count, number}.} other {Bekreftede angrep startet av {feature} i serverens gjeldende daglige telleøkt: {count, number}.}}",
+  "locale.automatic": "Automatisk (enhetens språk)",
+  "locale.help": "Velg visningsspråk, eller følg enheten din. Dette endrer ikke spillets språk."
 }

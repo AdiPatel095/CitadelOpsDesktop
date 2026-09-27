@@ -1,7 +1,6 @@
 import { useLocale as useStaticLocale } from "../i18n/LocaleContext";
 import { LocalizedText } from "../i18n/LocalizedText";
 import { useLocale } from '../i18n/LocaleContext';
-import { LanguageSelector } from '../i18n/LanguageSelector';
 import React, { useEffect, useMemo, useState } from 'react';
 import { Bird, Lock, Menu, Radio, Settings, Shield, Trash2, Unlock } from 'lucide-react';
 import { useCitadelAPI } from '../api/ApiContext';
@@ -350,7 +349,6 @@ const Header: React.FC<HeaderProps> = ({
   return (
     <header className="liquid-header transition-colors duration-300">
       <div className="liquid-header-inner relative z-10">
-        <LanguageSelector />
         <button
           type="button"
           className="liquid-mobile-nav-trigger"

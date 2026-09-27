@@ -1,3 +1,4 @@
+import { LanguageSelector } from '../i18n/LanguageSelector';
 import { LocalizedRichText } from "../i18n/LocalizedRichText";
 import { useLocale as useStaticLocale } from "../i18n/LocaleContext";
 import { LocalizedText } from "../i18n/LocalizedText";
@@ -804,6 +805,7 @@ const SettingsView: React.FC = () => {
       />
 
       <div className="grid grid-cols-1 gap-6">
+        <LanguageSelector />
 		<SectionCard
 			variant="solid"
 			title={t('settings.transfer')}

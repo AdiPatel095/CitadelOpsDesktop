@@ -302,5 +302,7 @@
   "automation.rate": "{state, select, loading {正在加载频率} unavailable {频率不可用} other {每小时攻击数：{count, number}}}",
   "automation.rateTitle": "{state, select, loading {正在加载{feature}的当前攻击频率。} unavailable {{feature}的当前攻击频率不可用。} other {过去60分钟内由{feature}发起的攻击数：{count, number}。}}",
   "automation.daily": "{state, select, loading {正在加载每日计数} unavailable {每日计数不可用} other {重置后{count, number}次}}",
-  "automation.dailyTitle": "{state, select, loading {正在加载{feature}在当前每日会话中的攻击数。} unavailable {在观察到服务器重置之前，{feature}的每日攻击数不可用。} dated {自服务器每日计数会话于{date}开始以来，由{feature}发起的已确认攻击数：{count, number}。} other {当前服务器每日计数会话中由{feature}发起的已确认攻击数：{count, number}。}}"
+  "automation.dailyTitle": "{state, select, loading {正在加载{feature}在当前每日会话中的攻击数。} unavailable {在观察到服务器重置之前，{feature}的每日攻击数不可用。} dated {自服务器每日计数会话于{date}开始以来，由{feature}发起的已确认攻击数：{count, number}。} other {当前服务器每日计数会话中由{feature}发起的已确认攻击数：{count, number}。}}",
+  "locale.automatic": "自动（设备语言）",
+  "locale.help": "选择显示语言，或跟随设备语言。这不会更改游戏语言。"
 }

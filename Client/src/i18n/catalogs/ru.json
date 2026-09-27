@@ -302,5 +302,7 @@
   "automation.rate": "{state, select, loading {Загрузка частоты} unavailable {Частота недоступна} other {Атак / ч: {count, number}}}",
   "automation.rateTitle": "{state, select, loading {Загрузка текущей частоты атак {feature}.} unavailable {Текущая частота атак {feature} недоступна.} other {Атак, запущенных {feature} за последние 60 минут: {count, number}.}}",
   "automation.daily": "{state, select, loading {Загрузка суточного счётчика} unavailable {Суточный счётчик недоступен} other {{count, number} после сброса}}",
-  "automation.dailyTitle": "{state, select, loading {Загрузка числа атак {feature} в текущей суточной сессии.} unavailable {Суточное число атак {feature} недоступно до наблюдения сброса сервера.} dated {Подтверждённых атак, запущенных {feature} с начала суточной сессии подсчёта сервера {date}: {count, number}.} other {Подтверждённых атак, запущенных {feature} в текущей суточной сессии подсчёта сервера: {count, number}.}}"
+  "automation.dailyTitle": "{state, select, loading {Загрузка числа атак {feature} в текущей суточной сессии.} unavailable {Суточное число атак {feature} недоступно до наблюдения сброса сервера.} dated {Подтверждённых атак, запущенных {feature} с начала суточной сессии подсчёта сервера {date}: {count, number}.} other {Подтверждённых атак, запущенных {feature} в текущей суточной сессии подсчёта сервера: {count, number}.}}",
+  "locale.automatic": "Автоматически (язык устройства)",
+  "locale.help": "Выберите язык интерфейса или язык устройства. Это не меняет язык игры."
 }
