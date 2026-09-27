@@ -302,5 +302,7 @@
   "automation.rate": "{state, select, loading {Läser in takt} unavailable {Takt otillgänglig} other {Anfall / timme: {count, number}}}",
   "automation.rateTitle": "{state, select, loading {Läser in aktuell anfallstakt för {feature}.} unavailable {Aktuell anfallstakt för {feature} är otillgänglig.} other {Anfall som startats av {feature} under de senaste 60 minuterna: {count, number}.}}",
   "automation.daily": "{state, select, loading {Läser in dygnsantal} unavailable {Dygnsantal otillgängligt} other {{count, number} sedan återställningen}}",
-  "automation.dailyTitle": "{state, select, loading {Läser in antal anfall för {feature} under den aktuella dygnssessionen.} unavailable {Dygnsantalet anfall för {feature} är otillgängligt tills en serveråterställning har observerats.} dated {Bekräftade anfall som startats av {feature} sedan serverns dagliga räkningssession började {date}: {count, number}.} other {Bekräftade anfall som startats av {feature} under serverns aktuella dagliga räkningssession: {count, number}.}}"
+  "automation.dailyTitle": "{state, select, loading {Läser in antal anfall för {feature} under den aktuella dygnssessionen.} unavailable {Dygnsantalet anfall för {feature} är otillgängligt tills en serveråterställning har observerats.} dated {Bekräftade anfall som startats av {feature} sedan serverns dagliga räkningssession började {date}: {count, number}.} other {Bekräftade anfall som startats av {feature} under serverns aktuella dagliga räkningssession: {count, number}.}}",
+  "locale.automatic": "Automatiskt (enhetens språk)",
+  "locale.help": "Välj visningsspråk eller följ din enhet. Detta ändrar inte spelets språk."
 }

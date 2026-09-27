@@ -302,5 +302,7 @@
   "automation.rate": "{state, select, loading {Načítání četnosti} unavailable {Četnost nedostupná} other {Útoky / hod.: {count, number}}}",
   "automation.rateTitle": "{state, select, loading {Načítání aktuální četnosti útoků funkce {feature}.} unavailable {Aktuální četnost útoků funkce {feature} není dostupná.} other {Útoky zahájené funkcí {feature} za posledních 60 minut: {count, number}.}}",
   "automation.daily": "{state, select, loading {Načítání denního počtu} unavailable {Denní počet nedostupný} other {{count, number} od resetu}}",
-  "automation.dailyTitle": "{state, select, loading {Načítání počtu útoků funkce {feature} v aktuální denní relaci.} unavailable {Denní počet útoků funkce {feature} není dostupný, dokud není zaznamenán reset serveru.} dated {Potvrzené útoky zahájené funkcí {feature} od začátku denní počítací relace serveru v {date}: {count, number}.} other {Potvrzené útoky zahájené funkcí {feature} v aktuální denní počítací relaci serveru: {count, number}.}}"
+  "automation.dailyTitle": "{state, select, loading {Načítání počtu útoků funkce {feature} v aktuální denní relaci.} unavailable {Denní počet útoků funkce {feature} není dostupný, dokud není zaznamenán reset serveru.} dated {Potvrzené útoky zahájené funkcí {feature} od začátku denní počítací relace serveru v {date}: {count, number}.} other {Potvrzené útoky zahájené funkcí {feature} v aktuální denní počítací relaci serveru: {count, number}.}}",
+  "locale.automatic": "Automaticky (jazyk zařízení)",
+  "locale.help": "Vyberte jazyk rozhraní nebo použijte jazyk zařízení. Jazyk hry se nezmění."
 }

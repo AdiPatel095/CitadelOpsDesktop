@@ -302,5 +302,7 @@
   "automation.rate": "{state, select, loading {Rate wird geladen} unavailable {Rate nicht verfügbar} other {Angriffe / Std.: {count, number}}}",
   "automation.rateTitle": "{state, select, loading {Die aktuelle Angriffsrate von {feature} wird geladen.} unavailable {Die aktuelle Angriffsrate von {feature} ist nicht verfügbar.} other {Von {feature} in den letzten 60 Minuten gestartete Angriffe: {count, number}.}}",
   "automation.daily": "{state, select, loading {Tageswert wird geladen} unavailable {Tageswert nicht verfügbar} other {{count, number} seit Zurücksetzung}}",
-  "automation.dailyTitle": "{state, select, loading {Die aktuelle Tagesangriffszahl von {feature} wird geladen.} unavailable {Die Tagesangriffszahl von {feature} ist erst verfügbar, wenn eine Zurücksetzung des Servers beobachtet wurde.} dated {Bestätigte Angriffe von {feature} seit Beginn der täglichen Server-Zählsitzung am {date}: {count, number}.} other {Bestätigte Angriffe von {feature} in der aktuellen täglichen Server-Zählsitzung: {count, number}.}}"
+  "automation.dailyTitle": "{state, select, loading {Die aktuelle Tagesangriffszahl von {feature} wird geladen.} unavailable {Die Tagesangriffszahl von {feature} ist erst verfügbar, wenn eine Zurücksetzung des Servers beobachtet wurde.} dated {Bestätigte Angriffe von {feature} seit Beginn der täglichen Server-Zählsitzung am {date}: {count, number}.} other {Bestätigte Angriffe von {feature} in der aktuellen täglichen Server-Zählsitzung: {count, number}.}}",
+  "locale.automatic": "Automatisch (Gerätesprache)",
+  "locale.help": "Wähle die Anzeigesprache oder folge deinem Gerät. Die Spielsprache bleibt unverändert."
 }

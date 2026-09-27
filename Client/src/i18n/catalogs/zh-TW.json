@@ -302,5 +302,7 @@
   "automation.rate": "{state, select, loading {正在載入頻率} unavailable {頻率無法使用} other {每小時攻擊數：{count, number}}}",
   "automation.rateTitle": "{state, select, loading {正在載入{feature}目前的攻擊頻率。} unavailable {{feature}目前的攻擊頻率無法使用。} other {過去60分鐘內由{feature}發起的攻擊數：{count, number}。}}",
   "automation.daily": "{state, select, loading {正在載入每日計數} unavailable {每日計數無法使用} other {重設後{count, number}次}}",
-  "automation.dailyTitle": "{state, select, loading {正在載入{feature}在目前每日工作階段中的攻擊數。} unavailable {在觀察到伺服器重設之前，{feature}的每日攻擊數無法使用。} dated {自伺服器每日計數工作階段於{date}開始以來，由{feature}發起的已確認攻擊數：{count, number}。} other {目前伺服器每日計數工作階段中由{feature}發起的已確認攻擊數：{count, number}。}}"
+  "automation.dailyTitle": "{state, select, loading {正在載入{feature}在目前每日工作階段中的攻擊數。} unavailable {在觀察到伺服器重設之前，{feature}的每日攻擊數無法使用。} dated {自伺服器每日計數工作階段於{date}開始以來，由{feature}發起的已確認攻擊數：{count, number}。} other {目前伺服器每日計數工作階段中由{feature}發起的已確認攻擊數：{count, number}。}}",
+  "locale.automatic": "自動（裝置語言）",
+  "locale.help": "選擇顯示語言，或跟隨裝置語言。這不會變更遊戲語言。"
 }

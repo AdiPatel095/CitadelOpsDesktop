@@ -8,6 +8,6 @@ export function loadBackendCatalog(language: string): Promise<Catalog> {
     if (!locale || locale === 'en') return Promise.resolve({});
     const load = loaders[`./backend/${locale}.json`];
     if (!load) return Promise.resolve({});
-    if (!loaded.has(locale)) loaded.set(locale, load().then(module => module.default).catch(() => ({})));
+    if (!loaded.has(locale)) loaded.set(locale, load().then(module => module.default).catch(error => { loaded.delete(locale); throw error; }));
     return loaded.get(locale)!;
 }

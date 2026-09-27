@@ -302,5 +302,7 @@
   "automation.rate": "{state, select, loading {Hız yükleniyor} unavailable {Hız kullanılamıyor} other {Saldırılar / saat: {count, number}}}",
   "automation.rateTitle": "{state, select, loading {{feature} için güncel saldırı hızı yükleniyor.} unavailable {{feature} için güncel saldırı hızı kullanılamıyor.} other {Son 60 dakikada {feature} tarafından başlatılan saldırılar: {count, number}.}}",
   "automation.daily": "{state, select, loading {Günlük sayı yükleniyor} unavailable {Günlük sayı kullanılamıyor} other {Sıfırlamadan beri {count, number}}}",
-  "automation.dailyTitle": "{state, select, loading {{feature} için güncel günlük oturum saldırı sayısı yükleniyor.} unavailable {{feature} için günlük saldırı sayısı, sunucu sıfırlaması gözlemlenene kadar kullanılamaz.} dated {Sunucunun günlük sayım oturumu {date} tarihinde başladığından beri {feature} tarafından başlatılan doğrulanmış saldırılar: {count, number}.} other {Sunucunun güncel günlük sayım oturumunda {feature} tarafından başlatılan doğrulanmış saldırılar: {count, number}.}}"
+  "automation.dailyTitle": "{state, select, loading {{feature} için güncel günlük oturum saldırı sayısı yükleniyor.} unavailable {{feature} için günlük saldırı sayısı, sunucu sıfırlaması gözlemlenene kadar kullanılamaz.} dated {Sunucunun günlük sayım oturumu {date} tarihinde başladığından beri {feature} tarafından başlatılan doğrulanmış saldırılar: {count, number}.} other {Sunucunun güncel günlük sayım oturumunda {feature} tarafından başlatılan doğrulanmış saldırılar: {count, number}.}}",
+  "locale.automatic": "Otomatik (cihaz dili)",
+  "locale.help": "Görüntüleme dilini seçin veya cihazınızın dilini kullanın. Bu, oyun dilini değiştirmez."
 }

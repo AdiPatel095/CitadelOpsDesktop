@@ -7473,5 +7473,205 @@
       "automation.daily": "716c9e07f73057d6d16a57e477a6f767848c2eaf0259cd1726eb5e27b9853b1b",
       "automation.dailyTitle": "8ac1f8a7d6c323211484b04181cec2171994c2449eedc9f7906bca5da9eeff39"
     }
+  },
+  "locale-preference.tr.json": {
+    "method": "direct-model-authored",
+    "linguisticReview": "pending",
+    "sourceHashes": {
+      "locale.automatic": "7fc908ce5f7dc3357f0a4d18e4d58d633f6b4fc46e6cbcc0e8e11dd50cd74919",
+      "locale.help": "7a5e2ebe181a0e7bbb9832e32dc4964b57a0333abe4ee2381b5b24a95fead725"
+    }
+  },
+  "locale-preference.hu.json": {
+    "method": "direct-model-authored",
+    "linguisticReview": "pending",
+    "sourceHashes": {
+      "locale.automatic": "7fc908ce5f7dc3357f0a4d18e4d58d633f6b4fc46e6cbcc0e8e11dd50cd74919",
+      "locale.help": "7a5e2ebe181a0e7bbb9832e32dc4964b57a0333abe4ee2381b5b24a95fead725"
+    }
+  },
+  "locale-preference.lt.json": {
+    "method": "direct-model-authored",
+    "linguisticReview": "pending",
+    "sourceHashes": {
+      "locale.automatic": "7fc908ce5f7dc3357f0a4d18e4d58d633f6b4fc46e6cbcc0e8e11dd50cd74919",
+      "locale.help": "7a5e2ebe181a0e7bbb9832e32dc4964b57a0333abe4ee2381b5b24a95fead725"
+    }
+  },
+  "locale-preference.nl.json": {
+    "method": "direct-model-authored",
+    "linguisticReview": "pending",
+    "sourceHashes": {
+      "locale.automatic": "7fc908ce5f7dc3357f0a4d18e4d58d633f6b4fc46e6cbcc0e8e11dd50cd74919",
+      "locale.help": "7a5e2ebe181a0e7bbb9832e32dc4964b57a0333abe4ee2381b5b24a95fead725"
+    }
+  },
+  "locale-preference.ja.json": {
+    "method": "direct-model-authored",
+    "linguisticReview": "pending",
+    "sourceHashes": {
+      "locale.automatic": "7fc908ce5f7dc3357f0a4d18e4d58d633f6b4fc46e6cbcc0e8e11dd50cd74919",
+      "locale.help": "7a5e2ebe181a0e7bbb9832e32dc4964b57a0333abe4ee2381b5b24a95fead725"
+    }
+  },
+  "locale-preference.de.json": {
+    "method": "direct-model-authored",
+    "linguisticReview": "pending",
+    "sourceHashes": {
+      "locale.automatic": "7fc908ce5f7dc3357f0a4d18e4d58d633f6b4fc46e6cbcc0e8e11dd50cd74919",
+      "locale.help": "7a5e2ebe181a0e7bbb9832e32dc4964b57a0333abe4ee2381b5b24a95fead725"
+    }
+  },
+  "locale-preference.ru.json": {
+    "method": "direct-model-authored",
+    "linguisticReview": "pending",
+    "sourceHashes": {
+      "locale.automatic": "7fc908ce5f7dc3357f0a4d18e4d58d633f6b4fc46e6cbcc0e8e11dd50cd74919",
+      "locale.help": "7a5e2ebe181a0e7bbb9832e32dc4964b57a0333abe4ee2381b5b24a95fead725"
+    }
+  },
+  "locale-preference.pl.json": {
+    "method": "direct-model-authored",
+    "linguisticReview": "pending",
+    "sourceHashes": {
+      "locale.automatic": "7fc908ce5f7dc3357f0a4d18e4d58d633f6b4fc46e6cbcc0e8e11dd50cd74919",
+      "locale.help": "7a5e2ebe181a0e7bbb9832e32dc4964b57a0333abe4ee2381b5b24a95fead725"
+    }
+  },
+  "locale-preference.fi.json": {
+    "method": "direct-model-authored",
+    "linguisticReview": "pending",
+    "sourceHashes": {
+      "locale.automatic": "7fc908ce5f7dc3357f0a4d18e4d58d633f6b4fc46e6cbcc0e8e11dd50cd74919",
+      "locale.help": "7a5e2ebe181a0e7bbb9832e32dc4964b57a0333abe4ee2381b5b24a95fead725"
+    }
+  },
+  "locale-preference.zh-CN.json": {
+    "method": "direct-model-authored",
+    "linguisticReview": "pending",
+    "sourceHashes": {
+      "locale.automatic": "7fc908ce5f7dc3357f0a4d18e4d58d633f6b4fc46e6cbcc0e8e11dd50cd74919",
+      "locale.help": "7a5e2ebe181a0e7bbb9832e32dc4964b57a0333abe4ee2381b5b24a95fead725"
+    }
+  },
+  "locale-preference.sk.json": {
+    "method": "direct-model-authored",
+    "linguisticReview": "pending",
+    "sourceHashes": {
+      "locale.automatic": "7fc908ce5f7dc3357f0a4d18e4d58d633f6b4fc46e6cbcc0e8e11dd50cd74919",
+      "locale.help": "7a5e2ebe181a0e7bbb9832e32dc4964b57a0333abe4ee2381b5b24a95fead725"
+    }
+  },
+  "locale-preference.pt.json": {
+    "method": "direct-model-authored",
+    "linguisticReview": "pending",
+    "sourceHashes": {
+      "locale.automatic": "7fc908ce5f7dc3357f0a4d18e4d58d633f6b4fc46e6cbcc0e8e11dd50cd74919",
+      "locale.help": "7a5e2ebe181a0e7bbb9832e32dc4964b57a0333abe4ee2381b5b24a95fead725"
+    }
+  },
+  "locale-preference.it.json": {
+    "method": "direct-model-authored",
+    "linguisticReview": "pending",
+    "sourceHashes": {
+      "locale.automatic": "7fc908ce5f7dc3357f0a4d18e4d58d633f6b4fc46e6cbcc0e8e11dd50cd74919",
+      "locale.help": "7a5e2ebe181a0e7bbb9832e32dc4964b57a0333abe4ee2381b5b24a95fead725"
+    }
+  },
+  "locale-preference.fr.json": {
+    "method": "direct-model-authored",
+    "linguisticReview": "pending",
+    "sourceHashes": {
+      "locale.automatic": "7fc908ce5f7dc3357f0a4d18e4d58d633f6b4fc46e6cbcc0e8e11dd50cd74919",
+      "locale.help": "7a5e2ebe181a0e7bbb9832e32dc4964b57a0333abe4ee2381b5b24a95fead725"
+    }
+  },
+  "locale-preference.el.json": {
+    "method": "direct-model-authored",
+    "linguisticReview": "pending",
+    "sourceHashes": {
+      "locale.automatic": "7fc908ce5f7dc3357f0a4d18e4d58d633f6b4fc46e6cbcc0e8e11dd50cd74919",
+      "locale.help": "7a5e2ebe181a0e7bbb9832e32dc4964b57a0333abe4ee2381b5b24a95fead725"
+    }
+  },
+  "locale-preference.bg.json": {
+    "method": "direct-model-authored",
+    "linguisticReview": "pending",
+    "sourceHashes": {
+      "locale.automatic": "7fc908ce5f7dc3357f0a4d18e4d58d633f6b4fc46e6cbcc0e8e11dd50cd74919",
+      "locale.help": "7a5e2ebe181a0e7bbb9832e32dc4964b57a0333abe4ee2381b5b24a95fead725"
+    }
+  },
+  "locale-preference.ro.json": {
+    "method": "direct-model-authored",
+    "linguisticReview": "pending",
+    "sourceHashes": {
+      "locale.automatic": "7fc908ce5f7dc3357f0a4d18e4d58d633f6b4fc46e6cbcc0e8e11dd50cd74919",
+      "locale.help": "7a5e2ebe181a0e7bbb9832e32dc4964b57a0333abe4ee2381b5b24a95fead725"
+    }
+  },
+  "locale-preference.ko.json": {
+    "method": "direct-model-authored",
+    "linguisticReview": "pending",
+    "sourceHashes": {
+      "locale.automatic": "7fc908ce5f7dc3357f0a4d18e4d58d633f6b4fc46e6cbcc0e8e11dd50cd74919",
+      "locale.help": "7a5e2ebe181a0e7bbb9832e32dc4964b57a0333abe4ee2381b5b24a95fead725"
+    }
+  },
+  "locale-preference.zh-TW.json": {
+    "method": "direct-model-authored",
+    "linguisticReview": "pending",
+    "sourceHashes": {
+      "locale.automatic": "7fc908ce5f7dc3357f0a4d18e4d58d633f6b4fc46e6cbcc0e8e11dd50cd74919",
+      "locale.help": "7a5e2ebe181a0e7bbb9832e32dc4964b57a0333abe4ee2381b5b24a95fead725"
+    }
+  },
+  "locale-preference.cs.json": {
+    "method": "direct-model-authored",
+    "linguisticReview": "pending",
+    "sourceHashes": {
+      "locale.automatic": "7fc908ce5f7dc3357f0a4d18e4d58d633f6b4fc46e6cbcc0e8e11dd50cd74919",
+      "locale.help": "7a5e2ebe181a0e7bbb9832e32dc4964b57a0333abe4ee2381b5b24a95fead725"
+    }
+  },
+  "locale-preference.no.json": {
+    "method": "direct-model-authored",
+    "linguisticReview": "pending",
+    "sourceHashes": {
+      "locale.automatic": "7fc908ce5f7dc3357f0a4d18e4d58d633f6b4fc46e6cbcc0e8e11dd50cd74919",
+      "locale.help": "7a5e2ebe181a0e7bbb9832e32dc4964b57a0333abe4ee2381b5b24a95fead725"
+    }
+  },
+  "locale-preference.da.json": {
+    "method": "direct-model-authored",
+    "linguisticReview": "pending",
+    "sourceHashes": {
+      "locale.automatic": "7fc908ce5f7dc3357f0a4d18e4d58d633f6b4fc46e6cbcc0e8e11dd50cd74919",
+      "locale.help": "7a5e2ebe181a0e7bbb9832e32dc4964b57a0333abe4ee2381b5b24a95fead725"
+    }
+  },
+  "locale-preference.sv.json": {
+    "method": "direct-model-authored",
+    "linguisticReview": "pending",
+    "sourceHashes": {
+      "locale.automatic": "7fc908ce5f7dc3357f0a4d18e4d58d633f6b4fc46e6cbcc0e8e11dd50cd74919",
+      "locale.help": "7a5e2ebe181a0e7bbb9832e32dc4964b57a0333abe4ee2381b5b24a95fead725"
+    }
+  },
+  "locale-preference.es.json": {
+    "method": "direct-model-authored",
+    "linguisticReview": "pending",
+    "sourceHashes": {
+      "locale.automatic": "7fc908ce5f7dc3357f0a4d18e4d58d633f6b4fc46e6cbcc0e8e11dd50cd74919",
+      "locale.help": "7a5e2ebe181a0e7bbb9832e32dc4964b57a0333abe4ee2381b5b24a95fead725"
+    }
+  },
+  "locale-preference.ar.json": {
+    "method": "direct-model-authored",
+    "linguisticReview": "pending",
+    "sourceHashes": {
+      "locale.automatic": "7fc908ce5f7dc3357f0a4d18e4d58d633f6b4fc46e6cbcc0e8e11dd50cd74919",
+      "locale.help": "7a5e2ebe181a0e7bbb9832e32dc4964b57a0333abe4ee2381b5b24a95fead725"
+    }
   }
 }

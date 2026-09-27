@@ -302,5 +302,7 @@
   "automation.rate": "{state, select, loading {빈도 불러오는 중} unavailable {빈도를 사용할 수 없음} other {공격 / 시간: {count, number}}}",
   "automation.rateTitle": "{state, select, loading {{feature}의 현재 공격 빈도를 불러오는 중입니다.} unavailable {{feature}의 현재 공격 빈도를 사용할 수 없습니다.} other {지난 60분 동안 {feature}에서 시작한 공격: {count, number}.}}",
   "automation.daily": "{state, select, loading {일일 횟수 불러오는 중} unavailable {일일 횟수를 사용할 수 없음} other {초기화 이후 {count, number}회}}",
-  "automation.dailyTitle": "{state, select, loading {{feature}의 현재 일일 세션 공격 횟수를 불러오는 중입니다.} unavailable {서버 초기화가 관측될 때까지 {feature}의 일일 공격 횟수를 사용할 수 없습니다.} dated {서버 일일 집계 세션이 {date}에 시작된 이후 {feature}에서 시작한 확인된 공격: {count, number}.} other {현재 서버 일일 집계 세션에서 {feature}가 시작한 확인된 공격: {count, number}.}}"
+  "automation.dailyTitle": "{state, select, loading {{feature}의 현재 일일 세션 공격 횟수를 불러오는 중입니다.} unavailable {서버 초기화가 관측될 때까지 {feature}의 일일 공격 횟수를 사용할 수 없습니다.} dated {서버 일일 집계 세션이 {date}에 시작된 이후 {feature}에서 시작한 확인된 공격: {count, number}.} other {현재 서버 일일 집계 세션에서 {feature}가 시작한 확인된 공격: {count, number}.}}",
+  "locale.automatic": "자동 (기기 언어)",
+  "locale.help": "표시 언어를 선택하거나 기기 언어를 따릅니다. 게임 언어는 변경되지 않습니다."
 }

@@ -416,6 +416,8 @@ export const messages = {
   "settings.toggle": "Toggle setting",
   "workspace.loading": "Loading workspace…",
 
+  'locale.automatic': 'Automatic (device language)',
+  'locale.help': 'Choose the display language, or follow your device. This does not change your game language.',
   'locale.select': 'Display language',
   'locale.coverage': 'Some interface text is still English.',
 } as const;

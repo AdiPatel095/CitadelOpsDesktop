@@ -302,5 +302,7 @@
   "automation.rate": "{state, select, loading {Įkeliamas dažnis} unavailable {Dažnis neprieinamas} other {Atakos / val.: {count, number}}}",
   "automation.rateTitle": "{state, select, loading {Įkeliamas dabartinis funkcijos {feature} atakų dažnis.} unavailable {Dabartinis funkcijos {feature} atakų dažnis neprieinamas.} other {Funkcijos {feature} per pastarąsias 60 minučių pradėtos atakos: {count, number}.}}",
   "automation.daily": "{state, select, loading {Įkeliamas dienos skaičius} unavailable {Dienos skaičius neprieinamas} other {{count, number} nuo nustatymo iš naujo}}",
-  "automation.dailyTitle": "{state, select, loading {Įkeliamas funkcijos {feature} dabartinės dienos sesijos atakų skaičius.} unavailable {Funkcijos {feature} dienos atakų skaičius neprieinamas, kol neužfiksuojamas serverio skaitiklio nustatymas iš naujo.} dated {Funkcijos {feature} patvirtintos atakos nuo serverio dienos skaičiavimo sesijos pradžios {date}: {count, number}.} other {Funkcijos {feature} patvirtintos atakos dabartinėje serverio dienos skaičiavimo sesijoje: {count, number}.}}"
+  "automation.dailyTitle": "{state, select, loading {Įkeliamas funkcijos {feature} dabartinės dienos sesijos atakų skaičius.} unavailable {Funkcijos {feature} dienos atakų skaičius neprieinamas, kol neužfiksuojamas serverio skaitiklio nustatymas iš naujo.} dated {Funkcijos {feature} patvirtintos atakos nuo serverio dienos skaičiavimo sesijos pradžios {date}: {count, number}.} other {Funkcijos {feature} patvirtintos atakos dabartinėje serverio dienos skaičiavimo sesijoje: {count, number}.}}",
+  "locale.automatic": "Automatiškai (įrenginio kalba)",
+  "locale.help": "Pasirinkite sąsajos kalbą arba naudokite įrenginio kalbą. Žaidimo kalba nepasikeis."
 }

@@ -302,5 +302,7 @@
   "automation.rate": "{state, select, loading {Ladataan tahtia} unavailable {Tahti ei saatavilla} other {Hyökkäyksiä / h: {count, number}}}",
   "automation.rateTitle": "{state, select, loading {Ladataan toiminnon {feature} nykyistä hyökkäystahtia.} unavailable {Toiminnon {feature} nykyinen hyökkäystahti ei ole saatavilla.} other {Toiminnon {feature} viimeisten 60 minuutin aikana aloittamat hyökkäykset: {count, number}.}}",
   "automation.daily": "{state, select, loading {Ladataan päiväsummaa} unavailable {Päiväsumma ei saatavilla} other {{count, number} nollauksesta}}",
-  "automation.dailyTitle": "{state, select, loading {Ladataan toiminnon {feature} nykyisen päivittäisen jakson hyökkäysmäärää.} unavailable {Toiminnon {feature} päivittäinen hyökkäysmäärä ei ole saatavilla ennen kuin palvelimen nollaus havaitaan.} dated {Toiminnon {feature} vahvistetut hyökkäykset palvelimen päivittäisen laskentajakson alusta {date}: {count, number}.} other {Toiminnon {feature} vahvistetut hyökkäykset palvelimen nykyisessä päivittäisessä laskentajaksossa: {count, number}.}}"
+  "automation.dailyTitle": "{state, select, loading {Ladataan toiminnon {feature} nykyisen päivittäisen jakson hyökkäysmäärää.} unavailable {Toiminnon {feature} päivittäinen hyökkäysmäärä ei ole saatavilla ennen kuin palvelimen nollaus havaitaan.} dated {Toiminnon {feature} vahvistetut hyökkäykset palvelimen päivittäisen laskentajakson alusta {date}: {count, number}.} other {Toiminnon {feature} vahvistetut hyökkäykset palvelimen nykyisessä päivittäisessä laskentajaksossa: {count, number}.}}",
+  "locale.automatic": "Automaattinen (laitteen kieli)",
+  "locale.help": "Valitse näyttökieli tai käytä laitteen kieltä. Tämä ei muuta pelin kieltä."
 }
