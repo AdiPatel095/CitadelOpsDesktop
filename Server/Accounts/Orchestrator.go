@@ -344,6 +344,7 @@ func (orchestrator *Orchestrator) Handler() http.Handler {
 		mux.HandleFunc("POST /orchestrator/v1/handovers/local/activate", orchestrator.handleLocalProfileActivate)
 	}
 	mux.HandleFunc("GET /orchestrator/v1/status", orchestrator.handleStatus)
+	mux.HandleFunc("GET /orchestrator/v1/diagnostics", orchestrator.handleDiagnostics)
 	mux.HandleFunc("GET /orchestrator/v1/events", orchestrator.handleEvents)
 	mux.HandleFunc("POST /orchestrator/v1/reconcile", orchestrator.handleReconcile)
 	mux.HandleFunc("POST /orchestrator/v1/control-fence", func(writer http.ResponseWriter, request *http.Request) {

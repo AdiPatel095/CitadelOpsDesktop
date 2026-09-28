@@ -2,6 +2,7 @@ package Telemetry
 
 import (
 	"bufio"
+	"context"
 	"errors"
 	"fmt"
 	"io"
@@ -53,7 +54,8 @@ func (store *Store) wakeRetention() {
 	}
 }
 
-func (store *Store) stopRetention() {
+func (store *Store) stopRetention() { _ = store.stopRetentionContext(context.Background()) }
+func (store *Store) stopRetentionContext(ctx context.Context) error {
 	store.retentionLifecycleMu.Lock()
 	started := store.retentionStarted
 	if !store.retentionStopped {
@@ -65,8 +67,13 @@ func (store *Store) stopRetention() {
 	done := store.retentionDone
 	store.retentionLifecycleMu.Unlock()
 	if started {
-		<-done
+		select {
+		case <-done:
+		case <-ctx.Done():
+			return ctx.Err()
+		}
 	}
+	return nil
 }
 
 func (store *Store) runRetention() {
@@ -105,10 +112,16 @@ func (store *Store) pruneLogs(cutoff time.Time) (logRetentionResult, error) {
 	if store == nil || cutoff.IsZero() {
 		return result, nil
 	}
-	store.flushPersistence()
-	store.retentionFileMu.Lock()
+	if !store.flushPersistence() {
+		return result, fmt.Errorf("telemetry flush unavailable")
+	}
+	if !store.retentionFileMu.TryLock() {
+		return result, fmt.Errorf("telemetry retention busy")
+	}
 	defer store.retentionFileMu.Unlock()
-	store.fileMu.Lock()
+	if !store.fileMu.TryLock() {
+		return result, fmt.Errorf("telemetry writer busy")
+	}
 	directory := store.channelsDir
 	activePaths := make(map[string]struct{}, len(store.filePaths))
 	for _, path := range store.filePaths {

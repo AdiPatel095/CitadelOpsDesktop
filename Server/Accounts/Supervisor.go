@@ -90,7 +90,8 @@ type accountRuntime struct {
 	cancel      context.CancelFunc
 	// config is retained so the supervisor can restart the runtime unchanged,
 	// e.g. after rebinding its profile onto the player-keyed directory.
-	config AccountConfig
+	config      AccountConfig
+	stopWatcher bool
 }
 
 type Supervisor struct {
@@ -623,10 +624,21 @@ func (supervisor *Supervisor) RemoveAccount(ctx context.Context, id AccountID) e
 	} else {
 		// Keep the profile directory reserved if the caller's shutdown deadline
 		// expires. Release it only when the application really finishes.
-		go func() {
-			_ = runtime.application.Wait(context.Background())
-			supervisor.releaseStoppedAccount(id, runtime)
-		}()
+		supervisor.mu.Lock()
+		current, exists := supervisor.stopping[id]
+		watch := exists && !current.stopWatcher
+		if watch {
+			current.stopWatcher = true
+			supervisor.stopping[id] = current
+		}
+		supervisor.mu.Unlock()
+		if watch {
+			go func() {
+				_ = runtime.application.Wait(context.Background())
+				supervisor.releaseStoppedAccount(id, runtime)
+			}()
+		}
+
 	}
 	return errors.Join(stopErr, waitErr)
 }
