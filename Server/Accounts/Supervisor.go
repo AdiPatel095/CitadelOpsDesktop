@@ -624,14 +624,7 @@ func (supervisor *Supervisor) RemoveAccount(ctx context.Context, id AccountID) e
 	} else {
 		// Keep the profile directory reserved if the caller's shutdown deadline
 		// expires. Release it only when the application really finishes.
-		supervisor.mu.Lock()
-		current, exists := supervisor.stopping[id]
-		watch := exists && !current.stopWatcher
-		if watch {
-			current.stopWatcher = true
-			supervisor.stopping[id] = current
-		}
-		supervisor.mu.Unlock()
+		watch := supervisor.claimStopWatcher(id, runtime)
 		if watch {
 			go func() {
 				_ = runtime.application.Wait(context.Background())
@@ -643,15 +636,28 @@ func (supervisor *Supervisor) RemoveAccount(ctx context.Context, id AccountID) e
 	return errors.Join(stopErr, waitErr)
 }
 
-func (supervisor *Supervisor) releaseStoppedAccount(id AccountID, runtime accountRuntime) {
-	if supervisor.worldMaps != nil {
-		supervisor.worldMaps.UnregisterStormScanner(string(id))
+// claimStopWatcher coalesces cleanup for one application generation.
+func (supervisor *Supervisor) claimStopWatcher(id AccountID, runtime accountRuntime) bool {
+	supervisor.mu.Lock()
+	defer supervisor.mu.Unlock()
+	current, exists := supervisor.stopping[id]
+	watch := exists && current.application == runtime.application && !current.stopWatcher
+	if watch {
+		current.stopWatcher = true
+		supervisor.stopping[id] = current
 	}
+	return watch
+}
+
+func (supervisor *Supervisor) releaseStoppedAccount(id AccountID, runtime accountRuntime) {
 	supervisor.mu.Lock()
 	defer supervisor.mu.Unlock()
 	current, exists := supervisor.stopping[id]
 	if !exists || current.application != runtime.application {
 		return
+	}
+	if supervisor.worldMaps != nil {
+		supervisor.worldMaps.UnregisterStormScanner(string(id))
 	}
 	delete(supervisor.stopping, id)
 	if owner, reserved := supervisor.dataDirs[runtime.application.DataDir]; reserved && owner == id {
