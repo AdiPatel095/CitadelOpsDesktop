@@ -610,9 +610,12 @@ func (supervisor *Supervisor) RemoveAccount(ctx context.Context, id AccountID) e
 		}
 		// Withdraw sensor membership before potentially slow account teardown so
 		// its uncompleted public-map lease can be reassigned immediately.
-		if supervisor.worldMaps != nil {
+		supervisor.mu.Lock()
+		current, stillStopping := supervisor.stopping[id]
+		if stillStopping && current.application == runtime.application && supervisor.worldMaps != nil {
 			supervisor.worldMaps.UnregisterStormScanner(string(id))
 		}
+		supervisor.mu.Unlock()
 		// Cancellation ensures every account-owned worker begins draining before
 		// we wait for durable stores to close.
 		stopErr = runtime.application.Session.Stop(ctx)
