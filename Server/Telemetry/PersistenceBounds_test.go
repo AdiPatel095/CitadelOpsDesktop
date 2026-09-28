@@ -309,3 +309,59 @@ func TestProductionFlushDeadline(t *testing.T) {
 		t.Fatalf("deadline counters=%+v", stats)
 	}
 }
+
+func TestStalledDiskReadersRemainOwnedUntilClose(t *testing.T) {
+	s := NewStore(100)
+	defer s.Close()
+	if err := s.SetDataDir(t.TempDir()); err != nil {
+		t.Fatal(err)
+	}
+	s.stopRetention()
+	s.RecordRaw("memory fallback", Protocol.DirectionInbound, time.Now(), nil)
+	if !s.flushPersistence() {
+		t.Fatal("initial flush failed")
+	}
+	entered := make(chan struct{}, 2)
+	release := make(chan struct{})
+	s.readPersistedTail = func([]string, int) ([]string, error) {
+		entered <- struct{}{}
+		<-release
+		return []string{"persisted"}, nil
+	}
+	finished := make(chan struct{}, 2)
+	for i := 0; i < 2; i++ {
+		go func() { s.tailRecords(ChannelWebSocketGame, 10); finished <- struct{}{} }()
+	}
+	<-entered
+	<-entered
+	if len(s.tailRecords(ChannelWebSocketGame, 10)) != 1 {
+		t.Error("saturated reader did not fall back")
+	}
+	for i := 0; i < 10; i++ {
+		ctx, cancel := context.WithTimeout(t.Context(), time.Millisecond)
+		err := s.CloseContext(ctx)
+		cancel()
+		if err == nil {
+			t.Error("close claimed completed stalled readers")
+		}
+	}
+	if s.PersistenceSnapshot().TailReaders != 2 {
+		t.Error("reader accounting lost")
+	}
+	// Close forbids new disk readers even after a flush frontier passes.
+	s.tailRecords(ChannelWebSocketGame, 10)
+	if s.PersistenceSnapshot().TailReaders != 2 {
+		t.Error("new reader admitted after close")
+	}
+	close(release)
+	<-finished
+	<-finished
+	ctx, cancel := context.WithTimeout(t.Context(), time.Second)
+	defer cancel()
+	if err := s.CloseContext(ctx); err != nil {
+		t.Fatal(err)
+	}
+	if s.PersistenceSnapshot().TailReaders != 0 {
+		t.Fatal("reader references retained")
+	}
+}
