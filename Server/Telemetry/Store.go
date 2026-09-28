@@ -197,6 +197,7 @@ type Store struct {
 	persistProgress     chan struct{}
 	persistFlushWaiters int
 	persistTailReaders  int
+	readPersistedTail   func([]string, int) ([]string, error) // internal deterministic disk-read test seam
 
 	attackMu       sync.Mutex
 	attackLaunches map[string][]time.Time
@@ -533,13 +534,19 @@ func (store *Store) tailRecords(channel string, limit int) []string {
 		return lines
 	}
 	store.persistMu.Lock()
-	if store.persistTailReaders >= 2 {
+	if store.persistClosed || store.persistTailReaders >= 2 {
 		store.persistMu.Unlock()
 		return lines
 	}
 	store.persistTailReaders++
 	store.persistMu.Unlock()
-	defer func() { store.persistMu.Lock(); store.persistTailReaders--; store.persistMu.Unlock() }()
+	defer func() {
+		store.persistMu.Lock()
+		store.persistTailReaders--
+		close(store.persistProgress)
+		store.persistProgress = make(chan struct{})
+		store.persistMu.Unlock()
+	}()
 	locked := false
 	deadline := time.Now().Add(25 * time.Millisecond)
 	for {
@@ -568,7 +575,11 @@ func (store *Store) tailRecords(channel string, limit int) []string {
 	if isFeatureChannel(channel) {
 		readLimit = min(limit*16, 100_000)
 	}
-	persisted, err := tailNonEmptyLinesFromPaths(paths, readLimit)
+	read := store.readPersistedTail
+	if read == nil {
+		read = tailNonEmptyLinesFromPaths
+	}
+	persisted, err := read(paths, readLimit)
 	if err == nil {
 		if isFeatureChannel(channel) {
 			return tailFeatureActivityLines(persisted, limit)
@@ -733,6 +744,16 @@ func (store *Store) appendLocked(channel string, line string, observedAt time.Ti
 
 func (store *Store) runPersistence() {
 	defer func() {
+		for {
+			store.persistMu.Lock()
+			readers := store.persistTailReaders
+			progress := store.persistProgress
+			store.persistMu.Unlock()
+			if readers == 0 {
+				break
+			}
+			<-progress
+		}
 		_ = store.stopRetentionContext(context.Background())
 		store.fileMu.Lock()
 		store.closeFilesLocked()
