@@ -230,6 +230,12 @@ func New(ctx context.Context, config Config) (*Application, error) {
 	ingest := Ingest.NewPipeline(state, gameData, registry)
 	ingest.SetProfileID(profileLease.ProfileID)
 	telemetry := Telemetry.NewStore(5000)
+	closeTelemetry := true
+	defer func() {
+		if closeTelemetry {
+			_ = telemetry.CloseContext(context.Background())
+		}
+	}()
 	if telemetryErr := telemetry.SetDataDir(config.DataDir); telemetryErr != nil {
 		startupErr = errors.Join(startupErr, Localization.WithError(fmt.Errorf("initialize logger: %w", telemetryErr), Localization.ErrorContext(Localization.New("server.app.initialize_logger.453e61ce", "initialize logger", nil), telemetryErr)))
 	}
@@ -458,6 +464,7 @@ func New(ctx context.Context, config Config) (*Application, error) {
 		BackgroundLogin: application.BackgroundLogin, BackgroundOnly: config.BackgroundOnly, Persistence: application,
 		WorldIntel: application.WorldIntel,
 	})
+	closeTelemetry = false
 	closeOperationStore = false
 	closeReportStore = false
 	closeProfileLease = false
@@ -486,7 +493,7 @@ func (application *Application) start(ctx context.Context) {
 		defer close(application.shutdownDone)
 		<-ctx.Done()
 		<-application.statePersistenceDone
-		application.Telemetry.Close()
+		_ = application.Telemetry.CloseContext(context.Background())
 		if application.Reports != nil {
 			application.Reports.Wait()
 		}

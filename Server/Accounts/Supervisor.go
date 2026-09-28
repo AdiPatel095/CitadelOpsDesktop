@@ -90,7 +90,8 @@ type accountRuntime struct {
 	cancel      context.CancelFunc
 	// config is retained so the supervisor can restart the runtime unchanged,
 	// e.g. after rebinding its profile onto the player-keyed directory.
-	config AccountConfig
+	config      AccountConfig
+	stopWatcher bool
 }
 
 type Supervisor struct {
@@ -609,9 +610,12 @@ func (supervisor *Supervisor) RemoveAccount(ctx context.Context, id AccountID) e
 		}
 		// Withdraw sensor membership before potentially slow account teardown so
 		// its uncompleted public-map lease can be reassigned immediately.
-		if supervisor.worldMaps != nil {
+		supervisor.mu.Lock()
+		current, stillStopping := supervisor.stopping[id]
+		if stillStopping && current.application == runtime.application && supervisor.worldMaps != nil {
 			supervisor.worldMaps.UnregisterStormScanner(string(id))
 		}
+		supervisor.mu.Unlock()
 		// Cancellation ensures every account-owned worker begins draining before
 		// we wait for durable stores to close.
 		stopErr = runtime.application.Session.Stop(ctx)
@@ -623,23 +627,40 @@ func (supervisor *Supervisor) RemoveAccount(ctx context.Context, id AccountID) e
 	} else {
 		// Keep the profile directory reserved if the caller's shutdown deadline
 		// expires. Release it only when the application really finishes.
-		go func() {
-			_ = runtime.application.Wait(context.Background())
-			supervisor.releaseStoppedAccount(id, runtime)
-		}()
+		watch := supervisor.claimStopWatcher(id, runtime)
+		if watch {
+			go func() {
+				_ = runtime.application.Wait(context.Background())
+				supervisor.releaseStoppedAccount(id, runtime)
+			}()
+		}
+
 	}
 	return errors.Join(stopErr, waitErr)
 }
 
-func (supervisor *Supervisor) releaseStoppedAccount(id AccountID, runtime accountRuntime) {
-	if supervisor.worldMaps != nil {
-		supervisor.worldMaps.UnregisterStormScanner(string(id))
+// claimStopWatcher coalesces cleanup for one application generation.
+func (supervisor *Supervisor) claimStopWatcher(id AccountID, runtime accountRuntime) bool {
+	supervisor.mu.Lock()
+	defer supervisor.mu.Unlock()
+	current, exists := supervisor.stopping[id]
+	watch := exists && current.application == runtime.application && !current.stopWatcher
+	if watch {
+		current.stopWatcher = true
+		supervisor.stopping[id] = current
 	}
+	return watch
+}
+
+func (supervisor *Supervisor) releaseStoppedAccount(id AccountID, runtime accountRuntime) {
 	supervisor.mu.Lock()
 	defer supervisor.mu.Unlock()
 	current, exists := supervisor.stopping[id]
 	if !exists || current.application != runtime.application {
 		return
+	}
+	if supervisor.worldMaps != nil {
+		supervisor.worldMaps.UnregisterStormScanner(string(id))
 	}
 	delete(supervisor.stopping, id)
 	if owner, reserved := supervisor.dataDirs[runtime.application.DataDir]; reserved && owner == id {

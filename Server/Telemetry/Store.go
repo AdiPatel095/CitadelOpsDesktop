@@ -3,6 +3,8 @@ package Telemetry
 import (
 	"bufio"
 	"bytes"
+	"context"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -130,7 +132,7 @@ type persistenceEntry struct {
 	channel    string
 	line       string
 	observedAt time.Time
-	flushed    chan struct{}
+	sequence   uint64
 }
 
 // memoryTail is an append-only window with an amortized O(1) eviction path.
@@ -184,11 +186,18 @@ type Store struct {
 	filePaths       map[string]string
 	channelSessions map[string]*channelLogSession
 
-	persistMu     sync.Mutex
-	persistQueue  []persistenceEntry
-	persistWake   chan struct{}
-	persistDone   chan struct{}
-	persistClosed bool
+	persistMu           sync.Mutex
+	persistQueue        []persistenceEntry
+	persistWake         chan struct{}
+	persistDone         chan struct{}
+	persistClosed       bool
+	persistStats        PersistenceStats
+	persistAccepted     uint64
+	persistCompleted    uint64
+	persistProgress     chan struct{}
+	persistFlushWaiters int
+	persistTailReaders  int
+	readPersistedTail   func([]string, int) ([]string, error) // internal deterministic disk-read test seam
 
 	attackMu       sync.Mutex
 	attackLaunches map[string][]time.Time
@@ -215,6 +224,7 @@ func NewStore(capacity int) *Store {
 		channelSessions: map[string]*channelLogSession{},
 		persistWake:     make(chan struct{}, 1),
 		persistDone:     make(chan struct{}),
+		persistProgress: make(chan struct{}),
 		attackLaunches:  map[string][]time.Time{},
 		retentionWake:   make(chan struct{}, 1),
 		retentionStop:   make(chan struct{}),
@@ -235,9 +245,17 @@ func (store *Store) SetDataDir(dataDir string) error {
 	}
 	loadedAt := time.Now()
 	loadedAttackLaunches := loadAttackLaunches(directory, loadedAt.Add(-attackLaunchRetention))
-	store.retentionFileMu.Lock()
-	store.flushPersistence()
-	store.fileMu.Lock()
+	if !store.retentionFileMu.TryLock() {
+		return errors.New("telemetry retention busy")
+	}
+	if !store.flushPersistence() {
+		store.retentionFileMu.Unlock()
+		return fmt.Errorf("telemetry persistence unavailable")
+	}
+	if !store.fileMu.TryLock() {
+		store.retentionFileMu.Unlock()
+		return errors.New("telemetry writer busy")
+	}
 	store.closeFilesLocked()
 	store.channelsDir = directory
 	store.persistenceEnabled.Store(true)
@@ -263,8 +281,12 @@ func (store *Store) BeginWebSocketGameSession() {
 	if store == nil {
 		return
 	}
-	store.flushPersistence()
-	store.fileMu.Lock()
+	if !store.flushPersistence() {
+		return
+	}
+	if !store.fileMu.TryLock() {
+		return
+	}
 	defer store.fileMu.Unlock()
 	_, _ = store.ensureChannelSessionLocked(ChannelWebSocketGame, time.Now(), true)
 }
@@ -508,10 +530,42 @@ func (store *Store) tailRecords(channel string, limit int) []string {
 		lines = tailFeatureActivityLines(memoryLines, limit)
 	}
 	store.mu.RUnlock()
-	store.flushPersistence()
-	store.retentionFileMu.RLock()
+	if !store.flushPersistence() {
+		return lines
+	}
+	store.persistMu.Lock()
+	if store.persistClosed || store.persistTailReaders >= 2 {
+		store.persistMu.Unlock()
+		return lines
+	}
+	store.persistTailReaders++
+	store.persistMu.Unlock()
+	defer func() {
+		store.persistMu.Lock()
+		store.persistTailReaders--
+		close(store.persistProgress)
+		store.persistProgress = make(chan struct{})
+		store.persistMu.Unlock()
+	}()
+	locked := false
+	deadline := time.Now().Add(25 * time.Millisecond)
+	for {
+		if store.retentionFileMu.TryRLock() {
+			if store.fileMu.TryLock() {
+				locked = true
+				break
+			}
+			store.retentionFileMu.RUnlock()
+		}
+		if time.Now().After(deadline) {
+			break
+		}
+		time.Sleep(time.Millisecond)
+	}
+	if !locked {
+		return lines
+	}
 	defer store.retentionFileMu.RUnlock()
-	store.fileMu.Lock()
 	paths := channelLogPathsNewest(store.channelsDir, channel)
 	store.fileMu.Unlock()
 	if len(paths) == 0 {
@@ -521,7 +575,11 @@ func (store *Store) tailRecords(channel string, limit int) []string {
 	if isFeatureChannel(channel) {
 		readLimit = min(limit*16, 100_000)
 	}
-	persisted, err := tailNonEmptyLinesFromPaths(paths, readLimit)
+	read := store.readPersistedTail
+	if read == nil {
+		read = tailNonEmptyLinesFromPaths
+	}
+	persisted, err := read(paths, readLimit)
 	if err == nil {
 		if isFeatureChannel(channel) {
 			return tailFeatureActivityLines(persisted, limit)
@@ -556,21 +614,31 @@ func (store *Store) recordAttackLaunch(channel string, observedAt time.Time) {
 	store.attackMu.Unlock()
 }
 
+// Close coalesces shutdown onto the single existing writer. A permanently
+// stalled filesystem cannot be canceled by Go; the caller stops waiting after
+// the bounded deadline while that writer owns eventual cleanup.
 func (store *Store) Close() {
+	ctx, cancel := context.WithTimeout(context.Background(), persistenceFlushTimeout)
+	defer cancel()
+	_ = store.CloseContext(ctx)
+}
+func (store *Store) CloseContext(ctx context.Context) error {
 	if store == nil {
-		return
+		return nil
 	}
-	store.stopRetention()
 	store.persistMu.Lock()
-	if !store.persistClosed {
-		store.persistClosed = true
-	}
+	store.persistClosed = true
 	store.persistMu.Unlock()
 	store.wakePersistence()
-	<-store.persistDone
-	store.fileMu.Lock()
-	store.closeFilesLocked()
-	store.fileMu.Unlock()
+	if err := store.stopRetentionContext(ctx); err != nil {
+		return err
+	}
+	select {
+	case <-store.persistDone:
+		return nil
+	case <-ctx.Done():
+		return ctx.Err()
+	}
 }
 
 func (store *Store) recordMatchingAppResponse(frame Protocol.Frame, payload string) {
@@ -627,23 +695,71 @@ func (store *Store) appendLocked(channel string, line string, observedAt time.Ti
 		tail = &memoryTail{}
 		store.tails[channel] = tail
 	}
-	maxBytes := 0
-	if store.persistenceEnabled.Load() && isDiagnosticChannel(channel) {
+	maxBytes := featureLiveTailMaxBytes
+	if isDiagnosticChannel(channel) {
 		maxBytes = diagnosticLiveTailMaxBytes
 	}
-	tail.append(line, store.capacity, maxBytes)
+	if len(line) <= max(maxBytes, PersistenceMaxBytes) {
+		line = strings.Clone(line)
+	}
+	beforeBytes := tail.bytes
+	beforeLines := len(tail.activeLines())
+	if len(line) <= maxBytes {
+		beforeBytes += len(line)
+		beforeLines++
+	}
+	if len(line) <= maxBytes {
+		tail.append(line, store.capacity, maxBytes)
+	}
 	store.persistMu.Lock()
+	store.persistStats.LiveTailEvictedBytes += uint64(max(0, beforeBytes-tail.bytes))
+	store.persistStats.LiveTailEvictedRecords += uint64(max(0, beforeLines-len(tail.activeLines())))
+	if len(line) > maxBytes {
+		store.persistStats.LiveTailOversizeRecords++
+	}
 	if !store.persistClosed {
-		store.persistQueue = append(store.persistQueue, persistenceEntry{
-			channel: channel, line: line, observedAt: observedAt,
-		})
+		size := len(line) + len(channel)
+		if size > PersistenceMaxBytes {
+			store.persistStats.OversizeRecords++
+			store.persistStats.OversizeBytes += uint64(size)
+			store.persistStats.DroppedRecords++
+			store.persistStats.DroppedBytes += uint64(size)
+		} else if store.persistStats.RetainedBytes+size > PersistenceMaxBytes || store.persistStats.RetainedRecords >= PersistenceMaxRecords {
+			store.persistStats.OverflowRecords++
+			store.persistStats.OverflowBytes += uint64(size)
+			store.persistStats.DroppedRecords++
+			store.persistStats.DroppedBytes += uint64(size)
+		} else {
+			store.persistAccepted++
+			store.persistQueue = append(store.persistQueue, persistenceEntry{channel: strings.Clone(channel), line: line, observedAt: observedAt, sequence: store.persistAccepted})
+			store.persistStats.RetainedBytes += size
+			store.persistStats.RetainedRecords++
+			store.persistStats.HighWaterBytes = max(store.persistStats.HighWaterBytes, store.persistStats.RetainedBytes)
+			store.persistStats.HighWaterRecords = max(store.persistStats.HighWaterRecords, store.persistStats.RetainedRecords)
+		}
 	}
 	store.persistMu.Unlock()
 	store.wakePersistence()
 }
 
 func (store *Store) runPersistence() {
-	defer close(store.persistDone)
+	defer func() {
+		for {
+			store.persistMu.Lock()
+			readers := store.persistTailReaders
+			progress := store.persistProgress
+			store.persistMu.Unlock()
+			if readers == 0 {
+				break
+			}
+			<-progress
+		}
+		_ = store.stopRetentionContext(context.Background())
+		store.fileMu.Lock()
+		store.closeFilesLocked()
+		store.fileMu.Unlock()
+		close(store.persistDone)
+	}()
 	for {
 		batch, ok := store.nextPersistenceBatch()
 		if !ok {
@@ -657,14 +773,28 @@ func (store *Store) nextPersistenceBatch() ([]persistenceEntry, bool) {
 	for {
 		store.persistMu.Lock()
 		if len(store.persistQueue) > 0 {
-			flushFirst := store.persistQueue[0].flushed != nil
 			store.persistMu.Unlock()
-			if !flushFirst {
-				time.Sleep(persistenceBatchWindow)
-			}
+			time.Sleep(persistenceBatchWindow)
 			store.persistMu.Lock()
-			batch := store.persistQueue
-			store.persistQueue = nil
+			n := 0
+			bytes := 0
+			for n < len(store.persistQueue) && n < persistenceMaxBatchRecords {
+				size := len(store.persistQueue[n].line) + len(store.persistQueue[n].channel)
+				if n > 0 && bytes+size > persistenceMaxBatchBytes {
+					break
+				}
+				bytes += size
+				n++
+			}
+			batch := append([]persistenceEntry(nil), store.persistQueue[:n]...)
+			copy(store.persistQueue, store.persistQueue[n:])
+			clear(store.persistQueue[len(store.persistQueue)-n:])
+			store.persistQueue = store.persistQueue[:len(store.persistQueue)-n]
+			if len(store.persistQueue) == 0 {
+				store.persistQueue = nil
+			}
+			store.persistStats.InFlightBytes += bytes
+			store.persistStats.InFlightRecords += n
 			store.persistMu.Unlock()
 			return batch, true
 		}
@@ -678,28 +808,51 @@ func (store *Store) nextPersistenceBatch() ([]persistenceEntry, bool) {
 }
 
 func (store *Store) persistBatch(batch []persistenceEntry) {
+	started := time.Now()
 	store.fileMu.Lock()
 	touched := make(map[string]struct{}, 2)
-	for index := range batch {
-		entry := &batch[index]
-		if entry.flushed != nil {
-			store.flushBuffersLocked(touched)
-			clear(touched)
-			close(entry.flushed)
-			continue
-		}
+	failures := uint64(0)
+	for _, entry := range batch {
 		if store.channelsDir != "" {
 			writer, err := store.channelBufferLocked(entry.channel, entry.observedAt)
 			if err == nil {
-				_, _ = writer.WriteString(entry.line)
-				_ = writer.WriteByte('\n')
+				_, err = writer.WriteString(entry.line)
+				if err == nil {
+					err = writer.WriteByte('\n')
+				}
 				touched[entry.channel] = struct{}{}
 			}
+			if err != nil {
+				failures++
+			}
 		}
-		*entry = persistenceEntry{}
 	}
-	store.flushBuffersLocked(touched)
+	for channel := range touched {
+		if writer := store.buffers[channel]; writer != nil {
+			if err := writer.Flush(); err != nil {
+				failures++
+			}
+		}
+	}
 	store.fileMu.Unlock()
+	store.persistMu.Lock()
+	for i := range batch {
+		size := len(batch[i].line) + len(batch[i].channel)
+		store.persistStats.RetainedBytes -= size
+		store.persistStats.RetainedRecords--
+		store.persistStats.InFlightBytes -= size
+		store.persistStats.InFlightRecords--
+		store.persistCompleted = batch[i].sequence
+		batch[i] = persistenceEntry{}
+	}
+	store.persistStats.WriteFailures += failures
+	store.persistStats.LastDrainDurationMillis = time.Since(started).Milliseconds()
+	if failures == 0 {
+		store.persistStats.LastSuccessfulDrain = time.Now().UTC()
+	}
+	close(store.persistProgress)
+	store.persistProgress = make(chan struct{})
+	store.persistMu.Unlock()
 }
 
 func (store *Store) flushBuffersLocked(channels map[string]struct{}) {
@@ -717,18 +870,50 @@ func (store *Store) wakePersistence() {
 	}
 }
 
-func (store *Store) flushPersistence() {
-	flushed := make(chan struct{})
+// A frontier is a nonqueued barrier: later records cannot overtake it. Bounded
+// callers and a timeout prevent blocked disk I/O from accumulating waiters.
+func (store *Store) flushPersistence() bool {
+	ctx, cancel := context.WithTimeout(context.Background(), persistenceFlushTimeout)
+	defer cancel()
+	return store.flushPersistenceContext(ctx) == nil
+}
+func (store *Store) flushPersistenceContext(ctx context.Context) error {
 	store.persistMu.Lock()
-	if store.persistClosed {
+	if store.persistFlushWaiters >= persistenceMaxFlushWaiters {
+		store.persistStats.FlushRejected++
 		store.persistMu.Unlock()
-		<-store.persistDone
-		return
+		return errors.New("telemetry flush busy")
 	}
-	store.persistQueue = append(store.persistQueue, persistenceEntry{flushed: flushed})
+	store.persistFlushWaiters++
+	target := store.persistAccepted
 	store.persistMu.Unlock()
+	defer func() { store.persistMu.Lock(); store.persistFlushWaiters--; store.persistMu.Unlock() }()
 	store.wakePersistence()
-	<-flushed
+	for {
+		store.persistMu.Lock()
+		completed := store.persistCompleted >= target
+		failed := store.persistStats.WriteFailures > 0
+		progress := store.persistProgress
+		store.persistMu.Unlock()
+		if completed {
+			if failed {
+				return errors.New("telemetry persistence write failed")
+			}
+			return nil
+		}
+		select {
+		case <-progress:
+		case <-ctx.Done():
+			store.persistMu.Lock()
+			if errors.Is(ctx.Err(), context.DeadlineExceeded) {
+				store.persistStats.FlushTimeouts++
+			} else {
+				store.persistStats.FlushCancelled++
+			}
+			store.persistMu.Unlock()
+			return ctx.Err()
+		}
+	}
 }
 
 func (store *Store) channelFileLocked(channel string, now time.Time) (*os.File, error) {
