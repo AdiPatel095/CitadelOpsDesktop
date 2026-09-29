@@ -43,7 +43,7 @@ import {
   summarizeAttackPreset,
 } from '../attackPresets/AttackPresetTypes';
 import { buildPresetDocumentUpdate } from '../configuration/PresetDocumentUpdate';
-import { withoutMarker } from '../attackPresets/AppCreatedPresets';
+import { duplicateAttackPreset, editedAttackPreset } from '../attackPresets/AttackPresetEdits';
 import { appCreatedPresetBadge } from '../attackPresets/AttackPresetOptionLabel';
 import {
   attackPresetReferences,
@@ -166,7 +166,7 @@ const AttackPresetsView: React.FC = () => {
       ? <LocalizedText messageKey="attackPresets.inUseBy" params={{ referrers: describeReferrers(referrers) }} />
       : null;
   };
-  // Renaming, editing or duplicating an app-created preset converts it into a normal preset.
+  // Renaming or editing an app-created preset converts it into a normal preset.
   const confirmPromotion = (preset: AppAttackPreset) => !preset.app
     || window.confirm(localizeStatic('attackPresets.promotionNotice', { module: ownerModuleLabel(preset) }));
   const filteredPresets = useMemo(() => {
@@ -198,16 +198,9 @@ const AttackPresetsView: React.FC = () => {
     }
     setSaving(true);
     const now = new Date().toISOString();
-    const preset: AppAttackPreset = {
-      id: existing?.id ?? createID(),
-      name: draft.name.trim(),
-      targetType: editor?.targetType ?? existing?.targetType ?? 'pve',
-      useTroopFamilies: Boolean(draft.useTroopFamilies),
-      waves: cloneWaves(draft.waves),
-      courtyardSupport: cloneCourtyardSupport(draft.courtyardSupport),
-      createdAt: existing?.createdAt ?? now,
-      updatedAt: now,
-    };
+    // Rebuilt from the draft without `app`: editing or renaming an app-created preset here promotes it
+    // to a normal preset, so the owning module keeps using it as a saved preset (see AttackPresetEdits).
+    const preset = editedAttackPreset(existing, draft, { id: createID(), targetType: editor?.targetType, now });
     const presets = existing
       ? document.presets.map((candidate) => candidate.id === existing.id ? preset : candidate)
       : [...document.presets, preset];
@@ -222,23 +215,12 @@ const AttackPresetsView: React.FC = () => {
   };
 
   const handleDuplicate = async (preset: AppAttackPreset) => {
-    if (pendingID || !confirmPromotion(preset)) return;
+    if (pendingID) return;
     setPendingID(preset.id);
-    const now = new Date().toISOString();
-    const duplicate: AppAttackPreset = {
-      ...withoutMarker(preset),
-      id: createID(),
-      name: uniqueCopyName(preset.name, document.presets),
-      waves: cloneWaves(preset.waves),
-      courtyardSupport: cloneCourtyardSupport(preset.courtyardSupport),
-      createdAt: now,
-      updatedAt: now,
-    };
+    // Copy only: the duplicate is a normal preset and the original keeps its `app` marker.
+    const { presets } = duplicateAttackPreset(document.presets, preset, { id: createID(), now: new Date().toISOString() });
     try {
-      await saveDocument([
-        ...document.presets.map((candidate) => candidate.id === preset.id && candidate.app ? withoutMarker(candidate) : candidate),
-        duplicate,
-      ], 'Attack preset duplicated.');
+      await saveDocument(presets, 'Attack preset duplicated.');
     } catch (error) {
       Notifications.error(errorMessage(error, 'Could not duplicate attack preset.'));
     } finally {
@@ -616,30 +598,8 @@ function createID(): string {
   return crypto.randomUUID?.() ?? `${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`;
 }
 
-function uniqueCopyName(name: string, presets: AppAttackPreset[]): string {
-  const existing = new Set(presets.map((preset) => preset.name.toLowerCase()));
-  let candidate = `${name} copy`;
-  let suffix = 2;
-  while (existing.has(candidate.toLowerCase())) candidate = `${name} copy ${suffix++}`;
-  return candidate;
-}
 
-function cloneWaves(waves: AttackSetupDraft['waves']): AttackSetupDraft['waves'] {
-  return waves.map((wave) => ({
-    L: { troops: wave.L.troops.map((slot) => ({ ...slot })), tools: wave.L.tools.map((slot) => ({ ...slot })) },
-    M: { troops: wave.M.troops.map((slot) => ({ ...slot })), tools: wave.M.tools.map((slot) => ({ ...slot })) },
-    R: { troops: wave.R.troops.map((slot) => ({ ...slot })), tools: wave.R.tools.map((slot) => ({ ...slot })) },
-  }));
-}
 
-function cloneCourtyardSupport(
-  support: AttackSetupDraft['courtyardSupport'],
-): AttackSetupDraft['courtyardSupport'] {
-  return {
-    troops: support.troops.map((slot) => ({ ...slot })),
-    tools: support.tools.map((slot) => ({ ...slot })),
-  };
-}
 
 function formatUpdatedAt(value: string): string {
   const date = new Date(value);

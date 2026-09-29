@@ -4,6 +4,7 @@ import type { AttackSetupLane, AttackSetupSlot, AttackSetupWave } from '../../co
 import type { MetadataItem } from '../../context/MetadataContext';
 import type { MessageKey } from '../../i18n/messages';
 import type { ReadinessFix } from '../readiness/Readiness';
+import { isAttackUnit } from '../UnitRole';
 import { EVENT_ATTACK_STARTER_RECIPE, pendingStarterReviews, type EventAttackStarterRecipe } from './StarterRecipes';
 
 export type EventAttackRequirementId =
@@ -118,7 +119,10 @@ export function recommendEventAttackSetup(input: EventAttackRecommendationInput)
   return { setup, requirements, notes, pendingReviews, resolvedFor };
 }
 
-/** Stationed troop types by quantity (descending), then unit id (ascending). Tools are excluded. */
+/**
+ * Stationed attack troop types by quantity (descending), then unit id (ascending).
+ * Tools and defensive units (the troop picker's role rule, `unitCombatRole`) are excluded.
+ */
 export function rankStationedTroops(
   castle: CastleStateV2,
   troops: Record<number, MetadataItem>,
@@ -129,7 +133,7 @@ export function rankStationedTroops(
     const id = Number(rawId);
     const quantity = Math.trunc(Number(rawCount));
     if (!Number.isInteger(id) || id <= 0 || !Number.isFinite(quantity) || quantity <= 0) continue;
-    if (tools[id] || !troops[id]) continue;
+    if (tools[id] || !troops[id] || !isAttackUnit(troops[id])) continue;
     ranked.push({ id, quantity });
   }
   return ranked.sort((left, right) => right.quantity - left.quantity || left.id - right.id);

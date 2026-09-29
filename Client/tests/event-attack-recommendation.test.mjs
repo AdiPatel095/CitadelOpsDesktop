@@ -18,7 +18,13 @@ after(async () => {
   await vite.close();
 });
 
-const troops = Object.fromEntries([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map((id) => [id, { id, name: `Unit ${id}` }]));
+const troops = {
+  ...Object.fromEntries([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map((id) => [id, { id, name: `Unit ${id}`, meleeAttack: 50, meleeDefence: 20 }])),
+  // Shield-maiden-like defender: best defence above best attack.
+  20: { id: 20, name: 'Defender', meleeAttack: 10, rangeAttack: 5, meleeDefence: 40, rangeDefence: 45 },
+  // Ranged attacker whose melee defence is high but ranged attack is higher.
+  21: { id: 21, name: 'Ranged attacker', rangeAttack: 60, meleeDefence: 60 },
+};
 const tools = { 500: { id: 500, name: 'Ladder' } };
 
 function castle(stationed, observed = true) {
@@ -91,6 +97,14 @@ test('fewer troop types than slots leave the remaining slots empty', () => {
   const [wave] = result.setup.waves;
   assert.deepEqual(wave.L.troops, [{ itemId: 4, quantity: 10 }, { itemId: null, quantity: 0 }]);
   assert.ok(wave.M.troops.every((slot) => slot.itemId == null));
+});
+
+test('defensive units are never proposed, using the troop picker role rule', () => {
+  const result = recommend({ sourceCastle: castle({ 20: 99999, 21: 10, 4: 5 }) });
+  const [wave] = result.setup.waves;
+  const ids = [...wave.L.troops, ...wave.M.troops, ...wave.R.troops].map((slot) => slot.itemId).filter((id) => id != null);
+  assert.deepEqual(ids, [21, 4]);
+  assert.equal(recommend({ sourceCastle: castle({ 20: 500 }) }).requirements[0].id, 'no-stationed-troops');
 });
 
 test('pending starter reviews are reported with the recommendation', () => {

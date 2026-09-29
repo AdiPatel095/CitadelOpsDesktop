@@ -47,7 +47,7 @@ export const EVENT_ATTACK_STARTER_RECIPE: EventAttackStarterRecipe = {
   laneFill: {
     value: 'most-numerous-stationed-troop-types',
     source: 'account-data',
-    rationale: 'Rank the source castle stationed troop types by quantity (descending, then unit id ascending), assign them once each to the troop slots in lane order left (2), center (6), right (2), each slot holding that type\'s full stationed count. The runtime limits every lane to its capacity at launch. No stationed troops means no setup and a requirement instead.',
+    rationale: 'Rank the source castle stationed attack troop types (defensive units excluded by the troop picker role rule: best attack value at least best defence value) by quantity (descending, then unit id ascending), assign them once each to the troop slots in lane order left (2), center (6), right (2), each slot holding that type\'s full stationed count. The runtime limits every lane to its capacity at launch. No stationed troops means no setup and a requirement instead.',
     review: { owner: 'Maya', status: 'pending' },
   },
   tools: {

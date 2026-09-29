@@ -1159,11 +1159,6 @@
     "reason": "Reviewer-facing starter recipe metadata (sources, rules, owners, rationale and citations) that is never rendered.",
     "evidence": "EVENT_ATTACK_STARTER_RECIPE is consumed by recommendEventAttackSetup and tests/starter-recipes.test.mjs; the UI shows only a typed pending-review badge."
   },
-  "2b9743db6128f6beb6992a5c3b774e1fbdabf0424bf10ce449a3f4a4fa4a6f9e": {
-    "classification": "technical",
-    "reason": "Reviewer-facing starter recipe metadata (sources, rules, owners, rationale and citations) that is never rendered.",
-    "evidence": "EVENT_ATTACK_STARTER_RECIPE is consumed by recommendEventAttackSetup and tests/starter-recipes.test.mjs; the UI shows only a typed pending-review badge."
-  },
   "ba5b19b0736b0957c64857940301e2554c88c9dc977860fae87bcf22d6113299": {
     "classification": "technical",
     "reason": "Reviewer-facing starter recipe metadata (sources, rules, owners, rationale and citations) that is never rendered.",
@@ -1758,5 +1753,30 @@
     "classification": "technical",
     "reason": "Readiness check ids, states, slots, fix codes, select parameters and booster ids.",
     "evidence": "ReadinessCheck id/state/slot/fix and params (boost, currency) are identifiers or ICU select arguments; text is the typed messageKey rendered by ReadinessPanel."
+  },
+  "ad2ba72d89f70325ea0aca4b417b8ad5f80eef9b2cd244fc824910d35c5fb344": {
+    "classification": "technical",
+    "reason": "Default attack preset target type token.",
+    "evidence": "targetType pve is a preset discriminator shown through typed PvE/PvP labels."
+  },
+  "f69b24e9812abfb3e49153a9ea6d6c0584ee1251c04cbbda33b12ff0b04b395c": {
+    "classification": "technical",
+    "reason": "Unit combat role tokens.",
+    "evidence": "unitCombatRole returns attack/defense identifiers compared by the troop picker filter and the starter recommendation."
+  },
+  "b7114ee60938b5fed1b2ae52ad32ee539b9f5e36b7618ccf2c6bee9a2a6615cc": {
+    "classification": "technical",
+    "reason": "Unit combat role tokens.",
+    "evidence": "unitCombatRole returns attack/defense identifiers compared by the troop picker filter and the starter recommendation."
+  },
+  "008edd9d34171f7e3d117bbd1a093fe6fb4351f10fa702b942f1bccaa9462b06": {
+    "classification": "technical",
+    "reason": "Mode ids, ref discriminators, component variant/size tokens, lane keys, DOM ids and numeric/id fallbacks.",
+    "evidence": "saved/inline chip values, AttackSetupRef sources, Button/Badge/Modal props and #<id> fallbacks for unnamed castles or units; labels render typed messages and user/official names."
+  },
+  "83cbd2575669745f669208454b15e725af87e12aa54e7463a27db4d74893e1ad": {
+    "classification": "technical",
+    "reason": "Reviewer-facing starter recipe metadata (sources, rules, owners, rationale and citations) that is never rendered.",
+    "evidence": "EVENT_ATTACK_STARTER_RECIPE is consumed by recommendEventAttackSetup and tests/starter-recipes.test.mjs; the UI shows only a typed pending-review badge."
   }
 }

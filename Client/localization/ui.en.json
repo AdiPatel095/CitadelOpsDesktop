@@ -1543,6 +1543,7 @@
   "ui.settings.configurationDraftSession.load.latest.86edc870": "Load latest",
   "ui.settings.readiness.eventAttackReadiness.berimond.camp.stock.is.checked.at.launch.e26aa185": "Berimond camp stock is checked at launch. Transfers from the source castle and the armorer lane refill it.",
   "ui.settings.components.eventAttackSetupField.this.attack.uses.the.saved.preset.until.af2cf4a8": "This attack uses the saved preset until you apply a setup here with Edit composition or the recommended starting setup.",
+  "ui.settings.components.eventAttackSetupField.apply.composition.b3b4946b": "Apply composition",
   "equipment.swap.description": "{kind, select, commander {Move base equipment and heroes between <leader>{name}</leader> and another commander. Socketed gems remain on their equipment.} castellan {Move base equipment and heroes between <leader>{name}</leader> and another castellan. Socketed gems remain on their equipment.} other {Move base equipment and heroes between <leader>{name}</leader> and another leader. Socketed gems remain on their equipment.}}",
   "equipment.unequip.description": "{kind, select, equipment {Select equipment to remove from <leader>{name}</leader>.} other {Select gems to remove from <leader>{name}</leader>.}}",
   "equipment.upgrade.description": "{kind, select, equipment {Choose one equipment item on <leader>{name}</leader>.} other {Choose one gem on <leader>{name}</leader>.}}",

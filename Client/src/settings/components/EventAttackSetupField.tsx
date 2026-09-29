@@ -382,6 +382,8 @@ export const EventAttackSetupField: React.FC<EventAttackSetupFieldProps> = ({
             targetType={targetType}
             toolLimits={toolLimits}
             allowTroopFamilyMode
+            nameField="hidden"
+            saveLabel={<LocalizedText messageKey="ui.settings.components.eventAttackSetupField.apply.composition.b3b4946b" />}
             onClose={() => setEditing(false)}
             onSave={saveComposition}
           />

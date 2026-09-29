@@ -5,6 +5,7 @@ import { Check, Heart, List, Flame } from 'lucide-react';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import UnitImage from './UnitImage';
 import { useMetadata, type MetadataItem } from '../context/MetadataContext';
+import { unitCombatRole } from '../settings/UnitRole';
 import {
   getFavorites,
   toggleFavorite,
@@ -713,9 +714,7 @@ const TroopPickerModal: React.FC<TroopPickerModalProps> = ({ isOpen, options, on
 function pickerUnitMetadata(item: MetadataItem) {
   const officialRole = String(item.role ?? '').toLowerCase();
   const type: 'melee' | 'range' = officialRole.includes('range') ? 'range' : 'melee';
-  const attack = Math.max(metadataNumber(item.meleeAttack), metadataNumber(item.rangeAttack));
-  const defense = Math.max(metadataNumber(item.meleeDefence), metadataNumber(item.rangeDefence));
-  const role: 'attack' | 'defense' = attack >= defense ? 'attack' : 'defense';
+  const role = unitCombatRole(item);
   const mead = metadataNumber(item.meadSupply);
   const beef = metadataNumber(item.beefSupply);
   const food = metadataNumber(item.foodSupply);

@@ -1594,5 +1594,6 @@ export const sourceMessages = {
   "ui.settings.configurationDraftSession.loading.ba3bbbe1": "Loading…",
   "ui.settings.configurationDraftSession.load.latest.86edc870": "Load latest",
   "ui.settings.readiness.eventAttackReadiness.berimond.camp.stock.is.checked.at.launch.e26aa185": "Berimond camp stock is checked at launch. Transfers from the source castle and the armorer lane refill it.",
-  "ui.settings.components.eventAttackSetupField.this.attack.uses.the.saved.preset.until.af2cf4a8": "This attack uses the saved preset until you apply a setup here with Edit composition or the recommended starting setup."
+  "ui.settings.components.eventAttackSetupField.this.attack.uses.the.saved.preset.until.af2cf4a8": "This attack uses the saved preset until you apply a setup here with Edit composition or the recommended starting setup.",
+  "ui.settings.components.eventAttackSetupField.apply.composition.b3b4946b": "Apply composition"
 } as const;
