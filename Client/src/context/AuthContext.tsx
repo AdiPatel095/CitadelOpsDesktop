@@ -257,7 +257,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const forgetFailure = useCallback((feature: string) => {
     setWriteFailures((current) => {
       if (!(feature in current)) return current;
-      const { [feature]: _removed, ...rest } = current;
+      const rest = { ...current };
+      delete rest[feature];
       return rest;
     });
   }, []);
