@@ -202,7 +202,7 @@ export const AutoFoodBalanceSettingsModal: React.FC<AutoFoodBalanceSettingsModal
                 {readiness.rows.map((row) => (
                   <tr key={row.castleId}>
                     <td className="max-w-0 truncate py-1 pr-2 text-text-main">{row.name}</td>
-                    <td className="py-1 pr-2 text-right font-mono tabular-nums">{row.food == null ? '—' : row.food.toLocaleString()}</td>
+                    <td className="py-1 pr-2 text-right font-mono tabular-nums">{row.food == null ? '—' : Math.floor(row.food).toLocaleString()}</td>
                     <td className="py-1 text-text-muted"><LocalizedText messageKey="setupReadiness.foodRole" params={{ role: row.role }} /></td>
                   </tr>
                 ))}
