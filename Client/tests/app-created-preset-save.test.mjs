@@ -363,4 +363,3 @@ test('Khan: reusing another slot\'s app-created defense promotes it with its raw
   assert.equal(record.app, undefined);
   assert.equal(record['x-extra'], 1);
 });
-

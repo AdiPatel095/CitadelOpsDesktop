@@ -349,4 +349,3 @@ export async function saveInlineDefenseAsUserPreset(
   await draftSession.saveSection(DEFENSE_PRESETS_SECTION, buildPresetDocumentUpdate(raw, current, [...current, preset]));
   return preset.id;
 }
-
