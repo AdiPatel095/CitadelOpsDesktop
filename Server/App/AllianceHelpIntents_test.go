@@ -37,7 +37,7 @@ func TestPlanAllianceHelpRequestUsesCapturedAHRPayload(t *testing.T) {
 				Production: map[int]State.ProductionQueue{
 					test.lineID: {
 						LineID: test.lineID, ObservedAt: observedAt,
-						Active: &State.QueueItem{ProductionID: 2033307472},
+						Active: &State.QueueItem{ProductionID: 2033307472, Amount: 5},
 					},
 				},
 			}
@@ -114,7 +114,7 @@ func TestRecruitmentAllianceHelpResolverRequiresExactCommittedCastleContext(t *t
 		Production: map[int]State.ProductionQueue{
 			recruitmentProductionLineID: {
 				LineID: recruitmentProductionLineID, ObservedAt: observedAt,
-				Active: &State.QueueItem{ProductionID: 205, AllianceHelpAvailable: true},
+				Active: &State.QueueItem{ProductionID: 205, Amount: 5, AllianceHelpAvailable: true},
 			},
 		},
 	}
@@ -333,7 +333,7 @@ func TestRecruitmentAllianceHelpRequiresQueueFromCommittedCastleSnapshot(t *test
 		Production: map[int]State.ProductionQueue{
 			recruitmentProductionLineID: {
 				LineID: recruitmentProductionLineID, ObservedAt: now.Add(-time.Minute),
-				Active: &State.QueueItem{ProductionID: 205, AllianceHelpAvailable: true},
+				Active: &State.QueueItem{ProductionID: 205, Amount: 5, AllianceHelpAvailable: true},
 			},
 		},
 	}
@@ -365,7 +365,7 @@ func TestAllianceHelpRejectsCurrentRetainedUnfocusableCastle(t *testing.T) {
 		Production: map[int]State.ProductionQueue{
 			hospitalProductionLineID: {
 				LineID: hospitalProductionLineID,
-				Active: &State.QueueItem{ProductionID: 204, AllianceHelpAvailable: true},
+				Active: &State.QueueItem{ProductionID: 204, Amount: 5, AllianceHelpAvailable: true},
 			},
 		},
 	}
@@ -402,7 +402,7 @@ func TestPlanHospitalAllianceHelpStopsAtObservedAccountLimit(t *testing.T) {
 		Production: map[int]State.ProductionQueue{
 			hospitalProductionLineID: {
 				LineID: hospitalProductionLineID,
-				Queued: []State.QueueItem{{ProductionID: 204}},
+				Queued: []State.QueueItem{{ProductionID: 204, Amount: 5}},
 			},
 		},
 	}
@@ -426,7 +426,7 @@ func TestHospitalAllianceHelpWaitsForCurrentRequestList(t *testing.T) {
 		Production: map[int]State.ProductionQueue{
 			hospitalProductionLineID: {
 				LineID: hospitalProductionLineID,
-				Queued: []State.QueueItem{{ProductionID: 204}},
+				Queued: []State.QueueItem{{ProductionID: 204, Amount: 5}},
 			},
 		},
 	}
@@ -467,7 +467,7 @@ func TestRecruitmentAllianceHelpIgnoresPendingOwnRequestWhenQueueLacksRAH(t *tes
 			recruitmentProductionLineID: {
 				LineID: recruitmentProductionLineID, ObservedAt: now,
 				Active: &State.QueueItem{ProductionID: 205, AllianceHelpAvailable: true, AllianceHelpRequested: true},
-				Queued: []State.QueueItem{{ProductionID: 206, AllianceHelpAvailable: true}},
+				Queued: []State.QueueItem{{ProductionID: 206, Amount: 5, AllianceHelpAvailable: true}},
 			},
 		},
 	}
@@ -498,7 +498,7 @@ func TestAllianceHelpGuardReplansAtAuthoritativeHospitalLimit(t *testing.T) {
 		Production: map[int]State.ProductionQueue{
 			hospitalProductionLineID: {
 				LineID: hospitalProductionLineID,
-				Queued: []State.QueueItem{{ProductionID: 204}},
+				Queued: []State.QueueItem{{ProductionID: 204, Amount: 5}},
 			},
 		},
 	}
@@ -613,8 +613,8 @@ func TestMarkAllianceHelpRequestedDoesNotInferRecruitmentSuccess(t *testing.T) {
 		Production: map[int]State.ProductionQueue{
 			0: {
 				LineID: 0,
-				Active: &State.QueueItem{ProductionID: 101, AllianceHelpAvailable: true},
-				Queued: []State.QueueItem{{ProductionID: 101}, {ProductionID: 102}},
+				Active: &State.QueueItem{ProductionID: 101, Amount: 5, AllianceHelpAvailable: true},
+				Queued: []State.QueueItem{{ProductionID: 101, Amount: 5}, {ProductionID: 102, Amount: 5}},
 			},
 		},
 	}

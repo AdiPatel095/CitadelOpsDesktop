@@ -179,13 +179,24 @@ func (state *GameState) MarkInventoryEquipmentMutated(at time.Time) bool {
 // active recruitment job has no known completion time.
 const RecruitmentHelpIneligibilityFallback = 30 * time.Minute
 
+// RecruitmentAllianceHelpMinimumUnits is the official client threshold for
+// recruitment-list help: CastleRecruitDialogUnits treats the list as helpable
+// only while some slot holds at least five units without RAH
+// (dialog_allianceHelp_requestButton_inactive_minimumFailed: "No recruitment
+// slot contains the minimum of 5 units."). Restored by CEO decision on CIT-13
+// after its removal in 2.3.5.
+const RecruitmentAllianceHelpMinimumUnits = 5
+
 // RecruitmentAllianceHelpItemEligible is the single recruitment help rule used
 // by both the automation policy and the request planner/resolver. The official
 // client requests T=6 help for the whole recruitment list, so queued jobs stay
-// eligible; an inferred or observed RAH, a job already past its known
-// completion, or a live AHR 269 record excludes the job.
+// eligible; a job qualifies only with at least five units and no inferred or
+// observed RAH, before its known completion, and outside a live AHR 269 record.
+// Selecting the first qualifying job therefore requests help exactly when at
+// least one non-RAH slot holds five or more units.
 func RecruitmentAllianceHelpItemEligible(state GameState, castleID CastleID, item QueueItem, now time.Time) bool {
-	if item.ProductionID <= 0 || item.AllianceHelpRequested {
+	if item.ProductionID <= 0 || item.AllianceHelpRequested ||
+		item.Amount < RecruitmentAllianceHelpMinimumUnits {
 		return false
 	}
 	if item.CompletesAt != nil && !now.IsZero() && !item.CompletesAt.After(now) {

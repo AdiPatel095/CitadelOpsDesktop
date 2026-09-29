@@ -164,12 +164,13 @@ func TestRecruitmentHelpEligibilityRefusesInferredOrCompletedJobs(t *testing.T) 
 		"inferred RAH":  {ProductionID: 1, Amount: 8, AllianceHelpRequested: true},
 		"missing id":    {Amount: 8},
 		"completed job": {ProductionID: 2, Amount: 8, CompletesAt: &past},
+		"below minimum": {ProductionID: 4, Amount: RecruitmentAllianceHelpMinimumUnits - 1},
 	} {
 		if RecruitmentAllianceHelpItemEligible(state, 77, item, now) {
 			t.Errorf("%s was eligible", name)
 		}
 	}
-	if !RecruitmentAllianceHelpItemEligible(state, 77, QueueItem{ProductionID: 3, Amount: 1}, now) {
+	if !RecruitmentAllianceHelpItemEligible(state, 77, QueueItem{ProductionID: 3, Amount: RecruitmentAllianceHelpMinimumUnits}, now) {
 		t.Fatal("queued explicit-RAH-false job was refused")
 	}
 }

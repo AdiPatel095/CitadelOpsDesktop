@@ -439,9 +439,11 @@ func TestRecruitPolicyUsesQueueRAHInsteadOfOwnRequestList(t *testing.T) {
 	castle.Production[0] = queue
 	snapshot.State.Castles[77] = castle
 	decision, err = policy.Evaluate(t.Context(), snapshot)
+	// Slot 202 holds one unit: below the official five-unit minimum it is
+	// skipped, and the first false-RAH slot with five units is requested.
 	if err != nil || decision.Request == nil || decision.Request.Name != "alliance.help.request" ||
-		allianceHelpProductionID(t, decision) != 202 {
-		t.Fatalf("mixed RAH queue did not target its first false slot: %#v err=%v", decision, err)
+		allianceHelpProductionID(t, decision) != 203 {
+		t.Fatalf("mixed RAH queue did not target its first helpable false slot: %#v err=%v", decision, err)
 	}
 
 	for index := range queue.Queued {
@@ -619,7 +621,9 @@ func TestRecruitPolicyRequestsFirstFalseRAHSlotDespiteOtherRAH(t *testing.T) {
 	}
 }
 
-func TestRecruitPolicyRequestsFalseRAHBelowFormerMinimumStack(t *testing.T) {
+// CIT-13 q1 (CEO decision): restore the official client rule. A recruitment
+// list whose false-RAH slots all hold fewer than five units is not helpable.
+func TestRecruitPolicyDoesNotRequestAllianceHelpBelowMinimumStack(t *testing.T) {
 	now := time.Date(2026, 7, 11, 12, 0, 0, 0, time.UTC)
 	snapshot := recruitPolicySnapshot(t, now)
 	castle := snapshot.State.Castles[77]
@@ -635,9 +639,17 @@ func TestRecruitPolicyRequestsFalseRAHBelowFormerMinimumStack(t *testing.T) {
 	if err != nil {
 		t.Fatalf("evaluate policy: %v", err)
 	}
-	if decision.Request == nil || decision.Request.Name != "alliance.help.request" ||
-		allianceHelpProductionID(t, decision) != 201 {
-		t.Fatalf("small false-RAH slot was not requested: %#v", decision)
+	if decision.Request != nil && decision.Request.Name == "alliance.help.request" {
+		t.Fatalf("list below the five-unit minimum requested alliance help: %#v", decision)
+	}
+
+	queue.Queued[3].Amount = State.RecruitmentAllianceHelpMinimumUnits
+	castle.Production[0] = queue
+	snapshot.State.Castles[77] = castle
+	decision, err = NewRecruitPolicy().Evaluate(context.Background(), snapshot)
+	if err != nil || decision.Request == nil || decision.Request.Name != "alliance.help.request" ||
+		allianceHelpProductionID(t, decision) != 205 {
+		t.Fatalf("five-unit false-RAH slot was not requested: %#v err=%v", decision, err)
 	}
 }
 
