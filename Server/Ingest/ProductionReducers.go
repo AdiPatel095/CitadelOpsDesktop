@@ -79,6 +79,10 @@ func reduceProductionSnapshot(
 	if changed {
 		gameState.SetCastleParts(castleID, castle, State.CastlePartProduction)
 		domains = append(domains, "castles", "production")
+		// An AHR 269 record ends once its rejected jobs leave the queue.
+		if State.PruneRecruitmentHelpIneligibility(gameState, frame.ReceivedAt) {
+			helpChanged = true
+		}
 	}
 	if helpChanged {
 		domains = append(domains, "alliance-help")
@@ -136,6 +140,10 @@ func reduceEmbeddedProductionSnapshots(
 	if changed {
 		gameState.SetCastleParts(castleID, castle, State.CastlePartProduction)
 		domains = append(domains, "castles", "production")
+		// An AHR 269 record ends once its rejected jobs leave the queue.
+		if State.PruneRecruitmentHelpIneligibility(gameState, frame.ReceivedAt) {
+			helpChanged = true
+		}
 	}
 	if helpChanged {
 		domains = append(domains, "alliance-help")

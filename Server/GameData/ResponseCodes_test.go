@@ -1,6 +1,7 @@
 package GameData
 
 import (
+	"strconv"
 	"strings"
 	"testing"
 )
@@ -231,5 +232,73 @@ func TestResolveConstructionSlotOccupiedIsOpcodeScoped(t *testing.T) {
 	}
 	if unrelated := ResolveResponseCode(nil, "future", 374); unrelated.Source != ResponseCodeUnknown || unrelated.ExpectedState {
 		t.Fatalf("RPC mapping leaked to another opcode = %#v", unrelated)
+	}
+}
+
+// CIT-13: official client enum names verified in ggs.dll.6644f9217d73e8ce169d.js.
+func TestResolveCIT13OpcodePairsAreOpcodeScoped(t *testing.T) {
+	store, err := DecodeLanguage([]byte(`{
+		"errorCode_95":"This target can't be attacked again yet. Wait for target's cooldown to end or refresh the world map.",
+		"errorCode_175":"This place is located in a kingdom which you can no longer access.",
+		"errorCode_66":"This message is old and has been deleted."
+	}`), LanguageMetadata{Language: "en"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, test := range []struct {
+		opcode           string
+		code             int
+		source           ResponseCodeSource
+		kind             ResponseCodeKind
+		messageFragment  string
+		recoveryFragment string
+	}{
+		{" ABI ", 95, ResponseCodeOfficial, ResponseCodeCooldown, "can't be attacked again yet", "before Auto Fortress re-checks this fortress"},
+		{"cra", 95, ResponseCodeOfficial, ResponseCodeCooldown, "can't be attacked again yet", "before this target is checked again"},
+		{"SEQ", 214, ResponseCodeOfficialClient, ResponseCodeStaleState, "not found in storage", "Refresh equipment storage before selling again"},
+		{"sbp", 175, ResponseCodeOfficial, ResponseCodeContext, "can no longer access", "Re-enter the destination castle"},
+		{"ahr", 269, ResponseCodeOfficialClient, ResponseCodeAvailability, "cannot receive alliance help", "waits for the next helpable order"},
+		{"bsd", 130, ResponseCodeOfficialClient, ResponseCodeAvailability, "no spy data", "will not be fetched again"},
+		{"bsd", 66, ResponseCodeOfficial, ResponseCodeAvailability, "has been deleted", "will not be fetched again"},
+	} {
+		meaning := ResolveResponseCode(store, test.opcode, test.code)
+		if meaning.Source != test.source || meaning.Kind != test.kind || !meaning.ExpectedState ||
+			!strings.Contains(meaning.Message, test.messageFragment) ||
+			!strings.Contains(meaning.Recovery, test.recoveryFragment) || meaning.RecoveryDescriptor == nil {
+			t.Errorf("%s %d meaning = %#v", test.opcode, test.code, meaning)
+		}
+		if test.source == ResponseCodeOfficial && meaning.MessageDescriptor.OfficialKey != "errorCode_"+strconv.Itoa(test.code) {
+			t.Errorf("%s %d replaced the official language text descriptor: %#v", test.opcode, test.code, meaning.MessageDescriptor)
+		}
+		unrelated := ResolveResponseCode(store, "xyz", test.code)
+		if unrelated.Recovery == meaning.Recovery {
+			t.Errorf("%s %d recovery leaked to another opcode = %#v", test.opcode, test.code, unrelated)
+		}
+		if test.code != 175 && (unrelated.Kind != "" || unrelated.ExpectedState || unrelated.Recovery != "") {
+			t.Errorf("%s %d guidance leaked to another opcode = %#v", test.opcode, test.code, unrelated)
+		}
+		if test.source == ResponseCodeOfficialClient && unrelated.Source != ResponseCodeUnknown {
+			t.Errorf("%s %d official-client meaning leaked to another opcode = %#v", test.opcode, test.code, unrelated)
+		}
+	}
+	// SBP keeps its purchase-specific 175 guidance; other opcodes keep the generic one.
+	if generic := ResolveResponseCode(store, "jaa", 175); !strings.Contains(generic.Recovery, "Choose a location") {
+		t.Fatalf("generic 175 guidance changed = %#v", generic)
+	}
+	// Existing AHR 273 mapping is unchanged.
+	if duplicate := ResolveResponseCode(nil, "ahr", 273); !strings.Contains(duplicate.Message, "duplicate") {
+		t.Fatalf("AHR 273 mapping changed = %#v", duplicate)
+	}
+	for opcode, code := range map[string]int{"seq": 269, "ahr": 214, "bsd": 214, "sge": 214} {
+		if got := ResolveResponseCode(nil, opcode, code); got.Source != ResponseCodeUnknown {
+			t.Errorf("%s %d resolved from another opcode's mapping = %#v", opcode, code, got)
+		}
+	}
+	for _, opcode := range []string{"seq", "ahr", "bsd"} {
+		codes := store.ResponseCodeMeanings(opcode)
+		want := map[string]int{"seq": 214, "ahr": 269, "bsd": 130}[opcode]
+		if codes[want].Source != ResponseCodeOfficialClient {
+			t.Errorf("%s response-code catalog omitted %d: %#v", opcode, want, codes[want])
+		}
 	}
 }

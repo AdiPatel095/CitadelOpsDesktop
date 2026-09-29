@@ -566,6 +566,21 @@ type AllianceHelpRequestState struct {
 	OthersObservedGeneration         uint64                           `json:"othersObservedGeneration,omitempty"`
 	LastHelpAllAt                    time.Time                        `json:"lastHelpAllAt,omitempty"`
 	LastHelpAllGeneration            uint64                           `json:"lastHelpAllGeneration,omitempty"`
+	// IneligibleRecruitment retains the game's AHR 269 (PACKAGE_NOT_HELPABLE)
+	// answer per castle until the rejected recruitment list changes or the
+	// bounded record expires. It never unlocks a lane or authorizes a request.
+	IneligibleRecruitment map[CastleID]RecruitmentHelpIneligibility `json:"ineligibleRecruitment,omitempty"`
+}
+
+// RecruitmentHelpIneligibility records the recruitment production jobs that
+// were present when the game rejected a T=6 recruitment-list help request
+// with AHR 269. The official client requests help for the whole list, so the
+// rejection covers every job it contained; jobs added later stay eligible.
+type RecruitmentHelpIneligibility struct {
+	ProductionIDs []int64   `json:"productionIds"`
+	OperationID   string    `json:"operationId,omitempty"`
+	ObservedAt    time.Time `json:"observedAt"`
+	Until         time.Time `json:"until"`
 }
 
 // RecruitmentAllianceHelpRequest retains the server-assigned request identity
@@ -1046,6 +1061,9 @@ type InventoryState struct {
 	GemStacks                       map[GemID]int64                           `json:"gemStacks"`
 	Items                           map[string]map[int64]int64                `json:"items"`
 	ItemsObservedAt                 map[string]time.Time                      `json:"itemsObservedAt,omitempty"`
+	// EquipmentMutatedAt is the latest outbound equipment/gem sale. Storage
+	// snapshots received before it are stale whatever the sale's outcome.
+	EquipmentMutatedAt time.Time `json:"equipmentMutatedAt,omitempty"`
 }
 
 type ResearchState struct {
@@ -2107,6 +2125,25 @@ type ReportState struct {
 type CommandContextState struct {
 	ProductionSessionKey int        `json:"productionSessionKey,omitempty"`
 	ProductionObservedAt *time.Time `json:"productionObservedAt,omitempty"`
+	// PendingRequests correlates outbound commands whose response has no
+	// self-identifying payload (seq, sge, ahr) with their later inbound reply.
+	// Bounded per opcode and scoped to one session generation.
+	PendingRequests []PendingCommandRequest `json:"pendingRequests,omitempty"`
+}
+
+// PendingCommandRequest is the request identity captured from one outbound
+// command frame. Only the fields of its own opcode are populated.
+type PendingCommandRequest struct {
+	Opcode            string              `json:"opcode"`
+	OperationID       string              `json:"operationId,omitempty"`
+	SentAt            time.Time           `json:"sentAt"`
+	SessionGeneration uint64              `json:"sessionGeneration,omitempty"`
+	EquipmentID       EquipmentInstanceID `json:"equipmentId,omitempty"`
+	GemID             int64               `json:"gemId,omitempty"`
+	RelicGem          bool                `json:"relicGem,omitempty"`
+	HelpType          int                 `json:"helpType,omitempty"`
+	HelpID            int64               `json:"helpId,omitempty"`
+	CastleID          CastleID            `json:"castleId,omitempty"`
 }
 
 type DailyAttackState struct {

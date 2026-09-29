@@ -1402,6 +1402,9 @@ func cloneGameStateComponents(source GameState, components ComponentSet) GameSta
 		clone.AllianceHelpRequests.PendingOtherListIDs = append(
 			[]int64{}, source.AllianceHelpRequests.PendingOtherListIDs...,
 		)
+		clone.AllianceHelpRequests.IneligibleRecruitment = cloneRecruitmentHelpIneligibility(
+			source.AllianceHelpRequests.IneligibleRecruitment,
+		)
 	}
 	if components.Has(ComponentAlliances) {
 		clone.Alliances = make(map[AllianceID]AllianceState, len(source.Alliances))
@@ -1517,6 +1520,9 @@ func cloneGameStateComponents(source GameState, components ComponentSet) GameSta
 	}
 	if components.Has(ComponentCommandContext) {
 		clone.CommandContext.ProductionObservedAt = cloneTimePointer(source.CommandContext.ProductionObservedAt)
+		clone.CommandContext.PendingRequests = append(
+			[]PendingCommandRequest(nil), source.CommandContext.PendingRequests...,
+		)
 	}
 	if components.Has(ComponentAutomations) {
 		clone.Automations = make(map[string]AutomationState, len(source.Automations))

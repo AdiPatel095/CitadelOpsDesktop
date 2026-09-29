@@ -81,9 +81,20 @@ var officialClientEnchantResponseCodes = map[int]ResponseCodeMeaning{
 var officialClientOpcodeResponseCodes = map[string]map[int]ResponseCodeMeaning{
 	// Official client C2_CONFIRMATION_REQUIRED. Scoped to the verified EUP flow.
 	"eup": {440: {Code: 440, Message: "This ruby purchase requires confirmation in the game.", MessageDescriptor: Localization.New("server.gamedata.ruby_purchase_confirmation", "This ruby purchase requires confirmation in the game.", nil), Source: ResponseCodeOfficialClient}},
-	// Official client enum: NO_MULTIPLE_ALLIANCEHELP = 273.
+	// Official client enum: NO_MULTIPLE_ALLIANCEHELP = 273, PACKAGE_NOT_HELPABLE = 269.
 	// https://empire-html5.goodgamestudios.com/default/dll/ggs.dll.6644f9217d73e8ce169d.js
+	// (SHA-256 4e5a349421097555628c3a3dc9eae9431b7c29b093e4ac6ef35a50d5aee5da5e)
 	"ahr": {
+		269: {
+			Code:               269,
+			Message:            "The recruitment order cannot receive alliance help.",
+			MessageDescriptor:  Localization.New("server.gamedata.the_recruitment_order_cannot.1886103f", "The recruitment order cannot receive alliance help.", nil),
+			Source:             ResponseCodeOfficialClient,
+			Kind:               ResponseCodeAvailability,
+			Recovery:           "The current recruitment order cannot receive alliance help right now. The app waits for the next helpable order.",
+			RecoveryDescriptor: Localization.New("server.gamedata.the_current_recruitment_order.99c86d86", "The current recruitment order cannot receive alliance help right now. The app waits for the next helpable order.", nil),
+			ExpectedState:      true,
+		},
 		273: {
 			Code:               273,
 			Message:            "The alliance-help request was rejected as a duplicate or multiple request.",
@@ -113,6 +124,34 @@ var officialClientOpcodeResponseCodes = map[string]map[int]ResponseCodeMeaning{
 	},
 	"ere": officialClientEnchantResponseCodes,
 	"eqe": officialClientEnchantResponseCodes,
+	// Official client enum: EQUIPMENT_NOT_FOUND = 214 (ggs.dll above). The
+	// game publishes no language text; a SEQ 214 never proves a sale.
+	"seq": {
+		214: {
+			Code:               214,
+			Message:            "The equipment item was not found in storage.",
+			MessageDescriptor:  Localization.New("server.gamedata.the_equipment_item_was.94fc0647", "The equipment item was not found in storage.", nil),
+			Source:             ResponseCodeOfficialClient,
+			Kind:               ResponseCodeStaleState,
+			Recovery:           "This equipment is no longer in storage (already sold or moved). Refresh equipment storage before selling again.",
+			RecoveryDescriptor: Localization.New("server.gamedata.this_equipment_is_no.40ff15b6", "This equipment is no longer in storage (already sold or moved). Refresh equipment storage before selling again.", nil),
+			ExpectedState:      true,
+		},
+	},
+	// Official client enum: NO_SPY_DATA = 130 (ggs.dll above). The official
+	// BSDCommand.executeCommand handles NO_SPY_DATA like NO_SUCH_MESSAGE (66).
+	"bsd": {
+		130: {
+			Code:               130,
+			Message:            "The game has no spy data for this report.",
+			MessageDescriptor:  Localization.New("server.gamedata.the_game_has_no.2cd515eb", "The game has no spy data for this report.", nil),
+			Source:             ResponseCodeOfficialClient,
+			Kind:               ResponseCodeAvailability,
+			Recovery:           "The spy report is no longer available from the game. It will not be fetched again.",
+			RecoveryDescriptor: Localization.New("server.gamedata.the_spy_report_is.0abc413e", "The spy report is no longer available from the game. It will not be fetched again.", nil),
+			ExpectedState:      true,
+		},
+	},
 }
 
 var observedOpcodeResponseCodes = map[string]map[int]ResponseCodeMeaning{
@@ -184,6 +223,30 @@ var responseCodeGuidanceByCode = map[int]responseCodeGuidance{
 }
 
 var responseCodeGuidanceByOpcode = map[string]map[int]responseCodeGuidance{
+	// Official client enum COOLING_DOWN = 95; errorCode_95 supplies the text.
+	"abi": {
+		95: {
+			kind: ResponseCodeCooldown, expectedState: true,
+			recovery:           "The attack was not sent. The lane pauses for the safety cooldown before Auto Fortress re-checks this fortress.",
+			recoveryDescriptor: Localization.New("server.gamedata.the_attack_was_not.6a515a2d", "The attack was not sent. The lane pauses for the safety cooldown before Auto Fortress re-checks this fortress.", nil),
+		},
+	},
+	// CRA is shared by every attack lane, so its text names no feature.
+	"cra": {
+		95: {
+			kind: ResponseCodeCooldown, expectedState: true,
+			recovery:           "The attack was not sent. The lane pauses for the safety cooldown before this target is checked again.",
+			recoveryDescriptor: Localization.New("server.gamedata.the_attack_was_not.2af0c0e8", "The attack was not sent. The lane pauses for the safety cooldown before this target is checked again.", nil),
+		},
+	},
+	// Official client enum NO_SUCH_MESSAGE = 66; errorCode_66 supplies the text.
+	"bsd": {
+		66: {
+			kind: ResponseCodeAvailability, expectedState: true,
+			recovery:           "The spy report is no longer available from the game. It will not be fetched again.",
+			recoveryDescriptor: Localization.New("server.gamedata.the_spy_report_is.0abc413e", "The spy report is no longer available from the game. It will not be fetched again.", nil),
+		},
+	},
 	"adi": {
 		95: {
 			kind: ResponseCodeCooldown, expectedState: true,
@@ -234,6 +297,13 @@ var responseCodeGuidanceByOpcode = map[string]map[int]responseCodeGuidance{
 		},
 	},
 	"sbp": {
+		// Official client enum INVALID_KINGDOM_ID = 175; errorCode_175 supplies
+		// the text. Overrides the generic 175 guidance for purchases.
+		175: {
+			kind: ResponseCodeContext, expectedState: true,
+			recovery:           "The purchase was rejected for the current kingdom context. Re-enter the destination castle in its kingdom and refresh the shop before buying again.",
+			recoveryDescriptor: Localization.New("server.gamedata.the_purchase_was_rejected.3e23965a", "The purchase was rejected for the current kingdom context. Re-enter the destination castle in its kingdom and refresh the shop before buying again.", nil),
+		},
 		55: {
 			kind: ResponseCodeAvailability, expectedState: true,
 			recovery:           "Wait for enough shop currency or lower the purchase amount, then refresh the shop.",

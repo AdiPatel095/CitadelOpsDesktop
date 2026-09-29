@@ -211,7 +211,7 @@ func (policy *ProductionPolicy) Evaluate(_ context.Context, snapshot Snapshot) (
 		if queueCapacity <= 0 || occupied >= queueCapacity {
 			full++
 			if policy.lineID == 0 && occupied >= queueCapacity {
-				if productionID := eligibleAllianceHelpProductionID(queue); productionID > 0 {
+				if productionID := eligibleAllianceHelpProductionID(snapshot.State, castleID, queue, snapshot.Now); productionID > 0 {
 					arguments, _ := json.Marshal(map[string]any{"productionId": productionID})
 					policy.lastCastleID = castleID
 					return Decision{

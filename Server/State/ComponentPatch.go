@@ -67,6 +67,7 @@ type InventoryPatch struct {
 	Gems                            *map[GemInstanceID]GemInstance             `json:"gems,omitempty"`
 	GemChanges                      *[]GemChange                               `json:"gemChanges,omitempty"`
 	GemStacks                       *map[GemID]int64                           `json:"gemStacks,omitempty"`
+	EquipmentMutatedAt              *time.Time                                 `json:"equipmentMutatedAt,omitempty"`
 	Items                           *map[string]map[int64]int64                `json:"items,omitempty"`
 	ItemsObservedAt                 *map[string]time.Time                      `json:"itemsObservedAt,omitempty"`
 	ItemChanges                     *[]InventoryItemChange                     `json:"itemChanges,omitempty"`
@@ -499,6 +500,7 @@ func inventoryComponentPatch(inventory *InventoryState, changes componentChanges
 	}
 	if parts&inventoryGemStacksMutable != 0 {
 		patch.GemStacks = &inventory.GemStacks
+		patch.EquipmentMutatedAt = &inventory.EquipmentMutatedAt
 	}
 	if parts&inventoryItemsMutable != 0 {
 		patch.ItemsObservedAt = &inventory.ItemsObservedAt
