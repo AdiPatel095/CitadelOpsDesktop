@@ -356,9 +356,11 @@ func clientCastles(source map[CastleID]CastleState) map[CastleID]CastleState {
 
 func clientCastle(source CastleState) CastleState {
 	projected := source
-	projected.ContextSnapshotObservedAt = time.Time{}
-	projected.FoodStateObservedAt = time.Time{}
-	projected.UnitsObservedAt = time.Time{}
+	// ContextSnapshotObservedAt, FoodStateObservedAt and UnitsObservedAt are
+	// projected: the dashboard reads them to say how old a castle's stock and
+	// food figures are. The reducers already advance them together with the
+	// unit, resource and identity parts, whose patches are published today,
+	// so projecting the values adds no patches or revisions.
 	projected.BuildingProduction = map[BuildingInstanceID]BuildingProduction{}
 	projected.Layout = CastleLayout{}
 	projected.BuildingQueue = BuildingConstructionQueue{}
@@ -378,9 +380,6 @@ func clientCastleChanges(source []CastleChange) []CastleChange {
 		}
 		if change.Patch != nil {
 			value := *change.Patch
-			value.ContextSnapshotObservedAt = nil
-			value.FoodStateObservedAt = nil
-			value.UnitsObservedAt = nil
 			value.BuildingProduction = nil
 			value.Layout = nil
 			value.BuildingQueue = nil
