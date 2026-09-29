@@ -25,6 +25,7 @@ import { useLocale } from '../../i18n/LocaleContext';
 import { LocalizedText } from '../../i18n/LocalizedText';
 import { isRecordOwnedBy, recordOwner } from '../../presets/AppCreatedRecords';
 import type { ReadinessCheck } from '../readiness/Readiness';
+import { DEFENSE_NO_TOOLS } from '../readiness/khanReadiness';
 import type { KhanDefenseStarter } from '../onboarding/KhanDefenseStarter';
 import { validateUserPresetName } from '../AppCreatedPresetSave';
 import { ReadinessCheckLine } from './ReadinessPanel';
@@ -206,6 +207,9 @@ export const DefenseSetupField: React.FC<DefenseSetupFieldProps> = ({
       <LocalizedText messageKey="defenseSetup.summary" params={{ tools: summary.summary.toolAmount, types: summary.summary.toolTypes.length }} />
     </Badge>
   ) : null;
+  const toollessNote = summary.summary && summary.summary.toolAmount === 0 ? (
+    <p className="text-[11px] font-semibold text-warning"><LocalizedText messageKey={DEFENSE_NO_TOOLS} /></p>
+  ) : null;
 
   return (
     <div id={id} ref={fieldRef} tabIndex={-1} className="min-w-0 space-y-3 rounded-xl border border-border-base bg-bg-app/35 p-3 outline-none focus-visible:ring-2 focus-visible:ring-primary/40">
@@ -250,6 +254,7 @@ export const DefenseSetupField: React.FC<DefenseSetupFieldProps> = ({
               {summaryBadge}
             </div>
           ) : null}
+          {selectedPreset ? toollessNote : null}
           {owner && ownerDefinition ? (
             <p className="text-[11px] text-warning">
               <LocalizedText messageKey="attackPresets.createdByOther" params={{ module: `${localizeStatic(ownerDefinition.moduleLabelKey)} · ${localizeStatic(ownerDefinition.slotLabelKey)}` }} />
@@ -285,7 +290,9 @@ export const DefenseSetupField: React.FC<DefenseSetupFieldProps> = ({
               {appCreatedPresetBadge()}
               {summaryBadge}
             </div>
-          ) : value.source === 'preset' ? (
+          ) : null}
+          {inlineSetup ? toollessNote : null}
+          {inlineSetup ? null : value.source === 'preset' ? (
             <p className="text-xs text-text-muted"><LocalizedText messageKey="ui.settings.components.defenseSetupField.this.defense.uses.the.saved.preset.until.c319bac8" /></p>
           ) : (
             <p className="text-xs text-text-muted"><LocalizedText messageKey="ui.settings.components.defenseSetupField.no.defense.is.configured.here.yet.edit.6eac4105" /></p>
@@ -394,6 +401,9 @@ export const DefenseSetupField: React.FC<DefenseSetupFieldProps> = ({
               ))}
               <div className="col-span-3 text-left text-xs text-text-muted">
                 <LocalizedText messageKey="defenseSetup.summary" params={{ tools: starterSummary.toolAmount, types: starterSummary.toolTypes.length }} />
+                {starterSummary.toolAmount === 0 ? (
+                  <span className="mt-1 block font-semibold text-warning"><LocalizedText messageKey={DEFENSE_NO_TOOLS} /></span>
+                ) : null}
               </div>
             </div>
           ) : null}

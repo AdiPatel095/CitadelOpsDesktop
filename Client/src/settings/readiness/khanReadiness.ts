@@ -36,6 +36,9 @@ export interface KhanReadinessInput {
 
 const RAGE_BOOSTER_ID = '27';
 
+/** Maya's copy (CIT-16 acceptance); also shown under the defense field summary. */
+export const DEFENSE_NO_TOOLS: MessageKey = "ui.settings.readiness.khanReadiness.this.defense.names.no.tools.re.applying.f866c645";
+
 const message = (key: MessageKey): MessageKey => key;
 
 /**
@@ -75,6 +78,7 @@ export function evaluateKhanReadiness(input: KhanReadinessInput): ReadinessRepor
   }));
 
   const defense = defenseComposition(input.defense, input.defenseDocument);
+  let defenseToolless = false;
   if (input.defense.source === 'none') {
     checks.push({ id: 'defense-composition', slot: 'defense', state: 'blocked', messageKey: message('ui.settings.readiness.khanReadiness.no.main.castle.defense.is.chosen.pick.d5b8b9f5'), fix: 'presets' });
   } else if (!defense) {
@@ -82,6 +86,7 @@ export function evaluateKhanReadiness(input: KhanReadinessInput): ReadinessRepor
   } else {
     const summary = summarizeDefensePreset(defense);
     checks.push({ id: 'defense-composition', slot: 'defense', state: 'valid', messageKey: message('defenseSetup.summary'), params: { tools: summary.toolAmount, types: summary.toolTypes.length } });
+    defenseToolless = summary.toolAmount === 0;
     if (summary.toolAmount > 0) {
       checks.push(draft.replenishDefenseTools
         ? { id: 'defense-tool-stock', slot: 'defense', state: 'pending', messageKey: message('ui.settings.readiness.khanReadiness.missing.defense.tools.are.bought.when.the.bc51f5ea') }
@@ -116,6 +121,9 @@ export function evaluateKhanReadiness(input: KhanReadinessInput): ReadinessRepor
 
   // The resolved plan: existing advanced effects, stated before Start.
   plan.push({ id: 'defense-reapply', messageKey: message('ui.settings.components.autoKhanSettingsModal.the.selected.defense.preset.is.re.applied.e0cc99f5') });
+  // Re-applying a tool-less defense releases the castle's current wall, gate and moat tools
+  // (Server/Khan/DefenseSafety.go Matches; Server/App/DefensePresetIntents.go releasedGroups).
+  if (defenseToolless) plan.push({ id: 'defense-no-tools', messageKey: DEFENSE_NO_TOOLS });
   if (!draft.attackLaunchesEnabled) plan.push({ id: 'attacks-locked', messageKey: message('ui.settings.components.autoKhanSettingsModal.stops.only.auto.khan.s.own.attack.284cf413') });
   plan.push(draft.triggerRage
     ? { id: 'trigger-rage', messageKey: message('ui.settings.readiness.khanReadiness.at.full.rage.auto.khan.dispatches.the.eacd290a') }

@@ -1743,5 +1743,6 @@ export const sourceMessages = {
   "ui.settings.readiness.stormReadiness.the.unlock.plan.builds.the.chosen.storm.d2a66163": "The unlock plan builds the chosen Storm castle; its costs are shown under Unlock.",
   "ui.settings.components.autoStormSettingsModal.optional.it.only.decorates.the.storm.castle.bda00004": "Optional. It only decorates the Storm castle after construction; attacks never wait for it.",
   "ui.settings.requirements.setupReadiness.no.direwolves.are.available.set.direwolves.per.45e831e3": "No Direwolves are available. Set Direwolves per session above 0, or station Direwolves in your Great Empire main castle.",
-  "ui.settings.readiness.stormReadiness.no.attack.branch.is.enabled.only.the.95ad9529": "No attack branch is enabled; only the build, unlock and shop lanes run."
+  "ui.settings.readiness.stormReadiness.no.attack.branch.is.enabled.only.the.95ad9529": "No attack branch is enabled; only the build, unlock and shop lanes run.",
+  "ui.settings.readiness.khanReadiness.this.defense.names.no.tools.re.applying.f866c645": "This defense names no tools; re-applying it removes the main castle's wall, gate and moat tools."
 } as const;

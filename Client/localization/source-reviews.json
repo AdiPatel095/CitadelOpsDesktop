@@ -3354,11 +3354,6 @@
     "reason": "Reviewer-facing starter recipe metadata (sources, rules, owners, rationale and citations) that is never rendered.",
     "evidence": "EVENT_ATTACK_STARTER_RECIPE is consumed by recommendEventAttackSetup and tests/starter-recipes.test.mjs; the UI shows only a typed pending-review badge."
   },
-  "c077f38a89736a233c2f0c28376b1a720ec8f931d4572a4c6b215aa0e56e0f87": {
-    "classification": "technical",
-    "reason": "Reviewer-facing starter recipe metadata (sources, rules, owners, rationale and citations) that is never rendered.",
-    "evidence": "EVENT_ATTACK_STARTER_RECIPE is consumed by recommendEventAttackSetup and tests/starter-recipes.test.mjs; the UI shows only a typed pending-review badge."
-  },
   "63c278eaf6cfb344e9d25ab070d19fcee5669d3038868e04107c912de3aaea83": {
     "classification": "technical",
     "reason": "Composition of typed module and slot labels.",
@@ -4512,6 +4507,26 @@
   "8eb70a2feabee6a5b3db1614deac1338dfe5c5f2d5fd2bee414e1c881891ef64": {
     "classification": "technical",
     "reason": "Readiness check ids, states, slots, fix codes, plan line ids, unlock kingdom key and id fallbacks.",
+    "evidence": "ReadinessCheck/ReadinessPlanLine id/state/slot/fix values are identifiers; text is the typed messageKey rendered by ReadinessPanel."
+  },
+  "bf1ed20672d9b46a326f9f0833d3fd8bbe9a318a41feeefcfff1761d1a919b5a": {
+    "classification": "technical",
+    "reason": "Reviewer-facing starter recipe metadata (sources, rules, owners, rationale and citations) that is never rendered.",
+    "evidence": "EVENT_ATTACK_STARTER_RECIPE is consumed by recommendEventAttackSetup and tests/starter-recipes.test.mjs; the UI shows only a typed pending-review badge."
+  },
+  "b8bfd53314098830819678a568f8ffd5efe21b3ff76c5847fb037bbfa77214a6": {
+    "classification": "technical",
+    "reason": "Reviewer-facing starter recipe metadata (sources, rules, owners, rationale and citations) that is never rendered.",
+    "evidence": "EVENT_ATTACK_STARTER_RECIPE is consumed by recommendEventAttackSetup and tests/starter-recipes.test.mjs; the UI shows only a typed pending-review badge."
+  },
+  "17f82384418f02f20f9c3cabf4d2918b947ece1d178cf88dfb02b6836bc358a5": {
+    "classification": "technical",
+    "reason": "Readiness check ids, states, slots, fix codes, plan line ids, booster id and id fallbacks.",
+    "evidence": "ReadinessCheck/ReadinessPlanLine id/state/slot/fix values are identifiers; text is the typed messageKey rendered by ReadinessPanel."
+  },
+  "a0206c13ea25b259559ddcf62fbf7cdc42fe5352fb11394a2ac3de1495bb6f12": {
+    "classification": "technical",
+    "reason": "Readiness check ids, states, slots, fix codes, plan line ids, booster id and id fallbacks.",
     "evidence": "ReadinessCheck/ReadinessPlanLine id/state/slot/fix values are identifiers; text is the typed messageKey rendered by ReadinessPanel."
   }
 }
