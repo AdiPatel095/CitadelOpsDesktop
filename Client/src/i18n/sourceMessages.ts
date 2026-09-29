@@ -1595,5 +1595,9 @@ export const sourceMessages = {
   "ui.settings.configurationDraftSession.load.latest.86edc870": "Load latest",
   "ui.settings.readiness.eventAttackReadiness.berimond.camp.stock.is.checked.at.launch.e26aa185": "Berimond camp stock is checked at launch. Transfers from the source castle and the armorer lane refill it.",
   "ui.settings.components.eventAttackSetupField.this.attack.uses.the.saved.preset.until.af2cf4a8": "This attack uses the saved preset until you apply a setup here with Edit composition or the recommended starting setup.",
-  "ui.settings.components.eventAttackSetupField.apply.composition.b3b4946b": "Apply composition"
+  "ui.settings.components.eventAttackSetupField.apply.composition.b3b4946b": "Apply composition",
+  "ui.settings.requirements.observationFreshness.this.is.a.saved.checkpoint.troop.counts.4a2b7024": "This is a saved checkpoint. Troop counts are used again when the runtime is live.",
+  "ui.settings.requirements.observationFreshness.waiting.for.the.game.connection.to.finish.c661a838": "Waiting for the game connection to finish its first sync before troop counts are used.",
+  "ui.settings.requirements.observationFreshness.troop.counts.are.older.than.the.current.a894b573": "Troop counts are older than the current game connection.",
+  "ui.settings.readiness.eventAttackReadiness.the.source.castle.has.the.troops.and.52877360": "The source castle has the troops and tools this setup names. Counts are from this connection; per-castle age is not reported by the runtime."
 } as const;

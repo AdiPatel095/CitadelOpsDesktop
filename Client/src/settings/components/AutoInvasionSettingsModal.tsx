@@ -30,6 +30,7 @@ import { focusReadinessTarget } from '../readiness/focusReadinessTarget';
 import type { ReadinessCheck } from '../readiness/Readiness';
 import { EventAttackSetupField } from './EventAttackSetupField';
 import { ReadinessPanel } from './ReadinessPanel';
+import { useAuth } from '../../context/AuthContext';
 import {
   AUTO_INVASION_SECTION,
   clampAutoInvasionInteger,
@@ -72,6 +73,13 @@ export const AutoInvasionSettingsModal: React.FC<AutoInvasionSettingsModalProps>
   );
   const presetReferences = useMemo(() => attackPresetReferences(draftSession.sections), [draftSession.sections]);
   const metadataReady = !unitsLoading && !unitsError;
+  const { gameLoggedIn } = useAuth();
+  const hostedPresence = undefined;
+  // Unit counts are current only once this connection has its baseline (CIT-15 D1).
+  const observation = useMemo(
+    () => ({ session: state?.session ?? null, connected: gameLoggedIn, hostedPresence }),
+    [gameLoggedIn, hostedPresence, state?.session],
+  );
   const completedAchievements = state?.player.achievements?.completed ?? {};
   const achievementsObserved = Boolean(state?.player.achievements?.observedAt);
   const difficultyCatalog = useEventDifficultyOptions(isOpen, [71, 103], completedAchievements);
@@ -128,8 +136,8 @@ export const AutoInvasionSettingsModal: React.FC<AutoInvasionSettingsModalProps>
   }, [draft.sourceCastleId, state?.castles]);
   const recipePending = useMemo(() => pendingStarterReviews(), []);
   const recommendation = useMemo(
-    () => recommendEventAttackSetup({ sourceCastle, troops, tools, metadataReady, eventId: 71 }),
-    [metadataReady, sourceCastle, tools, troops],
+    () => recommendEventAttackSetup({ sourceCastle, observation, troops, tools, metadataReady, eventId: 71 }),
+    [metadataReady, observation, sourceCastle, tools, troops],
   );
   const canSave = draft.sourceCastleId > 0
     && attackSetupRefUsable(attackRef, presetDocument)
@@ -151,6 +159,7 @@ export const AutoInvasionSettingsModal: React.FC<AutoInvasionSettingsModalProps>
     troops,
     tools,
     metadataReady,
+    observation,
     difficulties: {
       selections: [
         { eventId: 71, available: foreignLordsSelectionAvailable },
@@ -160,6 +169,7 @@ export const AutoInvasionSettingsModal: React.FC<AutoInvasionSettingsModalProps>
       loading: difficultyCatalog.loading,
     },
   }), [
+    observation,
     achievementsObserved, attackRef, bloodcrowSelectionAvailable, difficultyCatalog.loading, draft.dailyAttackLimit,
     draft.fortifyCurrency, draft.horseTravelBoostId, draft.scoreTarget, draft.sourceCastleId, foreignLordsSelectionAvailable,
     metadataReady, presetDocument, state, tools, troops,

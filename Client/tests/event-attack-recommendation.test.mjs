@@ -27,7 +27,12 @@ const troops = {
 };
 const tools = { 500: { id: 500, name: 'Ladder' } };
 
-function castle(stationed, observed = true) {
+// Real projection shape: every castle carries the Go zero time; freshness comes from the session.
+const ZERO_TIME = '0001-01-01T00:00:00Z';
+const SESSION = { generation: 25, baselineGeneration: 25, connectionGeneration: 3, status: 'ready', loggedIn: true, socketReady: true, changedAt: '2026-09-29T09:00:00Z' };
+const LIVE = { session: SESSION, connected: true };
+
+function castle(stationed) {
   return {
     id: 7,
     kingdomId: 0,
@@ -35,12 +40,12 @@ function castle(stationed, observed = true) {
     x: 1,
     y: 2,
     units: { stationed, traveling: {}, hospital: {}, specialHospital: {}, total: {} },
-    ...(observed ? { unitsObservedAt: '2026-09-29T10:00:00Z' } : {}),
+    unitsObservedAt: ZERO_TIME,
   };
 }
 
 function recommend(input) {
-  return recommendation.recommendEventAttackSetup({ troops, tools, metadataReady: true, eventId: 72, ...input });
+  return recommendation.recommendEventAttackSetup({ troops, tools, metadataReady: true, eventId: 72, observation: LIVE, ...input });
 }
 
 test('no source castle yields a specific requirement and no setup', () => {
@@ -51,10 +56,26 @@ test('no source castle yields a specific requirement and no setup', () => {
   assert.ok(sourceMessages[result.requirements[0].messageKey]);
 });
 
-test('a castle whose units were never observed yields a requirement, not a guess', () => {
-  const result = recommend({ sourceCastle: castle({ 1: 500 }, false) });
-  assert.equal(result.setup, null);
-  assert.deepEqual(result.requirements.map((requirement) => requirement.id), ['units-not-observed']);
+test('counts that are not current yield a reason-specific requirement, never a setup (D1)', () => {
+  const cases = [
+    [{ session: SESSION, connected: false }, 'ui.components.staleSessionBanner.disconnected.last.known.data.166a8c99'],
+    [{ session: { ...SESSION, baselineGeneration: 24 }, connected: true }, null],
+    [{ session: SESSION, connected: true, hostedPresence: { mode: 'checkpoint' } }, null],
+  ];
+  const keys = new Set();
+  for (const [observation, key] of cases) {
+    const result = recommend({ sourceCastle: castle({ 1: 500 }), observation });
+    assert.equal(result.setup, null, JSON.stringify(observation));
+    assert.deepEqual(result.requirements.map((requirement) => requirement.id), ['units-not-observed']);
+    assert.equal(result.requirements[0].fix, 'connection');
+    assert.ok(sourceMessages[result.requirements[0].messageKey], result.requirements[0].messageKey);
+    if (key) assert.equal(result.requirements[0].messageKey, key);
+    keys.add(result.requirements[0].messageKey);
+  }
+  assert.equal(keys.size, 3, 'each reason has its own message');
+  const stale = recommend({ sourceCastle: { ...castle({ 1: 500 }), unitsObservedAt: '2026-09-29T08:00:00Z' } });
+  assert.deepEqual(stale.requirements.map((requirement) => requirement.id), ['units-not-observed']);
+  assert.ok(recommend({ sourceCastle: castle({ 1: 500 }) }).setup, 'a live, baselined session resolves a setup despite the sentinel');
 });
 
 test('unready metadata yields a requirement', () => {

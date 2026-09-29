@@ -234,7 +234,7 @@ export function promoteAppCreatedPresets(
     promoted.push(preset.id);
     return withoutMarker(preset);
   });
-  return { document: buildPresetDocumentUpdate(rawDocument ?? {}, current, presets), promoted };
+  return { document: clearRawMarkers(buildPresetDocumentUpdate(rawDocument ?? {}, current, presets), rawDocument, promoted), promoted };
 }
 
 /**
@@ -269,7 +269,40 @@ export function removeUnreferencedAppCreated(
     }
     presets.push(preset);
   }
-  return { document: buildPresetDocumentUpdate(rawDocument ?? {}, current, presets), removed, promoted };
+  return { document: clearRawMarkers(buildPresetDocumentUpdate(rawDocument ?? {}, current, presets), rawDocument, promoted), removed, promoted };
+}
+
+/**
+ * Promotion only clears the marker: write the original raw record without `app`
+ * so unknown or forward-version per-preset fields survive (CIT-15 L1).
+ */
+function clearRawMarkers(
+  document: AttackPresetDocumentValue,
+  rawDocument: unknown,
+  promoted: readonly string[],
+): AttackPresetDocumentValue {
+  if (promoted.length === 0) return document;
+  const targets = new Set(promoted);
+  const rawPresets = rawDocument != null && typeof rawDocument === 'object' && Array.isArray((rawDocument as { presets?: unknown }).presets)
+    ? (rawDocument as { presets: unknown[] }).presets
+    : [];
+  const rawById = new Map<string, Record<string, unknown>>();
+  for (const candidate of rawPresets) {
+    if (candidate == null || typeof candidate !== 'object' || Array.isArray(candidate)) continue;
+    const record = candidate as Record<string, unknown>;
+    if (typeof record.id === 'string' && targets.has(record.id)) rawById.set(record.id, record);
+  }
+  return {
+    ...document,
+    presets: document.presets.map((entry) => {
+      const id = entry != null && typeof entry === 'object' ? (entry as { id?: unknown }).id : undefined;
+      const raw = typeof id === 'string' ? rawById.get(id) : undefined;
+      if (!raw) return entry;
+      const copy = { ...raw };
+      delete copy.app;
+      return copy;
+    }),
+  };
 }
 
 export function withoutMarker(preset: AppAttackPreset): AppAttackPreset {

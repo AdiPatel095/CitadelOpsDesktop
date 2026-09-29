@@ -28,6 +28,7 @@ import { focusReadinessTarget } from '../readiness/focusReadinessTarget';
 import type { ReadinessCheck } from '../readiness/Readiness';
 import { EventAttackSetupField } from './EventAttackSetupField';
 import { ReadinessPanel } from './ReadinessPanel';
+import { useAuth } from '../../context/AuthContext';
 import {
 	AUTO_BERI_COIN_ATTACK_TOOLS,
 	AUTO_BERI_DEFAULT_STABLE_LEVEL,
@@ -85,6 +86,13 @@ export const AutoBeriWorldSettingsModal: React.FC<AutoBeriWorldSettingsModalProp
 	);
 	const presetReferences = useMemo(() => attackPresetReferences(draftSession.sections), [draftSession.sections]);
 	const metadataReady = !unitsLoading && !unitsError;
+	const { gameLoggedIn } = useAuth();
+	const hostedPresence = undefined;
+	// Unit counts are current only once this connection has its baseline (CIT-15 D1).
+	const observation = useMemo(
+	  () => ({ session: state?.session ?? null, connected: gameLoggedIn, hostedPresence }),
+	  [gameLoggedIn, hostedPresence, state?.session],
+	);
 	const gallantryBooster = state?.market?.boosters?.['24'];
 	const gallantryBoosterExpiresAt = gallantryBooster?.expiresAt ? Date.parse(gallantryBooster.expiresAt) : 0;
 	const gallantryBoosterActive = gallantryBooster?.permanent === true ||
@@ -148,8 +156,8 @@ export const AutoBeriWorldSettingsModal: React.FC<AutoBeriWorldSettingsModalProp
 	);
 	const recipePending = useMemo(() => pendingStarterReviews(), []);
 	const recommendation = useMemo(
-		() => recommendEventAttackSetup({ sourceCastle, troops, tools, metadataReady, eventId: 0 }),
-		[metadataReady, sourceCastle, tools, troops],
+		() => recommendEventAttackSetup({ sourceCastle, observation, troops, tools, metadataReady, eventId: 0 }),
+		[metadataReady, observation, sourceCastle, tools, troops],
 	);
 	const attackRefInvalid = attackRef.source === 'inline' && !attackSetupRefUsable(attackRef, presetDocument);
 	const readiness = useMemo(() => evaluateEventAttackReadiness({
@@ -166,7 +174,9 @@ export const AutoBeriWorldSettingsModal: React.FC<AutoBeriWorldSettingsModalProp
 		troops,
 		tools,
 		metadataReady,
+		observation,
 	}), [
+		observation,
 		attackRef, effectiveSourceID, metadataReady, presetDocument, settings.dailyAttackLimit, settings.horseTravelBoostId,
 		settings.requireActiveGallantryBooster, state, tools, troops,
 	]);

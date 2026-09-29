@@ -24,6 +24,8 @@ import { Badge, Button, Input, Modal, ModalTitle, SectionCard, Select } from '..
 import { SpyReportDetail, type SpyReport } from '../../spyReports/components/SpyReportsView';
 import { useCitadelAPI } from '../../api/ApiContext';
 import { useMetadata } from '../../context/MetadataContext';
+import { useAuth } from '../../context/AuthContext';
+import { unitObservationFreshness } from '../../settings/requirements/observationFreshness';
 import {
 	ATTACK_PRESETS_SECTION,
 	parseAttackPresetDocument,
@@ -558,6 +560,7 @@ interface PresetRequirement {
 const AllianceTargetAttackModal = ({ target, onClose }: AllianceTargetAttackModalProps) => {
   const { t: localizeStatic } = useStaticLocale();
 	const { state, configuration, previewAllianceTargetAttack, submitIntent } = useCitadelAPI();
+	const { gameLoggedIn } = useAuth();
 	const { troops, tools } = useMetadata();
 	const [sourceCastleID, setSourceCastleID] = useState('');
 	const [presetID, setPresetID] = useState('');
@@ -679,7 +682,12 @@ const AllianceTargetAttackModal = ({ target, onClose }: AllianceTargetAttackModa
 	const blockReason = attackBlockReason({
 		target,
 		sourceCastleSelected: sourceCastle != null,
-		inventoryObserved: Boolean(sourceCastle?.unitsObservedAt),
+		// The projection zeroes unitsObservedAt; counts are current only after this connection's baseline (CIT-15 D1).
+		inventoryObserved: sourceCastle != null && unitObservationFreshness({
+			castle: sourceCastle,
+			session: state?.session ?? null,
+			connected: gameLoggedIn,
+		}).state === 'observed',
 		presetSelected: preset != null,
 		preview,
 		previewLoading,

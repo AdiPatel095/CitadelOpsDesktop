@@ -108,6 +108,24 @@ export const EventAttackSetupField: React.FC<EventAttackSetupFieldProps> = ({
   const [saveAsBusy, setSaveAsBusy] = useState(false);
   const [saveAsFailed, setSaveAsFailed] = useState(false);
   const saveAsInput = useRef<HTMLInputElement>(null);
+  const fieldRef = useRef<HTMLDivElement>(null);
+  const recommendTrigger = useRef<HTMLButtonElement>(null);
+  const saveAsTrigger = useRef<HTMLButtonElement>(null);
+  // Dialogs return focus to the control that opened them (after the dialog's own cleanup), or to the field.
+  const returnFocus = (trigger: React.RefObject<HTMLButtonElement | null>) => {
+    window.requestAnimationFrame(() => window.requestAnimationFrame(() => {
+      const target = trigger.current?.isConnected && !trigger.current.disabled ? trigger.current : fieldRef.current;
+      target?.focus();
+    }));
+  };
+  const closePreview = () => {
+    setPreviewOpen(false);
+    returnFocus(recommendTrigger);
+  };
+  const closeSaveAs = () => {
+    setSaveAsOpen(false);
+    returnFocus(saveAsTrigger);
+  };
 
   useEffect(() => {
     const next = modeFor(value);
@@ -225,7 +243,7 @@ export const EventAttackSetupField: React.FC<EventAttackSetupFieldProps> = ({
       const presetId = await onSaveAsPreset(inlineSetup, name);
       onChange({ source: 'preset', presetId, missing: false });
       setMode('saved');
-      setSaveAsOpen(false);
+      closeSaveAs();
     } catch (error) {
       setSaveAsFailed(true);
       setSaveAsError(error instanceof Error && error.message ? error.message : localizeStatic('ui.settings.components.eventAttackSetupField.could.not.save.the.preset.your.setup.d9f51983'));
@@ -246,7 +264,7 @@ export const EventAttackSetupField: React.FC<EventAttackSetupFieldProps> = ({
   ) : null;
 
   return (
-    <div id={id} tabIndex={-1} className="min-w-0 space-y-3 rounded-xl border border-border-base bg-bg-app/35 p-3 outline-none focus-visible:ring-2 focus-visible:ring-primary/40">
+    <div id={id} ref={fieldRef} tabIndex={-1} className="min-w-0 space-y-3 rounded-xl border border-border-base bg-bg-app/35 p-3 outline-none focus-visible:ring-2 focus-visible:ring-primary/40">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <span id={`${fieldId}-label`} className="flex items-center gap-2 text-[10px] font-black uppercase tracking-wider text-text-muted">
           <Swords className="h-3.5 w-3.5" aria-hidden="true" /> {label}
@@ -339,13 +357,14 @@ export const EventAttackSetupField: React.FC<EventAttackSetupFieldProps> = ({
               variant="outline"
               size="sm"
               disabled={disabled || recommendedSetup == null}
+              ref={recommendTrigger}
               leftIcon={<Sparkles className="h-4 w-4" />}
               onClick={() => setPreviewOpen(true)}
             >
               <LocalizedText messageKey="ui.settings.components.eventAttackSetupField.use.recommended.starting.setup.51456aa3" />
             </Button>
             {inlineSetup && inlineTroops > 0 ? (
-              <Button variant="ghost" size="sm" disabled={disabled} leftIcon={<Save className="h-4 w-4" />} onClick={openSaveAs}>
+              <Button variant="ghost" size="sm" disabled={disabled} ref={saveAsTrigger} leftIcon={<Save className="h-4 w-4" />} onClick={openSaveAs}>
                 <LocalizedText messageKey="ui.settings.components.eventAttackSetupField.save.as.preset.da93e96d" />
               </Button>
             ) : null}
@@ -392,7 +411,7 @@ export const EventAttackSetupField: React.FC<EventAttackSetupFieldProps> = ({
 
       <Modal
         isOpen={previewOpen}
-        onClose={() => setPreviewOpen(false)}
+        onClose={closePreview}
         maxWidth="2xl"
         title={(
           <ModalTitle icon={<Sparkles className="h-5 w-5" />} description={localizeStatic('ui.settings.components.eventAttackSetupField.description.review.the.composition.before.it.replaces.anything.50789484')}>
@@ -401,12 +420,12 @@ export const EventAttackSetupField: React.FC<EventAttackSetupFieldProps> = ({
         )}
         footer={(
           <div className="flex w-full flex-wrap items-center justify-end gap-2">
-            <Button variant="ghost" onClick={() => setPreviewOpen(false)}><LocalizedText messageKey="game.cancel" /></Button>
+            <Button variant="ghost" onClick={closePreview}><LocalizedText messageKey="game.cancel" /></Button>
             <Button
               disabled={recommendedSetup == null}
               onClick={() => {
                 if (recommendedSetup) applyInline(recommendedSetup);
-                setPreviewOpen(false);
+                closePreview();
               }}
             >
               <LocalizedText messageKey="ui.settings.components.eventAttackSetupField.apply.to.this.setup.d00f0343" />
@@ -462,7 +481,7 @@ export const EventAttackSetupField: React.FC<EventAttackSetupFieldProps> = ({
 
       <Modal
         isOpen={saveAsOpen}
-        onClose={() => { if (!saveAsBusy) setSaveAsOpen(false); }}
+        onClose={() => { if (!saveAsBusy) closeSaveAs(); }}
         maxWidth="md"
         title={(
           <ModalTitle icon={<Save className="h-5 w-5" />} description={localizeStatic('ui.settings.components.eventAttackSetupField.description.creates.a.normal.reusable.attack.preset.from.b8966892')}>
@@ -471,7 +490,7 @@ export const EventAttackSetupField: React.FC<EventAttackSetupFieldProps> = ({
         )}
         footer={(
           <div className="flex w-full items-center justify-end gap-2">
-            <Button variant="ghost" disabled={saveAsBusy} onClick={() => setSaveAsOpen(false)}><LocalizedText messageKey="game.cancel" /></Button>
+            <Button variant="ghost" disabled={saveAsBusy} onClick={closeSaveAs}><LocalizedText messageKey="game.cancel" /></Button>
             <Button isLoading={saveAsBusy} disabled={saveAsBusy} leftIcon={<Save className="h-4 w-4" />} onClick={() => void submitSaveAs()}>
               {saveAsFailed && !saveAsBusy ? <LocalizedText messageKey="ui.settings.components.eventAttackSetupField.try.again.d8b8392e" /> : <LocalizedText messageKey="ui.settings.components.eventAttackSetupField.save.preset.362a1376" />}
             </Button>

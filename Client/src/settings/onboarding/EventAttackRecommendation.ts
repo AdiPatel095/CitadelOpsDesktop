@@ -4,6 +4,7 @@ import type { AttackSetupLane, AttackSetupSlot, AttackSetupWave } from '../../co
 import type { MetadataItem } from '../../context/MetadataContext';
 import type { MessageKey } from '../../i18n/messages';
 import type { ReadinessFix } from '../readiness/Readiness';
+import { observationUnavailableMessage, unitObservationFreshness, type ObservationContext } from '../requirements/observationFreshness';
 import { isAttackUnit } from '../UnitRole';
 import { EVENT_ATTACK_STARTER_RECIPE, pendingStarterReviews, type EventAttackStarterRecipe } from './StarterRecipes';
 
@@ -21,6 +22,8 @@ export interface EventAttackRequirement {
 
 export interface EventAttackRecommendationInput {
   sourceCastle: CastleStateV2 | null;
+  /** Session, connection and hosted presence used to decide whether unit counts are current (D1). */
+  observation: ObservationContext;
   troops: Record<number, MetadataItem>;
   tools: Record<number, MetadataItem>;
   metadataReady: boolean;
@@ -65,13 +68,16 @@ export function recommendEventAttackSetup(input: EventAttackRecommendationInput)
   }
   if (!input.sourceCastle) {
     requirements.push({ id: 'source-castle', messageKey: message('ui.settings.onboarding.eventAttackRecommendation.choose.a.source.castle.first.the.starting.5edacd0b'), fix: 'settings' });
-  } else if (!input.sourceCastle.unitsObservedAt) {
-    requirements.push({ id: 'units-not-observed', messageKey: message('ui.settings.onboarding.eventAttackRecommendation.troops.in.this.castle.have.not.been.6c663496'), fix: 'connection' });
   }
-  const ranked = input.sourceCastle?.unitsObservedAt && input.metadataReady
+  const freshness = unitObservationFreshness({ castle: input.sourceCastle, ...input.observation });
+  const unitsCurrent = input.sourceCastle != null && freshness.state === 'observed';
+  if (input.sourceCastle && freshness.state === 'unavailable') {
+    requirements.push({ id: 'units-not-observed', messageKey: observationUnavailableMessage(freshness.reason), fix: 'connection' });
+  }
+  const ranked = unitsCurrent && input.sourceCastle && input.metadataReady
     ? rankStationedTroops(input.sourceCastle, input.troops, input.tools)
     : [];
-  if (input.sourceCastle?.unitsObservedAt && input.metadataReady && ranked.length === 0) {
+  if (unitsCurrent && input.metadataReady && ranked.length === 0) {
     requirements.push({ id: 'no-stationed-troops', messageKey: message('ui.settings.onboarding.eventAttackRecommendation.no.attack.troops.are.stationed.in.this.270d8b35'), fix: 'settings' });
   }
   if (requirements.length > 0) {

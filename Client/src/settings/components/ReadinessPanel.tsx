@@ -38,7 +38,7 @@ export const ReadinessCheckLine: React.FC<{
     <StateIcon state={check.state} />
     <span className="sr-only"><LocalizedText messageKey="readiness.state" params={{ state: check.state }} /></span>
     <span className="min-w-0 flex-1">
-      {slotLabelKey ? <span className="mr-1 font-bold text-text-muted"><LocalizedText messageKey={slotLabelKey} />:</span> : null}
+      {slotLabelKey ? <span className="font-bold text-text-muted"><LocalizedText messageKey={slotLabelKey} />{': '}</span> : null}
       <LocalizedText messageKey={check.messageKey} params={check.params} />
       {check.fix === 'assignment' ? (
         <span className="block text-[11px] text-text-muted"><LocalizedText messageKey="ui.settings.components.readinessPanel.assign.commanders.under.commanders.features.repairing.assignments.a9c68853" /></span>

@@ -153,8 +153,8 @@ test('promoteAppCreatedPresets clears only the marker', () => {
   const result = app.promoteAppCreatedPresets(raw, current, ['own', 'user', 'missing']);
   assert.deepEqual(result.promoted, ['own']);
   const promoted = result.document.presets[0];
-  const { app: _marker, ...expected } = current[0];
-  assert.deepEqual(promoted, expected);
+  const { app: _marker, ...expected } = raw.presets[0];
+  assert.deepEqual(promoted, expected, 'the raw record is written back without the marker');
   assert.equal(result.document.presets[1], raw.presets[1], 'user presets remain the exact raw record');
 });
 
@@ -210,4 +210,16 @@ test('summarizeAttackSetupRef exposes badge and missing state', () => {
   assert.equal(inline.badge, 'app');
   assert.equal(inline.summary.troops, 4);
   assert.equal(inline.missing, false);
+});
+
+test('promotion clears only the marker on the raw record, keeping unknown per-preset fields (L1)', () => {
+  const rawRecord = rawPreset('own', 'Own', { app: { section: NOMAD, slot: 'nomad' }, 'x-extra': { keep: [1, 2] } });
+  const raw = { version: 1, presets: [rawRecord] };
+  const current = types.parseAttackPresetDocument(raw).presets;
+  const { app: _marker, ...expected } = rawRecord;
+  assert.deepEqual(app.promoteAppCreatedPresets(raw, current, ['own']).document.presets[0], expected);
+  const cleaned = app.removeUnreferencedAppCreated(raw, current, NOMAD, [reference('automation.autoInvasion', 'attack', 'own')]);
+  assert.deepEqual(cleaned.promoted, ['own']);
+  assert.deepEqual(cleaned.document.presets[0], expected);
+  assert.deepEqual(rawRecord.app, { section: NOMAD, slot: 'nomad' }, 'the input document is not mutated');
 });

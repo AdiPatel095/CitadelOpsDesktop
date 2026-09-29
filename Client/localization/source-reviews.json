@@ -1778,5 +1778,100 @@
     "classification": "technical",
     "reason": "Reviewer-facing starter recipe metadata (sources, rules, owners, rationale and citations) that is never rendered.",
     "evidence": "EVENT_ATTACK_STARTER_RECIPE is consumed by recommendEventAttackSetup and tests/starter-recipes.test.mjs; the UI shows only a typed pending-review badge."
+  },
+  "9e36bb61e10219cf02b0e2e8b2349780cbfff02eb0bb02655a3c46d490f49a38": {
+    "classification": "technical",
+    "reason": "Readiness ids/states/fix codes.",
+    "evidence": "Readiness text is the typed messageKey rendered by ReadinessPanel."
+  },
+  "41c2aa2e83691e627c01953534f1bb1aa6102dc1224c619176bb0c05f1f5d4f5": {
+    "classification": "technical",
+    "reason": "Readiness ids/states/fix codes.",
+    "evidence": "Readiness text is the typed messageKey rendered by ReadinessPanel."
+  },
+  "6c743197cc0ab56d4207c23e408f53bafd9a191bd90052c1b5c4bb619d6335a7": {
+    "classification": "technical",
+    "reason": "Readiness ids/states/fix codes.",
+    "evidence": "Readiness text is the typed messageKey rendered by ReadinessPanel."
+  },
+  "b40994cd117fd49bea6d070f1918e7fc8d64e60dc8ff745b1bbbcf9a0555b8eb": {
+    "classification": "technical",
+    "reason": "Readiness ids/states/fix codes.",
+    "evidence": "Readiness text is the typed messageKey rendered by ReadinessPanel."
+  },
+  "d1573784f019d21c054e363756e88718ae61b0f88be5b778f81d7fdcae232a8f": {
+    "classification": "technical",
+    "reason": "Readiness ids/states/fix codes.",
+    "evidence": "Readiness text is the typed messageKey rendered by ReadinessPanel."
+  },
+  "f592d390f8d720d36051c127d7edca67129d2318755edad5358bdbb8bdd89807": {
+    "classification": "technical",
+    "reason": "Observation freshness states, scopes, reasons and presence modes.",
+    "evidence": "Freshness tokens are compared by recommendation/readiness; displayed text comes from observationUnavailableMessage typed keys."
+  },
+  "a27adf9dce810b62f3ca5cacf0cc0d99c2203abb955f61b06a8a902026e21d33": {
+    "classification": "technical",
+    "reason": "Observation freshness states, scopes, reasons and presence modes.",
+    "evidence": "Freshness tokens are compared by recommendation/readiness; displayed text comes from observationUnavailableMessage typed keys."
+  },
+  "3385dd72bdd96264c9e94e9e03ff9a6cc1a15276ad089ab45a90346a622c18d3": {
+    "classification": "technical",
+    "reason": "Observation freshness states, scopes, reasons and presence modes.",
+    "evidence": "Freshness tokens are compared by recommendation/readiness; displayed text comes from observationUnavailableMessage typed keys."
+  },
+  "62ee29d666be6087c3ba362201e0d5457b3048c66a21476165c1a1ce8a2ba587": {
+    "classification": "technical",
+    "reason": "Observation freshness states, scopes, reasons and presence modes.",
+    "evidence": "Freshness tokens are compared by recommendation/readiness; displayed text comes from observationUnavailableMessage typed keys."
+  },
+  "9a760193fb4da9fc7f2b68be50e14619844b72e998ae0670e495e37151dcb0d5": {
+    "classification": "technical",
+    "reason": "Observation freshness states, scopes, reasons and presence modes.",
+    "evidence": "Freshness tokens are compared by recommendation/readiness; displayed text comes from observationUnavailableMessage typed keys."
+  },
+  "271094e175fab3af4516bdedd62562f79606f180271d8537198590f32721629a": {
+    "classification": "technical",
+    "reason": "Observation freshness states, scopes, reasons and presence modes.",
+    "evidence": "Freshness tokens are compared by recommendation/readiness; displayed text comes from observationUnavailableMessage typed keys."
+  },
+  "69dcfdd89c7cd85f02b1b158a5526ae1c5dfb32cab8d65e9f6645be31e15f796": {
+    "classification": "technical",
+    "reason": "Observation freshness states, scopes, reasons and presence modes.",
+    "evidence": "Freshness tokens are compared by recommendation/readiness; displayed text comes from observationUnavailableMessage typed keys."
+  },
+  "97efb5b0f7cebeed654259643176b5cc1f91f48115c40d7d511102c94c91614a": {
+    "classification": "technical",
+    "reason": "Observation freshness states, scopes, reasons and presence modes.",
+    "evidence": "Freshness tokens are compared by recommendation/readiness; displayed text comes from observationUnavailableMessage typed keys."
+  },
+  "c7129d43dfbc0384a5cc2f75b5c685a4189a4228f91824d0bfd07591553a4bd0": {
+    "classification": "technical",
+    "reason": "Observation freshness states, scopes, reasons and presence modes.",
+    "evidence": "Freshness tokens are compared by recommendation/readiness; displayed text comes from observationUnavailableMessage typed keys."
+  },
+  "4fcf91f3412d17faf58ed941182422622ddf89682061c6045317adb08ad978aa": {
+    "classification": "technical",
+    "reason": "Observation freshness states, scopes, reasons and presence modes.",
+    "evidence": "Freshness tokens are compared by recommendation/readiness; displayed text comes from observationUnavailableMessage typed keys."
+  },
+  "8c9311395cfb0a095491cf258b8d134b8ba1af7d7b358db94a4313590ea6a284": {
+    "classification": "technical",
+    "reason": "Observation freshness states, scopes, reasons and presence modes.",
+    "evidence": "Freshness tokens are compared by recommendation/readiness; displayed text comes from observationUnavailableMessage typed keys."
+  },
+  "93f1d0a421a5f3c994ba7d4ad00a2997ec21149b936aefeb9688895e946863bf": {
+    "classification": "technical",
+    "reason": "Observation freshness states, scopes, reasons and presence modes.",
+    "evidence": "Freshness tokens are compared by recommendation/readiness; displayed text comes from observationUnavailableMessage typed keys."
+  },
+  "70d4b51fbaf8b198b812e54e87d3e6bf279235f46224152aa071cf2691bfb9ee": {
+    "classification": "technical",
+    "reason": "Observation freshness states, scopes, reasons and presence modes.",
+    "evidence": "Freshness tokens are compared by recommendation/readiness; displayed text comes from observationUnavailableMessage typed keys."
+  },
+  "33dbacf8713e53cedcded64a2da7a16bcdc367c4f9e4d64c6cc3c27075bbd447": {
+    "classification": "technical",
+    "reason": "Observation freshness states, scopes, reasons and presence modes.",
+    "evidence": "Freshness tokens are compared by recommendation/readiness; displayed text comes from observationUnavailableMessage typed keys."
   }
 }

@@ -45,12 +45,18 @@ function inline(troopSlots, toolSlots = []) {
   };
 }
 
+const ZERO_TIME = '0001-01-01T00:00:00Z';
+const SESSION = { generation: 25, baselineGeneration: 25, connectionGeneration: 3, status: 'ready', loggedIn: true, socketReady: true, changedAt: '2026-09-29T09:00:00Z' };
+const LIVE = { session: SESSION, connected: true };
+
 function gameState(overrides = {}) {
   return {
+    session: SESSION,
     castles: {
-      7: { id: 7, kingdomId: 0, x: 0, y: 0, units: { stationed: { 1: 100, 2: 5, 500: 10 }, traveling: {}, hospital: {}, specialHospital: {}, total: {} }, unitsObservedAt: '2026-09-29T10:00:00Z' },
-      8: { id: 8, kingdomId: 10, x: 0, y: 0, units: { stationed: {}, traveling: {}, hospital: {}, specialHospital: {}, total: {} } },
-      9: { id: 9, kingdomId: 0, x: 0, y: 0, units: { stationed: {}, traveling: {}, hospital: {}, specialHospital: {}, total: {} } },
+      // Real projection shape: ClientProjection zeroes unitsObservedAt, serialized as the Go zero time.
+      7: { id: 7, kingdomId: 0, x: 0, y: 0, units: { stationed: { 1: 100, 2: 5, 500: 10 }, traveling: {}, hospital: {}, specialHospital: {}, total: {} }, unitsObservedAt: ZERO_TIME },
+      8: { id: 8, kingdomId: 10, x: 0, y: 0, units: { stationed: {}, traveling: {}, hospital: {}, specialHospital: {}, total: {} }, unitsObservedAt: ZERO_TIME },
+      9: { id: 9, kingdomId: 0, x: 0, y: 0, units: { stationed: {}, traveling: {}, hospital: {}, specialHospital: {}, total: {} }, unitsObservedAt: ZERO_TIME },
     },
     commanders: { 1: { id: 1, available: true, equipment: {}, gems: {} } },
     dailyAttacks: { count: 3, serverThreshold: 100, growthRate: 0, observedAt: '2026-09-29T11:00:00Z' },
@@ -71,6 +77,7 @@ function evaluate(draft = {}, extra = {}) {
     tools,
     metadataReady: true,
     now: NOW,
+    observation: LIVE,
     ...extra,
   });
 }
@@ -109,7 +116,8 @@ test('composition is blocked for no setup, a missing record or zero troops', () 
 });
 
 test('inventory reaches unavailable, blocked, pending and valid', () => {
-  assert.equal(stateOf(evaluate({ sourceCastleId: 9 }), 'inventory', 'nomad'), 'unavailable');
+  assert.equal(stateOf(evaluate({}, { observation: { session: SESSION, connected: false } }), 'inventory', 'nomad'), 'unavailable');
+  assert.equal(stateOf(evaluate({ sourceCastleId: 9 }), 'inventory', 'nomad'), 'blocked', 'an observed empty castle is missing troops, not unknown');
   assert.equal(stateOf(evaluate({ slots: [{ slot: 'nomad', ref: inline([[1, 5], [3, 1]]) }] }), 'inventory', 'nomad'), 'blocked');
   assert.equal(stateOf(evaluate({ slots: [{ slot: 'nomad', ref: inline([[1, 5]], [[500, 99]]) }] }), 'inventory', 'nomad'), 'pending');
   assert.equal(stateOf(evaluate({ slots: [{ slot: 'nomad', ref: inline([[1, 100], [2, 5]], [[500, 10]]) }] }), 'inventory', 'nomad'), 'valid');
@@ -163,6 +171,7 @@ test('Berimond Gallantry booster is pending when unobserved, blocked when inacti
     tools,
     metadataReady: true,
     now: NOW,
+    observation: LIVE,
   });
   assert.equal(stateOf(beri({ requireActiveGallantryBooster: true }, gameState({ market: {} })), 'gallantry-booster'), 'pending');
   assert.equal(stateOf(beri({ requireActiveGallantryBooster: true }, gameState({ market: { boostersObservedAt: 'x', boosters: {} } })), 'gallantry-booster'), 'blocked');
@@ -182,6 +191,7 @@ test('Berimond inventory is decided at launch because the camp, not the source c
     tools,
     metadataReady: true,
     now: NOW,
+    observation: LIVE,
   });
   assert.equal(stateOf(beri(inline([[1, 5]], [[614, 20]])), 'inventory', 'attack'), 'pending', 'coin tools are bought in the camp');
   assert.equal(stateOf(beri(inline([[3, 5]])), 'inventory', 'attack'), 'pending');
@@ -192,13 +202,13 @@ test('Invasion fortification is reported only when chosen and Rubies are never d
   assert.equal(invasion.defaultAutoInvasionClientState().fortifyCurrency, '');
   const draft = { fortifyCurrency: invasion.defaultAutoInvasionClientState().fortifyCurrency };
   const off = readiness.evaluateEventAttackReadiness({
-    featureId: 'autoInvasion', draft: { sourceCastleId: 7, slots: [], ...draft }, state: gameState(), document: emptyDocument, troops, tools, metadataReady: true, now: NOW,
+    featureId: 'autoInvasion', draft: { sourceCastleId: 7, slots: [], ...draft }, state: gameState(), document: emptyDocument, troops, tools, metadataReady: true, now: NOW, observation: LIVE,
   });
   assert.equal(off.checks.some((check) => check.id === 'fortify-currency'), false);
   assert.equal(off.checks.some((check) => JSON.stringify(check.params ?? {}).includes('C2')), false);
   for (const currency of ['GTO', 'MEDALS', 'C2']) {
     const report = readiness.evaluateEventAttackReadiness({
-      featureId: 'autoInvasion', draft: { sourceCastleId: 7, slots: [], fortifyCurrency: currency }, state: gameState(), document: emptyDocument, troops, tools, metadataReady: true, now: NOW,
+      featureId: 'autoInvasion', draft: { sourceCastleId: 7, slots: [], fortifyCurrency: currency }, state: gameState(), document: emptyDocument, troops, tools, metadataReady: true, now: NOW, observation: LIVE,
     });
     const check = report.checks.find((candidate) => candidate.id === 'fortify-currency');
     assert.equal(check.state, 'pending');
@@ -220,6 +230,36 @@ test('evaluation has no side effects on its inputs', () => {
   const draft = { sourceCastleId: 7, slots: [{ slot: 'nomad', ref: inline([[1, 5]]) }], dailyAttackLimit: 2, fortifyCurrency: 'GTO' };
   const state = gameState();
   const before = JSON.stringify([draft, state]);
-  readiness.evaluateEventAttackReadiness({ featureId: 'autoNomad', draft, state, document: emptyDocument, troops, tools, metadataReady: true, now: NOW });
+  readiness.evaluateEventAttackReadiness({ featureId: 'autoNomad', draft, state, document: emptyDocument, troops, tools, metadataReady: true, now: NOW, observation: LIVE });
   assert.equal(JSON.stringify([draft, state]), before);
+});
+
+test('inventory is unavailable, with the reason, whenever unit counts are not current (D1, real projection shape)', () => {
+  const cases = [
+    [{ session: SESSION, connected: false }, 'ui.components.staleSessionBanner.disconnected.last.known.data.166a8c99'],
+    [{ session: { ...SESSION, baselineGeneration: 24 }, connected: true }, null],
+    [{ session: { ...SESSION, generation: 0, baselineGeneration: 0 }, connected: true }, null],
+    [{ session: SESSION, connected: true, hostedPresence: { mode: 'checkpoint', checkpointObservedAt: '2026-09-29T08:00:00Z' } }, null],
+    [{ session: null, connected: true }, null],
+  ];
+  for (const [observation, key] of cases) {
+    const check = evaluate({}, { observation }).checks.find((entry) => entry.id === 'inventory');
+    assert.equal(check.state, 'unavailable', JSON.stringify(observation));
+    assert.equal(check.fix, 'connection');
+    assert.ok(messages[check.messageKey], check.messageKey);
+    if (key) assert.equal(check.messageKey, key);
+  }
+  const live = evaluate().checks.find((entry) => entry.id === 'inventory');
+  assert.equal(live.state, 'valid', 'on a live, baselined session the sentinel no longer hides stock; 50 of 100 stationed is enough');
+  const valid = evaluate({ slots: [{ slot: 'nomad', ref: inline([[1, 100]]) }] }).checks.find((entry) => entry.id === 'inventory');
+  assert.equal(valid.state, 'valid');
+  assert.match(messages[valid.messageKey], /per-castle age is not reported by the runtime/);
+  const timed = evaluate({ slots: [{ slot: 'nomad', ref: inline([[1, 100]]) }] }, {
+    state: gameState({ castles: { 7: { ...gameState().castles[7], unitsObservedAt: '2026-09-29T10:00:00Z' } } }),
+  }).checks.find((entry) => entry.id === 'inventory');
+  assert.equal(timed.messageKey, 'eventAttackReadiness.inventoryObservedAt');
+  const stale = evaluate({}, {
+    state: gameState({ castles: { 7: { ...gameState().castles[7], unitsObservedAt: '2026-09-29T08:00:00Z' } } }),
+  }).checks.find((entry) => entry.id === 'inventory');
+  assert.equal(stale.state, 'unavailable', 'a real timestamp before the connection changed is stale');
 });

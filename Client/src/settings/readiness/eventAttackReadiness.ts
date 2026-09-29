@@ -9,6 +9,7 @@ import type { MetadataItem } from '../../context/MetadataContext';
 import type { MessageKey } from '../../i18n/messages';
 import { unitUpgradeFamily } from '../UnitUpgradeFamily';
 import { aggregateReadiness, type ReadinessCheck, type ReadinessReport } from './Readiness';
+import { observationUnavailableMessage, unitObservationFreshness, type ObservationContext } from '../requirements/observationFreshness';
 
 export type EventAttackFeatureId = 'autoNomad' | 'autoInvasion' | 'autoBeriWorld';
 
@@ -43,6 +44,8 @@ export interface EventAttackReadinessInput {
   tools: Record<number, MetadataItem>;
   metadataReady: boolean;
   difficulties?: EventAttackDifficultyInput;
+  /** Session, connection and hosted presence used to decide whether unit counts are current (D1). */
+  observation: ObservationContext;
   now?: number;
 }
 
@@ -170,8 +173,12 @@ function inventoryCheck(
   castle: GameStateV2['castles'][string] | null,
   input: EventAttackReadinessInput,
 ): ReadinessCheck {
-  if (!castle?.unitsObservedAt) {
+  if (!castle) {
     return { id: 'inventory', slot, state: 'unavailable', messageKey: message('ui.settings.readiness.eventAttackReadiness.stationed.troops.are.unknown.until.the.source.335de03d') };
+  }
+  const freshness = unitObservationFreshness({ castle, ...input.observation });
+  if (freshness.state === 'unavailable') {
+    return { id: 'inventory', slot, state: 'unavailable', messageKey: observationUnavailableMessage(freshness.reason), fix: 'connection' };
   }
   if (composition.useTroopFamilies && !input.metadataReady) {
     return { id: 'inventory', slot, state: 'unavailable', messageKey: message('ui.settings.readiness.eventAttackReadiness.troop.family.data.is.still.loading.74980d2f') };
@@ -204,7 +211,10 @@ function inventoryCheck(
     // quantity above stock is decided at launch rather than here.
     return { id: 'inventory', slot, state: 'pending', messageKey: message('eventAttackReadiness.inventoryShort'), params: { count: short } };
   }
-  return { id: 'inventory', slot, state: 'valid', messageKey: message('ui.settings.readiness.eventAttackReadiness.the.source.castle.has.the.troops.and.a73c676a') };
+  return freshness.scope === 'castle' && freshness.observedAt
+    ? { id: 'inventory', slot, state: 'valid', messageKey: message('eventAttackReadiness.inventoryObservedAt'), params: { observedAt: Date.parse(freshness.observedAt) } }
+    // No per-castle time reaches the client today: counts are from this connection's baseline.
+    : { id: 'inventory', slot, state: 'valid', messageKey: message('ui.settings.readiness.eventAttackReadiness.the.source.castle.has.the.troops.and.52877360') };
 }
 
 function requestedItems(composition: AttackSetupDraft): { troops: Map<number, number>; tools: Map<number, number> } {

@@ -30,6 +30,7 @@ import { focusReadinessTarget } from '../readiness/focusReadinessTarget';
 import type { ReadinessCheck } from '../readiness/Readiness';
 import { EventAttackSetupField } from './EventAttackSetupField';
 import { ReadinessPanel } from './ReadinessPanel';
+import { useAuth } from '../../context/AuthContext';
 import {
   AUTO_NOMAD_SECTION,
   clampAutoNomadInteger,
@@ -73,6 +74,13 @@ export const AutoNomadSettingsModal: React.FC<AutoNomadSettingsModalProps> = ({ 
   );
   const presetReferences = useMemo(() => attackPresetReferences(draftSession.sections), [draftSession.sections]);
   const metadataReady = !unitsLoading && !unitsError;
+  const { gameLoggedIn } = useAuth();
+  const hostedPresence = undefined;
+  // Unit counts are current only once this connection has its baseline (CIT-15 D1).
+  const observation = useMemo(
+    () => ({ session: state?.session ?? null, connected: gameLoggedIn, hostedPresence }),
+    [gameLoggedIn, hostedPresence, state?.session],
+  );
   const completedAchievements = state?.player.achievements?.completed ?? {};
   const achievementsObserved = Boolean(state?.player.achievements?.observedAt);
   const difficultyCatalog = useEventDifficultyOptions(isOpen, [72, 80], completedAchievements);
@@ -86,12 +94,12 @@ export const AutoNomadSettingsModal: React.FC<AutoNomadSettingsModalProps> = ({ 
   }, [draft.sourceCastleId, state?.castles]);
   const recipePending = useMemo(() => pendingStarterReviews(), []);
   const nomadRecommendation = useMemo(
-    () => recommendEventAttackSetup({ sourceCastle, troops, tools, metadataReady, eventId: 72 }),
-    [metadataReady, sourceCastle, tools, troops],
+    () => recommendEventAttackSetup({ sourceCastle, observation, troops, tools, metadataReady, eventId: 72 }),
+    [metadataReady, observation, sourceCastle, tools, troops],
   );
   const samuraiRecommendation = useMemo(
-    () => recommendEventAttackSetup({ sourceCastle, troops, tools, metadataReady, eventId: 80 }),
-    [metadataReady, sourceCastle, tools, troops],
+    () => recommendEventAttackSetup({ sourceCastle, observation, troops, tools, metadataReady, eventId: 80 }),
+    [metadataReady, observation, sourceCastle, tools, troops],
   );
 
   useEffect(() => {
@@ -132,6 +140,7 @@ export const AutoNomadSettingsModal: React.FC<AutoNomadSettingsModalProps> = ({ 
     troops,
     tools,
     metadataReady,
+    observation,
     difficulties: draft.rbcTest.enabled ? undefined : {
       selections: [
         { eventId: 72, available: nomadSelectionAvailable },
@@ -141,6 +150,7 @@ export const AutoNomadSettingsModal: React.FC<AutoNomadSettingsModalProps> = ({ 
       loading: difficultyCatalog.loading,
     },
   }), [
+    observation,
     achievementsObserved, difficultyCatalog.loading, draft.dailyAttackLimit, draft.horseTravelBoostId, draft.rbcTest.enabled,
     draft.scoreTarget, draft.sourceCastleId, metadataReady, nomadRef, nomadSelectionAvailable, presetDocument, samuraiRef,
     samuraiSelectionAvailable, state, tools, troops,
