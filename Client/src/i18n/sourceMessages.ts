@@ -1741,5 +1741,6 @@ export const sourceMessages = {
   "ui.settings.readiness.stormReadiness.buildings.that.do.not.match.the.blueprint.1ddb1620": "Buildings that do not match the blueprint may be demolished.",
   "ui.settings.readiness.stormReadiness.construction.may.use.time.skips.reserved.skips.a97fe7ac": "Construction may use time skips; reserved skips are kept.",
   "ui.settings.readiness.stormReadiness.resources.may.be.transported.to.the.storm.8860d6c2": "Resources may be transported to the Storm castle for construction; reserves are kept.",
-  "ui.settings.readiness.stormReadiness.the.unlock.plan.builds.the.chosen.storm.d2a66163": "The unlock plan builds the chosen Storm castle; its costs are shown under Unlock."
+  "ui.settings.readiness.stormReadiness.the.unlock.plan.builds.the.chosen.storm.d2a66163": "The unlock plan builds the chosen Storm castle; its costs are shown under Unlock.",
+  "ui.settings.components.autoStormSettingsModal.optional.it.only.decorates.the.storm.castle.bda00004": "Optional. It only decorates the Storm castle after construction; attacks never wait for it."
 } as const;
