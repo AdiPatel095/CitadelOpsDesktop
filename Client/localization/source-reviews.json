@@ -2804,16 +2804,6 @@
     "reason": "Readiness ids/states/fix codes, feature ids, resource JSON keys, stock modes and castle roles.",
     "evidence": "F and C1 are official resource JSON keys; roles feed the setupReadiness.foodRole select; readiness text is the typed messageKey."
   },
-  "8f6762ea5634a36aa545c7d56c5195fab86af8f54d47208a98dcc7c7f5ffa634": {
-    "classification": "technical",
-    "reason": "Readiness ids/states/fix codes, feature ids, resource JSON keys, stock modes and castle roles.",
-    "evidence": "F and C1 are official resource JSON keys; roles feed the setupReadiness.foodRole select; readiness text is the typed messageKey."
-  },
-  "97c781309acf9bf7c29f5fa2a9a6fd429684f93bbee6d1fc4197c29418df2626": {
-    "classification": "technical",
-    "reason": "Readiness ids/states/fix codes, feature ids, resource JSON keys, stock modes and castle roles.",
-    "evidence": "F and C1 are official resource JSON keys; roles feed the setupReadiness.foodRole select; readiness text is the typed messageKey."
-  },
   "d6107c6761f79f678f5a05631f80b9794a74115dc4c0a8775834d5462953dd37": {
     "classification": "technical",
     "reason": "Readiness ids/states/fix codes, feature ids, resource JSON keys, stock modes and castle roles.",
@@ -3223,5 +3213,30 @@
     "classification": "technical",
     "reason": "Stock line states, request kinds, readiness ids/states/fix codes and fallback ids.",
     "evidence": "Line states map to typed unitStock.state.* labels; readiness text is the typed messageKey."
+  },
+  "60d1f56e372d44aa22d80ca991a752d16444e589ee76f702b00300137e5420dc": {
+    "classification": "technical",
+    "reason": "Readiness ids/states/fix codes, feature ids, resource JSON keys, stock modes and castle roles.",
+    "evidence": "F and C1 are official resource JSON keys; roles feed the setupReadiness.foodRole select; readiness text is the typed messageKey."
+  },
+  "2d4b2448ff6d444e0b5091bd8e9d89d510f7c4f8d6b21b9ca98962bb1613c9f7": {
+    "classification": "technical",
+    "reason": "Readiness ids/states/fix codes, feature ids, resource JSON keys, stock modes and castle roles.",
+    "evidence": "F and C1 are official resource JSON keys; roles feed the setupReadiness.foodRole select; readiness text is the typed messageKey."
+  },
+  "ea62d75338db9e92fa3040fb106940445e7c3f6e5c2004336e9cad13ca10172d": {
+    "classification": "technical",
+    "reason": "Readiness ids/states/fix codes, feature ids, resource JSON keys, stock modes and castle roles.",
+    "evidence": "F and C1 are official resource JSON keys; roles feed the setupReadiness.foodRole select; readiness text is the typed messageKey."
+  },
+  "0bce15113e1a6935efaa174d1d2931caf040e2eaac39a490908bc94fbd8c9ec0": {
+    "classification": "technical",
+    "reason": "Readiness ids/states/fix codes, feature ids, resource JSON keys, stock modes and castle roles.",
+    "evidence": "F and C1 are official resource JSON keys; roles feed the setupReadiness.foodRole select; readiness text is the typed messageKey."
+  },
+  "d7f4643640e5f9d7dd2bb563bfaabd652400b02d43023dfa3c93725c26c674e2": {
+    "classification": "technical",
+    "reason": "Readiness ids/states/fix codes, feature ids, resource JSON keys, stock modes and castle roles.",
+    "evidence": "F and C1 are official resource JSON keys; roles feed the setupReadiness.foodRole select; readiness text is the typed messageKey."
   }
 }

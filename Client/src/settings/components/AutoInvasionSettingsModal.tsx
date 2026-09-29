@@ -30,7 +30,6 @@ import { focusReadinessTarget } from '../readiness/focusReadinessTarget';
 import type { ReadinessCheck } from '../readiness/Readiness';
 import { EventAttackSetupField } from './EventAttackSetupField';
 import { ReadinessPanel } from './ReadinessPanel';
-import { useAuth } from '../../context/AuthContext';
 import { CastleRequirementField } from './CastleRequirementField';
 import { CommanderAssignmentPanel } from './CommanderAssignmentPanel';
 import { COMMANDER_FEATURE_SECTION } from '../../Movement/types/CommanderFeatureAssignments';
@@ -82,13 +81,8 @@ export const AutoInvasionSettingsModal: React.FC<AutoInvasionSettingsModalProps>
   const presetReferences = useMemo(() => attackPresetReferences(draftSession.sections), [draftSession.sections]);
   const commanderAssignments = useMemo(() => savedCommanderAssignments(draftSession.sections), [draftSession.sections]);
   const metadataReady = !unitsLoading && !unitsError;
-  const { gameLoggedIn } = useAuth();
-  const hostedPresence = undefined;
   // Unit counts are current only once this connection has its baseline (CIT-15 D1).
-  const observation = useMemo(
-    () => ({ session: state?.session ?? null, connected: gameLoggedIn, hostedPresence }),
-    [gameLoggedIn, hostedPresence, state?.session],
-  );
+  const observation = setup.observation;
   const completedAchievements = state?.player.achievements?.completed ?? {};
   const achievementsObserved = Boolean(state?.player.achievements?.observedAt);
   const difficultyCatalog = useEventDifficultyOptions(isOpen, [71, 103], completedAchievements);

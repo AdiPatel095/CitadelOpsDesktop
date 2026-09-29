@@ -64,6 +64,25 @@ test('Fortress: kingdom main castles, Direwolf stock and the fastest-commander r
   [result, staged, locked, none].forEach((entry) => allMessagesExist(entry.report));
 });
 
+test('Fortress: owned Great Empire Direwolves supply a kingdom even without purchases (AutoFortressPolicy)', () => {
+  const kingdoms = { 2: { enabled: true } };
+  const stockFor = (castles, direwolfPurchaseLimit) => setup.evaluateFortressReadiness({ state: { castles }, kingdoms, direwolfId: 277, direwolfPurchaseLimit, ...metadata })
+    .kingdoms.find((kingdom) => kingdom.kingdomId === 2).stock.check;
+  const empty = castle(22, 2, 12, {});
+  // Neither purchases nor Great Empire stock: blocked.
+  assert.equal(stockFor({ 22: empty, 1: castle(1, 0, 1, {}) }, 0).state, 'blocked');
+  // Great Empire main castle holds Direwolves: staged at launch.
+  const fromGreatEmpire = stockFor({ 22: empty, 1: castle(1, 0, 1, { 277: 50 }) }, 0);
+  assert.equal(fromGreatEmpire.state, 'pending');
+  assert.equal(fromGreatEmpire.messageKey, 'ui.settings.requirements.setupReadiness.direwolves.are.staged.by.the.supply.lane.448002c8');
+  // Direwolves in a non-main Great Empire castle do not count.
+  assert.equal(stockFor({ 22: empty, 5: castle(5, 0, 4, { 277: 50 }) }, 0).state, 'blocked');
+  // Purchases allowed: staged at launch.
+  assert.equal(stockFor({ 22: empty }, 1000).state, 'pending');
+  assert.equal(setup.greatEmpireMainCastle({ castles: { 5: castle(5, 0, 4), 1: castle(1, 0, 1) } }).id, 1);
+  assert.equal(setup.greatEmpireMainCastle(null), null);
+});
+
 test('Station/Bird reserves: covered, above stock and unknown units', () => {
   const state = { castles: { 1: castle(1, 0, 1, { 1: 20 }) } };
   const result = setup.evaluateReserveReadiness({ featureId: 'autoBird', state, reserves: { 1: [{ id: 1, amount: 10 }] }, ...metadata });
@@ -73,6 +92,10 @@ test('Station/Bird reserves: covered, above stock and unknown units', () => {
   const unknown = setup.evaluateReserveReadiness({ featureId: 'autoStation', state, reserves: { 1: [{ id: 999, amount: 1 }] }, ...metadata });
   assert.equal(unknown.report.overall, 'blocked');
   assert.equal(setup.evaluateReserveReadiness({ featureId: 'autoStation', state: null, reserves: {}, ...metadata }).report.overall, 'unavailable');
+  const noCastles = setup.evaluateReserveReadiness({ featureId: 'autoStation', state: { castles: {} }, reserves: {}, ...metadata });
+  const castlesCheck = noCastles.report.checks.find((check) => check.id === 'castles');
+  assert.equal(castlesCheck.state, 'unavailable', 'zero observed castles is not a valid observation');
+  assert.equal(castlesCheck.fix, 'connection');
   [result, above, unknown].forEach((entry) => allMessagesExist(entry.report));
 });
 

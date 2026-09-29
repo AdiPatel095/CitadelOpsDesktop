@@ -122,8 +122,17 @@ export function fortressMainCastle(state: GameStateV2 | null, kingdomId: number)
   return Object.values(state?.castles ?? {}).find((castle) => castle.kingdomId === kingdomId && castleMatchesPurpose(castle, 'outer-main')) ?? null;
 }
 
+/** The Great Empire main castle (kingdom 0, slot type 1). */
+export function greatEmpireMainCastle(state: GameStateV2 | null): CastleStateV2 | null {
+  return Object.values(state?.castles ?? {}).find((castle) => castle.kingdomId === 0 && castle.slotType === 1) ?? null;
+}
+
 export function evaluateFortressReadiness(input: FortressReadinessInput): FortressReadiness {
   const checks: ReadinessCheck[] = [];
+  // The supply lane moves owned Direwolves from the Great Empire main castle whether or not
+  // purchases are allowed (AutoFortressPolicy), so only no purchases and no owned stock there block.
+  const greatEmpireDirewolves = Math.max(0, Number(greatEmpireMainCastle(input.state)?.units?.stationed?.[String(input.direwolfId)]) || 0);
+  const supplyAvailable = input.direwolfPurchaseLimit > 0 || greatEmpireDirewolves > 0;
   const kingdoms: FortressKingdomReadiness[] = FORTRESS_KINGDOMS.map((kingdomId) => {
     const castle = fortressMainCastle(input.state, kingdomId);
     const castleCheck: ReadinessCheck = !input.state
@@ -139,8 +148,8 @@ export function evaluateFortressReadiness(input: FortressReadinessInput): Fortre
       tools: input.tools,
       metadataReady: input.metadataReady,
       slot: String(kingdomId),
-      // The Direwolf supply lane stages units before launch when purchases are allowed.
-      decidedAtLaunch: input.direwolfPurchaseLimit > 0 ? 'stock' : 'quantity',
+      // The Direwolf supply lane stages purchased or Great Empire Direwolves before launch.
+      decidedAtLaunch: supplyAvailable ? 'stock' : 'quantity',
       messages: {
         valid: message('ui.settings.requirements.setupReadiness.direwolves.are.stationed.one.full.flank.wave.69e18c6a'),
         decidedAtLaunch: message('ui.settings.requirements.setupReadiness.direwolves.are.staged.by.the.supply.lane.448002c8'),
@@ -206,7 +215,10 @@ export function evaluateReserveReadiness(input: ReserveReadinessInput): ReserveR
       mode: 'reserve',
     });
   }
-  checks.push({ id: 'castles', state: 'valid', messageKey: message('setupReadiness.observedCastles'), params: { count: Object.keys(input.state.castles).length } });
+  const observedCastles = Object.keys(input.state.castles).length;
+  checks.push(observedCastles > 0
+    ? { id: 'castles', state: 'valid', messageKey: message('setupReadiness.observedCastles'), params: { count: observedCastles } }
+    : { id: 'castles', state: 'unavailable', messageKey: message('ui.settings.requirements.setupReadiness.castle.data.has.not.been.observed.yet.76ce81b7'), fix: 'connection' });
   if (castlesNotInWorld.length > 0) {
     checks.push({ id: 'saved-castles', state: 'pending', messageKey: message('setupReadiness.reservesNotInWorld'), params: { count: castlesNotInWorld.length }, fix: 'settings' });
   }
