@@ -13,7 +13,7 @@ Every modal has a run line at the top of its Essentials view (`AutomationRunStri
 
 ## Matrix
 
-"Maya review" records product acceptance for each row. Evidence for every `accepted` row: `Maya matrix review 2026-09-29, Desktop 1c2fa93 / Hosted 745eef2, Product/Simpler automation setup.md § CIT-17 placement matrix review`. `accepted (adjusted)` rows are the ones Maya moved in that review; the placement below is her exact decision and is implemented as written.
+"Maya review" records product acceptance for each row. Evidence for every `accepted` row: `Maya matrix review 2026-09-29, Desktop 1c2fa93 / Hosted 745eef2, Product/Simpler automation setup.md § CIT-17 placement matrix review`. `accepted (adjusted)` rows are the ones Maya moved in that review; the placement below is her exact decision and is implemented as written. The five rows that gained "Copy to other castles" (autoTowers `castles`, autoStation `reserves`, autoBird `castles`, autoRecruit `plan`, autoTool `plan`) are `accepted` on this evidence: `Maya matrix review 2026-09-29 (CIT-21), Desktop a505626 / Hosted f80f6af, Product/Simpler automation setup.md § CIT-21 matrix rows`.
 
 | Feature | Section | Tier | Contains | Collapsed summary | Maya review |
 |---|---|---|---|---|---|
@@ -40,7 +40,7 @@ Every modal has a run line at the top of its Essentials view (`AutomationRunStri
 | autoBeriWorld | building-options | advanced | Construction time skips and reserves; demolition | Demolition; time skips and reserve | accepted (adjusted) |
 | autoBeriWorld | attack-options | advanced | Attack check interval; armorer tool minimums (coins); troop transport skips; transfer check interval and minimum | Check interval; tool types bought with coins; transfer skips | accepted |
 | autoBeriWorld | travel | advanced | Paid travel | Travel payment | accepted |
-| autoTowers | castles | essentials | Castle on or off; tower troop, stock and radius per castle; per-castle scope line; Copy to other castles | — | pending |
+| autoTowers | castles | essentials | Castle on or off; tower troop, stock and radius per castle; per-castle scope line; Copy to other castles | — | accepted |
 | autoTowers | limits | essentials | Daily attack limit | — | accepted |
 | autoTowers | advisor | advanced | Advisor chains; activation with a token; daily time-skip cap | Advisor on or off, token activation, daily time skips | accepted |
 | autoTowers | scan | advanced | Map scan interval; maiden-supported filter per castle | Map scan every N; maiden-supported commanders only at N castles | accepted (adjusted) |
@@ -64,14 +64,14 @@ Every modal has a run line at the top of its Essentials view (`AutomationRunStri
 | autoFoodBalance | transport-skips | advanced | Transport time skips and reserves | Time skips on or off; skips kept | accepted |
 | autoFoodBalance | travel | advanced | Market barrow travel | Travel payment | accepted |
 | autoStation | evacuation | essentials | Evacuate at N minutes; recall when clear; open-gate fallback | — | accepted (adjusted) |
-| autoStation | reserves | essentials | Troops left to defend per castle, with stock; Copy to other castles | — | pending |
+| autoStation | reserves | essentials | Troops left to defend per castle, with stock; Copy to other castles | — | accepted |
 | autoStation | filters | advanced | Minimum Bird protection days on target | Protection filter | accepted (adjusted) |
 | autoBird | targets | essentials | Minimum Bird protection days on target | — | accepted |
-| autoBird | castles | essentials | Active preset; kept units per castle, with stock; Copy to other castles | — | pending |
+| autoBird | castles | essentials | Active preset; kept units per castle, with stock; Copy to other castles | — | accepted |
 | autoBird | timing | advanced | Random delay range; minimum group size | Delay range; minimum per send | accepted |
-| autoRecruit | plan | essentials | Shared or per-castle mode; enabled castles; units and schedules; Glory title fallback; Copy to other castles | — | pending |
+| autoRecruit | plan | essentials | Shared or per-castle mode; enabled castles; units and schedules; Glory title fallback; Copy to other castles | — | accepted |
 | autoRecruit | timing | advanced | Queue check interval | Check interval | accepted |
-| autoTool | plan | essentials | Shared or per-castle mode; enabled castles; tools and schedules; Copy to other castles | — | pending |
+| autoTool | plan | essentials | Shared or per-castle mode; enabled castles; tools and schedules; Copy to other castles | — | accepted |
 | autoTool | timing | advanced | Queue check interval | Check interval | accepted |
 | autoHospital | schedule | essentials | Scan windows (weekly schedule); Account-wide settings only; no per-castle copy. | — | accepted |
 | autoHospital | timing | advanced | Queue check interval | Check interval | accepted |

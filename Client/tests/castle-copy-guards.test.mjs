@@ -149,13 +149,14 @@ test('Queue Production offers Copy only per castle, never in shared mode or for 
   assert.match(text, /\{!isGlobalMode && !castleUsesScheduledItems \? \(\s*<CastleCopyButton/);
 });
 
-test('the placement matrix records Copy on the hosting rows and the account-wide note on Food and Hospital', async () => {
+test('the placement matrix records Copy on the hosting rows (accepted) and the account-wide note on Food and Hospital', async () => {
   const matrix = await readFile(new URL('../../Docs/Features/SettingsPlacement.md', import.meta.url), 'utf8');
   const row = (feature, section) => matrix.split('\n').find((line) => line.startsWith(`| ${feature} | ${section} |`));
   for (const [feature, section] of [['autoTowers', 'castles'], ['autoStation', 'reserves'], ['autoBird', 'castles'], ['autoRecruit', 'plan'], ['autoTool', 'plan']]) {
     assert.match(row(feature, section), /Copy to other castles/, `${feature}/${section}`);
-    assert.match(row(feature, section), /\| pending \|$/, `${feature}/${section}: back to pending for Maya's review`);
+    assert.match(row(feature, section), /\| accepted \|$/, `${feature}/${section}: accepted by Maya's CIT-21 matrix review`);
   }
+  assert.ok(matrix.includes('Maya matrix review 2026-09-29 (CIT-21), Desktop a505626 / Hosted f80f6af, Product/Simpler automation setup.md § CIT-21 matrix rows'), 'the CIT-21 evidence string');
   for (const [feature, section] of [['autoFoodBalance', 'reserves'], ['autoHospital', 'schedule']]) {
     assert.match(row(feature, section), /Account-wide settings only; no per-castle copy\./, `${feature}: Maya's note wording`);
   }
