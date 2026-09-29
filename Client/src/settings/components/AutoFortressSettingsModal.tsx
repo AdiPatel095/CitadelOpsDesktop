@@ -32,9 +32,20 @@ import {
   clampDirewolfPurchaseLimit,
   defaultAutoFortressClientState,
   parseAutoFortressClientState,
-  persistAutoFortressClientState,
   type AutoFortressClientStateV1,
 } from '../AutoFortressClientState';
+import { useConfigurationDraftSession } from '../ConfigurationDraftSession';
+import { useMetadata } from '../../context/MetadataContext';
+import { COMMANDER_FEATURE_SECTION } from '../../Movement/types/CommanderFeatureAssignments';
+import { savedCommanderAssignments } from '../requirements/commanderAssignmentDraft';
+import { evaluateCommanderEligibility } from '../requirements/commanderEligibility';
+import { evaluateFortressReadiness } from '../requirements/setupReadiness';
+import { useSetupContext } from '../requirements/useSetupContext';
+import { focusReadinessTarget } from '../readiness/focusReadinessTarget';
+import type { ReadinessCheck } from '../readiness/Readiness';
+import { CommanderAssignmentPanel } from './CommanderAssignmentPanel';
+import { ReadinessCheckLine, ReadinessPanel } from './ReadinessPanel';
+import { UnitStockList } from './UnitStockList';
 
 interface AutoFortressSettingsModalProps {
   isOpen: boolean;
@@ -70,7 +81,16 @@ export const AutoFortressSettingsModal: React.FC<AutoFortressSettingsModalProps>
   onOpenFeatureSchedule,
 }) => {
   const { t: localizeStatic } = useStaticLocale();
-  const { state, configuration } = useCitadelAPI();
+  const { state } = useCitadelAPI();
+  const setup = useSetupContext(AUTO_FORTRESS_SECTION);
+  const draftSession = useConfigurationDraftSession({
+    isOpen,
+    section: AUTO_FORTRESS_SECTION,
+    configurationDependencies: [COMMANDER_FEATURE_SECTION],
+    sessionKey: setup.sessionKey,
+  });
+  const { troops, tools, unitsLoading, unitsError } = useMetadata();
+  const [commandersOpen, setCommandersOpen] = useState(false);
   const [settings, setSettings] = useState<AutoFortressClientStateV1>(defaultAutoFortressClientState);
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
@@ -85,8 +105,37 @@ export const AutoFortressSettingsModal: React.FC<AutoFortressSettingsModalProps>
       setSaveError(null);
       return;
     }
-    setSettings(parseAutoFortressClientState(configuration?.sections[AUTO_FORTRESS_SECTION]));
-  }, [configuration?.sections, isOpen]);
+    if (!draftSession.initialSnapshot) return;
+    setSettings(parseAutoFortressClientState(draftSession.initialSections?.[AUTO_FORTRESS_SECTION]));
+  }, [draftSession.initialSections, draftSession.openKey, draftSession.initialSnapshot, isOpen]);
+
+  const commanderAssignments = useMemo(() => savedCommanderAssignments(draftSession.sections), [draftSession.sections]);
+  const readiness = useMemo(() => evaluateFortressReadiness({
+    state,
+    kingdoms: settings.kingdoms,
+    direwolfId: AUTO_FORTRESS_DIREWOLF_ID,
+    direwolfPurchaseLimit: settings.direwolfPurchaseLimit,
+    troops,
+    tools,
+    metadataReady: !unitsLoading && !unitsError,
+    observation: setup.observation,
+    commanders: evaluateCommanderEligibility({
+      featureId: 'autoFortress',
+      state,
+      assignments: commanderAssignments,
+      movement: setup.movement,
+      gameLoggedIn: setup.gameLoggedIn,
+      now: Date.now(),
+    }),
+  }), [commanderAssignments, settings.direwolfPurchaseLimit, settings.kingdoms, setup.gameLoggedIn, setup.movement, state, tools, troops, unitsError, unitsLoading, setup.observation]);
+  const fixReadiness = (check: ReadinessCheck) => {
+    if (check.id === 'commanders' || check.id === 'commander-assignment' || check.id === 'commander-speed') {
+      setCommandersOpen(true);
+      window.requestAnimationFrame(() => focusReadinessTarget('auto-fortress-commanders-heading'));
+      return;
+    }
+    focusReadinessTarget('auto-fortress-kingdoms');
+  };
 
   const castlesByKingdom = useMemo(() => {
     const result = new Map<number, { id: number; name: string; stationed: number }>();
@@ -124,7 +173,7 @@ export const AutoFortressSettingsModal: React.FC<AutoFortressSettingsModalProps>
     setIsSaving(true);
     setSaveError(null);
     try {
-      await persistAutoFortressClientState(settings);
+      await draftSession.save(settings);
       onClose();
     } catch (error) {
       setSaveError(error instanceof Error ? error.message : 'Could not save Auto Fortress settings.');
@@ -157,6 +206,9 @@ export const AutoFortressSettingsModal: React.FC<AutoFortressSettingsModalProps>
       onSave={save}
       saveLabel="Save fortress plan"
       isSaving={isSaving}
+      saveDisabled={!draftSession.ready}
+      contentDisabled={!draftSession.ready}
+      contentNotice={draftSession.conflictNotice}
     >
       {saveError && (
         <div className="mb-4 rounded-global border border-error/30 bg-error/10 px-4 py-3 text-sm font-semibold text-error" role="alert">
@@ -212,7 +264,7 @@ export const AutoFortressSettingsModal: React.FC<AutoFortressSettingsModalProps>
             </span>
           </div>
         </div>
-        <div className="grid grid-cols-1 gap-3 lg:grid-cols-3">
+        <div id="auto-fortress-kingdoms" tabIndex={-1} className="grid grid-cols-1 gap-3 outline-none lg:grid-cols-3">
           {KINGDOMS.map((kingdom,kingdomIndex) => {
             const Icon = kingdom.icon;
             const castle = castlesByKingdom.get(kingdom.id);
@@ -225,6 +277,7 @@ export const AutoFortressSettingsModal: React.FC<AutoFortressSettingsModalProps>
             const allocated = Math.max(0, Math.trunc(fortressMetrics[`allocatedDirewolvesKingdom${kingdom.id}`] ?? stationed + inbound));
             const outstanding = Math.max(0, Math.trunc(fortressMetrics[`outstandingDirewolvesKingdom${kingdom.id}`] ?? 0));
             const supplyDetail = localizedSupplyDetails[kingdomIndex];
+            const kingdomReadiness = readiness.kingdoms.find((entry) => entry.kingdomId === kingdom.id);
             return (
               <Card key={kingdom.id} variant="solid" className={`relative overflow-hidden bg-gradient-to-br ${kingdom.wash} p-4`}>
                 <div className="flex items-start justify-between gap-3">
@@ -255,6 +308,15 @@ export const AutoFortressSettingsModal: React.FC<AutoFortressSettingsModalProps>
                     </div>
                   ) : <div className="mt-1 text-[11px] text-text-muted"><LocalizedText messageKey="ui.settings.components.autoFortressSettingsModal.unlock.kingdom.first.8f49a64e" /></div>}
                   {supplyDetail.text && <div className="mt-2 text-[10px] font-semibold text-text-muted" {...messageLanguageAttributes(supplyDetail)}>{supplyDetail.text}</div>}
+                  {kingdomReadiness ? (
+                    <div className="mt-2 space-y-1.5 border-t border-border-base/70 pt-2">
+                      {kingdomReadiness.stock ? <UnitStockList lines={kingdomReadiness.stock.lines} /> : null}
+                      <ul className="space-y-1">
+                        {kingdomReadiness.castleCheck.state !== 'valid' ? <ReadinessCheckLine check={kingdomReadiness.castleCheck} /> : null}
+                        {kingdomReadiness.stock ? <ReadinessCheckLine check={kingdomReadiness.stock.check} /> : null}
+                      </ul>
+                    </div>
+                  ) : null}
                   {castle && (
                     <div className="mt-2 flex items-center gap-1.5 border-t border-border-base/70 pt-2 text-[10px] font-semibold text-text-muted">
                       <Radar className="h-3.5 w-3.5 shrink-0 text-primary" />
@@ -369,6 +431,22 @@ export const AutoFortressSettingsModal: React.FC<AutoFortressSettingsModalProps>
             </p>
           </div>
         </div>
+      </div>
+
+      <div className="mt-4 space-y-4">
+        <ReadinessPanel report={readiness.report} onFix={fixReadiness} />
+        <CommanderAssignmentPanel
+          id="auto-fortress-commanders"
+          featureId="autoFortress"
+          draftSession={draftSession}
+          state={setup.state}
+          movement={setup.movement}
+          gameLoggedIn={setup.gameLoggedIn}
+          expanded={commandersOpen}
+          onExpandedChange={setCommandersOpen}
+          note={<LocalizedText messageKey="ui.settings.components.autoFortressSettingsModal.auto.fortress.launches.the.fastest.eligible.commander.328bce79" />}
+          disabled={isSaving}
+        />
       </div>
     </SettingsModal>
     <FeatureGuideModal feature="autoFortress" isOpen={isOpen && isGuideOpen} onClose={() => setIsGuideOpen(false)} />

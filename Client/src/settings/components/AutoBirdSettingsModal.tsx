@@ -1,6 +1,6 @@
 import { useLocale as useStaticLocale } from "../../i18n/LocaleContext";
 import { LocalizedText } from "../../i18n/LocalizedText";
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { Bird, BookOpen, CalendarDays, LockKeyhole, Plus } from 'lucide-react';
 import { showTroopPicker } from '../../components/TroopPickerModal';
 import type { UnitWithQuantity } from '../../components/TroopPickerModal';
@@ -15,7 +15,6 @@ import {
   buildAutoBirdClientState,
   defaultAutoBirdSettings,
   parseAutoBirdClientState,
-  persistAutoBirdClientState,
   type AutoBirdStoredSettings,
 } from '../AutoBirdClientState';
 import {
@@ -33,6 +32,13 @@ import { useAuth } from '../../context/AuthContext';
 import { AUTO_FORTRESS_DIREWOLF_ID } from '../AutoFortressClientState';
 import { AutoBirdGuideModal } from './AutoBirdGuideModal';
 import { useGuideLocale } from '../../config/useGuideLocale';
+import { useConfigurationDraftSession } from '../ConfigurationDraftSession';
+import { useMetadata } from '../../context/MetadataContext';
+import { evaluateReserveReadiness } from '../requirements/setupReadiness';
+import { useSetupContext } from '../requirements/useSetupContext';
+import { focusReadinessTarget } from '../readiness/focusReadinessTarget';
+import { ReadinessCheckLine, ReadinessPanel } from './ReadinessPanel';
+import { UnitStockList } from './UnitStockList';
 import {
   autoFortressReservesDirewolves,
   mergeAutoBirdPickerItems,
@@ -58,7 +64,15 @@ function clampMinRPTDays(value: number): number {
 export const AutoBirdSettingsModal: React.FC<AutoBirdSettingsModalProps> = ({ isOpen, onClose, onOpenFeatureSchedule }) => {
   const { locale: guideLocale, pack: guidePack } = useGuideLocale();
   const { t: localizeStatic } = useStaticLocale();
-  const { state, configuration } = useCitadelAPI();
+  const { state } = useCitadelAPI();
+  const setup = useSetupContext('automation.autoBird');
+  const draftSession = useConfigurationDraftSession({
+    isOpen,
+    section: 'automation.autoBird',
+    configurationDependencies: ['automation.autoFortress'],
+    sessionKey: setup.sessionKey,
+  });
+  const { troops, tools, unitsLoading, unitsError } = useMetadata();
   const { autoFortressEnabled } = useAuth();
   const castles = castleOptionsFromState(state);
   const [settings, setSettings] = useState<Record<string, { id: number; amount: number }[]>>({});
@@ -91,14 +105,24 @@ export const AutoBirdSettingsModal: React.FC<AutoBirdSettingsModalProps> = ({ is
     };
   }, [settings, minDelay, maxDelay, minSend, minRPTDays]);
 
+  const birdReadiness = useMemo(() => evaluateReserveReadiness({
+    featureId: 'autoBird',
+    state,
+    reserves: settings,
+    troops,
+    tools,
+    metadataReady: !unitsLoading && !unitsError,
+    observation: setup.observation,
+  }), [settings, state, tools, troops, unitsError, unitsLoading, setup.observation]);
+
   const hydrateFromConfiguration = useCallback(() => {
-    const s = parseAutoBirdClientState(configuration?.sections['automation.autoBird']).ignoreSettings;
+    const s = parseAutoBirdClientState(draftSession.sections?.['automation.autoBird']).ignoreSettings;
     setSettings(s.settings);
     setMinDelay(clampDelayHours(s.minDelay));
     setMaxDelay(clampDelayHours(s.maxDelay));
     setMinSend(s.minSend);
     setMinRPTDays(clampMinRPTDays(s.minRPTDays));
-  }, [configuration?.sections]);
+  }, [draftSession.sections]);
 
   const applyFullClientState = useCallback((state: ReturnType<typeof parseAutoBirdClientState>) => {
     const activePreset = state.activePresetId
@@ -124,7 +148,8 @@ export const AutoBirdSettingsModal: React.FC<AutoBirdSettingsModalProps> = ({ is
       setSaveError(null);
       return;
     }
-    const rawState = configuration?.sections['automation.autoBird']
+    if (!draftSession.initialSnapshot) return;
+    const rawState = draftSession.initialSections?.['automation.autoBird']
       ?? buildAutoBirdClientState(defaultAutoBirdSettings(), emptyPresetsFile());
     const signature = JSON.stringify(rawState);
     if (loadedConfigurationSignature.current === signature) return;
@@ -132,7 +157,7 @@ export const AutoBirdSettingsModal: React.FC<AutoBirdSettingsModalProps> = ({ is
     applyFullClientState(parseAutoBirdClientState(rawState));
     setPresetError('');
 
-  }, [configuration?.sections, isOpen, applyFullClientState]);
+  }, [draftSession.initialSections, draftSession.openKey, draftSession.initialSnapshot, isOpen, applyFullClientState]);
 
   const handleAddItem = async (castleId: string) => {
     const currentItems = settings[castleId] || [];
@@ -140,7 +165,7 @@ export const AutoBirdSettingsModal: React.FC<AutoBirdSettingsModalProps> = ({ is
     const fortressProtected = autoFortressReservesDirewolves(
       autoFortressEnabled,
       castleState,
-      configuration?.sections['automation.autoFortress'],
+      draftSession.sections?.['automation.autoFortress'],
     );
     const editableItems = visibleAutoBirdReserveItems(currentItems, fortressProtected);
     const preselectedQuantities: Record<number, number> = {};
@@ -216,7 +241,7 @@ export const AutoBirdSettingsModal: React.FC<AutoBirdSettingsModalProps> = ({ is
     };
     setIsSaving(true);
     try {
-      const snapshot = await persistAutoBirdClientState(buildAutoBirdClientState(currentIgnoreSettings(), presetsFile, id));
+      const snapshot = await draftSession.save(buildAutoBirdClientState(currentIgnoreSettings(), presetsFile, id));
       loadedConfigurationSignature.current = JSON.stringify(snapshot.sections['automation.autoBird']);
       setPresetsState(presetsFile);
       setPresetDropdownId(id);
@@ -244,7 +269,7 @@ export const AutoBirdSettingsModal: React.FC<AutoBirdSettingsModalProps> = ({ is
     setIsSaving(true);
     setSaveError(null);
     try {
-      const snapshot = await persistAutoBirdClientState(buildAutoBirdClientState(
+      const snapshot = await draftSession.save(buildAutoBirdClientState(
         currentIgnoreSettings(),
         presetsFile,
         nextActivePresetId,
@@ -286,7 +311,7 @@ export const AutoBirdSettingsModal: React.FC<AutoBirdSettingsModalProps> = ({ is
     };
     setIsSaving(true);
     try {
-      const snapshot = await persistAutoBirdClientState(buildAutoBirdClientState(payload, presetsFile, appliedPresetId));
+      const snapshot = await draftSession.save(buildAutoBirdClientState(payload, presetsFile, appliedPresetId));
       loadedConfigurationSignature.current = JSON.stringify(snapshot.sections['automation.autoBird']);
       setPresetsState(presetsFile);
       setActivePresetId(appliedPresetId);
@@ -318,6 +343,9 @@ export const AutoBirdSettingsModal: React.FC<AutoBirdSettingsModalProps> = ({ is
       isOpen={isOpen}
       onClose={handleClose}
       maxWidth="full"
+      saveDisabled={!draftSession.ready}
+      contentDisabled={!draftSession.ready}
+      contentNotice={draftSession.conflictNotice}
       title={localizeStatic("ui.settings.components.autoBirdSettingsModal.title.auto.bird.settings.158a0a4f")}
       icon={<Bird className="h-5 w-5" />}
       description={(
@@ -439,8 +467,10 @@ export const AutoBirdSettingsModal: React.FC<AutoBirdSettingsModalProps> = ({ is
           )}
         />
 
+        <ReadinessPanel report={birdReadiness.report} onFix={() => focusReadinessTarget('auto-bird-castles')} />
+
         {/* Castle grid */}
-        <div className="custom-scrollbar min-h-0 flex-1 overflow-y-auto pr-1">
+        <div id="auto-bird-castles" tabIndex={-1} className="custom-scrollbar min-h-0 flex-1 overflow-y-auto pr-1 outline-none">
           {castles.length === 0 && (
             <p className="py-8 text-center text-sm text-text-muted"><LocalizedText messageKey="ui.settings.components.autoBirdSettingsModal.loading.castles.reopen.if.this.stays.empty.fea1a1d6" /></p>
           )}
@@ -451,9 +481,10 @@ export const AutoBirdSettingsModal: React.FC<AutoBirdSettingsModalProps> = ({ is
               const fortressProtected = autoFortressReservesDirewolves(
                 autoFortressEnabled,
                 state?.castles[cid],
-                configuration?.sections['automation.autoFortress'],
+                draftSession.sections?.['automation.autoFortress'],
               );
               const visibleItems = visibleAutoBirdReserveItems(items, fortressProtected);
+              const stock = birdReadiness.stockByCastle[cid];
               return (
                 <Card key={castle.id} variant="solid" className="flex flex-col bg-bg-card-hover/40 p-4 shadow-inner">
                   <div className="mb-3 flex flex-wrap items-center gap-2 border-b border-border-base pb-2">
@@ -505,6 +536,12 @@ export const AutoBirdSettingsModal: React.FC<AutoBirdSettingsModalProps> = ({ is
                       />
                     </div>
                   )}
+                  {stock ? (
+                    <div className="mt-3 space-y-1.5 border-t border-border-base pt-2">
+                      <UnitStockList lines={stock.lines} mode="reserve" />
+                      <ul><ReadinessCheckLine check={stock.check} /></ul>
+                    </div>
+                  ) : null}
                 </Card>
               );
             })}

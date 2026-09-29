@@ -1634,51 +1634,6 @@
     "reason": "Readiness check ids, states, slots, fix codes, select parameters and booster ids.",
     "evidence": "ReadinessCheck id/state/slot/fix and params (boost, currency) are identifiers or ICU select arguments; text is the typed messageKey rendered by ReadinessPanel."
   },
-  "8257e5817b94a94a1724910e8dc9b5a59bf37dd8e8bb139e28acfc7bcd05f70a": {
-    "classification": "technical",
-    "reason": "Readiness check ids, states, slots, fix codes, select parameters and booster ids.",
-    "evidence": "ReadinessCheck id/state/slot/fix and params (boost, currency) are identifiers or ICU select arguments; text is the typed messageKey rendered by ReadinessPanel."
-  },
-  "578947dd30b4b6018a3c10b92b6231a969eb19524d84977bd8498c1a04397b8c": {
-    "classification": "technical",
-    "reason": "Readiness check ids, states, slots, fix codes, select parameters and booster ids.",
-    "evidence": "ReadinessCheck id/state/slot/fix and params (boost, currency) are identifiers or ICU select arguments; text is the typed messageKey rendered by ReadinessPanel."
-  },
-  "533982d7d9a89eeae37f707dcbd0944b48cb8756974ffe33c38ef61e80bbec3c": {
-    "classification": "technical",
-    "reason": "Readiness check ids, states, slots, fix codes, select parameters and booster ids.",
-    "evidence": "ReadinessCheck id/state/slot/fix and params (boost, currency) are identifiers or ICU select arguments; text is the typed messageKey rendered by ReadinessPanel."
-  },
-  "e3fb1d3683154ce9d1339e64738eb708be82af51e5feb1906f00c5422f52db51": {
-    "classification": "technical",
-    "reason": "Readiness check ids, states, slots, fix codes, select parameters and booster ids.",
-    "evidence": "ReadinessCheck id/state/slot/fix and params (boost, currency) are identifiers or ICU select arguments; text is the typed messageKey rendered by ReadinessPanel."
-  },
-  "5ff5c37ed4499e4c69e448018162a202e725676c521f20a51f5a698c3ba7240e": {
-    "classification": "technical",
-    "reason": "Readiness check ids, states, slots, fix codes, select parameters and booster ids.",
-    "evidence": "ReadinessCheck id/state/slot/fix and params (boost, currency) are identifiers or ICU select arguments; text is the typed messageKey rendered by ReadinessPanel."
-  },
-  "4246856fa62e048c60be65f8d727b0b8e7efdb7f14128d181ee2a0495e8267fb": {
-    "classification": "technical",
-    "reason": "Readiness check ids, states, slots, fix codes, select parameters and booster ids.",
-    "evidence": "ReadinessCheck id/state/slot/fix and params (boost, currency) are identifiers or ICU select arguments; text is the typed messageKey rendered by ReadinessPanel."
-  },
-  "03689bf2a569f6bd8f2aff1d26c4002627bbaa475178fdad19fdb26d55ef3a4a": {
-    "classification": "technical",
-    "reason": "Readiness check ids, states, slots, fix codes, select parameters and booster ids.",
-    "evidence": "ReadinessCheck id/state/slot/fix and params (boost, currency) are identifiers or ICU select arguments; text is the typed messageKey rendered by ReadinessPanel."
-  },
-  "2ed399eb31a61091baa108f285295c1af6ea1eb5289a0ee24469cdcd40c8d9a1": {
-    "classification": "technical",
-    "reason": "Readiness check ids, states, slots, fix codes, select parameters and booster ids.",
-    "evidence": "ReadinessCheck id/state/slot/fix and params (boost, currency) are identifiers or ICU select arguments; text is the typed messageKey rendered by ReadinessPanel."
-  },
-  "3ad095747667cb77a2acd413652662a9e19cf84f9ac1fa5c61d54f83f1fe4992": {
-    "classification": "technical",
-    "reason": "Readiness check ids, states, slots, fix codes, select parameters and booster ids.",
-    "evidence": "ReadinessCheck id/state/slot/fix and params (boost, currency) are identifiers or ICU select arguments; text is the typed messageKey rendered by ReadinessPanel."
-  },
   "2892ee50ce3a05b92c7da2e27e492462fd5aefb24c46908adb4cee78b2f4de20": {
     "classification": "technical",
     "reason": "DOM scroll options and focusable-element selector.",
@@ -1709,16 +1664,6 @@
     "reason": "Badge variant token and composition of typed module/slot labels.",
     "evidence": "Module and slot labels come from attackPresets.module.* / attackPresets.slot.* messages joined with a separator."
   },
-  "27ae5e79c3384d5d394f0f0fb5f42b9b9e28421efe147dcf08e3efeeda38774a": {
-    "classification": "technical",
-    "reason": "Readiness check ids, states, slots, fix codes, select parameters and booster ids.",
-    "evidence": "ReadinessCheck id/state/slot/fix and params (boost, currency) are identifiers or ICU select arguments; text is the typed messageKey rendered by ReadinessPanel."
-  },
-  "d4c9d92e7de2a0baf3236589a84223be591131c4c03f4f8de037c5e035a420db": {
-    "classification": "technical",
-    "reason": "Readiness check ids, states, slots, fix codes, select parameters and booster ids.",
-    "evidence": "ReadinessCheck id/state/slot/fix and params (boost, currency) are identifiers or ICU select arguments; text is the typed messageKey rendered by ReadinessPanel."
-  },
   "ad2ba72d89f70325ea0aca4b417b8ad5f80eef9b2cd244fc824910d35c5fb344": {
     "classification": "technical",
     "reason": "Default attack preset target type token.",
@@ -1738,31 +1683,6 @@
     "classification": "technical",
     "reason": "Mode ids, ref discriminators, component variant/size tokens, lane keys, DOM ids and numeric/id fallbacks.",
     "evidence": "saved/inline chip values, AttackSetupRef sources, Button/Badge/Modal props and #<id> fallbacks for unnamed castles or units; labels render typed messages and user/official names."
-  },
-  "9e36bb61e10219cf02b0e2e8b2349780cbfff02eb0bb02655a3c46d490f49a38": {
-    "classification": "technical",
-    "reason": "Readiness ids/states/fix codes.",
-    "evidence": "Readiness text is the typed messageKey rendered by ReadinessPanel."
-  },
-  "41c2aa2e83691e627c01953534f1bb1aa6102dc1224c619176bb0c05f1f5d4f5": {
-    "classification": "technical",
-    "reason": "Readiness ids/states/fix codes.",
-    "evidence": "Readiness text is the typed messageKey rendered by ReadinessPanel."
-  },
-  "6c743197cc0ab56d4207c23e408f53bafd9a191bd90052c1b5c4bb619d6335a7": {
-    "classification": "technical",
-    "reason": "Readiness ids/states/fix codes.",
-    "evidence": "Readiness text is the typed messageKey rendered by ReadinessPanel."
-  },
-  "b40994cd117fd49bea6d070f1918e7fc8d64e60dc8ff745b1bbbcf9a0555b8eb": {
-    "classification": "technical",
-    "reason": "Readiness ids/states/fix codes.",
-    "evidence": "Readiness text is the typed messageKey rendered by ReadinessPanel."
-  },
-  "d1573784f019d21c054e363756e88718ae61b0f88be5b778f81d7fdcae232a8f": {
-    "classification": "technical",
-    "reason": "Readiness ids/states/fix codes.",
-    "evidence": "Readiness text is the typed messageKey rendered by ReadinessPanel."
   },
   "f592d390f8d720d36051c127d7edca67129d2318755edad5358bdbb8bdd89807": {
     "classification": "technical",
@@ -1913,5 +1833,1435 @@
     "classification": "technical",
     "reason": "Reviewer-facing starter recipe metadata (sources, rules, owners, rationale and citations) that is never rendered.",
     "evidence": "EVENT_ATTACK_STARTER_RECIPE is consumed by recommendEventAttackSetup and tests/starter-recipes.test.mjs; the UI shows only a typed pending-review badge."
+  },
+  "e05ae57dd0c04d8e3a992eff73099093b2ec564efab9266964e94c3c06cb12a6": {
+    "classification": "technical",
+    "reason": "Commander activity tokens.",
+    "evidence": "CommanderActivity values are compared and mapped to commanderActivity.* typed labels."
+  },
+  "a84bd31a2de65c2d39cc20afb830ad8916e396ae4bbcc0161cb7aaed2f72c2e1": {
+    "classification": "technical",
+    "reason": "Commander activity tokens.",
+    "evidence": "CommanderActivity values are compared and mapped to commanderActivity.* typed labels."
+  },
+  "2ea2f131b387d17444d0c744a4069a3247bc8feb5945f8f2212977641924f460": {
+    "classification": "technical",
+    "reason": "Commander activity tokens.",
+    "evidence": "CommanderActivity values are compared and mapped to commanderActivity.* typed labels."
+  },
+  "e20ff358dd3ff4488b8cc84b2eb42b5888fbefab7bb2133bb151d05395a34ec4": {
+    "classification": "technical",
+    "reason": "Commander activity tokens.",
+    "evidence": "CommanderActivity values are compared and mapped to commanderActivity.* typed labels."
+  },
+  "3f4cff2691d23f31bb66645cffbeb7c666899b0ffda2b9b1d424ae2853520ff1": {
+    "classification": "technical",
+    "reason": "Commander activity tokens.",
+    "evidence": "CommanderActivity values are compared and mapped to commanderActivity.* typed labels."
+  },
+  "e3a3f85f72d6a7e029f83aaa849be92f93f8f0db0735799657e1d0b527bfd388": {
+    "classification": "technical",
+    "reason": "Commander feature ids.",
+    "evidence": "COMMANDER_FEATURE_IDS index automation.commanderFeatures assignments; labels come from commanderFeatures.* keys."
+  },
+  "2381ca578f08860827f76d99cd797c75c96850480f88f9fdad86a08f54fe23ab": {
+    "classification": "technical",
+    "reason": "Commander feature ids.",
+    "evidence": "COMMANDER_FEATURE_IDS index automation.commanderFeatures assignments; labels come from commanderFeatures.* keys."
+  },
+  "a5b407f01c5549ff52fa58a9fcac20753c8ed11b7ee4e5f9a200d0b2d2461a55": {
+    "classification": "technical",
+    "reason": "Commander feature ids.",
+    "evidence": "COMMANDER_FEATURE_IDS index automation.commanderFeatures assignments; labels come from commanderFeatures.* keys."
+  },
+  "f785c3ee3d9fb4fb1f6e14a2b7acb90f67cef840d6022da0775865d926d98798": {
+    "classification": "technical",
+    "reason": "Commander feature ids.",
+    "evidence": "COMMANDER_FEATURE_IDS index automation.commanderFeatures assignments; labels come from commanderFeatures.* keys."
+  },
+  "3403a4b6aee9d5723458aaddf6343a3a3bc7a4b931e05f26fd9c6d59f5cfab7b": {
+    "classification": "technical",
+    "reason": "Commander feature ids.",
+    "evidence": "COMMANDER_FEATURE_IDS index automation.commanderFeatures assignments; labels come from commanderFeatures.* keys."
+  },
+  "5ca1cbf273fef165bf878afbaceaf6725cc333df9a6694d909903bdaaaea28ea": {
+    "classification": "technical",
+    "reason": "Commander feature ids.",
+    "evidence": "COMMANDER_FEATURE_IDS index automation.commanderFeatures assignments; labels come from commanderFeatures.* keys."
+  },
+  "48c4423046e70051e3d322bd0dbcc269b0a061bcbb440de71048214eb5c4c760": {
+    "classification": "technical",
+    "reason": "Commander feature ids.",
+    "evidence": "COMMANDER_FEATURE_IDS index automation.commanderFeatures assignments; labels come from commanderFeatures.* keys."
+  },
+  "98a5f5e490afd8659bf52233b7b1ddbd3ee4d6fa749d5a623f9f0f588d007492": {
+    "classification": "technical",
+    "reason": "Commander feature ids.",
+    "evidence": "COMMANDER_FEATURE_IDS index automation.commanderFeatures assignments; labels come from commanderFeatures.* keys."
+  },
+  "0201d6ec6e9c32919bcce925dbb2bbd5c0d6ae2caa7ed25089bb7814a3401581": {
+    "classification": "technical",
+    "reason": "Commander feature ids.",
+    "evidence": "COMMANDER_FEATURE_IDS index automation.commanderFeatures assignments; labels come from commanderFeatures.* keys."
+  },
+  "cdb230f36cd6f8f223097bc6dfc8a24abdfb1aef507111fb50f0fc858b87b8db": {
+    "classification": "technical",
+    "reason": "Commander feature ids.",
+    "evidence": "COMMANDER_FEATURE_IDS index automation.commanderFeatures assignments; labels come from commanderFeatures.* keys."
+  },
+  "d060aa0402db21d0f3df30c5e2e125eb50ef3c57bbc28dab8d9a4dcfe55d244e": {
+    "classification": "technical",
+    "reason": "Configuration section keys, commander feature ids, castle purposes, readiness element ids and component tokens.",
+    "evidence": "Section ids address configuration, feature ids index automation.commanderFeatures, ids are focus targets for readiness fixes; visible text renders through LocalizedText keys."
+  },
+  "6d0b997a9532e2b40449ab9ca362a53d5a1337b5939420f0cc21460e5fb53fc9": {
+    "classification": "technical",
+    "reason": "Configuration section keys, commander feature ids, castle purposes, readiness element ids and component tokens.",
+    "evidence": "Section ids address configuration, feature ids index automation.commanderFeatures, ids are focus targets for readiness fixes; visible text renders through LocalizedText keys."
+  },
+  "e65718f1a79a6011c2a7c20c51d955153df6e4ad9d99cb1b86473a2011ed1416": {
+    "classification": "technical",
+    "reason": "Configuration section keys, commander feature ids, castle purposes, readiness element ids and component tokens.",
+    "evidence": "Section ids address configuration, feature ids index automation.commanderFeatures, ids are focus targets for readiness fixes; visible text renders through LocalizedText keys."
+  },
+  "ad53630a5435fc9f1a8ad0ba4006529b101b908e6b0128509119c35c6a960389": {
+    "classification": "technical",
+    "reason": "Configuration section keys, commander feature ids, castle purposes, readiness element ids and component tokens.",
+    "evidence": "Section ids address configuration, feature ids index automation.commanderFeatures, ids are focus targets for readiness fixes; visible text renders through LocalizedText keys."
+  },
+  "d8c27c0d1404b9f449adcaa94517930a514e488b74be21af7ff16cbf2a77c564": {
+    "classification": "technical",
+    "reason": "Configuration section keys, commander feature ids, castle purposes, readiness element ids and component tokens.",
+    "evidence": "Section ids address configuration, feature ids index automation.commanderFeatures, ids are focus targets for readiness fixes; visible text renders through LocalizedText keys."
+  },
+  "9bb0ed65184ac7c5aa1760aa703baf6c00e461bb6fec7685d2a53abd4accfd8d": {
+    "classification": "technical",
+    "reason": "Configuration section keys, commander feature ids, castle purposes, readiness element ids and component tokens.",
+    "evidence": "Section ids address configuration, feature ids index automation.commanderFeatures, ids are focus targets for readiness fixes; visible text renders through LocalizedText keys."
+  },
+  "01338ae7d44161d0cce22222d7a862a88a75bc0bcc5d1b2242d5b6001e84446a": {
+    "classification": "technical",
+    "reason": "Configuration section keys, commander feature ids, castle purposes, readiness element ids and component tokens.",
+    "evidence": "Section ids address configuration, feature ids index automation.commanderFeatures, ids are focus targets for readiness fixes; visible text renders through LocalizedText keys."
+  },
+  "37bfa78437e584d209d1a389e127437dbfb3d3d25f5d246baf1476a0eeaab465": {
+    "classification": "technical",
+    "reason": "Configuration section keys, commander feature ids, castle purposes, readiness element ids and component tokens.",
+    "evidence": "Section ids address configuration, feature ids index automation.commanderFeatures, ids are focus targets for readiness fixes; visible text renders through LocalizedText keys."
+  },
+  "fbb015717f5fbdb5299d823a3bfe58ea89450b7cd7e4242b55391b3f4847f459": {
+    "classification": "technical",
+    "reason": "Configuration section keys, commander feature ids, castle purposes, readiness element ids and component tokens.",
+    "evidence": "Section ids address configuration, feature ids index automation.commanderFeatures, ids are focus targets for readiness fixes; visible text renders through LocalizedText keys."
+  },
+  "335dc7f931dd19ee2dfee781179bf1220052dbb50d75961614d37f5e5422a6b8": {
+    "classification": "technical",
+    "reason": "Configuration section keys, commander feature ids, castle purposes, readiness element ids and component tokens.",
+    "evidence": "Section ids address configuration, feature ids index automation.commanderFeatures, ids are focus targets for readiness fixes; visible text renders through LocalizedText keys."
+  },
+  "8ee0da3cd468f60dfd3c91c8982a420e4433c20083692a0b65926e92778d9301": {
+    "classification": "technical",
+    "reason": "Configuration section keys, commander feature ids, castle purposes, readiness element ids and component tokens.",
+    "evidence": "Section ids address configuration, feature ids index automation.commanderFeatures, ids are focus targets for readiness fixes; visible text renders through LocalizedText keys."
+  },
+  "4513715e20d3aa76764130d6f3e705a19186dfa86b00129eb2c8d04f765be7b2": {
+    "classification": "technical",
+    "reason": "Configuration section keys, commander feature ids, castle purposes, readiness element ids and component tokens.",
+    "evidence": "Section ids address configuration, feature ids index automation.commanderFeatures, ids are focus targets for readiness fixes; visible text renders through LocalizedText keys."
+  },
+  "219ae6d1fefe7d0581cb90ab96cd40fb79d00df8d83fc3e1f82aa1e271b760f6": {
+    "classification": "technical",
+    "reason": "Configuration section keys, commander feature ids, castle purposes, readiness element ids and component tokens.",
+    "evidence": "Section ids address configuration, feature ids index automation.commanderFeatures, ids are focus targets for readiness fixes; visible text renders through LocalizedText keys."
+  },
+  "59fa28f1e8b6bdd039ae251f07172f8bbef9550cb4bde7f753cfa119a43871f4": {
+    "classification": "technical",
+    "reason": "Configuration section keys, commander feature ids, castle purposes, readiness element ids and component tokens.",
+    "evidence": "Section ids address configuration, feature ids index automation.commanderFeatures, ids are focus targets for readiness fixes; visible text renders through LocalizedText keys."
+  },
+  "b7d2a071e15bfd4cc23d655473a0ae7be6ac5c41ae1122203f2f3d45c1dddf3d": {
+    "classification": "technical",
+    "reason": "Configuration section keys, commander feature ids, castle purposes, readiness element ids and component tokens.",
+    "evidence": "Section ids address configuration, feature ids index automation.commanderFeatures, ids are focus targets for readiness fixes; visible text renders through LocalizedText keys."
+  },
+  "8e082168d56b40eac4c4bc4cbbe24f860a8c2e692f5013fed4a3ca8e97f3e426": {
+    "classification": "technical",
+    "reason": "Configuration section keys, commander feature ids, castle purposes, readiness element ids and component tokens.",
+    "evidence": "Section ids address configuration, feature ids index automation.commanderFeatures, ids are focus targets for readiness fixes; visible text renders through LocalizedText keys."
+  },
+  "8436ee79b6eeb9e8053ed44ac064757c943c1d5e9b61c9704213e0b5bd786850": {
+    "classification": "technical",
+    "reason": "Configuration section keys, commander feature ids, castle purposes, readiness element ids and component tokens.",
+    "evidence": "Section ids address configuration, feature ids index automation.commanderFeatures, ids are focus targets for readiness fixes; visible text renders through LocalizedText keys."
+  },
+  "06d224d1e4d1dba8fccf5aff17a88b458da8e1dabd31f43f004f115e687cc293": {
+    "classification": "technical",
+    "reason": "Configuration section keys, commander feature ids, castle purposes, readiness element ids and component tokens.",
+    "evidence": "Section ids address configuration, feature ids index automation.commanderFeatures, ids are focus targets for readiness fixes; visible text renders through LocalizedText keys."
+  },
+  "25f7d2b62689a64587bb1ba160be139a11da09d79df270713d625da2f7f33531": {
+    "classification": "technical",
+    "reason": "Configuration section keys, commander feature ids, castle purposes, readiness element ids and component tokens.",
+    "evidence": "Section ids address configuration, feature ids index automation.commanderFeatures, ids are focus targets for readiness fixes; visible text renders through LocalizedText keys."
+  },
+  "50e453cd72deadcb6b143f9b3109d5cbbae5a4d2835afe518430fce7012eeb44": {
+    "classification": "technical",
+    "reason": "Configuration section keys, commander feature ids, castle purposes, readiness element ids and component tokens.",
+    "evidence": "Section ids address configuration, feature ids index automation.commanderFeatures, ids are focus targets for readiness fixes; visible text renders through LocalizedText keys."
+  },
+  "242269ac820604ffce5d493523601ca940b5a74def10171a68655db3f0dfb8f4": {
+    "classification": "technical",
+    "reason": "Configuration section keys, commander feature ids, castle purposes, readiness element ids and component tokens.",
+    "evidence": "Section ids address configuration, feature ids index automation.commanderFeatures, ids are focus targets for readiness fixes; visible text renders through LocalizedText keys."
+  },
+  "6eb1a2dda826b78e26a8e2c662ff5fd5c221b2ec6279ae6537710e4fcd27619d": {
+    "classification": "technical",
+    "reason": "Configuration section keys, commander feature ids, castle purposes, readiness element ids and component tokens.",
+    "evidence": "Section ids address configuration, feature ids index automation.commanderFeatures, ids are focus targets for readiness fixes; visible text renders through LocalizedText keys."
+  },
+  "ccc637b9065b55fc7514503aa91d450595f9af6bf2c4be8e20767c81bdba659f": {
+    "classification": "technical",
+    "reason": "Configuration section keys, commander feature ids, castle purposes, readiness element ids and component tokens.",
+    "evidence": "Section ids address configuration, feature ids index automation.commanderFeatures, ids are focus targets for readiness fixes; visible text renders through LocalizedText keys."
+  },
+  "734b339386f10a755da7667d408402a812ddbd4ca6d1e4bb82767c7c37f40183": {
+    "classification": "technical",
+    "reason": "Configuration section keys, commander feature ids, castle purposes, readiness element ids and component tokens.",
+    "evidence": "Section ids address configuration, feature ids index automation.commanderFeatures, ids are focus targets for readiness fixes; visible text renders through LocalizedText keys."
+  },
+  "a9a691afc735ba57cc9a2288eda5c8ebda4c5541e3baa4da0bd8b12c26121151": {
+    "classification": "technical",
+    "reason": "Configuration section keys, commander feature ids, castle purposes, readiness element ids and component tokens.",
+    "evidence": "Section ids address configuration, feature ids index automation.commanderFeatures, ids are focus targets for readiness fixes; visible text renders through LocalizedText keys."
+  },
+  "98fe899f855735b28560ca140ea0d0caeb9d19755425e93a0a248c3e373e86d9": {
+    "classification": "technical",
+    "reason": "Configuration section keys, commander feature ids, castle purposes, readiness element ids and component tokens.",
+    "evidence": "Section ids address configuration, feature ids index automation.commanderFeatures, ids are focus targets for readiness fixes; visible text renders through LocalizedText keys."
+  },
+  "ecd9874cf1fbbd68b47542da6ef46fcf7a88ea67bcd13b9f5b6bb0ff22a80dde": {
+    "classification": "technical",
+    "reason": "Configuration section keys, commander feature ids, castle purposes, readiness element ids and component tokens.",
+    "evidence": "Section ids address configuration, feature ids index automation.commanderFeatures, ids are focus targets for readiness fixes; visible text renders through LocalizedText keys."
+  },
+  "914d97f77c53bdb03cf3b807e8160c84169a37ddec3b08a484b74922394b7a0d": {
+    "classification": "technical",
+    "reason": "Configuration section keys, commander feature ids, castle purposes, readiness element ids and component tokens.",
+    "evidence": "Section ids address configuration, feature ids index automation.commanderFeatures, ids are focus targets for readiness fixes; visible text renders through LocalizedText keys."
+  },
+  "86ae0dad666c8f553c774ef9a2eb057e8da065a7009b56752c0ae981bd2bdc86": {
+    "classification": "technical",
+    "reason": "Configuration section keys, commander feature ids, castle purposes, readiness element ids and component tokens.",
+    "evidence": "Section ids address configuration, feature ids index automation.commanderFeatures, ids are focus targets for readiness fixes; visible text renders through LocalizedText keys."
+  },
+  "ff3bdc8bab2d2a8697e2cc5fd1116397f2d24a312b89a3148e617b203cecf0a9": {
+    "classification": "technical",
+    "reason": "Configuration section keys, commander feature ids, castle purposes, readiness element ids and component tokens.",
+    "evidence": "Section ids address configuration, feature ids index automation.commanderFeatures, ids are focus targets for readiness fixes; visible text renders through LocalizedText keys."
+  },
+  "331e57fefeaacdffc2cf5216e3f1bbf32bc91817fd8de86d557ed26341e672c4": {
+    "classification": "technical",
+    "reason": "Configuration section keys, commander feature ids, castle purposes, readiness element ids and component tokens.",
+    "evidence": "Section ids address configuration, feature ids index automation.commanderFeatures, ids are focus targets for readiness fixes; visible text renders through LocalizedText keys."
+  },
+  "3913c85d192fe3eeda2073bc2bcdee86404bad5946350068a45b3803dc8bb998": {
+    "classification": "technical",
+    "reason": "Configuration section keys, commander feature ids, castle purposes, readiness element ids and component tokens.",
+    "evidence": "Section ids address configuration, feature ids index automation.commanderFeatures, ids are focus targets for readiness fixes; visible text renders through LocalizedText keys."
+  },
+  "542d3b94574af61d9b9201789ad5d0007a644e86cffb982e8bf850a02bf20355": {
+    "classification": "technical",
+    "reason": "Configuration section keys, commander feature ids, castle purposes, readiness element ids and component tokens.",
+    "evidence": "Section ids address configuration, feature ids index automation.commanderFeatures, ids are focus targets for readiness fixes; visible text renders through LocalizedText keys."
+  },
+  "f937f4415f0a8db9540ecaa8d9c659830eae86e620bcc7be0d8c7fe017f240c7": {
+    "classification": "technical",
+    "reason": "Configuration section keys, commander feature ids, castle purposes, readiness element ids and component tokens.",
+    "evidence": "Section ids address configuration, feature ids index automation.commanderFeatures, ids are focus targets for readiness fixes; visible text renders through LocalizedText keys."
+  },
+  "6ae7d5a2a6b0f460bacd062419634fbf309eea90a39f5f5f6d16198e0e3f40ea": {
+    "classification": "technical",
+    "reason": "Configuration section keys, commander feature ids, castle purposes, readiness element ids and component tokens.",
+    "evidence": "Section ids address configuration, feature ids index automation.commanderFeatures, ids are focus targets for readiness fixes; visible text renders through LocalizedText keys."
+  },
+  "670c2b7308920ab52f4b2ce8b0febe3e93b1d530733408397c84eecc22fc89f7": {
+    "classification": "technical",
+    "reason": "Configuration section keys, commander feature ids, castle purposes, readiness element ids and component tokens.",
+    "evidence": "Section ids address configuration, feature ids index automation.commanderFeatures, ids are focus targets for readiness fixes; visible text renders through LocalizedText keys."
+  },
+  "a3e71bee6f82913bfc86bccff35c054817d625e87f8ff0a66814bf7e185944c2": {
+    "classification": "technical",
+    "reason": "Configuration section keys, commander feature ids, castle purposes, readiness element ids and component tokens.",
+    "evidence": "Section ids address configuration, feature ids index automation.commanderFeatures, ids are focus targets for readiness fixes; visible text renders through LocalizedText keys."
+  },
+  "3f3f5fac5e42cfb3e243cb520fb7503feeb83efe807d64b8982ce6f57ee06b0c": {
+    "classification": "technical",
+    "reason": "Castle option label composed from the castle name and coordinates, and a structural flag.",
+    "evidence": "Castle names are game data and coordinates are numbers; the requirement text is a typed message."
+  },
+  "f7faf4a4879e1fa615fb0479a6b6e8aad536df1376632ded3f00fa8a95ccb7a3": {
+    "classification": "technical",
+    "reason": "Castle option label composed from the castle name and coordinates, and a structural flag.",
+    "evidence": "Castle names are game data and coordinates are numbers; the requirement text is a typed message."
+  },
+  "6fe576498ced1cdea1ce0d9521ff5a436b14bb1156cae114f3fd8454ea9d82de": {
+    "classification": "technical",
+    "reason": "Badge/button variant and size tokens, DOM ids and #id fallbacks for unnamed commanders.",
+    "evidence": "Structural component props; names are game data; text renders through LocalizedText keys."
+  },
+  "179cc51c4d133a960252aded2070edd6ca7830735e06088c9f668ac5ea457977": {
+    "classification": "technical",
+    "reason": "Badge/button variant and size tokens, DOM ids and #id fallbacks for unnamed commanders.",
+    "evidence": "Structural component props; names are game data; text renders through LocalizedText keys."
+  },
+  "382138b2a8446bffe9ef51bdb8add8f044a912f907dbac058a54e18fe7ef30e8": {
+    "classification": "technical",
+    "reason": "Badge/button variant and size tokens, DOM ids and #id fallbacks for unnamed commanders.",
+    "evidence": "Structural component props; names are game data; text renders through LocalizedText keys."
+  },
+  "c7bda629a1101d406b44cfabf2a9a5983314121dd42f0c09732af0cca7373d40": {
+    "classification": "technical",
+    "reason": "Badge/button variant and size tokens, DOM ids and #id fallbacks for unnamed commanders.",
+    "evidence": "Structural component props; names are game data; text renders through LocalizedText keys."
+  },
+  "3857c49b85d2f5129cdaceccbfa766d9e944ffab6008c401303a007e96433ffe": {
+    "classification": "technical",
+    "reason": "Badge/button variant and size tokens, DOM ids and #id fallbacks for unnamed commanders.",
+    "evidence": "Structural component props; names are game data; text renders through LocalizedText keys."
+  },
+  "a29397069681c12b0277701490c9a085eefe47623f62eef317307532b192d40b": {
+    "classification": "technical",
+    "reason": "Badge/button variant and size tokens, DOM ids and #id fallbacks for unnamed commanders.",
+    "evidence": "Structural component props; names are game data; text renders through LocalizedText keys."
+  },
+  "1b22a7f2d023fc32df17c54eac5cf0c8df322863ee6dc5e75c2e98d8c63cd0e1": {
+    "classification": "technical",
+    "reason": "Badge/button variant and size tokens, DOM ids and #id fallbacks for unnamed commanders.",
+    "evidence": "Structural component props; names are game data; text renders through LocalizedText keys."
+  },
+  "d6ab1e2166065b9514857b584d7f1675877f352ba1735bef9cc7e8883267c7c8": {
+    "classification": "technical",
+    "reason": "Badge/button variant and size tokens, DOM ids and #id fallbacks for unnamed commanders.",
+    "evidence": "Structural component props; names are game data; text renders through LocalizedText keys."
+  },
+  "ed92c35e8534af6fb840852f2651cc46b35ec4b06f2fe151065abc012988b091": {
+    "classification": "technical",
+    "reason": "Badge/button variant and size tokens, DOM ids and #id fallbacks for unnamed commanders.",
+    "evidence": "Structural component props; names are game data; text renders through LocalizedText keys."
+  },
+  "dd57d17489d15ff22fb678da095160535c2ff22f1b87ce27a1c0357bb50b4b9a": {
+    "classification": "technical",
+    "reason": "Badge/button variant and size tokens, DOM ids and #id fallbacks for unnamed commanders.",
+    "evidence": "Structural component props; names are game data; text renders through LocalizedText keys."
+  },
+  "37539be4a31a3bab2cfae102afa331fb6f46e5618f2cc0681486d22ba4d7d874": {
+    "classification": "technical",
+    "reason": "Badge/button variant and size tokens, DOM ids and #id fallbacks for unnamed commanders.",
+    "evidence": "Structural component props; names are game data; text renders through LocalizedText keys."
+  },
+  "f063dcdb6ae5734bec88d8b453d51dfcbfbce4b85140b01042aec2fb2b752e0e": {
+    "classification": "technical",
+    "reason": "Badge/button variant and size tokens, DOM ids and #id fallbacks for unnamed commanders.",
+    "evidence": "Structural component props; names are game data; text renders through LocalizedText keys."
+  },
+  "b8607d5afa426a2b941f7f704f91ca44677292035e8455bb9e5f62427cc08224": {
+    "classification": "technical",
+    "reason": "Badge/button variant and size tokens, DOM ids and #id fallbacks for unnamed commanders.",
+    "evidence": "Structural component props; names are game data; text renders through LocalizedText keys."
+  },
+  "b9fd9856b7df5e6512df300ea0d1c3d9723908c64cbe94df41fad3fad88dd525": {
+    "classification": "technical",
+    "reason": "Badge/button variant and size tokens, DOM ids and #id fallbacks for unnamed commanders.",
+    "evidence": "Structural component props; names are game data; text renders through LocalizedText keys."
+  },
+  "cbe0ef0cc9bd6a176fd71c7a9fc01d066b9b922093a415937a3da09286969527": {
+    "classification": "technical",
+    "reason": "Badge/button variant and size tokens, DOM ids and #id fallbacks for unnamed commanders.",
+    "evidence": "Structural component props; names are game data; text renders through LocalizedText keys."
+  },
+  "793ed3bb6a1d694e5db3979dfcce90c3efcd7991cb48805066a0ce3c6c4650b1": {
+    "classification": "technical",
+    "reason": "Badge/button variant and size tokens, DOM ids and #id fallbacks for unnamed commanders.",
+    "evidence": "Structural component props; names are game data; text renders through LocalizedText keys."
+  },
+  "41a91f4a670212db63fa59eaf82c5ff2a7781360fdb6ddf4bcf19980a6b3011e": {
+    "classification": "technical",
+    "reason": "Badge/button variant and size tokens, DOM ids and #id fallbacks for unnamed commanders.",
+    "evidence": "Structural component props; names are game data; text renders through LocalizedText keys."
+  },
+  "19209cf359e51123890ea60e829d8031e6437d671ed51ca1dc78957f184a7e00": {
+    "classification": "technical",
+    "reason": "Badge/button variant and size tokens, DOM ids and #id fallbacks for unnamed commanders.",
+    "evidence": "Structural component props; names are game data; text renders through LocalizedText keys."
+  },
+  "674b2437716ad4d423eafa961f207a909c6009a62d651602ac7560bc5753e1a0": {
+    "classification": "technical",
+    "reason": "Badge/button variant and size tokens, DOM ids and #id fallbacks for unnamed commanders.",
+    "evidence": "Structural component props; names are game data; text renders through LocalizedText keys."
+  },
+  "a3114f8883173ca7899b91ee7717b7c720d03510edeefadca0de7788e7fde174": {
+    "classification": "technical",
+    "reason": "Badge/button variant and size tokens, DOM ids and #id fallbacks for unnamed commanders.",
+    "evidence": "Structural component props; names are game data; text renders through LocalizedText keys."
+  },
+  "2cac4614854fe8d3c60f623ff5231c03eaf23103d3705b2435cc1d1f9efbcc98": {
+    "classification": "technical",
+    "reason": "Badge/button variant and size tokens, DOM ids and #id fallbacks for unnamed commanders.",
+    "evidence": "Structural component props; names are game data; text renders through LocalizedText keys."
+  },
+  "1b5862fe069aaffa407c74067e7f7d3cc027daafb60a886ab8af01b33e4a69e8": {
+    "classification": "technical",
+    "reason": "Badge/button variant and size tokens, DOM ids and #id fallbacks for unnamed commanders.",
+    "evidence": "Structural component props; names are game data; text renders through LocalizedText keys."
+  },
+  "cb333358f94eae2b15338909ea31c6c937a2432421ad6ec560ef8eae36463929": {
+    "classification": "technical",
+    "reason": "Badge/button variant and size tokens, DOM ids and #id fallbacks for unnamed commanders.",
+    "evidence": "Structural component props; names are game data; text renders through LocalizedText keys."
+  },
+  "017b83d196203f40f44eea3f89b2bdafa3b65d4c85de31a2cb9188033e3e39aa": {
+    "classification": "technical",
+    "reason": "Badge/button variant and size tokens, DOM ids and #id fallbacks for unnamed commanders.",
+    "evidence": "Structural component props; names are game data; text renders through LocalizedText keys."
+  },
+  "0edf5ce4322fc94e8324a6adac0ba8fcc25b51073ab3c2b73ce1643bfdcf1f5b": {
+    "classification": "technical",
+    "reason": "Badge/button variant and size tokens, DOM ids and #id fallbacks for unnamed commanders.",
+    "evidence": "Structural component props; names are game data; text renders through LocalizedText keys."
+  },
+  "7c69000425851479f9455c255132d005dd980e7af0c864411ff87ca6df39d3fc": {
+    "classification": "technical",
+    "reason": "Stock mode tokens.",
+    "evidence": "decidedAtLaunch mode selects the evaluateUnitStock rule."
+  },
+  "ad428e15229710e67eb7f6726f460179fef60b5702f136ead5f84df2ad622edc": {
+    "classification": "technical",
+    "reason": "Stock mode tokens.",
+    "evidence": "decidedAtLaunch mode selects the evaluateUnitStock rule."
+  },
+  "c7ac52597918a4809d89ee2b31f54c17b8bd8755423df40e96c0cc021b7360f1": {
+    "classification": "technical",
+    "reason": "CSS tones, typed label keys, list mode token and #id fallbacks for unknown units.",
+    "evidence": "Label keys are MessageKey values rendered with localizeStatic/LocalizedText; names are official metadata."
+  },
+  "6c07dca14e82cfeb971b92448a0abafac678cf9603b2a1399cfe0009ec115f3c": {
+    "classification": "technical",
+    "reason": "CSS tones, typed label keys, list mode token and #id fallbacks for unknown units.",
+    "evidence": "Label keys are MessageKey values rendered with localizeStatic/LocalizedText; names are official metadata."
+  },
+  "b9a504214587d4909b016a4212db07bb7a49421e409e6ab6815c3e1348a74b32": {
+    "classification": "technical",
+    "reason": "CSS tones, typed label keys, list mode token and #id fallbacks for unknown units.",
+    "evidence": "Label keys are MessageKey values rendered with localizeStatic/LocalizedText; names are official metadata."
+  },
+  "9f1a556eee2e676b431473de94c256c90ce0562db65da3f8cd8a7df47176d15b": {
+    "classification": "technical",
+    "reason": "CSS tones, typed label keys, list mode token and #id fallbacks for unknown units.",
+    "evidence": "Label keys are MessageKey values rendered with localizeStatic/LocalizedText; names are official metadata."
+  },
+  "212a5cd4c10b784c84693d21b796d3a11f13d7057cac114104d54525e0506038": {
+    "classification": "technical",
+    "reason": "CSS tones, typed label keys, list mode token and #id fallbacks for unknown units.",
+    "evidence": "Label keys are MessageKey values rendered with localizeStatic/LocalizedText; names are official metadata."
+  },
+  "b56cf7b50708cb353906844ef393a129a33016a5ccc31ccd61cf386ef1cadd37": {
+    "classification": "technical",
+    "reason": "CSS tones, typed label keys, list mode token and #id fallbacks for unknown units.",
+    "evidence": "Label keys are MessageKey values rendered with localizeStatic/LocalizedText; names are official metadata."
+  },
+  "dd9a2aae61f0e6e5fc4232462718082e0a1c9ceaf2634c8d773f37984604f9a3": {
+    "classification": "technical",
+    "reason": "CSS tones, typed label keys, list mode token and #id fallbacks for unknown units.",
+    "evidence": "Label keys are MessageKey values rendered with localizeStatic/LocalizedText; names are official metadata."
+  },
+  "5ee91b563cbe2608ab4f781d9413eee9328ef8dcb512cf3fb73fdd1b7de40275": {
+    "classification": "technical",
+    "reason": "CSS tones, typed label keys, list mode token and #id fallbacks for unknown units.",
+    "evidence": "Label keys are MessageKey values rendered with localizeStatic/LocalizedText; names are official metadata."
+  },
+  "c05a78499a3dc77f8928a2dc5cb3101d0305ad3194d71f6fe2516b822bc45e5a": {
+    "classification": "technical",
+    "reason": "CSS tones, typed label keys, list mode token and #id fallbacks for unknown units.",
+    "evidence": "Label keys are MessageKey values rendered with localizeStatic/LocalizedText; names are official metadata."
+  },
+  "89c4f33e14edeb54636464e887d0449e7db3aabc387e251cb7141b25f4033d36": {
+    "classification": "technical",
+    "reason": "CSS tones, typed label keys, list mode token and #id fallbacks for unknown units.",
+    "evidence": "Label keys are MessageKey values rendered with localizeStatic/LocalizedText; names are official metadata."
+  },
+  "ee355f7983907d8b78e3aeb649a83e432432b798c709fee8a6d0deb9a0544128": {
+    "classification": "technical",
+    "reason": "CSS tones, typed label keys, list mode token and #id fallbacks for unknown units.",
+    "evidence": "Label keys are MessageKey values rendered with localizeStatic/LocalizedText; names are official metadata."
+  },
+  "0bef03ab83d489bc0ac5c867d964953294edaa023b9da9e8c38aa2518379f36f": {
+    "classification": "technical",
+    "reason": "CSS tones, typed label keys, list mode token and #id fallbacks for unknown units.",
+    "evidence": "Label keys are MessageKey values rendered with localizeStatic/LocalizedText; names are official metadata."
+  },
+  "bafd1cd35d0d905d48f1a7ea3cc5bc04c09ff3addf68b5c6c7a7c8b26e75315b": {
+    "classification": "technical",
+    "reason": "Stock mode token.",
+    "evidence": "decidedAtLaunch mode selects the evaluateUnitStock rule."
+  },
+  "2a46023782103f4678fa5b1eab379986dc8846cacef3bfd5dd8d431e0d232012": {
+    "classification": "technical",
+    "reason": "Castle purpose tokens, readiness ids/states/fix codes and account key composition.",
+    "evidence": "Purposes select castles; readiness text is the typed messageKey rendered by ReadinessPanel; accountKey is an identity string."
+  },
+  "6ec217990271e4cdb8a575984a6537959947a358cf1d06c230c50ebb52e142e1": {
+    "classification": "technical",
+    "reason": "Castle purpose tokens, readiness ids/states/fix codes and account key composition.",
+    "evidence": "Purposes select castles; readiness text is the typed messageKey rendered by ReadinessPanel; accountKey is an identity string."
+  },
+  "9af2dca6becfe969c6913e1716960baccf48835c2d954dba1811e57a2b98e540": {
+    "classification": "technical",
+    "reason": "Castle purpose tokens, readiness ids/states/fix codes and account key composition.",
+    "evidence": "Purposes select castles; readiness text is the typed messageKey rendered by ReadinessPanel; accountKey is an identity string."
+  },
+  "b01578e0c31abdf4679e25cd24b0376e8f488e42182a9ff8498e53e8a9adeadc": {
+    "classification": "technical",
+    "reason": "Castle purpose tokens, readiness ids/states/fix codes and account key composition.",
+    "evidence": "Purposes select castles; readiness text is the typed messageKey rendered by ReadinessPanel; accountKey is an identity string."
+  },
+  "f0797e65366bbea464dafe24a9b5bf523c07bd1850000ed29f78619e171f9c88": {
+    "classification": "technical",
+    "reason": "Castle purpose tokens, readiness ids/states/fix codes and account key composition.",
+    "evidence": "Purposes select castles; readiness text is the typed messageKey rendered by ReadinessPanel; accountKey is an identity string."
+  },
+  "02948b08fddb38291c00fe3de1e2516109d433c2a5c45662dd82ccdbc47be7ca": {
+    "classification": "technical",
+    "reason": "Castle purpose tokens, readiness ids/states/fix codes and account key composition.",
+    "evidence": "Purposes select castles; readiness text is the typed messageKey rendered by ReadinessPanel; accountKey is an identity string."
+  },
+  "7a963bc3b5a1fe670e2cc10de2e4d99dc645bb407700f86be631f9ce31853405": {
+    "classification": "technical",
+    "reason": "Castle purpose tokens, readiness ids/states/fix codes and account key composition.",
+    "evidence": "Purposes select castles; readiness text is the typed messageKey rendered by ReadinessPanel; accountKey is an identity string."
+  },
+  "bfc63d84c66e24d0f804e4ddbe2f3f3cc1f09711c11e4cdb7c7c06576329b7de": {
+    "classification": "technical",
+    "reason": "Castle purpose tokens, readiness ids/states/fix codes and account key composition.",
+    "evidence": "Purposes select castles; readiness text is the typed messageKey rendered by ReadinessPanel; accountKey is an identity string."
+  },
+  "89f86674f206b606a82e42f61995f397aea791c8cdf314f0d3f108acd941e65f": {
+    "classification": "technical",
+    "reason": "Castle purpose tokens, readiness ids/states/fix codes and account key composition.",
+    "evidence": "Purposes select castles; readiness text is the typed messageKey rendered by ReadinessPanel; accountKey is an identity string."
+  },
+  "ddf6b2a1d8de6908641c2692bd92a381d2d8d85b1b5ed50a466e705cc0375da6": {
+    "classification": "technical",
+    "reason": "Castle purpose tokens, readiness ids/states/fix codes and account key composition.",
+    "evidence": "Purposes select castles; readiness text is the typed messageKey rendered by ReadinessPanel; accountKey is an identity string."
+  },
+  "5901b0aaced1ca7acddca59edc8243c6430e977b318a513f9a194bd513238903": {
+    "classification": "technical",
+    "reason": "Castle purpose tokens, readiness ids/states/fix codes and account key composition.",
+    "evidence": "Purposes select castles; readiness text is the typed messageKey rendered by ReadinessPanel; accountKey is an identity string."
+  },
+  "7a789faf1701cd0a1cbd2b570caebba9c9576d8bc5255bea01bbca5f6131b605": {
+    "classification": "technical",
+    "reason": "Castle purpose tokens, readiness ids/states/fix codes and account key composition.",
+    "evidence": "Purposes select castles; readiness text is the typed messageKey rendered by ReadinessPanel; accountKey is an identity string."
+  },
+  "7ce2e262a734b185ae57003c4cf5c7bca3238617105cd11feaaf91f3c034dcf1": {
+    "classification": "technical",
+    "reason": "Castle purpose tokens, readiness ids/states/fix codes and account key composition.",
+    "evidence": "Purposes select castles; readiness text is the typed messageKey rendered by ReadinessPanel; accountKey is an identity string."
+  },
+  "3545cf65625b413e0e8dd518cb7f7cecc4cf5334d14ed7e0911db1d38ea1dc86": {
+    "classification": "technical",
+    "reason": "Commander feature ids, readiness ids/states/fix codes and activity tokens.",
+    "evidence": "Readiness text is the typed messageKey; activity tokens map to typed labels."
+  },
+  "8f08441962c91cbc688e4628aee545a9caea757bbf7b0174157dee9c150f4d3b": {
+    "classification": "technical",
+    "reason": "Commander feature ids, readiness ids/states/fix codes and activity tokens.",
+    "evidence": "Readiness text is the typed messageKey; activity tokens map to typed labels."
+  },
+  "3c80f0a7d0846d6c7473cbd114ef4183b74c7522f1270c5f8bfca17ec947956d": {
+    "classification": "technical",
+    "reason": "Commander feature ids, readiness ids/states/fix codes and activity tokens.",
+    "evidence": "Readiness text is the typed messageKey; activity tokens map to typed labels."
+  },
+  "247aff4fe3b8a8f19e6f5dfe06e1c96dd0195b8f588d152b4e951fea37248873": {
+    "classification": "technical",
+    "reason": "Commander feature ids, readiness ids/states/fix codes and activity tokens.",
+    "evidence": "Readiness text is the typed messageKey; activity tokens map to typed labels."
+  },
+  "4281728b33cc3cd06b5026363bd9ec24468a9d151f39741846272956b0084f94": {
+    "classification": "technical",
+    "reason": "Commander feature ids, readiness ids/states/fix codes and activity tokens.",
+    "evidence": "Readiness text is the typed messageKey; activity tokens map to typed labels."
+  },
+  "a26371cd13ed9f1b28d2480c7d3a06ae190ee630e442fe79a0e60a764a69f7ad": {
+    "classification": "technical",
+    "reason": "Commander feature ids, readiness ids/states/fix codes and activity tokens.",
+    "evidence": "Readiness text is the typed messageKey; activity tokens map to typed labels."
+  },
+  "d572de283bbe070189a8563b361c979df3661911af49799cb94febfcadc75291": {
+    "classification": "technical",
+    "reason": "Commander feature ids, readiness ids/states/fix codes and activity tokens.",
+    "evidence": "Readiness text is the typed messageKey; activity tokens map to typed labels."
+  },
+  "3ff2f507644cf5bf0f3f2c425bda46020727d687d91371285fed3761a4f6f310": {
+    "classification": "technical",
+    "reason": "Commander feature ids, readiness ids/states/fix codes and activity tokens.",
+    "evidence": "Readiness text is the typed messageKey; activity tokens map to typed labels."
+  },
+  "1b38db49b77b9b8a784d427f0328b0734bea54a512d68aef158c37dbca07f2d7": {
+    "classification": "technical",
+    "reason": "Commander feature ids, readiness ids/states/fix codes and activity tokens.",
+    "evidence": "Readiness text is the typed messageKey; activity tokens map to typed labels."
+  },
+  "6c9065fc508423567466f555086a710791d84db03cb2ae15497b3f6a2fa2b884": {
+    "classification": "technical",
+    "reason": "Commander feature ids, readiness ids/states/fix codes and activity tokens.",
+    "evidence": "Readiness text is the typed messageKey; activity tokens map to typed labels."
+  },
+  "e4b2ab93eb30bd178ada5a3eca968ae16e5aab963e1315c732c0c118c927a656": {
+    "classification": "technical",
+    "reason": "Commander feature ids, readiness ids/states/fix codes and activity tokens.",
+    "evidence": "Readiness text is the typed messageKey; activity tokens map to typed labels."
+  },
+  "afa1cef211544be7acebf55530f5622536d9bf5f1ef296059f3db6ecdb8ee03d": {
+    "classification": "technical",
+    "reason": "Commander feature ids, readiness ids/states/fix codes and activity tokens.",
+    "evidence": "Readiness text is the typed messageKey; activity tokens map to typed labels."
+  },
+  "86cf7725ff1093cc924fe68ecda9f7fc624a034e33693b68459efb9e2c3bc5af": {
+    "classification": "technical",
+    "reason": "Commander feature ids, readiness ids/states/fix codes and activity tokens.",
+    "evidence": "Readiness text is the typed messageKey; activity tokens map to typed labels."
+  },
+  "ee5ae22ae19773a73d93b748f53e4ad6d9a09bcb280169249385b47e38f4ca2b": {
+    "classification": "technical",
+    "reason": "Commander feature ids, readiness ids/states/fix codes and activity tokens.",
+    "evidence": "Readiness text is the typed messageKey; activity tokens map to typed labels."
+  },
+  "1de95df42197c05f85ca848265752e65e12fc46a32c65f68bd24a16d95477076": {
+    "classification": "technical",
+    "reason": "Commander feature ids, readiness ids/states/fix codes and activity tokens.",
+    "evidence": "Readiness text is the typed messageKey; activity tokens map to typed labels."
+  },
+  "af9854f22e49f5d6961660ec4ad2d7cb5f00665e68d7a9acb0b0b39eb8514721": {
+    "classification": "technical",
+    "reason": "Commander feature ids, readiness ids/states/fix codes and activity tokens.",
+    "evidence": "Readiness text is the typed messageKey; activity tokens map to typed labels."
+  },
+  "6c58416a9aabe7505bcd69d74547239706816e99edbe22392a27ec3716feabd7": {
+    "classification": "technical",
+    "reason": "Commander feature ids, readiness ids/states/fix codes and activity tokens.",
+    "evidence": "Readiness text is the typed messageKey; activity tokens map to typed labels."
+  },
+  "60bce2323775553d37eb9095fef20289df36bef57d8289e3e6f4363164250076": {
+    "classification": "technical",
+    "reason": "Commander feature ids, readiness ids/states/fix codes and activity tokens.",
+    "evidence": "Readiness text is the typed messageKey; activity tokens map to typed labels."
+  },
+  "5149773a151bdf0bdd33d377dd592ea83904163dcef5a3d219314686e3f0dc68": {
+    "classification": "technical",
+    "reason": "Commander feature ids, readiness ids/states/fix codes and activity tokens.",
+    "evidence": "Readiness text is the typed messageKey; activity tokens map to typed labels."
+  },
+  "8914511733f0fb05ebd402d013813c99fd56cc754df9868743f7c04623f486c1": {
+    "classification": "technical",
+    "reason": "Commander feature ids, readiness ids/states/fix codes and activity tokens.",
+    "evidence": "Readiness text is the typed messageKey; activity tokens map to typed labels."
+  },
+  "2915aca2438d277a54bbf500dee41ccca05d9ebdd2a7abc0d7e0b03269f14427": {
+    "classification": "technical",
+    "reason": "Commander feature ids, readiness ids/states/fix codes and activity tokens.",
+    "evidence": "Readiness text is the typed messageKey; activity tokens map to typed labels."
+  },
+  "a2e92cc009ec77fc3bbe0d2560fbd3a5ada6e166f4e95a4ce7ef7c4ade89cf97": {
+    "classification": "technical",
+    "reason": "Commander feature ids, readiness ids/states/fix codes and activity tokens.",
+    "evidence": "Readiness text is the typed messageKey; activity tokens map to typed labels."
+  },
+  "e73d78a71669f5f0f29786e60086c8b0d71fda2691f047e82ae57fcbd48f643e": {
+    "classification": "technical",
+    "reason": "Commander feature ids, readiness ids/states/fix codes and activity tokens.",
+    "evidence": "Readiness text is the typed messageKey; activity tokens map to typed labels."
+  },
+  "af58f3b0a8cd5b192b75ddd413e4da1ebc0b06f1bd2335fc117b3dd05235a3ed": {
+    "classification": "technical",
+    "reason": "Commander feature ids, readiness ids/states/fix codes and activity tokens.",
+    "evidence": "Readiness text is the typed messageKey; activity tokens map to typed labels."
+  },
+  "f9a3c3cc12dc204596a4064e9070576cb13b1b2fe14ffe008a8b0f766c079f50": {
+    "classification": "technical",
+    "reason": "Commander feature ids, readiness ids/states/fix codes and activity tokens.",
+    "evidence": "Readiness text is the typed messageKey; activity tokens map to typed labels."
+  },
+  "dbd84c78043fdc08db33d4d8190d57b438e0dff0aea9e96e76c8322af52aad63": {
+    "classification": "technical",
+    "reason": "Commander feature ids, readiness ids/states/fix codes and activity tokens.",
+    "evidence": "Readiness text is the typed messageKey; activity tokens map to typed labels."
+  },
+  "e3aee4dd450126ea64ceb082a745a44eac66f7e2cc4a35c09628dffa7fe0f0d7": {
+    "classification": "technical",
+    "reason": "Commander feature ids, readiness ids/states/fix codes and activity tokens.",
+    "evidence": "Readiness text is the typed messageKey; activity tokens map to typed labels."
+  },
+  "d2fb947b3ad38dc80a55932c146cef98e06d59bc3eb19345a122a0c57ce364ef": {
+    "classification": "technical",
+    "reason": "Commander feature ids, readiness ids/states/fix codes and activity tokens.",
+    "evidence": "Readiness text is the typed messageKey; activity tokens map to typed labels."
+  },
+  "8e753c9ea2ab87df9cc3ab7df3075320ccc799ac5324e037c4f757965eec106b": {
+    "classification": "technical",
+    "reason": "Commander feature ids, readiness ids/states/fix codes and activity tokens.",
+    "evidence": "Readiness text is the typed messageKey; activity tokens map to typed labels."
+  },
+  "ba057f6d086106c0ae31090595ff1a56f82b75d47f5d8dd57544d62961a3a06f": {
+    "classification": "technical",
+    "reason": "Commander feature ids, readiness ids/states/fix codes and activity tokens.",
+    "evidence": "Readiness text is the typed messageKey; activity tokens map to typed labels."
+  },
+  "c4970b5e5a94d99a45703408213ff43f2e0389c3d3900c7b64e5c15f4cc9bc51": {
+    "classification": "technical",
+    "reason": "Commander feature ids, readiness ids/states/fix codes and activity tokens.",
+    "evidence": "Readiness text is the typed messageKey; activity tokens map to typed labels."
+  },
+  "b8901a6b0879b4f5946fc2f2376801f95845a1d2a61d6c81f53487ced478a576": {
+    "classification": "technical",
+    "reason": "Commander feature ids, readiness ids/states/fix codes and activity tokens.",
+    "evidence": "Readiness text is the typed messageKey; activity tokens map to typed labels."
+  },
+  "7e3711635051b1eed75e96b6bbfe56f413178d5a515e3b4f9ec8c269cd012962": {
+    "classification": "technical",
+    "reason": "Commander feature ids, readiness ids/states/fix codes and activity tokens.",
+    "evidence": "Readiness text is the typed messageKey; activity tokens map to typed labels."
+  },
+  "aa5f2c02bd19cb172044080d6880682d94ec2a128a6ba1a61decc630968f28bb": {
+    "classification": "technical",
+    "reason": "Commander feature ids, readiness ids/states/fix codes and activity tokens.",
+    "evidence": "Readiness text is the typed messageKey; activity tokens map to typed labels."
+  },
+  "acb21999c1c6c03cd6f79ac6472823dd04db9b29398be1b86cc205e4e547d7dd": {
+    "classification": "technical",
+    "reason": "Commander feature ids, readiness ids/states/fix codes and activity tokens.",
+    "evidence": "Readiness text is the typed messageKey; activity tokens map to typed labels."
+  },
+  "63b9f0d309ffd7c703016419bea3e4e95fd6298d1313c7a18e244ad1ad1e74ef": {
+    "classification": "technical",
+    "reason": "Commander feature ids, readiness ids/states/fix codes and activity tokens.",
+    "evidence": "Readiness text is the typed messageKey; activity tokens map to typed labels."
+  },
+  "230a75a0e66939b670d574c5234d42c857379ea1f802064d19b92219f77cfb00": {
+    "classification": "technical",
+    "reason": "Readiness ids/states/fix codes, feature ids, resource JSON keys, stock modes and castle roles.",
+    "evidence": "F and C1 are official resource JSON keys; roles feed the setupReadiness.foodRole select; readiness text is the typed messageKey."
+  },
+  "c10cb3218dedcfbbf141f440520d69d8f434e6e8ea7fdeebfdba41c8276c3995": {
+    "classification": "technical",
+    "reason": "Readiness ids/states/fix codes, feature ids, resource JSON keys, stock modes and castle roles.",
+    "evidence": "F and C1 are official resource JSON keys; roles feed the setupReadiness.foodRole select; readiness text is the typed messageKey."
+  },
+  "91b5522d0e4f902fbdc125e258b2f13e6311715031477802d295aa05c67e74e2": {
+    "classification": "technical",
+    "reason": "Readiness ids/states/fix codes, feature ids, resource JSON keys, stock modes and castle roles.",
+    "evidence": "F and C1 are official resource JSON keys; roles feed the setupReadiness.foodRole select; readiness text is the typed messageKey."
+  },
+  "e6700a294791ddd6376486d9a64be6c0224f90606d49864aa8fdc0a7c70476dd": {
+    "classification": "technical",
+    "reason": "Readiness ids/states/fix codes, feature ids, resource JSON keys, stock modes and castle roles.",
+    "evidence": "F and C1 are official resource JSON keys; roles feed the setupReadiness.foodRole select; readiness text is the typed messageKey."
+  },
+  "3fbdc699dcfc59c6550877c7269d090dbf7273bae23e110b9bab0c98570a18dc": {
+    "classification": "technical",
+    "reason": "Readiness ids/states/fix codes, feature ids, resource JSON keys, stock modes and castle roles.",
+    "evidence": "F and C1 are official resource JSON keys; roles feed the setupReadiness.foodRole select; readiness text is the typed messageKey."
+  },
+  "daea99498f136fe2820a340cd0dc6496d00f673c1adbf49eeffc0ed35f7bfd6a": {
+    "classification": "technical",
+    "reason": "Readiness ids/states/fix codes, feature ids, resource JSON keys, stock modes and castle roles.",
+    "evidence": "F and C1 are official resource JSON keys; roles feed the setupReadiness.foodRole select; readiness text is the typed messageKey."
+  },
+  "1d86595d35baf4297862c5ade93e0f79cca1bcaa17eb77917fb7d38c24e02033": {
+    "classification": "technical",
+    "reason": "Readiness ids/states/fix codes, feature ids, resource JSON keys, stock modes and castle roles.",
+    "evidence": "F and C1 are official resource JSON keys; roles feed the setupReadiness.foodRole select; readiness text is the typed messageKey."
+  },
+  "ca6a83153d0c9ea4a1e54f79bef69b3522033dadee0819d869b54d3ef1c20c62": {
+    "classification": "technical",
+    "reason": "Readiness ids/states/fix codes, feature ids, resource JSON keys, stock modes and castle roles.",
+    "evidence": "F and C1 are official resource JSON keys; roles feed the setupReadiness.foodRole select; readiness text is the typed messageKey."
+  },
+  "02b6b7195a4f4a16fd4e097544774f2eb01589e112c362159ca18f75e35679cc": {
+    "classification": "technical",
+    "reason": "Readiness ids/states/fix codes, feature ids, resource JSON keys, stock modes and castle roles.",
+    "evidence": "F and C1 are official resource JSON keys; roles feed the setupReadiness.foodRole select; readiness text is the typed messageKey."
+  },
+  "04a31443ac90956be24dba13dff869adb5078102a6f912a81df4388dc2fd17a7": {
+    "classification": "technical",
+    "reason": "Readiness ids/states/fix codes, feature ids, resource JSON keys, stock modes and castle roles.",
+    "evidence": "F and C1 are official resource JSON keys; roles feed the setupReadiness.foodRole select; readiness text is the typed messageKey."
+  },
+  "65e3d8123f0800038dbf339a88dca8d31a40eb1d5901d6ed59612f4ca08ff038": {
+    "classification": "technical",
+    "reason": "Readiness ids/states/fix codes, feature ids, resource JSON keys, stock modes and castle roles.",
+    "evidence": "F and C1 are official resource JSON keys; roles feed the setupReadiness.foodRole select; readiness text is the typed messageKey."
+  },
+  "8bfce02eaa1e7b13afa96a3a1ff5c1fc6b82b4dc2a32c792f5bd7e72a087b00c": {
+    "classification": "technical",
+    "reason": "Readiness ids/states/fix codes, feature ids, resource JSON keys, stock modes and castle roles.",
+    "evidence": "F and C1 are official resource JSON keys; roles feed the setupReadiness.foodRole select; readiness text is the typed messageKey."
+  },
+  "4a2882e457ac7e3a42a0fafb35b172b3cc9532d4a8932e7e67e1427f9e494ff6": {
+    "classification": "technical",
+    "reason": "Readiness ids/states/fix codes, feature ids, resource JSON keys, stock modes and castle roles.",
+    "evidence": "F and C1 are official resource JSON keys; roles feed the setupReadiness.foodRole select; readiness text is the typed messageKey."
+  },
+  "b659d3fa6c68625329607b79ae6abbc85978464e8973c5586dd321dfd5e7e368": {
+    "classification": "technical",
+    "reason": "Readiness ids/states/fix codes, feature ids, resource JSON keys, stock modes and castle roles.",
+    "evidence": "F and C1 are official resource JSON keys; roles feed the setupReadiness.foodRole select; readiness text is the typed messageKey."
+  },
+  "df0439607c4a1679df0c3c8b0807de19aa58d2a79f73c437db8bc6221eeb42db": {
+    "classification": "technical",
+    "reason": "Readiness ids/states/fix codes, feature ids, resource JSON keys, stock modes and castle roles.",
+    "evidence": "F and C1 are official resource JSON keys; roles feed the setupReadiness.foodRole select; readiness text is the typed messageKey."
+  },
+  "c8f74843a1be8ae5f71e76d356f3adde1db63ff2492c2a17720eb270abfaef82": {
+    "classification": "technical",
+    "reason": "Readiness ids/states/fix codes, feature ids, resource JSON keys, stock modes and castle roles.",
+    "evidence": "F and C1 are official resource JSON keys; roles feed the setupReadiness.foodRole select; readiness text is the typed messageKey."
+  },
+  "74f42bfd2c5ca38d386fd77189b3c1c95b1f90e5b81a45c946cc55f37e6a083f": {
+    "classification": "technical",
+    "reason": "Readiness ids/states/fix codes, feature ids, resource JSON keys, stock modes and castle roles.",
+    "evidence": "F and C1 are official resource JSON keys; roles feed the setupReadiness.foodRole select; readiness text is the typed messageKey."
+  },
+  "4b304a92a0aedfd8065c159a7c0ab027c88f425455201cb7c83cbd039d2e0ba7": {
+    "classification": "technical",
+    "reason": "Readiness ids/states/fix codes, feature ids, resource JSON keys, stock modes and castle roles.",
+    "evidence": "F and C1 are official resource JSON keys; roles feed the setupReadiness.foodRole select; readiness text is the typed messageKey."
+  },
+  "5cfdbcdea34f41b0686534130b981acc1553431ffa8046fe5cc46565c401302b": {
+    "classification": "technical",
+    "reason": "Readiness ids/states/fix codes, feature ids, resource JSON keys, stock modes and castle roles.",
+    "evidence": "F and C1 are official resource JSON keys; roles feed the setupReadiness.foodRole select; readiness text is the typed messageKey."
+  },
+  "a4131281df6119190ef5110847cec3f865386b738be0fefad00e46061a89e00d": {
+    "classification": "technical",
+    "reason": "Readiness ids/states/fix codes, feature ids, resource JSON keys, stock modes and castle roles.",
+    "evidence": "F and C1 are official resource JSON keys; roles feed the setupReadiness.foodRole select; readiness text is the typed messageKey."
+  },
+  "a767758d15b1643c8d6e37623847be63b937b1fcb87129c1e1ff4dbbc0d9e404": {
+    "classification": "technical",
+    "reason": "Readiness ids/states/fix codes, feature ids, resource JSON keys, stock modes and castle roles.",
+    "evidence": "F and C1 are official resource JSON keys; roles feed the setupReadiness.foodRole select; readiness text is the typed messageKey."
+  },
+  "5457347f392853e5b200e867dd106c345f321efdd9fc0f3b2bca6a4400bb9e9d": {
+    "classification": "technical",
+    "reason": "Readiness ids/states/fix codes, feature ids, resource JSON keys, stock modes and castle roles.",
+    "evidence": "F and C1 are official resource JSON keys; roles feed the setupReadiness.foodRole select; readiness text is the typed messageKey."
+  },
+  "cc4667471bbb6f24e7c7f9f07fc9186b5ae48625c513e1b8757c19b085b5e117": {
+    "classification": "technical",
+    "reason": "Readiness ids/states/fix codes, feature ids, resource JSON keys, stock modes and castle roles.",
+    "evidence": "F and C1 are official resource JSON keys; roles feed the setupReadiness.foodRole select; readiness text is the typed messageKey."
+  },
+  "43a60a792ca8d8fc1e42005adeb60533cc28b218fc996e47109ad30bb76c8268": {
+    "classification": "technical",
+    "reason": "Readiness ids/states/fix codes, feature ids, resource JSON keys, stock modes and castle roles.",
+    "evidence": "F and C1 are official resource JSON keys; roles feed the setupReadiness.foodRole select; readiness text is the typed messageKey."
+  },
+  "81d951b331633c0ddda5d8537753a3569b5f69bb7823f181bb2c8d0a69bb1b40": {
+    "classification": "technical",
+    "reason": "Readiness ids/states/fix codes, feature ids, resource JSON keys, stock modes and castle roles.",
+    "evidence": "F and C1 are official resource JSON keys; roles feed the setupReadiness.foodRole select; readiness text is the typed messageKey."
+  },
+  "23a47310ab33a6352fe8902d6f05af83f135e9ec72f5399e5a1dace25e2e2a1f": {
+    "classification": "technical",
+    "reason": "Readiness ids/states/fix codes, feature ids, resource JSON keys, stock modes and castle roles.",
+    "evidence": "F and C1 are official resource JSON keys; roles feed the setupReadiness.foodRole select; readiness text is the typed messageKey."
+  },
+  "58559c807b359d40c7dd38e8088943871eae817daf865bf04e3c23e4c6245683": {
+    "classification": "technical",
+    "reason": "Readiness ids/states/fix codes, feature ids, resource JSON keys, stock modes and castle roles.",
+    "evidence": "F and C1 are official resource JSON keys; roles feed the setupReadiness.foodRole select; readiness text is the typed messageKey."
+  },
+  "d6107c6761f79f678f5a05631f80b9794a74115dc4c0a8775834d5462953dd37": {
+    "classification": "technical",
+    "reason": "Readiness ids/states/fix codes, feature ids, resource JSON keys, stock modes and castle roles.",
+    "evidence": "F and C1 are official resource JSON keys; roles feed the setupReadiness.foodRole select; readiness text is the typed messageKey."
+  },
+  "25404d0fdef8d7af1bb079046dc716585c70f17cb79f78a7a3d18e74561af768": {
+    "classification": "technical",
+    "reason": "Readiness ids/states/fix codes, feature ids, resource JSON keys, stock modes and castle roles.",
+    "evidence": "F and C1 are official resource JSON keys; roles feed the setupReadiness.foodRole select; readiness text is the typed messageKey."
+  },
+  "564b8ab5533eda0388aca3b227f303447662e8c5bf574857450b4aacd73e9802": {
+    "classification": "technical",
+    "reason": "Readiness ids/states/fix codes, feature ids, resource JSON keys, stock modes and castle roles.",
+    "evidence": "F and C1 are official resource JSON keys; roles feed the setupReadiness.foodRole select; readiness text is the typed messageKey."
+  },
+  "7e32f35a82be4c2c8359be6d64f0aa771f0904d99da5e2a4da28c9105c3ae5ac": {
+    "classification": "technical",
+    "reason": "Readiness ids/states/fix codes, feature ids, resource JSON keys, stock modes and castle roles.",
+    "evidence": "F and C1 are official resource JSON keys; roles feed the setupReadiness.foodRole select; readiness text is the typed messageKey."
+  },
+  "03941b1f09b9626e14935c874c59350de0947d50c6cf839d2d1136d7f63f6ea7": {
+    "classification": "technical",
+    "reason": "Readiness ids/states/fix codes, feature ids, resource JSON keys, stock modes and castle roles.",
+    "evidence": "F and C1 are official resource JSON keys; roles feed the setupReadiness.foodRole select; readiness text is the typed messageKey."
+  },
+  "4fb1c11cb4fc8e0c4222cebc87db9744f5a74d8618b106653d3a2182064612ba": {
+    "classification": "technical",
+    "reason": "Readiness ids/states/fix codes, feature ids, resource JSON keys, stock modes and castle roles.",
+    "evidence": "F and C1 are official resource JSON keys; roles feed the setupReadiness.foodRole select; readiness text is the typed messageKey."
+  },
+  "4883a48bceb3ecb675e3cb0ae6f770610738c8b363d44cfb32b13ccb9d93a283": {
+    "classification": "technical",
+    "reason": "Readiness ids/states/fix codes, feature ids, resource JSON keys, stock modes and castle roles.",
+    "evidence": "F and C1 are official resource JSON keys; roles feed the setupReadiness.foodRole select; readiness text is the typed messageKey."
+  },
+  "fc396064855665a54f4f514df4891443cf0ebbdefbf5ff89008f0700c0e4138c": {
+    "classification": "technical",
+    "reason": "Readiness ids/states/fix codes, feature ids, resource JSON keys, stock modes and castle roles.",
+    "evidence": "F and C1 are official resource JSON keys; roles feed the setupReadiness.foodRole select; readiness text is the typed messageKey."
+  },
+  "19155025a6143965f8e75f7d52acc1368193ff4a1084827d45a1ce093cde2769": {
+    "classification": "technical",
+    "reason": "Readiness ids/states/fix codes, feature ids, resource JSON keys, stock modes and castle roles.",
+    "evidence": "F and C1 are official resource JSON keys; roles feed the setupReadiness.foodRole select; readiness text is the typed messageKey."
+  },
+  "7eaa4af9b8939edee3d25a05bcc6cb8b134568fd0658489898a9ef34d4537c03": {
+    "classification": "technical",
+    "reason": "Readiness ids/states/fix codes, feature ids, resource JSON keys, stock modes and castle roles.",
+    "evidence": "F and C1 are official resource JSON keys; roles feed the setupReadiness.foodRole select; readiness text is the typed messageKey."
+  },
+  "7b8b81c74f6201d14cb07d3b0903502df1277c6978f7e89dedebb2cffcfd6845": {
+    "classification": "technical",
+    "reason": "Readiness ids/states/fix codes, feature ids, resource JSON keys, stock modes and castle roles.",
+    "evidence": "F and C1 are official resource JSON keys; roles feed the setupReadiness.foodRole select; readiness text is the typed messageKey."
+  },
+  "0499d60eff74233a04f2ad42ca1c439c2b378db0bf0b0a831c0f602ee810eb8a": {
+    "classification": "technical",
+    "reason": "Readiness ids/states/fix codes, feature ids, resource JSON keys, stock modes and castle roles.",
+    "evidence": "F and C1 are official resource JSON keys; roles feed the setupReadiness.foodRole select; readiness text is the typed messageKey."
+  },
+  "bce484e55564dc7024a01ed01ae48f366c652a356685c1eb425db4c120b4ff3e": {
+    "classification": "technical",
+    "reason": "Readiness ids/states/fix codes, feature ids, resource JSON keys, stock modes and castle roles.",
+    "evidence": "F and C1 are official resource JSON keys; roles feed the setupReadiness.foodRole select; readiness text is the typed messageKey."
+  },
+  "7f619cc08e015c9b774704e9456a60d433f1afb48575120e70004caf73c45ec6": {
+    "classification": "technical",
+    "reason": "Readiness ids/states/fix codes, feature ids, resource JSON keys, stock modes and castle roles.",
+    "evidence": "F and C1 are official resource JSON keys; roles feed the setupReadiness.foodRole select; readiness text is the typed messageKey."
+  },
+  "0c2848d58282f569ca6d26a8145bc525f07360dedc00f44ed1ae11950d4ff21f": {
+    "classification": "technical",
+    "reason": "Readiness ids/states/fix codes, feature ids, resource JSON keys, stock modes and castle roles.",
+    "evidence": "F and C1 are official resource JSON keys; roles feed the setupReadiness.foodRole select; readiness text is the typed messageKey."
+  },
+  "d7a2b76fa5065245303535540cf2cf44de7c71c3d1b7c14a079e566df0341e78": {
+    "classification": "technical",
+    "reason": "Readiness ids/states/fix codes, feature ids, resource JSON keys, stock modes and castle roles.",
+    "evidence": "F and C1 are official resource JSON keys; roles feed the setupReadiness.foodRole select; readiness text is the typed messageKey."
+  },
+  "b53c3ac5bfa943847f8c8a5a47f507cf32a3badf10c5e4a8a10097f17793a7ef": {
+    "classification": "technical",
+    "reason": "Readiness ids/states/fix codes, feature ids, resource JSON keys, stock modes and castle roles.",
+    "evidence": "F and C1 are official resource JSON keys; roles feed the setupReadiness.foodRole select; readiness text is the typed messageKey."
+  },
+  "f552e55e70855b2c7921200878f67330174cd8ffceb03abc8909a196caec32a1": {
+    "classification": "technical",
+    "reason": "Readiness ids/states/fix codes, feature ids, resource JSON keys, stock modes and castle roles.",
+    "evidence": "F and C1 are official resource JSON keys; roles feed the setupReadiness.foodRole select; readiness text is the typed messageKey."
+  },
+  "728615c7de4979c2d181371fcf8918ba637998f2dff81b1746b5b8391fa2b3b4": {
+    "classification": "technical",
+    "reason": "Readiness ids/states/fix codes, feature ids, resource JSON keys, stock modes and castle roles.",
+    "evidence": "F and C1 are official resource JSON keys; roles feed the setupReadiness.foodRole select; readiness text is the typed messageKey."
+  },
+  "d4f529fb454c6dd1ff1dc5be74d10340bd2d7b729d40bebdf64a3c5fd8f43947": {
+    "classification": "technical",
+    "reason": "Readiness ids/states/fix codes, feature ids, resource JSON keys, stock modes and castle roles.",
+    "evidence": "F and C1 are official resource JSON keys; roles feed the setupReadiness.foodRole select; readiness text is the typed messageKey."
+  },
+  "a49dbb3230caf2f0f320654e6124d1d49633408d348c57dbd118ba6c2e5d0e88": {
+    "classification": "technical",
+    "reason": "Readiness ids/states/fix codes, feature ids, resource JSON keys, stock modes and castle roles.",
+    "evidence": "F and C1 are official resource JSON keys; roles feed the setupReadiness.foodRole select; readiness text is the typed messageKey."
+  },
+  "7b584c873cc8e8b9656adfa3fefe027ec7e968e2eb7370944e50eb0b36a4aef6": {
+    "classification": "technical",
+    "reason": "Readiness ids/states/fix codes, feature ids, resource JSON keys, stock modes and castle roles.",
+    "evidence": "F and C1 are official resource JSON keys; roles feed the setupReadiness.foodRole select; readiness text is the typed messageKey."
+  },
+  "405479b8c41de2ea6d41ff49eed2f1ec3829385a01e37fc048fbb02fe916f77d": {
+    "classification": "technical",
+    "reason": "Readiness ids/states/fix codes, feature ids, resource JSON keys, stock modes and castle roles.",
+    "evidence": "F and C1 are official resource JSON keys; roles feed the setupReadiness.foodRole select; readiness text is the typed messageKey."
+  },
+  "81e3fcc082730d4bd869d79aae913a797afde734f0767e188b212d3bc454ff40": {
+    "classification": "technical",
+    "reason": "Readiness ids/states/fix codes, feature ids, resource JSON keys, stock modes and castle roles.",
+    "evidence": "F and C1 are official resource JSON keys; roles feed the setupReadiness.foodRole select; readiness text is the typed messageKey."
+  },
+  "13b66af5a49440cb33f8fa986841b330f26fc8ba09360d6a28eabdd41c7787e9": {
+    "classification": "technical",
+    "reason": "Readiness ids/states/fix codes, feature ids, resource JSON keys, stock modes and castle roles.",
+    "evidence": "F and C1 are official resource JSON keys; roles feed the setupReadiness.foodRole select; readiness text is the typed messageKey."
+  },
+  "c589b582842ca7d1ed58b0463f5ca687ff94bd9f8dcf7185e6b958ffcdd39777": {
+    "classification": "technical",
+    "reason": "Readiness ids/states/fix codes, feature ids, resource JSON keys, stock modes and castle roles.",
+    "evidence": "F and C1 are official resource JSON keys; roles feed the setupReadiness.foodRole select; readiness text is the typed messageKey."
+  },
+  "e9034b57e4c1ffe7540fcd5e6efbfd11d8931ab1840b4aefc645e731267f30c6": {
+    "classification": "technical",
+    "reason": "Readiness ids/states/fix codes, feature ids, resource JSON keys, stock modes and castle roles.",
+    "evidence": "F and C1 are official resource JSON keys; roles feed the setupReadiness.foodRole select; readiness text is the typed messageKey."
+  },
+  "2200627d1b2dbda23c40587cddc94fc96ecd645158a9b69bfb1f649fa55acbd0": {
+    "classification": "technical",
+    "reason": "Readiness ids/states/fix codes, feature ids, resource JSON keys, stock modes and castle roles.",
+    "evidence": "F and C1 are official resource JSON keys; roles feed the setupReadiness.foodRole select; readiness text is the typed messageKey."
+  },
+  "77af2f1e1998a7b20485c009f7182b8dfbf9f31277c59a0ade6e1cf4413d6cb0": {
+    "classification": "technical",
+    "reason": "Readiness ids/states/fix codes, feature ids, resource JSON keys, stock modes and castle roles.",
+    "evidence": "F and C1 are official resource JSON keys; roles feed the setupReadiness.foodRole select; readiness text is the typed messageKey."
+  },
+  "c7569506f5aae12ab48a85c11c6e65af619d05e55a23e51717c0ef6029cfcbb8": {
+    "classification": "technical",
+    "reason": "Readiness ids/states/fix codes, feature ids, resource JSON keys, stock modes and castle roles.",
+    "evidence": "F and C1 are official resource JSON keys; roles feed the setupReadiness.foodRole select; readiness text is the typed messageKey."
+  },
+  "88c6a41ea0fdd4f7b916c86a8b50c09615c8921b339ad32b612e8665eccf3094": {
+    "classification": "technical",
+    "reason": "Readiness ids/states/fix codes, feature ids, resource JSON keys, stock modes and castle roles.",
+    "evidence": "F and C1 are official resource JSON keys; roles feed the setupReadiness.foodRole select; readiness text is the typed messageKey."
+  },
+  "89eee07c26cd782019d53b504acac304987c55d2a299bce3d3ec8a9e015fe7dc": {
+    "classification": "technical",
+    "reason": "Readiness ids/states/fix codes, feature ids, resource JSON keys, stock modes and castle roles.",
+    "evidence": "F and C1 are official resource JSON keys; roles feed the setupReadiness.foodRole select; readiness text is the typed messageKey."
+  },
+  "4f023d5bacb020d2fff2dc7377459262f49e312f17eaf0c48f94744e2c3fde50": {
+    "classification": "technical",
+    "reason": "Readiness ids/states/fix codes, feature ids, resource JSON keys, stock modes and castle roles.",
+    "evidence": "F and C1 are official resource JSON keys; roles feed the setupReadiness.foodRole select; readiness text is the typed messageKey."
+  },
+  "02a1a440a3ae0658aa9fb48bdc7b7b2684ad8349e672a79c09bc96e86875cdc3": {
+    "classification": "technical",
+    "reason": "Readiness ids/states/fix codes, feature ids, resource JSON keys, stock modes and castle roles.",
+    "evidence": "F and C1 are official resource JSON keys; roles feed the setupReadiness.foodRole select; readiness text is the typed messageKey."
+  },
+  "28b5bf89c06ea023ec583fc90c3b5d9765bd1dd2cb19f55ffdbf9421e16f27f7": {
+    "classification": "technical",
+    "reason": "Readiness ids/states/fix codes, feature ids, resource JSON keys, stock modes and castle roles.",
+    "evidence": "F and C1 are official resource JSON keys; roles feed the setupReadiness.foodRole select; readiness text is the typed messageKey."
+  },
+  "6950f9b58ac91b7b222b0c7cb8aa2b2f3f7e1d5d76618fcacd6d09e0f0ff8ed1": {
+    "classification": "technical",
+    "reason": "Readiness ids/states/fix codes, feature ids, resource JSON keys, stock modes and castle roles.",
+    "evidence": "F and C1 are official resource JSON keys; roles feed the setupReadiness.foodRole select; readiness text is the typed messageKey."
+  },
+  "d8d1058988601e7b9164fa0d0c183df405aac4eb41746add6bd75dc6cc953a69": {
+    "classification": "technical",
+    "reason": "Readiness ids/states/fix codes, feature ids, resource JSON keys, stock modes and castle roles.",
+    "evidence": "F and C1 are official resource JSON keys; roles feed the setupReadiness.foodRole select; readiness text is the typed messageKey."
+  },
+  "01ff439c6e2b8bd11bc4da856f6571420364c579f0e83af89bd5072afb14e63f": {
+    "classification": "technical",
+    "reason": "Readiness ids/states/fix codes, feature ids, resource JSON keys, stock modes and castle roles.",
+    "evidence": "F and C1 are official resource JSON keys; roles feed the setupReadiness.foodRole select; readiness text is the typed messageKey."
+  },
+  "3fd0041d9ad849d46ffa24c1d3656232380d6d6e2bfd959d00940bed2e90f293": {
+    "classification": "technical",
+    "reason": "Readiness ids/states/fix codes, feature ids, resource JSON keys, stock modes and castle roles.",
+    "evidence": "F and C1 are official resource JSON keys; roles feed the setupReadiness.foodRole select; readiness text is the typed messageKey."
+  },
+  "2f7c444f0317efd69ca17566db45c23ff3c6c20d6f25ee62004562bef9747867": {
+    "classification": "technical",
+    "reason": "Readiness ids/states/fix codes, feature ids, resource JSON keys, stock modes and castle roles.",
+    "evidence": "F and C1 are official resource JSON keys; roles feed the setupReadiness.foodRole select; readiness text is the typed messageKey."
+  },
+  "554cf6164343f6048e14b34be70d886f2c71fdff699b543735f6bcb4f3000622": {
+    "classification": "technical",
+    "reason": "Readiness ids/states/fix codes, feature ids, resource JSON keys, stock modes and castle roles.",
+    "evidence": "F and C1 are official resource JSON keys; roles feed the setupReadiness.foodRole select; readiness text is the typed messageKey."
+  },
+  "16a58a13ec0459151c20ff11d22bf568f9713210ad5abb2219c65303ceb53535": {
+    "classification": "technical",
+    "reason": "Readiness ids/states/fix codes, feature ids, resource JSON keys, stock modes and castle roles.",
+    "evidence": "F and C1 are official resource JSON keys; roles feed the setupReadiness.foodRole select; readiness text is the typed messageKey."
+  },
+  "7e5dda1676580bf2769354c5c04432da3626e4105ecf358ab8586104820953bf": {
+    "classification": "technical",
+    "reason": "Readiness ids/states/fix codes, feature ids, resource JSON keys, stock modes and castle roles.",
+    "evidence": "F and C1 are official resource JSON keys; roles feed the setupReadiness.foodRole select; readiness text is the typed messageKey."
+  },
+  "c6acbbed082c0887f75c4d4fad8f1f7f0314e1807ee5d75871f6a20a410c6f37": {
+    "classification": "technical",
+    "reason": "Readiness ids/states/fix codes, feature ids, resource JSON keys, stock modes and castle roles.",
+    "evidence": "F and C1 are official resource JSON keys; roles feed the setupReadiness.foodRole select; readiness text is the typed messageKey."
+  },
+  "2dbd3e46973e2f7537231dc728e5ca036cd9ea6cc3854497731323c51af35c07": {
+    "classification": "technical",
+    "reason": "Readiness ids/states/fix codes, feature ids, resource JSON keys, stock modes and castle roles.",
+    "evidence": "F and C1 are official resource JSON keys; roles feed the setupReadiness.foodRole select; readiness text is the typed messageKey."
+  },
+  "8b8ec34100f776e1f16c996a21ee4020379e00e48e0b0415c223b66d676a563f": {
+    "classification": "technical",
+    "reason": "Readiness ids/states/fix codes, feature ids, resource JSON keys, stock modes and castle roles.",
+    "evidence": "F and C1 are official resource JSON keys; roles feed the setupReadiness.foodRole select; readiness text is the typed messageKey."
+  },
+  "b6ca259b8a86e02d326b3d7dae272ba4fb6055374d1e230ea3cdc5892b74480e": {
+    "classification": "technical",
+    "reason": "Readiness ids/states/fix codes, feature ids, resource JSON keys, stock modes and castle roles.",
+    "evidence": "F and C1 are official resource JSON keys; roles feed the setupReadiness.foodRole select; readiness text is the typed messageKey."
+  },
+  "3fb0d24474121cf930325ac30cab0abd21079e2a9ac3b0f3651b15f29e0fb637": {
+    "classification": "technical",
+    "reason": "Readiness ids/states/fix codes, feature ids, resource JSON keys, stock modes and castle roles.",
+    "evidence": "F and C1 are official resource JSON keys; roles feed the setupReadiness.foodRole select; readiness text is the typed messageKey."
+  },
+  "525b1cc096cc68a94ddbe05eec3ee58f81d75e627484bdfa67fdfbfd0e42d19e": {
+    "classification": "technical",
+    "reason": "Readiness ids/states/fix codes, feature ids, resource JSON keys, stock modes and castle roles.",
+    "evidence": "F and C1 are official resource JSON keys; roles feed the setupReadiness.foodRole select; readiness text is the typed messageKey."
+  },
+  "40233a736993d21e0d9d849666f92dab438fccc16c4749c61f8c10523fab2869": {
+    "classification": "technical",
+    "reason": "Readiness ids/states/fix codes, feature ids, resource JSON keys, stock modes and castle roles.",
+    "evidence": "F and C1 are official resource JSON keys; roles feed the setupReadiness.foodRole select; readiness text is the typed messageKey."
+  },
+  "7ea7800c19d1e45887c0de043222b9fd2cc6edab8807e60683cadaac2e8bbfac": {
+    "classification": "technical",
+    "reason": "Readiness ids/states/fix codes, feature ids, resource JSON keys, stock modes and castle roles.",
+    "evidence": "F and C1 are official resource JSON keys; roles feed the setupReadiness.foodRole select; readiness text is the typed messageKey."
+  },
+  "46d12279f2bf2b68f5509d0beecd25c6abdc35932c044a93866083e7c2a3feae": {
+    "classification": "technical",
+    "reason": "Readiness ids/states/fix codes, feature ids, resource JSON keys, stock modes and castle roles.",
+    "evidence": "F and C1 are official resource JSON keys; roles feed the setupReadiness.foodRole select; readiness text is the typed messageKey."
+  },
+  "1fae33ab31aafa1f949f9d0bbb6b15be4004137792ec54690a3cf0515a6ec474": {
+    "classification": "technical",
+    "reason": "Stock line states, request kinds, readiness ids/states/fix codes and fallback ids.",
+    "evidence": "Line states map to typed unitStock.state.* labels; readiness text is the typed messageKey."
+  },
+  "5f393073b9f0b105089a443ab516289674098300a330f923193d788cd900c0b4": {
+    "classification": "technical",
+    "reason": "Stock line states, request kinds, readiness ids/states/fix codes and fallback ids.",
+    "evidence": "Line states map to typed unitStock.state.* labels; readiness text is the typed messageKey."
+  },
+  "face22a1b56ec2374a23a23db2e678cd8dd0426d93abbd9f840f753d65e80424": {
+    "classification": "technical",
+    "reason": "Stock line states, request kinds, readiness ids/states/fix codes and fallback ids.",
+    "evidence": "Line states map to typed unitStock.state.* labels; readiness text is the typed messageKey."
+  },
+  "fa77a0282327f31ef796516d5bbb7d80a1718abb3a2e7a2b4747964d0190ca9a": {
+    "classification": "technical",
+    "reason": "Stock line states, request kinds, readiness ids/states/fix codes and fallback ids.",
+    "evidence": "Line states map to typed unitStock.state.* labels; readiness text is the typed messageKey."
+  },
+  "c28e1e38c77aaa9176707bf35aa811478c7c90e84eacfd27d56ddc9089910023": {
+    "classification": "technical",
+    "reason": "Stock line states, request kinds, readiness ids/states/fix codes and fallback ids.",
+    "evidence": "Line states map to typed unitStock.state.* labels; readiness text is the typed messageKey."
+  },
+  "c690e6c5f90d7b0749423e32ae3cfabb780d496e4a0de337d2d784b6ca867875": {
+    "classification": "technical",
+    "reason": "Stock line states, request kinds, readiness ids/states/fix codes and fallback ids.",
+    "evidence": "Line states map to typed unitStock.state.* labels; readiness text is the typed messageKey."
+  },
+  "7494b2fddbdd7c046f564808f85b3d90c39734354509666c5d81f93b6312406d": {
+    "classification": "technical",
+    "reason": "Stock line states, request kinds, readiness ids/states/fix codes and fallback ids.",
+    "evidence": "Line states map to typed unitStock.state.* labels; readiness text is the typed messageKey."
+  },
+  "671b37389259f186fe6d74d1c610a3efab54d9c323de67b29abe48eb408159fd": {
+    "classification": "technical",
+    "reason": "Stock line states, request kinds, readiness ids/states/fix codes and fallback ids.",
+    "evidence": "Line states map to typed unitStock.state.* labels; readiness text is the typed messageKey."
+  },
+  "e042d102479d96c8466cdd12e3484eab5604774ea5517f3c3b2c628f7dcde32d": {
+    "classification": "technical",
+    "reason": "Stock line states, request kinds, readiness ids/states/fix codes and fallback ids.",
+    "evidence": "Line states map to typed unitStock.state.* labels; readiness text is the typed messageKey."
+  },
+  "a55d9046aba695e343c051934371c527e38149e98c744f0e70f4af6c538634cf": {
+    "classification": "technical",
+    "reason": "Stock line states, request kinds, readiness ids/states/fix codes and fallback ids.",
+    "evidence": "Line states map to typed unitStock.state.* labels; readiness text is the typed messageKey."
+  },
+  "93acee64491110eb2a0bf2f7e40282c090fec3b9b24c420fc4cb14a6132ddb82": {
+    "classification": "technical",
+    "reason": "Stock line states, request kinds, readiness ids/states/fix codes and fallback ids.",
+    "evidence": "Line states map to typed unitStock.state.* labels; readiness text is the typed messageKey."
+  },
+  "cfe1a817dc34b532bbda7119d8118ddd834851c4ed7970378214e6e3dbb0c9ad": {
+    "classification": "technical",
+    "reason": "Stock line states, request kinds, readiness ids/states/fix codes and fallback ids.",
+    "evidence": "Line states map to typed unitStock.state.* labels; readiness text is the typed messageKey."
+  },
+  "85b89a84b767f0a61bfcc4ce56be23e920478552db826c175621a477dbb8ab24": {
+    "classification": "technical",
+    "reason": "Stock line states, request kinds, readiness ids/states/fix codes and fallback ids.",
+    "evidence": "Line states map to typed unitStock.state.* labels; readiness text is the typed messageKey."
+  },
+  "47fc8ef5b19f4e7f266d1f4c5c4e7553d0f3762f9320f5486a682d12e133dcb4": {
+    "classification": "technical",
+    "reason": "Stock line states, request kinds, readiness ids/states/fix codes and fallback ids.",
+    "evidence": "Line states map to typed unitStock.state.* labels; readiness text is the typed messageKey."
+  },
+  "5040ef5aa51b13f4a6fd2fc2b118ac4bb6d27418977217a408aa97272d818b11": {
+    "classification": "technical",
+    "reason": "Stock line states, request kinds, readiness ids/states/fix codes and fallback ids.",
+    "evidence": "Line states map to typed unitStock.state.* labels; readiness text is the typed messageKey."
+  },
+  "e4075e2a1521c9e035f005f4152afa794a0a59938be4639a8f4849d5ba380a59": {
+    "classification": "technical",
+    "reason": "Stock line states, request kinds, readiness ids/states/fix codes and fallback ids.",
+    "evidence": "Line states map to typed unitStock.state.* labels; readiness text is the typed messageKey."
+  },
+  "1411b85b04d986a0e2e8b1f17155fce5a37206b03a414837c653928d59ba0ab3": {
+    "classification": "technical",
+    "reason": "Stock line states, request kinds, readiness ids/states/fix codes and fallback ids.",
+    "evidence": "Line states map to typed unitStock.state.* labels; readiness text is the typed messageKey."
+  },
+  "6d573d32b65e194c4fcadb2ba7380d343c8abfa0d4db8cdf6f41222ec612af68": {
+    "classification": "technical",
+    "reason": "Stock line states, request kinds, readiness ids/states/fix codes and fallback ids.",
+    "evidence": "Line states map to typed unitStock.state.* labels; readiness text is the typed messageKey."
+  },
+  "b1d7a097c1804c804b91f93452cf157cdf7cc0468099f40dd4682eb47761d579": {
+    "classification": "technical",
+    "reason": "Stock line states, request kinds, readiness ids/states/fix codes and fallback ids.",
+    "evidence": "Line states map to typed unitStock.state.* labels; readiness text is the typed messageKey."
+  },
+  "9513a25475e57efd91fce79cfe5ec4bc8e9c093fbcb90f273ac46fdee5d877c9": {
+    "classification": "technical",
+    "reason": "Stock line states, request kinds, readiness ids/states/fix codes and fallback ids.",
+    "evidence": "Line states map to typed unitStock.state.* labels; readiness text is the typed messageKey."
+  },
+  "48ece7ecbd797bde814344dff1f443e72a8cd85463cdf5df4c660e300b43846d": {
+    "classification": "technical",
+    "reason": "Stock line states, request kinds, readiness ids/states/fix codes and fallback ids.",
+    "evidence": "Line states map to typed unitStock.state.* labels; readiness text is the typed messageKey."
+  },
+  "c1a2744725adbf594fe49fd9d42cf617cbf2ad592a29780bac5c5fa5f94d06a9": {
+    "classification": "technical",
+    "reason": "Stock line states, request kinds, readiness ids/states/fix codes and fallback ids.",
+    "evidence": "Line states map to typed unitStock.state.* labels; readiness text is the typed messageKey."
+  },
+  "ada5ceaf61944c85e6b8c75e27e59de68272799dcea90d27a985c8e6f442cde3": {
+    "classification": "technical",
+    "reason": "Stock line states, request kinds, readiness ids/states/fix codes and fallback ids.",
+    "evidence": "Line states map to typed unitStock.state.* labels; readiness text is the typed messageKey."
+  },
+  "40c00f8497ce7b32e6d5fb96440c9fadca66ff5d186ab08675866c51b4662ab6": {
+    "classification": "technical",
+    "reason": "Stock line states, request kinds, readiness ids/states/fix codes and fallback ids.",
+    "evidence": "Line states map to typed unitStock.state.* labels; readiness text is the typed messageKey."
+  },
+  "d457630c758b0018104a3c660cf6356af82b3af676c8481dad95cf30bb48a8b7": {
+    "classification": "technical",
+    "reason": "Stock line states, request kinds, readiness ids/states/fix codes and fallback ids.",
+    "evidence": "Line states map to typed unitStock.state.* labels; readiness text is the typed messageKey."
+  },
+  "9937bc7f3f33ddeca409cb041af43f7ba293512bbe13f35c4a2d25448e06c13b": {
+    "classification": "technical",
+    "reason": "Stock line states, request kinds, readiness ids/states/fix codes and fallback ids.",
+    "evidence": "Line states map to typed unitStock.state.* labels; readiness text is the typed messageKey."
+  },
+  "87b164642e15a8265a58ab2be219a5ba498635d433cb0aa30364c5252e33da36": {
+    "classification": "technical",
+    "reason": "Draft-session key composition.",
+    "evidence": "sessionKey identity string passed to useConfigurationDraftSession."
+  },
+  "c5358fb77554d3ac0d77e3742cbfc9ee6fc1ef6ae2cd31632215e4d15a738ca8": {
+    "classification": "technical",
+    "reason": "Stock line states, request kinds, readiness ids/states/fix codes and fallback ids.",
+    "evidence": "Line states map to typed unitStock.state.* labels; readiness text is the typed messageKey."
+  },
+  "9f9317e4232918bbd17780c58383c2f1680eae46141a6bb01818fc8a87aca9b5": {
+    "classification": "technical",
+    "reason": "Stock line states, request kinds, readiness ids/states/fix codes and fallback ids.",
+    "evidence": "Line states map to typed unitStock.state.* labels; readiness text is the typed messageKey."
+  },
+  "60d1f56e372d44aa22d80ca991a752d16444e589ee76f702b00300137e5420dc": {
+    "classification": "technical",
+    "reason": "Readiness ids/states/fix codes, feature ids, resource JSON keys, stock modes and castle roles.",
+    "evidence": "F and C1 are official resource JSON keys; roles feed the setupReadiness.foodRole select; readiness text is the typed messageKey."
+  },
+  "2d4b2448ff6d444e0b5091bd8e9d89d510f7c4f8d6b21b9ca98962bb1613c9f7": {
+    "classification": "technical",
+    "reason": "Readiness ids/states/fix codes, feature ids, resource JSON keys, stock modes and castle roles.",
+    "evidence": "F and C1 are official resource JSON keys; roles feed the setupReadiness.foodRole select; readiness text is the typed messageKey."
+  },
+  "ea62d75338db9e92fa3040fb106940445e7c3f6e5c2004336e9cad13ca10172d": {
+    "classification": "technical",
+    "reason": "Readiness ids/states/fix codes, feature ids, resource JSON keys, stock modes and castle roles.",
+    "evidence": "F and C1 are official resource JSON keys; roles feed the setupReadiness.foodRole select; readiness text is the typed messageKey."
+  },
+  "0bce15113e1a6935efaa174d1d2931caf040e2eaac39a490908bc94fbd8c9ec0": {
+    "classification": "technical",
+    "reason": "Readiness ids/states/fix codes, feature ids, resource JSON keys, stock modes and castle roles.",
+    "evidence": "F and C1 are official resource JSON keys; roles feed the setupReadiness.foodRole select; readiness text is the typed messageKey."
+  },
+  "d7f4643640e5f9d7dd2bb563bfaabd652400b02d43023dfa3c93725c26c674e2": {
+    "classification": "technical",
+    "reason": "Readiness ids/states/fix codes, feature ids, resource JSON keys, stock modes and castle roles.",
+    "evidence": "F and C1 are official resource JSON keys; roles feed the setupReadiness.foodRole select; readiness text is the typed messageKey."
+  },
+  "4f158506168f4207965c231689858989c0e766b4c4050ed385d2c04abe0b79b3": {
+    "classification": "technical",
+    "reason": "Castle option label composed from the castle name and coordinates, and a structural flag.",
+    "evidence": "Castle names are game data and coordinates are numbers; the requirement text is a typed message."
+  },
+  "b242468e96aa8644d454826ee77d42e38a13e874b3db9be32f431577919796df": {
+    "classification": "technical",
+    "reason": "Castle option label composed from the castle name and coordinates, and a structural flag.",
+    "evidence": "Castle names are game data and coordinates are numbers; the requirement text is a typed message."
+  },
+  "75cc49f61bdd9b83d7a1f2c185b47d20a5c7f4c4e17937355ae5e85f82ce1e71": {
+    "classification": "technical",
+    "reason": "Castle purpose tokens, readiness ids/states/fix codes and account key composition.",
+    "evidence": "Purposes select castles; readiness text is the typed messageKey rendered by ReadinessPanel; accountKey is an identity string."
+  },
+  "c2a8da154cd9a9520e3f45e7e1f17783dfabb082ca8c90b9c1db65ff0a6620bb": {
+    "classification": "technical",
+    "reason": "Castle purpose tokens, readiness ids/states/fix codes and account key composition.",
+    "evidence": "Purposes select castles; readiness text is the typed messageKey rendered by ReadinessPanel; accountKey is an identity string."
+  },
+  "1bdfddc726ae1a704e5220fd9c789ccd3a21b8b081b7547503f8d47bba8117fd": {
+    "classification": "technical",
+    "reason": "Readiness ids/states/fix codes, feature ids, resource JSON keys, stock modes and castle roles.",
+    "evidence": "F and C1 are official resource JSON keys; roles feed the setupReadiness.foodRole select; readiness text is the typed messageKey."
+  },
+  "3ac95a21b83e55c8d96b44c52ac96c546e585d87b0abd2211ef9826fcc2a514f": {
+    "classification": "technical",
+    "reason": "Readiness ids/states/fix codes, feature ids, resource JSON keys, stock modes and castle roles.",
+    "evidence": "F and C1 are official resource JSON keys; roles feed the setupReadiness.foodRole select; readiness text is the typed messageKey."
+  },
+  "3bc596b314c53339e3033bb52c35246a321fdb6599b08459e4c8e3f06b0dc0d7": {
+    "classification": "technical",
+    "reason": "Readiness ids/states/fix codes, feature ids, resource JSON keys, stock modes and castle roles.",
+    "evidence": "F and C1 are official resource JSON keys; roles feed the setupReadiness.foodRole select; readiness text is the typed messageKey."
+  },
+  "ca19fb4b0ced795a86d56117981e6960315623ae7aa0e8fe302a2a3f035565c6": {
+    "classification": "technical",
+    "reason": "Readiness ids/states/fix codes, feature ids, resource JSON keys, stock modes and castle roles.",
+    "evidence": "F and C1 are official resource JSON keys; roles feed the setupReadiness.foodRole select; readiness text is the typed messageKey."
+  },
+  "66386300ab324b73cf13d1350bc5f538992d7e1902c0d93126e165dcc3503d96": {
+    "classification": "technical",
+    "reason": "Readiness ids/states/fix codes, feature ids, resource JSON keys, stock modes and castle roles.",
+    "evidence": "F and C1 are official resource JSON keys; roles feed the setupReadiness.foodRole select; readiness text is the typed messageKey."
+  },
+  "4bc4492c18b251334608b340536dd0e45687515578419dd21e6ceeeeaab0a2e0": {
+    "classification": "technical",
+    "reason": "Readiness ids/states/fix codes, feature ids, resource JSON keys, stock modes and castle roles.",
+    "evidence": "F and C1 are official resource JSON keys; roles feed the setupReadiness.foodRole select; readiness text is the typed messageKey."
+  },
+  "c33953c69004a768244932a7bcd320fa649347424b9fa4f1c0127d4645b0998e": {
+    "classification": "technical",
+    "reason": "Readiness ids/states/fix codes, feature ids, resource JSON keys, stock modes and castle roles.",
+    "evidence": "F and C1 are official resource JSON keys; roles feed the setupReadiness.foodRole select; readiness text is the typed messageKey."
+  },
+  "6c52f8768e50e9213619a440003ed5912458299f6a9bb985c456c2999e77c9f6": {
+    "classification": "technical",
+    "reason": "Readiness ids/states/fix codes, feature ids, resource JSON keys, stock modes and castle roles.",
+    "evidence": "F and C1 are official resource JSON keys; roles feed the setupReadiness.foodRole select; readiness text is the typed messageKey."
+  },
+  "9560b253f2e5ca9e3644dfb83785381a1df3a0de963527ffb2d9aed3651af287": {
+    "classification": "technical",
+    "reason": "Readiness ids/states/fix codes, feature ids, resource JSON keys, stock modes and castle roles.",
+    "evidence": "F and C1 are official resource JSON keys; roles feed the setupReadiness.foodRole select; readiness text is the typed messageKey."
+  },
+  "535f3824859f31cd15b418486fd7607156dd405a3e03fb504a1d92861d9d4993": {
+    "classification": "technical",
+    "reason": "Readiness ids/states/fix codes, feature ids, resource JSON keys, stock modes and castle roles.",
+    "evidence": "F and C1 are official resource JSON keys; roles feed the setupReadiness.foodRole select; readiness text is the typed messageKey."
+  },
+  "39fe167a76ff341eff6a78b03f8591d3b0d9b3488cff151355e41bed1f0b314f": {
+    "classification": "technical",
+    "reason": "Readiness ids/states/fix codes, feature ids, resource JSON keys, stock modes and castle roles.",
+    "evidence": "F and C1 are official resource JSON keys; roles feed the setupReadiness.foodRole select; readiness text is the typed messageKey."
+  },
+  "4d04e3c1530b833f5b55e92fa6aaa6e1432790f76e16b3eec325d5ca3e35962a": {
+    "classification": "technical",
+    "reason": "Readiness ids/states/fix codes, feature ids, resource JSON keys, stock modes and castle roles.",
+    "evidence": "F and C1 are official resource JSON keys; roles feed the setupReadiness.foodRole select; readiness text is the typed messageKey."
+  },
+  "4298799ca701c356252dce044a23b9eaa79bad5931bb43adb0ad1f288c9deaa4": {
+    "classification": "technical",
+    "reason": "Readiness ids/states/fix codes, feature ids, resource JSON keys, stock modes and castle roles.",
+    "evidence": "F and C1 are official resource JSON keys; roles feed the setupReadiness.foodRole select; readiness text is the typed messageKey."
+  },
+  "841d5efa4ee54c8c5ea66c6ab125cae8003702964d47690fceba35f57cdc698b": {
+    "classification": "technical",
+    "reason": "Readiness ids/states/fix codes, feature ids, resource JSON keys, stock modes and castle roles.",
+    "evidence": "F and C1 are official resource JSON keys; roles feed the setupReadiness.foodRole select; readiness text is the typed messageKey."
+  },
+  "0cb49c34fe4bd95bb087d81483ec4a74ccbd823d48dd1ff0f0b8fbd1e4ee9763": {
+    "classification": "technical",
+    "reason": "Readiness ids/states/fix codes, feature ids, resource JSON keys, stock modes and castle roles.",
+    "evidence": "F and C1 are official resource JSON keys; roles feed the setupReadiness.foodRole select; readiness text is the typed messageKey."
+  },
+  "f575f68e16ba599a6bc1b9b9ff3d7d996faf5df1c70c7a15645e2528a110e303": {
+    "classification": "technical",
+    "reason": "Readiness ids/states/fix codes, feature ids, resource JSON keys, stock modes and castle roles.",
+    "evidence": "F and C1 are official resource JSON keys; roles feed the setupReadiness.foodRole select; readiness text is the typed messageKey."
+  },
+  "babc5f3cde619e8b9a65d254d0a6db7af7218ddf6c2c39730e8cb2c6b59c9537": {
+    "classification": "technical",
+    "reason": "Readiness ids/states/fix codes, feature ids, resource JSON keys, stock modes and castle roles.",
+    "evidence": "F and C1 are official resource JSON keys; roles feed the setupReadiness.foodRole select; readiness text is the typed messageKey."
+  },
+  "72828d2a14669d43ab7c02064f195d9284a2563abf90db26a4417450986ecae3": {
+    "classification": "technical",
+    "reason": "Readiness ids/states/fix codes, feature ids, resource JSON keys, stock modes and castle roles.",
+    "evidence": "F and C1 are official resource JSON keys; roles feed the setupReadiness.foodRole select; readiness text is the typed messageKey."
+  },
+  "3372969ead5b3847eaa42ee36dfb39d18a5e6d84d4fc04573776dfb85f019ead": {
+    "classification": "technical",
+    "reason": "Readiness ids/states/fix codes, feature ids, resource JSON keys, stock modes and castle roles.",
+    "evidence": "F and C1 are official resource JSON keys; roles feed the setupReadiness.foodRole select; readiness text is the typed messageKey."
+  },
+  "ca4895e91ddb5286b0e5126a695baecd61ea80d3095dce4762830571e79fb1ac": {
+    "classification": "technical",
+    "reason": "Readiness ids/states/fix codes, feature ids, resource JSON keys, stock modes and castle roles.",
+    "evidence": "F and C1 are official resource JSON keys; roles feed the setupReadiness.foodRole select; readiness text is the typed messageKey."
+  },
+  "cd70b3d4b914231694b5a025f7b8e90dc254a118c8cb97e422e1c537f15692bb": {
+    "classification": "technical",
+    "reason": "Readiness ids/states/fix codes, feature ids, resource JSON keys, stock modes and castle roles.",
+    "evidence": "F and C1 are official resource JSON keys; roles feed the setupReadiness.foodRole select; readiness text is the typed messageKey."
+  },
+  "8213c5acf47118d0f59752896a3c3c52211d4ef62bee24048a3ca9ba8b0bd296": {
+    "classification": "technical",
+    "reason": "Readiness ids/states/fix codes, feature ids, resource JSON keys, stock modes and castle roles.",
+    "evidence": "F and C1 are official resource JSON keys; roles feed the setupReadiness.foodRole select; readiness text is the typed messageKey."
+  },
+  "bb1ec1154228f51b966eec57008979e989d614f71b23275b28bdc12168f7115e": {
+    "classification": "technical",
+    "reason": "Readiness ids/states/fix codes, feature ids, resource JSON keys, stock modes and castle roles.",
+    "evidence": "F and C1 are official resource JSON keys; roles feed the setupReadiness.foodRole select; readiness text is the typed messageKey."
+  },
+  "06dcc126b3fa6d96b8a6b4735ebda6c94805a2799df7e6159f000115e6bdc376": {
+    "classification": "technical",
+    "reason": "Readiness ids/states/fix codes, feature ids, resource JSON keys, stock modes and castle roles.",
+    "evidence": "F and C1 are official resource JSON keys; roles feed the setupReadiness.foodRole select; readiness text is the typed messageKey."
+  },
+  "11df7f5c34b9f3ec27e4d993b46a728d186b1ea8af485b83e0982a7f510f3d48": {
+    "classification": "technical",
+    "reason": "Readiness ids/states/fix codes, feature ids, resource JSON keys, stock modes and castle roles.",
+    "evidence": "F and C1 are official resource JSON keys; roles feed the setupReadiness.foodRole select; readiness text is the typed messageKey."
+  },
+  "888870102c184dff904476362a39dfd10abd49046872e3e79cac238c5d265fee": {
+    "classification": "technical",
+    "reason": "CSS attribute selector used to detect inert (non-interactive) ancestors before moving focus.",
+    "evidence": "focusable() calls target.closest(\"[inert]\"); the string is never rendered."
   }
 }

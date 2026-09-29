@@ -28,7 +28,11 @@ import { focusReadinessTarget } from '../readiness/focusReadinessTarget';
 import type { ReadinessCheck } from '../readiness/Readiness';
 import { EventAttackSetupField } from './EventAttackSetupField';
 import { ReadinessPanel } from './ReadinessPanel';
-import { useAuth } from '../../context/AuthContext';
+import { CastleRequirementField } from './CastleRequirementField';
+import { CommanderAssignmentPanel } from './CommanderAssignmentPanel';
+import { COMMANDER_FEATURE_SECTION } from '../../Movement/types/CommanderFeatureAssignments';
+import { savedCommanderAssignments } from '../requirements/commanderAssignmentDraft';
+import { useSetupContext } from '../requirements/useSetupContext';
 import {
 	AUTO_BERI_COIN_ATTACK_TOOLS,
 	AUTO_BERI_DEFAULT_STABLE_LEVEL,
@@ -66,11 +70,14 @@ export const AutoBeriWorldSettingsModal: React.FC<AutoBeriWorldSettingsModalProp
   const [isGuideOpen, setIsGuideOpen] = useState(false);
   useEffect(() => { if (!isOpen) setIsGuideOpen(false); }, [isOpen]);
 	const { state, captureBuildingTarget } = useCitadelAPI();
+	const setup = useSetupContext('automation.autoBeriWorld');
+	const [commandersOpen, setCommandersOpen] = useState(false);
 	const { troops, tools, unitsLoading, unitsError } = useMetadata();
 	const draftSession = useConfigurationDraftSession({
 		isOpen,
 		section: 'automation.autoBeriWorld',
-		configurationDependencies: [ATTACK_PRESETS_SECTION, AUTO_BERI_WORLD_BLUEPRINTS_SECTION],
+		configurationDependencies: [ATTACK_PRESETS_SECTION, AUTO_BERI_WORLD_BLUEPRINTS_SECTION, COMMANDER_FEATURE_SECTION],
+		sessionKey: setup.sessionKey,
 	});
 	const [settings, setSettings] = useState<AutoBeriWorldSettings>(DEFAULT_AUTO_BERI_WORLD_SETTINGS);
 	const [attackRef, setAttackRef] = useState<AttackSetupRef>({ source: 'none' });
@@ -85,14 +92,10 @@ export const AutoBeriWorldSettingsModal: React.FC<AutoBeriWorldSettingsModalProp
 		[draftSession.sections],
 	);
 	const presetReferences = useMemo(() => attackPresetReferences(draftSession.sections), [draftSession.sections]);
+	const commanderAssignments = useMemo(() => savedCommanderAssignments(draftSession.sections), [draftSession.sections]);
 	const metadataReady = !unitsLoading && !unitsError;
-	const { gameLoggedIn } = useAuth();
-	const hostedPresence = undefined;
 	// Unit counts are current only once this connection has its baseline (CIT-15 D1).
-	const observation = useMemo(
-	  () => ({ session: state?.session ?? null, connected: gameLoggedIn, hostedPresence }),
-	  [gameLoggedIn, hostedPresence, state?.session],
-	);
+	const observation = setup.observation;
 	const gallantryBooster = state?.market?.boosters?.['24'];
 	const gallantryBoosterExpiresAt = gallantryBooster?.expiresAt ? Date.parse(gallantryBooster.expiresAt) : 0;
 	const gallantryBoosterActive = gallantryBooster?.permanent === true ||
@@ -175,12 +178,19 @@ export const AutoBeriWorldSettingsModal: React.FC<AutoBeriWorldSettingsModalProp
 		tools,
 		metadataReady,
 		observation,
+		commanders: { assignments: commanderAssignments, movement: setup.movement, gameLoggedIn: setup.gameLoggedIn },
 	}), [
 		observation,
+		commanderAssignments, setup.gameLoggedIn, setup.movement,
 		attackRef, effectiveSourceID, metadataReady, presetDocument, settings.dailyAttackLimit, settings.horseTravelBoostId,
 		settings.requireActiveGallantryBooster, state, tools, troops,
 	]);
 	const fixReadiness = (check: ReadinessCheck) => {
+		if (check.id === 'commanders' || check.id === 'commander-assignment') {
+			setCommandersOpen(true);
+			window.requestAnimationFrame(() => focusReadinessTarget('auto-beri-commanders-heading'));
+			return;
+		}
 		const target = check.slot ? 'auto-beri-attack' : {
 			'source-castle': 'auto-beri-source',
 			'daily-limit': 'auto-beri-daily-limit',
@@ -629,6 +639,7 @@ export const AutoBeriWorldSettingsModal: React.FC<AutoBeriWorldSettingsModalProp
 								document={presetDocument}
 								references={presetReferences}
 								sourceCastle={sourceCastle}
+								observation={observation}
 								eventId={0}
 								recommendation={recommendation}
 								recipePending={recipePending}
@@ -746,18 +757,31 @@ export const AutoBeriWorldSettingsModal: React.FC<AutoBeriWorldSettingsModalProp
 				</div>
 
 
-				<div id="auto-beri-source" className="space-y-1.5">
-					<label className="text-xs font-bold uppercase tracking-wider text-text-muted"><LocalizedText messageKey="ui.settings.components.autoBeriWorldSettingsModal.source.castle.86d5a48e" /></label>
-					<Select
-						value={effectiveSourceID > 0 ? String(effectiveSourceID) : ''}
-						options={sourceOptions}
-						onChange={(value) => updateNumber('sourceCastleId', value)}
-						placeholder={localizeStatic("ui.settings.components.autoBeriWorldSettingsModal.placeholder.main.castle.0e106dcc")}
-					/>
-				</div>
+				<CastleRequirementField
+					id="auto-beri-source"
+					label={<LocalizedText messageKey="ui.settings.components.autoBeriWorldSettingsModal.source.castle.86d5a48e" />}
+					value={effectiveSourceID}
+					onChange={(sourceCastleId) => setSettings((current) => ({ ...current, sourceCastleId }))}
+					state={setup.state}
+					purpose="source-great-empire"
+					options={sourceOptions}
+					placeholder={localizeStatic("ui.settings.components.autoBeriWorldSettingsModal.placeholder.main.castle.0e106dcc")}
+				/>
 
 
 				<ReadinessPanel report={readiness} slotLabelKeys={{ attack: 'attackPresets.slot.towerAttack' }} onFix={fixReadiness} />
+
+				<CommanderAssignmentPanel
+				  id="auto-beri-commanders"
+				  featureId="autoBeriWorld"
+				  draftSession={draftSession}
+				  state={setup.state}
+				  movement={setup.movement}
+				  gameLoggedIn={setup.gameLoggedIn}
+				  expanded={commandersOpen}
+				  onExpandedChange={setCommandersOpen}
+				  disabled={saving}
+				/>
 
 				{saveError && <p role="alert" className="text-xs text-error">{saveError}</p>}
 			</div>

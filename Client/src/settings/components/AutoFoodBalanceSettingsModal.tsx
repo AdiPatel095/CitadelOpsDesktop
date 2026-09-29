@@ -4,7 +4,13 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { CalendarDays, FastForward, Truck, Wheat } from 'lucide-react';
 import { Button, ChoiceChipGroup, Input, SettingsModal, SettingsToggleRow } from '../../components/ui';
 import { useCitadelAPI } from '../../api/ApiContext';
-import { configurationSection } from '../Configuration';
+import { asRecord } from '../Configuration';
+import { useConfigurationDraftSession } from '../ConfigurationDraftSession';
+import { useMetadata } from '../../context/MetadataContext';
+import { evaluateFoodBalanceReadiness } from '../requirements/setupReadiness';
+import { useSetupContext } from '../requirements/useSetupContext';
+import { focusReadinessTarget } from '../readiness/focusReadinessTarget';
+import { ReadinessPanel } from './ReadinessPanel';
 import { normalizeFeatureSchedules, scheduleSummary } from '../SchedulerTypes';
 import {
   AUTO_FOOD_BALANCE_TIME_SKIPS,
@@ -26,18 +32,31 @@ export const AutoFoodBalanceSettingsModal: React.FC<AutoFoodBalanceSettingsModal
   onOpenFeatureSchedule,
 }) => {
   const { t: localizeStatic } = useStaticLocale();
-  const { configuration, updateConfiguration } = useCitadelAPI();
-  const saved = useMemo(
-    () => parseAutoFoodBalanceSettings(configurationSection(configuration, 'automation.autoFoodBalance')),
-    [configuration?.sections['automation.autoFoodBalance']],
-  );
-  const schedules = normalizeFeatureSchedules(configurationSection(configuration, 'scheduler').featureSchedules);
+  const { state } = useCitadelAPI();
+  const setup = useSetupContext('automation.autoFoodBalance');
+  const draftSession = useConfigurationDraftSession({ isOpen, section: 'automation.autoFoodBalance', sessionKey: setup.sessionKey });
+  const { resources, isLoading: metadataLoading } = useMetadata();
+  const schedules = normalizeFeatureSchedules(asRecord(draftSession.sections?.scheduler).featureSchedules);
   const [settings, setSettings] = useState<AutoFoodBalanceSettings>(DEFAULT_AUTO_FOOD_BALANCE_SETTINGS);
   const [saveError, setSaveError] = useState('');
 
   useEffect(() => {
-    if (isOpen) setSettings(saved);
-  }, [isOpen, saved]);
+    if (isOpen && draftSession.initialSnapshot) {
+      setSettings(parseAutoFoodBalanceSettings(asRecord(
+        draftSession.initialSections?.['automation.autoFoodBalance'],
+      )));
+    }
+  }, [draftSession.initialSections, draftSession.openKey, draftSession.initialSnapshot, isOpen]);
+
+  const readiness = useMemo(() => evaluateFoodBalanceReadiness({
+    state,
+    resources,
+    metadataReady: !metadataLoading,
+    minimumSourceReserve: settings.minimumSourceReserve,
+    minimumCoinReserve: settings.minimumCoinReserve,
+    autoKingdomTransport: settings.autoKingdomTransport,
+    observation: setup.observation,
+  }), [metadataLoading, resources, settings.autoKingdomTransport, settings.minimumCoinReserve, settings.minimumSourceReserve, setup.observation, state]);
 
   const setNumber = (field: keyof AutoFoodBalanceSettings, value: string) => {
     setSettings((current) => parseAutoFoodBalanceSettings({ ...current, [field]: Number(value) }));
@@ -46,7 +65,7 @@ export const AutoFoodBalanceSettingsModal: React.FC<AutoFoodBalanceSettingsModal
   const save = () => {
     const normalized = parseAutoFoodBalanceSettings(settings);
     setSaveError('');
-    void updateConfiguration('automation.autoFoodBalance', normalized)
+    void draftSession.save(normalized)
       .then(onClose)
       .catch((error) => setSaveError(error instanceof Error ? error.message : 'Could not save food-balance settings.'));
   };
@@ -73,6 +92,9 @@ export const AutoFoodBalanceSettingsModal: React.FC<AutoFoodBalanceSettingsModal
       )}
       onSave={save}
       saveLabel="Save"
+      saveDisabled={!draftSession.ready}
+      contentDisabled={!draftSession.ready}
+      contentNotice={draftSession.conflictNotice}
     >
       <div className="space-y-5">
         <p className="text-sm text-text-muted">
@@ -164,7 +186,39 @@ export const AutoFoodBalanceSettingsModal: React.FC<AutoFoodBalanceSettingsModal
           </div>
         )}
 
-        {saveError && <p className="text-xs text-error">{saveError}</p>}
+        <div id="auto-food-castles" tabIndex={-1} className="space-y-2 rounded-global border border-border-base bg-bg-card/40 p-4 outline-none">
+          <div className="text-xs font-bold uppercase tracking-wider text-text-muted"><LocalizedText messageKey="ui.settings.components.autoFoodBalanceSettingsModal.castles.and.food.stock.a2f41062" /></div>
+          {readiness.rows.length > 0 && !readiness.rows[0].current ? (
+            <p className="text-[11px] font-semibold text-warning"><LocalizedText messageKey="ui.settings.components.autoFoodBalanceSettingsModal.last.known.food.stock.it.updates.once.49b8947f" /></p>
+          ) : null}
+          {readiness.rows.length === 0 ? (
+            <p className="text-xs text-text-muted"><LocalizedText messageKey="ui.settings.components.autoFoodBalanceSettingsModal.no.castles.are.observed.yet.ba035a87" /></p>
+          ) : (
+            <table className="w-full text-left text-xs">
+              <thead className="text-[10px] uppercase tracking-wider text-text-muted">
+                <tr>
+                  <th scope="col" className="py-1 pr-2 font-bold"><LocalizedText messageKey="ui.settings.components.autoFoodBalanceSettingsModal.castle.419fb3b8" /></th>
+                  <th scope="col" className="py-1 pr-2 text-right font-bold"><LocalizedText messageKey="ui.settings.components.autoFoodBalanceSettingsModal.food.e4eb1806" /></th>
+                  <th scope="col" className="py-1 font-bold"><LocalizedText messageKey="ui.settings.components.autoFoodBalanceSettingsModal.role.14736a2e" /></th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border-base">
+                {readiness.rows.map((row) => (
+                  <tr key={row.castleId}>
+                    <td className="max-w-0 truncate py-1 pr-2 text-text-main">{row.name}</td>
+                    <td className="py-1 pr-2 text-right font-mono tabular-nums">{row.food == null ? '—' : Math.floor(row.food).toLocaleString()}</td>
+                    <td className="py-1 text-text-muted"><LocalizedText messageKey="setupReadiness.foodRole" params={{ role: row.role }} /></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+          <p className="text-[11px] text-text-muted"><LocalizedText messageKey="ui.settings.components.autoFoodBalanceSettingsModal.donors.hold.food.above.the.donor.reserve.e605cba8" /></p>
+        </div>
+
+        <ReadinessPanel report={readiness.report} onFix={() => focusReadinessTarget('auto-food-castles')} />
+
+        {saveError && <p role="alert" className="text-xs text-error">{saveError}</p>}
       </div>
     </SettingsModal>
   );

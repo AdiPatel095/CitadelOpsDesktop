@@ -75,12 +75,17 @@ test('acknowledged same-session writes advance the revision while later remote w
   );
 });
 
-test('event attack editors use the fresh-open draft session and block edits while loading', async () => {
-  // CIT-15 migrates the three event attack modals; the remaining editors follow in CIT-16/CIT-17.
+test('migrated editors use the fresh-open draft session and block edits while loading', async () => {
+  // CIT-15 migrated the event attack modals and CIT-18 the Tower/Fortress/Station/Bird/Food editors; the rest follow in CIT-16/CIT-17.
   const editors = [
     'AutoBeriWorldSettingsModal.tsx',
+    'AutoBirdSettingsModal.tsx',
+    'AutoFoodBalanceSettingsModal.tsx',
+    'AutoFortressSettingsModal.tsx',
     'AutoInvasionSettingsModal.tsx',
     'AutoNomadSettingsModal.tsx',
+    'AutoStationSettingsModal.tsx',
+    'AutoTowerSettingsModal.tsx',
   ];
 
   for (const editor of editors) {

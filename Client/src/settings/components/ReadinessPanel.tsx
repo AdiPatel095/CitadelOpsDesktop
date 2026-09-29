@@ -40,14 +40,14 @@ export const ReadinessCheckLine: React.FC<{
     <span className="min-w-0 flex-1">
       {slotLabelKey ? <span className="font-bold text-text-muted"><LocalizedText messageKey={slotLabelKey} />{': '}</span> : null}
       <LocalizedText messageKey={check.messageKey} params={check.params} />
-      {check.fix === 'assignment' ? (
+      {check.fix === 'assignment' && !onFix ? (
         <span className="block text-[11px] text-text-muted"><LocalizedText messageKey="ui.settings.components.readinessPanel.assign.commanders.under.commanders.features.repairing.assignments.a9c68853" /></span>
       ) : null}
       {check.fix === 'connection' ? (
         <span className="block text-[11px] text-text-muted"><LocalizedText messageKey="ui.settings.components.readinessPanel.this.updates.by.itself.once.the.game.7b60fd8c" /></span>
       ) : null}
     </span>
-    {onFix && check.state !== 'valid' && (check.fix === 'settings' || check.fix === 'presets') ? (
+    {onFix && check.state !== 'valid' && (check.fix === 'settings' || check.fix === 'presets' || check.fix === 'assignment') ? (
       <Button variant="ghost" size="sm" className="shrink-0" onClick={() => onFix(check)}>
         <LocalizedText messageKey="ui.settings.components.readinessPanel.fix.21f1595b" />
       </Button>

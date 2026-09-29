@@ -7,9 +7,12 @@ import {
 import type { AttackSetupDraft } from '../../components/AttackSetupModal';
 import type { MetadataItem } from '../../context/MetadataContext';
 import type { MessageKey } from '../../i18n/messages';
-import { unitUpgradeFamily } from '../UnitUpgradeFamily';
+import type { CommanderFeatureConfigurationV2 } from '../../Movement/types/CommanderFeatureAssignments';
+import type { MovementViewModel } from '../../Movement/types/MovementState';
+import { evaluateCommanderEligibility } from '../requirements/commanderEligibility';
+import { evaluateUnitStock, requestsFromComposition } from '../requirements/unitRequirements';
 import { aggregateReadiness, type ReadinessCheck, type ReadinessReport } from './Readiness';
-import { observationUnavailableMessage, unitObservationFreshness, type ObservationContext } from '../requirements/observationFreshness';
+import type { ObservationContext } from '../requirements/observationFreshness';
 
 export type EventAttackFeatureId = 'autoNomad' | 'autoInvasion' | 'autoBeriWorld';
 
@@ -46,6 +49,12 @@ export interface EventAttackReadinessInput {
   difficulties?: EventAttackDifficultyInput;
   /** Session, connection and hosted presence used to decide whether unit counts are current (D1). */
   observation: ObservationContext;
+  /** Saved commander assignments and movement; when present, commander checks follow CIT-18 eligibility. */
+  commanders?: {
+    assignments: CommanderFeatureConfigurationV2;
+    movement: MovementViewModel | null;
+    gameLoggedIn: boolean;
+  };
   now?: number;
 }
 
@@ -111,14 +120,27 @@ export function evaluateEventAttackReadiness(input: EventAttackReadinessInput): 
   }
 
   const commanders = Object.values(state?.commanders ?? {});
-  if (!state || commanders.length === 0) {
+  if (input.commanders) {
+    // Assignment-aware preview (CIT-18): which assigned, qualified commanders exist and are free.
+    const report = evaluateCommanderEligibility({
+      featureId: input.featureId,
+      state,
+      assignments: input.commanders.assignments,
+      movement: input.commanders.movement,
+      gameLoggedIn: input.commanders.gameLoggedIn,
+      now: input.now ?? Date.now(),
+    });
+    checks.push(report.activity, report.assignment);
+  } else if (!state || commanders.length === 0) {
     checks.push({ id: 'commanders', state: 'unavailable', messageKey: message('ui.settings.readiness.eventAttackReadiness.commanders.have.not.been.observed.yet.44c4e9ab'), fix: 'connection' });
   } else if (commanders.some((commander) => commander.available)) {
     checks.push({ id: 'commanders', state: 'valid', messageKey: message('ui.settings.readiness.eventAttackReadiness.at.least.one.commander.is.available.now.229f8af6') });
   } else {
     checks.push({ id: 'commanders', state: 'pending', messageKey: message('ui.settings.readiness.eventAttackReadiness.no.commander.is.available.right.now.the.8b8f881e') });
   }
-  checks.push({ id: 'commander-assignment', state: 'pending', messageKey: message('ui.settings.readiness.eventAttackReadiness.commanders.assigned.to.this.automation.under.commanders.462970de'), fix: 'assignment' });
+  if (!input.commanders) {
+    checks.push({ id: 'commander-assignment', state: 'pending', messageKey: message('ui.settings.readiness.eventAttackReadiness.commanders.assigned.to.this.automation.under.commanders.462970de'), fix: 'assignment' });
+  }
   checks.push({ id: 'tool-compatibility', state: 'pending', messageKey: message('ui.settings.readiness.eventAttackReadiness.tool.compatibility.with.each.target.is.checked.95eb4eaa') });
 
   if (draft.dailyAttackLimit !== undefined) {
@@ -176,63 +198,29 @@ function inventoryCheck(
   if (!castle) {
     return { id: 'inventory', slot, state: 'unavailable', messageKey: message('ui.settings.readiness.eventAttackReadiness.stationed.troops.are.unknown.until.the.source.335de03d') };
   }
-  const freshness = unitObservationFreshness({ castle, ...input.observation });
-  if (freshness.state === 'unavailable') {
-    return { id: 'inventory', slot, state: 'unavailable', messageKey: observationUnavailableMessage(freshness.reason), fix: 'connection' };
-  }
-  if (composition.useTroopFamilies && !input.metadataReady) {
-    return { id: 'inventory', slot, state: 'unavailable', messageKey: message('ui.settings.readiness.eventAttackReadiness.troop.family.data.is.still.loading.74980d2f') };
-  }
-  const requested = requestedItems(composition);
-  const stationed = castle.units?.stationed ?? {};
-  let missing = 0;
-  let short = 0;
-  for (const [itemId, amount] of requested.troops) {
-    const ids = composition.useTroopFamilies ? unitUpgradeFamily(itemId, input.troops)?.ids ?? [itemId] : [itemId];
-    const stock = ids.reduce((total, id) => total + Math.max(0, Number(stationed[String(id)]) || 0), 0);
-    if (stock <= 0) missing += 1;
-    else if (stock < amount) short += 1;
-  }
-  for (const [itemId, amount] of requested.tools) {
-    const stock = Math.max(0, Number(stationed[String(itemId)]) || 0);
-    if (stock <= 0) missing += 1;
-    else if (stock < amount) short += 1;
-  }
-  if ((missing > 0 || short > 0) && input.featureId === 'autoBeriWorld') {
+  const { check, freshness } = evaluateUnitStock({
+    castle,
+    observation: input.observation,
+    requests: requestsFromComposition(composition),
+    troops: input.troops,
+    tools: input.tools,
+    metadataReady: input.metadataReady,
+    useTroopFamilies: composition.useTroopFamilies,
+    slot,
     // Berimond attacks launch from the camp: transfers move troops there and the armorer lane buys
     // coin tools there, so source-castle stock alone cannot decide this before launch.
-    return { id: 'inventory', slot, state: 'pending', messageKey: message('ui.settings.readiness.eventAttackReadiness.berimond.camp.stock.is.checked.at.launch.e26aa185') };
-  }
-  if (missing > 0) {
-    return { id: 'inventory', slot, state: 'blocked', messageKey: message('eventAttackReadiness.inventoryMissing'), params: { count: missing }, fix: 'settings' };
-  }
-  if (short > 0) {
-    // The runtime limits each lane to its capacity before checking stock, so a raw
-    // quantity above stock is decided at launch rather than here.
-    return { id: 'inventory', slot, state: 'pending', messageKey: message('eventAttackReadiness.inventoryShort'), params: { count: short } };
-  }
+    decidedAtLaunch: input.featureId === 'autoBeriWorld' ? 'stock' : undefined,
+    messages: {
+      unobserved: message('ui.settings.readiness.eventAttackReadiness.stationed.troops.are.unknown.until.the.source.335de03d'),
+      familiesLoading: message('ui.settings.readiness.eventAttackReadiness.troop.family.data.is.still.loading.74980d2f'),
+      decidedAtLaunch: message('ui.settings.readiness.eventAttackReadiness.berimond.camp.stock.is.checked.at.launch.e26aa185'),
+    },
+  });
+  if (check.state !== 'valid' || freshness?.state !== 'observed') return check;
   return freshness.scope === 'castle' && freshness.observedAt
-    ? { id: 'inventory', slot, state: 'valid', messageKey: message('eventAttackReadiness.inventoryObservedAt'), params: { observedAt: Date.parse(freshness.observedAt) } }
+    ? { ...check, messageKey: message('eventAttackReadiness.inventoryObservedAt'), params: { observedAt: Date.parse(freshness.observedAt) } }
     // No per-castle time reaches the client today: counts are from this connection's baseline.
-    : { id: 'inventory', slot, state: 'valid', messageKey: message('ui.settings.readiness.eventAttackReadiness.the.source.castle.has.the.troops.and.57e05dcd') };
-}
-
-function requestedItems(composition: AttackSetupDraft): { troops: Map<number, number>; tools: Map<number, number> } {
-  const troops = new Map<number, number>();
-  const tools = new Map<number, number>();
-  const add = (target: Map<number, number>, itemId: number | null, quantity: number) => {
-    if (itemId == null || quantity <= 0) return;
-    target.set(itemId, (target.get(itemId) ?? 0) + quantity);
-  };
-  for (const wave of composition.waves) {
-    for (const lane of [wave.L, wave.M, wave.R]) {
-      for (const slot of lane.troops) add(troops, slot.itemId, slot.quantity);
-      for (const slot of lane.tools) add(tools, slot.itemId, slot.quantity);
-    }
-  }
-  for (const slot of composition.courtyardSupport?.troops ?? []) add(troops, slot.itemId, slot.quantity);
-  for (const slot of composition.courtyardSupport?.tools ?? []) add(tools, slot.itemId, slot.itemId == null ? 0 : 1);
-  return { troops, tools };
+    : { ...check, messageKey: message('ui.settings.readiness.eventAttackReadiness.the.source.castle.has.the.troops.and.57e05dcd') };
 }
 
 function gallantryBoosterActive(state: GameStateV2, now: number): boolean {

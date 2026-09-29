@@ -1,6 +1,6 @@
 import { useLocale as useStaticLocale } from "../../i18n/LocaleContext";
 import { LocalizedText } from "../../i18n/LocalizedText";
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { BookOpen, Bot, CalendarDays, Crosshair, FastForward, TicketCheck } from 'lucide-react';
 import UnitImage from '../../components/UnitImage';
 import { showTroopPicker } from '../../components/TroopPickerModal';
@@ -15,7 +15,6 @@ import {
   defaultAutoTowerCastleSettings,
   defaultAutoTowerClientState,
   parseAutoTowerClientState,
-  persistAutoTowerClientState,
   type AutoTowerCastleSettings,
 } from '../AutoTowerClientState';
 import { AutoTowerGuideModal } from './AutoTowerGuideModal';
@@ -23,6 +22,18 @@ import { useGuideLocale } from '../../config/useGuideLocale';
 import HorseTravelBoostSelect from './HorseTravelBoostSelect';
 import { DailyAttackLimitField } from './DailyAttackLimitField';
 import type { HorseTravelBoostID } from '../HorseTravelBoost';
+import { useConfigurationDraftSession } from '../ConfigurationDraftSession';
+import { useMetadata } from '../../context/MetadataContext';
+import { COMMANDER_FEATURE_SECTION } from '../../Movement/types/CommanderFeatureAssignments';
+import { savedCommanderAssignments } from '../requirements/commanderAssignmentDraft';
+import { evaluateCommanderEligibility } from '../requirements/commanderEligibility';
+import { evaluateTowerReadiness } from '../requirements/setupReadiness';
+import { useSetupContext } from '../requirements/useSetupContext';
+import { focusReadinessTarget } from '../readiness/focusReadinessTarget';
+import type { ReadinessCheck } from '../readiness/Readiness';
+import { CommanderAssignmentPanel } from './CommanderAssignmentPanel';
+import { ReadinessCheckLine, ReadinessPanel } from './ReadinessPanel';
+import { UnitStockList } from './UnitStockList';
 
 interface AutoTowerSettingsModalProps {
   isOpen: boolean;
@@ -33,7 +44,16 @@ interface AutoTowerSettingsModalProps {
 export const AutoTowerSettingsModal: React.FC<AutoTowerSettingsModalProps> = ({ isOpen, onClose, onOpenFeatureSchedule }) => {
   const { locale: guideLocale, pack: guidePack } = useGuideLocale();
   const { t: localizeStatic } = useStaticLocale();
-  const { state, configuration } = useCitadelAPI();
+  const { state } = useCitadelAPI();
+  const setup = useSetupContext('automation.autoTowers');
+  const draftSession = useConfigurationDraftSession({
+    isOpen,
+    section: 'automation.autoTowers',
+    configurationDependencies: [COMMANDER_FEATURE_SECTION],
+    sessionKey: setup.sessionKey,
+  });
+  const { troops, tools, unitsLoading, unitsError } = useMetadata();
+  const [commandersOpen, setCommandersOpen] = useState(false);
   const castles = castleOptionsFromState(state);
   const [settings, setSettings] = useState<Record<string, AutoTowerCastleSettings>>({});
   const [mapRefreshIntervalSec, setMapRefreshIntervalSec] = useState(1800);
@@ -52,8 +72,9 @@ export const AutoTowerSettingsModal: React.FC<AutoTowerSettingsModalProps> = ({ 
       setSaveError(null);
       return;
     }
+    if (!draftSession.initialSnapshot) return;
     const current = parseAutoTowerClientState(
-      configuration?.sections['automation.autoTowers'] ?? defaultAutoTowerClientState(),
+      draftSession.initialSections?.['automation.autoTowers'] ?? defaultAutoTowerClientState(),
     );
     setSettings(current.castles);
     setMapRefreshIntervalSec(current.mapRefreshIntervalSec);
@@ -62,7 +83,33 @@ export const AutoTowerSettingsModal: React.FC<AutoTowerSettingsModalProps> = ({ 
     setUseAdvisor(current.useAdvisor);
     setAutoActivateAdvisor(current.autoActivateAdvisor);
     setMaximumDailyTimeSkips(current.maximumDailyTimeSkips);
-  }, [configuration?.sections, isOpen]);
+  }, [draftSession.initialSections, draftSession.openKey, draftSession.initialSnapshot, isOpen]);
+
+  const commanderAssignments = useMemo(() => savedCommanderAssignments(draftSession.sections), [draftSession.sections]);
+  const readiness = useMemo(() => evaluateTowerReadiness({
+    state,
+    castles: settings,
+    troops,
+    tools,
+    metadataReady: !unitsLoading && !unitsError,
+    observation: setup.observation,
+    commanders: evaluateCommanderEligibility({
+      featureId: 'autoTowers',
+      state,
+      assignments: commanderAssignments,
+      movement: setup.movement,
+      gameLoggedIn: setup.gameLoggedIn,
+      now: Date.now(),
+    }),
+  }), [commanderAssignments, settings, setup.gameLoggedIn, setup.movement, state, tools, troops, unitsError, unitsLoading, setup.observation]);
+  const fixReadiness = (check: ReadinessCheck) => {
+    if (check.id === 'commanders' || check.id === 'commander-assignment') {
+      setCommandersOpen(true);
+      window.requestAnimationFrame(() => focusReadinessTarget('auto-towers-commanders-heading'));
+      return;
+    }
+    focusReadinessTarget('auto-towers-castles');
+  };
 
   const settingsFor = useCallback((castleID: number): AutoTowerCastleSettings => (
     settings[String(castleID)] ?? defaultAutoTowerCastleSettings()
@@ -89,9 +136,9 @@ export const AutoTowerSettingsModal: React.FC<AutoTowerSettingsModalProps> = ({ 
     if (isSaving) return;
     setIsSaving(true);
     setSaveError(null);
-    const current = parseAutoTowerClientState(configuration?.sections['automation.autoTowers']);
+    const current = parseAutoTowerClientState(draftSession.sections?.['automation.autoTowers']);
     try {
-      await persistAutoTowerClientState({
+      await draftSession.save({
         ...current,
         version: 4,
         mapRefreshIntervalSec,
@@ -140,6 +187,9 @@ export const AutoTowerSettingsModal: React.FC<AutoTowerSettingsModalProps> = ({ 
       onSave={save}
       saveLabel="Save changes"
       isSaving={isSaving}
+      saveDisabled={!draftSession.ready}
+      contentDisabled={!draftSession.ready}
+      contentNotice={draftSession.conflictNotice}
     >
       {saveError && (
         <div className="mb-4 rounded-global border border-error/30 bg-error/10 px-4 py-3 text-sm font-semibold text-error" role="alert">
@@ -245,10 +295,11 @@ export const AutoTowerSettingsModal: React.FC<AutoTowerSettingsModalProps> = ({ 
         />
       </div>
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+      <div id="auto-towers-castles" tabIndex={-1} className="grid grid-cols-1 gap-4 outline-none sm:grid-cols-2 xl:grid-cols-3">
         {castles.map((castle) => {
           const plan = settingsFor(castle.id);
           const stock = state?.castles[String(castle.id)]?.units.stationed[String(plan.unitId)] ?? 0;
+          const stockResult = plan.enabled ? readiness.stockByCastle[String(castle.id)] : undefined;
           return (
             <Card key={castle.id} variant="solid" className="flex flex-col gap-4 bg-bg-card-hover/40 p-4 shadow-inner">
               <div className="flex items-start justify-between gap-3 border-b border-border-base pb-3">
@@ -295,6 +346,13 @@ export const AutoTowerSettingsModal: React.FC<AutoTowerSettingsModalProps> = ({ 
                 </span>
               </button>
 
+              {stockResult ? (
+                <div className="space-y-1.5 rounded-xl border border-border-base bg-bg-app/50 px-3 py-2.5">
+                  <UnitStockList lines={stockResult.lines} />
+                  <ul><ReadinessCheckLine check={stockResult.check} /></ul>
+                </div>
+              ) : null}
+
               <div className="flex items-center justify-between gap-3 rounded-xl border border-border-base bg-bg-app/50 px-3 py-2.5">
                 <div className="min-w-0">
                   <div className="text-xs font-bold text-text-main"><LocalizedText messageKey="ui.settings.components.autoTowerSettingsModal.maiden.supported.only.1374eb47" /></div>
@@ -309,6 +367,21 @@ export const AutoTowerSettingsModal: React.FC<AutoTowerSettingsModalProps> = ({ 
             </Card>
           );
         })}
+      </div>
+
+      <div className="mt-4 space-y-4">
+        <ReadinessPanel report={readiness.report} onFix={fixReadiness} />
+        <CommanderAssignmentPanel
+          id="auto-towers-commanders"
+          featureId="autoTowers"
+          draftSession={draftSession}
+          state={setup.state}
+          movement={setup.movement}
+          gameLoggedIn={setup.gameLoggedIn}
+          expanded={commandersOpen}
+          onExpandedChange={setCommandersOpen}
+          disabled={isSaving}
+        />
       </div>
     </SettingsModal>
     <AutoTowerGuideModal isOpen={isOpen && isGuideOpen} onClose={() => setIsGuideOpen(false)} />
