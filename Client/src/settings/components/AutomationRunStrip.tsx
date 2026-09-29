@@ -68,7 +68,7 @@ export const AutomationRunStrip: React.FC<AutomationRunStripProps> = ({ featureI
             </span>
           ) : null}
         </div>
-        <div className="flex shrink-0 flex-wrap items-center gap-2">
+        <div className="flex min-w-0 flex-wrap items-center gap-2">
           {scheduleId && onOpenSchedule ? (
             <Button variant="outline" size="sm" onClick={onOpenSchedule} leftIcon={<CalendarDays className="h-4 w-4" />}>
               <LocalizedText messageKey="common.calendar" />

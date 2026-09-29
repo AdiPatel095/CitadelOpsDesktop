@@ -852,8 +852,6 @@ export const QueueProductionSettingsModal: React.FC<QueueProductionSettingsModal
       >
         <AutomationRunStrip
           featureId={definition.featureID}
-          scheduleId={definition.featureID}
-          onOpenSchedule={() => onOpenFeatureSchedule(definition.featureID, definition.featureLabel)}
           onOpenDuration={onOpenAutomationDuration ? () => onOpenAutomationDuration(AUTOMATION_ENABLED_KEYS[definition.featureID], definition.featureLabel) : undefined}
         />
         <div className={`recruit-modal-shell mx-auto flex w-full flex-col gap-5 overflow-visible pb-2 ${isGlobalMode ? 'max-w-6xl' : 'max-w-[min(1840px,98vw)]'}`}>

@@ -406,7 +406,7 @@ export const messages = {
   "settingsSummary.transportSkips": "{enabled, select, on {troop transfers may use time skips} other {troop transfers never use time skips}}",
   "settingsSummary.advisorRunSizing": "up to {max, plural, one {# attack} other {# attacks}} per run · stops {minutes, plural, =0 {at the event end} one {# minute before the event ends} other {# minutes before the event ends}}",
   "settingsSummary.mapRefreshEvery": "full map refresh every {unit, select, second {{count, plural, one {# second} other {# seconds}}} minute {{count, plural, one {# minute} other {# minutes}}} hour {{count, plural, one {# hour} other {# hours}}} other {{count, plural, one {# day} other {# days}}}}",
-  "settingsSummary.stormImportTuning": "{enabled, select, on {imports keep {troops, plural, =0 {no minimum} one {at least # troop} other {at least # troops}} stationed after launch} other {troop import off}}",
+  "settingsSummary.stormImportTuning": "{enabled, select, on {{troops, plural, =0 {no minimum troops kept after launch} one {keeps at least # troop stationed after launch} other {keeps at least # troops stationed after launch}}} other {troop import off}}",
   "settingsSummary.stormPriority": "{count, plural, =0 {no enabled target types to order} one {# enabled target type} other {# enabled target types, attacked highest first}}",
   "settingsSummary.stormBuildTarget": "{enabled, select, on {builds toward the captured castle target} other {no construction target; combat only}}",
   "settingsSummary.resourceTransport": "{enabled, select, on {may ship resources from your other castles} other {no resource shipments}}",

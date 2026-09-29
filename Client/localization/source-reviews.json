@@ -5114,27 +5114,12 @@
     "reason": "Settings disclosure identifier or typed message argument, not human display prose.",
     "evidence": "Settings section ids, disclosure feature ids, automation.enabled keys, summary select values and countCustomValues field names are identifiers; feature product names are passed as featureLabel exactly like the existing schedule labels; visible text renders through typed messageKeys."
   },
-  "5a3b175e3b7c4418fe28c6ad0c5d9c02d637957611e4e1a1882d64027278cb8d": {
-    "classification": "technical",
-    "reason": "Settings disclosure identifier or typed message argument, not human display prose.",
-    "evidence": "Settings section ids, disclosure feature ids, automation.enabled keys, summary select values and countCustomValues field names are identifiers; feature product names are passed as featureLabel exactly like the existing schedule labels; visible text renders through typed messageKeys."
-  },
   "8f5585c8c0788538105cc9234011ee98e97c3286f3c84ead03cbafcd7bfa32ab": {
     "classification": "technical",
     "reason": "Settings disclosure identifier or typed message argument, not human display prose.",
     "evidence": "Settings section ids, disclosure feature ids, automation.enabled keys, summary select values and countCustomValues field names are identifiers; feature product names are passed as featureLabel exactly like the existing schedule labels; visible text renders through typed messageKeys."
   },
   "06a3f8085edf55c09f47bdd8ec64a074d94d2cb082a9011e1b2082fed164a8ea": {
-    "classification": "technical",
-    "reason": "Settings disclosure identifier or typed message argument, not human display prose.",
-    "evidence": "Settings section ids, disclosure feature ids, automation.enabled keys, summary select values and countCustomValues field names are identifiers; feature product names are passed as featureLabel exactly like the existing schedule labels; visible text renders through typed messageKeys."
-  },
-  "1339bb19873dbf4b6f8f055b2b2f78187fca1f24210e95fc381d605f8695dba0": {
-    "classification": "technical",
-    "reason": "Settings disclosure identifier or typed message argument, not human display prose.",
-    "evidence": "Settings section ids, disclosure feature ids, automation.enabled keys, summary select values and countCustomValues field names are identifiers; feature product names are passed as featureLabel exactly like the existing schedule labels; visible text renders through typed messageKeys."
-  },
-  "11b9dae750e38c580d7716366815eba9e71c9776a0b1a81a3e9bd840ee809156": {
     "classification": "technical",
     "reason": "Settings disclosure identifier or typed message argument, not human display prose.",
     "evidence": "Settings section ids, disclosure feature ids, automation.enabled keys, summary select values and countCustomValues field names are identifiers; feature product names are passed as featureLabel exactly like the existing schedule labels; visible text renders through typed messageKeys."

@@ -78,7 +78,7 @@ export const SettingsSection: React.FC<SettingsSectionProps> = ({ disclosure, se
           {expanded
             ? <LocalizedText messageKey="ui.settings.components.settingsSection.hide.ac20a57b" />
             : <LocalizedText messageKey="ui.settings.components.settingsSection.show.and.edit.f60aed35" />}
-          {expanded ? <ChevronDown className="h-4 w-4" aria-hidden="true" /> : <ChevronRight className="h-4 w-4" aria-hidden="true" />}
+          {expanded ? <ChevronDown className="h-4 w-4" aria-hidden="true" /> : <ChevronRight className="h-4 w-4 rtl:-scale-x-100" aria-hidden="true" />}
         </span>
       </button>
       <div id={bodyId} hidden={!expanded} className="border-t border-border-base px-4 py-4">

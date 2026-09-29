@@ -152,8 +152,6 @@ export const AutoHospitalSettingsModal: React.FC<AutoHospitalSettingsModalProps>
     >
       <AutomationRunStrip
         featureId="autoHospital"
-        scheduleId="autoHospital"
-        onOpenSchedule={() => onOpenFeatureSchedule('autoHospital', 'Auto Hospital')}
         onOpenDuration={onOpenAutomationDuration ? () => onOpenAutomationDuration(AUTOMATION_ENABLED_KEYS.autoHospital, 'Auto Hospital') : undefined}
       />
       <div className="mx-auto flex w-full max-w-4xl flex-col gap-5 overflow-visible pb-2">
