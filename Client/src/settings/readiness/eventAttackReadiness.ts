@@ -81,23 +81,21 @@ export function evaluateEventAttackReadiness(input: EventAttackReadinessInput): 
   }
 
   for (const { slot, ref } of draft.slots) {
-    const composition = compositionOf(ref, input.document);
-    if (ref.source === 'none') {
-      checks.push({ id: 'composition', slot, state: 'blocked', messageKey: message('ui.settings.readiness.eventAttackReadiness.no.attack.setup.is.chosen.pick.a.571c87b6'), fix: 'presets' });
-    } else if (!composition) {
-      checks.push({ id: 'composition', slot, state: 'blocked', messageKey: message('ui.settings.readiness.eventAttackReadiness.the.selected.attack.preset.does.not.exist.dec0caad'), fix: 'presets' });
-    } else {
-      const summary = summarizeAttackPreset(composition);
-      if (summary.troops <= 0) {
-        checks.push({ id: 'composition', slot, state: 'blocked', messageKey: message('ui.settings.readiness.eventAttackReadiness.this.attack.setup.has.no.troops.46b41b58'), fix: 'settings' });
-      } else {
-        checks.push({
-          id: 'composition', slot, state: 'valid', messageKey: message('eventAttackReadiness.composition'),
-          params: { waves: summary.waves, troops: summary.troops, tools: summary.tools },
-        });
-      }
-    }
-    if (composition) checks.push(inventoryCheck(slot, composition, castle, input));
+    checks.push(...attackSlotReadiness({
+      slot,
+      ref,
+      castle,
+      document: input.document,
+      troops: input.troops,
+      tools: input.tools,
+      metadataReady: input.metadataReady,
+      observation: input.observation,
+      // Berimond attacks launch from the camp: transfers move troops there and the armorer lane buys
+      // coin tools there, so source-castle stock alone cannot decide this before launch.
+      ...(input.featureId === 'autoBeriWorld'
+        ? { decidedAtLaunch: 'stock' as const, decidedAtLaunchMessage: message('ui.settings.readiness.eventAttackReadiness.berimond.camp.stock.is.checked.at.launch.e26aa185') }
+        : {}),
+    }));
   }
 
   if (input.difficulties) {
@@ -143,24 +141,9 @@ export function evaluateEventAttackReadiness(input: EventAttackReadinessInput): 
   }
   checks.push({ id: 'tool-compatibility', state: 'pending', messageKey: message('ui.settings.readiness.eventAttackReadiness.tool.compatibility.with.each.target.is.checked.95eb4eaa') });
 
-  if (draft.dailyAttackLimit !== undefined) {
-    const daily = state?.dailyAttacks;
-    const observed = Boolean(daily?.observedAt && !daily.observedAt.startsWith('0001-01-01'));
-    if (draft.dailyAttackLimit <= 0) {
-      checks.push({ id: 'daily-limit', state: 'valid', messageKey: message('ui.settings.readiness.eventAttackReadiness.no.daily.attack.limit.is.set.0863264a') });
-    } else if (!observed || !daily) {
-      checks.push({ id: 'daily-limit', state: 'unavailable', messageKey: message('ui.settings.readiness.eventAttackReadiness.the.server.daily.attack.count.has.not.e5f46250') });
-    } else if (daily.count >= draft.dailyAttackLimit) {
-      checks.push({ id: 'daily-limit', state: 'blocked', messageKey: message('eventAttackReadiness.dailyLimitReached'), params: { count: daily.count, limit: draft.dailyAttackLimit }, fix: 'settings' });
-    } else {
-      checks.push({ id: 'daily-limit', state: 'valid', messageKey: message('eventAttackReadiness.dailyLimit'), params: { count: daily.count, limit: draft.dailyAttackLimit } });
-    }
-  }
+  if (draft.dailyAttackLimit !== undefined) checks.push(dailyLimitCheck(draft.dailyAttackLimit, state));
 
-  if (draft.horseTravelBoostId !== undefined) {
-    const boost = draft.horseTravelBoostId === 1007 ? 'coins' : draft.horseTravelBoostId === 1008 || draft.horseTravelBoostId === 1009 ? 'rubies' : 'feather';
-    checks.push({ id: 'horse-travel-boost', state: 'valid', messageKey: message('eventAttackReadiness.travelBoost'), params: { boost } });
-  }
+  if (draft.horseTravelBoostId !== undefined) checks.push(travelBoostCheck(draft.horseTravelBoostId));
 
   if (draft.requireActiveGallantryBooster !== undefined) {
     if (!draft.requireActiveGallantryBooster) {
@@ -189,12 +172,75 @@ function compositionOf(ref: AttackSetupRef, document: AttackPresetDocument): Att
   return document.presets.find((preset) => preset.id === ref.presetId) ?? null;
 }
 
+export interface AttackSlotReadinessInput {
+  slot: string;
+  ref: AttackSetupRef;
+  /** Castle whose stationed stock supplies the attack (Storm: Storm castle plus enabled donors). */
+  castle: GameStateV2['castles'][string] | null;
+  document: AttackPresetDocument;
+  troops: Record<number, MetadataItem>;
+  tools: Record<number, MetadataItem>;
+  metadataReady: boolean;
+  observation: ObservationContext;
+  /** `stock`: the module refills stock before launch, so a shortage is decided at launch. */
+  decidedAtLaunch?: 'stock';
+  decidedAtLaunchMessage?: MessageKey;
+}
+
+/**
+ * Composition and stationed-stock checks for one attack slot (CIT-15 events,
+ * reused by Khan and Storm in CIT-16). Every module policy limits lanes to
+ * capacity before its inventory check, so a raw quantity above stock is pending.
+ */
+export function attackSlotReadiness(input: AttackSlotReadinessInput): ReadinessCheck[] {
+  const { slot, ref } = input;
+  const checks: ReadinessCheck[] = [];
+  const composition = compositionOf(ref, input.document);
+  if (ref.source === 'none') {
+    checks.push({ id: 'composition', slot, state: 'blocked', messageKey: message('ui.settings.readiness.eventAttackReadiness.no.attack.setup.is.chosen.pick.a.571c87b6'), fix: 'presets' });
+  } else if (!composition) {
+    checks.push({ id: 'composition', slot, state: 'blocked', messageKey: message('ui.settings.readiness.eventAttackReadiness.the.selected.attack.preset.does.not.exist.dec0caad'), fix: 'presets' });
+  } else {
+    const summary = summarizeAttackPreset(composition);
+    if (summary.troops <= 0) {
+      checks.push({ id: 'composition', slot, state: 'blocked', messageKey: message('ui.settings.readiness.eventAttackReadiness.this.attack.setup.has.no.troops.46b41b58'), fix: 'settings' });
+    } else {
+      checks.push({
+        id: 'composition', slot, state: 'valid', messageKey: message('eventAttackReadiness.composition'),
+        params: { waves: summary.waves, troops: summary.troops, tools: summary.tools },
+      });
+    }
+  }
+  if (composition) checks.push(inventoryCheck(slot, composition, input));
+  return checks;
+}
+
+export function dailyLimitCheck(dailyAttackLimit: number, state: GameStateV2 | null): ReadinessCheck {
+  const daily = state?.dailyAttacks;
+  const observed = Boolean(daily?.observedAt && !daily.observedAt.startsWith('0001-01-01'));
+  if (dailyAttackLimit <= 0) {
+    return { id: 'daily-limit', state: 'valid', messageKey: message('ui.settings.readiness.eventAttackReadiness.no.daily.attack.limit.is.set.0863264a') };
+  }
+  if (!observed || !daily) {
+    return { id: 'daily-limit', state: 'unavailable', messageKey: message('ui.settings.readiness.eventAttackReadiness.the.server.daily.attack.count.has.not.e5f46250') };
+  }
+  if (daily.count >= dailyAttackLimit) {
+    return { id: 'daily-limit', state: 'blocked', messageKey: message('eventAttackReadiness.dailyLimitReached'), params: { count: daily.count, limit: dailyAttackLimit }, fix: 'settings' };
+  }
+  return { id: 'daily-limit', state: 'valid', messageKey: message('eventAttackReadiness.dailyLimit'), params: { count: daily.count, limit: dailyAttackLimit } };
+}
+
+export function travelBoostCheck(horseTravelBoostId: number): ReadinessCheck {
+  const boost = horseTravelBoostId === 1007 ? 'coins' : horseTravelBoostId === 1008 || horseTravelBoostId === 1009 ? 'rubies' : 'feather';
+  return { id: 'horse-travel-boost', state: 'valid', messageKey: message('eventAttackReadiness.travelBoost'), params: { boost } };
+}
+
 function inventoryCheck(
   slot: string,
   composition: AttackSetupDraft,
-  castle: GameStateV2['castles'][string] | null,
-  input: EventAttackReadinessInput,
+  input: AttackSlotReadinessInput,
 ): ReadinessCheck {
+  const castle = input.castle;
   if (!castle) {
     return { id: 'inventory', slot, state: 'unavailable', messageKey: message('ui.settings.readiness.eventAttackReadiness.stationed.troops.are.unknown.until.the.source.335de03d') };
   }
@@ -207,13 +253,11 @@ function inventoryCheck(
     metadataReady: input.metadataReady,
     useTroopFamilies: composition.useTroopFamilies,
     slot,
-    // Berimond attacks launch from the camp: transfers move troops there and the armorer lane buys
-    // coin tools there, so source-castle stock alone cannot decide this before launch.
-    decidedAtLaunch: input.featureId === 'autoBeriWorld' ? 'stock' : undefined,
+    decidedAtLaunch: input.decidedAtLaunch,
     messages: {
       unobserved: message('ui.settings.readiness.eventAttackReadiness.stationed.troops.are.unknown.until.the.source.335de03d'),
       familiesLoading: message('ui.settings.readiness.eventAttackReadiness.troop.family.data.is.still.loading.74980d2f'),
-      decidedAtLaunch: message('ui.settings.readiness.eventAttackReadiness.berimond.camp.stock.is.checked.at.launch.e26aa185'),
+      ...(input.decidedAtLaunchMessage ? { decidedAtLaunch: input.decidedAtLaunchMessage } : {}),
     },
   });
   if (check.state !== 'valid' || freshness?.state !== 'observed') return check;

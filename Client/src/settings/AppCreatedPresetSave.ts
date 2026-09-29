@@ -30,6 +30,7 @@ import {
 } from '../defensePresets/AppCreatedDefensePresets';
 import {
   DEFENSE_PRESETS_SECTION,
+  normalizeDefensePresetSlots,
   parseDefensePresetDocument,
   type AppDefensePreset,
 } from '../defensePresets/DefensePresetTypes';
@@ -316,9 +317,36 @@ export async function saveInlineSetupAsUserPreset(
 }
 
 /** Returns a machine reason when the name cannot be used; the UI maps it to a message. */
-export function validateUserPresetName(name: string, presets: readonly AppAttackPreset[]): 'empty' | 'duplicate' | null {
+export function validateUserPresetName(name: string, presets: readonly { name: string }[]): 'empty' | 'duplicate' | null {
   const trimmed = name.trim();
   if (!trimmed) return 'empty';
   const lower = trimmed.toLowerCase();
   return presets.some((preset) => preset.name.trim().toLowerCase() === lower) ? 'duplicate' : null;
 }
+
+/**
+ * Explicit "Save as preset" for an inline defense (CIT-16): creates a normal user
+ * defense preset (fresh id, no marker). The app-created record stays until the
+ * module save's cleanup removes it, so no module reference ever dangles.
+ */
+export async function saveInlineDefenseAsUserPreset(
+  draftSession: Pick<AppCreatedPresetDraftSession, 'sections' | 'saveSection'>,
+  setup: InlineDefenseSetup,
+  name: string,
+  now: string = new Date().toISOString(),
+): Promise<string> {
+  const trimmed = name.trim();
+  const raw = draftSession.sections?.[DEFENSE_PRESETS_SECTION] ?? emptyPresetDocument();
+  const current = parseDefensePresetDocument(raw).presets;
+  const validation = validateUserPresetName(trimmed, current);
+  if (validation) throw new Error(validation);
+  const preset: AppDefensePreset = {
+    ...normalizeDefensePresetSlots({ name: trimmed, ...setup }),
+    id: globalThis.crypto.randomUUID(),
+    createdAt: now,
+    updatedAt: now,
+  };
+  await draftSession.saveSection(DEFENSE_PRESETS_SECTION, buildPresetDocumentUpdate(raw, current, [...current, preset]));
+  return preset.id;
+}
+

@@ -325,6 +325,7 @@ export const messages = {
   "eventAttackSetup.alsoUsedBy": "Also used by {referrers}. Changes here never edit this preset; use Customize to make a copy.",
   "eventAttackSetup.inventoryLabel": "Source castle · {castle}",
   "eventAttackSetup.duplicateName": "A preset named “{name}” already exists. Choose another name.",
+  "defenseSetup.summary": "{tools, number} tools · {types, plural, one {# tool type} other {# tool types}}",
   "eventAttackReadiness.composition": "{waves, plural, one {# wave} other {# waves}}, {troops, number} troops and {tools, number} tools.",
   "eventAttackReadiness.scoreTarget": "Stops at {score, number} event points.",
   "eventAttackReadiness.dailyLimitReached": "The daily attack limit is reached ({count, number} of {limit, number}). The automation waits for the server reset.",

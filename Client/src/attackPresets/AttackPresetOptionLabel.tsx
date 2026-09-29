@@ -2,7 +2,13 @@ import React from 'react';
 import { Badge } from '../components/ui/Badge';
 import type { SelectOption } from '../components/ui/Select';
 import { LocalizedText } from '../i18n/LocalizedText';
-import type { AppAttackPreset } from './AttackPresetTypes';
+
+/** Any preset record listed in a picker (attack or defense). */
+interface ListedPreset {
+  id: string;
+  name: string;
+  app?: unknown;
+}
 
 /** "Created by app" marker shown wherever an app-created preset is listed. */
 export function appCreatedPresetBadge(className = ''): React.ReactElement {
@@ -14,7 +20,7 @@ export function appCreatedPresetBadge(className = ''): React.ReactElement {
 }
 
 /** Select option label: the preset name, plus the badge for app-created presets. */
-export function presetOptionLabel(preset: AppAttackPreset, detail?: string): React.ReactNode {
+export function presetOptionLabel(preset: ListedPreset, detail?: string): React.ReactNode {
   const text = detail ? `${preset.name} · ${detail}` : preset.name;
   if (!preset.app) return text;
   return (
@@ -26,9 +32,9 @@ export function presetOptionLabel(preset: AppAttackPreset, detail?: string): Rea
 }
 
 /** Options for a preset picker. Search keeps matching the plain preset name. */
-export function attackPresetSelectOptions(
-  presets: readonly AppAttackPreset[],
-  describe?: (preset: AppAttackPreset) => string,
+export function attackPresetSelectOptions<T extends ListedPreset>(
+  presets: readonly T[],
+  describe?: (preset: T) => string,
 ): SelectOption[] {
   return presets.map((preset) => {
     const detail = describe?.(preset);
