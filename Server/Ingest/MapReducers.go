@@ -419,11 +419,18 @@ func populateStormObservation(observation *State.MapObservation, row []json.RawM
 	if observation == nil || !isStormMapType(observation.TypeID) {
 		return
 	}
-	if len(row) > 3 {
-		observation.ObjectID = rowInt(row, 3)
-	}
+	// Official layouts (Game.bundle / ggs.dll parseAreaInfo):
+	// ResourceIsleMapobjectVO (24): [24, X, Y, objectId, occupierPId, kingdomID,
+	//   areaName, secondsSinceEspionage, isleID, remainingOccupierSec].
+	// DungeonIsleMapobjectVO (25): [25, X, Y, kingdomID, secondsSinceEspionage,
+	//   isleID, attackCooldownSec, victoryCount, isVisibleOnMap (e[8] <= 0)].
+	// Forts carry no object ID; row[3] is the kingdom shared by every fort.
+	observation.ObjectID = 0
 	switch observation.TypeID {
 	case stormIslandMapTypeID:
+		if len(row) > 3 {
+			observation.ObjectID = rowInt(row, 3)
+		}
 		if len(row) < 10 {
 			return
 		}

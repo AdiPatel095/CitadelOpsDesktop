@@ -109,3 +109,24 @@ func TestRejectedTargetsAndPackageDispatchPersist(t *testing.T) {
 		t.Fatal("rejected-target registry leaked into the client projection")
 	}
 }
+
+// CIT-23: rejections are keyed by kingdom/type/X/Y, never by the (now zero)
+// Storm fort ObjectID.
+func TestStormFortRejectionIgnoresMapObjectID(t *testing.T) {
+	now := time.Date(2026, 9, 29, 12, 0, 0, 0, time.UTC)
+	for _, objectID := range []int64{0, 4} {
+		state := NewGameState()
+		state.Map[4] = map[string]MapObservation{
+			"50:60": {KingdomID: 4, X: 50, Y: 60, TypeID: MapTypeStormFort, ObjectID: objectID, ObservedAt: now},
+		}
+		rejection, _ := RecordAttackTargetRejection(&state, AttackTargetRejection{
+			KingdomID: 4, TargetTypeID: MapTypeStormFort, X: 50, Y: 60, Opcode: "cra", Code: 95, ObservedAt: now,
+		})
+		if rejection.Key() != "4:25:50:60" {
+			t.Fatalf("rejection key = %q", rejection.Key())
+		}
+		if _, found := AttackTargetRejectedAt(state, 4, MapTypeStormFort, 50, 60, now.Add(time.Minute)); !found {
+			t.Fatalf("fort rejection not found with map ObjectID %d", objectID)
+		}
+	}
+}
