@@ -363,3 +363,30 @@ test('Khan: reusing another slot\'s app-created defense promotes it with its raw
   assert.equal(record.app, undefined);
   assert.equal(record['x-extra'], 1);
 });
+
+test('Khan: Save as preset for a defense creates a user preset with a fresh id and no marker', async () => {
+  const own = rawDefense('own-d', 'Auto Khan – Main castle defense (auto)', { app: { section: KHAN, slot: 'defense' } });
+  const session = fakeDraftSession({ [DEFENSE]: { version: 1, presets: [own, rawDefense('mine', 'Mine')] }, [KHAN]: { defensePresetId: 'own-d' } }, [], KHAN);
+  const newId = await save.saveInlineDefenseAsUserPreset(session, defenseSetup(11), '  Wall plan  ', '2026-09-29T00:00:00.000Z');
+  assert.deepEqual(session.writes.map((write) => write.section), [DEFENSE]);
+  const defense = defenseTypes.parseDefensePresetDocument(session.state.sections[DEFENSE]).presets;
+  assert.deepEqual(defense.map((preset) => preset.id), ['own-d', 'mine', newId]);
+  assert.notEqual(newId, 'own-d');
+  assert.doesNotMatch(newId, /^app:/);
+  const user = defense.find((preset) => preset.id === newId);
+  assert.equal(user.name, 'Wall plan');
+  assert.equal(Object.hasOwn(user, 'app'), false);
+  assert.equal(user.wall.left.toolSlots[0].amount, 11);
+  assert.equal(user.createdAt, '2026-09-29T00:00:00.000Z');
+  assert.equal(session.state.sections[KHAN].defensePresetId, 'own-d', 'no dangling reference while the module is unsaved');
+
+  await assert.rejects(save.saveInlineDefenseAsUserPreset(session, defenseSetup(1), 'wall PLAN'), /duplicate/);
+  await assert.rejects(save.saveInlineDefenseAsUserPreset(session, defenseSetup(1), '   '), /empty/);
+  assert.equal(session.writes.length, 1, 'rejected names write nothing');
+});
+
+test('Khan: a failed defense Save as preset writes nothing and surfaces the error', async () => {
+  const session = fakeDraftSession({ [DEFENSE]: { version: 1, presets: [] } }, ['fail'], KHAN);
+  await assert.rejects(save.saveInlineDefenseAsUserPreset(session, defenseSetup(1), 'Name'), /write failed: defense\.presets/);
+  assert.deepEqual(session.state.sections[DEFENSE], { version: 1, presets: [] });
+});

@@ -6,6 +6,7 @@ import type { MessageKey } from '../../i18n/messages';
 import type { AutoStormClientStateV1 } from '../AutoStormClientState';
 import type { CommanderEligibilityReport } from '../requirements/commanderEligibility';
 import type { ObservationContext } from '../requirements/observationFreshness';
+import { castlesUnobserved } from '../requirements/setupReadiness';
 import { evaluateUnitStock } from '../requirements/unitRequirements';
 import { attackSlotReadiness, dailyLimitCheck, travelBoostCheck } from './eventAttackReadiness';
 import { aggregateReadiness, type ReadinessCheck, type ReadinessPlanLine, type ReadinessReport } from './Readiness';
@@ -69,12 +70,15 @@ export function evaluateStormReadiness(input: StormReadinessInput): ReadinessRep
   const plan: ReadinessPlanLine[] = [];
   const unlock = state?.kingdomTransport?.unlocks?.['4'];
 
-  if (!state) {
+  // Waiting for castle or unlock data is not a configuration error (CIT-18 zero-castles lesson).
+  if (castlesUnobserved(state)) {
     checks.push({ id: 'unlock', state: 'unavailable', messageKey: message('ui.settings.requirements.castleRequirements.castle.data.has.not.been.observed.yet.76ce81b7'), fix: 'connection' });
   } else if (unlock?.unlocked || unlock?.created || input.stormCastle) {
     checks.push(input.stormCastle
       ? { id: 'storm-castle', state: 'valid', messageKey: message('stormReadiness.stormCastle'), params: { castle: input.stormCastle.name?.trim() || `#${input.stormCastle.id}` } }
       : { id: 'storm-castle', state: 'unavailable', messageKey: message('ui.settings.readiness.stormReadiness.the.storm.castle.is.unlocked.but.has.f6946840'), fix: 'connection' });
+  } else if (Object.keys(state?.kingdomTransport?.unlocks ?? {}).length === 0) {
+    checks.push({ id: 'unlock', state: 'unavailable', messageKey: message('ui.settings.requirements.setupReadiness.kingdom.transport.unlocks.have.not.been.observed.f12193f1'), fix: 'connection' });
   } else if (draft.unlock.enabled) {
     checks.push({ id: 'unlock', state: 'pending', messageKey: message('ui.settings.readiness.stormReadiness.the.storm.castle.is.not.unlocked.yet.58e0fdef') });
   } else {
@@ -82,7 +86,8 @@ export function evaluateStormReadiness(input: StormReadinessInput): ReadinessRep
   }
 
   if (!draft.forts.enabled && !draft.islands.enabled) {
-    checks.push({ id: 'branches', state: 'blocked', messageKey: message('ui.settings.readiness.stormReadiness.enable.storm.forts.resource.islands.or.both.14f81932'), fix: 'settings' });
+    // Build, unlock and shop lanes run without combat: informational, never a prerequisite.
+    plan.push({ id: 'branches', messageKey: message('ui.settings.readiness.stormReadiness.no.attack.branch.is.enabled.only.the.95ad9529') });
   }
 
   const donorIds = draft.troopImport.enabled ? draft.troopImport.donorCastleIds : [];

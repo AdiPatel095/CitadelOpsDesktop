@@ -43,7 +43,8 @@ test('forts only, islands only and both: disabled branches impose nothing', () =
   const both = evaluate({ draft: { forts: { enabled: true }, islands: { enabled: true } } });
   assert.ok(ids(both).includes('composition:forts') && ids(both).includes('composition:islands'));
   const neither = evaluate();
-  assert.equal(neither.checks.find((check) => check.id === 'branches').state, 'blocked');
+  assert.equal(neither.checks.some((check) => check.id === 'branches'), false, 'no attack branch is a plan line, never a check');
+  assert.ok(neither.plan.some((line) => line.id === 'branches'));
   for (const report of [fortsOnly, islandsOnly, both, neither]) {
     for (const check of report.checks) assert.ok(messages[check.messageKey], check.messageKey);
     for (const line of report.plan) assert.ok(messages[line.messageKey], line.messageKey);
@@ -78,12 +79,37 @@ test('the decoration preset is optional and informational; purchases are disclos
 });
 
 test('unlock states and island defense units', () => {
-  const locked = evaluate({ draft: { forts: { enabled: true } }, unlocks: {}, castles: { 1: castle(1, 0, {}) } });
+  const lockedUnlocks = { 4: { kingdomId: 4, unlocked: false, created: false } };
+  const locked = evaluate({ draft: { forts: { enabled: true } }, unlocks: lockedUnlocks, castles: { 1: castle(1, 0, {}) } });
   assert.equal(locked.checks[0].state, 'blocked');
-  const planned = evaluate({ draft: { forts: { enabled: true }, unlock: { enabled: true, prebuiltCastleId: 7 } }, unlocks: {}, castles: { 1: castle(1, 0, {}) } });
+  const planned = evaluate({ draft: { forts: { enabled: true }, unlock: { enabled: true, prebuiltCastleId: 7 } }, unlocks: lockedUnlocks, castles: { 1: castle(1, 0, {}) } });
   assert.equal(planned.checks[0].state, 'pending');
   const guards = evaluate({ draft: { islands: { enabled: true, defenseUnits: [{ unitId: 2, amount: 50 }] } } });
   assert.equal(guards.checks.find((check) => check.id === 'islands-defense-units').state, 'blocked', 'none stationed');
   const bad = evaluate({ draft: { islands: { enabled: true, defenseUnits: [{ unitId: 0, amount: 5 }] } } });
   assert.equal(bad.checks.find((check) => check.id === 'islands-defense-units').fix, 'settings');
+});
+
+test('a build, unlock or shop-only setup is not blocked by the absence of attack branches', () => {
+  const buildOnly = evaluate({
+    draft: { build: { ...stormState.defaultAutoStormClientState().build, allowPremium: true } },
+    buildActive: true,
+  });
+  assert.notEqual(buildOnly.overall, 'blocked');
+  assert.equal(buildOnly.checks.some((check) => check.state === 'blocked'), false);
+  assert.ok(buildOnly.plan.some((line) => line.id === 'branches'));
+  assert.ok(buildOnly.plan.some((line) => line.id === 'build-premium'));
+});
+
+test('unobserved castles or unlocks read as waiting for data, not as a configuration error', () => {
+  const noCastles = evaluate({ draft: { forts: { enabled: true } }, castles: {}, unlocks: {} });
+  assert.deepEqual([noCastles.checks[0].id, noCastles.checks[0].state, noCastles.checks[0].fix], ['unlock', 'unavailable', 'connection']);
+  const noUnlocks = evaluate({ draft: { forts: { enabled: true } }, unlocks: {}, castles: { 1: castle(1, 0, {}) } });
+  assert.deepEqual([noUnlocks.checks[0].id, noUnlocks.checks[0].state, noUnlocks.checks[0].fix], ['unlock', 'unavailable', 'connection']);
+  assert.equal(noUnlocks.checks.some((check) => check.state === 'blocked'), false);
+  const observedCastle = evaluate({ draft: { forts: { enabled: true } }, unlocks: {} });
+  assert.deepEqual([observedCastle.checks[0].id, observedCastle.checks[0].state], ['storm-castle', 'valid'], 'an observed Storm castle proves the unlock');
+  for (const report of [noCastles, noUnlocks]) {
+    for (const check of report.checks) assert.ok(messages[check.messageKey], check.messageKey);
+  }
 });

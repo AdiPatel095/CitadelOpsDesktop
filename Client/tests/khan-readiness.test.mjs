@@ -82,6 +82,8 @@ test('missing defense, missing main castle and a skip dependency block', () => {
   assert.deepEqual([byId(noSkips, 'skip-cooldowns').state, byId(noSkips, 'skip-cooldowns').fix], ['blocked', 'settings']);
   assert.equal(noSkips.overall, 'blocked');
   assert.equal(byId(evaluate({ state: null }), 'main-castle').state, 'unavailable');
+  const noCastles = byId(evaluate({ state: { castles: {}, commanders: {}, market: {} } }), 'main-castle');
+  assert.deepEqual([noCastles.state, noCastles.fix], ['unavailable', 'connection'], 'zero observed castles is waiting for data');
 });
 
 test('a shared custom defense preset is accepted as a saved preset', () => {

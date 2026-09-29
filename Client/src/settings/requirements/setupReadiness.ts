@@ -30,7 +30,7 @@ interface MetadataInput {
 }
 
 /** True when castle data is missing or has no castles yet: nothing can be validated against it (waiting for data). */
-function castlesUnobserved(state: GameStateV2 | null): boolean {
+export function castlesUnobserved(state: GameStateV2 | null): boolean {
   return state == null || Object.keys(state.castles ?? {}).length === 0;
 }
 

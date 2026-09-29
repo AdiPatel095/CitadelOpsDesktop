@@ -4414,16 +4414,6 @@
     "reason": "Readiness check ids, states, slots, fix codes, plan line ids, unlock kingdom key and id fallbacks.",
     "evidence": "ReadinessCheck/ReadinessPlanLine id/state/slot/fix values are identifiers; text is the typed messageKey rendered by ReadinessPanel."
   },
-  "075d6b774ef4f6b2e03de46d6c7affa7cfb59784c79a63a79d42f4ddfa56af57": {
-    "classification": "technical",
-    "reason": "Readiness check ids, states, slots, fix codes, plan line ids, unlock kingdom key and id fallbacks.",
-    "evidence": "ReadinessCheck/ReadinessPlanLine id/state/slot/fix values are identifiers; text is the typed messageKey rendered by ReadinessPanel."
-  },
-  "32fd6bba7d764abe75cd612de4b9a39386472b775caf27754d772e9c0d9a31e8": {
-    "classification": "technical",
-    "reason": "Readiness check ids, states, slots, fix codes, plan line ids, unlock kingdom key and id fallbacks.",
-    "evidence": "ReadinessCheck/ReadinessPlanLine id/state/slot/fix values are identifiers; text is the typed messageKey rendered by ReadinessPanel."
-  },
   "6b62b186a7dd2ebbacf903ff610fef04986d4d76d989bebaaa3bced0767fc0c2": {
     "classification": "technical",
     "reason": "Readiness check ids, states, slots, fix codes, plan line ids, unlock kingdom key and id fallbacks.",
@@ -4508,5 +4498,20 @@
     "classification": "technical",
     "reason": "Readiness ids/states/fix codes, feature ids, resource JSON keys, stock modes and castle roles.",
     "evidence": "F and C1 are official resource JSON keys; roles feed the setupReadiness.foodRole select; readiness text is the typed messageKey."
+  },
+  "4591f0377915a0c16264f14343f9e599d96f0b35f88c522528498ab579e5137b": {
+    "classification": "technical",
+    "reason": "Readiness check ids, states, slots, fix codes, plan line ids, unlock kingdom key and id fallbacks.",
+    "evidence": "ReadinessCheck/ReadinessPlanLine id/state/slot/fix values are identifiers; text is the typed messageKey rendered by ReadinessPanel."
+  },
+  "039212e30e7c2af31c7759aa102b36476451da728a048f357547d8cc7f42ffb9": {
+    "classification": "technical",
+    "reason": "Readiness check ids, states, slots, fix codes, plan line ids, unlock kingdom key and id fallbacks.",
+    "evidence": "ReadinessCheck/ReadinessPlanLine id/state/slot/fix values are identifiers; text is the typed messageKey rendered by ReadinessPanel."
+  },
+  "8eb70a2feabee6a5b3db1614deac1338dfe5c5f2d5fd2bee414e1c881891ef64": {
+    "classification": "technical",
+    "reason": "Readiness check ids, states, slots, fix codes, plan line ids, unlock kingdom key and id fallbacks.",
+    "evidence": "ReadinessCheck/ReadinessPlanLine id/state/slot/fix values are identifiers; text is the typed messageKey rendered by ReadinessPanel."
   }
 }

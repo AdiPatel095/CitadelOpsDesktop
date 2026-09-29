@@ -9,7 +9,7 @@ import type { AutoKhanClientStateV1 } from '../AutoKhanClientState';
 import type { CommanderEligibilityReport } from '../requirements/commanderEligibility';
 import { evaluateCastleReference } from '../requirements/castleRequirements';
 import type { ObservationContext } from '../requirements/observationFreshness';
-import { greatEmpireMainCastle } from '../requirements/setupReadiness';
+import { castlesUnobserved, greatEmpireMainCastle } from '../requirements/setupReadiness';
 import { attackSlotReadiness, dailyLimitCheck, travelBoostCheck } from './eventAttackReadiness';
 import { aggregateReadiness, type ReadinessCheck, type ReadinessPlanLine, type ReadinessReport } from './Readiness';
 
@@ -54,7 +54,8 @@ export function evaluateKhanReadiness(input: KhanReadinessInput): ReadinessRepor
   const sourceIsMain = mainCastle != null && draft.sourceCastleId === mainCastle.id;
 
   checks.push(evaluateCastleReference({ castleId: draft.sourceCastleId, state, purpose: 'source-great-empire' }));
-  if (!state) {
+  if (castlesUnobserved(state)) {
+    // No castle observed yet (first sync, offline server): waiting for data, not a configuration error.
     checks.push({ id: 'main-castle', state: 'unavailable', messageKey: message('ui.settings.requirements.castleRequirements.castle.data.has.not.been.observed.yet.76ce81b7'), fix: 'connection' });
   } else if (!mainCastle) {
     checks.push({ id: 'main-castle', state: 'blocked', messageKey: message('ui.settings.readiness.khanReadiness.the.great.empire.main.castle.is.not.94e41079') });
