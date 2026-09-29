@@ -1,7 +1,7 @@
 import { useLocale as useStaticLocale } from "../../i18n/LocaleContext";
 import { LocalizedText } from "../../i18n/LocalizedText";
 import React, { useEffect, useMemo, useState } from 'react';
-import { BookOpen, Castle, Clock3, Crosshair, ShieldCheck, ShieldPlus, Target } from 'lucide-react';
+import { BookOpen, Clock3, Crosshair, ShieldCheck, ShieldPlus, Target } from 'lucide-react';
 import { useCitadelAPI } from '../../api/ApiContext';
 import { castleOptionsFromState } from '../../api/Selectors';
 import {
@@ -31,6 +31,11 @@ import type { ReadinessCheck } from '../readiness/Readiness';
 import { EventAttackSetupField } from './EventAttackSetupField';
 import { ReadinessPanel } from './ReadinessPanel';
 import { useAuth } from '../../context/AuthContext';
+import { CastleRequirementField } from './CastleRequirementField';
+import { CommanderAssignmentPanel } from './CommanderAssignmentPanel';
+import { COMMANDER_FEATURE_SECTION } from '../../Movement/types/CommanderFeatureAssignments';
+import { savedCommanderAssignments } from '../requirements/commanderAssignmentDraft';
+import { useSetupContext } from '../requirements/useSetupContext';
 import {
   AUTO_INVASION_SECTION,
   clampAutoInvasionInteger,
@@ -52,11 +57,14 @@ interface AutoInvasionSettingsModalProps {
 export const AutoInvasionSettingsModal: React.FC<AutoInvasionSettingsModalProps> = ({ isOpen, onClose }) => {
   const { t: localizeStatic } = useStaticLocale();
   const { state } = useCitadelAPI();
+  const setup = useSetupContext(AUTO_INVASION_SECTION);
+  const [commandersOpen, setCommandersOpen] = useState(false);
   const { troops, tools, unitsLoading, unitsError } = useMetadata();
   const draftSession = useConfigurationDraftSession({
     isOpen,
     section: AUTO_INVASION_SECTION,
-    configurationDependencies: [ATTACK_PRESETS_SECTION],
+    configurationDependencies: [ATTACK_PRESETS_SECTION, COMMANDER_FEATURE_SECTION],
+    sessionKey: setup.sessionKey,
   });
   const [draft, setDraft] = useState<AutoInvasionClientStateV1>(defaultAutoInvasionClientState);
   const [attackRef, setAttackRef] = useState<AttackSetupRef>({ source: 'none' });
@@ -72,6 +80,7 @@ export const AutoInvasionSettingsModal: React.FC<AutoInvasionSettingsModalProps>
     [draftSession.sections],
   );
   const presetReferences = useMemo(() => attackPresetReferences(draftSession.sections), [draftSession.sections]);
+  const commanderAssignments = useMemo(() => savedCommanderAssignments(draftSession.sections), [draftSession.sections]);
   const metadataReady = !unitsLoading && !unitsError;
   const { gameLoggedIn } = useAuth();
   const hostedPresence = undefined;
@@ -160,6 +169,7 @@ export const AutoInvasionSettingsModal: React.FC<AutoInvasionSettingsModalProps>
     tools,
     metadataReady,
     observation,
+    commanders: { assignments: commanderAssignments, movement: setup.movement, gameLoggedIn: setup.gameLoggedIn },
     difficulties: {
       selections: [
         { eventId: 71, available: foreignLordsSelectionAvailable },
@@ -170,11 +180,17 @@ export const AutoInvasionSettingsModal: React.FC<AutoInvasionSettingsModalProps>
     },
   }), [
     observation,
+    commanderAssignments, setup.gameLoggedIn, setup.movement,
     achievementsObserved, attackRef, bloodcrowSelectionAvailable, difficultyCatalog.loading, draft.dailyAttackLimit,
     draft.fortifyCurrency, draft.horseTravelBoostId, draft.scoreTarget, draft.sourceCastleId, foreignLordsSelectionAvailable,
     metadataReady, presetDocument, state, tools, troops,
   ]);
   const fixReadiness = (check: ReadinessCheck) => {
+    if (check.id === 'commanders' || check.id === 'commander-assignment') {
+      setCommandersOpen(true);
+      window.requestAnimationFrame(() => focusReadinessTarget('auto-invasion-commanders-heading'));
+      return;
+    }
     const target = check.slot ? 'auto-invasion-attack' : {
       'source-castle': 'auto-invasion-source',
       difficulty: 'auto-invasion-difficulty',
@@ -227,16 +243,18 @@ export const AutoInvasionSettingsModal: React.FC<AutoInvasionSettingsModalProps>
       <div className="space-y-3">
         <Card variant="solid" className="p-4">
           <div className="grid gap-4 md:grid-cols-2">
-            <label id="auto-invasion-source" className="block md:col-span-2">
-              <span className="mb-1.5 flex items-center gap-2 text-[10px] font-black uppercase tracking-wider text-text-muted"><Castle className="h-3.5 w-3.5" /> <LocalizedText messageKey="ui.settings.components.autoInvasionSettingsModal.source.castle.86d5a48e" /></span>
-              <Select
-                value={draft.sourceCastleId > 0 ? String(draft.sourceCastleId) : ''}
-                onChange={(value) => setDraft((current) => ({ ...current, sourceCastleId: Number(value) || 0 }))}
+            <div className="md:col-span-2">
+              <CastleRequirementField
+                id="auto-invasion-source"
+                label={<LocalizedText messageKey="ui.settings.components.autoInvasionSettingsModal.source.castle.86d5a48e" />}
+                value={draft.sourceCastleId}
+                onChange={(sourceCastleId) => setDraft((current) => ({ ...current, sourceCastleId }))}
+                state={setup.state}
+                purpose="source-great-empire"
                 options={castles.map((castle) => ({ value: String(castle.id), label: `${castle.name} · ${castle.x}:${castle.y}` }))}
                 placeholder={localizeStatic("ui.settings.components.autoInvasionSettingsModal.placeholder.choose.a.great.empire.castle.8a81fec1")}
-                menuGrowToViewport
               />
-            </label>
+            </div>
 
             <div className="md:col-span-2">
               <EventAttackSetupField
@@ -385,6 +403,18 @@ export const AutoInvasionSettingsModal: React.FC<AutoInvasionSettingsModalProps>
 			<LocalizedText messageKey="ui.settings.components.autoInvasionSettingsModal.troop.quantities.adapt.to.the.freshly.resolved.67bcfcf5" /></p>
 
         <ReadinessPanel report={readiness} slotLabelKeys={{ attack: 'attackPresets.slot.attack' }} onFix={fixReadiness} />
+
+        <CommanderAssignmentPanel
+          id="auto-invasion-commanders"
+          featureId="autoInvasion"
+          draftSession={draftSession}
+          state={setup.state}
+          movement={setup.movement}
+          gameLoggedIn={setup.gameLoggedIn}
+          expanded={commandersOpen}
+          onExpandedChange={setCommandersOpen}
+          disabled={saving}
+        />
       </div>
     </SettingsModal>
     <FeatureGuideModal feature="autoInvasion" isOpen={isOpen && isGuideOpen} onClose={() => setIsGuideOpen(false)} />

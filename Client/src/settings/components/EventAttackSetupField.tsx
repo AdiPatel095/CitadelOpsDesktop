@@ -36,6 +36,8 @@ import type { ReadinessCheck } from '../readiness/Readiness';
 import type { EventAttackRecommendation } from '../onboarding/EventAttackRecommendation';
 import { validateUserPresetName } from '../AppCreatedPresetSave';
 import { ReadinessCheckLine } from './ReadinessPanel';
+import { evaluateUnitStock, requestsFromComposition } from '../requirements/unitRequirements';
+import { UnitStockList } from './UnitStockList';
 
 const AttackSetupModal = React.lazy(() => import('../../components/AttackSetupModal'));
 
@@ -97,7 +99,7 @@ export const EventAttackSetupField: React.FC<EventAttackSetupFieldProps> = ({
   disabled = false,
 }) => {
   const { t: localizeStatic, locale } = useLocale();
-  const { troops, tools, getTroop } = useMetadata();
+  const { troops, tools, getTroop, unitsLoading, unitsError } = useMetadata();
   const fieldId = useId();
   const [mode, setMode] = useState<FieldMode | null>(() => modeFor(value));
   const [editing, setEditing] = useState(false);
@@ -164,6 +166,22 @@ export const EventAttackSetupField: React.FC<EventAttackSetupFieldProps> = ({
   const owner = selectedPreset ? appCreatedPresetOwner(selectedPreset) : null;
   const ownerDefinition = owner ? attackPresetSlotDefinition(owner.section, owner.slot) : undefined;
   const inlineSetup = value.source === 'inline' ? value.setup : null;
+  const stock = useMemo(() => {
+    const composition = inlineSetup ?? (value.source === 'preset' && !value.missing
+      ? document.presets.find((preset) => preset.id === value.presetId)
+      : undefined);
+    if (!composition || !sourceCastle) return null;
+    return evaluateUnitStock({
+      castle: sourceCastle,
+      requests: requestsFromComposition({ name: '', ...composition }),
+      troops,
+      tools,
+      metadataReady: !unitsLoading && !unitsError,
+      useTroopFamilies: composition.useTroopFamilies,
+      // Berimond: transfers and the armorer lane refill the camp before launch.
+      decidedAtLaunch: section === 'automation.autoBeriWorld' ? 'stock' : 'quantity',
+    });
+  }, [document.presets, inlineSetup, section, sourceCastle, tools, troops, unitsError, unitsLoading, value]);
   const inlineTroops = inlineSetup ? inlineSetupTroopCount(inlineSetup) : 0;
   const generatedName = summary.name || localizeStatic('attackPresets.appCreatedName', { module: moduleLabel, slot: slotLabel });
   const targetType = inlineSetup?.targetType ?? 'pve';
@@ -385,6 +403,14 @@ export const EventAttackSetupField: React.FC<EventAttackSetupFieldProps> = ({
         </div>
       ) : null}
 
+      {stock && stock.lines.length > 0 ? (
+        <div className="border-t border-border-base pt-2">
+          <UnitStockList
+            lines={stock.lines}
+            note={<LocalizedText messageKey="ui.settings.components.eventAttackSetupField.stationed.stock.in.the.source.castle.the.ff087c1c" />}
+          />
+        </div>
+      ) : null}
       {readinessChecks.length > 0 ? (
         <ul className="space-y-1.5 border-t border-border-base pt-2">
           {readinessChecks.map((check, index) => <ReadinessCheckLine key={`${check.id}:${index}`} check={check} />)}

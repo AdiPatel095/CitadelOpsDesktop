@@ -1,7 +1,7 @@
 import { useLocale as useStaticLocale } from "../../i18n/LocaleContext";
 import { LocalizedText } from "../../i18n/LocalizedText";
 import React, { useEffect, useMemo, useState } from 'react';
-import { BookOpen, Castle, Clock3, Crosshair, Lock, RotateCcw, ShieldCheck, Target, TestTube2 } from 'lucide-react';
+import { BookOpen, Clock3, Crosshair, Lock, RotateCcw, ShieldCheck, Target, TestTube2 } from 'lucide-react';
 import { useCitadelAPI } from '../../api/ApiContext';
 import { castleOptionsFromState } from '../../api/Selectors';
 import {
@@ -31,6 +31,11 @@ import type { ReadinessCheck } from '../readiness/Readiness';
 import { EventAttackSetupField } from './EventAttackSetupField';
 import { ReadinessPanel } from './ReadinessPanel';
 import { useAuth } from '../../context/AuthContext';
+import { CastleRequirementField } from './CastleRequirementField';
+import { CommanderAssignmentPanel } from './CommanderAssignmentPanel';
+import { COMMANDER_FEATURE_SECTION } from '../../Movement/types/CommanderFeatureAssignments';
+import { savedCommanderAssignments } from '../requirements/commanderAssignmentDraft';
+import { useSetupContext } from '../requirements/useSetupContext';
 import {
   AUTO_NOMAD_SECTION,
   clampAutoNomadInteger,
@@ -52,11 +57,14 @@ interface AutoNomadSettingsModalProps {
 export const AutoNomadSettingsModal: React.FC<AutoNomadSettingsModalProps> = ({ isOpen, onClose }) => {
   const { t: localizeStatic } = useStaticLocale();
   const { state } = useCitadelAPI();
+  const setup = useSetupContext(AUTO_NOMAD_SECTION);
+  const [commandersOpen, setCommandersOpen] = useState(false);
   const { troops, tools, unitsLoading, unitsError } = useMetadata();
   const draftSession = useConfigurationDraftSession({
     isOpen,
     section: AUTO_NOMAD_SECTION,
-    configurationDependencies: [ATTACK_PRESETS_SECTION],
+    configurationDependencies: [ATTACK_PRESETS_SECTION, COMMANDER_FEATURE_SECTION],
+    sessionKey: setup.sessionKey,
   });
   const [draft, setDraft] = useState<AutoNomadClientStateV5>(defaultAutoNomadClientState);
   const [nomadRef, setNomadRef] = useState<AttackSetupRef>({ source: 'none' });
@@ -73,6 +81,7 @@ export const AutoNomadSettingsModal: React.FC<AutoNomadSettingsModalProps> = ({ 
     [draftSession.sections],
   );
   const presetReferences = useMemo(() => attackPresetReferences(draftSession.sections), [draftSession.sections]);
+  const commanderAssignments = useMemo(() => savedCommanderAssignments(draftSession.sections), [draftSession.sections]);
   const metadataReady = !unitsLoading && !unitsError;
   const { gameLoggedIn } = useAuth();
   const hostedPresence = undefined;
@@ -141,6 +150,7 @@ export const AutoNomadSettingsModal: React.FC<AutoNomadSettingsModalProps> = ({ 
     tools,
     metadataReady,
     observation,
+    commanders: { assignments: commanderAssignments, movement: setup.movement, gameLoggedIn: setup.gameLoggedIn },
     difficulties: draft.rbcTest.enabled ? undefined : {
       selections: [
         { eventId: 72, available: nomadSelectionAvailable },
@@ -151,12 +161,18 @@ export const AutoNomadSettingsModal: React.FC<AutoNomadSettingsModalProps> = ({ 
     },
   }), [
     observation,
+    commanderAssignments, setup.gameLoggedIn, setup.movement,
     achievementsObserved, difficultyCatalog.loading, draft.dailyAttackLimit, draft.horseTravelBoostId, draft.rbcTest.enabled,
     draft.scoreTarget, draft.sourceCastleId, metadataReady, nomadRef, nomadSelectionAvailable, presetDocument, samuraiRef,
     samuraiSelectionAvailable, state, tools, troops,
   ]);
   const slotChecks = (slot: string) => readiness.checks.filter((check) => check.slot === slot);
   const fixReadiness = (check: ReadinessCheck) => {
+    if (check.id === 'commanders' || check.id === 'commander-assignment') {
+      setCommandersOpen(true);
+      window.requestAnimationFrame(() => focusReadinessTarget('auto-nomad-commanders-heading'));
+      return;
+    }
     const target = check.slot ? `auto-nomad-${check.slot}` : {
       'source-castle': 'auto-nomad-source',
       difficulty: 'auto-nomad-difficulty',
@@ -224,16 +240,18 @@ export const AutoNomadSettingsModal: React.FC<AutoNomadSettingsModalProps> = ({ 
       <div className="space-y-3">
         <Card variant="solid" className="p-4">
           <div className="grid gap-4 md:grid-cols-2">
-            <label id="auto-nomad-source" className="block md:col-span-2">
-              <span className="mb-1.5 flex items-center gap-2 text-[10px] font-black uppercase tracking-wider text-text-muted"><Castle className="h-3.5 w-3.5" /> <LocalizedText messageKey="ui.settings.components.autoNomadSettingsModal.source.castle.86d5a48e" /></span>
-              <Select
-                value={draft.sourceCastleId > 0 ? String(draft.sourceCastleId) : ''}
-                onChange={(value) => setDraft((current) => ({ ...current, sourceCastleId: Number(value) || 0 }))}
+            <div className="md:col-span-2">
+              <CastleRequirementField
+                id="auto-nomad-source"
+                label={<LocalizedText messageKey="ui.settings.components.autoNomadSettingsModal.source.castle.86d5a48e" />}
+                value={draft.sourceCastleId}
+                onChange={(sourceCastleId) => setDraft((current) => ({ ...current, sourceCastleId }))}
+                state={setup.state}
+                purpose="source-great-empire"
                 options={castles.map((castle) => ({ value: String(castle.id), label: `${castle.name} · ${castle.x}:${castle.y}` }))}
                 placeholder={localizeStatic("ui.settings.components.autoNomadSettingsModal.placeholder.choose.a.great.empire.castle.8a81fec1")}
-                menuGrowToViewport
               />
-            </label>
+            </div>
 
             <EventAttackSetupField
               id="auto-nomad-nomad"
@@ -471,6 +489,17 @@ export const AutoNomadSettingsModal: React.FC<AutoNomadSettingsModalProps> = ({ 
           report={readiness}
           slotLabelKeys={{ nomad: 'attackPresets.slot.nomad', samurai: 'attackPresets.slot.samurai' }}
           onFix={fixReadiness}
+        />
+        <CommanderAssignmentPanel
+          id="auto-nomad-commanders"
+          featureId="autoNomad"
+          draftSession={draftSession}
+          state={setup.state}
+          movement={setup.movement}
+          gameLoggedIn={setup.gameLoggedIn}
+          expanded={commandersOpen}
+          onExpandedChange={setCommandersOpen}
+          disabled={saving}
         />
       </div>
     </SettingsModal>

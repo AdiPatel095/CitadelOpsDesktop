@@ -1,6 +1,6 @@
 import { useLocale as useStaticLocale } from "../../i18n/LocaleContext";
 import { LocalizedText } from "../../i18n/LocalizedText";
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { BookOpen, Plus, Shield } from 'lucide-react';
 import { useGuideLocale } from '../../config/useGuideLocale';
 import { FeatureGuideModal } from './FeatureGuideModal';
@@ -17,11 +17,17 @@ import {
 } from '../../components/ui';
 import {
   parseAutoStationClientState,
-  persistAutoStationClientState,
   type AutoStationClientStateV1,
 } from '../AutoStationClientState';
 import { useCitadelAPI } from '../../api/ApiContext';
 import { castleOptionsFromState, type CastleOptionV2 } from '../../api/Selectors';
+import { useConfigurationDraftSession } from '../ConfigurationDraftSession';
+import { useMetadata } from '../../context/MetadataContext';
+import { evaluateReserveReadiness } from '../requirements/setupReadiness';
+import { useSetupContext } from '../requirements/useSetupContext';
+import { focusReadinessTarget } from '../readiness/focusReadinessTarget';
+import { ReadinessCheckLine, ReadinessPanel } from './ReadinessPanel';
+import { UnitStockList } from './UnitStockList';
 
 interface AutoStationSettingsModalProps {
   isOpen: boolean;
@@ -43,7 +49,10 @@ export const AutoStationSettingsModal: React.FC<AutoStationSettingsModalProps> =
   const [isGuideOpen, setIsGuideOpen] = useState(false);
   useEffect(() => { if (!isOpen) setIsGuideOpen(false); }, [isOpen]);
   const { t: localizeStatic } = useStaticLocale();
-  const { state: gameState, configuration } = useCitadelAPI();
+  const { state: gameState } = useCitadelAPI();
+  const setup = useSetupContext('automation.autoStation');
+  const draftSession = useConfigurationDraftSession({ isOpen, section: 'automation.autoStation', sessionKey: setup.sessionKey });
+  const { troops, tools, unitsLoading, unitsError } = useMetadata();
   const castles = castleOptionsFromState(gameState);
   const [state, setState] = useState<AutoStationClientStateV1>(() => parseAutoStationClientState(null));
   const [isSaving, setIsSaving] = useState(false);
@@ -54,10 +63,20 @@ export const AutoStationSettingsModal: React.FC<AutoStationSettingsModalProps> =
       setSaveError(null);
       return;
     }
+    if (!draftSession.initialSnapshot) return;
     setState(parseAutoStationClientState(
-      configuration?.sections['automation.autoStation'],
+      draftSession.initialSections?.['automation.autoStation'],
     ));
-  }, [configuration?.sections, isOpen]);
+  }, [draftSession.initialSections, draftSession.openKey, draftSession.initialSnapshot, isOpen]);
+
+  const readiness = useMemo(() => evaluateReserveReadiness({
+    featureId: 'autoStation',
+    state: gameState,
+    reserves: state.settings,
+    troops,
+    tools,
+    metadataReady: !unitsLoading && !unitsError,
+  }), [gameState, state.settings, tools, troops, unitsError, unitsLoading]);
 
   const selectReserve = async (castle: CastleOptionV2) => {
     const castleID = String(castle.id);
@@ -99,7 +118,7 @@ export const AutoStationSettingsModal: React.FC<AutoStationSettingsModalProps> =
     setIsSaving(true);
     setSaveError(null);
     try {
-      await persistAutoStationClientState(state);
+      await draftSession.save(parseAutoStationClientState(state));
       onClose();
     } catch (error) {
       setSaveError(error instanceof Error ? error.message : 'Could not save Auto Station settings.');
@@ -125,6 +144,9 @@ export const AutoStationSettingsModal: React.FC<AutoStationSettingsModalProps> =
       onSave={save}
       saveLabel="Save changes"
       isSaving={isSaving}
+      saveDisabled={!draftSession.ready}
+      contentDisabled={!draftSession.ready}
+      contentNotice={draftSession.conflictNotice}
     >
       {saveError && (
         <div className="mb-4 rounded-global border border-error/30 bg-error/10 px-4 py-3 text-sm font-semibold text-error" role="alert">
@@ -180,7 +202,9 @@ export const AutoStationSettingsModal: React.FC<AutoStationSettingsModalProps> =
           </p>
         </Card>
 
-        <div className="custom-scrollbar min-h-0 flex-1 overflow-y-auto pr-1">
+        <ReadinessPanel report={readiness.report} onFix={() => focusReadinessTarget('auto-station-castles')} />
+
+        <div id="auto-station-castles" tabIndex={-1} className="custom-scrollbar min-h-0 flex-1 overflow-y-auto pr-1 outline-none">
           {castles.length === 0 && (
             <p className="py-8 text-center text-sm text-text-muted"><LocalizedText messageKey="ui.settings.components.autoStationSettingsModal.loading.castles.37f1e3a3" /></p>
           )}
@@ -188,6 +212,7 @@ export const AutoStationSettingsModal: React.FC<AutoStationSettingsModalProps> =
             {castles.map((castle) => {
               const castleID = String(castle.id);
               const reserves = state.settings[castleID] ?? [];
+              const stock = readiness.stockByCastle[castleID];
               return (
                 <Card key={castle.id} variant="solid" className="flex flex-col bg-bg-card-hover/40 p-4 shadow-inner">
                   <div className="mb-3 border-b border-border-base pb-2">
@@ -220,6 +245,12 @@ export const AutoStationSettingsModal: React.FC<AutoStationSettingsModalProps> =
                       />
                     </div>
                   )}
+                  {stock ? (
+                    <div className="mt-3 space-y-1.5 border-t border-border-base pt-2">
+                      <UnitStockList lines={stock.lines} mode="reserve" />
+                      <ul><ReadinessCheckLine check={stock.check} /></ul>
+                    </div>
+                  ) : null}
                 </Card>
               );
             })}
