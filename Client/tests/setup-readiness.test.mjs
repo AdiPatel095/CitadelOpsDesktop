@@ -126,10 +126,11 @@ test('Food Balance: observed food, donors by the saved reserve, coins and transp
   assert.ok(result.rows.every((row) => row.current));
 });
 
+// [label, observation, troop wording (Station/Bird), neutral account wording (Food Balance)]
 const NOT_CURRENT = [
-  ['disconnected', { session: SESSION, connected: false }, 'ui.components.staleSessionBanner.disconnected.last.known.data.166a8c99'],
-  ['checkpoint', { session: SESSION, connected: true, hostedPresence: { mode: 'checkpoint', checkpointObservedAt: '2026-09-29T08:00:00Z' } }, 'ui.settings.requirements.observationFreshness.this.is.a.saved.checkpoint.troop.counts.48b43424'],
-  ['awaiting baseline', { session: { ...SESSION, baselineGeneration: 24 }, connected: true }, 'ui.settings.requirements.observationFreshness.waiting.for.the.game.connection.to.finish.c661a838'],
+  ['disconnected', { session: SESSION, connected: false }, 'ui.components.staleSessionBanner.disconnected.last.known.data.166a8c99', 'ui.components.staleSessionBanner.disconnected.last.known.data.166a8c99'],
+  ['checkpoint', { session: SESSION, connected: true, hostedPresence: { mode: 'checkpoint', checkpointObservedAt: '2026-09-29T08:00:00Z' } }, 'ui.settings.requirements.observationFreshness.this.is.a.saved.checkpoint.troop.counts.48b43424', 'ui.settings.requirements.setupReadiness.this.is.a.saved.checkpoint.account.data.3513aa23'],
+  ['awaiting baseline', { session: { ...SESSION, baselineGeneration: 24 }, connected: true }, 'ui.settings.requirements.observationFreshness.waiting.for.the.game.connection.to.finish.c661a838', 'ui.settings.requirements.setupReadiness.waiting.for.the.game.connection.to.finish.c6e90c18'],
 ];
 
 test('Food Balance and Station/Bird: last-known data while the connection is not current (CIT-18 QA)', () => {
@@ -139,15 +140,16 @@ test('Food Balance and Station/Bird: last-known data while the connection is not
     kingdomTransport: { unlocks: { 1: { kingdomId: 1, unlocked: true, created: true } } },
     castles: { 1: castle(1, 0, 1, { 1: 20 }, { resources: { 5: { amount: 5000 } } }) },
   };
-  for (const [label, observation, messageKey] of NOT_CURRENT) {
+  for (const [label, observation, messageKey, accountMessageKey] of NOT_CURRENT) {
     const food = setup.evaluateFoodBalanceReadiness({ state, resources, metadataReady: true, minimumSourceReserve: 1000, minimumCoinReserve: 100, autoKingdomTransport: true, observation });
     assert.equal(food.report.overall, 'unavailable', label);
     assert.deepEqual(food.report.checks.map((check) => [check.id, check.state, check.messageKey, check.fix]), [
-      ['food-observations', 'unavailable', messageKey, 'connection'],
-      ['donors', 'unavailable', messageKey, 'connection'],
-      ['coin-reserve', 'unavailable', messageKey, 'connection'],
-      ['kingdom-transport', 'unavailable', messageKey, 'connection'],
+      ['food-observations', 'unavailable', accountMessageKey, 'connection'],
+      ['donors', 'unavailable', accountMessageKey, 'connection'],
+      ['coin-reserve', 'unavailable', accountMessageKey, 'connection'],
+      ['kingdom-transport', 'unavailable', accountMessageKey, 'connection'],
     ], label);
+    assert.doesNotMatch(messages[accountMessageKey], /troop/i, `${label}: food lines never mention troop counts`);
     assert.equal(food.coins, null, `${label}: no coin claim`);
     assert.ok(food.rows.every((row) => !row.current), `${label}: rows are last known`);
     const reserves = setup.evaluateReserveReadiness({ featureId: 'autoBird', state, reserves: { 1: [{ id: 1, amount: 10 }] }, ...metadata, observation });

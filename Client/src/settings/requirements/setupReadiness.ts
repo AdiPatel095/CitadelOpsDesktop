@@ -36,10 +36,20 @@ function castlesUnobserved(state: GameStateV2 | null): boolean {
 
 const CASTLES_NOT_OBSERVED = message('ui.settings.requirements.setupReadiness.castle.data.has.not.been.observed.yet.76ce81b7');
 
-/** Session-level freshness (checkpoint, disconnected, awaiting baseline) for lines that describe current stock. */
-function sessionUnavailable(observation: ObservationContext): MessageKey | null {
+/**
+ * Session-level freshness (checkpoint, disconnected, awaiting baseline) for lines that describe current
+ * stock. `troops` keeps the troop wording; `account` is neutral for food, coins and unlocks.
+ */
+function sessionUnavailable(observation: ObservationContext, subject: 'troops' | 'account' = 'troops'): MessageKey | null {
   const freshness = unitObservationFreshness({ castle: null, ...observation });
-  return freshness.state === 'unavailable' ? observationUnavailableMessage(freshness.reason) : null;
+  if (freshness.state !== 'unavailable') return null;
+  if (subject === 'account' && freshness.reason === 'checkpoint') {
+    return message('ui.settings.requirements.setupReadiness.this.is.a.saved.checkpoint.account.data.3513aa23');
+  }
+  if (subject === 'account' && freshness.reason === 'awaiting-baseline') {
+    return message('ui.settings.requirements.setupReadiness.waiting.for.the.game.connection.to.finish.c6e90c18');
+  }
+  return observationUnavailableMessage(freshness.reason);
 }
 
 // ——— Auto Towers ———
@@ -292,7 +302,7 @@ export function evaluateFoodBalanceReadiness(input: FoodBalanceReadinessInput): 
   const checks: ReadinessCheck[] = [];
   const foodId = input.metadataReady ? resourceIdForJsonKey(input.resources, 'F') : null;
   const coinId = input.metadataReady ? resourceIdForJsonKey(input.resources, 'C1') : null;
-  const notCurrent = sessionUnavailable(input.observation);
+  const notCurrent = sessionUnavailable(input.observation, 'account');
   const rows: FoodCastleRow[] = Object.values(input.state?.castles ?? {})
     .map((castle) => {
       const balance = foodId != null ? castle.resources?.[String(foodId)] : undefined;

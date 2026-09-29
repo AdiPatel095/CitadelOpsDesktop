@@ -3248,5 +3248,20 @@
     "classification": "technical",
     "reason": "Readiness ids/states/fix codes, feature ids, resource JSON keys, stock modes and castle roles.",
     "evidence": "F and C1 are official resource JSON keys; roles feed the setupReadiness.foodRole select; readiness text is the typed messageKey."
+  },
+  "06dcc126b3fa6d96b8a6b4735ebda6c94805a2799df7e6159f000115e6bdc376": {
+    "classification": "technical",
+    "reason": "Readiness ids/states/fix codes, feature ids, resource JSON keys, stock modes and castle roles.",
+    "evidence": "F and C1 are official resource JSON keys; roles feed the setupReadiness.foodRole select; readiness text is the typed messageKey."
+  },
+  "11df7f5c34b9f3ec27e4d993b46a728d186b1ea8af485b83e0982a7f510f3d48": {
+    "classification": "technical",
+    "reason": "Readiness ids/states/fix codes, feature ids, resource JSON keys, stock modes and castle roles.",
+    "evidence": "F and C1 are official resource JSON keys; roles feed the setupReadiness.foodRole select; readiness text is the typed messageKey."
+  },
+  "888870102c184dff904476362a39dfd10abd49046872e3e79cac238c5d265fee": {
+    "classification": "technical",
+    "reason": "CSS attribute selector used to detect inert (non-interactive) ancestors before moving focus.",
+    "evidence": "focusable() calls target.closest(\"[inert]\"); the string is never rendered."
   }
 }

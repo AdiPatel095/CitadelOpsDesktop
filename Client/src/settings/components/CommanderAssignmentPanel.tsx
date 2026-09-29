@@ -26,6 +26,7 @@ import {
   evaluateCommanderEligibility,
 } from '../requirements/commanderEligibility';
 import { ReadinessCheckLine } from './ReadinessPanel';
+import { browserFrames, moveFocusAfterDialog } from './dialogFocus';
 
 export interface CommanderAssignmentPanelProps {
   id: string;
@@ -77,23 +78,22 @@ export const CommanderAssignmentPanel: React.FC<CommanderAssignmentPanelProps> =
   const [confirming, setConfirming] = useState(false);
   const reviewTrigger = useRef<HTMLButtonElement>(null);
   const cancelButton = useRef<HTMLButtonElement>(null);
-  const wasConfirming = useRef(false);
+  // Set synchronously when the dialog opens, so the first close already knows where focus returns.
+  const returnTarget = useRef<HTMLElement | null>(null);
   // The confirm dialog opens inside the settings modal: move focus into it after the dialog's own
-  // open-frame (double rAF, as the CIT-15 Save-as dialog), and back to the trigger when it closes.
+  // open frame, and back to the trigger after it closes (retrying while the content is briefly inert).
   useEffect(() => {
-    let inner = 0;
-    const outer = window.requestAnimationFrame(() => {
-      inner = window.requestAnimationFrame(() => {
-        if (confirming) cancelButton.current?.focus();
-        else if (wasConfirming.current && reviewTrigger.current?.isConnected) reviewTrigger.current.focus();
-        wasConfirming.current = confirming;
-      });
-    });
-    return () => {
-      window.cancelAnimationFrame(outer);
-      window.cancelAnimationFrame(inner);
-    };
+    if (confirming) return moveFocusAfterDialog(() => cancelButton.current, browserFrames);
+    const target = returnTarget.current;
+    if (!target) return undefined;
+    returnTarget.current = null;
+    return moveFocusAfterDialog(() => (target.isConnected ? target : reviewTrigger.current), browserFrames);
   }, [confirming]);
+  const openConfirm = (trigger: HTMLElement | null) => {
+    returnTarget.current = trigger ?? reviewTrigger.current;
+    setSaveError('');
+    setConfirming(true);
+  };
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState('');
   // Activity (for example "posted" after arrival) depends on the clock; re-evaluate periodically.
@@ -207,7 +207,7 @@ export const CommanderAssignmentPanel: React.FC<CommanderAssignmentPanelProps> =
             <Button variant="ghost" size="sm" disabled={!pending || saving} onClick={() => { setPending(null); setSaveError(''); }}>
               <LocalizedText messageKey="ui.settings.components.commanderAssignmentPanel.discard.assignment.changes.c07d4258" />
             </Button>
-            <Button size="sm" ref={reviewTrigger} disabled={disabled || !dirty || saving} leftIcon={<Save className="h-4 w-4" />} onClick={() => { setSaveError(''); setConfirming(true); }}>
+            <Button size="sm" ref={reviewTrigger} disabled={disabled || !dirty || saving} leftIcon={<Save className="h-4 w-4" />} onClick={(event) => openConfirm(event.currentTarget)}>
               <LocalizedText messageKey="ui.settings.components.commanderAssignmentPanel.review.and.save.assignments.18f33af7" />
             </Button>
           </div>

@@ -1687,5 +1687,7 @@ export const sourceMessages = {
   "ui.settings.requirements.commanderEligibility.commander.assignments.are.checked.once.commanders.are.497afa18": "Commander assignments are checked once commanders are observed.",
   "ui.settings.requirements.setupReadiness.the.fastest.eligible.commander.is.chosen.when.87205aff": "The fastest eligible commander is chosen when the attack launches; speed is not ranked here.",
   "ui.settings.components.autoFoodBalanceSettingsModal.donors.hold.food.above.the.donor.reserve.e605cba8": "Donors hold food above the donor reserve; shipments also keep the source castle's safety window.",
-  "ui.settings.components.autoFoodBalanceSettingsModal.last.known.food.stock.it.updates.once.49b8947f": "Last known food stock; it updates once the game connection is current."
+  "ui.settings.components.autoFoodBalanceSettingsModal.last.known.food.stock.it.updates.once.49b8947f": "Last known food stock; it updates once the game connection is current.",
+  "ui.settings.requirements.setupReadiness.this.is.a.saved.checkpoint.account.data.3513aa23": "This is a saved checkpoint. Account data is used once the game connection is live again.",
+  "ui.settings.requirements.setupReadiness.waiting.for.the.game.connection.to.finish.c6e90c18": "Waiting for the game connection to finish its first sync before account data is used."
 } as const;
