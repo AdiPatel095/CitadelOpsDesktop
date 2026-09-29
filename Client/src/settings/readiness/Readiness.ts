@@ -23,10 +23,22 @@ export interface ReadinessCheck {
   slot?: string;
 }
 
+/**
+ * An informational line of the resolved plan (CIT-16): limits, reapplication,
+ * protection, skips, reserves, purchase policy. Never affects `overall`.
+ */
+export interface ReadinessPlanLine {
+  id: string;
+  messageKey: MessageKey;
+  params?: MessageParameters;
+}
+
 export interface ReadinessReport {
   featureId: string;
   checks: ReadinessCheck[];
   overall: CheckState;
+  /** What the automation will do with these settings; shown before the checks. */
+  plan?: ReadinessPlanLine[];
 }
 
 const severity: Record<CheckState, number> = { valid: 0, pending: 1, unavailable: 2, blocked: 3 };
