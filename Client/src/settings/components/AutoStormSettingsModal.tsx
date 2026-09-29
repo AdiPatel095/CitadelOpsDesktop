@@ -1060,7 +1060,7 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
         <Card id="auto-storm-shop" tabIndex={-1} variant="solid" className="p-4 outline-none">
           <SectionHeading
             icon={Package}
-            title={localizeStatic("ui.settings.components.autoStormSettingsModal.title.aquamarine.spending.9cd6c95d")}
+            title={localizeStatic("ui.settings.disclosure.placement.aquamarine.and.ruby.spending.1861ad41")}
             description={localizeStatic("ui.settings.components.autoStormSettingsModal.description.buy.prioritized.luna.packages.while.the.protected.babf384f")}
           />
           <div className="mt-4 grid gap-3 md:grid-cols-2">

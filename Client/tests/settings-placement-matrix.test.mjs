@@ -124,3 +124,13 @@ test('the matrix records Maya\'s review evidence and no row is left pending', as
     assert.match(cells[cells.length - 2], /^accepted( \(adjusted\))?$/, `${cells[1]}/${cells[2]}`);
   }
 });
+
+test('the Storm shop group heading renders the placement title (Aquamarine and Ruby spending)', async () => {
+  const shop = SETTINGS_PLACEMENT.autoStorm.find((section) => section.id === 'shop');
+  const { messages } = await vite.ssrLoadModule('/src/i18n/messages.ts');
+  assert.equal(messages[shop.titleKey], 'Aquamarine and Ruby spending');
+  const source = await readFile(new URL('settings/components/AutoStormSettingsModal.tsx', SOURCE_ROOT), 'utf8');
+  const shopBlock = source.slice(source.indexOf('section="shop"'), source.indexOf('section="limits"'));
+  assert.ok(shopBlock.includes(`title={localizeStatic("${shop.titleKey}")}`), 'the shop heading uses the placement title key');
+  assert.ok(!source.includes('title.aquamarine.spending'), 'the older heading key is gone');
+});
