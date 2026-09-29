@@ -38,6 +38,8 @@ export interface EventAttackStarterRecipe {
 
 /** Maya's CIT-15 product acceptance record for the accepted entries. */
 const EVIDENCE_CIT15_ACCEPTANCE = 'Maya product acceptance 2026-09-29, Desktop 723d12d / Hosted 2178a0e, Product/Simpler automation setup.md § CIT-15 product acceptance';
+/** Maya's adjusted laneFill rule, accepted after Sophie's preview QA. */
+const EVIDENCE_LANE_FILL_ACCEPTANCE = 'Maya product acceptance 2026-09-29 (adjusted rule) + Sophie preview QA PASS @ 7eb7571/4f29345, QA/Results/CIT-15 inline event attack setup.md § Starter-recipe follow-up';
 
 export const EVENT_ATTACK_STARTER_RECIPE: EventAttackStarterRecipe = {
   waveCount: {
@@ -50,8 +52,8 @@ export const EVENT_ATTACK_STARTER_RECIPE: EventAttackStarterRecipe = {
   laneFill: {
     value: 'most-numerous-stationed-troop-types-center-first',
     source: 'account-data',
-    rationale: 'Rank the source castle stationed attack troop types (tools and defensive units excluded by unitCombatRole) by quantity (descending, then unit id ascending). The first type takes the center front first slot, the second the left flank first slot, the third the right flank first slot; the following types fill the remaining slots in the order center front, left flank, right flank. Each slot holds that type\'s full stationed count. The runtime fills each lane first-fit up to its capacity, so a lane\'s first type is sent first. No stationed attack troops means no setup and a requirement instead. Adjusted by Maya (CIT-15 product acceptance); stays pending until Sophie re-checks the preview.',
-    review: { owner: 'Maya', status: 'pending' },
+    rationale: 'Rank the source castle stationed attack troop types (tools and defensive units excluded by unitCombatRole) by quantity (descending, then unit id ascending). The first type takes the center front first slot, the second the left flank first slot, the third the right flank first slot; the following types fill the remaining slots in the order center front, left flank, right flank. Each slot holds that type\'s full stationed count. The runtime fills each lane first-fit up to its capacity, so a lane\'s first type is sent first. No stationed attack troops means no setup and a requirement instead. Adjusted by Maya (CIT-15 product acceptance) and accepted after Sophie\'s preview QA.',
+    review: { owner: 'Maya', status: 'accepted', evidence: EVIDENCE_LANE_FILL_ACCEPTANCE },
   },
   tools: {
     value: 'none',

@@ -57,5 +57,5 @@ test('player-facing freshness text keeps "runtime" out (Maya, CIT-15 product acc
   for (const reason of ['disconnected', 'checkpoint', 'awaiting-baseline', 'stale-before-connection']) {
     assert.doesNotMatch(messages[freshness.observationUnavailableMessage(reason)], /runtime/i, reason);
   }
-  assert.match(messages[freshness.observationUnavailableMessage('checkpoint')], /when the game connection is live again/);
+  assert.equal(messages[freshness.observationUnavailableMessage('checkpoint')], 'This is a saved checkpoint. Troop counts are used once the game connection is live again.');
 });

@@ -264,3 +264,11 @@ test('inventory is unavailable, with the reason, whenever unit counts are not cu
   }).checks.find((entry) => entry.id === 'inventory');
   assert.equal(stale.state, 'unavailable', 'a real timestamp before the connection changed is stale');
 });
+
+test('player-facing readiness text keeps "runtime" out (Daniel review of the CIT-15 recipe PR)', () => {
+  const readinessKeys = Object.keys(messages).filter((key) => key.startsWith('ui.settings.readiness.eventAttackReadiness.') || key.startsWith('eventAttackReadiness.'));
+  assert.ok(readinessKeys.length > 10);
+  for (const key of readinessKeys) assert.doesNotMatch(messages[key], /runtime/i, key);
+  assert.equal(messages['ui.settings.readiness.eventAttackReadiness.tool.compatibility.with.each.target.is.checked.95eb4eaa'], 'Tool compatibility with each target is checked when the attack launches.');
+  assert.equal(messages['ui.settings.readiness.eventAttackReadiness.achievements.are.still.syncing.unlocked.difficulties.are.183b4a1f'], 'Achievements are still syncing. Unlocked difficulties are confirmed when the attack launches.');
+});

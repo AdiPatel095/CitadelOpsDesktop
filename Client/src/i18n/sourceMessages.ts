@@ -1530,14 +1530,12 @@ export const sourceMessages = {
   "ui.settings.readiness.eventAttackReadiness.this.attack.setup.has.no.troops.46b41b58": "This attack setup has no troops.",
   "ui.settings.readiness.eventAttackReadiness.official.event.difficulties.are.still.loading.c5abdc91": "Official event difficulties are still loading.",
   "ui.settings.readiness.eventAttackReadiness.choose.an.unlocked.difficulty.for.every.event.005d1686": "Choose an unlocked difficulty for every event.",
-  "ui.settings.readiness.eventAttackReadiness.achievements.are.still.syncing.the.runtime.confirms.0954fe53": "Achievements are still syncing. The runtime confirms which difficulties are unlocked.",
   "ui.settings.readiness.eventAttackReadiness.every.event.has.an.unlocked.difficulty.5d1cac20": "Every event has an unlocked difficulty.",
   "ui.settings.readiness.eventAttackReadiness.set.the.event.score.at.which.to.d0584bb8": "Set the event score at which to stop.",
   "ui.settings.readiness.eventAttackReadiness.commanders.have.not.been.observed.yet.44c4e9ab": "Commanders have not been observed yet.",
   "ui.settings.readiness.eventAttackReadiness.at.least.one.commander.is.available.now.229f8af6": "At least one commander is available now.",
   "ui.settings.readiness.eventAttackReadiness.no.commander.is.available.right.now.the.8b8f881e": "No commander is available right now. The automation waits for one to return.",
   "ui.settings.readiness.eventAttackReadiness.commanders.assigned.to.this.automation.under.commanders.462970de": "Commanders assigned to this automation under Commanders are checked at launch.",
-  "ui.settings.readiness.eventAttackReadiness.tool.compatibility.with.each.target.is.verified.197b0a1d": "Tool compatibility with each target is verified by the runtime at Start.",
   "ui.settings.readiness.eventAttackReadiness.no.daily.attack.limit.is.set.0863264a": "No daily attack limit is set.",
   "ui.settings.readiness.eventAttackReadiness.the.server.daily.attack.count.has.not.e5f46250": "The server daily attack count has not been observed yet.",
   "ui.settings.readiness.eventAttackReadiness.a.gallantry.booster.is.not.required.da539628": "A Gallantry booster is not required.",
@@ -1598,6 +1596,8 @@ export const sourceMessages = {
   "ui.settings.requirements.observationFreshness.waiting.for.the.game.connection.to.finish.c661a838": "Waiting for the game connection to finish its first sync before troop counts are used.",
   "ui.settings.requirements.observationFreshness.troop.counts.are.older.than.the.current.a894b573": "Troop counts are older than the current game connection.",
   "ui.settings.onboarding.eventAttackRecommendation.each.lane.s.first.troop.type.is.51372e83": "Each lane's first troop type is sent up to that lane's capacity when the attack launches; further types in a lane are sent only if room is left.",
-  "ui.settings.requirements.observationFreshness.this.is.a.saved.checkpoint.troop.counts.59c30579": "This is a saved checkpoint. Troop counts are used again when the game connection is live again.",
-  "ui.settings.readiness.eventAttackReadiness.the.source.castle.has.the.troops.and.57e05dcd": "The source castle has the troops and tools this setup names. Counts are from this connection; the game does not report when each castle was last checked."
+  "ui.settings.readiness.eventAttackReadiness.the.source.castle.has.the.troops.and.57e05dcd": "The source castle has the troops and tools this setup names. Counts are from this connection; the game does not report when each castle was last checked.",
+  "ui.settings.requirements.observationFreshness.this.is.a.saved.checkpoint.troop.counts.48b43424": "This is a saved checkpoint. Troop counts are used once the game connection is live again.",
+  "ui.settings.readiness.eventAttackReadiness.achievements.are.still.syncing.unlocked.difficulties.are.183b4a1f": "Achievements are still syncing. Unlocked difficulties are confirmed when the attack launches.",
+  "ui.settings.readiness.eventAttackReadiness.tool.compatibility.with.each.target.is.checked.95eb4eaa": "Tool compatibility with each target is checked when the attack launches."
 } as const;

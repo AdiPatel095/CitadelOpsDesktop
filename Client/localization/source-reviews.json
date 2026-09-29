@@ -1144,11 +1144,6 @@
     "reason": "Reviewer-facing starter recipe metadata (sources, rules, owners, rationale and citations) that is never rendered.",
     "evidence": "EVENT_ATTACK_STARTER_RECIPE is consumed by recommendEventAttackSetup and tests/starter-recipes.test.mjs; the UI shows only a typed pending-review badge."
   },
-  "c077f38a89736a233c2f0c28376b1a720ec8f931d4572a4c6b215aa0e56e0f87": {
-    "classification": "technical",
-    "reason": "Reviewer-facing starter recipe metadata (sources, rules, owners, rationale and citations) that is never rendered.",
-    "evidence": "EVENT_ATTACK_STARTER_RECIPE is consumed by recommendEventAttackSetup and tests/starter-recipes.test.mjs; the UI shows only a typed pending-review badge."
-  },
   "f3171b5e82127563b6028a2067e900dcc2e3a761bbc2bba8697bf0dd8a4e897a": {
     "classification": "technical",
     "reason": "Reviewer-facing starter recipe metadata (sources, rules, owners, rationale and citations) that is never rendered.",
@@ -1854,11 +1849,6 @@
     "reason": "Reviewer-facing starter recipe metadata (sources, rules, owners, rationale and citations) that is never rendered.",
     "evidence": "EVENT_ATTACK_STARTER_RECIPE is consumed by recommendEventAttackSetup and tests/starter-recipes.test.mjs; the UI shows only a typed pending-review badge."
   },
-  "3f4148350c17477c21f6bdad73baaf96a598c1d3ae1ecabcc1e70a00b4b99c67": {
-    "classification": "technical",
-    "reason": "Reviewer-facing starter recipe metadata (sources, rules, owners, rationale and citations) that is never rendered.",
-    "evidence": "EVENT_ATTACK_STARTER_RECIPE is consumed by recommendEventAttackSetup and tests/starter-recipes.test.mjs; the UI shows only a typed pending-review badge."
-  },
   "9e2678dd8ea5a045720232877c331a2579b4b8c0ee24678d3f9e57a1f5b2678e": {
     "classification": "technical",
     "reason": "Reviewer-facing starter recipe metadata (sources, rules, owners, rationale and citations) that is never rendered.",
@@ -1908,5 +1898,20 @@
     "classification": "technical",
     "reason": "Requirement ids, lane keys and readiness fix codes.",
     "evidence": "Requirement.id/fix and L/M/R lane keys are identifiers; requirement text is the typed messageKey rendered with LocalizedText; CENTER_FIRST_SLOT_ORDER lists lane keys with slot indexes."
+  },
+  "89c8d587eb7b56a7cf49bd4d6427ade7e576682c469f864894c9b016604ffa37": {
+    "classification": "technical",
+    "reason": "Reviewer-facing starter recipe metadata (sources, rules, owners, rationale and citations) that is never rendered.",
+    "evidence": "EVENT_ATTACK_STARTER_RECIPE is consumed by recommendEventAttackSetup and tests/starter-recipes.test.mjs; the UI shows only a typed pending-review badge."
+  },
+  "a4830d280a9137e23d78fe4573252845280f2415e781e09cccc71cc3064c8354": {
+    "classification": "technical",
+    "reason": "Reviewer-facing starter recipe metadata (sources, rules, owners, rationale and citations) that is never rendered.",
+    "evidence": "EVENT_ATTACK_STARTER_RECIPE is consumed by recommendEventAttackSetup and tests/starter-recipes.test.mjs; the UI shows only a typed pending-review badge."
+  },
+  "aa3fa4060fb2e36d16175f344904332aea01844b143d26104b60716729d34524": {
+    "classification": "technical",
+    "reason": "Reviewer-facing starter recipe metadata (sources, rules, owners, rationale and citations) that is never rendered.",
+    "evidence": "EVENT_ATTACK_STARTER_RECIPE is consumed by recommendEventAttackSetup and tests/starter-recipes.test.mjs; the UI shows only a typed pending-review badge."
   }
 }

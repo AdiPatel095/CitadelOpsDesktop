@@ -149,11 +149,19 @@ test('defensive units are never proposed, using the troop picker role rule', () 
   assert.equal(recommend({ sourceCastle: castle({ 20: 500 }) }).requirements[0].id, 'no-stationed-troops');
 });
 
-test('pending starter reviews are reported with the recommendation', () => {
+test('with every starter value accepted, no pending-review note is added', () => {
   const result = recommend({ sourceCastle: castle({ 1: 1 }) });
-  assert.deepEqual(result.pendingReviews, recipes.pendingStarterReviews());
-  assert.deepEqual(result.pendingReviews, ['laneFill']);
-  assert.ok(result.notes.length >= 3);
+  assert.deepEqual(result.pendingReviews, []);
+  assert.equal(result.notes.length, 2);
   for (const key of result.notes) assert.ok(sourceMessages[key], key);
+  assert.ok(!result.notes.includes('ui.settings.onboarding.eventAttackRecommendation.these.starter.values.are.pending.product.review.215357af'));
   assert.deepEqual(result.resolvedFor, { sourceCastleId: 7, eventId: 72 });
+});
+
+test('a pending starter value is still reported with its note', () => {
+  const recipe = structuredClone(recipes.EVENT_ATTACK_STARTER_RECIPE);
+  recipe.laneFill.review = { owner: 'Maya', status: 'pending' };
+  const result = recommend({ sourceCastle: castle({ 1: 1 }), recipe });
+  assert.deepEqual(result.pendingReviews, ['laneFill']);
+  assert.ok(result.notes.includes('ui.settings.onboarding.eventAttackRecommendation.these.starter.values.are.pending.product.review.215357af'));
 });
