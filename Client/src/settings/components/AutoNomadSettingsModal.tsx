@@ -1,16 +1,36 @@
 import { useLocale as useStaticLocale } from "../../i18n/LocaleContext";
 import { LocalizedText } from "../../i18n/LocalizedText";
 import React, { useEffect, useMemo, useState } from 'react';
-import { BookOpen, Castle, Clock3, Crosshair, Lock, RotateCcw, ShieldCheck, Swords, Target, TestTube2 } from 'lucide-react';
+import { BookOpen, Castle, Clock3, Crosshair, Lock, RotateCcw, ShieldCheck, Target, TestTube2 } from 'lucide-react';
 import { useCitadelAPI } from '../../api/ApiContext';
 import { castleOptionsFromState } from '../../api/Selectors';
 import {
   ATTACK_PRESETS_SECTION,
   parseAttackPresetDocument,
-  summarizeAttackPreset,
 } from '../../attackPresets/AttackPresetTypes';
+import {
+  attackSetupRef,
+  attackSetupRefUsable,
+  type AttackSetupRef,
+} from '../../attackPresets/AppCreatedPresets';
+import { attackPresetReferences } from '../../attackPresets/AttackPresetReferences';
 import { Notifications } from '../../components/Notifications';
 import { Badge, Button, Card, Input, Select, SettingsModal, Switch } from '../../components/ui';
+import { useMetadata } from '../../context/MetadataContext';
+import { useConfigurationDraftSession } from '../ConfigurationDraftSession';
+import {
+  saveInlineSetupAsUserPreset,
+  saveModuleWithAppCreatedPresets,
+  type AppCreatedPresetSaveWarning,
+} from '../AppCreatedPresetSave';
+import { recommendEventAttackSetup } from '../onboarding/EventAttackRecommendation';
+import { pendingStarterReviews } from '../onboarding/StarterRecipes';
+import { evaluateEventAttackReadiness } from '../readiness/eventAttackReadiness';
+import { focusReadinessTarget } from '../readiness/focusReadinessTarget';
+import type { ReadinessCheck } from '../readiness/Readiness';
+import { EventAttackSetupField } from './EventAttackSetupField';
+import { ReadinessPanel } from './ReadinessPanel';
+import { useAuth } from '../../context/AuthContext';
 import {
   AUTO_NOMAD_SECTION,
   clampAutoNomadInteger,
@@ -31,8 +51,16 @@ interface AutoNomadSettingsModalProps {
 
 export const AutoNomadSettingsModal: React.FC<AutoNomadSettingsModalProps> = ({ isOpen, onClose }) => {
   const { t: localizeStatic } = useStaticLocale();
-  const { state, configuration, updateConfiguration } = useCitadelAPI();
+  const { state } = useCitadelAPI();
+  const { troops, tools, unitsLoading, unitsError } = useMetadata();
+  const draftSession = useConfigurationDraftSession({
+    isOpen,
+    section: AUTO_NOMAD_SECTION,
+    configurationDependencies: [ATTACK_PRESETS_SECTION],
+  });
   const [draft, setDraft] = useState<AutoNomadClientStateV5>(defaultAutoNomadClientState);
+  const [nomadRef, setNomadRef] = useState<AttackSetupRef>({ source: 'none' });
+  const [samuraiRef, setSamuraiRef] = useState<AttackSetupRef>({ source: 'none' });
   const [saving, setSaving] = useState(false);
   const [isGuideOpen, setIsGuideOpen] = useState(false);
   const { locale: guideLocale, pack: guidePack } = useGuideLocale();
@@ -41,8 +69,17 @@ export const AutoNomadSettingsModal: React.FC<AutoNomadSettingsModalProps> = ({ 
   useEffect(() => { if (!isOpen) setIsGuideOpen(false); }, [isOpen]);
   const castles = useMemo(() => castleOptionsFromState(state).filter((castle) => castle.kingdomId === 0), [state]);
   const presetDocument = useMemo(
-    () => parseAttackPresetDocument(configuration?.sections[ATTACK_PRESETS_SECTION]),
-    [configuration?.sections],
+    () => parseAttackPresetDocument(draftSession.sections?.[ATTACK_PRESETS_SECTION]),
+    [draftSession.sections],
+  );
+  const presetReferences = useMemo(() => attackPresetReferences(draftSession.sections), [draftSession.sections]);
+  const metadataReady = !unitsLoading && !unitsError;
+  const { gameLoggedIn } = useAuth();
+  const hostedPresence = undefined;
+  // Unit counts are current only once this connection has its baseline (CIT-15 D1).
+  const observation = useMemo(
+    () => ({ session: state?.session ?? null, connected: gameLoggedIn, hostedPresence }),
+    [gameLoggedIn, hostedPresence, state?.session],
   );
   const completedAchievements = state?.player.achievements?.completed ?? {};
   const achievementsObserved = Boolean(state?.player.achievements?.observedAt);
@@ -51,27 +88,87 @@ export const AutoNomadSettingsModal: React.FC<AutoNomadSettingsModalProps> = ({ 
   const samuraiDifficulties = difficultyCatalog.optionsByEvent['80'] ?? [];
   const nomadSelectionAvailable = nomadDifficulties.some((option) => option.value === String(draft.nomadDifficultyId));
   const samuraiSelectionAvailable = samuraiDifficulties.some((option) => option.value === String(draft.samuraiDifficultyId));
-  const selectedNomadPreset = presetDocument.presets.find((preset) => preset.id === draft.nomadPresetId);
-  const selectedSamuraiPreset = presetDocument.presets.find((preset) => preset.id === draft.samuraiPresetId);
-  const nomadPresetSummary = selectedNomadPreset ? summarizeAttackPreset(selectedNomadPreset) : null;
-  const samuraiPresetSummary = selectedSamuraiPreset ? summarizeAttackPreset(selectedSamuraiPreset) : null;
+  const sourceCastle = useMemo(() => {
+    const castle = state?.castles?.[String(draft.sourceCastleId)];
+    return castle && castle.kingdomId === 0 ? castle : null;
+  }, [draft.sourceCastleId, state?.castles]);
+  const recipePending = useMemo(() => pendingStarterReviews(), []);
+  const nomadRecommendation = useMemo(
+    () => recommendEventAttackSetup({ sourceCastle, observation, troops, tools, metadataReady, eventId: 72 }),
+    [metadataReady, observation, sourceCastle, tools, troops],
+  );
+  const samuraiRecommendation = useMemo(
+    () => recommendEventAttackSetup({ sourceCastle, observation, troops, tools, metadataReady, eventId: 80 }),
+    [metadataReady, observation, sourceCastle, tools, troops],
+  );
 
   useEffect(() => {
-    if (!isOpen) return;
-    setDraft(parseAutoNomadClientState(configuration?.sections[AUTO_NOMAD_SECTION]));
-  }, [configuration?.sections, isOpen]);
+    if (!isOpen || !draftSession.initialSnapshot) return;
+    const saved = parseAutoNomadClientState(draftSession.initialSections?.[AUTO_NOMAD_SECTION]);
+    const savedPresets = parseAttackPresetDocument(draftSession.initialSections?.[ATTACK_PRESETS_SECTION]);
+    setDraft(saved);
+    setNomadRef(attackSetupRef(saved.nomadPresetId, savedPresets, AUTO_NOMAD_SECTION, 'nomad'));
+    setSamuraiRef(attackSetupRef(saved.samuraiPresetId, savedPresets, AUTO_NOMAD_SECTION, 'samurai'));
+  }, [draftSession.initialSections, draftSession.openKey, draftSession.initialSnapshot, isOpen]);
 
+  const nomadUsable = attackSetupRefUsable(nomadRef, presetDocument);
+  const samuraiUsable = attackSetupRefUsable(samuraiRef, presetDocument);
   const trialReady = draft.rbcTest.enabled
     && Boolean(draft.rbcTest.runId)
-    && Boolean(draft.nomadPresetId)
+    && nomadUsable
     && draft.skipCooldowns;
   const eventReady = !draft.rbcTest.enabled
-    && Boolean(draft.nomadPresetId)
-    && Boolean(draft.samuraiPresetId)
+    && nomadUsable
+    && samuraiUsable
     && nomadSelectionAvailable
     && samuraiSelectionAvailable
     && draft.scoreTarget > 0;
   const canSave = draft.sourceCastleId > 0 && (trialReady || eventReady);
+  const readiness = useMemo(() => evaluateEventAttackReadiness({
+    featureId: 'autoNomad',
+    draft: {
+      sourceCastleId: draft.sourceCastleId,
+      slots: draft.rbcTest.enabled
+        ? [{ slot: 'nomad', ref: nomadRef }]
+        : [{ slot: 'nomad', ref: nomadRef }, { slot: 'samurai', ref: samuraiRef }],
+      scoreTarget: draft.rbcTest.enabled ? undefined : draft.scoreTarget,
+      dailyAttackLimit: draft.dailyAttackLimit,
+      horseTravelBoostId: draft.horseTravelBoostId,
+    },
+    state,
+    document: presetDocument,
+    troops,
+    tools,
+    metadataReady,
+    observation,
+    difficulties: draft.rbcTest.enabled ? undefined : {
+      selections: [
+        { eventId: 72, available: nomadSelectionAvailable },
+        { eventId: 80, available: samuraiSelectionAvailable },
+      ],
+      achievementsObserved,
+      loading: difficultyCatalog.loading,
+    },
+  }), [
+    observation,
+    achievementsObserved, difficultyCatalog.loading, draft.dailyAttackLimit, draft.horseTravelBoostId, draft.rbcTest.enabled,
+    draft.scoreTarget, draft.sourceCastleId, metadataReady, nomadRef, nomadSelectionAvailable, presetDocument, samuraiRef,
+    samuraiSelectionAvailable, state, tools, troops,
+  ]);
+  const slotChecks = (slot: string) => readiness.checks.filter((check) => check.slot === slot);
+  const fixReadiness = (check: ReadinessCheck) => {
+    const target = check.slot ? `auto-nomad-${check.slot}` : {
+      'source-castle': 'auto-nomad-source',
+      difficulty: 'auto-nomad-difficulty',
+      'score-target': 'auto-nomad-score',
+      'daily-limit': 'auto-nomad-daily-limit',
+    }[check.id];
+    if (target) focusReadinessTarget(target);
+  };
+  const moduleLabel = localizeStatic('attackPresets.module.autoNomad');
+  const saveAsPreset = (setup: Parameters<typeof saveInlineSetupAsUserPreset>[1], name: string) => (
+    saveInlineSetupAsUserPreset(draftSession, setup, name)
+  );
 
   const setTimeSkipReserve = (key: string, value: unknown) => {
     setDraft((current) => ({
@@ -86,12 +183,25 @@ export const AutoNomadSettingsModal: React.FC<AutoNomadSettingsModalProps> = ({ 
   const save = async () => {
     if (saving || !canSave) return;
     setSaving(true);
+    const warnings: AppCreatedPresetSaveWarning[] = [];
     try {
-      await updateConfiguration(AUTO_NOMAD_SECTION, draft);
+      await saveModuleWithAppCreatedPresets({
+        draftSession,
+        section: AUTO_NOMAD_SECTION,
+        slots: [
+          { slot: 'nomad', ref: nomadRef, moduleLabel, slotLabel: localizeStatic('attackPresets.slot.nomad') },
+          { slot: 'samurai', ref: samuraiRef, moduleLabel, slotLabel: localizeStatic('attackPresets.slot.samurai') },
+        ],
+        buildSectionValue: (ids) => ({ ...draft, nomadPresetId: ids.nomad, samuraiPresetId: ids.samurai }),
+        formatPresetName: (module, slot) => localizeStatic('attackPresets.appCreatedName', { module, slot }),
+        warnings,
+      });
       Notifications.success('Auto Nomad/Samurai settings saved.');
+      if (warnings.includes('cleanup-pending')) Notifications.warning(localizeStatic('attackPresets.cleanupPending'));
       onClose();
     } catch (error) {
       Notifications.error(error instanceof Error ? error.message : 'Could not save Auto Nomad/Samurai settings.');
+      if (warnings.includes('cleanup-pending')) Notifications.warning(localizeStatic('attackPresets.rollbackPending'));
     } finally {
       setSaving(false);
     }
@@ -107,12 +217,14 @@ export const AutoNomadSettingsModal: React.FC<AutoNomadSettingsModalProps> = ({ 
       description={localizeStatic("ui.settings.components.autoNomadSettingsModal.description.four.camp.leveling.and.locked.target.attack.2e4977f9")}
       onSave={() => void save()}
       isSaving={saving}
-      saveDisabled={!canSave}
+      saveDisabled={!canSave || !draftSession.ready}
+      contentDisabled={!draftSession.ready}
+      contentNotice={draftSession.conflictNotice}
     >
       <div className="space-y-3">
         <Card variant="solid" className="p-4">
           <div className="grid gap-4 md:grid-cols-2">
-            <label className="block md:col-span-2">
+            <label id="auto-nomad-source" className="block md:col-span-2">
               <span className="mb-1.5 flex items-center gap-2 text-[10px] font-black uppercase tracking-wider text-text-muted"><Castle className="h-3.5 w-3.5" /> <LocalizedText messageKey="ui.settings.components.autoNomadSettingsModal.source.castle.86d5a48e" /></span>
               <Select
                 value={draft.sourceCastleId > 0 ? String(draft.sourceCastleId) : ''}
@@ -123,63 +235,61 @@ export const AutoNomadSettingsModal: React.FC<AutoNomadSettingsModalProps> = ({ 
               />
             </label>
 
-            <label className="block">
-              <span className="mb-1.5 flex items-center gap-2 text-[10px] font-black uppercase tracking-wider text-text-muted"><Swords className="h-3.5 w-3.5" /> <LocalizedText messageKey="ui.settings.components.autoNomadSettingsModal.nomad.attack.preset.88ec98ef" /></span>
-              <Select
-                value={draft.nomadPresetId}
-                onChange={(nomadPresetId) => setDraft((current) => ({ ...current, nomadPresetId }))}
-                options={presetDocument.presets.map((preset) => ({ value: preset.id, label: preset.name }))}
-                placeholder={presetDocument.presets.length > 0 ? 'Choose a CitadelOps preset' : 'Create an Attack Preset first'}
-                disabled={presetDocument.presets.length === 0}
-                menuGrowToViewport
-              />
-            </label>
-            <label className="block">
-              <span className="mb-1.5 flex items-center gap-2 text-[10px] font-black uppercase tracking-wider text-text-muted"><Swords className="h-3.5 w-3.5" /> <LocalizedText messageKey="ui.settings.components.autoNomadSettingsModal.samurai.attack.preset.31066b77" /></span>
-              <Select
-                value={draft.samuraiPresetId}
-                onChange={(samuraiPresetId) => setDraft((current) => ({ ...current, samuraiPresetId }))}
-                options={presetDocument.presets.map((preset) => ({ value: preset.id, label: preset.name }))}
-                placeholder={presetDocument.presets.length > 0 ? 'Choose a CitadelOps preset' : 'Create an Attack Preset first'}
-                disabled={presetDocument.presets.length === 0}
-                menuGrowToViewport
-              />
-            </label>
+            <EventAttackSetupField
+              id="auto-nomad-nomad"
+              label={<LocalizedText messageKey="ui.settings.components.autoNomadSettingsModal.nomad.attack.preset.88ec98ef" />}
+              section={AUTO_NOMAD_SECTION}
+              slot="nomad"
+              moduleLabel={moduleLabel}
+              slotLabel={localizeStatic('attackPresets.slot.nomad')}
+              value={nomadRef}
+              onChange={setNomadRef}
+              document={presetDocument}
+              references={presetReferences}
+              sourceCastle={sourceCastle}
+              eventId={72}
+              recommendation={nomadRecommendation}
+              recipePending={recipePending}
+              onSaveAsPreset={saveAsPreset}
+              readinessChecks={slotChecks('nomad')}
+              disabled={saving}
+            />
+            <EventAttackSetupField
+              id="auto-nomad-samurai"
+              label={<LocalizedText messageKey="ui.settings.components.autoNomadSettingsModal.samurai.attack.preset.31066b77" />}
+              section={AUTO_NOMAD_SECTION}
+              slot="samurai"
+              moduleLabel={moduleLabel}
+              slotLabel={localizeStatic('attackPresets.slot.samurai')}
+              value={samuraiRef}
+              onChange={setSamuraiRef}
+              document={presetDocument}
+              references={presetReferences}
+              sourceCastle={sourceCastle}
+              eventId={80}
+              recommendation={samuraiRecommendation}
+              recipePending={recipePending}
+              onSaveAsPreset={saveAsPreset}
+              readinessChecks={draft.rbcTest.enabled ? [] : slotChecks('samurai')}
+              disabled={saving}
+            />
             <HorseTravelBoostSelect
               className="block md:col-span-2"
               value={draft.horseTravelBoostId}
               onChange={(horseTravelBoostId) => setDraft((current) => ({ ...current, horseTravelBoostId }))}
             />
           </div>
-          {nomadPresetSummary || samuraiPresetSummary ? (
-            <div className="mt-3 grid gap-2 border-t border-border-base pt-3 md:grid-cols-2">
-              {nomadPresetSummary ? (
-                <div className="flex flex-wrap items-center gap-2">
-                  <span className="mr-1 text-xs text-text-muted"><LocalizedText messageKey="ui.settings.components.autoNomadSettingsModal.nomad.b156d00c" /></span>
-                  <Badge variant="outline">{nomadPresetSummary.waves} waves</Badge>
-                  <Badge variant="outline">{nomadPresetSummary.troops.toLocaleString()} troops</Badge>
-                  <Badge variant="outline">{nomadPresetSummary.tools.toLocaleString()} tools</Badge>
-                </div>
-              ) : null}
-              {samuraiPresetSummary ? (
-                <div className="flex flex-wrap items-center gap-2">
-                  <span className="mr-1 text-xs text-text-muted"><LocalizedText messageKey="ui.settings.components.autoNomadSettingsModal.samurai.031cfd72" /></span>
-                  <Badge variant="outline">{samuraiPresetSummary.waves} waves</Badge>
-                  <Badge variant="outline">{samuraiPresetSummary.troops.toLocaleString()} troops</Badge>
-                  <Badge variant="outline">{samuraiPresetSummary.tools.toLocaleString()} tools</Badge>
-                </div>
-              ) : null}
-            </div>
-          ) : null}
         </Card>
 
-        <DailyAttackLimitField
-          value={draft.dailyAttackLimit}
-          onChange={(dailyAttackLimit) => setDraft((current) => ({ ...current, dailyAttackLimit }))}
-          serverState={state?.dailyAttacks}
-        />
+        <div id="auto-nomad-daily-limit" tabIndex={-1} className="outline-none">
+          <DailyAttackLimitField
+            value={draft.dailyAttackLimit}
+            onChange={(dailyAttackLimit) => setDraft((current) => ({ ...current, dailyAttackLimit }))}
+            serverState={state?.dailyAttacks}
+          />
+        </div>
 
-        <Card variant="solid" className="p-4">
+        <Card id="auto-nomad-difficulty" variant="solid" className="p-4">
           <div className="mb-3 flex items-start justify-between gap-3">
             <div>
               <div className="flex items-center gap-2 text-sm font-black text-text-main"><ShieldCheck className="h-4 w-4 text-primary" /> <LocalizedText messageKey="ui.settings.components.autoNomadSettingsModal.event.start.difficulty.d32020cb" /></div>
@@ -221,7 +331,7 @@ export const AutoNomadSettingsModal: React.FC<AutoNomadSettingsModalProps> = ({ 
 
         <Card variant="solid" className="p-4">
           <div className="grid items-start gap-4 md:grid-cols-2">
-            <label className="flex min-w-0 flex-col">
+            <label id="auto-nomad-score" className="flex min-w-0 flex-col">
               <span className="mb-1.5 flex min-h-6 items-center gap-2 text-[10px] font-black uppercase tracking-wider text-text-muted"><Target className="h-3.5 w-3.5" /> <LocalizedText messageKey="ui.settings.components.autoNomadSettingsModal.stop.at.event.score.f1752bfd" /></span>
               <Input
                 type="text"
@@ -356,6 +466,12 @@ export const AutoNomadSettingsModal: React.FC<AutoNomadSettingsModalProps> = ({ 
 
         <p className="rounded-global border border-border-base bg-bg-app/40 px-4 py-3 text-xs text-text-muted">
           <LocalizedText messageKey="ui.settings.components.autoNomadSettingsModal.adi.must.confirm.the.same.target.and.1c6467ca" /></p>
+
+        <ReadinessPanel
+          report={readiness}
+          slotLabelKeys={{ nomad: 'attackPresets.slot.nomad', samurai: 'attackPresets.slot.samurai' }}
+          onFix={fixReadiness}
+        />
       </div>
     </SettingsModal>
     <FeatureGuideModal feature="autoNomad" isOpen={isOpen && isGuideOpen} onClose={() => setIsGuideOpen(false)} />

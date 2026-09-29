@@ -34,6 +34,7 @@ import {
   parseAttackPresetDocument,
   summarizeAttackPreset,
 } from '../../attackPresets/AttackPresetTypes';
+import { attackPresetSelectOptions } from '../../attackPresets/AttackPresetOptionLabel';
 import { Notifications } from '../../components/Notifications';
 import { showTroopPicker, type UnitWithQuantity } from '../../components/TroopPickerModal';
 import UnitImage from '../../components/UnitImage';
@@ -1515,7 +1516,7 @@ function PresetSelect({
       <Select
         value={value}
         onChange={onChange}
-        options={presets.map((preset) => ({ value: preset.id, label: preset.name }))}
+        options={attackPresetSelectOptions(presets)}
         placeholder={presets.length > 0 ? placeholder : 'Create an Attack Preset first'}
         disabled={presets.length === 0}
         searchable
