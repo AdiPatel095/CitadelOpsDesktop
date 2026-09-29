@@ -10,7 +10,6 @@ import {
   Plus,
   ShieldCheck,
   Trash2,
-  Truck,
   Warehouse,
 } from 'lucide-react';
 import {
@@ -22,7 +21,6 @@ import {
   CardTitle,
   ChoiceChipGroup,
   Input,
-  ScheduleSummaryRow,
   Select,
   SettingsToggleRow,
   SettingsModal,
@@ -33,7 +31,6 @@ import {
   defaultAutoSceatResSettings,
   normalizeAutoSceatResSettings,
   normalizeAutoSceatResCatalog,
-  persistAutoSceatResSettings,
   type AutoSceatBuildingPlan,
   type AutoSceatBuildingState,
   type AutoSceatRecipeCatalogEntry,
@@ -41,10 +38,14 @@ import {
   type AutoSceatResClientSettings,
   type AutoSceatStorageNode,
 } from '../AutoSceatResClientState';
-import { normalizeFeatureSchedules, scheduleSummary } from '../SchedulerTypes';
 import { useCitadelAPI } from '../../api/ApiContext';
 import { CitadelAPI } from '../../api/CitadelClient';
-import { configurationSection } from '../Configuration';
+import { useConfigurationDraftSession } from '../ConfigurationDraftSession';
+import { AUTOMATION_ENABLED_KEYS } from '../disclosure/placement';
+import { countCustomValues, countLine, sceatTimingSummary, timeSkipLines } from '../disclosure/summaries';
+import { useSettingsDisclosure } from '../disclosure/useSettingsDisclosure';
+import { AutomationRunStrip } from './AutomationRunStrip';
+import { SettingsSection } from './SettingsSection';
 import { AutoSceatRecipePickerModal } from './AutoSceatRecipePickerModal';
 import { useMetadata } from '../../context/MetadataContext';
 
@@ -52,7 +53,11 @@ interface AutoSceatResSettingsModalProps {
   isOpen: boolean;
   onClose: () => void;
   onOpenFeatureSchedule: (featureID: string, featureLabel: string) => void;
+  onOpenAutomationDuration?: (featureKey: string, featureLabel: string) => void;
 }
+
+const AUTO_SCEAT_SECTION = 'automation.autoSceatResources';
+const sceatDefaults = defaultAutoSceatResSettings();
 
 const EMPTY_BUILDING_PLAN: AutoSceatBuildingPlan = {
   enabled: false,
@@ -84,16 +89,16 @@ export const AutoSceatResSettingsModal: React.FC<AutoSceatResSettingsModalProps>
   isOpen,
   onClose,
   onOpenFeatureSchedule,
+  onOpenAutomationDuration,
 }) => {
   const { t: localizeStatic } = useStaticLocale();
-  const { configuration, state, submitIntent } = useCitadelAPI();
+  const { state, submitIntent } = useCitadelAPI();
+  const draftSession = useConfigurationDraftSession({ isOpen, section: AUTO_SCEAT_SECTION });
+  const disclosure = useSettingsDisclosure('autoSceatRes');
   const { currencies } = useMetadata();
   const [settings, setSettings] = useState<AutoSceatResClientSettings>(() => defaultAutoSceatResSettings());
   const [catalog, setCatalog] = useState<AutoSceatResCatalog>(() => emptyAutoSceatResCatalog());
   const [catalogError, setCatalogError] = useState<string | null>(null);
-  const featureSchedules = normalizeFeatureSchedules(
-    configurationSection(configuration, 'scheduler').featureSchedules,
-  );
   const [pickerTarget, setPickerTarget] = useState<{ castleID: number; building: AutoSceatBuildingState } | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
@@ -104,9 +109,6 @@ export const AutoSceatResSettingsModal: React.FC<AutoSceatResSettingsModalProps>
       setSaveError(null);
       return;
     }
-    setSettings(normalizeAutoSceatResSettings(
-      configuration?.sections['automation.autoSceatResources'] ?? defaultAutoSceatResSettings(),
-    ));
     let active = true;
     const load = async () => {
       try {
@@ -123,7 +125,14 @@ export const AutoSceatResSettingsModal: React.FC<AutoSceatResSettingsModalProps>
     };
     void load();
     return () => { active = false; };
-  }, [configuration?.sections, isOpen, state?.session.socketReady, submitIntent]);
+  }, [isOpen, state?.session.socketReady, submitIntent]);
+
+  useEffect(() => {
+    if (!isOpen || !draftSession.initialSnapshot) return;
+    setSettings(normalizeAutoSceatResSettings(
+      draftSession.initialSections?.[AUTO_SCEAT_SECTION] ?? defaultAutoSceatResSettings(),
+    ));
+  }, [draftSession.initialSections, draftSession.openKey, draftSession.initialSnapshot, isOpen]);
 
   useEffect(() => {
     if (!isOpen || craftingRevision === 0) return;
@@ -142,7 +151,6 @@ export const AutoSceatResSettingsModal: React.FC<AutoSceatResSettingsModalProps>
 
   const craftingNodes = useMemo(() => catalog.nodes.filter((node) => node.canCraft && node.buildings.length > 0), [catalog.nodes]);
   const storageNodes = useMemo(() => catalog.nodes.filter((node) => !node.canCraft), [catalog.nodes]);
-  const schedule = featureSchedules.autoSceatRes;
   const timeSkips = useMemo(() => Object.values(currencies)
     .map((currency) => ({
       id: typeof currency.JSONKey === 'string' ? currency.JSONKey.toUpperCase() : '',
@@ -192,7 +200,7 @@ export const AutoSceatResSettingsModal: React.FC<AutoSceatResSettingsModalProps>
     setIsSaving(true);
     setSaveError(null);
     try {
-      await persistAutoSceatResSettings(settings);
+      await draftSession.save(normalizeAutoSceatResSettings(settings));
       onClose();
     } catch (error) {
       setSaveError(error instanceof Error ? error.message : 'Could not save Auto Sceat Resources settings.');
@@ -203,9 +211,6 @@ export const AutoSceatResSettingsModal: React.FC<AutoSceatResSettingsModalProps>
 
   const handleClose = () => {
     if (isSaving) return;
-    setSettings(normalizeAutoSceatResSettings(
-      configuration?.sections['automation.autoSceatResources'] ?? defaultAutoSceatResSettings(),
-    ));
     onClose();
   };
 
@@ -264,7 +269,16 @@ export const AutoSceatResSettingsModal: React.FC<AutoSceatResSettingsModalProps>
         description={localizeStatic("ui.settings.components.autoSceatResSettingsModal.description.research.aware.crafting.queues.and.kingdom.resource.394ed6a5")}
         onSave={handleSave}
         isSaving={isSaving}
+        saveDisabled={!draftSession.ready}
+        contentDisabled={!draftSession.ready}
+        contentNotice={draftSession.conflictNotice}
       >
+        <AutomationRunStrip
+          featureId="autoSceatRes"
+          scheduleId="autoSceatRes"
+          onOpenSchedule={() => onOpenFeatureSchedule('autoSceatRes', 'Auto Sceat Resources')}
+          onOpenDuration={onOpenAutomationDuration ? () => onOpenAutomationDuration(AUTOMATION_ENABLED_KEYS.autoSceatRes, 'Auto Sceat Resources') : undefined}
+        />
         <div className="mx-auto flex w-full max-w-[1780px] flex-col gap-5 pb-2">
           {catalogError && (
             <div className="rounded-global border border-error/30 bg-error/10 px-4 py-3 text-sm font-semibold text-error">
@@ -276,50 +290,20 @@ export const AutoSceatResSettingsModal: React.FC<AutoSceatResSettingsModalProps>
               {saveError}
             </div>
           )}
-          <Card variant="solid" className="liquid-prominent-header-card">
-            <CardHeader className="liquid-card-header-prominent">
-              <div>
-                <CardTitle className="flex items-center gap-2 text-base"><Truck className="h-4 w-4 text-primary" />Automation & Logistics</CardTitle>
-                <p className="mt-1 text-xs text-text-muted"><LocalizedText messageKey="ui.settings.components.autoSceatResSettingsModal.schedule.queue.checks.control.resource.movement.and.77b1a0cd" /></p>
-              </div>
-            </CardHeader>
-            <CardContent className="liquid-prominent-header-content grid gap-4 p-5 xl:grid-cols-[1fr_1.2fr_1fr]">
-              <div className="grid content-start gap-3">
-                <div className="grid grid-cols-2 gap-3">
-                  <label className="grid gap-1.5 text-xs font-bold text-text-muted">
-                    Check interval
-                    <Input
-                      type="number"
-                      min={1}
-                      value={Math.max(1, Math.round(settings.checkIntervalSec / 60))}
-                      onChange={(event) => setSettings((current) => normalizeAutoSceatResSettings({ ...current, checkIntervalSec: Number(event.target.value) * 60 }))}
-                      rightIcon={<span className="text-[10px] font-black uppercase"><LocalizedText messageKey="ui.settings.components.autoSceatResSettingsModal.min.1f6fa6f6" /></span>}
-                    />
-                  </label>
-                  <label className="grid gap-1.5 text-xs font-bold text-text-muted">Minimum shipment
-                    <Input type="number" min={0} value={settings.minimumShipmentSize} onChange={(event) => setSettings((current) => normalizeAutoSceatResSettings({ ...current, minimumShipmentSize: Number(event.target.value) }))} />
-                  </label>
-                </div>
-                <ScheduleSummaryRow
-                  summary={schedule ? scheduleSummary(schedule) : 'Runs any time'}
-                  onEdit={() => onOpenFeatureSchedule('autoSceatRes', 'Auto Sceat Resources')}
-                />
-                <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-                  <label className="grid gap-1.5 text-xs font-bold text-text-muted">Overflow starts
-                    <Input type="number" min={50} max={100} value={settings.overflowThresholdPercent} onChange={(event) => setSettings((current) => normalizeAutoSceatResSettings({ ...current, overflowThresholdPercent: Number(event.target.value) }))} rightIcon={<span className="text-xs font-black">%</span>} />
-                  </label>
+          <SettingsSection disclosure={disclosure} section="reserves">
+            <Card variant="solid" className="p-5">
+              <div className="grid gap-4 xl:grid-cols-[1fr_1.4fr]">
+                <div className="grid content-start gap-3 sm:grid-cols-2">
                   <label className="grid gap-1.5 text-xs font-bold text-text-muted">Minimum coin reserve
                     <Input type="number" min={0} value={settings.minimumCoinReserve} onChange={(event) => setSettings((current) => normalizeAutoSceatResSettings({ ...current, minimumCoinReserve: Number(event.target.value) }))} leftIcon={<Coins className="h-4 w-4" />} />
                   </label>
                   <label className="grid gap-1.5 text-xs font-bold text-text-muted">Minimum ruby reserve
                     <Input type="number" min={0} value={settings.minimumRubyReserve} onChange={(event) => setSettings((current) => normalizeAutoSceatResSettings({ ...current, minimumRubyReserve: Number(event.target.value) }))} leftIcon={<Gem className="h-4 w-4" />} />
                   </label>
+                  <p className="sm:col-span-2 text-[11px] leading-relaxed text-text-muted"><LocalizedText messageKey="ui.settings.components.autoSceatResSettingsModal.coins.and.rubies.below.these.amounts.are.8972d347" /></p>
                 </div>
-              </div>
-
-              <div className="grid content-start gap-2.5">
+                <div className="grid content-start gap-2.5">
                 {renderToggle('Resource logistics', 'Drains sovereign-resource surplus into configured future queue refills, even while queues are full.', settings.autoKingdomTransport, (checked) => setSettings((current) => ({ ...current, autoKingdomTransport: checked })))}
-                {renderToggle('Use transport time skips', 'Applies only selected skips, one command per confirmed response, to kingdom resource transports (TT 2).', settings.useKingdomTimeSkips, (checked) => setSettings((current) => ({ ...current, useKingdomTimeSkips: checked })), !settings.autoKingdomTransport)}
                 {renderToggle('Use Storm as overflow buffer', 'Storm can hold kingdom resources even though it cannot craft them.', settings.useStormBuffer, (checked) => setSettings((current) => ({ ...current, useStormBuffer: checked })))}
                 {renderToggle('Allow ruby recipes', 'Explicit permission for recipes whose official cost includes C2/rubies.', settings.allowRubyRecipes, (checked) => setSettings((current) => ({ ...current, allowRubyRecipes: checked })))}
                 {renderToggle('Ruby-skip blocked overflow', 'Completes at most one Green main resource craft per cycle when threshold overflow cannot be moved, using the official remaining-time ruby price.', settings.useRubyOverflowSkip, (checked) => setSettings((current) => ({ ...current, useRubyOverflowSkip: checked })), !settings.autoKingdomTransport)}
@@ -327,54 +311,12 @@ export const AutoSceatResSettingsModal: React.FC<AutoSceatResSettingsModalProps>
                   <div className="rounded-global border border-warning/30 bg-warning/8 px-3 py-2 text-[10px] font-semibold leading-relaxed text-warning">
                     <LocalizedText messageKey="ui.settings.components.autoSceatResSettingsModal.ruby.spending.is.limited.to.production.slots.e2ddc881" /></div>
                 )}
-              </div>
-
-              <div className="grid content-start gap-3">
-                <div>
-                  <div className="text-xs font-black uppercase tracking-wide text-text-muted"><LocalizedText messageKey="ui.settings.components.autoSceatResSettingsModal.allowed.transport.skips.73eba8a9" /></div>
-                  <ChoiceChipGroup
-                    className="mt-2"
-                    ariaLabel={localizeStatic("ui.settings.components.autoSceatResSettingsModal.ariaLabel.allowed.transport.skips.73eba8a9")}
-                    options={timeSkips.map((skip) => ({ value: skip.id, label: skip.label }))}
-                    selected={settings.allowedTimeSkips}
-                    disabled={!settings.useKingdomTimeSkips || !settings.autoKingdomTransport}
-                    onToggle={(skipID) => setSettings((current) => normalizeAutoSceatResSettings({
-                      ...current,
-                      allowedTimeSkips: current.allowedTimeSkips.includes(skipID)
-                        ? current.allowedTimeSkips.filter((id) => id !== skipID)
-                        : [...current.allowedTimeSkips, skipID],
-                    }))}
-                  />
-                  {settings.useKingdomTimeSkips && settings.autoKingdomTransport && (
-                    <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3">
-                      {timeSkips.filter((skip) => settings.allowedTimeSkips.includes(skip.id)).map((skip) => (
-                        <label key={skip.id} className="grid gap-1 text-[10px] font-bold text-text-muted">
-                          Keep {skip.label}
-                          <Input
-                            type="number"
-                            min={0}
-                            value={settings.timeSkipReserve[skip.id] ?? 0}
-                            onChange={(event) => setSettings((current) => normalizeAutoSceatResSettings({
-                              ...current,
-                              timeSkipReserve: {
-                                ...current.timeSkipReserve,
-                                [skip.id]: Number(event.target.value),
-                              },
-                            }))}
-                            className="!py-1.5 text-xs"
-                          />
-                        </label>
-                      ))}
-                    </div>
-                  )}
                 </div>
-                <div className="rounded-global border border-border-base bg-bg-input/35 px-4 py-3 text-[11px] font-medium leading-relaxed text-text-muted">
-                  <LocalizedText messageKey="ui.settings.components.autoSceatResSettingsModal.the.smallest.selected.skip.that.completes.a.e43403b9" /></div>
               </div>
-            </CardContent>
-          </Card>
+            </Card>
+          </SettingsSection>
 
-          <div className="grid grid-cols-1 gap-5 2xl:grid-cols-[minmax(0,1fr)_20rem]">
+          <SettingsSection disclosure={disclosure} section="crafting">
             <div className="grid gap-5">
               {craftingNodes.map((node) => (
                 <Card key={node.castleID} variant="solid">
@@ -513,7 +455,90 @@ export const AutoSceatResSettingsModal: React.FC<AutoSceatResSettingsModalProps>
               )}
             </div>
 
-            <Card variant="solid" className="h-fit 2xl:sticky 2xl:top-0">
+          </SettingsSection>
+
+          <SettingsSection
+            disclosure={disclosure}
+            section="timing"
+            summary={sceatTimingSummary(settings)}
+            customCount={countCustomValues(settings, sceatDefaults, ['checkIntervalSec', 'minimumShipmentSize', 'overflowThresholdPercent'])}
+          >
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                  <label className="grid gap-1.5 text-xs font-bold text-text-muted">
+                    Check interval
+                    <Input
+                      type="number"
+                      min={1}
+                      value={Math.max(1, Math.round(settings.checkIntervalSec / 60))}
+                      onChange={(event) => setSettings((current) => normalizeAutoSceatResSettings({ ...current, checkIntervalSec: Number(event.target.value) * 60 }))}
+                      rightIcon={<span className="text-[10px] font-black uppercase"><LocalizedText messageKey="ui.settings.components.autoSceatResSettingsModal.min.1f6fa6f6" /></span>}
+                    />
+                  </label>
+                  <label className="grid gap-1.5 text-xs font-bold text-text-muted">Minimum shipment
+                    <Input type="number" min={0} value={settings.minimumShipmentSize} onChange={(event) => setSettings((current) => normalizeAutoSceatResSettings({ ...current, minimumShipmentSize: Number(event.target.value) }))} />
+                  </label>
+                  <label className="grid gap-1.5 text-xs font-bold text-text-muted">Overflow starts
+                    <Input type="number" min={50} max={100} value={settings.overflowThresholdPercent} onChange={(event) => setSettings((current) => normalizeAutoSceatResSettings({ ...current, overflowThresholdPercent: Number(event.target.value) }))} rightIcon={<span className="text-xs font-black">%</span>} />
+                  </label>
+            </div>
+          </SettingsSection>
+
+          <SettingsSection
+            disclosure={disclosure}
+            section="transport-skips"
+            summary={timeSkipLines(settings.autoKingdomTransport && settings.useKingdomTimeSkips, settings.timeSkipReserve)}
+            customCount={countCustomValues(settings, sceatDefaults, ['useKingdomTimeSkips', 'allowedTimeSkips', 'timeSkipReserve'])}
+            className="space-y-3"
+          >
+                {renderToggle('Use transport time skips', 'Applies only selected skips, one command per confirmed response, to kingdom resource transports (TT 2).', settings.useKingdomTimeSkips, (checked) => setSettings((current) => ({ ...current, useKingdomTimeSkips: checked })), !settings.autoKingdomTransport)}
+                <div>
+                  <div className="text-xs font-black uppercase tracking-wide text-text-muted"><LocalizedText messageKey="ui.settings.components.autoSceatResSettingsModal.allowed.transport.skips.73eba8a9" /></div>
+                  <ChoiceChipGroup
+                    className="mt-2"
+                    ariaLabel={localizeStatic("ui.settings.components.autoSceatResSettingsModal.ariaLabel.allowed.transport.skips.73eba8a9")}
+                    options={timeSkips.map((skip) => ({ value: skip.id, label: skip.label }))}
+                    selected={settings.allowedTimeSkips}
+                    disabled={!settings.useKingdomTimeSkips || !settings.autoKingdomTransport}
+                    onToggle={(skipID) => setSettings((current) => normalizeAutoSceatResSettings({
+                      ...current,
+                      allowedTimeSkips: current.allowedTimeSkips.includes(skipID)
+                        ? current.allowedTimeSkips.filter((id) => id !== skipID)
+                        : [...current.allowedTimeSkips, skipID],
+                    }))}
+                  />
+                  {settings.useKingdomTimeSkips && settings.autoKingdomTransport && (
+                    <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3">
+                      {timeSkips.filter((skip) => settings.allowedTimeSkips.includes(skip.id)).map((skip) => (
+                        <label key={skip.id} className="grid gap-1 text-[10px] font-bold text-text-muted">
+                          Keep {skip.label}
+                          <Input
+                            type="number"
+                            min={0}
+                            value={settings.timeSkipReserve[skip.id] ?? 0}
+                            onChange={(event) => setSettings((current) => normalizeAutoSceatResSettings({
+                              ...current,
+                              timeSkipReserve: {
+                                ...current.timeSkipReserve,
+                                [skip.id]: Number(event.target.value),
+                              },
+                            }))}
+                            className="!py-1.5 text-xs"
+                          />
+                        </label>
+                      ))}
+                    </div>
+                  )}
+                </div>
+                <div className="rounded-global border border-border-base bg-bg-input/35 px-4 py-3 text-[11px] font-medium leading-relaxed text-text-muted">
+                  <LocalizedText messageKey="ui.settings.components.autoSceatResSettingsModal.the.smallest.selected.skip.that.completes.a.e43403b9" /></div>
+          </SettingsSection>
+
+          <SettingsSection
+            disclosure={disclosure}
+            section="storage"
+            summary={[countLine('settingsSummary.storageNodes', storageNodes.length)]}
+          >
+            <Card variant="solid">
               <CardHeader>
                 <div>
                   <CardTitle className="flex items-center gap-2 text-base"><Warehouse className="h-4 w-4 text-primary" /><LocalizedText messageKey="ui.settings.components.autoSceatResSettingsModal.additional.storage.nodes.017a7158" /></CardTitle>
@@ -527,7 +552,7 @@ export const AutoSceatResSettingsModal: React.FC<AutoSceatResSettingsModalProps>
                   <LocalizedText messageKey="ui.settings.components.autoSceatResSettingsModal.logistics.capacity.is.calculated.automatically.from.current.52f0c37c" /></div>
               </CardContent>
             </Card>
-          </div>
+          </SettingsSection>
         </div>
       </SettingsModal>
 

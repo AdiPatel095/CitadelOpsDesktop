@@ -34,6 +34,7 @@ interface SettingsModalProps {
   isOpen: boolean;
   onClose: () => void;
   onOpenFeatureSchedule?: (id: string, label: string) => void;
+  onOpenAutomationDuration?: (featureKey: string, label: string) => void;
 }
 
 function lazyNamed<P>(loader: () => Promise<unknown>, exportName: string) {
@@ -192,6 +193,7 @@ const AppContent: React.FC = () => {
             isOpen
             onClose={() => setActiveSettingsModal(null)}
             onOpenFeatureSchedule={openSchedule}
+            onOpenAutomationDuration={openDuration}
           />
         </Suspense>
       )}

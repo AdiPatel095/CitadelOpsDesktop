@@ -1,6 +1,6 @@
 import { useLocale as useStaticLocale } from "../../i18n/LocaleContext";
 import { LocalizedText } from "../../i18n/LocalizedText";
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { CalendarDays, Castle, Clock3, Copy, Trash2, Plus, Settings } from 'lucide-react';
 import { showTroopPicker } from '../../components/TroopPickerModal';
 import { showToolPicker } from '../../components/ToolPickerModal';
@@ -58,11 +58,18 @@ import {
   unitIDsAvailableByFamilyAcrossCastles,
   unitUpgradeFamily,
 } from '../UnitUpgradeFamily';
+import { useConfigurationDraftSession } from '../ConfigurationDraftSession';
+import { AUTOMATION_ENABLED_KEYS } from '../disclosure/placement';
+import { checkIntervalLine, countCustomValues } from '../disclosure/summaries';
+import { useSettingsDisclosure } from '../disclosure/useSettingsDisclosure';
+import { AutomationRunStrip } from './AutomationRunStrip';
+import { SettingsSection } from './SettingsSection';
 
 export interface QueueProductionSettingsModalProps {
   isOpen: boolean;
   onClose: () => void;
   onOpenFeatureSchedule: (featureID: string, featureLabel: string) => void;
+  onOpenAutomationDuration?: (featureKey: string, featureLabel: string) => void;
   kind: 'recruit' | 'tool';
 }
 
@@ -154,11 +161,14 @@ export const QueueProductionSettingsModal: React.FC<QueueProductionSettingsModal
   isOpen,
   onClose,
   onOpenFeatureSchedule,
+  onOpenAutomationDuration,
   kind,
 }) => {
   const { t: localizeStatic } = useStaticLocale();
   const definition = DEFINITIONS[kind];
   const { configuration, state } = useCitadelAPI();
+  const draftSession = useConfigurationDraftSession({ isOpen, section: definition.configurationSection });
+  const disclosure = useSettingsDisclosure(definition.featureID);
   const { getTroop, getTool, buildings, troops, tools, isLoading: metadataLoading } = useMetadata();
   const castles = castleOptionsFromState(state);
   const [settings, setSettings] = useState<QueueProductionClientSettingsV1>(() => definition.defaultSettings());
@@ -184,23 +194,17 @@ export const QueueProductionSettingsModal: React.FC<QueueProductionSettingsModal
   const [saveError, setSaveError] = useState<string | null>(null);
 
   const [editingItem, setEditingItem] = useState<{ scope: ItemScope, item: QueueProductionItem } | null>(null);
-  const loadedSettingsSignature = useRef<string | null>(null);
   useEffect(() => {
     if (!isOpen) {
-      loadedSettingsSignature.current = null;
       setSaveError(null);
       return;
     }
-
-    const rawSettings = configuration?.sections[definition.configurationSection] ?? definition.defaultSettings();
-    const settingsSignature = `${definition.configurationSection}:${JSON.stringify(rawSettings)}`;
-    // Saving a nested calendar replaces the full configuration snapshot. Preserve this
-    // modal's unsaved mode and item edits unless its own persisted section changed.
-    if (loadedSettingsSignature.current === settingsSignature) return;
-
-    loadedSettingsSignature.current = settingsSignature;
-    setSettings(definition.normalizeSettings(rawSettings));
-  }, [configuration?.sections, definition, isOpen]);
+    // Baseline at open: a nested calendar save never resets unsaved mode and item edits.
+    if (!draftSession.initialSnapshot) return;
+    setSettings(definition.normalizeSettings(
+      draftSession.initialSections?.[definition.configurationSection] ?? definition.defaultSettings(),
+    ));
+  }, [definition, draftSession.initialSections, draftSession.openKey, draftSession.initialSnapshot, isOpen]);
 
   const itemName = (itemID: number) => (
     (kind === 'recruit' ? getTroop(itemID)?.name : getTool(itemID)?.name)
@@ -447,7 +451,7 @@ export const QueueProductionSettingsModal: React.FC<QueueProductionSettingsModal
     );
     setSettings(nextSettings);
     try {
-      await definition.persistSettings(nextSettings);
+      await draftSession.save(nextSettings);
       onClose();
     } catch (error) {
       setSaveError(error instanceof Error ? error.message : `Could not save ${definition.featureLabel} settings.`);
@@ -842,32 +846,24 @@ export const QueueProductionSettingsModal: React.FC<QueueProductionSettingsModal
         description={localizeStatic("ui.settings.components.queueProductionSettingsModal.description.queue.slots.schedules.and.castle.coverage.f3307f74")}
         onSave={handleSave}
         isSaving={isSaving}
+        saveDisabled={!draftSession.ready}
+        contentDisabled={!draftSession.ready}
+        contentNotice={draftSession.conflictNotice}
       >
+        <AutomationRunStrip
+          featureId={definition.featureID}
+          scheduleId={definition.featureID}
+          onOpenSchedule={() => onOpenFeatureSchedule(definition.featureID, definition.featureLabel)}
+          onOpenDuration={onOpenAutomationDuration ? () => onOpenAutomationDuration(AUTOMATION_ENABLED_KEYS[definition.featureID], definition.featureLabel) : undefined}
+        />
         <div className={`recruit-modal-shell mx-auto flex w-full flex-col gap-5 overflow-visible pb-2 ${isGlobalMode ? 'max-w-6xl' : 'max-w-[min(1840px,98vw)]'}`}>
           {saveError && (
             <div className="rounded-global border border-error/30 bg-error/10 px-4 py-3 text-sm font-semibold text-error" role="alert">
               {saveError}
             </div>
           )}
-          <div className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(17rem,0.8fr)_minmax(22rem,1.15fr)_minmax(11rem,0.5fr)]">
-            <SectionCard
-              title={localizeStatic("ui.settings.components.queueProductionSettingsModal.title.queue.check.39bf2207")}
-              description={localizeStatic("ui.settings.components.queueProductionSettingsModal.description.minutes.between.castle.cycles.18f97935")}
-              icon={<Clock3 className="h-4 w-4" />}
-              titleClassName="text-base"
-            >
-                <Input
-                  type="text"
-                  value={definition.checkIntervalSecToMinutes(settings.checkIntervalSec).toLocaleString()}
-                  onChange={(e) => updateCheckIntervalMinutes(e.target.value)}
-                  className="font-mono text-lg font-black tabular-nums"
-                  rightIcon={<span className="text-xs font-bold uppercase text-text-muted"><LocalizedText messageKey="ui.settings.components.queueProductionSettingsModal.min.1f6fa6f6" /></span>}
-                />
-                <p className="mt-2 text-[11px] font-medium text-text-muted">
-                  Minimum {definition.minCheckIntervalMin.toLocaleString()} minute. Default is {definition.defaultCheckIntervalMin.toLocaleString()} minutes.
-                </p>
-            </SectionCard>
-
+          <SettingsSection disclosure={disclosure} section="plan" className="flex flex-col gap-5">
+          <div className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(22rem,1.15fr)_minmax(11rem,0.5fr)]">
             <SectionCard
               title={definition.modeTitle}
               description={definition.modeDescription}
@@ -1047,6 +1043,35 @@ export const QueueProductionSettingsModal: React.FC<QueueProductionSettingsModal
               </div>
             </>
           )}
+          </SettingsSection>
+
+          <SettingsSection
+            disclosure={disclosure}
+            section="timing"
+            summary={[checkIntervalLine(settings.checkIntervalSec)]}
+            customCount={countCustomValues(settings, definition.defaultSettings(), ['checkIntervalSec'])}
+          >
+            <div className="max-w-md">
+            <SectionCard
+              title={localizeStatic("ui.settings.components.queueProductionSettingsModal.title.queue.check.39bf2207")}
+              description={localizeStatic("ui.settings.components.queueProductionSettingsModal.description.minutes.between.castle.cycles.18f97935")}
+              icon={<Clock3 className="h-4 w-4" />}
+              titleClassName="text-base"
+            >
+                <Input
+                  type="text"
+                  value={definition.checkIntervalSecToMinutes(settings.checkIntervalSec).toLocaleString()}
+                  onChange={(e) => updateCheckIntervalMinutes(e.target.value)}
+                  className="font-mono text-lg font-black tabular-nums"
+                  rightIcon={<span className="text-xs font-bold uppercase text-text-muted"><LocalizedText messageKey="ui.settings.components.queueProductionSettingsModal.min.1f6fa6f6" /></span>}
+                />
+                <p className="mt-2 text-[11px] font-medium text-text-muted">
+                  Minimum {definition.minCheckIntervalMin.toLocaleString()} minute. Default is {definition.defaultCheckIntervalMin.toLocaleString()} minutes.
+                </p>
+            </SectionCard>
+
+            </div>
+          </SettingsSection>
         </div>
       </SettingsModal>
 

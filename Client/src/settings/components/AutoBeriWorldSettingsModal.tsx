@@ -1,7 +1,7 @@
 import { useLocale as useStaticLocale } from "../../i18n/LocaleContext";
 import { LocalizedText } from "../../i18n/LocalizedText";
 import React, { useEffect, useMemo, useState } from 'react';
-import { BookOpen, CalendarDays, Camera, Castle, Crosshair, FastForward, Hammer, Shield, Swords, Trash2, Zap } from 'lucide-react';
+import { BookOpen, Camera, Castle, Crosshair, FastForward, Hammer, Shield, Swords, Trash2, Zap } from 'lucide-react';
 import type { BuildingBlueprintDiffResponse, BuildingTargetCaptureMode } from '../../api/Contracts';
 import { CitadelAPI } from '../../api/CitadelClient';
 import { ATTACK_PRESETS_SECTION, parseAttackPresetDocument } from '../../attackPresets/AttackPresetTypes';
@@ -52,18 +52,26 @@ import { FeatureGuideModal } from './FeatureGuideModal';
 import { englishGuidePack, useGuideLocale } from '../../config/useGuideLocale';
 import HorseTravelBoostSelect from './HorseTravelBoostSelect';
 import { DailyAttackLimitField } from './DailyAttackLimitField';
+import { AUTOMATION_ENABLED_KEYS } from '../disclosure/placement';
+import { beriAttackOptionsSummary, beriBuildOptionsSummary, countCustomValues, travelLine } from '../disclosure/summaries';
+import { useSettingsDisclosure } from '../disclosure/useSettingsDisclosure';
+import { AutomationRunStrip } from './AutomationRunStrip';
+import { collapsedSettingNote, SettingsSection } from './SettingsSection';
 
 interface AutoBeriWorldSettingsModalProps {
 	isOpen: boolean;
 	onClose: () => void;
 	onOpenFeatureSchedule: (featureID: string, featureLabel: string) => void;
+	onOpenAutomationDuration?: (featureKey: string, featureLabel: string) => void;
 }
 
 export const AutoBeriWorldSettingsModal: React.FC<AutoBeriWorldSettingsModalProps> = ({
 	isOpen,
 	onClose,
 	onOpenFeatureSchedule,
+	onOpenAutomationDuration,
 }) => {
+  const disclosure = useSettingsDisclosure('autoBeriWorld');
   const { t: localizeStatic } = useStaticLocale();
   const { locale: guideLocale, pack: guidePack } = useGuideLocale();
   const beriGuidePack = guidePack.autoBeri ? guidePack : englishGuidePack;
@@ -192,12 +200,7 @@ export const AutoBeriWorldSettingsModal: React.FC<AutoBeriWorldSettingsModalProp
 			window.requestAnimationFrame(() => focusReadinessTarget('auto-beri-commanders-heading'));
 			return;
 		}
-		const target = check.slot ? 'auto-beri-attack' : {
-			'source-castle': 'auto-beri-source',
-			'daily-limit': 'auto-beri-daily-limit',
-			'gallantry-booster': 'auto-beri-gallantry',
-		}[check.id];
-		if (target) focusReadinessTarget(target);
+		disclosure.fix(check);
 	};
 	const moduleLabel = localizeStatic('attackPresets.module.autoBeriWorld');
 
@@ -334,19 +337,7 @@ export const AutoBeriWorldSettingsModal: React.FC<AutoBeriWorldSettingsModalProp
 			title={localizeStatic("ui.settings.components.autoBeriWorldSettingsModal.title.auto.beri.world.a579a63b")}
 			icon={<Swords className="h-5 w-5" />}
 			description={localizeStatic("ui.settings.components.autoBeriWorldSettingsModal.description.attack.berimond.towers.bring.the.loot.home.ff1b05e8")}
-			titleTrailing={(
-        <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" className="shrink-0" onClick={() => setIsGuideOpen(true)} leftIcon={<BookOpen className="h-4 w-4" />}><span lang={beriGuideLocale}>{beriGuidePack.ui.guideButton}</span></Button>
-					<Button
-						variant="outline"
-						size="sm"
-						className="shrink-0"
-						onClick={() => onOpenFeatureSchedule('autoBeriWorld', 'Auto Beri World')}
-						leftIcon={<CalendarDays className="h-4 w-4" />}
-					>
-						<LocalizedText messageKey="common.calendar" /></Button>
-        </div>
-			)}
+			titleTrailing={<Button variant="outline" size="sm" className="shrink-0" onClick={() => setIsGuideOpen(true)} leftIcon={<BookOpen className="h-4 w-4" />}><span lang={beriGuideLocale}>{beriGuidePack.ui.guideButton}</span></Button>}
 			maxWidth="4xl"
 			onSave={() => void save()}
 			saveLabel="Save"
@@ -355,7 +346,26 @@ export const AutoBeriWorldSettingsModal: React.FC<AutoBeriWorldSettingsModalProp
 			contentDisabled={!draftSession.ready}
 			contentNotice={draftSession.conflictNotice}
 		>
+			<AutomationRunStrip
+				featureId="autoBeriWorld"
+				scheduleId="autoBeriWorld"
+				onOpenSchedule={() => onOpenFeatureSchedule('autoBeriWorld', 'Auto Beri World')}
+				onOpenDuration={onOpenAutomationDuration ? () => onOpenAutomationDuration(AUTOMATION_ENABLED_KEYS.autoBeriWorld, 'Auto Beri World') : undefined}
+			/>
 			<div className="space-y-5">
+				<SettingsSection disclosure={disclosure} section="attack" className="space-y-5">
+				<CastleRequirementField
+					id="auto-beri-source"
+					label={<LocalizedText messageKey="ui.settings.components.autoBeriWorldSettingsModal.source.castle.86d5a48e" />}
+					value={effectiveSourceID}
+					onChange={(sourceCastleId) => setSettings((current) => ({ ...current, sourceCastleId }))}
+					state={setup.state}
+					purpose="source-great-empire"
+					options={sourceOptions}
+					placeholder={localizeStatic("ui.settings.components.autoBeriWorldSettingsModal.placeholder.main.castle.0e106dcc")}
+				/>
+
+
 				<div id="auto-beri-gallantry" tabIndex={-1} className="outline-none">
 				<SettingsToggleRow
 					title={localizeStatic("ui.settings.components.autoBeriWorldSettingsModal.title.only.run.with.a.gallantry.booster.358a7233")}
@@ -377,6 +387,55 @@ export const AutoBeriWorldSettingsModal: React.FC<AutoBeriWorldSettingsModalProp
 				/>
 				</div>
 
+				<div className="space-y-4 rounded-xl border border-border-base bg-bg-elevated/40 p-4">
+					<div>
+						<div className="flex items-center gap-2 text-sm font-black text-text-main">
+							<Crosshair className="h-4 w-4 text-primary" /> <LocalizedText messageKey="ui.settings.components.autoBeriWorldSettingsModal.tower.attack.62826c7e" />
+						</div>
+						<p className="mt-1 text-xs text-text-muted">
+							<LocalizedText messageKey="ui.settings.components.autoBeriWorldSettingsModal.uses.berimond.s.find.next.tower.command.f09dfe35" /></p>
+					</div>
+					<div className="grid gap-4 md:grid-cols-2">
+						<div className="md:col-span-2">
+							<EventAttackSetupField
+								id="auto-beri-attack"
+								label={<LocalizedText messageKey="ui.settings.components.autoBeriWorldSettingsModal.attack.preset.407b93e9" />}
+								section="automation.autoBeriWorld"
+								slot="attack"
+								moduleLabel={moduleLabel}
+								slotLabel={localizeStatic('attackPresets.slot.towerAttack')}
+								value={attackRef}
+								onChange={setAttackRef}
+								document={presetDocument}
+								references={presetReferences}
+								sourceCastle={sourceCastle}
+								observation={observation}
+								eventId={0}
+								recommendation={recommendation}
+								recipePending={recipePending}
+								onSaveAsPreset={(setup, name) => saveInlineSetupAsUserPreset(draftSession, setup, name)}
+								readinessChecks={readiness.checks.filter((check) => check.slot === 'attack')}
+								disabled={saving}
+							/>
+						</div>
+					</div>
+					<p className="text-xs text-text-muted">{beriGuidePack.autoBeri.steps.transfers.items.preset_troop_mix.description} {beriGuidePack.autoBeri.steps.transfers.items.food_only.description}</p>
+				</div>
+
+				</SettingsSection>
+
+				<SettingsSection disclosure={disclosure} section="limits">
+				<div id="auto-beri-daily-limit" tabIndex={-1} className="outline-none">
+					<DailyAttackLimitField
+						value={settings.dailyAttackLimit}
+						onChange={(dailyAttackLimit) => setSettings((current) => ({ ...current, dailyAttackLimit }))}
+						serverState={state?.dailyAttacks}
+					/>
+				</div>
+
+				</SettingsSection>
+
+				<SettingsSection disclosure={disclosure} section="building">
 				<div className="space-y-4 rounded-xl border border-border-base bg-bg-elevated/40 p-4">
 					<div>
 						<div className="flex items-center gap-2 text-sm font-black text-text-main">
@@ -534,6 +593,42 @@ export const AutoBeriWorldSettingsModal: React.FC<AutoBeriWorldSettingsModalProp
 							<LocalizedText messageKey="ui.settings.components.autoBeriWorldSettingsModal.the.built.in.exact.target.is.active.07b82a6b" /></p>
 					)}
 
+					<div className="border-t border-border-base pt-4">
+						<div>
+							<div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-text-muted">
+								<Shield className="h-3.5 w-3.5" /> <LocalizedText messageKey="ui.settings.components.autoBeriWorldSettingsModal.camp.resources.kept.in.reserve.f6713557" />
+							</div>
+							<div className="mt-2 grid grid-cols-2 gap-3">
+								{[
+									{ key: '3', label: 'Wood' },
+									{ key: '4', label: 'Stone' },
+								].map((resource) => (
+									<label key={resource.key} className="block">
+										<span className="mb-1 block text-[10px] font-semibold text-text-muted">{resource.label}</span>
+										<Input
+											type="number"
+											min={0}
+											value={settings.build.resourceReserves[resource.key] ?? 0}
+											onChange={(event) => updateBuildNumberMap('resourceReserves', resource.key, event.target.value)}
+										/>
+									</label>
+								))}
+							</div>
+							<p className="mt-2 text-[11px] text-text-muted"><LocalizedText messageKey="ui.settings.components.autoBeriWorldSettingsModal.the.builder.spends.only.the.amount.above.d96d3273" /></p>
+						</div>
+
+					</div>
+				</div>
+
+				</SettingsSection>
+
+				<SettingsSection
+					disclosure={disclosure}
+					section="building-options"
+					summary={beriBuildOptionsSummary(settings.build)}
+					customCount={countCustomValues(settings.build, DEFAULT_AUTO_BERI_WORLD_SETTINGS.build, ['allowTimeSkips', 'allowPremium', 'allowDemolition', 'timeSkipReserve'])}
+					className="space-y-4"
+				>
 					<div className="grid gap-3 lg:grid-cols-3">
 						<SettingsToggleRow
 							title={localizeStatic("ui.settings.components.autoBeriWorldSettingsModal.title.use.construction.time.skips.c7ae0ffb")}
@@ -569,30 +664,7 @@ export const AutoBeriWorldSettingsModal: React.FC<AutoBeriWorldSettingsModalProp
 						/>
 					</div>
 
-					<div className="grid gap-4 border-t border-border-base pt-4 lg:grid-cols-2">
-						<div>
-							<div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-text-muted">
-								<Shield className="h-3.5 w-3.5" /> <LocalizedText messageKey="ui.settings.components.autoBeriWorldSettingsModal.camp.resources.kept.in.reserve.f6713557" />
-							</div>
-							<div className="mt-2 grid grid-cols-2 gap-3">
-								{[
-									{ key: '3', label: 'Wood' },
-									{ key: '4', label: 'Stone' },
-								].map((resource) => (
-									<label key={resource.key} className="block">
-										<span className="mb-1 block text-[10px] font-semibold text-text-muted">{resource.label}</span>
-										<Input
-											type="number"
-											min={0}
-											value={settings.build.resourceReserves[resource.key] ?? 0}
-											onChange={(event) => updateBuildNumberMap('resourceReserves', resource.key, event.target.value)}
-										/>
-									</label>
-								))}
-							</div>
-							<p className="mt-2 text-[11px] text-text-muted"><LocalizedText messageKey="ui.settings.components.autoBeriWorldSettingsModal.the.builder.spends.only.the.amount.above.d96d3273" /></p>
-						</div>
-
+					<div className="border-t border-border-base pt-4">
 						{settings.build.allowTimeSkips ? (
 							<div>
 								<div className="text-xs font-bold uppercase tracking-wider text-text-muted"><LocalizedText messageKey="ui.settings.components.autoBeriWorldSettingsModal.construction.skips.kept.in.reserve.c78ae698" /></div>
@@ -615,40 +687,18 @@ export const AutoBeriWorldSettingsModal: React.FC<AutoBeriWorldSettingsModalProp
 							<p className="self-center rounded-xl border border-border-base bg-bg-app/35 px-3 py-2 text-xs text-text-muted">
 								<LocalizedText messageKey="ui.settings.components.autoBeriWorldSettingsModal.construction.time.skips.are.off.active.build.c8682826" /></p>
 						)}
-					</div>
-				</div>
 
-				<div className="space-y-4 rounded-xl border border-border-base bg-bg-elevated/40 p-4">
-					<div>
-						<div className="flex items-center gap-2 text-sm font-black text-text-main">
-							<Crosshair className="h-4 w-4 text-primary" /> <LocalizedText messageKey="ui.settings.components.autoBeriWorldSettingsModal.tower.attack.62826c7e" />
-						</div>
-						<p className="mt-1 text-xs text-text-muted">
-							<LocalizedText messageKey="ui.settings.components.autoBeriWorldSettingsModal.uses.berimond.s.find.next.tower.command.f09dfe35" /></p>
 					</div>
-					<div className="grid gap-4 md:grid-cols-2">
-						<div className="md:col-span-2">
-							<EventAttackSetupField
-								id="auto-beri-attack"
-								label={<LocalizedText messageKey="ui.settings.components.autoBeriWorldSettingsModal.attack.preset.407b93e9" />}
-								section="automation.autoBeriWorld"
-								slot="attack"
-								moduleLabel={moduleLabel}
-								slotLabel={localizeStatic('attackPresets.slot.towerAttack')}
-								value={attackRef}
-								onChange={setAttackRef}
-								document={presetDocument}
-								references={presetReferences}
-								sourceCastle={sourceCastle}
-								observation={observation}
-								eventId={0}
-								recommendation={recommendation}
-								recipePending={recipePending}
-								onSaveAsPreset={(setup, name) => saveInlineSetupAsUserPreset(draftSession, setup, name)}
-								readinessChecks={readiness.checks.filter((check) => check.slot === 'attack')}
-								disabled={saving}
-							/>
-						</div>
+				</SettingsSection>
+
+				<SettingsSection
+					disclosure={disclosure}
+					section="attack-options"
+					summary={beriAttackOptionsSummary(settings)}
+					customCount={countCustomValues(settings, DEFAULT_AUTO_BERI_WORLD_SETTINGS, ['attackCheckIntervalSec', 'toolMinimums', 'useTroopTransportTimeSkips', 'troopTransportTimeSkipId', 'troopSpaceCheckIntervalSec', 'minTroopsToTransfer'])}
+					className="space-y-5"
+				>
+					<div className="grid gap-4 sm:grid-cols-2">
 						<label className="block">
 							<span className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-text-muted"><LocalizedText messageKey="ui.settings.components.autoBeriWorldSettingsModal.attack.check.interval.bc3e388d" /></span>
 							<Input
@@ -660,24 +710,7 @@ export const AutoBeriWorldSettingsModal: React.FC<AutoBeriWorldSettingsModalProp
 								rightIcon={<span className="text-xs">s</span>}
 							/>
 						</label>
-						<HorseTravelBoostSelect
-							className="block md:col-span-2"
-							value={settings.horseTravelBoostId}
-							onChange={(horseTravelBoostId) => setSettings((current) => ({ ...current, horseTravelBoostId }))}
-							description={localizeStatic("ui.settings.components.autoBeriWorldSettingsModal.description.the.exact.berimond.hbw.id.and.speed.6618c35f")}
-						/>
 					</div>
-					<p className="text-xs text-text-muted">{beriGuidePack.autoBeri.steps.transfers.items.preset_troop_mix.description} {beriGuidePack.autoBeri.steps.transfers.items.food_only.description}</p>
-				</div>
-
-				<div id="auto-beri-daily-limit" tabIndex={-1} className="outline-none">
-					<DailyAttackLimitField
-						value={settings.dailyAttackLimit}
-						onChange={(dailyAttackLimit) => setSettings((current) => ({ ...current, dailyAttackLimit }))}
-						serverState={state?.dailyAttacks}
-					/>
-				</div>
-
 				<div className="space-y-4 rounded-xl border border-border-base bg-bg-elevated/40 p-4">
 					<div>
 						<div className="flex items-center gap-2 text-sm font-black text-text-main">
@@ -758,19 +791,23 @@ export const AutoBeriWorldSettingsModal: React.FC<AutoBeriWorldSettingsModalProp
 				</div>
 
 
-				<CastleRequirementField
-					id="auto-beri-source"
-					label={<LocalizedText messageKey="ui.settings.components.autoBeriWorldSettingsModal.source.castle.86d5a48e" />}
-					value={effectiveSourceID}
-					onChange={(sourceCastleId) => setSettings((current) => ({ ...current, sourceCastleId }))}
-					state={setup.state}
-					purpose="source-great-empire"
-					options={sourceOptions}
-					placeholder={localizeStatic("ui.settings.components.autoBeriWorldSettingsModal.placeholder.main.castle.0e106dcc")}
-				/>
+				</SettingsSection>
 
+				<SettingsSection
+					disclosure={disclosure}
+					section="travel"
+					summary={[travelLine(settings.horseTravelBoostId)]}
+					customCount={countCustomValues(settings, DEFAULT_AUTO_BERI_WORLD_SETTINGS, ['horseTravelBoostId'])}
+				>
+						<HorseTravelBoostSelect
+							className="block"
+							value={settings.horseTravelBoostId}
+							onChange={(horseTravelBoostId) => setSettings((current) => ({ ...current, horseTravelBoostId }))}
+							description={localizeStatic("ui.settings.components.autoBeriWorldSettingsModal.description.the.exact.berimond.hbw.id.and.speed.6618c35f")}
+						/>
+				</SettingsSection>
 
-				<ReadinessPanel report={readiness} slotLabelKeys={{ attack: 'attackPresets.slot.towerAttack' }} onFix={fixReadiness} />
+				<ReadinessPanel report={readiness} slotLabelKeys={{ attack: 'attackPresets.slot.towerAttack' }} onFix={fixReadiness} noteFor={collapsedSettingNote(disclosure)} />
 
 				<CommanderAssignmentPanel
 				  id="auto-beri-commanders"

@@ -82,12 +82,20 @@ import { presentAutoStormTroopCap } from '../AutoStormTroopCapPresentation';
 import HorseTravelBoostSelect from './HorseTravelBoostSelect';
 import { DailyAttackLimitField } from './DailyAttackLimitField';
 import { FeatureGuideModal } from './FeatureGuideModal';
+import { AUTOMATION_ENABLED_KEYS } from '../disclosure/placement';
+import { checkIntervalLine, countCustomValues, mapRefreshLine, stormConstructionSummary, stormImportTuningSummary, stormPriorityLine, travelLine } from '../disclosure/summaries';
+import { useSettingsDisclosure } from '../disclosure/useSettingsDisclosure';
+import { AutomationRunStrip } from './AutomationRunStrip';
+import { collapsedSettingNote, SettingsSection } from './SettingsSection';
 import { englishGuidePack, useGuideLocale } from '../../config/useGuideLocale';
 
 interface AutoStormSettingsModalProps {
   isOpen: boolean;
   onClose: () => void;
+  onOpenAutomationDuration?: (featureKey: string, featureLabel: string) => void;
 }
+
+const stormDefaults = defaultAutoStormClientState();
 
 interface DecorationPresetOption {
   value: string;
@@ -156,7 +164,8 @@ const TIME_SKIP_RESERVES = [
 ];
 const LUNA_PACKAGE_ID_SET = new Set(AUTO_STORM_LUNA_PACKAGE_IDS);
 
-export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ isOpen, onClose }) => {
+export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ isOpen, onClose, onOpenAutomationDuration }) => {
+  const disclosure = useSettingsDisclosure('autoStorm');
   const { t: localizeStatic } = useStaticLocale();
   const { captureBuildingTarget } = useCitadelAPI();
   const setup = useSetupContext(AUTO_STORM_SECTION, useHostedRuntimePresence());
@@ -603,14 +612,7 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
       window.requestAnimationFrame(() => focusReadinessTarget('auto-storm-commanders-heading'));
       return;
     }
-    const target = check.slot ? `auto-storm-${check.slot}` : {
-      unlock: 'auto-storm-access',
-      branches: 'auto-storm-branches',
-      donors: 'auto-storm-donors',
-      shop: 'auto-storm-shop',
-      'daily-limit': 'auto-storm-daily-limit',
-    }[check.id];
-    if (target) focusReadinessTarget(target);
+    disclosure.fix(check);
   };
   const moduleLabel = localizeStatic('attackPresets.module.autoStorm');
   const stockLabel = stormCastle
@@ -678,6 +680,11 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
     >
       <div className="space-y-4">
         <div className="flex justify-end"><Button variant="outline" size="sm" onClick={() => setIsGuideOpen(true)} leftIcon={<BookOpen className="h-4 w-4" />}><span lang={stormPack === englishGuidePack ? "en" : stormGuideLocale}>{stormPack.ui.guideButton}</span></Button></div>
+        <AutomationRunStrip
+          featureId="autoStorm"
+          onOpenDuration={onOpenAutomationDuration ? () => onOpenAutomationDuration(AUTOMATION_ENABLED_KEYS.autoStorm, 'Auto Storm') : undefined}
+        />
+        <SettingsSection disclosure={disclosure} section="castle">
         <Card id="auto-storm-access" tabIndex={-1} variant="solid" className="p-4 outline-none">
           <SectionHeading
             icon={Castle}
@@ -738,291 +745,15 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
           {stormCastleOptionsError ? <p className="mt-2 text-xs text-error">{stormCastleOptionsError}</p> : null}
           {!unlockValid ? <p className="mt-2 text-xs text-error"><LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.choose.a.currently.available.official.storm.castle.25a907f3" /></p> : null}
         </Card>
+        </SettingsSection>
 
-        <Card variant="solid" className="p-4">
-          <SectionHeading
-            icon={Camera}
-            title={localizeStatic("ui.settings.components.autoStormSettingsModal.title.durable.castle.blueprints.36e000b1")}
-            description={localizeStatic("ui.settings.components.autoStormSettingsModal.description.capture.a.reusable.end.state.each.mode.e37c0a19")}
-          />
-          <div className="mt-4 grid gap-3 lg:grid-cols-[minmax(0,1fr)_repeat(3,auto)] lg:items-end">
-            <label className="block">
-              <FieldLabel><LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.storm.castle.2fd1da3a" /></FieldLabel>
-              <Select
-                value={stormCastle ? String(stormCastle.id) : ''}
-                onChange={(value) => setCaptureCastleId(Number(value) || 0)}
-                options={stormCastles.map((castle) => ({
-                  value: String(castle.id),
-                  label: `${castle.name?.trim() || `Castle ${castle.id}`} · ${castle.x}:${castle.y}`,
-                }))}
-                placeholder={stormCastles.length > 0 ? 'Choose Storm castle' : 'Unlock Storm first'}
-                disabled={stormCastles.length === 0 || capturing != null}
-                menuGrowToViewport
-              />
-            </label>
-            <Button
-              variant="outline"
-              disabled={!stormCastle || capturing != null}
-              isLoading={capturing === 'functional'}
-              onClick={() => void capture('functional')}
-              leftIcon={<Hammer className="h-4 w-4" />}
-            >
-              <LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.functional.b6656595" /></Button>
-            <Button
-              variant="outline"
-              disabled={!stormCastle || capturing != null}
-              isLoading={capturing === 'layout'}
-              onClick={() => void capture('layout')}
-              leftIcon={<Castle className="h-4 w-4" />}
-            >
-              <LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.layout.a5119091" /></Button>
-            <Button
-              variant="outline"
-              disabled={!stormCastle || capturing != null}
-              isLoading={capturing === 'exact'}
-              onClick={() => void capture('exact')}
-              leftIcon={<Camera className="h-4 w-4" />}
-            >
-              <LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.exact.clone.0174197d" /></Button>
-          </div>
-
-          {savedBlueprints.length > 0 ? (
-            <div className="mt-3 flex flex-wrap items-center gap-2">
-              <span className="text-[11px] font-semibold text-text-muted"><LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.saved.b6199040" /></span>
-              {savedBlueprints.map((blueprint) => (
-                <Button
-                  key={blueprint.id}
-                  size="sm"
-                  variant={blueprint.id === blueprintDocument.activeId ? 'primary' : 'ghost'}
-                  disabled={capturing != null || saving}
-                  onClick={() => void activateBlueprint(blueprint.id)}
-                >
-                  {blueprint.name}
-                </Button>
-              ))}
-            </div>
-          ) : null}
-
-          {target ? (
-            <div className="mt-4 rounded-global border border-primary/20 bg-primary/5 p-3">
-              <div className="flex flex-wrap items-center justify-between gap-3">
-                <div>
-                  <div className="flex flex-wrap items-center gap-2">
-                    <Badge variant="success">{captureModeLabel(target.mode)}</Badge>
-                    <span className="text-sm font-bold text-text-main">
-                      {targetCastle?.name?.trim() || `Castle ${target.castleId}`}
-                    </span>
-                  </div>
-                  <p className="mt-1 text-xs text-text-muted">Captured {formatDate(target.capturedAt)} from revision {target.revision.toLocaleString()}.</p>
-                </div>
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  onClick={() => void deactivateBlueprint()}
-                  leftIcon={<Trash2 className="h-3.5 w-3.5" />}
-                >
-                  <LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.pause.target.ba267ca2" /></Button>
-              </div>
-              <div className="mt-3 flex flex-wrap gap-2">
-                <Badge variant="outline">{target.summary.groundCount} ground tiles</Badge>
-                <Badge variant="outline">{target.summary.buildingCount} buildings</Badge>
-                <Badge variant="outline">{target.summary.fixedCount} fixed</Badge>
-                <Badge variant="outline">{target.summary.decorationCount} decorations</Badge>
-                {blueprintPreview ? (
-                  <Badge variant="outline">
-                    Preflight: {blueprintPreview.satisfiedCount}/{blueprintPreview.targetCount} satisfied · {blueprintPreview.actionCount} actions
-                  </Badge>
-                ) : null}
-              </div>
-            </div>
-          ) : (
-            <p className="mt-3 rounded-global border border-border-base bg-bg-app/35 px-3 py-2 text-xs text-text-muted">
-              <LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.no.castle.target.is.required.for.combat.f9ca213e" /></p>
-          )}
-
-          {target && target.mode !== 'exact' && target.mode !== 'full' ? (
-            <label className="mt-4 block border-t border-border-base pt-4">
-              <FieldLabel icon={Sparkles}><LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.decoration.preset.applied.after.construction.3ec5caba" /></FieldLabel>
-              <Select
-                value={selectedDecorationValue}
-                onChange={(value) => {
-                  const option = decorationOptions.find((candidate) => candidate.value === value);
-                  setDraft((current) => ({
-                    ...current,
-                    decorationPresetCastleId: option?.castleId ?? 0,
-                    decorationPresetId: option?.presetId ?? '',
-                  }));
-                }}
-                options={decorationOptions.map((option) => ({ value: option.value, label: option.label }))}
-                placeholder={decorationOptions.length > 0 ? 'Optional saved decoration preset' : 'Save a decoration preset first'}
-                disabled={decorationOptions.length === 0}
-                searchable
-                menuGrowToViewport
-              />
-              <p className="mt-2 text-xs text-text-muted"><LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.the.preset.may.come.from.any.castle.42cc0294" /></p>
-              <p className="mt-1 text-xs text-text-muted"><LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.optional.it.only.decorates.the.storm.castle.bda00004" /></p>
-            </label>
-          ) : null}
-        </Card>
-
-        <div className="grid gap-4 xl:grid-cols-2">
-          <Card variant="solid" className="p-4">
-            <SectionHeading
-              icon={Hammer}
-              title={localizeStatic("ui.settings.components.autoStormSettingsModal.title.construction.and.logistics.8e6e0606")}
-              description={localizeStatic("ui.settings.components.autoStormSettingsModal.description.gift.packets.are.cleared.after.expansions.storage.3cefb10e")}
-            />
-            <div className="mt-4 space-y-3">
-              <SettingsToggleRow
-                icon={<Truck className="h-3.5 w-3.5" />}
-                title={localizeStatic("ui.settings.components.autoStormSettingsModal.title.transport.missing.resources.b76e94ff")}
-                description={localizeStatic("ui.settings.components.autoStormSettingsModal.description.ship.available.resources.from.another.owned.kingdom.cfa81f3c")}
-                checked={draft.build.allowResourceTransport}
-                onChange={(allowResourceTransport) => updateBuild(setDraft, { allowResourceTransport })}
-              />
-              <SettingsToggleRow
-                icon={<FastForward className="h-3.5 w-3.5" />}
-                title={localizeStatic("ui.settings.components.autoStormSettingsModal.title.use.time.skips.a5caaa59")}
-                description={localizeStatic("ui.settings.components.autoStormSettingsModal.description.advance.construction.resource.transport.or.troop.transport.326defea")}
-                checked={draft.build.allowTimeSkips}
-                onChange={(allowTimeSkips) => updateBuild(setDraft, { allowTimeSkips })}
-              />
-              <SettingsToggleRow
-                icon={<Sparkles className="h-3.5 w-3.5" />}
-                title={localizeStatic("ui.settings.components.autoStormSettingsModal.title.allow.premium.costs.fd72d704")}
-                description={localizeStatic("ui.settings.components.autoStormSettingsModal.description.permit.premium.construction.paths.harbor.levels.2.e7439d0f")}
-                checked={draft.build.allowPremium}
-                onChange={(allowPremium) => updateBuild(setDraft, { allowPremium })}
-                tone="warning"
-              />
-              <SettingsToggleRow
-                icon={<Trash2 className="h-3.5 w-3.5" />}
-                title={localizeStatic("ui.settings.components.autoStormSettingsModal.title.allow.demolition.b9a49e66")}
-                description={localizeStatic("ui.settings.components.autoStormSettingsModal.description.permit.exact.reconciliation.to.demolish.unmanaged.buildings.e7ae16af")}
-                checked={draft.build.allowDemolition}
-                onChange={(allowDemolition) => updateBuild(setDraft, { allowDemolition })}
-                warning
-              />
-            </div>
-
-            <div className="mt-4 border-t border-border-base pt-4">
-              <FieldLabel><LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.storm.castle.spending.reserves.d7661852" /></FieldLabel>
-              <div className="grid grid-cols-3 gap-2">
-                {RESOURCE_RESERVES.map((resource) => (
-                  <label key={resource.key} className="block">
-                    <span className="mb-1 block text-[10px] font-semibold text-text-muted">{resource.label}</span>
-                    <Input
-                      type="number"
-                      min={0}
-                      value={draft.build.resourceReserves[resource.key] ?? 0}
-                      onChange={(event) => updateNumberMap(
-                        setDraft,
-                        'resourceReserves',
-                        resource.key,
-                        clampAutoStormInteger(event.target.value, 0, Number.MAX_SAFE_INTEGER, 0),
-                      )}
-                      className="font-mono"
-                    />
-                  </label>
-                ))}
-              </div>
-            </div>
-
-            {draft.build.allowResourceTransport ? (
-              <div className="mt-4 border-t border-border-base pt-4">
-                <FieldLabel><LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.protected.donor.reserves.1ab79630" /></FieldLabel>
-                <div className="grid grid-cols-3 gap-2">
-                  {RESOURCE_RESERVES.map((resource) => (
-                    <label key={resource.key} className="block">
-                      <span className="mb-1 block text-[10px] font-semibold text-text-muted">{resource.label}</span>
-                      <Input
-                        type="number"
-                        min={0}
-                        value={draft.build.sourceResourceReserves[resource.key] ?? 0}
-                        onChange={(event) => updateNumberMap(
-                          setDraft,
-                          'sourceResourceReserves',
-                          resource.key,
-                          clampAutoStormInteger(event.target.value, 0, Number.MAX_SAFE_INTEGER, 0),
-                        )}
-                        className="font-mono"
-                      />
-                    </label>
-                  ))}
-                </div>
-                <p className="mt-2 text-[11px] text-text-muted">
-                  <LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.multi.resource.shipments.may.use.every.amount.cfd5df72" /></p>
-              </div>
-            ) : null}
-
-            {draft.build.allowTimeSkips ? (
-              <div className="mt-4 border-t border-border-base pt-4">
-                <FieldLabel><LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.time.skips.kept.in.reserve.07cf3bca" /></FieldLabel>
-                <div className="grid grid-cols-4 gap-2 sm:grid-cols-7">
-                  {TIME_SKIP_RESERVES.map((skip) => (
-                    <label key={skip.key} className="block">
-                      <span className="mb-1 block text-center text-[10px] font-semibold text-text-muted">{skip.label}</span>
-                      <Input
-                        type="number"
-                        min={0}
-                        value={draft.build.timeSkipReserve[skip.key] ?? 0}
-                        onChange={(event) => updateNumberMap(
-                          setDraft,
-                          'timeSkipReserve',
-                          skip.key,
-                          clampAutoStormInteger(event.target.value, 0, Number.MAX_SAFE_INTEGER, 0),
-                        )}
-                        className="px-2 text-center font-mono"
-                      />
-                    </label>
-                  ))}
-                </div>
-              </div>
-            ) : null}
-
-            <div className="mt-4 border-t border-border-base pt-4">
-              <div className="flex items-start justify-between gap-4">
-                <div>
-                  <div className="flex items-center gap-2 text-sm font-bold text-text-main"><Anchor className="h-4 w-4 text-primary" /> <LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.upgrade.harbor.da1bc184" /></div>
-                  <p className="mt-1 text-xs text-text-muted"><LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.override.the.captured.harbor.path.and.maintain.1d06a158" /></p>
-                </div>
-                <Switch
-                  checked={draft.harbor.enabled}
-                  onChange={(enabled) => setDraft((current) => ({ ...current, harbor: { ...current.harbor, enabled } }))}
-                  ariaLabel={localizeStatic("ui.settings.components.autoStormSettingsModal.ariaLabel.automate.storm.harbor.upgrades.9fb63b2d")}
-                />
-              </div>
-              {draft.harbor.enabled ? (
-                <div className="mt-3">
-                  <Select
-                    value={String(draft.harbor.targetLevel)}
-                    onChange={(value) => setDraft((current) => ({
-                      ...current,
-                      harbor: { ...current.harbor, targetLevel: Number(value) || 1 },
-                    }))}
-                    options={[1, 2, 3].map((level) => ({ value: String(level), label: `Harbor level ${level}` }))}
-                  />
-                  {draft.harbor.targetLevel > 1 && !draft.build.allowPremium ? (
-                    <p className="mt-2 text-xs text-warning"><LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.harbor.levels.2.3.are.premium.paths.398f3dd1" /></p>
-                  ) : null}
-                </div>
-              ) : null}
-            </div>
-          </Card>
-
+        <SettingsSection disclosure={disclosure} section="targets">
           <Card id="auto-storm-branches" tabIndex={-1} variant="solid" className="p-4 outline-none">
             <SectionHeading
               icon={Swords}
               title={localizeStatic("ui.settings.components.autoStormSettingsModal.title.forts.and.resource.islands.4ccb548f")}
               description={localizeStatic("ui.settings.components.autoStormSettingsModal.description.each.target.type.has.its.own.attack.287a841c")}
             />
-
-            <div className="mt-4 rounded-global border border-border-base bg-bg-app/30 p-3">
-              <HorseTravelBoostSelect
-                value={draft.horseTravelBoostId}
-                onChange={(horseTravelBoostId) => setDraft((current) => ({ ...current, horseTravelBoostId }))}
-              />
-            </div>
 
             <div className="mt-4 rounded-global border border-border-base bg-bg-app/30 p-3">
               <div className="flex items-start justify-between gap-4">
@@ -1088,92 +819,6 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
                   {draft.forts.levels.length === 0 ? <p className="text-xs text-error"><LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.select.at.least.one.fort.level.32a7a693" /></p> : null}
                 </div>
               ) : null}
-            </div>
-
-            <div className="mt-3 rounded-global border border-border-base bg-bg-app/30 p-3">
-              <div>
-                <div className="flex items-center gap-2 text-sm font-bold text-text-main">
-                  <Crosshair className="h-4 w-4 text-primary" /> <LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.attack.target.priority.f25858a6" />
-                </div>
-                <p className="mt-1 text-xs text-text-muted">
-                  <LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.drag.enabled.targets.into.attack.order.highest.6f2dfc44" /></p>
-              </div>
-
-              {activeTargetPriorities.length > 0 ? (
-                <div className="mt-3 space-y-2 border-t border-border-base pt-3" role="list" aria-label={localizeStatic("ui.settings.components.autoStormSettingsModal.aria-label.auto.storm.target.priority.order.de42d734")}>
-                  {activeTargetPriorities.map((priority, index) => {
-                    const option = TARGET_PRIORITY_OPTIONS[priority];
-                    return (
-                      <div
-                        key={priority}
-                        role="listitem"
-                        draggable
-                        onDragStart={(event) => {
-                          event.dataTransfer.effectAllowed = 'move';
-                          event.dataTransfer.setData('text/plain', priority);
-                          setDraggedTargetPriority(priority);
-                        }}
-                        onDragOver={(event) => {
-                          event.preventDefault();
-                          event.dataTransfer.dropEffect = 'move';
-                          if (priority !== draggedTargetPriority) setTargetPriorityDropTarget(priority);
-                        }}
-                        onDragLeave={(event) => {
-                          if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setTargetPriorityDropTarget(null);
-                        }}
-                        onDrop={(event) => {
-                          event.preventDefault();
-                          const source = (draggedTargetPriority ?? event.dataTransfer.getData('text/plain')) as AutoStormTargetPriority;
-                          if (AUTO_STORM_TARGET_PRIORITIES.some((candidate) => candidate === source)) {
-                            moveTargetPriority(source, priority);
-                          }
-                          finishTargetPriorityDrag();
-                        }}
-                        onDragEnd={finishTargetPriorityDrag}
-                        className={`flex cursor-grab items-center gap-3 rounded-global border bg-bg-card/45 p-3 transition-colors active:cursor-grabbing ${
-                          draggedTargetPriority === priority
-                            ? 'border-primary/40 opacity-45'
-                            : targetPriorityDropTarget === priority
-                              ? 'border-primary bg-primary/10'
-                              : 'border-border-base hover:border-primary/30'
-                        }`}
-                      >
-                        <GripVertical className="h-5 w-5 shrink-0 text-text-muted" aria-hidden="true" />
-                        <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-bg-app text-xs font-bold tabular-nums text-primary ring-1 ring-border-base">
-                          {index + 1}
-                        </span>
-                        <span className="min-w-0 flex-1">
-                          <span className="block text-xs font-bold text-text-main">{option.label}</span>
-                          <span className="mt-0.5 block text-[11px] leading-4 text-text-muted">{option.detail}</span>
-                        </span>
-                        <span className="flex shrink-0 items-center gap-1">
-                          <button
-                            type="button"
-                            disabled={index === 0}
-                            onClick={() => moveTargetPriorityBy(priority, -1)}
-                            className="rounded-md p-1.5 text-text-muted transition-colors hover:bg-primary/10 hover:text-primary disabled:pointer-events-none disabled:opacity-25"
-                            aria-label={`Move ${option.label} up`}
-                          >
-                            <ArrowUp className="h-3.5 w-3.5" />
-                          </button>
-                          <button
-                            type="button"
-                            disabled={index === activeTargetPriorities.length - 1}
-                            onClick={() => moveTargetPriorityBy(priority, 1)}
-                            className="rounded-md p-1.5 text-text-muted transition-colors hover:bg-primary/10 hover:text-primary disabled:pointer-events-none disabled:opacity-25"
-                            aria-label={`Move ${option.label} down`}
-                          >
-                            <ArrowDown className="h-3.5 w-3.5" />
-                          </button>
-                        </span>
-                      </div>
-                    );
-                  })}
-                </div>
-              ) : (
-                <p className="mt-3 border-t border-border-base pt-3 text-xs text-text-muted">
-                  <LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.enable.forts.or.resource.islands.and.select.db2a7a68" /></p>
-              )}
             </div>
 
             <div className="mt-3 rounded-global border border-border-base bg-bg-app/30 p-3">
@@ -1272,8 +917,12 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
                 </div>
               ) : null}
             </div>
+          </Card>
+        </SettingsSection>
 
-            <div className="mt-3 rounded-global border border-border-base bg-bg-app/30 p-3">
+        <SettingsSection disclosure={disclosure} section="donors">
+          <Card variant="solid" className="p-4">
+            <div>
               <div className="flex items-start justify-between gap-4">
                 <div>
                   <div className="flex items-center gap-2 text-sm font-bold text-text-main"><Truck className="h-4 w-4 text-primary" /> <LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.import.missing.troops.8667e705" /></div>
@@ -1311,6 +960,22 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
                   {readiness.checks.filter((check) => check.id === 'donors').map((check) => (
                     <ul key={check.id} id="auto-storm-donors" tabIndex={-1} className="mt-2 outline-none"><ReadinessCheckLine check={check} /></ul>
                   ))}
+                  <p className="mt-2 text-[11px] text-text-muted"><LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.donors.are.checked.in.the.displayed.order.06f5ffd4" /></p>
+                  {!troopImportValid ? <p className="mt-2 text-xs text-error"><LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.select.at.least.one.currently.observed.donor.8e329343" /></p> : null}
+                </div>
+              ) : null}
+            </div>
+          </Card>
+        </SettingsSection>
+
+        <SettingsSection
+          disclosure={disclosure}
+          section="import-tuning"
+          summary={stormImportTuningSummary(draft.troopImport)}
+          customCount={countCustomValues(draft.troopImport, stormDefaults.troopImport, ['minimumTroops'])}
+        >
+          {draft.troopImport.enabled ? (
+            <div>
                   <div className="mt-3 grid gap-3 sm:grid-cols-2">
                     <label>
                       <FieldLabel><LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.minimum.troops.kept.after.launch.96092426" /></FieldLabel>
@@ -1392,30 +1057,12 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
                   </div>
                   <p className="mt-3 text-[11px] text-text-muted">
                     <LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.the.cap.is.the.largest.of.the.4802a71d" /></p>
-                  <p className="mt-2 text-[11px] text-text-muted"><LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.donors.are.checked.in.the.displayed.order.06f5ffd4" /></p>
-                  {!troopImportValid ? <p className="mt-2 text-xs text-error"><LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.select.at.least.one.currently.observed.donor.8e329343" /></p> : null}
-                </div>
-              ) : null}
-            </div>
 
-            <div className="mt-4 border-t border-border-base pt-4">
-              <div>
-                <FieldLabel><LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.map.coverage.88c46857" /></FieldLabel>
-                <Input readOnly value={stormMapCoverage} />
-                <p className="mt-1 text-[11px] text-text-muted">
-                  {stormMapState?.windowCount && stormMapState.lastCompletedAt ? `Last completed ${formatDate(stormMapState.lastCompletedAt)}. ` : ''}
-                  Coverage is scoped to the current server and account, then expanded when a completed sweep reaches an observed map edge.
-                </p>
-                <p className="mt-1 text-[11px] text-text-muted">
-                  {stormOpportunities.ready} learned targets are ready now.
-                  {Number.isFinite(stormOpportunities.nextReadyAt) ? ` Next readyAt label: ${formatDate(new Date(stormOpportunities.nextReadyAt).toISOString())}.` : ''}
-                  {' '}Auto Storm wakes on these labels between full sweeps.
-                </p>
-              </div>
             </div>
-          </Card>
-        </div>
+          ) : <p className="text-xs text-text-muted"><LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.troop.import.is.off.so.no.troops.1db2da31" /></p>}
+        </SettingsSection>
 
+        <SettingsSection disclosure={disclosure} section="shop">
         <Card id="auto-storm-shop" tabIndex={-1} variant="solid" className="p-4 outline-none">
           <SectionHeading
             icon={Package}
@@ -1583,7 +1230,9 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
               <LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.lower.priority.numbers.run.first.an.uncapped.1a572fa0" /></p>
           ) : null}
         </Card>
+        </SettingsSection>
 
+        <SettingsSection disclosure={disclosure} section="limits">
         <div id="auto-storm-daily-limit" tabIndex={-1} className="outline-none">
           <DailyAttackLimitField
             value={draft.dailyAttackLimit}
@@ -1591,7 +1240,397 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
             serverState={state?.dailyAttacks}
           />
         </div>
+        </SettingsSection>
 
+        <SettingsSection
+          disclosure={disclosure}
+          section="construction"
+          summary={stormConstructionSummary(draft, draft.target != null || Boolean(blueprintDocument.activeId))}
+          customCount={countCustomValues(draft.build, stormDefaults.build, ['allowResourceTransport', 'allowTimeSkips', 'allowPremium', 'allowDemolition', 'resourceReserves', 'sourceResourceReserves', 'timeSkipReserve'])
+            + countCustomValues(draft.harbor, stormDefaults.harbor, ['enabled', 'targetLevel'])}
+          className="space-y-4"
+        >
+        <Card variant="solid" className="p-4">
+          <SectionHeading
+            icon={Camera}
+            title={localizeStatic("ui.settings.components.autoStormSettingsModal.title.durable.castle.blueprints.36e000b1")}
+            description={localizeStatic("ui.settings.components.autoStormSettingsModal.description.capture.a.reusable.end.state.each.mode.e37c0a19")}
+          />
+          <div className="mt-4 grid gap-3 lg:grid-cols-[minmax(0,1fr)_repeat(3,auto)] lg:items-end">
+            <label className="block">
+              <FieldLabel><LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.storm.castle.2fd1da3a" /></FieldLabel>
+              <Select
+                value={stormCastle ? String(stormCastle.id) : ''}
+                onChange={(value) => setCaptureCastleId(Number(value) || 0)}
+                options={stormCastles.map((castle) => ({
+                  value: String(castle.id),
+                  label: `${castle.name?.trim() || `Castle ${castle.id}`} · ${castle.x}:${castle.y}`,
+                }))}
+                placeholder={stormCastles.length > 0 ? 'Choose Storm castle' : 'Unlock Storm first'}
+                disabled={stormCastles.length === 0 || capturing != null}
+                menuGrowToViewport
+              />
+            </label>
+            <Button
+              variant="outline"
+              disabled={!stormCastle || capturing != null}
+              isLoading={capturing === 'functional'}
+              onClick={() => void capture('functional')}
+              leftIcon={<Hammer className="h-4 w-4" />}
+            >
+              <LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.functional.b6656595" /></Button>
+            <Button
+              variant="outline"
+              disabled={!stormCastle || capturing != null}
+              isLoading={capturing === 'layout'}
+              onClick={() => void capture('layout')}
+              leftIcon={<Castle className="h-4 w-4" />}
+            >
+              <LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.layout.a5119091" /></Button>
+            <Button
+              variant="outline"
+              disabled={!stormCastle || capturing != null}
+              isLoading={capturing === 'exact'}
+              onClick={() => void capture('exact')}
+              leftIcon={<Camera className="h-4 w-4" />}
+            >
+              <LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.exact.clone.0174197d" /></Button>
+          </div>
+
+          {savedBlueprints.length > 0 ? (
+            <div className="mt-3 flex flex-wrap items-center gap-2">
+              <span className="text-[11px] font-semibold text-text-muted"><LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.saved.b6199040" /></span>
+              {savedBlueprints.map((blueprint) => (
+                <Button
+                  key={blueprint.id}
+                  size="sm"
+                  variant={blueprint.id === blueprintDocument.activeId ? 'primary' : 'ghost'}
+                  disabled={capturing != null || saving}
+                  onClick={() => void activateBlueprint(blueprint.id)}
+                >
+                  {blueprint.name}
+                </Button>
+              ))}
+            </div>
+          ) : null}
+
+          {target ? (
+            <div className="mt-4 rounded-global border border-primary/20 bg-primary/5 p-3">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <Badge variant="success">{captureModeLabel(target.mode)}</Badge>
+                    <span className="text-sm font-bold text-text-main">
+                      {targetCastle?.name?.trim() || `Castle ${target.castleId}`}
+                    </span>
+                  </div>
+                  <p className="mt-1 text-xs text-text-muted">Captured {formatDate(target.capturedAt)} from revision {target.revision.toLocaleString()}.</p>
+                </div>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => void deactivateBlueprint()}
+                  leftIcon={<Trash2 className="h-3.5 w-3.5" />}
+                >
+                  <LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.pause.target.ba267ca2" /></Button>
+              </div>
+              <div className="mt-3 flex flex-wrap gap-2">
+                <Badge variant="outline">{target.summary.groundCount} ground tiles</Badge>
+                <Badge variant="outline">{target.summary.buildingCount} buildings</Badge>
+                <Badge variant="outline">{target.summary.fixedCount} fixed</Badge>
+                <Badge variant="outline">{target.summary.decorationCount} decorations</Badge>
+                {blueprintPreview ? (
+                  <Badge variant="outline">
+                    Preflight: {blueprintPreview.satisfiedCount}/{blueprintPreview.targetCount} satisfied · {blueprintPreview.actionCount} actions
+                  </Badge>
+                ) : null}
+              </div>
+            </div>
+          ) : (
+            <p className="mt-3 rounded-global border border-border-base bg-bg-app/35 px-3 py-2 text-xs text-text-muted">
+              <LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.no.castle.target.is.required.for.combat.f9ca213e" /></p>
+          )}
+
+          {target && target.mode !== 'exact' && target.mode !== 'full' ? (
+            <label className="mt-4 block border-t border-border-base pt-4">
+              <FieldLabel icon={Sparkles}><LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.decoration.preset.applied.after.construction.3ec5caba" /></FieldLabel>
+              <Select
+                value={selectedDecorationValue}
+                onChange={(value) => {
+                  const option = decorationOptions.find((candidate) => candidate.value === value);
+                  setDraft((current) => ({
+                    ...current,
+                    decorationPresetCastleId: option?.castleId ?? 0,
+                    decorationPresetId: option?.presetId ?? '',
+                  }));
+                }}
+                options={decorationOptions.map((option) => ({ value: option.value, label: option.label }))}
+                placeholder={decorationOptions.length > 0 ? 'Optional saved decoration preset' : 'Save a decoration preset first'}
+                disabled={decorationOptions.length === 0}
+                searchable
+                menuGrowToViewport
+              />
+              <p className="mt-2 text-xs text-text-muted"><LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.the.preset.may.come.from.any.castle.42cc0294" /></p>
+              <p className="mt-1 text-xs text-text-muted"><LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.optional.it.only.decorates.the.storm.castle.bda00004" /></p>
+            </label>
+          ) : null}
+        </Card>
+        <Card variant="solid" className="p-4">
+          <SectionHeading
+            icon={Hammer}
+            title={localizeStatic("ui.settings.components.autoStormSettingsModal.title.construction.and.logistics.8e6e0606")}
+            description={localizeStatic("ui.settings.components.autoStormSettingsModal.description.gift.packets.are.cleared.after.expansions.storage.3cefb10e")}
+          />
+          <div className="mt-4 space-y-3">
+            <SettingsToggleRow
+              icon={<Truck className="h-3.5 w-3.5" />}
+              title={localizeStatic("ui.settings.components.autoStormSettingsModal.title.transport.missing.resources.b76e94ff")}
+              description={localizeStatic("ui.settings.components.autoStormSettingsModal.description.ship.available.resources.from.another.owned.kingdom.cfa81f3c")}
+              checked={draft.build.allowResourceTransport}
+              onChange={(allowResourceTransport) => updateBuild(setDraft, { allowResourceTransport })}
+            />
+            <SettingsToggleRow
+              icon={<FastForward className="h-3.5 w-3.5" />}
+              title={localizeStatic("ui.settings.components.autoStormSettingsModal.title.use.time.skips.a5caaa59")}
+              description={localizeStatic("ui.settings.components.autoStormSettingsModal.description.advance.construction.resource.transport.or.troop.transport.326defea")}
+              checked={draft.build.allowTimeSkips}
+              onChange={(allowTimeSkips) => updateBuild(setDraft, { allowTimeSkips })}
+            />
+            <SettingsToggleRow
+              icon={<Sparkles className="h-3.5 w-3.5" />}
+              title={localizeStatic("ui.settings.components.autoStormSettingsModal.title.allow.premium.costs.fd72d704")}
+              description={localizeStatic("ui.settings.components.autoStormSettingsModal.description.permit.premium.construction.paths.harbor.levels.2.e7439d0f")}
+              checked={draft.build.allowPremium}
+              onChange={(allowPremium) => updateBuild(setDraft, { allowPremium })}
+              tone="warning"
+            />
+            <SettingsToggleRow
+              icon={<Trash2 className="h-3.5 w-3.5" />}
+              title={localizeStatic("ui.settings.components.autoStormSettingsModal.title.allow.demolition.b9a49e66")}
+              description={localizeStatic("ui.settings.components.autoStormSettingsModal.description.permit.exact.reconciliation.to.demolish.unmanaged.buildings.e7ae16af")}
+              checked={draft.build.allowDemolition}
+              onChange={(allowDemolition) => updateBuild(setDraft, { allowDemolition })}
+              warning
+            />
+          </div>
+
+          <div className="mt-4 border-t border-border-base pt-4">
+            <FieldLabel><LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.storm.castle.spending.reserves.d7661852" /></FieldLabel>
+            <div className="grid grid-cols-3 gap-2">
+              {RESOURCE_RESERVES.map((resource) => (
+                <label key={resource.key} className="block">
+                  <span className="mb-1 block text-[10px] font-semibold text-text-muted">{resource.label}</span>
+                  <Input
+                    type="number"
+                    min={0}
+                    value={draft.build.resourceReserves[resource.key] ?? 0}
+                    onChange={(event) => updateNumberMap(
+                      setDraft,
+                      'resourceReserves',
+                      resource.key,
+                      clampAutoStormInteger(event.target.value, 0, Number.MAX_SAFE_INTEGER, 0),
+                    )}
+                    className="font-mono"
+                  />
+                </label>
+              ))}
+            </div>
+          </div>
+
+          {draft.build.allowResourceTransport ? (
+            <div className="mt-4 border-t border-border-base pt-4">
+              <FieldLabel><LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.protected.donor.reserves.1ab79630" /></FieldLabel>
+              <div className="grid grid-cols-3 gap-2">
+                {RESOURCE_RESERVES.map((resource) => (
+                  <label key={resource.key} className="block">
+                    <span className="mb-1 block text-[10px] font-semibold text-text-muted">{resource.label}</span>
+                    <Input
+                      type="number"
+                      min={0}
+                      value={draft.build.sourceResourceReserves[resource.key] ?? 0}
+                      onChange={(event) => updateNumberMap(
+                        setDraft,
+                        'sourceResourceReserves',
+                        resource.key,
+                        clampAutoStormInteger(event.target.value, 0, Number.MAX_SAFE_INTEGER, 0),
+                      )}
+                      className="font-mono"
+                    />
+                  </label>
+                ))}
+              </div>
+              <p className="mt-2 text-[11px] text-text-muted">
+                <LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.multi.resource.shipments.may.use.every.amount.cfd5df72" /></p>
+            </div>
+          ) : null}
+
+          {draft.build.allowTimeSkips ? (
+            <div className="mt-4 border-t border-border-base pt-4">
+              <FieldLabel><LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.time.skips.kept.in.reserve.07cf3bca" /></FieldLabel>
+              <div className="grid grid-cols-4 gap-2 sm:grid-cols-7">
+                {TIME_SKIP_RESERVES.map((skip) => (
+                  <label key={skip.key} className="block">
+                    <span className="mb-1 block text-center text-[10px] font-semibold text-text-muted">{skip.label}</span>
+                    <Input
+                      type="number"
+                      min={0}
+                      value={draft.build.timeSkipReserve[skip.key] ?? 0}
+                      onChange={(event) => updateNumberMap(
+                        setDraft,
+                        'timeSkipReserve',
+                        skip.key,
+                        clampAutoStormInteger(event.target.value, 0, Number.MAX_SAFE_INTEGER, 0),
+                      )}
+                      className="px-2 text-center font-mono"
+                    />
+                  </label>
+                ))}
+              </div>
+            </div>
+          ) : null}
+
+          <div className="mt-4 border-t border-border-base pt-4">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <div className="flex items-center gap-2 text-sm font-bold text-text-main"><Anchor className="h-4 w-4 text-primary" /> <LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.upgrade.harbor.da1bc184" /></div>
+                <p className="mt-1 text-xs text-text-muted"><LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.override.the.captured.harbor.path.and.maintain.1d06a158" /></p>
+              </div>
+              <Switch
+                checked={draft.harbor.enabled}
+                onChange={(enabled) => setDraft((current) => ({ ...current, harbor: { ...current.harbor, enabled } }))}
+                ariaLabel={localizeStatic("ui.settings.components.autoStormSettingsModal.ariaLabel.automate.storm.harbor.upgrades.9fb63b2d")}
+              />
+            </div>
+            {draft.harbor.enabled ? (
+              <div className="mt-3">
+                <Select
+                  value={String(draft.harbor.targetLevel)}
+                  onChange={(value) => setDraft((current) => ({
+                    ...current,
+                    harbor: { ...current.harbor, targetLevel: Number(value) || 1 },
+                  }))}
+                  options={[1, 2, 3].map((level) => ({ value: String(level), label: `Harbor level ${level}` }))}
+                />
+                {draft.harbor.targetLevel > 1 && !draft.build.allowPremium ? (
+                  <p className="mt-2 text-xs text-warning"><LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.harbor.levels.2.3.are.premium.paths.398f3dd1" /></p>
+                ) : null}
+              </div>
+            ) : null}
+          </div>
+        </Card>
+        </SettingsSection>
+
+        <SettingsSection
+          disclosure={disclosure}
+          section="priority"
+          summary={[stormPriorityLine(activeTargetPriorities.length)]}
+        >
+            <div>
+              <div>
+                <div className="flex items-center gap-2 text-sm font-bold text-text-main">
+                  <Crosshair className="h-4 w-4 text-primary" /> <LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.attack.target.priority.f25858a6" />
+                </div>
+                <p className="mt-1 text-xs text-text-muted">
+                  <LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.drag.enabled.targets.into.attack.order.highest.6f2dfc44" /></p>
+              </div>
+
+              {activeTargetPriorities.length > 0 ? (
+                <div className="mt-3 space-y-2 border-t border-border-base pt-3" role="list" aria-label={localizeStatic("ui.settings.components.autoStormSettingsModal.aria-label.auto.storm.target.priority.order.de42d734")}>
+                  {activeTargetPriorities.map((priority, index) => {
+                    const option = TARGET_PRIORITY_OPTIONS[priority];
+                    return (
+                      <div
+                        key={priority}
+                        role="listitem"
+                        draggable
+                        onDragStart={(event) => {
+                          event.dataTransfer.effectAllowed = 'move';
+                          event.dataTransfer.setData('text/plain', priority);
+                          setDraggedTargetPriority(priority);
+                        }}
+                        onDragOver={(event) => {
+                          event.preventDefault();
+                          event.dataTransfer.dropEffect = 'move';
+                          if (priority !== draggedTargetPriority) setTargetPriorityDropTarget(priority);
+                        }}
+                        onDragLeave={(event) => {
+                          if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setTargetPriorityDropTarget(null);
+                        }}
+                        onDrop={(event) => {
+                          event.preventDefault();
+                          const source = (draggedTargetPriority ?? event.dataTransfer.getData('text/plain')) as AutoStormTargetPriority;
+                          if (AUTO_STORM_TARGET_PRIORITIES.some((candidate) => candidate === source)) {
+                            moveTargetPriority(source, priority);
+                          }
+                          finishTargetPriorityDrag();
+                        }}
+                        onDragEnd={finishTargetPriorityDrag}
+                        className={`flex cursor-grab items-center gap-3 rounded-global border bg-bg-card/45 p-3 transition-colors active:cursor-grabbing ${
+                          draggedTargetPriority === priority
+                            ? 'border-primary/40 opacity-45'
+                            : targetPriorityDropTarget === priority
+                              ? 'border-primary bg-primary/10'
+                              : 'border-border-base hover:border-primary/30'
+                        }`}
+                      >
+                        <GripVertical className="h-5 w-5 shrink-0 text-text-muted" aria-hidden="true" />
+                        <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-bg-app text-xs font-bold tabular-nums text-primary ring-1 ring-border-base">
+                          {index + 1}
+                        </span>
+                        <span className="min-w-0 flex-1">
+                          <span className="block text-xs font-bold text-text-main">{option.label}</span>
+                          <span className="mt-0.5 block text-[11px] leading-4 text-text-muted">{option.detail}</span>
+                        </span>
+                        <span className="flex shrink-0 items-center gap-1">
+                          <button
+                            type="button"
+                            disabled={index === 0}
+                            onClick={() => moveTargetPriorityBy(priority, -1)}
+                            className="rounded-md p-1.5 text-text-muted transition-colors hover:bg-primary/10 hover:text-primary disabled:pointer-events-none disabled:opacity-25"
+                            aria-label={`Move ${option.label} up`}
+                          >
+                            <ArrowUp className="h-3.5 w-3.5" />
+                          </button>
+                          <button
+                            type="button"
+                            disabled={index === activeTargetPriorities.length - 1}
+                            onClick={() => moveTargetPriorityBy(priority, 1)}
+                            className="rounded-md p-1.5 text-text-muted transition-colors hover:bg-primary/10 hover:text-primary disabled:pointer-events-none disabled:opacity-25"
+                            aria-label={`Move ${option.label} down`}
+                          >
+                            <ArrowDown className="h-3.5 w-3.5" />
+                          </button>
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <p className="mt-3 border-t border-border-base pt-3 text-xs text-text-muted">
+                  <LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.enable.forts.or.resource.islands.and.select.db2a7a68" /></p>
+              )}
+            </div>
+        </SettingsSection>
+
+        <SettingsSection
+          disclosure={disclosure}
+          section="travel"
+          summary={[travelLine(draft.horseTravelBoostId)]}
+          customCount={countCustomValues(draft, stormDefaults, ['horseTravelBoostId'])}
+        >
+              <HorseTravelBoostSelect
+                value={draft.horseTravelBoostId}
+                onChange={(horseTravelBoostId) => setDraft((current) => ({ ...current, horseTravelBoostId }))}
+              />
+        </SettingsSection>
+
+        <SettingsSection
+          disclosure={disclosure}
+          section="timing"
+          summary={[checkIntervalLine(draft.checkIntervalSec), mapRefreshLine(draft.mapRefreshIntervalSec)]}
+          customCount={countCustomValues(draft, stormDefaults, ['checkIntervalSec'])}
+          className="space-y-4"
+        >
         <Card variant="solid" className="p-4">
           <SectionHeading icon={Clock3} title={localizeStatic("ui.settings.components.autoStormSettingsModal.title.cadence.316d43c0")} description={localizeStatic("ui.settings.components.autoStormSettingsModal.description.map.refreshes.are.authoritative.scans.policy.checks.ab4ae38c")} />
           <div className="mt-4 grid gap-3 sm:grid-cols-2">
@@ -1622,11 +1661,28 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
             </label>
           </div>
         </Card>
+          <div className="rounded-global border border-border-base bg-bg-app/30 p-3">
+              <div>
+                <FieldLabel><LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.map.coverage.88c46857" /></FieldLabel>
+                <Input readOnly value={stormMapCoverage} />
+                <p className="mt-1 text-[11px] text-text-muted">
+                  {stormMapState?.windowCount && stormMapState.lastCompletedAt ? `Last completed ${formatDate(stormMapState.lastCompletedAt)}. ` : ''}
+                  Coverage is scoped to the current server and account, then expanded when a completed sweep reaches an observed map edge.
+                </p>
+                <p className="mt-1 text-[11px] text-text-muted">
+                  {stormOpportunities.ready} learned targets are ready now.
+                  {Number.isFinite(stormOpportunities.nextReadyAt) ? ` Next readyAt label: ${formatDate(new Date(stormOpportunities.nextReadyAt).toISOString())}.` : ''}
+                  {' '}Auto Storm wakes on these labels between full sweeps.
+                </p>
+              </div>
+          </div>
+        </SettingsSection>
 
         <ReadinessPanel
           report={readiness}
           slotLabelKeys={{ forts: 'attackPresets.slot.forts', islands: 'attackPresets.slot.islands' }}
           onFix={fixReadiness}
+          noteFor={collapsedSettingNote(disclosure)}
         />
         <CommanderAssignmentPanel
           id="auto-storm-commanders"

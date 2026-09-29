@@ -10,7 +10,6 @@ import {
   defaultAutoHospitalSettings,
   MIN_AUTO_HOSPITAL_CHECK_INTERVAL_MIN,
   normalizeAutoHospitalSettings,
-  persistAutoHospitalSettings,
   type AutoHospitalClientSettingsV1,
 } from '../AutoHospitalClientState';
 import {
@@ -22,20 +21,32 @@ import {
 } from '../SchedulerTypes';
 import { useCitadelAPI } from '../../api/ApiContext';
 import { configurationSection } from '../Configuration';
+import { useConfigurationDraftSession } from '../ConfigurationDraftSession';
+import { AUTOMATION_ENABLED_KEYS } from '../disclosure/placement';
+import { checkIntervalLine, countCustomValues } from '../disclosure/summaries';
+import { useSettingsDisclosure } from '../disclosure/useSettingsDisclosure';
+import { AutomationRunStrip } from './AutomationRunStrip';
+import { SettingsSection } from './SettingsSection';
 
 interface AutoHospitalSettingsModalProps {
   isOpen: boolean;
   onClose: () => void;
   onOpenFeatureSchedule: (featureID: string, featureLabel: string) => void;
+  onOpenAutomationDuration?: (featureKey: string, featureLabel: string) => void;
 }
+
+const AUTO_HOSPITAL_SECTION = 'automation.autoHospital';
 
 export const AutoHospitalSettingsModal: React.FC<AutoHospitalSettingsModalProps> = ({
   isOpen,
   onClose,
   onOpenFeatureSchedule,
+  onOpenAutomationDuration,
 }) => {
   const { t: localizeStatic } = useStaticLocale();
   const { configuration } = useCitadelAPI();
+  const draftSession = useConfigurationDraftSession({ isOpen, section: AUTO_HOSPITAL_SECTION });
+  const disclosure = useSettingsDisclosure('autoHospital');
   const [settings, setSettings] = useState<AutoHospitalClientSettingsV1>(() => defaultAutoHospitalSettings());
   const featureSchedules = normalizeFeatureSchedules(
     configurationSection(configuration, 'scheduler').featureSchedules,
@@ -48,10 +59,11 @@ export const AutoHospitalSettingsModal: React.FC<AutoHospitalSettingsModalProps>
       setSaveError(null);
       return;
     }
+    if (!draftSession.initialSnapshot) return;
     setSettings(normalizeAutoHospitalSettings(
-      configuration?.sections['automation.autoHospital'] ?? defaultAutoHospitalSettings(),
+      draftSession.initialSections?.[AUTO_HOSPITAL_SECTION] ?? defaultAutoHospitalSettings(),
     ));
-  }, [configuration?.sections, isOpen]);
+  }, [draftSession.initialSections, draftSession.openKey, draftSession.initialSnapshot, isOpen]);
 
   const updateCheckIntervalMinutes = (value: string) => {
     const raw = value.replace(/,/g, '');
@@ -63,10 +75,11 @@ export const AutoHospitalSettingsModal: React.FC<AutoHospitalSettingsModalProps>
   };
 
   const handleSave = async () => {
+    if (isSaving) return;
     setIsSaving(true);
     setSaveError(null);
     try {
-      await persistAutoHospitalSettings(settings);
+      await draftSession.save(normalizeAutoHospitalSettings(settings));
       onClose();
     } catch (error) {
       setSaveError(error instanceof Error ? error.message : 'Could not save Auto Hospital settings.');
@@ -133,32 +146,23 @@ export const AutoHospitalSettingsModal: React.FC<AutoHospitalSettingsModalProps>
       description={localizeStatic("ui.settings.components.autoHospitalSettingsModal.description.queue.scans.and.calendar.windows.038e9499")}
       onSave={handleSave}
       isSaving={isSaving}
+      saveDisabled={!draftSession.ready}
+      contentDisabled={!draftSession.ready}
+      contentNotice={draftSession.conflictNotice}
     >
+      <AutomationRunStrip
+        featureId="autoHospital"
+        scheduleId="autoHospital"
+        onOpenSchedule={() => onOpenFeatureSchedule('autoHospital', 'Auto Hospital')}
+        onOpenDuration={onOpenAutomationDuration ? () => onOpenAutomationDuration(AUTOMATION_ENABLED_KEYS.autoHospital, 'Auto Hospital') : undefined}
+      />
       <div className="mx-auto flex w-full max-w-4xl flex-col gap-5 overflow-visible pb-2">
         {saveError && (
           <div className="rounded-global border border-error/30 bg-error/10 px-4 py-3 text-sm font-semibold text-error" role="alert">
             {saveError}
           </div>
         )}
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-[minmax(14rem,0.8fr)_minmax(18rem,1.2fr)]">
-          <SectionCard
-            title={localizeStatic("ui.settings.components.autoHospitalSettingsModal.title.queue.check.39bf2207")}
-            description={localizeStatic("ui.settings.components.autoHospitalSettingsModal.description.minutes.between.hospital.scans.3dde05fe")}
-            icon={<Clock3 className="h-4 w-4" />}
-            titleClassName="text-base"
-          >
-              <Input
-                type="text"
-                value={autoHospitalCheckIntervalSecToMinutes(settings.checkIntervalSec).toLocaleString()}
-                onChange={(e) => updateCheckIntervalMinutes(e.target.value)}
-                className="font-mono text-lg font-black tabular-nums"
-                rightIcon={<span className="text-xs font-bold uppercase text-text-muted"><LocalizedText messageKey="ui.settings.components.autoHospitalSettingsModal.min.1f6fa6f6" /></span>}
-              />
-              <p className="mt-2 text-[11px] font-medium text-text-muted">
-                Minimum {MIN_AUTO_HOSPITAL_CHECK_INTERVAL_MIN.toLocaleString()} minute. Default is {DEFAULT_AUTO_HOSPITAL_CHECK_INTERVAL_MIN.toLocaleString()} minutes.
-              </p>
-          </SectionCard>
-
+        <SettingsSection disclosure={disclosure} section="schedule">
           <SectionCard
             title={localizeStatic("ui.settings.components.autoHospitalSettingsModal.title.shared.schedule.27b35dc8")}
             description={autoHospitalSchedule ? scheduleSummary(autoHospitalSchedule) : 'Schedule off'}
@@ -186,7 +190,32 @@ export const AutoHospitalSettingsModal: React.FC<AutoHospitalSettingsModalProps>
                   <LocalizedText messageKey="ui.settings.components.autoHospitalSettingsModal.auto.hospital.can.scan.at.any.time.c06d2e2d" /></div>
               )}
           </SectionCard>
-        </div>
+        </SettingsSection>
+
+        <SettingsSection
+          disclosure={disclosure}
+          section="timing"
+          summary={[checkIntervalLine(settings.checkIntervalSec)]}
+          customCount={countCustomValues(settings, defaultAutoHospitalSettings(), ['checkIntervalSec'])}
+        >
+          <div className="flex flex-wrap items-center gap-3">
+            <Clock3 className="h-4 w-4 text-primary" aria-hidden="true" />
+            <span className="text-sm font-bold text-text-main"><LocalizedText messageKey="ui.settings.components.autoHospitalSettingsModal.title.queue.check.39bf2207" /></span>
+            <span className="text-xs text-text-muted"><LocalizedText messageKey="ui.settings.components.autoHospitalSettingsModal.description.minutes.between.hospital.scans.3dde05fe" /></span>
+          </div>
+          <div className="mt-3 max-w-xs">
+            <Input
+              type="text"
+              value={autoHospitalCheckIntervalSecToMinutes(settings.checkIntervalSec).toLocaleString()}
+              onChange={(e) => updateCheckIntervalMinutes(e.target.value)}
+              className="font-mono text-lg font-black tabular-nums"
+              rightIcon={<span className="text-xs font-bold uppercase text-text-muted"><LocalizedText messageKey="ui.settings.components.autoHospitalSettingsModal.min.1f6fa6f6" /></span>}
+            />
+          </div>
+          <p className="mt-2 text-[11px] font-medium text-text-muted">
+            Minimum {MIN_AUTO_HOSPITAL_CHECK_INTERVAL_MIN.toLocaleString()} minute. Default is {DEFAULT_AUTO_HOSPITAL_CHECK_INTERVAL_MIN.toLocaleString()} minutes.
+          </p>
+        </SettingsSection>
       </div>
     </SettingsModal>
   );

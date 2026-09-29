@@ -48,13 +48,22 @@ import HorseTravelBoostSelect from './HorseTravelBoostSelect';
 import { FeatureGuideModal } from './FeatureGuideModal';
 import { englishGuidePack, useGuideLocale } from '../../config/useGuideLocale';
 import { DailyAttackLimitField } from './DailyAttackLimitField';
+import { AUTOMATION_ENABLED_KEYS } from '../disclosure/placement';
+import { countCustomValues, travelLine } from '../disclosure/summaries';
+import { useSettingsDisclosure } from '../disclosure/useSettingsDisclosure';
+import { AutomationRunStrip } from './AutomationRunStrip';
+import { collapsedSettingNote, SettingsSection } from './SettingsSection';
 
 interface AutoInvasionSettingsModalProps {
   isOpen: boolean;
   onClose: () => void;
+  onOpenAutomationDuration?: (featureKey: string, featureLabel: string) => void;
 }
 
-export const AutoInvasionSettingsModal: React.FC<AutoInvasionSettingsModalProps> = ({ isOpen, onClose }) => {
+const invasionDefaults = defaultAutoInvasionClientState();
+
+export const AutoInvasionSettingsModal: React.FC<AutoInvasionSettingsModalProps> = ({ isOpen, onClose, onOpenAutomationDuration }) => {
+  const disclosure = useSettingsDisclosure('autoInvasion');
   const { t: localizeStatic } = useStaticLocale();
   const { state } = useCitadelAPI();
   const setup = useSetupContext(AUTO_INVASION_SECTION, useHostedRuntimePresence());
@@ -186,13 +195,7 @@ export const AutoInvasionSettingsModal: React.FC<AutoInvasionSettingsModalProps>
       window.requestAnimationFrame(() => focusReadinessTarget('auto-invasion-commanders-heading'));
       return;
     }
-    const target = check.slot ? 'auto-invasion-attack' : {
-      'source-castle': 'auto-invasion-source',
-      difficulty: 'auto-invasion-difficulty',
-      'score-target': 'auto-invasion-score',
-      'daily-limit': 'auto-invasion-daily-limit',
-    }[check.id];
-    if (target) focusReadinessTarget(target);
+    disclosure.fix(check);
   };
   const moduleLabel = localizeStatic('attackPresets.module.autoInvasion');
 
@@ -235,7 +238,12 @@ export const AutoInvasionSettingsModal: React.FC<AutoInvasionSettingsModalProps>
       contentDisabled={!draftSession.ready}
       contentNotice={draftSession.conflictNotice}
     >
+      <AutomationRunStrip
+        featureId="autoInvasion"
+        onOpenDuration={onOpenAutomationDuration ? () => onOpenAutomationDuration(AUTOMATION_ENABLED_KEYS.autoInvasion, 'Auto Invasion') : undefined}
+      />
       <div className="space-y-3">
+        <SettingsSection disclosure={disclosure} section="setup">
         <Card variant="solid" className="p-4">
           <div className="grid gap-4 md:grid-cols-2">
             <div className="md:col-span-2">
@@ -273,14 +281,11 @@ export const AutoInvasionSettingsModal: React.FC<AutoInvasionSettingsModalProps>
                 disabled={saving}
               />
             </div>
-            <HorseTravelBoostSelect
-              className="block md:col-span-2"
-              value={draft.horseTravelBoostId}
-              onChange={(horseTravelBoostId) => setDraft((current) => ({ ...current, horseTravelBoostId }))}
-            />
           </div>
         </Card>
+        </SettingsSection>
 
+        <SettingsSection disclosure={disclosure} section="event" className="space-y-3">
         <Card id="auto-invasion-difficulty" variant="solid" className="p-4">
           <div className="mb-3 flex items-start justify-between gap-3">
             <div>
@@ -357,8 +362,10 @@ export const AutoInvasionSettingsModal: React.FC<AutoInvasionSettingsModalProps>
             </label>
           </div>
         </Card>
+        </SettingsSection>
 
-		<Card variant="solid" className="p-4">
+		<SettingsSection disclosure={disclosure} section="fortify">
+		<Card id="auto-invasion-fortify" variant="solid" className="p-4">
 			<div className="flex items-start justify-between gap-4">
 				<div className="min-w-0">
 					<div className="flex items-center gap-2 text-sm font-black text-text-main"><ShieldPlus className="h-4 w-4 text-primary" /> <LocalizedText messageKey="ui.settings.components.autoInvasionSettingsModal.fortify.each.target.418c29a2" /></div>
@@ -386,7 +393,9 @@ export const AutoInvasionSettingsModal: React.FC<AutoInvasionSettingsModalProps>
 				</label>
 			) : null}
 		</Card>
+		</SettingsSection>
 
+        <SettingsSection disclosure={disclosure} section="limits">
         <div id="auto-invasion-daily-limit" tabIndex={-1} className="outline-none">
           <DailyAttackLimitField
             value={draft.dailyAttackLimit}
@@ -394,11 +403,25 @@ export const AutoInvasionSettingsModal: React.FC<AutoInvasionSettingsModalProps>
             serverState={state?.dailyAttacks}
           />
         </div>
+        </SettingsSection>
+
+        <SettingsSection
+          disclosure={disclosure}
+          section="travel"
+          summary={[travelLine(draft.horseTravelBoostId)]}
+          customCount={countCustomValues(draft, invasionDefaults, ['horseTravelBoostId'])}
+        >
+          <HorseTravelBoostSelect
+            className="block"
+            value={draft.horseTravelBoostId}
+            onChange={(horseTravelBoostId) => setDraft((current) => ({ ...current, horseTravelBoostId }))}
+          />
+        </SettingsSection>
 
         <p className="rounded-global border border-border-base bg-bg-app/40 px-4 py-3 text-xs text-text-muted">
 			<LocalizedText messageKey="ui.settings.components.autoInvasionSettingsModal.troop.quantities.adapt.to.the.freshly.resolved.67bcfcf5" /></p>
 
-        <ReadinessPanel report={readiness} slotLabelKeys={{ attack: 'attackPresets.slot.attack' }} onFix={fixReadiness} />
+        <ReadinessPanel report={readiness} slotLabelKeys={{ attack: 'attackPresets.slot.attack' }} onFix={fixReadiness} noteFor={collapsedSettingNote(disclosure)} />
 
         <CommanderAssignmentPanel
           id="auto-invasion-commanders"

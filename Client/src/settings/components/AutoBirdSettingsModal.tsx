@@ -1,7 +1,7 @@
 import { useLocale as useStaticLocale } from "../../i18n/LocaleContext";
 import { LocalizedText } from "../../i18n/LocalizedText";
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
-import { Bird, BookOpen, CalendarDays, LockKeyhole, Plus } from 'lucide-react';
+import { Bird, BookOpen, LockKeyhole, Plus } from 'lucide-react';
 import { showTroopPicker } from '../../components/TroopPickerModal';
 import type { UnitWithQuantity } from '../../components/TroopPickerModal';
 import UnitImage from '../../components/UnitImage';
@@ -38,6 +38,11 @@ import { evaluateReserveReadiness } from '../requirements/setupReadiness';
 import { useSetupContext } from '../requirements/useSetupContext';
 import { focusReadinessTarget } from '../readiness/focusReadinessTarget';
 import { ReadinessCheckLine, ReadinessPanel } from './ReadinessPanel';
+import { AUTOMATION_ENABLED_KEYS } from '../disclosure/placement';
+import { birdTimingSummary, countCustomValues } from '../disclosure/summaries';
+import { useSettingsDisclosure } from '../disclosure/useSettingsDisclosure';
+import { AutomationRunStrip } from './AutomationRunStrip';
+import { collapsedSettingNote, SettingsSection } from './SettingsSection';
 import { UnitStockList } from './UnitStockList';
 import {
   autoFortressReservesDirewolves,
@@ -49,7 +54,10 @@ interface AutoBirdSettingsModalProps {
   isOpen: boolean;
   onClose: () => void;
   onOpenFeatureSchedule: (featureID: string, featureLabel: string) => void;
+  onOpenAutomationDuration?: (featureKey: string, featureLabel: string) => void;
 }
+
+const BIRD_TIMING_DEFAULTS = (({ minDelay, maxDelay, minSend }) => ({ minDelay, maxDelay, minSend }))(defaultAutoBirdSettings());
 
 function clampDelayHours(value: number): number {
   if (!Number.isFinite(value)) return 1;
@@ -61,7 +69,8 @@ function clampMinRPTDays(value: number): number {
   return Math.min(30, Math.max(0, value));
 }
 
-export const AutoBirdSettingsModal: React.FC<AutoBirdSettingsModalProps> = ({ isOpen, onClose, onOpenFeatureSchedule }) => {
+export const AutoBirdSettingsModal: React.FC<AutoBirdSettingsModalProps> = ({ isOpen, onClose, onOpenFeatureSchedule, onOpenAutomationDuration }) => {
+  const disclosure = useSettingsDisclosure('autoBird');
   const { locale: guideLocale, pack: guidePack } = useGuideLocale();
   const { t: localizeStatic } = useStaticLocale();
   const { state } = useCitadelAPI();
@@ -354,20 +363,7 @@ export const AutoBirdSettingsModal: React.FC<AutoBirdSettingsModalProps> = ({ is
               <span className="font-bold text-text-main"><LocalizedText messageKey="ui.settings.components.autoBirdSettingsModal.not.254bb97b" /></span> be sent.
             </>
       )}
-      titleTrailing={(
-        <div className="flex flex-wrap gap-2">
-          <Button variant="outline" size="sm" onClick={() => setIsGuideOpen(true)} leftIcon={<BookOpen className="h-4 w-4" />}><span lang={guideLocale}>{guidePack.ui.guideButton}</span></Button>
-            <Button
-              variant="outline"
-              size="sm"
-              className="shrink-0"
-              onClick={() => onOpenFeatureSchedule('autoBird', 'Auto Bird')}
-              leftIcon={<CalendarDays className="h-4 w-4" />}
-            >
-              <LocalizedText messageKey="common.calendar" />
-            </Button>
-        </div>
-      )}
+      titleTrailing={<Button variant="outline" size="sm" onClick={() => setIsGuideOpen(true)} leftIcon={<BookOpen className="h-4 w-4" />}><span lang={guideLocale}>{guidePack.ui.guideButton}</span></Button>}
       onSave={handleSave}
       saveLabel="Save changes"
       isSaving={isSaving}
@@ -382,8 +378,36 @@ export const AutoBirdSettingsModal: React.FC<AutoBirdSettingsModalProps> = ({ is
           <div className="rounded-global border border-warning/30 bg-warning/10 px-4 py-3 text-sm font-semibold text-warning" role="alert">
             <LocalizedText messageKey="ui.settings.components.autoBirdSettingsModal.the.selected.runtime.preset.no.longer.exists.f845b7fe" /></div>
         )}
-        {/* Global settings bar */}
-        <Card variant="solid" className="shrink-0 bg-bg-app border-border-base p-4">
+        <AutomationRunStrip
+          featureId="autoBird"
+          scheduleId="autoBird"
+          onOpenSchedule={() => onOpenFeatureSchedule('autoBird', 'Auto Bird')}
+          onOpenDuration={onOpenAutomationDuration ? () => onOpenAutomationDuration(AUTOMATION_ENABLED_KEYS.autoBird, 'Auto Bird') : undefined}
+        />
+        <SettingsSection disclosure={disclosure} section="targets">
+          <Card variant="solid" className="bg-bg-app border-border-base p-4">
+            <label id="auto-bird-min-rpt" className="flex max-w-sm flex-col gap-1">
+              <span className="text-xs font-bold uppercase tracking-wider text-primary"><LocalizedText messageKey="ui.settings.components.autoBirdSettingsModal.minimum.rpt.4e22018c" /></span>
+              <Input
+                type="number"
+                min={0}
+                max={30}
+                value={minRPTDays}
+                onChange={(e) => setMinRPTDays(clampMinRPTDays(parseInt(e.target.value, 10)))}
+                className="font-mono"
+                rightIcon={<span className="text-xs font-medium uppercase text-text-muted"><LocalizedText messageKey="ui.settings.components.autoBirdSettingsModal.days.e08c0aa8" /></span>}
+              />
+              <span className="text-[11px] leading-relaxed text-text-muted"><LocalizedText messageKey="ui.settings.components.autoBirdSettingsModal.troops.are.sent.only.to.alliance.members.faff0c89" /></span>
+            </label>
+          </Card>
+        </SettingsSection>
+
+        <SettingsSection
+          disclosure={disclosure}
+          section="timing"
+          summary={birdTimingSummary({ minDelay, maxDelay, minSend })}
+          customCount={countCustomValues({ minDelay, maxDelay, minSend }, BIRD_TIMING_DEFAULTS, ['minDelay', 'maxDelay', 'minSend'])}
+        >
           <div className="flex flex-col gap-4 lg:flex-row lg:flex-wrap lg:items-end">
             <div className="flex flex-1 flex-wrap items-end gap-3">
               <span className="mb-1.5 w-full text-xs font-bold uppercase tracking-wider text-primary lg:mb-0 lg:mr-2 lg:w-auto">
@@ -424,25 +448,12 @@ export const AutoBirdSettingsModal: React.FC<AutoBirdSettingsModalProps> = ({ is
                 />
               </div>
             </div>
-            <div className="flex min-w-0 flex-1 basis-full flex-col gap-1 md:basis-52 lg:min-w-[200px]">
-              <span className="text-xs font-bold uppercase tracking-wider text-primary"><LocalizedText messageKey="ui.settings.components.autoBirdSettingsModal.minimum.rpt.4e22018c" /></span>
-              <div className="flex items-center gap-2">
-                <Input
-                  type="number"
-                  min={0}
-                  max={30}
-                  value={minRPTDays}
-                  onChange={(e) => setMinRPTDays(clampMinRPTDays(parseInt(e.target.value, 10)))}
-                  className="font-mono"
-                  rightIcon={<span className="text-xs font-medium uppercase text-text-muted"><LocalizedText messageKey="ui.settings.components.autoBirdSettingsModal.days.e08c0aa8" /></span>}
-                />
-              </div>
-            </div>
           </div>
           <p className="mt-3 text-xs text-text-muted">
             <LocalizedText messageKey="ui.settings.components.autoBirdSettingsModal.birds.are.sent.with.a.random.delay.64f21ceb" /></p>
-        </Card>
+        </SettingsSection>
 
+        <SettingsSection disclosure={disclosure} section="castles" className="flex flex-col gap-6">
         {/* Presets */}
         <NamedPresetControls
           name={presetName}
@@ -467,7 +478,7 @@ export const AutoBirdSettingsModal: React.FC<AutoBirdSettingsModalProps> = ({ is
           )}
         />
 
-        <ReadinessPanel report={birdReadiness.report} onFix={() => focusReadinessTarget('auto-bird-castles')} />
+        <ReadinessPanel report={birdReadiness.report} onFix={(check) => { if (!disclosure.fix(check)) focusReadinessTarget('auto-bird-castles'); }} noteFor={collapsedSettingNote(disclosure)} />
 
         {/* Castle grid */}
         <div id="auto-bird-castles" tabIndex={-1} className="custom-scrollbar min-h-0 flex-1 overflow-y-auto pr-1 outline-none">
@@ -547,6 +558,7 @@ export const AutoBirdSettingsModal: React.FC<AutoBirdSettingsModalProps> = ({ is
             })}
           </div>
         </div>
+        </SettingsSection>
       </div>
     </SettingsModal>
     <AutoBirdGuideModal isOpen={isOpen && isGuideOpen} onClose={() => setIsGuideOpen(false)} />

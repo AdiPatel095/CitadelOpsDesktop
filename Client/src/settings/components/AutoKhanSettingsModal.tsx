@@ -65,14 +65,23 @@ import {
 import HorseTravelBoostSelect from './HorseTravelBoostSelect';
 import { DailyAttackLimitField } from './DailyAttackLimitField';
 import { FeatureGuideModal } from './FeatureGuideModal';
+import { AUTOMATION_ENABLED_KEYS } from '../disclosure/placement';
+import { countCustomValues, khanStopLimitsSummary, travelLine } from '../disclosure/summaries';
+import { useSettingsDisclosure } from '../disclosure/useSettingsDisclosure';
+import { AutomationRunStrip } from './AutomationRunStrip';
+import { collapsedSettingNote, SettingsSection } from './SettingsSection';
 import { englishGuidePack, useGuideLocale } from '../../config/useGuideLocale';
 
 interface AutoKhanSettingsModalProps {
   isOpen: boolean;
   onClose: () => void;
+  onOpenAutomationDuration?: (featureKey: string, featureLabel: string) => void;
 }
 
-export const AutoKhanSettingsModal: React.FC<AutoKhanSettingsModalProps> = ({ isOpen, onClose }) => {
+const khanDefaults = defaultAutoKhanClientState();
+
+export const AutoKhanSettingsModal: React.FC<AutoKhanSettingsModalProps> = ({ isOpen, onClose, onOpenAutomationDuration }) => {
+  const disclosure = useSettingsDisclosure('autoKhan');
   const { t: localizeStatic } = useStaticLocale();
   const setup = useSetupContext(AUTO_KHAN_SECTION, useHostedRuntimePresence());
   const state = setup.state;
@@ -174,13 +183,10 @@ export const AutoKhanSettingsModal: React.FC<AutoKhanSettingsModalProps> = ({ is
       window.requestAnimationFrame(() => focusReadinessTarget('auto-khan-commanders-heading'));
       return;
     }
-    const target = check.slot ? `auto-khan-${check.slot}` : {
-      'source-castle': 'auto-khan-source',
-      'skip-cooldowns': 'auto-khan-skips',
-      'rage-booster': 'auto-khan-rage',
-      'daily-limit': 'auto-khan-daily-limit',
-    }[check.id];
-    if (target) focusReadinessTarget(target);
+    disclosure.fix(check);
+  };
+  const khanCollapsedValues = {
+    'auto-khan-rage': localizeStatic(draft.requireActiveRageBooster ? 'ui.settings.components.autoKhanSettingsModal.required.4850b174' : 'ui.settings.components.autoKhanSettingsModal.not.required.5fe2851c'),
   };
   const moduleLabel = localizeStatic('attackPresets.module.autoKhan');
 
@@ -243,6 +249,10 @@ export const AutoKhanSettingsModal: React.FC<AutoKhanSettingsModalProps> = ({ is
       contentDisabled={!draftSession.ready}
       contentNotice={draftSession.conflictNotice}
     >
+      <AutomationRunStrip
+        featureId="autoKhan"
+        onOpenDuration={onOpenAutomationDuration ? () => onOpenAutomationDuration(AUTOMATION_ENABLED_KEYS.autoKhan, 'Auto Khan') : undefined}
+      />
       <div className="space-y-3">
         {protection?.active ? (
           <div className="rounded-global border border-warning/30 bg-warning/10 p-4">
@@ -255,6 +265,7 @@ export const AutoKhanSettingsModal: React.FC<AutoKhanSettingsModalProps> = ({ is
           </div>
         ) : null}
 
+        <SettingsSection disclosure={disclosure} section="setup" className="space-y-3">
         <Card variant="solid" className="p-4">
           <div className="grid gap-4 md:grid-cols-2">
             <CastleRequirementField
@@ -284,119 +295,6 @@ export const AutoKhanSettingsModal: React.FC<AutoKhanSettingsModalProps> = ({ is
           </div>
           <p className="mt-3 border-t border-border-base pt-3 text-xs text-text-muted">
             <LocalizedText messageKey="ui.settings.components.autoKhanSettingsModal.auto.station.has.precedence.any.incoming.player.19ee005a" /></p>
-        </Card>
-
-        <Card variant="solid" className="p-4">
-          <div className="grid gap-4 md:grid-cols-2">
-            <div className="flex items-start justify-between gap-4">
-              <div className="min-w-0">
-                <div className="flex items-center gap-2 text-sm font-black text-text-main"><LockKeyhole className="h-4 w-4 text-primary" /> <LocalizedText messageKey="ui.settings.components.autoKhanSettingsModal.lock.automatic.khan.attacks.2b670e17" /></div>
-                <p className="mt-1 text-xs text-text-muted"><LocalizedText messageKey="ui.settings.components.autoKhanSettingsModal.stops.only.auto.khan.s.own.attack.284cf413" /></p>
-              </div>
-              <Switch
-                checked={!draft.attackLaunchesEnabled}
-                onChange={(locked) => setDraft((current) => ({ ...current, attackLaunchesEnabled: !locked }))}
-                ariaLabel={localizeStatic("ui.settings.components.autoKhanSettingsModal.ariaLabel.lock.automatic.khan.attacks.2b670e17")}
-              />
-            </div>
-
-            <div className="flex items-start justify-between gap-4 border-t border-border-base pt-4 md:border-l md:border-t-0 md:pl-4 md:pt-0">
-              <div className="min-w-0">
-                <div className="flex items-center gap-2 text-sm font-black text-text-main"><Flame className="h-4 w-4 text-primary" /> <LocalizedText messageKey="ui.settings.components.autoKhanSettingsModal.trigger.khan.at.full.rage.6e8b370e" /></div>
-                <p className="mt-1 text-xs text-text-muted"><LocalizedText messageKey="ui.settings.components.autoKhanSettingsModal.turn.this.off.to.keep.attacking.and.e1a20f3a" /></p>
-              </div>
-              <Switch
-                checked={draft.triggerRage}
-                onChange={(triggerRage) => setDraft((current) => ({ ...current, triggerRage }))}
-                ariaLabel={localizeStatic("ui.settings.components.autoKhanSettingsModal.ariaLabel.trigger.khan.retaliation.at.full.rage.a2d62469")}
-              />
-            </div>
-          </div>
-        </Card>
-
-        <Card variant="solid" className="p-4">
-          <div className="grid gap-4 md:grid-cols-2">
-            <div>
-              <div className="flex items-center gap-2 text-sm font-black text-text-main"><Flame className="h-4 w-4 text-primary" /> <LocalizedText messageKey="ui.settings.components.autoKhanSettingsModal.rage.chain.limit.907ed6bc" /></div>
-              <p className="mt-1 text-xs text-text-muted"><LocalizedText messageKey="ui.settings.components.autoKhanSettingsModal.once.this.many.accepted.khan.retaliations.are.fa686d33" /></p>
-              <label className="mt-3 block max-w-xs">
-                <span className="mb-1.5 block text-[10px] font-black uppercase tracking-wider text-text-muted"><LocalizedText messageKey="ui.settings.components.autoKhanSettingsModal.max.rage.chain.0.disables.limit.a652d0a7" /></span>
-                <Input
-                  type="text"
-                  inputMode="numeric"
-                  autoComplete="off"
-                  value={draft.maxRageChain.toLocaleString()}
-                  onChange={(event) => {
-                    const digits = event.target.value.replace(/\D/g, '');
-                    const maxRageChain = clampAutoKhanInteger(digits, 0, Number.MAX_SAFE_INTEGER, 0);
-                    setDraft((current) => ({ ...current, maxRageChain }));
-                  }}
-                  className="font-mono"
-                />
-              </label>
-            </div>
-
-            <div id="auto-khan-rage" tabIndex={-1} className="border-t border-border-base pt-4 outline-none md:border-l md:border-t-0 md:pl-4 md:pt-0">
-              <div className="flex items-start justify-between gap-4">
-                <div className="min-w-0">
-                  <div className="flex items-center gap-2 text-sm font-black text-text-main"><Zap className="h-4 w-4 text-primary" /> <LocalizedText messageKey="ui.settings.components.autoKhanSettingsModal.require.rage.points.booster.ad17ec97" /></div>
-                  <p className="mt-1 text-xs text-text-muted"><LocalizedText messageKey="ui.settings.components.autoKhanSettingsModal.gate.only.new.automatic.camp.attacks.unless.2ea26f61" /></p>
-                  <p className={`mt-1 text-xs font-bold ${rageBoosterActive ? 'text-success' : 'text-text-muted'}`}>{rageBoosterStatus}</p>
-                </div>
-                <Switch
-                  checked={draft.requireActiveRageBooster}
-                  onChange={(requireActiveRageBooster) => setDraft((current) => ({ ...current, requireActiveRageBooster }))}
-                  ariaLabel={localizeStatic("ui.settings.components.autoKhanSettingsModal.ariaLabel.require.an.active.khan.rage.points.booster.2bf5fdd6")}
-                />
-              </div>
-              <p className="mt-3 rounded-global border border-border-base bg-bg-input/50 p-3 text-xs text-text-muted"><LocalizedText messageKey="ui.settings.components.autoKhanSettingsModal.this.is.the.timed.rage.points.booster.4049d4e5" /></p>
-            </div>
-          </div>
-        </Card>
-
-        <Card variant="solid" className="p-4">
-          <div className="grid gap-4 md:grid-cols-2">
-            <div>
-              <div className="flex items-center gap-2 text-sm font-black text-text-main"><LockKeyhole className="h-4 w-4 text-primary" /> <LocalizedText messageKey="ui.settings.components.autoKhanSettingsModal.nomad.points.stop.727b7bc2" /></div>
-              <p className="mt-1 text-xs text-text-muted"><LocalizedText messageKey="ui.settings.components.autoKhanSettingsModal.at.the.limit.auto.khan.stops.launching.8f630fc2" /></p>
-              <label className="mt-3 block max-w-xs">
-                <span className="mb-1.5 block text-[10px] font-black uppercase tracking-wider text-text-muted"><LocalizedText messageKey="ui.settings.components.autoKhanSettingsModal.stop.at.nomad.points.0.disables.81362bed" /></span>
-                <Input
-                  type="text"
-                  inputMode="numeric"
-                  autoComplete="off"
-                  value={draft.nomadPointThreshold.toLocaleString()}
-                  onChange={(event) => {
-                    const digits = event.target.value.replace(/\D/g, '');
-                    const nomadPointThreshold = clampAutoKhanInteger(digits, 0, Number.MAX_SAFE_INTEGER, 0);
-                    setDraft((current) => ({ ...current, nomadPointThreshold }));
-                  }}
-                  className="font-mono"
-                />
-              </label>
-              {draft.nomadPointThreshold > 0 ? (
-                <p className="mt-2 text-xs text-warning"><LocalizedText messageKey="ui.settings.components.autoKhanSettingsModal.reaching.this.limit.uses.the.game.s.10d3a9bb" /></p>
-              ) : null}
-            </div>
-
-            <div className="border-t border-border-base pt-4 md:border-l md:border-t-0 md:pl-4 md:pt-0">
-              <div className="flex items-start justify-between gap-4">
-                <div className="min-w-0">
-                  <div className="flex items-center gap-2 text-sm font-black text-text-main"><ShoppingCart className="h-4 w-4 text-primary" /> <LocalizedText messageKey="ui.settings.components.autoKhanSettingsModal.replenish.defense.tools.04cc1c22" /></div>
-                  <p className="mt-1 text-xs text-text-muted"><LocalizedText messageKey="ui.settings.components.autoKhanSettingsModal.every.30.seconds.replace.preset.shortages.from.b001d2e4" /></p>
-                </div>
-                <Switch
-                  checked={draft.replenishDefenseTools}
-                  onChange={(replenishDefenseTools) => setDraft((current) => ({ ...current, replenishDefenseTools }))}
-                  ariaLabel={localizeStatic("ui.settings.components.autoKhanSettingsModal.ariaLabel.replenish.auto.khan.defense.tools.2db26fd2")}
-                />
-              </div>
-              {draft.replenishDefenseTools ? (
-                <div className="mt-3 rounded-global border border-success/30 bg-success/10 p-3 text-xs text-text-main">
-                  <LocalizedText messageKey="ui.settings.components.autoKhanSettingsModal.ruby.priced.packages.are.rejected.auto.khan.8c84936b" /></div>
-              ) : null}
-            </div>
-          </div>
         </Card>
 
         <Card variant="solid" className="p-4">
@@ -438,15 +336,106 @@ export const AutoKhanSettingsModal: React.FC<AutoKhanSettingsModalProps> = ({ is
               readinessChecks={readiness.checks.filter((check) => check.slot === 'defense')}
               disabled={saving}
             />
-            <HorseTravelBoostSelect
-              className="block md:col-span-2"
-              value={draft.horseTravelBoostId}
-              onChange={(horseTravelBoostId) => setDraft((current) => ({ ...current, horseTravelBoostId }))}
-            />
           </div>
           <p className="mt-3 border-t border-border-base pt-3 text-xs text-text-muted"><LocalizedText messageKey="ui.settings.components.autoKhanSettingsModal.the.selected.defense.preset.is.re.applied.e0cc99f5" /></p>
         </Card>
 
+        </SettingsSection>
+
+        <SettingsSection disclosure={disclosure} section="policy" className="space-y-3">
+        <Card variant="solid" className="p-4">
+          <div className="grid gap-4 md:grid-cols-2">
+            <div className="flex items-start justify-between gap-4">
+              <div className="min-w-0">
+                <div className="flex items-center gap-2 text-sm font-black text-text-main"><LockKeyhole className="h-4 w-4 text-primary" /> <LocalizedText messageKey="ui.settings.components.autoKhanSettingsModal.lock.automatic.khan.attacks.2b670e17" /></div>
+                <p className="mt-1 text-xs text-text-muted"><LocalizedText messageKey="ui.settings.components.autoKhanSettingsModal.stops.only.auto.khan.s.own.attack.284cf413" /></p>
+              </div>
+              <Switch
+                checked={!draft.attackLaunchesEnabled}
+                onChange={(locked) => setDraft((current) => ({ ...current, attackLaunchesEnabled: !locked }))}
+                ariaLabel={localizeStatic("ui.settings.components.autoKhanSettingsModal.ariaLabel.lock.automatic.khan.attacks.2b670e17")}
+              />
+            </div>
+
+            <div className="flex items-start justify-between gap-4 border-t border-border-base pt-4 md:border-l md:border-t-0 md:pl-4 md:pt-0">
+              <div className="min-w-0">
+                <div className="flex items-center gap-2 text-sm font-black text-text-main"><Flame className="h-4 w-4 text-primary" /> <LocalizedText messageKey="ui.settings.components.autoKhanSettingsModal.trigger.khan.at.full.rage.6e8b370e" /></div>
+                <p className="mt-1 text-xs text-text-muted"><LocalizedText messageKey="ui.settings.components.autoKhanSettingsModal.turn.this.off.to.keep.attacking.and.e1a20f3a" /></p>
+              </div>
+              <Switch
+                checked={draft.triggerRage}
+                onChange={(triggerRage) => setDraft((current) => ({ ...current, triggerRage }))}
+                ariaLabel={localizeStatic("ui.settings.components.autoKhanSettingsModal.ariaLabel.trigger.khan.retaliation.at.full.rage.a2d62469")}
+              />
+            </div>
+          </div>
+        </Card>
+
+        <Card id="auto-khan-purchase-policy" variant="solid" className="p-4">
+            <div>
+              <div className="flex items-start justify-between gap-4">
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2 text-sm font-black text-text-main"><ShoppingCart className="h-4 w-4 text-primary" /> <LocalizedText messageKey="ui.settings.components.autoKhanSettingsModal.replenish.defense.tools.04cc1c22" /></div>
+                  <p className="mt-1 text-xs text-text-muted"><LocalizedText messageKey="ui.settings.components.autoKhanSettingsModal.every.30.seconds.replace.preset.shortages.from.b001d2e4" /></p>
+                </div>
+                <Switch
+                  checked={draft.replenishDefenseTools}
+                  onChange={(replenishDefenseTools) => setDraft((current) => ({ ...current, replenishDefenseTools }))}
+                  ariaLabel={localizeStatic("ui.settings.components.autoKhanSettingsModal.ariaLabel.replenish.auto.khan.defense.tools.2db26fd2")}
+                />
+              </div>
+              {draft.replenishDefenseTools ? (
+                <div className="mt-3 rounded-global border border-success/30 bg-success/10 p-3 text-xs text-text-main">
+                  <LocalizedText messageKey="ui.settings.components.autoKhanSettingsModal.ruby.priced.packages.are.rejected.auto.khan.8c84936b" /></div>
+              ) : null}
+            </div>
+        </Card>
+
+        <Card variant="solid" className="p-4">
+          <div className="flex items-start justify-between gap-4">
+            <div className="min-w-0">
+              <div className="flex items-center gap-2 text-sm font-black text-text-main"><ShieldAlert className="h-4 w-4 text-primary" /> <LocalizedText messageKey="ui.settings.components.autoKhanSettingsModal.protect.offense.on.the.main.castle.wall.e3913e51" /></div>
+              <p className="mt-1 text-xs text-text-muted">
+                {sourceIsMain
+                  ? 'Use this when the main castle holds both the attacking army and the defense.'
+                  : selectedSource
+                    ? 'Not needed: the attacking army is isolated in an outpost while the main castle defends.'
+                    : 'Choose the main castle as the attack source to configure this safeguard.'}
+              </p>
+            </div>
+            <Switch
+              checked={sourceIsMain && draft.openGateProtection}
+              onChange={(openGateProtection) => setDraft((current) => ({ ...current, openGateProtection }))}
+              disabled={!sourceIsMain}
+              ariaLabel={localizeStatic("ui.settings.components.autoKhanSettingsModal.ariaLabel.open.gates.if.offensive.troops.would.defend.14754cac")}
+            />
+          </div>
+          {sourceIsMain && draft.openGateProtection ? (
+            <div className="mt-3 border-t border-border-base pt-3">
+              <label className="block max-w-xs">
+                <span className="mb-1.5 block text-[10px] font-black uppercase tracking-wider text-text-muted"><LocalizedText messageKey="ui.settings.components.autoKhanSettingsModal.offensive.wall.unit.threshold.c94cc3f9" /></span>
+                <Input
+                  type="text"
+                  inputMode="numeric"
+                  autoComplete="off"
+                  value={draft.offensiveUnitThreshold.toLocaleString()}
+                  onChange={(event) => {
+                    const digits = event.target.value.replace(/\D/g, '');
+                    const offensiveUnitThreshold = digits ? Number.parseInt(digits, 10) : 0;
+                    setDraft((current) => ({ ...current, offensiveUnitThreshold }));
+                  }}
+                  className="font-mono"
+                />
+              </label>
+              <div className="mt-3 rounded-global border border-warning/30 bg-warning/10 p-3 text-xs text-text-main">
+                <LocalizedText messageKey="ui.settings.components.autoKhanSettingsModal.at.or.above.this.threshold.auto.khan.e1d0e5a1" /></div>
+            </div>
+          ) : null}
+        </Card>
+
+        </SettingsSection>
+
+        <SettingsSection disclosure={disclosure} section="skips">
         <div id="auto-khan-skips" tabIndex={-1} className="outline-none">
         <Card variant="solid" className="p-4">
           <div className="flex items-start justify-between gap-4">
@@ -501,48 +490,9 @@ export const AutoKhanSettingsModal: React.FC<AutoKhanSettingsModalProps> = ({ is
         </Card>
         </div>
 
-        <Card variant="solid" className="p-4">
-          <div className="flex items-start justify-between gap-4">
-            <div className="min-w-0">
-              <div className="flex items-center gap-2 text-sm font-black text-text-main"><ShieldAlert className="h-4 w-4 text-primary" /> <LocalizedText messageKey="ui.settings.components.autoKhanSettingsModal.protect.offense.on.the.main.castle.wall.e3913e51" /></div>
-              <p className="mt-1 text-xs text-text-muted">
-                {sourceIsMain
-                  ? 'Use this when the main castle holds both the attacking army and the defense.'
-                  : selectedSource
-                    ? 'Not needed: the attacking army is isolated in an outpost while the main castle defends.'
-                    : 'Choose the main castle as the attack source to configure this safeguard.'}
-              </p>
-            </div>
-            <Switch
-              checked={sourceIsMain && draft.openGateProtection}
-              onChange={(openGateProtection) => setDraft((current) => ({ ...current, openGateProtection }))}
-              disabled={!sourceIsMain}
-              ariaLabel={localizeStatic("ui.settings.components.autoKhanSettingsModal.ariaLabel.open.gates.if.offensive.troops.would.defend.14754cac")}
-            />
-          </div>
-          {sourceIsMain && draft.openGateProtection ? (
-            <div className="mt-3 border-t border-border-base pt-3">
-              <label className="block max-w-xs">
-                <span className="mb-1.5 block text-[10px] font-black uppercase tracking-wider text-text-muted"><LocalizedText messageKey="ui.settings.components.autoKhanSettingsModal.offensive.wall.unit.threshold.c94cc3f9" /></span>
-                <Input
-                  type="text"
-                  inputMode="numeric"
-                  autoComplete="off"
-                  value={draft.offensiveUnitThreshold.toLocaleString()}
-                  onChange={(event) => {
-                    const digits = event.target.value.replace(/\D/g, '');
-                    const offensiveUnitThreshold = digits ? Number.parseInt(digits, 10) : 0;
-                    setDraft((current) => ({ ...current, offensiveUnitThreshold }));
-                  }}
-                  className="font-mono"
-                />
-              </label>
-              <div className="mt-3 rounded-global border border-warning/30 bg-warning/10 p-3 text-xs text-text-main">
-                <LocalizedText messageKey="ui.settings.components.autoKhanSettingsModal.at.or.above.this.threshold.auto.khan.e1d0e5a1" /></div>
-            </div>
-          ) : null}
-        </Card>
+        </SettingsSection>
 
+        <SettingsSection disclosure={disclosure} section="limits">
         <div id="auto-khan-daily-limit" tabIndex={-1} className="outline-none">
           <DailyAttackLimitField
             value={draft.dailyAttackLimit}
@@ -551,10 +501,98 @@ export const AutoKhanSettingsModal: React.FC<AutoKhanSettingsModalProps> = ({ is
           />
         </div>
 
+        </SettingsSection>
+
+        <SettingsSection
+          disclosure={disclosure}
+          section="stop-limits"
+          summary={khanStopLimitsSummary(draft)}
+          customCount={countCustomValues(draft, khanDefaults, ['maxRageChain', 'requireActiveRageBooster', 'nomadPointThreshold'])}
+        >
+        <div className="space-y-4">
+          <div className="grid gap-4 md:grid-cols-2">
+            <div>
+              <div className="flex items-center gap-2 text-sm font-black text-text-main"><Flame className="h-4 w-4 text-primary" /> <LocalizedText messageKey="ui.settings.components.autoKhanSettingsModal.rage.chain.limit.907ed6bc" /></div>
+              <p className="mt-1 text-xs text-text-muted"><LocalizedText messageKey="ui.settings.components.autoKhanSettingsModal.once.this.many.accepted.khan.retaliations.are.fa686d33" /></p>
+              <label className="mt-3 block max-w-xs">
+                <span className="mb-1.5 block text-[10px] font-black uppercase tracking-wider text-text-muted"><LocalizedText messageKey="ui.settings.components.autoKhanSettingsModal.max.rage.chain.0.disables.limit.a652d0a7" /></span>
+                <Input
+                  type="text"
+                  inputMode="numeric"
+                  autoComplete="off"
+                  value={draft.maxRageChain.toLocaleString()}
+                  onChange={(event) => {
+                    const digits = event.target.value.replace(/\D/g, '');
+                    const maxRageChain = clampAutoKhanInteger(digits, 0, Number.MAX_SAFE_INTEGER, 0);
+                    setDraft((current) => ({ ...current, maxRageChain }));
+                  }}
+                  className="font-mono"
+                />
+              </label>
+            </div>
+
+            <div id="auto-khan-rage" tabIndex={-1} className="border-t border-border-base pt-4 outline-none md:border-l md:border-t-0 md:pl-4 md:pt-0">
+              <div className="flex items-start justify-between gap-4">
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2 text-sm font-black text-text-main"><Zap className="h-4 w-4 text-primary" /> <LocalizedText messageKey="ui.settings.components.autoKhanSettingsModal.require.rage.points.booster.ad17ec97" /></div>
+                  <p className="mt-1 text-xs text-text-muted"><LocalizedText messageKey="ui.settings.components.autoKhanSettingsModal.gate.only.new.automatic.camp.attacks.unless.2ea26f61" /></p>
+                  <p className={`mt-1 text-xs font-bold ${rageBoosterActive ? 'text-success' : 'text-text-muted'}`}>{rageBoosterStatus}</p>
+                </div>
+                <Switch
+                  checked={draft.requireActiveRageBooster}
+                  onChange={(requireActiveRageBooster) => setDraft((current) => ({ ...current, requireActiveRageBooster }))}
+                  ariaLabel={localizeStatic("ui.settings.components.autoKhanSettingsModal.ariaLabel.require.an.active.khan.rage.points.booster.2bf5fdd6")}
+                />
+              </div>
+              <p className="mt-3 rounded-global border border-border-base bg-bg-input/50 p-3 text-xs text-text-muted"><LocalizedText messageKey="ui.settings.components.autoKhanSettingsModal.this.is.the.timed.rage.points.booster.4049d4e5" /></p>
+            </div>
+          </div>
+          <div className="border-t border-border-base pt-4">
+            <div>
+              <div className="flex items-center gap-2 text-sm font-black text-text-main"><LockKeyhole className="h-4 w-4 text-primary" /> <LocalizedText messageKey="ui.settings.components.autoKhanSettingsModal.nomad.points.stop.727b7bc2" /></div>
+              <p className="mt-1 text-xs text-text-muted"><LocalizedText messageKey="ui.settings.components.autoKhanSettingsModal.at.the.limit.auto.khan.stops.launching.8f630fc2" /></p>
+              <label className="mt-3 block max-w-xs">
+                <span className="mb-1.5 block text-[10px] font-black uppercase tracking-wider text-text-muted"><LocalizedText messageKey="ui.settings.components.autoKhanSettingsModal.stop.at.nomad.points.0.disables.81362bed" /></span>
+                <Input
+                  type="text"
+                  inputMode="numeric"
+                  autoComplete="off"
+                  value={draft.nomadPointThreshold.toLocaleString()}
+                  onChange={(event) => {
+                    const digits = event.target.value.replace(/\D/g, '');
+                    const nomadPointThreshold = clampAutoKhanInteger(digits, 0, Number.MAX_SAFE_INTEGER, 0);
+                    setDraft((current) => ({ ...current, nomadPointThreshold }));
+                  }}
+                  className="font-mono"
+                />
+              </label>
+              {draft.nomadPointThreshold > 0 ? (
+                <p className="mt-2 text-xs text-warning"><LocalizedText messageKey="ui.settings.components.autoKhanSettingsModal.reaching.this.limit.uses.the.game.s.10d3a9bb" /></p>
+              ) : null}
+            </div>
+
+          </div>
+        </div>
+        </SettingsSection>
+
+        <SettingsSection
+          disclosure={disclosure}
+          section="travel"
+          summary={[travelLine(draft.horseTravelBoostId)]}
+          customCount={countCustomValues(draft, khanDefaults, ['horseTravelBoostId'])}
+        >
+          <HorseTravelBoostSelect
+            className="block"
+            value={draft.horseTravelBoostId}
+            onChange={(horseTravelBoostId) => setDraft((current) => ({ ...current, horseTravelBoostId }))}
+          />
+        </SettingsSection>
+
         <ReadinessPanel
           report={readiness}
           slotLabelKeys={{ attack: 'attackPresets.slot.attack', defense: 'attackPresets.slot.defense' }}
           onFix={fixReadiness}
+          noteFor={collapsedSettingNote(disclosure, khanCollapsedValues)}
         />
         <CommanderAssignmentPanel
           id="auto-khan-commanders"

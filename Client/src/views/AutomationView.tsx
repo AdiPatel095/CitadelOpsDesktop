@@ -47,6 +47,10 @@ import { useCitadelAPI } from '../api/ApiContext';
 import { parseAutoBeriWorldSettings } from '../settings/AutoBeriWorldClientState';
 import { configurationSection } from '../settings/Configuration';
 import { AutomationSafetyPanel } from '../components/AutomationSafetyPanel';
+import { checkIntervalLine } from '../settings/disclosure/summaries';
+import { useSettingsDisclosure } from '../settings/disclosure/useSettingsDisclosure';
+import { AutomationRunStrip } from '../settings/components/AutomationRunStrip';
+import { SettingsSection } from '../settings/components/SettingsSection';
 
 interface AutomationViewProps {
   onOpenAutoTCISettings: () => void;
@@ -349,6 +353,7 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
   } = useAuth();
   const [now, setNow] = useState(() => Date.now());
   const [isEquipmentCleanupSettingsOpen, setIsEquipmentCleanupSettingsOpen] = useState(false);
+  const cleanupDisclosure = useSettingsDisclosure('autoEquipmentCleanup');
   const [attackLaunchesByFeature, setAttackLaunchesByFeature] = useState<Record<string, number> | null | undefined>(undefined);
   const [dailyAttackSession, setDailyAttackSession] = useState<AttackLaunchDailySessionV2 | null | undefined>(undefined);
 
@@ -904,7 +909,34 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
         }
         footer={<Button variant="ghost" onClick={() => setIsEquipmentCleanupSettingsOpen(false)}><LocalizedText messageKey="common.close" /></Button>}
       >
+        <AutomationRunStrip
+          featureId="autoEquipmentCleanup"
+          onOpenDuration={() => {
+            setIsEquipmentCleanupSettingsOpen(false);
+            onOpenAutomationDuration(AUTO_EQUIPMENT_CLEANUP_ENABLED_KEY, 'Auto Equipment Cleanup');
+          }}
+        />
         <div className="flex flex-col gap-4">
+          <SettingsSection disclosure={cleanupDisclosure} section="schedule" className="flex flex-col gap-4">
+          <ScheduleSummaryRow
+            summary={equipmentCleanupScheduleLabel}
+            actionLabel="Edit schedule"
+            className="bg-bg-card/45 p-4"
+            onEdit={() => {
+                setIsEquipmentCleanupSettingsOpen(false);
+                onOpenFeatureSchedule(AUTO_EQUIPMENT_CLEANUP_FEATURE_ID, 'Auto Equipment Cleanup');
+            }}
+          />
+
+          <p className="text-xs leading-relaxed text-text-muted">
+            <LocalizedText messageKey="ui.views.automationView.the.schedule.decides.when.cleanup.may.run.ec3b83b8" /></p>
+          </SettingsSection>
+          <SettingsSection
+            disclosure={cleanupDisclosure}
+            section="timing"
+            summary={[checkIntervalLine(autoEquipmentCleanup.intervalMinutes * 60)]}
+            customCount={autoEquipmentCleanup.intervalMinutes !== 1 ? 1 : 0}
+          >
           <div className="flex flex-wrap items-center justify-between gap-4 rounded-global border border-primary/20 bg-primary/5 p-4">
             <div className="min-w-0">
               <div className="text-sm font-bold text-text-main"><LocalizedText messageKey="ui.views.automationView.poll.interval.47ea8f5d" /></div>
@@ -926,18 +958,7 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
             </div>
           </div>
 
-          <ScheduleSummaryRow
-            summary={equipmentCleanupScheduleLabel}
-            actionLabel="Edit schedule"
-            className="bg-bg-card/45 p-4"
-            onEdit={() => {
-                setIsEquipmentCleanupSettingsOpen(false);
-                onOpenFeatureSchedule(AUTO_EQUIPMENT_CLEANUP_FEATURE_ID, 'Auto Equipment Cleanup');
-            }}
-          />
-
-          <p className="text-xs leading-relaxed text-text-muted">
-            <LocalizedText messageKey="ui.views.automationView.the.schedule.decides.when.cleanup.may.run.ec3b83b8" /></p>
+          </SettingsSection>
         </div>
       </Modal>
     </div>
