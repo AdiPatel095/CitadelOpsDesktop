@@ -1518,7 +1518,6 @@ export const sourceMessages = {
   "ui.settings.onboarding.eventAttackRecommendation.choose.a.source.castle.first.the.starting.5edacd0b": "Choose a source castle first. The starting setup uses the troops stationed there.",
   "ui.settings.onboarding.eventAttackRecommendation.troops.in.this.castle.have.not.been.6c663496": "Troops in this castle have not been observed yet. Wait for the castle to sync.",
   "ui.settings.onboarding.eventAttackRecommendation.no.attack.troops.are.stationed.in.this.270d8b35": "No attack troops are stationed in this castle. Recruit or move troops there, or choose another castle.",
-  "ui.settings.onboarding.eventAttackRecommendation.each.slot.uses.one.stationed.troop.type.7a7aa312": "Each slot uses one stationed troop type with its full count. The game limits every lane to its capacity when the attack launches.",
   "ui.settings.onboarding.eventAttackRecommendation.no.tools.or.courtyard.support.are.added.143d3a76": "No tools or courtyard support are added. Add them with Edit composition if you want them.",
   "ui.settings.onboarding.eventAttackRecommendation.these.starter.values.are.pending.product.review.215357af": "These starter values are pending product review.",
   "ui.settings.readiness.eventAttackReadiness.castle.data.has.not.been.observed.yet.76ce81b7": "Castle data has not been observed yet.",
@@ -1596,8 +1595,9 @@ export const sourceMessages = {
   "ui.settings.readiness.eventAttackReadiness.berimond.camp.stock.is.checked.at.launch.e26aa185": "Berimond camp stock is checked at launch. Transfers from the source castle and the armorer lane refill it.",
   "ui.settings.components.eventAttackSetupField.this.attack.uses.the.saved.preset.until.af2cf4a8": "This attack uses the saved preset until you apply a setup here with Edit composition or the recommended starting setup.",
   "ui.settings.components.eventAttackSetupField.apply.composition.b3b4946b": "Apply composition",
-  "ui.settings.requirements.observationFreshness.this.is.a.saved.checkpoint.troop.counts.4a2b7024": "This is a saved checkpoint. Troop counts are used again when the runtime is live.",
   "ui.settings.requirements.observationFreshness.waiting.for.the.game.connection.to.finish.c661a838": "Waiting for the game connection to finish its first sync before troop counts are used.",
   "ui.settings.requirements.observationFreshness.troop.counts.are.older.than.the.current.a894b573": "Troop counts are older than the current game connection.",
-  "ui.settings.readiness.eventAttackReadiness.the.source.castle.has.the.troops.and.52877360": "The source castle has the troops and tools this setup names. Counts are from this connection; per-castle age is not reported by the runtime."
+  "ui.settings.onboarding.eventAttackRecommendation.each.lane.s.first.troop.type.is.51372e83": "Each lane's first troop type is sent up to that lane's capacity when the attack launches; further types in a lane are sent only if room is left.",
+  "ui.settings.requirements.observationFreshness.this.is.a.saved.checkpoint.troop.counts.59c30579": "This is a saved checkpoint. Troop counts are used again when the game connection is live again.",
+  "ui.settings.readiness.eventAttackReadiness.the.source.castle.has.the.troops.and.57e05dcd": "The source castle has the troops and tools this setup names. Counts are from this connection; the game does not report when each castle was last checked."
 } as const;

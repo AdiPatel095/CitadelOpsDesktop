@@ -47,6 +47,21 @@ const LANE_SLOTS = {
   R: { troops: 2, tools: 2 },
 } as const;
 const LANE_ORDER = ['L', 'M', 'R'] as const;
+type LaneKey = typeof LANE_ORDER[number];
+
+/**
+ * Troop slot fill order for `most-numerous-stationed-troop-types-center-first`:
+ * one type per lane first (center front, left flank, right flank), then the
+ * remaining center, left and right slots. The runtime fills each lane
+ * first-fit up to its capacity, so every lane's first slot is the one sent first.
+ */
+export const CENTER_FIRST_SLOT_ORDER: ReadonlyArray<readonly [LaneKey, number]> = (() => {
+  const order: Array<readonly [LaneKey, number]> = [['M', 0], ['L', 0], ['R', 0]];
+  for (const laneKey of ['M', 'L', 'R'] as const) {
+    for (let slot = 1; slot < LANE_SLOTS[laneKey].troops; slot += 1) order.push([laneKey, slot]);
+  }
+  return order;
+})();
 const COURTYARD_TROOP_SLOTS = 8;
 const COURTYARD_TOOL_SLOTS = 3;
 
@@ -90,21 +105,18 @@ export function recommendEventAttackSetup(input: EventAttackRecommendationInput)
   for (let index = 0; index < waveCount; index += 1) {
     const wave = {} as AttackSetupWave;
     for (const laneKey of LANE_ORDER) {
-      const troops: AttackSetupSlot[] = [];
-      for (let slot = 0; slot < LANE_SLOTS[laneKey].troops; slot += 1) {
-        const entry = ranked[next];
-        if (entry) {
-          troops.push({ itemId: entry.id, quantity: entry.quantity });
-          next += 1;
-        } else {
-          troops.push({ itemId: null, quantity: 0 });
-        }
-      }
       const lane: AttackSetupLane = {
-        troops,
+        troops: Array.from({ length: LANE_SLOTS[laneKey].troops }, (): AttackSetupSlot => ({ itemId: null, quantity: 0 })),
         tools: Array.from({ length: LANE_SLOTS[laneKey].tools }, () => ({ itemId: null, quantity: 0 })),
       };
       wave[laneKey] = lane;
+    }
+    // Each stationed type is used once, with its full count, in center-first slot order.
+    for (const [laneKey, slot] of CENTER_FIRST_SLOT_ORDER) {
+      const entry = ranked[next];
+      if (!entry) break;
+      wave[laneKey].troops[slot] = { itemId: entry.id, quantity: entry.quantity };
+      next += 1;
     }
     waves.push(wave);
   }
@@ -118,7 +130,7 @@ export function recommendEventAttackSetup(input: EventAttackRecommendationInput)
     },
   };
   const notes: MessageKey[] = [
-    message('ui.settings.onboarding.eventAttackRecommendation.each.slot.uses.one.stationed.troop.type.7a7aa312'),
+    message('ui.settings.onboarding.eventAttackRecommendation.each.lane.s.first.troop.type.is.51372e83'),
     message('ui.settings.onboarding.eventAttackRecommendation.no.tools.or.courtyard.support.are.added.143d3a76'),
   ];
   if (pendingReviews.length > 0) notes.push(message('ui.settings.onboarding.eventAttackRecommendation.these.starter.values.are.pending.product.review.215357af'));

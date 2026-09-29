@@ -214,7 +214,7 @@ function inventoryCheck(
   return freshness.scope === 'castle' && freshness.observedAt
     ? { id: 'inventory', slot, state: 'valid', messageKey: message('eventAttackReadiness.inventoryObservedAt'), params: { observedAt: Date.parse(freshness.observedAt) } }
     // No per-castle time reaches the client today: counts are from this connection's baseline.
-    : { id: 'inventory', slot, state: 'valid', messageKey: message('ui.settings.readiness.eventAttackReadiness.the.source.castle.has.the.troops.and.52877360') };
+    : { id: 'inventory', slot, state: 'valid', messageKey: message('ui.settings.readiness.eventAttackReadiness.the.source.castle.has.the.troops.and.57e05dcd') };
 }
 
 function requestedItems(composition: AttackSetupDraft): { troops: Map<number, number>; tools: Map<number, number> } {

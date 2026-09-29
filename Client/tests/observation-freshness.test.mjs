@@ -52,3 +52,10 @@ test('every unavailable reason has a catalog message; disconnected reuses the ba
   }
   assert.equal(freshness.observationUnavailableMessage('disconnected'), 'ui.components.staleSessionBanner.disconnected.last.known.data.166a8c99');
 });
+
+test('player-facing freshness text keeps "runtime" out (Maya, CIT-15 product acceptance)', () => {
+  for (const reason of ['disconnected', 'checkpoint', 'awaiting-baseline', 'stale-before-connection']) {
+    assert.doesNotMatch(messages[freshness.observationUnavailableMessage(reason)], /runtime/i, reason);
+  }
+  assert.match(messages[freshness.observationUnavailableMessage('checkpoint')], /when the game connection is live again/);
+});

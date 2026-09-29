@@ -68,7 +68,7 @@ const message = (key: MessageKey): MessageKey => key;
 /** Why unit counts cannot be used right now. */
 export function observationUnavailableMessage(reason: ObservationUnavailableReason): MessageKey {
   if (reason === 'disconnected') return message('ui.components.staleSessionBanner.disconnected.last.known.data.166a8c99');
-  if (reason === 'checkpoint') return message('ui.settings.requirements.observationFreshness.this.is.a.saved.checkpoint.troop.counts.4a2b7024');
+  if (reason === 'checkpoint') return message('ui.settings.requirements.observationFreshness.this.is.a.saved.checkpoint.troop.counts.59c30579');
   if (reason === 'awaiting-baseline') return message('ui.settings.requirements.observationFreshness.waiting.for.the.game.connection.to.finish.c661a838');
   return message('ui.settings.requirements.observationFreshness.troop.counts.are.older.than.the.current.a894b573');
 }

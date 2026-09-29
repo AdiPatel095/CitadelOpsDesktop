@@ -253,7 +253,8 @@ test('inventory is unavailable, with the reason, whenever unit counts are not cu
   assert.equal(live.state, 'valid', 'on a live, baselined session the sentinel no longer hides stock; 50 of 100 stationed is enough');
   const valid = evaluate({ slots: [{ slot: 'nomad', ref: inline([[1, 100]]) }] }).checks.find((entry) => entry.id === 'inventory');
   assert.equal(valid.state, 'valid');
-  assert.match(messages[valid.messageKey], /per-castle age is not reported by the runtime/);
+  assert.match(messages[valid.messageKey], /the game does not report when each castle was last checked/);
+  assert.doesNotMatch(messages[valid.messageKey], /runtime/);
   const timed = evaluate({ slots: [{ slot: 'nomad', ref: inline([[1, 100]]) }] }, {
     state: gameState({ castles: { 7: { ...gameState().castles[7], unitsObservedAt: '2026-09-29T10:00:00Z' } } }),
   }).checks.find((entry) => entry.id === 'inventory');

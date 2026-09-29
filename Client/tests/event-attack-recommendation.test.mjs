@@ -90,7 +90,7 @@ test('a castle without stationed attack troops yields a requirement', () => {
   assert.deepEqual(result.requirements.map((requirement) => requirement.id), ['no-stationed-troops']);
 });
 
-test('stationed troops fill one wave deterministically under the lane slot caps with no tools', () => {
+test('stationed troops fill one wave center first, deterministically, under the lane slot caps with no tools', () => {
   const stationed = { 1: 100, 2: 900, 3: 900, 4: 50, 5: 10, 6: 400, 7: 30, 8: 20, 9: 60, 10: 70, 11: 80, 12: 5, 500: 99999 };
   const result = recommend({ sourceCastle: castle(stationed) });
   assert.deepEqual(result.requirements, []);
@@ -101,8 +101,13 @@ test('stationed troops fill one wave deterministically under the lane slot caps 
   assert.equal(wave.L.troops.length, 2);
   assert.equal(wave.M.troops.length, 6);
   assert.equal(wave.R.troops.length, 2);
-  const order = [...wave.L.troops, ...wave.M.troops, ...wave.R.troops].map((slot) => [slot.itemId, slot.quantity]);
-  assert.deepEqual(order, [[2, 900], [3, 900], [6, 400], [1, 100], [11, 80], [10, 70], [9, 60], [4, 50], [7, 30], [8, 20]]);
+  // Ranked: 2:900, 3:900, 6:400, 1:100, 11:80, 10:70, 9:60, 4:50, 7:30, 8:20 (5 and 12 do not fit).
+  // Center front, left and right first slots take the top three; the rest fill center, then left, then right.
+  const lane = (key) => wave[key].troops.map((slot) => [slot.itemId, slot.quantity]);
+  assert.deepEqual(lane('M'), [[2, 900], [1, 100], [11, 80], [10, 70], [9, 60], [4, 50]]);
+  assert.deepEqual(lane('L'), [[3, 900], [7, 30]]);
+  assert.deepEqual(lane('R'), [[6, 400], [8, 20]]);
+  const order = [...lane('L'), ...lane('M'), ...lane('R')];
   for (const laneKey of ['L', 'M', 'R']) {
     assert.ok(wave[laneKey].tools.every((slot) => slot.itemId == null && slot.quantity === 0), laneKey);
   }
@@ -113,25 +118,41 @@ test('stationed troops fill one wave deterministically under the lane slot caps 
   assert.deepEqual(recommend({ sourceCastle: castle(stationed) }).setup, result.setup, 'deterministic');
 });
 
-test('fewer troop types than slots leave the remaining slots empty', () => {
-  const result = recommend({ sourceCastle: castle({ 4: 10 }) });
-  const [wave] = result.setup.waves;
-  assert.deepEqual(wave.L.troops, [{ itemId: 4, quantity: 10 }, { itemId: null, quantity: 0 }]);
-  assert.ok(wave.M.troops.every((slot) => slot.itemId == null));
+test('fewer troop types than slots: one type per lane first, center front first', () => {
+  const empty = { itemId: null, quantity: 0 };
+  const one = recommend({ sourceCastle: castle({ 4: 10 }) }).setup.waves[0];
+  assert.deepEqual(one.M.troops, [{ itemId: 4, quantity: 10 }, empty, empty, empty, empty, empty]);
+  assert.ok(one.L.troops.every((slot) => slot.itemId == null));
+  assert.ok(one.R.troops.every((slot) => slot.itemId == null));
+  const three = recommend({ sourceCastle: castle({ 4: 10, 1: 30, 7: 20 }) }).setup.waves[0];
+  assert.deepEqual(three.M.troops[0], { itemId: 1, quantity: 30 });
+  assert.deepEqual(three.L.troops, [{ itemId: 7, quantity: 20 }, empty]);
+  assert.deepEqual(three.R.troops, [{ itemId: 4, quantity: 10 }, empty]);
+  assert.ok(three.M.troops.slice(1).every((slot) => slot.itemId == null));
+  const four = recommend({ sourceCastle: castle({ 4: 10, 1: 30, 7: 20, 9: 5 }) }).setup.waves[0];
+  assert.deepEqual(four.M.troops.slice(0, 2), [{ itemId: 1, quantity: 30 }, { itemId: 9, quantity: 5 }], 'the fourth type goes to the center front');
+  assert.equal(four.L.troops[1].itemId, null);
+});
+
+test('the center-first slot order covers every troop slot once', () => {
+  const order = recommendation.CENTER_FIRST_SLOT_ORDER.map(([lane, slot]) => `${lane}${slot}`);
+  assert.deepEqual(order, ['M0', 'L0', 'R0', 'M1', 'M2', 'M3', 'M4', 'M5', 'L1', 'R1']);
 });
 
 test('defensive units are never proposed, using the troop picker role rule', () => {
   const result = recommend({ sourceCastle: castle({ 20: 99999, 21: 10, 4: 5 }) });
   const [wave] = result.setup.waves;
+  assert.equal(wave.M.troops[0].itemId, 21);
+  assert.equal(wave.L.troops[0].itemId, 4);
   const ids = [...wave.L.troops, ...wave.M.troops, ...wave.R.troops].map((slot) => slot.itemId).filter((id) => id != null);
-  assert.deepEqual(ids, [21, 4]);
+  assert.deepEqual(ids.sort((a, b) => a - b), [4, 21]);
   assert.equal(recommend({ sourceCastle: castle({ 20: 500 }) }).requirements[0].id, 'no-stationed-troops');
 });
 
 test('pending starter reviews are reported with the recommendation', () => {
   const result = recommend({ sourceCastle: castle({ 1: 1 }) });
   assert.deepEqual(result.pendingReviews, recipes.pendingStarterReviews());
-  assert.ok(result.pendingReviews.length > 0);
+  assert.deepEqual(result.pendingReviews, ['laneFill']);
   assert.ok(result.notes.length >= 3);
   for (const key of result.notes) assert.ok(sourceMessages[key], key);
   assert.deepEqual(result.resolvedFor, { sourceCastleId: 7, eventId: 72 });
