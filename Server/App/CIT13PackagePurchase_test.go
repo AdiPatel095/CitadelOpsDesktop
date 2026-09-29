@@ -11,6 +11,7 @@ import (
 	"CitadelDesktop/Server/GameData"
 	"CitadelDesktop/Server/Ingest"
 	"CitadelDesktop/Server/Intent"
+	"CitadelDesktop/Server/Protocol"
 	"CitadelDesktop/Server/State"
 )
 
@@ -104,6 +105,13 @@ func TestEventBackedSBPGuardRequiresSettledSessionKingdom(t *testing.T) {
 			t.Errorf("%s: guard = %v, want stale", name, err)
 		}
 	}
+	// A later committed context reply settles an unanswered read.
+	answered := input
+	answered.ProtocolContext.MapReadSentAt = now
+	answered.ProtocolContext.MapReadSettledAt = now.Add(time.Millisecond)
+	if _, err := validateEventBackedSBP(answered, castle, request, now, true); err != nil {
+		t.Fatalf("settled map read rejected: %v", err)
+	}
 	// A read sent before the committed focus change has already settled.
 	settledRead := input
 	settledRead.ProtocolContext.MapReadSentAt = now.Add(-2 * time.Second)
@@ -160,5 +168,72 @@ func TestPackagePurchase175IsNeverCountedAsPurchase(t *testing.T) {
 	meaning := GameData.ResolveResponseCode(nil, "sbp", 175)
 	if !strings.Contains(meaning.Recovery, "Re-enter the destination castle") {
 		t.Fatalf("SBP 175 recovery = %q", meaning.Recovery)
+	}
+}
+
+// Review r4135728774: an unanswered GAA must not block purchases forever. A
+// later committed context reply (the plan's own same-castle JCA, answered as
+// JAA) settles it without a focus-epoch change; without any reply it stays
+// in flight.
+func TestSBPGuardSettlesUnansweredMapReadOnLaterContextReply(t *testing.T) {
+	now := time.Now().UTC()
+	gameState := cit13DirewolfState(now)
+	gameState.Player.ID = 42
+	stateStore := State.NewStore(gameState)
+	registry := Ingest.NewRegistry()
+	if err := Ingest.RegisterCoreReducers(registry); err != nil {
+		t.Fatal(err)
+	}
+	pipeline := Ingest.NewPipeline(stateStore, nil, registry)
+	code := 0
+	enterCastle := func(at time.Time) {
+		t.Helper()
+		if _, err := pipeline.HandleFrame(t.Context(), Protocol.Frame{
+			Direction: Protocol.DirectionInbound, Opcode: "jaa", ResponseCode: &code, ReceivedAt: at,
+			Payload: json.RawMessage(`{"KID":0,"gca":{"A":[1,100,100,10,42,0,0,0,0,0,"Main"]},"gui":{"I":[],"TU":[],"HI":[],"SHI":[]}}`),
+		}); err != nil {
+			t.Fatal(err)
+		}
+	}
+	guard := func() error {
+		view := stateStore.PlanningView()
+		_, err := validateEventBackedSBP(Intent.PlanningContext{
+			State: view.State, GameData: cit13DirewolfCatalog(t), ProtocolContext: view.ProtocolContext,
+		}, view.State.Castles[10], eventBackedSBPRequest{PackageID: 3857, TableID: 94, Amount: 1, Stock: 50, MaxBuyPerClick: 1000}, time.Now().UTC(), true)
+		return err
+	}
+	enterCastle(time.Now().UTC())
+	// Counters read after the committed focus.
+	if _, err := stateStore.ApplyComponents(State.Components(State.ComponentInventory), func(state *State.GameState) ([]string, bool, error) {
+		state.Inventory.ConstructionOffersObservedAt = time.Now().UTC().Add(time.Millisecond)
+		state.MutableInventoryConstructionOffers()
+		return []string{"inventory"}, true, nil
+	}); err != nil {
+		t.Fatal(err)
+	}
+	if err := guard(); err != nil {
+		t.Fatalf("settled castle context rejected: %v", err)
+	}
+	epoch := stateStore.ProtocolContext().FocusEpoch
+
+	if _, err := pipeline.HandleFrame(t.Context(), Protocol.Frame{
+		Direction: Protocol.DirectionOutbound, Opcode: "gaa", ReceivedAt: time.Now().UTC(),
+		Payload: json.RawMessage(`{"KID":1,"AX1":0,"AY1":0,"AX2":10,"AY2":10}`),
+	}); err != nil {
+		t.Fatal(err)
+	}
+	if err := guard(); !errors.Is(err, Intent.ErrPlanStale) || !strings.Contains(err.Error(), "in-flight world-map read") {
+		t.Fatalf("unanswered GAA did not hold the purchase: %v", err)
+	}
+	if err := guard(); !errors.Is(err, Intent.ErrPlanStale) {
+		t.Fatalf("GAA settled although nothing committed: %v", err)
+	}
+
+	enterCastle(time.Now().UTC().Add(time.Millisecond)) // same-castle JCA reply
+	if got := stateStore.ProtocolContext().FocusEpoch; got != epoch {
+		t.Fatalf("same-castle re-entry changed the focus epoch %d → %d", epoch, got)
+	}
+	if err := guard(); err != nil {
+		t.Fatalf("committed same-castle reply did not settle the map read: %v", err)
 	}
 }

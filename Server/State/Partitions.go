@@ -261,15 +261,19 @@ type ProtocolContextState struct {
 	FocusedKingdomID KingdomID `json:"focusedKingdomId,omitempty"`
 	// FocusChangedAt is when FocusEpoch last advanced.
 	FocusChangedAt time.Time `json:"focusChangedAt,omitempty"`
-	// MapReadSentAt is when the latest outbound GAA was sent. A read sent after
-	// FocusChangedAt has not committed its map focus yet.
+	// MapReadSentAt is when the latest outbound GAA was sent.
 	MapReadSentAt time.Time `json:"mapReadSentAt,omitempty"`
+	// MapReadSettledAt is the receive time of the latest committed inbound
+	// GAA/JAA/JCA reply. The connection is processed in order, so such a reply
+	// received after MapReadSentAt proves the game already handled that read.
+	MapReadSettledAt time.Time `json:"mapReadSettledAt,omitempty"`
 }
 
-// MapReadInFlight reports an outbound world-map read whose reply has not yet
-// committed a focus change.
+// MapReadInFlight reports an outbound world-map read that neither advanced
+// the committed focus nor was followed by a committed context reply.
 func (context ProtocolContextState) MapReadInFlight() bool {
-	return !context.MapReadSentAt.IsZero() && context.MapReadSentAt.After(context.FocusChangedAt)
+	return !context.MapReadSentAt.IsZero() && context.MapReadSentAt.After(context.FocusChangedAt) &&
+		context.MapReadSentAt.After(context.MapReadSettledAt)
 }
 
 type PlanningView struct {

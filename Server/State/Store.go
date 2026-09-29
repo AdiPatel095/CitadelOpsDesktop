@@ -247,6 +247,23 @@ func (store *Store) ObserveOutboundMapRead(sentAt time.Time) {
 	store.generation.Store(&storeGeneration{state: current.state, versions: current.versions, protocol: protocol})
 }
 
+// ObserveContextReplySettled records the receive time of a committed inbound
+// GAA/JAA/JCA reply; it settles every world-map read sent before it.
+func (store *Store) ObserveContextReplySettled(receivedAt time.Time) {
+	if store == nil || receivedAt.IsZero() {
+		return
+	}
+	store.writeMu.Lock()
+	defer store.writeMu.Unlock()
+	current := store.generation.Load()
+	if current == nil || !receivedAt.After(current.protocol.MapReadSettledAt) {
+		return
+	}
+	protocol := current.protocol
+	protocol.MapReadSettledAt = receivedAt
+	store.generation.Store(&storeGeneration{state: current.state, versions: current.versions, protocol: protocol})
+}
+
 // ObserveProtocolFocus advances the ephemeral protocol focus epoch without
 // creating a GameState revision or dirty component. It is used by successful
 // context-setting frames whose payload has no retained state projection.
