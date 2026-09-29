@@ -98,7 +98,7 @@ export function evaluateEventAttackReadiness(input: EventAttackReadinessInput): 
     } else if (selections.some((selection) => !selection.available)) {
       checks.push({ id: 'difficulty', state: 'blocked', messageKey: message('ui.settings.readiness.eventAttackReadiness.choose.an.unlocked.difficulty.for.every.event.005d1686'), fix: 'settings' });
     } else if (!achievementsObserved) {
-      checks.push({ id: 'difficulty', state: 'pending', messageKey: message('ui.settings.readiness.eventAttackReadiness.achievements.are.still.syncing.the.runtime.confirms.0954fe53') });
+      checks.push({ id: 'difficulty', state: 'pending', messageKey: message('ui.settings.readiness.eventAttackReadiness.achievements.are.still.syncing.unlocked.difficulties.are.183b4a1f') });
     } else {
       checks.push({ id: 'difficulty', state: 'valid', messageKey: message('ui.settings.readiness.eventAttackReadiness.every.event.has.an.unlocked.difficulty.5d1cac20') });
     }
@@ -119,7 +119,7 @@ export function evaluateEventAttackReadiness(input: EventAttackReadinessInput): 
     checks.push({ id: 'commanders', state: 'pending', messageKey: message('ui.settings.readiness.eventAttackReadiness.no.commander.is.available.right.now.the.8b8f881e') });
   }
   checks.push({ id: 'commander-assignment', state: 'pending', messageKey: message('ui.settings.readiness.eventAttackReadiness.commanders.assigned.to.this.automation.under.commanders.462970de'), fix: 'assignment' });
-  checks.push({ id: 'tool-compatibility', state: 'pending', messageKey: message('ui.settings.readiness.eventAttackReadiness.tool.compatibility.with.each.target.is.verified.197b0a1d') });
+  checks.push({ id: 'tool-compatibility', state: 'pending', messageKey: message('ui.settings.readiness.eventAttackReadiness.tool.compatibility.with.each.target.is.checked.95eb4eaa') });
 
   if (draft.dailyAttackLimit !== undefined) {
     const daily = state?.dailyAttacks;
@@ -214,7 +214,7 @@ function inventoryCheck(
   return freshness.scope === 'castle' && freshness.observedAt
     ? { id: 'inventory', slot, state: 'valid', messageKey: message('eventAttackReadiness.inventoryObservedAt'), params: { observedAt: Date.parse(freshness.observedAt) } }
     // No per-castle time reaches the client today: counts are from this connection's baseline.
-    : { id: 'inventory', slot, state: 'valid', messageKey: message('ui.settings.readiness.eventAttackReadiness.the.source.castle.has.the.troops.and.52877360') };
+    : { id: 'inventory', slot, state: 'valid', messageKey: message('ui.settings.readiness.eventAttackReadiness.the.source.castle.has.the.troops.and.57e05dcd') };
 }
 
 function requestedItems(composition: AttackSetupDraft): { troops: Map<number, number>; tools: Map<number, number> } {

@@ -253,7 +253,8 @@ test('inventory is unavailable, with the reason, whenever unit counts are not cu
   assert.equal(live.state, 'valid', 'on a live, baselined session the sentinel no longer hides stock; 50 of 100 stationed is enough');
   const valid = evaluate({ slots: [{ slot: 'nomad', ref: inline([[1, 100]]) }] }).checks.find((entry) => entry.id === 'inventory');
   assert.equal(valid.state, 'valid');
-  assert.match(messages[valid.messageKey], /per-castle age is not reported by the runtime/);
+  assert.match(messages[valid.messageKey], /the game does not report when each castle was last checked/);
+  assert.doesNotMatch(messages[valid.messageKey], /runtime/);
   const timed = evaluate({ slots: [{ slot: 'nomad', ref: inline([[1, 100]]) }] }, {
     state: gameState({ castles: { 7: { ...gameState().castles[7], unitsObservedAt: '2026-09-29T10:00:00Z' } } }),
   }).checks.find((entry) => entry.id === 'inventory');
@@ -262,4 +263,12 @@ test('inventory is unavailable, with the reason, whenever unit counts are not cu
     state: gameState({ castles: { 7: { ...gameState().castles[7], unitsObservedAt: '2026-09-29T08:00:00Z' } } }),
   }).checks.find((entry) => entry.id === 'inventory');
   assert.equal(stale.state, 'unavailable', 'a real timestamp before the connection changed is stale');
+});
+
+test('player-facing readiness text keeps "runtime" out (Daniel review of the CIT-15 recipe PR)', () => {
+  const readinessKeys = Object.keys(messages).filter((key) => key.startsWith('ui.settings.readiness.eventAttackReadiness.') || key.startsWith('eventAttackReadiness.'));
+  assert.ok(readinessKeys.length > 10);
+  for (const key of readinessKeys) assert.doesNotMatch(messages[key], /runtime/i, key);
+  assert.equal(messages['ui.settings.readiness.eventAttackReadiness.tool.compatibility.with.each.target.is.checked.95eb4eaa'], 'Tool compatibility with each target is checked when the attack launches.');
+  assert.equal(messages['ui.settings.readiness.eventAttackReadiness.achievements.are.still.syncing.unlocked.difficulties.are.183b4a1f'], 'Achievements are still syncing. Unlocked difficulties are confirmed when the attack launches.');
 });

@@ -40,11 +40,24 @@ test('accepted entries require evidence', () => {
   assert.equal(recipes.pendingStarterReviews(accepted).includes('waveCount'), false);
 });
 
-test('no starter value is approved by this story', () => {
-  assert.deepEqual(
-    recipes.pendingStarterReviews().sort(),
-    Object.keys(recipes.EVENT_ATTACK_STARTER_RECIPE).sort(),
-  );
+test('CIT-15 product acceptance: every entry accepted with its evidence', () => {
+  const evidence = 'Maya product acceptance 2026-09-29, Desktop 723d12d / Hosted 2178a0e, Product/Simpler automation setup.md § CIT-15 product acceptance';
+  assert.deepEqual(recipes.pendingStarterReviews(), []);
+  for (const name of ['waveCount', 'tools', 'courtyardSupport', 'targetType', 'useTroopFamilies']) {
+    assert.deepEqual(recipes.EVENT_ATTACK_STARTER_RECIPE[name].review, { owner: 'Maya', status: 'accepted', evidence }, name);
+  }
+  const { waveCount, laneFill, tools, courtyardSupport, targetType, useTroopFamilies } = recipes.EVENT_ATTACK_STARTER_RECIPE;
+  assert.equal(waveCount.value, 1);
+  assert.equal(tools.value, 'none');
+  assert.equal(courtyardSupport.value, 'none');
+  assert.equal(targetType.value, 'pve');
+  assert.equal(useTroopFamilies.value, false);
+  assert.equal(laneFill.value, 'most-numerous-stationed-troop-types-center-first');
+  assert.deepEqual(laneFill.review, {
+    owner: 'Maya',
+    status: 'accepted',
+    evidence: 'Maya product acceptance 2026-09-29 (adjusted rule) + Sophie preview QA PASS @ 7eb7571/4f29345, QA/Results/CIT-15 inline event attack setup.md § Starter-recipe follow-up',
+  });
 });
 
 test('existing-default values equal the cited defaults', () => {
