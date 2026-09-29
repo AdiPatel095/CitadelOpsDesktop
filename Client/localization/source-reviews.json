@@ -1748,5 +1748,15 @@
     "classification": "technical",
     "reason": "Badge variant token and composition of typed module/slot labels.",
     "evidence": "Module and slot labels come from attackPresets.module.* / attackPresets.slot.* messages joined with a separator."
+  },
+  "27ae5e79c3384d5d394f0f0fb5f42b9b9e28421efe147dcf08e3efeeda38774a": {
+    "classification": "technical",
+    "reason": "Readiness check ids, states, slots, fix codes, select parameters and booster ids.",
+    "evidence": "ReadinessCheck id/state/slot/fix and params (boost, currency) are identifiers or ICU select arguments; text is the typed messageKey rendered by ReadinessPanel."
+  },
+  "d4c9d92e7de2a0baf3236589a84223be591131c4c03f4f8de037c5e035a420db": {
+    "classification": "technical",
+    "reason": "Readiness check ids, states, slots, fix codes, select parameters and booster ids.",
+    "evidence": "ReadinessCheck id/state/slot/fix and params (boost, currency) are identifiers or ICU select arguments; text is the typed messageKey rendered by ReadinessPanel."
   }
 }

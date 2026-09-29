@@ -172,6 +172,22 @@ test('Berimond Gallantry booster is pending when unobserved, blocked when inacti
   assert.equal(stateOf(beri({ requireActiveGallantryBooster: false }, gameState({ market: {} })), 'gallantry-booster'), 'valid');
 });
 
+test('Berimond inventory is decided at launch because the camp, not the source castle, supplies the attack', () => {
+  const beri = (ref) => readiness.evaluateEventAttackReadiness({
+    featureId: 'autoBeriWorld',
+    draft: { sourceCastleId: 7, slots: [{ slot: 'attack', ref }] },
+    state: gameState(),
+    document: emptyDocument,
+    troops,
+    tools,
+    metadataReady: true,
+    now: NOW,
+  });
+  assert.equal(stateOf(beri(inline([[1, 5]], [[614, 20]])), 'inventory', 'attack'), 'pending', 'coin tools are bought in the camp');
+  assert.equal(stateOf(beri(inline([[3, 5]])), 'inventory', 'attack'), 'pending');
+  assert.equal(stateOf(beri(inline([[1, 5]])), 'inventory', 'attack'), 'valid');
+});
+
 test('Invasion fortification is reported only when chosen and Rubies are never defaulted', () => {
   assert.equal(invasion.defaultAutoInvasionClientState().fortifyCurrency, '');
   const draft = { fortifyCurrency: invasion.defaultAutoInvasionClientState().fortifyCurrency };

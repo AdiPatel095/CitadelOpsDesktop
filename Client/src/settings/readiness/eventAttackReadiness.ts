@@ -191,6 +191,11 @@ function inventoryCheck(
     if (stock <= 0) missing += 1;
     else if (stock < amount) short += 1;
   }
+  if ((missing > 0 || short > 0) && input.featureId === 'autoBeriWorld') {
+    // Berimond attacks launch from the camp: transfers move troops there and the armorer lane buys
+    // coin tools there, so source-castle stock alone cannot decide this before launch.
+    return { id: 'inventory', slot, state: 'pending', messageKey: message('ui.settings.readiness.eventAttackReadiness.berimond.camp.stock.is.checked.at.launch.e26aa185') };
+  }
   if (missing > 0) {
     return { id: 'inventory', slot, state: 'blocked', messageKey: message('eventAttackReadiness.inventoryMissing'), params: { count: missing }, fix: 'settings' };
   }

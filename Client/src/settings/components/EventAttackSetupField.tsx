@@ -323,6 +323,8 @@ export const EventAttackSetupField: React.FC<EventAttackSetupFieldProps> = ({
               {appCreatedPresetBadge()}
               {summaryBadges}
             </div>
+          ) : value.source === 'preset' ? (
+            <p className="text-xs text-text-muted"><LocalizedText messageKey="ui.settings.components.eventAttackSetupField.this.attack.uses.the.saved.preset.until.af2cf4a8" /></p>
           ) : (
             <p className="text-xs text-text-muted"><LocalizedText messageKey="ui.settings.components.eventAttackSetupField.no.setup.is.configured.here.yet.start.06ce2916" /></p>
           )}
