@@ -1,5 +1,6 @@
 import { useLocale as useStaticLocale } from "../../i18n/LocaleContext";
 import { LocalizedText } from "../../i18n/LocalizedText";
+import type { MessageKey } from "../../i18n/messages";
 import { memo, useCallback, useDeferredValue, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import {
 	AlertTriangle,
@@ -32,6 +33,7 @@ import {
 	summarizeAttackPreset,
 } from '../../attackPresets/AttackPresetTypes';
 import { attackPresetSelectOptions } from '../../attackPresets/AttackPresetOptionLabel';
+import { attackPresetSlotDefinition } from '../../attackPresets/AttackPresetReferences';
 import { Notifications } from '../../components/Notifications';
 import { runtimeFetch } from '../../api/RuntimeURL';
 import type {
@@ -824,6 +826,15 @@ const AllianceTargetAttackModal = ({ target, onClose }: AllianceTargetAttackModa
 							searchable
 							menuGrowToViewport
 						/>
+						{preset?.app ? (
+							// No stored reference here: the composition is sent with the attack, so nothing is promoted.
+							<p className="mt-1.5 text-[11px] text-text-muted">
+								<LocalizedText
+									messageKey="allianceTargets.appCreatedPresetNote"
+									params={{ module: presetOwnerLabel(preset.app, localizeStatic) }}
+								/>
+							</p>
+						) : null}
 					</label>
 				</div>
 
@@ -982,3 +993,8 @@ function attackBlockReason(input: {
 }
 
 export default AllianceTargetsView;
+
+function presetOwnerLabel(app: { section: string; slot: string }, localize: (key: MessageKey) => string): string {
+	const definition = attackPresetSlotDefinition(app.section, app.slot);
+	return definition ? `${localize(definition.moduleLabelKey)} · ${localize(definition.slotLabelKey)}` : app.section;
+}

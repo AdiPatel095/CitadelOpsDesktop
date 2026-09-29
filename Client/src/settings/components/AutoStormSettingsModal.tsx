@@ -50,6 +50,7 @@ import type { ReadinessCheck } from '../readiness/Readiness';
 import { savedCommanderAssignments } from '../requirements/commanderAssignmentDraft';
 import { evaluateCommanderEligibility } from '../requirements/commanderEligibility';
 import { evaluateUnitStock } from '../requirements/unitRequirements';
+import { useHostedRuntimePresence } from '../../config/Deployment';
 import { useSetupContext } from '../requirements/useSetupContext';
 import { CommanderAssignmentPanel } from './CommanderAssignmentPanel';
 import { EventAttackSetupField } from './EventAttackSetupField';
@@ -158,7 +159,7 @@ const LUNA_PACKAGE_ID_SET = new Set(AUTO_STORM_LUNA_PACKAGE_IDS);
 export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ isOpen, onClose }) => {
   const { t: localizeStatic } = useStaticLocale();
   const { captureBuildingTarget } = useCitadelAPI();
-  const setup = useSetupContext(AUTO_STORM_SECTION);
+  const setup = useSetupContext(AUTO_STORM_SECTION, useHostedRuntimePresence());
   const state = setup.state;
   const { getTool, getTroop, troops, tools, unitsLoading, unitsError } = useMetadata();
   const draftSession = useConfigurationDraftSession({
@@ -612,6 +613,12 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
     if (target) focusReadinessTarget(target);
   };
   const moduleLabel = localizeStatic('attackPresets.module.autoStorm');
+  const stockLabel = stormCastle
+    ? localizeStatic('stormReadiness.inventoryLabel', {
+      castle: stormCastle.name?.trim() || `#${stormCastle.id}`,
+      donors: draft.troopImport.enabled ? selectedDonors.length : 0,
+    })
+    : undefined;
 
   const save = async () => {
     if (!canSave || saving) return;
@@ -1075,6 +1082,7 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
                     recipePending={recipePending}
                     onSaveAsPreset={(inline, name) => saveInlineSetupAsUserPreset(draftSession, inline, name)}
                     readinessChecks={readiness.checks.filter((check) => check.slot === 'forts')}
+                    inventoryLabel={stockLabel}
                     disabled={saving}
                   />
                   {draft.forts.levels.length === 0 ? <p className="text-xs text-error"><LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.select.at.least.one.fort.level.32a7a693" /></p> : null}
@@ -1224,6 +1232,7 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
                     recipePending={recipePending}
                     onSaveAsPreset={(inline, name) => saveInlineSetupAsUserPreset(draftSession, inline, name)}
                     readinessChecks={readiness.checks.filter((check) => check.slot === 'islands' && check.id !== 'islands-defense-units')}
+                    inventoryLabel={stockLabel}
                     disabled={saving}
                   />
 

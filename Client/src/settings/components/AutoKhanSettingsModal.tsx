@@ -48,6 +48,7 @@ import type { ReadinessCheck } from '../readiness/Readiness';
 import { savedCommanderAssignments } from '../requirements/commanderAssignmentDraft';
 import { evaluateCommanderEligibility } from '../requirements/commanderEligibility';
 import { greatEmpireMainCastle } from '../requirements/setupReadiness';
+import { useHostedRuntimePresence } from '../../config/Deployment';
 import { useSetupContext } from '../requirements/useSetupContext';
 import { CastleRequirementField } from './CastleRequirementField';
 import { CommanderAssignmentPanel } from './CommanderAssignmentPanel';
@@ -73,7 +74,7 @@ interface AutoKhanSettingsModalProps {
 
 export const AutoKhanSettingsModal: React.FC<AutoKhanSettingsModalProps> = ({ isOpen, onClose }) => {
   const { t: localizeStatic } = useStaticLocale();
-  const setup = useSetupContext(AUTO_KHAN_SECTION);
+  const setup = useSetupContext(AUTO_KHAN_SECTION, useHostedRuntimePresence());
   const state = setup.state;
   const { troops, tools, unitsLoading, unitsError } = useMetadata();
   const draftSession = useConfigurationDraftSession({

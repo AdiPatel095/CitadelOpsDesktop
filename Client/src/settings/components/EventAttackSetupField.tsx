@@ -66,6 +66,8 @@ export interface EventAttackSetupFieldProps {
   onSaveAsPreset: (setup: InlineAttackSetup, name: string) => Promise<string>;
   readinessChecks?: readonly ReadinessCheck[];
   disabled?: boolean;
+  /** Label of the stock shown in the editor (Storm: the Storm castle plus donors). */
+  inventoryLabel?: string;
 }
 
 function modeFor(ref: AttackSetupRef): FieldMode | null {
@@ -101,6 +103,7 @@ export const EventAttackSetupField: React.FC<EventAttackSetupFieldProps> = ({
   onSaveAsPreset,
   readinessChecks = [],
   disabled = false,
+  inventoryLabel,
 }) => {
   const { t: localizeStatic, locale } = useLocale();
   const { troops, tools, getTroop, unitsLoading, unitsError } = useMetadata();
@@ -204,11 +207,11 @@ export const EventAttackSetupField: React.FC<EventAttackSetupFieldProps> = ({
       else if (troops[itemId]) troopStock[itemId] = count;
     }
     return {
-      label: localizeStatic('eventAttackSetup.inventoryLabel', { castle: sourceCastle.name?.trim() || `#${sourceCastle.id}` }),
+      label: inventoryLabel ?? localizeStatic('eventAttackSetup.inventoryLabel', { castle: sourceCastle.name?.trim() || `#${sourceCastle.id}` }),
       troopStock,
       toolStock,
     };
-  }, [localizeStatic, sourceCastle, tools, troops]);
+  }, [inventoryLabel, localizeStatic, sourceCastle, tools, troops]);
 
   const inlineId = value.source === 'inline' ? value.presetId : '';
   // A recommendation resolved for another castle or event is never applied.
