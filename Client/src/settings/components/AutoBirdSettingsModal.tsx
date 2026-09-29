@@ -112,7 +112,8 @@ export const AutoBirdSettingsModal: React.FC<AutoBirdSettingsModalProps> = ({ is
     troops,
     tools,
     metadataReady: !unitsLoading && !unitsError,
-  }), [settings, state, tools, troops, unitsError, unitsLoading]);
+    observation: setup.observation,
+  }), [settings, state, tools, troops, unitsError, unitsLoading, setup.observation]);
 
   const hydrateFromConfiguration = useCallback(() => {
     const s = parseAutoBirdClientState(draftSession.sections?.['automation.autoBird']).ignoreSettings;

@@ -3,6 +3,7 @@ import { useCitadelAPI } from '../../api/ApiContext';
 import { useAuth } from '../../context/AuthContext';
 import { movementViewFromState } from '../../Movement/types/MovementState';
 import { accountKey, advanceAccountSession, type AccountSessionTracking } from './castleRequirements';
+import type { ObservationContext, ObservationPresence } from './observationFreshness';
 
 /**
  * Observations a settings modal needs to evaluate requirements (CIT-18).
@@ -10,12 +11,21 @@ import { accountKey, advanceAccountSession, type AccountSessionTracking } from '
  * refresh commander movements (`useMovement().refreshMovement` would submit
  * `game.refresh_movements`, so it is deliberately not used).
  */
-export function useSetupContext(section: string) {
+export function useSetupContext(section: string, hostedPresence?: ObservationPresence) {
   const { state } = useCitadelAPI();
   const { gameLoggedIn } = useAuth();
   const movement = useMemo(() => movementViewFromState(state), [state]);
   const sessionKey = useAccountSessionKey(section, accountKey(state));
-  return { state, gameLoggedIn, movement, sessionKey };
+  const session = state?.session ?? null;
+  const presenceMode = hostedPresence?.mode;
+  const checkpointObservedAt = hostedPresence?.checkpointObservedAt;
+  // Unit counts are used only while current on this connection (CIT-15 D1).
+  const observation = useMemo<ObservationContext>(() => ({
+    session,
+    connected: gameLoggedIn,
+    hostedPresence: presenceMode ? { mode: presenceMode, checkpointObservedAt } : undefined,
+  }), [checkpointObservedAt, gameLoggedIn, presenceMode, session]);
+  return { state, gameLoggedIn, movement, sessionKey, observation };
 }
 
 /**

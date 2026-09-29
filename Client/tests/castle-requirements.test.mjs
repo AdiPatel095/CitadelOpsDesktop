@@ -23,8 +23,8 @@ function castle(id, kingdomId, slotType, extra = {}) {
 const state = {
   account: { uid: 5, worldId: 'EmpireEx_21' },
   castles: {
-    1: castle(1, 0, 1, { unitsObservedAt: '2026-09-29T10:00:00Z' }),
-    2: castle(2, 0, 4),
+    1: castle(1, 0, 1, { unitsObservedAt: '0001-01-01T00:00:00Z' }),
+    2: castle(2, 0, 4, { unitsObservedAt: '2026-07-31T09:00:00Z' }),
     11: castle(11, 1, 12),
     12: castle(12, 1, 3),
     31: castle(31, 10, 17),
@@ -41,14 +41,20 @@ test('purposes match the castles each module offers today', () => {
 
 test('castle references report missing, wrong kind, unobserved and valid', () => {
   const check = (castleId, purpose, requireObservedUnits) => castles.evaluateCastleReference({ castleId, state, purpose, requireObservedUnits });
+  const session = { generation: 25, baselineGeneration: 25, changedAt: '2026-09-29T09:00:00Z' };
+  const live = { session, connected: true };
   assert.equal(castles.evaluateCastleReference({ castleId: 1, state: null, purpose: 'any-owned' }).state, 'unavailable');
   assert.equal(check(0, 'source-great-empire').state, 'blocked');
   assert.equal(check(0, 'source-great-empire').fix, 'settings');
   assert.equal(check(404, 'source-great-empire').state, 'blocked');
   assert.equal(check(11, 'source-great-empire').state, 'blocked');
   assert.equal(check(12, 'outer-main').state, 'blocked');
-  assert.equal(check(2, 'source-great-empire', true).state, 'unavailable');
-  assert.equal(check(1, 'source-great-empire', true).state, 'valid');
+  // D1: zero-time counts follow the session; a real time before this connection is stale.
+  assert.equal(check(1, 'source-great-empire', live).state, 'valid');
+  assert.equal(check(2, 'source-great-empire', live).state, 'unavailable');
+  assert.equal(check(1, 'source-great-empire', { session, connected: false }).state, 'unavailable');
+  assert.equal(check(1, 'source-great-empire', { session, connected: false }).fix, 'connection');
+  assert.equal(check(1, 'source-great-empire').state, 'valid');
   assert.equal(check(31, 'berimond').state, 'valid');
   assert.equal(castles.evaluateCastleReference({ castleId: 1, state, purpose: 'any-owned', id: 'donor' }).id, 'donor');
 });

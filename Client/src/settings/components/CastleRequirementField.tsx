@@ -4,6 +4,7 @@ import type { GameStateV2 } from '../../api/Contracts';
 import { Select, type SelectOption } from '../../components/ui/Select';
 import { useLocale } from '../../i18n/LocaleContext';
 import { castleOptionsFor, evaluateCastleReference, type CastlePurpose } from '../requirements/castleRequirements';
+import type { ObservationContext } from '../requirements/observationFreshness';
 import { ReadinessCheckLine } from './ReadinessPanel';
 
 export interface CastleRequirementFieldProps {
@@ -13,7 +14,8 @@ export interface CastleRequirementFieldProps {
   onChange: (castleId: number) => void;
   state: GameStateV2 | null;
   purpose: CastlePurpose;
-  requireObservedUnits?: boolean;
+  /** When set, the castle's unit counts must be current (CIT-15 D1). */
+  requireObservedUnits?: ObservationContext;
   /** The options this module offers today; defaults to every castle matching the purpose. */
   options?: SelectOption[];
   placeholder?: React.ReactNode;

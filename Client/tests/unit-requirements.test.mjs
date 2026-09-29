@@ -18,10 +18,14 @@ after(async () => {
 
 const troops = { 1: { id: 1, name: 'A' }, 2: { id: 2, name: 'B' } };
 const tools = { 500: { id: 500, name: 'Ladder' } };
-const castle = { id: 7, kingdomId: 0, units: { stationed: { 1: 100, 2: 5, 500: 10 } }, unitsObservedAt: '2026-09-29T10:00:00Z' };
+// The dashboard projection zeroes unitsObservedAt (Go zero time); freshness comes from the session (CIT-15 D1).
+const ZERO_TIME = '0001-01-01T00:00:00Z';
+const castle = { id: 7, kingdomId: 0, units: { stationed: { 1: 100, 2: 5, 500: 10 } }, unitsObservedAt: ZERO_TIME };
+const SESSION = { generation: 25, baselineGeneration: 25, changedAt: '2026-09-29T09:00:00Z' };
+const LIVE = { session: SESSION, connected: true };
 
 function stock(requests, extra = {}) {
-  return units.evaluateUnitStock({ castle, requests, troops, tools, metadataReady: true, ...extra });
+  return units.evaluateUnitStock({ castle, observation: LIVE, requests, troops, tools, metadataReady: true, ...extra });
 }
 
 test('required amounts: valid, short (pending) and missing (blocked) with per-line states', () => {
@@ -50,10 +54,33 @@ test('decided at launch: quantity keeps missing blocked, stock refills make it p
   assert.equal(stock([{ itemId: 3, amount: 1, kind: 'troop' }], { decidedAtLaunch: 'stock' }).check.state, 'pending');
 });
 
-test('unobserved castle and loading family data are unavailable', () => {
-  assert.equal(units.evaluateUnitStock({ castle: { ...castle, unitsObservedAt: undefined }, requests: [], troops, tools, metadataReady: true }).check.state, 'unavailable');
-  assert.equal(units.evaluateUnitStock({ castle: null, requests: [], troops, tools, metadataReady: true }).check.state, 'unavailable');
+test('no castle and loading family data are unavailable', () => {
+  assert.equal(units.evaluateUnitStock({ castle: null, observation: LIVE, requests: [], troops, tools, metadataReady: true }).check.state, 'unavailable');
   assert.equal(stock([{ itemId: 1, amount: 1, kind: 'troop' }], { useTroopFamilies: true, metadataReady: false }).check.state, 'unavailable');
+});
+
+test('D1: zero-time counts are compared only while this connection is current', () => {
+  const request = [{ itemId: 1, amount: 1, kind: 'troop' }];
+  const live = stock(request);
+  assert.equal(live.check.state, 'valid');
+  assert.deepEqual(live.freshness, { state: 'observed', scope: 'session', since: SESSION.changedAt });
+  const cases = [
+    [{ session: SESSION, connected: false }, 'ui.components.staleSessionBanner.disconnected.last.known.data.166a8c99'],
+    [{ session: { ...SESSION, baselineGeneration: 24 }, connected: true }, 'ui.settings.requirements.observationFreshness.waiting.for.the.game.connection.to.finish.c661a838'],
+    [{ ...LIVE, hostedPresence: { mode: 'checkpoint', checkpointObservedAt: '2026-09-29T08:00:00Z' } }, 'ui.settings.requirements.observationFreshness.this.is.a.saved.checkpoint.troop.counts.4a2b7024'],
+  ];
+  for (const [observation, messageKey] of cases) {
+    const result = stock(request, { observation });
+    assert.equal(result.check.state, 'unavailable');
+    assert.equal(result.check.messageKey, messageKey);
+    assert.equal(result.check.fix, 'connection');
+    assert.deepEqual(result.lines, [], 'no stale per-line counts are shown');
+  }
+  const stale = stock(request, { castle: { ...castle, unitsObservedAt: '2026-07-31T09:00:00Z' } });
+  assert.equal(stale.check.state, 'unavailable');
+  assert.equal(stale.freshness.reason, 'stale-before-connection');
+  const fresh = stock(request, { castle: { ...castle, unitsObservedAt: '2026-09-29T10:00:00Z' } });
+  assert.equal(fresh.freshness.scope, 'castle');
 });
 
 test('reserves: above stock is pending, unknown units block, covered reserves are valid', () => {

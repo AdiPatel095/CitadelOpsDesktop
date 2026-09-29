@@ -118,6 +118,7 @@ export const AutoFortressSettingsModal: React.FC<AutoFortressSettingsModalProps>
     troops,
     tools,
     metadataReady: !unitsLoading && !unitsError,
+    observation: setup.observation,
     commanders: evaluateCommanderEligibility({
       featureId: 'autoFortress',
       state,
@@ -126,7 +127,7 @@ export const AutoFortressSettingsModal: React.FC<AutoFortressSettingsModalProps>
       gameLoggedIn: setup.gameLoggedIn,
       now: Date.now(),
     }),
-  }), [commanderAssignments, settings.direwolfPurchaseLimit, settings.kingdoms, setup.gameLoggedIn, setup.movement, state, tools, troops, unitsError, unitsLoading]);
+  }), [commanderAssignments, settings.direwolfPurchaseLimit, settings.kingdoms, setup.gameLoggedIn, setup.movement, state, tools, troops, unitsError, unitsLoading, setup.observation]);
   const fixReadiness = (check: ReadinessCheck) => {
     if (check.id === 'commanders' || check.id === 'commander-assignment' || check.id === 'commander-speed') {
       setCommandersOpen(true);

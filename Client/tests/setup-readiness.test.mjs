@@ -19,8 +19,10 @@ after(async () => {
 });
 
 const troops = { 1: { id: 1, name: 'A' }, 277: { id: 277, name: 'Direwolf' } };
-const metadata = { troops, tools: {}, metadataReady: true };
-const castle = (id, kingdomId, slotType, stationed = {}, extra = {}) => ({ id, kingdomId, slotType, name: `C${id}`, units: { stationed }, unitsObservedAt: 'x', resources: {}, ...extra });
+// Zero-time unitsObservedAt as the projection serves it; freshness comes from the session (CIT-15 D1).
+const SESSION = { generation: 25, baselineGeneration: 25, changedAt: '2026-09-29T09:00:00Z' };
+const metadata = { troops, tools: {}, metadataReady: true, observation: { session: SESSION, connected: true } };
+const castle = (id, kingdomId, slotType, stationed = {}, extra = {}) => ({ id, kingdomId, slotType, name: `C${id}`, units: { stationed }, unitsObservedAt: '0001-01-01T00:00:00Z', resources: {}, ...extra });
 
 const allMessagesExist = (report) => report.checks.forEach((check) => assert.ok(messages[check.messageKey], `${check.id}: ${check.messageKey}`));
 
@@ -114,5 +116,19 @@ test('every CIT-18 module renders the readiness panel; commander modules render 
     } else {
       assert.doesNotMatch(source, /<CommanderAssignmentPanel/, `${file} must not impose commander choices`);
     }
+  }
+});
+
+test('D1: stock checks are unavailable while disconnected or awaiting the baseline', () => {
+  const state = { castles: { 1: castle(1, 0, 1, { 1: 50 }) } };
+  for (const observation of [{ session: SESSION, connected: false }, { session: { ...SESSION, baselineGeneration: 24 }, connected: true }]) {
+    const towers = setup.evaluateTowerReadiness({ state, castles: { 1: { enabled: true, unitId: 1, maidenOnly: false } }, ...metadata, observation });
+    assert.equal(towers.stockByCastle[1].check.state, 'unavailable');
+    assert.equal(towers.stockByCastle[1].check.fix, 'connection');
+    assert.deepEqual(towers.stockByCastle[1].lines, []);
+    const reserves = setup.evaluateReserveReadiness({ featureId: 'autoStation', state, reserves: { 1: [{ id: 1, amount: 5 }] }, ...metadata, observation });
+    assert.equal(reserves.stockByCastle[1].check.state, 'unavailable');
+    allMessagesExist(towers.report);
+    allMessagesExist(reserves.report);
   }
 });

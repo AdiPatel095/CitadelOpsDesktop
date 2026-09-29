@@ -3213,5 +3213,15 @@
     "classification": "technical",
     "reason": "Draft-session key composition.",
     "evidence": "sessionKey identity string passed to useConfigurationDraftSession."
+  },
+  "c5358fb77554d3ac0d77e3742cbfc9ee6fc1ef6ae2cd31632215e4d15a738ca8": {
+    "classification": "technical",
+    "reason": "Stock line states, request kinds, readiness ids/states/fix codes and fallback ids.",
+    "evidence": "Line states map to typed unitStock.state.* labels; readiness text is the typed messageKey."
+  },
+  "9f9317e4232918bbd17780c58383c2f1680eae46141a6bb01818fc8a87aca9b5": {
+    "classification": "technical",
+    "reason": "Stock line states, request kinds, readiness ids/states/fix codes and fallback ids.",
+    "evidence": "Line states map to typed unitStock.state.* labels; readiness text is the typed messageKey."
   }
 }

@@ -2,6 +2,7 @@ import type { CastleStateV2, GameStateV2 } from '../../api/Contracts';
 import { castleOptionsFromState, type CastleOptionV2 } from '../../api/Selectors';
 import type { MessageKey } from '../../i18n/messages';
 import type { ReadinessCheck } from '../readiness/Readiness';
+import { observationUnavailableMessage, unitObservationFreshness, type ObservationContext } from './observationFreshness';
 
 /**
  * Castle references in automation settings (CIT-18). A saved castle id is never
@@ -33,7 +34,8 @@ export interface CastleReferenceInput {
   castleId: number;
   state: GameStateV2 | null;
   purpose: CastlePurpose;
-  requireObservedUnits?: boolean;
+  /** When set, the castle's unit counts must be current on this connection (CIT-15 D1). */
+  requireObservedUnits?: ObservationContext;
   /** Readiness check id; defaults to `source-castle`. */
   id?: string;
 }
@@ -59,8 +61,11 @@ export function evaluateCastleReference(input: CastleReferenceInput): ReadinessC
         : message('ui.settings.requirements.castleRequirements.this.castle.is.not.in.berimond.ba05be9b');
     return { id, state: 'blocked', messageKey: key, fix: 'settings' };
   }
-  if (input.requireObservedUnits && !castle.unitsObservedAt) {
-    return { id, state: 'unavailable', messageKey: message('ui.settings.requirements.castleRequirements.troops.in.this.castle.have.not.been.56351416'), fix: 'connection' };
+  if (input.requireObservedUnits) {
+    const freshness = unitObservationFreshness({ castle, ...input.requireObservedUnits });
+    if (freshness.state === 'unavailable') {
+      return { id, state: 'unavailable', messageKey: observationUnavailableMessage(freshness.reason), fix: 'connection' };
+    }
   }
   return { id, state: 'valid', messageKey: message('ui.settings.requirements.castleRequirements.the.castle.is.available.in.this.account.41064dc3') };
 }

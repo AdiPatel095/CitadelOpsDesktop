@@ -92,6 +92,7 @@ export const AutoTowerSettingsModal: React.FC<AutoTowerSettingsModalProps> = ({ 
     troops,
     tools,
     metadataReady: !unitsLoading && !unitsError,
+    observation: setup.observation,
     commanders: evaluateCommanderEligibility({
       featureId: 'autoTowers',
       state,
@@ -100,7 +101,7 @@ export const AutoTowerSettingsModal: React.FC<AutoTowerSettingsModalProps> = ({ 
       gameLoggedIn: setup.gameLoggedIn,
       now: Date.now(),
     }),
-  }), [commanderAssignments, settings, setup.gameLoggedIn, setup.movement, state, tools, troops, unitsError, unitsLoading]);
+  }), [commanderAssignments, settings, setup.gameLoggedIn, setup.movement, state, tools, troops, unitsError, unitsLoading, setup.observation]);
   const fixReadiness = (check: ReadinessCheck) => {
     if (check.id === 'commanders' || check.id === 'commander-assignment') {
       setCommandersOpen(true);

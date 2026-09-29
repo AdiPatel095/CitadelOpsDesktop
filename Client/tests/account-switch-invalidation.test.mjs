@@ -18,9 +18,9 @@ after(async () => {
   await vite.close();
 });
 
-const worldA = { account: { uid: 1, worldId: 'A' }, castles: { 7: { id: 7, kingdomId: 0, units: { stationed: { 1: 10 } }, unitsObservedAt: 'x' } } };
-const worldB = { account: { uid: 1, worldId: 'B' }, castles: { 9: { id: 9, kingdomId: 0, units: { stationed: {} }, unitsObservedAt: 'x' } } };
-const metadata = { troops: { 1: { id: 1, name: 'A' } }, tools: {}, metadataReady: true };
+const worldA = { account: { uid: 1, worldId: 'A' }, castles: { 7: { id: 7, kingdomId: 0, units: { stationed: { 1: 10 } }, unitsObservedAt: '0001-01-01T00:00:00Z' } } };
+const worldB = { account: { uid: 1, worldId: 'B' }, castles: { 9: { id: 9, kingdomId: 0, units: { stationed: {} }, unitsObservedAt: '0001-01-01T00:00:00Z' } } };
+const metadata = { troops: { 1: { id: 1, name: 'A' } }, tools: {}, metadataReady: true, observation: { session: { generation: 3, baselineGeneration: 3 }, connected: true } };
 
 test('the draft session key changes only on a real account/world switch', () => {
   let tracked = { key: '', generation: 0 };

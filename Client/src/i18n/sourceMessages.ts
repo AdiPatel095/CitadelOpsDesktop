@@ -1606,7 +1606,6 @@ export const sourceMessages = {
   "ui.settings.requirements.castleRequirements.the.source.castle.must.be.in.the.949334c8": "The source castle must be in the Great Empire.",
   "ui.settings.requirements.castleRequirements.main.castle.is.unavailable.or.the.kingdom.552f7db4": "Main castle is unavailable or the kingdom is not unlocked.",
   "ui.settings.requirements.castleRequirements.this.castle.is.not.in.berimond.ba05be9b": "This castle is not in Berimond.",
-  "ui.settings.requirements.castleRequirements.troops.in.this.castle.have.not.been.56351416": "Troops in this castle have not been observed yet.",
   "ui.settings.requirements.castleRequirements.the.castle.is.available.in.this.account.41064dc3": "The castle is available in this account.",
   "ui.settings.requirements.commanderEligibility.commanders.have.not.been.observed.for.this.ac14289c": "Commanders have not been observed for this account yet.",
   "ui.settings.requirements.commanderEligibility.a.commander.requirement.for.this.automation.is.040482cf": "A commander requirement for this automation is not supported by this version. Edit it under Commanders.",

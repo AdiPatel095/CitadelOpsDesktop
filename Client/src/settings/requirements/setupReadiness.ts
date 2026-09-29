@@ -4,6 +4,7 @@ import type { MessageKey } from '../../i18n/messages';
 import { aggregateReadiness, type CheckState, type ReadinessCheck, type ReadinessReport } from '../readiness/Readiness';
 import { castleMatchesPurpose } from './castleRequirements';
 import type { CommanderEligibilityReport } from './commanderEligibility';
+import type { ObservationContext } from './observationFreshness';
 import { evaluateUnitStock, type UnitStockResult } from './unitRequirements';
 
 /**
@@ -24,6 +25,8 @@ interface MetadataInput {
   troops: Record<number, MetadataItem>;
   tools: Record<number, MetadataItem>;
   metadataReady: boolean;
+  /** Stock is compared only while unit counts are current (CIT-15 D1). */
+  observation: ObservationContext;
 }
 
 // ——— Auto Towers ———
@@ -63,6 +66,7 @@ export function evaluateTowerReadiness(input: TowerReadinessInput): TowerReadine
   for (const [castleId, castle] of enabled) {
     if (castle.unitId <= 0 || input.state?.castles[castleId] == null) continue;
     stockByCastle[castleId] = evaluateUnitStock({
+      observation: input.observation,
       castle: input.state?.castles[castleId] ?? null,
       requests: [{ itemId: castle.unitId, amount: 1, kind: 'troop' }],
       troops: input.troops,
@@ -128,6 +132,7 @@ export function evaluateFortressReadiness(input: FortressReadinessInput): Fortre
         ? { id: 'kingdom-castle', slot: String(kingdomId), state: 'valid', messageKey: message('ui.settings.requirements.setupReadiness.the.kingdom.main.castle.is.available.25e1efec') }
         : { id: 'kingdom-castle', slot: String(kingdomId), state: 'blocked', messageKey: message('ui.settings.requirements.setupReadiness.main.castle.is.unavailable.or.the.kingdom.552f7db4'), fix: 'settings' };
     const stock = castle ? evaluateUnitStock({
+      observation: input.observation,
       castle,
       requests: [{ itemId: input.direwolfId, amount: 1, kind: 'troop' }],
       troops: input.troops,
@@ -191,6 +196,7 @@ export function evaluateReserveReadiness(input: ReserveReadinessInput): ReserveR
       continue;
     }
     stockByCastle[castleId] = evaluateUnitStock({
+      observation: input.observation,
       castle,
       requests: reserves.map((reserve) => ({ itemId: reserve.id, amount: reserve.amount, kind: 'troop' as const })),
       troops: input.troops,

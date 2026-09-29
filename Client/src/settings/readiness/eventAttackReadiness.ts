@@ -12,7 +12,7 @@ import type { MovementViewModel } from '../../Movement/types/MovementState';
 import { evaluateCommanderEligibility } from '../requirements/commanderEligibility';
 import { evaluateUnitStock, requestsFromComposition } from '../requirements/unitRequirements';
 import { aggregateReadiness, type ReadinessCheck, type ReadinessReport } from './Readiness';
-import { observationUnavailableMessage, unitObservationFreshness, type ObservationContext } from '../requirements/observationFreshness';
+import type { ObservationContext } from '../requirements/observationFreshness';
 
 export type EventAttackFeatureId = 'autoNomad' | 'autoInvasion' | 'autoBeriWorld';
 
@@ -198,12 +198,9 @@ function inventoryCheck(
   if (!castle) {
     return { id: 'inventory', slot, state: 'unavailable', messageKey: message('ui.settings.readiness.eventAttackReadiness.stationed.troops.are.unknown.until.the.source.335de03d') };
   }
-  const freshness = unitObservationFreshness({ castle, ...input.observation });
-  if (freshness.state === 'unavailable') {
-    return { id: 'inventory', slot, state: 'unavailable', messageKey: observationUnavailableMessage(freshness.reason), fix: 'connection' };
-  }
-  const { check } = evaluateUnitStock({
+  const { check, freshness } = evaluateUnitStock({
     castle,
+    observation: input.observation,
     requests: requestsFromComposition(composition),
     troops: input.troops,
     tools: input.tools,
@@ -219,7 +216,7 @@ function inventoryCheck(
       decidedAtLaunch: message('ui.settings.readiness.eventAttackReadiness.berimond.camp.stock.is.checked.at.launch.e26aa185'),
     },
   });
-  if (check.state !== 'valid') return check;
+  if (check.state !== 'valid' || freshness?.state !== 'observed') return check;
   return freshness.scope === 'castle' && freshness.observedAt
     ? { ...check, messageKey: message('eventAttackReadiness.inventoryObservedAt'), params: { observedAt: Date.parse(freshness.observedAt) } }
     // No per-castle time reaches the client today: counts are from this connection's baseline.

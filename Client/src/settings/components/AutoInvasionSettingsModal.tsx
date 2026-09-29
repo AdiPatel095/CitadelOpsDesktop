@@ -269,6 +269,7 @@ export const AutoInvasionSettingsModal: React.FC<AutoInvasionSettingsModalProps>
                 document={presetDocument}
                 references={presetReferences}
                 sourceCastle={sourceCastle}
+                observation={observation}
                 eventId={71}
                 recommendation={recommendation}
                 recipePending={recipePending}

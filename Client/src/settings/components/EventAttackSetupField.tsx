@@ -36,6 +36,7 @@ import type { ReadinessCheck } from '../readiness/Readiness';
 import type { EventAttackRecommendation } from '../onboarding/EventAttackRecommendation';
 import { validateUserPresetName } from '../AppCreatedPresetSave';
 import { ReadinessCheckLine } from './ReadinessPanel';
+import type { ObservationContext } from '../requirements/observationFreshness';
 import { evaluateUnitStock, requestsFromComposition } from '../requirements/unitRequirements';
 import { UnitStockList } from './UnitStockList';
 
@@ -56,6 +57,8 @@ export interface EventAttackSetupFieldProps {
   document: AttackPresetDocument;
   references: readonly AttackPresetReference[];
   sourceCastle: CastleStateV2 | null;
+  /** Session, connection and hosted presence; stationed stock is shown only while current (CIT-15 D1). */
+  observation: ObservationContext;
   eventId: number;
   recommendation: EventAttackRecommendation;
   recipePending: readonly string[];
@@ -91,6 +94,7 @@ export const EventAttackSetupField: React.FC<EventAttackSetupFieldProps> = ({
   document,
   references,
   sourceCastle,
+  observation,
   eventId,
   recommendation,
   recipePending,
@@ -173,6 +177,7 @@ export const EventAttackSetupField: React.FC<EventAttackSetupFieldProps> = ({
     if (!composition || !sourceCastle) return null;
     return evaluateUnitStock({
       castle: sourceCastle,
+      observation,
       requests: requestsFromComposition({ name: '', ...composition }),
       troops,
       tools,
@@ -181,7 +186,7 @@ export const EventAttackSetupField: React.FC<EventAttackSetupFieldProps> = ({
       // Berimond: transfers and the armorer lane refill the camp before launch.
       decidedAtLaunch: section === 'automation.autoBeriWorld' ? 'stock' : 'quantity',
     });
-  }, [document.presets, inlineSetup, section, sourceCastle, tools, troops, unitsError, unitsLoading, value]);
+  }, [document.presets, inlineSetup, observation, section, sourceCastle, tools, troops, unitsError, unitsLoading, value]);
   const inlineTroops = inlineSetup ? inlineSetupTroopCount(inlineSetup) : 0;
   const generatedName = summary.name || localizeStatic('attackPresets.appCreatedName', { module: moduleLabel, slot: slotLabel });
   const targetType = inlineSetup?.targetType ?? 'pve';

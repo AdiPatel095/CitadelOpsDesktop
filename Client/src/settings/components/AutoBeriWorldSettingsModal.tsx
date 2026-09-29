@@ -645,6 +645,7 @@ export const AutoBeriWorldSettingsModal: React.FC<AutoBeriWorldSettingsModalProp
 								document={presetDocument}
 								references={presetReferences}
 								sourceCastle={sourceCastle}
+								observation={observation}
 								eventId={0}
 								recommendation={recommendation}
 								recipePending={recipePending}

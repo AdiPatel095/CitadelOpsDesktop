@@ -76,7 +76,8 @@ export const AutoStationSettingsModal: React.FC<AutoStationSettingsModalProps> =
     troops,
     tools,
     metadataReady: !unitsLoading && !unitsError,
-  }), [gameState, state.settings, tools, troops, unitsError, unitsLoading]);
+    observation: setup.observation,
+  }), [gameState, state.settings, tools, troops, unitsError, unitsLoading, setup.observation]);
 
   const selectReserve = async (castle: CastleOptionV2) => {
     const castleID = String(castle.id);
