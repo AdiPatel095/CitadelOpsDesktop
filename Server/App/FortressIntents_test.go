@@ -229,6 +229,10 @@ type fortressEngineSender struct {
 	reconnectAfterGAA       bool
 	connectionGeneration    uint64
 	beforeFinalDispatch     func(string) error
+	// CIT-13: optional per-opcode response codes and outbound frame commits
+	// so outbound-capture reducers observe the command like production.
+	responseCodes map[string]int
+	feedOutbound  bool
 }
 
 func (*fortressEngineSender) Ready() bool               { return true }
@@ -256,6 +260,14 @@ func (sender *fortressEngineSender) Send(ctx context.Context, payload []byte) er
 	}
 	sender.opcodes = append(sender.opcodes, command.Opcode)
 	sender.events = append(sender.events, command.Opcode)
+	if sender.feedOutbound {
+		if _, err := sender.pipeline.HandleFrame(ctx, Protocol.Frame{
+			Direction: Protocol.DirectionOutbound, Opcode: command.Opcode, Payload: command.Payload,
+			ReceivedAt: time.Now().UTC(), CausationOperationID: Outbound.MetadataFromContext(ctx).OperationID,
+		}); err != nil {
+			return err
+		}
+	}
 	responseOpcode := command.Opcode
 	if command.Opcode == "jca" {
 		responseOpcode = "jaa"
@@ -287,6 +299,12 @@ func (sender *fortressEngineSender) Send(ctx context.Context, payload []byte) er
 	}
 	metadata := Outbound.MetadataFromContext(ctx)
 	code := 0
+	if override, found := sender.responseCodes[command.Opcode]; found {
+		code = override
+		if code != 0 {
+			responsePayload = nil
+		}
+	}
 	receivedAt := time.Now().UTC()
 	if !sender.gaaReceivedAt.IsZero() && command.Opcode == "gaa" {
 		receivedAt = sender.gaaReceivedAt

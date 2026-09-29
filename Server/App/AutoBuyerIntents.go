@@ -223,6 +223,12 @@ func planAutoBuyerPackagePurchase(_ context.Context, input Intent.PlanningContex
 	if product.Price.Scope == GameData.AutoBuyerPriceCastleResource {
 		purchaseCastleID = int64(source.ID)
 		purchaseKingdomID = source.KingdomID
+	} else if product.UnitID > 0 {
+		// Official shop dialogs send C2SBuyEventPackageVO with
+		// KID = kingdomData.activeKingdomID and AID = -1 for non-building rewards.
+		// The plan refocuses the source castle first, so its kingdom is the
+		// active kingdom; KID 0 from an outer-kingdom focus returns SBP 175.
+		purchaseKingdomID = source.KingdomID
 	}
 	payload, _ := json.Marshal(struct {
 		ProductID State.PackageID `json:"PID"`
@@ -245,6 +251,8 @@ func planAutoBuyerPackagePurchase(_ context.Context, input Intent.PlanningContex
 		steps = append(steps, resourceRefresh)
 	}
 	purchase := shopCommandStep("Purchase "+product.Name, "sbp", payload, 0)
+	// A missing or unprojectable reply never proves the paid purchase failed.
+	purchase.ResponseProjectionFailureIndeterminate = true
 	purchase.FinalDispatchAction = "auto_buyer.package.guard"
 	purchase.FinalDispatchArguments = append(json.RawMessage(nil), resolved...)
 	steps = append(steps,

@@ -1064,6 +1064,17 @@ type InventoryState struct {
 	// EquipmentMutatedAt is the latest outbound equipment/gem sale. Storage
 	// snapshots received before it are stale whatever the sale's outcome.
 	EquipmentMutatedAt time.Time `json:"equipmentMutatedAt,omitempty"`
+	// LastPackagePurchaseDispatch is the latest outbound event-package SBP.
+	// Purchase counters observed before it cannot prove its outcome.
+	LastPackagePurchaseDispatch PackagePurchaseDispatch `json:"lastPackagePurchaseDispatch,omitzero"`
+}
+
+// PackagePurchaseDispatch identifies one dispatched package purchase.
+type PackagePurchaseDispatch struct {
+	PackageID   PackageID `json:"packageId,omitempty"`
+	Amount      int64     `json:"amount,omitempty"`
+	OperationID string    `json:"operationId,omitempty"`
+	SentAt      time.Time `json:"sentAt,omitempty"`
 }
 
 type ResearchState struct {
@@ -2144,6 +2155,11 @@ type PendingCommandRequest struct {
 	HelpType          int                 `json:"helpType,omitempty"`
 	HelpID            int64               `json:"helpId,omitempty"`
 	CastleID          CastleID            `json:"castleId,omitempty"`
+	KingdomID         KingdomID           `json:"kingdomId,omitempty"`
+	TargetX           int                 `json:"targetX,omitempty"`
+	TargetY           int                 `json:"targetY,omitempty"`
+	PackageID         PackageID           `json:"packageId,omitempty"`
+	Amount            int64               `json:"amount,omitempty"`
 }
 
 type DailyAttackState struct {

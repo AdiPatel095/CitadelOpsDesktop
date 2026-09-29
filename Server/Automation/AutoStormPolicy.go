@@ -1816,6 +1816,13 @@ func autoStormCombatOpportunities(
 			return true
 		}
 		readyAt := autoStormTargetReadyAt(target)
+		// A COOLING_DOWN rejection (CRA 95, CIT-13) defers the target even when
+		// the map row reports it ready; other targets stay eligible.
+		if rejection, rejected := State.AttackTargetRejectedAt(
+			snapshot.State, target.KingdomID, target.TypeID, target.X, target.Y, snapshot.Now,
+		); rejected && rejection.Until.After(readyAt) {
+			readyAt = rejection.Until
+		}
 		if readyAt.After(snapshot.Now) {
 			if next.IsZero() || readyAt.Before(next) {
 				next = readyAt

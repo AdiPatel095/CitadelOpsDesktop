@@ -227,16 +227,17 @@ var responseCodeGuidanceByOpcode = map[string]map[int]responseCodeGuidance{
 	"abi": {
 		95: {
 			kind: ResponseCodeCooldown, expectedState: true,
-			recovery:           "The attack was not sent. The lane pauses for the safety cooldown before Auto Fortress re-checks this fortress.",
-			recoveryDescriptor: Localization.New("server.gamedata.the_attack_was_not.6a515a2d", "The attack was not sent. The lane pauses for the safety cooldown before Auto Fortress re-checks this fortress.", nil),
+			recovery:           "The attack was not sent. Auto Fortress defers this fortress and, after the lane's safety pause, chooses another target; it re-checks this fortress when the deferral ends.",
+			recoveryDescriptor: Localization.New("server.gamedata.the_attack_was_not.d9661ba8", "The attack was not sent. Auto Fortress defers this fortress and, after the lane's safety pause, chooses another target; it re-checks this fortress when the deferral ends.", nil),
 		},
 	},
-	// CRA is shared by every attack lane, so its text names no feature.
+	// CRA is shared by every attack lane; only fortress and Storm targets are
+	// deferred by AttackAnalytics.RejectedTargets (CIT-13 PR 2).
 	"cra": {
 		95: {
 			kind: ResponseCodeCooldown, expectedState: true,
-			recovery:           "The attack was not sent. The lane pauses for the safety cooldown before this target is checked again.",
-			recoveryDescriptor: Localization.New("server.gamedata.the_attack_was_not.2af0c0e8", "The attack was not sent. The lane pauses for the safety cooldown before this target is checked again.", nil),
+			recovery:           "The attack was not sent. Auto Fortress and Auto Storm defer this target and, after the lane's safety pause, choose another; other features re-check the target after the pause.",
+			recoveryDescriptor: Localization.New("server.gamedata.the_attack_was_not.8589c6cb", "The attack was not sent. Auto Fortress and Auto Storm defer this target and, after the lane's safety pause, choose another; other features re-check the target after the pause.", nil),
 		},
 	},
 	// Official client enum NO_SUCH_MESSAGE = 66; errorCode_66 supplies the text.

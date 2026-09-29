@@ -290,6 +290,9 @@ func (pipeline *Pipeline) CommitFrameGuarded(
 	if pipeline.gameData != nil {
 		currentData, _ = pipeline.gameData.Current()
 	}
+	if frame.Direction == Protocol.DirectionOutbound && frame.Opcode == "gaa" {
+		pipeline.state.ObserveOutboundMapRead(frame.ReceivedAt)
+	}
 	registration := pipeline.registry.registered(frame.Opcode, frame.Direction)
 	reducer := registration.reducer
 	retainsObservation := State.RetainProtocolObservation(frame.Opcode) &&
@@ -314,6 +317,7 @@ func (pipeline *Pipeline) CommitFrameGuarded(
 			return Protocol.CommittedFrame{}, validateErr
 		}
 		pipeline.state.ObserveProtocolFocus(focusSubcontext, frame.ReceivedAt)
+		pipeline.settleContextReply(frame)
 		committed := Protocol.CommittedFrame{
 			Frame: frame, IngressID: observed.IngressID, Revision: pipeline.state.Revision(),
 		}
@@ -430,12 +434,25 @@ func (pipeline *Pipeline) CommitFrameGuarded(
 			return committed, fenceErr
 		}
 	}
+	pipeline.settleContextReply(frame)
 	pipeline.publish(committed)
 	pipeline.completeWireCommit(observed.IngressID, committed, nil)
 	if pipeline.telemetry != nil {
 		pipeline.telemetry.Record(committed, nil)
 	}
 	return committed, nil
+}
+
+// settleContextReply marks every earlier world-map read as handled once an
+// inbound GAA/JAA/JCA reply commits (JCA is answered as JAA).
+func (pipeline *Pipeline) settleContextReply(frame Protocol.Frame) {
+	if frame.Direction != Protocol.DirectionInbound {
+		return
+	}
+	switch frame.Opcode {
+	case "gaa", "jaa", "jca":
+		pipeline.state.ObserveContextReplySettled(frame.ReceivedAt)
+	}
 }
 
 func requiresDurabilityFence(domains []string) bool {

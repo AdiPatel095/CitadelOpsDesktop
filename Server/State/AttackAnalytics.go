@@ -51,6 +51,9 @@ type AttackAnalyticsState struct {
 	PendingAttacks              []AttackFeatureLaunch       `json:"pendingAttacks,omitempty"`
 	RecentAutoStormLaunches     []AttackFeatureLaunch       `json:"recentAutoStormLaunches,omitempty"`
 	RecentTowerAdvisorTimeSkips []TowerAdvisorTimeSkipUsage `json:"recentTowerAdvisorTimeSkips,omitempty"`
+	// RejectedTargets defers fortress and Storm targets the game rejected with
+	// COOLING_DOWN (ABI/CRA 95). Server-only: stripped from client projection.
+	RejectedTargets []AttackTargetRejection `json:"rejectedTargets,omitempty"`
 }
 
 func IsAttackAnalyticsFeature(featureID AttackFeatureID) bool {

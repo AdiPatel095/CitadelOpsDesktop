@@ -607,6 +607,9 @@ func (application *Application) guardFortressTargetVerification(ctx context.Cont
 	if remaining := fortressCooldownRemaining(state, target, now); remaining > 0 {
 		return fail(fmt.Sprintf("the target is unavailable for %s", (time.Duration(remaining) * time.Second).Round(time.Second)))
 	}
+	if err := refuseRejectedAttackTarget(state, request.KingdomID, State.MapTypeKingdomFortress, request.TargetX, request.TargetY, now); err != nil {
+		return err
+	}
 	if request.RequireDialogReady {
 		source, found := state.Castles[request.SourceCastleID]
 		if !found || !fortressAttackDialogFreshForTarget(state.AttackDialog, source, target, now) ||
@@ -645,6 +648,9 @@ func fortressAttackContext(input Intent.PlanningContext, arguments json.RawMessa
 	}
 	if remaining := fortressCooldownRemaining(input.State, target, now); remaining > 0 {
 		return request, State.CastleState{}, State.MapObservation{}, 0, fmt.Errorf("%w: fortress at %d:%d is unavailable for %s", Intent.ErrPlanStale, target.X, target.Y, (time.Duration(remaining) * time.Second).Round(time.Second))
+	}
+	if err := refuseRejectedAttackTarget(input.State, target.KingdomID, target.TypeID, target.X, target.Y, now); err != nil {
+		return request, State.CastleState{}, State.MapObservation{}, 0, err
 	}
 	if State.AttackFeatureTargetPendingAt(input.State, State.AttackFeatureAutoFortress, target.KingdomID, target.TypeID, target.X, target.Y, now) {
 		return request, State.CastleState{}, State.MapObservation{}, 0, Localization.WithError(fmt.Errorf("%w: fortress at %d:%d already has an unsettled attack", Intent.ErrPlanStale, target.X, target.Y), Localization.New("server.app.intent_plan_became_stale.57437f4b", "intent plan became stale before dispatch: fortress at {p1}:{p2} already has an unsettled attack", Localization.Params{"p1": fmt.Sprintf("%d", target.X), "p2": fmt.Sprintf("%d", target.Y)}))

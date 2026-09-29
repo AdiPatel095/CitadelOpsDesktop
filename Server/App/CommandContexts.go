@@ -400,6 +400,9 @@ func (application *Application) guardCRASend(_ context.Context, arguments json.R
 			return Localization.WithError(fmt.Errorf("%w: CRA commander %d is no longer available", Intent.ErrPlanStale, *request.CommanderID), Localization.New("server.app.intent_plan_became_stale.97faff4d", "intent plan became stale before dispatch: CRA commander {p1} is no longer available", Localization.Params{"p1": fmt.Sprintf("%d", *request.CommanderID)}))
 		}
 	}
+	if err := refuseRejectedAttackTarget(state, request.KingdomID, dialog.Target.TypeID, request.TargetX, request.TargetY, time.Now().UTC()); err != nil {
+		return err
+	}
 	key := fmt.Sprintf("%d:%d:%d", request.KingdomID, request.TargetX, request.TargetY)
 	switch dialog.Target.TypeID {
 	case kingdomTowerMapTypeID, State.MapTypeKingdomFortress:

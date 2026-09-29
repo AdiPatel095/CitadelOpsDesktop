@@ -253,8 +253,8 @@ func TestResolveCIT13OpcodePairsAreOpcodeScoped(t *testing.T) {
 		messageFragment  string
 		recoveryFragment string
 	}{
-		{" ABI ", 95, ResponseCodeOfficial, ResponseCodeCooldown, "can't be attacked again yet", "before Auto Fortress re-checks this fortress"},
-		{"cra", 95, ResponseCodeOfficial, ResponseCodeCooldown, "can't be attacked again yet", "before this target is checked again"},
+		{" ABI ", 95, ResponseCodeOfficial, ResponseCodeCooldown, "can't be attacked again yet", "Auto Fortress defers this fortress"},
+		{"cra", 95, ResponseCodeOfficial, ResponseCodeCooldown, "can't be attacked again yet", "Auto Fortress and Auto Storm defer this target"},
 		{"SEQ", 214, ResponseCodeOfficialClient, ResponseCodeStaleState, "not found in storage", "Refresh equipment storage before selling again"},
 		{"sbp", 175, ResponseCodeOfficial, ResponseCodeContext, "can no longer access", "Re-enter the destination castle"},
 		{"ahr", 269, ResponseCodeOfficialClient, ResponseCodeAvailability, "cannot receive alliance help", "waits for the next helpable order"},

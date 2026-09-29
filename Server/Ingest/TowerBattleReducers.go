@@ -88,6 +88,11 @@ func reduceSuccessfulTowerBattle(
 		CooldownObservedAt: frame.ReceivedAt,
 	})
 	domains := []string{"tower-cooldowns"}
+	// An own victory proves the target was attackable; drop its rejection.
+	if summary.Target.TypeID == State.MapTypeKingdomFortress &&
+		State.ClearAttackTargetRejection(gameState, kingdomID, summary.Target.TypeID, summary.Target.X, summary.Target.Y) {
+		domains = append(domains, "attack-analytics")
+	}
 	if recordRBCTestVictory(gameState, kingdomID, summary.Target.X, summary.Target.Y, reportID) {
 		domains = append(domains, "nomad-camps")
 	}
