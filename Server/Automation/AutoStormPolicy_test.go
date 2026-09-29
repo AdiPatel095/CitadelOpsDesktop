@@ -1418,3 +1418,42 @@ func TestStormCastleActionDescriptorsDistinguishGeneratedNames(t *testing.T) {
 		}
 	}
 }
+
+// CIT-24: a hidden Storm fort (official row[8] > 0) is never a candidate and
+// contributes no ready time; once a scan shows it visible it is eligible.
+func TestAutoStormSkipsHiddenFortWithoutReadyTime(t *testing.T) {
+	now := time.Now().UTC()
+	state := State.NewGameState()
+	storm := autoStormTestCastle(40, 4, "Storm")
+	storm.X, storm.Y = 100, 100
+	state.Castles[storm.ID] = storm
+	targets := map[string]State.MapObservation{
+		"101:101": {KingdomID: 4, X: 101, Y: 101, TypeID: autoStormFortMapTypeID, StormIsleID: 7, StormVictoryCount: 1, ObservedAt: now},
+		"105:105": {
+			KingdomID: 4, X: 105, Y: 105, TypeID: autoStormFortMapTypeID, StormIsleID: 7, StormVictoryCount: 1,
+			StormCooldownRemaining: 120, StormHidden: true, ObservedAt: now,
+		},
+	}
+	state.Map[4] = map[string]State.MapObservation{}
+	for key, target := range targets {
+		state.Map[4][key] = target
+	}
+	state.Storm.Map = State.StormMapState{SourceCastleID: storm.ID, LastAttemptAt: now, LastCompletedAt: now, Targets: targets}
+	settings := defaultAutoStormSettings()
+	settings.Forts.Enabled = true
+	snapshot := Snapshot{State: state, GameData: autoStormTestGameData(t), Now: now}
+
+	candidates, next := autoStormCombatOpportunities(snapshot, settings, storm)
+	if len(candidates) != 1 || candidates[0].Observation.X != 101 || !next.IsZero() {
+		t.Fatalf("hidden fort was a candidate or produced a ready time: %#v next=%v", candidates, next)
+	}
+
+	visible := targets["105:105"]
+	visible.StormHidden = false
+	visible.StormCooldownRemaining = 0
+	snapshot.State.Storm.Map.Targets["105:105"] = visible
+	snapshot.State.Map[4]["105:105"] = visible
+	if candidates, _ = autoStormCombatOpportunities(snapshot, settings, storm); len(candidates) != 2 {
+		t.Fatalf("visible fort did not become eligible: %#v", candidates)
+	}
+}

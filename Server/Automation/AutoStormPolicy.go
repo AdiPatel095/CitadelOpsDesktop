@@ -1872,7 +1872,9 @@ func autoStormCandidateForTarget(
 ) (autoStormCombatCandidate, bool) {
 	switch target.TypeID {
 	case autoStormFortMapTypeID:
-		if !settings.Forts.Enabled || definition.Kind != GameData.StormIsleKindFort ||
+		// A hidden fort (official row[8] > 0) is never a target and has no
+		// ready time; a later scan showing it visible makes it eligible again.
+		if target.StormHidden || !settings.Forts.Enabled || definition.Kind != GameData.StormIsleKindFort ||
 			!autoStormIntSelected(settings.Forts.Levels, definition.Level) {
 			return autoStormCombatCandidate{}, false
 		}

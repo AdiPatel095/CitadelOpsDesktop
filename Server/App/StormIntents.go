@@ -850,6 +850,10 @@ func stormAttackContext(
 	if request.TargetTypeID == stormIntentIslandMapTypeID && stormIslandUnavailable(target, now) {
 		return stormAttackRequest{}, State.CastleState{}, State.MapObservation{}, GameData.StormIsleDefinition{}, Localization.WithError(fmt.Errorf("Storm resource island %d:%d is already occupied", request.TargetX, request.TargetY), Localization.New("server.app.storm_resource_island_p.2177c4ca", "Storm resource island {p0}:{p1} is already occupied", Localization.Params{"p0": request.TargetX, "p1": request.TargetY}))
 	}
+	if request.TargetTypeID == stormIntentFortMapTypeID && target.StormHidden {
+		// Not ErrPlanStale: a hidden fort cannot be attacked, so the policy retargets.
+		return stormAttackRequest{}, State.CastleState{}, State.MapObservation{}, GameData.StormIsleDefinition{}, Localization.WithError(fmt.Errorf("Storm fort %d:%d is hidden on the map", request.TargetX, request.TargetY), Localization.New("server.app.storm_fort_p_p.f03e1d2d", "Storm fort {p0}:{p1} is hidden on the map", Localization.Params{"p0": request.TargetX, "p1": request.TargetY}))
+	}
 	if err := refuseRejectedAttackTarget(input.State, request.KingdomID, request.TargetTypeID, request.TargetX, request.TargetY, now); err != nil {
 		return stormAttackRequest{}, State.CastleState{}, State.MapObservation{}, GameData.StormIsleDefinition{}, err
 	}
@@ -1731,7 +1735,8 @@ func stormTargetExpired(target State.MapObservation, definition GameData.StormIs
 func stormAttackDialogUnavailable(target State.AttackDialogTarget) bool {
 	switch target.TypeID {
 	case stormIntentFortMapTypeID:
-		return target.StormCooldownRemaining > 0
+		// Official DungeonIsleMapobjectVO row[8] > 0 hides the fort.
+		return target.StormCooldownRemaining > 0 || target.StormHidden
 	case stormIntentIslandMapTypeID:
 		return target.OwnerID > 0
 	default:

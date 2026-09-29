@@ -1179,3 +1179,60 @@ func TestStormIslandConsumeKeepsOfficialObjectID(t *testing.T) {
 		t.Fatal("island consumption without an object id was accepted")
 	}
 }
+
+// CIT-24: hidden Storm forts (official row[8] > 0) are refused by the planner
+// without ErrPlanStale and by the CRA send guard via the dialog or the map.
+func TestHiddenStormFortIsRefusedByPlannerAndCRAGuard(t *testing.T) {
+	now := time.Now().UTC()
+	state := State.NewGameState()
+	state.Castles[40] = State.CastleState{ID: 40, KingdomID: stormIntentKingdomID, X: 100, Y: 100, Focused: true}
+	state.Commanders[43] = State.CommanderState{ID: 43, Available: true}
+	fort := State.MapObservation{
+		KingdomID: stormIntentKingdomID, X: 101, Y: 102, TypeID: stormIntentFortMapTypeID,
+		StormIsleID: 7, StormVictoryCount: 5, StormHidden: true, ObservedAt: now,
+	}
+	state.Map[stormIntentKingdomID] = map[string]State.MapObservation{"101:102": fort}
+	gameData := stormAttackTestGameData(t)
+	arguments := json.RawMessage(`{
+		"sourceCastleId":40,"kingdomId":4,"targetTypeId":25,"targetX":101,"targetY":102,
+		"stormIsleId":7,"minimumVictoryCount":4,"commanderIds":[43],
+		"preset":{"id":"fort","name":"Fort","waves":[]}
+	}`)
+	if _, err := planStormAttack(t.Context(), Intent.PlanningContext{State: state, GameData: gameData}, arguments); err == nil ||
+		errors.Is(err, Intent.ErrPlanStale) || !strings.Contains(err.Error(), "hidden on the map") {
+		t.Fatalf("planner accepted a hidden fort: %v", err)
+	}
+	visible := fort
+	visible.StormHidden = false
+	state.Map[stormIntentKingdomID]["101:102"] = visible
+	if _, err := planStormAttack(t.Context(), Intent.PlanningContext{State: state, GameData: gameData}, arguments); err != nil {
+		t.Fatalf("visible fort was refused: %v", err)
+	}
+
+	guardArguments, _ := json.Marshal(craSendGuardRequest{
+		SourceX: 100, SourceY: 100, TargetX: 101, TargetY: 102, KingdomID: stormIntentKingdomID,
+		DialogObservedAt: now.Add(-time.Second),
+	})
+	for name, test := range map[string]struct {
+		dialogHidden bool
+		mapHidden    bool
+		fragment     string
+	}{
+		"dialog": {dialogHidden: true, fragment: "on cooldown"},
+		"map":    {mapHidden: true, fragment: "hidden on the map"},
+	} {
+		guardState := state
+		guardState.Map = map[State.KingdomID]map[string]State.MapObservation{stormIntentKingdomID: {"101:102": visible}}
+		if test.mapHidden {
+			guardState.Map[stormIntentKingdomID]["101:102"] = fort
+		}
+		guardState.AttackDialog = State.AttackDialogState{
+			SourceCastleID: 40, KingdomID: stormIntentKingdomID, ObservedAt: now,
+			Target: State.AttackDialogTarget{TypeID: stormIntentFortMapTypeID, X: 101, Y: 102, StormIsleID: 7, StormHidden: test.dialogHidden},
+		}
+		err := (&Application{State: State.NewStore(guardState)}).guardCRASend(t.Context(), guardArguments)
+		if err == nil || errors.Is(err, Intent.ErrPlanStale) || !strings.Contains(err.Error(), test.fragment) {
+			t.Fatalf("%s: CRA guard accepted a hidden fort: %v", name, err)
+		}
+	}
+}

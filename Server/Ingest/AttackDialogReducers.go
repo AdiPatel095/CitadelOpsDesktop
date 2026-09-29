@@ -144,6 +144,7 @@ func reduceAttackDialogNode(
 				dialog.Target.StormIsleID = observation.StormIsleID
 				dialog.Target.StormVictoryCount = observation.StormVictoryCount
 				dialog.Target.StormCooldownRemaining = observation.StormCooldownRemaining
+				dialog.Target.StormHidden = observation.StormHidden
 				stormObservation = &observation
 			}
 		}
