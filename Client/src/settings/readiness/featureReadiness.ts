@@ -382,6 +382,30 @@ export function startRequiresConfirmation(report: ReadinessReport): boolean {
   return report.overall === 'blocked';
 }
 
+/** What the loaded official catalogs contribute to a report; the row and the Start check build it the same way. */
+export interface ReadinessCatalogState {
+  /** Nomad and Invasion: the official difficulty options. Undefined when not loaded or failed to load. */
+  difficulties?: { optionsByEvent: DifficultyCatalogInput['optionsByEvent']; achievementsObserved: boolean; loading: boolean };
+  /** Storm: the official starter castles currently offered. */
+  stormOffer?: { loaded: boolean; offeredIds: readonly number[] };
+}
+
+/**
+ * The catalog-dependent inputs of `evaluateFeatureReadiness`, only for the features that read them. A catalog that
+ * did not load contributes nothing, so its check reads "decided at launch" on every surface.
+ */
+export function catalogInputsFor(featureId: string, catalogs: ReadinessCatalogState): Pick<FeatureReadinessInputs, 'difficulties' | 'stormUnlockOffer'> {
+  if (featureId === 'autoNomad' || featureId === 'autoInvasion') return catalogs.difficulties ? { difficulties: catalogs.difficulties } : {};
+  if (featureId === 'autoStorm') return catalogs.stormOffer ? { stormUnlockOffer: catalogs.stormOffer } : {};
+  return {};
+}
+
+/** Events whose official difficulty catalogs a feature's readiness reads. */
+export const READINESS_DIFFICULTY_EVENTS: Readonly<Record<string, readonly number[]>> = {
+  autoNomad: [72, 80],
+  autoInvasion: [71, 103],
+};
+
 /** The blocked checks of a report: what the Start confirmation lists. */
 export function blockedChecks(report: ReadinessReport): ReadinessCheck[] {
   return report.checks.filter((check) => check.state === 'blocked');

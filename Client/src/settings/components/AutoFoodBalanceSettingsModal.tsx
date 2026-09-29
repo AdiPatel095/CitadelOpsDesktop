@@ -16,6 +16,7 @@ import { AUTOMATION_ENABLED_KEYS } from '../disclosure/placement';
 import { countCustomValues, foodTimingSummary, timeSkipLines, travelLine } from '../disclosure/summaries';
 import { useSettingsDisclosure } from '../disclosure/useSettingsDisclosure';
 import { AutomationRunStrip } from './AutomationRunStrip';
+import { FoodCastleTableRow } from './FoodCastleTableRow';
 import { ReadinessPanel } from './ReadinessPanel';
 import { collapsedSettingNote, SettingsSection } from './SettingsSection';
 import {
@@ -145,16 +146,7 @@ export const AutoFoodBalanceSettingsModal: React.FC<AutoFoodBalanceSettingsModal
                 </thead>
                 <tbody className="divide-y divide-border-base">
                   {readiness.rows.map((row) => (
-                    <tr key={row.castleId}>
-                      <td className="max-w-0 truncate py-1 pr-2 text-text-main">{row.name}</td>
-                      <td className="py-1 pr-2 text-right font-mono tabular-nums">{row.food == null ? '—' : Math.floor(row.food).toLocaleString()}</td>
-                      <td className="py-1 pr-2 text-text-muted"><LocalizedText messageKey="setupReadiness.foodRole" params={{ role: row.role }} /></td>
-                      <td className="py-1 text-text-muted">
-                        {row.observedAt
-                          ? <LocalizedText messageKey="observedAt.castleFoodShort" params={{ observedAt: Date.parse(row.observedAt) }} />
-                          : <LocalizedText messageKey="observedAt.thisConnection" />}
-                      </td>
-                    </tr>
+                    <FoodCastleTableRow key={row.castleId} row={row} />
                   ))}
                 </tbody>
               </table>

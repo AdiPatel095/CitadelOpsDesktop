@@ -73,7 +73,7 @@ export const AutomationRunStrip: React.FC<AutomationRunStripProps> = ({ featureI
         </div>
       </div>
       <p className="mt-1.5 text-[11px] leading-relaxed text-text-muted">
-        <LocalizedText messageKey={running ? 'settingsRun.savingNote' : saveMode === 'immediate' ? 'settingsRun.immediateNote' : 'settingsRun.stoppedNote'} />
+        <LocalizedText messageKey={running ? (saveMode === 'immediate' ? 'settingsRun.savingNoteImmediate' : 'settingsRun.savingNote') : saveMode === 'immediate' ? 'settingsRun.immediateNote' : 'settingsRun.stoppedNote'} />
       </p>
       {!running ? <StopControl enabledKey={enabledKey} featureId={featureId} variant="notice" className="mt-1.5" /> : null}
     </div>

@@ -1,27 +1,21 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { CheckCircle2, ChevronDown, CircleDashed, Clock3, XCircle } from 'lucide-react';
 import { useCitadelAPI } from '../api/ApiContext';
-import { CitadelAPI } from '../api/CitadelClient';
 import { useHostedRuntimePresence } from '../config/Deployment';
 import { useAuth } from '../context/AuthContext';
 import { useMetadata } from '../context/MetadataContext';
 import { LocalizedText } from '../i18n/LocalizedText';
 import { movementViewFromState } from '../Movement/types/MovementState';
 import { ReadinessPanel } from '../settings/components/ReadinessPanel';
-import { AUTOMATION_ENABLED_KEYS, type SettingsFeatureId } from '../settings/disclosure/placement';
+import type { SettingsFeatureId } from '../settings/disclosure/placement';
 import { useEventDifficultyOptions } from '../settings/EventDifficultyOptions';
-import { evaluateFeatureReadiness } from '../settings/readiness/featureReadiness';
+import { catalogInputsFor, evaluateFeatureReadiness, READINESS_DIFFICULTY_EVENTS } from '../settings/readiness/featureReadiness';
+import { publishReadiness, savedSectionsDigest } from '../settings/readiness/latestReadiness';
 import type { CheckState, ReadinessCheck } from '../settings/readiness/Readiness';
-import { requestSettingsFix } from '../settings/readiness/settingsFixRequest';
+import { clearPendingRowFocus, requestSettingsFix, ROW_FOCUS_EVENT, takePendingRowFocus } from '../settings/readiness/settingsFixRequest';
 import { normalizeFeatureSchedules } from '../settings/SchedulerTypes';
-import { parseStormCastleOptions } from '../settings/StormCastleOptions';
+import { loadStormUnlockOffer, type StormUnlockOffer } from '../settings/StormCastleOptions';
 import { Badge } from './ui/Badge';
-
-/** Events whose official difficulty catalogs the event-attack readiness reads. */
-const DIFFICULTY_EVENTS: Readonly<Partial<Record<SettingsFeatureId, readonly number[]>>> = {
-  autoNomad: [72, 80],
-  autoInvasion: [71, 103],
-};
 
 const ICON: Record<CheckState, React.ComponentType<{ className?: string }>> = {
   valid: CheckCircle2, blocked: XCircle, pending: Clock3, unavailable: CircleDashed,
@@ -58,7 +52,7 @@ export const AutomationReadinessRow: React.FC<{
   featureId: SettingsFeatureId;
   onOpenSettings: () => void;
 }> = ({ featureId, onOpenSettings }) => {
-  const { state: liveState, configuration: liveConfiguration } = useCitadelAPI();
+  const { state: liveState, configuration: liveConfiguration, getCatalog } = useCitadelAPI();
   const state = useThrottledValue(liveState, REFRESH_MS);
   const configuration = useThrottledValue(liveConfiguration, REFRESH_MS);
   const { troops, tools, resources, unitsLoading, unitsError } = useMetadata();
@@ -74,23 +68,19 @@ export const AutomationReadinessRow: React.FC<{
     hostedPresence: presence.mode ? { mode: presence.mode, checkpointObservedAt: presence.checkpointObservedAt } : undefined,
   }), [gameLoggedIn, presence.checkpointObservedAt, presence.mode, session]);
 
-  const difficultyEvents = DIFFICULTY_EVENTS[featureId];
+  const difficultyEvents = READINESS_DIFFICULTY_EVENTS[featureId];
   const completed = state?.player.achievements?.completed ?? NO_ACHIEVEMENTS;
   const difficulties = useEventDifficultyOptions(difficultyEvents !== undefined, difficultyEvents ?? [], completed);
   const achievementsObserved = Boolean(state?.player.achievements?.observedAt);
 
-  const [stormOffer, setStormOffer] = useState<{ loaded: boolean; offeredIds: number[] }>({ loaded: false, offeredIds: [] });
+  const [stormOffer, setStormOffer] = useState<StormUnlockOffer>({ loaded: false, offeredIds: [] });
   const playerLevel = state?.player.level;
   useEffect(() => {
     if (featureId !== 'autoStorm') return undefined;
     let cancelled = false;
-    void CitadelAPI.getCatalog<Record<string, unknown>>('prebuiltcastles')
-      .then((response) => {
-        if (!cancelled) setStormOffer({ loaded: true, offeredIds: parseStormCastleOptions(response.items, playerLevel).map((option) => option.id) });
-      })
-      .catch(() => { if (!cancelled) setStormOffer({ loaded: false, offeredIds: [] }); });
+    void loadStormUnlockOffer(getCatalog, playerLevel).then((offer) => { if (!cancelled) setStormOffer(offer); });
     return () => { cancelled = true; };
-  }, [featureId, playerLevel]);
+  }, [featureId, getCatalog, playerLevel]);
 
   const sections = configuration?.sections;
   const report = useMemo(() => evaluateFeatureReadiness(featureId, {
@@ -98,21 +88,35 @@ export const AutomationReadinessRow: React.FC<{
     metadataReady: !unitsLoading && !unitsError,
     movement, gameLoggedIn, now: Date.now(),
     schedule: normalizeFeatureSchedules((sections?.scheduler as { featureSchedules?: unknown } | undefined)?.featureSchedules)[featureId],
-    ...(difficultyEvents ? { difficulties: { optionsByEvent: difficulties.optionsByEvent, achievementsObserved, loading: difficulties.loading } } : {}),
-    ...(featureId === 'autoStorm' ? { stormUnlockOffer: stormOffer } : {}),
-  }), [achievementsObserved, difficultyEvents, difficulties.loading, difficulties.optionsByEvent, featureId, gameLoggedIn, movement, observation, resources, sections, state, stormOffer, tools, troops, unitsError, unitsLoading]);
+    ...catalogInputsFor(featureId, {
+      // A catalog that failed to load contributes nothing: the check reads "decided at launch" here and at Start.
+      difficulties: difficultyEvents && !difficulties.error
+        ? { optionsByEvent: difficulties.optionsByEvent, achievementsObserved, loading: difficulties.loading }
+        : undefined,
+      stormOffer: stormOffer.loaded ? stormOffer : undefined,
+    }),
+  }), [achievementsObserved, difficultyEvents, difficulties.error, difficulties.loading, difficulties.optionsByEvent, featureId, gameLoggedIn, movement, observation, resources, sections, state, stormOffer, tools, troops, unitsError, unitsLoading]);
 
-  // "Fix first" from the Start confirmation brings this row into view, expanded.
+  // One report per feature: the Start check reuses this one while the saved configuration is unchanged.
+  const digest = useMemo(() => savedSectionsDigest(sections), [sections]);
+  useEffect(() => { publishReadiness(featureId, report, digest); }, [digest, featureId, report]);
+
+  // "Fix first" from the Start confirmation brings this row into view, expanded. Same pending mechanism as the
+  // settings fix: a row that mounts after the request takes the pending record, a mounted one hears the event.
   useEffect(() => {
-    const onFixFirst = (event: Event) => {
-      const detail = (event as CustomEvent<{ enabledKey?: string }>).detail;
-      if (detail?.enabledKey !== AUTOMATION_ENABLED_KEYS[featureId]) return;
+    const bringIntoView = () => {
       setExpanded(true);
       rootRef.current?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
       toggleRef.current?.focus({ preventScroll: true });
     };
-    window.addEventListener('citadelops:fix-before-start', onFixFirst);
-    return () => window.removeEventListener('citadelops:fix-before-start', onFixFirst);
+    if (takePendingRowFocus(featureId)) bringIntoView();
+    const onFixFirst = (event: Event) => {
+      if ((event as CustomEvent<{ featureId?: string }>).detail?.featureId !== featureId) return;
+      clearPendingRowFocus(featureId);
+      bringIntoView();
+    };
+    window.addEventListener(ROW_FOCUS_EVENT, onFixFirst);
+    return () => window.removeEventListener(ROW_FOCUS_EVENT, onFixFirst);
   }, [featureId]);
 
   const fix = (check: ReadinessCheck) => requestSettingsFix(featureId, check, onOpenSettings);
@@ -125,7 +129,7 @@ export const AutomationReadinessRow: React.FC<{
       <button
         ref={toggleRef}
         type="button"
-        className="flex w-full min-w-0 items-center gap-1.5 rounded-md px-1 py-0.5 text-left text-text-muted hover:text-text-main focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary"
+        className="flex w-full min-w-0 flex-wrap items-center gap-1.5 rounded-md px-1 py-0.5 text-left text-text-muted hover:text-text-main focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary"
         aria-expanded={expanded}
         aria-controls={panelId}
         onClick={() => setExpanded((current) => !current)}
@@ -136,7 +140,7 @@ export const AutomationReadinessRow: React.FC<{
           <LocalizedText messageKey="readiness.overall" params={{ state: report.overall }} />
         </Badge>
         {blocked + waiting > 0 ? (
-          <span className="min-w-0 truncate"><LocalizedText messageKey="featureReadiness.counts" params={{ blocked, waiting }} /></span>
+          <span className="min-w-0 whitespace-normal break-words"><LocalizedText messageKey="featureReadiness.counts" params={{ blocked, waiting }} /></span>
         ) : null}
         <ChevronDown className={`ml-auto h-3.5 w-3.5 shrink-0 transition-transform ${expanded ? 'rotate-180' : ''}`} aria-hidden="true" />
         <span className="sr-only"><LocalizedText messageKey={expanded ? 'featureReadiness.collapse' : 'featureReadiness.expand'} /></span>

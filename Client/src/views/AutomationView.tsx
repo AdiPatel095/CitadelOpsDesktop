@@ -9,6 +9,7 @@ import { useLocale as useStaticLocale } from "../i18n/LocaleContext";
 import { LocalizedText } from "../i18n/LocalizedText";
 import React, { useEffect, useMemo, useState } from 'react';
 import {
+  Bird,
   Bot,
   Castle,
   Coins,
@@ -17,6 +18,7 @@ import {
   HeartPulse,
   MousePointerClick,
   Settings,
+  Shield,
   ShoppingCart,
   Trash2,
   Users,
@@ -72,6 +74,8 @@ interface AutomationViewProps {
   onOpenAutoKhanSettings: () => void;
   onOpenAutoBeriWorldSettings: () => void;
   onOpenAutoStormSettings: () => void;
+  onOpenAutoStationSettings: () => void;
+  onOpenAutoBirdSettings: () => void;
   autoEquipmentCleanup: AutoEquipmentCleanupController;
   onOpenFeatureSchedule: (id: string, label: string) => void;
   onOpenAutomationDuration: (featureKey: string, featureLabel: string) => void;
@@ -307,6 +311,8 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
   onOpenAutoKhanSettings,
   onOpenAutoBeriWorldSettings,
   onOpenAutoStormSettings,
+  onOpenAutoStationSettings,
+  onOpenAutoBirdSettings,
   autoEquipmentCleanup,
   onOpenFeatureSchedule,
   onOpenAutomationDuration,
@@ -332,6 +338,8 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
     autoKhanEnabled,
     autoBeriWorldEnabled,
     autoStormEnabled,
+    autoStationEnabled,
+    autoBirdEnabled,
     toggleRecruitTroops,
     toggleAutoTool,
     toggleAutoSceatRes,
@@ -348,6 +356,8 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
 		toggleAutoKhan,
 		toggleAutoBeriWorld,
 		toggleAutoStorm,
+		toggleAutoStation,
+		toggleAutoBird,
 		automationStates,
 		automationTimedUntilByKey,
   } = useAuth();
@@ -470,6 +480,32 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
       icon: HeartPulse,
       onToggle: toggleAutoHospital,
       onOpenSettings: onOpenAutoHospitalSettings,
+    },
+    {
+      id: 'autoStation',
+      enabledKey: 'auto_station',
+      group: 'support',
+      name: 'Auto Station',
+      description: 'Moves troops out of a castle before an incoming attack lands, keeps the reserves you set at home, and recalls them when it is clear.',
+      enabled: autoStationEnabled,
+      detail: autoStationEnabled ? automationStates.autoStation?.detail : undefined,
+      status: automationStates.autoStation?.status ?? (autoStationEnabled ? 'unknown' : 'disabled'),
+      icon: Shield,
+      onToggle: toggleAutoStation,
+      onOpenSettings: onOpenAutoStationSettings,
+    },
+    {
+      id: 'autoBird',
+      enabledKey: 'auto_bird',
+      group: 'support',
+      name: 'Auto Bird',
+      description: 'Sends troops from each castle on a repeating Bird cycle, keeping the troops you set aside at home.',
+      enabled: autoBirdEnabled,
+      detail: autoBirdEnabled ? automationStates.autoBird?.detail : undefined,
+      status: automationStates.autoBird?.status ?? (autoBirdEnabled ? 'unknown' : 'disabled'),
+      icon: Bird,
+      onToggle: toggleAutoBird,
+      onOpenSettings: onOpenAutoBirdSettings,
     },
     {
       id: 'autoTCI',
@@ -718,6 +754,8 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
     autoBeriToolRuntime,
     autoBeriBuildRuntime,
     autoBeriWorldStatus,
+    autoStationEnabled,
+    autoBirdEnabled,
     autoStormEnabled,
     autoStormRuntime,
     autoStormShopRuntime,
@@ -745,6 +783,8 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
     onOpenAutoKhanSettings,
     onOpenAutoBeriWorldSettings,
     onOpenAutoStormSettings,
+    onOpenAutoStationSettings,
+    onOpenAutoBirdSettings,
     onOpenRecruitTroopsSettings,
     toggleAutoHospital,
     toggleAutoSceatRes,
@@ -760,6 +800,8 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
     toggleAutoKhan,
     toggleAutoBeriWorld,
     toggleAutoStorm,
+    toggleAutoStation,
+    toggleAutoBird,
     toggleAutoTool,
     toggleRecruitTroops,
   ]);

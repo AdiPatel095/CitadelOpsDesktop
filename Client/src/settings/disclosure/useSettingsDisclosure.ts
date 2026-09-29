@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { ReadinessCheck } from '../readiness/Readiness';
 import { focusReadinessTargetWhenReady } from '../readiness/focusReadinessTarget';
-import { SETTINGS_FIX_EVENT, type SettingsFixRequest } from '../readiness/settingsFixRequest';
+import { clearPendingSettingsFix, SETTINGS_FIX_EVENT, takePendingSettingsFix, type SettingsFixRequest } from '../readiness/settingsFixRequest';
 import { fixTargetFor, type SettingsFixTarget } from './fixTargets';
 import {
   advancedSectionIds,
@@ -85,7 +85,13 @@ export interface SettingsDisclosure {
   collapsedTarget: (check: ReadinessCheck) => CollapsedFixTarget | null;
 }
 
-export function useSettingsDisclosure(featureId: SettingsFeatureId): SettingsDisclosure {
+export interface SettingsDisclosureOptions {
+  /** The editor is interactive (draft loaded, content not inert). A fix requested earlier is taken as soon as this is true. */
+  ready?: boolean;
+}
+
+export function useSettingsDisclosure(featureId: SettingsFeatureId, options: SettingsDisclosureOptions = {}): SettingsDisclosure {
+  const ready = options.ready !== false;
   const [expandedIds, setExpandedIds] = useState<string[]>(() => readSettingsDisclosure(featureId));
   const [focusRequest, setFocusRequest] = useState<{ controlId: string; sequence: number } | null>(null);
 
@@ -125,15 +131,22 @@ export function useSettingsDisclosure(featureId: SettingsFeatureId): SettingsDis
     }));
   }, [expand, featureId]);
 
-  // A fix requested from the Automation page (see `requestSettingsFix`) reveals and focuses its control here.
+  // A fix requested from the Automation page (see `requestSettingsFix`) reveals and focuses its control here. The
+  // request is a pending record: an editor that mounts (or becomes interactive) after the request takes it now, and
+  // one that is already mounted hears the event. Records older than the TTL are ignored.
   useEffect(() => {
+    if (!ready) return undefined;
+    const pending = takePendingSettingsFix(featureId);
+    if (pending) reveal(pending.section, pending.control);
     const onRequest = (event: Event) => {
       const detail = (event as CustomEvent<SettingsFixRequest>).detail;
-      if (detail?.featureId === featureId) reveal(detail.section, detail.control);
+      if (detail?.featureId !== featureId) return;
+      clearPendingSettingsFix(featureId);
+      reveal(detail.section, detail.control);
     };
     window.addEventListener(SETTINGS_FIX_EVENT, onRequest);
     return () => window.removeEventListener(SETTINGS_FIX_EVENT, onRequest);
-  }, [featureId, reveal]);
+  }, [featureId, ready, reveal]);
 
   const fix = useCallback((check: ReadinessCheck) => {
     const target = fixTargetFor(featureId, check);

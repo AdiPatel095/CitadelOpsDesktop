@@ -50,7 +50,9 @@ test('Start revalidation reads the latest saved configuration, and the single en
   const start = context.slice(context.indexOf('const setAutomationEnabled'), context.indexOf('const toggle'));
   assert.ok(start.indexOf('confirmStart(feature)') < start.indexOf("updateConfiguration('automation.enabled'"), 'the confirmation precedes the write');
   assert.match(start, /if \(enabled && !\(await confirmStart\(feature\)\)\)/, 'only turning on is previewed; Stop is never delayed by a dialog');
-  assert.match(start, /citadelops:fix-before-start/, '"Fix first" brings the readiness row into view');
+  assert.match(start, /requestReadinessRowFocus\(/, '"Fix first" brings the readiness row into view through the pending-request mechanism');
+  const settingsFix = await source('settings/readiness/settingsFixRequest.ts');
+  assert.match(settingsFix, /ROW_FOCUS_EVENT = 'citadelops:fix-before-start'/);
 });
 
 test('declining leaves the switch off: no write happens after Fix first', async () => {
@@ -67,8 +69,9 @@ test('the client preflight never proves dispatch or success: no readiness path s
     assert.doesNotMatch(text, /submitIntent|updateConfiguration|cancelOperation\(|queueConfigurationUpdate/, file);
   }
   const row = await source('components/AutomationReadinessRow.tsx');
-  assert.match(row, /CitadelAPI\.getCatalog/, 'the only request is the read-only official catalog');
-  assert.doesNotMatch(row.replace(/CitadelAPI\.getCatalog/g, ''), /CitadelAPI\./);
+  assert.match(row, /loadStormUnlockOffer\(getCatalog/, 'the only request is the read-only official catalog, through the shared cached loader');
+  assert.doesNotMatch(row, /CitadelAPI\./);
+  assert.doesNotMatch(row, /\bgetCatalog\(/, 'the row itself requests no catalog directly');
   assert.match(row, /it never disables the switch/, 'readiness never disables the switch');
   const view = await source('views/AutomationView.tsx');
   assert.doesNotMatch(view.slice(view.indexOf('<Switch'), view.indexOf('<Switch') + 300), /readiness|blocked/i, 'the switch is never disabled by readiness');

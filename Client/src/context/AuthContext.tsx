@@ -3,15 +3,19 @@ import { useCitadelAPI } from '../api/ApiContext';
 import { StartConfirmDialog, type PendingStart } from '../components/StartConfirmDialog';
 import { useHostedRuntimePresence } from '../config/Deployment';
 import { movementViewFromState } from '../Movement/types/MovementState';
-import { AUTOMATION_ENABLED_KEYS, type SettingsFeatureId } from '../settings/disclosure/placement';
-import { evaluateFeatureReadiness, startRequiresConfirmation } from '../settings/readiness/featureReadiness';
+import { featureIdForEnabledKey } from '../settings/disclosure/placement';
+import { requestReadinessRowFocus } from '../settings/readiness/settingsFixRequest';
+import { catalogInputsFor, evaluateFeatureReadiness, READINESS_DIFFICULTY_EVENTS, startRequiresConfirmation, type ReadinessCatalogState } from '../settings/readiness/featureReadiness';
+import { latestReadiness, savedSectionsDigest } from '../settings/readiness/latestReadiness';
+import { loadEventDifficultyOptions } from '../settings/EventDifficultyOptions';
+import { loadStormUnlockOffer } from '../settings/StormCastleOptions';
 import { clearEnabledSince, readEnabledSince, recordEnabledSince } from '../settings/readiness/firstResult';
 import { accountKey } from '../settings/requirements/castleRequirements';
 import { normalizeFeatureSchedules } from '../settings/SchedulerTypes';
 import { useMetadata } from './MetadataContext';
 import type { RecruitTroopsMode } from '../settings/RecruitTroopsClientState';
 import type { AutoToolMode } from '../settings/AutoToolClientState';
-import type { AutomationStateV2, StationingOperationV2 } from '../api/Contracts';
+import type { AutomationStateV2, GameStateV2, StationingOperationV2 } from '../api/Contracts';
 import {
 	nextAutomationExpirationMs,
 	parseAutomationEnabledControls,
@@ -140,7 +144,7 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const { connectionStatus, state, catalogs, configuration, diagnostics, submitIntent, updateConfiguration, loadLatestConfiguration } = useCitadelAPI();
+  const { connectionStatus, state, catalogs, configuration, diagnostics, submitIntent, updateConfiguration, loadLatestConfiguration, getCatalog } = useCitadelAPI();
   const metadata = useMetadata();
   const hostedPresence = useHostedRuntimePresence();
   const session = state?.session;
@@ -245,8 +249,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
   };
 
-  const latest = useRef({ state, configuration, metadata, gameLoggedIn, hostedPresence });
-  latest.current = { state, configuration, metadata, gameLoggedIn, hostedPresence };
+  const latest = useRef({ state, configuration, metadata, gameLoggedIn, hostedPresence, getCatalog, catalogs });
+  latest.current = { state, configuration, metadata, gameLoggedIn, hostedPresence, getCatalog, catalogs };
   const [writeFailures, setWriteFailures] = useState<Record<string, AutomationWriteFailure>>({});
   const [pendingStart, setPendingStart] = useState<PendingStart | null>(null);
 
@@ -269,7 +273,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
    * Submits nothing; the game's fail-closed guards decide what actually runs.
    */
   const confirmStart = useCallback(async (feature: string): Promise<boolean> => {
-    const featureId = (Object.keys(AUTOMATION_ENABLED_KEYS) as SettingsFeatureId[]).find((id) => AUTOMATION_ENABLED_KEYS[id] === feature);
+    const featureId = featureIdForEnabledKey(feature);
     if (!featureId) return true;
     let sections = latest.current.configuration?.sections;
     try {
@@ -279,7 +283,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
     const current = latest.current;
     const session = current.state?.session ?? null;
-    const report = evaluateFeatureReadiness(featureId, {
+    // One report per feature: reuse the Automation row's while the saved configuration is unchanged; otherwise
+    // evaluate with the same catalog inputs the row reads (cached loaders), so the two cannot disagree.
+    const published = latestReadiness(featureId, savedSectionsDigest(sections));
+    const catalogState: ReadinessCatalogState = published ? {} : await loadReadinessCatalogs(featureId, current);
+    const report = published ?? evaluateFeatureReadiness(featureId, {
       sections,
       state: current.state,
       observation: {
@@ -292,6 +300,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       movement: movementViewFromState(current.state),
       gameLoggedIn: current.gameLoggedIn,
       schedule: normalizeFeatureSchedules(isRecord(sections?.scheduler) ? (sections?.scheduler as Record<string, unknown>).featureSchedules : undefined)[featureId],
+      ...catalogInputsFor(featureId, catalogState),
     });
     if (!startRequiresConfirmation(report)) return true;
     return new Promise<boolean>((resolve) => {
@@ -301,7 +310,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const setAutomationEnabled = async (feature: string, enabled: boolean) => {
 	if (enabled && !(await confirmStart(feature))) {
-		window.dispatchEvent(new CustomEvent('citadelops:fix-before-start', { detail: { enabledKey: feature } }));
+		requestReadinessRowFocus(featureIdForEnabledKey(feature) ?? feature);
 		return;
 	}
 	try {
@@ -315,7 +324,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const enableAutomationFor = async (feature: string, durationMinutes: number) => {
 	if (!(await confirmStart(feature))) {
-		window.dispatchEvent(new CustomEvent('citadelops:fix-before-start', { detail: { enabledKey: feature } }));
+		requestReadinessRowFocus(featureIdForEnabledKey(feature) ?? feature);
 		return;
 	}
 	try {
@@ -487,6 +496,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       <StartConfirmDialog pending={pendingStart} />
     </AuthContext.Provider>
   );
+}
+
+/** The official catalogs a feature's readiness reads, through the same cached loaders the Automation row uses. */
+async function loadReadinessCatalogs(
+  featureId: string,
+  current: { state: GameStateV2 | null | undefined; getCatalog: Parameters<typeof loadStormUnlockOffer>[0] & Parameters<typeof loadEventDifficultyOptions>[0]; catalogs: { metadata: { digestSha256?: string; itemVersion?: string } } | null },
+): Promise<ReadinessCatalogState> {
+  const events = READINESS_DIFFICULTY_EVENTS[featureId];
+  if (events) {
+    try {
+      const version = current.catalogs?.metadata.digestSha256 ?? current.catalogs?.metadata.itemVersion ?? '';
+      const optionsByEvent = await loadEventDifficultyOptions(current.getCatalog, version, events, current.state?.player.achievements?.completed ?? {});
+      return { difficulties: { optionsByEvent, achievementsObserved: Boolean(current.state?.player.achievements?.observedAt), loading: false } };
+    } catch {
+      return {};
+    }
+  }
+  if (featureId === 'autoStorm') {
+    const offer = await loadStormUnlockOffer(current.getCatalog, current.state?.player.level);
+    return offer.loaded ? { stormOffer: offer } : {};
+  }
+  return {};
 }
 
 function automationWakeMillis(state: AutomationStateV2 | undefined): number {

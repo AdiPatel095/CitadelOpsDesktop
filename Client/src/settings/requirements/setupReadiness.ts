@@ -290,6 +290,8 @@ export interface FoodCastleRow {
   current: boolean;
   /** The castle's real food-state observation time, when the runtime reports one (older runtimes do not). */
   observedAt?: string;
+  /** Why the row is last-known: the connection is not current, or this castle's own time predates it. */
+  unavailableReason?: MessageKey;
 }
 
 export interface FoodBalanceReadiness {
@@ -321,6 +323,7 @@ export function evaluateFoodBalanceReadiness(input: FoodBalanceReadinessInput): 
         castleId: castle.id, name: castle.name?.trim() || `#${castle.id}`, kingdomId: castle.kingdomId, food, role,
         current: notCurrent == null && !beforeConnection,
         ...(observedAt ? { observedAt } : {}),
+        ...(notCurrent != null || beforeConnection ? { unavailableReason: notCurrent ?? observationUnavailableMessage('stale-before-connection') } : {}),
       };
     })
     .sort((left, right) => left.kingdomId - right.kingdomId || left.castleId - right.castleId);

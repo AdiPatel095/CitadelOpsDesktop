@@ -50,3 +50,37 @@ function positiveInteger(value: unknown): number {
 function stringValue(value: unknown): string {
   return typeof value === 'string' ? value.trim() : '';
 }
+
+type CatalogLoader = <T extends Record<string, unknown>>(name: string) => Promise<{ items: T[] }>;
+
+export interface StormUnlockOffer {
+  loaded: boolean;
+  offeredIds: number[];
+}
+
+const OFFER_CACHE_MS = 60_000;
+const offerCache = new Map<string, { at: number; rows: Promise<Record<string, unknown>[]> }>();
+
+/**
+ * The official starter castles currently offered, from the cached `prebuiltcastles` catalog (CIT-20). The Automation
+ * row and the Start check read this same loader, so the unlock check cannot differ between them. A failed load is
+ * `{ loaded: false }`: nothing is claimed about the offer.
+ */
+export async function loadStormUnlockOffer(getCatalog: CatalogLoader, playerLevel: number | undefined, now: number = Date.now()): Promise<StormUnlockOffer> {
+  const cached = offerCache.get('prebuiltcastles');
+  let rows = cached && now - cached.at < OFFER_CACHE_MS ? cached.rows : undefined;
+  if (!rows) {
+    rows = getCatalog<Record<string, unknown>>('prebuiltcastles').then((response) => response.items);
+    offerCache.set('prebuiltcastles', { at: now, rows });
+    rows.catch(() => { if (offerCache.get('prebuiltcastles')?.rows === rows) offerCache.delete('prebuiltcastles'); });
+  }
+  try {
+    return { loaded: true, offeredIds: parseStormCastleOptions(await rows, playerLevel).map((option) => option.id) };
+  } catch {
+    return { loaded: false, offeredIds: [] };
+  }
+}
+
+export function resetStormOfferCacheForTests(): void {
+  offerCache.clear();
+}

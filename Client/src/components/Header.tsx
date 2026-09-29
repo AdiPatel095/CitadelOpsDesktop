@@ -7,6 +7,8 @@ import { useCitadelAPI } from '../api/ApiContext';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import AutoBirdHoverPopover from './AutoBirdHoverPopover';
+import AutoStationHoverPopover from './AutoStationHoverPopover';
+import { AutomationFeatureFeedback } from './AutomationFeatureFeedback';
 import CastleFocusSwitcher from './CastleFocusSwitcher';
 import DailyAttackTracker from './DailyAttackTracker';
 import { Notifications } from './Notifications';
@@ -407,6 +409,7 @@ const Header: React.FC<HeaderProps> = ({
                 enabled={autoBirdEnabled}
                 now={nowTick}
                 hint={autoBirdInteractionHint}
+                feedback={<AutomationFeatureFeedback featureId="autoBird" enabled={autoBirdEnabled} onOpenSettings={onOpenAutoBirdSettings} compact />}
               >
                 <Button
                   variant="ghost"
@@ -461,6 +464,7 @@ const Header: React.FC<HeaderProps> = ({
                     ? 'liquid-status-dock-item-danger'
                     : 'liquid-status-dock-item-muted'
             }`}>
+              <AutoStationHoverPopover feedback={<AutomationFeatureFeedback featureId="autoStation" enabled={autoStationEnabled} onOpenSettings={onOpenAutoStationSettings} compact />}>
               <Button
                 variant="ghost"
                 size="icon"
@@ -490,6 +494,7 @@ const Header: React.FC<HeaderProps> = ({
                 <Shield className="liquid-desktop-status-icon h-4 w-4" aria-hidden="true" />
                 <span className="liquid-desktop-status-text">{autoStationPill.text}</span>
               </Button>
+              </AutoStationHoverPopover>
               <span className="liquid-status-dock-utilities">
                 <Button
                   variant="ghost"

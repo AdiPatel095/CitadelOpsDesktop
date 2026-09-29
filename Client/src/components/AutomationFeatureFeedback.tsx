@@ -35,7 +35,12 @@ export const AutomationFeatureFeedback: React.FC<{
   accountLabel?: string;
   /** Berimond's builder lane only counts while its build switch is on. */
   buildLaneActive?: boolean;
-}> = ({ featureId, enabled, onOpenSettings, launchesByFeature, accountLabel, buildLaneActive }) => {
+  /**
+   * Header popovers: phase, next step, a failed Start/Stop and the first result, without "Before you start"
+   * (that stays on the Automation page row, which is the one place a start is confirmed).
+   */
+  compact?: boolean;
+}> = ({ featureId, enabled, onOpenSettings, launchesByFeature, accountLabel, buildLaneActive, compact = false }) => {
   const description = useAutomationDescription(featureId, { buildLaneActive });
   const { operations, state } = useCitadelAPI();
   const { automationEnabledSince, automationStates } = useAuth();
@@ -51,7 +56,7 @@ export const AutomationFeatureFeedback: React.FC<{
   }), [accountLabel, automationEnabledSince, automationStates, enabledKey, featureId, launchesByFeature, operations, state]);
   const showPhase = enabled || description.phase === 'stopped';
   return (
-    <div className="mt-1 space-y-1.5" data-automation-feedback={featureId}>
+    <div className={compact ? 'space-y-1.5' : 'mt-1 space-y-1.5'} data-automation-feedback={featureId} data-feedback-compact={compact ? 'true' : undefined}>
       {showPhase ? (
         <div className="flex flex-wrap items-start gap-1.5 text-xs leading-relaxed text-text-muted" data-automation-phase={description.phase}>
           <Badge variant={PHASE_BADGE[description.phase]} className="normal-case tracking-normal">
@@ -77,7 +82,7 @@ export const AutomationFeatureFeedback: React.FC<{
       ) : null}
       <StopControl enabledKey={enabledKey} featureId={featureId} variant="notice" />
       {enabled ? <FirstResultCard result={result} accountLabel={accountLabel} /> : null}
-      <AutomationReadinessRow featureId={featureId} onOpenSettings={onOpenSettings} />
+      {compact ? null : <AutomationReadinessRow featureId={featureId} onOpenSettings={onOpenSettings} />}
     </div>
   );
 };
