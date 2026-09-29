@@ -1634,51 +1634,6 @@
     "reason": "Readiness check ids, states, slots, fix codes, select parameters and booster ids.",
     "evidence": "ReadinessCheck id/state/slot/fix and params (boost, currency) are identifiers or ICU select arguments; text is the typed messageKey rendered by ReadinessPanel."
   },
-  "8257e5817b94a94a1724910e8dc9b5a59bf37dd8e8bb139e28acfc7bcd05f70a": {
-    "classification": "technical",
-    "reason": "Readiness check ids, states, slots, fix codes, select parameters and booster ids.",
-    "evidence": "ReadinessCheck id/state/slot/fix and params (boost, currency) are identifiers or ICU select arguments; text is the typed messageKey rendered by ReadinessPanel."
-  },
-  "578947dd30b4b6018a3c10b92b6231a969eb19524d84977bd8498c1a04397b8c": {
-    "classification": "technical",
-    "reason": "Readiness check ids, states, slots, fix codes, select parameters and booster ids.",
-    "evidence": "ReadinessCheck id/state/slot/fix and params (boost, currency) are identifiers or ICU select arguments; text is the typed messageKey rendered by ReadinessPanel."
-  },
-  "533982d7d9a89eeae37f707dcbd0944b48cb8756974ffe33c38ef61e80bbec3c": {
-    "classification": "technical",
-    "reason": "Readiness check ids, states, slots, fix codes, select parameters and booster ids.",
-    "evidence": "ReadinessCheck id/state/slot/fix and params (boost, currency) are identifiers or ICU select arguments; text is the typed messageKey rendered by ReadinessPanel."
-  },
-  "e3fb1d3683154ce9d1339e64738eb708be82af51e5feb1906f00c5422f52db51": {
-    "classification": "technical",
-    "reason": "Readiness check ids, states, slots, fix codes, select parameters and booster ids.",
-    "evidence": "ReadinessCheck id/state/slot/fix and params (boost, currency) are identifiers or ICU select arguments; text is the typed messageKey rendered by ReadinessPanel."
-  },
-  "5ff5c37ed4499e4c69e448018162a202e725676c521f20a51f5a698c3ba7240e": {
-    "classification": "technical",
-    "reason": "Readiness check ids, states, slots, fix codes, select parameters and booster ids.",
-    "evidence": "ReadinessCheck id/state/slot/fix and params (boost, currency) are identifiers or ICU select arguments; text is the typed messageKey rendered by ReadinessPanel."
-  },
-  "4246856fa62e048c60be65f8d727b0b8e7efdb7f14128d181ee2a0495e8267fb": {
-    "classification": "technical",
-    "reason": "Readiness check ids, states, slots, fix codes, select parameters and booster ids.",
-    "evidence": "ReadinessCheck id/state/slot/fix and params (boost, currency) are identifiers or ICU select arguments; text is the typed messageKey rendered by ReadinessPanel."
-  },
-  "03689bf2a569f6bd8f2aff1d26c4002627bbaa475178fdad19fdb26d55ef3a4a": {
-    "classification": "technical",
-    "reason": "Readiness check ids, states, slots, fix codes, select parameters and booster ids.",
-    "evidence": "ReadinessCheck id/state/slot/fix and params (boost, currency) are identifiers or ICU select arguments; text is the typed messageKey rendered by ReadinessPanel."
-  },
-  "2ed399eb31a61091baa108f285295c1af6ea1eb5289a0ee24469cdcd40c8d9a1": {
-    "classification": "technical",
-    "reason": "Readiness check ids, states, slots, fix codes, select parameters and booster ids.",
-    "evidence": "ReadinessCheck id/state/slot/fix and params (boost, currency) are identifiers or ICU select arguments; text is the typed messageKey rendered by ReadinessPanel."
-  },
-  "3ad095747667cb77a2acd413652662a9e19cf84f9ac1fa5c61d54f83f1fe4992": {
-    "classification": "technical",
-    "reason": "Readiness check ids, states, slots, fix codes, select parameters and booster ids.",
-    "evidence": "ReadinessCheck id/state/slot/fix and params (boost, currency) are identifiers or ICU select arguments; text is the typed messageKey rendered by ReadinessPanel."
-  },
   "2892ee50ce3a05b92c7da2e27e492462fd5aefb24c46908adb4cee78b2f4de20": {
     "classification": "technical",
     "reason": "DOM scroll options and focusable-element selector.",
@@ -1709,16 +1664,6 @@
     "reason": "Badge variant token and composition of typed module/slot labels.",
     "evidence": "Module and slot labels come from attackPresets.module.* / attackPresets.slot.* messages joined with a separator."
   },
-  "27ae5e79c3384d5d394f0f0fb5f42b9b9e28421efe147dcf08e3efeeda38774a": {
-    "classification": "technical",
-    "reason": "Readiness check ids, states, slots, fix codes, select parameters and booster ids.",
-    "evidence": "ReadinessCheck id/state/slot/fix and params (boost, currency) are identifiers or ICU select arguments; text is the typed messageKey rendered by ReadinessPanel."
-  },
-  "d4c9d92e7de2a0baf3236589a84223be591131c4c03f4f8de037c5e035a420db": {
-    "classification": "technical",
-    "reason": "Readiness check ids, states, slots, fix codes, select parameters and booster ids.",
-    "evidence": "ReadinessCheck id/state/slot/fix and params (boost, currency) are identifiers or ICU select arguments; text is the typed messageKey rendered by ReadinessPanel."
-  },
   "ad2ba72d89f70325ea0aca4b417b8ad5f80eef9b2cd244fc824910d35c5fb344": {
     "classification": "technical",
     "reason": "Default attack preset target type token.",
@@ -1738,31 +1683,6 @@
     "classification": "technical",
     "reason": "Mode ids, ref discriminators, component variant/size tokens, lane keys, DOM ids and numeric/id fallbacks.",
     "evidence": "saved/inline chip values, AttackSetupRef sources, Button/Badge/Modal props and #<id> fallbacks for unnamed castles or units; labels render typed messages and user/official names."
-  },
-  "9e36bb61e10219cf02b0e2e8b2349780cbfff02eb0bb02655a3c46d490f49a38": {
-    "classification": "technical",
-    "reason": "Readiness ids/states/fix codes.",
-    "evidence": "Readiness text is the typed messageKey rendered by ReadinessPanel."
-  },
-  "41c2aa2e83691e627c01953534f1bb1aa6102dc1224c619176bb0c05f1f5d4f5": {
-    "classification": "technical",
-    "reason": "Readiness ids/states/fix codes.",
-    "evidence": "Readiness text is the typed messageKey rendered by ReadinessPanel."
-  },
-  "6c743197cc0ab56d4207c23e408f53bafd9a191bd90052c1b5c4bb619d6335a7": {
-    "classification": "technical",
-    "reason": "Readiness ids/states/fix codes.",
-    "evidence": "Readiness text is the typed messageKey rendered by ReadinessPanel."
-  },
-  "b40994cd117fd49bea6d070f1918e7fc8d64e60dc8ff745b1bbbcf9a0555b8eb": {
-    "classification": "technical",
-    "reason": "Readiness ids/states/fix codes.",
-    "evidence": "Readiness text is the typed messageKey rendered by ReadinessPanel."
-  },
-  "d1573784f019d21c054e363756e88718ae61b0f88be5b778f81d7fdcae232a8f": {
-    "classification": "technical",
-    "reason": "Readiness ids/states/fix codes.",
-    "evidence": "Readiness text is the typed messageKey rendered by ReadinessPanel."
   },
   "f592d390f8d720d36051c127d7edca67129d2318755edad5358bdbb8bdd89807": {
     "classification": "technical",
@@ -1910,46 +1830,6 @@
     "evidence": "EVENT_ATTACK_STARTER_RECIPE is consumed by recommendEventAttackSetup and tests/starter-recipes.test.mjs; the UI shows only a typed pending-review badge."
   },
   "aa3fa4060fb2e36d16175f344904332aea01844b143d26104b60716729d34524": {
-    "classification": "technical",
-    "reason": "Reviewer-facing starter recipe metadata (sources, rules, owners, rationale and citations) that is never rendered.",
-    "evidence": "EVENT_ATTACK_STARTER_RECIPE is consumed by recommendEventAttackSetup and tests/starter-recipes.test.mjs; the UI shows only a typed pending-review badge."
-  },
-  "c077f38a89736a233c2f0c28376b1a720ec8f931d4572a4c6b215aa0e56e0f87": {
-    "classification": "technical",
-    "reason": "Reviewer-facing starter recipe metadata (sources, rules, owners, rationale and citations) that is never rendered.",
-    "evidence": "EVENT_ATTACK_STARTER_RECIPE is consumed by recommendEventAttackSetup and tests/starter-recipes.test.mjs; the UI shows only a typed pending-review badge."
-  },
-  "8b3c22054b67d023fa80adc75825d4223771feb01bfc92d1671b40caf5000fe9": {
-    "classification": "technical",
-    "reason": "Reviewer-facing starter recipe metadata (sources, rules, owners, rationale and citations) that is never rendered.",
-    "evidence": "EVENT_ATTACK_STARTER_RECIPE is consumed by recommendEventAttackSetup and tests/starter-recipes.test.mjs; the UI shows only a typed pending-review badge."
-  },
-  "8b5c4e0a008121a531f1e63c8b83c0e626ca119d48d0f7da278905591ec7c966": {
-    "classification": "technical",
-    "reason": "Reviewer-facing starter recipe metadata (sources, rules, owners, rationale and citations) that is never rendered.",
-    "evidence": "EVENT_ATTACK_STARTER_RECIPE is consumed by recommendEventAttackSetup and tests/starter-recipes.test.mjs; the UI shows only a typed pending-review badge."
-  },
-  "dfc71305e27f07f139cf06f6210000895853c13e16e3c17dd7843fce272e26f1": {
-    "classification": "technical",
-    "reason": "Reviewer-facing starter recipe metadata (sources, rules, owners, rationale and citations) that is never rendered.",
-    "evidence": "EVENT_ATTACK_STARTER_RECIPE is consumed by recommendEventAttackSetup and tests/starter-recipes.test.mjs; the UI shows only a typed pending-review badge."
-  },
-  "fe4357034c8f17bf138e84942d057386f71bef085ec9aa444837ce4b5b09a0a8": {
-    "classification": "technical",
-    "reason": "Reviewer-facing starter recipe metadata (sources, rules, owners, rationale and citations) that is never rendered.",
-    "evidence": "EVENT_ATTACK_STARTER_RECIPE is consumed by recommendEventAttackSetup and tests/starter-recipes.test.mjs; the UI shows only a typed pending-review badge."
-  },
-  "549740e57477c2236c5c5a78396a8b3c6994dfa0569acd49c23823d7a16ef83c": {
-    "classification": "technical",
-    "reason": "Reviewer-facing starter recipe metadata (sources, rules, owners, rationale and citations) that is never rendered.",
-    "evidence": "EVENT_ATTACK_STARTER_RECIPE is consumed by recommendEventAttackSetup and tests/starter-recipes.test.mjs; the UI shows only a typed pending-review badge."
-  },
-  "7dc79543094335e02d7e0870f15bd5b1e8d8c42d32ce969eba37a8f290833eff": {
-    "classification": "technical",
-    "reason": "Reviewer-facing starter recipe metadata (sources, rules, owners, rationale and citations) that is never rendered.",
-    "evidence": "EVENT_ATTACK_STARTER_RECIPE is consumed by recommendEventAttackSetup and tests/starter-recipes.test.mjs; the UI shows only a typed pending-review badge."
-  },
-  "83cbd2575669745f669208454b15e725af87e12aa54e7463a27db4d74893e1ad": {
     "classification": "technical",
     "reason": "Reviewer-facing starter recipe metadata (sources, rules, owners, rationale and citations) that is never rendered.",
     "evidence": "EVENT_ATTACK_STARTER_RECIPE is consumed by recommendEventAttackSetup and tests/starter-recipes.test.mjs; the UI shows only a typed pending-review badge."
@@ -3075,11 +2955,6 @@
     "evidence": "Line states map to typed unitStock.state.* labels; readiness text is the typed messageKey."
   },
   "face22a1b56ec2374a23a23db2e678cd8dd0426d93abbd9f840f753d65e80424": {
-    "classification": "technical",
-    "reason": "Stock line states, request kinds, readiness ids/states/fix codes and fallback ids.",
-    "evidence": "Line states map to typed unitStock.state.* labels; readiness text is the typed messageKey."
-  },
-  "b437232bedf111a5b1ff35aaf021b3ff0a3a1b8098bb0447de9228c37d0d9690": {
     "classification": "technical",
     "reason": "Stock line states, request kinds, readiness ids/states/fix codes and fallback ids.",
     "evidence": "Line states map to typed unitStock.state.* labels; readiness text is the typed messageKey."

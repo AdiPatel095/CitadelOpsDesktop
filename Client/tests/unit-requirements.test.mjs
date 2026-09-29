@@ -67,7 +67,7 @@ test('D1: zero-time counts are compared only while this connection is current', 
   const cases = [
     [{ session: SESSION, connected: false }, 'ui.components.staleSessionBanner.disconnected.last.known.data.166a8c99'],
     [{ session: { ...SESSION, baselineGeneration: 24 }, connected: true }, 'ui.settings.requirements.observationFreshness.waiting.for.the.game.connection.to.finish.c661a838'],
-    [{ ...LIVE, hostedPresence: { mode: 'checkpoint', checkpointObservedAt: '2026-09-29T08:00:00Z' } }, 'ui.settings.requirements.observationFreshness.this.is.a.saved.checkpoint.troop.counts.4a2b7024'],
+    [{ ...LIVE, hostedPresence: { mode: 'checkpoint', checkpointObservedAt: '2026-09-29T08:00:00Z' } }, 'ui.settings.requirements.observationFreshness.this.is.a.saved.checkpoint.troop.counts.48b43424'],
   ];
   for (const [observation, messageKey] of cases) {
     const result = stock(request, { observation });
