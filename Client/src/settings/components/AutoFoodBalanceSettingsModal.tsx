@@ -209,7 +209,7 @@ export const AutoFoodBalanceSettingsModal: React.FC<AutoFoodBalanceSettingsModal
               </tbody>
             </table>
           )}
-          <p className="text-[11px] text-text-muted"><LocalizedText messageKey="ui.settings.components.autoFoodBalanceSettingsModal.donors.hold.food.above.the.donor.reserve.7322e187" /></p>
+          <p className="text-[11px] text-text-muted"><LocalizedText messageKey="ui.settings.components.autoFoodBalanceSettingsModal.donors.hold.food.above.the.donor.reserve.e605cba8" /></p>
         </div>
 
         <ReadinessPanel report={readiness.report} onFix={() => focusReadinessTarget('auto-food-castles')} />

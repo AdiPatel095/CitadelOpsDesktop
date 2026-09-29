@@ -1651,7 +1651,6 @@ export const sourceMessages = {
   "ui.settings.requirements.setupReadiness.direwolves.are.stationed.one.full.flank.wave.69e18c6a": "Direwolves are stationed. One full flank wave is sized at launch.",
   "ui.settings.requirements.setupReadiness.direwolves.are.staged.by.the.supply.lane.448002c8": "Direwolves are staged by the supply lane and counted at launch.",
   "ui.settings.requirements.setupReadiness.enable.at.least.one.available.outer.kingdom.49656995": "Enable at least one available outer-kingdom main castle.",
-  "ui.settings.requirements.setupReadiness.the.runtime.launches.the.fastest.eligible.commander.a5cfada8": "The runtime launches the fastest eligible commander; speed is not ranked here.",
   "ui.settings.requirements.setupReadiness.official.resource.data.is.still.loading.4657aec3": "Official resource data is still loading.",
   "ui.settings.requirements.setupReadiness.food.stock.is.observed.in.every.castle.22c2fc66": "Food stock is observed in every castle.",
   "ui.settings.requirements.setupReadiness.no.castle.holds.food.above.the.donor.145a5b24": "No castle holds food above the donor reserve right now; shipments wait for one.",
@@ -1684,7 +1683,8 @@ export const sourceMessages = {
   "ui.settings.components.autoFoodBalanceSettingsModal.castle.419fb3b8": "Castle",
   "ui.settings.components.autoFoodBalanceSettingsModal.food.e4eb1806": "Food",
   "ui.settings.components.autoFoodBalanceSettingsModal.role.14736a2e": "Role",
-  "ui.settings.components.autoFoodBalanceSettingsModal.donors.hold.food.above.the.donor.reserve.7322e187": "Donors hold food above the donor reserve; the runtime also keeps the source safety window before sending.",
   "ui.settings.components.eventAttackSetupField.stationed.stock.in.the.source.castle.the.ff087c1c": "Stationed stock in the source castle. The game sizes each lane at launch.",
-  "ui.settings.requirements.commanderEligibility.commander.assignments.are.checked.once.commanders.are.497afa18": "Commander assignments are checked once commanders are observed."
+  "ui.settings.requirements.commanderEligibility.commander.assignments.are.checked.once.commanders.are.497afa18": "Commander assignments are checked once commanders are observed.",
+  "ui.settings.requirements.setupReadiness.the.fastest.eligible.commander.is.chosen.when.87205aff": "The fastest eligible commander is chosen when the attack launches; speed is not ranked here.",
+  "ui.settings.components.autoFoodBalanceSettingsModal.donors.hold.food.above.the.donor.reserve.e605cba8": "Donors hold food above the donor reserve; shipments also keep the source castle's safety window."
 } as const;

@@ -161,7 +161,7 @@ export function evaluateFortressReadiness(input: FortressReadinessInput): Fortre
   if (stockChecks.length > 0) checks.push({ ...worst(stockChecks, stockChecks[0]), id: 'inventory', slot: undefined });
   if (input.commanders) {
     checks.push(input.commanders.activity, input.commanders.assignment);
-    checks.push({ id: 'commander-speed', state: 'pending', messageKey: message('ui.settings.requirements.setupReadiness.the.runtime.launches.the.fastest.eligible.commander.a5cfada8') });
+    checks.push({ id: 'commander-speed', state: 'pending', messageKey: message('ui.settings.requirements.setupReadiness.the.fastest.eligible.commander.is.chosen.when.87205aff') });
   }
   return { report: { featureId: 'autoFortress', checks, overall: aggregateReadiness(checks) }, kingdoms };
 }

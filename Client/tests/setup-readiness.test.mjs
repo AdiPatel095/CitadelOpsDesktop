@@ -132,3 +132,11 @@ test('D1: stock checks are unavailable while disconnected or awaiting the baseli
     allMessagesExist(reserves.report);
   }
 });
+
+test('player-facing requirement text keeps "runtime" out (Daniel, CIT-15 recipe review)', () => {
+  // observationFreshness copy is reworded by the CIT-15 starter-recipe PR (#110); it is checked there.
+  const keys = Object.keys(messages).filter((key) => /^(ui\.settings\.requirements\.|setupReadiness\.|unitStock\.|commanderEligibility\.|commanderAssignment\.|castleRequirement\.)/.test(key)
+    && !key.startsWith('ui.settings.requirements.observationFreshness.'));
+  assert.ok(keys.length > 20);
+  for (const key of keys) assert.doesNotMatch(messages[key], /runtime/i, key);
+});
