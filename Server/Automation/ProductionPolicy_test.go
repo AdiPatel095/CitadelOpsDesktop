@@ -1288,3 +1288,60 @@ func productionPolicyGameData(t *testing.T, raw string) *GameData.Store {
 	}
 	return store
 }
+
+// CIT-13 AHR 269: a rejected recruitment list is not requested again while its
+// record is live, other castles keep valid help, and the record is bounded.
+func TestRecruitPolicyDoesNotRerequestHelpRejectedWith269(t *testing.T) {
+	now := time.Date(2026, 9, 14, 12, 0, 0, 0, time.UTC)
+	snapshot := recruitPolicySnapshot(t, now)
+	snapshot.Configuration.Sections["automation.recruitTroops"] = json.RawMessage(`{
+		"mode":"global","checkIntervalSec":300,"globalItems":[{"id":489,"amount":0}],
+		"castles":{"77":{"enabled":true,"items":[]},"88":{"enabled":true,"items":[]}}
+	}`)
+	full := func(firstID int64) State.ProductionQueue {
+		queue := State.ProductionQueue{LineID: 0, Capacity: 5, ObservedAt: now,
+			Active: &State.QueueItem{ProductionID: firstID, Amount: 8}}
+		for offset := int64(1); offset <= 5; offset++ {
+			queue.Queued = append(queue.Queued, State.QueueItem{ProductionID: firstID + offset, Amount: 8})
+		}
+		return queue
+	}
+	castle := snapshot.State.Castles[77]
+	castle.Production = map[int]State.ProductionQueue{0: full(201)}
+	snapshot.State.Castles[77] = castle
+	other := castle
+	other.ID = 88
+	other.Production = map[int]State.ProductionQueue{0: full(301)}
+	snapshot.State.Castles[88] = other
+
+	policy := NewRecruitPolicy()
+	decision, err := policy.Evaluate(t.Context(), snapshot)
+	if err != nil || decision.Request == nil || allianceHelpProductionID(t, decision) != 201 {
+		t.Fatalf("baseline help decision = %#v err=%v", decision, err)
+	}
+	if !State.RecordRecruitmentHelpIneligibility(&snapshot.State, 77, "ahr-269", now) {
+		t.Fatal("269 record was not stored")
+	}
+	decision, err = policy.Evaluate(t.Context(), snapshot)
+	if err != nil || decision.Request == nil || decision.Request.Name != "alliance.help.request" ||
+		allianceHelpProductionID(t, decision) != 301 {
+		t.Fatalf("269 castle was requested again or blocked the other castle: %#v err=%v", decision, err)
+	}
+
+	other.Production = map[int]State.ProductionQueue{0: full(301)}
+	for index := range other.Production[0].Queued {
+		other.Production[0].Queued[index].AllianceHelpRequested = true
+	}
+	other.Production[0].Active.AllianceHelpRequested = true
+	snapshot.State.Castles[88] = other
+	decision, err = policy.Evaluate(t.Context(), snapshot)
+	if err != nil || decision.Request != nil && decision.Request.Name == "alliance.help.request" {
+		t.Fatalf("269 produced a same-job request loop: %#v err=%v", decision, err)
+	}
+
+	snapshot.Now = now.Add(State.RecruitmentHelpIneligibilityFallback)
+	decision, err = policy.Evaluate(t.Context(), snapshot)
+	if err != nil || decision.Request == nil || allianceHelpProductionID(t, decision) != 201 {
+		t.Fatalf("269 disabled valid help beyond its bounded window: %#v err=%v", decision, err)
+	}
+}

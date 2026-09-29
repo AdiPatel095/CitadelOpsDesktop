@@ -1210,7 +1210,10 @@ func planEquipmentSell(_ context.Context, input Intent.PlanningContext, argument
 				FilterID    int                       `json:"LFID"`
 			}{id, -1, 0, -1})
 			step := commandStep(fmt.Sprintf("Sell equipment %d", id), "seq", payload, "seq", Localization.New("server.app.sell_equipment_p.7101a2a7", "Sell equipment {p0}", Localization.Params{"p0": fmt.Sprintf("%d", id)}))
-			steps = append(steps, step)
+			steps = append(steps, withEquipmentSaleGuard(step, equipmentSaleGuardRequest{
+				EquipmentID: id, Category: request.Category, SellLookItems: request.SellLookItems,
+				SellPost2026: request.SellPost2026, KeepStars: request.KeepStars,
+			}))
 		}
 		count = len(ids)
 		if count > 0 {
@@ -1235,7 +1238,9 @@ func planEquipmentSell(_ context.Context, input Intent.PlanningContext, argument
 					FilterID int         `json:"LFID"`
 				}{id, 0, -1})
 				step := commandStep(fmt.Sprintf("Sell gem %d", id), "sge", payload, "sge", Localization.New("server.app.sell_gem_p.a179cdcd", "Sell gem {p0}", Localization.Params{"p0": fmt.Sprintf("%d", id)}))
-				steps = append(steps, step)
+				steps = append(steps, withEquipmentSaleGuard(step, equipmentSaleGuardRequest{
+					GemID: int64(id), Category: request.Category, SellPost2026: request.SellPost2026,
+				}))
 				count++
 			}
 		}
@@ -1260,7 +1265,9 @@ func planEquipmentSell(_ context.Context, input Intent.PlanningContext, argument
 				FilterID int                 `json:"LFID"`
 			}{id, 1, -1})
 			step := commandStep(fmt.Sprintf("Sell relic gem %d", id), "sge", payload, "sge", Localization.New("server.app.sell_relic_gem_p.30592411", "Sell relic gem {p0}", Localization.Params{"p0": fmt.Sprintf("%d", id)}))
-			steps = append(steps, step)
+			steps = append(steps, withEquipmentSaleGuard(step, equipmentSaleGuardRequest{
+				GemID: int64(id), RelicGem: true, Category: request.Category, KeepStars: request.KeepStars,
+			}))
 		}
 		count = len(ids)
 		if count > 0 {

@@ -599,9 +599,7 @@ func TestOutboundAllianceHelpDoesNotMarkBeforeSuccessfulResponse(t *testing.T) {
 	if err := RegisterCoreReducers(registry); err != nil {
 		t.Fatal(err)
 	}
-	if registry.HasOutbound("ahr") {
-		t.Fatal("outbound AHR still has an optimistic state reducer")
-	}
+	assertOutboundAllianceHelpCapturesOnlyCommandContext(t, registry)
 	pipeline := NewPipeline(store, nil, registry)
 	if _, err := pipeline.HandleFrame(t.Context(), Protocol.Frame{
 		Direction: Protocol.DirectionOutbound, Opcode: "ahr",
@@ -638,9 +636,7 @@ func TestOutboundOrRejectedRecruitmentAllianceHelpDoesNotPoisonState(t *testing.
 	if err := RegisterCoreReducers(registry); err != nil {
 		t.Fatal(err)
 	}
-	if registry.HasOutbound("ahr") {
-		t.Fatal("outbound AHR still has an optimistic state reducer")
-	}
+	assertOutboundAllianceHelpCapturesOnlyCommandContext(t, registry)
 	rejected := 175
 	frame := Protocol.Frame{
 		Direction: Protocol.DirectionInbound, Opcode: "ahh", ResponseCode: &rejected,
@@ -824,5 +820,15 @@ func TestProductionLearnedStackHighWaterAndSubscriptionScopeReset(t *testing.T) 
 	queue = gameState.Castles[77].Production[0]
 	if queue.LearnedStacks[489] != 220 || queue.LearnedStackScope != "" {
 		t.Fatalf("post-lapse learned = %v scope %q, want re-learned 489→220 under empty scope", queue.LearnedStacks, queue.LearnedStackScope)
+	}
+}
+
+// The outbound AHR reducer only records the request identity for correlating
+// its reply (CIT-13 AHR 269). It must never write castle or alliance-help state.
+func assertOutboundAllianceHelpCapturesOnlyCommandContext(t *testing.T, registry *Registry) {
+	t.Helper()
+	outbound := registry.registered("ahr", Protocol.DirectionOutbound)
+	if outbound.writes&^State.Components(State.ComponentCommandContext) != 0 {
+		t.Fatalf("outbound AHR has an optimistic state reducer: writes=%v", outbound.writes)
 	}
 }

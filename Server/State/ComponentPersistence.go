@@ -1896,6 +1896,10 @@ func applyInventoryPersistencePart(inventory *InventoryState, part string, patch
 			return fmt.Errorf("inventory gem-stacks state part has no value")
 		}
 		inventory.GemStacks = *patch.GemStacks
+		// Optional so gem-stack parts written before sale tracking still load.
+		if patch.EquipmentMutatedAt != nil {
+			inventory.EquipmentMutatedAt = *patch.EquipmentMutatedAt
+		}
 	case "items":
 		if patch.Items == nil {
 			return fmt.Errorf("inventory items state part has no value")

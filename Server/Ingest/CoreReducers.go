@@ -130,8 +130,6 @@ func RegisterCoreReducers(registry *Registry) error {
 		{"eqe", equipment, reduceEquipmentMutation},
 		{"gsue", equipment, reduceEquipmentMutation},
 		{"guse", equipment, reduceEquipmentMutation},
-		{"seq", equipment, reduceEquipmentMutation},
-		{"sge", equipment, reduceEquipmentMutation},
 		{"gnr", equipment, reduceEquipmentMutation},
 	}
 	for _, entry := range reducers {
@@ -289,6 +287,33 @@ func RegisterCoreReducers(registry *Registry) error {
 		return err
 	}
 	if err := registry.RegisterOutboundComponents("sbp", components(State.ComponentStorm), reduceStormShopCommand); err != nil {
+		return err
+	}
+	commandContext := components(State.ComponentCommandContext)
+	saleContext := components(State.ComponentCommandContext, State.ComponentInventory)
+	for _, opcode := range []string{"seq", "sge"} {
+		if err := registry.RegisterOutboundComponents(opcode, saleContext, reduceEquipmentSaleCommand); err != nil {
+			return err
+		}
+	}
+	if err := registry.registerComponentSequence("seq",
+		reducerStep{writes: equipment, reducer: reduceEquipmentMutation},
+		reducerStep{writes: saleContext, reducer: reduceEquipmentSaleResponse},
+	); err != nil {
+		return err
+	}
+	if err := registry.registerComponentSequence("sge",
+		reducerStep{writes: equipment, reducer: reduceEquipmentMutation},
+		reducerStep{writes: commandContext, reducer: reduceGemSaleResponse},
+	); err != nil {
+		return err
+	}
+	if err := registry.RegisterOutboundComponents("ahr", commandContext, reduceAllianceHelpRequestCommand); err != nil {
+		return err
+	}
+	if err := registry.RegisterComponents("ahr",
+		components(State.ComponentCommandContext, State.ComponentAllianceHelp), reduceAllianceHelpRequestResponse,
+	); err != nil {
 		return err
 	}
 	for _, opcode := range []string{"blm", "bld"} {

@@ -268,11 +268,23 @@ func recordNumber(store *GameData.Store, collection string, id int64, field stri
 	return catalog.Float64(strconv.FormatInt(id, 10), field)
 }
 
-func eligibleAllianceHelpProductionID(queue State.ProductionQueue) int64 {
+// eligibleAllianceHelpProductionID returns the production job used to request
+// alliance help for the queue. Recruitment uses the shared official-client
+// rule (State.RecruitmentAllianceHelpItemEligible); hospital keeps its
+// per-job rule.
+func eligibleAllianceHelpProductionID(
+	state State.GameState,
+	castleID State.CastleID,
+	queue State.ProductionQueue,
+	now time.Time,
+) int64 {
 	if queue.LineID != 0 && queue.LineID != 2 {
 		return 0
 	}
 	eligible := func(item State.QueueItem) bool {
+		if queue.LineID == 0 {
+			return State.RecruitmentAllianceHelpItemEligible(state, castleID, item, now)
+		}
 		return item.ProductionID > 0 && !item.AllianceHelpRequested
 	}
 	if queue.Active != nil && eligible(*queue.Active) {

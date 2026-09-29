@@ -629,7 +629,7 @@ func allianceHelpJobEligible(
 		return false
 	}
 	if lineID == recruitmentProductionLineID {
-		return true
+		return State.RecruitmentAllianceHelpItemEligible(state, castleID, item, time.Now().UTC())
 	}
 	return lineID != hospitalProductionLineID ||
 		!State.HasOutstandingHospitalAllianceHelpRequest(state, item.ProductionID)

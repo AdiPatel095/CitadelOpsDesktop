@@ -62,7 +62,7 @@ func (*HospitalPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision,
 		queue, exists := castle.Production[hospitalLineID]
 		queueObserved := exists && !queue.ObservedAt.IsZero()
 		if State.CastleFocusKnownUnavailable(snapshot.State, castle) {
-			if len(wounded) > 0 || queueObserved && eligibleAllianceHelpProductionID(queue) > 0 {
+			if len(wounded) > 0 || queueObserved && eligibleAllianceHelpProductionID(snapshot.State, castleID, queue, snapshot.Now) > 0 {
 				focusUnavailable++
 			}
 			continue
@@ -77,7 +77,7 @@ func (*HospitalPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision,
 				queueCapacity = queue.Capacity
 			}
 			if queueCapacity > 0 && occupied >= queueCapacity {
-				if productionID := eligibleAllianceHelpProductionID(queue); productionID > 0 {
+				if productionID := eligibleAllianceHelpProductionID(snapshot.State, castleID, queue, snapshot.Now); productionID > 0 {
 					if !State.OwnAllianceHelpListCurrent(snapshot.State) {
 						helpListPending = true
 						continue

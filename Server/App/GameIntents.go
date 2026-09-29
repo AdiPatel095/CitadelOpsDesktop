@@ -135,6 +135,9 @@ func (application *Application) registerGameIntents() error {
 	if err := application.Intents.RegisterAction("equipment.reconfigure.verify", application.verifyEquipmentReconfigure); err != nil {
 		return err
 	}
+	if err := application.Intents.RegisterAction(equipmentSaleGuardAction, application.guardEquipmentSale); err != nil {
+		return err
+	}
 	for name, action := range map[string]Intent.Action{
 		"equipment.reconfigure.extraction.arm":           application.armEquipmentExtraction,
 		"equipment.reconfigure.extraction.dispatch":      application.finalizeEquipmentExtractionDispatch,

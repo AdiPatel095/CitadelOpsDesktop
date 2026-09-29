@@ -97,12 +97,13 @@ func TestPartialAutomationRejectionStillNotifies(t *testing.T) {
 func TestUndocumentedGameRejectionDoesNotInventACause(t *testing.T) {
 	engine := &Engine{}
 	receipt := Receipt{Actor: "automation:autoRecruit", Status: StatusFailed}
-	err := &ResponseCodeError{Opcode: "ahr", Meaning: GameData.ResolveResponseCode(nil, "ahr", 269)}
+	// AHR 269 is now mapped (CIT-13 PACKAGE_NOT_HELPABLE); 268 remains unmapped.
+	err := &ResponseCodeError{Opcode: "ahr", Meaning: GameData.ResolveResponseCode(nil, "ahr", 268)}
 	receipt = engine.withFailure(receipt, err)
 
 	if receipt.Failure == nil || !receipt.Failure.Toast || receipt.Failure.Knowledge != FailureKnowledgeUnknown ||
 		!strings.Contains(receipt.Failure.Explanation, "does not provide a known explanation") ||
-		!strings.Contains(receipt.Failure.Recovery, "game error 269") {
+		!strings.Contains(receipt.Failure.Recovery, "game error 268") {
 		t.Fatalf("undocumented response projection = %#v", receipt.Failure)
 	}
 }
