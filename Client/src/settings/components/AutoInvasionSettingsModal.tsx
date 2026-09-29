@@ -1,16 +1,35 @@
 import { useLocale as useStaticLocale } from "../../i18n/LocaleContext";
 import { LocalizedText } from "../../i18n/LocalizedText";
 import React, { useEffect, useMemo, useState } from 'react';
-import { BookOpen, Castle, Clock3, Crosshair, ShieldCheck, ShieldPlus, Swords, Target } from 'lucide-react';
+import { BookOpen, Castle, Clock3, Crosshair, ShieldCheck, ShieldPlus, Target } from 'lucide-react';
 import { useCitadelAPI } from '../../api/ApiContext';
 import { castleOptionsFromState } from '../../api/Selectors';
 import {
   ATTACK_PRESETS_SECTION,
   parseAttackPresetDocument,
-  summarizeAttackPreset,
 } from '../../attackPresets/AttackPresetTypes';
+import {
+  attackSetupRef,
+  attackSetupRefUsable,
+  type AttackSetupRef,
+} from '../../attackPresets/AppCreatedPresets';
+import { attackPresetReferences } from '../../attackPresets/AttackPresetReferences';
 import { Badge, Button, Card, Input, Select, SettingsModal, Switch } from '../../components/ui';
 import { Notifications } from '../../components/Notifications';
+import { useMetadata } from '../../context/MetadataContext';
+import { useConfigurationDraftSession } from '../ConfigurationDraftSession';
+import {
+  saveInlineSetupAsUserPreset,
+  saveModuleWithAppCreatedPresets,
+  type AppCreatedPresetSaveWarning,
+} from '../AppCreatedPresetSave';
+import { recommendEventAttackSetup } from '../onboarding/EventAttackRecommendation';
+import { pendingStarterReviews } from '../onboarding/StarterRecipes';
+import { evaluateEventAttackReadiness } from '../readiness/eventAttackReadiness';
+import { focusReadinessTarget } from '../readiness/focusReadinessTarget';
+import type { ReadinessCheck } from '../readiness/Readiness';
+import { EventAttackSetupField } from './EventAttackSetupField';
+import { ReadinessPanel } from './ReadinessPanel';
 import {
   AUTO_INVASION_SECTION,
   clampAutoInvasionInteger,
@@ -31,8 +50,15 @@ interface AutoInvasionSettingsModalProps {
 
 export const AutoInvasionSettingsModal: React.FC<AutoInvasionSettingsModalProps> = ({ isOpen, onClose }) => {
   const { t: localizeStatic } = useStaticLocale();
-  const { state, configuration, updateConfiguration } = useCitadelAPI();
+  const { state } = useCitadelAPI();
+  const { troops, tools, unitsLoading, unitsError } = useMetadata();
+  const draftSession = useConfigurationDraftSession({
+    isOpen,
+    section: AUTO_INVASION_SECTION,
+    configurationDependencies: [ATTACK_PRESETS_SECTION],
+  });
   const [draft, setDraft] = useState<AutoInvasionClientStateV1>(defaultAutoInvasionClientState);
+  const [attackRef, setAttackRef] = useState<AttackSetupRef>({ source: 'none' });
   const [saving, setSaving] = useState(false);
   const [isGuideOpen, setIsGuideOpen] = useState(false);
   const { locale: guideLocale, pack: guidePack } = useGuideLocale();
@@ -41,16 +67,16 @@ export const AutoInvasionSettingsModal: React.FC<AutoInvasionSettingsModalProps>
   useEffect(() => { if (!isOpen) setIsGuideOpen(false); }, [isOpen]);
   const castles = useMemo(() => castleOptionsFromState(state).filter((castle) => castle.kingdomId === 0), [state]);
   const presetDocument = useMemo(
-    () => parseAttackPresetDocument(configuration?.sections[ATTACK_PRESETS_SECTION]),
-    [configuration?.sections],
+    () => parseAttackPresetDocument(draftSession.sections?.[ATTACK_PRESETS_SECTION]),
+    [draftSession.sections],
   );
+  const presetReferences = useMemo(() => attackPresetReferences(draftSession.sections), [draftSession.sections]);
+  const metadataReady = !unitsLoading && !unitsError;
   const completedAchievements = state?.player.achievements?.completed ?? {};
   const achievementsObserved = Boolean(state?.player.achievements?.observedAt);
   const difficultyCatalog = useEventDifficultyOptions(isOpen, [71, 103], completedAchievements);
   const foreignLordsDifficulties = difficultyCatalog.optionsByEvent['71'] ?? [];
   const bloodcrowDifficulties = difficultyCatalog.optionsByEvent['103'] ?? [];
-  const selectedPreset = presetDocument.presets.find((preset) => preset.id === draft.presetId);
-  const presetSummary = selectedPreset ? summarizeAttackPreset(selectedPreset) : null;
   const foreignLordsSelectionAvailable = foreignLordsDifficulties.some((option) => option.value === String(draft.foreignLordsDifficultyId));
 	const bloodcrowSelectionAvailable = bloodcrowDifficulties.some((option) => option.value === String(draft.bloodcrowDifficultyId));
 	const liveFortifyCurrencies = useMemo(() => Array.from(new Set(
@@ -85,25 +111,89 @@ export const AutoInvasionSettingsModal: React.FC<AutoInvasionSettingsModalProps>
 	}, [liveFortifyCurrencies]);
 
   useEffect(() => {
-    if (!isOpen) return;
-    setDraft(parseAutoInvasionClientState(configuration?.sections[AUTO_INVASION_SECTION]));
-  }, [configuration?.sections, isOpen]);
+    if (!isOpen || !draftSession.initialSnapshot) return;
+    const saved = parseAutoInvasionClientState(draftSession.initialSections?.[AUTO_INVASION_SECTION]);
+    setDraft(saved);
+    setAttackRef(attackSetupRef(
+      saved.presetId,
+      parseAttackPresetDocument(draftSession.initialSections?.[ATTACK_PRESETS_SECTION]),
+      AUTO_INVASION_SECTION,
+      'attack',
+    ));
+  }, [draftSession.initialSections, draftSession.openKey, draftSession.initialSnapshot, isOpen]);
 
+  const sourceCastle = useMemo(() => {
+    const castle = state?.castles?.[String(draft.sourceCastleId)];
+    return castle && castle.kingdomId === 0 ? castle : null;
+  }, [draft.sourceCastleId, state?.castles]);
+  const recipePending = useMemo(() => pendingStarterReviews(), []);
+  const recommendation = useMemo(
+    () => recommendEventAttackSetup({ sourceCastle, troops, tools, metadataReady, eventId: 71 }),
+    [metadataReady, sourceCastle, tools, troops],
+  );
   const canSave = draft.sourceCastleId > 0
-    && Boolean(draft.presetId)
+    && attackSetupRefUsable(attackRef, presetDocument)
     && foreignLordsSelectionAvailable
     && bloodcrowSelectionAvailable
     && draft.scoreTarget > 0;
+  const readiness = useMemo(() => evaluateEventAttackReadiness({
+    featureId: 'autoInvasion',
+    draft: {
+      sourceCastleId: draft.sourceCastleId,
+      slots: [{ slot: 'attack', ref: attackRef }],
+      scoreTarget: draft.scoreTarget,
+      dailyAttackLimit: draft.dailyAttackLimit,
+      horseTravelBoostId: draft.horseTravelBoostId,
+      fortifyCurrency: draft.fortifyCurrency,
+    },
+    state,
+    document: presetDocument,
+    troops,
+    tools,
+    metadataReady,
+    difficulties: {
+      selections: [
+        { eventId: 71, available: foreignLordsSelectionAvailable },
+        { eventId: 103, available: bloodcrowSelectionAvailable },
+      ],
+      achievementsObserved,
+      loading: difficultyCatalog.loading,
+    },
+  }), [
+    achievementsObserved, attackRef, bloodcrowSelectionAvailable, difficultyCatalog.loading, draft.dailyAttackLimit,
+    draft.fortifyCurrency, draft.horseTravelBoostId, draft.scoreTarget, draft.sourceCastleId, foreignLordsSelectionAvailable,
+    metadataReady, presetDocument, state, tools, troops,
+  ]);
+  const fixReadiness = (check: ReadinessCheck) => {
+    const target = check.slot ? 'auto-invasion-attack' : {
+      'source-castle': 'auto-invasion-source',
+      difficulty: 'auto-invasion-difficulty',
+      'score-target': 'auto-invasion-score',
+      'daily-limit': 'auto-invasion-daily-limit',
+    }[check.id];
+    if (target) focusReadinessTarget(target);
+  };
+  const moduleLabel = localizeStatic('attackPresets.module.autoInvasion');
 
   const save = async () => {
     if (saving || !canSave) return;
     setSaving(true);
+    const warnings: AppCreatedPresetSaveWarning[] = [];
     try {
-      await updateConfiguration(AUTO_INVASION_SECTION, draft);
+      await saveModuleWithAppCreatedPresets({
+        draftSession,
+        section: AUTO_INVASION_SECTION,
+        slots: [{ slot: 'attack', ref: attackRef, moduleLabel, slotLabel: localizeStatic('attackPresets.slot.attack') }],
+        buildSectionValue: (ids) => ({ ...draft, presetId: ids.attack }),
+        formatPresetName: (module, slot) => localizeStatic('attackPresets.appCreatedName', { module, slot }),
+        warnings,
+      });
       Notifications.success('Auto Invasion settings saved.');
+      if (warnings.includes('cleanup-pending')) Notifications.warning(localizeStatic('attackPresets.cleanupPending'));
       onClose();
     } catch (error) {
       Notifications.error(error instanceof Error ? error.message : 'Could not save Auto Invasion settings.');
+      if (warnings.includes('cleanup-pending')) Notifications.warning(localizeStatic('attackPresets.rollbackPending'));
     } finally {
       setSaving(false);
     }
@@ -120,12 +210,14 @@ export const AutoInvasionSettingsModal: React.FC<AutoInvasionSettingsModalProps>
       titleTrailing={<Button variant="outline" size="sm" className="shrink-0" onClick={() => setIsGuideOpen(true)} leftIcon={<BookOpen className="h-4 w-4" />}><span lang={invasionGuideLocale}>{invasionGuidePack.ui.guideButton}</span></Button>}
       onSave={() => void save()}
       isSaving={saving}
-      saveDisabled={!canSave}
+      saveDisabled={!canSave || !draftSession.ready}
+      contentDisabled={!draftSession.ready}
+      contentNotice={draftSession.conflictNotice}
     >
       <div className="space-y-3">
         <Card variant="solid" className="p-4">
           <div className="grid gap-4 md:grid-cols-2">
-            <label className="block">
+            <label id="auto-invasion-source" className="block md:col-span-2">
               <span className="mb-1.5 flex items-center gap-2 text-[10px] font-black uppercase tracking-wider text-text-muted"><Castle className="h-3.5 w-3.5" /> <LocalizedText messageKey="ui.settings.components.autoInvasionSettingsModal.source.castle.86d5a48e" /></span>
               <Select
                 value={draft.sourceCastleId > 0 ? String(draft.sourceCastleId) : ''}
@@ -136,34 +228,36 @@ export const AutoInvasionSettingsModal: React.FC<AutoInvasionSettingsModalProps>
               />
             </label>
 
-            <label className="block">
-              <span className="mb-1.5 flex items-center gap-2 text-[10px] font-black uppercase tracking-wider text-text-muted"><Swords className="h-3.5 w-3.5" /> <LocalizedText messageKey="ui.settings.components.autoInvasionSettingsModal.attack.preset.407b93e9" /></span>
-              <Select
-                value={draft.presetId}
-                onChange={(presetId) => setDraft((current) => ({ ...current, presetId }))}
-                options={presetDocument.presets.map((preset) => ({ value: preset.id, label: preset.name }))}
-                placeholder={presetDocument.presets.length > 0 ? 'Choose a CitadelOps preset' : 'Create an Attack Preset first'}
-                disabled={presetDocument.presets.length === 0}
-                menuGrowToViewport
+            <div className="md:col-span-2">
+              <EventAttackSetupField
+                id="auto-invasion-attack"
+                label={<LocalizedText messageKey="ui.settings.components.autoInvasionSettingsModal.attack.preset.407b93e9" />}
+                section={AUTO_INVASION_SECTION}
+                slot="attack"
+                moduleLabel={moduleLabel}
+                slotLabel={localizeStatic('attackPresets.slot.attack')}
+                value={attackRef}
+                onChange={setAttackRef}
+                document={presetDocument}
+                references={presetReferences}
+                sourceCastle={sourceCastle}
+                eventId={71}
+                recommendation={recommendation}
+                recipePending={recipePending}
+                onSaveAsPreset={(setup, name) => saveInlineSetupAsUserPreset(draftSession, setup, name)}
+                readinessChecks={readiness.checks.filter((check) => check.slot === 'attack')}
+                disabled={saving}
               />
-            </label>
+            </div>
             <HorseTravelBoostSelect
               className="block md:col-span-2"
               value={draft.horseTravelBoostId}
               onChange={(horseTravelBoostId) => setDraft((current) => ({ ...current, horseTravelBoostId }))}
             />
           </div>
-          {presetSummary ? (
-            <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-border-base pt-3">
-              <span className="mr-1 text-xs text-text-muted"><LocalizedText messageKey="ui.settings.components.autoInvasionSettingsModal.preset.loadout.4c1e2d30" /></span>
-              <Badge variant="outline">{presetSummary.waves} waves</Badge>
-              <Badge variant="outline">{presetSummary.troops.toLocaleString()} troops</Badge>
-              <Badge variant="outline">{presetSummary.tools.toLocaleString()} tools</Badge>
-            </div>
-          ) : null}
         </Card>
 
-        <Card variant="solid" className="p-4">
+        <Card id="auto-invasion-difficulty" variant="solid" className="p-4">
           <div className="mb-3 flex items-start justify-between gap-3">
             <div>
               <div className="flex items-center gap-2 text-sm font-black text-text-main"><ShieldCheck className="h-4 w-4 text-primary" /> <LocalizedText messageKey="ui.settings.components.autoInvasionSettingsModal.event.difficulty.88766fcf" /></div>
@@ -206,7 +300,7 @@ export const AutoInvasionSettingsModal: React.FC<AutoInvasionSettingsModalProps>
 
         <Card variant="solid" className="p-4">
           <div className="grid items-start gap-4 md:grid-cols-2">
-            <label className="flex min-w-0 flex-col">
+            <label id="auto-invasion-score" className="flex min-w-0 flex-col">
               <span className="mb-1.5 flex min-h-6 items-center gap-2 text-[10px] font-black uppercase tracking-wider text-text-muted"><Target className="h-3.5 w-3.5" /> <LocalizedText messageKey="ui.settings.components.autoInvasionSettingsModal.stop.at.event.score.f1752bfd" /></span>
               <Input
                 type="text"
@@ -269,14 +363,18 @@ export const AutoInvasionSettingsModal: React.FC<AutoInvasionSettingsModalProps>
 			) : null}
 		</Card>
 
-        <DailyAttackLimitField
-          value={draft.dailyAttackLimit}
-          onChange={(dailyAttackLimit) => setDraft((current) => ({ ...current, dailyAttackLimit }))}
-          serverState={state?.dailyAttacks}
-        />
+        <div id="auto-invasion-daily-limit" tabIndex={-1} className="outline-none">
+          <DailyAttackLimitField
+            value={draft.dailyAttackLimit}
+            onChange={(dailyAttackLimit) => setDraft((current) => ({ ...current, dailyAttackLimit }))}
+            serverState={state?.dailyAttacks}
+          />
+        </div>
 
         <p className="rounded-global border border-border-base bg-bg-app/40 px-4 py-3 text-xs text-text-muted">
 			<LocalizedText messageKey="ui.settings.components.autoInvasionSettingsModal.troop.quantities.adapt.to.the.freshly.resolved.67bcfcf5" /></p>
+
+        <ReadinessPanel report={readiness} slotLabelKeys={{ attack: 'attackPresets.slot.attack' }} onFix={fixReadiness} />
       </div>
     </SettingsModal>
     <FeatureGuideModal feature="autoInvasion" isOpen={isOpen && isGuideOpen} onClose={() => setIsGuideOpen(false)} />
