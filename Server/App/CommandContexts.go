@@ -485,6 +485,9 @@ func (application *Application) guardCRASend(_ context.Context, arguments json.R
 			if stormTargetCooldownRemaining(target, now) > 0 {
 				return Localization.WithError(fmt.Errorf("CRA target %d:%d is on cooldown", request.TargetX, request.TargetY), Localization.New("server.app.cra_target_p_p.f4664247", "CRA target {p0}:{p1} is on cooldown", Localization.Params{"p0": request.TargetX, "p1": request.TargetY}))
 			}
+			if target.TypeID == stormIntentFortMapTypeID && target.StormHidden {
+				return Localization.WithError(fmt.Errorf("CRA Storm fort %d:%d is hidden on the map", request.TargetX, request.TargetY), Localization.New("server.app.cra_storm_fort_p.1f3b58c9", "CRA Storm fort {p0}:{p1} is hidden on the map", Localization.Params{"p0": request.TargetX, "p1": request.TargetY}))
+			}
 		}
 	}
 	return nil

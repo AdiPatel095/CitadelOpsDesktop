@@ -37,6 +37,7 @@ type WorldEventMapFact struct {
 	StormIsleID            int64 `json:"stormIsleId,omitempty"`
 	StormVictoryCount      int64 `json:"stormVictoryCount,omitempty"`
 	StormCooldownRemaining int   `json:"stormCooldownRemaining,omitempty"`
+	StormHidden            bool  `json:"stormHidden,omitempty"`
 }
 
 type worldFactMap map[KingdomID]*worldFactRegion
@@ -510,6 +511,7 @@ func worldMapFact(observation MapObservation) WorldMapFact {
 			Level: observation.Level, StormIsleID: observation.StormIsleID,
 			StormVictoryCount:      observation.StormVictoryCount,
 			StormCooldownRemaining: observation.StormCooldownRemaining,
+			StormHidden:            observation.StormHidden,
 		}
 	}
 	return fact
@@ -527,6 +529,7 @@ func (fact WorldMapFact) observation() MapObservation {
 		observation.StormIsleID = fact.Event.StormIsleID
 		observation.StormVictoryCount = fact.Event.StormVictoryCount
 		observation.StormCooldownRemaining = fact.Event.StormCooldownRemaining
+		observation.StormHidden = fact.Event.StormHidden
 	}
 	return observation
 }

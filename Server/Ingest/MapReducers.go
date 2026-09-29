@@ -424,7 +424,9 @@ func populateStormObservation(observation *State.MapObservation, row []json.RawM
 	//   areaName, secondsSinceEspionage, isleID, remainingOccupierSec].
 	// DungeonIsleMapobjectVO (25): [25, X, Y, kingdomID, secondsSinceEspionage,
 	//   isleID, attackCooldownSec, victoryCount, isVisibleOnMap (e[8] <= 0)].
-	// Forts carry no object ID; row[3] is the kingdom shared by every fort.
+	// Forts carry no object ID (row[3] is the kingdom shared by every fort) and
+	// no occupier (row[4] is the spy age, ignored). row[8] > 0 hides the fort;
+	// it is not a cooldown.
 	observation.ObjectID = 0
 	switch observation.TypeID {
 	case stormIslandMapTypeID:
@@ -440,9 +442,11 @@ func populateStormObservation(observation *State.MapObservation, row []json.RawM
 		if len(row) < 9 {
 			return
 		}
+		observation.OwnerID = 0
 		observation.StormIsleID = rowInt(row, 5)
 		observation.StormVictoryCount = rowInt(row, 7)
-		observation.StormCooldownRemaining = boundedWireSeconds(max(rowInt(row, 6), rowInt(row, 8)))
+		observation.StormCooldownRemaining = boundedWireSeconds(rowInt(row, 6))
+		observation.StormHidden = rowInt(row, 8) > 0
 	}
 	if gameData == nil {
 		return

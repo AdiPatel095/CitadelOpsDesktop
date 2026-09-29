@@ -1555,7 +1555,10 @@ type MapObservation struct {
 	StormIsleID                int64     `json:"stormIsleId,omitempty"`
 	StormVictoryCount          int64     `json:"stormVictoryCount,omitempty"`
 	StormCooldownRemaining     int       `json:"stormCooldownRemaining,omitempty"`
-	ObservedAt                 time.Time `json:"observedAt"`
+	// StormHidden is the official Storm fort visibility flag (row[8] > 0).
+	// A hidden fort is never a target; it is not a cooldown.
+	StormHidden bool      `json:"stormHidden,omitempty"`
+	ObservedAt  time.Time `json:"observedAt"`
 }
 
 func (observation *MapObservation) UnmarshalJSON(raw []byte) error {
@@ -2045,6 +2048,7 @@ type AttackDialogTarget struct {
 	StormIsleID                int64    `json:"stormIsleId,omitempty"`
 	StormVictoryCount          int64    `json:"stormVictoryCount,omitempty"`
 	StormCooldownRemaining     int      `json:"stormCooldownRemaining,omitempty"`
+	StormHidden                bool     `json:"stormHidden,omitempty"`
 }
 
 type AttackDialogEffect struct {

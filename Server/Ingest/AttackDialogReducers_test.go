@@ -304,9 +304,13 @@ func TestStormAttackDialogObjectIDFollowsOfficialRowLayout(t *testing.T) {
 		objectID int64
 		isleID   int64
 		cooldown int
+		ownerID  State.PlayerID
+		hidden   bool
 	}{
-		{"fort", `[25,104,105,4,-1,10,300,5,0]`, 0, 10, 300},
-		{"island", `[24,100,101,3319,-403,0,0,0,4,100]`, 3319, 4, 100},
+		{"visible spied fort", `[25,104,105,4,3600,10,300,5,0]`, 0, 10, 300, 0, false},
+		{"hidden fort", `[25,106,107,4,-1,10,120,0,1]`, 0, 10, 120, 0, true},
+		{"hidden fort large flag", `[25,108,109,4,-1,10,0,0,200]`, 0, 10, 0, 0, true},
+		{"island", `[24,100,101,3319,-403,0,0,0,4,100]`, 3319, 4, 100, -403, false},
 	} {
 		t.Run(test.name, func(t *testing.T) {
 			gameState := State.NewGameState()
@@ -318,7 +322,8 @@ func TestStormAttackDialogObjectIDFollowsOfficialRowLayout(t *testing.T) {
 				t.Fatalf("dialog changed=%t err=%v", changed, err)
 			}
 			target := gameState.AttackDialog.Target
-			if target.ObjectID != test.objectID || target.StormIsleID != test.isleID || target.StormCooldownRemaining != test.cooldown {
+			if target.ObjectID != test.objectID || target.StormIsleID != test.isleID || target.StormCooldownRemaining != test.cooldown ||
+				target.OwnerID != test.ownerID || target.StormHidden != test.hidden {
 				t.Fatalf("%s dialog target = %#v", test.name, target)
 			}
 		})
