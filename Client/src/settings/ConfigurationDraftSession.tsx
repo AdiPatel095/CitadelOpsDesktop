@@ -68,6 +68,8 @@ interface UseConfigurationDraftSessionOptions {
   sessionKey?: string;
   /** Configuration sections whose open-time contents affect validation or the value being saved. */
   configurationDependencies?: readonly string[];
+  /** A castle copy was applied to this draft (CIT-21): the conflict notice says the copied setup is still in it. */
+  copiedSetup?: boolean;
 }
 
 export function useConfigurationDraftSession({
@@ -75,6 +77,7 @@ export function useConfigurationDraftSession({
   section,
   sessionKey = section,
   configurationDependencies = [],
+  copiedSetup = false,
 }: UseConfigurationDraftSessionOptions) {
   const { loadLatestConfiguration, updateConfiguration } = useCitadelAPI();
   const { t: localizeStatic } = useLocale();
@@ -217,6 +220,7 @@ export function useConfigurationDraftSession({
             </div>
             <p className="mt-1 text-xs leading-relaxed text-text-main">
               <LocalizedText messageKey="ui.settings.configurationDraftSession.your.unsaved.draft.is.still.here.review.0e9b1deb" />
+              {copiedSetup ? <> <LocalizedText messageKey="castleCopy.conflictKept" /></> : null}
             </p>
           </div>
           <Button
@@ -231,7 +235,7 @@ export function useConfigurationDraftSession({
         </div>
       </div>
     );
-  }, [conflict, loadError, loading, reloadLatest, snapshot]);
+  }, [conflict, copiedSetup, loadError, loading, reloadLatest, snapshot]);
 
   return {
     snapshot,

@@ -40,7 +40,7 @@ Every modal has a run line at the top of its Essentials view (`AutomationRunStri
 | autoBeriWorld | building-options | advanced | Construction time skips and reserves; demolition | Demolition; time skips and reserve | accepted (adjusted) |
 | autoBeriWorld | attack-options | advanced | Attack check interval; armorer tool minimums (coins); troop transport skips; transfer check interval and minimum | Check interval; tool types bought with coins; transfer skips | accepted |
 | autoBeriWorld | travel | advanced | Paid travel | Travel payment | accepted |
-| autoTowers | castles | essentials | Castle on or off; tower troop, stock and radius per castle; per-castle scope line | — | accepted (adjusted) |
+| autoTowers | castles | essentials | Castle on or off; tower troop, stock and radius per castle; per-castle scope line; Copy to other castles | — | pending |
 | autoTowers | limits | essentials | Daily attack limit | — | accepted |
 | autoTowers | advisor | advanced | Advisor chains; activation with a token; daily time-skip cap | Advisor on or off, token activation, daily time skips | accepted |
 | autoTowers | scan | advanced | Map scan interval; maiden-supported filter per castle | Map scan every N; maiden-supported commanders only at N castles | accepted (adjusted) |
@@ -59,21 +59,21 @@ Every modal has a run line at the top of its Essentials view (`AutomationRunStri
 | autoStorm | priority | advanced | Attack target priority | Number of ordered target types | accepted |
 | autoStorm | travel | advanced | Paid travel | Travel payment | accepted |
 | autoStorm | timing | advanced | Policy check interval; map refresh; map coverage | Check interval; map refresh | accepted |
-| autoFoodBalance | reserves | essentials | Donor reserve; coin reserve; kingdom transport; castle food table | — | accepted |
+| autoFoodBalance | reserves | essentials | Donor reserve; coin reserve; kingdom transport; castle food table; Account-wide settings only; no per-castle copy. | — | accepted |
 | autoFoodBalance | timing | advanced | Polling interval; minimum kingdom shipment; minimum Storm delivery | Check interval; shipment minimums | accepted |
 | autoFoodBalance | transport-skips | advanced | Transport time skips and reserves | Time skips on or off; skips kept | accepted |
 | autoFoodBalance | travel | advanced | Market barrow travel | Travel payment | accepted |
 | autoStation | evacuation | essentials | Evacuate at N minutes; recall when clear; open-gate fallback | — | accepted (adjusted) |
-| autoStation | reserves | essentials | Troops left to defend per castle, with stock | — | accepted |
+| autoStation | reserves | essentials | Troops left to defend per castle, with stock; Copy to other castles | — | pending |
 | autoStation | filters | advanced | Minimum Bird protection days on target | Protection filter | accepted (adjusted) |
 | autoBird | targets | essentials | Minimum Bird protection days on target | — | accepted |
-| autoBird | castles | essentials | Active preset; kept units per castle, with stock | — | accepted |
+| autoBird | castles | essentials | Active preset; kept units per castle, with stock; Copy to other castles | — | pending |
 | autoBird | timing | advanced | Random delay range; minimum group size | Delay range; minimum per send | accepted |
-| autoRecruit | plan | essentials | Shared or per-castle mode; enabled castles; units and schedules; Glory title fallback | — | accepted |
+| autoRecruit | plan | essentials | Shared or per-castle mode; enabled castles; units and schedules; Glory title fallback; Copy to other castles | — | pending |
 | autoRecruit | timing | advanced | Queue check interval | Check interval | accepted |
-| autoTool | plan | essentials | Shared or per-castle mode; enabled castles; tools and schedules | — | accepted |
+| autoTool | plan | essentials | Shared or per-castle mode; enabled castles; tools and schedules; Copy to other castles | — | pending |
 | autoTool | timing | advanced | Queue check interval | Check interval | accepted |
-| autoHospital | schedule | essentials | Scan windows (weekly schedule) | — | accepted |
+| autoHospital | schedule | essentials | Scan windows (weekly schedule); Account-wide settings only; no per-castle copy. | — | accepted |
 | autoHospital | timing | advanced | Queue check interval | Check interval | accepted |
 | autoTCI | items | essentials | Construction items and level floor and ceiling per castle | — | accepted |
 | autoTCI | presets | advanced | Saved item presets (apply, save as new, delete) | Number of presets; applied preset | accepted |

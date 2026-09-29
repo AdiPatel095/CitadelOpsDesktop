@@ -1,4 +1,7 @@
 import { StopFooter } from '../../components/StopControl';
+import { castleCandidates } from '../copy/candidates';
+import { stationCopyDescriptor } from '../copy/features/station';
+import { CastleCopyButton } from './CastleCopyDialog';
 import { useLocale as useStaticLocale } from "../../i18n/LocaleContext";
 import { LocalizedText } from "../../i18n/LocalizedText";
 import React, { useEffect, useMemo, useState } from 'react';
@@ -60,7 +63,8 @@ export const AutoStationSettingsModal: React.FC<AutoStationSettingsModalProps> =
   const { t: localizeStatic } = useStaticLocale();
   const { state: gameState } = useCitadelAPI();
   const setup = useSetupContext('automation.autoStation');
-  const draftSession = useConfigurationDraftSession({ isOpen, section: 'automation.autoStation', sessionKey: setup.sessionKey });
+  const [copyApplied, setCopyApplied] = useState(false);
+  const draftSession = useConfigurationDraftSession({ isOpen, section: 'automation.autoStation', sessionKey: setup.sessionKey, copiedSetup: copyApplied });
   const disclosure = useSettingsDisclosure('autoStation');
   const { troops, tools, unitsLoading, unitsError } = useMetadata();
   const castles = castleOptionsFromState(gameState);
@@ -74,11 +78,16 @@ export const AutoStationSettingsModal: React.FC<AutoStationSettingsModalProps> =
       return;
     }
     if (!draftSession.initialSnapshot) return;
+    setCopyApplied(false);
     setState(parseAutoStationClientState(
       draftSession.initialSections?.['automation.autoStation'],
     ));
   }, [draftSession.initialSections, draftSession.openKey, draftSession.initialSnapshot, isOpen]);
 
+  const copyContext = useMemo(() => ({
+    state: gameState, troops, tools, metadataReady: !unitsLoading && !unitsError, observation: setup.observation,
+    candidates: castleCandidates(castles, gameState),
+  }), [castles, gameState, setup.observation, tools, troops, unitsError, unitsLoading]);
   const readiness = useMemo(() => evaluateReserveReadiness({
     featureId: 'autoStation',
     state: gameState,
@@ -283,6 +292,15 @@ export const AutoStationSettingsModal: React.FC<AutoStationSettingsModalProps> =
                       />
                     </div>
                   )}
+                  <CastleCopyButton
+                    descriptor={stationCopyDescriptor}
+                    draft={state.settings}
+                    sourceKey={castleID}
+                    context={copyContext}
+                    featureLabel="Auto Station"
+                    onApply={(next) => { setState((previous) => ({ ...previous, settings: next })); setCopyApplied(true); }}
+                    className="mt-3 self-start"
+                  />
                   {stock ? (
                     <div className="mt-3 space-y-1.5 border-t border-border-base pt-2">
                       <UnitStockList lines={stock.lines} mode="reserve" freshness={stock.freshness} />

@@ -115,13 +115,16 @@ test('Maya matrix review adjustments (2026-09-29) are placed as decided', () => 
   assert.equal(tier('autoAdvisor', 'run-sizing'), 'essentials');
 });
 
-test('the matrix records Maya\'s review evidence and no row is left pending', async () => {
+test('the matrix records Maya\'s review evidence and only the CIT-21 copy rows are pending', async () => {
   const text = await readFile(MATRIX, 'utf8');
   assert.match(text, /Maya matrix review 2026-09-29, Desktop 1c2fa93 \/ Hosted 745eef2, Product\/Simpler automation setup\.md § CIT-17 placement matrix review/);
   for (const line of text.split('\n')) {
     const cells = line.split('|').map((cell) => cell.trim());
     if (cells.length < 7 || !/^auto[A-Z]/.test(cells[1])) continue;
-    assert.match(cells[cells.length - 2], /^accepted( \(adjusted\))?$/, `${cells[1]}/${cells[2]}`);
+    // CIT-21 rows that gained "Copy to other castles" wait for Maya's review of that addition.
+    const status = cells[cells.length - 2];
+    if (status === 'pending') assert.match(cells[4], /Copy to other castles/, `${cells[1]}/${cells[2]}: only the CIT-21 copy rows may be pending`);
+    else assert.match(status, /^accepted( \(adjusted\))?$/, `${cells[1]}/${cells[2]}`);
   }
 });
 

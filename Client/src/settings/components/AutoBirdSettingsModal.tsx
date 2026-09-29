@@ -1,4 +1,7 @@
 import { StopFooter } from '../../components/StopControl';
+import { castleCandidates } from '../copy/candidates';
+import { birdCandidateFlags, birdCopyDescriptor } from '../copy/features/bird';
+import { CastleCopyButton } from './CastleCopyDialog';
 import { useLocale as useStaticLocale } from "../../i18n/LocaleContext";
 import { LocalizedText } from "../../i18n/LocalizedText";
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
@@ -76,11 +79,13 @@ export const AutoBirdSettingsModal: React.FC<AutoBirdSettingsModalProps> = ({ is
   const { t: localizeStatic } = useStaticLocale();
   const { state } = useCitadelAPI();
   const setup = useSetupContext('automation.autoBird');
+  const [copyApplied, setCopyApplied] = useState(false);
   const draftSession = useConfigurationDraftSession({
     isOpen,
     section: 'automation.autoBird',
     configurationDependencies: ['automation.autoFortress'],
     sessionKey: setup.sessionKey,
+    copiedSetup: copyApplied,
   });
   const { troops, tools, unitsLoading, unitsError } = useMetadata();
   const { autoFortressEnabled } = useAuth();
@@ -101,6 +106,8 @@ export const AutoBirdSettingsModal: React.FC<AutoBirdSettingsModalProps> = ({ is
   const [isGuideOpen, setIsGuideOpen] = useState(false);
   useEffect(() => { if (!isOpen) setIsGuideOpen(false); }, [isOpen]);
   const loadedConfigurationSignature = useRef<string | null>(null);
+  // A reloaded or preset-replaced draft no longer holds the copied setup.
+  useEffect(() => { setCopyApplied(false); }, [draftSession.openKey]);
 
   const currentIgnoreSettings = useCallback((): AutoBirdStoredSettings => {
     let maxD = clampDelayHours(maxDelay);
@@ -115,6 +122,14 @@ export const AutoBirdSettingsModal: React.FC<AutoBirdSettingsModalProps> = ({ is
     };
   }, [settings, minDelay, maxDelay, minSend, minRPTDays]);
 
+  const fortressSection = draftSession.sections?.['automation.autoFortress'];
+  const copyContext = useMemo(() => {
+    const base = {
+      state, troops, tools, metadataReady: !unitsLoading && !unitsError, observation: setup.observation,
+      fortress: { enabled: autoFortressEnabled, section: fortressSection },
+    };
+    return { ...base, candidates: castleCandidates(castles, state, { flagsFor: (castle) => birdCandidateFlags(castle, base) }) };
+  }, [autoFortressEnabled, castles, fortressSection, setup.observation, state, tools, troops, unitsError, unitsLoading]);
   const birdReadiness = useMemo(() => evaluateReserveReadiness({
     featureId: 'autoBird',
     state,
@@ -213,6 +228,7 @@ export const AutoBirdSettingsModal: React.FC<AutoBirdSettingsModalProps> = ({ is
 
   const handleApplyPreset = () => {
     if (isSaving) return;
+    setCopyApplied(false);
     setPresetError('');
     if (!presetDropdownId) {
       hydrateFromConfiguration();
@@ -549,6 +565,15 @@ export const AutoBirdSettingsModal: React.FC<AutoBirdSettingsModalProps> = ({ is
                       />
                     </div>
                   )}
+                  <CastleCopyButton
+                    descriptor={birdCopyDescriptor}
+                    draft={settings}
+                    sourceKey={cid}
+                    context={copyContext}
+                    featureLabel="Auto Bird"
+                    onApply={(next) => { setSettings(next); setCopyApplied(true); }}
+                    className="mt-3 self-start"
+                  />
                   {stock ? (
                     <div className="mt-3 space-y-1.5 border-t border-border-base pt-2">
                       <UnitStockList lines={stock.lines} mode="reserve" freshness={stock.freshness} />
