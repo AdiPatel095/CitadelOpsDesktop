@@ -6,7 +6,6 @@ import { LocalizedText } from "../../i18n/LocalizedText";
 import React, { useEffect, useMemo, useState } from 'react';
 import {
   BookOpen,
-  Castle,
   Clock3,
   Crosshair,
   Flame,
@@ -15,24 +14,46 @@ import {
   ShieldAlert,
   ShieldCheck,
   ShoppingCart,
-  Swords,
   Zap,
 } from 'lucide-react';
-import { useCitadelAPI } from '../../api/ApiContext';
 import { castleOptionsFromState } from '../../api/Selectors';
 import {
   ATTACK_PRESETS_SECTION,
   parseAttackPresetDocument,
-  summarizeAttackPreset,
 } from '../../attackPresets/AttackPresetTypes';
-import { attackPresetSelectOptions } from '../../attackPresets/AttackPresetOptionLabel';
+import { attackSetupRef, attackSetupRefUsable, type AttackSetupRef } from '../../attackPresets/AppCreatedPresets';
+import { attackPresetReferences, defensePresetReferences } from '../../attackPresets/AttackPresetReferences';
 import { Notifications } from '../../components/Notifications';
-import { Badge, Button, Card, Input, Select, SettingsModal, Switch } from '../../components/ui';
+import { Badge, Button, Card, Input, SettingsModal, Switch } from '../../components/ui';
+import { useMetadata } from '../../context/MetadataContext';
 import {
   DEFENSE_PRESETS_SECTION,
   parseDefensePresetDocument,
-  summarizeDefensePreset,
 } from '../../defensePresets/DefensePresetTypes';
+import { defenseSetupRef, defenseSetupRefUsable, type DefenseSetupRef } from '../../defensePresets/AppCreatedDefensePresets';
+import { COMMANDER_FEATURE_SECTION } from '../../Movement/types/CommanderFeatureAssignments';
+import { useConfigurationDraftSession } from '../ConfigurationDraftSession';
+import {
+  saveInlineDefenseAsUserPreset,
+  saveInlineSetupAsUserPreset,
+  saveModuleWithAppCreatedPresets,
+  type AppCreatedPresetSaveWarning,
+} from '../AppCreatedPresetSave';
+import { recommendEventAttackSetup } from '../onboarding/EventAttackRecommendation';
+import { khanDefenseStarter } from '../onboarding/KhanDefenseStarter';
+import { pendingStarterReviews } from '../onboarding/StarterRecipes';
+import { evaluateKhanReadiness } from '../readiness/khanReadiness';
+import { focusReadinessTarget } from '../readiness/focusReadinessTarget';
+import type { ReadinessCheck } from '../readiness/Readiness';
+import { savedCommanderAssignments } from '../requirements/commanderAssignmentDraft';
+import { evaluateCommanderEligibility } from '../requirements/commanderEligibility';
+import { greatEmpireMainCastle } from '../requirements/setupReadiness';
+import { useSetupContext } from '../requirements/useSetupContext';
+import { CastleRequirementField } from './CastleRequirementField';
+import { CommanderAssignmentPanel } from './CommanderAssignmentPanel';
+import { DefenseSetupField } from './DefenseSetupField';
+import { EventAttackSetupField } from './EventAttackSetupField';
+import { ReadinessPanel } from './ReadinessPanel';
 import {
   AUTO_KHAN_SECTION,
   clampAutoKhanInteger,
@@ -52,8 +73,19 @@ interface AutoKhanSettingsModalProps {
 
 export const AutoKhanSettingsModal: React.FC<AutoKhanSettingsModalProps> = ({ isOpen, onClose }) => {
   const { t: localizeStatic } = useStaticLocale();
-  const { state, configuration, updateConfiguration } = useCitadelAPI();
+  const setup = useSetupContext(AUTO_KHAN_SECTION);
+  const state = setup.state;
+  const { troops, tools, unitsLoading, unitsError } = useMetadata();
+  const draftSession = useConfigurationDraftSession({
+    isOpen,
+    section: AUTO_KHAN_SECTION,
+    configurationDependencies: [ATTACK_PRESETS_SECTION, DEFENSE_PRESETS_SECTION, COMMANDER_FEATURE_SECTION],
+    sessionKey: setup.sessionKey,
+  });
   const [draft, setDraft] = useState<AutoKhanClientStateV1>(defaultAutoKhanClientState);
+  const [attackRef, setAttackRef] = useState<AttackSetupRef>({ source: 'none' });
+  const [defenseRef, setDefenseRef] = useState<DefenseSetupRef>({ source: 'none' });
+  const [commandersOpen, setCommandersOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [isGuideOpen, setIsGuideOpen] = useState(false);
   const { locale: guideLocale, pack: guidePack } = useGuideLocale();
@@ -61,23 +93,31 @@ export const AutoKhanSettingsModal: React.FC<AutoKhanSettingsModalProps> = ({ is
   const khanGuideLocale = khanGuidePack === englishGuidePack ? 'en' : guideLocale;
   useEffect(() => { if (!isOpen) setIsGuideOpen(false); }, [isOpen]);
   const castles = useMemo(() => castleOptionsFromState(state).filter((castle) => castle.kingdomId === 0), [state]);
-  const mainCastle = useMemo(
-    () => Object.values(state?.castles ?? {}).find((castle) => castle.kingdomId === 0 && castle.slotType === 1),
-    [state],
-  );
+  const mainCastle = useMemo(() => greatEmpireMainCastle(state) ?? undefined, [state]);
   const attackDocument = useMemo(
-    () => parseAttackPresetDocument(configuration?.sections[ATTACK_PRESETS_SECTION]),
-    [configuration?.sections],
+    () => parseAttackPresetDocument(draftSession.sections?.[ATTACK_PRESETS_SECTION]),
+    [draftSession.sections],
   );
   const defenseDocument = useMemo(
-    () => parseDefensePresetDocument(configuration?.sections[DEFENSE_PRESETS_SECTION]),
-    [configuration?.sections],
+    () => parseDefensePresetDocument(draftSession.sections?.[DEFENSE_PRESETS_SECTION]),
+    [draftSession.sections],
   );
+  const attackReferences = useMemo(() => attackPresetReferences(draftSession.sections), [draftSession.sections]);
+  const defenseReferences = useMemo(() => defensePresetReferences(draftSession.sections), [draftSession.sections]);
+  const commanderAssignments = useMemo(() => savedCommanderAssignments(draftSession.sections), [draftSession.sections]);
+  const metadataReady = !unitsLoading && !unitsError;
+  const observation = setup.observation;
   const selectedSource = castles.find((castle) => castle.id === draft.sourceCastleId);
-  const selectedAttackPreset = attackDocument.presets.find((preset) => preset.id === draft.attackPresetId);
-  const selectedDefensePreset = defenseDocument.presets.find((preset) => preset.id === draft.defensePresetId);
-  const attackSummary = selectedAttackPreset ? summarizeAttackPreset(selectedAttackPreset) : null;
-  const defenseSummary = selectedDefensePreset ? summarizeDefensePreset(selectedDefensePreset) : null;
+  const sourceCastle = useMemo(() => {
+    const castle = state?.castles?.[String(draft.sourceCastleId)];
+    return castle && castle.kingdomId === 0 ? castle : null;
+  }, [draft.sourceCastleId, state?.castles]);
+  const recipePending = useMemo(() => pendingStarterReviews(), []);
+  const recommendation = useMemo(
+    () => recommendEventAttackSetup({ sourceCastle, observation, troops, tools, metadataReady, eventId: 0 }),
+    [metadataReady, observation, sourceCastle, tools, troops],
+  );
+  const defenseStarter = useMemo(() => khanDefenseStarter({ mainCastle: mainCastle ?? null, observation }), [mainCastle, observation]);
   const sourceIsMain = mainCastle != null && draft.sourceCastleId === mainCastle.id;
   const protection = state?.khan?.protection;
   const protectionReason = useLocalizedMessage(parseMessageDescriptor(protection?.reasonDescriptor),protection?.reason || 'Add defense units before the Khan chain can continue.');
@@ -94,16 +134,54 @@ export const AutoKhanSettingsModal: React.FC<AutoKhanSettingsModalProps> = ({ is
       : 'Waiting for the first authoritative boi booster snapshot';
 
   useEffect(() => {
-    if (!isOpen) return;
-    setDraft(parseAutoKhanClientState(configuration?.sections[AUTO_KHAN_SECTION]));
-  }, [configuration?.sections, isOpen]);
+    if (!isOpen || !draftSession.initialSnapshot) return;
+    const saved = parseAutoKhanClientState(draftSession.initialSections?.[AUTO_KHAN_SECTION]);
+    setDraft(saved);
+    setAttackRef(attackSetupRef(saved.attackPresetId, parseAttackPresetDocument(draftSession.initialSections?.[ATTACK_PRESETS_SECTION]), AUTO_KHAN_SECTION, 'attack'));
+    setDefenseRef(defenseSetupRef(saved.defensePresetId, parseDefensePresetDocument(draftSession.initialSections?.[DEFENSE_PRESETS_SECTION]), AUTO_KHAN_SECTION, 'defense'));
+  }, [draftSession.initialSections, draftSession.openKey, draftSession.initialSnapshot, isOpen]);
 
   const canSave = draft.sourceCastleId > 0
     && Boolean(mainCastle)
-    && Boolean(selectedAttackPreset)
-    && Boolean(selectedDefensePreset)
+    && attackSetupRefUsable(attackRef, attackDocument)
+    && defenseSetupRefUsable(defenseRef, defenseDocument)
     && draft.skipCooldowns
     && (!sourceIsMain || !draft.openGateProtection || draft.offensiveUnitThreshold > 0);
+  const readiness = useMemo(() => evaluateKhanReadiness({
+    draft,
+    attack: attackRef,
+    defense: defenseRef,
+    state,
+    attackDocument,
+    defenseDocument,
+    troops,
+    tools,
+    metadataReady,
+    observation,
+    commanders: evaluateCommanderEligibility({
+      featureId: 'autoKhan',
+      state,
+      assignments: commanderAssignments,
+      movement: setup.movement,
+      gameLoggedIn: setup.gameLoggedIn,
+      now: Date.now(),
+    }),
+  }), [attackDocument, attackRef, commanderAssignments, defenseDocument, defenseRef, draft, metadataReady, observation, setup.gameLoggedIn, setup.movement, state, tools, troops]);
+  const fixReadiness = (check: ReadinessCheck) => {
+    if (check.id === 'commanders' || check.id === 'commander-assignment') {
+      setCommandersOpen(true);
+      window.requestAnimationFrame(() => focusReadinessTarget('auto-khan-commanders-heading'));
+      return;
+    }
+    const target = check.slot ? `auto-khan-${check.slot}` : {
+      'source-castle': 'auto-khan-source',
+      'skip-cooldowns': 'auto-khan-skips',
+      'rage-booster': 'auto-khan-rage',
+      'daily-limit': 'auto-khan-daily-limit',
+    }[check.id];
+    if (target) focusReadinessTarget(target);
+  };
+  const moduleLabel = localizeStatic('attackPresets.module.autoKhan');
 
   const setTimeSkipReserve = (key: string, value: unknown) => {
     setDraft((current) => ({
@@ -118,15 +196,31 @@ export const AutoKhanSettingsModal: React.FC<AutoKhanSettingsModalProps> = ({ is
   const save = async () => {
     if (saving || !canSave) return;
     setSaving(true);
+    const warnings: AppCreatedPresetSaveWarning[] = [];
     try {
-      await updateConfiguration(AUTO_KHAN_SECTION, {
-        ...draft,
-        openGateProtection: sourceIsMain && draft.openGateProtection,
+      // Ordered save: attack presets, defense presets, then Auto Khan (CIT-16).
+      await saveModuleWithAppCreatedPresets({
+        draftSession,
+        section: AUTO_KHAN_SECTION,
+        slots: [
+          { slot: 'attack', ref: attackRef, moduleLabel, slotLabel: localizeStatic('attackPresets.slot.attack') },
+          { document: DEFENSE_PRESETS_SECTION, slot: 'defense', ref: defenseRef, moduleLabel, slotLabel: localizeStatic('attackPresets.slot.defense') },
+        ],
+        buildSectionValue: (ids) => ({
+          ...draft,
+          attackPresetId: ids.attack,
+          defensePresetId: ids.defense,
+          openGateProtection: sourceIsMain && draft.openGateProtection,
+        }),
+        formatPresetName: (module, slot) => localizeStatic('attackPresets.appCreatedName', { module, slot }),
+        warnings,
       });
       Notifications.success('Auto Khan settings saved.');
+      if (warnings.includes('cleanup-pending')) Notifications.warning(localizeStatic('attackPresets.cleanupPending'));
       onClose();
     } catch (error) {
       Notifications.error(error instanceof Error ? error.message : 'Could not save Auto Khan settings.');
+      if (warnings.includes('cleanup-pending')) Notifications.warning(localizeStatic('attackPresets.rollbackPending'));
     } finally {
       setSaving(false);
     }
@@ -144,7 +238,9 @@ export const AutoKhanSettingsModal: React.FC<AutoKhanSettingsModalProps> = ({ is
       description={localizeStatic("ui.settings.components.autoKhanSettingsModal.description.chained.camp.attacks.khan.taunts.and.main.339ad3f1")}
       onSave={() => void save()}
       isSaving={saving}
-      saveDisabled={!canSave}
+      saveDisabled={!canSave || !draftSession.ready}
+      contentDisabled={!draftSession.ready}
+      contentNotice={draftSession.conflictNotice}
     >
       <div className="space-y-3">
         {protection?.active ? (
@@ -160,26 +256,23 @@ export const AutoKhanSettingsModal: React.FC<AutoKhanSettingsModalProps> = ({ is
 
         <Card variant="solid" className="p-4">
           <div className="grid gap-4 md:grid-cols-2">
-            <label className="block">
-              <span className="mb-1.5 flex items-center gap-2 text-[10px] font-black uppercase tracking-wider text-text-muted"><Castle className="h-3.5 w-3.5" /> <LocalizedText messageKey="ui.settings.components.autoKhanSettingsModal.attack.from.2ef61f36" /></span>
-              <Select
-                value={draft.sourceCastleId > 0 ? String(draft.sourceCastleId) : ''}
-                onChange={(value) => {
-                  const sourceCastleId = Number(value) || 0;
-                  setDraft((current) => ({
-                    ...current,
-                    sourceCastleId,
-                    openGateProtection: mainCastle != null && sourceCastleId === mainCastle.id,
-                  }));
-                }}
-                options={castles.map((castle) => ({
-                  value: String(castle.id),
-                  label: `${castle.name}${castle.id === mainCastle?.id ? ' · Main' : ' · Outpost'} · ${castle.x}:${castle.y}`,
-                }))}
-                placeholder={localizeStatic("ui.settings.components.autoKhanSettingsModal.placeholder.choose.a.great.empire.castle.8a81fec1")}
-                menuGrowToViewport
-              />
-            </label>
+            <CastleRequirementField
+              id="auto-khan-source"
+              label={<LocalizedText messageKey="ui.settings.components.autoKhanSettingsModal.attack.from.2ef61f36" />}
+              value={draft.sourceCastleId}
+              onChange={(sourceCastleId) => setDraft((current) => ({
+                ...current,
+                sourceCastleId,
+                openGateProtection: mainCastle != null && sourceCastleId === mainCastle.id,
+              }))}
+              state={state}
+              purpose="source-great-empire"
+              options={castles.map((castle) => ({
+                value: String(castle.id),
+                label: `${castle.name}${castle.id === mainCastle?.id ? ' · Main' : ' · Outpost'} · ${castle.x}:${castle.y}`,
+              }))}
+              placeholder={localizeStatic("ui.settings.components.autoKhanSettingsModal.placeholder.choose.a.great.empire.castle.8a81fec1")}
+            />
 
             <div>
               <span className="mb-1.5 flex items-center gap-2 text-[10px] font-black uppercase tracking-wider text-text-muted"><ShieldCheck className="h-3.5 w-3.5" /> <LocalizedText messageKey="ui.settings.components.autoKhanSettingsModal.defend.at.a5f2a10a" /></span>
@@ -242,7 +335,7 @@ export const AutoKhanSettingsModal: React.FC<AutoKhanSettingsModalProps> = ({ is
               </label>
             </div>
 
-            <div className="border-t border-border-base pt-4 md:border-l md:border-t-0 md:pl-4 md:pt-0">
+            <div id="auto-khan-rage" tabIndex={-1} className="border-t border-border-base pt-4 outline-none md:border-l md:border-t-0 md:pl-4 md:pt-0">
               <div className="flex items-start justify-between gap-4">
                 <div className="min-w-0">
                   <div className="flex items-center gap-2 text-sm font-black text-text-main"><Zap className="h-4 w-4 text-primary" /> <LocalizedText messageKey="ui.settings.components.autoKhanSettingsModal.require.rage.points.booster.ad17ec97" /></div>
@@ -307,41 +400,43 @@ export const AutoKhanSettingsModal: React.FC<AutoKhanSettingsModalProps> = ({ is
 
         <Card variant="solid" className="p-4">
           <div className="grid gap-4 md:grid-cols-2">
-            <label className="block">
-              <span className="mb-1.5 flex items-center gap-2 text-[10px] font-black uppercase tracking-wider text-text-muted"><Swords className="h-3.5 w-3.5" /> <LocalizedText messageKey="ui.settings.components.autoKhanSettingsModal.camp.attack.preset.7f63bfed" /></span>
-              <Select
-                value={draft.attackPresetId}
-                onChange={(attackPresetId) => setDraft((current) => ({ ...current, attackPresetId }))}
-                options={attackPresetSelectOptions(attackDocument.presets)}
-                placeholder={attackDocument.presets.length > 0 ? 'Choose an Attack Preset' : 'Create an Attack Preset first'}
-                disabled={attackDocument.presets.length === 0}
-                menuGrowToViewport
-              />
-              {attackSummary ? (
-                <div className="mt-2 flex flex-wrap gap-2">
-                  <Badge variant="outline">{attackSummary.waves} waves</Badge>
-                  <Badge variant="outline">{attackSummary.troops.toLocaleString()} troops</Badge>
-                </div>
-              ) : null}
-            </label>
-
-            <label className="block">
-              <span className="mb-1.5 flex items-center gap-2 text-[10px] font-black uppercase tracking-wider text-text-muted"><ShieldCheck className="h-3.5 w-3.5" /> <LocalizedText messageKey="ui.settings.components.autoKhanSettingsModal.main.defense.preset.75e96539" /></span>
-              <Select
-                value={draft.defensePresetId}
-                onChange={(defensePresetId) => setDraft((current) => ({ ...current, defensePresetId }))}
-                options={defenseDocument.presets.map((preset) => ({ value: preset.id, label: preset.name }))}
-                placeholder={defenseDocument.presets.length > 0 ? 'Choose a Defense Preset' : 'Create a Defense Preset first'}
-                disabled={defenseDocument.presets.length === 0}
-                menuGrowToViewport
-              />
-              {defenseSummary ? (
-                <div className="mt-2 flex flex-wrap gap-2">
-                  <Badge variant="outline">{defenseSummary.toolTypes.length} tool types</Badge>
-                  <Badge variant="outline">{defenseSummary.toolAmount.toLocaleString()} tools</Badge>
-                </div>
-              ) : null}
-            </label>
+            <EventAttackSetupField
+              id="auto-khan-attack"
+              label={<LocalizedText messageKey="ui.settings.components.autoKhanSettingsModal.camp.attack.preset.7f63bfed" />}
+              section={AUTO_KHAN_SECTION}
+              slot="attack"
+              moduleLabel={moduleLabel}
+              slotLabel={localizeStatic('attackPresets.slot.attack')}
+              value={attackRef}
+              onChange={setAttackRef}
+              document={attackDocument}
+              references={attackReferences}
+              sourceCastle={sourceCastle}
+              observation={observation}
+              eventId={0}
+              recommendation={recommendation}
+              recipePending={recipePending}
+              onSaveAsPreset={(inline, name) => saveInlineSetupAsUserPreset(draftSession, inline, name)}
+              readinessChecks={readiness.checks.filter((check) => check.slot === 'attack')}
+              disabled={saving}
+            />
+            <DefenseSetupField
+              id="auto-khan-defense"
+              label={<LocalizedText messageKey="ui.settings.components.autoKhanSettingsModal.main.defense.preset.75e96539" />}
+              section={AUTO_KHAN_SECTION}
+              slot="defense"
+              moduleLabel={moduleLabel}
+              slotLabel={localizeStatic('attackPresets.slot.defense')}
+              value={defenseRef}
+              onChange={setDefenseRef}
+              document={defenseDocument}
+              references={defenseReferences}
+              starter={defenseStarter}
+              starterCastleName={mainCastle ? (mainCastle.name?.trim() || `#${mainCastle.id}`) : undefined}
+              onSaveAsPreset={(inline, name) => saveInlineDefenseAsUserPreset(draftSession, inline, name)}
+              readinessChecks={readiness.checks.filter((check) => check.slot === 'defense')}
+              disabled={saving}
+            />
             <HorseTravelBoostSelect
               className="block md:col-span-2"
               value={draft.horseTravelBoostId}
@@ -351,6 +446,7 @@ export const AutoKhanSettingsModal: React.FC<AutoKhanSettingsModalProps> = ({ is
           <p className="mt-3 border-t border-border-base pt-3 text-xs text-text-muted"><LocalizedText messageKey="ui.settings.components.autoKhanSettingsModal.the.selected.defense.preset.is.re.applied.e0cc99f5" /></p>
         </Card>
 
+        <div id="auto-khan-skips" tabIndex={-1} className="outline-none">
         <Card variant="solid" className="p-4">
           <div className="flex items-start justify-between gap-4">
             <div className="min-w-0">
@@ -402,6 +498,7 @@ export const AutoKhanSettingsModal: React.FC<AutoKhanSettingsModalProps> = ({ is
           </div>
           {!draft.skipCooldowns ? <p className="mt-3 text-xs text-warning"><LocalizedText messageKey="ui.settings.components.autoKhanSettingsModal.cooldown.skipping.is.required.before.these.chained.0dfd850e" /></p> : null}
         </Card>
+        </div>
 
         <Card variant="solid" className="p-4">
           <div className="flex items-start justify-between gap-4">
@@ -445,10 +542,29 @@ export const AutoKhanSettingsModal: React.FC<AutoKhanSettingsModalProps> = ({ is
           ) : null}
         </Card>
 
-        <DailyAttackLimitField
-          value={draft.dailyAttackLimit}
-          onChange={(dailyAttackLimit) => setDraft((current) => ({ ...current, dailyAttackLimit }))}
-          serverState={state?.dailyAttacks}
+        <div id="auto-khan-daily-limit" tabIndex={-1} className="outline-none">
+          <DailyAttackLimitField
+            value={draft.dailyAttackLimit}
+            onChange={(dailyAttackLimit) => setDraft((current) => ({ ...current, dailyAttackLimit }))}
+            serverState={state?.dailyAttacks}
+          />
+        </div>
+
+        <ReadinessPanel
+          report={readiness}
+          slotLabelKeys={{ attack: 'attackPresets.slot.attack', defense: 'attackPresets.slot.defense' }}
+          onFix={fixReadiness}
+        />
+        <CommanderAssignmentPanel
+          id="auto-khan-commanders"
+          featureId="autoKhan"
+          draftSession={draftSession}
+          state={setup.state}
+          movement={setup.movement}
+          gameLoggedIn={setup.gameLoggedIn}
+          expanded={commandersOpen}
+          onExpandedChange={setCommandersOpen}
+          disabled={saving}
         />
       </div>
     </SettingsModal>
