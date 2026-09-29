@@ -478,7 +478,8 @@ func TestReduceMapSnapshotRetainsOfficialStormTimers(t *testing.T) {
 		Payload: json.RawMessage(`{"KID":4,"AI":[
 			[24,100,101,3319,-403,0,0,0,4,100],
 			[24,102,103,4447,12345,0,0,0,6,120],
-			[25,104,105,4,-1,10,300,5,200]
+			[25,104,105,4,-1,10,300,5,200],
+			[25,106,107,4,-1,10,0,0,0]
 		]}`),
 	}, &gameState, gameData)
 	if err != nil || !changed {
@@ -499,6 +500,19 @@ func TestReduceMapSnapshotRetainsOfficialStormTimers(t *testing.T) {
 	}
 	if tracked := gameState.Storm.Map.Targets["104:105"]; tracked != fort {
 		t.Fatalf("tracked Storm fort was not refreshed from the newer map row: %#v", tracked)
+	}
+	// CIT-23: official DungeonIsleMapobjectVO row[3] is the kingdom ID, not an
+	// object ID; forts carry no identity. ResourceIsleMapobjectVO row[3] is one.
+	secondFort := gameState.Map[4]["106:107"]
+	if fort.ObjectID != 0 || secondFort.ObjectID != 0 || secondFort.X != 106 || secondFort.Y != 107 {
+		t.Fatalf("fort object ids = %d, %d (%#v)", fort.ObjectID, secondFort.ObjectID, secondFort)
+	}
+	if fort.StormIsleID != 10 || fort.StormVictoryCount != 5 || fort.StormCooldownRemaining != 300 ||
+		secondFort.StormIsleID != 10 || secondFort.StormCooldownRemaining != 0 {
+		t.Fatalf("fort fields changed: %#v %#v", fort, secondFort)
+	}
+	if unoccupied.ObjectID != 3319 || unoccupied.OwnerID != -403 || occupied.ObjectID != 4447 {
+		t.Fatalf("island identities = %#v %#v", unoccupied, occupied)
 	}
 }
 

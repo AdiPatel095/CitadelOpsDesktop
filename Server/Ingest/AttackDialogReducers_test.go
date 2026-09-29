@@ -283,3 +283,44 @@ func TestReduceAttackDialogRefreshesTrackedStormOpportunity(t *testing.T) {
 		t.Fatalf("tracked Storm opportunity = %#v", tracked)
 	}
 }
+
+// CIT-23: an ADI/ABI dialog for a Storm fort carries no object ID (row[3] is
+// the kingdom ID); an island dialog keeps its official object ID.
+func TestStormAttackDialogObjectIDFollowsOfficialRowLayout(t *testing.T) {
+	gameData, err := GameData.DecodeStore([]byte(`{
+		"versionInfo":[],"buildings":[],"units":[],
+		"isles":[
+			{"IsleID":4,"type":"VILLAGEWOOD","dungeonlevel":70,"globalCooldown":115200,"occupationTime":14400},
+			{"IsleID":10,"type":"DUNGEON","dungeonlevel":40,"maxCountVictories":10,"countVictories":"0#1#2#3#4#5#6#7#8#9"}
+		]
+	}`), GameData.SourceMetadata{ItemVersion: "test"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	code := 0
+	for _, test := range []struct {
+		name     string
+		row      string
+		objectID int64
+		isleID   int64
+		cooldown int
+	}{
+		{"fort", `[25,104,105,4,-1,10,300,5,0]`, 0, 10, 300},
+		{"island", `[24,100,101,3319,-403,0,0,0,4,100]`, 3319, 4, 100},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			gameState := State.NewGameState()
+			_, changed, err := reduceAttackDialog(t.Context(), Protocol.Frame{
+				Opcode: "adi", Direction: Protocol.DirectionInbound, ResponseCode: &code, ReceivedAt: time.Now().UTC(),
+				Payload: json.RawMessage(`{"KID":4,"SCID":40,"gaa":{"AI":` + test.row + `},"AE":[]}`),
+			}, &gameState, gameData)
+			if err != nil || !changed {
+				t.Fatalf("dialog changed=%t err=%v", changed, err)
+			}
+			target := gameState.AttackDialog.Target
+			if target.ObjectID != test.objectID || target.StormIsleID != test.isleID || target.StormCooldownRemaining != test.cooldown {
+				t.Fatalf("%s dialog target = %#v", test.name, target)
+			}
+		})
+	}
+}
