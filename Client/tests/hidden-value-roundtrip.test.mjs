@@ -93,7 +93,7 @@ test('event combat: Nomad, Invasion, Khan and Beri World', () => {
     parse: beri.parseAutoBeriWorldSettings,
     defaults: beri.DEFAULT_AUTO_BERI_WORLD_SETTINGS,
     hidden: {
-      build: { allowPremium: true, allowDemolition: true, allowTimeSkips: true, timeSkipReserve: { MS2: 5 } },
+      build: { allowDemolition: true, allowTimeSkips: true, timeSkipReserve: { MS2: 5 } },
       attackCheckIntervalSec: 120,
       toolMinimums: { 614: 20 },
       useTroopTransportTimeSkips: true,
@@ -116,7 +116,7 @@ test('world combat: Towers, Fortress and Storm', () => {
       useAdvisor: true,
       autoActivateAdvisor: true,
       maximumDailyTimeSkips: 12,
-      castles: { 5: { radius: 25, maidenOnly: true } },
+      castles: { 5: { maidenOnly: true } },
     },
     edit: (draft) => ({ ...draft, castles: { ...draft.castles, 5: { ...draft.castles[5], enabled: true } }, dailyAttackLimit: 30 }),
     save: towerSave,
@@ -134,8 +134,7 @@ test('world combat: Towers, Fortress and Storm', () => {
       checkIntervalSec: 90,
       horseTravelBoostId: 1007,
       harbor: { enabled: true, targetLevel: 2 },
-      build: { allowPremium: true, allowDemolition: true, allowTimeSkips: true, allowResourceTransport: true, timeSkipReserve: { MS3: 2 } },
-      troopImport: { minimumTroops: 900 },
+      build: { allowDemolition: true, allowTimeSkips: true, allowResourceTransport: true, timeSkipReserve: { MS3: 2 } },
     },
     edit: (draft) => ({ ...draft, dailyAttackLimit: 60 }),
     save: (draft) => storm.parseAutoStormClientState({ ...draft }),
@@ -157,7 +156,7 @@ test('supply and support: Food Balance, Station and Bird', () => {
   assertHiddenValuesSurvive('autoStation', {
     parse: station.parseAutoStationClientState,
     defaults: station.DEFAULT_AUTO_STATION_STATE,
-    hidden: { minRPTDays: 7, openGateFallback: true },
+    hidden: { minRPTDays: 7 },
     edit: (draft) => ({ ...draft, leadTimeSec: 300 }),
     save: station.parseAutoStationClientState,
   });
@@ -222,7 +221,7 @@ test('upkeep and economy: TCI, Sceat, Booster, Buyer and Advisor', () => {
   assertHiddenValuesSurvive('autoAdvisor', {
     parse: advisor.parseAutoAdvisorClientState,
     defaults: advisor.defaultAutoAdvisorClientState(),
-    hidden: { maxAttackCount: 20, minimumRemainingSec: 3600, horseTravelBoostId: 1008 },
+    hidden: { horseTravelBoostId: 1008 },
     edit: (draft) => ({ ...draft, coinCostPerAttack: 900 }),
     save: (draft) => ({ ...draft, presetId: draft.presetId }),
   });

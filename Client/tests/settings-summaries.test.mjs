@@ -50,24 +50,27 @@ test('feature summaries state consequences in player language', () => {
   assert.deepEqual(texts(summaries.towerAdvisorSummary({ useAdvisor: false, autoActivateAdvisor: true, maximumDailyTimeSkips: 3 })),
     ['Advisor chains off; no tokens or time skips used']);
   assert.deepEqual(texts(summaries.towerScanSummary(1800, [{ radius: 10, maidenOnly: true }, { radius: 20, maidenOnly: false }])),
-    ['Map scan every 30 minutes', 'radius 10–20 tiles', 'maiden-supported commanders only at 1 castle']);
-  assert.deepEqual(texts(summaries.stationFiltersSummary({ minRPTDays: 3, openGateFallback: true })),
-    ['sends troops only to members with more than 3 days of Bird protection', 'opens the gates when troops cannot leave in time']);
+    ['Map scan every 30 minutes', 'maiden-supported commanders only at 1 castle']);
+  // The radius stays on each castle card (Essentials) and the open-gate fallback in Evacuation, so neither is summarized here.
+  assert.deepEqual(texts(summaries.stationFiltersSummary({ minRPTDays: 3 })),
+    ['sends troops only to members with more than 3 days of Bird protection']);
   assert.deepEqual(texts(summaries.foodTimingSummary({ checkIntervalSec: 60, minimumShipmentSize: 1000, minimumStormShipmentSize: 10000 })),
     ['Checks every 1 minute', 'kingdom shipments from 1,000 · Storm deliveries from 10,000']);
-  assert.deepEqual(texts(summaries.khanStopLimitsSummary({ maxRageChain: 2, requireActiveRageBooster: false, nomadPointThreshold: 0 })),
-    ['new camp attacks stop after 2 accepted Khan retaliations', 'no Rage points booster required', 'no Nomad points stop']);
+  assert.deepEqual(texts(summaries.khanStopLimitsSummary({ maxRageChain: 2, requireActiveRageBooster: false })),
+    ['new camp attacks stop after 2 accepted Khan retaliations', 'no Rage points booster required']);
+  assert.deepEqual(texts(summaries.beriBuildOptionsSummary({ allowDemolition: false, allowTimeSkips: true, timeSkipReserve: { MS1: 2 } })),
+    ['no demolition', 'time skips on', '2 skips kept in reserve']);
   assert.equal(text(summaries.rbcTrialLine({ enabled: true, targetX: 1234, targetY: 56 })), 'Trial on against the robber baron castle at 1234:56');
   assert.deepEqual(texts(summaries.beriAttackOptionsSummary({ attackCheckIntervalSec: 60, toolMinimums: { 1: 5, 2: 0 }, useTroopTransportTimeSkips: false })),
     ['Checks every 1 minute', 'coins keep 1 tool type at its minimum', 'troop transfers never use time skips']);
   const storm = texts(summaries.stormConstructionSummary({
-    build: { allowResourceTransport: true, allowTimeSkips: false, allowPremium: true, allowDemolition: false, timeSkipReserve: {} },
+    build: { allowResourceTransport: true, allowTimeSkips: false, allowDemolition: false, timeSkipReserve: {} },
     harbor: { enabled: true, targetLevel: 3 },
     decorationPresetId: '',
   }, false));
   assert.deepEqual(storm, [
-    'no construction target; combat only', 'premium (Ruby) construction costs allowed', 'no demolition',
-    'may ship resources from your other castles', 'Time skips off', 'harbor kept at level 3', 'no decoration',
+    'no construction target; combat only', 'no demolition',
+    'may ship resources from your other castles', 'time skips off', 'harbor kept at level 3', 'no decoration',
   ]);
   assert.deepEqual(texts(summaries.birdTimingSummary({ minDelay: 6, maxDelay: 12, minSend: 0 })), ['sends after a random 6–12 hour delay · no minimum group size']);
   assert.deepEqual(texts(summaries.tciPresetsSummary(2, 'Main')), ['2 saved presets; editing Main']);

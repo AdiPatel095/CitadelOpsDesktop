@@ -618,28 +618,7 @@ export const AutoBeriWorldSettingsModal: React.FC<AutoBeriWorldSettingsModalProp
 						</div>
 
 					</div>
-				</div>
-
-				</SettingsSection>
-
-				<SettingsSection
-					disclosure={disclosure}
-					section="building-options"
-					summary={beriBuildOptionsSummary(settings.build)}
-					customCount={countCustomValues(settings.build, DEFAULT_AUTO_BERI_WORLD_SETTINGS.build, ['allowTimeSkips', 'allowPremium', 'allowDemolition', 'timeSkipReserve'])}
-					className="space-y-4"
-				>
-					<div className="grid gap-3 lg:grid-cols-3">
-						<SettingsToggleRow
-							title={localizeStatic("ui.settings.components.autoBeriWorldSettingsModal.title.use.construction.time.skips.c7ae0ffb")}
-							description={localizeStatic("ui.settings.components.autoBeriWorldSettingsModal.description.advance.a.confirmed.build.timer.while.preserving.3e2f7894")}
-							icon={<FastForward className="h-4 w-4" />}
-							checked={settings.build.allowTimeSkips}
-							onChange={(allowTimeSkips) => setSettings((current) => ({
-								...current,
-								build: { ...current.build, allowTimeSkips },
-							}))}
-						/>
+					<div className="mt-4 border-t border-border-base pt-4">
 						<SettingsToggleRow
 							title={localizeStatic("ui.settings.components.autoBeriWorldSettingsModal.title.allow.premium.costs.fd72d704")}
 							description={localizeStatic("ui.settings.components.autoBeriWorldSettingsModal.description.permit.built.in.or.captured.target.steps.95dd7222")}
@@ -650,6 +629,29 @@ export const AutoBeriWorldSettingsModal: React.FC<AutoBeriWorldSettingsModalProp
 								build: { ...current.build, allowPremium },
 							}))}
 							tone="warning"
+						/>
+					</div>
+				</div>
+
+				</SettingsSection>
+
+				<SettingsSection
+					disclosure={disclosure}
+					section="building-options"
+					summary={beriBuildOptionsSummary(settings.build)}
+					customCount={countCustomValues(settings.build, DEFAULT_AUTO_BERI_WORLD_SETTINGS.build, ['allowTimeSkips', 'allowDemolition', 'timeSkipReserve'])}
+					className="space-y-4"
+				>
+					<div className="grid gap-3 lg:grid-cols-2">
+						<SettingsToggleRow
+							title={localizeStatic("ui.settings.components.autoBeriWorldSettingsModal.title.use.construction.time.skips.c7ae0ffb")}
+							description={localizeStatic("ui.settings.components.autoBeriWorldSettingsModal.description.advance.a.confirmed.build.timer.while.preserving.3e2f7894")}
+							icon={<FastForward className="h-4 w-4" />}
+							checked={settings.build.allowTimeSkips}
+							onChange={(allowTimeSkips) => setSettings((current) => ({
+								...current,
+								build: { ...current.build, allowTimeSkips },
+							}))}
 						/>
 						<SettingsToggleRow
 							title={localizeStatic("ui.settings.components.autoBeriWorldSettingsModal.title.allow.demolition.b9a49e66")}

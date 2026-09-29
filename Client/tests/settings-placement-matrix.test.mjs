@@ -97,3 +97,30 @@ test('the module coverage inventory is complete (CIT-17 matrix families)', () =>
   ];
   assert.deepEqual(Object.keys(SETTINGS_PLACEMENT).sort(), [...expected].sort());
 });
+
+test('Maya matrix review adjustments (2026-09-29) are placed as decided', () => {
+  const tier = (featureId, sectionId) => SETTINGS_PLACEMENT[featureId].find((section) => section.id === sectionId)?.tier;
+  assert.equal(tier('autoTowers', 'castles'), 'essentials');
+  assert.equal(tier('autoTowers', 'scan'), 'advanced');
+  assert.equal(tier('autoKhan', 'policy'), 'essentials');
+  assert.equal(tier('autoKhan', 'stop-limits'), 'advanced');
+  assert.equal(tier('autoBeriWorld', 'building'), 'essentials');
+  assert.equal(tier('autoBeriWorld', 'building-options'), 'advanced');
+  assert.equal(tier('autoStorm', 'shop'), 'essentials');
+  assert.equal(tier('autoStorm', 'donors'), 'essentials');
+  assert.equal(tier('autoStorm', 'construction'), 'advanced');
+  assert.equal(tier('autoStorm', 'import-tuning'), undefined, 'import sizing is folded into the Essentials donors group');
+  assert.equal(tier('autoStation', 'evacuation'), 'essentials');
+  assert.equal(tier('autoStation', 'filters'), 'advanced');
+  assert.equal(tier('autoAdvisor', 'run-sizing'), 'essentials');
+});
+
+test('the matrix records Maya\'s review evidence and no row is left pending', async () => {
+  const text = await readFile(MATRIX, 'utf8');
+  assert.match(text, /Maya matrix review 2026-09-29, Desktop 1c2fa93 \/ Hosted 745eef2, Product\/Simpler automation setup\.md § CIT-17 placement matrix review/);
+  for (const line of text.split('\n')) {
+    const cells = line.split('|').map((cell) => cell.trim());
+    if (cells.length < 7 || !/^auto[A-Z]/.test(cells[1])) continue;
+    assert.match(cells[cells.length - 2], /^accepted( \(adjusted\))?$/, `${cells[1]}/${cells[2]}`);
+  }
+});

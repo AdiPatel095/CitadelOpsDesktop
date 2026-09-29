@@ -140,7 +140,7 @@ export const AutoKhanSettingsModal: React.FC<AutoKhanSettingsModalProps> = ({ is
       ? 'active'
       : `${formatBoosterRemaining(rageBoosterExpiresAt - Date.now())} left`}`
     : state?.market?.boostersObservedAt
-      ? 'No active boi ID 27 booster detected'
+      ? localizeStatic('khanRageBooster.none')
       : 'Waiting for the first authoritative boi booster snapshot';
 
   useEffect(() => {
@@ -433,6 +433,31 @@ export const AutoKhanSettingsModal: React.FC<AutoKhanSettingsModalProps> = ({ is
           ) : null}
         </Card>
 
+        <Card id="auto-khan-nomad-points" variant="solid" className="p-4">
+          <div>
+            <div className="flex items-center gap-2 text-sm font-black text-text-main"><LockKeyhole className="h-4 w-4 text-primary" /> <LocalizedText messageKey="ui.settings.components.autoKhanSettingsModal.nomad.points.stop.727b7bc2" /></div>
+            <p className="mt-1 text-xs text-text-muted"><LocalizedText messageKey="ui.settings.components.autoKhanSettingsModal.at.the.limit.auto.khan.stops.launching.8f630fc2" /></p>
+            <label className="mt-3 block max-w-xs">
+              <span className="mb-1.5 block text-[10px] font-black uppercase tracking-wider text-text-muted"><LocalizedText messageKey="ui.settings.components.autoKhanSettingsModal.stop.at.nomad.points.0.disables.81362bed" /></span>
+              <Input
+                type="text"
+                inputMode="numeric"
+                autoComplete="off"
+                value={draft.nomadPointThreshold.toLocaleString()}
+                onChange={(event) => {
+                  const digits = event.target.value.replace(/\D/g, '');
+                  const nomadPointThreshold = clampAutoKhanInteger(digits, 0, Number.MAX_SAFE_INTEGER, 0);
+                  setDraft((current) => ({ ...current, nomadPointThreshold }));
+                }}
+                className="font-mono"
+              />
+            </label>
+            {draft.nomadPointThreshold > 0 ? (
+              <p className="mt-2 text-xs text-warning"><LocalizedText messageKey="ui.settings.components.autoKhanSettingsModal.reaching.this.limit.uses.the.game.s.10d3a9bb" /></p>
+            ) : null}
+          </div>
+        </Card>
+
         </SettingsSection>
 
         <SettingsSection disclosure={disclosure} section="skips">
@@ -507,7 +532,7 @@ export const AutoKhanSettingsModal: React.FC<AutoKhanSettingsModalProps> = ({ is
           disclosure={disclosure}
           section="stop-limits"
           summary={khanStopLimitsSummary(draft)}
-          customCount={countCustomValues(draft, khanDefaults, ['maxRageChain', 'requireActiveRageBooster', 'nomadPointThreshold'])}
+          customCount={countCustomValues(draft, khanDefaults, ['maxRageChain', 'requireActiveRageBooster'])}
         >
         <div className="space-y-4">
           <div className="grid gap-4 md:grid-cols-2">
@@ -535,7 +560,7 @@ export const AutoKhanSettingsModal: React.FC<AutoKhanSettingsModalProps> = ({ is
               <div className="flex items-start justify-between gap-4">
                 <div className="min-w-0">
                   <div className="flex items-center gap-2 text-sm font-black text-text-main"><Zap className="h-4 w-4 text-primary" /> <LocalizedText messageKey="ui.settings.components.autoKhanSettingsModal.require.rage.points.booster.ad17ec97" /></div>
-                  <p className="mt-1 text-xs text-text-muted"><LocalizedText messageKey="ui.settings.components.autoKhanSettingsModal.gate.only.new.automatic.camp.attacks.unless.2ea26f61" /></p>
+                  <p className="mt-1 text-xs text-text-muted"><LocalizedText messageKey="ui.settings.components.autoKhanSettingsModal.gate.new.automatic.camp.attacks.unless.the.a6408062" /></p>
                   <p className={`mt-1 text-xs font-bold ${rageBoosterActive ? 'text-success' : 'text-text-muted'}`}>{rageBoosterStatus}</p>
                 </div>
                 <Switch
@@ -546,31 +571,6 @@ export const AutoKhanSettingsModal: React.FC<AutoKhanSettingsModalProps> = ({ is
               </div>
               <p className="mt-3 rounded-global border border-border-base bg-bg-input/50 p-3 text-xs text-text-muted"><LocalizedText messageKey="ui.settings.components.autoKhanSettingsModal.this.is.the.timed.rage.points.booster.4049d4e5" /></p>
             </div>
-          </div>
-          <div className="border-t border-border-base pt-4">
-            <div>
-              <div className="flex items-center gap-2 text-sm font-black text-text-main"><LockKeyhole className="h-4 w-4 text-primary" /> <LocalizedText messageKey="ui.settings.components.autoKhanSettingsModal.nomad.points.stop.727b7bc2" /></div>
-              <p className="mt-1 text-xs text-text-muted"><LocalizedText messageKey="ui.settings.components.autoKhanSettingsModal.at.the.limit.auto.khan.stops.launching.8f630fc2" /></p>
-              <label className="mt-3 block max-w-xs">
-                <span className="mb-1.5 block text-[10px] font-black uppercase tracking-wider text-text-muted"><LocalizedText messageKey="ui.settings.components.autoKhanSettingsModal.stop.at.nomad.points.0.disables.81362bed" /></span>
-                <Input
-                  type="text"
-                  inputMode="numeric"
-                  autoComplete="off"
-                  value={draft.nomadPointThreshold.toLocaleString()}
-                  onChange={(event) => {
-                    const digits = event.target.value.replace(/\D/g, '');
-                    const nomadPointThreshold = clampAutoKhanInteger(digits, 0, Number.MAX_SAFE_INTEGER, 0);
-                    setDraft((current) => ({ ...current, nomadPointThreshold }));
-                  }}
-                  className="font-mono"
-                />
-              </label>
-              {draft.nomadPointThreshold > 0 ? (
-                <p className="mt-2 text-xs text-warning"><LocalizedText messageKey="ui.settings.components.autoKhanSettingsModal.reaching.this.limit.uses.the.game.s.10d3a9bb" /></p>
-              ) : null}
-            </div>
-
           </div>
         </div>
         </SettingsSection>

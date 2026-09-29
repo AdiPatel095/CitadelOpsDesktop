@@ -4359,21 +4359,6 @@
     "reason": "Configuration section key, slot id, feature id, ref discriminator, readiness check ids and DOM anchor ids.",
     "evidence": "automation.autoBeriWorld section, attack slot, autoBeriWorld feature id and auto-beri-* element ids used by focusReadinessTarget."
   },
-  "9c79f2fa8107804d3d41c4ed2fe55bd0ae97b993f624c037bc2b44bb03e19234": {
-    "classification": "technical",
-    "reason": "Configuration section key, slot id, feature id, ref discriminator, readiness check ids and DOM anchor ids.",
-    "evidence": "automation.autoBeriWorld section, attack slot, autoBeriWorld feature id and auto-beri-* element ids used by focusReadinessTarget."
-  },
-  "91b73269f1d90ca4dc8f2b3ed87ac7b1445dfc695f0cd1c01e5845f527c11fba": {
-    "classification": "technical",
-    "reason": "Configuration section key, slot id, feature id, ref discriminator, readiness check ids and DOM anchor ids.",
-    "evidence": "automation.autoBeriWorld section, attack slot, autoBeriWorld feature id and auto-beri-* element ids used by focusReadinessTarget."
-  },
-  "e9973f004e5a606ecec39d14c1b8640d97ca9b4792725cef29ad5d5efcea9436": {
-    "classification": "technical",
-    "reason": "Configuration section key, slot id, feature id, ref discriminator, readiness check ids and DOM anchor ids.",
-    "evidence": "automation.autoBeriWorld section, attack slot, autoBeriWorld feature id and auto-beri-* element ids used by focusReadinessTarget."
-  },
   "d6c17e5aba4fcbf8c88228fa71dc5efd450108042aa257445c74d0cace11e367": {
     "classification": "technical",
     "reason": "Configuration section key, slot id, feature id, ref discriminator, readiness check ids and DOM anchor ids.",
@@ -4604,21 +4589,6 @@
     "reason": "Slot ids, feature id, readiness ids, DOM anchor ids, message keys and id fallbacks.",
     "evidence": "attack/defense slots, autoKhan feature id, readiness check ids, auto-khan-* element ids used by focusReadinessTarget, typed message keys passed to localizeStatic and #<id> fallbacks for unnamed castles."
   },
-  "0406119458ffa53d7d5ea88be094b93fdbc875b374f418996fbc48bce0f0bb93": {
-    "classification": "technical",
-    "reason": "Slot ids, feature id, readiness ids, DOM anchor ids, message keys and id fallbacks.",
-    "evidence": "attack/defense slots, autoKhan feature id, readiness check ids, auto-khan-* element ids used by focusReadinessTarget, typed message keys passed to localizeStatic and #<id> fallbacks for unnamed castles."
-  },
-  "deb746b1ecc99df9d4dc3af0efd34cea815eebb2e90c5298c36deebac83cafd9": {
-    "classification": "technical",
-    "reason": "Slot ids, feature id, readiness ids, DOM anchor ids, message keys and id fallbacks.",
-    "evidence": "attack/defense slots, autoKhan feature id, readiness check ids, auto-khan-* element ids used by focusReadinessTarget, typed message keys passed to localizeStatic and #<id> fallbacks for unnamed castles."
-  },
-  "f6f4c17e8cd4837ffe42cc0e65160bba36f950aeaa7bfc0ae3ad1448df1a1b29": {
-    "classification": "technical",
-    "reason": "Slot ids, feature id, readiness ids, DOM anchor ids, message keys and id fallbacks.",
-    "evidence": "attack/defense slots, autoKhan feature id, readiness check ids, auto-khan-* element ids used by focusReadinessTarget, typed message keys passed to localizeStatic and #<id> fallbacks for unnamed castles."
-  },
   "6404618949328bbcaaee8d6accaba51c06c71d2750e360573e9211cf74466f8a": {
     "classification": "technical",
     "reason": "Slot ids, feature id, readiness ids, DOM anchor ids, message keys and id fallbacks.",
@@ -4719,16 +4689,6 @@
     "reason": "Configuration section keys, commander feature ids, castle purposes, readiness element ids and component tokens.",
     "evidence": "Section ids address configuration, feature ids index automation.commanderFeatures, ids are focus targets for readiness fixes; visible text renders through LocalizedText keys."
   },
-  "5ec30b2dbfa557a62094b624882f02c1b963b213cec798a8c182fc9a6014ec88": {
-    "classification": "technical",
-    "reason": "Configuration section keys, commander feature ids, castle purposes, readiness element ids and component tokens.",
-    "evidence": "Section ids address configuration, feature ids index automation.commanderFeatures, ids are focus targets for readiness fixes; visible text renders through LocalizedText keys."
-  },
-  "ba78ca3b6fb8348461cebd1a4b3b8177343ccae96d8bb452f331c29d835ed0ba": {
-    "classification": "technical",
-    "reason": "Configuration section keys, commander feature ids, castle purposes, readiness element ids and component tokens.",
-    "evidence": "Section ids address configuration, feature ids index automation.commanderFeatures, ids are focus targets for readiness fixes; visible text renders through LocalizedText keys."
-  },
   "ef3097fce69f2c86d1d8c5466256ac70ddb617dfb85ffe4b19ae49a9f3eb93d9": {
     "classification": "technical",
     "reason": "Configuration section keys, commander feature ids, castle purposes, readiness element ids and component tokens.",
@@ -4774,16 +4734,6 @@
     "reason": "Slot ids, feature id, readiness ids, DOM anchor ids, message keys and id fallbacks.",
     "evidence": "forts/islands slots, autoStorm feature id, readiness check ids, auto-storm-* element ids used by focusReadinessTarget, typed message keys and #<id> fallbacks."
   },
-  "156ef92e585b464809e48319c49539de04c2379c8cac1e21468498677a12eb18": {
-    "classification": "technical",
-    "reason": "Slot ids, feature id, readiness ids, DOM anchor ids, message keys and id fallbacks.",
-    "evidence": "forts/islands slots, autoStorm feature id, readiness check ids, auto-storm-* element ids used by focusReadinessTarget, typed message keys and #<id> fallbacks."
-  },
-  "8b1562cfcd70dd864a29f0a0a73902722598a0832742cb7f495f2bcf8aa87018": {
-    "classification": "technical",
-    "reason": "Slot ids, feature id, readiness ids, DOM anchor ids, message keys and id fallbacks.",
-    "evidence": "forts/islands slots, autoStorm feature id, readiness check ids, auto-storm-* element ids used by focusReadinessTarget, typed message keys and #<id> fallbacks."
-  },
   "b5eee503342d03174534057e3c881526341949d5ac32350a401f363b1bfea197": {
     "classification": "technical",
     "reason": "Slot ids, feature id, readiness ids, DOM anchor ids, message keys and id fallbacks.",
@@ -4795,26 +4745,6 @@
     "evidence": "forts/islands slots, autoStorm feature id, readiness check ids, auto-storm-* element ids used by focusReadinessTarget, typed message keys and #<id> fallbacks."
   },
   "84e766cb864b72e1981b8ca07f3839116b9bd4fba01b029c3f4a6018f1d39c35": {
-    "classification": "technical",
-    "reason": "Slot ids, feature id, readiness ids, DOM anchor ids, message keys and id fallbacks.",
-    "evidence": "forts/islands slots, autoStorm feature id, readiness check ids, auto-storm-* element ids used by focusReadinessTarget, typed message keys and #<id> fallbacks."
-  },
-  "b0a9744246bae5d259324be6511beaecca0206d2f5be30f20465daca580ae478": {
-    "classification": "technical",
-    "reason": "Slot ids, feature id, readiness ids, DOM anchor ids, message keys and id fallbacks.",
-    "evidence": "forts/islands slots, autoStorm feature id, readiness check ids, auto-storm-* element ids used by focusReadinessTarget, typed message keys and #<id> fallbacks."
-  },
-  "2461bfd817bbd39a8aae8358f4c21bf7e6c5e5f6e450f9a1e51e81c38c79ba39": {
-    "classification": "technical",
-    "reason": "Slot ids, feature id, readiness ids, DOM anchor ids, message keys and id fallbacks.",
-    "evidence": "forts/islands slots, autoStorm feature id, readiness check ids, auto-storm-* element ids used by focusReadinessTarget, typed message keys and #<id> fallbacks."
-  },
-  "e95dbeb3f8cc8f48abb22fef7f824f508f4274f60883b78f65f23ac3b97ea0bd": {
-    "classification": "technical",
-    "reason": "Slot ids, feature id, readiness ids, DOM anchor ids, message keys and id fallbacks.",
-    "evidence": "forts/islands slots, autoStorm feature id, readiness check ids, auto-storm-* element ids used by focusReadinessTarget, typed message keys and #<id> fallbacks."
-  },
-  "94fe66dfc730b634aee719fae2c8591a0ec57e495aae32e3aa049acf3cf07845": {
     "classification": "technical",
     "reason": "Slot ids, feature id, readiness ids, DOM anchor ids, message keys and id fallbacks.",
     "evidence": "forts/islands slots, autoStorm feature id, readiness check ids, auto-storm-* element ids used by focusReadinessTarget, typed message keys and #<id> fallbacks."
@@ -6404,11 +6334,6 @@
     "reason": "Settings disclosure identifier or typed message argument, not human display prose.",
     "evidence": "SETTINGS_PLACEMENT section ids/tiers and AUTOMATION_ENABLED_KEYS are identifiers (layout ids, automation.enabled keys); section titles are typed messageKeys rendered by SettingsSection."
   },
-  "f7235b4c3a560e56821e917802fd69e8611b7df55d4515ac6e4c2d8f0e62a38d": {
-    "classification": "technical",
-    "reason": "Settings disclosure identifier or typed message argument, not human display prose.",
-    "evidence": "SETTINGS_PLACEMENT section ids/tiers and AUTOMATION_ENABLED_KEYS are identifiers (layout ids, automation.enabled keys); section titles are typed messageKeys rendered by SettingsSection."
-  },
   "866ba9f0c4c5f901b51f857272573059573be64d8be36668c9fc543da80211ae": {
     "classification": "technical",
     "reason": "Settings disclosure identifier or typed message argument, not human display prose.",
@@ -6425,11 +6350,6 @@
     "evidence": "SETTINGS_PLACEMENT section ids/tiers and AUTOMATION_ENABLED_KEYS are identifiers (layout ids, automation.enabled keys); section titles are typed messageKeys rendered by SettingsSection."
   },
   "df45508bd62042111d8856cde10c4d1616948f263e9cec15910b155800a1dbc3": {
-    "classification": "technical",
-    "reason": "Settings disclosure identifier or typed message argument, not human display prose.",
-    "evidence": "SETTINGS_PLACEMENT section ids/tiers and AUTOMATION_ENABLED_KEYS are identifiers (layout ids, automation.enabled keys); section titles are typed messageKeys rendered by SettingsSection."
-  },
-  "574725ee67dbf4d8437353cda48d78dc1dd2d5795df92e7c83d1a85ff1f86775": {
     "classification": "technical",
     "reason": "Settings disclosure identifier or typed message argument, not human display prose.",
     "evidence": "SETTINGS_PLACEMENT section ids/tiers and AUTOMATION_ENABLED_KEYS are identifiers (layout ids, automation.enabled keys); section titles are typed messageKeys rendered by SettingsSection."
@@ -6509,11 +6429,6 @@
     "reason": "Settings disclosure identifier or typed message argument, not human display prose.",
     "evidence": "SETTINGS_PLACEMENT section ids/tiers and AUTOMATION_ENABLED_KEYS are identifiers (layout ids, automation.enabled keys); section titles are typed messageKeys rendered by SettingsSection."
   },
-  "e9c7223191a4a6bb0b93113a00e05dc50214b34eb673c938499b870d77e2d57c": {
-    "classification": "technical",
-    "reason": "Settings disclosure identifier or typed message argument, not human display prose.",
-    "evidence": "SETTINGS_PLACEMENT section ids/tiers and AUTOMATION_ENABLED_KEYS are identifiers (layout ids, automation.enabled keys); section titles are typed messageKeys rendered by SettingsSection."
-  },
   "9f648eca2e428654d5e02355eea4c20a147695738817e12d7bf255af38b7a328": {
     "classification": "technical",
     "reason": "Settings disclosure identifier or typed message argument, not human display prose.",
@@ -6525,11 +6440,6 @@
     "evidence": "SETTINGS_PLACEMENT section ids/tiers and AUTOMATION_ENABLED_KEYS are identifiers (layout ids, automation.enabled keys); section titles are typed messageKeys rendered by SettingsSection."
   },
   "162aa98fb0538558379b791e55872aeedcfd469f75262926d6604ee3982ecc7b": {
-    "classification": "technical",
-    "reason": "Settings disclosure identifier or typed message argument, not human display prose.",
-    "evidence": "SETTINGS_PLACEMENT section ids/tiers and AUTOMATION_ENABLED_KEYS are identifiers (layout ids, automation.enabled keys); section titles are typed messageKeys rendered by SettingsSection."
-  },
-  "bb19c194ed7d93ce68fd3b59bc72d800d1d957e9f2912c892cdb14bd07e8178c": {
     "classification": "technical",
     "reason": "Settings disclosure identifier or typed message argument, not human display prose.",
     "evidence": "SETTINGS_PLACEMENT section ids/tiers and AUTOMATION_ENABLED_KEYS are identifiers (layout ids, automation.enabled keys); section titles are typed messageKeys rendered by SettingsSection."
@@ -6570,11 +6480,6 @@
     "evidence": "SETTINGS_PLACEMENT section ids/tiers and AUTOMATION_ENABLED_KEYS are identifiers (layout ids, automation.enabled keys); section titles are typed messageKeys rendered by SettingsSection."
   },
   "a96a771e31b386f45aebf358f963136d4a9aa0c9b724a361f340cc9e775e9b07": {
-    "classification": "technical",
-    "reason": "Settings disclosure identifier or typed message argument, not human display prose.",
-    "evidence": "SETTINGS_PLACEMENT section ids/tiers and AUTOMATION_ENABLED_KEYS are identifiers (layout ids, automation.enabled keys); section titles are typed messageKeys rendered by SettingsSection."
-  },
-  "a67807ba52967339ebad9f647625a419fbf8904814e51c743f6a3a7e9620f6a8": {
     "classification": "technical",
     "reason": "Settings disclosure identifier or typed message argument, not human display prose.",
     "evidence": "SETTINGS_PLACEMENT section ids/tiers and AUTOMATION_ENABLED_KEYS are identifiers (layout ids, automation.enabled keys); section titles are typed messageKeys rendered by SettingsSection."
@@ -6695,11 +6600,6 @@
     "evidence": "SETTINGS_PLACEMENT section ids/tiers and AUTOMATION_ENABLED_KEYS are identifiers (layout ids, automation.enabled keys); section titles are typed messageKeys rendered by SettingsSection."
   },
   "ef8b99255e6b368c4efacd37b6f768b4b7de60077bf77deeab96578cc40b7285": {
-    "classification": "technical",
-    "reason": "Settings disclosure identifier or typed message argument, not human display prose.",
-    "evidence": "SETTINGS_PLACEMENT section ids/tiers and AUTOMATION_ENABLED_KEYS are identifiers (layout ids, automation.enabled keys); section titles are typed messageKeys rendered by SettingsSection."
-  },
-  "f5f4d604f816d86c6c63bb3049a69f52c2efd1b24b48442ef467eb802dfcc26a": {
     "classification": "technical",
     "reason": "Settings disclosure identifier or typed message argument, not human display prose.",
     "evidence": "SETTINGS_PLACEMENT section ids/tiers and AUTOMATION_ENABLED_KEYS are identifiers (layout ids, automation.enabled keys); section titles are typed messageKeys rendered by SettingsSection."
@@ -6869,17 +6769,7 @@
     "reason": "Settings disclosure identifier or typed message argument, not human display prose.",
     "evidence": "Summary builders return typed messageKeys with ICU select/plural arguments (on/off, unit, boost) that are identifiers, not display prose."
   },
-  "718646e2af54327c48c25d3b5828e1dc70a7f1f90897aaa17362ac0b66af53f0": {
-    "classification": "technical",
-    "reason": "Settings disclosure identifier or typed message argument, not human display prose.",
-    "evidence": "Summary builders return typed messageKeys with ICU select/plural arguments (on/off, unit, boost) that are identifiers, not display prose."
-  },
   "6dad01b06d9dfa4aa9917131ba2d7c9294dc90a7db7042b04521404b156881ee": {
-    "classification": "technical",
-    "reason": "Settings disclosure identifier or typed message argument, not human display prose.",
-    "evidence": "Summary builders return typed messageKeys with ICU select/plural arguments (on/off, unit, boost) that are identifiers, not display prose."
-  },
-  "a99165e425ac3ea63e6225b7b3a3131b813ec513ab563ec322e8d0ea8063fa50": {
     "classification": "technical",
     "reason": "Settings disclosure identifier or typed message argument, not human display prose.",
     "evidence": "Summary builders return typed messageKeys with ICU select/plural arguments (on/off, unit, boost) that are identifiers, not display prose."
@@ -6910,11 +6800,6 @@
     "evidence": "Summary builders return typed messageKeys with ICU select/plural arguments (on/off, unit, boost) that are identifiers, not display prose."
   },
   "9636c84b904d6e3e8fd18b01325474a95dfbddbf0c669e9a3c2e03d1c2ffbd32": {
-    "classification": "technical",
-    "reason": "Settings disclosure identifier or typed message argument, not human display prose.",
-    "evidence": "Summary builders return typed messageKeys with ICU select/plural arguments (on/off, unit, boost) that are identifiers, not display prose."
-  },
-  "d3a1877a9a5cd34a4610462f1f2e1c7968f90ebfa37ccb82fd7207df76cb57d6": {
     "classification": "technical",
     "reason": "Settings disclosure identifier or typed message argument, not human display prose.",
     "evidence": "Summary builders return typed messageKeys with ICU select/plural arguments (on/off, unit, boost) that are identifiers, not display prose."
@@ -6970,21 +6855,6 @@
     "evidence": "Summary builders return typed messageKeys with ICU select/plural arguments (on/off, unit, boost) that are identifiers, not display prose."
   },
   "2d34899d21a5c42fa0d15a7403d00103240152226fdb8682cadc759aa3302c05": {
-    "classification": "technical",
-    "reason": "Settings disclosure identifier or typed message argument, not human display prose.",
-    "evidence": "Summary builders return typed messageKeys with ICU select/plural arguments (on/off, unit, boost) that are identifiers, not display prose."
-  },
-  "e72473fe8c6bde6fe69fe7ff568e3c258535fa1ee8a5ea97784e79d0e30b2177": {
-    "classification": "technical",
-    "reason": "Settings disclosure identifier or typed message argument, not human display prose.",
-    "evidence": "Summary builders return typed messageKeys with ICU select/plural arguments (on/off, unit, boost) that are identifiers, not display prose."
-  },
-  "3ba6af40ef2e841966cbb2d86b70de1fd57b3fac3bb80218bf446a8901d0d836": {
-    "classification": "technical",
-    "reason": "Settings disclosure identifier or typed message argument, not human display prose.",
-    "evidence": "Summary builders return typed messageKeys with ICU select/plural arguments (on/off, unit, boost) that are identifiers, not display prose."
-  },
-  "a87050f58bf95c83fe04f999477a155d7e93b3df1b430afa1cd50eb55b380223": {
     "classification": "technical",
     "reason": "Settings disclosure identifier or typed message argument, not human display prose.",
     "evidence": "Summary builders return typed messageKeys with ICU select/plural arguments (on/off, unit, boost) that are identifiers, not display prose."
@@ -7049,16 +6919,6 @@
     "reason": "Settings disclosure identifier or typed message argument, not human display prose.",
     "evidence": "Summary builders return typed messageKeys with ICU select/plural arguments (on/off, unit, boost) that are identifiers, not display prose."
   },
-  "5acc34ba103e0fa9d277a73354da108b92c2bb0154ef6c6de71a4fad0fdc1aa6": {
-    "classification": "technical",
-    "reason": "Settings disclosure identifier or typed message argument, not human display prose.",
-    "evidence": "Summary builders return typed messageKeys with ICU select/plural arguments (on/off, unit, boost) that are identifiers, not display prose."
-  },
-  "2d7a3cbe18ee8202ccacfef0b3837e73ffdde735ae37f5451cc42c675b5df9b1": {
-    "classification": "technical",
-    "reason": "Settings disclosure identifier or typed message argument, not human display prose.",
-    "evidence": "Summary builders return typed messageKeys with ICU select/plural arguments (on/off, unit, boost) that are identifiers, not display prose."
-  },
   "b00df2fab430c94c9226cdd7884ae13381cefe6640110beb23455f156dc0450b": {
     "classification": "technical",
     "reason": "Settings disclosure identifier or typed message argument, not human display prose.",
@@ -7074,27 +6934,7 @@
     "reason": "Settings disclosure identifier or typed message argument, not human display prose.",
     "evidence": "Summary builders return typed messageKeys with ICU select/plural arguments (on/off, unit, boost) that are identifiers, not display prose."
   },
-  "01152acaff796f9f5e45f1446c9e1cce32768d226e45d2ce9f3ad9d0f1a7bdec": {
-    "classification": "technical",
-    "reason": "Settings disclosure identifier or typed message argument, not human display prose.",
-    "evidence": "Summary builders return typed messageKeys with ICU select/plural arguments (on/off, unit, boost) that are identifiers, not display prose."
-  },
   "1ee7023c265c13b38109da57143e0d45e5b11d333ea50252a6f133f653f7c490": {
-    "classification": "technical",
-    "reason": "Settings disclosure identifier or typed message argument, not human display prose.",
-    "evidence": "Summary builders return typed messageKeys with ICU select/plural arguments (on/off, unit, boost) that are identifiers, not display prose."
-  },
-  "0a67085da5609660c1dc5f622da12c04379b81e652a808cce2b1e1bee119cab9": {
-    "classification": "technical",
-    "reason": "Settings disclosure identifier or typed message argument, not human display prose.",
-    "evidence": "Summary builders return typed messageKeys with ICU select/plural arguments (on/off, unit, boost) that are identifiers, not display prose."
-  },
-  "37978e6d90869c39543bb86756529c7bf1bd359a377e32c0475ec602f3820e74": {
-    "classification": "technical",
-    "reason": "Settings disclosure identifier or typed message argument, not human display prose.",
-    "evidence": "Summary builders return typed messageKeys with ICU select/plural arguments (on/off, unit, boost) that are identifiers, not display prose."
-  },
-  "823cbb8b5d5078ba64e7d0c2ad92f10504a446dfdb221cbda50784217721435b": {
     "classification": "technical",
     "reason": "Settings disclosure identifier or typed message argument, not human display prose.",
     "evidence": "Summary builders return typed messageKeys with ICU select/plural arguments (on/off, unit, boost) that are identifiers, not display prose."
@@ -7105,11 +6945,6 @@
     "evidence": "Summary builders return typed messageKeys with ICU select/plural arguments (on/off, unit, boost) that are identifiers, not display prose."
   },
   "2f3de3efa5bfc42b96f16b16f7ebbe24a1acf33d00914090fb2d3d198461015e": {
-    "classification": "technical",
-    "reason": "Settings disclosure identifier or typed message argument, not human display prose.",
-    "evidence": "Summary builders return typed messageKeys with ICU select/plural arguments (on/off, unit, boost) that are identifiers, not display prose."
-  },
-  "f86d7e62d7ce2286234df1c08da313cd5f2535f38264ac60f364e7150947edc5": {
     "classification": "technical",
     "reason": "Settings disclosure identifier or typed message argument, not human display prose.",
     "evidence": "Summary builders return typed messageKeys with ICU select/plural arguments (on/off, unit, boost) that are identifiers, not display prose."
@@ -7193,5 +7028,95 @@
     "classification": "technical",
     "reason": "Settings disclosure identifier or typed message argument, not human display prose.",
     "evidence": "Equipment Cleanup SettingsSection ids, the autoEquipmentCleanup disclosure feature id and the automation.enabled key are identifiers."
+  },
+  "2bd9ce5f6ecf51d89bd0c7e89aff5ba8bdfbea58fba7225619d40684f7017cb0": {
+    "classification": "technical",
+    "reason": "Configuration section key, slot id, feature id, ref discriminator, readiness check ids and DOM anchor ids.",
+    "evidence": "automation.autoBeriWorld section, attack slot, autoBeriWorld feature id and auto-beri-* element ids used by focusReadinessTarget."
+  },
+  "3c6de8152acaf3698b8cfd7ba952b9aa49c2eedd851aaac89519a7cf11609247": {
+    "classification": "technical",
+    "reason": "Configuration section key, slot id, feature id, ref discriminator, readiness check ids and DOM anchor ids.",
+    "evidence": "automation.autoBeriWorld section, attack slot, autoBeriWorld feature id and auto-beri-* element ids used by focusReadinessTarget."
+  },
+  "b3fb7d0aa3bf8b940935cbcf8977c59dd45494b8870e531d51f25d38c84337be": {
+    "classification": "technical",
+    "reason": "Slot ids, feature id, readiness ids, DOM anchor ids, message keys and id fallbacks.",
+    "evidence": "attack/defense slots, autoKhan feature id, readiness check ids, auto-khan-* element ids used by focusReadinessTarget, typed message keys passed to localizeStatic and #<id> fallbacks for unnamed castles."
+  },
+  "c8f2fb8d8c18b3825cf168f57e7008d73ce3aa7ed9df6194debc04f53124997a": {
+    "classification": "technical",
+    "reason": "Slot ids, feature id, readiness ids, DOM anchor ids, message keys and id fallbacks.",
+    "evidence": "attack/defense slots, autoKhan feature id, readiness check ids, auto-khan-* element ids used by focusReadinessTarget, typed message keys passed to localizeStatic and #<id> fallbacks for unnamed castles."
+  },
+  "669ed3815e0b7dd3225595c44848a86ac7711192ad6e52722d4943891bcce180": {
+    "classification": "technical",
+    "reason": "Configuration section keys, commander feature ids, castle purposes, readiness element ids and component tokens.",
+    "evidence": "Section ids address configuration, feature ids index automation.commanderFeatures, ids are focus targets for readiness fixes; visible text renders through LocalizedText keys."
+  },
+  "8e205fa016b79bac3030e9d9fc62cabd1e2be954691d8f3a611dd5751e7e6227": {
+    "classification": "technical",
+    "reason": "Slot ids, feature id, readiness ids, DOM anchor ids, message keys and id fallbacks.",
+    "evidence": "forts/islands slots, autoStorm feature id, readiness check ids, auto-storm-* element ids used by focusReadinessTarget, typed message keys and #<id> fallbacks."
+  },
+  "6ae331309a9060a2fc0b2408fc17d5131a2522e94d6d5d15bf229e56d152f34a": {
+    "classification": "technical",
+    "reason": "Slot ids, feature id, readiness ids, DOM anchor ids, message keys and id fallbacks.",
+    "evidence": "forts/islands slots, autoStorm feature id, readiness check ids, auto-storm-* element ids used by focusReadinessTarget, typed message keys and #<id> fallbacks."
+  },
+  "a968e541e98981af7cc2b6378cf6a442a7f0b60b59d626c53c0563510cc70381": {
+    "classification": "technical",
+    "reason": "Slot ids, feature id, readiness ids, DOM anchor ids, message keys and id fallbacks.",
+    "evidence": "forts/islands slots, autoStorm feature id, readiness check ids, auto-storm-* element ids used by focusReadinessTarget, typed message keys and #<id> fallbacks."
+  },
+  "ba93a45fc21f94013ef3c5c589adfa3ddc1b8e039f86fc2ac6bce45cd5e9acba": {
+    "classification": "technical",
+    "reason": "Settings disclosure identifier or typed message argument, not human display prose.",
+    "evidence": "SETTINGS_PLACEMENT section ids/tiers and AUTOMATION_ENABLED_KEYS are identifiers (layout ids, automation.enabled keys); section titles are typed messageKeys rendered by SettingsSection."
+  },
+  "9376d5a795c1ba4a4b00401cd825e0692113f89629220839d6fa1ae62711b8bb": {
+    "classification": "technical",
+    "reason": "Settings disclosure identifier or typed message argument, not human display prose.",
+    "evidence": "SETTINGS_PLACEMENT section ids/tiers and AUTOMATION_ENABLED_KEYS are identifiers (layout ids, automation.enabled keys); section titles are typed messageKeys rendered by SettingsSection."
+  },
+  "bf350f8a29084f181de69e75505b2e56ebf1bdaf40a7f29b26206e7c9a1d2328": {
+    "classification": "technical",
+    "reason": "Settings disclosure identifier or typed message argument, not human display prose.",
+    "evidence": "SETTINGS_PLACEMENT section ids/tiers and AUTOMATION_ENABLED_KEYS are identifiers (layout ids, automation.enabled keys); section titles are typed messageKeys rendered by SettingsSection."
+  },
+  "fbb30310d195d80162c63f1fca3b859b5c77bcc34f93614c75fc7b2bb87bf125": {
+    "classification": "technical",
+    "reason": "Settings disclosure identifier or typed message argument, not human display prose.",
+    "evidence": "SETTINGS_PLACEMENT section ids/tiers and AUTOMATION_ENABLED_KEYS are identifiers (layout ids, automation.enabled keys); section titles are typed messageKeys rendered by SettingsSection."
+  },
+  "be5b2f9af11927a5775a31b5c25072685a7eb1938a262ad3cfdfed38193a3ccf": {
+    "classification": "technical",
+    "reason": "Settings disclosure identifier or typed message argument, not human display prose.",
+    "evidence": "SETTINGS_PLACEMENT section ids/tiers and AUTOMATION_ENABLED_KEYS are identifiers (layout ids, automation.enabled keys); section titles are typed messageKeys rendered by SettingsSection."
+  },
+  "59dabacd6c3e1d9ac7acbb1bee8bc79cb05d6c38fd9b2058b0e3be26c9da57f6": {
+    "classification": "technical",
+    "reason": "Settings disclosure identifier or typed message argument, not human display prose.",
+    "evidence": "Summary builders return typed messageKeys with ICU select/plural arguments (on/off, unit, boost) that are identifiers, not display prose."
+  },
+  "4748d578bc9b3fbdecdb310b3b710a33dbe6c00ad85ff6037da1e76e58c2c7f4": {
+    "classification": "technical",
+    "reason": "Settings disclosure identifier or typed message argument, not human display prose.",
+    "evidence": "Summary builders return typed messageKeys with ICU select/plural arguments (on/off, unit, boost, position) that are identifiers, not display prose."
+  },
+  "a6942a39c046ed81babd2b5484c759d099c226455f1f366c29618953d4c5c58c": {
+    "classification": "technical",
+    "reason": "Settings disclosure identifier or typed message argument, not human display prose.",
+    "evidence": "Summary builders return typed messageKeys with ICU select/plural arguments (on/off, unit, boost, position) that are identifiers, not display prose."
+  },
+  "60c9a4f3bd18727dcd24c0be66fec810431577f855360420345939adeaca82e5": {
+    "classification": "technical",
+    "reason": "Settings disclosure identifier or typed message argument, not human display prose.",
+    "evidence": "Summary builders return typed messageKeys with ICU select/plural arguments (on/off, unit, boost, position) that are identifiers, not display prose."
+  },
+  "76ee0a9ca4040f4d6049decd33dfed3514ed1aebacf0e1b6804004d44a303f72": {
+    "classification": "technical",
+    "reason": "Settings disclosure identifier or typed message argument, not human display prose.",
+    "evidence": "Summary builders return typed messageKeys with ICU select/plural arguments (on/off, unit, boost, position) that are identifiers, not display prose."
   }
 }

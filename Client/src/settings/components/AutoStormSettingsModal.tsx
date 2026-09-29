@@ -83,7 +83,7 @@ import HorseTravelBoostSelect from './HorseTravelBoostSelect';
 import { DailyAttackLimitField } from './DailyAttackLimitField';
 import { FeatureGuideModal } from './FeatureGuideModal';
 import { AUTOMATION_ENABLED_KEYS } from '../disclosure/placement';
-import { checkIntervalLine, countCustomValues, mapRefreshLine, stormConstructionSummary, stormImportTuningSummary, stormPriorityLine, travelLine } from '../disclosure/summaries';
+import { checkIntervalLine, countCustomValues, mapRefreshLine, stormConstructionSummary, stormPriorityLine, travelLine } from '../disclosure/summaries';
 import { useSettingsDisclosure } from '../disclosure/useSettingsDisclosure';
 import { AutomationRunStrip } from './AutomationRunStrip';
 import { collapsedSettingNote, SettingsSection } from './SettingsSection';
@@ -966,14 +966,7 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
               ) : null}
             </div>
           </Card>
-        </SettingsSection>
-
-        <SettingsSection
-          disclosure={disclosure}
-          section="import-tuning"
-          summary={stormImportTuningSummary(draft.troopImport)}
-          customCount={countCustomValues(draft.troopImport, stormDefaults.troopImport, ['minimumTroops'])}
-        >
+          <div className="mt-3" id="auto-storm-import-sizing">
           {draft.troopImport.enabled ? (
             <div>
                   <div className="mt-3 grid gap-3 sm:grid-cols-2">
@@ -1060,6 +1053,7 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
 
             </div>
           ) : <p className="text-xs text-text-muted"><LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.troop.import.is.off.so.no.troops.1db2da31" /></p>}
+          </div>
         </SettingsSection>
 
         <SettingsSection disclosure={disclosure} section="shop">
@@ -1230,6 +1224,16 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
               <LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.lower.priority.numbers.run.first.an.uncapped.1a572fa0" /></p>
           ) : null}
         </Card>
+        <Card id="auto-storm-premium" variant="solid" className="mt-3 p-4">
+          <SettingsToggleRow
+            icon={<Sparkles className="h-3.5 w-3.5" />}
+            title={localizeStatic("ui.settings.components.autoStormSettingsModal.title.allow.premium.costs.fd72d704")}
+            description={localizeStatic("ui.settings.components.autoStormSettingsModal.description.permit.premium.construction.paths.harbor.levels.2.e7439d0f")}
+            checked={draft.build.allowPremium}
+            onChange={(allowPremium) => updateBuild(setDraft, { allowPremium })}
+            tone="warning"
+          />
+        </Card>
         </SettingsSection>
 
         <SettingsSection disclosure={disclosure} section="limits">
@@ -1246,7 +1250,7 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
           disclosure={disclosure}
           section="construction"
           summary={stormConstructionSummary(draft, draft.target != null || Boolean(blueprintDocument.activeId))}
-          customCount={countCustomValues(draft.build, stormDefaults.build, ['allowResourceTransport', 'allowTimeSkips', 'allowPremium', 'allowDemolition', 'resourceReserves', 'sourceResourceReserves', 'timeSkipReserve'])
+          customCount={countCustomValues(draft.build, stormDefaults.build, ['allowResourceTransport', 'allowTimeSkips', 'allowDemolition', 'resourceReserves', 'sourceResourceReserves', 'timeSkipReserve'])
             + countCustomValues(draft.harbor, stormDefaults.harbor, ['enabled', 'targetLevel'])}
           className="space-y-4"
         >
@@ -1395,14 +1399,6 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
               description={localizeStatic("ui.settings.components.autoStormSettingsModal.description.advance.construction.resource.transport.or.troop.transport.326defea")}
               checked={draft.build.allowTimeSkips}
               onChange={(allowTimeSkips) => updateBuild(setDraft, { allowTimeSkips })}
-            />
-            <SettingsToggleRow
-              icon={<Sparkles className="h-3.5 w-3.5" />}
-              title={localizeStatic("ui.settings.components.autoStormSettingsModal.title.allow.premium.costs.fd72d704")}
-              description={localizeStatic("ui.settings.components.autoStormSettingsModal.description.permit.premium.construction.paths.harbor.levels.2.e7439d0f")}
-              checked={draft.build.allowPremium}
-              onChange={(allowPremium) => updateBuild(setDraft, { allowPremium })}
-              tone="warning"
             />
             <SettingsToggleRow
               icon={<Trash2 className="h-3.5 w-3.5" />}

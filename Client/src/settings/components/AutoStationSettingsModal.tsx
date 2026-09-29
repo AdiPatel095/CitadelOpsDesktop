@@ -197,6 +197,13 @@ export const AutoStationSettingsModal: React.FC<AutoStationSettingsModalProps> =
                 checked={state.recallWhenClear}
                 onChange={(checked) => setState((previous) => ({ ...previous, recallWhenClear: checked }))}
               />
+              <SettingsToggleRow
+                title={localizeStatic("ui.settings.components.autoStationSettingsModal.title.open.gate.fallback.739eb349")}
+                description={localizeStatic("ui.settings.components.autoStationSettingsModal.when.troops.cannot.be.evacuated.in.time.3bd33592")}
+                tone={state.openGateFallback ? 'warning' : 'default'}
+                checked={state.openGateFallback}
+                onChange={(checked) => setState((previous) => ({ ...previous, openGateFallback: checked }))}
+              />
             </div>
             <p className="mt-4 text-xs leading-relaxed text-text-muted">
               <span lang={guideLocale} dir={guideLocale === 'ar' ? 'rtl' : 'ltr'}>{guidePack.autoStation.feature.helper}</span>
@@ -208,7 +215,7 @@ export const AutoStationSettingsModal: React.FC<AutoStationSettingsModalProps> =
           disclosure={disclosure}
           section="filters"
           summary={stationFiltersSummary(state)}
-          customCount={countCustomValues(state, DEFAULT_AUTO_STATION_STATE, ['minRPTDays', 'openGateFallback'])}
+          customCount={countCustomValues(state, DEFAULT_AUTO_STATION_STATE, ['minRPTDays'])}
         >
           <div className="grid gap-4 md:grid-cols-2">
             <label className="flex flex-col gap-1.5">
@@ -227,13 +234,6 @@ export const AutoStationSettingsModal: React.FC<AutoStationSettingsModalProps> =
               />
               <span className="text-[11px] leading-relaxed text-text-muted"><LocalizedText messageKey="ui.settings.components.autoStationSettingsModal.troops.are.sent.only.to.alliance.members.faff0c89" /></span>
             </label>
-            <SettingsToggleRow
-              title={localizeStatic("ui.settings.components.autoStationSettingsModal.title.open.gate.fallback.739eb349")}
-              description={localizeStatic("ui.settings.components.autoStationSettingsModal.when.troops.cannot.be.evacuated.in.time.3bd33592")}
-              tone={state.openGateFallback ? 'warning' : 'default'}
-              checked={state.openGateFallback}
-              onChange={(checked) => setState((previous) => ({ ...previous, openGateFallback: checked }))}
-            />
           </div>
         </SettingsSection>
 

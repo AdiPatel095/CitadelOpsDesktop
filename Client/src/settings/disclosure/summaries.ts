@@ -46,10 +46,12 @@ export function reservedSkipCount(reserve: Readonly<Record<string, number>> | un
 }
 
 /** Time-skip use and how many skips stay reserved. */
-export function timeSkipLines(enabled: boolean, reserve?: Readonly<Record<string, number>>): SettingsSummaryLine[] {
-  if (!enabled) return [line('settingsSummary.timeSkips', { enabled: 'off' })];
+export function timeSkipLines(enabled: boolean, reserve?: Readonly<Record<string, number>>, position: 'first' | 'inline' = 'first'): SettingsSummaryLine[] {
+  // Inline fragments follow other fragments in the joined summary, so they start lower case.
+  const key = position === 'inline' ? 'settingsSummary.timeSkipsInline' : 'settingsSummary.timeSkips';
+  if (!enabled) return [line(key, { enabled: 'off' })];
   return [
-    line('settingsSummary.timeSkips', { enabled: 'on' }),
+    line(key, { enabled: 'on' }),
     line('settingsSummary.skipReserve', { count: reservedSkipCount(reserve) }),
   ];
 }
@@ -76,11 +78,9 @@ export function foodTimingSummary(settings: { checkIntervalSec: number; minimumS
   ];
 }
 
-export function stationFiltersSummary(state: { minRPTDays: number; openGateFallback: boolean }): SettingsSummaryLine[] {
-  return [
-    line('settingsSummary.stationProtection', { days: state.minRPTDays }),
-    toggleLine('settingsSummary.openGateFallback', state.openGateFallback),
-  ];
+/** The open-gate fallback lives in Essentials (Evacuation); this summary states the protection filter only. */
+export function stationFiltersSummary(state: { minRPTDays: number }): SettingsSummaryLine[] {
+  return [line('settingsSummary.stationProtection', { days: state.minRPTDays })];
 }
 
 export function boosterEvidenceSummary(hasPurchase: boolean): SettingsSummaryLine[] {
@@ -96,16 +96,12 @@ export function towerAdvisorSummary(settings: { useAdvisor: boolean; autoActivat
   })];
 }
 
-export function towerScanSummary(mapRefreshIntervalSec: number, enabledCastles: readonly { radius: number; maidenOnly: boolean }[]): SettingsSummaryLine[] {
-  const lines = [line('settingsSummary.mapScanEvery', durationParts(mapRefreshIntervalSec))];
-  if (enabledCastles.length > 0) {
-    const radii = enabledCastles.map((castle) => castle.radius);
-    const min = Math.min(...radii);
-    const max = Math.max(...radii);
-    lines.push(line('settingsSummary.towerRadius', { range: min === max ? 'single' : 'range', min, max }));
-  }
-  lines.push(line('settingsSummary.maidenOnly', { count: enabledCastles.filter((castle) => castle.maidenOnly).length }));
-  return lines;
+/** Radius stays on each castle card (Essentials); the scan group states the interval and the maiden filter. */
+export function towerScanSummary(mapRefreshIntervalSec: number, enabledCastles: readonly { maidenOnly: boolean }[]): SettingsSummaryLine[] {
+  return [
+    line('settingsSummary.mapScanEvery', durationParts(mapRefreshIntervalSec)),
+    line('settingsSummary.maidenOnly', { count: enabledCastles.filter((castle) => castle.maidenOnly).length }),
+  ];
 }
 
 export function birdTimingSummary(settings: { minDelay: number; maxDelay: number; minSend: number }): SettingsSummaryLine[] {
@@ -125,19 +121,19 @@ export function rbcTrialLine(trial: { enabled: boolean; targetX: number; targetY
   return line('settingsSummary.rbcTrial', { enabled: trial.enabled ? 'on' : 'off', x: String(trial.targetX), y: String(trial.targetY) });
 }
 
-export function khanStopLimitsSummary(draft: { maxRageChain: number; requireActiveRageBooster: boolean; nomadPointThreshold: number }): SettingsSummaryLine[] {
+/** The Nomad points stop lives in Essentials (Attacks, rage and protection). */
+export function khanStopLimitsSummary(draft: { maxRageChain: number; requireActiveRageBooster: boolean }): SettingsSummaryLine[] {
   return [
     line('settingsSummary.khanRageChain', { count: draft.maxRageChain }),
     toggleLine('settingsSummary.khanRageBooster', draft.requireActiveRageBooster),
-    line('settingsSummary.khanNomadPoints', { points: draft.nomadPointThreshold }),
   ];
 }
 
-export function beriBuildOptionsSummary(build: { allowPremium: boolean; allowDemolition: boolean; allowTimeSkips: boolean; timeSkipReserve: Readonly<Record<string, number>> }): SettingsSummaryLine[] {
+/** The premium (Ruby) construction switch lives in Essentials (Camp construction). */
+export function beriBuildOptionsSummary(build: { allowDemolition: boolean; allowTimeSkips: boolean; timeSkipReserve: Readonly<Record<string, number>> }): SettingsSummaryLine[] {
   return [
-    toggleLine('settingsSummary.buildPremium', build.allowPremium),
     toggleLine('settingsSummary.buildDemolition', build.allowDemolition),
-    ...timeSkipLines(build.allowTimeSkips, build.timeSkipReserve),
+    ...timeSkipLines(build.allowTimeSkips, build.timeSkipReserve, 'inline'),
   ];
 }
 
@@ -149,16 +145,8 @@ export function beriAttackOptionsSummary(settings: { attackCheckIntervalSec: num
   ];
 }
 
-export function advisorRunSizingLine(draft: { maxAttackCount: number; minimumRemainingSec: number }): SettingsSummaryLine {
-  return line('settingsSummary.advisorRunSizing', { max: draft.maxAttackCount, minutes: Math.round(draft.minimumRemainingSec / 60) });
-}
-
 export function mapRefreshLine(seconds: number): SettingsSummaryLine {
   return line('settingsSummary.mapRefreshEvery', durationParts(seconds));
-}
-
-export function stormImportTuningSummary(troopImport: { enabled: boolean; minimumTroops: number }): SettingsSummaryLine[] {
-  return [line('settingsSummary.stormImportTuning', { enabled: troopImport.enabled ? 'on' : 'off', troops: troopImport.minimumTroops })];
 }
 
 export function stormPriorityLine(activeTargetTypes: number): SettingsSummaryLine {
@@ -167,7 +155,7 @@ export function stormPriorityLine(activeTargetTypes: number): SettingsSummaryLin
 
 export function stormConstructionSummary(
   draft: {
-    build: { allowResourceTransport: boolean; allowTimeSkips: boolean; allowPremium: boolean; allowDemolition: boolean; timeSkipReserve: Readonly<Record<string, number>> };
+    build: { allowResourceTransport: boolean; allowTimeSkips: boolean; allowDemolition: boolean; timeSkipReserve: Readonly<Record<string, number>> };
     harbor: { enabled: boolean; targetLevel: number };
     decorationPresetId: string;
   },
@@ -175,10 +163,9 @@ export function stormConstructionSummary(
 ): SettingsSummaryLine[] {
   return [
     toggleLine('settingsSummary.stormBuildTarget', buildActive),
-    toggleLine('settingsSummary.buildPremium', draft.build.allowPremium),
     toggleLine('settingsSummary.buildDemolition', draft.build.allowDemolition),
     toggleLine('settingsSummary.resourceTransport', draft.build.allowResourceTransport),
-    ...timeSkipLines(draft.build.allowTimeSkips, draft.build.timeSkipReserve),
+    ...timeSkipLines(draft.build.allowTimeSkips, draft.build.timeSkipReserve, 'inline'),
     line('settingsSummary.harbor', { enabled: draft.harbor.enabled ? 'on' : 'off', level: draft.harbor.targetLevel }),
     toggleLine('settingsSummary.decoration', draft.decorationPresetId !== ''),
   ];

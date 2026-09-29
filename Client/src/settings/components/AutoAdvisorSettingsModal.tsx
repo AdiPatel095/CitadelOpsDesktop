@@ -30,7 +30,7 @@ import { eventDifficultyName, useEventDifficultyOptions } from '../EventDifficul
 import HorseTravelBoostSelect from './HorseTravelBoostSelect';
 import { FeatureGuideModal } from './FeatureGuideModal';
 import { AUTOMATION_ENABLED_KEYS } from '../disclosure/placement';
-import { advisorRunSizingLine, countCustomValues, travelLine } from '../disclosure/summaries';
+import { countCustomValues, travelLine } from '../disclosure/summaries';
 import { useSettingsDisclosure } from '../disclosure/useSettingsDisclosure';
 import { AutomationRunStrip } from './AutomationRunStrip';
 import { SettingsSection } from './SettingsSection';
@@ -378,12 +378,7 @@ export const AutoAdvisorSettingsModal: React.FC<AutoAdvisorSettingsModalProps> =
           </Card>
 
           </SettingsSection>
-          <SettingsSection
-            disclosure={disclosure}
-            section="run-sizing"
-            summary={[advisorRunSizingLine(draft)]}
-            customCount={countCustomValues(draft, advisorDefaults, ['maxAttackCount', 'minimumRemainingSec'])}
-          >
+          <SettingsSection disclosure={disclosure} section="run-sizing">
           <div>
             <div className="mb-3 flex items-center gap-2 text-sm font-black text-text-main"><Clock3 className="h-4 w-4 text-primary" /> <LocalizedText messageKey="ui.settings.components.autoAdvisorSettingsModal.run.sizing.878bd208" /></div>
             <div className="grid gap-4 sm:grid-cols-2">

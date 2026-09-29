@@ -236,6 +236,19 @@ export const AutoTowerSettingsModal: React.FC<AutoTowerSettingsModalProps> = ({ 
                   </span>
                 </button>
 
+                <label className="flex flex-col gap-1">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-text-muted"><LocalizedText messageKey="ui.settings.components.autoTowerSettingsModal.radius.6fe0661c" /></span>
+                  <Input
+                    type="number"
+                    min={1}
+                    max={50}
+                    value={plan.radius}
+                    onChange={(event) => updateCastle(castle.id, { radius: clampRadius(event.target.value) })}
+                    className="text-center font-mono"
+                    rightIcon={<span className="text-[10px] text-text-muted"><LocalizedText messageKey="ui.settings.components.autoTowerSettingsModal.tiles.ad9243fa" /></span>}
+                  />
+                </label>
+
                 {stockResult ? (
                   <div className="space-y-1.5 rounded-xl border border-border-base bg-bg-app/50 px-3 py-2.5">
                     <UnitStockList lines={stockResult.lines} />
@@ -331,7 +344,7 @@ export const AutoTowerSettingsModal: React.FC<AutoTowerSettingsModalProps> = ({ 
           section="scan"
           summary={towerScanSummary(mapRefreshIntervalSec, castles.map((castle) => settingsFor(castle.id)).filter((plan) => plan.enabled))}
           customCount={(mapRefreshIntervalSec !== towerDefaults.mapRefreshIntervalSec ? 1 : 0)
-            + castles.map((castle) => settingsFor(castle.id)).filter((plan) => plan.maidenOnly || plan.radius !== defaultAutoTowerCastleSettings().radius).length}
+            + castles.map((castle) => settingsFor(castle.id)).filter((plan) => plan.maidenOnly).length}
         >
           <div className="mb-4 flex flex-wrap items-center justify-between gap-4 rounded-global border border-primary/20 bg-primary/5 p-4">
             <div className="min-w-0">
@@ -362,18 +375,6 @@ export const AutoTowerSettingsModal: React.FC<AutoTowerSettingsModalProps> = ({ 
                     <span className="truncate text-xs font-bold text-primary">{castle.name}</span>
                     {plan.enabled ? null : <span className="text-[10px] font-semibold uppercase text-text-muted"><LocalizedText messageKey="ui.settings.components.autoTowerSettingsModal.castle.off.539be403" /></span>}
                   </div>
-                  <label className="flex flex-col gap-1">
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-text-muted"><LocalizedText messageKey="ui.settings.components.autoTowerSettingsModal.radius.6fe0661c" /></span>
-                    <Input
-                      type="number"
-                      min={1}
-                      max={50}
-                      value={plan.radius}
-                      onChange={(event) => updateCastle(castle.id, { radius: clampRadius(event.target.value) })}
-                      className="text-center font-mono"
-                      rightIcon={<span className="text-[10px] text-text-muted"><LocalizedText messageKey="ui.settings.components.autoTowerSettingsModal.tiles.ad9243fa" /></span>}
-                    />
-                  </label>
                   <div className="flex items-center justify-between gap-3">
                     <div className="min-w-0">
                       <div className="text-xs font-bold text-text-main"><LocalizedText messageKey="ui.settings.components.autoTowerSettingsModal.maiden.supported.only.1374eb47" /></div>

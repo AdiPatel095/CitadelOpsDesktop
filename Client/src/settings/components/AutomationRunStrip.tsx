@@ -45,7 +45,9 @@ export const AutomationRunStrip: React.FC<AutomationRunStripProps> = ({ featureI
     try {
       await setAutomationEnabled(enabledKey, false);
     } catch (error) {
-      setStopError(error instanceof Error ? error.message : t('ui.settings.components.automationRunStrip.could.not.stop.this.automation.fd842ddb'));
+      const fallback = t('ui.settings.components.automationRunStrip.could.not.stop.this.automation.it.is.683025c4');
+      // Always say the automation is still running; add the reason when the write reports one.
+      setStopError(error instanceof Error && error.message.trim() ? `${fallback} ${error.message}` : fallback);
     } finally {
       setStopping(false);
     }
