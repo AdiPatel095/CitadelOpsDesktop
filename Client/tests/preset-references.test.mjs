@@ -17,7 +17,7 @@ after(async () => {
   await vite.close();
 });
 
-test('registry returns every attack preset slot for fixture sections', () => {
+test('registry returns every attack and defense preset slot for fixture sections', () => {
   const references = registry.attackPresetReferences({
     'automation.autoNomad': { nomadPresetId: 'n', samuraiPresetId: ' s ' },
     'automation.autoInvasion': { presetId: 'i' },
@@ -36,7 +36,17 @@ test('registry returns every attack preset slot for fixture sections', () => {
     'automation.autoStorm:islands=is',
     'automation.autoAdvisor:attack=a',
   ]);
-  for (const reference of references) {
+  assert.ok(references.every((reference) => reference.document === 'attacks.presets'));
+  const defense = registry.defensePresetReferences({
+    'automation.autoKhan': { attackPresetId: 'k', defensePresetId: ' d ' },
+    'automation.autoStorm': { decorationPresetId: 'decoration' },
+  });
+  assert.deepEqual(defense.map(({ document, section, slot, presetId }) => `${document}|${section}:${slot}=${presetId}`), [
+    'defense.presets|automation.autoKhan:defense=d',
+  ]);
+  assert.equal(registry.presetSlotDefinition('defense.presets', 'automation.autoKhan', 'defense').slotLabelKey, 'attackPresets.slot.defense');
+  assert.equal(registry.attackPresetSlotDefinition('automation.autoKhan', 'defense'), undefined);
+  for (const reference of [...references, ...defense]) {
     assert.ok(reference.moduleLabelKey.startsWith('attackPresets.module.'));
     assert.ok(reference.slotLabelKey.startsWith('attackPresets.slot.'));
   }
@@ -52,10 +62,9 @@ test('registry reads the Nomad legacy presetId exactly like the Nomad parser', (
   assert.deepEqual(registry.attackPresetReferences({ 'automation.autoStorm': { forts: 'bad' } }), []);
 });
 
-// Fields that store ids of other preset families. Anything else must be registered.
-const NON_ATTACK_PRESET_FIELDS = {
+// Fields that store ids of preset families outside attacks.presets / defense.presets. Anything else must be registered.
+const UNREGISTERED_PRESET_FIELDS = {
   'AutoBirdClientState.ts': new Set(['activePresetId', 'presetId']), // Auto Bird presets inside automation.autoBird
-  'AutoKhanClientState.ts': new Set(['defensePresetId']), // defense presets
   'AutoStormClientState.ts': new Set(['decorationPresetId']), // decoration presets
 };
 
@@ -79,13 +88,13 @@ test('every *PresetId/presetId field in settings/*ClientState.ts maps to a regis
     if (fields.size === 0) continue;
     const section = SECTION_OVERRIDES[file] ?? source.match(/export const [A-Z_]+_SECTION = '([^']+)'/)?.[1];
     for (const field of fields) {
-      if (NON_ATTACK_PRESET_FIELDS[file]?.has(field)) continue;
-      const registered = registry.ATTACK_PRESET_SLOTS.some((definition) => definition.section === section
+      if (UNREGISTERED_PRESET_FIELDS[file]?.has(field)) continue;
+      const registered = registry.PRESET_SLOTS.some((definition) => definition.section === section
         && (definition.path.at(-1) === field || definition.legacyPath?.at(-1) === field));
       if (!registered) unregistered.push(`${file}: ${field} (section ${section ?? 'unknown'})`);
     }
   }
-  assert.deepEqual(unregistered, [], `Register these attack preset id fields in ATTACK_PRESET_SLOTS or document them as non-attack fields: ${unregistered.join(', ')}`);
+  assert.deepEqual(unregistered, [], `Register these preset id fields in PRESET_SLOTS or document them as other preset families: ${unregistered.join(', ')}`);
 });
 
 test('the Beri World section constant used by the registry matches the modal write path', async () => {

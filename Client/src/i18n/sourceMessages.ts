@@ -1510,6 +1510,7 @@ export const sourceMessages = {
   "attackPresets.slot.towerAttack": "Tower attack",
   "attackPresets.slot.forts": "Storm forts",
   "attackPresets.slot.islands": "Resource islands",
+  "attackPresets.slot.defense": "Main castle defense",
   "attackPresets.createdByApp": "Created by app",
   "attackPresets.notInUse": "Not in use",
   "attackPresets.cleanupPending": "Saved. An app-created preset could not be cleaned up yet; it is removed on the next save.",

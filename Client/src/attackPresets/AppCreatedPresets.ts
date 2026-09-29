@@ -2,7 +2,17 @@ import type {
   AttackSetupCourtyardSupport,
   AttackSetupWave,
 } from '../components/AttackSetupModal';
-import { buildPresetDocumentUpdate } from '../configuration/PresetDocumentUpdate';
+import {
+  isRecordOwnedBy,
+  newAppCreatedRecordId,
+  promoteRecords,
+  recordOwner,
+  removeUnreferencedRecords,
+  uniqueRecordName,
+  upsertOwnedRecord,
+  withoutRecordMarker,
+  type PresetDocumentValue,
+} from '../presets/AppCreatedRecords';
 import {
   summarizeAttackPreset,
   type AppAttackPreset,
@@ -11,16 +21,14 @@ import {
   type AttackPresetSummary,
   type AttackPresetTargetType,
 } from './AttackPresetTypes';
-import type { AttackPresetReference } from './AttackPresetReferences';
+import type { PresetReference } from './AttackPresetReferences';
 import { interpolate, messages } from '../i18n/messages';
 
 /**
- * App-created attack presets (CIT-15). A module's inline setup is persisted as
- * an ordinary `attacks.presets` record carrying an `app` marker, so the
- * unchanged runtime keeps resolving compositions by preset id. The marker, not
- * the id, defines ownership: only the owning module slot edits the record, and
- * only while it is the sole referrer. Any other reuse promotes the record to a
- * normal user preset by clearing the marker.
+ * App-created attack presets (CIT-15): the `attacks.presets` adapter over the
+ * generic core in `presets/AppCreatedRecords.ts`. A module's inline setup is an
+ * ordinary record carrying an `app` marker; the marker, not the id, defines
+ * ownership, and any other reuse promotes the record to a normal user preset.
  */
 
 export type AppCreatedPresetOwner = AppCreatedPresetMarker;
@@ -45,26 +53,23 @@ export interface AttackSetupRefSummary {
 }
 
 /** Raw `attacks.presets` document as written to configuration. */
-export type AttackPresetDocumentValue = Record<string, unknown> & { version: 1; presets: unknown[] };
+export type AttackPresetDocumentValue = PresetDocumentValue;
 
 export function isAppCreatedPreset(preset: AppAttackPreset): boolean {
   return preset.app != null;
 }
 
 export function appCreatedPresetOwner(preset: AppAttackPreset): AppCreatedPresetOwner | null {
-  return preset.app ? { section: preset.app.section, slot: preset.app.slot } : null;
+  return recordOwner(preset);
 }
 
 export function isOwnedBy(preset: AppAttackPreset, section: string, slot: string): boolean {
-  return preset.app?.section === section && preset.app.slot === slot;
+  return isRecordOwnedBy(preset, section, slot);
 }
 
 /** Not derivable from the owner: a promoted record must never collide with the owner's next record. */
 export function newAppCreatedPresetId(section: string, slot: string): string {
-  const bytes = new Uint8Array(4);
-  globalThis.crypto.getRandomValues(bytes);
-  const suffix = Array.from(bytes, (byte) => byte.toString(16).padStart(2, '0')).join('');
-  return `app:${section}:${slot}:${suffix}`;
+  return newAppCreatedRecordId(section, slot);
 }
 
 /**
@@ -72,17 +77,12 @@ export function newAppCreatedPresetId(section: string, slot: string): string {
  * localized module and slot labels and returns the localized title pattern.
  */
 export function appCreatedPresetName(
-  existing: readonly AppAttackPreset[],
+  existing: readonly { name: string }[],
   moduleLabel: string,
   slotLabel: string,
   formatName: (moduleLabel: string, slotLabel: string) => string = defaultAppCreatedName,
 ): string {
-  const base = formatName(moduleLabel, slotLabel).trim() || defaultAppCreatedName(moduleLabel, slotLabel);
-  const taken = new Set(existing.map((preset) => preset.name.trim().toLowerCase()));
-  let candidate = base;
-  let suffix = 2;
-  while (taken.has(candidate.toLowerCase())) candidate = `${base} ${suffix++}`;
-  return candidate;
+  return uniqueRecordName(existing, formatName(moduleLabel, slotLabel).trim() || defaultAppCreatedName(moduleLabel, slotLabel));
 }
 
 /** English catalog fallback; UI callers pass the localized pattern. */
@@ -198,27 +198,11 @@ export function upsertOwnedAppCreatedPreset(
   name: string,
   now: string = new Date().toISOString(),
 ): { document: AttackPresetDocumentValue; presetId: string; changed: boolean } {
-  const existing = currentId
-    ? current.find((preset) => preset.id === currentId && isOwnedBy(preset, section, slot))
-    : undefined;
-  if (existing && inlineSetupsEqual(inlineSetupFromPreset(existing), setup)) {
-    return { document: buildPresetDocumentUpdate(rawDocument ?? {}, current, current), presetId: existing.id, changed: false };
-  }
-  const composition = cloneInlineSetup(setup);
-  const next: AppAttackPreset = existing
-    ? { ...existing, ...composition, updatedAt: now }
-    : {
-      id: newAppCreatedPresetId(section, slot),
-      name,
-      ...composition,
-      createdAt: now,
-      updatedAt: now,
-      app: { section, slot },
-    };
-  const presets = existing
-    ? current.map((preset) => preset === existing ? next : preset)
-    : [...current, next];
-  return { document: buildPresetDocumentUpdate(rawDocument ?? {}, current, presets), presetId: next.id, changed: true };
+  return upsertOwnedRecord(rawDocument, current, section, slot, currentId, {
+    unchanged: (existing) => inlineSetupsEqual(inlineSetupFromPreset(existing), setup),
+    update: (existing) => ({ ...existing, ...cloneInlineSetup(setup), updatedAt: now }),
+    create: (id) => ({ id, name, ...cloneInlineSetup(setup), createdAt: now, updatedAt: now, app: { section, slot } }),
+  });
 }
 
 /** Clears the `app` marker of the named app-created records; everything else is kept verbatim. */
@@ -227,14 +211,7 @@ export function promoteAppCreatedPresets(
   current: readonly AppAttackPreset[],
   ids: readonly string[],
 ): { document: AttackPresetDocumentValue; promoted: string[] } {
-  const targets = new Set(ids);
-  const promoted: string[] = [];
-  const presets = current.map((preset) => {
-    if (!targets.has(preset.id) || !preset.app) return preset;
-    promoted.push(preset.id);
-    return withoutMarker(preset);
-  });
-  return { document: clearRawMarkers(buildPresetDocumentUpdate(rawDocument ?? {}, current, presets), rawDocument, promoted), promoted };
+  return promoteRecords(rawDocument, current, ids);
 }
 
 /**
@@ -246,67 +223,11 @@ export function removeUnreferencedAppCreated(
   rawDocument: unknown,
   current: readonly AppAttackPreset[],
   section: string,
-  references: readonly AttackPresetReference[],
+  references: readonly PresetReference[],
 ): { document: AttackPresetDocumentValue; removed: string[]; promoted: string[] } {
-  const removed: string[] = [];
-  const promoted: string[] = [];
-  const presets: AppAttackPreset[] = [];
-  for (const preset of current) {
-    if (preset.app?.section !== section) {
-      presets.push(preset);
-      continue;
-    }
-    const referrers = references.filter((reference) => reference.presetId === preset.id);
-    if (referrers.length === 0) {
-      removed.push(preset.id);
-      continue;
-    }
-    const marker = preset.app;
-    if (referrers.some((reference) => reference.section !== marker.section || reference.slot !== marker.slot)) {
-      promoted.push(preset.id);
-      presets.push(withoutMarker(preset));
-      continue;
-    }
-    presets.push(preset);
-  }
-  return { document: clearRawMarkers(buildPresetDocumentUpdate(rawDocument ?? {}, current, presets), rawDocument, promoted), removed, promoted };
-}
-
-/**
- * Promotion only clears the marker: write the original raw record without `app`
- * so unknown or forward-version per-preset fields survive (CIT-15 L1).
- */
-function clearRawMarkers(
-  document: AttackPresetDocumentValue,
-  rawDocument: unknown,
-  promoted: readonly string[],
-): AttackPresetDocumentValue {
-  if (promoted.length === 0) return document;
-  const targets = new Set(promoted);
-  const rawPresets = rawDocument != null && typeof rawDocument === 'object' && Array.isArray((rawDocument as { presets?: unknown }).presets)
-    ? (rawDocument as { presets: unknown[] }).presets
-    : [];
-  const rawById = new Map<string, Record<string, unknown>>();
-  for (const candidate of rawPresets) {
-    if (candidate == null || typeof candidate !== 'object' || Array.isArray(candidate)) continue;
-    const record = candidate as Record<string, unknown>;
-    if (typeof record.id === 'string' && targets.has(record.id)) rawById.set(record.id, record);
-  }
-  return {
-    ...document,
-    presets: document.presets.map((entry) => {
-      const id = entry != null && typeof entry === 'object' ? (entry as { id?: unknown }).id : undefined;
-      const raw = typeof id === 'string' ? rawById.get(id) : undefined;
-      if (!raw) return entry;
-      const copy = { ...raw };
-      delete copy.app;
-      return copy;
-    }),
-  };
+  return removeUnreferencedRecords(rawDocument, current, section, references);
 }
 
 export function withoutMarker(preset: AppAttackPreset): AppAttackPreset {
-  const copy = { ...preset };
-  delete copy.app;
-  return copy;
+  return withoutRecordMarker(preset);
 }
