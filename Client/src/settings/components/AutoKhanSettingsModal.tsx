@@ -25,6 +25,7 @@ import {
   parseAttackPresetDocument,
   summarizeAttackPreset,
 } from '../../attackPresets/AttackPresetTypes';
+import { attackPresetSelectOptions } from '../../attackPresets/AttackPresetOptionLabel';
 import { Notifications } from '../../components/Notifications';
 import { Badge, Button, Card, Input, Select, SettingsModal, Switch } from '../../components/ui';
 import {
@@ -311,7 +312,7 @@ export const AutoKhanSettingsModal: React.FC<AutoKhanSettingsModalProps> = ({ is
               <Select
                 value={draft.attackPresetId}
                 onChange={(attackPresetId) => setDraft((current) => ({ ...current, attackPresetId }))}
-                options={attackDocument.presets.map((preset) => ({ value: preset.id, label: preset.name }))}
+                options={attackPresetSelectOptions(attackDocument.presets)}
                 placeholder={attackDocument.presets.length > 0 ? 'Choose an Attack Preset' : 'Create an Attack Preset first'}
                 disabled={attackDocument.presets.length === 0}
                 menuGrowToViewport

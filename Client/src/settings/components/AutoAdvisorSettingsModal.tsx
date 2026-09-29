@@ -10,6 +10,7 @@ import {
   parseAttackPresetDocument,
   summarizeAttackPreset,
 } from '../../attackPresets/AttackPresetTypes';
+import { attackPresetSelectOptions } from '../../attackPresets/AttackPresetOptionLabel';
 import { Notifications } from '../../components/Notifications';
 import { Badge, Button, Card, Input, Modal, ModalTitle, Select, SettingsModal, Switch } from '../../components/ui';
 import {
@@ -247,7 +248,7 @@ export const AutoAdvisorSettingsModal: React.FC<AutoAdvisorSettingsModalProps> =
                 <Select
                   value={draft.presetId}
                   onChange={(presetId) => setDraft((current) => ({ ...current, presetId }))}
-                  options={presetDocument.presets.map((preset) => ({ value: preset.id, label: preset.name }))}
+                  options={attackPresetSelectOptions(presetDocument.presets)}
                   placeholder={presetDocument.presets.length ? 'Choose a CitadelOps preset' : 'Create an Attack Preset first'}
                   disabled={presetDocument.presets.length === 0}
                   menuGrowToViewport

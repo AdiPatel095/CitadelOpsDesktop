@@ -29,6 +29,7 @@ import {
 	parseAttackPresetDocument,
 	summarizeAttackPreset,
 } from '../../attackPresets/AttackPresetTypes';
+import { attackPresetSelectOptions } from '../../attackPresets/AttackPresetOptionLabel';
 import { Notifications } from '../../components/Notifications';
 import { runtimeFetch } from '../../api/RuntimeURL';
 import type {
@@ -692,12 +693,9 @@ const AllianceTargetAttackModal = ({ target, onClose }: AllianceTargetAttackModa
 		value: String(castle.id),
 		label: `${castle.name || `Castle ${castle.id}`} · ${castle.x}:${castle.y}`,
 	}));
-	const presetOptions = document.presets.map((candidate) => {
+	const presetOptions = attackPresetSelectOptions(document.presets, (candidate) => {
 		const summary = summarizeAttackPreset(candidate);
-		return {
-			value: candidate.id,
-			label: `${candidate.name} · ${summary.troops.toLocaleString()} troops · ${summary.tools.toLocaleString()} tools`,
-		};
+		return `${summary.troops.toLocaleString()} troops · ${summary.tools.toLocaleString()} tools`;
 	});
 
 	const launch = async () => {
