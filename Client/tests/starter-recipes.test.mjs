@@ -80,3 +80,11 @@ test('proposed numeric values stay within runtime limits and invent nothing else
   const numeric = Object.entries(recipes.EVENT_ATTACK_STARTER_RECIPE).filter(([, entry]) => typeof entry.value === 'number');
   assert.deepEqual(numeric.map(([name]) => name), ['waveCount']);
 });
+
+test('CIT-16 product acceptance: the Khan main-castle defense starter is accepted with its evidence', () => {
+  const evidence = 'Maya product acceptance 2026-09-29, Desktop 98fb2fa / Hosted 483ecc0, Product/Simpler automation setup.md § CIT-16 product acceptance';
+  assert.deepEqual(recipes.KHAN_DEFENSE_STARTER_RECIPE.source.review, { owner: 'Maya', status: 'accepted', evidence });
+  assert.equal(recipes.KHAN_DEFENSE_STARTER_RECIPE.source.source, 'account-data');
+  assert.deepEqual(recipes.pendingStarterReviews(recipes.KHAN_DEFENSE_STARTER_RECIPE), []);
+  assert.deepEqual(Object.keys(recipes.KHAN_DEFENSE_STARTER_RECIPE), ['source'], 'no Storm or other entries are added');
+});

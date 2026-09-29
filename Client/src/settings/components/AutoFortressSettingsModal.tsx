@@ -6,7 +6,6 @@ import { useLocale as useStaticLocale } from "../../i18n/LocaleContext";
 import { LocalizedText } from "../../i18n/LocalizedText";
 import React, { useEffect, useMemo, useState } from 'react';
 import {
-  CalendarDays,
   BookOpen,
   Castle,
   Clock3,
@@ -46,12 +45,20 @@ import type { ReadinessCheck } from '../readiness/Readiness';
 import { CommanderAssignmentPanel } from './CommanderAssignmentPanel';
 import { ReadinessCheckLine, ReadinessPanel } from './ReadinessPanel';
 import { UnitStockList } from './UnitStockList';
+import { AUTOMATION_ENABLED_KEYS } from '../disclosure/placement';
+import { countCustomValues, toggleLine, travelLine } from '../disclosure/summaries';
+import { useSettingsDisclosure } from '../disclosure/useSettingsDisclosure';
+import { AutomationRunStrip } from './AutomationRunStrip';
+import { collapsedSettingNote, SettingsSection } from './SettingsSection';
 
 interface AutoFortressSettingsModalProps {
   isOpen: boolean;
   onClose: () => void;
   onOpenFeatureSchedule: (featureID: string, featureLabel: string) => void;
+  onOpenAutomationDuration?: (featureKey: string, featureLabel: string) => void;
 }
+
+const fortressDefaults = defaultAutoFortressClientState();
 
 const KINGDOMS = [
   { id: 1, name: 'Everwinter Glacier', level: 45, icon: Snowflake, tone: 'text-sky-500', wash: 'from-sky-500/15 to-cyan-500/5' },
@@ -79,8 +86,10 @@ export const AutoFortressSettingsModal: React.FC<AutoFortressSettingsModalProps>
   isOpen,
   onClose,
   onOpenFeatureSchedule,
+  onOpenAutomationDuration,
 }) => {
   const { t: localizeStatic } = useStaticLocale();
+  const disclosure = useSettingsDisclosure('autoFortress');
   const { state } = useCitadelAPI();
   const setup = useSetupContext(AUTO_FORTRESS_SECTION);
   const draftSession = useConfigurationDraftSession({
@@ -134,7 +143,7 @@ export const AutoFortressSettingsModal: React.FC<AutoFortressSettingsModalProps>
       window.requestAnimationFrame(() => focusReadinessTarget('auto-fortress-commanders-heading'));
       return;
     }
-    focusReadinessTarget('auto-fortress-kingdoms');
+    if (!disclosure.fix(check)) focusReadinessTarget('auto-fortress-kingdoms');
   };
 
   const castlesByKingdom = useMemo(() => {
@@ -190,19 +199,9 @@ export const AutoFortressSettingsModal: React.FC<AutoFortressSettingsModalProps>
       title={localizeStatic("ui.settings.components.autoFortressSettingsModal.title.auto.fortress.8b0edaf5")}
       icon={<Castle className="h-5 w-5" />}
       description={localizeStatic("ui.settings.components.autoFortressSettingsModal.description.a.speed.first.fortress.pipeline.discover.a.20cf0ae7")}
-      titleTrailing={<div className="flex flex-wrap gap-2">
-        <Button variant="outline" size="sm" className="shrink-0" onClick={() => setIsGuideOpen(true)} leftIcon={<BookOpen className="h-4 w-4" />}>
-          <span lang={fortressGuideLocale}>{fortressGuidePack.ui.guideButton}</span>
-        </Button>
-        <Button
-          variant="outline"
-          size="sm"
-          className="shrink-0"
-          onClick={() => onOpenFeatureSchedule('autoFortress', 'Auto Fortress')}
-          leftIcon={<CalendarDays className="h-4 w-4" />}
-        >
-          <LocalizedText messageKey="common.calendar" /></Button>
-      </div>}
+      titleTrailing={<Button variant="outline" size="sm" className="shrink-0" onClick={() => setIsGuideOpen(true)} leftIcon={<BookOpen className="h-4 w-4" />}>
+        <span lang={fortressGuideLocale}>{fortressGuidePack.ui.guideButton}</span>
+      </Button>}
       onSave={save}
       saveLabel="Save fortress plan"
       isSaving={isSaving}
@@ -210,6 +209,12 @@ export const AutoFortressSettingsModal: React.FC<AutoFortressSettingsModalProps>
       contentDisabled={!draftSession.ready}
       contentNotice={draftSession.conflictNotice}
     >
+      <AutomationRunStrip
+        featureId="autoFortress"
+        scheduleId="autoFortress"
+        onOpenSchedule={() => onOpenFeatureSchedule('autoFortress', 'Auto Fortress')}
+        onOpenDuration={onOpenAutomationDuration ? () => onOpenAutomationDuration(AUTOMATION_ENABLED_KEYS.autoFortress, 'Auto Fortress') : undefined}
+      />
       {saveError && (
         <div className="mb-4 rounded-global border border-error/30 bg-error/10 px-4 py-3 text-sm font-semibold text-error" role="alert">
           {saveError}
@@ -249,7 +254,7 @@ export const AutoFortressSettingsModal: React.FC<AutoFortressSettingsModalProps>
         </div>
       </div>
 
-      <section className="mb-4">
+      <SettingsSection disclosure={disclosure} section="kingdoms" className="mb-4">
         <div className="mb-2 flex items-center justify-between gap-3">
           <div>
             <h3 className="text-sm font-black text-text-main"><LocalizedText messageKey="ui.settings.components.autoFortressSettingsModal.kingdom.targets.3e092efa" /></h3>
@@ -336,10 +341,10 @@ export const AutoFortressSettingsModal: React.FC<AutoFortressSettingsModalProps>
             );
           })}
         </div>
-      </section>
+      </SettingsSection>
 
-      <div className="mb-4 grid grid-cols-1 gap-4 xl:grid-cols-2">
-        <Card variant="solid" className="p-4">
+      <SettingsSection disclosure={disclosure} section="supply" className="mb-4">
+        <Card id="auto-fortress-supply" variant="solid" className="p-4">
           <div className="flex items-start gap-3">
             <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary"><ShoppingBag className="h-5 w-5" /></div>
             <div className="min-w-0 flex-1">
@@ -385,16 +390,48 @@ export const AutoFortressSettingsModal: React.FC<AutoFortressSettingsModalProps>
             <Truck className="mt-0.5 h-4 w-4 shrink-0 text-secondary" />
             <LocalizedText messageKey="ui.settings.components.autoFortressSettingsModal.purchases.arrive.at.the.great.empire.main.e7405a14" />
           </div>
-          <div className="mt-3 flex items-center justify-between gap-4 rounded-xl border border-border-base bg-bg-app/55 px-3 py-3">
+        </Card>
+      </SettingsSection>
+
+      <SettingsSection disclosure={disclosure} section="limits" className="mb-4">
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+          <DailyAttackLimitField value={settings.dailyAttackLimit} onChange={(dailyAttackLimit) => update({ dailyAttackLimit })} serverState={state?.dailyAttacks} />
+          <div className="flex items-center gap-3 rounded-global border border-border-base bg-bg-card/50 p-4">
+            <Gauge className="h-5 w-5 shrink-0 text-primary" />
+            <div>
+              <div className="text-xs font-black text-text-main"><LocalizedText messageKey="ui.settings.components.autoFortressSettingsModal.full.map.cache.exact.ready.time.checks.b3e0112d" /></div>
+              <p className="mt-0.5 text-[11px] text-text-muted">
+                Adaptive sweeps discover every populated map chunk. The account-private timer then schedules a 1×1 refresh at availability and another immediate guard before CRA.
+                {nextExpectedReady ? ` Earliest tracked availability: ${nextExpectedReady}.` : ''}
+              </p>
+            </div>
+          </div>
+        </div>
+      </SettingsSection>
+
+      <div className="space-y-3">
+        <SettingsSection
+          disclosure={disclosure}
+          section="transfer-skips"
+          summary={[toggleLine('settingsSummary.direwolfTransferSkips', settings.useTimeSkips)]}
+          customCount={countCustomValues(settings, fortressDefaults, ['useTimeSkips'])}
+        >
+          <div className="flex items-center justify-between gap-4 rounded-xl border border-border-base bg-bg-app/55 px-3 py-3">
             <div>
               <div className="text-xs font-black text-text-main"><LocalizedText messageKey="ui.settings.components.autoFortressSettingsModal.use.time.skips.for.direwolf.transfers.e1a00ae9" /></div>
               <p className="mt-0.5 text-[11px] text-text-muted"><LocalizedText messageKey="ui.settings.components.autoFortressSettingsModal.off.by.default.when.enabled.only.confirmed.51b3f8c5" /></p>
             </div>
             <Switch checked={settings.useTimeSkips} onChange={() => update({ useTimeSkips: !settings.useTimeSkips })} ariaLabel={localizeStatic("ui.settings.components.autoFortressSettingsModal.ariaLabel.use.time.skips.for.direwolf.transfers.e1a00ae9")} />
           </div>
-        </Card>
+        </SettingsSection>
 
-        <Card variant="solid" className="p-4">
+        <SettingsSection
+          disclosure={disclosure}
+          section="travel"
+          summary={[travelLine(settings.horseTravelBoostId)]}
+          customCount={countCustomValues(settings, fortressDefaults, ['horseTravelBoostId'])}
+        >
+        <div>
           <div className="flex items-start gap-3">
             <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-amber-500/10 text-amber-500"><Zap className="h-5 w-5" /></div>
             <div className="min-w-0 flex-1">
@@ -416,25 +453,12 @@ export const AutoFortressSettingsModal: React.FC<AutoFortressSettingsModalProps>
               description={<span lang={fortressGuideLocale} dir={fortressGuideLocale === 'ar' ? 'rtl' : 'ltr'}>{fortressGuidePack.autoFortress.feature.travelHelp}</span>}
             />
           </div>
-        </Card>
-      </div>
-
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-        <DailyAttackLimitField value={settings.dailyAttackLimit} onChange={(dailyAttackLimit) => update({ dailyAttackLimit })} serverState={state?.dailyAttacks} />
-        <div className="flex items-center gap-3 rounded-global border border-border-base bg-bg-card/50 p-4">
-          <Gauge className="h-5 w-5 shrink-0 text-primary" />
-          <div>
-            <div className="text-xs font-black text-text-main"><LocalizedText messageKey="ui.settings.components.autoFortressSettingsModal.full.map.cache.exact.ready.time.checks.b3e0112d" /></div>
-            <p className="mt-0.5 text-[11px] text-text-muted">
-              Adaptive sweeps discover every populated map chunk. The account-private timer then schedules a 1×1 refresh at availability and another immediate guard before CRA.
-              {nextExpectedReady ? ` Earliest tracked availability: ${nextExpectedReady}.` : ''}
-            </p>
-          </div>
         </div>
+        </SettingsSection>
       </div>
 
       <div className="mt-4 space-y-4">
-        <ReadinessPanel report={readiness.report} onFix={fixReadiness} />
+        <ReadinessPanel report={readiness.report} onFix={fixReadiness} noteFor={collapsedSettingNote(disclosure)} />
         <CommanderAssignmentPanel
           id="auto-fortress-commanders"
           featureId="autoFortress"

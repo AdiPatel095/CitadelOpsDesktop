@@ -47,14 +47,23 @@ import { eventDifficultyName, useEventDifficultyOptions } from '../EventDifficul
 import HorseTravelBoostSelect from './HorseTravelBoostSelect';
 import { DailyAttackLimitField } from './DailyAttackLimitField';
 import { FeatureGuideModal } from './FeatureGuideModal';
+import { AUTOMATION_ENABLED_KEYS } from '../disclosure/placement';
+import { cooldownSkipLines, countCustomValues, rbcTrialLine, travelLine } from '../disclosure/summaries';
+import { useSettingsDisclosure } from '../disclosure/useSettingsDisclosure';
+import { AutomationRunStrip } from './AutomationRunStrip';
+import { collapsedSettingNote, SettingsSection } from './SettingsSection';
 import { englishGuidePack, useGuideLocale } from '../../config/useGuideLocale';
 
 interface AutoNomadSettingsModalProps {
   isOpen: boolean;
   onClose: () => void;
+  onOpenAutomationDuration?: (featureKey: string, featureLabel: string) => void;
 }
 
-export const AutoNomadSettingsModal: React.FC<AutoNomadSettingsModalProps> = ({ isOpen, onClose }) => {
+const nomadDefaults = defaultAutoNomadClientState();
+
+export const AutoNomadSettingsModal: React.FC<AutoNomadSettingsModalProps> = ({ isOpen, onClose, onOpenAutomationDuration }) => {
+  const disclosure = useSettingsDisclosure('autoNomad');
   const { t: localizeStatic } = useStaticLocale();
   const { state } = useCitadelAPI();
   const setup = useSetupContext(AUTO_NOMAD_SECTION, useHostedRuntimePresence());
@@ -168,13 +177,7 @@ export const AutoNomadSettingsModal: React.FC<AutoNomadSettingsModalProps> = ({ 
       window.requestAnimationFrame(() => focusReadinessTarget('auto-nomad-commanders-heading'));
       return;
     }
-    const target = check.slot ? `auto-nomad-${check.slot}` : {
-      'source-castle': 'auto-nomad-source',
-      difficulty: 'auto-nomad-difficulty',
-      'score-target': 'auto-nomad-score',
-      'daily-limit': 'auto-nomad-daily-limit',
-    }[check.id];
-    if (target) focusReadinessTarget(target);
+    disclosure.fix(check);
   };
   const moduleLabel = localizeStatic('attackPresets.module.autoNomad');
   const saveAsPreset = (setup: Parameters<typeof saveInlineSetupAsUserPreset>[1], name: string) => (
@@ -232,7 +235,12 @@ export const AutoNomadSettingsModal: React.FC<AutoNomadSettingsModalProps> = ({ 
       contentDisabled={!draftSession.ready}
       contentNotice={draftSession.conflictNotice}
     >
+      <AutomationRunStrip
+        featureId="autoNomad"
+        onOpenDuration={onOpenAutomationDuration ? () => onOpenAutomationDuration(AUTOMATION_ENABLED_KEYS.autoNomad, 'Auto Nomad / Samurai') : undefined}
+      />
       <div className="space-y-3">
+        <SettingsSection disclosure={disclosure} section="setup">
         <Card variant="solid" className="p-4">
           <div className="grid gap-4 md:grid-cols-2">
             <div className="md:col-span-2">
@@ -288,14 +296,11 @@ export const AutoNomadSettingsModal: React.FC<AutoNomadSettingsModalProps> = ({ 
               readinessChecks={draft.rbcTest.enabled ? [] : slotChecks('samurai')}
               disabled={saving}
             />
-            <HorseTravelBoostSelect
-              className="block md:col-span-2"
-              value={draft.horseTravelBoostId}
-              onChange={(horseTravelBoostId) => setDraft((current) => ({ ...current, horseTravelBoostId }))}
-            />
           </div>
         </Card>
+        </SettingsSection>
 
+        <SettingsSection disclosure={disclosure} section="limits">
         <div id="auto-nomad-daily-limit" tabIndex={-1} className="outline-none">
           <DailyAttackLimitField
             value={draft.dailyAttackLimit}
@@ -303,7 +308,9 @@ export const AutoNomadSettingsModal: React.FC<AutoNomadSettingsModalProps> = ({ 
             serverState={state?.dailyAttacks}
           />
         </div>
+        </SettingsSection>
 
+        <SettingsSection disclosure={disclosure} section="event" className="space-y-3">
         <Card id="auto-nomad-difficulty" variant="solid" className="p-4">
           <div className="mb-3 flex items-start justify-between gap-3">
             <div>
@@ -379,8 +386,14 @@ export const AutoNomadSettingsModal: React.FC<AutoNomadSettingsModalProps> = ({ 
             </label>
           </div>
         </Card>
+        </SettingsSection>
 
-        <Card variant="solid" className="p-4">
+        <SettingsSection
+          disclosure={disclosure}
+          section="cooldown-skips"
+          summary={cooldownSkipLines(draft.skipCooldowns, draft.timeSkipReserve)}
+          customCount={countCustomValues(draft, nomadDefaults, ['skipCooldowns', 'timeSkipReserve'])}
+        >
           <div className="flex items-start justify-between gap-4">
             <div className="min-w-0">
               <div className="flex items-center gap-2 text-sm font-black text-text-main"><RotateCcw className="h-4 w-4 text-primary" /> <LocalizedText messageKey="ui.settings.components.autoNomadSettingsModal.clear.each.landed.hit.cooldown.e51dba73" /></div>
@@ -419,9 +432,27 @@ export const AutoNomadSettingsModal: React.FC<AutoNomadSettingsModalProps> = ({ 
               <p className="mt-3 text-[11px] text-warning"><LocalizedText messageKey="ui.settings.components.autoNomadSettingsModal.each.server.command.uses.exactly.one.skip.ab37a717" /></p>
             </div>
           ) : null}
-        </Card>
+        </SettingsSection>
 
-        <Card variant="solid" className="p-4">
+        <SettingsSection
+          disclosure={disclosure}
+          section="travel"
+          summary={[travelLine(draft.horseTravelBoostId)]}
+          customCount={countCustomValues(draft, nomadDefaults, ['horseTravelBoostId'])}
+        >
+          <HorseTravelBoostSelect
+            className="block"
+            value={draft.horseTravelBoostId}
+            onChange={(horseTravelBoostId) => setDraft((current) => ({ ...current, horseTravelBoostId }))}
+          />
+        </SettingsSection>
+
+        <SettingsSection
+          disclosure={disclosure}
+          section="rbc-trial"
+          summary={[rbcTrialLine(draft.rbcTest)]}
+          customCount={draft.rbcTest.enabled ? 1 : 0}
+        >
           <div className="flex items-start justify-between gap-4">
             <div className="min-w-0">
               <div className="flex items-center gap-2 text-sm font-black text-text-main"><TestTube2 className="h-4 w-4 text-primary" /> <LocalizedText messageKey="ui.settings.components.autoNomadSettingsModal.temporary.rbc.end.to.end.trial.9da6b870" /></div>
@@ -468,7 +499,7 @@ export const AutoNomadSettingsModal: React.FC<AutoNomadSettingsModalProps> = ({ 
               <p className="sm:col-span-2 text-[11px] text-warning"><LocalizedText messageKey="ui.settings.components.autoNomadSettingsModal.the.chain.uses.every.currently.available.selected.b2a29d49" /></p>
             </div>
           ) : null}
-        </Card>
+        </SettingsSection>
 
         <Card variant="solid" className="p-4">
           <div className="flex items-center gap-2 text-sm font-black text-text-main"><Lock className="h-4 w-4 text-primary" /> <LocalizedText messageKey="ui.settings.components.autoNomadSettingsModal.fixed.four.camp.flow.380f9acb" /></div>
@@ -486,6 +517,7 @@ export const AutoNomadSettingsModal: React.FC<AutoNomadSettingsModalProps> = ({ 
           report={readiness}
           slotLabelKeys={{ nomad: 'attackPresets.slot.nomad', samurai: 'attackPresets.slot.samurai' }}
           onFix={fixReadiness}
+          noteFor={collapsedSettingNote(disclosure)}
         />
         <CommanderAssignmentPanel
           id="auto-nomad-commanders"

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { type ReactNode } from 'react';
 import { CheckCircle2, CircleDashed, Clock3, ClipboardCheck, Info, XCircle } from 'lucide-react';
 import { Badge } from '../../components/ui/Badge';
 import { Button } from '../../components/ui/Button';
@@ -33,7 +33,9 @@ export const ReadinessCheckLine: React.FC<{
   check: ReadinessCheck;
   slotLabelKey?: MessageKey;
   onFix?: (check: ReadinessCheck) => void;
-}> = ({ check, slotLabelKey, onFix }) => (
+  /** Extra context under the message, e.g. the current value of a collapsed Advanced setting. */
+  note?: ReactNode;
+}> = ({ check, slotLabelKey, onFix, note }) => (
   <li className="flex items-start gap-2 text-xs leading-relaxed text-text-main">
     <StateIcon state={check.state} />
     <span className="sr-only"><LocalizedText messageKey="readiness.state" params={{ state: check.state }} /></span>
@@ -43,6 +45,7 @@ export const ReadinessCheckLine: React.FC<{
       {check.fix === 'assignment' && !onFix ? (
         <span className="block text-[11px] text-text-muted"><LocalizedText messageKey="ui.settings.components.readinessPanel.assign.commanders.under.commanders.features.repairing.assignments.a9c68853" /></span>
       ) : null}
+      {note}
       {check.fix === 'connection' ? (
         <span className="block text-[11px] text-text-muted"><LocalizedText messageKey="ui.settings.components.readinessPanel.this.updates.by.itself.once.the.game.7b60fd8c" /></span>
       ) : null}
@@ -60,13 +63,15 @@ export interface ReadinessPanelProps {
   /** Label for slot-specific checks (for example Nomad / Samurai). */
   slotLabelKeys?: Readonly<Record<string, MessageKey>>;
   onFix?: (check: ReadinessCheck) => void;
+  /** Per-check note, e.g. `collapsedSettingNote` for settings inside collapsed Advanced sections. */
+  noteFor?: (check: ReadinessCheck) => ReactNode;
 }
 
 /**
  * Non-action readiness review. It never sends game actions, and saving the
  * module does not start the automation.
  */
-export const ReadinessPanel: React.FC<ReadinessPanelProps> = ({ report, slotLabelKeys, onFix }) => (
+export const ReadinessPanel: React.FC<ReadinessPanelProps> = ({ report, slotLabelKeys, onFix, noteFor }) => (
   <section className="rounded-xl border border-border-base bg-bg-elevated/40 p-4" aria-labelledby={`readiness-${report.featureId}`}>
     <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
       <h3 id={`readiness-${report.featureId}`} className="flex items-center gap-2 text-sm font-black text-text-main">
@@ -96,6 +101,7 @@ export const ReadinessPanel: React.FC<ReadinessPanelProps> = ({ report, slotLabe
           check={check}
           slotLabelKey={check.slot ? slotLabelKeys?.[check.slot] : undefined}
           onFix={onFix}
+          note={noteFor?.(check)}
         />
       ))}
     </ul>

@@ -40,6 +40,7 @@ export interface EventAttackStarterRecipe {
 const EVIDENCE_CIT15_ACCEPTANCE = 'Maya product acceptance 2026-09-29, Desktop 723d12d / Hosted 2178a0e, Product/Simpler automation setup.md § CIT-15 product acceptance';
 /** Maya's adjusted laneFill rule, accepted after Sophie's preview QA. */
 const EVIDENCE_LANE_FILL_ACCEPTANCE = 'Maya product acceptance 2026-09-29 (adjusted rule) + Sophie preview QA PASS @ 7eb7571/4f29345, QA/Results/CIT-15 inline event attack setup.md § Starter-recipe follow-up';
+const EVIDENCE_CIT16_ACCEPTANCE = 'Maya product acceptance 2026-09-29, Desktop 98fb2fa / Hosted 483ecc0, Product/Simpler automation setup.md § CIT-16 product acceptance';
 
 export const EVENT_ATTACK_STARTER_RECIPE: EventAttackStarterRecipe = {
   waveCount: {
@@ -95,7 +96,7 @@ export const KHAN_DEFENSE_STARTER_RECIPE: KhanDefenseStarterRecipe = {
     value: 'current-main-castle-defense',
     source: 'account-data',
     rationale: 'Capture the Great Empire main castle\'s currently observed wall splits, wall/gate/moat tools and courtyard rows (defensePresetDraftFromCastle, the same capture as Defense Presets). No value is invented; it is applied only after an explicit preview and only while the main castle\'s defense is observed on this connection.',
-    review: { owner: 'Maya', status: 'pending' },
+    review: { owner: 'Maya', status: 'accepted', evidence: EVIDENCE_CIT16_ACCEPTANCE },
   },
 };
 

@@ -1,8 +1,8 @@
 import { LocalizedText } from "../../i18n/LocalizedText";
 import { useLocale } from '../../i18n/LocaleContext';
 import { officialCatalogGeneration, subscribeOfficialCatalog } from '../../i18n/officialMessages';
-import React, { useState, useEffect, useMemo, useCallback, useRef, useSyncExternalStore } from 'react';
-import { CalendarDays, Hammer, Trash2, Plus, Minus } from 'lucide-react';
+import React, { useState, useEffect, useMemo, useCallback, useSyncExternalStore } from 'react';
+import { Hammer, Trash2, Plus, Minus } from 'lucide-react';
 import {
   showTCIPicker,
   type TCIWithLevelCeiling,
@@ -25,8 +25,13 @@ import {
 import {
   buildAutoTCIClientState,
   parseAutoTCIClientState,
-  persistAutoTCIClientState,
 } from '../AutoTCIClientState';
+import { useConfigurationDraftSession } from '../ConfigurationDraftSession';
+import { AUTOMATION_ENABLED_KEYS } from '../disclosure/placement';
+import { tciPresetsSummary } from '../disclosure/summaries';
+import { useSettingsDisclosure } from '../disclosure/useSettingsDisclosure';
+import { AutomationRunStrip } from './AutomationRunStrip';
+import { SettingsSection } from './SettingsSection';
 import {
   Badge,
   Button,
@@ -44,7 +49,10 @@ interface AutoTCISettingsModalProps {
   isOpen: boolean;
   onClose: () => void;
   onOpenFeatureSchedule: (featureID: string, featureLabel: string) => void;
+  onOpenAutomationDuration?: (featureKey: string, featureLabel: string) => void;
 }
+
+const AUTO_TCI_SECTION = 'automation.constructionItems';
 
 /** `amount` is the level ceiling; optional `minLevel` is the floor (default 1). */
 interface AutoTCIItem {
@@ -53,8 +61,10 @@ interface AutoTCIItem {
   minLevel?: number;
 }
 
-export const AutoTCISettingsModal: React.FC<AutoTCISettingsModalProps> = ({ isOpen, onClose, onOpenFeatureSchedule }) => {
-  const { state, configuration } = useCitadelAPI();
+export const AutoTCISettingsModal: React.FC<AutoTCISettingsModalProps> = ({ isOpen, onClose, onOpenFeatureSchedule, onOpenAutomationDuration }) => {
+  const { state } = useCitadelAPI();
+  const draftSession = useConfigurationDraftSession({ isOpen, section: AUTO_TCI_SECTION });
+  const disclosure = useSettingsDisclosure('autoTCI');
   const castles = castleOptionsFromState(state);
   const [settings, setSettings] = useState<Record<string, AutoTCIItem[]>>({});
   const {locale} = useLocale();
@@ -67,7 +77,6 @@ export const AutoTCISettingsModal: React.FC<AutoTCISettingsModalProps> = ({ isOp
   const [presetError, setPresetError] = useState('');
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
-  const loadedConfigurationSignature = useRef<string | null>(null);
 
   const catalogByWireId = useMemo(() => {
     const m = new Map<number, ConstructionItemCatalogEntry>();
@@ -81,8 +90,8 @@ export const AutoTCISettingsModal: React.FC<AutoTCISettingsModalProps> = ({ isOp
   }, [catalog]);
 
   const hydrateFromConfiguration = useCallback(() => {
-    setSettings(parseAutoTCIClientState(configuration?.sections['automation.constructionItems']).targets);
-  }, [configuration?.sections]);
+    setSettings(parseAutoTCIClientState(draftSession.sections?.[AUTO_TCI_SECTION]).targets);
+  }, [draftSession.sections]);
 
   const applyFullClientState = useCallback((state: ReturnType<typeof parseAutoTCIClientState>) => {
     setSettings(state.targets);
@@ -101,22 +110,17 @@ export const AutoTCISettingsModal: React.FC<AutoTCISettingsModalProps> = ({ isOp
 
   useEffect(() => {
     if (!isOpen) {
-      loadedConfigurationSignature.current = null;
       setSaveError(null);
       return;
     }
-    const rawState = configuration?.sections['automation.constructionItems']
-      ?? buildAutoTCIClientState({}, emptyPresetsFile());
-    const signature = JSON.stringify(rawState);
-    if (loadedConfigurationSignature.current === signature) return;
-    loadedConfigurationSignature.current = signature;
-    applyFullClientState(parseAutoTCIClientState(rawState));
-
+    if (!draftSession.initialSnapshot) return;
+    applyFullClientState(parseAutoTCIClientState(
+      draftSession.initialSections?.[AUTO_TCI_SECTION] ?? buildAutoTCIClientState({}, emptyPresetsFile()),
+    ));
     setAppliedPresetId(null);
     setPresetName('');
     setPresetError('');
-
-  }, [configuration?.sections, isOpen, applyFullClientState]);
+  }, [applyFullClientState, draftSession.initialSections, draftSession.openKey, draftSession.initialSnapshot, isOpen]);
 
   const handleAddItem = async (castleId: string) => {
     const currentItems = settings[castleId] || [];
@@ -248,8 +252,7 @@ export const AutoTCISettingsModal: React.FC<AutoTCISettingsModalProps> = ({ isOp
     };
     setIsSaving(true);
     try {
-      const snapshot = await persistAutoTCIClientState(buildAutoTCIClientState(settings, presetsFile));
-      loadedConfigurationSignature.current = JSON.stringify(snapshot.sections['automation.constructionItems']);
+      await draftSession.save(buildAutoTCIClientState(settings, presetsFile));
       setPresetsState(presetsFile);
       setPresetDropdownId(id);
       setAppliedPresetId(id);
@@ -274,8 +277,7 @@ export const AutoTCISettingsModal: React.FC<AutoTCISettingsModalProps> = ({ isOp
     setIsSaving(true);
     setSaveError(null);
     try {
-      const snapshot = await persistAutoTCIClientState(buildAutoTCIClientState(settings, presetsFile));
-      loadedConfigurationSignature.current = JSON.stringify(snapshot.sections['automation.constructionItems']);
+      await draftSession.save(buildAutoTCIClientState(settings, presetsFile));
       setPresetsState(presetsFile);
       setPresetDropdownId('');
       if (appliedPresetId === id) {
@@ -309,8 +311,7 @@ export const AutoTCISettingsModal: React.FC<AutoTCISettingsModalProps> = ({ isOp
     };
     setIsSaving(true);
     try {
-      const snapshot = await persistAutoTCIClientState(buildAutoTCIClientState(settings, presetsFile));
-      loadedConfigurationSignature.current = JSON.stringify(snapshot.sections['automation.constructionItems']);
+      await draftSession.save(buildAutoTCIClientState(settings, presetsFile));
       setPresetsState(presetsFile);
       onClose();
     } catch (error) {
@@ -388,26 +389,30 @@ export const AutoTCISettingsModal: React.FC<AutoTCISettingsModalProps> = ({ isOp
               using the level range supplied by the current official construction-item catalog.
             </>
       )}
-      titleTrailing={(
-            <Button
-              variant="outline"
-              size="sm"
-              className="shrink-0"
-              onClick={() => onOpenFeatureSchedule('autoTCI', 'Auto TCI')}
-              leftIcon={<CalendarDays className="h-4 w-4" />}
-            >
-              <LocalizedText messageKey="common.calendar" /></Button>
-      )}
       onSave={handleSave}
       saveLabel="Save changes"
       isSaving={isSaving}
+      saveDisabled={!draftSession.ready}
+      contentDisabled={!draftSession.ready}
+      contentNotice={draftSession.conflictNotice}
     >
+      <AutomationRunStrip
+        featureId="autoTCI"
+        scheduleId="autoTCI"
+        onOpenSchedule={() => onOpenFeatureSchedule('autoTCI', 'Auto TCI')}
+        onOpenDuration={onOpenAutomationDuration ? () => onOpenAutomationDuration(AUTOMATION_ENABLED_KEYS.autoTCI, 'Auto TCI') : undefined}
+      />
       <div className="auto-tci-settings-workspace custom-scrollbar mx-auto flex w-full flex-col gap-5 overflow-y-auto pb-4">
         {saveError && (
           <div className="rounded-global border border-error/30 bg-error/10 px-4 py-3 text-sm font-semibold text-error" role="alert">
             {saveError}
           </div>
         )}
+        <SettingsSection
+          disclosure={disclosure}
+          section="presets"
+          summary={tciPresetsSummary(presetsState.presets.length, presetsState.presets.find((preset) => preset.id === appliedPresetId)?.name ?? '')}
+        >
         <NamedPresetControls
           name={presetName}
           onNameChange={(value) => {
@@ -430,6 +435,9 @@ export const AutoTCISettingsModal: React.FC<AutoTCISettingsModalProps> = ({ isOp
             </>
           )}
         />
+        </SettingsSection>
+
+        <SettingsSection disclosure={disclosure} section="items">
 
         <div className="grid w-full auto-rows-max grid-cols-1 gap-5 md:grid-cols-2 2xl:grid-cols-3">
         {castles.map((castle) => {
@@ -547,6 +555,7 @@ export const AutoTCISettingsModal: React.FC<AutoTCISettingsModalProps> = ({ isOp
           );
         })}
         </div>
+        </SettingsSection>
       </div>
     </SettingsModal>
   );

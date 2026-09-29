@@ -133,7 +133,7 @@ test('the main-castle defense starter is account data, offered only while curren
   const offered = starter.khanDefenseStarter({ mainCastle: main, observation: LIVE });
   assert.ok(offered.setup);
   assert.equal(offered.setup.wall.middle.unitPercent, 34, 'captured from the castle, not invented');
-  assert.deepEqual(offered.pendingReviews, ['source']);
+  assert.deepEqual(offered.pendingReviews, [], 'accepted in CIT-16 product acceptance');
   assert.equal(starter.khanDefenseStarter({ mainCastle: null, observation: LIVE }).setup, null);
   assert.equal(starter.khanDefenseStarter({ mainCastle: main, observation: { ...LIVE, connected: false } }).reason, 'ui.components.staleSessionBanner.disconnected.last.known.data.166a8c99');
   const unread = starter.khanDefenseStarter({ mainCastle: castle(1, 1, { defense: { ...main.defense, observedAt: ZERO } }), observation: LIVE });
@@ -141,4 +141,18 @@ test('the main-castle defense starter is account data, offered only while curren
   const old = starter.khanDefenseStarter({ mainCastle: castle(1, 1, { defense: { ...main.defense, observedAt: '2026-09-28T09:00:00Z' } }), observation: LIVE });
   assert.equal(old.setup, null, 'a defense read before this connection is not offered');
   for (const result of [unread, old]) assert.ok(messages[result.reason], result.reason);
+});
+
+test('a defense that names no tools says re-applying it removes the main castle tools (Maya, CIT-16)', () => {
+  const toolless = { source: 'inline', presetId: '', missing: false, setup: defenseApp.inlineDefenseFromPreset(defenseTypes.emptyDefensePresetDraft()) };
+  const report = evaluate({ defense: toolless });
+  const ids = report.plan.map((line) => line.id);
+  assert.equal(ids[ids.indexOf('defense-reapply') + 1], 'defense-no-tools', 'stated right after the reapplication line');
+  const line = report.plan.find((entry) => entry.id === 'defense-no-tools');
+  assert.equal(messages[line.messageKey], "This defense names no tools; re-applying it removes the main castle's wall, gate and moat tools.");
+  assert.equal(line.messageKey, khan.DEFENSE_NO_TOOLS, 'the defense field shows the same copy');
+  assert.equal(byId(report, 'defense-tool-stock'), undefined);
+  assert.equal(report.overall === 'blocked', false, 'informational, never a blocker');
+  assert.equal(evaluate().plan.some((entry) => entry.id === 'defense-no-tools'), false, 'a defense with tools has no such line');
+  assert.equal(evaluate({ defense: { source: 'none' } }).plan.some((entry) => entry.id === 'defense-no-tools'), false, 'no defense resolved, no line');
 });
