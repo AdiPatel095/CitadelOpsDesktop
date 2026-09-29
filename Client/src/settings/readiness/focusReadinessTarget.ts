@@ -8,3 +8,21 @@ export function focusReadinessTarget(elementId: string): void {
     : element.querySelector<HTMLElement>('button, input, select, textarea, [tabindex]:not([tabindex="-1"])') ?? element;
   focusable.focus({ preventScroll: true });
 }
+
+/**
+ * Like `focusReadinessTarget`, but waits (up to `frames` animation frames) for the control to exist, for a
+ * fix that opens its editor first. Returns a cancel function.
+ */
+export function focusReadinessTargetWhenReady(elementId: string, frames = 30): () => void {
+  let handle = 0;
+  let remaining = frames;
+  const attempt = () => {
+    if (globalThis.document?.getElementById(elementId)) {
+      focusReadinessTarget(elementId);
+      return;
+    }
+    if (--remaining > 0) handle = globalThis.requestAnimationFrame(attempt);
+  };
+  handle = globalThis.requestAnimationFrame(attempt);
+  return () => globalThis.cancelAnimationFrame(handle);
+}

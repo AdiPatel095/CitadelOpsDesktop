@@ -1,3 +1,4 @@
+import { StopFooter } from '../../components/StopControl';
 import {useLocalizedMessage} from '../../i18n/useLocalizedMessage';
 import {parseMessageDescriptor} from '../../i18n/messageDescriptor';
 import {messageLanguageAttributes} from '../../i18n/messageLanguage';
@@ -236,6 +237,7 @@ export const AutoKhanSettingsModal: React.FC<AutoKhanSettingsModalProps> = ({ is
   return (
     <>
     <SettingsModal
+      footerLeading={<StopFooter featureId="autoKhan" />}
       isOpen={isOpen}
       onClose={() => { if (!saving) onClose(); }}
       maxWidth="3xl"

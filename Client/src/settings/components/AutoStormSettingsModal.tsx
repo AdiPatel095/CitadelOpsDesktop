@@ -1,3 +1,4 @@
+import { StopFooter } from '../../components/StopControl';
 import { useLocale as useStaticLocale } from "../../i18n/LocaleContext";
 import { LocalizedText } from "../../i18n/LocalizedText";
 import React, { useEffect, useMemo, useState } from 'react';
@@ -83,6 +84,7 @@ import HorseTravelBoostSelect from './HorseTravelBoostSelect';
 import { DailyAttackLimitField } from './DailyAttackLimitField';
 import { FeatureGuideModal } from './FeatureGuideModal';
 import { AUTOMATION_ENABLED_KEYS } from '../disclosure/placement';
+import { parseStormCastleOptions, preferredStormCastleOption, type StormCastleOption } from '../StormCastleOptions';
 import { checkIntervalLine, countCustomValues, mapRefreshLine, stormConstructionSummary, stormPriorityLine, travelLine } from '../disclosure/summaries';
 import { useSettingsDisclosure } from '../disclosure/useSettingsDisclosure';
 import { AutomationRunStrip } from './AutomationRunStrip';
@@ -116,17 +118,6 @@ interface LunaPackage {
   buildingId: number;
   buildingAmount: number;
   rewardDetail: string;
-}
-
-interface StormCastleOption {
-  id: number;
-  name: string;
-  minLevel: number;
-  costWood: number;
-  costStone: number;
-  costFood: number;
-  costCoins: number;
-  costPremium: number;
 }
 
 const FORT_LEVELS = [40, 50, 60, 70, 80];
@@ -492,6 +483,7 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
       preselected: draft.islands.defenseUnits.map((unit) => unit.unitId),
       preselectedQuantities: quantities,
       stockQuantities: stormCastle?.units.stationed,
+      stockObservation: { castle: stormCastle ?? null, observation },
     });
     if (!Array.isArray(result)) return;
     const defenseUnits = (result as UnitWithQuantity[])
@@ -588,6 +580,7 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
     observation,
     buildActive: draft.target != null || Boolean(blueprintDocument.activeId),
     decorationLabel,
+    unlockOffer: { loaded: !loadingStormCastleOptions && !stormCastleOptionsError, offeredIds: stormCastleOptions.map((option) => option.id) },
     commanders: evaluateCommanderEligibility({
       featureId: 'autoStorm',
       state,
@@ -596,7 +589,7 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
       gameLoggedIn: setup.gameLoggedIn,
       now: Date.now(),
     }),
-  }), [attackPresets, blueprintDocument.activeId, commanderAssignments, decorationLabel, draft, fortsRef, islandsRef, metadataReady, observation, setup.gameLoggedIn, setup.movement, state, stormCastle, tools, troops]);
+  }), [attackPresets, blueprintDocument.activeId, commanderAssignments, decorationLabel, draft, fortsRef, islandsRef, loadingStormCastleOptions, metadataReady, observation, setup.gameLoggedIn, setup.movement, state, stormCastle, stormCastleOptions, stormCastleOptionsError, tools, troops]);
   const islandDefenseStock = useMemo(() => draft.islands.defenseUnits.length > 0 ? evaluateUnitStock({
     castle: stockCastle,
     observation,
@@ -665,6 +658,7 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
   return (
     <>
     <SettingsModal
+      footerLeading={<StopFooter featureId="autoStorm" />}
       isOpen={isOpen}
       onClose={() => { if (!saving && !capturing) onClose(); }}
       maxWidth="full"
@@ -698,7 +692,8 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
             </div>
             <Switch
               checked={draft.unlock.enabled}
-              disabled={loadingStormCastleOptions || stormCastleOptions.length === 0}
+              // Turning the unlock off must always work, even when no official castle is offered right now.
+              disabled={!draft.unlock.enabled && (loadingStormCastleOptions || stormCastleOptions.length === 0)}
               onChange={(enabled) => setDraft((current) => ({
                 ...current,
                 unlock: {
@@ -905,7 +900,7 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
                     ) : <p className="mt-2 text-[11px] text-text-muted"><LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.automatic.minimum.occupation.after.victory.is.reported.4a4d8d99" /></p>}
                     {islandDefenseStock ? (
                       <div className="mt-3 space-y-2">
-                        <UnitStockList lines={islandDefenseStock.lines} />
+                        <UnitStockList lines={islandDefenseStock.lines} freshness={islandDefenseStock.freshness} />
                         <ul><ReadinessCheckLine check={islandDefenseStock.check} /></ul>
                       </div>
                     ) : null}
@@ -1038,7 +1033,7 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
                             ? troopCapPreviewError
                             : troopCap.available && troopCap.maximumTroops != null
                               ? troopCap.capBasis == null
-                                ? 'This runtime returned a legacy troop cap without reset-rate basis details.'
+                                ? 'The game returned a legacy troop cap without reset-rate basis details.'
                                 : troopCap.capBasis === 'reset_rate'
                                 ? `Using the ${troopCap.rateBasedTroops?.toLocaleString() ?? troopCap.maximumTroops.toLocaleString()} rate-based requirement because it exceeds the ${troopCap.baselineTroops.toLocaleString()} baseline.`
                                 : troopCap.capBasis === 'reserve'
@@ -1824,35 +1819,6 @@ function parseDecorationPresetOptions(
     }
   }
   return result.sort((left, right) => left.label.localeCompare(right.label));
-}
-
-function parseStormCastleOptions(rows: Record<string, unknown>[], playerLevel?: number): StormCastleOption[] {
-  const availableLevel = playerLevel && playerLevel > 0 ? playerLevel : Number.MAX_SAFE_INTEGER;
-  const options: StormCastleOption[] = [];
-  for (const row of rows) {
-    const spaces = String(row.spaceIDs ?? '')
-      .split(',')
-      .map((value) => Number(value.trim()))
-      .filter(Number.isFinite);
-    const id = positiveInteger(row.preBuiltCastleID);
-    const minLevel = positiveInteger(row.minLevel);
-    if (!spaces.includes(4) || id <= 0 || minLevel > availableLevel) continue;
-    options.push({
-      id,
-      name: stringValue(row.comment2),
-      minLevel,
-      costWood: positiveInteger(row.costWood),
-      costStone: positiveInteger(row.costStone),
-      costFood: positiveInteger(row.costFood),
-      costCoins: positiveInteger(row.costC1),
-      costPremium: positiveInteger(row.costC2),
-    });
-  }
-  return options.sort((left, right) => left.id - right.id);
-}
-
-function preferredStormCastleOption(options: StormCastleOption[]): StormCastleOption | undefined {
-  return options.find((option) => option.costPremium === 0) ?? options[0];
 }
 
 function stormCastleOptionLabel(option: StormCastleOption): string {

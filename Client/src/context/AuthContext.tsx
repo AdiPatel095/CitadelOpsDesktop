@@ -1,5 +1,14 @@
-import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { useCitadelAPI } from '../api/ApiContext';
+import { StartConfirmDialog, type PendingStart } from '../components/StartConfirmDialog';
+import { useHostedRuntimePresence } from '../config/Deployment';
+import { movementViewFromState } from '../Movement/types/MovementState';
+import { AUTOMATION_ENABLED_KEYS, type SettingsFeatureId } from '../settings/disclosure/placement';
+import { evaluateFeatureReadiness, startRequiresConfirmation } from '../settings/readiness/featureReadiness';
+import { clearEnabledSince, readEnabledSince, recordEnabledSince } from '../settings/readiness/firstResult';
+import { accountKey } from '../settings/requirements/castleRequirements';
+import { normalizeFeatureSchedules } from '../settings/SchedulerTypes';
+import { useMetadata } from './MetadataContext';
 import type { RecruitTroopsMode } from '../settings/RecruitTroopsClientState';
 import type { AutoToolMode } from '../settings/AutoToolClientState';
 import type { AutomationStateV2, StationingOperationV2 } from '../api/Contracts';
@@ -23,6 +32,13 @@ export type GameConnectionState =
   | 'error';
 
 export type DashboardConnectionStatus = 'Disconnected' | 'Connecting' | 'Connected';
+
+/** A rejected write of `automation.enabled`, kept until the next write of that feature succeeds (CIT-20). */
+export interface AutomationWriteFailure {
+  intent: 'start' | 'stop';
+  message: string;
+  at: number;
+}
 
 export interface AutoBirdCastleCycle {
  paused?: boolean;
@@ -85,6 +101,10 @@ interface AuthContextType {
 	automationStates: Record<string, AutomationStateV2>;
 	automationEnabledByKey: Record<string, boolean>;
 	automationTimedUntilByKey: Record<string, number>;
+	/** Failed Start/Stop writes by `automation.enabled` key; the switch itself always follows the saved value. */
+	automationWriteFailures: Record<string, AutomationWriteFailure>;
+	/** When this account turned each automation on (ISO), from configuration changes seen on this device. */
+	automationEnabledSince: Record<string, string>;
   startGame: () => void;
   stopGame: () => void;
   /** Force a fresh game connection now, bypassing a scheduled retry, cooldown wait, or login park. */
@@ -108,6 +128,11 @@ interface AuthContextType {
 	toggleAutoBird: () => void;
 	toggleAutoStation: () => void;
 	toggleBotLock: () => void;
+	/**
+	 * Writes `automation.enabled[feature]`. Turning on first previews the saved settings; blocked checks open a
+	 * confirmation (the game's own guards stay authoritative), and declining leaves the switch off. The
+	 * preview and confirmation submit nothing; the switch write is the only mutation.
+	 */
 	setAutomationEnabled: (feature: string, enabled: boolean) => Promise<void>;
 	enableAutomationFor: (feature: string, durationMinutes: number) => Promise<void>;
 }
@@ -115,7 +140,9 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const { connectionStatus, state, catalogs, configuration, diagnostics, submitIntent, updateConfiguration } = useCitadelAPI();
+  const { connectionStatus, state, catalogs, configuration, diagnostics, submitIntent, updateConfiguration, loadLatestConfiguration } = useCitadelAPI();
+  const metadata = useMetadata();
+  const hostedPresence = useHostedRuntimePresence();
   const session = state?.session;
 	const automationEnabled = isRecord(configuration?.sections['automation.enabled'])
 		? configuration.sections['automation.enabled'] as Record<string, unknown>
@@ -218,20 +245,124 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
   };
 
+  const latest = useRef({ state, configuration, metadata, gameLoggedIn, hostedPresence });
+  latest.current = { state, configuration, metadata, gameLoggedIn, hostedPresence };
+  const [writeFailures, setWriteFailures] = useState<Record<string, AutomationWriteFailure>>({});
+  const [pendingStart, setPendingStart] = useState<PendingStart | null>(null);
+
+  const rememberFailure = useCallback((feature: string, intent: 'start' | 'stop', error: unknown) => {
+    const message = error instanceof Error && error.message.trim() ? error.message : '';
+    setWriteFailures((current) => ({ ...current, [feature]: { intent, message, at: Date.now() } }));
+  }, []);
+  const forgetFailure = useCallback((feature: string) => {
+    setWriteFailures((current) => {
+      if (!(feature in current)) return current;
+      const { [feature]: _removed, ...rest } = current;
+      return rest;
+    });
+  }, []);
+
+  /**
+   * Start-time revalidation (CIT-20): previews the LATEST saved configuration with the current observations.
+   * Blocked checks ask for confirmation; unresolved ones (decided by the game, waiting for data) never block.
+   * Submits nothing; the game's fail-closed guards decide what actually runs.
+   */
+  const confirmStart = useCallback(async (feature: string): Promise<boolean> => {
+    const featureId = (Object.keys(AUTOMATION_ENABLED_KEYS) as SettingsFeatureId[]).find((id) => AUTOMATION_ENABLED_KEYS[id] === feature);
+    if (!featureId) return true;
+    let sections = latest.current.configuration?.sections;
+    try {
+      sections = (await loadLatestConfiguration()).sections;
+    } catch {
+      // Keep the configuration already loaded; the write below reports its own failure.
+    }
+    const current = latest.current;
+    const session = current.state?.session ?? null;
+    const report = evaluateFeatureReadiness(featureId, {
+      sections,
+      state: current.state,
+      observation: {
+        session, connected: current.gameLoggedIn,
+        hostedPresence: current.hostedPresence?.mode ? { mode: current.hostedPresence.mode, checkpointObservedAt: current.hostedPresence.checkpointObservedAt } : undefined,
+      },
+      troops: current.metadata.troops, tools: current.metadata.tools,
+      metadataReady: !current.metadata.unitsLoading && !current.metadata.unitsError,
+      resources: current.metadata.resources,
+      movement: movementViewFromState(current.state),
+      gameLoggedIn: current.gameLoggedIn,
+      schedule: normalizeFeatureSchedules(isRecord(sections?.scheduler) ? (sections?.scheduler as Record<string, unknown>).featureSchedules : undefined)[featureId],
+    });
+    if (!startRequiresConfirmation(report)) return true;
+    return new Promise<boolean>((resolve) => {
+      setPendingStart({ featureId, report, decide: (proceed) => { setPendingStart(null); resolve(proceed); } });
+    });
+  }, [loadLatestConfiguration]);
+
   const setAutomationEnabled = async (feature: string, enabled: boolean) => {
-	await updateConfiguration('automation.enabled', { ...automationEnabled, [feature]: enabled });
+	if (enabled && !(await confirmStart(feature))) {
+		window.dispatchEvent(new CustomEvent('citadelops:fix-before-start', { detail: { enabledKey: feature } }));
+		return;
+	}
+	try {
+		await updateConfiguration('automation.enabled', { ...automationEnabled, [feature]: enabled });
+		forgetFailure(feature);
+	} catch (error) {
+		rememberFailure(feature, enabled ? 'start' : 'stop', error);
+		throw error;
+	}
   };
 
   const enableAutomationFor = async (feature: string, durationMinutes: number) => {
-	await updateConfiguration('automation.enabled', {
-		...automationEnabled,
-		[feature]: timedAutomationEnabledValue(durationMinutes),
-	});
+	if (!(await confirmStart(feature))) {
+		window.dispatchEvent(new CustomEvent('citadelops:fix-before-start', { detail: { enabledKey: feature } }));
+		return;
+	}
+	try {
+		await updateConfiguration('automation.enabled', {
+			...automationEnabled,
+			[feature]: timedAutomationEnabledValue(durationMinutes),
+		});
+		forgetFailure(feature);
+	} catch (error) {
+		rememberFailure(feature, 'start', error);
+		throw error;
+	}
   };
 
   const toggle = (feature: string, enabled: boolean) => {
-	void setAutomationEnabled(feature, !enabled);
+	// A failed write is kept in `automationWriteFailures` (and reported by the configuration client).
+	void setAutomationEnabled(feature, !enabled).catch(() => undefined);
   };
+
+  // Turn-on times per account: a configuration change that flips a switch on records when; off clears it.
+  const accountId = accountKey(state ?? null);
+  const [enabledSince, setEnabledSince] = useState<Record<string, string>>({});
+  const previousEnabled = useRef<{ account: string; enabled: Record<string, boolean> } | null>(null);
+  const configurationUpdatedAt = configuration?.updatedAt;
+  useEffect(() => {
+	if (!accountId || !configuration) return;
+	const storage = typeof window === 'undefined' ? undefined : (() => { try { return window.localStorage; } catch { return undefined; } })();
+	const previous = previousEnabled.current;
+	if (!previous || previous.account !== accountId) {
+		previousEnabled.current = { account: accountId, enabled: { ...automationEnabledByKey } };
+		const stored = readEnabledSince(storage, accountId);
+		// A stored time for a switch that is off is stale: drop it.
+		let next = stored;
+		for (const key of Object.keys(stored)) if (automationEnabledByKey[key] !== true) next = clearEnabledSince(storage, accountId, key);
+		setEnabledSince(next);
+		return;
+	}
+	let next: Record<string, string> | undefined;
+	for (const key of new Set([...Object.keys(previous.enabled), ...Object.keys(automationEnabledByKey)])) {
+		const was = previous.enabled[key] === true;
+		const is = automationEnabledByKey[key] === true;
+		if (!was && is) next = recordEnabledSince(storage, accountId, key, configurationUpdatedAt || new Date().toISOString());
+		if (was && !is) next = clearEnabledSince(storage, accountId, key);
+	}
+	previous.enabled = { ...automationEnabledByKey };
+	if (next) setEnabledSince(next);
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- only switch changes and account changes matter
+  }, [accountId, automationEnabledByKey]);
 
   const value = useMemo<AuthContextType>(() => ({
     gameLoggedIn,
@@ -279,6 +410,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 	automationStates,
 	automationEnabledByKey,
 	automationTimedUntilByKey,
+	automationWriteFailures: writeFailures,
+	automationEnabledSince: enabledSince,
     startGame: () => submit('session.start'),
     stopGame: () => submit('session.stop'),
     reconnectGame: () => submit('session.reconnect'),
@@ -331,6 +464,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 	automationStates,
 	automationEnabledByKey,
 	automationTimedUntilByKey,
+	writeFailures,
+	enabledSince,
     catalogs,
 	configuration,
     connectionStatus,
@@ -345,7 +480,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 	updateConfiguration,
   ]);
 
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+  return (
+    <AuthContext.Provider value={value}>
+      {children}
+      <StartConfirmDialog pending={pendingStart} />
+    </AuthContext.Provider>
+  );
 }
 
 function automationWakeMillis(state: AutomationStateV2 | undefined): number {

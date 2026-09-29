@@ -1,3 +1,4 @@
+import { StopFooter } from '../../components/StopControl';
 import { LocalizedText } from "../../i18n/LocalizedText";
 import { useLocale } from '../../i18n/LocaleContext';
 import { officialCatalogGeneration, subscribeOfficialCatalog } from '../../i18n/officialMessages';
@@ -378,6 +379,7 @@ export const AutoTCISettingsModal: React.FC<AutoTCISettingsModalProps> = ({ isOp
 
   return (
     <SettingsModal
+      footerLeading={<StopFooter featureId="autoTCI" />}
       isOpen={isOpen}
       onClose={handleClose}
       maxWidth="full"

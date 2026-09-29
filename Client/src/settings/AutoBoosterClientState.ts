@@ -1,5 +1,3 @@
-import { queueConfigurationUpdate } from './Configuration';
-
 export const AUTO_BOOSTER_SECTION = 'automation.autoBooster';
 export const AUTO_BOOSTER_GLOBAL_EFFECT_ID = 2;
 export const AUTO_BOOSTER_RUBY_COST = 2500 as const;
@@ -29,10 +27,6 @@ export function parseAutoBoosterClientState(value: unknown): AutoBoosterClientSt
     rubyCostCeiling: AUTO_BOOSTER_RUBY_COST,
     minimumRubyReserve: clampInteger(value.minimumRubyReserve, 0, Number.MAX_SAFE_INTEGER, 0),
   };
-}
-
-export function persistAutoBoosterClientState(state: AutoBoosterClientStateV1) {
-  return queueConfigurationUpdate(AUTO_BOOSTER_SECTION, state);
 }
 
 function clampInteger(value: unknown, minimum: number, maximum: number, fallback: number): number {

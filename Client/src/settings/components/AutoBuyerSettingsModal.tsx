@@ -1,3 +1,4 @@
+import { StopFooter } from '../../components/StopControl';
 import { useLocale as useStaticLocale } from "../../i18n/LocaleContext";
 import { LocalizedText } from "../../i18n/LocalizedText";
 import React, { useEffect, useMemo, useState } from 'react';
@@ -110,7 +111,7 @@ export const AutoBuyerSettingsModal: React.FC<AutoBuyerSettingsModalProps> = ({ 
         );
         if (!completeCatalog) {
           setProjection(null);
-          setLoadError('This runtime did not return a complete Auto Buyer catalog. Refresh after the runtime is updated.');
+          setLoadError('This version could not load a complete Auto Buyer catalog. Refresh after updating.');
           return;
         }
         setProjection(catalog);
@@ -321,6 +322,7 @@ export const AutoBuyerSettingsModal: React.FC<AutoBuyerSettingsModalProps> = ({ 
 
   return (
     <SettingsModal
+      footerLeading={<StopFooter featureId="autoBuyer" />}
       isOpen={isOpen}
       onClose={() => { if (!saving) onClose(); }}
       maxWidth="6xl"
@@ -566,7 +568,7 @@ export const AutoBuyerSettingsModal: React.FC<AutoBuyerSettingsModalProps> = ({ 
               <div>
                 <h3 className="text-sm font-black text-text-main"><LocalizedText messageKey="ui.settings.components.autoBuyerSettingsModal.specialist.renewal.floors.c3cb9aea" /></h3>
 				<p className="mt-1 text-xs text-text-muted"><LocalizedText messageKey="ui.settings.components.autoBuyerSettingsModal.enabled.floors.stay.between.14.and.365.55fa81de" /></p>
-				{!specialistUpkeepSupported ? <p className="mt-2 text-xs text-amber-300">{projection.specialistUpkeep?.reason || 'This runtime cannot safely automate specialist purchases yet. Saved goals can be disabled.'}</p> : null}
+				{!specialistUpkeepSupported ? <p className="mt-2 text-xs text-amber-300">{projection.specialistUpkeep?.reason || 'This version cannot safely automate specialist purchases yet. Saved goals can be disabled.'}</p> : null}
               </div>
               <div className="flex gap-2">
                 <Button variant="ghost" onClick={() => setAllSpecialists(false)}><LocalizedText messageKey="ui.settings.components.autoBuyerSettingsModal.disable.all.6cb2279d" /></Button>
@@ -652,7 +654,7 @@ export const AutoBuyerSettingsModal: React.FC<AutoBuyerSettingsModalProps> = ({ 
                   <p className="mt-1 text-xs text-text-muted">
                     {automaticFeastSourceSupported
                       ? 'The selected feast is started or extended one purchase at a time. Auto Buyer chooses the owned positive-net castle with the most food stored.'
-                      : 'This runtime does not expose the automatic feast-source and purchase-evidence contract required by these controls.'}
+                      : 'This version does not provide the automatic feast-source and purchase-evidence data these controls need.'}
                   </p>
                 </div>
                 <Switch
@@ -722,7 +724,7 @@ export const AutoBuyerSettingsModal: React.FC<AutoBuyerSettingsModalProps> = ({ 
                             : 'Selection waits for fresh stored-food and economy data from every usable owned castle; only positive-net castles qualify.'}
                         </p>
                       </>
-                    ) : <p className="mt-1 text-xs text-warning"><LocalizedText messageKey="ui.settings.components.autoBuyerSettingsModal.update.the.account.runtime.before.changing.or.f6cf7d7a" /></p>}
+                    ) : <p className="mt-1 text-xs text-warning"><LocalizedText messageKey="ui.settings.components.autoBuyerSettingsModal.update.this.version.before.changing.or.enabling.4be32c9b" /></p>}
                   </div>
                   {!selectedFeastSupported ? (
                     <div className="rounded-xl border border-warning/30 bg-warning/5 p-3 md:col-span-2">

@@ -1,4 +1,3 @@
-import { queueConfigurationUpdate } from './Configuration';
 import { clampLevelCeiling, normalizeLevelRange } from '../components/TCIPickerModal';
 import {
   emptyPresetsFile,
@@ -72,8 +71,4 @@ export function buildAutoTCIClientState(
   presets: PresetsFileV1,
 ): AutoTCIClientStateV1 {
   return { version: 1, targets, presets };
-}
-
-export function persistAutoTCIClientState(state: AutoTCIClientStateV1) {
-  return queueConfigurationUpdate('automation.constructionItems', state);
 }

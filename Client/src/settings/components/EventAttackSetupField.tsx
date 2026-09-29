@@ -415,6 +415,7 @@ export const EventAttackSetupField: React.FC<EventAttackSetupFieldProps> = ({
         <div className="border-t border-border-base pt-2">
           <UnitStockList
             lines={stock.lines}
+            freshness={stock.freshness}
             note={<LocalizedText messageKey="ui.settings.components.eventAttackSetupField.stationed.stock.in.the.source.castle.the.ff087c1c" />}
           />
         </div>

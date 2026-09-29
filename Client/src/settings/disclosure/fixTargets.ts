@@ -28,6 +28,12 @@ const target = (section: string, control: string, labelKey?: MessageKey): Settin
 
 const COMMANDERS = { commanders: null, 'commander-assignment': null } as const;
 
+/**
+ * Checks of `configurationReadiness` (CIT-20), the minimal readiness of modules without an evaluator. They
+ * describe the saved section as a whole, so Open settings opens the editor without moving to a control.
+ */
+const CONFIGURATION_CHECKS = { 'saved-settings': null, plan: null, schedule: null, castles: null } as const;
+
 /** Checks shared by the Nomad, Invasion and Beri World event-attack evaluator. */
 function eventAttackTable(prefix: string, slots: readonly string[], extra: FixTable = {}): FixTable {
   const perSlot: Record<string, SettingsFixTarget> = {};
@@ -144,15 +150,15 @@ export const SETTINGS_FIX_TARGETS: Readonly<Record<SettingsFeatureId, FixTable>>
     'saved-castles': target('castles', 'auto-bird-castles'),
     reserves: target('castles', 'auto-bird-castles'),
   },
-  autoRecruit: {},
-  autoTool: {},
-  autoHospital: {},
-  autoTCI: {},
-  autoSceatRes: {},
-  autoBooster: {},
-  autoBuyer: {},
-  autoAdvisor: {},
-  autoEquipmentCleanup: {},
+  autoRecruit: { ...CONFIGURATION_CHECKS },
+  autoTool: { ...CONFIGURATION_CHECKS },
+  autoHospital: { ...CONFIGURATION_CHECKS },
+  autoTCI: { ...CONFIGURATION_CHECKS },
+  autoSceatRes: { ...CONFIGURATION_CHECKS },
+  autoBooster: { ...CONFIGURATION_CHECKS },
+  autoBuyer: { ...CONFIGURATION_CHECKS },
+  autoAdvisor: { ...CONFIGURATION_CHECKS, ...COMMANDERS, 'source-castle': null, composition: null, inventory: null, 'composition:attack': null, 'inventory:attack': null },
+  autoEquipmentCleanup: { ...CONFIGURATION_CHECKS },
 };
 
 export function fixTargetFor(featureId: SettingsFeatureId, check: Pick<ReadinessCheck, 'id' | 'slot'>): SettingsFixTarget | null {

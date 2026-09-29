@@ -1,3 +1,4 @@
+import { StopFooter } from '../../components/StopControl';
 import { useLocale as useStaticLocale } from "../../i18n/LocaleContext";
 import { LocalizedText } from "../../i18n/LocalizedText";
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
@@ -337,10 +338,10 @@ export const AutoBirdSettingsModal: React.FC<AutoBirdSettingsModalProps> = ({ is
   };
 
   const presetOptions = [
-    { value: '', label: activePresetId ? '— Saved configuration —' : '— Saved configuration (runtime default) —' },
+    { value: '', label: activePresetId ? '— Saved configuration —' : '— Saved configuration (default) —' },
     ...presetsState.presets.map((p) => ({
       value: p.id,
-      label: p.id === activePresetId ? `${p.name} (runtime default)` : p.name,
+      label: p.id === activePresetId ? `${p.name} (default)` : p.name,
     })),
   ];
   const activePresetMissing = !!activePresetId &&
@@ -349,6 +350,7 @@ export const AutoBirdSettingsModal: React.FC<AutoBirdSettingsModalProps> = ({ is
   return (
     <>
     <SettingsModal
+      footerLeading={<StopFooter featureId="autoBird" />}
       isOpen={isOpen}
       onClose={handleClose}
       maxWidth="full"
@@ -359,7 +361,7 @@ export const AutoBirdSettingsModal: React.FC<AutoBirdSettingsModalProps> = ({ is
       icon={<Bird className="h-5 w-5" />}
       description={(
             <>
-              Configure runtime-selectable presets of troops to keep in each castle. These units will{' '}
+              Configure presets of troops to keep in each castle. These units will{' '}
               <span className="font-bold text-text-main"><LocalizedText messageKey="ui.settings.components.autoBirdSettingsModal.not.254bb97b" /></span> be sent.
             </>
       )}
@@ -376,7 +378,7 @@ export const AutoBirdSettingsModal: React.FC<AutoBirdSettingsModalProps> = ({ is
         )}
         {activePresetMissing && (
           <div className="rounded-global border border-warning/30 bg-warning/10 px-4 py-3 text-sm font-semibold text-warning" role="alert">
-            <LocalizedText messageKey="ui.settings.components.autoBirdSettingsModal.the.selected.runtime.preset.no.longer.exists.f845b7fe" /></div>
+            <LocalizedText messageKey="ui.settings.components.autoBirdSettingsModal.the.selected.preset.no.longer.exists.saving.1fd22d5b" /></div>
         )}
         <AutomationRunStrip
           featureId="autoBird"
@@ -473,7 +475,7 @@ export const AutoBirdSettingsModal: React.FC<AutoBirdSettingsModalProps> = ({ is
             <>
             Choose a preset and click <span className="font-semibold text-text-main"><LocalizedText messageKey="common.apply" /></span> to load it into this draft.{' '}
             <span className="font-semibold text-text-main"><LocalizedText messageKey="common.saveChanges" /></span> persists that selection and updates the applied preset
-            (including its name). Another feature can switch the runtime default by preset ID, while Calendar periods can override it.
+            (including its name). Another feature can switch the default preset by preset ID, while Calendar periods can override it.
             </>
           )}
         />
@@ -549,7 +551,7 @@ export const AutoBirdSettingsModal: React.FC<AutoBirdSettingsModalProps> = ({ is
                   )}
                   {stock ? (
                     <div className="mt-3 space-y-1.5 border-t border-border-base pt-2">
-                      <UnitStockList lines={stock.lines} mode="reserve" />
+                      <UnitStockList lines={stock.lines} mode="reserve" freshness={stock.freshness} />
                       <ul><ReadinessCheckLine check={stock.check} /></ul>
                     </div>
                   ) : null}

@@ -6,6 +6,8 @@ import { useVirtualizer } from '@tanstack/react-virtual';
 import UnitImage from './UnitImage';
 import { useMetadata, type MetadataItem } from '../context/MetadataContext';
 import { unitCombatRole } from '../settings/UnitRole';
+import type { CastleStateV2 } from '../api/Contracts';
+import { stockObservationNote, unitObservationFreshness, type ObservationContext } from '../settings/requirements/observationFreshness';
 import {
   getFavorites,
   toggleFavorite,
@@ -43,6 +45,12 @@ export interface TroopPickerOptions {
   excludedUnitIds?: number[];
   /** Optional in-castle stock counts shown on each unit card. */
   stockQuantities?: Record<number, number>;
+  /**
+   * Where `stockQuantities` come from and how current they are (CIT-20): counts are captioned "last known"
+   * with the reason when the game connection is not current, and "as of <time>" when the game reports a
+   * castle time. Selection never changes.
+   */
+  stockObservation?: { castle: Pick<CastleStateV2, 'unitsObservedAt'> | null; observation: ObservationContext };
 }
 
 // Result type varies based on options
@@ -423,7 +431,13 @@ const TroopPickerModal: React.FC<TroopPickerModalProps> = ({ isOpen, options, on
     allowedUnitIds,
     excludedUnitIds = [],
     stockQuantities,
+    stockObservation,
   } = options;
+  const stockNote = useMemo(() => (
+    stockQuantities && stockObservation
+      ? stockObservationNote(unitObservationFreshness({ castle: stockObservation.castle, ...stockObservation.observation }))
+      : null
+  ), [stockObservation, stockQuantities]);
   const { troops } = useMetadata();
 
   // Selection state
@@ -655,6 +669,12 @@ const TroopPickerModal: React.FC<TroopPickerModalProps> = ({ isOpen, options, on
       )}
       filterDock={(
         <div className="picker-filter-dock">
+          {stockNote ? (
+            <p className="mb-1 text-[11px] font-semibold text-warning" data-stock-observation={stockNote.reasonKey ? 'last-known' : 'observed'}>
+              <LocalizedText messageKey={stockNote.messageKey} params={stockNote.params} />
+              {stockNote.reasonKey ? <> · <LocalizedText messageKey={stockNote.reasonKey} /></> : null}
+            </p>
+          ) : null}
           <span className="ui-kicker picker-filter-dock-label"><LocalizedText messageKey="ui.components.troopPickerModal.filters.546ebb8e" /></span>
           <div className="picker-filter-row">
             <PillSelector
