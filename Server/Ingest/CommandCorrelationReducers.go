@@ -166,3 +166,45 @@ func reduceAllianceHelpRequestResponse(
 	}
 	return domains, changed, nil
 }
+
+// storageSnapshotSaleOpcodes maps a storage refresh to the sale it resolves.
+var storageSnapshotSaleOpcodes = map[string]string{"gei": "seq", "ggm": "sge"}
+
+// reduceStorageSnapshotCommand records an outbound GEI/GGM so its reply can be
+// tied to the moment the refresh was requested.
+func reduceStorageSnapshotCommand(
+	_ context.Context,
+	frame Protocol.Frame,
+	gameState *State.GameState,
+	_ *GameData.Store,
+) ([]string, bool, error) {
+	if _, tracked := storageSnapshotSaleOpcodes[frame.Opcode]; !tracked ||
+		!gameState.RecordPendingCommandRequest(State.PendingCommandRequest{
+			Opcode: frame.Opcode, OperationID: frame.CausationOperationID, SentAt: frame.ReceivedAt,
+		}) {
+		return nil, false, nil
+	}
+	return []string{"command-context"}, true, nil
+}
+
+// reduceStorageSnapshotSaleResolution drops unresolved SEQ/SGE identities that
+// were sent before the answered GEI/GGM request: the game processes one
+// connection in order, so the snapshot already reflects those sales. This
+// stops a lost sale reply from shifting FIFO attribution onto a later sale.
+func reduceStorageSnapshotSaleResolution(
+	_ context.Context,
+	frame Protocol.Frame,
+	gameState *State.GameState,
+	_ *GameData.Store,
+) ([]string, bool, error) {
+	saleOpcode, tracked := storageSnapshotSaleOpcodes[frame.Opcode]
+	if !tracked || frame.ResponseCode == nil {
+		return nil, false, nil
+	}
+	before := len(gameState.CommandContext.PendingRequests)
+	request, found := gameState.TakePendingCommandRequest(frame.Opcode, frame.CausationOperationID, frame.ReceivedAt)
+	if found && frameResponseCodeIs(frame, 0) {
+		gameState.DropPendingCommandRequestsBefore(saleOpcode, request.SentAt)
+	}
+	return []string{"command-context"}, before != len(gameState.CommandContext.PendingRequests), nil
+}

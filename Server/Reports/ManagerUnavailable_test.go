@@ -153,6 +153,8 @@ func TestReportFetchUnavailableIgnoresReceiptText(t *testing.T) {
 		{"bsd 130", Intent.Receipt{Failure: &Intent.FailurePresentation{GameOpcode: "bsd", GameCode: code(130)}}, true},
 		{"bsd 66", Intent.Receipt{Failure: &Intent.FailurePresentation{GameOpcode: "BSD", GameCode: code(66)}}, true},
 		{"bsd other", Intent.Receipt{Failure: &Intent.FailurePresentation{GameOpcode: "bsd", GameCode: code(1300066)}}, false},
+		{"battle summary 66 keeps terminal handling", Intent.Receipt{Failure: &Intent.FailurePresentation{GameOpcode: "bls", GameCode: code(66)}}, true},
+		{"battle summary other", Intent.Receipt{Failure: &Intent.FailurePresentation{GameOpcode: "bls", GameCode: code(130)}}, false},
 		{"battle waves 66 keeps terminal handling", Intent.Receipt{Failure: &Intent.FailurePresentation{GameOpcode: "blm", GameCode: code(66)}}, true},
 		{"battle details 66 keeps terminal handling", Intent.Receipt{Failure: &Intent.FailurePresentation{GameOpcode: "bld", GameCode: code(66)}}, true},
 		{"no code", Intent.Receipt{Failure: &Intent.FailurePresentation{GameOpcode: "bsd"}}, false},

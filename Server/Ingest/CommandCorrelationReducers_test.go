@@ -178,3 +178,42 @@ func TestAllianceHelpRejection269MarksOnlyTheRequestedRecruitmentList(t *testing
 		t.Fatalf("record survived its jobs leaving the queue: %#v", store.ReadOnlyView().AllianceHelpRequests.IneligibleRecruitment)
 	}
 }
+
+// Daniel review r4135053984: a lost SEQ reply must not shift the next reply
+// onto the wrong item once a storage refresh has been requested after it.
+func TestStorageRefreshResolvesLostSaleRepliesBeforeTheNextSale(t *testing.T) {
+	base := time.Date(2026, 9, 17, 10, 0, 0, 0, time.UTC)
+	gameState := State.NewGameState()
+	gameState.Session.Generation = 2
+	for _, id := range []State.EquipmentInstanceID{6558434871, 6558434872} {
+		gameState.Inventory.Equipment[id] = State.EquipmentInstance{ID: id, DefinitionID: 100, Slot: 1, RarityID: 2}
+	}
+	store, pipeline := commandCorrelationPipeline(t, gameState)
+	outbound := func(opcode string, payload string, at time.Time) {
+		handleCorrelationFrame(t, pipeline, Protocol.Frame{
+			Direction: Protocol.DirectionOutbound, Opcode: opcode, Payload: json.RawMessage(payload), ReceivedAt: at,
+		})
+	}
+	inbound := func(opcode string, payload string, at time.Time) {
+		code := 0
+		handleCorrelationFrame(t, pipeline, Protocol.Frame{
+			Direction: Protocol.DirectionInbound, Opcode: opcode, ResponseCode: &code, Payload: json.RawMessage(payload), ReceivedAt: at,
+		})
+	}
+
+	outbound("seq", `{"EID":6558434871,"LID":-1,"EX":0,"LFID":-1}`, base) // reply lost
+	outbound("gei", `{}`, base.Add(time.Second))
+	inbound("gei", `{"I":[[6558434871,1,0,2,100,[],100],[6558434872,1,0,2,100,[],100]]}`, base.Add(2*time.Second))
+	if pending := State.PendingCommandRequests(store.ReadOnlyView(), "seq"); len(pending) != 0 {
+		t.Fatalf("storage refresh left the lost sale pending: %#v", pending)
+	}
+	outbound("seq", `{"EID":6558434872,"LID":-1,"EX":0,"LFID":-1}`, base.Add(3*time.Second))
+	inbound("seq", `{}`, base.Add(3*time.Second+100*time.Millisecond))
+	inventory := store.ReadOnlyView().Inventory.Equipment
+	if _, kept := inventory[6558434871]; !kept {
+		t.Fatal("the next sale reply was attributed to the lost sale")
+	}
+	if _, sold := inventory[6558434872]; sold {
+		t.Fatal("the answered sale was not reconciled")
+	}
+}

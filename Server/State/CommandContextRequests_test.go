@@ -44,6 +44,22 @@ func TestPendingCommandRequestsCorrelateFIFOWithinSessionAndWindow(t *testing.T)
 		t.Fatalf("expired request was not dropped or fresh request was lost: %#v", got)
 	}
 
+	// A storage refresh requested after a lost reply resolves that sale: the
+	// next reply must not be attributed to it.
+	state.RecordPendingCommandRequest(PendingCommandRequest{Opcode: "seq", SentAt: base.Add(50 * time.Second), EquipmentID: 10})
+	if !state.DropPendingCommandRequestsBefore("seq", base.Add(45*time.Second)) {
+		t.Fatal("sales sent before the storage refresh were retained")
+	}
+	if got := PendingCommandRequests(state, "seq"); len(got) != 1 || got[0].EquipmentID != 10 {
+		t.Fatalf("storage refresh dropped the wrong sales: %#v", got)
+	}
+	if got := PendingCommandRequests(state, "ahr"); len(got) != 1 {
+		t.Fatalf("storage refresh dropped another opcode: %#v", got)
+	}
+	if taken, found = state.TakePendingCommandRequest("seq", "", base.Add(51*time.Second)); !found || taken.EquipmentID != 10 {
+		t.Fatalf("reply after the refresh = %#v found=%t", taken, found)
+	}
+
 	state.Session.Generation = 5
 	if got := PendingCommandRequests(state, "seq"); len(got) != 0 {
 		t.Fatalf("previous session requests are still pending: %#v", got)

@@ -91,8 +91,6 @@ func RegisterCoreReducers(registry *Registry) error {
 		{"fuc", components(State.ComponentBeri), reduceBeriCapacity},
 		{"gli", leaders, reduceLeaders},
 		{"gie", components(State.ComponentGenerals), reduceGenerals},
-		{"gei", components(State.ComponentInventory), reduceEquipmentStorage},
-		{"ggm", components(State.ComponentInventory), reduceGemStorage},
 		{"gii", components(State.ComponentInventory), reduceConstructionInventory},
 		{"abpi", castles, reduceBuildingProduction},
 		{"gui", castles, reduceFocusedUnits},
@@ -307,6 +305,17 @@ func RegisterCoreReducers(registry *Registry) error {
 		reducerStep{writes: commandContext, reducer: reduceGemSaleResponse},
 	); err != nil {
 		return err
+	}
+	for opcode, reducer := range map[string]Reducer{"gei": reduceEquipmentStorage, "ggm": reduceGemStorage} {
+		if err := registry.RegisterOutboundComponents(opcode, commandContext, reduceStorageSnapshotCommand); err != nil {
+			return err
+		}
+		if err := registry.registerComponentSequence(opcode,
+			reducerStep{writes: components(State.ComponentInventory), reducer: reducer},
+			reducerStep{writes: commandContext, reducer: reduceStorageSnapshotSaleResolution},
+		); err != nil {
+			return err
+		}
 	}
 	if err := registry.RegisterOutboundComponents("ahr", commandContext, reduceAllianceHelpRequestCommand); err != nil {
 		return err

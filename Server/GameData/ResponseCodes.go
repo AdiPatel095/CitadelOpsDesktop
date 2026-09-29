@@ -227,15 +227,16 @@ var responseCodeGuidanceByOpcode = map[string]map[int]responseCodeGuidance{
 	"abi": {
 		95: {
 			kind: ResponseCodeCooldown, expectedState: true,
-			recovery:           "The fortress reported a cooldown at the attack dialog. Auto Fortress defers this fortress and chooses another target; it will re-check it later.",
-			recoveryDescriptor: Localization.New("server.gamedata.the_fortress_reported_a.6fb33e15", "The fortress reported a cooldown at the attack dialog. Auto Fortress defers this fortress and chooses another target; it will re-check it later.", nil),
+			recovery:           "The attack was not sent. The lane pauses for the safety cooldown before Auto Fortress re-checks this fortress.",
+			recoveryDescriptor: Localization.New("server.gamedata.the_attack_was_not.6a515a2d", "The attack was not sent. The lane pauses for the safety cooldown before Auto Fortress re-checks this fortress.", nil),
 		},
 	},
+	// CRA is shared by every attack lane, so its text names no feature.
 	"cra": {
 		95: {
 			kind: ResponseCodeCooldown, expectedState: true,
-			recovery:           "The Storm target reported a cooldown at launch. Auto Storm defers this target and chooses another; it will re-check it later.",
-			recoveryDescriptor: Localization.New("server.gamedata.the_storm_target_reported.288352c7", "The Storm target reported a cooldown at launch. Auto Storm defers this target and chooses another; it will re-check it later.", nil),
+			recovery:           "The attack was not sent. The lane pauses for the safety cooldown before this target is checked again.",
+			recoveryDescriptor: Localization.New("server.gamedata.the_attack_was_not.2af0c0e8", "The attack was not sent. The lane pauses for the safety cooldown before this target is checked again.", nil),
 		},
 	},
 	// Official client enum NO_SUCH_MESSAGE = 66; errorCode_66 supplies the text.

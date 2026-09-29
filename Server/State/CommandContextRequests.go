@@ -119,6 +119,30 @@ func (state *GameState) TakePendingCommandRequest(
 	return taken, match >= 0
 }
 
+// DropPendingCommandRequestsBefore discards unresolved requests of one opcode
+// sent before cutoff. A storage snapshot requested at cutoff already reflects
+// every earlier sale, so those identities can no longer be correlated safely.
+func (state *GameState) DropPendingCommandRequestsBefore(opcode string, cutoff time.Time) bool {
+	if state == nil || cutoff.IsZero() {
+		return false
+	}
+	opcode = strings.ToLower(strings.TrimSpace(opcode))
+	current := state.CommandContext.PendingRequests
+	next := make([]PendingCommandRequest, 0, len(current))
+	for _, existing := range current {
+		if existing.SessionGeneration != state.Session.Generation ||
+			existing.Opcode == opcode && existing.SentAt.Before(cutoff) {
+			continue
+		}
+		next = append(next, existing)
+	}
+	if len(next) == len(current) {
+		return false
+	}
+	state.CommandContext.PendingRequests = normalizePendingCommandRequests(next)
+	return true
+}
+
 // PendingCommandRequests returns the current session's unresolved requests of
 // one opcode in send order.
 func PendingCommandRequests(state GameState, opcode string) []PendingCommandRequest {
