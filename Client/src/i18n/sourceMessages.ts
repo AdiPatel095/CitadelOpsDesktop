@@ -1686,5 +1686,6 @@ export const sourceMessages = {
   "ui.settings.components.eventAttackSetupField.stationed.stock.in.the.source.castle.the.ff087c1c": "Stationed stock in the source castle. The game sizes each lane at launch.",
   "ui.settings.requirements.commanderEligibility.commander.assignments.are.checked.once.commanders.are.497afa18": "Commander assignments are checked once commanders are observed.",
   "ui.settings.requirements.setupReadiness.the.fastest.eligible.commander.is.chosen.when.87205aff": "The fastest eligible commander is chosen when the attack launches; speed is not ranked here.",
-  "ui.settings.components.autoFoodBalanceSettingsModal.donors.hold.food.above.the.donor.reserve.e605cba8": "Donors hold food above the donor reserve; shipments also keep the source castle's safety window."
+  "ui.settings.components.autoFoodBalanceSettingsModal.donors.hold.food.above.the.donor.reserve.e605cba8": "Donors hold food above the donor reserve; shipments also keep the source castle's safety window.",
+  "ui.settings.components.autoFoodBalanceSettingsModal.last.known.food.stock.it.updates.once.49b8947f": "Last known food stock; it updates once the game connection is current."
 } as const;

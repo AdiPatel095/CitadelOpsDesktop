@@ -45,9 +45,14 @@ export const CastleRequirementField: React.FC<CastleRequirementFieldProps> = ({
     label: `${castle.name} · ${castle.x}:${castle.y}`,
   })), [options, purpose, state]);
   const check = evaluateCastleReference({ castleId: value, state, purpose, requireObservedUnits });
-  const savedMissing = value > 0 && state != null && state.castles[String(value)] == null;
-  const selectOptions = savedMissing
-    ? [...offered, { value: String(value), label: localizeStatic('castleRequirement.missingOption', { id: value }) }]
+  const castleDataObserved = state != null && Object.keys(state.castles ?? {}).length > 0;
+  const savedNotListed = value > 0 && state?.castles[String(value)] == null;
+  // Without castle data the saved castle is kept as is ("not observed yet"), never "not in this world".
+  const selectOptions = savedNotListed
+    ? [...offered, {
+      value: String(value),
+      label: localizeStatic(castleDataObserved ? 'castleRequirement.missingOption' : 'castleRequirement.unobservedOption', { id: value }),
+    }]
     : offered;
   return (
     <div id={id} className="block">

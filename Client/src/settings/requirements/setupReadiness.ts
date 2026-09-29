@@ -4,7 +4,7 @@ import type { MessageKey } from '../../i18n/messages';
 import { aggregateReadiness, type CheckState, type ReadinessCheck, type ReadinessReport } from '../readiness/Readiness';
 import { castleMatchesPurpose } from './castleRequirements';
 import type { CommanderEligibilityReport } from './commanderEligibility';
-import type { ObservationContext } from './observationFreshness';
+import { observationUnavailableMessage, unitObservationFreshness, type ObservationContext } from './observationFreshness';
 import { evaluateUnitStock, type UnitStockResult } from './unitRequirements';
 
 /**
@@ -27,6 +27,19 @@ interface MetadataInput {
   metadataReady: boolean;
   /** Stock is compared only while unit counts are current (CIT-15 D1). */
   observation: ObservationContext;
+}
+
+/** True when castle data is missing or has no castles yet: nothing can be validated against it (waiting for data). */
+function castlesUnobserved(state: GameStateV2 | null): boolean {
+  return state == null || Object.keys(state.castles ?? {}).length === 0;
+}
+
+const CASTLES_NOT_OBSERVED = message('ui.settings.requirements.setupReadiness.castle.data.has.not.been.observed.yet.76ce81b7');
+
+/** Session-level freshness (checkpoint, disconnected, awaiting baseline) for lines that describe current stock. */
+function sessionUnavailable(observation: ObservationContext): MessageKey | null {
+  const freshness = unitObservationFreshness({ castle: null, ...observation });
+  return freshness.state === 'unavailable' ? observationUnavailableMessage(freshness.reason) : null;
 }
 
 // ——— Auto Towers ———
@@ -56,6 +69,9 @@ export function evaluateTowerReadiness(input: TowerReadinessInput): TowerReadine
   const withoutUnit = enabled.filter(([castleId, castle]) => castle.unitId <= 0 && input.state?.castles[castleId] != null);
   if (enabled.length === 0) {
     checks.push({ id: 'enabled-castles', state: 'blocked', messageKey: message('ui.settings.requirements.setupReadiness.enable.at.least.one.castle.and.choose.f11e9525'), fix: 'settings' });
+  } else if (castlesUnobserved(input.state)) {
+    // Saved castles cannot be validated without castle data: waiting, not a configuration error.
+    checks.push({ id: 'enabled-castles', state: 'unavailable', messageKey: CASTLES_NOT_OBSERVED, fix: 'connection' });
   } else if (missingCastles.length > 0) {
     checks.push({ id: 'enabled-castles', state: 'blocked', messageKey: message('setupReadiness.castlesNotInWorld'), params: { count: missingCastles.length }, fix: 'settings' });
   } else if (withoutUnit.length > 0) {
@@ -135,8 +151,8 @@ export function evaluateFortressReadiness(input: FortressReadinessInput): Fortre
   const supplyAvailable = input.direwolfPurchaseLimit > 0 || greatEmpireDirewolves > 0;
   const kingdoms: FortressKingdomReadiness[] = FORTRESS_KINGDOMS.map((kingdomId) => {
     const castle = fortressMainCastle(input.state, kingdomId);
-    const castleCheck: ReadinessCheck = !input.state
-      ? { id: 'kingdom-castle', slot: String(kingdomId), state: 'unavailable', messageKey: message('ui.settings.requirements.setupReadiness.castle.data.has.not.been.observed.yet.76ce81b7'), fix: 'connection' }
+    const castleCheck: ReadinessCheck = castlesUnobserved(input.state)
+      ? { id: 'kingdom-castle', slot: String(kingdomId), state: 'unavailable', messageKey: CASTLES_NOT_OBSERVED, fix: 'connection' }
       : castle
         ? { id: 'kingdom-castle', slot: String(kingdomId), state: 'valid', messageKey: message('ui.settings.requirements.setupReadiness.the.kingdom.main.castle.is.available.25e1efec') }
         : { id: 'kingdom-castle', slot: String(kingdomId), state: 'blocked', messageKey: message('ui.settings.requirements.setupReadiness.main.castle.is.unavailable.or.the.kingdom.552f7db4'), fix: 'settings' };
@@ -159,7 +175,9 @@ export function evaluateFortressReadiness(input: FortressReadinessInput): Fortre
   });
   const enabled = kingdoms.filter((kingdom) => input.kingdoms[String(kingdom.kingdomId)]?.enabled);
   const enabledAvailable = enabled.filter((kingdom) => kingdom.castle != null);
-  if (enabled.length === 0) {
+  if (castlesUnobserved(input.state)) {
+    checks.push({ id: 'enabled-kingdoms', state: 'unavailable', messageKey: CASTLES_NOT_OBSERVED, fix: 'connection' });
+  } else if (enabled.length === 0) {
     checks.push({ id: 'enabled-kingdoms', state: 'blocked', messageKey: message('ui.settings.requirements.setupReadiness.enable.at.least.one.available.outer.kingdom.49656995'), fix: 'settings' });
   } else if (enabledAvailable.length < enabled.length) {
     checks.push(worst(enabled.map((kingdom) => kingdom.castleCheck), enabled[0].castleCheck));
@@ -197,10 +215,13 @@ export function evaluateReserveReadiness(input: ReserveReadinessInput): ReserveR
     checks.push({ id: 'castles', state: 'unavailable', messageKey: message('ui.settings.requirements.setupReadiness.castle.data.has.not.been.observed.yet.76ce81b7'), fix: 'connection' });
     return { report: { featureId: input.featureId, checks, overall: aggregateReadiness(checks) }, stockByCastle, castlesNotInWorld };
   }
+  const castleDataObserved = !castlesUnobserved(input.state);
   for (const [castleId, reserves] of Object.entries(input.reserves)) {
     if (reserves.length === 0) continue;
     const castle = input.state.castles[castleId];
     if (!castle) {
+      // With no castle data yet, a saved reserve cannot be judged "not in this world".
+      if (!castleDataObserved) continue;
       castlesNotInWorld.push(castleId);
       continue;
     }
@@ -216,9 +237,12 @@ export function evaluateReserveReadiness(input: ReserveReadinessInput): ReserveR
     });
   }
   const observedCastles = Object.keys(input.state.castles).length;
-  checks.push(observedCastles > 0
-    ? { id: 'castles', state: 'valid', messageKey: message('setupReadiness.observedCastles'), params: { count: observedCastles } }
-    : { id: 'castles', state: 'unavailable', messageKey: message('ui.settings.requirements.setupReadiness.castle.data.has.not.been.observed.yet.76ce81b7'), fix: 'connection' });
+  const notCurrent = sessionUnavailable(input.observation);
+  checks.push(observedCastles === 0
+    ? { id: 'castles', state: 'unavailable', messageKey: CASTLES_NOT_OBSERVED, fix: 'connection' }
+    : notCurrent
+      ? { id: 'castles', state: 'unavailable', messageKey: notCurrent, fix: 'connection' }
+      : { id: 'castles', state: 'valid', messageKey: message('setupReadiness.observedCastles'), params: { count: observedCastles } });
   if (castlesNotInWorld.length > 0) {
     checks.push({ id: 'saved-castles', state: 'pending', messageKey: message('setupReadiness.reservesNotInWorld'), params: { count: castlesNotInWorld.length }, fix: 'settings' });
   }
@@ -231,6 +255,8 @@ export function evaluateReserveReadiness(input: ReserveReadinessInput): ReserveR
 
 export interface FoodBalanceReadinessInput {
   state: GameStateV2 | null;
+  /** Food, coins and unlocks are described only while current on this connection (CIT-15 D1). */
+  observation: ObservationContext;
   resources: Record<number, MetadataItem>;
   metadataReady: boolean;
   minimumSourceReserve: number;
@@ -246,6 +272,8 @@ export interface FoodCastleRow {
   kingdomId: number;
   food: number | null;
   role: FoodCastleRole;
+  /** False while the connection is not current: the row shows last-known data. */
+  current: boolean;
 }
 
 export interface FoodBalanceReadiness {
@@ -264,18 +292,29 @@ export function evaluateFoodBalanceReadiness(input: FoodBalanceReadinessInput): 
   const checks: ReadinessCheck[] = [];
   const foodId = input.metadataReady ? resourceIdForJsonKey(input.resources, 'F') : null;
   const coinId = input.metadataReady ? resourceIdForJsonKey(input.resources, 'C1') : null;
+  const notCurrent = sessionUnavailable(input.observation);
   const rows: FoodCastleRow[] = Object.values(input.state?.castles ?? {})
     .map((castle) => {
       const balance = foodId != null ? castle.resources?.[String(foodId)] : undefined;
       const food = balance ? Math.max(0, Number(balance.amount) || 0) : null;
       const role: FoodCastleRole = food == null ? 'unobserved' : food > input.minimumSourceReserve ? 'donor' : 'recipient';
-      return { castleId: castle.id, name: castle.name?.trim() || `#${castle.id}`, kingdomId: castle.kingdomId, food, role };
+      return { castleId: castle.id, name: castle.name?.trim() || `#${castle.id}`, kingdomId: castle.kingdomId, food, role, current: notCurrent == null };
     })
     .sort((left, right) => left.kingdomId - right.kingdomId || left.castleId - right.castleId);
 
-  if (!input.state) {
-    checks.push({ id: 'food-observations', state: 'unavailable', messageKey: message('ui.settings.requirements.setupReadiness.castle.data.has.not.been.observed.yet.76ce81b7'), fix: 'connection' });
-  } else if (foodId == null) {
+  if (castlesUnobserved(input.state)) {
+    checks.push({ id: 'food-observations', state: 'unavailable', messageKey: CASTLES_NOT_OBSERVED, fix: 'connection' });
+    return { report: { featureId: 'autoFoodBalance', checks, overall: aggregateReadiness(checks) }, rows, coins: null };
+  }
+  if (notCurrent) {
+    // Last-known data only: no claims about donors, coins or unlocks until the connection is current.
+    checks.push({ id: 'food-observations', state: 'unavailable', messageKey: notCurrent, fix: 'connection' });
+    checks.push({ id: 'donors', state: 'unavailable', messageKey: notCurrent, fix: 'connection' });
+    checks.push({ id: 'coin-reserve', state: 'unavailable', messageKey: notCurrent, fix: 'connection' });
+    if (input.autoKingdomTransport) checks.push({ id: 'kingdom-transport', state: 'unavailable', messageKey: notCurrent, fix: 'connection' });
+    return { report: { featureId: 'autoFoodBalance', checks, overall: aggregateReadiness(checks) }, rows, coins: null };
+  }
+  if (foodId == null) {
     checks.push({ id: 'food-observations', state: 'unavailable', messageKey: message('ui.settings.requirements.setupReadiness.official.resource.data.is.still.loading.4657aec3') });
   } else if (rows.some((row) => row.role === 'unobserved')) {
     checks.push({ id: 'food-observations', state: 'unavailable', messageKey: message('setupReadiness.foodUnobserved'), params: { count: rows.filter((row) => row.role === 'unobserved').length } });

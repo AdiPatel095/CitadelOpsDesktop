@@ -39,7 +39,7 @@ test('saved castle references from another world are reported for reselection, n
   const check = castles.evaluateCastleReference({ castleId: 7, state: worldB, purpose: 'source-great-empire' });
   assert.equal(check.state, 'blocked');
   assert.equal(check.fix, 'settings');
-  assert.deepEqual(castles.draftReferencesValid({ castleIds: [7] }, worldB), { valid: false, missing: [7] });
+  assert.deepEqual(castles.draftReferencesValid({ castleIds: [7] }, worldB), { valid: false, missing: [7], unobserved: false });
   const towers = setup.evaluateTowerReadiness({ state: worldB, castles: { 7: { enabled: true, unitId: 1, maidenOnly: false } }, ...metadata });
   assert.equal(towers.report.checks.find((entry) => entry.id === 'enabled-castles').state, 'blocked');
   assert.equal(towers.report.overall, 'blocked');

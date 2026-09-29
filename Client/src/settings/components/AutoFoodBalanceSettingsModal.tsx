@@ -55,7 +55,8 @@ export const AutoFoodBalanceSettingsModal: React.FC<AutoFoodBalanceSettingsModal
     minimumSourceReserve: settings.minimumSourceReserve,
     minimumCoinReserve: settings.minimumCoinReserve,
     autoKingdomTransport: settings.autoKingdomTransport,
-  }), [metadataLoading, resources, settings.autoKingdomTransport, settings.minimumCoinReserve, settings.minimumSourceReserve, state]);
+    observation: setup.observation,
+  }), [metadataLoading, resources, settings.autoKingdomTransport, settings.minimumCoinReserve, settings.minimumSourceReserve, setup.observation, state]);
 
   const setNumber = (field: keyof AutoFoodBalanceSettings, value: string) => {
     setSettings((current) => parseAutoFoodBalanceSettings({ ...current, [field]: Number(value) }));
@@ -187,6 +188,9 @@ export const AutoFoodBalanceSettingsModal: React.FC<AutoFoodBalanceSettingsModal
 
         <div id="auto-food-castles" tabIndex={-1} className="space-y-2 rounded-global border border-border-base bg-bg-card/40 p-4 outline-none">
           <div className="text-xs font-bold uppercase tracking-wider text-text-muted"><LocalizedText messageKey="ui.settings.components.autoFoodBalanceSettingsModal.castles.and.food.stock.a2f41062" /></div>
+          {readiness.rows.length > 0 && !readiness.rows[0].current ? (
+            <p className="text-[11px] font-semibold text-warning"><LocalizedText messageKey="ui.settings.components.autoFoodBalanceSettingsModal.last.known.food.stock.it.updates.once.49b8947f" /></p>
+          ) : null}
           {readiness.rows.length === 0 ? (
             <p className="text-xs text-text-muted"><LocalizedText messageKey="ui.settings.components.autoFoodBalanceSettingsModal.no.castles.are.observed.yet.ba035a87" /></p>
           ) : (

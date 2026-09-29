@@ -347,6 +347,7 @@ export const messages = {
   "unitStock.requiredStationed": "{required, number} needed · {stationed, number} stationed",
   "unitStock.reserveStationed": "Keep {required, number} · {stationed, number} stationed",
   "castleRequirement.missingOption": "Saved castle #{id} (not in this world)",
+  "castleRequirement.unobservedOption": "Saved castle #{id} (castle data not observed yet)",
   "commanderAssignment.toggle": "Allow {commander} for this automation",
   "setupReadiness.castlesNotInWorld": "{count, plural, one {# enabled castle is not in this account or world. Reselect or disable it.} other {# enabled castles are not in this account or world. Reselect or disable them.}}",
   "setupReadiness.castlesWithoutTroop": "{count, plural, one {# enabled castle has no troop chosen.} other {# enabled castles have no troop chosen.}}",

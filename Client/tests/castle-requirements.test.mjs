@@ -62,6 +62,13 @@ test('castle references report missing, wrong kind, unobserved and valid', () =>
 test('account key and reference validity', () => {
   assert.equal(castles.accountKey(state), '5:EmpireEx_21');
   assert.equal(castles.accountKey(null), '');
-  assert.deepEqual(castles.draftReferencesValid({ castleIds: [1, 0, 404] }, state), { valid: false, missing: [404] });
-  assert.deepEqual(castles.draftReferencesValid({ castleIds: [1, 11] }, state), { valid: true, missing: [] });
+  assert.deepEqual(castles.draftReferencesValid({ castleIds: [1, 0, 404] }, state), { valid: false, missing: [404], unobserved: false });
+  assert.deepEqual(castles.draftReferencesValid({ castleIds: [1, 11] }, state), { valid: true, missing: [], unobserved: false });
+  // Zero observed castles is waiting for data, never "reselect" (CIT-18 QA).
+  assert.deepEqual(castles.draftReferencesValid({ castleIds: [404] }, { castles: {} }), { valid: false, missing: [], unobserved: true });
+  assert.deepEqual(castles.draftReferencesValid({ castleIds: [404] }, null), { valid: false, missing: [], unobserved: true });
+  const waiting = castles.evaluateCastleReference({ castleId: 404, state: { castles: {} }, purpose: 'source-great-empire' });
+  assert.equal(waiting.state, 'unavailable');
+  assert.equal(waiting.fix, 'connection');
+  assert.equal(castles.evaluateCastleReference({ castleId: 0, state: { castles: {} }, purpose: 'source-great-empire' }).state, 'blocked', 'no castle chosen is still a setting');
 });

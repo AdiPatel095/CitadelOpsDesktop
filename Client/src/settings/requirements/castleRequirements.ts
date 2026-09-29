@@ -49,6 +49,10 @@ export function evaluateCastleReference(input: CastleReferenceInput): ReadinessC
   if (castleId <= 0) {
     return { id, state: 'blocked', messageKey: message('ui.settings.requirements.castleRequirements.choose.a.castle.ddcc3a1f'), fix: 'settings' };
   }
+  if (Object.keys(state.castles ?? {}).length === 0) {
+    // No castle data yet: the saved castle cannot be judged missing (waiting, not "reselect").
+    return { id, state: 'unavailable', messageKey: message('ui.settings.requirements.castleRequirements.castle.data.has.not.been.observed.yet.76ce81b7'), fix: 'connection' };
+  }
   const castle = state.castles[String(castleId)];
   if (!castle) {
     return { id, state: 'blocked', messageKey: message('ui.settings.requirements.castleRequirements.the.saved.castle.is.not.in.this.e718c127'), fix: 'settings' };
@@ -79,9 +83,11 @@ export function accountKey(state: GameStateV2 | null): string {
 export function draftReferencesValid(
   references: { castleIds: readonly number[] },
   state: GameStateV2 | null,
-): { valid: boolean; missing: number[] } {
-  const missing = references.castleIds.filter((castleId) => castleId > 0 && state?.castles[String(castleId)] == null);
-  return { valid: state != null && missing.length === 0, missing };
+): { valid: boolean; missing: number[]; unobserved: boolean } {
+  // Without castle data, saved references cannot be validated yet; never report them as missing.
+  if (state == null || Object.keys(state.castles ?? {}).length === 0) return { valid: false, missing: [], unobserved: true };
+  const missing = references.castleIds.filter((castleId) => castleId > 0 && state.castles[String(castleId)] == null);
+  return { valid: missing.length === 0, missing, unobserved: false };
 }
 
 export interface AccountSessionTracking {

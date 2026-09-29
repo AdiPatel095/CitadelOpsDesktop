@@ -3113,5 +3113,140 @@
     "classification": "technical",
     "reason": "Readiness ids/states/fix codes, feature ids, resource JSON keys, stock modes and castle roles.",
     "evidence": "F and C1 are official resource JSON keys; roles feed the setupReadiness.foodRole select; readiness text is the typed messageKey."
+  },
+  "4f158506168f4207965c231689858989c0e766b4c4050ed385d2c04abe0b79b3": {
+    "classification": "technical",
+    "reason": "Castle option label composed from the castle name and coordinates, and a structural flag.",
+    "evidence": "Castle names are game data and coordinates are numbers; the requirement text is a typed message."
+  },
+  "b242468e96aa8644d454826ee77d42e38a13e874b3db9be32f431577919796df": {
+    "classification": "technical",
+    "reason": "Castle option label composed from the castle name and coordinates, and a structural flag.",
+    "evidence": "Castle names are game data and coordinates are numbers; the requirement text is a typed message."
+  },
+  "75cc49f61bdd9b83d7a1f2c185b47d20a5c7f4c4e17937355ae5e85f82ce1e71": {
+    "classification": "technical",
+    "reason": "Castle purpose tokens, readiness ids/states/fix codes and account key composition.",
+    "evidence": "Purposes select castles; readiness text is the typed messageKey rendered by ReadinessPanel; accountKey is an identity string."
+  },
+  "c2a8da154cd9a9520e3f45e7e1f17783dfabb082ca8c90b9c1db65ff0a6620bb": {
+    "classification": "technical",
+    "reason": "Castle purpose tokens, readiness ids/states/fix codes and account key composition.",
+    "evidence": "Purposes select castles; readiness text is the typed messageKey rendered by ReadinessPanel; accountKey is an identity string."
+  },
+  "1bdfddc726ae1a704e5220fd9c789ccd3a21b8b081b7547503f8d47bba8117fd": {
+    "classification": "technical",
+    "reason": "Readiness ids/states/fix codes, feature ids, resource JSON keys, stock modes and castle roles.",
+    "evidence": "F and C1 are official resource JSON keys; roles feed the setupReadiness.foodRole select; readiness text is the typed messageKey."
+  },
+  "3ac95a21b83e55c8d96b44c52ac96c546e585d87b0abd2211ef9826fcc2a514f": {
+    "classification": "technical",
+    "reason": "Readiness ids/states/fix codes, feature ids, resource JSON keys, stock modes and castle roles.",
+    "evidence": "F and C1 are official resource JSON keys; roles feed the setupReadiness.foodRole select; readiness text is the typed messageKey."
+  },
+  "3bc596b314c53339e3033bb52c35246a321fdb6599b08459e4c8e3f06b0dc0d7": {
+    "classification": "technical",
+    "reason": "Readiness ids/states/fix codes, feature ids, resource JSON keys, stock modes and castle roles.",
+    "evidence": "F and C1 are official resource JSON keys; roles feed the setupReadiness.foodRole select; readiness text is the typed messageKey."
+  },
+  "ca19fb4b0ced795a86d56117981e6960315623ae7aa0e8fe302a2a3f035565c6": {
+    "classification": "technical",
+    "reason": "Readiness ids/states/fix codes, feature ids, resource JSON keys, stock modes and castle roles.",
+    "evidence": "F and C1 are official resource JSON keys; roles feed the setupReadiness.foodRole select; readiness text is the typed messageKey."
+  },
+  "66386300ab324b73cf13d1350bc5f538992d7e1902c0d93126e165dcc3503d96": {
+    "classification": "technical",
+    "reason": "Readiness ids/states/fix codes, feature ids, resource JSON keys, stock modes and castle roles.",
+    "evidence": "F and C1 are official resource JSON keys; roles feed the setupReadiness.foodRole select; readiness text is the typed messageKey."
+  },
+  "4bc4492c18b251334608b340536dd0e45687515578419dd21e6ceeeeaab0a2e0": {
+    "classification": "technical",
+    "reason": "Readiness ids/states/fix codes, feature ids, resource JSON keys, stock modes and castle roles.",
+    "evidence": "F and C1 are official resource JSON keys; roles feed the setupReadiness.foodRole select; readiness text is the typed messageKey."
+  },
+  "c33953c69004a768244932a7bcd320fa649347424b9fa4f1c0127d4645b0998e": {
+    "classification": "technical",
+    "reason": "Readiness ids/states/fix codes, feature ids, resource JSON keys, stock modes and castle roles.",
+    "evidence": "F and C1 are official resource JSON keys; roles feed the setupReadiness.foodRole select; readiness text is the typed messageKey."
+  },
+  "6c52f8768e50e9213619a440003ed5912458299f6a9bb985c456c2999e77c9f6": {
+    "classification": "technical",
+    "reason": "Readiness ids/states/fix codes, feature ids, resource JSON keys, stock modes and castle roles.",
+    "evidence": "F and C1 are official resource JSON keys; roles feed the setupReadiness.foodRole select; readiness text is the typed messageKey."
+  },
+  "9560b253f2e5ca9e3644dfb83785381a1df3a0de963527ffb2d9aed3651af287": {
+    "classification": "technical",
+    "reason": "Readiness ids/states/fix codes, feature ids, resource JSON keys, stock modes and castle roles.",
+    "evidence": "F and C1 are official resource JSON keys; roles feed the setupReadiness.foodRole select; readiness text is the typed messageKey."
+  },
+  "535f3824859f31cd15b418486fd7607156dd405a3e03fb504a1d92861d9d4993": {
+    "classification": "technical",
+    "reason": "Readiness ids/states/fix codes, feature ids, resource JSON keys, stock modes and castle roles.",
+    "evidence": "F and C1 are official resource JSON keys; roles feed the setupReadiness.foodRole select; readiness text is the typed messageKey."
+  },
+  "39fe167a76ff341eff6a78b03f8591d3b0d9b3488cff151355e41bed1f0b314f": {
+    "classification": "technical",
+    "reason": "Readiness ids/states/fix codes, feature ids, resource JSON keys, stock modes and castle roles.",
+    "evidence": "F and C1 are official resource JSON keys; roles feed the setupReadiness.foodRole select; readiness text is the typed messageKey."
+  },
+  "4d04e3c1530b833f5b55e92fa6aaa6e1432790f76e16b3eec325d5ca3e35962a": {
+    "classification": "technical",
+    "reason": "Readiness ids/states/fix codes, feature ids, resource JSON keys, stock modes and castle roles.",
+    "evidence": "F and C1 are official resource JSON keys; roles feed the setupReadiness.foodRole select; readiness text is the typed messageKey."
+  },
+  "4298799ca701c356252dce044a23b9eaa79bad5931bb43adb0ad1f288c9deaa4": {
+    "classification": "technical",
+    "reason": "Readiness ids/states/fix codes, feature ids, resource JSON keys, stock modes and castle roles.",
+    "evidence": "F and C1 are official resource JSON keys; roles feed the setupReadiness.foodRole select; readiness text is the typed messageKey."
+  },
+  "841d5efa4ee54c8c5ea66c6ab125cae8003702964d47690fceba35f57cdc698b": {
+    "classification": "technical",
+    "reason": "Readiness ids/states/fix codes, feature ids, resource JSON keys, stock modes and castle roles.",
+    "evidence": "F and C1 are official resource JSON keys; roles feed the setupReadiness.foodRole select; readiness text is the typed messageKey."
+  },
+  "0cb49c34fe4bd95bb087d81483ec4a74ccbd823d48dd1ff0f0b8fbd1e4ee9763": {
+    "classification": "technical",
+    "reason": "Readiness ids/states/fix codes, feature ids, resource JSON keys, stock modes and castle roles.",
+    "evidence": "F and C1 are official resource JSON keys; roles feed the setupReadiness.foodRole select; readiness text is the typed messageKey."
+  },
+  "f575f68e16ba599a6bc1b9b9ff3d7d996faf5df1c70c7a15645e2528a110e303": {
+    "classification": "technical",
+    "reason": "Readiness ids/states/fix codes, feature ids, resource JSON keys, stock modes and castle roles.",
+    "evidence": "F and C1 are official resource JSON keys; roles feed the setupReadiness.foodRole select; readiness text is the typed messageKey."
+  },
+  "babc5f3cde619e8b9a65d254d0a6db7af7218ddf6c2c39730e8cb2c6b59c9537": {
+    "classification": "technical",
+    "reason": "Readiness ids/states/fix codes, feature ids, resource JSON keys, stock modes and castle roles.",
+    "evidence": "F and C1 are official resource JSON keys; roles feed the setupReadiness.foodRole select; readiness text is the typed messageKey."
+  },
+  "72828d2a14669d43ab7c02064f195d9284a2563abf90db26a4417450986ecae3": {
+    "classification": "technical",
+    "reason": "Readiness ids/states/fix codes, feature ids, resource JSON keys, stock modes and castle roles.",
+    "evidence": "F and C1 are official resource JSON keys; roles feed the setupReadiness.foodRole select; readiness text is the typed messageKey."
+  },
+  "3372969ead5b3847eaa42ee36dfb39d18a5e6d84d4fc04573776dfb85f019ead": {
+    "classification": "technical",
+    "reason": "Readiness ids/states/fix codes, feature ids, resource JSON keys, stock modes and castle roles.",
+    "evidence": "F and C1 are official resource JSON keys; roles feed the setupReadiness.foodRole select; readiness text is the typed messageKey."
+  },
+  "ca4895e91ddb5286b0e5126a695baecd61ea80d3095dce4762830571e79fb1ac": {
+    "classification": "technical",
+    "reason": "Readiness ids/states/fix codes, feature ids, resource JSON keys, stock modes and castle roles.",
+    "evidence": "F and C1 are official resource JSON keys; roles feed the setupReadiness.foodRole select; readiness text is the typed messageKey."
+  },
+  "cd70b3d4b914231694b5a025f7b8e90dc254a118c8cb97e422e1c537f15692bb": {
+    "classification": "technical",
+    "reason": "Readiness ids/states/fix codes, feature ids, resource JSON keys, stock modes and castle roles.",
+    "evidence": "F and C1 are official resource JSON keys; roles feed the setupReadiness.foodRole select; readiness text is the typed messageKey."
+  },
+  "8213c5acf47118d0f59752896a3c3c52211d4ef62bee24048a3ca9ba8b0bd296": {
+    "classification": "technical",
+    "reason": "Readiness ids/states/fix codes, feature ids, resource JSON keys, stock modes and castle roles.",
+    "evidence": "F and C1 are official resource JSON keys; roles feed the setupReadiness.foodRole select; readiness text is the typed messageKey."
+  },
+  "bb1ec1154228f51b966eec57008979e989d614f71b23275b28bdc12168f7115e": {
+    "classification": "technical",
+    "reason": "Readiness ids/states/fix codes, feature ids, resource JSON keys, stock modes and castle roles.",
+    "evidence": "F and C1 are official resource JSON keys; roles feed the setupReadiness.foodRole select; readiness text is the typed messageKey."
   }
 }

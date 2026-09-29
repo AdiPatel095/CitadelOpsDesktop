@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { ChevronDown, ChevronRight, Save, Users } from 'lucide-react';
 import type { GameStateV2 } from '../../api/Contracts';
 import { Notifications } from '../../components/Notifications';
@@ -75,6 +75,25 @@ export const CommanderAssignmentPanel: React.FC<CommanderAssignmentPanelProps> =
   const saved = useMemo(() => savedCommanderAssignments(draftSession.sections), [draftSession.sections]);
   const [pending, setPending] = useState<CommanderFeatureConfigurationV2 | null>(null);
   const [confirming, setConfirming] = useState(false);
+  const reviewTrigger = useRef<HTMLButtonElement>(null);
+  const cancelButton = useRef<HTMLButtonElement>(null);
+  const wasConfirming = useRef(false);
+  // The confirm dialog opens inside the settings modal: move focus into it after the dialog's own
+  // open-frame (double rAF, as the CIT-15 Save-as dialog), and back to the trigger when it closes.
+  useEffect(() => {
+    let inner = 0;
+    const outer = window.requestAnimationFrame(() => {
+      inner = window.requestAnimationFrame(() => {
+        if (confirming) cancelButton.current?.focus();
+        else if (wasConfirming.current && reviewTrigger.current?.isConnected) reviewTrigger.current.focus();
+        wasConfirming.current = confirming;
+      });
+    });
+    return () => {
+      window.cancelAnimationFrame(outer);
+      window.cancelAnimationFrame(inner);
+    };
+  }, [confirming]);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState('');
   // Activity (for example "posted" after arrival) depends on the clock; re-evaluate periodically.
@@ -188,7 +207,7 @@ export const CommanderAssignmentPanel: React.FC<CommanderAssignmentPanelProps> =
             <Button variant="ghost" size="sm" disabled={!pending || saving} onClick={() => { setPending(null); setSaveError(''); }}>
               <LocalizedText messageKey="ui.settings.components.commanderAssignmentPanel.discard.assignment.changes.c07d4258" />
             </Button>
-            <Button size="sm" disabled={disabled || !dirty || saving} leftIcon={<Save className="h-4 w-4" />} onClick={() => { setSaveError(''); setConfirming(true); }}>
+            <Button size="sm" ref={reviewTrigger} disabled={disabled || !dirty || saving} leftIcon={<Save className="h-4 w-4" />} onClick={() => { setSaveError(''); setConfirming(true); }}>
               <LocalizedText messageKey="ui.settings.components.commanderAssignmentPanel.review.and.save.assignments.18f33af7" />
             </Button>
           </div>
@@ -206,7 +225,7 @@ export const CommanderAssignmentPanel: React.FC<CommanderAssignmentPanelProps> =
         )}
         footer={(
           <div className="flex w-full items-center justify-end gap-2">
-            <Button variant="ghost" disabled={saving} onClick={() => setConfirming(false)}><LocalizedText messageKey="game.cancel" /></Button>
+            <Button variant="ghost" ref={cancelButton} disabled={saving} onClick={() => setConfirming(false)}><LocalizedText messageKey="game.cancel" /></Button>
             <Button isLoading={saving} disabled={saving} leftIcon={<Save className="h-4 w-4" />} onClick={() => void confirmSave()}>
               {saveError ? <LocalizedText messageKey="ui.settings.components.commanderAssignmentPanel.try.again.d8b8392e" /> : <LocalizedText messageKey="ui.settings.components.commanderAssignmentPanel.save.assignments.79af590f" />}
             </Button>

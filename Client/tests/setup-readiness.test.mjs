@@ -109,7 +109,7 @@ test('Food Balance: observed food, donors by the saved reserve, coins and transp
       2: castle(2, 1, 12, {}, { resources: { 5: { amount: 200 } } }),
     },
   };
-  const input = { state, resources, metadataReady: true, minimumSourceReserve: 1000, minimumCoinReserve: 100, autoKingdomTransport: true };
+  const input = { state, resources, metadataReady: true, minimumSourceReserve: 1000, minimumCoinReserve: 100, autoKingdomTransport: true, observation: metadata.observation };
   const result = setup.evaluateFoodBalanceReadiness(input);
   assert.deepEqual(result.rows.map((row) => [row.castleId, row.role]), [[1, 'donor'], [2, 'recipient']]);
   assert.equal(result.report.overall, 'valid');
@@ -123,6 +123,59 @@ test('Food Balance: observed food, donors by the saved reserve, coins and transp
   assert.equal(noTransport.report.checks.find((check) => check.id === 'kingdom-transport').state, 'pending');
   assert.equal(setup.evaluateFoodBalanceReadiness({ ...input, metadataReady: false }).report.checks[0].state, 'unavailable');
   [result, unobserved, poor, noTransport].forEach((entry) => allMessagesExist(entry.report));
+  assert.ok(result.rows.every((row) => row.current));
+});
+
+const NOT_CURRENT = [
+  ['disconnected', { session: SESSION, connected: false }, 'ui.components.staleSessionBanner.disconnected.last.known.data.166a8c99'],
+  ['checkpoint', { session: SESSION, connected: true, hostedPresence: { mode: 'checkpoint', checkpointObservedAt: '2026-09-29T08:00:00Z' } }, 'ui.settings.requirements.observationFreshness.this.is.a.saved.checkpoint.troop.counts.48b43424'],
+  ['awaiting baseline', { session: { ...SESSION, baselineGeneration: 24 }, connected: true }, 'ui.settings.requirements.observationFreshness.waiting.for.the.game.connection.to.finish.c661a838'],
+];
+
+test('Food Balance and Station/Bird: last-known data while the connection is not current (CIT-18 QA)', () => {
+  const resources = { 1: { id: 1, name: 'currency1', JSONKey: 'C1' }, 5: { id: 5, name: 'food', JSONKey: 'F' } };
+  const state = {
+    player: { resources: { 1: 500 } },
+    kingdomTransport: { unlocks: { 1: { kingdomId: 1, unlocked: true, created: true } } },
+    castles: { 1: castle(1, 0, 1, { 1: 20 }, { resources: { 5: { amount: 5000 } } }) },
+  };
+  for (const [label, observation, messageKey] of NOT_CURRENT) {
+    const food = setup.evaluateFoodBalanceReadiness({ state, resources, metadataReady: true, minimumSourceReserve: 1000, minimumCoinReserve: 100, autoKingdomTransport: true, observation });
+    assert.equal(food.report.overall, 'unavailable', label);
+    assert.deepEqual(food.report.checks.map((check) => [check.id, check.state, check.messageKey, check.fix]), [
+      ['food-observations', 'unavailable', messageKey, 'connection'],
+      ['donors', 'unavailable', messageKey, 'connection'],
+      ['coin-reserve', 'unavailable', messageKey, 'connection'],
+      ['kingdom-transport', 'unavailable', messageKey, 'connection'],
+    ], label);
+    assert.equal(food.coins, null, `${label}: no coin claim`);
+    assert.ok(food.rows.every((row) => !row.current), `${label}: rows are last known`);
+    const reserves = setup.evaluateReserveReadiness({ featureId: 'autoBird', state, reserves: { 1: [{ id: 1, amount: 10 }] }, ...metadata, observation });
+    const castles = reserves.report.checks.find((check) => check.id === 'castles');
+    assert.deepEqual([castles.state, castles.messageKey, castles.fix], ['unavailable', messageKey, 'connection'], label);
+    assert.equal(reserves.stockByCastle[1].check.state, 'unavailable', `${label}: per-castle stock waits too`);
+    allMessagesExist(food.report);
+    allMessagesExist(reserves.report);
+  }
+});
+
+test('zero observed castles is waiting for data in every evaluator, never a configuration error (CIT-18 QA)', () => {
+  const empty = { castles: {} };
+  const towers = setup.evaluateTowerReadiness({ state: empty, castles: { 7: { enabled: true, unitId: 1, maidenOnly: false } }, ...metadata });
+  const enabledCastles = towers.report.checks.find((check) => check.id === 'enabled-castles');
+  assert.deepEqual([enabledCastles.state, enabledCastles.fix], ['unavailable', 'connection']);
+  assert.equal(towers.report.overall, 'unavailable');
+  const fortress = setup.evaluateFortressReadiness({ state: empty, kingdoms: { 1: { enabled: true } }, direwolfId: 277, direwolfPurchaseLimit: 0, ...metadata });
+  assert.ok(fortress.kingdoms.every((kingdom) => kingdom.castleCheck.state === 'unavailable'));
+  const enabledKingdoms = fortress.report.checks.find((check) => check.id === 'enabled-kingdoms');
+  assert.deepEqual([enabledKingdoms.state, enabledKingdoms.fix], ['unavailable', 'connection']);
+  assert.equal(setup.evaluateFortressReadiness({ state: empty, kingdoms: {}, direwolfId: 277, direwolfPurchaseLimit: 0, ...metadata }).report.checks[0].state, 'unavailable');
+  const food = setup.evaluateFoodBalanceReadiness({ state: empty, resources: {}, metadataReady: true, minimumSourceReserve: 0, minimumCoinReserve: 0, autoKingdomTransport: true, observation: metadata.observation });
+  assert.deepEqual(food.report.checks.map((check) => [check.id, check.state]), [['food-observations', 'unavailable']]);
+  const reserves = setup.evaluateReserveReadiness({ featureId: 'autoStation', state: empty, reserves: { 7: [{ id: 1, amount: 5 }] }, ...metadata });
+  assert.deepEqual(reserves.castlesNotInWorld, [], 'saved reserves are not "not in this world" without castle data');
+  assert.equal(reserves.report.checks.some((check) => check.id === 'saved-castles'), false);
+  [towers, fortress, food, reserves].forEach((entry) => allMessagesExist(entry.report));
 });
 
 test('every CIT-18 module renders the readiness panel; commander modules render the assignment panel', async () => {
