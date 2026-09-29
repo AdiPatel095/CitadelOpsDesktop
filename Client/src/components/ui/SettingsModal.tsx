@@ -17,6 +17,8 @@ export interface SettingsModalProps extends Omit<ModalProps, 'title' | 'footer'>
   cancelDisabled?: boolean;
   cancelLabel?: ReactNode;
   footerLeading?: ReactNode;
+  contentDisabled?: boolean;
+  contentNotice?: ReactNode;
 }
 
 export const SettingsModal: React.FC<SettingsModalProps> = ({
@@ -31,6 +33,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   cancelDisabled = false,
   cancelLabel,
   footerLeading,
+  contentDisabled = false,
+  contentNotice,
   onClose,
   children,
   ...modalProps
@@ -61,7 +65,10 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
       </>
     )}
   >
-    {children}
+    {contentNotice}
+    <div inert={contentDisabled ? true : undefined} aria-busy={contentDisabled || undefined}>
+      {children}
+    </div>
   </Modal>
 );
 };

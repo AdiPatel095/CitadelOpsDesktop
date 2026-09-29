@@ -51,6 +51,8 @@ interface APIContextValue {
   refreshState: () => Promise<void>;
   refreshCatalogs: () => Promise<void>;
   refreshConfiguration: () => Promise<void>;
+  /** Loads and accepts the latest configuration snapshot; rejects on failure (draft sessions need the snapshot). */
+  loadLatestConfiguration: () => Promise<ConfigurationSnapshot>;
 	refreshApplicationUpdate: () => Promise<void>;
 	refreshDiagnostics: () => Promise<void>;
   getCatalog: <T extends Record<string, unknown>>(name: string) => Promise<CatalogResponse<T>>;
@@ -68,7 +70,7 @@ interface APIContextValue {
   updateConfiguration: (
     section: string,
     value: unknown,
-    options?: { expectedValue?: unknown },
+    options?: ConfigurationUpdateOptions,
   ) => Promise<ConfigurationSnapshot>;
 	getPlayerHistoryRetention: () => Promise<PlayerHistoryRetentionV1>;
 	applyPlayerHistoryRetention: (
@@ -79,6 +81,10 @@ interface APIContextValue {
 		expectedRecordingIntervalSeconds: number,
 	) => Promise<PlayerHistoryRetentionApplyV1>;
 }
+
+export type ConfigurationUpdateOptions =
+	| { expectedValue: unknown; expectedRevision?: never }
+	| { expectedRevision: number; expectedValue?: never };
 
 const APIContext = createContext<APIContextValue | undefined>(undefined);
 
@@ -187,6 +193,20 @@ export function APIProvider({ children }: { children: ReactNode }) {
       setError(errorMessage(requestError));
     }
   }, [acceptConfigurationSnapshot]);
+
+	const loadLatestConfiguration = useCallback(async () => {
+		try {
+			const snapshot = await CitadelAPI.getConfiguration();
+			acceptConfigurationSnapshot(snapshot);
+			setError(null);
+			return configurationRef.current != null && configurationRef.current.revision > snapshot.revision
+				? configurationRef.current
+				: snapshot;
+		} catch (requestError) {
+			setError(errorMessage(requestError));
+			throw requestError;
+		}
+	}, [acceptConfigurationSnapshot]);
 
 	const refreshApplicationUpdate = useCallback(async () => {
 		try {
@@ -349,9 +369,11 @@ export function APIProvider({ children }: { children: ReactNode }) {
 	const updateConfiguration = useCallback((
 		section: string,
 		value: unknown,
-		options?: { expectedValue?: unknown },
+		options?: ConfigurationUpdateOptions,
 	) => {
 	const hasExpectedValue = options != null && Object.prototype.hasOwnProperty.call(options, 'expectedValue');
+	// ConfigurationUpdateOptions admits exactly one condition; an explicit revision wins over the live one.
+	const hasExpectedRevision = !hasExpectedValue && options != null && Object.prototype.hasOwnProperty.call(options, 'expectedRevision');
 	if (hasExpectedValue && options?.expectedValue === undefined) {
 		return Promise.reject(new Error('A section-scoped configuration update requires a concrete expected value.'));
 	}
@@ -360,7 +382,7 @@ export function APIProvider({ children }: { children: ReactNode }) {
 	  try {
 		const snapshot = await CitadelAPI.updateConfiguration(section, value, hasExpectedValue
 			? { expectedValue: options?.expectedValue }
-			: { expectedRevision: configurationRef.current?.revision }, configurationScope);
+			: { expectedRevision: hasExpectedRevision ? options?.expectedRevision : configurationRef.current?.revision }, configurationScope);
 		acceptConfigurationSnapshot(snapshot);
 		return snapshot;
 	  } catch (requestError) {
@@ -444,6 +466,7 @@ export function APIProvider({ children }: { children: ReactNode }) {
     refreshState,
     refreshCatalogs,
     refreshConfiguration,
+    loadLatestConfiguration,
 	refreshApplicationUpdate,
 	refreshDiagnostics,
     getCatalog: (name) => CitadelAPI.getCatalog(name),
@@ -469,6 +492,7 @@ export function APIProvider({ children }: { children: ReactNode }) {
 	refreshApplicationUpdate,
 	refreshDiagnostics,
     refreshConfiguration,
+    loadLatestConfiguration,
     refreshState,
     state,
     submitIntent,
