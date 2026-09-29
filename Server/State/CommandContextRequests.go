@@ -179,6 +179,24 @@ func (state *GameState) MarkInventoryEquipmentMutated(at time.Time) bool {
 // active recruitment job has no known completion time.
 const RecruitmentHelpIneligibilityFallback = 30 * time.Minute
 
+// MarkInventoryPackagePurchaseDispatched records an outbound package purchase.
+// It rides the construction-offers persistence part with the counters it
+// invalidates.
+func (state *GameState) MarkInventoryPackagePurchaseDispatched(dispatch PackagePurchaseDispatch) bool {
+	if state == nil || dispatch.SentAt.IsZero() || !dispatch.SentAt.After(state.Inventory.LastPackagePurchaseDispatch.SentAt) {
+		return false
+	}
+	state.MutableInventoryConstructionOffers()
+	state.Inventory.LastPackagePurchaseDispatch = dispatch
+	return true
+}
+
+// PackageCountersAfterLastPurchase reports whether counters observed at
+// observedAt were committed after the latest dispatched package purchase.
+func PackageCountersAfterLastPurchase(gameState GameState, observedAt time.Time) bool {
+	return observedAt.After(gameState.Inventory.LastPackagePurchaseDispatch.SentAt)
+}
+
 // RecruitmentAllianceHelpMinimumUnits is the official client threshold for
 // recruitment-list help: CastleRecruitDialogUnits treats the list as helpable
 // only while some slot holds at least five units without RAH

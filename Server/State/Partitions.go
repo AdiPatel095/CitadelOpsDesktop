@@ -256,6 +256,20 @@ type ProtocolContextState struct {
 	RecruitmentAHRFocusCovered  bool            `json:"recruitmentAhrFocusCovered,omitempty"`
 	RecruitmentAHRPending       bool            `json:"recruitmentAhrPending,omitempty"`
 	ObservedAt                  time.Time       `json:"observedAt,omitempty"`
+	// FocusedKingdomID is the kingdom of the castle selected by the last
+	// committed JAA/JCA; the game resolves kingdom-scoped commands against it.
+	FocusedKingdomID KingdomID `json:"focusedKingdomId,omitempty"`
+	// FocusChangedAt is when FocusEpoch last advanced.
+	FocusChangedAt time.Time `json:"focusChangedAt,omitempty"`
+	// MapReadSentAt is when the latest outbound GAA was sent. A read sent after
+	// FocusChangedAt has not committed its map focus yet.
+	MapReadSentAt time.Time `json:"mapReadSentAt,omitempty"`
+}
+
+// MapReadInFlight reports an outbound world-map read whose reply has not yet
+// committed a focus change.
+func (context ProtocolContextState) MapReadInFlight() bool {
+	return !context.MapReadSentAt.IsZero() && context.MapReadSentAt.After(context.FocusChangedAt)
 }
 
 type PlanningView struct {
@@ -598,8 +612,10 @@ func nextProtocolContext(
 		next.SessionGeneration = state.Session.Generation
 		next.ConnectionGeneration = state.Session.ConnectionGeneration
 		next.FocusedCastleID = 0
+		next.FocusedKingdomID = 0
 		next.FocusSubcontext = FocusSubcontextUnknown
 		next.FocusEpoch++
+		next.FocusChangedAt = observedAt
 		clearRecruitmentBUPBatch(&next)
 		next.ObservedAt = observedAt
 	}
@@ -624,10 +640,17 @@ func nextProtocolContext(
 		// A newly selected castle comes from a castle snapshot such as JAA.
 		nextSubcontext = FocusSubcontextCastle
 	}
+	focusedKingdomID := KingdomID(0)
+	if focusedCastleID != 0 {
+		focusedKingdomID = state.Castles[focusedCastleID].KingdomID
+	}
+	// The kingdom follows the focused castle; it does not start a new epoch.
+	next.FocusedKingdomID = focusedKingdomID
 	if next.FocusedCastleID != focusedCastleID || next.FocusSubcontext != nextSubcontext {
 		next.FocusedCastleID = focusedCastleID
 		next.FocusSubcontext = nextSubcontext
 		next.FocusEpoch++
+		next.FocusChangedAt = observedAt
 		clearRecruitmentBUPBatch(&next)
 	}
 	next.SessionGeneration = state.Session.Generation

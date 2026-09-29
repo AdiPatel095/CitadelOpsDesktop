@@ -516,9 +516,12 @@ func populateFortressObservation(observation *State.MapObservation, row []json.R
 		return
 	}
 	// Captured boss-dungeon rows are
-	// [11, X, Y, lastSpyAge, dungeonLevel, effectiveCooldownSec,
-	//  lastDefeaterPlayerID, kingdomID]. The effective cooldown already reflects
-	// the viewer's personal five-day lockout after a successful defeat.
+	// [11, X, Y, lastSpyAge, dungeonLevel, cooldownSec,
+	//  lastDefeaterPlayerID, kingdomID]. Official BossdungeonMapobjectVO derives
+	// attackability from index 5 alone and uses index 6 only for display, so
+	// index 5 is not proof that the viewer's personal five-day lockout ended:
+	// beta evidence showed GAA 0 followed by ABI 95 (COOLING_DOWN) within 200 ms.
+	// A rejection is kept in AttackAnalytics.RejectedTargets (CIT-13).
 	observation.Level = int(rowInt(row, 4))
 	observation.TowerCooldownRemaining = boundedWireSeconds(rowInt(row, 5))
 	observation.FortressDefeaterPlayerID = State.PlayerID(rowInt(row, 6))

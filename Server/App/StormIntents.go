@@ -850,6 +850,9 @@ func stormAttackContext(
 	if request.TargetTypeID == stormIntentIslandMapTypeID && stormIslandUnavailable(target, now) {
 		return stormAttackRequest{}, State.CastleState{}, State.MapObservation{}, GameData.StormIsleDefinition{}, Localization.WithError(fmt.Errorf("Storm resource island %d:%d is already occupied", request.TargetX, request.TargetY), Localization.New("server.app.storm_resource_island_p.2177c4ca", "Storm resource island {p0}:{p1} is already occupied", Localization.Params{"p0": request.TargetX, "p1": request.TargetY}))
 	}
+	if err := refuseRejectedAttackTarget(input.State, request.KingdomID, request.TargetTypeID, request.TargetX, request.TargetY, now); err != nil {
+		return stormAttackRequest{}, State.CastleState{}, State.MapObservation{}, GameData.StormIsleDefinition{}, err
+	}
 	if stormTargetCooldownRemaining(target, now) > 0 {
 		return stormAttackRequest{}, State.CastleState{}, State.MapObservation{}, GameData.StormIsleDefinition{}, Localization.WithError(fmt.Errorf("Storm target %d:%d is still on cooldown", request.TargetX, request.TargetY), Localization.New("server.app.storm_target_p_p.a567def1", "Storm target {p0}:{p1} is still on cooldown", Localization.Params{"p0": request.TargetX, "p1": request.TargetY}))
 	}

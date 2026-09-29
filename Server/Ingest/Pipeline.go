@@ -290,6 +290,9 @@ func (pipeline *Pipeline) CommitFrameGuarded(
 	if pipeline.gameData != nil {
 		currentData, _ = pipeline.gameData.Current()
 	}
+	if frame.Direction == Protocol.DirectionOutbound && frame.Opcode == "gaa" {
+		pipeline.state.ObserveOutboundMapRead(frame.ReceivedAt)
+	}
 	registration := pipeline.registry.registered(frame.Opcode, frame.Direction)
 	reducer := registration.reducer
 	retainsObservation := State.RetainProtocolObservation(frame.Opcode) &&

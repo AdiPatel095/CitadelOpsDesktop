@@ -191,8 +191,10 @@ func TestBossDungeonAttackDialogReducerOwnsADIComponents(t *testing.T) {
 	}
 	abi := registry.registered("abi", Protocol.DirectionInbound)
 	adi := registry.registered("adi", Protocol.DirectionInbound)
-	if abi.reducer == nil || abi.writes != adi.writes || !abi.writes.Has(State.ComponentAttackDialog) ||
-		!abi.writes.Has(State.ComponentWorldMap) {
+	// CIT-13: ABI adds a second step that only records COOLING_DOWN rejections.
+	if abi.reducer == nil || len(abi.steps) != 2 || abi.steps[0].writes != adi.writes ||
+		!abi.writes.Has(State.ComponentAttackDialog) || !abi.writes.Has(State.ComponentWorldMap) ||
+		abi.steps[1].writes != State.Components(State.ComponentCommandContext, State.ComponentAttackAnalytics) {
 		t.Fatalf("ABI reducer ownership = %v, ADI = %v", abi.writes.List(), adi.writes.List())
 	}
 	if !frameMutatesWorldMap(Protocol.Frame{Opcode: "abi", Direction: Protocol.DirectionInbound}) {

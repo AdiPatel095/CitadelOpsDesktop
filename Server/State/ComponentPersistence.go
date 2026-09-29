@@ -1870,6 +1870,10 @@ func applyInventoryPersistencePart(inventory *InventoryState, part string, patch
 		inventory.ConstructionOffersObservedAt = *patch.ConstructionOffersObservedAt
 		inventory.ConstructionOffersCastleID = *patch.ConstructionOffersCastleID
 		inventory.ConstructionOffersKingdomID = *patch.ConstructionOffersKingdomID
+		// Optional so offer parts written before dispatch tracking still load.
+		if patch.LastPackagePurchaseDispatch != nil {
+			inventory.LastPackagePurchaseDispatch = *patch.LastPackagePurchaseDispatch
+		}
 		if patch.ConstructionOffersByCastle != nil {
 			inventory.ConstructionOffersByCastle = *patch.ConstructionOffersByCastle
 		} else if inventory.ConstructionOffersCastleID > 0 {

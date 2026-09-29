@@ -65,6 +65,28 @@ func validateEventBackedSBP(
 				Intent.ErrPlanStale, request.PackageID, source.ID,
 			), Localization.New("server.app.intent_plan_became_stale.28e62842", "intent plan became stale before dispatch: package {p1} lost current-session castle focus for destination {p2}", Localization.Params{"p1": fmt.Sprintf("%d", request.PackageID), "p2": fmt.Sprintf("%d", source.ID)}))
 		}
+		// SBP resolves its kingdom against the committed session kingdom
+		// (INVALID_KINGDOM_ID 175 otherwise), and the counters it relies on must
+		// have been read in that same focus.
+		if protocol.FocusedKingdomID != source.KingdomID {
+			return 0, Localization.WithError(fmt.Errorf(
+				"%w: package %d session kingdom %d does not match destination kingdom %d",
+				Intent.ErrPlanStale, request.PackageID, protocol.FocusedKingdomID, source.KingdomID,
+			), Localization.New("server.app.intent_plan_became_stale.833a5d6a", "intent plan became stale before dispatch: package {p1} session kingdom {p2} does not match destination kingdom {p3}", Localization.Params{"p1": fmt.Sprintf("%d", request.PackageID), "p2": fmt.Sprintf("%d", protocol.FocusedKingdomID), "p3": fmt.Sprintf("%d", source.KingdomID)}))
+		}
+		if protocol.MapReadInFlight() {
+			return 0, Localization.WithError(fmt.Errorf(
+				"%w: package %d waits for an in-flight world-map read to settle the session kingdom",
+				Intent.ErrPlanStale, request.PackageID,
+			), Localization.New("server.app.intent_plan_became_stale.ae1e717e", "intent plan became stale before dispatch: package {p1} waits for an in-flight world-map read to settle the session kingdom", Localization.Params{"p1": fmt.Sprintf("%d", request.PackageID)}))
+		}
+		if _, countersAt, found := input.State.ConstructionOffersFor(source.ID, source.KingdomID); found &&
+			!protocol.FocusChangedAt.IsZero() && protocol.FocusChangedAt.After(countersAt) {
+			return 0, Localization.WithError(fmt.Errorf(
+				"%w: package %d castle focus changed after its purchase counters were read",
+				Intent.ErrPlanStale, request.PackageID,
+			), Localization.New("server.app.intent_plan_became_stale.6001ec0b", "intent plan became stale before dispatch: package {p1} castle focus changed after its purchase counters were read", Localization.Params{"p1": fmt.Sprintf("%d", request.PackageID)}))
+		}
 	}
 	if request.Stock <= 0 {
 		return 0, nil

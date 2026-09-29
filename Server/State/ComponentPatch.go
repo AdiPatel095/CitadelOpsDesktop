@@ -62,6 +62,7 @@ type InventoryPatch struct {
 	ConstructionOffersCastleID      *CastleID                                  `json:"constructionOffersCastleId,omitempty"`
 	ConstructionOffersKingdomID     *KingdomID                                 `json:"constructionOffersKingdomId,omitempty"`
 	ConstructionOffersByCastle      *map[CastleID]ConstructionOfferSnapshot    `json:"constructionOffersByCastle,omitempty"`
+	LastPackagePurchaseDispatch     *PackagePurchaseDispatch                   `json:"lastPackagePurchaseDispatch,omitempty"`
 	Equipment                       *map[EquipmentInstanceID]EquipmentInstance `json:"equipment,omitempty"`
 	EquipmentChanges                *[]EquipmentChange                         `json:"equipmentChanges,omitempty"`
 	Gems                            *map[GemInstanceID]GemInstance             `json:"gems,omitempty"`
@@ -463,6 +464,7 @@ func inventoryComponentPatch(inventory *InventoryState, changes componentChanges
 		patch.ConstructionOffersCastleID = &inventory.ConstructionOffersCastleID
 		patch.ConstructionOffersKingdomID = &inventory.ConstructionOffersKingdomID
 		patch.ConstructionOffersByCastle = &inventory.ConstructionOffersByCastle
+		patch.LastPackagePurchaseDispatch = &inventory.LastPackagePurchaseDispatch
 	}
 	if parts&inventoryEquipmentMutable != 0 {
 		if changes.replaceEquipment || len(changes.equipmentIDs) == 0 {

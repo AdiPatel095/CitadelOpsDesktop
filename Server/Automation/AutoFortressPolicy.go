@@ -61,6 +61,8 @@ type autoFortressKingdomStats struct {
 	Known     int
 	Ready     int
 	NextReady time.Time
+	// Deferred lists targets the game rejected with ABI/CRA 95 (CIT-13).
+	Deferred []State.AttackTargetRejection
 }
 
 func NewAutoFortressPolicy() *AutoFortressPolicy {
@@ -154,6 +156,9 @@ func (policy *AutoFortressPolicy) Evaluate(_ context.Context, snapshot Snapshot)
 	knownFortresses := 0
 	for kingdomID, stats := range kingdomStats {
 		knownFortresses += stats.Known
+		for _, rejection := range stats.Deferred {
+			details["rejection:"+rejection.Key()] = rejection.Detail()
+		}
 		metrics[fmt.Sprintf("knownFortressesKingdom%d", kingdomID)] = float64(stats.Known)
 		metrics[fmt.Sprintf("readyFortressesKingdom%d", kingdomID)] = float64(stats.Ready)
 		if !stats.NextReady.IsZero() {
@@ -389,6 +394,20 @@ func autoFortressTargets(snapshot Snapshot, sources []State.CastleState) ([]auto
 				statsByKingdom[source.KingdomID] = stats
 				return true
 			}
+			// A fresh map zero never overrides an active COOLING_DOWN rejection.
+			if rejection, rejected := State.AttackTargetRejectedAt(
+				snapshot.State, target.KingdomID, target.TypeID, target.X, target.Y, snapshot.Now,
+			); rejected {
+				stats.Deferred = append(stats.Deferred, rejection)
+				if nextCooldown.IsZero() || rejection.Until.Before(nextCooldown) {
+					nextCooldown = rejection.Until
+				}
+				if stats.NextReady.IsZero() || rejection.Until.Before(stats.NextReady) {
+					stats.NextReady = rejection.Until
+				}
+				statsByKingdom[source.KingdomID] = stats
+				return true
+			}
 			stats.Ready++
 			statsByKingdom[source.KingdomID] = stats
 			candidates = append(candidates, autoFortressTarget{Source: source, Target: target})
@@ -399,6 +418,13 @@ func autoFortressTargets(snapshot Snapshot, sources []State.CastleState) ([]auto
 		}
 	}
 	sort.Slice(candidates, func(left, right int) bool {
+		// A fortress this player last defeated may still be inside the personal
+		// 120 h window that the map row does not show (CIT-13 ABI 95): try it last.
+		leftSuspect := autoFortressPersonalLockoutSuspected(snapshot.State, candidates[left].Target)
+		rightSuspect := autoFortressPersonalLockoutSuspected(snapshot.State, candidates[right].Target)
+		if leftSuspect != rightSuspect {
+			return rightSuspect
+		}
 		leftDistance := fortressDistanceSquared(candidates[left])
 		rightDistance := fortressDistanceSquared(candidates[right])
 		if leftDistance != rightDistance {
@@ -413,6 +439,17 @@ func autoFortressTargets(snapshot Snapshot, sources []State.CastleState) ([]auto
 		return candidates[left].Target.X < candidates[right].Target.X
 	})
 	return candidates, nextCooldown, statsByKingdom
+}
+
+// autoFortressPersonalLockoutSuspected reports a fortress whose last defeater
+// is this player while the app has no own-victory cooldown for it (the BLS
+// report was never observed). GAA index 5 is not proof of availability then.
+func autoFortressPersonalLockoutSuspected(gameState State.GameState, target State.MapObservation) bool {
+	if gameState.Player.ID <= 0 || target.FortressDefeaterPlayerID != gameState.Player.ID {
+		return false
+	}
+	cooldown, found := gameState.LookupTowerCooldown(towerTargetKey(target.KingdomID, target.X, target.Y))
+	return !found || cooldown.TargetTypeID != State.MapTypeKingdomFortress
 }
 
 func fortressDistanceSquared(candidate autoFortressTarget) int {
@@ -1098,7 +1135,10 @@ func evaluateAutoFortressPurchase(snapshot Snapshot, settings autoFortressSettin
 		return nil, "Nomad Direwolf shop is not active"
 	}
 	offers, observedAt, found := snapshot.State.ConstructionOffersFor(main.ID, main.KingdomID)
-	if !found || observedAt.IsZero() || snapshot.Now.Sub(observedAt) >= autoFortressPurchaseHistoryAge {
+	// Counters read before the latest dispatched purchase cannot prove its
+	// outcome (timeout or no reply): refresh before ever buying again.
+	if !found || observedAt.IsZero() || snapshot.Now.Sub(observedAt) >= autoFortressPurchaseHistoryAge ||
+		!State.PackageCountersAfterLastPurchase(snapshot.State, observedAt) {
 		decision := autoFortressRequest(snapshot, metrics, "Refresh Nomad Direwolf stock counters", "autoBuyer.package.history", map[string]any{"sourceCastleId": main.ID}, Localization.New("server.automation.refresh_nomad_direwolf_stock.3e1531f4", "Refresh Nomad Direwolf stock counters", nil))
 		return &decision, ""
 	}

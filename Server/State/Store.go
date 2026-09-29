@@ -228,6 +228,25 @@ func (store *Store) ProtocolContext() ProtocolContextState {
 	return generation.protocol
 }
 
+// ObserveOutboundMapRead records that a world-map read (GAA) was sent. The
+// game may switch the session kingdom for the read before its reply commits,
+// so kingdom-scoped commands treat a read sent after the last committed focus
+// change as unresolved context (CIT-13 SBP 175). Ephemeral, like the epoch.
+func (store *Store) ObserveOutboundMapRead(sentAt time.Time) {
+	if store == nil || sentAt.IsZero() {
+		return
+	}
+	store.writeMu.Lock()
+	defer store.writeMu.Unlock()
+	current := store.generation.Load()
+	if current == nil || !sentAt.After(current.protocol.MapReadSentAt) {
+		return
+	}
+	protocol := current.protocol
+	protocol.MapReadSentAt = sentAt
+	store.generation.Store(&storeGeneration{state: current.state, versions: current.versions, protocol: protocol})
+}
+
 // ObserveProtocolFocus advances the ephemeral protocol focus epoch without
 // creating a GameState revision or dirty component. It is used by successful
 // context-setting frames whose payload has no retained state projection.
@@ -1512,6 +1531,9 @@ func cloneGameStateComponents(source GameState, components ComponentSet) GameSta
 		)
 		clone.AttackAnalytics.RecentTowerAdvisorTimeSkips = append(
 			[]TowerAdvisorTimeSkipUsage(nil), source.AttackAnalytics.RecentTowerAdvisorTimeSkips...,
+		)
+		clone.AttackAnalytics.RejectedTargets = append(
+			[]AttackTargetRejection(nil), source.AttackAnalytics.RejectedTargets...,
 		)
 	}
 	if components.Has(ComponentEventScores) {

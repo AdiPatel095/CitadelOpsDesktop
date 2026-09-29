@@ -7,6 +7,7 @@ const (
 	attackAnalyticsPending
 	attackAnalyticsRecentStorm
 	attackAnalyticsTowerAdvisorTimeSkips
+	attackAnalyticsRejectedTargets
 )
 
 func (state *GameState) prepareAttackAnalyticsMutation(source GameState) {
@@ -100,5 +101,20 @@ func (state *GameState) SetRecentTowerAdvisorTimeSkips(values []TowerAdvisorTime
 	state.AttackAnalytics.RecentTowerAdvisorTimeSkips = values
 	if state.attackAnalyticsMutationCOW {
 		state.mutableAttackAnalyticsParts |= attackAnalyticsTowerAdvisorTimeSkips
+	}
+}
+
+// SetAttackTargetRejections replaces the rejected-target registry. Callers pass
+// a freshly built slice; the previous generation's slice is never mutated.
+func (state *GameState) SetAttackTargetRejections(values []AttackTargetRejection) {
+	if state == nil {
+		return
+	}
+	if len(values) == 0 {
+		values = nil
+	}
+	state.AttackAnalytics.RejectedTargets = values
+	if state.attackAnalyticsMutationCOW {
+		state.mutableAttackAnalyticsParts |= attackAnalyticsRejectedTargets
 	}
 }

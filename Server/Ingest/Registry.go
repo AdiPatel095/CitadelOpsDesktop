@@ -114,6 +114,21 @@ func (registry *Registry) register(
 // still clones the union before reduction, but persistence and client deltas
 // include only the steps that actually changed state.
 func (registry *Registry) registerComponentSequence(opcode string, steps ...reducerStep) error {
+	return registry.registerSequence(opcode, registry.inboundReducers, steps...)
+}
+
+// registerOutboundComponentSequence is the outbound mirror of
+// registerComponentSequence for command frames with several independent
+// captures (for example CRA Rift capture and attack-target correlation).
+func (registry *Registry) registerOutboundComponentSequence(opcode string, steps ...reducerStep) error {
+	return registry.registerSequence(opcode, registry.outboundReducers, steps...)
+}
+
+func (registry *Registry) registerSequence(
+	opcode string,
+	reducersByOpcode map[string]registeredReducer,
+	steps ...reducerStep,
+) error {
 	opcode = strings.ToLower(strings.TrimSpace(opcode))
 	if opcode == "" || len(steps) == 0 {
 		return fmt.Errorf("opcode and reducer steps are required")
@@ -131,10 +146,10 @@ func (registry *Registry) registerComponentSequence(opcode string, steps ...redu
 	}
 	registry.mu.Lock()
 	defer registry.mu.Unlock()
-	if _, exists := registry.inboundReducers[opcode]; exists {
+	if _, exists := reducersByOpcode[opcode]; exists {
 		return fmt.Errorf("reducer already registered for %s", opcode)
 	}
-	registry.inboundReducers[opcode] = registeredReducer{
+	reducersByOpcode[opcode] = registeredReducer{
 		reducer: combineReducers(reducers...), writes: writes, steps: owned,
 	}
 	return nil

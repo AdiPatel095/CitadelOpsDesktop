@@ -305,7 +305,8 @@ func (*AutoBuyerPolicy) Evaluate(_ context.Context, snapshot Snapshot) (result D
 			metrics["sourceCastleId"] = float64(packageSource.ID)
 			_, packageHistoryObservedAt, packageHistoryFound := snapshot.State.ConstructionOffersFor(packageSource.ID, packageSource.KingdomID)
 			if !packageHistoryFound || packageHistoryObservedAt.IsZero() ||
-				snapshot.Now.Sub(packageHistoryObservedAt) >= refreshAge {
+				snapshot.Now.Sub(packageHistoryObservedAt) >= refreshAge ||
+				!State.PackageCountersAfterLastPurchase(snapshot.State, packageHistoryObservedAt) {
 				return autoBuyerRequestDecision(snapshot.Now, metrics, "Refresh shop stock and reset counters", "autoBuyer.package.history", map[string]any{
 					"sourceCastleId": packageSource.ID,
 				}, Localization.New("server.automation.refresh_shop_stock_and.f65001ab", "Refresh shop stock and reset counters", nil)), nil
