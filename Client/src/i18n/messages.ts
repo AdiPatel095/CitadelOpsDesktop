@@ -325,7 +325,7 @@ export const messages = {
   "eventAttackSetup.alsoUsedBy": "Also used by {referrers}. Changes here never edit this preset; use Customize to make a copy.",
   "eventAttackSetup.inventoryLabel": "Source castle · {castle}",
   "eventAttackSetup.duplicateName": "A preset named “{name}” already exists. Choose another name.",
-  "defenseSetup.summary": "{tools, number} tools · {types, plural, one {# tool type} other {# tool types}}",
+  "defenseSetup.summary": "{tools, plural, one {# tool} other {# tools}} · {types, plural, one {# tool type} other {# tool types}}",
   "allianceTargets.appCreatedPresetNote": "Created by {module}. The composition is sent with this attack; the preset itself is not changed.",
   "khanReadiness.mainCastle": "Defends at {castle}, the Great Empire main castle.",
   "khanReadiness.skipReserve": "Camp cooldowns are skipped with time skips; {count, plural, =0 {no skip size keeps a reserve} one {# skip size keeps a reserve} other {# skip sizes keep a reserve}}.",

@@ -133,7 +133,7 @@ test('the main-castle defense starter is account data, offered only while curren
   const offered = starter.khanDefenseStarter({ mainCastle: main, observation: LIVE });
   assert.ok(offered.setup);
   assert.equal(offered.setup.wall.middle.unitPercent, 34, 'captured from the castle, not invented');
-  assert.deepEqual(offered.pendingReviews, ['source']);
+  assert.deepEqual(offered.pendingReviews, [], 'accepted in CIT-16 product acceptance');
   assert.equal(starter.khanDefenseStarter({ mainCastle: null, observation: LIVE }).setup, null);
   assert.equal(starter.khanDefenseStarter({ mainCastle: main, observation: { ...LIVE, connected: false } }).reason, 'ui.components.staleSessionBanner.disconnected.last.known.data.166a8c99');
   const unread = starter.khanDefenseStarter({ mainCastle: castle(1, 1, { defense: { ...main.defense, observedAt: ZERO } }), observation: LIVE });
