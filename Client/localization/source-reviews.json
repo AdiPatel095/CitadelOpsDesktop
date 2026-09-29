@@ -239,16 +239,6 @@
     "reason": "Configuration condition property name.",
     "evidence": "expectedRevision selects the CAS condition field."
   },
-  "d480a65ac8cf1ecab1fd7a7aef020e6da4306fda9f2c54136fb0d3441f9cdf3f": {
-    "classification": "technical",
-    "reason": "App-created preset ref discriminators, marker badge token and generated record id/title suffix composition.",
-    "evidence": "AttackSetupRef.source/badge unions are compared, never rendered; ids are app:<section>:<slot>:<hex>; the title pattern comes from attackPresets.appCreatedName and the suffix is a number."
-  },
-  "a5c776bed906ffe2a3e879e8997cd66ea41ff3ce96e228b4b5e8298f8dc4aade": {
-    "classification": "technical",
-    "reason": "App-created preset ref discriminators, marker badge token and generated record id/title suffix composition.",
-    "evidence": "AttackSetupRef.source/badge unions are compared, never rendered; ids are app:<section>:<slot>:<hex>; the title pattern comes from attackPresets.appCreatedName and the suffix is a number."
-  },
   "dda74ead8041723a5787b2f96a2bdb021bc4fb3078193f66156b8a484d2d3a6f": {
     "classification": "technical",
     "reason": "App-created preset ref discriminators, marker badge token and generated record id/title suffix composition.",
@@ -440,11 +430,6 @@
     "evidence": "ATTACK_PRESET_SLOTS section/slot/path values address configuration fields; displayed module/slot labels come from moduleLabelKey/slotLabelKey typed catalog messages."
   },
   "c8046eab09d3013ffdce46052459f1fabc3cab572a5e31ee64f2de9cff2ef81d": {
-    "classification": "technical",
-    "reason": "Save warning and name-validation reason codes.",
-    "evidence": "cleanup-pending, empty and duplicate are machine codes mapped to typed messages (attackPresets.cleanupPending, eventAttackSetup.duplicateName, field messages) by the caller."
-  },
-  "cb2611821348185f0d05553647eb81c22de512f235d1c4a7f3df2856b843ee65": {
     "classification": "technical",
     "reason": "Save warning and name-validation reason codes.",
     "evidence": "cleanup-pending, empty and duplicate are machine codes mapped to typed messages (attackPresets.cleanupPending, eventAttackSetup.duplicateName, field messages) by the caller."
@@ -1314,37 +1299,12 @@
     "reason": "Readiness check ids, states, slots, fix codes, select parameters and booster ids.",
     "evidence": "ReadinessCheck id/state/slot/fix and params (boost, currency) are identifiers or ICU select arguments; text is the typed messageKey rendered by ReadinessPanel."
   },
-  "ccd6837012590c6873f68dd0c626ff934af833927bb6c71688f30be0165e7f60": {
-    "classification": "technical",
-    "reason": "Readiness check ids, states, slots, fix codes, select parameters and booster ids.",
-    "evidence": "ReadinessCheck id/state/slot/fix and params (boost, currency) are identifiers or ICU select arguments; text is the typed messageKey rendered by ReadinessPanel."
-  },
   "b5677948223c263f9961108ce17b66457ff5964b8a8abccbf07f20c3171a2bf9": {
     "classification": "technical",
     "reason": "Readiness check ids, states, slots, fix codes, select parameters and booster ids.",
     "evidence": "ReadinessCheck id/state/slot/fix and params (boost, currency) are identifiers or ICU select arguments; text is the typed messageKey rendered by ReadinessPanel."
   },
-  "36c7253568385c44d81eee2e117d0f00c37f0ee393d25a06a224c07e0ea64c16": {
-    "classification": "technical",
-    "reason": "Readiness check ids, states, slots, fix codes, select parameters and booster ids.",
-    "evidence": "ReadinessCheck id/state/slot/fix and params (boost, currency) are identifiers or ICU select arguments; text is the typed messageKey rendered by ReadinessPanel."
-  },
-  "957514a41d7e9ea00f7d92e7830de3befcd769ed9a4a9d5b3a1e357a56296a8b": {
-    "classification": "technical",
-    "reason": "Readiness check ids, states, slots, fix codes, select parameters and booster ids.",
-    "evidence": "ReadinessCheck id/state/slot/fix and params (boost, currency) are identifiers or ICU select arguments; text is the typed messageKey rendered by ReadinessPanel."
-  },
   "22299ed013cb935a4d9d1959aa58c2eb16f0bf50b7005668acd344d4a3cb1bc4": {
-    "classification": "technical",
-    "reason": "Readiness check ids, states, slots, fix codes, select parameters and booster ids.",
-    "evidence": "ReadinessCheck id/state/slot/fix and params (boost, currency) are identifiers or ICU select arguments; text is the typed messageKey rendered by ReadinessPanel."
-  },
-  "4cae1987c43ea3f460218ebc2112715de10c802d8b601936b25076c9d5389885": {
-    "classification": "technical",
-    "reason": "Readiness check ids, states, slots, fix codes, select parameters and booster ids.",
-    "evidence": "ReadinessCheck id/state/slot/fix and params (boost, currency) are identifiers or ICU select arguments; text is the typed messageKey rendered by ReadinessPanel."
-  },
-  "eb6ead9d49f4e0e5c67260f6ef15d3b2d10ab767587fb88b1d720b6c451d3149": {
     "classification": "technical",
     "reason": "Readiness check ids, states, slots, fix codes, select parameters and booster ids.",
     "evidence": "ReadinessCheck id/state/slot/fix and params (boost, currency) are identifiers or ICU select arguments; text is the typed messageKey rendered by ReadinessPanel."
@@ -1355,11 +1315,6 @@
     "evidence": "ReadinessCheck id/state/slot/fix and params (boost, currency) are identifiers or ICU select arguments; text is the typed messageKey rendered by ReadinessPanel."
   },
   "431af9c3213f29e168e67da28b3c8c3f07ed6c645da2f13927ce9ce2bfb5cc92": {
-    "classification": "technical",
-    "reason": "Readiness check ids, states, slots, fix codes, select parameters and booster ids.",
-    "evidence": "ReadinessCheck id/state/slot/fix and params (boost, currency) are identifiers or ICU select arguments; text is the typed messageKey rendered by ReadinessPanel."
-  },
-  "05c8cd4de88b98125d21ec70e8fba1eb28eb745e6d634408282c8763bf51b8bf": {
     "classification": "technical",
     "reason": "Readiness check ids, states, slots, fix codes, select parameters and booster ids.",
     "evidence": "ReadinessCheck id/state/slot/fix and params (boost, currency) are identifiers or ICU select arguments; text is the typed messageKey rendered by ReadinessPanel."
@@ -1380,11 +1335,6 @@
     "evidence": "ReadinessCheck id/state/slot/fix and params (boost, currency) are identifiers or ICU select arguments; text is the typed messageKey rendered by ReadinessPanel."
   },
   "8d9206ad58b784f0ed2a899e5a1d98563221c2d96fdad3f4c2a8aef0ed96357a": {
-    "classification": "technical",
-    "reason": "Readiness check ids, states, slots, fix codes, select parameters and booster ids.",
-    "evidence": "ReadinessCheck id/state/slot/fix and params (boost, currency) are identifiers or ICU select arguments; text is the typed messageKey rendered by ReadinessPanel."
-  },
-  "20e39a865e963893a4a857b7b9ac2441ae35537ae319c2d57595e1681a2fcedd": {
     "classification": "technical",
     "reason": "Readiness check ids, states, slots, fix codes, select parameters and booster ids.",
     "evidence": "ReadinessCheck id/state/slot/fix and params (boost, currency) are identifiers or ICU select arguments; text is the typed messageKey rendered by ReadinessPanel."
@@ -1425,11 +1375,6 @@
     "evidence": "ReadinessCheck id/state/slot/fix and params (boost, currency) are identifiers or ICU select arguments; text is the typed messageKey rendered by ReadinessPanel."
   },
   "b7c04b6eec525eda794eaf54f1098eccd9d5aadb20c7d3926bfb8bd113b5e1ae": {
-    "classification": "technical",
-    "reason": "Readiness check ids, states, slots, fix codes, select parameters and booster ids.",
-    "evidence": "ReadinessCheck id/state/slot/fix and params (boost, currency) are identifiers or ICU select arguments; text is the typed messageKey rendered by ReadinessPanel."
-  },
-  "04bccacc4a3052c32549e64c919ecc388cfcde2da5cd1ea2664ffb13b94cadc0": {
     "classification": "technical",
     "reason": "Readiness check ids, states, slots, fix codes, select parameters and booster ids.",
     "evidence": "ReadinessCheck id/state/slot/fix and params (boost, currency) are identifiers or ICU select arguments; text is the typed messageKey rendered by ReadinessPanel."
@@ -1499,82 +1444,12 @@
     "reason": "Readiness check ids, states, slots, fix codes, select parameters and booster ids.",
     "evidence": "ReadinessCheck id/state/slot/fix and params (boost, currency) are identifiers or ICU select arguments; text is the typed messageKey rendered by ReadinessPanel."
   },
-  "af35e30d9194b3fb3efbc24b96b6b2a40978331410304e2a18a478ebeb2d4eef": {
-    "classification": "technical",
-    "reason": "Readiness check ids, states, slots, fix codes, select parameters and booster ids.",
-    "evidence": "ReadinessCheck id/state/slot/fix and params (boost, currency) are identifiers or ICU select arguments; text is the typed messageKey rendered by ReadinessPanel."
-  },
   "5dde8b8877b9a65457d6a9fc93396e5e10c17d506a675e1e8a9174033503fbc2": {
     "classification": "technical",
     "reason": "Readiness check ids, states, slots, fix codes, select parameters and booster ids.",
     "evidence": "ReadinessCheck id/state/slot/fix and params (boost, currency) are identifiers or ICU select arguments; text is the typed messageKey rendered by ReadinessPanel."
   },
-  "ea728b763e5469d266ddb6c3d2e46b596cbdac0b639f443d5d3c287f9b33536e": {
-    "classification": "technical",
-    "reason": "Readiness check ids, states, slots, fix codes, select parameters and booster ids.",
-    "evidence": "ReadinessCheck id/state/slot/fix and params (boost, currency) are identifiers or ICU select arguments; text is the typed messageKey rendered by ReadinessPanel."
-  },
-  "9ebba72c93edcf92aef66a6715230c68a77cb2a58f14d02f7ae7fb24165c4fea": {
-    "classification": "technical",
-    "reason": "Readiness check ids, states, slots, fix codes, select parameters and booster ids.",
-    "evidence": "ReadinessCheck id/state/slot/fix and params (boost, currency) are identifiers or ICU select arguments; text is the typed messageKey rendered by ReadinessPanel."
-  },
-  "50dd33badd90be253832515b26b3cc76748f4192cbe33995936be5159f6217b2": {
-    "classification": "technical",
-    "reason": "Readiness check ids, states, slots, fix codes, select parameters and booster ids.",
-    "evidence": "ReadinessCheck id/state/slot/fix and params (boost, currency) are identifiers or ICU select arguments; text is the typed messageKey rendered by ReadinessPanel."
-  },
-  "442944730d80e8c363e975c67d55c01eb6bbe7b1f7e16e76fcacf5e90923a43b": {
-    "classification": "technical",
-    "reason": "Readiness check ids, states, slots, fix codes, select parameters and booster ids.",
-    "evidence": "ReadinessCheck id/state/slot/fix and params (boost, currency) are identifiers or ICU select arguments; text is the typed messageKey rendered by ReadinessPanel."
-  },
-  "37fe2857ded8860b2856e394b364e681739b89c0e4724d0eda3eb8f03f2b1a71": {
-    "classification": "technical",
-    "reason": "Readiness check ids, states, slots, fix codes, select parameters and booster ids.",
-    "evidence": "ReadinessCheck id/state/slot/fix and params (boost, currency) are identifiers or ICU select arguments; text is the typed messageKey rendered by ReadinessPanel."
-  },
-  "942a8345e4b75cc8a079b5a01abd431d3fe0b56769bacb15efed4f9776e24f06": {
-    "classification": "technical",
-    "reason": "Readiness check ids, states, slots, fix codes, select parameters and booster ids.",
-    "evidence": "ReadinessCheck id/state/slot/fix and params (boost, currency) are identifiers or ICU select arguments; text is the typed messageKey rendered by ReadinessPanel."
-  },
-  "cb64aca3c3b6e45dcd16b56eccc85eb54d72b5c3cd37fad10a8e37e515836a64": {
-    "classification": "technical",
-    "reason": "Readiness check ids, states, slots, fix codes, select parameters and booster ids.",
-    "evidence": "ReadinessCheck id/state/slot/fix and params (boost, currency) are identifiers or ICU select arguments; text is the typed messageKey rendered by ReadinessPanel."
-  },
-  "a233ebead10601e7b1943d2d22f0cda58c999faa1f7e0f71cbe3284b349173d2": {
-    "classification": "technical",
-    "reason": "Readiness check ids, states, slots, fix codes, select parameters and booster ids.",
-    "evidence": "ReadinessCheck id/state/slot/fix and params (boost, currency) are identifiers or ICU select arguments; text is the typed messageKey rendered by ReadinessPanel."
-  },
-  "705d6193264fddd28db60f9c27a69ab869c6dbeb437ebd0883aa0757bd2f9387": {
-    "classification": "technical",
-    "reason": "Readiness check ids, states, slots, fix codes, select parameters and booster ids.",
-    "evidence": "ReadinessCheck id/state/slot/fix and params (boost, currency) are identifiers or ICU select arguments; text is the typed messageKey rendered by ReadinessPanel."
-  },
-  "b8612e9e238801e434b764be4887812138ca4a905a45ef5493eaec07f177cace": {
-    "classification": "technical",
-    "reason": "Readiness check ids, states, slots, fix codes, select parameters and booster ids.",
-    "evidence": "ReadinessCheck id/state/slot/fix and params (boost, currency) are identifiers or ICU select arguments; text is the typed messageKey rendered by ReadinessPanel."
-  },
-  "31c7a385a1b6e9e4ba8d2cc281cbdcf862e1ce63b5df85526fdff92968493049": {
-    "classification": "technical",
-    "reason": "Readiness check ids, states, slots, fix codes, select parameters and booster ids.",
-    "evidence": "ReadinessCheck id/state/slot/fix and params (boost, currency) are identifiers or ICU select arguments; text is the typed messageKey rendered by ReadinessPanel."
-  },
-  "8c215e76eb635aa513b8f0dfa53080c21ca4dfb6d7372d7e3324b7e3f379c75c": {
-    "classification": "technical",
-    "reason": "Readiness check ids, states, slots, fix codes, select parameters and booster ids.",
-    "evidence": "ReadinessCheck id/state/slot/fix and params (boost, currency) are identifiers or ICU select arguments; text is the typed messageKey rendered by ReadinessPanel."
-  },
   "4b0d39eca2507747848b7f0d1bd173f406e946a5d44a26fa703a25f54a1e0d19": {
-    "classification": "technical",
-    "reason": "Readiness check ids, states, slots, fix codes, select parameters and booster ids.",
-    "evidence": "ReadinessCheck id/state/slot/fix and params (boost, currency) are identifiers or ICU select arguments; text is the typed messageKey rendered by ReadinessPanel."
-  },
-  "12a6671b654e7b1de73da9398f0f6ed5c2e4ebee1ea89be945e88be126832214": {
     "classification": "technical",
     "reason": "Readiness check ids, states, slots, fix codes, select parameters and booster ids.",
     "evidence": "ReadinessCheck id/state/slot/fix and params (boost, currency) are identifiers or ICU select arguments; text is the typed messageKey rendered by ReadinessPanel."
@@ -1594,22 +1469,7 @@
     "reason": "Readiness check ids, states, slots, fix codes, select parameters and booster ids.",
     "evidence": "ReadinessCheck id/state/slot/fix and params (boost, currency) are identifiers or ICU select arguments; text is the typed messageKey rendered by ReadinessPanel."
   },
-  "0b5a2716ac362c2023d6f0162ecde8a29be7cdb3833b75fb99443860298c28dc": {
-    "classification": "technical",
-    "reason": "Readiness check ids, states, slots, fix codes, select parameters and booster ids.",
-    "evidence": "ReadinessCheck id/state/slot/fix and params (boost, currency) are identifiers or ICU select arguments; text is the typed messageKey rendered by ReadinessPanel."
-  },
   "e83fa8b4a859edd00135ceed23c7070365ddab40326c8c8b2484afe63e4fdc15": {
-    "classification": "technical",
-    "reason": "Readiness check ids, states, slots, fix codes, select parameters and booster ids.",
-    "evidence": "ReadinessCheck id/state/slot/fix and params (boost, currency) are identifiers or ICU select arguments; text is the typed messageKey rendered by ReadinessPanel."
-  },
-  "bc035928552ac9dd2d66dfb10428e6e07b8fc782cbc97d44b3803611915575b4": {
-    "classification": "technical",
-    "reason": "Readiness check ids, states, slots, fix codes, select parameters and booster ids.",
-    "evidence": "ReadinessCheck id/state/slot/fix and params (boost, currency) are identifiers or ICU select arguments; text is the typed messageKey rendered by ReadinessPanel."
-  },
-  "68f45ceb695b8d048c008c3e863648e5c0160f98a7ad8142cb6ac36054a83661": {
     "classification": "technical",
     "reason": "Readiness check ids, states, slots, fix codes, select parameters and booster ids.",
     "evidence": "ReadinessCheck id/state/slot/fix and params (boost, currency) are identifiers or ICU select arguments; text is the typed messageKey rendered by ReadinessPanel."
@@ -1908,11 +1768,6 @@
     "classification": "technical",
     "reason": "Commander feature ids.",
     "evidence": "COMMANDER_FEATURE_IDS index automation.commanderFeatures assignments; labels come from commanderFeatures.* keys."
-  },
-  "d060aa0402db21d0f3df30c5e2e125eb50ef3c57bbc28dab8d9a4dcfe55d244e": {
-    "classification": "technical",
-    "reason": "Configuration section keys, commander feature ids, castle purposes, readiness element ids and component tokens.",
-    "evidence": "Section ids address configuration, feature ids index automation.commanderFeatures, ids are focus targets for readiness fixes; visible text renders through LocalizedText keys."
   },
   "6d0b997a9532e2b40449ab9ca362a53d5a1337b5939420f0cc21460e5fb53fc9": {
     "classification": "technical",
@@ -2298,11 +2153,6 @@
     "classification": "technical",
     "reason": "CSS tones, typed label keys, list mode token and #id fallbacks for unknown units.",
     "evidence": "Label keys are MessageKey values rendered with localizeStatic/LocalizedText; names are official metadata."
-  },
-  "bafd1cd35d0d905d48f1a7ea3cc5bc04c09ff3addf68b5c6c7a7c8b26e75315b": {
-    "classification": "technical",
-    "reason": "Stock mode token.",
-    "evidence": "decidedAtLaunch mode selects the evaluateUnitStock rule."
   },
   "2a46023782103f4678fa5b1eab379986dc8846cacef3bfd5dd8d431e0d232012": {
     "classification": "technical",
@@ -3263,5 +3113,1405 @@
     "classification": "technical",
     "reason": "CSS attribute selector used to detect inert (non-interactive) ancestors before moving focus.",
     "evidence": "focusable() calls target.closest(\"[inert]\"); the string is never rendered."
+  },
+  "3b2f5e436f98374a83e15645db12a43a42d5ef5a5e4dcf59ea62ca818f3c7353": {
+    "classification": "technical",
+    "reason": "Save warning and name-validation reason codes.",
+    "evidence": "cleanup-pending, empty and duplicate are machine codes mapped to typed messages (attackPresets.cleanupPending, eventAttackSetup.duplicateName, field messages) by the caller."
+  },
+  "68562b248725aebed355679fbb256f445c1307da7e3e2addfce0050f6652d868": {
+    "classification": "technical",
+    "reason": "Configuration section keys, commander feature ids, castle purposes, readiness element ids and component tokens.",
+    "evidence": "Section ids address configuration, feature ids index automation.commanderFeatures, ids are focus targets for readiness fixes; visible text renders through LocalizedText keys."
+  },
+  "f370644ece0db81b97208b1fe12a2e1c0c2604ceb576e2eae18a88ee549cffb9": {
+    "classification": "technical",
+    "reason": "Readiness check ids, states, slots, fix codes, select parameters and booster ids.",
+    "evidence": "ReadinessCheck id/state/slot/fix and params (boost, currency) are identifiers or ICU select arguments; text is the typed messageKey rendered by ReadinessPanel."
+  },
+  "7dd3a201db6026bc20cab3f34d9c71a8ea7257d7a5ed4b835732a61cc5bbd020": {
+    "classification": "technical",
+    "reason": "Readiness check ids, states, slots, fix codes, select parameters and booster ids.",
+    "evidence": "ReadinessCheck id/state/slot/fix and params (boost, currency) are identifiers or ICU select arguments; text is the typed messageKey rendered by ReadinessPanel."
+  },
+  "73c932a5e3a303d4c7110e9617f8877af636473a2a6e1ec0b7b073a65d3525fd": {
+    "classification": "technical",
+    "reason": "Readiness check ids, states, slots, fix codes, select parameters and booster ids.",
+    "evidence": "ReadinessCheck id/state/slot/fix and params (boost, currency) are identifiers or ICU select arguments; text is the typed messageKey rendered by ReadinessPanel."
+  },
+  "326d6bc737af1c19a0b1730f4d6a8d917e0a275b2a934b8228bd5c617db87461": {
+    "classification": "technical",
+    "reason": "Readiness check ids, states, slots, fix codes, select parameters and booster ids.",
+    "evidence": "ReadinessCheck id/state/slot/fix and params (boost, currency) are identifiers or ICU select arguments; text is the typed messageKey rendered by ReadinessPanel."
+  },
+  "6b337c2e7eb461d077e5a15f8ef53d824f278ce95dc992a6283b5337bd6b0a31": {
+    "classification": "technical",
+    "reason": "Readiness check ids, states, slots, fix codes, select parameters and booster ids.",
+    "evidence": "ReadinessCheck id/state/slot/fix and params (boost, currency) are identifiers or ICU select arguments; text is the typed messageKey rendered by ReadinessPanel."
+  },
+  "cbf94f9f24397f3554fd540fed25962a563ad39f1d4457e7161f8c10637478b8": {
+    "classification": "technical",
+    "reason": "Readiness check ids, states, slots, fix codes, select parameters and booster ids.",
+    "evidence": "ReadinessCheck id/state/slot/fix and params (boost, currency) are identifiers or ICU select arguments; text is the typed messageKey rendered by ReadinessPanel."
+  },
+  "d4a619831d933fa96129b2b098366d8134621c8088337a36d3a6b5e77e5d6385": {
+    "classification": "technical",
+    "reason": "Readiness check ids, states, slots, fix codes, select parameters and booster ids.",
+    "evidence": "ReadinessCheck id/state/slot/fix and params (boost, currency) are identifiers or ICU select arguments; text is the typed messageKey rendered by ReadinessPanel."
+  },
+  "8bd323f37914d8140dbda078eda34c709d11c3805bf31ad20b93af2a2e795a59": {
+    "classification": "technical",
+    "reason": "Readiness check ids, states, slots, fix codes, select parameters and booster ids.",
+    "evidence": "ReadinessCheck id/state/slot/fix and params (boost, currency) are identifiers or ICU select arguments; text is the typed messageKey rendered by ReadinessPanel."
+  },
+  "12c2af23f7db8e141fb74b346c18e59b83517e74217726df76bfb9b2cda0aab9": {
+    "classification": "technical",
+    "reason": "Readiness check ids, states, slots, fix codes, select parameters and booster ids.",
+    "evidence": "ReadinessCheck id/state/slot/fix and params (boost, currency) are identifiers or ICU select arguments; text is the typed messageKey rendered by ReadinessPanel."
+  },
+  "19228c1e377eeca289a482e52be0499c7486c0b4da5c5baee23ca88fdd21b891": {
+    "classification": "technical",
+    "reason": "Readiness check ids, states, slots, fix codes, select parameters and booster ids.",
+    "evidence": "ReadinessCheck id/state/slot/fix and params (boost, currency) are identifiers or ICU select arguments; text is the typed messageKey rendered by ReadinessPanel."
+  },
+  "016dfab2f99231b0dbb252674bc2df667f3146dfb8fba12496fca1226845c937": {
+    "classification": "technical",
+    "reason": "Readiness check ids, states, slots, fix codes, select parameters and booster ids.",
+    "evidence": "ReadinessCheck id/state/slot/fix and params (boost, currency) are identifiers or ICU select arguments; text is the typed messageKey rendered by ReadinessPanel."
+  },
+  "3f823511288d72f77611e1365213344e39bf0496a2e38d498b7e638f2395f022": {
+    "classification": "technical",
+    "reason": "Readiness check ids, states, slots, fix codes, select parameters and booster ids.",
+    "evidence": "ReadinessCheck id/state/slot/fix and params (boost, currency) are identifiers or ICU select arguments; text is the typed messageKey rendered by ReadinessPanel."
+  },
+  "2735abcf722736cab004551fb82540df5c72129e9e27feab8aa4b6ff1cf6083b": {
+    "classification": "technical",
+    "reason": "Readiness check ids, states, slots, fix codes, select parameters and booster ids.",
+    "evidence": "ReadinessCheck id/state/slot/fix and params (boost, currency) are identifiers or ICU select arguments; text is the typed messageKey rendered by ReadinessPanel."
+  },
+  "5e4b9f7b08d7814c322fd5f126373a1868f6ede71916b34c430697a2d677ea79": {
+    "classification": "technical",
+    "reason": "Readiness check ids, states, slots, fix codes, select parameters and booster ids.",
+    "evidence": "ReadinessCheck id/state/slot/fix and params (boost, currency) are identifiers or ICU select arguments; text is the typed messageKey rendered by ReadinessPanel."
+  },
+  "a281fa0e617a950cb8983bcd481cd8979b588b40d6a69a763bc27cb1bcf36058": {
+    "classification": "technical",
+    "reason": "Readiness check ids, states, slots, fix codes, select parameters and booster ids.",
+    "evidence": "ReadinessCheck id/state/slot/fix and params (boost, currency) are identifiers or ICU select arguments; text is the typed messageKey rendered by ReadinessPanel."
+  },
+  "62f78907f3ad2462a0547b7cd9e6dffa90154e9d6f918bc0badb311921edc091": {
+    "classification": "technical",
+    "reason": "Readiness check ids, states, slots, fix codes, select parameters and booster ids.",
+    "evidence": "ReadinessCheck id/state/slot/fix and params (boost, currency) are identifiers or ICU select arguments; text is the typed messageKey rendered by ReadinessPanel."
+  },
+  "0c84bb90ae9e89aa9d8086aeef1d4a80f26b504d08d8c3643181376fcce0efd5": {
+    "classification": "technical",
+    "reason": "Readiness check ids, states, slots, fix codes, select parameters and booster ids.",
+    "evidence": "ReadinessCheck id/state/slot/fix and params (boost, currency) are identifiers or ICU select arguments; text is the typed messageKey rendered by ReadinessPanel."
+  },
+  "e9e00c9aec874b0dc609c8a507638b73e6fdd5066e1d7f68e1e95faf78c733f2": {
+    "classification": "technical",
+    "reason": "Readiness check ids, states, slots, fix codes, select parameters and booster ids.",
+    "evidence": "ReadinessCheck id/state/slot/fix and params (boost, currency) are identifiers or ICU select arguments; text is the typed messageKey rendered by ReadinessPanel."
+  },
+  "9d71ca41aff1fa0c642caa565531c72d6d4db38d21ab407cf5ccbaadbff5bfa3": {
+    "classification": "technical",
+    "reason": "Readiness check ids, states, slots, fix codes, select parameters and booster ids.",
+    "evidence": "ReadinessCheck id/state/slot/fix and params (boost, currency) are identifiers or ICU select arguments; text is the typed messageKey rendered by ReadinessPanel."
+  },
+  "5d631a5deee711486976276b53bdd8fcd42aedd9152fe18dc5e51049e359ee05": {
+    "classification": "technical",
+    "reason": "Readiness check ids, states, slots, fix codes, select parameters and booster ids.",
+    "evidence": "ReadinessCheck id/state/slot/fix and params (boost, currency) are identifiers or ICU select arguments; text is the typed messageKey rendered by ReadinessPanel."
+  },
+  "f7d64c95facc1ca040ee3f418dd9ba6f976034bece4846de16e1936be6a8e358": {
+    "classification": "technical",
+    "reason": "Readiness check ids, states, slots, fix codes, select parameters and booster ids.",
+    "evidence": "ReadinessCheck id/state/slot/fix and params (boost, currency) are identifiers or ICU select arguments; text is the typed messageKey rendered by ReadinessPanel."
+  },
+  "a3443d7ac4fb33cf7e28ee709a21b6f7df50c327ed559532c27ef47b04ac0398": {
+    "classification": "technical",
+    "reason": "Readiness check ids, states, slots, fix codes, select parameters and booster ids.",
+    "evidence": "ReadinessCheck id/state/slot/fix and params (boost, currency) are identifiers or ICU select arguments; text is the typed messageKey rendered by ReadinessPanel."
+  },
+  "9e8acd01118da15650eede78f60f245ab2f2ca1cc0b8ce038c62442c1f55dcda": {
+    "classification": "technical",
+    "reason": "Readiness check ids, states, slots, fix codes, select parameters and booster ids.",
+    "evidence": "ReadinessCheck id/state/slot/fix and params (boost, currency) are identifiers or ICU select arguments; text is the typed messageKey rendered by ReadinessPanel."
+  },
+  "31deaeb92d30664b18cbbe6ac9ff3018d79c7f75f96e11fdfd426609e70ac03a": {
+    "classification": "technical",
+    "reason": "Readiness check ids, states, slots, fix codes, select parameters and booster ids.",
+    "evidence": "ReadinessCheck id/state/slot/fix and params (boost, currency) are identifiers or ICU select arguments; text is the typed messageKey rendered by ReadinessPanel."
+  },
+  "bbc74e1d29314b8f955f2daed2913b8ec5c24fa6f2f3a0d896eff94a3dff0731": {
+    "classification": "technical",
+    "reason": "Readiness check ids, states, slots, fix codes, select parameters and booster ids.",
+    "evidence": "ReadinessCheck id/state/slot/fix and params (boost, currency) are identifiers or ICU select arguments; text is the typed messageKey rendered by ReadinessPanel."
+  },
+  "7060c0aa0348fae5fbd7e881e1ca3c3bce11f20d3d2ba914fc1958b62ccf7746": {
+    "classification": "technical",
+    "reason": "Readiness check ids, states, slots, fix codes, select parameters and booster ids.",
+    "evidence": "ReadinessCheck id/state/slot/fix and params (boost, currency) are identifiers or ICU select arguments; text is the typed messageKey rendered by ReadinessPanel."
+  },
+  "51131bdf8f28d3de9b45e5c794a7b9fda18fef76f51847af69d186afb4fc78b3": {
+    "classification": "technical",
+    "reason": "Configuration section keys, module slot ids and field paths of the attack preset reference registry.",
+    "evidence": "ATTACK_PRESET_SLOTS section/slot/path values address configuration fields; displayed module/slot labels come from moduleLabelKey/slotLabelKey typed catalog messages."
+  },
+  "067db79198b4a958f44af31c6080ab099371cd4154970fdb87f417e287e6d43c": {
+    "classification": "technical",
+    "reason": "Configuration section keys, module slot ids and field paths of the attack preset reference registry.",
+    "evidence": "ATTACK_PRESET_SLOTS section/slot/path values address configuration fields; displayed module/slot labels come from moduleLabelKey/slotLabelKey typed catalog messages."
+  },
+  "b1440e1143cb9ea2d474c7fad21ead8aba591c15bf6a33c7758c770a9ff13e23": {
+    "classification": "technical",
+    "reason": "Configuration section keys, module slot ids and field paths of the attack preset reference registry.",
+    "evidence": "ATTACK_PRESET_SLOTS section/slot/path values address configuration fields; displayed module/slot labels come from moduleLabelKey/slotLabelKey typed catalog messages."
+  },
+  "a6f7455a77ea9ab26581f39b8fc5f50bf6b61f6a4b291130dc4e3158a838bccc": {
+    "classification": "technical",
+    "reason": "Configuration section keys, module slot ids and field paths of the attack preset reference registry.",
+    "evidence": "ATTACK_PRESET_SLOTS section/slot/path values address configuration fields; displayed module/slot labels come from moduleLabelKey/slotLabelKey typed catalog messages."
+  },
+  "e5f4e6f13882aa6c2c35d018db3bb1a397e48c646689384c27cd750afade6cfc": {
+    "classification": "technical",
+    "reason": "Configuration section keys, module slot ids and field paths of the attack preset reference registry.",
+    "evidence": "ATTACK_PRESET_SLOTS section/slot/path values address configuration fields; displayed module/slot labels come from moduleLabelKey/slotLabelKey typed catalog messages."
+  },
+  "2bc68c7ac04ea34161f9e10d76734ae919545274327f2948ddfca74de46bcf51": {
+    "classification": "technical",
+    "reason": "Configuration section keys, module slot ids and field paths of the attack preset reference registry.",
+    "evidence": "ATTACK_PRESET_SLOTS section/slot/path values address configuration fields; displayed module/slot labels come from moduleLabelKey/slotLabelKey typed catalog messages."
+  },
+  "708068b2e4ae97397abe1ac631fa35083b588d49a6b5aaf4dc295a3df05e547b": {
+    "classification": "technical",
+    "reason": "Configuration section keys, module slot ids and field paths of the attack preset reference registry.",
+    "evidence": "ATTACK_PRESET_SLOTS section/slot/path values address configuration fields; displayed module/slot labels come from moduleLabelKey/slotLabelKey typed catalog messages."
+  },
+  "a91d510e73bfc0351cdcf71f82aada19ed72a17b4cbd9f41b96347789eed64f4": {
+    "classification": "technical",
+    "reason": "Configuration section keys, module slot ids and field paths of the attack preset reference registry.",
+    "evidence": "ATTACK_PRESET_SLOTS section/slot/path values address configuration fields; displayed module/slot labels come from moduleLabelKey/slotLabelKey typed catalog messages."
+  },
+  "9f47d1fa5bd5c8b5f8c852d84c81f401468e83c1bdc906d3d0ed6e289f98fa47": {
+    "classification": "technical",
+    "reason": "Configuration section keys, module slot ids and field paths of the attack preset reference registry.",
+    "evidence": "ATTACK_PRESET_SLOTS section/slot/path values address configuration fields; displayed module/slot labels come from moduleLabelKey/slotLabelKey typed catalog messages."
+  },
+  "0a965c3c3fb02d2ab39c5299b6d6029a03aa71daf3261a61a55888af3bf43013": {
+    "classification": "technical",
+    "reason": "Configuration section keys, module slot ids and field paths of the attack preset reference registry.",
+    "evidence": "ATTACK_PRESET_SLOTS section/slot/path values address configuration fields; displayed module/slot labels come from moduleLabelKey/slotLabelKey typed catalog messages."
+  },
+  "65937e780216471f463ad011e6472603a2ae9e5aca828c9a76c83b9a1c1a5986": {
+    "classification": "technical",
+    "reason": "Configuration section keys, module slot ids and field paths of the attack preset reference registry.",
+    "evidence": "ATTACK_PRESET_SLOTS section/slot/path values address configuration fields; displayed module/slot labels come from moduleLabelKey/slotLabelKey typed catalog messages."
+  },
+  "17b139f2ac0bd498954d4e546b05ca55042ea9cb6ecae0f613e56a6274946dc8": {
+    "classification": "technical",
+    "reason": "Configuration section keys, module slot ids and field paths of the attack preset reference registry.",
+    "evidence": "ATTACK_PRESET_SLOTS section/slot/path values address configuration fields; displayed module/slot labels come from moduleLabelKey/slotLabelKey typed catalog messages."
+  },
+  "37074969a219b03f3a064fe2c6df4aaac05837fb167ce1e74e40f67c91bfbf0d": {
+    "classification": "technical",
+    "reason": "Configuration section keys, module slot ids and field paths of the attack preset reference registry.",
+    "evidence": "ATTACK_PRESET_SLOTS section/slot/path values address configuration fields; displayed module/slot labels come from moduleLabelKey/slotLabelKey typed catalog messages."
+  },
+  "d1e9bad056cf54761cf7110b753c3429ed2e586d6c7ca79e3e6f74ec98e9a3ff": {
+    "classification": "technical",
+    "reason": "Configuration section keys, module slot ids and field paths of the attack preset reference registry.",
+    "evidence": "ATTACK_PRESET_SLOTS section/slot/path values address configuration fields; displayed module/slot labels come from moduleLabelKey/slotLabelKey typed catalog messages."
+  },
+  "4531291e13b8fd775f2b173b0cb807dbf2faf7f9dc04f3999b873fd98ac48b5a": {
+    "classification": "technical",
+    "reason": "Configuration section keys, module slot ids and field paths of the attack preset reference registry.",
+    "evidence": "ATTACK_PRESET_SLOTS section/slot/path values address configuration fields; displayed module/slot labels come from moduleLabelKey/slotLabelKey typed catalog messages."
+  },
+  "acfcfd7517390e75b9878abc8f685116f9dbe1bf5a779afa15a0fb9dcc6cadaa": {
+    "classification": "technical",
+    "reason": "CSS classes, badge variants, aria-hidden flags and heading ids.",
+    "evidence": "STATE_TONE/STATE_BADGE map states to classes/variants; text renders through LocalizedText."
+  },
+  "3dfc003bf175a791bb10503d4f5266099f42723e6a3fd2369c85112306efd1cb": {
+    "classification": "technical",
+    "reason": "Reviewer-facing starter recipe metadata (sources, rules, owners, rationale and citations) that is never rendered.",
+    "evidence": "EVENT_ATTACK_STARTER_RECIPE is consumed by recommendEventAttackSetup and tests/starter-recipes.test.mjs; the UI shows only a typed pending-review badge."
+  },
+  "094aa7193c987d0589575fe9a34852400e076fdd8c9a140100a4d187a09236a8": {
+    "classification": "technical",
+    "reason": "Reviewer-facing starter recipe metadata (sources, rules, owners, rationale and citations) that is never rendered.",
+    "evidence": "EVENT_ATTACK_STARTER_RECIPE is consumed by recommendEventAttackSetup and tests/starter-recipes.test.mjs; the UI shows only a typed pending-review badge."
+  },
+  "08ef0082bbe25e8bf6304028bce72dbd1e1e4a5d324ae5bbd51d7aeb9ca26c0d": {
+    "classification": "technical",
+    "reason": "Reviewer-facing starter recipe metadata (sources, rules, owners, rationale and citations) that is never rendered.",
+    "evidence": "EVENT_ATTACK_STARTER_RECIPE is consumed by recommendEventAttackSetup and tests/starter-recipes.test.mjs; the UI shows only a typed pending-review badge."
+  },
+  "471833905c7c7377280ddec3859eae07ef56cd74b249a4ad1443ba6539b193af": {
+    "classification": "technical",
+    "reason": "Reviewer-facing starter recipe metadata (sources, rules, owners, rationale and citations) that is never rendered.",
+    "evidence": "EVENT_ATTACK_STARTER_RECIPE is consumed by recommendEventAttackSetup and tests/starter-recipes.test.mjs; the UI shows only a typed pending-review badge."
+  },
+  "c077f38a89736a233c2f0c28376b1a720ec8f931d4572a4c6b215aa0e56e0f87": {
+    "classification": "technical",
+    "reason": "Reviewer-facing starter recipe metadata (sources, rules, owners, rationale and citations) that is never rendered.",
+    "evidence": "EVENT_ATTACK_STARTER_RECIPE is consumed by recommendEventAttackSetup and tests/starter-recipes.test.mjs; the UI shows only a typed pending-review badge."
+  },
+  "63c278eaf6cfb344e9d25ab070d19fcee5669d3038868e04107c912de3aaea83": {
+    "classification": "technical",
+    "reason": "Composition of typed module and slot labels.",
+    "evidence": "presetOwnerLabel joins localized attackPresets.module.* and attackPresets.slot.* messages; the result is a parameter of allianceTargets.appCreatedPresetNote."
+  },
+  "3648934936e0afc0c727cd62deb1f879d6676cc0d45cd1add03e8b14d0efc116": {
+    "classification": "technical",
+    "reason": "Prop default token.",
+    "evidence": "nameField defaults to visible/hidden, a structural option; visible text uses LocalizedText."
+  },
+  "8ee7ad50c2218b1bbb4bb0836d80a8ce17706a23932ad4bcb320c2a5aab21a30": {
+    "classification": "technical",
+    "reason": "Runtime presence mode token.",
+    "evidence": "HostedRuntimePresence.mode is compared by observationFreshness; never rendered."
+  },
+  "1e85c0deb6b58d8679bf4409ed2aa3a5c9e77fe5ddc53090739e21fd03413774": {
+    "classification": "technical",
+    "reason": "Defense setup ref discriminators and badge token.",
+    "evidence": "DefenseSetupRef.source (none/preset/inline) and the app badge value are compared, never rendered; labels are typed messages."
+  },
+  "b4829c53284a7fa02d376eb7ab3783fab336618508b003dd511dad104e193a99": {
+    "classification": "technical",
+    "reason": "Defense setup ref discriminators and badge token.",
+    "evidence": "DefenseSetupRef.source (none/preset/inline) and the app badge value are compared, never rendered; labels are typed messages."
+  },
+  "6438f911bf08b9601880f6dd9c8fd687af6ae77842b73ed8657247cea5d65edd": {
+    "classification": "technical",
+    "reason": "Defense setup ref discriminators and badge token.",
+    "evidence": "DefenseSetupRef.source (none/preset/inline) and the app badge value are compared, never rendered; labels are typed messages."
+  },
+  "7546e0d28c20920eeaf00e946d4379529ee92cdfd07ef09105b7892b56cd00e4": {
+    "classification": "technical",
+    "reason": "Defense setup ref discriminators and badge token.",
+    "evidence": "DefenseSetupRef.source (none/preset/inline) and the app badge value are compared, never rendered; labels are typed messages."
+  },
+  "bea90b833bd62c1e2cfcc4554afb4886b3b2ec58701482daba1d2efcbd6783a9": {
+    "classification": "technical",
+    "reason": "Defense setup ref discriminators and badge token.",
+    "evidence": "DefenseSetupRef.source (none/preset/inline) and the app badge value are compared, never rendered; labels are typed messages."
+  },
+  "8d0d7db9745487b30515227389decd099912474b21c8912b553a92b21152d562": {
+    "classification": "technical",
+    "reason": "Defense setup ref discriminators and badge token.",
+    "evidence": "DefenseSetupRef.source (none/preset/inline) and the app badge value are compared, never rendered; labels are typed messages."
+  },
+  "13a4fd8f48072324e74ce07944802041301005a508949287c3f012500fb5bb06": {
+    "classification": "technical",
+    "reason": "Defense setup ref discriminators and badge token.",
+    "evidence": "DefenseSetupRef.source (none/preset/inline) and the app badge value are compared, never rendered; labels are typed messages."
+  },
+  "7204c8d41f9d493f09c5e6a39ab49cb49949e0a88dd2df752b1431587c38619a": {
+    "classification": "technical",
+    "reason": "Generated record id and numeric name suffix composition.",
+    "evidence": "ids are app:<section>:<slot>:<hex>; the suffix appends a number to an already-localized generated title."
+  },
+  "57c186782bbebe4ccc36e1df969922b79f96cbd4b6c9d64862505066774427dc": {
+    "classification": "technical",
+    "reason": "Generated record id and numeric name suffix composition.",
+    "evidence": "ids are app:<section>:<slot>:<hex>; the suffix appends a number to an already-localized generated title."
+  },
+  "121ae4c3cbf23307ad41d54de10cc30ebb83e3df4995b0236b0b51d6368218ee": {
+    "classification": "technical",
+    "reason": "Slot ids, save warning codes and composition of typed labels.",
+    "evidence": "attack slot id and cleanup-pending warning code are identifiers; the owner label joins localized module/slot messages passed to attackPresets.createdByOther."
+  },
+  "a024871d10bc3f019036175145291467ada288461f7441af29b4bcd5f562b9a1": {
+    "classification": "technical",
+    "reason": "Slot ids, save warning codes and composition of typed labels.",
+    "evidence": "attack slot id and cleanup-pending warning code are identifiers; the owner label joins localized module/slot messages passed to attackPresets.createdByOther."
+  },
+  "fe45a017d54dc8a81f77d4a6fdd84438b449e0127f56ca7e81f384ee29a1f823": {
+    "classification": "technical",
+    "reason": "Slot ids, save warning codes and composition of typed labels.",
+    "evidence": "attack slot id and cleanup-pending warning code are identifiers; the owner label joins localized module/slot messages passed to attackPresets.createdByOther."
+  },
+  "b95090ffa731538e9506a23e8c51f3a6e044644b954070aa64a4e9ad278ad61d": {
+    "classification": "technical",
+    "reason": "Slot ids, save warning codes and composition of typed labels.",
+    "evidence": "attack slot id and cleanup-pending warning code are identifiers; the owner label joins localized module/slot messages passed to attackPresets.createdByOther."
+  },
+  "eff45e11ff34ebb2ae4f1585031d0fe7318b5feade4a632e839d22ff4397d106": {
+    "classification": "technical",
+    "reason": "Slot ids, save warning codes and composition of typed labels.",
+    "evidence": "attack slot id and cleanup-pending warning code are identifiers; the owner label joins localized module/slot messages passed to attackPresets.createdByOther."
+  },
+  "a8330c1f5dc426b97bd8aeb9232c6a1bd0d74aadc0bbd045b4ae8caab94211dc": {
+    "classification": "technical",
+    "reason": "Slot ids, feature id, readiness ids, DOM anchor ids, message keys and id fallbacks.",
+    "evidence": "attack/defense slots, autoKhan feature id, readiness check ids, auto-khan-* element ids used by focusReadinessTarget, typed message keys passed to localizeStatic and #<id> fallbacks for unnamed castles."
+  },
+  "d69772f8785dc7c56460b2d20bfbe48b7a8a8f4648cd5f7b69605dcb3677837f": {
+    "classification": "technical",
+    "reason": "Slot ids, feature id, readiness ids, DOM anchor ids, message keys and id fallbacks.",
+    "evidence": "attack/defense slots, autoKhan feature id, readiness check ids, auto-khan-* element ids used by focusReadinessTarget, typed message keys passed to localizeStatic and #<id> fallbacks for unnamed castles."
+  },
+  "64460ce5572f0a3e802226750f2686a6c01d636b2d0e0e55730320bb20fb4a0a": {
+    "classification": "technical",
+    "reason": "Slot ids, feature id, readiness ids, DOM anchor ids, message keys and id fallbacks.",
+    "evidence": "attack/defense slots, autoKhan feature id, readiness check ids, auto-khan-* element ids used by focusReadinessTarget, typed message keys passed to localizeStatic and #<id> fallbacks for unnamed castles."
+  },
+  "23b27b3d8a0644ece200f39f6d3800649aaa5d10723840839827299fc648a2b6": {
+    "classification": "technical",
+    "reason": "Slot ids, feature id, readiness ids, DOM anchor ids, message keys and id fallbacks.",
+    "evidence": "attack/defense slots, autoKhan feature id, readiness check ids, auto-khan-* element ids used by focusReadinessTarget, typed message keys passed to localizeStatic and #<id> fallbacks for unnamed castles."
+  },
+  "552c2f503dc65060d8c4ade4a7dab8afdaa0bd456477bd124577bbd4f15348d0": {
+    "classification": "technical",
+    "reason": "Slot ids, feature id, readiness ids, DOM anchor ids, message keys and id fallbacks.",
+    "evidence": "attack/defense slots, autoKhan feature id, readiness check ids, auto-khan-* element ids used by focusReadinessTarget, typed message keys passed to localizeStatic and #<id> fallbacks for unnamed castles."
+  },
+  "beeda5d1fe386f7a8ce541f314683b1d72563ca8420bb419eb35f2cc339da9e2": {
+    "classification": "technical",
+    "reason": "Slot ids, feature id, readiness ids, DOM anchor ids, message keys and id fallbacks.",
+    "evidence": "attack/defense slots, autoKhan feature id, readiness check ids, auto-khan-* element ids used by focusReadinessTarget, typed message keys passed to localizeStatic and #<id> fallbacks for unnamed castles."
+  },
+  "2fbe5a40dfaf99a3f84a7080e64b196da1f4f8fce3038f6877160504176f31a6": {
+    "classification": "technical",
+    "reason": "Slot ids, feature id, readiness ids, DOM anchor ids, message keys and id fallbacks.",
+    "evidence": "attack/defense slots, autoKhan feature id, readiness check ids, auto-khan-* element ids used by focusReadinessTarget, typed message keys passed to localizeStatic and #<id> fallbacks for unnamed castles."
+  },
+  "ead0342424018a79f9824ee1d6f375d2710f579f6678acf6f22d22c532003afe": {
+    "classification": "technical",
+    "reason": "Slot ids, feature id, readiness ids, DOM anchor ids, message keys and id fallbacks.",
+    "evidence": "attack/defense slots, autoKhan feature id, readiness check ids, auto-khan-* element ids used by focusReadinessTarget, typed message keys passed to localizeStatic and #<id> fallbacks for unnamed castles."
+  },
+  "cfd49e7667a4d64177fc8d0c0bda65fa23e6a98076165ab2e9a006bc562a1843": {
+    "classification": "technical",
+    "reason": "Slot ids, feature id, readiness ids, DOM anchor ids, message keys and id fallbacks.",
+    "evidence": "attack/defense slots, autoKhan feature id, readiness check ids, auto-khan-* element ids used by focusReadinessTarget, typed message keys passed to localizeStatic and #<id> fallbacks for unnamed castles."
+  },
+  "eb3f8c0fedef8cea09730b8e226b6a2ec832c69e825e7ddcd8b0f15ccb981f23": {
+    "classification": "technical",
+    "reason": "Slot ids, feature id, readiness ids, DOM anchor ids, message keys and id fallbacks.",
+    "evidence": "attack/defense slots, autoKhan feature id, readiness check ids, auto-khan-* element ids used by focusReadinessTarget, typed message keys passed to localizeStatic and #<id> fallbacks for unnamed castles."
+  },
+  "2314bec9b96eb2d38408a1923e6cddcf7dd3dda0f3cae85b04f4757b5b972975": {
+    "classification": "technical",
+    "reason": "Slot ids, feature id, readiness ids, DOM anchor ids, message keys and id fallbacks.",
+    "evidence": "attack/defense slots, autoKhan feature id, readiness check ids, auto-khan-* element ids used by focusReadinessTarget, typed message keys passed to localizeStatic and #<id> fallbacks for unnamed castles."
+  },
+  "80fd49bbcb0fe642f96429136d28ceb832f78cefa409490272958a7033ad1f87": {
+    "classification": "technical",
+    "reason": "Slot ids, feature id, readiness ids, DOM anchor ids, message keys and id fallbacks.",
+    "evidence": "attack/defense slots, autoKhan feature id, readiness check ids, auto-khan-* element ids used by focusReadinessTarget, typed message keys passed to localizeStatic and #<id> fallbacks for unnamed castles."
+  },
+  "01967bf93f806dd0a4fef00de2962b7fea0e63a42ff7543956d4989aa08b8395": {
+    "classification": "technical",
+    "reason": "Slot ids, feature id, readiness ids, DOM anchor ids, message keys and id fallbacks.",
+    "evidence": "attack/defense slots, autoKhan feature id, readiness check ids, auto-khan-* element ids used by focusReadinessTarget, typed message keys passed to localizeStatic and #<id> fallbacks for unnamed castles."
+  },
+  "fccb081406ae3bdf3b4445a10cd8d2dae517f61159bf17e6136f54eb2aafbbdf": {
+    "classification": "technical",
+    "reason": "Slot ids, feature id, readiness ids, DOM anchor ids, message keys and id fallbacks.",
+    "evidence": "attack/defense slots, autoKhan feature id, readiness check ids, auto-khan-* element ids used by focusReadinessTarget, typed message keys passed to localizeStatic and #<id> fallbacks for unnamed castles."
+  },
+  "2e5f66762f8f9193a1681f8c1ece1b13b0c59e91bc8306c3ad753ff3ee0a01bd": {
+    "classification": "technical",
+    "reason": "Slot ids, feature id, readiness ids, DOM anchor ids, message keys and id fallbacks.",
+    "evidence": "attack/defense slots, autoKhan feature id, readiness check ids, auto-khan-* element ids used by focusReadinessTarget, typed message keys passed to localizeStatic and #<id> fallbacks for unnamed castles."
+  },
+  "a0e8159b29e52b6553c8dc4aa26ce01dadca9456fb6f34ac5d4355d872e3b155": {
+    "classification": "technical",
+    "reason": "Slot ids, feature id, readiness ids, DOM anchor ids, message keys and id fallbacks.",
+    "evidence": "attack/defense slots, autoKhan feature id, readiness check ids, auto-khan-* element ids used by focusReadinessTarget, typed message keys passed to localizeStatic and #<id> fallbacks for unnamed castles."
+  },
+  "54cdec23d8a9296a546b18e3c710219012ed922a374ce1d9e09105fc2ed39553": {
+    "classification": "technical",
+    "reason": "Slot ids, feature id, readiness ids, DOM anchor ids, message keys and id fallbacks.",
+    "evidence": "attack/defense slots, autoKhan feature id, readiness check ids, auto-khan-* element ids used by focusReadinessTarget, typed message keys passed to localizeStatic and #<id> fallbacks for unnamed castles."
+  },
+  "b0984b959f308994e39f423dc8a42cbff2255a9856d5def183b29a2660eebf81": {
+    "classification": "technical",
+    "reason": "Slot ids, feature id, readiness ids, DOM anchor ids, message keys and id fallbacks.",
+    "evidence": "attack/defense slots, autoKhan feature id, readiness check ids, auto-khan-* element ids used by focusReadinessTarget, typed message keys passed to localizeStatic and #<id> fallbacks for unnamed castles."
+  },
+  "b326fb83f088fbd4e8828d181242bc3e047e3d00c08ac0f42151e1f9ea05f010": {
+    "classification": "technical",
+    "reason": "Slot ids, feature id, readiness ids, DOM anchor ids, message keys and id fallbacks.",
+    "evidence": "attack/defense slots, autoKhan feature id, readiness check ids, auto-khan-* element ids used by focusReadinessTarget, typed message keys passed to localizeStatic and #<id> fallbacks for unnamed castles."
+  },
+  "91fd17ac7878ad2ec5a51d02531050da6aa84d7e1c0ddd9451ad4a7168cac235": {
+    "classification": "technical",
+    "reason": "Slot ids, feature id, readiness ids, DOM anchor ids, message keys and id fallbacks.",
+    "evidence": "attack/defense slots, autoKhan feature id, readiness check ids, auto-khan-* element ids used by focusReadinessTarget, typed message keys passed to localizeStatic and #<id> fallbacks for unnamed castles."
+  },
+  "608817fd56b941850c1e17a93536126ea0de8bff71a646b847b996a1074f0e2e": {
+    "classification": "technical",
+    "reason": "Slot ids, feature id, readiness ids, DOM anchor ids, message keys and id fallbacks.",
+    "evidence": "attack/defense slots, autoKhan feature id, readiness check ids, auto-khan-* element ids used by focusReadinessTarget, typed message keys passed to localizeStatic and #<id> fallbacks for unnamed castles."
+  },
+  "ecda93b494a555d9f5bc56a71f6957fee2aaeb38dbcd419ea00041b974035548": {
+    "classification": "technical",
+    "reason": "Slot ids, feature id, readiness ids, DOM anchor ids, message keys and id fallbacks.",
+    "evidence": "attack/defense slots, autoKhan feature id, readiness check ids, auto-khan-* element ids used by focusReadinessTarget, typed message keys passed to localizeStatic and #<id> fallbacks for unnamed castles."
+  },
+  "c5d33dc3205f0015c344ef54ad13bb1e757b658945ca437520a3fcd38f8a626c": {
+    "classification": "technical",
+    "reason": "Slot ids, feature id, readiness ids, DOM anchor ids, message keys and id fallbacks.",
+    "evidence": "attack/defense slots, autoKhan feature id, readiness check ids, auto-khan-* element ids used by focusReadinessTarget, typed message keys passed to localizeStatic and #<id> fallbacks for unnamed castles."
+  },
+  "f318ecf4d7c6069ab6cd4a1576dfcabf3c3fbd017742e123a59ece14fd3110d7": {
+    "classification": "technical",
+    "reason": "Slot ids, feature id, readiness ids, DOM anchor ids, message keys and id fallbacks.",
+    "evidence": "attack/defense slots, autoKhan feature id, readiness check ids, auto-khan-* element ids used by focusReadinessTarget, typed message keys passed to localizeStatic and #<id> fallbacks for unnamed castles."
+  },
+  "4636eeeefff2312e85f52d62de470b79a5401d7d5b753d2c6a2be1b260c93742": {
+    "classification": "technical",
+    "reason": "Slot ids, feature id, readiness ids, DOM anchor ids, message keys and id fallbacks.",
+    "evidence": "attack/defense slots, autoKhan feature id, readiness check ids, auto-khan-* element ids used by focusReadinessTarget, typed message keys passed to localizeStatic and #<id> fallbacks for unnamed castles."
+  },
+  "3ffed4f2772da9101cd1c945f1789e40d8571c668c4ee7ae04d877af4eaca8ca": {
+    "classification": "technical",
+    "reason": "Slot ids, feature id, readiness ids, DOM anchor ids, message keys and id fallbacks.",
+    "evidence": "attack/defense slots, autoKhan feature id, readiness check ids, auto-khan-* element ids used by focusReadinessTarget, typed message keys passed to localizeStatic and #<id> fallbacks for unnamed castles."
+  },
+  "56368ea3847a1605536594ad405180c37bdc0d94e4f379e4463baf7cfe4738d4": {
+    "classification": "technical",
+    "reason": "Slot ids, feature id, readiness ids, DOM anchor ids, message keys and id fallbacks.",
+    "evidence": "forts/islands slots, autoStorm feature id, readiness check ids, auto-storm-* element ids used by focusReadinessTarget, typed message keys and #<id> fallbacks."
+  },
+  "4705e9baf4bb7e1227f5d42ce1de4a6571d7fa4e404effe25ba80dd391f6644a": {
+    "classification": "technical",
+    "reason": "Slot ids, feature id, readiness ids, DOM anchor ids, message keys and id fallbacks.",
+    "evidence": "forts/islands slots, autoStorm feature id, readiness check ids, auto-storm-* element ids used by focusReadinessTarget, typed message keys and #<id> fallbacks."
+  },
+  "c28870316fd22538e89b25478f597356550746e881b58c359058b9712edf712b": {
+    "classification": "technical",
+    "reason": "Slot ids, feature id, readiness ids, DOM anchor ids, message keys and id fallbacks.",
+    "evidence": "forts/islands slots, autoStorm feature id, readiness check ids, auto-storm-* element ids used by focusReadinessTarget, typed message keys and #<id> fallbacks."
+  },
+  "b2dd7a326483f9f7db3528d6e94fed80a786a8ef4c6569fb191d84a1e07cb845": {
+    "classification": "technical",
+    "reason": "Slot ids, feature id, readiness ids, DOM anchor ids, message keys and id fallbacks.",
+    "evidence": "forts/islands slots, autoStorm feature id, readiness check ids, auto-storm-* element ids used by focusReadinessTarget, typed message keys and #<id> fallbacks."
+  },
+  "678c1ec271a10d6bcdae5f5af66f9483147f127ca4d7bcb88624bea0bd33c775": {
+    "classification": "technical",
+    "reason": "Slot ids, feature id, readiness ids, DOM anchor ids, message keys and id fallbacks.",
+    "evidence": "forts/islands slots, autoStorm feature id, readiness check ids, auto-storm-* element ids used by focusReadinessTarget, typed message keys and #<id> fallbacks."
+  },
+  "10212501e25fed907735ea42c09445ed463e88e5fa090d7d584d8deead213b6e": {
+    "classification": "technical",
+    "reason": "Slot ids, feature id, readiness ids, DOM anchor ids, message keys and id fallbacks.",
+    "evidence": "forts/islands slots, autoStorm feature id, readiness check ids, auto-storm-* element ids used by focusReadinessTarget, typed message keys and #<id> fallbacks."
+  },
+  "ddf7b5663dd2ba840e3f6a8d46ec2df1b69bc02d8fdfcd5f9f4e3b7af6365bda": {
+    "classification": "technical",
+    "reason": "Slot ids, feature id, readiness ids, DOM anchor ids, message keys and id fallbacks.",
+    "evidence": "forts/islands slots, autoStorm feature id, readiness check ids, auto-storm-* element ids used by focusReadinessTarget, typed message keys and #<id> fallbacks."
+  },
+  "0a10ddbd9a470e813e65d0f3c19e669617440b5f18ef9b56aa605df01b5e8a59": {
+    "classification": "technical",
+    "reason": "Slot ids, feature id, readiness ids, DOM anchor ids, message keys and id fallbacks.",
+    "evidence": "forts/islands slots, autoStorm feature id, readiness check ids, auto-storm-* element ids used by focusReadinessTarget, typed message keys and #<id> fallbacks."
+  },
+  "15ed2621e24d20b7c560f80a66f2dfd7dc1015469c1436961f4cf5d15c686e77": {
+    "classification": "technical",
+    "reason": "Slot ids, feature id, readiness ids, DOM anchor ids, message keys and id fallbacks.",
+    "evidence": "forts/islands slots, autoStorm feature id, readiness check ids, auto-storm-* element ids used by focusReadinessTarget, typed message keys and #<id> fallbacks."
+  },
+  "971de9fac06650099524add2db8656b4cb781047d53bc640af428bddd5312720": {
+    "classification": "technical",
+    "reason": "Slot ids, feature id, readiness ids, DOM anchor ids, message keys and id fallbacks.",
+    "evidence": "forts/islands slots, autoStorm feature id, readiness check ids, auto-storm-* element ids used by focusReadinessTarget, typed message keys and #<id> fallbacks."
+  },
+  "933c85667975df1144b6e32e1d8cac205d9b207f08dababa758ca6921abcc79c": {
+    "classification": "technical",
+    "reason": "Slot ids, feature id, readiness ids, DOM anchor ids, message keys and id fallbacks.",
+    "evidence": "forts/islands slots, autoStorm feature id, readiness check ids, auto-storm-* element ids used by focusReadinessTarget, typed message keys and #<id> fallbacks."
+  },
+  "ae37c66d1446a9fa4ed79c496b7841e1ff6eacab15b93e5dceb73804cf029e09": {
+    "classification": "technical",
+    "reason": "Slot ids, feature id, readiness ids, DOM anchor ids, message keys and id fallbacks.",
+    "evidence": "forts/islands slots, autoStorm feature id, readiness check ids, auto-storm-* element ids used by focusReadinessTarget, typed message keys and #<id> fallbacks."
+  },
+  "4be9357af01ec9af7a877c5b0898db067d2e4c368127dfbb5d7419868dd134e8": {
+    "classification": "technical",
+    "reason": "Slot ids, feature id, readiness ids, DOM anchor ids, message keys and id fallbacks.",
+    "evidence": "forts/islands slots, autoStorm feature id, readiness check ids, auto-storm-* element ids used by focusReadinessTarget, typed message keys and #<id> fallbacks."
+  },
+  "dfd50657100d386bf64839a26ca538a61c02ec97727d47a389a6bc308a970521": {
+    "classification": "technical",
+    "reason": "Slot ids, feature id, readiness ids, DOM anchor ids, message keys and id fallbacks.",
+    "evidence": "forts/islands slots, autoStorm feature id, readiness check ids, auto-storm-* element ids used by focusReadinessTarget, typed message keys and #<id> fallbacks."
+  },
+  "7cc93ac9b4a52bfd398d411f4112958fad54ad25d7da1d350a49eb57027e24fe": {
+    "classification": "technical",
+    "reason": "Slot ids, feature id, readiness ids, DOM anchor ids, message keys and id fallbacks.",
+    "evidence": "forts/islands slots, autoStorm feature id, readiness check ids, auto-storm-* element ids used by focusReadinessTarget, typed message keys and #<id> fallbacks."
+  },
+  "cd351aa497baf812a8682b023830df7f925d7d8e9d12deb8c3ce692c2a1484e0": {
+    "classification": "technical",
+    "reason": "Slot ids, feature id, readiness ids, DOM anchor ids, message keys and id fallbacks.",
+    "evidence": "forts/islands slots, autoStorm feature id, readiness check ids, auto-storm-* element ids used by focusReadinessTarget, typed message keys and #<id> fallbacks."
+  },
+  "5f08fdd8cbf22f734260ea37ecaa44f197e59131913c00baa3962985e4761304": {
+    "classification": "technical",
+    "reason": "Slot ids, feature id, readiness ids, DOM anchor ids, message keys and id fallbacks.",
+    "evidence": "forts/islands slots, autoStorm feature id, readiness check ids, auto-storm-* element ids used by focusReadinessTarget, typed message keys and #<id> fallbacks."
+  },
+  "b65d4f52574c9de466b1bde510f4e4492e0d5b91405b6c38974d4ef7db7dc61b": {
+    "classification": "technical",
+    "reason": "Slot ids, feature id, readiness ids, DOM anchor ids, message keys and id fallbacks.",
+    "evidence": "forts/islands slots, autoStorm feature id, readiness check ids, auto-storm-* element ids used by focusReadinessTarget, typed message keys and #<id> fallbacks."
+  },
+  "225fac476d7adc30676b80a6083dd4d82faa8c95343b7879be9bf15c17d287ac": {
+    "classification": "technical",
+    "reason": "Slot ids, feature id, readiness ids, DOM anchor ids, message keys and id fallbacks.",
+    "evidence": "forts/islands slots, autoStorm feature id, readiness check ids, auto-storm-* element ids used by focusReadinessTarget, typed message keys and #<id> fallbacks."
+  },
+  "638b03ba8059fca3cced587a96c571b195990f824b029281e22df7bc327e6d20": {
+    "classification": "technical",
+    "reason": "Slot ids, feature id, readiness ids, DOM anchor ids, message keys and id fallbacks.",
+    "evidence": "forts/islands slots, autoStorm feature id, readiness check ids, auto-storm-* element ids used by focusReadinessTarget, typed message keys and #<id> fallbacks."
+  },
+  "4bbbbb34cf3d564c4243076d0e646abe1f81f74a9900fee767ab122ed23a780c": {
+    "classification": "technical",
+    "reason": "Slot ids, feature id, readiness ids, DOM anchor ids, message keys and id fallbacks.",
+    "evidence": "forts/islands slots, autoStorm feature id, readiness check ids, auto-storm-* element ids used by focusReadinessTarget, typed message keys and #<id> fallbacks."
+  },
+  "6e30f5187c02b98d0382729ac42490f931dec06b68fc55d4a33eb9601135886d": {
+    "classification": "technical",
+    "reason": "Slot ids, feature id, readiness ids, DOM anchor ids, message keys and id fallbacks.",
+    "evidence": "forts/islands slots, autoStorm feature id, readiness check ids, auto-storm-* element ids used by focusReadinessTarget, typed message keys and #<id> fallbacks."
+  },
+  "93af0055b89410c43a7f973465a37e3d16a9c457fd69adcbc7cfd99dd4ee96df": {
+    "classification": "technical",
+    "reason": "Slot ids, feature id, readiness ids, DOM anchor ids, message keys and id fallbacks.",
+    "evidence": "forts/islands slots, autoStorm feature id, readiness check ids, auto-storm-* element ids used by focusReadinessTarget, typed message keys and #<id> fallbacks."
+  },
+  "9056a05a1b92bb6b5921a286f1561aa6a80323a63fe5d85b6049b4d6976f5ab8": {
+    "classification": "technical",
+    "reason": "Slot ids, feature id, readiness ids, DOM anchor ids, message keys and id fallbacks.",
+    "evidence": "forts/islands slots, autoStorm feature id, readiness check ids, auto-storm-* element ids used by focusReadinessTarget, typed message keys and #<id> fallbacks."
+  },
+  "e2f11a6a5d7ed82fea9223508ecc4e0a8cf59be66f24f61ce18a6bdbab51fc04": {
+    "classification": "technical",
+    "reason": "Slot ids, feature id, readiness ids, DOM anchor ids, message keys and id fallbacks.",
+    "evidence": "forts/islands slots, autoStorm feature id, readiness check ids, auto-storm-* element ids used by focusReadinessTarget, typed message keys and #<id> fallbacks."
+  },
+  "353fff7db9558485945758c97d199b63babe0109c951d6390b17bbbe8741ccd5": {
+    "classification": "technical",
+    "reason": "Mode ids, ref discriminators, component variant/size tokens, wall side keys, DOM ids, document keys and composition of typed labels.",
+    "evidence": "saved/inline chip values, DefenseSetupRef sources, Button/Badge/Modal props, left/middle/right keys, defense.presets document key and #<id> fallbacks; labels render typed messages."
+  },
+  "41fa2cf17b12c6277ef5250fb577a20187c6ee94a60613f64ad66cf3ecaf2a4a": {
+    "classification": "technical",
+    "reason": "Mode ids, ref discriminators, component variant/size tokens, wall side keys, DOM ids, document keys and composition of typed labels.",
+    "evidence": "saved/inline chip values, DefenseSetupRef sources, Button/Badge/Modal props, left/middle/right keys, defense.presets document key and #<id> fallbacks; labels render typed messages."
+  },
+  "ac7c2cd51653aaa680c0279b40a91be6e815ca59eaf8ddbe15bc60d3e71e6d48": {
+    "classification": "technical",
+    "reason": "Mode ids, ref discriminators, component variant/size tokens, wall side keys, DOM ids, document keys and composition of typed labels.",
+    "evidence": "saved/inline chip values, DefenseSetupRef sources, Button/Badge/Modal props, left/middle/right keys, defense.presets document key and #<id> fallbacks; labels render typed messages."
+  },
+  "2af5274b02eea28d6ba99719f492e004a0e1facfb119e27480c845307d97a200": {
+    "classification": "technical",
+    "reason": "Mode ids, ref discriminators, component variant/size tokens, wall side keys, DOM ids, document keys and composition of typed labels.",
+    "evidence": "saved/inline chip values, DefenseSetupRef sources, Button/Badge/Modal props, left/middle/right keys, defense.presets document key and #<id> fallbacks; labels render typed messages."
+  },
+  "b953f687d47104dc0b0377f78d9318c24fd531bc958c448624af3d68ddef70ba": {
+    "classification": "technical",
+    "reason": "Mode ids, ref discriminators, component variant/size tokens, wall side keys, DOM ids, document keys and composition of typed labels.",
+    "evidence": "saved/inline chip values, DefenseSetupRef sources, Button/Badge/Modal props, left/middle/right keys, defense.presets document key and #<id> fallbacks; labels render typed messages."
+  },
+  "3c18f96767892e442dbe2c714334f3e471a56a85b2e8853feff16838e14789ea": {
+    "classification": "technical",
+    "reason": "Mode ids, ref discriminators, component variant/size tokens, wall side keys, DOM ids, document keys and composition of typed labels.",
+    "evidence": "saved/inline chip values, DefenseSetupRef sources, Button/Badge/Modal props, left/middle/right keys, defense.presets document key and #<id> fallbacks; labels render typed messages."
+  },
+  "af9b07dea46ff234e1207b3433cef971bc82680272f1b2268c73cbbeeb1e78dc": {
+    "classification": "technical",
+    "reason": "Mode ids, ref discriminators, component variant/size tokens, wall side keys, DOM ids, document keys and composition of typed labels.",
+    "evidence": "saved/inline chip values, DefenseSetupRef sources, Button/Badge/Modal props, left/middle/right keys, defense.presets document key and #<id> fallbacks; labels render typed messages."
+  },
+  "1fb58c799256a89c5e4dde9477025bd8b7627258f859e12a2b55fbfd2417dd75": {
+    "classification": "technical",
+    "reason": "Mode ids, ref discriminators, component variant/size tokens, wall side keys, DOM ids, document keys and composition of typed labels.",
+    "evidence": "saved/inline chip values, DefenseSetupRef sources, Button/Badge/Modal props, left/middle/right keys, defense.presets document key and #<id> fallbacks; labels render typed messages."
+  },
+  "6c913c53468c576156b287507c8117df319c42c9b4e65053fc65b777e8b415e6": {
+    "classification": "technical",
+    "reason": "Mode ids, ref discriminators, component variant/size tokens, wall side keys, DOM ids, document keys and composition of typed labels.",
+    "evidence": "saved/inline chip values, DefenseSetupRef sources, Button/Badge/Modal props, left/middle/right keys, defense.presets document key and #<id> fallbacks; labels render typed messages."
+  },
+  "7d68e3a4b3deb9e33f9687944127151203834c1075361530c2e5d201c0b444fd": {
+    "classification": "technical",
+    "reason": "Mode ids, ref discriminators, component variant/size tokens, wall side keys, DOM ids, document keys and composition of typed labels.",
+    "evidence": "saved/inline chip values, DefenseSetupRef sources, Button/Badge/Modal props, left/middle/right keys, defense.presets document key and #<id> fallbacks; labels render typed messages."
+  },
+  "7280c9bab7453672b524daaaa1ada8f9532385f19cc9b9a684ee1ce0e271fed4": {
+    "classification": "technical",
+    "reason": "Mode ids, ref discriminators, component variant/size tokens, wall side keys, DOM ids, document keys and composition of typed labels.",
+    "evidence": "saved/inline chip values, DefenseSetupRef sources, Button/Badge/Modal props, left/middle/right keys, defense.presets document key and #<id> fallbacks; labels render typed messages."
+  },
+  "3fadb2256a1f5c2a1a276930bacbb326b00879ddeac9c16f9388fe5fb924bfcb": {
+    "classification": "technical",
+    "reason": "Mode ids, ref discriminators, component variant/size tokens, wall side keys, DOM ids, document keys and composition of typed labels.",
+    "evidence": "saved/inline chip values, DefenseSetupRef sources, Button/Badge/Modal props, left/middle/right keys, defense.presets document key and #<id> fallbacks; labels render typed messages."
+  },
+  "ec6772f721c0173c7a26149140e60218c905731956890cf39ebefe28d484ed99": {
+    "classification": "technical",
+    "reason": "Mode ids, ref discriminators, component variant/size tokens, wall side keys, DOM ids, document keys and composition of typed labels.",
+    "evidence": "saved/inline chip values, DefenseSetupRef sources, Button/Badge/Modal props, left/middle/right keys, defense.presets document key and #<id> fallbacks; labels render typed messages."
+  },
+  "1a8e67fbec7b9d88ab1f46b832dc1147c4bf1de8338e2b6a99bf966427f2c668": {
+    "classification": "technical",
+    "reason": "Mode ids, ref discriminators, component variant/size tokens, wall side keys, DOM ids, document keys and composition of typed labels.",
+    "evidence": "saved/inline chip values, DefenseSetupRef sources, Button/Badge/Modal props, left/middle/right keys, defense.presets document key and #<id> fallbacks; labels render typed messages."
+  },
+  "9f33c159bae84e34b33b5c7d17d1b27536c670ed3cd9f77d02eeaf902abf9ec4": {
+    "classification": "technical",
+    "reason": "Mode ids, ref discriminators, component variant/size tokens, wall side keys, DOM ids, document keys and composition of typed labels.",
+    "evidence": "saved/inline chip values, DefenseSetupRef sources, Button/Badge/Modal props, left/middle/right keys, defense.presets document key and #<id> fallbacks; labels render typed messages."
+  },
+  "fe6c10b3a215ac36fff42c62ee0a8cd815b912ee79eb976f5230611075ba20c8": {
+    "classification": "technical",
+    "reason": "Mode ids, ref discriminators, component variant/size tokens, wall side keys, DOM ids, document keys and composition of typed labels.",
+    "evidence": "saved/inline chip values, DefenseSetupRef sources, Button/Badge/Modal props, left/middle/right keys, defense.presets document key and #<id> fallbacks; labels render typed messages."
+  },
+  "2457df69c0a357668aac71332b4c702822300a4e06a39a9293ca7f3c57461e11": {
+    "classification": "technical",
+    "reason": "Mode ids, ref discriminators, component variant/size tokens, wall side keys, DOM ids, document keys and composition of typed labels.",
+    "evidence": "saved/inline chip values, DefenseSetupRef sources, Button/Badge/Modal props, left/middle/right keys, defense.presets document key and #<id> fallbacks; labels render typed messages."
+  },
+  "cd89c1dd90cbb22d54aa2befe5677be68f4c7518244abfe09807a3e419f7a046": {
+    "classification": "technical",
+    "reason": "Mode ids, ref discriminators, component variant/size tokens, wall side keys, DOM ids, document keys and composition of typed labels.",
+    "evidence": "saved/inline chip values, DefenseSetupRef sources, Button/Badge/Modal props, left/middle/right keys, defense.presets document key and #<id> fallbacks; labels render typed messages."
+  },
+  "cf076b80cd35610077786636d018e0f0a9085ef87caa8fdde0bee96d7ececb86": {
+    "classification": "technical",
+    "reason": "Mode ids, ref discriminators, component variant/size tokens, wall side keys, DOM ids, document keys and composition of typed labels.",
+    "evidence": "saved/inline chip values, DefenseSetupRef sources, Button/Badge/Modal props, left/middle/right keys, defense.presets document key and #<id> fallbacks; labels render typed messages."
+  },
+  "0aa8a9fcbc8dea823dd4d5b2afb453b013ff18fe40e971b8b3ad1890b7d924cb": {
+    "classification": "technical",
+    "reason": "Mode ids, ref discriminators, component variant/size tokens, wall side keys, DOM ids, document keys and composition of typed labels.",
+    "evidence": "saved/inline chip values, DefenseSetupRef sources, Button/Badge/Modal props, left/middle/right keys, defense.presets document key and #<id> fallbacks; labels render typed messages."
+  },
+  "a1482908c08018926e18fa37d40ec82a83a506e8750a8c2b3d810d49d901e7ed": {
+    "classification": "technical",
+    "reason": "Mode ids, ref discriminators, component variant/size tokens, wall side keys, DOM ids, document keys and composition of typed labels.",
+    "evidence": "saved/inline chip values, DefenseSetupRef sources, Button/Badge/Modal props, left/middle/right keys, defense.presets document key and #<id> fallbacks; labels render typed messages."
+  },
+  "d4b36c414675e6feb12a8fc263a1df889023065ef08b21a2b93e78a02f9de172": {
+    "classification": "technical",
+    "reason": "Mode ids, ref discriminators, component variant/size tokens, wall side keys, DOM ids, document keys and composition of typed labels.",
+    "evidence": "saved/inline chip values, DefenseSetupRef sources, Button/Badge/Modal props, left/middle/right keys, defense.presets document key and #<id> fallbacks; labels render typed messages."
+  },
+  "99701e09a72343fbba1a427daff2ade95e96cd3945abc3124a4ee5b7755a52e5": {
+    "classification": "technical",
+    "reason": "Mode ids, ref discriminators, component variant/size tokens, wall side keys, DOM ids, document keys and composition of typed labels.",
+    "evidence": "saved/inline chip values, DefenseSetupRef sources, Button/Badge/Modal props, left/middle/right keys, defense.presets document key and #<id> fallbacks; labels render typed messages."
+  },
+  "eb9b02c02add7e81edb7d069d72ce8eb392709a1e8ad052703989d1364c5a7bf": {
+    "classification": "technical",
+    "reason": "Mode ids, ref discriminators, component variant/size tokens, wall side keys, DOM ids, document keys and composition of typed labels.",
+    "evidence": "saved/inline chip values, DefenseSetupRef sources, Button/Badge/Modal props, left/middle/right keys, defense.presets document key and #<id> fallbacks; labels render typed messages."
+  },
+  "eff0f41bf9492179c660b9629493b23c2d788d5b5249d3c3b1fde66a4d27d37a": {
+    "classification": "technical",
+    "reason": "Mode ids, ref discriminators, component variant/size tokens, wall side keys, DOM ids, document keys and composition of typed labels.",
+    "evidence": "saved/inline chip values, DefenseSetupRef sources, Button/Badge/Modal props, left/middle/right keys, defense.presets document key and #<id> fallbacks; labels render typed messages."
+  },
+  "d0855accd01b8e342cc94ccc4310ffaf88187b5fbc25b2e83c1d4e4e5fe319ca": {
+    "classification": "technical",
+    "reason": "Mode ids, ref discriminators, component variant/size tokens, wall side keys, DOM ids, document keys and composition of typed labels.",
+    "evidence": "saved/inline chip values, DefenseSetupRef sources, Button/Badge/Modal props, left/middle/right keys, defense.presets document key and #<id> fallbacks; labels render typed messages."
+  },
+  "461d0082d468f7c714656f918834f8acfec923ac908878f9de10b160c193fd5e": {
+    "classification": "technical",
+    "reason": "Mode ids, ref discriminators, component variant/size tokens, wall side keys, DOM ids, document keys and composition of typed labels.",
+    "evidence": "saved/inline chip values, DefenseSetupRef sources, Button/Badge/Modal props, left/middle/right keys, defense.presets document key and #<id> fallbacks; labels render typed messages."
+  },
+  "8bce4775f63460aea8f2954b6494785a2901c18cd5e19d7ca56b4c1243d19974": {
+    "classification": "technical",
+    "reason": "Mode ids, ref discriminators, component variant/size tokens, wall side keys, DOM ids, document keys and composition of typed labels.",
+    "evidence": "saved/inline chip values, DefenseSetupRef sources, Button/Badge/Modal props, left/middle/right keys, defense.presets document key and #<id> fallbacks; labels render typed messages."
+  },
+  "b7ff6dc97242ce3a6a07e312efd8b31ace2f2ed16867dc0a61eda20faf1656d5": {
+    "classification": "technical",
+    "reason": "Mode ids, ref discriminators, component variant/size tokens, wall side keys, DOM ids, document keys and composition of typed labels.",
+    "evidence": "saved/inline chip values, DefenseSetupRef sources, Button/Badge/Modal props, left/middle/right keys, defense.presets document key and #<id> fallbacks; labels render typed messages."
+  },
+  "8bd6eebac5d33bab119048823b0ff95844a109b0aa7eafc6a3793fcf5fe607be": {
+    "classification": "technical",
+    "reason": "Mode ids, ref discriminators, component variant/size tokens, wall side keys, DOM ids, document keys and composition of typed labels.",
+    "evidence": "saved/inline chip values, DefenseSetupRef sources, Button/Badge/Modal props, left/middle/right keys, defense.presets document key and #<id> fallbacks; labels render typed messages."
+  },
+  "f6d88d84df568ddad7a6fb74faf104aff5a0b90dce5c010fc5aba9e6ddf9d4db": {
+    "classification": "technical",
+    "reason": "Mode ids, ref discriminators, component variant/size tokens, wall side keys, DOM ids, document keys and composition of typed labels.",
+    "evidence": "saved/inline chip values, DefenseSetupRef sources, Button/Badge/Modal props, left/middle/right keys, defense.presets document key and #<id> fallbacks; labels render typed messages."
+  },
+  "8c8f2bd41952b0e17db91fff57a3247453d853bc043a92091b2657f95f4f8b76": {
+    "classification": "technical",
+    "reason": "Mode ids, ref discriminators, component variant/size tokens, wall side keys, DOM ids, document keys and composition of typed labels.",
+    "evidence": "saved/inline chip values, DefenseSetupRef sources, Button/Badge/Modal props, left/middle/right keys, defense.presets document key and #<id> fallbacks; labels render typed messages."
+  },
+  "aa48a914c8ad01037f282da3beecf8bac604662f5f49178f883ba68f9bf0c730": {
+    "classification": "technical",
+    "reason": "Mode ids, ref discriminators, component variant/size tokens, wall side keys, DOM ids, document keys and composition of typed labels.",
+    "evidence": "saved/inline chip values, DefenseSetupRef sources, Button/Badge/Modal props, left/middle/right keys, defense.presets document key and #<id> fallbacks; labels render typed messages."
+  },
+  "74be0ef2aa1f8aac9f8a23bcf1e770a4456f4fab2d5bd839f1ffeb45b1fca234": {
+    "classification": "technical",
+    "reason": "Mode ids, ref discriminators, component variant/size tokens, wall side keys, DOM ids, document keys and composition of typed labels.",
+    "evidence": "saved/inline chip values, DefenseSetupRef sources, Button/Badge/Modal props, left/middle/right keys, defense.presets document key and #<id> fallbacks; labels render typed messages."
+  },
+  "44c33190ff982763950aea8032a481eff0c9ee11525222ced062bead9eddfcdc": {
+    "classification": "technical",
+    "reason": "Mode ids, ref discriminators, component variant/size tokens, wall side keys, DOM ids, document keys and composition of typed labels.",
+    "evidence": "saved/inline chip values, DefenseSetupRef sources, Button/Badge/Modal props, left/middle/right keys, defense.presets document key and #<id> fallbacks; labels render typed messages."
+  },
+  "3b8bf7642a71590552e17b83ca9971bfba7a65749b98db4df5cf07b9ae055828": {
+    "classification": "technical",
+    "reason": "Mode ids, ref discriminators, component variant/size tokens, wall side keys, DOM ids, document keys and composition of typed labels.",
+    "evidence": "saved/inline chip values, DefenseSetupRef sources, Button/Badge/Modal props, left/middle/right keys, defense.presets document key and #<id> fallbacks; labels render typed messages."
+  },
+  "9eaf0bae706e5c31051254f85357f90a8a3634cb38aa7381a58efbbd6d121b02": {
+    "classification": "technical",
+    "reason": "Readiness check ids, states, slots, fix codes, plan line ids, booster id and id fallbacks.",
+    "evidence": "ReadinessCheck/ReadinessPlanLine id/state/slot/fix values are identifiers; text is the typed messageKey rendered by ReadinessPanel."
+  },
+  "a11e57a24eaf09d804f86097b4bcc7be31aee2bc129e22c1e2276a563c31dd2d": {
+    "classification": "technical",
+    "reason": "Readiness check ids, states, slots, fix codes, plan line ids, booster id and id fallbacks.",
+    "evidence": "ReadinessCheck/ReadinessPlanLine id/state/slot/fix values are identifiers; text is the typed messageKey rendered by ReadinessPanel."
+  },
+  "b9b4b7a984da70dc9a48d2899b930e402be101685050880ff4f756264f38cad8": {
+    "classification": "technical",
+    "reason": "Readiness check ids, states, slots, fix codes, plan line ids, booster id and id fallbacks.",
+    "evidence": "ReadinessCheck/ReadinessPlanLine id/state/slot/fix values are identifiers; text is the typed messageKey rendered by ReadinessPanel."
+  },
+  "d9bef27ef5f17cd58285d8776dce8f2fa3ec6248b3a31a6f3b086c54ef85dd6d": {
+    "classification": "technical",
+    "reason": "Readiness check ids, states, slots, fix codes, plan line ids, booster id and id fallbacks.",
+    "evidence": "ReadinessCheck/ReadinessPlanLine id/state/slot/fix values are identifiers; text is the typed messageKey rendered by ReadinessPanel."
+  },
+  "09f085b6880ddf30637b1436c399d7cd5fae031c7f290f084de4d7b019aabed9": {
+    "classification": "technical",
+    "reason": "Readiness check ids, states, slots, fix codes, plan line ids, booster id and id fallbacks.",
+    "evidence": "ReadinessCheck/ReadinessPlanLine id/state/slot/fix values are identifiers; text is the typed messageKey rendered by ReadinessPanel."
+  },
+  "3b1f4da647f24b03b0ba2a47f49b48dc4c47153ccb63b6206ae7d8d4d6b51cb6": {
+    "classification": "technical",
+    "reason": "Readiness check ids, states, slots, fix codes, plan line ids, booster id and id fallbacks.",
+    "evidence": "ReadinessCheck/ReadinessPlanLine id/state/slot/fix values are identifiers; text is the typed messageKey rendered by ReadinessPanel."
+  },
+  "240425062deed4f18f3b19fe44422eadc58a50890df331a32e4fd68aba3cd13b": {
+    "classification": "technical",
+    "reason": "Readiness check ids, states, slots, fix codes, plan line ids, booster id and id fallbacks.",
+    "evidence": "ReadinessCheck/ReadinessPlanLine id/state/slot/fix values are identifiers; text is the typed messageKey rendered by ReadinessPanel."
+  },
+  "5c4db867580c9f97145f2dac0086631598f7ac471cef29417f4c1ba01959aaf1": {
+    "classification": "technical",
+    "reason": "Readiness check ids, states, slots, fix codes, plan line ids, booster id and id fallbacks.",
+    "evidence": "ReadinessCheck/ReadinessPlanLine id/state/slot/fix values are identifiers; text is the typed messageKey rendered by ReadinessPanel."
+  },
+  "e72f139105e7a268d12670e608e94d909c57270b79bbdbf992f7c9dff5730c5c": {
+    "classification": "technical",
+    "reason": "Readiness check ids, states, slots, fix codes, plan line ids, booster id and id fallbacks.",
+    "evidence": "ReadinessCheck/ReadinessPlanLine id/state/slot/fix values are identifiers; text is the typed messageKey rendered by ReadinessPanel."
+  },
+  "e4de3fd9ed3eaf699c558444c4f875884ea6744d59aac9c588046b1590806d56": {
+    "classification": "technical",
+    "reason": "Readiness check ids, states, slots, fix codes, plan line ids, booster id and id fallbacks.",
+    "evidence": "ReadinessCheck/ReadinessPlanLine id/state/slot/fix values are identifiers; text is the typed messageKey rendered by ReadinessPanel."
+  },
+  "fc8a8a90ea2d64cd579944cdd2d062fe596094d1ff4bc01ba45ab4630b3c2e2e": {
+    "classification": "technical",
+    "reason": "Readiness check ids, states, slots, fix codes, plan line ids, booster id and id fallbacks.",
+    "evidence": "ReadinessCheck/ReadinessPlanLine id/state/slot/fix values are identifiers; text is the typed messageKey rendered by ReadinessPanel."
+  },
+  "a90eef725354919a49a8ad1f95313a37e48443a6efd80455b4e42c0461fb876c": {
+    "classification": "technical",
+    "reason": "Readiness check ids, states, slots, fix codes, plan line ids, booster id and id fallbacks.",
+    "evidence": "ReadinessCheck/ReadinessPlanLine id/state/slot/fix values are identifiers; text is the typed messageKey rendered by ReadinessPanel."
+  },
+  "4882c7da5e75dc7f3f472e86c024d77140ac0beb49da835b49298c8782e0e4c3": {
+    "classification": "technical",
+    "reason": "Readiness check ids, states, slots, fix codes, plan line ids, booster id and id fallbacks.",
+    "evidence": "ReadinessCheck/ReadinessPlanLine id/state/slot/fix values are identifiers; text is the typed messageKey rendered by ReadinessPanel."
+  },
+  "ed96b860900e143d7ac9da770db196c87e208f8d2c8e83a24cb0854c3b212582": {
+    "classification": "technical",
+    "reason": "Readiness check ids, states, slots, fix codes, plan line ids, booster id and id fallbacks.",
+    "evidence": "ReadinessCheck/ReadinessPlanLine id/state/slot/fix values are identifiers; text is the typed messageKey rendered by ReadinessPanel."
+  },
+  "7b19410aad5db3322d81dbf79bb9b843a067d76774de36fe2774c6219dddca25": {
+    "classification": "technical",
+    "reason": "Readiness check ids, states, slots, fix codes, plan line ids, booster id and id fallbacks.",
+    "evidence": "ReadinessCheck/ReadinessPlanLine id/state/slot/fix values are identifiers; text is the typed messageKey rendered by ReadinessPanel."
+  },
+  "240920cc50d75f246094e21f096bb634faf857e7bb691ab6a6996118ae9626d5": {
+    "classification": "technical",
+    "reason": "Readiness check ids, states, slots, fix codes, plan line ids, booster id and id fallbacks.",
+    "evidence": "ReadinessCheck/ReadinessPlanLine id/state/slot/fix values are identifiers; text is the typed messageKey rendered by ReadinessPanel."
+  },
+  "611ae4fa50f0a2781c704971d2f0ce5252819bfa5ba2746aae0bc87d5ab1caa7": {
+    "classification": "technical",
+    "reason": "Readiness check ids, states, slots, fix codes, plan line ids, booster id and id fallbacks.",
+    "evidence": "ReadinessCheck/ReadinessPlanLine id/state/slot/fix values are identifiers; text is the typed messageKey rendered by ReadinessPanel."
+  },
+  "96febdc70886c5ecc6ee2342ad44be32623b0a2238f3a53797176d41516c6abd": {
+    "classification": "technical",
+    "reason": "Readiness check ids, states, slots, fix codes, plan line ids, booster id and id fallbacks.",
+    "evidence": "ReadinessCheck/ReadinessPlanLine id/state/slot/fix values are identifiers; text is the typed messageKey rendered by ReadinessPanel."
+  },
+  "b364c3bcb0b80bade05d6bb5cd75c7b8de24d438b782258ffa3af1eb1e5f57b0": {
+    "classification": "technical",
+    "reason": "Readiness check ids, states, slots, fix codes, plan line ids, booster id and id fallbacks.",
+    "evidence": "ReadinessCheck/ReadinessPlanLine id/state/slot/fix values are identifiers; text is the typed messageKey rendered by ReadinessPanel."
+  },
+  "8f7d62519b20c746613b2ea39bfcc127b392764a2b5403d5a3cac2a9a68aebf9": {
+    "classification": "technical",
+    "reason": "Readiness check ids, states, slots, fix codes, plan line ids, booster id and id fallbacks.",
+    "evidence": "ReadinessCheck/ReadinessPlanLine id/state/slot/fix values are identifiers; text is the typed messageKey rendered by ReadinessPanel."
+  },
+  "b1dac8b9e44efc01d47a944b95aa59b18a912c3868014e65f70a344a538a57eb": {
+    "classification": "technical",
+    "reason": "Readiness check ids, states, slots, fix codes, plan line ids, booster id and id fallbacks.",
+    "evidence": "ReadinessCheck/ReadinessPlanLine id/state/slot/fix values are identifiers; text is the typed messageKey rendered by ReadinessPanel."
+  },
+  "17023bcbf526780726e6f60935732844e3a6b509deae18964376456b2d64949b": {
+    "classification": "technical",
+    "reason": "Readiness check ids, states, slots, fix codes, plan line ids, booster id and id fallbacks.",
+    "evidence": "ReadinessCheck/ReadinessPlanLine id/state/slot/fix values are identifiers; text is the typed messageKey rendered by ReadinessPanel."
+  },
+  "4c74f61df07a68db2ba7348eeacaae939d5414c595ffe2e1754293fd2fcd1023": {
+    "classification": "technical",
+    "reason": "Readiness check ids, states, slots, fix codes, plan line ids, booster id and id fallbacks.",
+    "evidence": "ReadinessCheck/ReadinessPlanLine id/state/slot/fix values are identifiers; text is the typed messageKey rendered by ReadinessPanel."
+  },
+  "82afd01b640c058ca5bcb6cca1d0d0186ba792cff66db5a75ddaff79898da592": {
+    "classification": "technical",
+    "reason": "Readiness check ids, states, slots, fix codes, plan line ids, booster id and id fallbacks.",
+    "evidence": "ReadinessCheck/ReadinessPlanLine id/state/slot/fix values are identifiers; text is the typed messageKey rendered by ReadinessPanel."
+  },
+  "b4a09d56daea5100b468721c1da99174eb2bdeb26d4e589061775832dedb80cc": {
+    "classification": "technical",
+    "reason": "Readiness check ids, states, slots, fix codes, plan line ids, booster id and id fallbacks.",
+    "evidence": "ReadinessCheck/ReadinessPlanLine id/state/slot/fix values are identifiers; text is the typed messageKey rendered by ReadinessPanel."
+  },
+  "7f0244334b082fd7cfd2193e8d5077e59e3147a5ff660f6481d63cac96e5c15a": {
+    "classification": "technical",
+    "reason": "Readiness check ids, states, slots, fix codes, plan line ids, booster id and id fallbacks.",
+    "evidence": "ReadinessCheck/ReadinessPlanLine id/state/slot/fix values are identifiers; text is the typed messageKey rendered by ReadinessPanel."
+  },
+  "872efdc8f1756c9f24ef83ba4769a3a9e61137d6ecbcccd191cac9c86e06c7f3": {
+    "classification": "technical",
+    "reason": "Readiness check ids, states, slots, fix codes, plan line ids, booster id and id fallbacks.",
+    "evidence": "ReadinessCheck/ReadinessPlanLine id/state/slot/fix values are identifiers; text is the typed messageKey rendered by ReadinessPanel."
+  },
+  "78e728470bfc14cc0eb315ffd9d6394ba0eeed1bcde879cb464f5fc7edec18d1": {
+    "classification": "technical",
+    "reason": "Readiness check ids, states, slots, fix codes, plan line ids, booster id and id fallbacks.",
+    "evidence": "ReadinessCheck/ReadinessPlanLine id/state/slot/fix values are identifiers; text is the typed messageKey rendered by ReadinessPanel."
+  },
+  "a7e3367b8b50dfedc883b532b83c5be121a21b8289662c7bebb002f7a062b37f": {
+    "classification": "technical",
+    "reason": "Readiness check ids, states, slots, fix codes, plan line ids, booster id and id fallbacks.",
+    "evidence": "ReadinessCheck/ReadinessPlanLine id/state/slot/fix values are identifiers; text is the typed messageKey rendered by ReadinessPanel."
+  },
+  "7da8cdc45635a1baa5f0171b91a4834c1697893720d8149c9f417cf8ef7f0490": {
+    "classification": "technical",
+    "reason": "Readiness check ids, states, slots, fix codes, plan line ids, booster id and id fallbacks.",
+    "evidence": "ReadinessCheck/ReadinessPlanLine id/state/slot/fix values are identifiers; text is the typed messageKey rendered by ReadinessPanel."
+  },
+  "3778c2d0b111c509c82f850dce8c8b7f85970a57306e885f341918404c4b78e1": {
+    "classification": "technical",
+    "reason": "Readiness check ids, states, slots, fix codes, plan line ids, booster id and id fallbacks.",
+    "evidence": "ReadinessCheck/ReadinessPlanLine id/state/slot/fix values are identifiers; text is the typed messageKey rendered by ReadinessPanel."
+  },
+  "4dc97217e04233adf42c1f74f3cf8c6b016ba18fa6b86825a254850ff356d037": {
+    "classification": "technical",
+    "reason": "Readiness check ids, states, slots, fix codes, plan line ids, booster id and id fallbacks.",
+    "evidence": "ReadinessCheck/ReadinessPlanLine id/state/slot/fix values are identifiers; text is the typed messageKey rendered by ReadinessPanel."
+  },
+  "92e6628356373bb68b6b4bce78ac99463e696de828ba5673088637a363d6a8d0": {
+    "classification": "technical",
+    "reason": "Readiness check ids, states, slots, fix codes, plan line ids, booster id and id fallbacks.",
+    "evidence": "ReadinessCheck/ReadinessPlanLine id/state/slot/fix values are identifiers; text is the typed messageKey rendered by ReadinessPanel."
+  },
+  "d6284df509ae4dcd41ebef90205ed2995715e4af255900c5211a8e3a55f2f399": {
+    "classification": "technical",
+    "reason": "Readiness check ids, states, slots, fix codes, plan line ids, booster id and id fallbacks.",
+    "evidence": "ReadinessCheck/ReadinessPlanLine id/state/slot/fix values are identifiers; text is the typed messageKey rendered by ReadinessPanel."
+  },
+  "111203a2c2079d96c638e638a87e401da8b5d2947612c37c9957832b55aedec4": {
+    "classification": "technical",
+    "reason": "Readiness check ids, states, slots, fix codes, plan line ids, booster id and id fallbacks.",
+    "evidence": "ReadinessCheck/ReadinessPlanLine id/state/slot/fix values are identifiers; text is the typed messageKey rendered by ReadinessPanel."
+  },
+  "6e205fecfe796d69a07e5337a27a70711d94386776dd4b28462d291949aadd94": {
+    "classification": "technical",
+    "reason": "Readiness check ids, states, slots, fix codes, plan line ids, booster id and id fallbacks.",
+    "evidence": "ReadinessCheck/ReadinessPlanLine id/state/slot/fix values are identifiers; text is the typed messageKey rendered by ReadinessPanel."
+  },
+  "0a46424cc21f65c19df039fb3b68e6a1a96a85ae15b6310c3a09739502b4f1bb": {
+    "classification": "technical",
+    "reason": "Readiness check ids, states, slots, fix codes, plan line ids, booster id and id fallbacks.",
+    "evidence": "ReadinessCheck/ReadinessPlanLine id/state/slot/fix values are identifiers; text is the typed messageKey rendered by ReadinessPanel."
+  },
+  "445753e32fa364cf99e75211d1898f7d2be009c186ebf5a22ec798e413ffa8fa": {
+    "classification": "technical",
+    "reason": "Readiness check ids, states, slots, fix codes, plan line ids, booster id and id fallbacks.",
+    "evidence": "ReadinessCheck/ReadinessPlanLine id/state/slot/fix values are identifiers; text is the typed messageKey rendered by ReadinessPanel."
+  },
+  "f9881cbee5b08408245ae7e1c1b405b44c5b972ca7f9e547c80c1ceec5aa96ec": {
+    "classification": "technical",
+    "reason": "Readiness check ids, states, slots, fix codes, plan line ids, booster id and id fallbacks.",
+    "evidence": "ReadinessCheck/ReadinessPlanLine id/state/slot/fix values are identifiers; text is the typed messageKey rendered by ReadinessPanel."
+  },
+  "936b6f7e805db8f1d739dffa3ac8f063b5cac2017c21abaa71c11cd15f37b1ef": {
+    "classification": "technical",
+    "reason": "Readiness check ids, states, slots, fix codes, plan line ids, booster id and id fallbacks.",
+    "evidence": "ReadinessCheck/ReadinessPlanLine id/state/slot/fix values are identifiers; text is the typed messageKey rendered by ReadinessPanel."
+  },
+  "9a23f81867e0d699f295c2ac978902c7b81a3a787a1063454a655e79a7076486": {
+    "classification": "technical",
+    "reason": "Readiness check ids, states, slots, fix codes, plan line ids, booster id and id fallbacks.",
+    "evidence": "ReadinessCheck/ReadinessPlanLine id/state/slot/fix values are identifiers; text is the typed messageKey rendered by ReadinessPanel."
+  },
+  "92c895fabe8ffc3a138f3da9c480932c352de4f8f9d754ffd41d1b6f5c81a2f3": {
+    "classification": "technical",
+    "reason": "Readiness check ids, states, slots, fix codes, plan line ids, booster id and id fallbacks.",
+    "evidence": "ReadinessCheck/ReadinessPlanLine id/state/slot/fix values are identifiers; text is the typed messageKey rendered by ReadinessPanel."
+  },
+  "80f1e6882853d60e20be8ea1ea3a40df5ae58f398e147e056bbc6c53b64a5790": {
+    "classification": "technical",
+    "reason": "Readiness check ids, states, slots, fix codes, plan line ids, booster id and id fallbacks.",
+    "evidence": "ReadinessCheck/ReadinessPlanLine id/state/slot/fix values are identifiers; text is the typed messageKey rendered by ReadinessPanel."
+  },
+  "f03f20b36c2bcdda3b7aeaea57a79a3dedccf765cc5cc785a5847390b2302a20": {
+    "classification": "technical",
+    "reason": "Readiness check ids, states, slots, fix codes, plan line ids, booster id and id fallbacks.",
+    "evidence": "ReadinessCheck/ReadinessPlanLine id/state/slot/fix values are identifiers; text is the typed messageKey rendered by ReadinessPanel."
+  },
+  "fb63ae40b967b24929277ae9f47a4ee604aadbee0ecf0bf3c21d9ca89c862a59": {
+    "classification": "technical",
+    "reason": "Readiness check ids, states, slots, fix codes, plan line ids, booster id and id fallbacks.",
+    "evidence": "ReadinessCheck/ReadinessPlanLine id/state/slot/fix values are identifiers; text is the typed messageKey rendered by ReadinessPanel."
+  },
+  "e4d322b646c9ef1603b3a9d49374a244da9d93af7afba83193506b0cf079bda3": {
+    "classification": "technical",
+    "reason": "Readiness check ids, states, slots, fix codes, plan line ids, booster id and id fallbacks.",
+    "evidence": "ReadinessCheck/ReadinessPlanLine id/state/slot/fix values are identifiers; text is the typed messageKey rendered by ReadinessPanel."
+  },
+  "eac20b26649aea8175b68680df9ec6135c94eac7a5c5279ba5117be2684ebac3": {
+    "classification": "technical",
+    "reason": "Readiness check ids, states, slots, fix codes, plan line ids, booster id and id fallbacks.",
+    "evidence": "ReadinessCheck/ReadinessPlanLine id/state/slot/fix values are identifiers; text is the typed messageKey rendered by ReadinessPanel."
+  },
+  "b89623f4753af0bd3eb3672bdd3620cfba51ee7f0793f5e8913ba70da80c87bb": {
+    "classification": "technical",
+    "reason": "Readiness check ids, states, slots, fix codes, plan line ids, booster id and id fallbacks.",
+    "evidence": "ReadinessCheck/ReadinessPlanLine id/state/slot/fix values are identifiers; text is the typed messageKey rendered by ReadinessPanel."
+  },
+  "dc4bef31b864a2a58885c121287b84f636e3b2416d615d9ed5bc3fffa0bddeaa": {
+    "classification": "technical",
+    "reason": "Readiness check ids, states, slots, fix codes, plan line ids, booster id and id fallbacks.",
+    "evidence": "ReadinessCheck/ReadinessPlanLine id/state/slot/fix values are identifiers; text is the typed messageKey rendered by ReadinessPanel."
+  },
+  "4d1ef8477cbba026ab59188693f03913d3b689264fbdc3017596b3bc8b285a38": {
+    "classification": "technical",
+    "reason": "Readiness check ids, states, slots, fix codes, plan line ids, booster id and id fallbacks.",
+    "evidence": "ReadinessCheck/ReadinessPlanLine id/state/slot/fix values are identifiers; text is the typed messageKey rendered by ReadinessPanel."
+  },
+  "77f21bc19b8702ae724f3a981011a98e21621041561014c92402e6d5d2e34168": {
+    "classification": "technical",
+    "reason": "Readiness check ids, states, slots, fix codes, plan line ids, booster id and id fallbacks.",
+    "evidence": "ReadinessCheck/ReadinessPlanLine id/state/slot/fix values are identifiers; text is the typed messageKey rendered by ReadinessPanel."
+  },
+  "2cec9caf6a35f58e3ab5c27a882f67e9bf83287db861688e07f4fcf453f8fba3": {
+    "classification": "technical",
+    "reason": "Readiness check ids, states, slots, fix codes, plan line ids, booster id and id fallbacks.",
+    "evidence": "ReadinessCheck/ReadinessPlanLine id/state/slot/fix values are identifiers; text is the typed messageKey rendered by ReadinessPanel."
+  },
+  "cddeb380be6c191853da06a1403a56ceda2fd6cc9c3579e0791f84bf609d28ae": {
+    "classification": "technical",
+    "reason": "Readiness check ids, states, slots, fix codes, plan line ids, booster id and id fallbacks.",
+    "evidence": "ReadinessCheck/ReadinessPlanLine id/state/slot/fix values are identifiers; text is the typed messageKey rendered by ReadinessPanel."
+  },
+  "aaf7b374bc0f792c943eedfd0f968a670707eb16b29ee5c11bbc7dd3fde9209d": {
+    "classification": "technical",
+    "reason": "Readiness check ids, states, slots, fix codes, plan line ids, booster id and id fallbacks.",
+    "evidence": "ReadinessCheck/ReadinessPlanLine id/state/slot/fix values are identifiers; text is the typed messageKey rendered by ReadinessPanel."
+  },
+  "9d0fd22710592b9c79930f0b166a8ce0dbd0c898f3a630a7383453a919c2ecfc": {
+    "classification": "technical",
+    "reason": "Readiness check ids, states, slots, fix codes, plan line ids, unlock kingdom key and id fallbacks.",
+    "evidence": "ReadinessCheck/ReadinessPlanLine id/state/slot/fix values are identifiers; text is the typed messageKey rendered by ReadinessPanel."
+  },
+  "150c442c320b7657062f685bfd683c58121be74116f0a3f4c3ddbbbe9a53fc1e": {
+    "classification": "technical",
+    "reason": "Readiness check ids, states, slots, fix codes, plan line ids, unlock kingdom key and id fallbacks.",
+    "evidence": "ReadinessCheck/ReadinessPlanLine id/state/slot/fix values are identifiers; text is the typed messageKey rendered by ReadinessPanel."
+  },
+  "9373e7e8a58aa6fc1f65a62e801d150e887618fbd8643ae9a198c92fccdd57c7": {
+    "classification": "technical",
+    "reason": "Readiness check ids, states, slots, fix codes, plan line ids, unlock kingdom key and id fallbacks.",
+    "evidence": "ReadinessCheck/ReadinessPlanLine id/state/slot/fix values are identifiers; text is the typed messageKey rendered by ReadinessPanel."
+  },
+  "7259ec49b033e692ef71e3128f94177547db839d6a244f8f550318dc584511df": {
+    "classification": "technical",
+    "reason": "Readiness check ids, states, slots, fix codes, plan line ids, unlock kingdom key and id fallbacks.",
+    "evidence": "ReadinessCheck/ReadinessPlanLine id/state/slot/fix values are identifiers; text is the typed messageKey rendered by ReadinessPanel."
+  },
+  "4d68cd7edb291b558b3eb6dc601a7f7ea35123daf17cfe431daff1efebce1f91": {
+    "classification": "technical",
+    "reason": "Readiness check ids, states, slots, fix codes, plan line ids, unlock kingdom key and id fallbacks.",
+    "evidence": "ReadinessCheck/ReadinessPlanLine id/state/slot/fix values are identifiers; text is the typed messageKey rendered by ReadinessPanel."
+  },
+  "c14d32f84847e074324cf2ec63b8b2aefdb26f909ad3e68c2fd9c479f09dc884": {
+    "classification": "technical",
+    "reason": "Readiness check ids, states, slots, fix codes, plan line ids, unlock kingdom key and id fallbacks.",
+    "evidence": "ReadinessCheck/ReadinessPlanLine id/state/slot/fix values are identifiers; text is the typed messageKey rendered by ReadinessPanel."
+  },
+  "3b90f1bfaf004a1581713b1d22d7cf49dd9e59998dad07e3b4a1f3bcbdd15230": {
+    "classification": "technical",
+    "reason": "Readiness check ids, states, slots, fix codes, plan line ids, unlock kingdom key and id fallbacks.",
+    "evidence": "ReadinessCheck/ReadinessPlanLine id/state/slot/fix values are identifiers; text is the typed messageKey rendered by ReadinessPanel."
+  },
+  "b2aaa8aa80a5409c26d30bf803014bea28d69109b07989bd84e79087c7bd14db": {
+    "classification": "technical",
+    "reason": "Readiness check ids, states, slots, fix codes, plan line ids, unlock kingdom key and id fallbacks.",
+    "evidence": "ReadinessCheck/ReadinessPlanLine id/state/slot/fix values are identifiers; text is the typed messageKey rendered by ReadinessPanel."
+  },
+  "f94c2a13e4f4f646966915ac1ff2acb55493594314f724f6b3d9a09294e6418a": {
+    "classification": "technical",
+    "reason": "Readiness check ids, states, slots, fix codes, plan line ids, unlock kingdom key and id fallbacks.",
+    "evidence": "ReadinessCheck/ReadinessPlanLine id/state/slot/fix values are identifiers; text is the typed messageKey rendered by ReadinessPanel."
+  },
+  "7f09a757c3adf231ae1648b451f0b59813cd25539fea5109228717a9dd1c0f81": {
+    "classification": "technical",
+    "reason": "Readiness check ids, states, slots, fix codes, plan line ids, unlock kingdom key and id fallbacks.",
+    "evidence": "ReadinessCheck/ReadinessPlanLine id/state/slot/fix values are identifiers; text is the typed messageKey rendered by ReadinessPanel."
+  },
+  "32e44f408ae328519976b3b7bd8304587a86d5afa863b7bd348d047371e15cd7": {
+    "classification": "technical",
+    "reason": "Readiness check ids, states, slots, fix codes, plan line ids, unlock kingdom key and id fallbacks.",
+    "evidence": "ReadinessCheck/ReadinessPlanLine id/state/slot/fix values are identifiers; text is the typed messageKey rendered by ReadinessPanel."
+  },
+  "17753b1869942480458d9cdaa161f372b3de9eeb5d7e6b22cec0d9b23c087a4c": {
+    "classification": "technical",
+    "reason": "Readiness check ids, states, slots, fix codes, plan line ids, unlock kingdom key and id fallbacks.",
+    "evidence": "ReadinessCheck/ReadinessPlanLine id/state/slot/fix values are identifiers; text is the typed messageKey rendered by ReadinessPanel."
+  },
+  "61d775f6ea8882796521d9ce39db891127ffd22c3e1aeef931e615f75b470fc1": {
+    "classification": "technical",
+    "reason": "Readiness check ids, states, slots, fix codes, plan line ids, unlock kingdom key and id fallbacks.",
+    "evidence": "ReadinessCheck/ReadinessPlanLine id/state/slot/fix values are identifiers; text is the typed messageKey rendered by ReadinessPanel."
+  },
+  "042054a6c3ecdefc218d1630fbf00e76286e3b6e47345affd94de35a79c0a4ba": {
+    "classification": "technical",
+    "reason": "Readiness check ids, states, slots, fix codes, plan line ids, unlock kingdom key and id fallbacks.",
+    "evidence": "ReadinessCheck/ReadinessPlanLine id/state/slot/fix values are identifiers; text is the typed messageKey rendered by ReadinessPanel."
+  },
+  "553851dd615513853db020f25f56161b4f82ce582927ca6ea890acc9c16586e7": {
+    "classification": "technical",
+    "reason": "Readiness check ids, states, slots, fix codes, plan line ids, unlock kingdom key and id fallbacks.",
+    "evidence": "ReadinessCheck/ReadinessPlanLine id/state/slot/fix values are identifiers; text is the typed messageKey rendered by ReadinessPanel."
+  },
+  "3dc6a9df320a69a0dd6786651b5e203703d2658f7aa25a2a4945f6ebf1004f82": {
+    "classification": "technical",
+    "reason": "Readiness check ids, states, slots, fix codes, plan line ids, unlock kingdom key and id fallbacks.",
+    "evidence": "ReadinessCheck/ReadinessPlanLine id/state/slot/fix values are identifiers; text is the typed messageKey rendered by ReadinessPanel."
+  },
+  "3b08a787ad5e14fb86afe9bedce854a0948c35d16192c1a37315b3b6329ea64b": {
+    "classification": "technical",
+    "reason": "Readiness check ids, states, slots, fix codes, plan line ids, unlock kingdom key and id fallbacks.",
+    "evidence": "ReadinessCheck/ReadinessPlanLine id/state/slot/fix values are identifiers; text is the typed messageKey rendered by ReadinessPanel."
+  },
+  "3f111d9ce1a1f5d8a37b9bac2aa4985053c434ac4a80ab3e9caf0f583f65e1b6": {
+    "classification": "technical",
+    "reason": "Readiness check ids, states, slots, fix codes, plan line ids, unlock kingdom key and id fallbacks.",
+    "evidence": "ReadinessCheck/ReadinessPlanLine id/state/slot/fix values are identifiers; text is the typed messageKey rendered by ReadinessPanel."
+  },
+  "f28109ee78e7e56a8271eabe2d911e5c1ec6e24b1a5c0c5620c42fc10312beeb": {
+    "classification": "technical",
+    "reason": "Readiness check ids, states, slots, fix codes, plan line ids, unlock kingdom key and id fallbacks.",
+    "evidence": "ReadinessCheck/ReadinessPlanLine id/state/slot/fix values are identifiers; text is the typed messageKey rendered by ReadinessPanel."
+  },
+  "08c1be9be4cb87b0741da2c6233cae31514ca203a9daebde6f174d42df5a3aa5": {
+    "classification": "technical",
+    "reason": "Readiness check ids, states, slots, fix codes, plan line ids, unlock kingdom key and id fallbacks.",
+    "evidence": "ReadinessCheck/ReadinessPlanLine id/state/slot/fix values are identifiers; text is the typed messageKey rendered by ReadinessPanel."
+  },
+  "530c3a8592756d333475c94accccbdd97dfe16418271e215efd656d5b99efe5e": {
+    "classification": "technical",
+    "reason": "Readiness check ids, states, slots, fix codes, plan line ids, unlock kingdom key and id fallbacks.",
+    "evidence": "ReadinessCheck/ReadinessPlanLine id/state/slot/fix values are identifiers; text is the typed messageKey rendered by ReadinessPanel."
+  },
+  "23673bc09b6d8cfbc78498a0c0f2245043cf7e9f1a3384343abcc637c00e9c1e": {
+    "classification": "technical",
+    "reason": "Readiness check ids, states, slots, fix codes, plan line ids, unlock kingdom key and id fallbacks.",
+    "evidence": "ReadinessCheck/ReadinessPlanLine id/state/slot/fix values are identifiers; text is the typed messageKey rendered by ReadinessPanel."
+  },
+  "8ca601a4458b27a2375ee0b0333e1bc2c45c71addb6403cd1bfe2ba0d55f61c4": {
+    "classification": "technical",
+    "reason": "Readiness check ids, states, slots, fix codes, plan line ids, unlock kingdom key and id fallbacks.",
+    "evidence": "ReadinessCheck/ReadinessPlanLine id/state/slot/fix values are identifiers; text is the typed messageKey rendered by ReadinessPanel."
+  },
+  "abfe0fc0ecbacfc7f329323aac347c9201821e018b2256d53e36b9357f183249": {
+    "classification": "technical",
+    "reason": "Readiness check ids, states, slots, fix codes, plan line ids, unlock kingdom key and id fallbacks.",
+    "evidence": "ReadinessCheck/ReadinessPlanLine id/state/slot/fix values are identifiers; text is the typed messageKey rendered by ReadinessPanel."
+  },
+  "80473916e50eb4618dee1892dfd7306b0ff81ca440a1c544a523f69bfb131bad": {
+    "classification": "technical",
+    "reason": "Readiness check ids, states, slots, fix codes, plan line ids, unlock kingdom key and id fallbacks.",
+    "evidence": "ReadinessCheck/ReadinessPlanLine id/state/slot/fix values are identifiers; text is the typed messageKey rendered by ReadinessPanel."
+  },
+  "27bb2e38fff6d285cf4fec5ab02f551e7960902935776d5ae06461b62852eb7f": {
+    "classification": "technical",
+    "reason": "Readiness check ids, states, slots, fix codes, plan line ids, unlock kingdom key and id fallbacks.",
+    "evidence": "ReadinessCheck/ReadinessPlanLine id/state/slot/fix values are identifiers; text is the typed messageKey rendered by ReadinessPanel."
+  },
+  "d4c6c9f2323c264d84e00578e657bf6cad3b51c662e9c894dedded60f18344a7": {
+    "classification": "technical",
+    "reason": "Readiness check ids, states, slots, fix codes, plan line ids, unlock kingdom key and id fallbacks.",
+    "evidence": "ReadinessCheck/ReadinessPlanLine id/state/slot/fix values are identifiers; text is the typed messageKey rendered by ReadinessPanel."
+  },
+  "11a1baf8a22277921eda5306773888738221d863c1e9d8e14bfa73913236b253": {
+    "classification": "technical",
+    "reason": "Readiness check ids, states, slots, fix codes, plan line ids, unlock kingdom key and id fallbacks.",
+    "evidence": "ReadinessCheck/ReadinessPlanLine id/state/slot/fix values are identifiers; text is the typed messageKey rendered by ReadinessPanel."
+  },
+  "4de3d399bede63b02d5c419e408287d5f685a976ba9131e65607f2256b22f781": {
+    "classification": "technical",
+    "reason": "Readiness check ids, states, slots, fix codes, plan line ids, unlock kingdom key and id fallbacks.",
+    "evidence": "ReadinessCheck/ReadinessPlanLine id/state/slot/fix values are identifiers; text is the typed messageKey rendered by ReadinessPanel."
+  },
+  "4fa2a9bdbf1f7dddabbb55a96523453d81be61e4a4d290cddf30eb49e853129c": {
+    "classification": "technical",
+    "reason": "Readiness check ids, states, slots, fix codes, plan line ids, unlock kingdom key and id fallbacks.",
+    "evidence": "ReadinessCheck/ReadinessPlanLine id/state/slot/fix values are identifiers; text is the typed messageKey rendered by ReadinessPanel."
+  },
+  "126281111b146ffd15cd8f0e911b87df0668dc4ef79d5588614574e3d4a35442": {
+    "classification": "technical",
+    "reason": "Readiness check ids, states, slots, fix codes, plan line ids, unlock kingdom key and id fallbacks.",
+    "evidence": "ReadinessCheck/ReadinessPlanLine id/state/slot/fix values are identifiers; text is the typed messageKey rendered by ReadinessPanel."
+  },
+  "4e05b89e29496e05949ca9bcbdc6aff73376557478e56a6d62fab91ca127ec05": {
+    "classification": "technical",
+    "reason": "Readiness check ids, states, slots, fix codes, plan line ids, unlock kingdom key and id fallbacks.",
+    "evidence": "ReadinessCheck/ReadinessPlanLine id/state/slot/fix values are identifiers; text is the typed messageKey rendered by ReadinessPanel."
+  },
+  "23c0b0699fe2e07b248c8f74f86a9f00b421fbc0997df8a7e28f6837f6145b80": {
+    "classification": "technical",
+    "reason": "Readiness check ids, states, slots, fix codes, plan line ids, unlock kingdom key and id fallbacks.",
+    "evidence": "ReadinessCheck/ReadinessPlanLine id/state/slot/fix values are identifiers; text is the typed messageKey rendered by ReadinessPanel."
+  },
+  "75a909c82e0b67c6ade63d8c392dfb04c6638dfdf243a7a3983ddcc3a25c1e87": {
+    "classification": "technical",
+    "reason": "Readiness check ids, states, slots, fix codes, plan line ids, unlock kingdom key and id fallbacks.",
+    "evidence": "ReadinessCheck/ReadinessPlanLine id/state/slot/fix values are identifiers; text is the typed messageKey rendered by ReadinessPanel."
+  },
+  "0b81858e90e444a1357796ae4be00f49f1a2d9d48fc63292ae3f31734977dd2d": {
+    "classification": "technical",
+    "reason": "Readiness check ids, states, slots, fix codes, plan line ids, unlock kingdom key and id fallbacks.",
+    "evidence": "ReadinessCheck/ReadinessPlanLine id/state/slot/fix values are identifiers; text is the typed messageKey rendered by ReadinessPanel."
+  },
+  "2b6ccc7312dcff8b681835554e90078fa06349540d4473ae2044165e88d9cb88": {
+    "classification": "technical",
+    "reason": "Readiness check ids, states, slots, fix codes, plan line ids, unlock kingdom key and id fallbacks.",
+    "evidence": "ReadinessCheck/ReadinessPlanLine id/state/slot/fix values are identifiers; text is the typed messageKey rendered by ReadinessPanel."
+  },
+  "bae0c176cf03eba1be036a30d0c1a9735657ea83914279f45b279246ae2ceaf9": {
+    "classification": "technical",
+    "reason": "Readiness check ids, states, slots, fix codes, plan line ids, unlock kingdom key and id fallbacks.",
+    "evidence": "ReadinessCheck/ReadinessPlanLine id/state/slot/fix values are identifiers; text is the typed messageKey rendered by ReadinessPanel."
+  },
+  "a3faf3b7f845c9e9c0e88a8e125934529ff1a0681bd6a1861b6d0c37e5bec3d9": {
+    "classification": "technical",
+    "reason": "Readiness check ids, states, slots, fix codes, plan line ids, unlock kingdom key and id fallbacks.",
+    "evidence": "ReadinessCheck/ReadinessPlanLine id/state/slot/fix values are identifiers; text is the typed messageKey rendered by ReadinessPanel."
+  },
+  "d5a2bcae35643f8ee7146112b34a1e4c03df71b40a560e6e9f1113c34d24b77a": {
+    "classification": "technical",
+    "reason": "Readiness check ids, states, slots, fix codes, plan line ids, unlock kingdom key and id fallbacks.",
+    "evidence": "ReadinessCheck/ReadinessPlanLine id/state/slot/fix values are identifiers; text is the typed messageKey rendered by ReadinessPanel."
+  },
+  "188c1854f0dfdce9b1820fa9b593aede255b120ad8bf48a7783424e3c1f58ee9": {
+    "classification": "technical",
+    "reason": "Readiness check ids, states, slots, fix codes, plan line ids, unlock kingdom key and id fallbacks.",
+    "evidence": "ReadinessCheck/ReadinessPlanLine id/state/slot/fix values are identifiers; text is the typed messageKey rendered by ReadinessPanel."
+  },
+  "be4fd642b46694f622f8b7f6d7281de1e7e716dfb3d9a5a5031a10935370f017": {
+    "classification": "technical",
+    "reason": "Readiness check ids, states, slots, fix codes, plan line ids, unlock kingdom key and id fallbacks.",
+    "evidence": "ReadinessCheck/ReadinessPlanLine id/state/slot/fix values are identifiers; text is the typed messageKey rendered by ReadinessPanel."
+  },
+  "59f47873a3e37f13a4df59f05f8d50c8f35de8fb0a25efb3b2455f8ed594674c": {
+    "classification": "technical",
+    "reason": "Readiness check ids, states, slots, fix codes, plan line ids, unlock kingdom key and id fallbacks.",
+    "evidence": "ReadinessCheck/ReadinessPlanLine id/state/slot/fix values are identifiers; text is the typed messageKey rendered by ReadinessPanel."
+  },
+  "95f321839ae9040e7792cb048dadd92192a6cf0a5a2c0add53532096fd2a707b": {
+    "classification": "technical",
+    "reason": "Readiness check ids, states, slots, fix codes, plan line ids, unlock kingdom key and id fallbacks.",
+    "evidence": "ReadinessCheck/ReadinessPlanLine id/state/slot/fix values are identifiers; text is the typed messageKey rendered by ReadinessPanel."
+  },
+  "56b6f037c8d412c2888b1b7de8c89158fa4a07b6e5148bef4938d5f8dad78928": {
+    "classification": "technical",
+    "reason": "Readiness check ids, states, slots, fix codes, plan line ids, unlock kingdom key and id fallbacks.",
+    "evidence": "ReadinessCheck/ReadinessPlanLine id/state/slot/fix values are identifiers; text is the typed messageKey rendered by ReadinessPanel."
+  },
+  "a36723db6cef3c06d3c7525d0b3b8bab5370213f3548c5b571bf22df2ee5da0c": {
+    "classification": "technical",
+    "reason": "Readiness check ids, states, slots, fix codes, plan line ids, unlock kingdom key and id fallbacks.",
+    "evidence": "ReadinessCheck/ReadinessPlanLine id/state/slot/fix values are identifiers; text is the typed messageKey rendered by ReadinessPanel."
+  },
+  "a838c881d3a6f4dec8af23e83c357bb142be989b9381edcac63d4db90a2dfa1d": {
+    "classification": "technical",
+    "reason": "Readiness check ids, states, slots, fix codes, plan line ids, unlock kingdom key and id fallbacks.",
+    "evidence": "ReadinessCheck/ReadinessPlanLine id/state/slot/fix values are identifiers; text is the typed messageKey rendered by ReadinessPanel."
+  },
+  "b63d074bca468cd3d5fa3d6e96416faa5e2438255806a8b6747d51c98784642f": {
+    "classification": "technical",
+    "reason": "Readiness check ids, states, slots, fix codes, plan line ids, unlock kingdom key and id fallbacks.",
+    "evidence": "ReadinessCheck/ReadinessPlanLine id/state/slot/fix values are identifiers; text is the typed messageKey rendered by ReadinessPanel."
+  },
+  "eae732f515ee434d432fec994bb1db70f12b1f2e238cdd4234b4c614e382c17e": {
+    "classification": "technical",
+    "reason": "Readiness check ids, states, slots, fix codes, plan line ids, unlock kingdom key and id fallbacks.",
+    "evidence": "ReadinessCheck/ReadinessPlanLine id/state/slot/fix values are identifiers; text is the typed messageKey rendered by ReadinessPanel."
+  },
+  "4b439aa345526ef2a492e2a99ab1499c3bfd5909db33a1f4c5faf252cd23e95d": {
+    "classification": "technical",
+    "reason": "Readiness check ids, states, slots, fix codes, plan line ids, unlock kingdom key and id fallbacks.",
+    "evidence": "ReadinessCheck/ReadinessPlanLine id/state/slot/fix values are identifiers; text is the typed messageKey rendered by ReadinessPanel."
+  },
+  "eef2bd388ede58358c69661e12a4d457536d45c2fc525c91764ab56a657d6dc0": {
+    "classification": "technical",
+    "reason": "Readiness check ids, states, slots, fix codes, plan line ids, unlock kingdom key and id fallbacks.",
+    "evidence": "ReadinessCheck/ReadinessPlanLine id/state/slot/fix values are identifiers; text is the typed messageKey rendered by ReadinessPanel."
+  },
+  "345abb04372424616c10bc0a8437a9276cf66f13a7851d346de0a2ea4ccf5fab": {
+    "classification": "technical",
+    "reason": "Readiness check ids, states, slots, fix codes, plan line ids, unlock kingdom key and id fallbacks.",
+    "evidence": "ReadinessCheck/ReadinessPlanLine id/state/slot/fix values are identifiers; text is the typed messageKey rendered by ReadinessPanel."
+  },
+  "50344a3a36d2e278c361727d60068470bd6ccc3af890d50a6b38e20c49233066": {
+    "classification": "technical",
+    "reason": "Readiness check ids, states, slots, fix codes, plan line ids, unlock kingdom key and id fallbacks.",
+    "evidence": "ReadinessCheck/ReadinessPlanLine id/state/slot/fix values are identifiers; text is the typed messageKey rendered by ReadinessPanel."
+  },
+  "d8a9010bb46b5ea154bb3f6b3fc035d2b6f919a5a7ca5d4ab8be9c363344aa9c": {
+    "classification": "technical",
+    "reason": "Readiness check ids, states, slots, fix codes, plan line ids, unlock kingdom key and id fallbacks.",
+    "evidence": "ReadinessCheck/ReadinessPlanLine id/state/slot/fix values are identifiers; text is the typed messageKey rendered by ReadinessPanel."
+  },
+  "6b62b186a7dd2ebbacf903ff610fef04986d4d76d989bebaaa3bced0767fc0c2": {
+    "classification": "technical",
+    "reason": "Readiness check ids, states, slots, fix codes, plan line ids, unlock kingdom key and id fallbacks.",
+    "evidence": "ReadinessCheck/ReadinessPlanLine id/state/slot/fix values are identifiers; text is the typed messageKey rendered by ReadinessPanel."
+  },
+  "16c540d9e15dbc5435c78e6186b4eaf5ae2c588fceae4529fc345a75864810b4": {
+    "classification": "technical",
+    "reason": "Readiness check ids, states, slots, fix codes, plan line ids, unlock kingdom key and id fallbacks.",
+    "evidence": "ReadinessCheck/ReadinessPlanLine id/state/slot/fix values are identifiers; text is the typed messageKey rendered by ReadinessPanel."
+  },
+  "06cde3c74e21df6bbab1df2cc10c9798cbec2842794f5efc207acadbfd431e16": {
+    "classification": "technical",
+    "reason": "Readiness check ids, states, slots, fix codes, plan line ids, unlock kingdom key and id fallbacks.",
+    "evidence": "ReadinessCheck/ReadinessPlanLine id/state/slot/fix values are identifiers; text is the typed messageKey rendered by ReadinessPanel."
+  },
+  "8f76d37d0bad23e43e873e942f33c9eddee43c82759c575fc2addfc838d6e33f": {
+    "classification": "technical",
+    "reason": "Readiness check ids, states, slots, fix codes, plan line ids, unlock kingdom key and id fallbacks.",
+    "evidence": "ReadinessCheck/ReadinessPlanLine id/state/slot/fix values are identifiers; text is the typed messageKey rendered by ReadinessPanel."
+  },
+  "b2f4ce97d950c12678bdd147bdf4158443a8ce3f03df0cdce7ba67b17c919801": {
+    "classification": "technical",
+    "reason": "Readiness check ids, states, slots, fix codes, plan line ids, unlock kingdom key and id fallbacks.",
+    "evidence": "ReadinessCheck/ReadinessPlanLine id/state/slot/fix values are identifiers; text is the typed messageKey rendered by ReadinessPanel."
+  },
+  "e99388623675ff9ae3da7fc4ad1787a627e34917f17f389926af983212670275": {
+    "classification": "technical",
+    "reason": "Readiness check ids, states, slots, fix codes, plan line ids, unlock kingdom key and id fallbacks.",
+    "evidence": "ReadinessCheck/ReadinessPlanLine id/state/slot/fix values are identifiers; text is the typed messageKey rendered by ReadinessPanel."
+  },
+  "c5980286517c62cc341e3985120eef72f2f221107e6bd22d3977d4a17248f610": {
+    "classification": "technical",
+    "reason": "Readiness check ids, states, slots, fix codes, plan line ids, unlock kingdom key and id fallbacks.",
+    "evidence": "ReadinessCheck/ReadinessPlanLine id/state/slot/fix values are identifiers; text is the typed messageKey rendered by ReadinessPanel."
+  },
+  "f59e47366c36c91b2f19143e60daa2df88608fd9c9761bf2759d8cebf34e5a81": {
+    "classification": "technical",
+    "reason": "Readiness check ids, states, slots, fix codes, plan line ids, unlock kingdom key and id fallbacks.",
+    "evidence": "ReadinessCheck/ReadinessPlanLine id/state/slot/fix values are identifiers; text is the typed messageKey rendered by ReadinessPanel."
+  },
+  "a614439688a81cd8897edfa12e7a182f85938fa523198593229bdc529874c23d": {
+    "classification": "technical",
+    "reason": "Readiness check ids, states, slots, fix codes, plan line ids, unlock kingdom key and id fallbacks.",
+    "evidence": "ReadinessCheck/ReadinessPlanLine id/state/slot/fix values are identifiers; text is the typed messageKey rendered by ReadinessPanel."
+  },
+  "2522bf22a0aacefc3595efb85036ebc062291cfef84c53d8370f65c18dbab83a": {
+    "classification": "technical",
+    "reason": "Readiness check ids, states, slots, fix codes, plan line ids, unlock kingdom key and id fallbacks.",
+    "evidence": "ReadinessCheck/ReadinessPlanLine id/state/slot/fix values are identifiers; text is the typed messageKey rendered by ReadinessPanel."
+  },
+  "5f76f5e8a5217684491e626e2e77df54846ba718695b3a596503c596e869bd23": {
+    "classification": "technical",
+    "reason": "Readiness check ids, states, slots, fix codes, plan line ids, unlock kingdom key and id fallbacks.",
+    "evidence": "ReadinessCheck/ReadinessPlanLine id/state/slot/fix values are identifiers; text is the typed messageKey rendered by ReadinessPanel."
+  },
+  "9d359c5d48d150e1f01a59275351956d5b1fa244f18b63d4cee036b42f4f1398": {
+    "classification": "technical",
+    "reason": "Badge variant token, document key and composition of typed module/slot labels.",
+    "evidence": "Owner and referrer labels join localized attackPresets.module.* / attackPresets.slot.* messages passed to ownership messages."
+  },
+  "1548f10ba9567e01d74a324abdc278e38fff9cc984ef42609f40697f39f086dc": {
+    "classification": "technical",
+    "reason": "Badge variant token, document key and composition of typed module/slot labels.",
+    "evidence": "Owner and referrer labels join localized attackPresets.module.* / attackPresets.slot.* messages passed to ownership messages."
+  },
+  "0e3bf8789a40407853fac331b4f14bebdddb04fab20da173790124baf928ef7a": {
+    "classification": "technical",
+    "reason": "Badge variant token, document key and composition of typed module/slot labels.",
+    "evidence": "Owner and referrer labels join localized attackPresets.module.* / attackPresets.slot.* messages passed to ownership messages."
+  },
+  "d637d9f020331fcbefd091dfd53462f508a04df605a77c3f4e9c8ca4489d7a0b": {
+    "classification": "technical",
+    "reason": "Badge variant token, document key and composition of typed module/slot labels.",
+    "evidence": "Owner and referrer labels join localized attackPresets.module.* / attackPresets.slot.* messages passed to ownership messages."
+  },
+  "4ba876f616c0525bc36742941d8b1f15742088d0f575d18e04924ca45748f7bf": {
+    "classification": "technical",
+    "reason": "Badge variant token, document key and composition of typed module/slot labels.",
+    "evidence": "Owner and referrer labels join localized attackPresets.module.* / attackPresets.slot.* messages passed to ownership messages."
+  },
+  "99106f14546885e5bc4cbe03ec261293bae1f9991ec9a6efb861c77eb8a66679": {
+    "classification": "technical",
+    "reason": "Readiness ids/states/fix codes, feature ids, resource JSON keys, stock modes and castle roles.",
+    "evidence": "F and C1 are official resource JSON keys; roles feed the setupReadiness.foodRole select; readiness text is the typed messageKey."
+  },
+  "4591f0377915a0c16264f14343f9e599d96f0b35f88c522528498ab579e5137b": {
+    "classification": "technical",
+    "reason": "Readiness check ids, states, slots, fix codes, plan line ids, unlock kingdom key and id fallbacks.",
+    "evidence": "ReadinessCheck/ReadinessPlanLine id/state/slot/fix values are identifiers; text is the typed messageKey rendered by ReadinessPanel."
+  },
+  "039212e30e7c2af31c7759aa102b36476451da728a048f357547d8cc7f42ffb9": {
+    "classification": "technical",
+    "reason": "Readiness check ids, states, slots, fix codes, plan line ids, unlock kingdom key and id fallbacks.",
+    "evidence": "ReadinessCheck/ReadinessPlanLine id/state/slot/fix values are identifiers; text is the typed messageKey rendered by ReadinessPanel."
+  },
+  "8eb70a2feabee6a5b3db1614deac1338dfe5c5f2d5fd2bee414e1c881891ef64": {
+    "classification": "technical",
+    "reason": "Readiness check ids, states, slots, fix codes, plan line ids, unlock kingdom key and id fallbacks.",
+    "evidence": "ReadinessCheck/ReadinessPlanLine id/state/slot/fix values are identifiers; text is the typed messageKey rendered by ReadinessPanel."
   }
 }

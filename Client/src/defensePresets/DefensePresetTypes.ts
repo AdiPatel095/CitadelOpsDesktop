@@ -4,6 +4,7 @@ import type {
   DefenseToolSlotV2,
   DefenseWallSectionV2,
 } from '../api/Contracts';
+import { parseAppCreatedPresetMarker, type AppCreatedPresetMarker } from '../presets/AppCreatedRecords';
 
 export const DEFENSE_PRESETS_SECTION = 'defense.presets';
 export const DEFENSE_WALL_FLANK_TOOL_SLOT_COUNT = 4;
@@ -42,6 +43,8 @@ export interface AppDefensePreset extends DefensePresetDraft {
   id: string;
   createdAt: string;
   updatedAt: string;
+  /** Present only on presets created by a module's inline setup (CIT-16); the marker defines ownership. */
+  app?: AppCreatedPresetMarker;
 }
 
 export interface DefensePresetDocument {
@@ -180,17 +183,19 @@ export function summarizeDefensePreset(preset: DefensePresetDraft): DefensePrese
   };
 }
 
-function parseDefensePreset(value: unknown): AppDefensePreset | null {
+export function parseDefensePreset(value: unknown): AppDefensePreset | null {
   if (!isRecord(value) || typeof value.id !== 'string' || typeof value.name !== 'string') return null;
   const draft = parseDefensePresetDraft(value);
   if (!draft) return null;
   const normalized = normalizeDefensePresetSlots(draft);
   const createdAt = validDate(value.createdAt) ?? new Date(0).toISOString();
+  const app = parseAppCreatedPresetMarker(value.app);
   return {
     ...normalized,
     id: value.id,
     createdAt,
     updatedAt: validDate(value.updatedAt) ?? createdAt,
+    ...(app ? { app } : {}),
   };
 }
 

@@ -83,8 +83,26 @@ export const EVENT_ATTACK_STARTER_RECIPE: EventAttackStarterRecipe = {
   },
 };
 
+export type KhanDefenseStarterRule = 'current-main-castle-defense';
+
+export interface KhanDefenseStarterRecipe {
+  source: ReviewableValue<KhanDefenseStarterRule>;
+}
+
+/** Khan main-castle defense starting configuration (CIT-16). Account data only; no numbers. */
+export const KHAN_DEFENSE_STARTER_RECIPE: KhanDefenseStarterRecipe = {
+  source: {
+    value: 'current-main-castle-defense',
+    source: 'account-data',
+    rationale: 'Capture the Great Empire main castle\'s currently observed wall splits, wall/gate/moat tools and courtyard rows (defensePresetDraftFromCastle, the same capture as Defense Presets). No value is invented; it is applied only after an explicit preview and only while the main castle\'s defense is observed on this connection.',
+    review: { owner: 'Maya', status: 'pending' },
+  },
+};
+
 /** Recipe entry names whose values still await product review. */
-export function pendingStarterReviews(recipe: EventAttackStarterRecipe = EVENT_ATTACK_STARTER_RECIPE): string[] {
+export function pendingStarterReviews(
+  recipe: EventAttackStarterRecipe | KhanDefenseStarterRecipe = EVENT_ATTACK_STARTER_RECIPE,
+): string[] {
   return Object.entries(recipe)
     .filter(([, entry]) => (entry as ReviewableValue<unknown>).review.status !== 'accepted')
     .map(([name]) => name);

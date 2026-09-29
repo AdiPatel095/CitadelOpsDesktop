@@ -1,7 +1,11 @@
 import type { MessageKey } from '../i18n/messages';
 
-/** One module field that stores an attack preset id in configuration. */
-export interface AttackPresetReference {
+/** The preset documents module fields reference by id. */
+export type PresetDocumentKey = 'attacks.presets' | 'defense.presets';
+
+/** One module field that stores an attack or defense preset id in configuration. */
+export interface PresetReference {
+  document: PresetDocumentKey;
   section: string;
   slot: string;
   presetId: string;
@@ -9,7 +13,11 @@ export interface AttackPresetReference {
   slotLabelKey: MessageKey;
 }
 
-export interface AttackPresetSlotDefinition {
+/** Attack-document references (kept name for CIT-15 callers). */
+export type AttackPresetReference = PresetReference;
+
+export interface PresetSlotDefinition {
+  document: PresetDocumentKey;
   section: string;
   slot: string;
   /** Field path inside the module section. */
@@ -22,55 +30,76 @@ export interface AttackPresetSlotDefinition {
 
 const message = (key: MessageKey): MessageKey => key;
 
+export type AttackPresetSlotDefinition = PresetSlotDefinition;
+
 /**
- * Every module field that stores an attack preset id. Cleanup and delete guards
- * trust this list: a missing field could let cleanup delete a referenced record.
- * `tests/attack-preset-references.test.mjs` fails on any unregistered
- * `*PresetId` field in `settings/*ClientState.ts`. CIT-16 extends it.
+ * Every module field that stores an attack or defense preset id. Cleanup and
+ * delete guards trust this list: a missing field could let cleanup delete a
+ * referenced record. `tests/preset-references.test.mjs` fails on any
+ * unregistered `*PresetId` field in `settings/*ClientState.ts`.
  */
-export const ATTACK_PRESET_SLOTS: readonly AttackPresetSlotDefinition[] = [
+export const PRESET_SLOTS: readonly PresetSlotDefinition[] = [
   {
-    section: 'automation.autoNomad', slot: 'nomad', path: ['nomadPresetId'], legacyPath: ['presetId'],
+    document: 'attacks.presets', section: 'automation.autoNomad', slot: 'nomad', path: ['nomadPresetId'], legacyPath: ['presetId'],
     moduleLabelKey: message('attackPresets.module.autoNomad'), slotLabelKey: message('attackPresets.slot.nomad'),
   },
   {
-    section: 'automation.autoNomad', slot: 'samurai', path: ['samuraiPresetId'], legacyPath: ['presetId'],
+    document: 'attacks.presets', section: 'automation.autoNomad', slot: 'samurai', path: ['samuraiPresetId'], legacyPath: ['presetId'],
     moduleLabelKey: message('attackPresets.module.autoNomad'), slotLabelKey: message('attackPresets.slot.samurai'),
   },
   {
-    section: 'automation.autoInvasion', slot: 'attack', path: ['presetId'],
+    document: 'attacks.presets', section: 'automation.autoInvasion', slot: 'attack', path: ['presetId'],
     moduleLabelKey: message('attackPresets.module.autoInvasion'), slotLabelKey: message('attackPresets.slot.attack'),
   },
   {
-    section: 'automation.autoBeriWorld', slot: 'attack', path: ['presetId'],
+    document: 'attacks.presets', section: 'automation.autoBeriWorld', slot: 'attack', path: ['presetId'],
     moduleLabelKey: message('attackPresets.module.autoBeriWorld'), slotLabelKey: message('attackPresets.slot.towerAttack'),
   },
   {
-    section: 'automation.autoKhan', slot: 'attack', path: ['attackPresetId'],
+    document: 'attacks.presets', section: 'automation.autoKhan', slot: 'attack', path: ['attackPresetId'],
     moduleLabelKey: message('attackPresets.module.autoKhan'), slotLabelKey: message('attackPresets.slot.attack'),
   },
   {
-    section: 'automation.autoStorm', slot: 'forts', path: ['forts', 'presetId'],
+    document: 'defense.presets', section: 'automation.autoKhan', slot: 'defense', path: ['defensePresetId'],
+    moduleLabelKey: message('attackPresets.module.autoKhan'), slotLabelKey: message('attackPresets.slot.defense'),
+  },
+  {
+    document: 'attacks.presets', section: 'automation.autoStorm', slot: 'forts', path: ['forts', 'presetId'],
     moduleLabelKey: message('attackPresets.module.autoStorm'), slotLabelKey: message('attackPresets.slot.forts'),
   },
   {
-    section: 'automation.autoStorm', slot: 'islands', path: ['islands', 'presetId'],
+    document: 'attacks.presets', section: 'automation.autoStorm', slot: 'islands', path: ['islands', 'presetId'],
     moduleLabelKey: message('attackPresets.module.autoStorm'), slotLabelKey: message('attackPresets.slot.islands'),
   },
   {
-    section: 'automation.autoAdvisor', slot: 'attack', path: ['presetId'],
+    document: 'attacks.presets', section: 'automation.autoAdvisor', slot: 'attack', path: ['presetId'],
     moduleLabelKey: message('attackPresets.module.autoAdvisor'), slotLabelKey: message('attackPresets.slot.attack'),
   },
 ];
 
+export const ATTACK_PRESET_SLOTS: readonly PresetSlotDefinition[] = PRESET_SLOTS.filter((definition) => definition.document === 'attacks.presets');
+export const DEFENSE_PRESET_SLOTS: readonly PresetSlotDefinition[] = PRESET_SLOTS.filter((definition) => definition.document === 'defense.presets');
+
 /** Every non-empty attack preset reference in the given configuration sections. */
-export function attackPresetReferences(sections: Record<string, unknown> | undefined): AttackPresetReference[] {
-  const references: AttackPresetReference[] = [];
-  for (const definition of ATTACK_PRESET_SLOTS) {
+export function attackPresetReferences(sections: Record<string, unknown> | undefined): PresetReference[] {
+  return presetReferences(sections, 'attacks.presets');
+}
+
+/** Every non-empty defense preset reference in the given configuration sections. */
+export function defensePresetReferences(sections: Record<string, unknown> | undefined): PresetReference[] {
+  return presetReferences(sections, 'defense.presets');
+}
+
+/** Every non-empty preset reference of one document in the given configuration sections. */
+export function presetReferences(sections: Record<string, unknown> | undefined, document: PresetDocumentKey): PresetReference[] {
+  const references: PresetReference[] = [];
+  for (const definition of PRESET_SLOTS) {
+    if (definition.document !== document) continue;
     const value = sections?.[definition.section];
     const presetId = stringAt(value, definition.path) || (definition.legacyPath ? stringAt(value, definition.legacyPath) : '');
     if (!presetId) continue;
     references.push({
+      document: definition.document,
       section: definition.section,
       slot: definition.slot,
       presetId,
@@ -82,14 +111,20 @@ export function attackPresetReferences(sections: Record<string, unknown> | undef
 }
 
 export function attackPresetReferrers(
-  references: readonly AttackPresetReference[],
+  references: readonly PresetReference[],
   presetId: string,
-): AttackPresetReference[] {
+): PresetReference[] {
   return references.filter((reference) => reference.presetId === presetId);
 }
 
-export function attackPresetSlotDefinition(section: string, slot: string): AttackPresetSlotDefinition | undefined {
-  return ATTACK_PRESET_SLOTS.find((definition) => definition.section === section && definition.slot === slot);
+export const presetReferrers = attackPresetReferrers;
+
+export function attackPresetSlotDefinition(section: string, slot: string): PresetSlotDefinition | undefined {
+  return presetSlotDefinition('attacks.presets', section, slot);
+}
+
+export function presetSlotDefinition(document: PresetDocumentKey, section: string, slot: string): PresetSlotDefinition | undefined {
+  return PRESET_SLOTS.find((definition) => definition.document === document && definition.section === section && definition.slot === slot);
 }
 
 function stringAt(value: unknown, path: readonly string[]): string {

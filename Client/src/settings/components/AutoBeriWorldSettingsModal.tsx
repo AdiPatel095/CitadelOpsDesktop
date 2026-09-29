@@ -32,6 +32,7 @@ import { CastleRequirementField } from './CastleRequirementField';
 import { CommanderAssignmentPanel } from './CommanderAssignmentPanel';
 import { COMMANDER_FEATURE_SECTION } from '../../Movement/types/CommanderFeatureAssignments';
 import { savedCommanderAssignments } from '../requirements/commanderAssignmentDraft';
+import { useHostedRuntimePresence } from '../../config/Deployment';
 import { useSetupContext } from '../requirements/useSetupContext';
 import {
 	AUTO_BERI_COIN_ATTACK_TOOLS,
@@ -70,7 +71,7 @@ export const AutoBeriWorldSettingsModal: React.FC<AutoBeriWorldSettingsModalProp
   const [isGuideOpen, setIsGuideOpen] = useState(false);
   useEffect(() => { if (!isOpen) setIsGuideOpen(false); }, [isOpen]);
 	const { state, captureBuildingTarget } = useCitadelAPI();
-	const setup = useSetupContext('automation.autoBeriWorld');
+	const setup = useSetupContext('automation.autoBeriWorld', useHostedRuntimePresence());
 	const [commandersOpen, setCommandersOpen] = useState(false);
 	const { troops, tools, unitsLoading, unitsError } = useMetadata();
 	const draftSession = useConfigurationDraftSession({

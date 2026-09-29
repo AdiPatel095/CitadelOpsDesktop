@@ -1,5 +1,5 @@
 import React from 'react';
-import { CheckCircle2, CircleDashed, Clock3, ClipboardCheck, XCircle } from 'lucide-react';
+import { CheckCircle2, CircleDashed, Clock3, ClipboardCheck, Info, XCircle } from 'lucide-react';
 import { Badge } from '../../components/ui/Badge';
 import { Button } from '../../components/ui/Button';
 import { LocalizedText } from '../../i18n/LocalizedText';
@@ -76,6 +76,19 @@ export const ReadinessPanel: React.FC<ReadinessPanelProps> = ({ report, slotLabe
         <LocalizedText messageKey="readiness.overall" params={{ state: report.overall }} />
       </Badge>
     </div>
+    {report.plan && report.plan.length > 0 ? (
+      <div className="mb-3 border-b border-border-base pb-3">
+        <h4 className="mb-2 text-[10px] font-black uppercase tracking-wider text-text-muted"><LocalizedText messageKey="ui.settings.components.readinessPanel.plan.fa8ed0bd" /></h4>
+        <ul className="space-y-1.5">
+          {report.plan.map((line, index) => (
+            <li key={`${line.id}:${index}`} className="flex items-start gap-2 text-xs leading-relaxed text-text-main">
+              <Info className="mt-0.5 h-4 w-4 shrink-0 text-primary" aria-hidden="true" />
+              <span className="min-w-0 flex-1"><LocalizedText messageKey={line.messageKey} params={line.params} /></span>
+            </li>
+          ))}
+        </ul>
+      </div>
+    ) : null}
     <ul className="space-y-2">
       {report.checks.map((check, index) => (
         <ReadinessCheckLine

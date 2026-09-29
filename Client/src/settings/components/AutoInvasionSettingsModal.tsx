@@ -34,6 +34,7 @@ import { CastleRequirementField } from './CastleRequirementField';
 import { CommanderAssignmentPanel } from './CommanderAssignmentPanel';
 import { COMMANDER_FEATURE_SECTION } from '../../Movement/types/CommanderFeatureAssignments';
 import { savedCommanderAssignments } from '../requirements/commanderAssignmentDraft';
+import { useHostedRuntimePresence } from '../../config/Deployment';
 import { useSetupContext } from '../requirements/useSetupContext';
 import {
   AUTO_INVASION_SECTION,
@@ -56,7 +57,7 @@ interface AutoInvasionSettingsModalProps {
 export const AutoInvasionSettingsModal: React.FC<AutoInvasionSettingsModalProps> = ({ isOpen, onClose }) => {
   const { t: localizeStatic } = useStaticLocale();
   const { state } = useCitadelAPI();
-  const setup = useSetupContext(AUTO_INVASION_SECTION);
+  const setup = useSetupContext(AUTO_INVASION_SECTION, useHostedRuntimePresence());
   const [commandersOpen, setCommandersOpen] = useState(false);
   const { troops, tools, unitsLoading, unitsError } = useMetadata();
   const draftSession = useConfigurationDraftSession({

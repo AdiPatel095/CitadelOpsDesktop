@@ -69,8 +69,13 @@ test('Fortress: owned Great Empire Direwolves supply a kingdom even without purc
   const stockFor = (castles, direwolfPurchaseLimit) => setup.evaluateFortressReadiness({ state: { castles }, kingdoms, direwolfId: 277, direwolfPurchaseLimit, ...metadata })
     .kingdoms.find((kingdom) => kingdom.kingdomId === 2).stock.check;
   const empty = castle(22, 2, 12, {});
-  // Neither purchases nor Great Empire stock: blocked.
-  assert.equal(stockFor({ 22: empty, 1: castle(1, 0, 1, {}) }, 0).state, 'blocked');
+  // Neither purchases nor Great Empire stock: blocked, saying what supplies Direwolves (Maya, CIT-16).
+  const none = stockFor({ 22: empty, 1: castle(1, 0, 1, {}) }, 0);
+  assert.equal(none.state, 'blocked');
+  assert.equal(none.messageKey, 'ui.settings.requirements.setupReadiness.no.direwolves.are.available.set.direwolves.per.45e831e3');
+  assert.equal(none.fix, 'settings');
+  assert.equal(messages[none.messageKey], 'No Direwolves are available. Set Direwolves per session above 0, or station Direwolves in your Great Empire main castle.');
+  assert.doesNotMatch(messages[none.messageKey], /runtime/i);
   // Great Empire main castle holds Direwolves: staged at launch.
   const fromGreatEmpire = stockFor({ 22: empty, 1: castle(1, 0, 1, { 277: 50 }) }, 0);
   assert.equal(fromGreatEmpire.state, 'pending');

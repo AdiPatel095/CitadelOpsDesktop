@@ -13,6 +13,8 @@ const vite = await createServer({
 const save = await vite.ssrLoadModule('/src/settings/AppCreatedPresetSave.ts');
 const types = await vite.ssrLoadModule('/src/attackPresets/AttackPresetTypes.ts');
 const app = await vite.ssrLoadModule('/src/attackPresets/AppCreatedPresets.ts');
+const defenseTypes = await vite.ssrLoadModule('/src/defensePresets/DefensePresetTypes.ts');
+const defenseApp = await vite.ssrLoadModule('/src/defensePresets/AppCreatedDefensePresets.ts');
 
 after(async () => {
   await vite.close();
@@ -56,7 +58,7 @@ class ConflictError extends Error {
 }
 
 /** Scripted stand-in for useConfigurationDraftSession: outcomes are consumed per write. */
-function fakeDraftSession(sections, outcomes = []) {
+function fakeDraftSession(sections, outcomes = [], moduleSection = NOMAD) {
   const state = { revision: 10, sections: structuredClone(sections) };
   const writes = [];
   const session = {
@@ -74,7 +76,7 @@ function fakeDraftSession(sections, outcomes = []) {
       return { schemaVersion: 2, revision: state.revision, updatedAt: '', sections: structuredClone(state.sections) };
     },
     async save(value) {
-      return session.saveSection(NOMAD, value);
+      return session.saveSection(moduleSection, value);
     },
   };
   return session;
@@ -261,4 +263,130 @@ test('Save as preset failure writes nothing and surfaces the error', async () =>
   const session = fakeDraftSession({ [PRESETS]: { version: 1, presets: [] } }, ['fail']);
   await assert.rejects(save.saveInlineSetupAsUserPreset(session, setup(1), 'Name'), /write failed/);
   assert.deepEqual(session.state.sections[PRESETS], { version: 1, presets: [] });
+});
+
+// ——— CIT-16: two documents (Khan attack + main-castle defense) ———
+
+const KHAN = 'automation.autoKhan';
+const DEFENSE = 'defense.presets';
+
+function defenseSetup(amount) {
+  const draft = defenseTypes.emptyDefensePresetDraft();
+  draft.wall.left.toolSlots[0] = { definitionId: 610, amount };
+  return defenseApp.inlineDefenseFromPreset(draft);
+}
+
+function rawDefense(id, name, extra = {}) {
+  return { id, name, ...defenseSetup(5), createdAt: '2026-09-01T00:00:00.000Z', updatedAt: '2026-09-01T00:00:00.000Z', ...extra };
+}
+
+function khanSlots(attackRef, defenseRef) {
+  return [
+    { slot: 'attack', ref: attackRef, moduleLabel: 'Auto Khan', slotLabel: 'Attack' },
+    { document: DEFENSE, slot: 'defense', ref: defenseRef, moduleLabel: 'Auto Khan', slotLabel: 'Main castle defense' },
+  ];
+}
+
+const khanValue = (ids) => ({ version: 1, attackPresetId: ids.attack, defensePresetId: ids.defense });
+const inlineAttack = (quantity) => ({ source: 'inline', presetId: '', setup: setup(quantity), missing: false });
+const inlineDefense = (amount) => ({ source: 'inline', presetId: '', setup: defenseSetup(amount), missing: false });
+
+test('Khan: attack presets, then defense presets, then the module; both records are app-created', async () => {
+  const session = fakeDraftSession({ [PRESETS]: { version: 1, presets: [] }, [DEFENSE]: { version: 1, presets: [rawDefense('user-d', 'Mine')] }, [KHAN]: {} }, [], KHAN);
+  const result = await save.saveModuleWithAppCreatedPresets({
+    draftSession: session, section: KHAN, slots: khanSlots(inlineAttack(9), inlineDefense(7)), buildSectionValue: khanValue,
+    formatPresetName: (module, slot) => `${module} – ${slot} (auto)`,
+  });
+  assert.deepEqual(session.writes.map((write) => write.section), [PRESETS, DEFENSE, KHAN]);
+  assert.match(result.idsBySlot.defense, /^app:automation\.autoKhan:defense:/);
+  const defense = defenseTypes.parseDefensePresetDocument(session.state.sections[DEFENSE]).presets;
+  assert.deepEqual(defense.map((preset) => preset.id), ['user-d', result.idsBySlot.defense], 'the user defense preset is kept verbatim');
+  const created = defense.find((preset) => preset.id === result.idsBySlot.defense);
+  assert.equal(created.name, 'Auto Khan – Main castle defense (auto)');
+  assert.deepEqual(created.app, { section: KHAN, slot: 'defense' });
+  assert.equal(created.wall.left.toolSlots[0].amount, 7);
+  assert.deepEqual(session.state.sections[DEFENSE].presets[0], rawDefense('user-d', 'Mine'), 'raw sibling untouched');
+  assert.deepEqual(session.state.sections[KHAN], { version: 1, attackPresetId: result.idsBySlot.attack, defensePresetId: result.idsBySlot.defense });
+});
+
+test('Khan: a defense write failure rolls back the attack write and rethrows', async () => {
+  const attackBaseline = { version: 1, presets: [rawPreset('user', 'User')] };
+  const session = fakeDraftSession({ [PRESETS]: attackBaseline, [DEFENSE]: { version: 1, presets: [] }, [KHAN]: {} }, ['ok', 'fail', 'ok'], KHAN);
+  await assert.rejects(
+    save.saveModuleWithAppCreatedPresets({ draftSession: session, section: KHAN, slots: khanSlots(inlineAttack(3), inlineDefense(2)), buildSectionValue: khanValue }),
+    /write failed: defense\.presets/,
+  );
+  assert.deepEqual(session.writes.map((write) => [write.section, write.outcome]), [[PRESETS, 'ok'], [DEFENSE, 'fail'], [PRESETS, 'ok']]);
+  assert.deepEqual(session.state.sections[PRESETS], attackBaseline);
+  assert.deepEqual(session.state.sections[KHAN], {}, 'the module is never written');
+});
+
+test('Khan: a module failure rolls back defense, then attack', async () => {
+  const session = fakeDraftSession({ [PRESETS]: { version: 1, presets: [] }, [DEFENSE]: { version: 1, presets: [] }, [KHAN]: {} }, ['ok', 'ok', 'fail', 'ok', 'ok'], KHAN);
+  await assert.rejects(
+    save.saveModuleWithAppCreatedPresets({ draftSession: session, section: KHAN, slots: khanSlots(inlineAttack(3), inlineDefense(2)), buildSectionValue: khanValue }),
+    /write failed: automation\.autoKhan/,
+  );
+  assert.deepEqual(session.writes.map((write) => write.section), [PRESETS, DEFENSE, KHAN, DEFENSE, PRESETS]);
+  assert.deepEqual(session.state.sections[DEFENSE], { version: 1, presets: [] });
+  assert.deepEqual(session.state.sections[PRESETS], { version: 1, presets: [] });
+});
+
+test('Khan: switching defense to a shared user preset cleans up the old app-created defense record only', async () => {
+  const oldOwn = rawDefense('old-d', 'Auto Khan – Main castle defense (auto)', { app: { section: KHAN, slot: 'defense' } });
+  const otherOwner = rawDefense('other-d', 'Other', { app: { section: 'automation.other', slot: 'defense' } });
+  const session = fakeDraftSession({
+    [PRESETS]: { version: 1, presets: [rawPreset('user', 'User')] },
+    [DEFENSE]: { version: 1, presets: [oldOwn, rawDefense('shared-d', 'Shared'), otherOwner] },
+    [KHAN]: { attackPresetId: 'user', defensePresetId: 'old-d' },
+  }, [], KHAN);
+  const result = await save.saveModuleWithAppCreatedPresets({
+    draftSession: session, section: KHAN,
+    slots: khanSlots({ source: 'preset', presetId: 'user', missing: false }, { source: 'preset', presetId: 'shared-d', missing: false }),
+    buildSectionValue: khanValue,
+  });
+  assert.deepEqual(result.idsBySlot, { attack: 'user', defense: 'shared-d' });
+  assert.deepEqual(session.writes.map((write) => write.section), [KHAN, DEFENSE]);
+  const ids = defenseTypes.parseDefensePresetDocument(session.state.sections[DEFENSE]).presets.map((preset) => preset.id);
+  assert.deepEqual(ids, ['shared-d', 'other-d'], 'another section\'s record is never removed by Khan cleanup');
+});
+
+test('Khan: reusing another slot\'s app-created defense promotes it with its raw fields', async () => {
+  const foreign = rawDefense('foreign-d', 'Foreign', { app: { section: 'automation.other', slot: 'defense' }, 'x-extra': 1 });
+  const session = fakeDraftSession({ [PRESETS]: { version: 1, presets: [rawPreset('user', 'User')] }, [DEFENSE]: { version: 1, presets: [foreign] }, [KHAN]: {} }, [], KHAN);
+  await save.saveModuleWithAppCreatedPresets({
+    draftSession: session, section: KHAN,
+    slots: khanSlots({ source: 'preset', presetId: 'user', missing: false }, { source: 'preset', presetId: 'foreign-d', missing: false, appCreatedBy: { section: 'automation.other', slot: 'defense' } }),
+    buildSectionValue: khanValue,
+  });
+  const record = session.state.sections[DEFENSE].presets[0];
+  assert.equal(record.app, undefined);
+  assert.equal(record['x-extra'], 1);
+});
+
+test('Khan: Save as preset for a defense creates a user preset with a fresh id and no marker', async () => {
+  const own = rawDefense('own-d', 'Auto Khan – Main castle defense (auto)', { app: { section: KHAN, slot: 'defense' } });
+  const session = fakeDraftSession({ [DEFENSE]: { version: 1, presets: [own, rawDefense('mine', 'Mine')] }, [KHAN]: { defensePresetId: 'own-d' } }, [], KHAN);
+  const newId = await save.saveInlineDefenseAsUserPreset(session, defenseSetup(11), '  Wall plan  ', '2026-09-29T00:00:00.000Z');
+  assert.deepEqual(session.writes.map((write) => write.section), [DEFENSE]);
+  const defense = defenseTypes.parseDefensePresetDocument(session.state.sections[DEFENSE]).presets;
+  assert.deepEqual(defense.map((preset) => preset.id), ['own-d', 'mine', newId]);
+  assert.notEqual(newId, 'own-d');
+  assert.doesNotMatch(newId, /^app:/);
+  const user = defense.find((preset) => preset.id === newId);
+  assert.equal(user.name, 'Wall plan');
+  assert.equal(Object.hasOwn(user, 'app'), false);
+  assert.equal(user.wall.left.toolSlots[0].amount, 11);
+  assert.equal(user.createdAt, '2026-09-29T00:00:00.000Z');
+  assert.equal(session.state.sections[KHAN].defensePresetId, 'own-d', 'no dangling reference while the module is unsaved');
+
+  await assert.rejects(save.saveInlineDefenseAsUserPreset(session, defenseSetup(1), 'wall PLAN'), /duplicate/);
+  await assert.rejects(save.saveInlineDefenseAsUserPreset(session, defenseSetup(1), '   '), /empty/);
+  assert.equal(session.writes.length, 1, 'rejected names write nothing');
+});
+
+test('Khan: a failed defense Save as preset writes nothing and surfaces the error', async () => {
+  const session = fakeDraftSession({ [DEFENSE]: { version: 1, presets: [] } }, ['fail'], KHAN);
+  await assert.rejects(save.saveInlineDefenseAsUserPreset(session, defenseSetup(1), 'Name'), /write failed: defense\.presets/);
+  assert.deepEqual(session.state.sections[DEFENSE], { version: 1, presets: [] });
 });

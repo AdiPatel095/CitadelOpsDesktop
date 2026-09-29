@@ -30,7 +30,7 @@ interface MetadataInput {
 }
 
 /** True when castle data is missing or has no castles yet: nothing can be validated against it (waiting for data). */
-function castlesUnobserved(state: GameStateV2 | null): boolean {
+export function castlesUnobserved(state: GameStateV2 | null): boolean {
   return state == null || Object.keys(state.castles ?? {}).length === 0;
 }
 
@@ -166,7 +166,7 @@ export function evaluateFortressReadiness(input: FortressReadinessInput): Fortre
       : castle
         ? { id: 'kingdom-castle', slot: String(kingdomId), state: 'valid', messageKey: message('ui.settings.requirements.setupReadiness.the.kingdom.main.castle.is.available.25e1efec') }
         : { id: 'kingdom-castle', slot: String(kingdomId), state: 'blocked', messageKey: message('ui.settings.requirements.setupReadiness.main.castle.is.unavailable.or.the.kingdom.552f7db4'), fix: 'settings' };
-    const stock = castle ? evaluateUnitStock({
+    const evaluated = castle ? evaluateUnitStock({
       observation: input.observation,
       castle,
       requests: [{ itemId: input.direwolfId, amount: 1, kind: 'troop' }],
@@ -181,6 +181,10 @@ export function evaluateFortressReadiness(input: FortressReadinessInput): Fortre
         decidedAtLaunch: message('ui.settings.requirements.setupReadiness.direwolves.are.staged.by.the.supply.lane.448002c8'),
       },
     }) : null;
+    // Maya (CIT-16): with no purchases and no Great Empire stock, say what supplies Direwolves.
+    const stock = evaluated && !supplyAvailable && evaluated.check.state === 'blocked'
+      ? { ...evaluated, check: { ...evaluated.check, messageKey: message('ui.settings.requirements.setupReadiness.no.direwolves.are.available.set.direwolves.per.45e831e3'), params: undefined, fix: 'settings' as const } }
+      : evaluated;
     return { kingdomId, castle, castleCheck, stock };
   });
   const enabled = kingdoms.filter((kingdom) => input.kingdoms[String(kingdom.kingdomId)]?.enabled);

@@ -1,3 +1,4 @@
+import { parseAppCreatedPresetMarker, type AppCreatedPresetMarker } from '../presets/AppCreatedRecords';
 import type {
   AttackSetupDraft,
   AttackSetupCourtyardSupport,
@@ -22,10 +23,8 @@ export interface AttackPresetToolProfile {
 }
 
 /** Present only on presets created by a module's inline setup. The marker, not the id, defines ownership. */
-export interface AppCreatedPresetMarker {
-  section: string;
-  slot: string;
-}
+export type { AppCreatedPresetMarker } from '../presets/AppCreatedRecords';
+export { parseAppCreatedPresetMarker } from '../presets/AppCreatedRecords';
 
 export interface AppAttackPreset extends AttackSetupDraft {
   id: string;
@@ -149,14 +148,6 @@ export function parseAttackPreset(value: unknown): AppAttackPreset | null {
     updatedAt: validDate(value.updatedAt) ?? createdAt,
     ...(app ? { app } : {}),
   };
-}
-
-/** Malformed markers are dropped, so a damaged record is treated as an ordinary user preset. */
-export function parseAppCreatedPresetMarker(value: unknown): AppCreatedPresetMarker | undefined {
-  if (!isRecord(value) || typeof value.section !== 'string' || typeof value.slot !== 'string') return undefined;
-  const section = value.section.trim();
-  const slot = value.slot.trim();
-  return section && slot ? { section, slot } : undefined;
 }
 
 export function parseCourtyardSupport(value: unknown): AttackSetupCourtyardSupport | null {

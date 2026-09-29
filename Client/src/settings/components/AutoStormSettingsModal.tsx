@@ -1,6 +1,6 @@
 import { useLocale as useStaticLocale } from "../../i18n/LocaleContext";
 import { LocalizedText } from "../../i18n/LocalizedText";
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   Anchor,
   ArrowDown,
@@ -32,9 +32,30 @@ import { CitadelAPI } from '../../api/CitadelClient';
 import {
   ATTACK_PRESETS_SECTION,
   parseAttackPresetDocument,
-  summarizeAttackPreset,
 } from '../../attackPresets/AttackPresetTypes';
-import { attackPresetSelectOptions } from '../../attackPresets/AttackPresetOptionLabel';
+import { attackSetupRef, attackSetupRefUsable, type AttackSetupRef } from '../../attackPresets/AppCreatedPresets';
+import { attackPresetReferences } from '../../attackPresets/AttackPresetReferences';
+import { COMMANDER_FEATURE_SECTION } from '../../Movement/types/CommanderFeatureAssignments';
+import { useConfigurationDraftSession } from '../ConfigurationDraftSession';
+import {
+  saveInlineSetupAsUserPreset,
+  saveModuleWithAppCreatedPresets,
+  type AppCreatedPresetSaveWarning,
+} from '../AppCreatedPresetSave';
+import { recommendEventAttackSetup } from '../onboarding/EventAttackRecommendation';
+import { pendingStarterReviews } from '../onboarding/StarterRecipes';
+import { evaluateStormReadiness, stormStockCastle } from '../readiness/stormReadiness';
+import { focusReadinessTarget } from '../readiness/focusReadinessTarget';
+import type { ReadinessCheck } from '../readiness/Readiness';
+import { savedCommanderAssignments } from '../requirements/commanderAssignmentDraft';
+import { evaluateCommanderEligibility } from '../requirements/commanderEligibility';
+import { evaluateUnitStock } from '../requirements/unitRequirements';
+import { useHostedRuntimePresence } from '../../config/Deployment';
+import { useSetupContext } from '../requirements/useSetupContext';
+import { CommanderAssignmentPanel } from './CommanderAssignmentPanel';
+import { EventAttackSetupField } from './EventAttackSetupField';
+import { ReadinessCheckLine, ReadinessPanel } from './ReadinessPanel';
+import { UnitStockList } from './UnitStockList';
 import { Notifications } from '../../components/Notifications';
 import { showTroopPicker, type UnitWithQuantity } from '../../components/TroopPickerModal';
 import UnitImage from '../../components/UnitImage';
@@ -137,9 +158,21 @@ const LUNA_PACKAGE_ID_SET = new Set(AUTO_STORM_LUNA_PACKAGE_IDS);
 
 export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ isOpen, onClose }) => {
   const { t: localizeStatic } = useStaticLocale();
-  const { state, configuration, captureBuildingTarget, updateConfiguration } = useCitadelAPI();
-  const { getTool, getTroop } = useMetadata();
+  const { captureBuildingTarget } = useCitadelAPI();
+  const setup = useSetupContext(AUTO_STORM_SECTION, useHostedRuntimePresence());
+  const state = setup.state;
+  const { getTool, getTroop, troops, tools, unitsLoading, unitsError } = useMetadata();
+  const draftSession = useConfigurationDraftSession({
+    isOpen,
+    section: AUTO_STORM_SECTION,
+    configurationDependencies: [ATTACK_PRESETS_SECTION, AUTO_STORM_BLUEPRINTS_SECTION, COMMANDER_FEATURE_SECTION],
+    sessionKey: setup.sessionKey,
+  });
+  const configurationSections = draftSession.sections;
   const [draft, setDraft] = useState<AutoStormClientStateV1>(defaultAutoStormClientState);
+  const [fortsRef, setFortsRef] = useState<AttackSetupRef>({ source: 'none' });
+  const [islandsRef, setIslandsRef] = useState<AttackSetupRef>({ source: 'none' });
+  const [commandersOpen, setCommandersOpen] = useState(false);
   const [captureCastleId, setCaptureCastleId] = useState(0);
   const [capturing, setCapturing] = useState<BuildingTargetCaptureMode | null>(null);
   const { locale: stormGuideLocale, pack: stormGuidePack } = useGuideLocale();
@@ -160,7 +193,6 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
   const [troopCapRefreshTick, setTroopCapRefreshTick] = useState(0);
   const [draggedTargetPriority, setDraggedTargetPriority] = useState<AutoStormTargetPriority | null>(null);
   const [targetPriorityDropTarget, setTargetPriorityDropTarget] = useState<AutoStormTargetPriority | null>(null);
-  const initializedOpen = useRef(false);
   const troopCap = useMemo(() => presentAutoStormTroopCap(troopCapPreview), [troopCapPreview]);
 
   const stormCastles = useMemo(() => Object.values(state?.castles ?? {})
@@ -173,18 +205,21 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
   const selectedUnlockOption = stormCastleOptions.find((option) => option.id === draft.unlock.prebuiltCastleId);
   const stormUnlockState = state?.kingdomTransport.unlocks['4'];
   const attackPresets = useMemo(
-    () => parseAttackPresetDocument(configuration?.sections[ATTACK_PRESETS_SECTION]),
-    [configuration?.sections],
+    () => parseAttackPresetDocument(configurationSections?.[ATTACK_PRESETS_SECTION]),
+    [configurationSections],
   );
+  const presetReferences = useMemo(() => attackPresetReferences(configurationSections), [configurationSections]);
+  const commanderAssignments = useMemo(() => savedCommanderAssignments(configurationSections), [configurationSections]);
   const decorationOptions = useMemo(
-    () => parseDecorationPresetOptions(configuration?.sections['decorations.presets'], state?.castles ?? {}),
-    [configuration?.sections, state?.castles],
+    () => parseDecorationPresetOptions(configurationSections?.['decorations.presets'], state?.castles ?? {}),
+    [configurationSections, state?.castles],
   );
   const selectedDecorationValue = decorationOptions.find((option) => (
     option.castleId === draft.decorationPresetCastleId && option.presetId === draft.decorationPresetId
   ))?.value ?? '';
-  const selectedFortPreset = attackPresets.presets.find((preset) => preset.id === draft.forts.presetId);
-  const selectedIslandPreset = attackPresets.presets.find((preset) => preset.id === draft.islands.presetId);
+  const refPresetId = (ref: AttackSetupRef) => ref.source === 'none' ? '' : ref.presetId;
+  const fortsPresetId = refPresetId(fortsRef);
+  const islandsPresetId = refPresetId(islandsRef);
   const troopCapPreviewSettings = useMemo(() => ({
     version: 1,
     troopImport: {
@@ -192,21 +227,22 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
       minimumTroops: draft.troopImport.minimumTroops,
       historyHours: AUTO_STORM_TROOP_HISTORY_HOURS,
     },
+    // The server preview resolves saved preset ids; a new inline setup is previewed after the first save.
     forts: {
       enabled: draft.forts.enabled,
-      presetId: draft.forts.presetId,
+      presetId: fortsPresetId,
     },
     islands: {
       enabled: draft.islands.enabled,
-      presetId: draft.islands.presetId,
+      presetId: islandsPresetId,
       defenseUnits: draft.islands.defenseUnits,
     },
   }), [
     draft.forts.enabled,
-    draft.forts.presetId,
+    fortsPresetId,
     draft.islands.defenseUnits,
     draft.islands.enabled,
-    draft.islands.presetId,
+    islandsPresetId,
     draft.troopImport.enabled,
     draft.troopImport.minimumTroops,
   ]);
@@ -248,30 +284,29 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
     && state.inventory.constructionOffersObservedAt,
   );
 
-  const savedConfiguration = configuration?.sections[AUTO_STORM_SECTION];
   const blueprintDocument = useMemo(
-    () => parseAutoStormBlueprintDocument(configuration?.sections[AUTO_STORM_BLUEPRINTS_SECTION]),
-    [configuration?.sections],
+    () => parseAutoStormBlueprintDocument(configurationSections?.[AUTO_STORM_BLUEPRINTS_SECTION]),
+    [configurationSections],
   );
-  const activeBlueprint = blueprintDocument.blueprints[blueprintDocument.activeId];
   const savedBlueprints = Object.values(blueprintDocument.blueprints)
     .sort((left, right) => left.id.localeCompare(right.id));
 
   useEffect(() => {
-    if (!isOpen) {
-      initializedOpen.current = false;
-      return;
-    }
-    if (initializedOpen.current || !configuration) return;
-    const current = parseAutoStormClientState(savedConfiguration);
-    const target = activeBlueprint?.target ?? current.target;
+    if (!isOpen || !draftSession.initialSnapshot) return;
+    // Baseline at open (draft session): background refreshes never reset the draft.
+    const sections = draftSession.initialSections ?? {};
+    const current = parseAutoStormClientState(sections[AUTO_STORM_SECTION]);
+    const blueprints = parseAutoStormBlueprintDocument(sections[AUTO_STORM_BLUEPRINTS_SECTION]);
+    const target = blueprints.blueprints[blueprints.activeId]?.target ?? current.target;
+    const presets = parseAttackPresetDocument(sections[ATTACK_PRESETS_SECTION]);
     setDraft({ ...current, ...(target ? { target } : {}) });
+    setFortsRef(attackSetupRef(current.forts.presetId, presets, AUTO_STORM_SECTION, 'forts'));
+    setIslandsRef(attackSetupRef(current.islands.presetId, presets, AUTO_STORM_SECTION, 'islands'));
     setCaptureCastleId(target?.castleId ?? 0);
     setBlueprintPreview(null);
     setDraggedTargetPriority(null);
     setTargetPriorityDropTarget(null);
-    initializedOpen.current = true;
-  }, [activeBlueprint?.target, configuration, isOpen, savedConfiguration]);
+  }, [draftSession.initialSections, draftSession.openKey, draftSession.initialSnapshot, isOpen]);
 
   useEffect(() => {
     if (!isOpen || captureCastleId > 0 || stormCastles.length === 0) return;
@@ -306,7 +341,7 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
   }, [isOpen]);
 
   useEffect(() => {
-    if (!isOpen || !configuration || !draft.troopImport.enabled) {
+    if (!isOpen || !draftSession.ready || !draft.troopImport.enabled) {
       setTroopCapPreview(null);
       setTroopCapPreviewError('');
       setLoadingTroopCapPreview(false);
@@ -335,7 +370,7 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
       window.clearTimeout(timer);
     };
   }, [
-    configuration?.revision,
+    draftSession.ready,
     draft.troopImport.enabled,
     isOpen,
     state?.dailyAttacks?.observedAt,
@@ -384,11 +419,10 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
           .find((candidate) => candidate.severity === 'error');
         throw new Error(issue?.message ?? 'The captured Storm blueprint cannot be compiled safely.');
       }
-	  const savedBlueprints = configuration?.sections[AUTO_STORM_BLUEPRINTS_SECTION];
-	  await updateConfiguration(
+	  // Blueprint writes go through the draft session (whole-configuration CAS) like the module save.
+	  await draftSession.saveSection(
 		AUTO_STORM_BLUEPRINTS_SECTION,
-		saveAutoStormBlueprint(savedBlueprints, preview.target),
-		savedBlueprints === undefined ? undefined : { expectedValue: savedBlueprints },
+		saveAutoStormBlueprint(configurationSections?.[AUTO_STORM_BLUEPRINTS_SECTION], preview.target),
 	  );
       setBlueprintPreview(preview);
       setDraft((current) => ({
@@ -409,11 +443,9 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
     const blueprint = blueprintDocument.blueprints[id];
     if (!blueprint) return;
     try {
-	  const savedBlueprints = configuration?.sections[AUTO_STORM_BLUEPRINTS_SECTION];
-	  await updateConfiguration(
+	  await draftSession.saveSection(
 		AUTO_STORM_BLUEPRINTS_SECTION,
-		activateAutoStormBlueprint(savedBlueprints, id),
-		savedBlueprints === undefined ? undefined : { expectedValue: savedBlueprints },
+		activateAutoStormBlueprint(configurationSections?.[AUTO_STORM_BLUEPRINTS_SECTION], id),
 	  );
       setDraft((current) => ({ ...current, target: blueprint.target }));
       setCaptureCastleId(blueprint.target.castleId);
@@ -427,11 +459,9 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
   const deactivateBlueprint = async () => {
     if (capturing || saving) return;
     try {
-	  const savedBlueprints = configuration?.sections[AUTO_STORM_BLUEPRINTS_SECTION];
-	  await updateConfiguration(
+	  await draftSession.saveSection(
 		AUTO_STORM_BLUEPRINTS_SECTION,
-		activateAutoStormBlueprint(savedBlueprints, ''),
-		savedBlueprints === undefined ? undefined : { expectedValue: savedBlueprints },
+		activateAutoStormBlueprint(configurationSections?.[AUTO_STORM_BLUEPRINTS_SECTION], ''),
 	  );
       setDraft((current) => {
         const { target: _target, ...rest } = current;
@@ -497,11 +527,11 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
     setTargetPriorityDropTarget(null);
   };
 
-  const fortValid = !draft.forts.enabled || (draft.forts.levels.length > 0 && Boolean(draft.forts.presetId));
+  const fortValid = !draft.forts.enabled || (draft.forts.levels.length > 0 && attackSetupRefUsable(fortsRef, attackPresets));
   const islandsValid = !draft.islands.enabled || (
     draft.islands.resources.length > 0
     && draft.islands.sizes.length > 0
-    && Boolean(draft.islands.presetId)
+    && attackSetupRefUsable(islandsRef, attackPresets)
     && draft.islands.defenseUnits.every((unit) => unit.unitId > 0 && unit.amount > 0)
   );
   const shopIDs = draft.aquamarine.purchases.map((purchase) => purchase.packageId);
@@ -519,25 +549,108 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
   const unlockValid = !draft.unlock.enabled || Boolean(selectedUnlockOption);
   const canSave = fortValid && islandsValid && shopValid && targetValid && troopImportValid && unlockValid;
 
+  const metadataReady = !unitsLoading && !unitsError;
+  const observation = setup.observation;
+  const selectedDonors = useMemo(() => draft.troopImport.donorCastleIds
+    .map((castleId) => state?.castles?.[String(castleId)])
+    .filter((castle): castle is NonNullable<typeof castle> => castle != null && castle.kingdomId !== 4), [draft.troopImport.donorCastleIds, state?.castles]);
+  // Attacks launch from the Storm castle; enabled donors import troops (never tools) before launch.
+  const stockCastle = useMemo(
+    () => stormStockCastle(stormCastle ?? null, selectedDonors, draft.troopImport.enabled, tools),
+    [draft.troopImport.enabled, selectedDonors, stormCastle, tools],
+  );
+  const recipePending = useMemo(() => pendingStarterReviews(), []);
+  // The recommendation reads the Storm castle's own stock only.
+  const recommendation = useMemo(
+    () => recommendEventAttackSetup({ sourceCastle: stormCastle ?? null, observation, troops, tools, metadataReady, eventId: 0 }),
+    [metadataReady, observation, stormCastle, tools, troops],
+  );
+  const decorationLabel = decorationOptions.find((option) => option.value === selectedDecorationValue)?.label;
+  const readiness = useMemo(() => evaluateStormReadiness({
+    draft,
+    forts: fortsRef,
+    islands: islandsRef,
+    state,
+    stormCastle: stormCastle ?? null,
+    document: attackPresets,
+    troops,
+    tools,
+    metadataReady,
+    observation,
+    buildActive: draft.target != null || Boolean(blueprintDocument.activeId),
+    decorationLabel,
+    commanders: evaluateCommanderEligibility({
+      featureId: 'autoStorm',
+      state,
+      assignments: commanderAssignments,
+      movement: setup.movement,
+      gameLoggedIn: setup.gameLoggedIn,
+      now: Date.now(),
+    }),
+  }), [attackPresets, blueprintDocument.activeId, commanderAssignments, decorationLabel, draft, fortsRef, islandsRef, metadataReady, observation, setup.gameLoggedIn, setup.movement, state, stormCastle, tools, troops]);
+  const islandDefenseStock = useMemo(() => draft.islands.defenseUnits.length > 0 ? evaluateUnitStock({
+    castle: stockCastle,
+    observation,
+    requests: draft.islands.defenseUnits.map((unit) => ({ itemId: unit.unitId, amount: unit.amount, kind: 'troop' as const })),
+    troops,
+    tools,
+    metadataReady,
+    decidedAtLaunch: 'quantity',
+  }) : null, [draft.islands.defenseUnits, metadataReady, observation, stockCastle, tools, troops]);
+  const fixReadiness = (check: ReadinessCheck) => {
+    if (check.id === 'commanders' || check.id === 'commander-assignment') {
+      setCommandersOpen(true);
+      window.requestAnimationFrame(() => focusReadinessTarget('auto-storm-commanders-heading'));
+      return;
+    }
+    const target = check.slot ? `auto-storm-${check.slot}` : {
+      unlock: 'auto-storm-access',
+      branches: 'auto-storm-branches',
+      donors: 'auto-storm-donors',
+      shop: 'auto-storm-shop',
+      'daily-limit': 'auto-storm-daily-limit',
+    }[check.id];
+    if (target) focusReadinessTarget(target);
+  };
+  const moduleLabel = localizeStatic('attackPresets.module.autoStorm');
+  const stockLabel = stormCastle
+    ? localizeStatic('stormReadiness.inventoryLabel', {
+      castle: stormCastle.name?.trim() || `#${stormCastle.id}`,
+      donors: draft.troopImport.enabled ? selectedDonors.length : 0,
+    })
+    : undefined;
+
   const save = async () => {
     if (!canSave || saving) return;
     setSaving(true);
+    const warnings: AppCreatedPresetSaveWarning[] = [];
     try {
-      const parsed = parseAutoStormClientState(draft);
-      let settings: Omit<AutoStormClientStateV1, 'target'> | AutoStormClientStateV1 = parsed;
-      if (blueprintDocument.activeId) {
-        const { target: _legacyTarget, ...withoutLegacyTarget } = parsed;
-        settings = withoutLegacyTarget;
-      }
-	  await updateConfiguration(
-		AUTO_STORM_SECTION,
-		settings,
-		savedConfiguration === undefined ? undefined : { expectedValue: savedConfiguration },
-	  );
+      await saveModuleWithAppCreatedPresets({
+        draftSession,
+        section: AUTO_STORM_SECTION,
+        slots: [
+          { slot: 'forts', ref: fortsRef, moduleLabel, slotLabel: localizeStatic('attackPresets.slot.forts') },
+          { slot: 'islands', ref: islandsRef, moduleLabel, slotLabel: localizeStatic('attackPresets.slot.islands') },
+        ],
+        buildSectionValue: (ids) => {
+          const parsed = parseAutoStormClientState({
+            ...draft,
+            forts: { ...draft.forts, presetId: ids.forts },
+            islands: { ...draft.islands, presetId: ids.islands },
+          });
+          if (!blueprintDocument.activeId) return parsed;
+          const { target: _legacyTarget, ...withoutLegacyTarget } = parsed;
+          return withoutLegacyTarget;
+        },
+        formatPresetName: (module, slot) => localizeStatic('attackPresets.appCreatedName', { module, slot }),
+        warnings,
+      });
       Notifications.success('Auto Storm settings saved.');
+      if (warnings.includes('cleanup-pending')) Notifications.warning(localizeStatic('attackPresets.cleanupPending'));
       onClose();
     } catch (error) {
       Notifications.error(error instanceof Error ? error.message : 'Could not save Auto Storm settings.');
+      if (warnings.includes('cleanup-pending')) Notifications.warning(localizeStatic('attackPresets.rollbackPending'));
     } finally {
       setSaving(false);
     }
@@ -558,12 +671,14 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
       description={localizeStatic("ui.settings.components.autoStormSettingsModal.description.reconcile.a.captured.storm.castle.attack.selected.f13374ef")}
       onSave={() => void save()}
       isSaving={saving}
-      saveDisabled={!canSave}
+      saveDisabled={!canSave || !draftSession.ready}
       cancelDisabled={capturing != null}
+      contentDisabled={!draftSession.ready}
+      contentNotice={draftSession.conflictNotice}
     >
       <div className="space-y-4">
         <div className="flex justify-end"><Button variant="outline" size="sm" onClick={() => setIsGuideOpen(true)} leftIcon={<BookOpen className="h-4 w-4" />}><span lang={stormPack === englishGuidePack ? "en" : stormGuideLocale}>{stormPack.ui.guideButton}</span></Button></div>
-        <Card variant="solid" className="p-4">
+        <Card id="auto-storm-access" tabIndex={-1} variant="solid" className="p-4 outline-none">
           <SectionHeading
             icon={Castle}
             title={localizeStatic("ui.settings.components.autoStormSettingsModal.title.storm.castle.access.8c4a0314")}
@@ -745,6 +860,7 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
                 menuGrowToViewport
               />
               <p className="mt-2 text-xs text-text-muted"><LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.the.preset.may.come.from.any.castle.42cc0294" /></p>
+              <p className="mt-1 text-xs text-text-muted"><LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.optional.it.only.decorates.the.storm.castle.bda00004" /></p>
             </label>
           ) : null}
         </Card>
@@ -894,7 +1010,7 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
             </div>
           </Card>
 
-          <Card variant="solid" className="p-4">
+          <Card id="auto-storm-branches" tabIndex={-1} variant="solid" className="p-4 outline-none">
             <SectionHeading
               icon={Swords}
               title={localizeStatic("ui.settings.components.autoStormSettingsModal.title.forts.and.resource.islands.4ccb548f")}
@@ -948,13 +1064,27 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
                     />
                     <p className="mt-1 text-[11px] text-text-muted"><LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.only.launch.against.forts.with.at.least.43220000" /></p>
                   </label>
-                  <PresetSelect
-                    value={draft.forts.presetId}
-                    onChange={(presetId) => setDraft((current) => ({ ...current, forts: { ...current.forts, presetId } }))}
-                    presets={attackPresets.presets}
-                    placeholder={localizeStatic("ui.settings.components.autoStormSettingsModal.placeholder.fort.attack.preset.9a1bfd17")}
+                  <EventAttackSetupField
+                    id="auto-storm-forts"
+                    label={<LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.placeholder.fort.attack.preset.9a1bfd17" />}
+                    section={AUTO_STORM_SECTION}
+                    slot="forts"
+                    moduleLabel={moduleLabel}
+                    slotLabel={localizeStatic('attackPresets.slot.forts')}
+                    value={fortsRef}
+                    onChange={setFortsRef}
+                    document={attackPresets}
+                    references={presetReferences}
+                    sourceCastle={stockCastle}
+                    observation={observation}
+                    eventId={0}
+                    recommendation={recommendation}
+                    recipePending={recipePending}
+                    onSaveAsPreset={(inline, name) => saveInlineSetupAsUserPreset(draftSession, inline, name)}
+                    readinessChecks={readiness.checks.filter((check) => check.slot === 'forts')}
+                    inventoryLabel={stockLabel}
+                    disabled={saving}
                   />
-                  {selectedFortPreset ? <PresetSummary preset={selectedFortPreset} /> : null}
                   {draft.forts.levels.length === 0 ? <p className="text-xs text-error"><LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.select.at.least.one.fort.level.32a7a693" /></p> : null}
                 </div>
               ) : null}
@@ -1084,13 +1214,27 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
                       }))}
                     />
                   </div>
-                  <PresetSelect
-                    value={draft.islands.presetId}
-                    onChange={(presetId) => setDraft((current) => ({ ...current, islands: { ...current.islands, presetId } }))}
-                    presets={attackPresets.presets}
-                    placeholder={localizeStatic("ui.settings.components.autoStormSettingsModal.placeholder.island.attack.preset.1f0006d5")}
+                  <EventAttackSetupField
+                    id="auto-storm-islands"
+                    label={<LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.placeholder.island.attack.preset.1f0006d5" />}
+                    section={AUTO_STORM_SECTION}
+                    slot="islands"
+                    moduleLabel={moduleLabel}
+                    slotLabel={localizeStatic('attackPresets.slot.islands')}
+                    value={islandsRef}
+                    onChange={setIslandsRef}
+                    document={attackPresets}
+                    references={presetReferences}
+                    sourceCastle={stockCastle}
+                    observation={observation}
+                    eventId={0}
+                    recommendation={recommendation}
+                    recipePending={recipePending}
+                    onSaveAsPreset={(inline, name) => saveInlineSetupAsUserPreset(draftSession, inline, name)}
+                    readinessChecks={readiness.checks.filter((check) => check.slot === 'islands' && check.id !== 'islands-defense-units')}
+                    inventoryLabel={stockLabel}
+                    disabled={saving}
                   />
-                  {selectedIslandPreset ? <PresetSummary preset={selectedIslandPreset} /> : null}
 
                   <div className="border-t border-border-base pt-3">
                     <div className="flex flex-wrap items-center justify-between gap-3">
@@ -1114,6 +1258,12 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
                         ))}
                       </div>
                     ) : <p className="mt-2 text-[11px] text-text-muted"><LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.automatic.minimum.occupation.after.victory.is.reported.4a4d8d99" /></p>}
+                    {islandDefenseStock ? (
+                      <div className="mt-3 space-y-2">
+                        <UnitStockList lines={islandDefenseStock.lines} />
+                        <ul><ReadinessCheckLine check={islandDefenseStock.check} /></ul>
+                      </div>
+                    ) : null}
                   </div>
 
                   {draft.islands.resources.length === 0 || draft.islands.sizes.length === 0 ? (
@@ -1158,6 +1308,9 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
                       }))}
                     />
                   ) : <p className="text-xs text-text-muted"><LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.no.non.storm.donor.castles.are.currently.3215ee89" /></p>}
+                  {readiness.checks.filter((check) => check.id === 'donors').map((check) => (
+                    <ul key={check.id} id="auto-storm-donors" tabIndex={-1} className="mt-2 outline-none"><ReadinessCheckLine check={check} /></ul>
+                  ))}
                   <div className="mt-3 grid gap-3 sm:grid-cols-2">
                     <label>
                       <FieldLabel><LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.minimum.troops.kept.after.launch.96092426" /></FieldLabel>
@@ -1263,7 +1416,7 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
           </Card>
         </div>
 
-        <Card variant="solid" className="p-4">
+        <Card id="auto-storm-shop" tabIndex={-1} variant="solid" className="p-4 outline-none">
           <SectionHeading
             icon={Package}
             title={localizeStatic("ui.settings.components.autoStormSettingsModal.title.aquamarine.spending.9cd6c95d")}
@@ -1431,11 +1584,13 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
           ) : null}
         </Card>
 
-        <DailyAttackLimitField
-          value={draft.dailyAttackLimit}
-          onChange={(dailyAttackLimit) => setDraft((current) => ({ ...current, dailyAttackLimit }))}
-          serverState={state?.dailyAttacks}
-        />
+        <div id="auto-storm-daily-limit" tabIndex={-1} className="outline-none">
+          <DailyAttackLimitField
+            value={draft.dailyAttackLimit}
+            onChange={(dailyAttackLimit) => setDraft((current) => ({ ...current, dailyAttackLimit }))}
+            serverState={state?.dailyAttacks}
+          />
+        </div>
 
         <Card variant="solid" className="p-4">
           <SectionHeading icon={Clock3} title={localizeStatic("ui.settings.components.autoStormSettingsModal.title.cadence.316d43c0")} description={localizeStatic("ui.settings.components.autoStormSettingsModal.description.map.refreshes.are.authoritative.scans.policy.checks.ab4ae38c")} />
@@ -1467,6 +1622,23 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
             </label>
           </div>
         </Card>
+
+        <ReadinessPanel
+          report={readiness}
+          slotLabelKeys={{ forts: 'attackPresets.slot.forts', islands: 'attackPresets.slot.islands' }}
+          onFix={fixReadiness}
+        />
+        <CommanderAssignmentPanel
+          id="auto-storm-commanders"
+          featureId="autoStorm"
+          draftSession={draftSession}
+          state={setup.state}
+          movement={setup.movement}
+          gameLoggedIn={setup.gameLoggedIn}
+          expanded={commandersOpen}
+          onExpandedChange={setCommandersOpen}
+          disabled={saving}
+        />
       </div>
     </SettingsModal>
     <FeatureGuideModal feature="autoStorm" isOpen={isOpen && isGuideOpen} onClose={() => setIsGuideOpen(false)} />
@@ -1499,43 +1671,6 @@ function FieldLabel({ children, icon: Icon }: { children: React.ReactNode; icon?
   );
 }
 
-function PresetSelect({
-  value,
-  onChange,
-  presets,
-  placeholder,
-}: {
-  value: string;
-  onChange: (value: string) => void;
-  presets: ReturnType<typeof parseAttackPresetDocument>['presets'];
-  placeholder: string;
-}) {
-  return (
-    <label className="block">
-      <FieldLabel icon={Crosshair}><LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.attack.preset.407b93e9" /></FieldLabel>
-      <Select
-        value={value}
-        onChange={onChange}
-        options={attackPresetSelectOptions(presets)}
-        placeholder={presets.length > 0 ? placeholder : 'Create an Attack Preset first'}
-        disabled={presets.length === 0}
-        searchable
-        menuGrowToViewport
-      />
-    </label>
-  );
-}
-
-function PresetSummary({ preset }: { preset: ReturnType<typeof parseAttackPresetDocument>['presets'][number] }) {
-  const summary = summarizeAttackPreset(preset);
-  return (
-    <div className="flex flex-wrap gap-2">
-      <Badge variant="outline">{summary.waves} waves</Badge>
-      <Badge variant="outline">{summary.troops.toLocaleString()} troops</Badge>
-      <Badge variant="outline">{summary.tools.toLocaleString()} tools</Badge>
-    </div>
-  );
-}
 
 function autoStormTargetPriorityEnabled(
   state: AutoStormClientStateV1,

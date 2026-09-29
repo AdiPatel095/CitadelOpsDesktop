@@ -11,6 +11,11 @@ import {
   summarizeAttackPreset,
 } from '../../attackPresets/AttackPresetTypes';
 import { attackPresetSelectOptions } from '../../attackPresets/AttackPresetOptionLabel';
+import { attackSetupRef } from '../../attackPresets/AppCreatedPresets';
+import { attackPresetSlotDefinition } from '../../attackPresets/AttackPresetReferences';
+import { useConfigurationDraftSession } from '../ConfigurationDraftSession';
+import { saveModuleWithAppCreatedPresets, type AppCreatedPresetSaveWarning } from '../AppCreatedPresetSave';
+import { useSetupContext } from '../requirements/useSetupContext';
 import { Notifications } from '../../components/Notifications';
 import { Badge, Button, Card, Input, Modal, ModalTitle, Select, SettingsModal, Switch } from '../../components/ui';
 import {
@@ -33,7 +38,15 @@ interface AutoAdvisorSettingsModalProps {
 
 export const AutoAdvisorSettingsModal: React.FC<AutoAdvisorSettingsModalProps> = ({ isOpen, onClose }) => {
   const { t: localizeStatic } = useStaticLocale();
-  const { state, configuration, submitIntent, updateConfiguration } = useCitadelAPI();
+  const { state, submitIntent } = useCitadelAPI();
+  const setup = useSetupContext(AUTO_ADVISOR_SECTION);
+  // Baseline at open (CIT-16): reusing an app-created preset promotes it in the same ordered save.
+  const draftSession = useConfigurationDraftSession({
+    isOpen,
+    section: AUTO_ADVISOR_SECTION,
+    configurationDependencies: [ATTACK_PRESETS_SECTION],
+    sessionKey: setup.sessionKey,
+  });
   const [draft, setDraft] = useState<AutoAdvisorClientStateV1>(defaultAutoAdvisorClientState);
   const [saving, setSaving] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
@@ -48,10 +61,11 @@ export const AutoAdvisorSettingsModal: React.FC<AutoAdvisorSettingsModalProps> =
 
   const castles = useMemo(() => castleOptionsFromState(state).filter((castle) => castle.kingdomId === 0), [state]);
   const presetDocument = useMemo(
-    () => parseAttackPresetDocument(configuration?.sections[ATTACK_PRESETS_SECTION]),
-    [configuration?.sections],
+    () => parseAttackPresetDocument(draftSession.sections?.[ATTACK_PRESETS_SECTION]),
+    [draftSession.sections],
   );
   const selectedPreset = presetDocument.presets.find((preset) => preset.id === draft.presetId);
+  const selectedOwner = selectedPreset?.app ? attackPresetSlotDefinition(selectedPreset.app.section, selectedPreset.app.slot) : undefined;
   const presetSummary = selectedPreset ? summarizeAttackPreset(selectedPreset) : null;
   const completedAchievements = state?.player.achievements?.completed ?? {};
   const achievementsObserved = Boolean(state?.player.achievements?.observedAt);
@@ -82,9 +96,9 @@ export const AutoAdvisorSettingsModal: React.FC<AutoAdvisorSettingsModalProps> =
   const summaryObserved = Boolean(summary?.observedAt && Date.parse(summary.observedAt) > 0);
 
   useEffect(() => {
-    if (!isOpen) return;
-    setDraft(parseAutoAdvisorClientState(configuration?.sections[AUTO_ADVISOR_SECTION]));
-  }, [configuration?.sections, isOpen]);
+    if (!isOpen || !draftSession.initialSnapshot) return;
+    setDraft(parseAutoAdvisorClientState(draftSession.initialSections?.[AUTO_ADVISOR_SECTION]));
+  }, [draftSession.initialSections, draftSession.openKey, draftSession.initialSnapshot, isOpen]);
 
   const canSave = draft.sourceCastleId > 0
     && Boolean(draft.presetId)
@@ -96,12 +110,27 @@ export const AutoAdvisorSettingsModal: React.FC<AutoAdvisorSettingsModalProps> =
   const save = async () => {
     if (saving || !canSave) return;
     setSaving(true);
+    const warnings: AppCreatedPresetSaveWarning[] = [];
     try {
-      await updateConfiguration(AUTO_ADVISOR_SECTION, draft);
+      // No inline mode: a selected app-created preset of another module is promoted before the module write.
+      await saveModuleWithAppCreatedPresets({
+        draftSession,
+        section: AUTO_ADVISOR_SECTION,
+        slots: [{
+          slot: 'attack',
+          ref: attackSetupRef(draft.presetId, presetDocument, AUTO_ADVISOR_SECTION, 'attack'),
+          moduleLabel: localizeStatic('attackPresets.module.autoAdvisor'),
+          slotLabel: localizeStatic('attackPresets.slot.attack'),
+        }],
+        buildSectionValue: (ids) => ({ ...draft, presetId: ids.attack }),
+        warnings,
+      });
       Notifications.success('Auto Advisor settings saved. No advisor token was consumed.');
+      if (warnings.includes('cleanup-pending')) Notifications.warning(localizeStatic('attackPresets.cleanupPending'));
       onClose();
     } catch (error) {
       Notifications.error(error instanceof Error ? error.message : 'Could not save Auto Advisor settings.');
+      if (warnings.includes('cleanup-pending')) Notifications.warning(localizeStatic('attackPresets.rollbackPending'));
     } finally {
       setSaving(false);
     }
@@ -169,7 +198,9 @@ export const AutoAdvisorSettingsModal: React.FC<AutoAdvisorSettingsModalProps> =
         description={localizeStatic("ui.settings.components.autoAdvisorSettingsModal.description.one.guarded.nomad.or.samurai.advisor.run.350d2486")}
         onSave={() => void save()}
         isSaving={saving}
-        saveDisabled={!canSave}
+        saveDisabled={!canSave || !draftSession.ready}
+        contentDisabled={!draftSession.ready}
+        contentNotice={draftSession.conflictNotice}
       >
         <div className="space-y-3">
           <Card variant="solid" className="p-4">
@@ -267,6 +298,11 @@ export const AutoAdvisorSettingsModal: React.FC<AutoAdvisorSettingsModalProps> =
                 <Badge variant="outline">{presetSummary.troops.toLocaleString()} troops</Badge>
                 <Badge variant="outline">{presetSummary.tools.toLocaleString()} tools</Badge>
               </div>
+            ) : null}
+            {selectedPreset?.app && selectedOwner ? (
+              <p className="mt-2 text-[11px] text-warning">
+                <LocalizedText messageKey="attackPresets.createdByOther" params={{ module: `${localizeStatic(selectedOwner.moduleLabelKey)} · ${localizeStatic(selectedOwner.slotLabelKey)}` }} />
+              </p>
             ) : null}
           </Card>
 
