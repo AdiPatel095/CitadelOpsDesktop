@@ -146,7 +146,8 @@
             "enabled": false,
             "status": "disabled",
             "detail": "Stopped: automation is off in your saved settings",
-            "updatedAt": "@now"
+            "updatedAt": "@now",
+            "lastRunAt": "@now"
           }
         }
       }

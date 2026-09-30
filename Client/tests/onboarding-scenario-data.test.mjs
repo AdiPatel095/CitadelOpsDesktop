@@ -414,6 +414,32 @@ test('phases-enabled-waiting end to end: turn on now, advance every step, and th
   assert.equal(results[1], 'in-progress');
   assert.equal(results[2], 'confirmed', 'the receipt is not dated before the turn-on');
   assert.equal(server.state().automations.autoTowers.status, 'disabled', 'the last step reports it stopped');
+  assert.equal(stoppedPhase(server), 'stopped', 'with the switch off the row reads Stopped, not Off');
+});
+
+/** The phase the Automation row shows for Towers once the saved switch is off, from what the fixture serves now. */
+function stoppedPhase(server) {
+  const state = server.state();
+  return runtimeState.describeFeatureState('autoTowers',
+    [{ id: 'autoTowers', runtime: state.automations.autoTowers, active: true }],
+    { configured: true, enabled: false },
+    { connected: true, connectionSince: state.session.changedAt, inFlight: server.operations().filter((entry) => entry.status === 'running').length, now: NOW },
+  ).overall.phase;
+}
+
+test('stop-failed end to end: after Retry turns the switch off, the game\'s stopped report makes the row read Stopped', async () => {
+  const { FixtureServer } = await load('/tests/onboarding-browser/fixtureServer.ts');
+  const server = new FixtureServer({ file: files.get('stop-failed'), nowMs: () => NOW });
+  assert.equal(server.state().automations.autoTowers.status, 'running');
+  assert.ok(server.advance(), 'the scenario has the stopped step');
+  assert.equal(server.state().automations.autoTowers.status, 'disabled');
+  assert.equal(stoppedPhase(server), 'stopped', 'Stopped, not Off: the runbook and the expectation promise it');
+  assert.equal(server.advance(), false);
+});
+
+test('a stopped step alone is Off, never Stopped, without a last run (why both scenarios carry lastRunAt)', () => {
+  const off = runtimeState.describeFeatureState('autoTowers', [{ id: 'autoTowers', runtime: { id: 'autoTowers', enabled: false, status: 'disabled', updatedAt: new Date(NOW).toISOString() }, active: true }], { configured: true, enabled: false }, { connected: true, inFlight: 0, now: NOW });
+  assert.equal(off.overall.phase, 'disabled');
 });
 
 test('class: every scenario with a second account switches to a different account and leaves a saved reference behind', () => {
