@@ -13,7 +13,7 @@ import type {
     GameStateV2,
     GemInstanceV2,
     ProductionQueueV2,
-} from '../../src/api/Contracts';
+} from './product';
 
 /** Stable timestamps derived from load time, so relative clocks look sensible. */
 let clock: () => number = () => Date.now();

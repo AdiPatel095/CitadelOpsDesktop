@@ -17,7 +17,7 @@ declare const __CANDIDATE_SHA__: string;
  * &account=<1|2>&draft=changed&reset=1
  */
 const params = new URLSearchParams(window.location.search);
-const scenarios = loadScenarioFiles();
+const scenarios = loadScenarioFiles('desktop');
 const problems = scenarios.flatMap(validateScenarioFile);
 if (problems.length > 0) console.error('Scenario problems:', problems);
 const file = scenarios.find((entry) => entry.id === params.get('scenario')) ?? scenarios.find((entry) => entry.id === 'new-user') ?? scenarios[0];

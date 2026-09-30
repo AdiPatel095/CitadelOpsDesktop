@@ -70,7 +70,7 @@ test('no credential, token, real account id, real player name or real host appea
   ];
   const targets = [
     ...scenarios.map(({ name, data }) => [`scenarios/${name}`, JSON.stringify(data)]),
-    ...await Promise.all(['realm.ts', 'catalogs.ts', 'scenario.ts', 'fixtureServer.ts', 'install.ts', 'dock.tsx', 'main.tsx', 'vite.config.ts'].map(async (file) => [file, await readFile(new URL(`./onboarding-browser/${file}`, import.meta.url), 'utf8')])),
+    ...await Promise.all(['realm.ts', 'catalogs.ts', 'scenario.ts', 'fixtureServer.ts', 'install.ts', 'fixtureSocket.ts', 'networkGuard.ts', 'product.ts', 'dock.tsx', 'main.tsx', 'vite.config.ts'].map(async (file) => [file, await readFile(new URL(`./onboarding-browser/${file}`, import.meta.url), 'utf8')])),
   ];
   for (const [file, text] of targets) {
     const stripped = text.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '').replace(/@(?:accountKey|now(?:[+-]\d+[smhd])?|savedDigest:[\w.]+)/g, '');

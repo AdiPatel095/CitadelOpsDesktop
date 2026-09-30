@@ -5,7 +5,7 @@ import { test } from 'node:test';
 const HARNESS = new URL('./onboarding-browser/', import.meta.url);
 const read = (name) => readFile(new URL(name, HARNESS), 'utf8');
 const code = (text) => text.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
-const harnessFiles = ['catalogs.ts', 'dock.tsx', 'fixtureServer.ts', 'install.ts', 'main.tsx', 'realm.ts', 'scenario.ts', 'vite.config.ts', 'coverage.mjs'];
+const harnessFiles = ['catalogs.ts', 'dock.tsx', 'fixtureServer.ts', 'fixtureSocket.ts', 'install.ts', 'main.tsx', 'networkGuard.ts', 'product.ts', 'realm.ts', 'scenario.ts', 'vite.config.ts', 'coverage.mjs'];
 
 async function walk(dir) {
   const out = [];
@@ -27,13 +27,15 @@ test('no harness module imports the real transport, the API context or a product
 });
 
 test('the transport denies every network path it does not answer from a fixture', async () => {
+  const guard = code(await read('networkGuard.ts'));
+  assert.match(guard, /url\.origin !== window\.location\.origin[\s\S]*?record\(`fetch/, 'cross-origin fetch is blocked');
+  for (const name of ['WebSocket', 'EventSource', 'XMLHttpRequest']) assert.match(guard, new RegExp(`window\\.${name} = new Proxy`), `${name} is replaced`);
+  assert.match(guard, /navigator\.sendBeacon = /);
+  const sockets = guard.slice(guard.indexOf('window.WebSocket = new Proxy'), guard.indexOf('if (typeof window.EventSource'));
+  assert.match(sockets, /options\.socket\?\.\(url\)[\s\S]*?record\(`WebSocket/, 'a socket is answered only when the fixture takes it; any other is refused');
   const install = code(await read('install.ts'));
-  assert.match(install, /url\.origin !== window\.location\.origin[\s\S]*?block\(`fetch/, 'cross-origin fetch is blocked');
   assert.match(install, /url\.pathname\.startsWith\('\/api\/'\)[\s\S]*?server\.handle\(/, 'every /api/ request is answered by the fixture server');
-  for (const name of ['WebSocket', 'EventSource', 'XMLHttpRequest']) assert.match(install, new RegExp(`window\\.${name} = new Proxy`), `${name} is replaced`);
-  assert.match(install, /navigator\.sendBeacon = /);
-  const sockets = install.slice(install.indexOf('window.WebSocket = new Proxy'), install.indexOf('if (typeof window.EventSource'));
-  assert.match(sockets, /url\.includes\(EVENTS_PATH\)[\s\S]*?FixtureSocket[\s\S]*?block\(`WebSocket/, 'only the event stream is answered; any other socket is refused');
+  assert.match(install, /url\.includes\(EVENTS_PATH\) \? new FixtureSocket/, 'only the event stream is answered by a socket');
   const main = code(await read('main.tsx'));
   assert.ok(main.indexOf('installFixtureTransport(server)') < main.indexOf("import('../../src/App.tsx')"), 'the transport is installed before the production app loads');
 });

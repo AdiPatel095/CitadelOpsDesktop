@@ -1,4 +1,4 @@
-import type { ConfigurationSnapshot, GameStateV2, IntentReceipt } from '../../src/api/Contracts';
+import type { ConfigurationSnapshot, GameStateV2, IntentReceipt } from './product';
 import { catalogFor, catalogManifest, LOCALIZED } from './catalogs';
 import { applyRuntimeStep, applySessionMode, buildScenario, mergePatch, type BuiltScenario, type ScenarioFile, type SessionMode } from './scenario';
 

@@ -1,5 +1,5 @@
-import type { ConfigurationSnapshot, GameStateV2, IntentReceipt } from '../../src/api/Contracts';
-import { stableDigest } from '../../src/settings/DraftRecovery';
+import type { ConfigurationSnapshot, GameStateV2, IntentReceipt } from './product';
+import { stableDigest } from './product';
 import { DEFAULT_CATALOG_ROWS } from './catalogs';
 import { buildRealmState, realmConfiguration, setRealmClock } from './realm';
 
@@ -205,10 +205,12 @@ export function applyRuntimeStep(built: BuiltScenario, step: RuntimeStep, nowMs:
   };
 }
 
-/** The scenario files, keyed by id (Vite bundles the JSON; tests load it the same way). */
-export function loadScenarioFiles(): ScenarioFile[] {
+/** The scenario files (Vite bundles the JSON; tests load it the same way), optionally only those a platform offers. */
+export function loadScenarioFiles(platform?: ScenarioPlatform): ScenarioFile[] {
   const modules = import.meta.glob('./scenarios/*.json', { eager: true, import: 'default' }) as Record<string, ScenarioFile>;
-  return Object.values(modules).sort((left, right) => left.id.localeCompare(right.id));
+  return Object.values(modules)
+    .filter((file) => platform === undefined || file.platforms.includes(platform))
+    .sort((left, right) => left.id.localeCompare(right.id));
 }
 
 const REQUIRED: Array<keyof ScenarioFile> = ['id', 'title', 'purpose', 'step', 'platforms', 'modules', 'columns', 'simulated', 'expect'];
