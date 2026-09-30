@@ -608,7 +608,7 @@ func (*AutoStationPolicy) Evaluate(_ context.Context, snapshot Snapshot) (decisi
 			if nextWindow.IsZero() {
 				nextWindow = snapshot.Now.Add(10 * time.Second)
 			}
-			return Decision{Status: "threat", Detail: "Some threatened castles cannot station troops or are outside their evacuation window", NextCheckAt: nextWindow, Metrics: metrics}, nil
+			return Decision{Status: "blocked", Detail: "Some threatened castles cannot station troops or are outside their evacuation window", NextCheckAt: nextWindow, Metrics: metrics}, nil
 		}
 		return Decision{
 			Status: "protected", Detail: fmt.Sprintf("%d incoming attack(s); eligible troops are already protected", threatCount), DetailDescriptor: Localization.New("server.automation.p_incoming_attack_s.100a15f6", "{p0} incoming attack(s); eligible troops are already protected", Localization.Params{"p0": threatCount}),
@@ -749,7 +749,7 @@ func protectionModeOpenGateDecision(
 	}
 	if unsupportedCastle > 0 {
 		return Decision{
-			Status: "threat", Detail: fmt.Sprintf("Protection Mode suppresses stationing; Open Gates is not capture-confirmed for castle %d's kingdom", unsupportedCastle), DetailDescriptor: Localization.New("server.automation.protection_mode_suppresses_stationing.028adab4", "Protection Mode suppresses stationing; Open Gates is not capture-confirmed for castle {p0}'s kingdom", Localization.Params{"p0": unsupportedCastle}),
+			Status: "blocked", Detail: fmt.Sprintf("Protection Mode suppresses stationing; Open Gates is not capture-confirmed for castle %d's kingdom", unsupportedCastle), DetailDescriptor: Localization.New("server.automation.protection_mode_suppresses_stationing.028adab4", "Protection Mode suppresses stationing; Open Gates is not capture-confirmed for castle {p0}'s kingdom", Localization.Params{"p0": unsupportedCastle}),
 			NextCheckAt: snapshot.Now.Add(30 * time.Second), Metrics: metrics,
 		}
 	}
