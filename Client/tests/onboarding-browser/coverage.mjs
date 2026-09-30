@@ -1,7 +1,8 @@
 /**
  * The coverage matrix (CIT-22): which scenario exercises which module in which column. The table in
- * Docs/OnboardingCoverage.md is derived from the scenario files by this module, and `tests/onboarding-coverage.test.mjs`
- * fails when the document and the scenarios disagree. Regenerate with `UPDATE_COVERAGE=1 npm test -- --test-name-pattern=coverage`.
+ * Docs/OnboardingCoverage.md is derived from the scenario files by this module, and each repository's
+ * `onboarding-coverage.test.mjs` fails when the document and the scenarios disagree. Regenerate with
+ * `UPDATE_COVERAGE=1 node --test tests/onboarding-coverage.test.mjs` (from `Client/` on desktop).
  */
 export const FEATURE_MODULES = [
   ['autoNomad', 'Auto Nomad / Samurai'], ['autoInvasion', 'Auto Invasion'], ['autoBeriWorld', 'Auto Beri World'], ['autoKhan', 'Auto Khan'],

@@ -13,7 +13,7 @@ This is the local preview of the whole integrated onboarding experience: goal-le
 
 - Candidate: the head of PR branch `ethan/cit-22-onboarding-preview` in this repository (`git rev-parse HEAD`; the dock shows the same short SHA). The PR description records the full SHA under test.
 - Stack: CIT-19 `845bcc89f7f220aa2a0fa5f96fa44776b18339c3` (desktop) over CIT-21 `e5fa8376f1c1f40cd85beedf8d4f2101cef63f74` over CIT-20 `eb614948b1d7b5f469764abde1ab2b66c5b8fa09`, on `develop` `6a5078c77905186004aeef17fc9983199f281ba7`.
-- The hosted candidate is in the hosted repository (`docs/OnboardingPreview.md`).
+- The hosted candidate is in the hosted repository (`Docs/OnboardingPreview.md`).
 
 ## Requirements
 

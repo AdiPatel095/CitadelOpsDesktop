@@ -1,6 +1,6 @@
 # Onboarding coverage matrix (CIT-22)
 
-Traceability from every automation module and shared surface to the scenario that exercises it. The matrix is derived from the scenario files in `Client/tests/onboarding-browser/scenarios/`; `Client/tests/onboarding-coverage.test.mjs` fails when this document, the scenarios or the module list disagree, and when a module has no scenario in a column it supports. A "not applicable" cell says why. Nothing here claims live success: every scenario is simulated (see `OnboardingPreview.md`).
+Traceability from every automation module and shared surface to the scenario that exercises it. The matrix is derived from the scenario files (`Client/tests/onboarding-browser/scenarios/` in the desktop repository, `src/commandCenter/mock/onboarding/scenarios/` in the hosted repository; the two directories and this document are byte-identical); each repository's `onboarding-coverage.test.mjs` fails when this document, the scenarios or the module list disagree, and when a module has no scenario in a column it supports. A "not applicable" cell says why. Nothing here claims live success: every scenario is simulated (see `OnboardingPreview.md`).
 
 Evidence screenshots and recordings are stored by Sophie in the vault under `QA/Evidence/CIT-22/` and indexed there; the Evidence column stays `pending` until that index exists.
 
@@ -36,7 +36,7 @@ Evidence screenshots and recordings are stored by Sophie in the vault under `QA/
 
 ## Scenarios
 
-`Step` is the walkthrough step in `OnboardingPreview.md`. Scenario ids are identical on desktop (JSON files) and hosted (`?mockScenario=` overlays in `scenarios.ts`).
+`Step` is the walkthrough step in `OnboardingPreview.md`. Scenario ids and files are identical on desktop (`?scenario=`) and hosted (`?mockScenario=`); each platform's dock lists the scenarios that name it under Platforms.
 
 | Scenario | Title | Step | Platforms | Platform differences |
 |---|---|---|---|---|
