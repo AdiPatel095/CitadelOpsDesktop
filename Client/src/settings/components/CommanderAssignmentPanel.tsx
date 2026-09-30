@@ -23,6 +23,7 @@ import {
   COMMANDER_FEATURE_LABEL_KEYS,
   assignmentImpact,
   assignmentImpactIsEmpty,
+  commanderRowStatus,
   evaluateCommanderEligibility,
 } from '../requirements/commanderEligibility';
 import { ReadinessCheckLine } from './ReadinessPanel';
@@ -171,32 +172,43 @@ export const CommanderAssignmentPanel: React.FC<CommanderAssignmentPanelProps> =
             <p className="text-xs text-text-muted"><LocalizedText messageKey="ui.settings.components.commanderAssignmentPanel.no.commanders.are.observed.in.this.account.8d3e969e" /></p>
           ) : (
             <ul className="divide-y divide-border-base rounded-global border border-border-base">
-              {report.rows.map((row) => (
-                <li key={row.commanderId} className="flex flex-wrap items-center gap-2 px-3 py-2">
-                  <div className="min-w-0 flex-1">
-                    <div className="truncate text-xs font-bold text-text-main">{row.name || `#${row.commanderId}`}</div>
-                    <div className="mt-0.5 flex flex-wrap items-center gap-1.5">
-                      <Badge variant={ACTIVITY_BADGE[row.activity]} className="normal-case tracking-normal">
-                        <LocalizedText messageKey={COMMANDER_ACTIVITY_LABEL_KEYS[row.activity]} />
-                      </Badge>
-                      {row.meetsRequirements
-                        ? null
-                        : <Badge variant="danger" className="normal-case tracking-normal"><LocalizedText messageKey="ui.settings.components.commanderAssignmentPanel.does.not.meet.the.requirement.ad82a9a0" /></Badge>}
-                      {row.otherFeatures.length > 0 ? (
-                        <span className="text-[11px] text-text-muted">
-                          <LocalizedText messageKey="commanderAssignment.alsoAssigned" params={{ features: featureList(row.otherFeatures) }} />
+              {report.rows.map((row) => {
+                const status = commanderRowStatus(row);
+                const stateId = `${id}-commander-${row.commanderId}-state`;
+                return (
+                  <li key={row.commanderId} className="flex flex-wrap items-center gap-2 px-3 py-2">
+                    <div className="min-w-0 flex-1">
+                      <div className="truncate text-xs font-bold text-text-main">{row.name || `#${row.commanderId}`}</div>
+                      <div className="mt-0.5 flex flex-wrap items-center gap-1.5">
+                        <span id={stateId}>
+                          {status.kind === 'activity' ? (
+                            <Badge variant={ACTIVITY_BADGE[row.activity]} className="normal-case tracking-normal">
+                              <LocalizedText messageKey={COMMANDER_ACTIVITY_LABEL_KEYS[row.activity]} />
+                            </Badge>
+                          ) : (
+                            <span className="text-[11px] text-text-muted"><LocalizedText messageKey="commanderAssignment.offForThisAutomation" /></span>
+                          )}
                         </span>
-                      ) : null}
+                        {row.meetsRequirements
+                          ? null
+                          : <Badge variant="danger" className="normal-case tracking-normal"><LocalizedText messageKey="ui.settings.components.commanderAssignmentPanel.does.not.meet.the.requirement.ad82a9a0" /></Badge>}
+                        {row.otherFeatures.length > 0 ? (
+                          <span className="text-[11px] text-text-muted">
+                            <LocalizedText messageKey="commanderAssignment.alsoAssigned" params={{ features: featureList(row.otherFeatures) }} />
+                          </span>
+                        ) : null}
+                      </div>
                     </div>
-                  </div>
-                  <Switch
-                    checked={row.assigned}
-                    disabled={disabled || saving}
-                    onChange={(assigned) => setPending(toggleFeatureCommander(effective, featureId, row.commanderId, assigned, observedIds))}
-                    ariaLabel={localizeStatic('commanderAssignment.toggle', { commander: row.name || `#${row.commanderId}` })}
-                  />
-                </li>
-              ))}
+                    <Switch
+                      checked={row.assigned}
+                      disabled={disabled || saving}
+                      onChange={(assigned) => setPending(toggleFeatureCommander(effective, featureId, row.commanderId, assigned, observedIds))}
+                      ariaLabel={localizeStatic('commanderAssignment.toggle', { commander: row.name || `#${row.commanderId}` })}
+                      ariaDescribedBy={stateId}
+                    />
+                  </li>
+                );
+              })}
             </ul>
           )}
           <p className="text-[11px] text-text-muted">

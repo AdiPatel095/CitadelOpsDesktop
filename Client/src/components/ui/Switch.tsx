@@ -7,6 +7,7 @@ export interface SwitchProps {
   size?: 'sm' | 'md' | 'lg';
   className?: string;
   ariaLabel: string;
+  ariaDescribedBy?: string;
   lang?: string;
   dir?: React.HTMLAttributes<HTMLButtonElement>['dir'];
   ariaLabelledBy?: string;
@@ -19,6 +20,7 @@ export const Switch: React.FC<SwitchProps> = ({
   size = 'sm',
   className = '',
   ariaLabel,
+  ariaDescribedBy,
   lang,
   dir,
   ariaLabelledBy,
@@ -29,6 +31,7 @@ export const Switch: React.FC<SwitchProps> = ({
       role="switch"
       aria-checked={checked}
       aria-label={ariaLabel}
+      aria-describedby={ariaDescribedBy}
       aria-labelledby={ariaLabelledBy}
       lang={lang}
       dir={dir}

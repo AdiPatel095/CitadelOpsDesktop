@@ -140,3 +140,29 @@ test('assignmentImpact lists additions, removals, emptied features and sharing, 
   assert.deepEqual(shared.commandersNowShared, [{ commanderId: 2, features: ['autoKhan'] }]);
   assert.equal(eligibility.assignmentImpactIsEmpty(eligibility.assignmentImpact(current, current, [1, 2])), true);
 });
+
+for (const activity of ['syncing', 'unknown', 'free', 'outbound', 'busy', 'posted', 'returning']) {
+  test(`an assigned commander shows its ${activity} activity`, () => {
+    assert.deepEqual(eligibility.commanderRowStatus({ assigned: true, activity }), { kind: 'activity', activity });
+  });
+
+  test(`an unassigned commander hides its ${activity} activity`, () => {
+    assert.deepEqual(eligibility.commanderRowStatus({ assigned: false, activity }), { kind: 'off' });
+  });
+}
+
+test('default assignment mode shows activity for every commander', () => {
+  const report = evaluate();
+  assert.ok(report.rows.length > 0);
+  for (const row of report.rows) {
+    assert.deepEqual(eligibility.commanderRowStatus(row), { kind: 'activity', activity: row.activity });
+  }
+});
+
+test('an explicit empty assignment shows every commander as off', () => {
+  const report = evaluate({ document: assignments({ autoTowers: [] }) });
+  assert.ok(report.rows.length > 0);
+  for (const row of report.rows) {
+    assert.deepEqual(eligibility.commanderRowStatus(row), { kind: 'off' });
+  }
+});
