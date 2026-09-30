@@ -1,0 +1,64 @@
+{
+  "id": "account-switch-editor",
+  "title": "Switch account with an editor open",
+  "purpose": "Two accounts; the dock's Switch account changes account and world while an editor is open.",
+  "step": "12",
+  "platforms": [
+    "desktop",
+    "hosted"
+  ],
+  "modules": [
+    "autoTowers",
+    "autoStation"
+  ],
+  "simulated": [
+    "banner: Simulated preview: sample data only. Nothing here reaches the game or an account.",
+    "dock: Candidate <short SHA>"
+  ],
+  "expect": [
+    "Open Auto Towers, then press Switch account: saved castles that are not in the new world (Ashford Keep) read '1 enabled castle is not in this account or world. Reselect or disable it.'; the open editor re-captures its baseline; nothing is cleared automatically."
+  ],
+  "patch": {
+    "config": {
+      "automation.autoTowers": {
+        "version": 4,
+        "checkIntervalSec": 30,
+        "mapRefreshIntervalSec": 1800,
+        "dailyAttackLimit": 0,
+        "horseTravelBoostId": -1,
+        "useAdvisor": false,
+        "autoActivateAdvisor": false,
+        "maximumDailyTimeSkips": 0,
+        "castles": {
+          "4101": {
+            "enabled": true,
+            "radius": 15,
+            "unitId": 2,
+            "maidenOnly": false
+          },
+          "4103": {
+            "enabled": true,
+            "radius": 15,
+            "unitId": 2,
+            "maidenOnly": false
+          }
+        }
+      }
+    }
+  },
+  "alternate": {
+    "account": {
+      "uid": 4100221,
+      "worldId": "demo-world-2",
+      "playerId": 4100221
+    },
+    "castles": {
+      "4102": null,
+      "4103": null,
+      "4106": null
+    }
+  },
+  "columns": [
+    "goal"
+  ]
+}

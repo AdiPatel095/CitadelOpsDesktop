@@ -1,0 +1,54 @@
+{
+  "id": "copy-conflict",
+  "title": "Copy: the first Save conflicts",
+  "purpose": "Same as copy-compatible; the first Save of the section is rejected once as if another window saved first.",
+  "step": "10",
+  "platforms": [
+    "desktop",
+    "hosted"
+  ],
+  "modules": [
+    "autoStation"
+  ],
+  "simulated": [
+    "banner: Simulated preview: sample data only. Nothing here reaches the game or an account.",
+    "dock: Candidate <short SHA>"
+  ],
+  "expect": [
+    "Apply, Save, conflict notice with 'Load latest and re-apply copy' / 'Load latest settings'; re-apply is silent when nothing differs and says 'Your copy was re-applied to the latest settings. Review and Save.'; the next Save succeeds."
+  ],
+  "conflictOnce": {},
+  "patch": {
+    "state": {
+      "castles": {
+        "4106": {
+          "units": {
+            "stationed": {
+              "39": 1000
+            }
+          }
+        }
+      }
+    },
+    "config": {
+      "automation.autoStation": {
+        "version": 1,
+        "leadTimeSec": 120,
+        "recallWhenClear": true,
+        "minRPTDays": 3,
+        "openGateFallback": false,
+        "settings": {
+          "4101": [
+            {
+              "id": 39,
+              "amount": 500
+            }
+          ]
+        }
+      }
+    }
+  },
+  "columns": [
+    "copy"
+  ]
+}

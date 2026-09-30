@@ -1,0 +1,84 @@
+{
+  "id": "copy-differences",
+  "title": "Copy: destinations with their own values",
+  "purpose": "Ashford Keep holds a custom Station reserve and a custom tower radius.",
+  "step": "10",
+  "platforms": [
+    "desktop",
+    "hosted"
+  ],
+  "modules": [
+    "autoStation",
+    "autoTowers"
+  ],
+  "simulated": [
+    "banner: Simulated preview: sample data only. Nothing here reaches the game or an account.",
+    "dock: Candidate <short SHA>"
+  ],
+  "expect": [
+    "Custom destination values are 'kept as they are' unless explicitly included; Towers 'enabled' is only copied by its explicit include."
+  ],
+  "patch": {
+    "state": {
+      "castles": {
+        "4106": {
+          "units": {
+            "stationed": {
+              "39": 1000
+            }
+          }
+        }
+      }
+    },
+    "config": {
+      "automation.autoStation": {
+        "version": 1,
+        "leadTimeSec": 120,
+        "recallWhenClear": true,
+        "minRPTDays": 3,
+        "openGateFallback": false,
+        "settings": {
+          "4101": [
+            {
+              "id": 39,
+              "amount": 500
+            }
+          ],
+          "4103": [
+            {
+              "id": 39,
+              "amount": 100
+            }
+          ]
+        }
+      },
+      "automation.autoTowers": {
+        "version": 4,
+        "checkIntervalSec": 30,
+        "mapRefreshIntervalSec": 1800,
+        "dailyAttackLimit": 0,
+        "horseTravelBoostId": -1,
+        "useAdvisor": false,
+        "autoActivateAdvisor": false,
+        "maximumDailyTimeSkips": 0,
+        "castles": {
+          "4101": {
+            "enabled": true,
+            "radius": 35,
+            "unitId": 2,
+            "maidenOnly": true
+          },
+          "4103": {
+            "enabled": false,
+            "radius": 12,
+            "unitId": 2,
+            "maidenOnly": false
+          }
+        }
+      }
+    }
+  },
+  "columns": [
+    "copy"
+  ]
+}

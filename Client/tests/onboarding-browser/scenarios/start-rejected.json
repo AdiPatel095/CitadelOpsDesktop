@@ -1,0 +1,48 @@
+{
+  "id": "start-rejected",
+  "title": "Start with unresolved setup, then a rejected write",
+  "purpose": "Towers has an enabled castle with no troop chosen (blocked). The fixture rejects the first Start write once.",
+  "step": "9",
+  "platforms": [
+    "desktop",
+    "hosted"
+  ],
+  "modules": [
+    "autoTowers"
+  ],
+  "simulated": [
+    "banner: Simulated preview: sample data only. Nothing here reaches the game or an account.",
+    "dock: Candidate <short SHA>"
+  ],
+  "expect": [
+    "Turning it on opens 'Start with unresolved setup?' listing the blocked check, with Fix first (default) and Start anyway; Fix first returns to the row and writes nothing.",
+    "Start anyway: the first write is rejected and the failure line offers Start anyway again; the second write succeeds and the row turns on."
+  ],
+  "fail": "start",
+  "patch": {
+    "config": {
+      "automation.autoTowers": {
+        "version": 4,
+        "checkIntervalSec": 30,
+        "mapRefreshIntervalSec": 1800,
+        "dailyAttackLimit": 0,
+        "horseTravelBoostId": -1,
+        "useAdvisor": false,
+        "autoActivateAdvisor": false,
+        "maximumDailyTimeSkips": 0,
+        "castles": {
+          "4101": {
+            "enabled": true,
+            "radius": 15,
+            "unitId": 0,
+            "maidenOnly": false
+          }
+        }
+      },
+      "automation.enabled": {}
+    }
+  },
+  "columns": [
+    "phases"
+  ]
+}

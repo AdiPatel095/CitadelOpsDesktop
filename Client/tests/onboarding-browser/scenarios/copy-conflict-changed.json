@@ -1,0 +1,67 @@
+{
+  "id": "copy-conflict-changed",
+  "title": "Copy: the other window changed a destination",
+  "purpose": "As copy-conflict, but the other save also gave Ashford Keep its own reserve.",
+  "step": "10",
+  "platforms": [
+    "desktop",
+    "hosted"
+  ],
+  "modules": [
+    "autoStation"
+  ],
+  "simulated": [
+    "banner: Simulated preview: sample data only. Nothing here reaches the game or an account.",
+    "dock: Candidate <short SHA>"
+  ],
+  "expect": [
+    "After re-apply the dialog reopens with 'The latest settings changed what this copy would do. Review the changes before applying.'; Ashford Keep is kept unless included."
+  ],
+  "conflictOnce": {
+    "configPatch": {
+      "automation.autoStation": {
+        "settings": {
+          "4103": [
+            {
+              "id": 39,
+              "amount": 100
+            }
+          ]
+        }
+      }
+    }
+  },
+  "patch": {
+    "state": {
+      "castles": {
+        "4106": {
+          "units": {
+            "stationed": {
+              "39": 1000
+            }
+          }
+        }
+      }
+    },
+    "config": {
+      "automation.autoStation": {
+        "version": 1,
+        "leadTimeSec": 120,
+        "recallWhenClear": true,
+        "minRPTDays": 3,
+        "openGateFallback": false,
+        "settings": {
+          "4101": [
+            {
+              "id": 39,
+              "amount": 500
+            }
+          ]
+        }
+      }
+    }
+  },
+  "columns": [
+    "copy"
+  ]
+}

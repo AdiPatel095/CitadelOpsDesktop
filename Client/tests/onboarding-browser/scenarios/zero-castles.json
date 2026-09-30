@@ -1,0 +1,51 @@
+{
+  "id": "zero-castles",
+  "title": "Zero observed castles",
+  "purpose": "Connected, but the game has not reported any castle yet.",
+  "step": "7",
+  "platforms": [
+    "desktop",
+    "hosted"
+  ],
+  "modules": [
+    "autoTowers",
+    "autoFoodBalance",
+    "autoStation",
+    "autoFortress"
+  ],
+  "simulated": [
+    "banner: Simulated preview: sample data only. Nothing here reaches the game or an account.",
+    "dock: Candidate <short SHA>"
+  ],
+  "expect": [
+    "'Castle data has not been observed yet' with the connection fix, in every module; never a configuration error with an unusable Settings fix."
+  ],
+  "patch": {
+    "state": {
+      "=castles": {}
+    },
+    "config": {
+      "automation.autoTowers": {
+        "version": 4,
+        "checkIntervalSec": 30,
+        "mapRefreshIntervalSec": 1800,
+        "dailyAttackLimit": 0,
+        "horseTravelBoostId": -1,
+        "useAdvisor": false,
+        "autoActivateAdvisor": false,
+        "maximumDailyTimeSkips": 0,
+        "castles": {
+          "4101": {
+            "enabled": true,
+            "radius": 15,
+            "unitId": 2,
+            "maidenOnly": false
+          }
+        }
+      }
+    }
+  },
+  "columns": [
+    "readiness"
+  ]
+}

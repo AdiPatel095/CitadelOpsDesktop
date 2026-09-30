@@ -1,0 +1,44 @@
+{
+  "id": "rich-account",
+  "title": "Existing account with every automation configured",
+  "purpose": "The fictional established account: every automation saved and reported by the game.",
+  "step": "9",
+  "platforms": [
+    "desktop",
+    "hosted"
+  ],
+  "modules": [
+    "autoNomad",
+    "autoInvasion",
+    "autoBeriWorld",
+    "autoKhan",
+    "autoStorm",
+    "autoTowers",
+    "autoFortress",
+    "autoFoodBalance",
+    "autoStation",
+    "autoBird",
+    "autoRecruit",
+    "autoTool",
+    "autoHospital",
+    "autoTCI",
+    "autoSceatRes",
+    "autoBooster",
+    "autoBuyer",
+    "autoAdvisor",
+    "autoEquipmentCleanup",
+    "presets-views"
+  ],
+  "simulated": [
+    "banner: Simulated preview: sample data only. Nothing here reaches the game or an account.",
+    "dock: Candidate <short SHA>"
+  ],
+  "expect": [
+    "Every Automation row shows its Before-you-start line, its phase from the game's own status, and Stop semantics; nothing reads as a success claim.",
+    "The catalog is the reference for how an existing configured account looks after the changes."
+  ],
+  "base": "rich",
+  "columns": [
+    "phases"
+  ]
+}
