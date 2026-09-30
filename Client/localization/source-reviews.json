@@ -11429,11 +11429,6 @@
     "reason": "CIT-66 status discriminator or semantic color role, not display text.",
     "evidence": "settings/readiness/playerStatus.ts consumes raw statuses as mapping inputs and returns PlayerStatus/PLAYER_STATUS_ROLE enum identifiers; display labels live in playerStatus.* English keys and reasons are LocalizedMessage descriptors. PR-B adds no UI sink."
   },
-  "4e3318a288165adc407e46e85bc5c192a79d8cf7e594df1a6fad66d6f254d1ba": {
-    "classification": "technical",
-    "reason": "CIT-66 status discriminator or semantic color role, not display text.",
-    "evidence": "settings/readiness/playerStatus.ts consumes raw statuses as mapping inputs and returns PlayerStatus/PLAYER_STATUS_ROLE enum identifiers; display labels live in playerStatus.* English keys and reasons are LocalizedMessage descriptors. PR-B adds no UI sink."
-  },
   "47d5c6d9d2e5140717b71d8a64618cddb5bc642692894c459ea44a0ca4d805cf": {
     "classification": "technical",
     "reason": "CIT-66 status discriminator or semantic color role, not display text.",
@@ -11493,5 +11488,30 @@
     "classification": "technical",
     "reason": "CIT-66 status discriminator or semantic color role, not display text.",
     "evidence": "settings/readiness/playerStatus.ts consumes raw statuses as mapping inputs and returns PlayerStatus/PLAYER_STATUS_ROLE enum identifiers; display labels live in playerStatus.* English keys and reasons are LocalizedMessage descriptors. PR-B adds no UI sink."
+  },
+  "cb46a7dd00ef8f0804f9d080da66eca3fd9b1df332ec8454ff071ae597046019": {
+    "classification": "technical",
+    "reason": "CIT-66 saved-status enum, fallback locale or descriptor identity; not display text.",
+    "evidence": "playerStatus.ts uses localized message descriptors and listParams for saved-data reasons. These literals select the neutral enum, English fallback formatting or the identity of an unkeyed game-detail leaf."
+  },
+  "c506e4cd4e47076792371c204c5b4d74b6ebfb7f193da2760aa52edcb531d7a1": {
+    "classification": "technical",
+    "reason": "CIT-66 saved-status enum, fallback locale or descriptor identity; not display text.",
+    "evidence": "playerStatus.ts uses localized message descriptors and listParams for saved-data reasons. These literals select the neutral enum, English fallback formatting or the identity of an unkeyed game-detail leaf."
+  },
+  "1fe8651065a874961ee46d3d5bb29a23fade4579d3d29714775e7c92bb83d650": {
+    "classification": "technical",
+    "reason": "CIT-66 saved-status enum, fallback locale or descriptor identity; not display text.",
+    "evidence": "playerStatus.ts uses localized message descriptors and listParams for saved-data reasons. These literals select the neutral enum, English fallback formatting or the identity of an unkeyed game-detail leaf."
+  },
+  "71105b10e44556173d00b1656da9c26dac0f45108484bea3b716247e10bcbb62": {
+    "classification": "technical",
+    "reason": "CIT-66 saved-status enum, fallback locale or descriptor identity; not display text.",
+    "evidence": "playerStatus.ts uses localized message descriptors and listParams for saved-data reasons. These literals select the neutral enum, English fallback formatting or the identity of an unkeyed game-detail leaf."
+  },
+  "a02918a8572ac9c1d386ad896d8fa1189913893bf80cd872a22a339da2638105": {
+    "classification": "technical",
+    "reason": "CIT-66 saved-status enum, fallback locale or descriptor identity; not display text.",
+    "evidence": "playerStatus.ts uses localized message descriptors and listParams for saved-data reasons. These literals select the neutral enum, English fallback formatting or the identity of an unkeyed game-detail leaf."
   }
 }

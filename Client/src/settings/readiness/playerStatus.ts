@@ -1,5 +1,6 @@
 import type { AutomationStateV2 } from '../../api/Contracts';
 import type { LocalizedMessage } from '../../i18n/formatMessage';
+import { formatMessage } from '../../i18n/formatMessage';
 import { describeMessage } from '../../i18n/messages';
 import type { AutomationEnabledControl } from '../AutomationEnabled';
 import type { RepairInput } from '../connection/connectionExplain';
@@ -38,8 +39,41 @@ export function playerStatusDetail(detail: RuntimeDetail | undefined, fallback: 
   return detail?.text.trim() ? detail.descriptor ?? { key: '', fallback: detail.text, fallbackText: detail.text } : fallback;
 }
 
+/** Saved data cannot make a green claim; other badges retain their localized reason. */
+function savedDataStatus(description: PlayerStatusDescription, observedAt?: string): PlayerStatusDescription {
+  const time = observedAt ? Date.parse(observedAt) : NaN;
+  const dated = Number.isFinite(time);
+  if (description.status === 'running' || description.status === 'done' || description.status === 'unknown') {
+    return {
+      status: 'unknown',
+      reason: dated ? describeMessage('playerStatus.checkpoint', { time }) : describeMessage('playerStatus.checkpointUndated'),
+    };
+  }
+  const { context, ...reason } = description.reason;
+  const suffix = dated ? describeMessage('playerStatus.checkpointSuffix', { time }) : describeMessage('playerStatus.checkpointSuffixUndated');
+  const fallback = formatMessage({ ...suffix, params: { ...suffix.params, reason: formatMessage(description.reason, 'en', {}).text } }, 'en', {}).text;
+  return {
+    status: description.status,
+    reason: {
+      ...suffix,
+      context,
+      // A single localized leaf keeps its descriptor; existing context stays before it.
+      listParams: { reason: [{ ...reason, key: reason.key || 'playerStatus.rawSavedReason' }] },
+      fallbackText: fallback,
+    },
+  };
+}
+
 /** CIT-20 owns freshness, enabled/schedule state and safety-lock classification. */
 export function automationPlayerStatus(input: AutomationPlayerStatusInput): PlayerStatusDescription {
+  if (input.context.presence?.mode === 'checkpoint') {
+    // Classify the saved state through CIT-20, then remove any green claim.
+    const saved = automationPlayerStatus({
+      ...input,
+      context: { ...input.context, presence: undefined, connected: true, connectionSince: undefined },
+    });
+    return savedDataStatus(saved, input.context.presence.checkpointObservedAt ?? input.runtime?.updatedAt);
+  }
   const phase = describeAutomationState(input.featureId, input.runtime, input.enabled, input.context);
   const reason = playerStatusDetail(phase.runtimeDetail, describeMessage(phase.messageKey, phase.params));
   let status: PlayerStatus;
@@ -78,13 +112,7 @@ export interface ConnectionPlayerStatusInput extends RepairInput {
 
 export function connectionPlayerStatus(input: ConnectionPlayerStatusInput): PlayerStatusDescription {
   if (input.surface === 'hosted' && input.checkpoint) {
-    const at = input.checkpointObservedAt ? Date.parse(input.checkpointObservedAt) : NaN;
-    return {
-      status: input.accountStatus?.status ?? 'unknown',
-      reason: Number.isFinite(at)
-        ? describeMessage('playerStatus.checkpoint', { time: at })
-        : describeMessage('playerStatus.checkpointUndated'),
-    };
+    return savedDataStatus(input.accountStatus ?? { status: 'unknown', reason: describeMessage('playerStatus.noConnection') }, input.checkpointObservedAt);
   }
   const raw = input.status.toLowerCase();
   let status: PlayerStatus;

@@ -76,8 +76,8 @@ test('CIT-20 schedule, stopped actions and timed expiry retain their sentences a
   const ended = model.automationPlayerStatus(input(rt(), { enabled: { configured: true, enabled: false, expiresAtMs: NOW - 1000 } }));
   assert.equal(ended.status, 'off'); assert.equal(ended.reason.key, 'runtimeState.timedEnded'); assert.equal(ended.reason.params.endedAt, NOW - 1000);
 });
-test('checkpoint, disconnected, missing and pre-connection evidence never uses stale game detail', () => {
-  for (const data of [input(rt({ detail: 'Old action' }), { context: { ...LIVE, presence: { mode: 'checkpoint' } } }), input(rt({ detail: 'Old action' }), { context: { ...LIVE, connected: false } }), input(undefined, { runtime: undefined }), input(rt({ status: 'running', detail: 'Old action', updatedAt: '2026-09-30T10:00:00Z' }))]) {
+test('disconnected, missing and pre-connection evidence never uses stale game detail', () => {
+  for (const data of [input(rt({ detail: 'Old action' }), { context: { ...LIVE, connected: false } }), input(undefined, { runtime: undefined }), input(rt({ status: 'running', detail: 'Old action', updatedAt: '2026-09-30T10:00:00Z' }))]) {
     const result = model.automationPlayerStatus(data);
     assert.equal(result.status, 'unknown'); assert.notEqual(text(result), 'Old action');
   }
@@ -107,17 +107,71 @@ test('connection connected, cooldown, suspended, fatal failure, before Start and
   assert.equal(model.connectionPlayerStatus(connection({ status: 'Connected', loggedIn: false })).status, 'unknown');
   assert.equal(model.connectionPlayerStatus(connection({ status: 'future-value', loggedIn: false })).status, 'unknown');
 });
-test('hosted checkpoints retain every account status and use the saved-data reason', () => {
+const SAVED_AT = '2026-09-30T10:00:00Z';
+const savedContext = { ...LIVE, connected: false, presence: { mode: 'checkpoint', checkpointObservedAt: SAVED_AT } };
+const savedReason = (key) => text({ reason: describeMessage(key, { time: Date.parse(SAVED_AT), reason: '' }) }).replace(/^ · /, '');
+for (const [expected, values] of Object.entries(table)) for (const raw of values) {
+  test(`saved automation ${raw} never claims green and preserves other badges`, () => {
+    const result = model.automationPlayerStatus(input(rt({ status: raw, detail: 'Game detail', updatedAt: SAVED_AT }), { context: savedContext, laneId: 'builder-missing-decorations' }));
+    const green = expected === 'running' || expected === 'done';
+    assert.equal(result.status, green ? 'unknown' : expected);
+    assert.equal(text(result), green ? savedReason('playerStatus.checkpoint') : `Game detail · ${savedReason('playerStatus.checkpointSuffix')}`);
+    assert.equal(result.reason.params.time, Date.parse(SAVED_AT));
+  });
+}
+test('saved automation retains CIT-20 off, schedule, Station and safety-lock reasons', () => {
+  for (const data of [...phaseCases.map(([, , data]) => data), input(rt({ status: 'protected' }), { featureId: 'autoStation' }), input(rt(), { desktopLocked: true }), input(rt({ safetyLock: { operationId: 'sent-action' } })), input(rt({ status: 'running' }), { context: { ...LIVE, schedule: { enabled: true, allowedNow: false } } })]) {
+    const live = model.automationPlayerStatus(data);
+    const saved = model.automationPlayerStatus({ ...data, context: { ...data.context, ...savedContext } });
+    const neutral = ['running', 'done', 'unknown'].includes(live.status);
+    assert.equal(saved.status, neutral ? 'unknown' : live.status);
+    assert.equal(text(saved), neutral ? savedReason('playerStatus.checkpoint') : `${text(live)} · ${savedReason('playerStatus.checkpointSuffix')}`);
+  }
+});
+test('hosted checkpoints remove green account badges and retain other localized reasons', () => {
+  const reason = { ...describeMessage('playerStatus.waitCountdown', { duration: '2m 00s' }), context: [describeMessage('playerStatus.connecting')] };
   for (const status of Object.keys(model.PLAYER_STATUS_ROLE)) {
-    const result = model.connectionPlayerStatus(connection({ surface: 'hosted', checkpoint: true, checkpointObservedAt: '2026-09-30T10:00:00Z', accountStatus: { status, reason: describeMessage('playerStatus.connected') } }));
-    assert.equal(result.status, status); assert.equal(result.reason.key, 'playerStatus.checkpoint');
-    assert.equal(result.reason.params.time, Date.parse('2026-09-30T10:00:00Z'));
+    const result = model.connectionPlayerStatus(connection({ surface: 'hosted', checkpoint: true, checkpointObservedAt: SAVED_AT, accountStatus: { status, reason } }));
+    const neutral = ['running', 'done', 'unknown'].includes(status);
+    assert.equal(result.status, neutral ? 'unknown' : status);
+    assert.equal(result.reason.key, neutral ? 'playerStatus.checkpoint' : 'playerStatus.checkpointSuffix');
+    assert.equal(text(result), neutral ? savedReason('playerStatus.checkpoint') : `${text({ reason })} · ${savedReason('playerStatus.checkpointSuffix')}`);
+    assert.equal(result.reason.params.time, Date.parse(SAVED_AT));
   }
   assert.equal(model.connectionPlayerStatus(connection({ surface: 'hosted', checkpoint: true })).status, 'unknown');
+});
+test('saved data uses runtime time as an automation fallback and handles missing or invalid dates', () => {
+  const fallback = model.automationPlayerStatus(input(rt({ status: 'running', updatedAt: SAVED_AT }), { context: { ...savedContext, presence: { mode: 'checkpoint' } } }));
+  assert.equal(fallback.reason.params.time, Date.parse(SAVED_AT));
+  for (const checkpointObservedAt of [undefined, 'invalid']) for (const status of ['running', 'done', 'waiting', 'off']) {
+    const result = model.connectionPlayerStatus(connection({ surface: 'hosted', checkpoint: true, checkpointObservedAt, accountStatus: { status, reason: describeMessage('playerStatus.connecting') } }));
+    assert.equal(text(result), ['running', 'done'].includes(status) ? 'Saved data' : 'Connecting to the game · saved data');
+    assert.equal(result.status, ['running', 'done'].includes(status) ? 'unknown' : status);
+  }
+  const undated = model.automationPlayerStatus(input(rt({ status: 'complete', updatedAt: undefined }), { context: { ...savedContext, presence: { mode: 'checkpoint' } } }));
+  assert.equal(undated.status, 'unknown'); assert.equal(text(undated), 'Saved data');
+});
+test('saved reasons preserve bound descriptors for translation and fall back as a complete sentence', () => {
+  const descriptor = { key: 'game.action', fallback: 'Check your saved login', fallbackText: 'Check your saved login' };
+  const result = model.automationPlayerStatus(input(rt({ status: 'blocked', detail: 'Check your saved login', detailDescriptor: descriptor }), { context: savedContext }));
+  assert.deepEqual(result.reason.listParams.reason[0], descriptor);
+  const translated = formatMessage(result.reason, 'de', { 'game.action': 'Prüfe deine Anmeldung', 'playerStatus.checkpointSuffix': '{reason} · gespeichert am {time, date, short} {time, time, short}' });
+  assert.equal(translated.translated, true); assert.match(translated.text, /^Prüfe deine Anmeldung · gespeichert am /);
+  const fallback = formatMessage(result.reason, 'de', {});
+  assert.equal(fallback.translated, false); assert.equal(fallback.text, `Check your saved login · ${savedReason('playerStatus.checkpointSuffix')}`);
 });
 
 if (portal) {
   const account = (extra = {}) => ({ enabled: true, status: 'ready', observed: {}, ...extra });
+  test('saved hosted account mappings retain each non-green badge and its detail/countdown', () => {
+    for (const data of [account(), ...['provisioning', 'connecting', 'released', 'suspended', 'action_required', 'disabled', 'future-value'].map(status => account({ status, statusDetail: 'Game detail', waitUntil: '2026-09-30T12:02:00Z' })), ...['draining', 'expired'].flatMap(status => [true, false].map(enabled => account({ status, enabled })))]) {
+      const live = accountPlayerStatus(data, NOW);
+      const saved = model.connectionPlayerStatus(connection({ surface: 'hosted', checkpoint: true, checkpointObservedAt: SAVED_AT, accountStatus: live }));
+      const neutral = ['running', 'done', 'unknown'].includes(live.status);
+      assert.equal(saved.status, neutral ? 'unknown' : live.status);
+      assert.equal(text(saved), neutral ? savedReason('playerStatus.checkpoint') : `${text(live)} · ${savedReason('playerStatus.checkpointSuffix')}`);
+    }
+  });
   for (const [raw, expected, key] of [['ready', 'running', 'gameConnected'], ['provisioning', 'waiting', 'starting'], ['connecting', 'waiting', 'connecting'], ['released', 'waiting', 'accountWait'], ['suspended', 'blocked', 'suspendedUndated'], ['action_required', 'needs-attention', 'loginFailed'], ['disabled', 'off', null], ['future-value', 'unknown', 'noConnection']]) test(`hosted ${raw} → ${expected}`, () => {
     const result = accountPlayerStatus(account({ status: raw }), NOW);
     assert.equal(result.status, expected); if (key) assert.equal(result.reason.key, `playerStatus.${key}`);
