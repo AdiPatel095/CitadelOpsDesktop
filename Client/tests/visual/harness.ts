@@ -7,9 +7,11 @@ export async function prepare(page: Page, theme: 'dark' | 'light') {
   const unhandled: string[] = [];
   const placeholder = await readFile(new URL('./fixtures/placeholder.png', import.meta.url));
   const context = page.context();
-  context.on('requestfinished', (request) => {
+  const verifyRequest = (request: Request) => {
     if (new URL(request.url()).hostname !== '127.0.0.1' && !intercepted.has(request)) escapes.push(request.url());
-  });
+  };
+  context.on('requestfinished', verifyRequest);
+  context.on('requestfailed', verifyRequest);
   page.on('console', (message) => {
     if (message.text().includes('[mock] unhandled runtime path')) unhandled.push(message.text());
   });

@@ -27,4 +27,3 @@ dist-ssr
 .visual/
 playwright-report/
 test-results/
-tests/visual/.host/

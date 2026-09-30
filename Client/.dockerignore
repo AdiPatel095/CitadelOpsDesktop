@@ -1,5 +1,4 @@
 .visual/
 playwright-report/
 test-results/
-tests/visual/.host/
 tests/visual/__screenshots__/

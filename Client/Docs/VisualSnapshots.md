@@ -1,24 +1,23 @@
-# Desktop visual snapshots (CIT-61)
+# Desktop visual snapshots (CIT-61 Revision 2)
 
-The canonical renderer is Playwright 1.63.0 in `mcr.microsoft.com/playwright:v1.63.0-noble`, Linux amd64. The version in the lockfile and the image tag must match. The suite opens the CIT-22 `rich-account` harness on 127.0.0.1:41736 and captures Castle, Automation, Equipment, Feature Stats and Auto Towers settings at 1440×900 and 1024×768, in dark and light: 20 viewport PNGs.
+The reference renderer is the studio Mac (macOS arm64), with Playwright 1.63.0 and its pinned Chromium headless shell. Ethan generates the baselines and Sophie verifies them on this same Mac. There is no CI workflow or container path.
 
-Each capture starts a fresh context with scale 1, reduced motion, en-US, UTC, a seeded random generator and a clock fixed at 2026-09-29T12:00:00Z while timers run. The harness banner and dock are hidden only by test CSS. The ready marker, network idle, fonts and a two-second settle precede each capture. External images get the committed neutral placeholder; other external traffic is aborted. Escaped requests and unhandled mock paths fail the test. Product images come from `public/game-data`.
+The suite opens the CIT-22 `rich-account` harness on 127.0.0.1:41736 and captures Castle, Automation, Equipment, Feature Stats and Auto Towers settings at 1440×900 and 1024×768, in dark and light: 20 viewport PNGs. A busy port fails the run; no existing server is reused. Never run two desktop visual suites at once.
 
-Run commands from `Client/`:
+Each capture starts a fresh context with scale 1, reduced motion, en-US, UTC, a seeded random generator and a clock fixed at 2026-09-29T12:00:00Z while timers run. Test CSS hides the harness banner and dock and resets the root viewport. The ready marker, network idle, fonts and a two-second settle precede each capture. External images get the committed neutral placeholder; other external traffic is aborted. Escaped requests and unhandled mock paths fail the test. Product images come from `public/game-data`. Captures disable animations and hide the caret; the comparator uses threshold 0.2 and zero differing pixels.
 
-- `npm run test:visual`: compare in CI or the canonical container, zero retries, threshold 0.2 and zero differing pixels.
-- `npm run test:visual:update`: update in the canonical renderer for inspection. Committed baselines must come from a failed PR run's artifact.
-- `npm run test:visual:docker`: optional pinned amd64 container with an anonymous node_modules volume, npm ci and host IPC. Local Docker is not needed for delivery.
-- `npm run test:visual:host -- --update-snapshots=changed`: local before/after comparisons only, written to the ignored `tests/visual/.host/`. Never commit these images.
+Run from `Client/` on the studio Mac:
 
-## CI baseline bootstrap and updates
+1. `npm ci`
+2. `npx playwright install chromium`
+3. `npm run test:visual:update` (refuses baseline generation outside macOS arm64).
+4. Verify exactly 20 PNGs under `tests/visual/__screenshots__/`, named `<case>-<width>-<theme>.png`, with nothing else; commit them.
+5. Run `npm run test:visual` twice, fresh each time. Both runs must pass.
+6. Make one throwaway CSS property change, run the suite and review the visible diff in `playwright-report/` and `test-results/`. Restore the CSS; never commit the probe change.
+7. Run `node scripts/visual/check-baseline-changes.mjs --base origin/develop --body-file <file>` against the final PR body. Every changed baseline filename belongs under the **Visual baseline changes** heading with a one-line reason.
 
-Open the PR into develop without baselines. The compare run fails for missing images, then captures missing/changed baselines and uploads `visual-baselines` for seven days. The job remains failed. `visual-report` always contains the compare/capture HTML reports, traces and diff screenshots.
+The PR records a **Visual environment** block: studio Mac, macOS version/build/arch, Node version, Playwright version, Chromium headless-shell revision, and commands with results and timestamps. Record run time and total baseline size. When macOS or Playwright changes, re-baseline in a separate PR with no product change and a new environment block.
 
-Download with `gh run download <run1> -n visual-baselines -D Client/tests/visual/__screenshots__` from the repository root. Verify exactly the expected 20 PNGs named `<case>-<width>-<theme>.png`, with nothing else. Commit as `CIT-61: Linux baselines from run <run1>` and push. Run 2 must pass; rerun it and require that attempt to pass too. Record all three run URLs, duration and baseline size in the PR.
+Sophie runs `npm ci` and `npm run test:visual` at the exact PR head on this Mac. When baselines change, she compares against the base's images, reviews intended differences, restores the PR images and verifies a passing run, then runs the local baseline guard. Initial baselines have no base images; their complete captures require review. Part B merges after Part A (portal #98).
 
-A successful compare also checks one throwaway CSS property (`filter: grayscale(1)`) against the Castle dark capture. That change exists only in the CI workspace, is restored, and must produce a failing assertion and a visible `-diff.png`. The report artifact includes that screenshot as the negative-control evidence.
-
-For later intended changes, review the failing compare report and download the failed run's baseline artifact. Commit only intended changes. Every PR changing baselines needs a **Visual baseline changes** heading listing every changed PNG and a one-line reason; the guard verifies every filename. Sophie reviews the snapshots and reports before approval. Part B merges after CIT-61 Part A (portal).
-
-The suite changes no UI design. Its only product-source change is the explicit Tailwind source root needed by the fixture harness; production built CSS must remain byte-identical. Production build, deployment configuration and the desktop client flow otherwise stay unchanged. Visual outputs and baselines are excluded from packaging; no network request goes outside loopback during captures.
+No redesign is included. The only product-source change is the explicit Tailwind source root needed by the fixture harness; production built CSS must remain byte-identical. Build/deployment configuration stays unchanged. Visual outputs and baselines are excluded from packaging, and capture requests remain on loopback.
