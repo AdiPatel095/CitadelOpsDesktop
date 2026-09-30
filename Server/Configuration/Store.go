@@ -131,6 +131,16 @@ func (store *Store) Snapshot() Snapshot {
 	return cloneSnapshot(store.snapshot)
 }
 
+// SharedSnapshot returns the current snapshot without copying it. Published
+// snapshots are never mutated (every update builds a new one), so the returned
+// sections are safe to read from any goroutine, but callers must not modify
+// them. Use Snapshot when a private, mutable copy is needed.
+func (store *Store) SharedSnapshot() Snapshot {
+	store.mu.RLock()
+	defer store.mu.RUnlock()
+	return store.snapshot
+}
+
 func (store *Store) Revision() uint64 {
 	if store == nil {
 		return 0

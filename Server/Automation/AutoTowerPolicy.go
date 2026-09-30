@@ -189,7 +189,9 @@ func (*AutoTowerPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision
 		if plannedTimeSkips < 1 {
 			return Decision{
 				Status: "waiting", Detail: "Baron Advisor chaining needs at least one Time Skip that covers the three-hour tower cooldown", DetailDescriptor: Localization.New("server.automation.baron_advisor_chaining_needs.d6347f08", "Baron Advisor chaining needs at least one Time Skip that covers the three-hour tower cooldown", nil),
-				EventDriven: true, Metrics: metrics,
+				// Time Skips arrive through the inventory, which this policy does not wake on, so
+				// the wait carries its own deadline instead of relying on unrelated state churn.
+				NextCheckAt: snapshot.Now.Add(policyInterval(settings.CheckIntervalSec, 30)), Metrics: metrics,
 			}, nil
 		}
 		maximumAdvisorAttacks = 1 + int(plannedTimeSkips)
@@ -408,7 +410,7 @@ func autoTowerAdvisorDailyTimeSkipAllowance(
 	if maximum <= 0 {
 		return 0, &Decision{
 			Status: "waiting", Detail: "Set a positive maximum daily Time Skip limit before using the Baron Advisor", DetailDescriptor: Localization.New("server.automation.set_a_positive_maximum.202e2322", "Set a positive maximum daily Time Skip limit before using the Baron Advisor", nil),
-			EventDriven: true, Metrics: metrics,
+			NextCheckAt: snapshot.Now.Add(interval), Metrics: metrics,
 		}
 	}
 	attacks := snapshot.State.DailyAttacks

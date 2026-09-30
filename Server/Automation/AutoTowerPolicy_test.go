@@ -1077,3 +1077,35 @@ func fillTowerCoverage(gameState *State.GameState, centerX int, centerY int, obs
 func mapKey(x int, y int) string {
 	return fmt.Sprintf("%d:%d", x, y)
 }
+
+// These two waits used to be event-driven although the inputs they wait for (Time Skips
+// in the inventory, which the policy does not wake on) change without waking it; the old
+// 5 s movement poll hid that. They carry a deadline instead (CIT-43).
+func TestAutoTowerAdvisorWaitsCarryTheirOwnDeadline(t *testing.T) {
+	now := time.Date(2026, 9, 2, 14, 0, 0, 0, time.UTC)
+
+	noSkips := readyAutoTowerAdvisorSnapshot(now, 5)
+	decision, err := NewAutoTowerPolicy().Evaluate(t.Context(), noSkips)
+	if err != nil || decision.Request != nil || decision.Status != "waiting" ||
+		!strings.Contains(decision.Detail, "at least one Time Skip") {
+		t.Fatalf("no-Time-Skip decision = %#v err=%v", decision, err)
+	}
+	if decision.EventDriven || !decision.NextCheckAt.Equal(now.Add(30*time.Second)) {
+		t.Fatalf("no-Time-Skip wait: eventDriven %t, next check %s, want a deadline at %s", decision.EventDriven, decision.NextCheckAt, now.Add(30*time.Second))
+	}
+
+	// The allowance helper's own unset-limit wait (defensive: Evaluate rejects it earlier) has a deadline too.
+	if _, wait := autoTowerAdvisorDailyTimeSkipAllowance(readyAutoTowerAdvisorSnapshot(now, 0), 0, 45*time.Second, nil); wait == nil ||
+		wait.EventDriven || !wait.NextCheckAt.Equal(now.Add(45*time.Second)) {
+		t.Fatalf("unset-limit allowance wait = %#v", wait)
+	}
+
+	// The configured interval is honoured.
+	slow := readyAutoTowerAdvisorSnapshot(now, 5)
+	slow.Configuration.Sections["automation.autoTowers"] = json.RawMessage(strings.Replace(
+		string(slow.Configuration.Sections["automation.autoTowers"]), `"checkIntervalSec":30`, `"checkIntervalSec":120`, 1))
+	decision, _ = NewAutoTowerPolicy().Evaluate(t.Context(), slow)
+	if !decision.NextCheckAt.Equal(now.Add(120 * time.Second)) {
+		t.Fatalf("configured interval: next check %s, want %s", decision.NextCheckAt, now.Add(120*time.Second))
+	}
+}
