@@ -933,6 +933,12 @@ func (store *Store) Subscribe(buffer int) (<-chan Event, func()) {
 }
 
 func (store *Store) publish(event Event) {
+	// Every constructor sets BaseRevision. A plain event without one would reach
+	// clients as "builds on revision 0" and let them skip the revisions in between,
+	// so an unset base defaults to the previous revision.
+	if !event.Gap && event.BaseRevision == 0 && event.Revision > 1 {
+		event.BaseRevision = event.Revision - 1
+	}
 	store.subMu.RLock()
 	defer store.subMu.RUnlock()
 	for _, channel := range store.subscribers {
