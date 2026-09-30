@@ -47,6 +47,7 @@ export interface UseDraftRecoveryOptions {
   extras?: unknown;
   /** The value `extras` has when the player has changed nothing (what the editor's load effect leaves them as). */
   loadedExtras?: unknown;
+  copyReapplied?: boolean;
 }
 
 export interface DraftRecovery {
@@ -68,7 +69,7 @@ const digestOf = draftDigest;
  *
  * What counts as a change is decided by `nextDraftRecoveryMachine` from digests of the saved data, not from timing.
  */
-export function useDraftRecovery({ section, isOpen, draftSession, draft, loaded, extras, loadedExtras }: UseDraftRecoveryOptions): DraftRecovery {
+export function useDraftRecovery({ section, isOpen, draftSession, draft, loaded, extras, loadedExtras, copyReapplied }: UseDraftRecoveryOptions): DraftRecovery {
   const { state } = useCitadelAPI();
   const key = scopeKey(state);
   const active = isOpen && key !== '' && isRecoverableSection(section) && draftSession.ready;
@@ -243,6 +244,7 @@ export function useDraftRecovery({ section, isOpen, draftSession, draft, loaded,
         >
           <div className="space-y-3 text-xs" data-draft-compare>
             <p className="text-text-main"><LocalizedText messageKey="draftRecovery.compareIntro" /></p>
+            {copyReapplied ? <p className="text-text-main"><LocalizedText messageKey="draftRecovery.compareIntroReappliedCopy" /></p> : null}
             {differences.length === 0 ? (
               <p className="text-text-muted"><LocalizedText messageKey="draftRecovery.noDifferences" /></p>
             ) : (

@@ -135,7 +135,7 @@ func reduceAdvisorMovement(
 	if !frameSucceeded(frame) || len(frame.Payload) == 0 {
 		return nil, false, nil
 	}
-	envelopes, err := advisorMovementEnvelopes(frame.Payload)
+	envelopes, err := advisorMovementEnvelopes(frame)
 	if err != nil {
 		return nil, false, fmt.Errorf("decode advisor movement: %w", err)
 	}
@@ -154,7 +154,7 @@ func reduceAdvisorMovement(
 	return []string{"advisor", "event-scores"}, true, nil
 }
 
-func advisorMovementEnvelopes(raw json.RawMessage) ([]advisorMovementEnvelope, error) {
+func advisorMovementEnvelopesFromPayload(raw json.RawMessage) ([]advisorMovementEnvelope, error) {
 	var payload struct {
 		Attack    *advisorMovementEnvelope `json:"AAM"`
 		Movement  json.RawMessage          `json:"A"`
@@ -343,4 +343,44 @@ func advisorTokenCurrency(eventID int64) State.CurrencyID {
 		return 78
 	}
 	return 0
+}
+
+func advisorMovementEnvelopes(frame Protocol.Frame) ([]advisorMovementEnvelope, error) {
+	root, err := frame.PayloadRoot()
+	if err != nil || Protocol.HasCaseFoldedAlias(root, "AAM", "A", "M") {
+		return advisorMovementEnvelopesFromPayload(frame.Payload)
+	}
+	result := make([]advisorMovementEnvelope, 0, 3)
+	if raw := root["AAM"]; len(raw) > 0 {
+		var attack *advisorMovementEnvelope
+		if json.Unmarshal(raw, &attack) != nil {
+			return advisorMovementEnvelopesFromPayload(frame.Payload)
+		}
+		if attack != nil {
+			result = append(result, *attack)
+		}
+	}
+	if raw := root["A"]; len(raw) > 0 && raw[0] == '{' {
+		var movement advisorMovementEnvelope
+		if json.Unmarshal(raw, &movement) != nil {
+			return advisorMovementEnvelopesFromPayload(frame.Payload)
+		}
+		result = append(result, movement)
+	}
+	if raw := root["M"]; len(raw) > 0 && string(raw) != "null" {
+		var movements []advisorMovementEnvelope
+		if raw[0] == '[' {
+			if json.Unmarshal(raw, &movements) != nil {
+				return advisorMovementEnvelopesFromPayload(frame.Payload)
+			}
+		} else {
+			var movement advisorMovementEnvelope
+			if json.Unmarshal(raw, &movement) != nil {
+				return advisorMovementEnvelopesFromPayload(frame.Payload)
+			}
+			movements = append(movements, movement)
+		}
+		result = append(result, movements...)
+	}
+	return result, nil
 }

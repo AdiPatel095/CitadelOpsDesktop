@@ -19,8 +19,8 @@ A local, moderated protocol for a future trial. It states agreed pass criteria, 
 |---|---|---|
 | T1 | "Set up Auto Nomad from nothing and get it ready to start." | `new-user` |
 | T2 | "Make Auto Khan re-apply your main-castle defense." | `khan-defense-fresh` |
-| T3 | "Turn Auto Towers on for two castles using the same setup." | `copy-compatible` |
-| T4 | "Return to the Food Balance setup you were interrupted in and finish it." | `onboarding-interrupted-return` |
+| T3 | "Use the same Auto Station troop reserve on Ashford Keep and Marrow Court as on Stonehaven." | `copy-compatible` |
+| T4 | "Return to the Auto Towers setup you were interrupted in and finish it." | `onboarding-interrupted-return` |
 | T5 | "Stop a running automation and say what happens to an attack already on its way." | `phases-running` |
 
 Condition A is run on the matching pre-CIT-15 build with equivalent starting data; the fixture scenarios above are for condition B (see `OnboardingPreview.md`).

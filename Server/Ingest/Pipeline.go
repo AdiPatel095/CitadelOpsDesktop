@@ -2,7 +2,6 @@ package Ingest
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"strings"
@@ -198,6 +197,7 @@ func (pipeline *Pipeline) ObserveFrame(frame Protocol.Frame) ObservedFrame {
 }
 
 func (pipeline *Pipeline) observeFrame(frame Protocol.Frame, causationOperationID string) ObservedFrame {
+	frame = frame.WithPayloadView()
 	observed := ObservedFrame{
 		Frame: frame, IngressID: pipeline.nextIngress.Add(1), ProfileID: pipeline.profileID,
 		DecoderVersion: observationDecoderVersion, CausationOperationID: strings.TrimSpace(causationOperationID),
@@ -212,7 +212,7 @@ func (pipeline *Pipeline) observeFrame(frame Protocol.Frame, causationOperationI
 		observed.FocusedCastleID = view.FocusedCastleID
 		observed.CatalogVersion = view.CatalogVersion
 	}
-	pipeline.publishWire(Protocol.CommittedFrame{Frame: frame, IngressID: observed.IngressID})
+	pipeline.publishWire(Protocol.CommittedFrame{Frame: frame.WithoutPayloadView(), IngressID: observed.IngressID})
 	return observed
 }
 
@@ -333,7 +333,7 @@ func (pipeline *Pipeline) commitFrameGuarded(
 		pipeline.state.ObserveProtocolFocus(focusSubcontext, frame.ReceivedAt)
 		pipeline.settleContextReply(frame)
 		committed := Protocol.CommittedFrame{
-			Frame: frame, IngressID: observed.IngressID, Revision: pipeline.state.Revision(),
+			Frame: frame.WithoutPayloadView(), IngressID: observed.IngressID, Revision: pipeline.state.Revision(),
 		}
 		pipeline.publish(committed)
 		pipeline.completeWireCommit(observed.IngressID, committed, nil)
@@ -390,7 +390,7 @@ func (pipeline *Pipeline) commitFrameGuarded(
 		reduceErr := err
 		if !retainsObservation {
 			committed := Protocol.CommittedFrame{
-				Frame: frame, IngressID: observed.IngressID, Revision: pipeline.state.Revision(), ReduceError: reduceErr.Error(),
+				Frame: frame.WithoutPayloadView(), IngressID: observed.IngressID, Revision: pipeline.state.Revision(), ReduceError: reduceErr.Error(),
 			}
 			pipeline.publish(committed)
 			pipeline.completeWireCommit(observed.IngressID, committed, reduceErr)
@@ -427,7 +427,7 @@ func (pipeline *Pipeline) commitFrameGuarded(
 			return Protocol.CommittedFrame{}, err
 		}
 		committed := Protocol.CommittedFrame{
-			Frame: frame, IngressID: observed.IngressID, Revision: event.Revision,
+			Frame: frame.WithoutPayloadView(), IngressID: observed.IngressID, Revision: event.Revision,
 			Domains: event.Domains, ReduceError: reduceErr.Error(),
 		}
 		pipeline.publish(committed)
@@ -437,7 +437,7 @@ func (pipeline *Pipeline) commitFrameGuarded(
 		}
 		return committed, reduceErr
 	}
-	committed := Protocol.CommittedFrame{Frame: frame, IngressID: observed.IngressID, Revision: event.Revision, Domains: event.Domains}
+	committed := Protocol.CommittedFrame{Frame: frame.WithoutPayloadView(), IngressID: observed.IngressID, Revision: event.Revision, Domains: event.Domains}
 	if pipeline.durabilityFence != nil && requiresDurabilityFence(event.Domains) {
 		if fenceErr := pipeline.durabilityFence(ctx, event); fenceErr != nil {
 			fenceErr = fmt.Errorf("persist committed %s frame revision %d: %w", frame.Opcode, event.Revision, fenceErr)
@@ -494,8 +494,8 @@ func observationAuthoritativePlayerID(frame Protocol.Frame) (State.PlayerID, boo
 	if frame.Direction != Protocol.DirectionInbound || !strings.EqualFold(strings.TrimSpace(frame.Opcode), "gbd") {
 		return 0, false
 	}
-	var root map[string]json.RawMessage
-	if len(frame.Payload) == 0 || json.Unmarshal(frame.Payload, &root) != nil {
+	root, err := frame.PayloadRoot()
+	if len(frame.Payload) == 0 || err != nil {
 		return 0, false
 	}
 	raw := root["gpi"]
@@ -782,4 +782,10 @@ func (pipeline *Pipeline) completeWireCommit(
 		close(commit.done)
 	}
 	pipeline.commitMu.Unlock()
+}
+
+func (pipeline *Pipeline) ObserveTransportFrame(frame Protocol.Frame, responseToken, causationOperationID string) ObservedFrame {
+	frame.ResponseToken = strings.TrimSpace(responseToken)
+	frame.CausationOperationID = strings.TrimSpace(causationOperationID)
+	return pipeline.observeFrame(frame, frame.CausationOperationID)
 }

@@ -791,6 +791,23 @@ func TestCandidateAndSupersededFramesNeverReachIngest(t *testing.T) {
 	if first.ConnectionGeneration == 0 || second.ConnectionGeneration <= first.ConnectionGeneration {
 		t.Fatalf("frame generations did not advance: first=%d second=%d", first.ConnectionGeneration, second.ConnectionGeneration)
 	}
+	for _, frame := range []RawFrame{first, second} {
+		if frame.Decoded == nil || !frame.Decoded.HasPayloadView() {
+			t.Fatal("decoded socket frame missing")
+		}
+		expected, err := Protocol.Decode(frame.Payload, frame.Direction, frame.ObservedAt)
+		actualJSON, _ := json.Marshal(frame.Decoded)
+		expectedJSON, _ := json.Marshal(expected)
+		if err != nil || string(actualJSON) != string(expectedJSON) {
+			t.Fatal("decoded socket fields differ", err)
+		}
+	}
+	processSocketTestNotice(t, transport, 7, socketFrameNotice("b", 4, "inbound", "invalid header"))
+	invalid := <-transport.frames
+	if invalid.Decoded != nil {
+		t.Fatal("invalid frame has decoded pointer")
+	}
+
 }
 
 func TestClosedTokenCannotAuthenticateLaterOrPolluteSameURLReplacement(t *testing.T) {

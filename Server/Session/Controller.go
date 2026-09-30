@@ -310,8 +310,11 @@ func (controller *Controller) observeDirectTraffic(observedAt time.Time) {
 	controller.outbound.Notify()
 }
 
-func pausesAutomationForDirectTraffic(payload string, observedAt time.Time) bool {
-	frame, err := Protocol.Decode(payload, Protocol.DirectionOutbound, observedAt)
+func pausesAutomationForDirectTraffic(raw RawFrame) bool {
+	if raw.Decoded != nil {
+		return raw.Decoded.Opcode != "dcl"
+	}
+	frame, err := Protocol.Decode(raw.Payload, Protocol.DirectionOutbound, raw.ObservedAt)
 	if err != nil {
 		return true
 	}
@@ -585,7 +588,7 @@ func (controller *Controller) run(ctx context.Context, runID uint64) {
 			}
 			if frame.Direction == Protocol.DirectionOutbound && frame.CausationOperationID == "" {
 				if reporter, ok := controller.transport.(OutboundCausationTransport); ok && reporter.ReportsOutboundCausation() {
-					if pausesAutomationForDirectTraffic(frame.Payload, frame.ObservedAt) {
+					if pausesAutomationForDirectTraffic(frame) {
 						controller.observeDirectTraffic(frame.ObservedAt)
 					}
 				}
@@ -596,10 +599,8 @@ func (controller *Controller) run(ctx context.Context, runID uint64) {
 			if !controller.acceptFrameGeneration(frame.ConnectionGeneration) {
 				continue
 			}
-			observed, err := controller.ingest.DecodeTransportFrameAt(
-				frame.Payload, frame.Direction, frame.ObservedAt, frame.ResponseToken, frame.CausationOperationID,
-			)
-			if err != nil {
+			observed, ok := controller.observeTransportFrame(frame)
+			if !ok {
 				continue
 			}
 			if observed.Frame.Namespace != "" {
@@ -714,4 +715,12 @@ func (controller *Controller) applyStatus(status Status) {
 		gameState.Session = next
 		return []string{"session"}, true, nil
 	})
+}
+
+func (controller *Controller) observeTransportFrame(frame RawFrame) (Ingest.ObservedFrame, bool) {
+	if frame.Decoded != nil {
+		return controller.ingest.ObserveTransportFrame(*frame.Decoded, frame.ResponseToken, frame.CausationOperationID), true
+	}
+	observed, err := controller.ingest.DecodeTransportFrameAt(frame.Payload, frame.Direction, frame.ObservedAt, frame.ResponseToken, frame.CausationOperationID)
+	return observed, err == nil
 }

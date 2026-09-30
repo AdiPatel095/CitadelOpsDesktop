@@ -38,6 +38,13 @@ import (
 
 const GameDataRefreshInterval = 6 * time.Hour
 
+const (
+	// defaultStatePersistenceWindow bounds background group-commit latency.
+	// Safety-critical changes use saveStateEvent's synchronous flush.
+	defaultStatePersistenceWindow = 15 * time.Second
+	statePersistenceRetryDelay    = 2 * time.Second
+)
+
 type Config struct {
 	DataDir string
 	Offline bool
@@ -116,6 +123,8 @@ type Application struct {
 	statePersistence          chan statePersistenceRequest
 	statePersistenceDone      chan struct{}
 	statePersistenceStarted   atomic.Bool
+	statePersistenceWindow    time.Duration
+	stateWriter               atomic.Pointer[State.ComponentSnapshotWriter]
 	controlConfigurationState atomic.Uint32
 	backgroundOnly            bool
 	ownsGameData              bool
@@ -691,13 +700,29 @@ func (application *Application) recordIntentLog(receipt Intent.Receipt) {
 	}
 }
 
+func (application *Application) statePersistenceWindowDuration() time.Duration {
+	if application.statePersistenceWindow == 0 {
+		return defaultStatePersistenceWindow
+	}
+	return application.statePersistenceWindow
+}
+
+func (application *Application) StatePersistenceStats() State.PersistenceStats {
+	if application == nil {
+		return State.PersistenceStats{}
+	}
+	return application.stateWriter.Load().Stats()
+}
+
 func (application *Application) persistState(ctx context.Context, ready chan<- struct{}) {
 	defer close(application.statePersistenceDone)
 	events, unsubscribe := application.State.Subscribe(128)
 	defer unsubscribe()
 	subscriptionBaseline := application.State.Revision()
 	close(ready)
+	window := application.statePersistenceWindowDuration()
 	writer := State.NewComponentSnapshotWriter(application.DataDir)
+	application.stateWriter.Store(writer)
 	var timer *time.Timer
 	var timerChannel <-chan time.Time
 	var pending State.PersistenceBatch
@@ -708,7 +733,7 @@ func (application *Application) persistState(ctx context.Context, ready chan<- s
 			return false
 		}
 		if timer == nil {
-			timer = time.NewTimer(2 * time.Second)
+			timer = time.NewTimer(window)
 			timerChannel = timer.C
 		}
 		return true
@@ -790,7 +815,7 @@ func (application *Application) persistState(ctx context.Context, ready chan<- s
 			force(request)
 		case <-timerChannel:
 			if flush() != nil {
-				timer = time.NewTimer(2 * time.Second)
+				timer = time.NewTimer(statePersistenceRetryDelay)
 				timerChannel = timer.C
 			}
 		}

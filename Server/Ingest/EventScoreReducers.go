@@ -444,8 +444,8 @@ func reduceGlobalEffectTriggerEnd(
 	if !frameSucceeded(frame) || len(frame.Payload) == 0 || gameState == nil {
 		return nil, false, nil
 	}
-	var root map[string]json.RawMessage
-	if err := json.Unmarshal(frame.Payload, &root); err != nil || root == nil {
+	root, err := frame.PayloadRoot()
+	if err != nil || root == nil {
 		changed := invalidateGlobalEffectBaseline(gameState)
 		return []string{"events", "event-scores", "global-effects"}, changed, nil
 	}

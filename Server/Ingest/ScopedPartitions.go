@@ -1,7 +1,6 @@
 package Ingest
 
 import (
-	"encoding/json"
 	"strings"
 
 	"CitadelDesktop/Server/Protocol"
@@ -123,20 +122,19 @@ func castleCapabilityForDomain(domain string) string {
 }
 
 func scopedMapKingdoms(frame Protocol.Frame, gameState State.GameState) []State.KingdomID {
-	payload := frame.Payload
 	for range 2 {
-		var root map[string]json.RawMessage
-		if json.Unmarshal(payload, &root) != nil {
+		root, err := frame.PayloadRoot()
+		if err != nil {
 			break
 		}
 		if raw, found := root["KID"]; found {
 			return []State.KingdomID{State.KingdomID(rawInteger(raw))}
 		}
-		nested, found := root["gaa"]
+		nested, found := frame.NestedPayload("gaa")
 		if !found {
 			break
 		}
-		payload = nested
+		frame = nested
 	}
 	return gameState.MapKingdomIDs()
 }

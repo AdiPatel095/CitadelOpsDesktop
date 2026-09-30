@@ -123,7 +123,8 @@ func (application *Application) guardAutoBirdBatch(ctx context.Context, argument
 	if application.Configuration == nil || !Automation.AutoBirdDispatchAllowed(application.Configuration.Snapshot(), request.Cycle.PresetID, time.Now()) {
 		return fmt.Errorf("%w: Auto Bird is disabled", Intent.ErrPlanStale)
 	}
-	state := application.State.Snapshot()
+	// read-only view: guards must not mutate state
+	state := application.State.ReadOnlyView()
 	if err := validateStationSession(state, "autoBird", request.Cycle.ConnectionGeneration, time.Now()); err != nil {
 		return err
 	}
@@ -141,7 +142,8 @@ func (application *Application) guardAutoBirdBatch(ctx context.Context, argument
 	if err := validateStationPayload(state, request.Cycle.ExpectedTargetCastle, request.Payload); err != nil {
 		return err
 	}
-	if err := validateAutoBirdControl(application.State.Snapshot(), request.Cycle, time.Now().UTC()); err != nil {
+	// read-only view: guards must not mutate state
+	if err := validateAutoBirdControl(application.State.ReadOnlyView(), request.Cycle, time.Now().UTC()); err != nil {
 		return err
 	}
 	var payload struct {
@@ -151,7 +153,8 @@ func (application *Application) guardAutoBirdBatch(ctx context.Context, argument
 	if err := json.Unmarshal(request.Payload, &payload); err != nil {
 		return err
 	}
-	if application.autoBirdDirewolvesProtected(application.State.Snapshot(), payload.SID, time.Now().UTC()) {
+	// read-only view: guards must not mutate state
+	if application.autoBirdDirewolvesProtected(application.State.ReadOnlyView(), payload.SID, time.Now().UTC()) {
 		for _, unit := range payload.A {
 			if State.UnitID(unit[0]) == GameData.DirewolfUnitID {
 				return Localization.WithError(fmt.Errorf("%w: Auto Fortress now reserves every Direwolf at castle %d; rebuild the Auto Bird manifest", Intent.ErrPlanStale, payload.SID), Localization.New("server.app.intent_plan_became_stale.e3ba5725", "intent plan became stale before dispatch: Auto Fortress now reserves every Direwolf at castle {p1}; rebuild the Auto Bird manifest", Localization.Params{"p1": fmt.Sprintf("%d", payload.SID)}))

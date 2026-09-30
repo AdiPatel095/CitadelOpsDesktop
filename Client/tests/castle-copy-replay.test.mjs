@@ -234,3 +234,28 @@ test('right-to-left: a direction-aware arrow, isolated from/to, a localized "to"
   const css = await readFile(new URL('../src/index.css', import.meta.url), 'utf8');
   assert.match(css, /\.castle-copy-title \.scheduler-modal-title-text \{[^}]*white-space: normal;[^}]*\}/);
 });
+
+const copyReplayHook = await vite.ssrLoadModule(`/src/settings/copy/useCastleCopyReplay.tsx`);
+const { APIError } = await vite.ssrLoadModule(`/src/api/CitadelClient.ts`);
+
+for (const [name, error, recorded, expected] of [
+  ['copy conflict', new APIError('Raw conflict', 409, 'configuration_conflict'), true, null],
+  ['non-copy conflict', new APIError('Raw conflict', 409, 'configuration_conflict'), false, 'Raw conflict'],
+  ['another API error', new APIError('Other error', 500, 'other_error'), true, 'Other error'],
+  ['plain error', new Error('Plain error'), true, 'Plain error'],
+  ['non-error fallback', 'unknown failure', true, 'Fallback'],
+]) {
+  test(`genericSaveError: ${name}`, () => {
+    const state = { status: false, replay: recorded ? applyReviewed(SOURCE_DRAFT).record : null };
+    assert.equal(copyReplayHook.genericSaveError(error, state, 'Fallback'), expected);
+  });
+}
+
+for (const status of [false, true]) {
+  for (const recorded of [false, true]) {
+    test(`copyReapplied: status=${status}, replay=${recorded}`, () => {
+      const state = { status, replay: recorded ? applyReviewed(SOURCE_DRAFT).record : null };
+      assert.equal(copyReplayHook.copyReapplied(state), status && recorded);
+    });
+  }
+}

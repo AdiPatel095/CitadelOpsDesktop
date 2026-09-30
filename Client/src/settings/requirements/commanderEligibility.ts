@@ -48,6 +48,12 @@ export interface CommanderEligibilityRow {
   otherFeatures: CommanderFeatureID[];
 }
 
+export type CommanderRowStatus = { kind: 'activity'; activity: CommanderActivity } | { kind: 'off' };
+/** CIT-80: activity is shown only for commanders this automation may use. */
+export function commanderRowStatus(row: Pick<CommanderEligibilityRow, 'assigned' | 'activity'>): CommanderRowStatus {
+  return row.assigned ? { kind: 'activity', activity: row.activity } : { kind: 'off' };
+}
+
 export interface CommanderEligibilitySummary {
   observed: boolean;
   assignedCount: number;
