@@ -68,6 +68,12 @@ interface UseConfigurationDraftSessionOptions {
   sessionKey?: string;
   /** Configuration sections whose open-time contents affect validation or the value being saved. */
   configurationDependencies?: readonly string[];
+  /**
+   * A castle copy was applied to this draft (CIT-21). The conflict notice then offers to load the latest settings and
+   * re-apply the copy (`onReloaded` runs once the latest settings are loaded), or to load them and drop the copy
+   * (`onDropped`).
+   */
+  copyReplay?: { onReloaded: () => void; onDropped: () => void };
 }
 
 export function useConfigurationDraftSession({
@@ -75,6 +81,7 @@ export function useConfigurationDraftSession({
   section,
   sessionKey = section,
   configurationDependencies = [],
+  copyReplay,
 }: UseConfigurationDraftSessionOptions) {
   const { loadLatestConfiguration, updateConfiguration } = useCitadelAPI();
   const { t: localizeStatic } = useLocale();
@@ -93,7 +100,7 @@ export function useConfigurationDraftSession({
   isOpenRef.current = isOpen;
   sessionKeyRef.current = sessionKey;
 
-  const loadLatest = useCallback(async () => {
+  const loadLatest = useCallback(async (): Promise<boolean> => {
     const request = ++loadRequest.current;
     const requestedSessionKey = sessionKey;
     setLoading(true);
@@ -102,7 +109,7 @@ export function useConfigurationDraftSession({
       const latest = await loadLatestConfiguration();
       if (request !== loadRequest.current
         || !isOpenRef.current
-        || sessionKeyRef.current !== requestedSessionKey) return;
+        || sessionKeyRef.current !== requestedSessionKey) return false;
       const captured = captureConfigurationDraft(
         latest,
         section,
@@ -114,11 +121,13 @@ export function useConfigurationDraftSession({
       setInitialSnapshot(captured);
       setOpenGeneration((current) => current + 1);
       setConflict(false);
+      return true;
     } catch (error) {
       if (request !== loadRequest.current
         || !isOpenRef.current
-        || sessionKeyRef.current !== requestedSessionKey) return;
+        || sessionKeyRef.current !== requestedSessionKey) return false;
       setLoadError(error instanceof Error ? error.message : localizeStatic('ui.settings.configurationDraftSession.could.not.load.the.latest.saved.settings.69428e73'));
+      return false;
     } finally {
       if (request === loadRequest.current) setLoading(false);
     }
@@ -184,6 +193,16 @@ export function useConfigurationDraftSession({
     await loadLatest();
   }, [loadLatest]);
 
+  // "Load latest and re-apply copy": the reviewed copy is applied again once the latest settings are loaded.
+  const reloadAndReapplyCopy = useCallback(async () => {
+    if (await loadLatest()) copyReplay?.onReloaded();
+  }, [copyReplay, loadLatest]);
+  // "Load latest settings": the copy is dropped.
+  const reloadAndDropCopy = useCallback(async () => {
+    copyReplay?.onDropped();
+    await loadLatest();
+  }, [copyReplay, loadLatest]);
+
   const conflictNotice = useMemo(() => {
     if (loading && snapshot == null) {
       return (
@@ -208,6 +227,7 @@ export function useConfigurationDraftSession({
       );
     }
     if (!conflict) return null;
+    const copied = copyReplay !== undefined;
     return (
       <div className="mb-4 rounded-global border border-warning/40 bg-warning/10 px-4 py-3" role="alert">
         <div className="flex flex-wrap items-start justify-between gap-3">
@@ -216,22 +236,41 @@ export function useConfigurationDraftSession({
               <AlertTriangle className="h-4 w-4 shrink-0" /> <LocalizedText messageKey="ui.settings.configurationDraftSession.settings.changed.elsewhere.0e978d4f" />
             </div>
             <p className="mt-1 text-xs leading-relaxed text-text-main">
-              <LocalizedText messageKey="ui.settings.configurationDraftSession.your.unsaved.draft.is.still.here.review.0e9b1deb" />
+              {copied
+                ? <LocalizedText messageKey="castleCopy.conflictNotice" />
+                : <LocalizedText messageKey="ui.settings.configurationDraftSession.your.unsaved.draft.is.still.here.review.0e9b1deb" />}
             </p>
           </div>
-          <Button
-            variant="outline"
-            size="sm"
-            disabled={loading}
-            onClick={() => void reloadLatest()}
-            leftIcon={<RotateCcw className={`h-4 w-4${loading ? ' animate-spin' : ''}`} />}
-          >
-            {loading ? <LocalizedText messageKey="ui.settings.configurationDraftSession.loading.ba3bbbe1" /> : <LocalizedText messageKey="ui.settings.configurationDraftSession.load.latest.86edc870" />}
-          </Button>
+          <div className="flex flex-wrap gap-2">
+            {copied ? (
+              <Button
+                variant="primary"
+                size="sm"
+                disabled={loading}
+                onClick={() => void reloadAndReapplyCopy()}
+                leftIcon={<RotateCcw className={`h-4 w-4${loading ? ' animate-spin' : ''}`} />}
+              >
+                <LocalizedText messageKey="castleCopy.loadAndReapply" />
+              </Button>
+            ) : null}
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={loading}
+              onClick={() => void (copied ? reloadAndDropCopy() : reloadLatest())}
+              leftIcon={copied ? undefined : <RotateCcw className={`h-4 w-4${loading ? ' animate-spin' : ''}`} />}
+            >
+              {loading
+                ? <LocalizedText messageKey="ui.settings.configurationDraftSession.loading.ba3bbbe1" />
+                : copied
+                  ? <LocalizedText messageKey="castleCopy.loadLatestOnly" />
+                  : <LocalizedText messageKey="ui.settings.configurationDraftSession.load.latest.86edc870" />}
+            </Button>
+          </div>
         </div>
       </div>
     );
-  }, [conflict, loadError, loading, reloadLatest, snapshot]);
+  }, [conflict, copyReplay, loadError, loading, reloadAndDropCopy, reloadAndReapplyCopy, reloadLatest, snapshot]);
 
   return {
     snapshot,

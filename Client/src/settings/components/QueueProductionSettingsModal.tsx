@@ -1,4 +1,10 @@
 import { StopFooter } from '../../components/StopControl';
+import { useHostedRuntimePresence } from '../../config/Deployment';
+import { useSetupContext } from '../requirements/useSetupContext';
+import { castleCandidates } from '../copy/candidates';
+import { recruitCopyDescriptor, toolCopyDescriptor } from '../copy/features/queueProduction';
+import { useCastleCopyReplayRun, useCastleCopyReplayState } from '../copy/useCastleCopyReplay';
+import { CastleCopyButton } from './CastleCopyDialog';
 import { useLocale as useStaticLocale } from "../../i18n/LocaleContext";
 import { LocalizedText } from "../../i18n/LocalizedText";
 import React, { useState, useEffect } from 'react';
@@ -163,7 +169,9 @@ export const QueueProductionSettingsModal: React.FC<QueueProductionSettingsModal
   const { t: localizeStatic } = useStaticLocale();
   const definition = DEFINITIONS[kind];
   const { configuration, state } = useCitadelAPI();
-  const draftSession = useConfigurationDraftSession({ isOpen, section: definition.configurationSection });
+  const setup = useSetupContext(definition.configurationSection, useHostedRuntimePresence());
+  const copyReplay = useCastleCopyReplayState();
+  const draftSession = useConfigurationDraftSession({ isOpen, section: definition.configurationSection, copyReplay: copyReplay.sessionOption });
   const disclosure = useSettingsDisclosure(definition.featureID);
   const { getTroop, getTool, buildings, troops, tools, isLoading: metadataLoading } = useMetadata();
   const castles = castleOptionsFromState(state);
@@ -467,6 +475,17 @@ export const QueueProductionSettingsModal: React.FC<QueueProductionSettingsModal
     (castle) => settings.castles[configurationKeyForCastle(castle)]?.enabled,
   ).length;
   const isGlobalMode = settings.mode === 'global';
+  const copyDescriptor = kind === 'recruit' ? recruitCopyDescriptor : toolCopyDescriptor;
+  const copyContext = {
+    state, troops, tools, metadataReady: !metadataLoading, observation: setup.observation,
+    candidates: castleCandidates(eligibleCastles, state, { keyFor: configurationKeyForCastle }),
+    allowedItemIds: (castle: { key: string; liveId: number }) => allowedItemIDsForScope({ type: 'castle', castleId: castle.key, liveCastleId: String(castle.liveId) }),
+    usesScheduledItems: (castle: { key: string }) => {
+      const schedule = featureSchedules[definition.castleScheduleID(castle.key)];
+      return !isGlobalMode && !!schedule?.enabled && !!schedule.slotOptionsEnabled;
+    },
+  };
+  const copyRun = useCastleCopyReplayRun(copyReplay, { descriptor: copyDescriptor, draft: settings, context: copyContext, featureLabel: definition.featureLabel, applyDraft: setSettings, isOpen });
   const globalSchedule = featureSchedules[definition.featureID];
   const globalScheduleEnabled = !!globalSchedule?.enabled;
   const globalUsesScheduledItems = !!(globalScheduleEnabled && globalSchedule?.slotOptionsEnabled);
@@ -845,7 +864,7 @@ export const QueueProductionSettingsModal: React.FC<QueueProductionSettingsModal
         isSaving={isSaving}
         saveDisabled={!draftSession.ready}
         contentDisabled={!draftSession.ready}
-        contentNotice={draftSession.conflictNotice}
+        contentNotice={<>{copyRun.status}{draftSession.conflictNotice}{copyRun.dialog}</>}
       >
         <AutomationRunStrip
           featureId={definition.featureID}
@@ -990,6 +1009,16 @@ export const QueueProductionSettingsModal: React.FC<QueueProductionSettingsModal
                               <CalendarDays className="h-4 w-4" />
                             </Button>
                           )}
+                          {!isGlobalMode && !castleUsesScheduledItems ? (
+                            <CastleCopyButton
+                              descriptor={copyDescriptor}
+                              draft={settings}
+                              sourceKey={castleId}
+                              context={copyContext}
+                              featureLabel={definition.featureLabel}
+                              onApply={(next, replay) => { setSettings(next); copyReplay.setReplay(replay); copyReplay.setStatus(false); }}
+                            />
+                          ) : null}
                           <Switch
                             checked={castleSettings.enabled}
                             onChange={(checked) => updateCastleEnabled(castleId, checked)}
