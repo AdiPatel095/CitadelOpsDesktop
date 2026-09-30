@@ -226,11 +226,14 @@ func (publisher *Publisher) SetPlacement(placement *Placement) error {
 		return err
 	}
 	publisher.placementMu.Lock()
+	renewal := publisher.placement != nil && publisher.placement.PlacementEpoch == normalized.PlacementEpoch
 	publisher.placement = &normalized
 	publisher.placementVersion++
 	publisher.placementMu.Unlock()
 	publisher.updateStatus(func(status *PublisherStatus) {
-		status.State = StateWaitingForRuntime
+		if !renewal || status.State != StatePublished {
+			status.State = StateWaitingForRuntime
+		}
 		status.ConsecutiveFailures = 0
 		status.LastError = ""
 	})
@@ -268,9 +271,23 @@ func (publisher *Publisher) Run(ctx context.Context) {
 	var lastCadence, lastUploaded time.Time
 	var lastDigest [sha256.Size]byte
 	var digestValid bool
-	var digestEpoch, settledEpoch uint64
-	var lastSessionKey = publisher.sessionKey()
+	var digestEpoch uint64
+	var lastKey settleKey
 	failures := 0
+	observe := func(now time.Time) bool {
+		placement, _, available := publisher.currentPlacement()
+		var epoch uint64
+		if available {
+			epoch = placement.PlacementEpoch
+		}
+		key := settleTrigger(epoch, publisher.state.ReadOnlyView())
+		opened := key != (settleKey{}) && key != lastKey
+		lastKey = key
+		if opened {
+			publisher.settle.Restart(now)
+		}
+		return opened
+	}
 
 	schedule := func(at time.Time) {
 		if timer.schedule(publisher.now().UTC(), at) {
@@ -389,9 +406,10 @@ func (publisher *Publisher) Run(ctx context.Context) {
 				})
 			}
 			digest := sampleDigest(sample)
+			requested := publisher.settle.TakeSampleRequest()
 			// A sample carrying resource aggregates always uploads: the
 			// outbox is only acknowledged by a successful upload.
-			if len(pendingAggregates) == 0 && digestValid && digest == lastDigest && digestEpoch == placement.PlacementEpoch &&
+			if len(pendingAggregates) == 0 && !requested && digestValid && digest == lastDigest && digestEpoch == placement.PlacementEpoch &&
 				!publisher.settle.Active(now) && now.Sub(lastUploaded) < publisher.heartbeat {
 				lastCadence = now
 				publisher.updateStatus(func(status *PublisherStatus) {
@@ -499,18 +517,9 @@ func (publisher *Publisher) Run(ctx context.Context) {
 				events = nil
 				continue
 			}
-			// A session transition (login, release, reconnect) restarts the
-			// shared settle window: the backend's handover readiness needs a
-			// fresh sample and a fresh checkpoint right after it.
 			now := publisher.now().UTC()
-			if key := publisher.sessionKey(); key != lastSessionKey {
-				lastSessionKey = key
-				publisher.settle.Restart(now)
-				// The first evaluation after a transition must not wait for the
-				// steady cadence: pull it forward once the runtime is ready.
-				if pending == nil && failures == 0 {
-					schedule(now.Add(publisher.debounce))
-				}
+			if observe(now) && pending == nil && failures == 0 {
+				schedule(now.Add(publisher.debounce))
 			}
 			// A state change only pulls the first publication forward (or the
 			// first one after the runtime recovers). Retry backoff and the
@@ -521,14 +530,11 @@ func (publisher *Publisher) Run(ctx context.Context) {
 		case <-publisher.wake:
 			pending = nil
 			failures = 0
-			if placement, _, available := publisher.currentPlacement(); available {
-				now := publisher.now().UTC()
-				if placement.PlacementEpoch != settledEpoch {
-					// A new epoch (or the first placement) restarts the
-					// settle window; a lease or grant renewal of the same
-					// epoch does not.
-					settledEpoch = placement.PlacementEpoch
-					publisher.settle.Restart(now)
+			now := publisher.now().UTC()
+			opened := observe(now)
+			if _, _, available := publisher.currentPlacement(); available {
+				if opened {
+					schedule(now.Add(publisher.debounce))
 				}
 				schedule(nextCadence(now))
 			}
@@ -562,13 +568,6 @@ func backoffDelay(interval time.Duration, failures int, jitterSource func() floa
 		jitter = 0
 	}
 	return base + time.Duration(float64(base)*0.2*jitter)
-}
-
-// sessionKey identifies the session situation the same way the checkpoint
-// publisher does, so both restart the shared settle window on the same events.
-func (publisher *Publisher) sessionKey() string {
-	session := publisher.state.Session()
-	return fmt.Sprintf("%s|%t|%t|%d", session.Status, session.LoggedIn, session.SocketReady, session.ConnectionGeneration)
 }
 
 func (publisher *Publisher) currentPlacement() (Placement, uint64, bool) {

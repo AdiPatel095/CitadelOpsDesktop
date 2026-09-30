@@ -3,20 +3,28 @@ package PrivateMetrics
 import (
 	"sync"
 	"time"
+
+	"CitadelDesktop/Server/State"
 )
 
-// Settle is the window after something that a handover (or a stale dashboard)
-// waits on: a new placement epoch, a session transition, or a configuration
-// apply. While it is active both publishers upload every evaluation without
-// content gating, because the backend's handover readiness needs an actual
-// checkpoint upload and an actual metrics upload, each no older than two
-// minutes, at the same moment. One Settle is shared by the runtime's metrics and
-// checkpoint publishers, so a trigger seen by either restarts the window for
-// both. It is safe for concurrent use.
+type settleKey struct{ epoch, connection, generation uint64 }
+
+func settleTrigger(epoch uint64, view State.GameState) settleKey {
+	if epoch == 0 || view.Session.LoginFailure != nil || sampleGate(view) != nil {
+		return settleKey{}
+	}
+	return settleKey{epoch, view.Session.ConnectionGeneration, view.Session.Generation}
+}
+
+// Settle is the three-minute window opened when a placed runtime first passes
+// the sample gate. Both publishers upload every evaluation while it is active.
+// A successful checkpoint also requests one sample so both publications stay
+// fresh together even after the window. It is safe for concurrent use.
 type Settle struct {
-	mu     sync.Mutex
-	window time.Duration
-	until  time.Time
+	mu              sync.Mutex
+	window          time.Duration
+	until           time.Time
+	sampleRequested bool
 }
 
 // NewSettle returns a settle window of the given length (defaultSettleWindow
@@ -48,4 +56,26 @@ func (settle *Settle) Active(now time.Time) bool {
 	settle.mu.Lock()
 	defer settle.mu.Unlock()
 	return now.Before(settle.until)
+}
+
+// RequestSample pairs the next ready metrics evaluation with a checkpoint upload.
+func (settle *Settle) RequestSample() {
+	if settle == nil {
+		return
+	}
+	settle.mu.Lock()
+	settle.sampleRequested = true
+	settle.mu.Unlock()
+}
+
+// TakeSampleRequest consumes a pending request once.
+func (settle *Settle) TakeSampleRequest() bool {
+	if settle == nil {
+		return false
+	}
+	settle.mu.Lock()
+	defer settle.mu.Unlock()
+	requested := settle.sampleRequested
+	settle.sampleRequested = false
+	return requested
 }

@@ -84,18 +84,10 @@ func (builder *SampleBuilder) Build(ctx context.Context, observedAt time.Time) (
 		observedAt = observedAt.UTC()
 	}
 	snapshot := builder.state.ReadOnlyView()
+	if err := sampleGate(snapshot); err != nil {
+		return Sample{}, err
+	}
 	worldID := State.CanonicalWorldID(snapshot.Account.WorldID)
-	sessionWorldID := State.CanonicalWorldID(snapshot.Session.ServerURL)
-	if snapshot.Account.UID <= 0 || snapshot.Account.PlayerID <= 0 || snapshot.Player.ID <= 0 ||
-		snapshot.Account.PlayerID != snapshot.Player.ID || worldID == "" || sessionWorldID == "" ||
-		worldID != sessionWorldID || snapshot.Account.BoundAt.IsZero() {
-		return Sample{}, fmt.Errorf("%w: account identity is not authoritatively bound", ErrRuntimeNotReady)
-	}
-	if !snapshot.Session.LoggedIn || !snapshot.Session.SocketReady || snapshot.Session.Generation == 0 ||
-		snapshot.Session.Generation != snapshot.Session.BaselineGeneration || snapshot.Session.ConnectionGeneration == 0 {
-		return Sample{}, fmt.Errorf("%w: session generation is not ready", ErrRuntimeNotReady)
-	}
-
 	playerSample := History.NewPlayerSampleAt(snapshot, builder.gameData, observedAt)
 	features, err := builder.buildFeatureMetrics(ctx, snapshot, observedAt)
 	if err != nil {
@@ -122,6 +114,21 @@ func (builder *SampleBuilder) Build(ctx context.Context, observedAt time.Time) (
 		},
 		Features: features, PublicCandidate: publicCandidate,
 	}, nil
+}
+
+func sampleGate(snapshot State.GameState) error {
+	worldID := State.CanonicalWorldID(snapshot.Account.WorldID)
+	sessionWorldID := State.CanonicalWorldID(snapshot.Session.ServerURL)
+	if snapshot.Account.UID <= 0 || snapshot.Account.PlayerID <= 0 || snapshot.Player.ID <= 0 ||
+		snapshot.Account.PlayerID != snapshot.Player.ID || worldID == "" || sessionWorldID == "" ||
+		worldID != sessionWorldID || snapshot.Account.BoundAt.IsZero() {
+		return fmt.Errorf("%w: account identity is not authoritatively bound", ErrRuntimeNotReady)
+	}
+	if !snapshot.Session.LoggedIn || !snapshot.Session.SocketReady || snapshot.Session.Generation == 0 ||
+		snapshot.Session.Generation != snapshot.Session.BaselineGeneration || snapshot.Session.ConnectionGeneration == 0 {
+		return fmt.Errorf("%w: session generation is not ready", ErrRuntimeNotReady)
+	}
+	return nil
 }
 
 func (builder *SampleBuilder) buildFeatureMetrics(

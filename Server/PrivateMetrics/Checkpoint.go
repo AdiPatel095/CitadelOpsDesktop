@@ -33,12 +33,10 @@ const (
 	// former five-minute cadence so a failure is not delayed by the longer
 	// steady-state interval.
 	defaultCheckpointRetryInterval = 5 * time.Minute
-	// defaultSettleWindow follows a new placement epoch (and process start), a
-	// session transition and a configuration apply. A handover waits for an
-	// actual checkpoint upload and an actual metrics upload, each no older than
-	// two minutes, so while the window is open neither publisher skips an
-	// unchanged upload and the checkpoint cadence is defaultSettleInterval.
-	defaultSettleWindow = 10 * time.Minute
+	// defaultSettleWindow opens when a placed runtime first passes the sample
+	// readiness gate. For three minutes both publishers upload every evaluation
+	// so a handover sees a fresh checkpoint and metrics sample together.
+	defaultSettleWindow = 3 * time.Minute
 	// defaultSettleInterval is the checkpoint cadence while settling, the same
 	// minute the metrics publisher evaluates on, so both stay inside the
 	// two-minute freshness a handover requires.
@@ -415,11 +413,14 @@ func (publisher *CheckpointPublisher) SetPlacement(placement *Placement) error {
 		return err
 	}
 	publisher.placementMu.Lock()
+	renewal := publisher.placement != nil && publisher.placement.PlacementEpoch == normalized.PlacementEpoch
 	publisher.placement = &normalized
 	publisher.placementVersion++
 	publisher.placementMu.Unlock()
 	publisher.updateStatus(func(status *CheckpointStatus) {
-		status.State = StateWaitingForRuntime
+		if !renewal || status.State != StatePublished {
+			status.State = StateWaitingForRuntime
+		}
 		status.ConsecutiveFailures = 0
 		status.LastError = ""
 	})
@@ -526,6 +527,7 @@ func (publisher *CheckpointPublisher) publish(ctx context.Context, placement Pla
 		status.ConsecutiveFailures = 0
 		status.LastError = ""
 	})
+	publisher.settle.RequestSample()
 	return nil
 }
 
@@ -556,10 +558,22 @@ func (publisher *CheckpointPublisher) Run(ctx context.Context) {
 		return fmt.Sprintf("%s|%t|%t|%d", session.Status, session.LoggedIn, session.SocketReady, session.ConnectionGeneration)
 	}
 	lastSessionKey = sessionKey()
-	// The shared settle window restarts at the first placement and on a new
-	// placement epoch (never on a lease or grant renewal of the same epoch), on
-	// every session transition, and on every configuration apply.
 	var settledEpoch uint64
+	var lastKey settleKey
+	observe := func(now time.Time) bool {
+		placement, _, available := publisher.currentPlacement()
+		var epoch uint64
+		if available {
+			epoch = placement.PlacementEpoch
+		}
+		key := settleTrigger(epoch, publisher.state.ReadOnlyView())
+		opened := key != (settleKey{}) && key != lastKey
+		lastKey = key
+		if opened {
+			publisher.settle.Restart(now)
+		}
+		return opened
+	}
 	cadence := func(now time.Time) time.Duration {
 		if publisher.settle.Active(now) {
 			return publisher.settleEvery
@@ -640,20 +654,23 @@ func (publisher *CheckpointPublisher) Run(ctx context.Context) {
 				events = nil
 				continue
 			}
+			now := publisher.now().UTC()
 			if key := sessionKey(); key != lastSessionKey {
 				lastSessionKey = key
-				publisher.settle.Restart(publisher.now().UTC())
 				if failures == 0 {
 					pendingReason = CheckpointReasonSession
-					schedule(publisher.now().UTC().Add(publisher.debounce))
+					schedule(now.Add(publisher.debounce))
 				}
+			}
+			if observe(now) && failures == 0 {
+				pendingReason = CheckpointReasonSession
+				schedule(now.Add(publisher.debounce))
 			}
 		case _, open := <-configurationEvents:
 			if !open {
 				configurationEvents = nil
 				continue
 			}
-			publisher.settle.Restart(publisher.now().UTC())
 			if pendingReason != CheckpointReasonSession {
 				pendingReason = CheckpointReasonConfiguration
 			}
@@ -668,17 +685,17 @@ func (publisher *CheckpointPublisher) Run(ctx context.Context) {
 			// attempt is armed (for example after the placement was cleared).
 			hadFailures := failures > 0
 			failures = 0
+			now := publisher.now().UTC()
+			opened := observe(now)
 			placement, _, available := publisher.currentPlacement()
 			if !available {
 				continue
 			}
-			now := publisher.now().UTC()
 			newEpoch := placement.PlacementEpoch != settledEpoch
 			if newEpoch {
 				settledEpoch = placement.PlacementEpoch
-				publisher.settle.Restart(now)
 			}
-			if newEpoch || hadFailures || !timer.armed {
+			if newEpoch || hadFailures || !timer.armed || opened {
 				schedule(now.Add(publisher.debounce))
 			}
 		case <-timer.channel():

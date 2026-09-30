@@ -188,11 +188,17 @@ func TestCheckpointPlacementRenewalDoesNotCheckpointButNewEpochDoes(t *testing.T
 			t.Fatal(err)
 		}
 		noCheckpointWithin(t, rig.received, 60*time.Millisecond, "same-epoch placement renewal")
+		if status := rig.publisher.Status(); status.State != StatePublished {
+			t.Fatalf("same-epoch renewal state = %q, want published", status.State)
+		}
 	}
 	// A new epoch is a real fence change (a handover waits for a checkpoint
 	// under it), so it publishes once.
 	if err := rig.publisher.SetPlacement(testPlacement(rig.now, 5, 20, strings.Repeat("z", 48))); err != nil {
 		t.Fatal(err)
+	}
+	if status := rig.publisher.Status(); status.State != StateWaitingForRuntime {
+		t.Fatalf("new-epoch state = %q, want waiting-for-runtime", status.State)
 	}
 	moved := awaitCheckpoint(t, rig.received)
 	if moved.request.PlacementEpoch != 5 {
@@ -230,7 +236,7 @@ func TestCheckpointDefaultsAreTheAgreedCadence(t *testing.T) {
 		t.Fatal(err)
 	}
 	if publisher.interval != 15*time.Minute || publisher.heartbeat != 30*time.Minute || publisher.retry != 5*time.Minute ||
-		publisher.settleEvery != time.Minute || publisher.settle.window != 10*time.Minute {
+		publisher.settleEvery != time.Minute || publisher.settle.window != 3*time.Minute {
 		t.Fatalf("defaults = interval %v heartbeat %v retry %v settle %v/%v",
 			publisher.interval, publisher.heartbeat, publisher.retry, publisher.settleEvery, publisher.settle.window)
 	}
@@ -238,7 +244,7 @@ func TestCheckpointDefaultsAreTheAgreedCadence(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if metrics.interval != time.Minute || metrics.heartbeat != 5*time.Minute || metrics.settle.window != 10*time.Minute {
+	if metrics.interval != time.Minute || metrics.heartbeat != 5*time.Minute || metrics.settle.window != 3*time.Minute {
 		t.Fatalf("metrics defaults = interval %v heartbeat %v settle %v", metrics.interval, metrics.heartbeat, metrics.settle.window)
 	}
 }
