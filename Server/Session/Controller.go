@@ -38,21 +38,29 @@ type Controller struct {
 
 const directTrafficQuietPeriod = 2 * time.Second
 
+const (
+	ingestQueueFrameLimit = 8192
+	ingestQueueByteLimit  = 32 << 20
+)
+
 type queuedIngestFrame struct {
+	bytes                int
 	observed             Ingest.ObservedFrame
 	connectionGeneration uint64
 }
 
 type ingestFrameQueue struct {
-	mu       sync.Mutex
-	changed  *sync.Cond
-	frames   []queuedIngestFrame
-	capacity int
-	closed   bool
+	mu        sync.Mutex
+	changed   *sync.Cond
+	frames    []queuedIngestFrame
+	capacity  int
+	bytes     int
+	byteLimit int
+	closed    bool
 }
 
-func newIngestFrameQueue(capacity int) *ingestFrameQueue {
-	queue := &ingestFrameQueue{capacity: capacity}
+func newIngestFrameQueue(capacity, byteLimit int) *ingestFrameQueue {
+	queue := &ingestFrameQueue{capacity: capacity, byteLimit: byteLimit}
 	queue.changed = sync.NewCond(&queue.mu)
 	return queue
 }
@@ -60,13 +68,14 @@ func newIngestFrameQueue(capacity int) *ingestFrameQueue {
 func (queue *ingestFrameQueue) push(frame queuedIngestFrame) bool {
 	queue.mu.Lock()
 	defer queue.mu.Unlock()
-	for !queue.closed && len(queue.frames) >= queue.capacity {
+	for !queue.closed && len(queue.frames) > 0 && (len(queue.frames) >= queue.capacity || queue.bytes+frame.bytes > queue.byteLimit) {
 		queue.changed.Wait()
 	}
 	if queue.closed {
 		return false
 	}
 	queue.frames = append(queue.frames, frame)
+	queue.bytes += frame.bytes
 	queue.changed.Signal()
 	return true
 }
@@ -81,6 +90,7 @@ func (queue *ingestFrameQueue) pop() (queuedIngestFrame, bool) {
 		return queuedIngestFrame{}, false
 	}
 	frame := queue.frames[0]
+	queue.bytes -= frame.bytes
 	queue.frames[0] = queuedIngestFrame{}
 	queue.frames = queue.frames[1:]
 	queue.changed.Signal()
@@ -96,6 +106,7 @@ func (queue *ingestFrameQueue) closeAndTakePending() []queuedIngestFrame {
 	queue.closed = true
 	pending := queue.frames
 	queue.frames = nil
+	queue.bytes = 0
 	queue.changed.Broadcast()
 	return pending
 }
@@ -524,7 +535,7 @@ func (controller *Controller) Status() Status {
 }
 
 func (controller *Controller) run(ctx context.Context, runID uint64) {
-	ingestQueue := newIngestFrameQueue(8192)
+	ingestQueue := newIngestFrameQueue(ingestQueueFrameLimit, ingestQueueByteLimit)
 	ingestDone := make(chan struct{})
 	discardPending := func(pending []queuedIngestFrame) {
 		for _, queued := range pending {
@@ -614,6 +625,7 @@ func (controller *Controller) run(ctx context.Context, runID uint64) {
 			observed.ConnectionGeneration = frame.ConnectionGeneration
 			if !ingestQueue.push(queuedIngestFrame{
 				observed: observed, connectionGeneration: frame.ConnectionGeneration,
+				bytes: len(observed.Frame.Raw) + len(observed.Frame.Payload),
 			}) {
 				controller.ingest.DiscardObserved(observed, ctx.Err())
 				return

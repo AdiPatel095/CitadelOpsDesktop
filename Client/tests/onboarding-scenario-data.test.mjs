@@ -469,6 +469,8 @@ test('account-switch-editor: after the switch the saved Towers setup says a cast
   assert.equal(after.state, 'blocked');
   assert.equal(after.messageKey, 'setupReadiness.castlesNotInWorld');
   assert.equal(after.params.count, 1);
+  assert.equal(after.params.castle, '#4103');
+  assert.equal(after.params.others, 0);
   assert.equal(after.fix, 'settings');
   assert.match(messages['setupReadiness.castlesNotInWorld'], /not in this account or world\. Reselect or disable/);
 });

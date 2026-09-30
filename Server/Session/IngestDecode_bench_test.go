@@ -91,7 +91,7 @@ func runDecodeBench(b *testing.B, raw string, pending int) {
 			}
 		}
 		transport.deliverInbound(raw, 1)
-		rf := <-transport.frames
+		rf := drainOutbox(transport)[0]
 		observed := pipeline.ObserveTransportFrame(*rf.Decoded, rf.ResponseToken, rf.CausationOperationID)
 		// Advance frame time deterministically, so repeated map rows always change.
 		observed.Frame.ReceivedAt = start.Add(time.Duration(i) * time.Millisecond)

@@ -83,7 +83,7 @@ export function evaluateTowerReadiness(input: TowerReadinessInput): TowerReadine
     // Saved castles cannot be validated without castle data: waiting, not a configuration error.
     checks.push({ id: 'enabled-castles', state: 'unavailable', messageKey: CASTLES_NOT_OBSERVED, fix: 'connection' });
   } else if (missingCastles.length > 0) {
-    checks.push({ id: 'enabled-castles', state: 'blocked', messageKey: message('setupReadiness.castlesNotInWorld'), params: { count: missingCastles.length }, fix: 'settings' });
+    checks.push({ id: 'enabled-castles', state: 'blocked', messageKey: message('setupReadiness.castlesNotInWorld'), params: { count: missingCastles.length, castle: '#' + missingCastles[0][0], others: missingCastles.length - 1 }, fix: 'settings' });
   } else if (withoutUnit.length > 0) {
     checks.push({ id: 'enabled-castles', state: 'blocked', messageKey: message('setupReadiness.castlesWithoutTroop'), params: { count: withoutUnit.length }, fix: 'settings' });
   } else {
