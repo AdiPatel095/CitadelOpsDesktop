@@ -115,6 +115,7 @@ type Application struct {
 	ownsGameData              bool
 	ownsUpdates               bool
 	refreshGameDataAll        func(context.Context) error
+	gameDataSyncPending       atomic.Bool
 	startOnce                 sync.Once
 	shutdownDone              chan struct{}
 }
@@ -1067,17 +1068,29 @@ func (application *Application) refreshGameData(ctx context.Context) error {
 	if application.refreshGameDataAll != nil {
 		return application.refreshGameDataAll(ctx)
 	}
-	return refreshGameDataStore(ctx, application.State, application.GameData)
+	return refreshGameDataStore(ctx, application.State, application.GameData, &application.gameDataSyncPending)
 }
 
-func refreshGameDataStore(ctx context.Context, state *State.Store, gameData *GameData.Manager) error {
+// refreshGameDataStore refreshes the official data and rehydrates this runtime
+// only when the store changed, or when the previous rehydration failed.
+func refreshGameDataStore(ctx context.Context, state *State.Store, gameData *GameData.Manager, syncPending *atomic.Bool) error {
 	if state == nil || gameData == nil {
 		return Localization.WithError(fmt.Errorf("official game data is unavailable"), Localization.New("server.app.official_game_data_is.ff6f65a7", "official game data is unavailable", nil))
 	}
-	if err := gameData.Refresh(ctx); err != nil {
+	changed, err := gameData.RefreshChanged(ctx)
+	if err != nil {
 		return err
 	}
-	return synchronizeGameDataStore(state, gameData)
+	if !changed && !syncPending.Load() {
+		// Same item and language versions: the runtime already runs this store.
+		return nil
+	}
+	syncPending.Store(true)
+	if err := synchronizeGameDataStore(state, gameData); err != nil {
+		return err
+	}
+	syncPending.Store(false)
+	return nil
 }
 
 // SynchronizeGameData applies the current process-owned catalog generation to
