@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"sort"
 	"strings"
+	"sync"
 	"time"
 
 	"CitadelDesktop/Server/Configuration"
@@ -31,28 +32,88 @@ type weeklyScheduleResolution struct {
 	ValidUntil         time.Time
 }
 
+// parsedScheduler is the scheduler section decoded once per content: the typed
+// weekly schedules (for resolution) and their raw JSON (for fingerprints).
+type parsedScheduler struct {
+	// valid: every schedule decoded (an invalid document allows everything).
+	valid bool
+	// outerValid: the document itself decoded, so raw is usable for fingerprints.
+	outerValid bool
+	schedules  map[string]weeklySchedule
+	raw        map[string]json.RawMessage
+}
+
+var schedulerMemo sectionMemo[*parsedScheduler]
+
+func parseScheduler(raw json.RawMessage) *parsedScheduler {
+	return schedulerMemo.get(raw, func() *parsedScheduler {
+		configurationParses.Add(1)
+		result := &parsedScheduler{}
+		if len(raw) == 0 {
+			result.valid, result.outerValid = true, true
+			return result
+		}
+		var document struct {
+			FeatureSchedules map[string]json.RawMessage `json:"featureSchedules"`
+		}
+		if json.Unmarshal(raw, &document) != nil {
+			return result
+		}
+		result.outerValid = true
+		result.raw = document.FeatureSchedules
+		result.schedules = make(map[string]weeklySchedule, len(document.FeatureSchedules))
+		for key, value := range document.FeatureSchedules {
+			var schedule weeklySchedule
+			if json.Unmarshal(value, &schedule) == nil {
+				result.schedules[key] = schedule
+			} else {
+				// One malformed schedule invalidates the whole document, as decoding it
+				// into map[string]weeklySchedule always did.
+				return &parsedScheduler{outerValid: true, raw: document.FeatureSchedules}
+			}
+		}
+		result.valid = true
+		return result
+	})
+}
+
+var locationMemo sync.Map // zone name -> *time.Location (nil for unknown names)
+
+func scheduleLocation(zone string) *time.Location {
+	zone = strings.TrimSpace(zone)
+	if zone == "" {
+		return time.Local
+	}
+	if cached, found := locationMemo.Load(zone); found {
+		if location, _ := cached.(*time.Location); location != nil {
+			return location
+		}
+		return time.Local
+	}
+	loaded, err := time.LoadLocation(zone)
+	if err != nil {
+		locationMemo.Store(zone, (*time.Location)(nil))
+		return time.Local
+	}
+	locationMemo.Store(zone, loaded)
+	return loaded
+}
+
 func resolveWeeklySchedule(configuration Configuration.Snapshot, featureID string, now time.Time) weeklyScheduleResolution {
 	result := weeklyScheduleResolution{Allowed: true}
 	raw := configuration.Sections["scheduler"]
 	if len(raw) == 0 {
 		return result
 	}
-	var document struct {
-		FeatureSchedules map[string]weeklySchedule `json:"featureSchedules"`
-	}
-	if json.Unmarshal(raw, &document) != nil {
+	document := parseScheduler(raw)
+	if !document.valid {
 		return result
 	}
-	schedule, exists := document.FeatureSchedules[featureID]
+	schedule, exists := document.schedules[featureID]
 	if !exists || !schedule.Enabled {
 		return result
 	}
-	location := time.Local
-	if zone := strings.TrimSpace(schedule.TimeZone); zone != "" {
-		if loaded, err := time.LoadLocation(zone); err == nil {
-			location = loaded
-		}
-	}
+	location := scheduleLocation(schedule.TimeZone)
 	localNow := now.In(location)
 	minute := localNow.Hour()*60 + localNow.Minute()
 	day := int(localNow.Weekday())

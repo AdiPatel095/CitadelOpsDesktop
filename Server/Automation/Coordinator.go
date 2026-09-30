@@ -47,6 +47,7 @@ type Coordinator struct {
 	started                        atomic.Bool
 	externalConfigurationAuthority atomic.Bool
 	labelBase                      atomic.Pointer[profilerLabelBase]
+	fingerprints                   policyFingerprintCache
 }
 
 // profilerLabelBase is the context Run received; it carries the runtime and
@@ -70,6 +71,11 @@ func (coordinator *Coordinator) SetTelemetry(telemetry AttackLaunchCountsProvide
 }
 
 type policyRuntime struct {
+	// enabledKnown/enabled record the policy's enablement at its last evaluation
+	// for policies switched by automation.enabled. A known-disabled policy is not
+	// woken by state events (CIT-43); every configuration change re-evaluates it.
+	enabledKnown                   bool
+	enabled                        bool
 	nextCheck                      time.Time
 	stateWakeNextCheck             time.Time
 	evaluationPending              bool
@@ -219,7 +225,7 @@ func (coordinator *Coordinator) Run(ctx context.Context) {
 		expirationTimer = nil
 		expirationChannel = nil
 		now := time.Now().UTC()
-		configuration := coordinator.configuration.Snapshot()
+		configuration := coordinator.configuration.SharedSnapshot()
 		next := nextAutomationExpiration(configuration, now)
 		if coordinator.externalConfigurationAuthority.Load() {
 			next = nextFutureAutomationExpiration(configuration, now)
@@ -359,7 +365,7 @@ func (coordinator *Coordinator) Run(ctx context.Context) {
 			expirationChannel = nil
 			now := time.Now().UTC()
 			coordinator.expireTimedAutomations(now)
-			wakePoliciesForEnabledControlExpirations(runtime, coordinator.policies, coordinator.configuration.Snapshot(), now)
+			wakePoliciesForEnabledControlExpirations(runtime, coordinator.policies, coordinator.configuration.SharedSnapshot(), now)
 			resetExpirationTimer()
 			evaluate()
 		case result := <-results:
@@ -422,7 +428,7 @@ func (coordinator *Coordinator) evaluate(
 	results chan<- operationResult,
 ) {
 	now := time.Now().UTC()
-	configuration := coordinator.configuration.Snapshot()
+	configuration := coordinator.configuration.SharedSnapshot()
 	state := coordinator.state.ReadOnlyView()
 	coordinator.cancelRunsDisallowedByConfiguration(runtime, configuration, now)
 	coordinator.cancelRunsForUnavailableSession(runtime, state)
@@ -457,8 +463,9 @@ func (coordinator *Coordinator) evaluate(
 		current.evaluationPending = false
 		current.eventOnly = false
 		isEnabled := policyEnabled(policy, enabled, state)
-		configurationFingerprint := policyConfigurationFingerprint(policy, configuration)
-		derivedConfigurationFingerprint := policyDerivedConfigurationFingerprint(policy, configuration)
+		current.enabled, current.enabledKnown = isEnabled, policyGatedByEnablement(policy)
+		configurationFingerprint := coordinator.policyFingerprint(policy, configuration)
+		derivedConfigurationFingerprint := coordinator.policyDerivedFingerprint(policy, configuration)
 		if consumePolicyEnabledControlExpirations(current, policy, configuration, now) {
 			current.controlExpiryPending = true
 		}
@@ -800,7 +807,7 @@ func (coordinator *Coordinator) cancelDisallowedPolicyRuns(
 		!event.Gap && section != "automation.enabled" && section != "scheduler" {
 		return
 	}
-	configuration := coordinator.configuration.Snapshot()
+	configuration := coordinator.configuration.SharedSnapshot()
 	coordinator.cancelRunsDisallowedByConfiguration(runtime, configuration, now)
 }
 
@@ -822,14 +829,14 @@ func (coordinator *Coordinator) wakePoliciesForConfigurationEvent(
 			candidates[policyID] = struct{}{}
 		}
 	}
-	configuration := coordinator.configuration.Snapshot()
+	configuration := coordinator.configuration.SharedSnapshot()
 	wokeIdle := false
 	for _, policy := range coordinator.policies {
 		if _, candidate := candidates[policy.ID()]; !candidate {
 			continue
 		}
 		current := runtime[policy.ID()]
-		latestFingerprint := policyConfigurationFingerprint(policy, configuration)
+		latestFingerprint := coordinator.policyFingerprint(policy, configuration)
 		if current == nil || event.Revision <= current.evaluatedConfigRevision ||
 			current.evaluatedConfiguration == latestFingerprint {
 			continue
@@ -839,7 +846,7 @@ func (coordinator *Coordinator) wakePoliciesForConfigurationEvent(
 			current.configurationRebuildPending = true
 		}
 		if current.allowedConfigurationChange == latestFingerprint {
-			current.evaluatedDerivedConfiguration = policyDerivedConfigurationFingerprint(policy, configuration)
+			current.evaluatedDerivedConfiguration = coordinator.policyDerivedFingerprint(policy, configuration)
 		}
 		if current.running {
 			current.configurationWakePending = true
@@ -875,10 +882,10 @@ func (coordinator *Coordinator) cancelRunsDisallowedByConfiguration(
 		if current == nil || !current.running || current.cancelRun == nil {
 			continue
 		}
-		latestFingerprint := policyConfigurationFingerprint(policy, configuration)
+		latestFingerprint := coordinator.policyFingerprint(policy, configuration)
 		if current.evaluatedConfiguration != latestFingerprint {
 			current.configurationWakePending = true
-			if current.evaluatedDerivedConfiguration != policyDerivedConfigurationFingerprint(policy, configuration) &&
+			if current.evaluatedDerivedConfiguration != coordinator.policyDerivedFingerprint(policy, configuration) &&
 				current.allowedConfigurationChange != latestFingerprint {
 				current.configurationRebuildPending = true
 			}
@@ -897,6 +904,17 @@ func (coordinator *Coordinator) cancelRunsDisallowedByConfiguration(
 			current.cancelRun()
 		}
 	}
+}
+
+// policyGatedByEnablement reports whether the automation.enabled switch decides
+// if a policy runs. Core policies always run and on-demand policies are enabled
+// by persisted state, so neither is ever treated as disabled for waking.
+func policyGatedByEnablement(policy Policy) bool {
+	if _, core := policy.(CorePolicy); core {
+		return false
+	}
+	_, onDemand := policy.(OnDemandPolicy)
+	return !onDemand
 }
 
 func policyEnabled(policy Policy, configured map[string]bool, state State.GameState) bool {
@@ -1729,6 +1747,54 @@ func policyDerivedConfigurationFingerprint(policy Policy, configuration Configur
 	return strings.Join(parts, "\x00")
 }
 
+// policyFingerprintCache memoizes the per-policy configuration fingerprints for
+// one configuration snapshot (revision plus the identity of its shared sections
+// map). Building them joins the policy's section JSON into strings; doing that
+// for every due policy on every evaluation was a measurable cost (CIT-43).
+type policyFingerprintCache struct {
+	mu       sync.Mutex
+	revision uint64
+	sections uintptr
+	valid    bool
+	config   map[string]string
+	derived  map[string]string
+}
+
+func (cache *policyFingerprintCache) forSnapshot(configuration Configuration.Snapshot) {
+	identity := reflect.ValueOf(configuration.Sections).Pointer()
+	if cache.valid && cache.revision == configuration.Revision && cache.sections == identity {
+		return
+	}
+	cache.valid, cache.revision, cache.sections = true, configuration.Revision, identity
+	cache.config, cache.derived = map[string]string{}, map[string]string{}
+}
+
+func (coordinator *Coordinator) policyFingerprint(policy Policy, configuration Configuration.Snapshot) string {
+	cache := &coordinator.fingerprints
+	cache.mu.Lock()
+	defer cache.mu.Unlock()
+	cache.forSnapshot(configuration)
+	if value, found := cache.config[policy.ID()]; found {
+		return value
+	}
+	value := policyConfigurationFingerprint(policy, configuration)
+	cache.config[policy.ID()] = value
+	return value
+}
+
+func (coordinator *Coordinator) policyDerivedFingerprint(policy Policy, configuration Configuration.Snapshot) string {
+	cache := &coordinator.fingerprints
+	cache.mu.Lock()
+	defer cache.mu.Unlock()
+	cache.forSnapshot(configuration)
+	if value, found := cache.derived[policy.ID()]; found {
+		return value
+	}
+	value := policyDerivedConfigurationFingerprint(policy, configuration)
+	cache.derived[policy.ID()] = value
+	return value
+}
+
 func policyConfigurationFingerprint(policy Policy, configuration Configuration.Snapshot) string {
 	_, core := policy.(CorePolicy)
 	enabled := core || configuredEnabledFeatures(configuration)[policy.EnabledKey()]
@@ -1830,15 +1896,13 @@ func policyScheduleConfiguration(policyID string, raw json.RawMessage) string {
 	if len(raw) == 0 {
 		return ""
 	}
-	var document struct {
-		FeatureSchedules map[string]json.RawMessage `json:"featureSchedules"`
-	}
-	if err := json.Unmarshal(raw, &document); err != nil {
+	document := parseScheduler(raw)
+	if !document.outerValid {
 		return "invalid\x00" + string(raw)
 	}
 	keys := make([]string, 0)
 	prefix := policyID + ":"
-	for key := range document.FeatureSchedules {
+	for key := range document.raw {
 		if key == policyID || strings.HasPrefix(key, prefix) {
 			keys = append(keys, key)
 		}
@@ -1846,7 +1910,7 @@ func policyScheduleConfiguration(policyID string, raw json.RawMessage) string {
 	sort.Strings(keys)
 	parts := make([]string, 0, len(keys)*2)
 	for _, key := range keys {
-		parts = append(parts, key, string(document.FeatureSchedules[key]))
+		parts = append(parts, key, string(document.raw[key]))
 	}
 	return strings.Join(parts, "\x00")
 }
@@ -1863,6 +1927,13 @@ func wakePoliciesForStateEvent(
 	wokeUrgently := false
 	wake := func(current *policyRuntime, session bool) bool {
 		if current == nil || event.Revision <= current.evaluatedStateRevision {
+			return false
+		}
+		if current.enabledKnown && !current.enabled {
+			// A disabled policy does nothing with a state change. Its urgent domains
+			// are not urgent either: an off Beri lane must not make every movement
+			// commit skip the debounce for the policies that are on. Any configuration
+			// change re-evaluates it, so switching it on is never missed.
 			return false
 		}
 		if current.running {
