@@ -44,6 +44,17 @@ stream, or pass `?wait=true` to block for the final receipt (the wait can be
 abandoned without cancelling the operation; `POST /operations/{id}/cancel` is
 the only client-side cancellation).
 
+`GET /api/v2/operations?limit=N` (or `history=recent`) returns recent
+in-process activity, including read-only and dry-run receipts. This list matches
+`operations.snapshot` and is not a cursor start. To walk durable history, start
+with `?history=stored&limit=N`, then continue with `?before=<last id>&limit=N`
+until an empty array is returned. Every stored page uses reservation order
+(SQLite rowid), newest first; updating a receipt or recovering it after restart
+does not move its row. New reservations belong to a new walk. A missing or
+pruned cursor returns `400 invalid_cursor`; restart the walk. An invalid
+`history` value returns `400 invalid_history`, and unavailable stored history
+returns `503 operations_unavailable`. The limit range is 1–1,000 (default 100).
+
 `Intent.Definition` (`Server/Intent/Types.go:139`):
 
 ```go

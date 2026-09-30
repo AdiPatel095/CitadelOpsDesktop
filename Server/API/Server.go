@@ -534,14 +534,21 @@ func (server *Server) handleOperations(writer http.ResponseWriter, request *http
 		}
 		limit = parsed
 	}
+	history := strings.TrimSpace(request.URL.Query().Get("history"))
+	if history != "" && history != "recent" && history != "stored" {
+		writeError(writer, http.StatusBadRequest, "invalid_history", "Operation history must be stored", Localization.New("server.api.operation_history_must_be.e857bc21", "Operation history must be stored", nil))
+		return
+	}
 	before := strings.TrimSpace(request.URL.Query().Get("before"))
 	var receipts []Intent.Receipt
 	var err error
 	if len(before) > 256 {
 		err = Intent.ErrUnknownOperationCursor
-	} else if before != "" {
+	} else if before != "" || history == "stored" {
 		receipts, err = server.config.Intents.OperationsBefore(request.Context(), before, limit)
 	} else {
+		// The in-process recent-activity list is not a cursor start. Start a
+		// stored rowid walk with history=stored, then continue with before.
 		receipts, err = server.config.Intents.RecentOperations(request.Context(), limit)
 	}
 	if errors.Is(err, Intent.ErrUnknownOperationCursor) {
