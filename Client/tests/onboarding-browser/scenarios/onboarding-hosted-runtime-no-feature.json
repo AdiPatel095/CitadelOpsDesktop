@@ -16,9 +16,16 @@
     "dock: Candidate <short SHA>"
   ],
   "expect": [
-    "Connected is done; Required choices saved is next; Turned on is not offered yet."
+    "Connected is done; Required choices saved is next; Turned on is not offered yet.",
+    "Hosted: the repair panel offers no runtime action and says 'A hosted runtime is running for this account.'"
   ],
   "hostedOnly": "Hosted Account Center shows the fictional 'Demo Keep' account with the three-way copy (Start the hosted runtime / Turn on <Feature> / First result); the Add-account form is never opened.",
+  "hostedAccount": {
+    "status": "ready",
+    "runtimeCreated": true,
+    "runtimePresent": true,
+    "loggedIn": true
+  },
   "columns": [
     "goal"
   ]

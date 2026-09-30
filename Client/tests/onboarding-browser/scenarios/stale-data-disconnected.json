@@ -69,5 +69,14 @@
   },
   "columns": [
     "readiness"
-  ]
+  ],
+  "hostedAccount": {
+    "status": "released",
+    "statusDetail": "Waiting to reconnect",
+    "waitReason": "reconnect",
+    "waitUntil": "@now+5m",
+    "runtimeCreated": true,
+    "runtimePresent": false,
+    "loggedIn": false
+  }
 }

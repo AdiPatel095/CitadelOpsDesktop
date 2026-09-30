@@ -68,6 +68,13 @@
     }
   },
   "hostedOnly": "On hosted the checkpoint mode is the account's saved dashboard; desktop shows it as a disconnected session.",
+  "hostedAccount": {
+    "status": "released",
+    "statusDetail": "No hosted runtime is running; showing the last saved checkpoint",
+    "runtimeCreated": true,
+    "runtimePresent": false,
+    "loggedIn": false
+  },
   "columns": [
     "readiness"
   ]

@@ -32,6 +32,28 @@ export interface ScenarioStorageSeed {
   value: Json;
 }
 
+/**
+ * What the hosted account behind a scenario looks like (hosted preview only; the desktop preview ignores it). It feeds the
+ * portal's Account Center card and the connection repair panel, so the panel's action and its sentences follow the
+ * scenario instead of a default. Values are the ones `HostedAccount` carries.
+ */
+export interface ScenarioHostedAccount {
+  /** `HostedAccount.status`: `ready`, `connecting`, `released`, `suspended`, `action_required`, `disabled`, `provisioning`. */
+  status: string;
+  statusDetail?: string;
+  waitReason?: string;
+  /** A time token such as `@now+5m`. */
+  waitUntil?: string;
+  /** A hosted runtime was created for this account before (it may not be running now). */
+  runtimeCreated: boolean;
+  runtimePresent: boolean;
+  loggedIn: boolean;
+  loginFailure?: { class: string; fatal?: boolean };
+}
+
+/** The hosted account of a scenario that says nothing: a running, logged-in one. */
+export const DEFAULT_HOSTED_ACCOUNT: ScenarioHostedAccount = { status: 'ready', runtimeCreated: true, runtimePresent: true, loggedIn: true };
+
 export interface ScenarioFile {
   id: string;
   title: string;
@@ -57,6 +79,8 @@ export interface ScenarioFile {
   alternate?: JsonObject;
   /** What Start Bot does in this fixture: the scenario is served again as connected (this patch replaces `patch`). Saved settings written so far are kept. */
   startedPatch?: { state?: JsonObject };
+  /** The fictional hosted account (hosted preview only). Required when the scenario serves a disconnected or checkpoint session. */
+  hostedAccount?: ScenarioHostedAccount;
   /** Locale and viewport the walkthrough uses for this scenario (the dock can change both). */
   locale?: 'en' | 'de' | 'ar';
   viewport?: { width: number; height: number };
@@ -221,6 +245,12 @@ export function validateScenarioFile(file: ScenarioFile): string[] {
   for (const key of REQUIRED) if (file[key] === undefined) problems.push(`${file.id ?? '?'}: missing ${key}`);
   if (typeof file.id === 'string' && !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(file.id)) problems.push(`${file.id}: id must be kebab-case`);
   if (Array.isArray(file.platforms) && file.platforms.some((platform) => platform !== 'desktop' && platform !== 'hosted')) problems.push(`${file.id}: unknown platform`);
+  if (file.hostedAccount !== undefined) {
+    const account = file.hostedAccount;
+    if (typeof account.status !== 'string' || account.status === '') problems.push(`${file.id}: hostedAccount.status`);
+    for (const flag of ['runtimeCreated', 'runtimePresent', 'loggedIn'] as const) if (typeof account[flag] !== 'boolean') problems.push(`${file.id}: hostedAccount.${flag} must be true or false`);
+    if (account.runtimePresent && !account.runtimeCreated) problems.push(`${file.id}: a runtime that is present was created`);
+  }
   if (Array.isArray(file.simulated) && file.simulated.length === 0) problems.push(`${file.id}: names no Simulated labels`);
   if (Array.isArray(file.expect) && file.expect.length === 0) problems.push(`${file.id}: no expected observations`);
   return problems;

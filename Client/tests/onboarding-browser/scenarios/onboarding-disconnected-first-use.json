@@ -16,7 +16,7 @@
     "dock: Candidate <short SHA>"
   ],
   "expect": [
-    "Set up with a goal \u2192 Play the Nomad or Samurai event: connection is Blocked with 'Check the connection'; the repair dialog opens over the page (desktop) and offers Start Bot.",
+    "Set up with a goal → Play the Nomad or Samurai event: connection is Blocked with 'Check the connection'; the repair dialog opens over the page (desktop) and offers Start Bot.",
     "Choices, readiness, turned on and first result are 'not started'; no step is done."
   ],
   "session": "disconnected",
@@ -30,6 +30,15 @@
     }
   },
   "hostedOnly": "Hosted shows the panel with 'Start the hosted runtime' (Account Center) instead of Start Bot.",
+  "hostedAccount": {
+    "status": "released",
+    "statusDetail": "Waiting to reconnect",
+    "waitReason": "reconnect",
+    "waitUntil": "@now+5m",
+    "runtimeCreated": true,
+    "runtimePresent": false,
+    "loggedIn": false
+  },
   "columns": [
     "goal",
     "readiness"

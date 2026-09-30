@@ -35,6 +35,17 @@
     }
   },
   "hostedOnly": "Hosted wording: 'The saved server does not match this login. Change the server in the Account Center.'",
+  "hostedAccount": {
+    "status": "action_required",
+    "statusDetail": "Game login was not accepted",
+    "runtimeCreated": true,
+    "runtimePresent": true,
+    "loggedIn": false,
+    "loginFailure": {
+      "class": "wrong_server",
+      "fatal": true
+    }
+  },
   "columns": [
     "goal",
     "readiness"

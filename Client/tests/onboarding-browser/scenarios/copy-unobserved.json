@@ -39,5 +39,12 @@
   },
   "columns": [
     "copy"
-  ]
+  ],
+  "hostedAccount": {
+    "status": "connecting",
+    "statusDetail": "Syncing with the game",
+    "runtimeCreated": true,
+    "runtimePresent": true,
+    "loggedIn": true
+  }
 }

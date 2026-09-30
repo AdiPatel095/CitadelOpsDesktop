@@ -163,3 +163,21 @@ test('the served catalogs carry what the production loaders read', () => {
   assert.equal(catalogs.catalogFor('prebuiltcastles').items.length, 0);
   assert.equal(catalogs.catalogFor('prebuiltcastles', { prebuiltcastles: [{ preBuiltCastleID: 1 }] }).items.length, 1);
 });
+
+test('hosted account blocks are well formed and agree with the session a scenario serves', () => {
+  let blocks = 0;
+  for (const { data } of scenarios) {
+    if (data.hostedAccount !== undefined) blocks += 1;
+    assert.deepEqual(scenario.validateScenarioFile(data), [], data.id);
+    const session = data.session ?? 'live';
+    if (data.platforms.includes('hosted') && (session === 'disconnected' || session === 'checkpoint')) {
+      assert.ok(data.hostedAccount, `${data.id}: serves a ${session} session, so it must say what the hosted account is`);
+      assert.equal(data.hostedAccount.runtimePresent, false, `${data.id}: no hosted runtime is present while the session is ${session}`);
+      assert.equal(data.hostedAccount.loggedIn, false, `${data.id}: and the game login is not held`);
+    }
+    if (data.platforms.length === 1 && data.platforms[0] === 'hosted') assert.ok(data.hostedAccount, `${data.id}: a hosted-only scenario says what its hosted account is`);
+    if (data.hostedAccount?.loginFailure) assert.equal(data.hostedAccount.loggedIn, false, `${data.id}: a login failure means not logged in`);
+    if (data.hostedAccount) assert.doesNotMatch(JSON.stringify(data.hostedAccount), /token|password|secret/i);
+  }
+  assert.ok(blocks >= 8, `${blocks} scenarios describe their hosted account`);
+});

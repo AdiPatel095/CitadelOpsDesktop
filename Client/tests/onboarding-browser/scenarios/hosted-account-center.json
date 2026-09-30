@@ -1,7 +1,7 @@
 {
   "id": "hosted-account-center",
   "title": "Hosted Account Center with the fictional Demo Keep account",
-  "purpose": "Hosted only.",
+  "purpose": "Hosted only: the Account Center card and the repair panel for an account whose hosted runtime is not running.",
   "step": "11",
   "platforms": [
     "hosted"
@@ -14,10 +14,20 @@
     "dock: Candidate <short SHA>"
   ],
   "expect": [
-    "The Account Center shows the fictional 'Demo Keep' account; the repair panel shows Start the hosted runtime, Turn on <Feature> and First result with the accepted copy; the Add-account form is never opened."
+    "The Account Center shows the fictional 'Demo Keep' account as released (waiting to reconnect); the repair panel offers 'Start the hosted runtime', says 'No hosted runtime is running for this account.' (no checkpoint sentence in live mode), then 'Turn on <Feature>' and 'First result' with the accepted copy; the Add-account form is never opened."
   ],
   "hostedOnly": "No desktop equivalent: the desktop shows Start Bot and Settings.",
+  "hostedAccount": {
+    "status": "released",
+    "statusDetail": "Waiting to reconnect",
+    "waitReason": "reconnect",
+    "waitUntil": "@now+5m",
+    "runtimeCreated": true,
+    "runtimePresent": false,
+    "loggedIn": false
+  },
   "columns": [
     "goal"
-  ]
+  ],
+  "session": "disconnected"
 }
