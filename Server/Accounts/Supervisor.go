@@ -129,7 +129,10 @@ type Supervisor struct {
 	rebindMu           sync.Mutex
 
 	refreshMu sync.Mutex
-	startOnce sync.Once
+	// gameDataSyncPending is guarded by refreshMu: a runtime failed to adopt the
+	// current store, so the next refresh rehydrates even when versions are unchanged.
+	gameDataSyncPending bool
+	startOnce           sync.Once
 }
 
 type Capacity struct {
@@ -561,8 +564,13 @@ func (supervisor *Supervisor) RefreshGameData(ctx context.Context) error {
 	}
 	supervisor.refreshMu.Lock()
 	defer supervisor.refreshMu.Unlock()
-	if err := supervisor.gameData.Refresh(ctx); err != nil {
+	changed, err := supervisor.gameData.RefreshChanged(ctx)
+	if err != nil {
 		return err
+	}
+	if !changed && !supervisor.gameDataSyncPending {
+		// Same item and language versions: every runtime already runs this store.
+		return nil
 	}
 	supervisor.mu.RLock()
 	applications := make([]*App.Application, 0, len(supervisor.accounts))
@@ -576,6 +584,7 @@ func (supervisor *Supervisor) RefreshGameData(ctx context.Context) error {
 			synchronizationErr = errors.Join(synchronizationErr, err)
 		}
 	}
+	supervisor.gameDataSyncPending = synchronizationErr != nil
 	return synchronizationErr
 }
 

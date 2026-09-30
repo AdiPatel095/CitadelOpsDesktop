@@ -64,6 +64,9 @@ type Store struct {
 	autoBuyerProducts        map[string]map[int64]AutoBuyerPackage
 	autoBuyerFeasts          map[int64]AutoBuyerFeast
 	autoBuyerErr             error
+
+	derivedMu sync.Mutex
+	derived   map[string]any
 }
 
 func DecodeStore(raw []byte, metadata SourceMetadata) (*Store, error) {
@@ -91,6 +94,25 @@ func DecodeStore(raw []byte, metadata SourceMetadata) (*Store, error) {
 		return nil, fmt.Errorf("official item document contains no collections")
 	}
 	return &Store{metadata: metadata, collections: collections, catalogs: map[string]*Catalog{}}, nil
+}
+
+// Derived returns a value that another package derives from this store, building
+// it on first use and keeping it for the lifetime of the store. Held on the store,
+// it is released together with the store when a refresh replaces it, so derived
+// data never pins a retired store. build must be a pure function of the store and
+// must not call Derived on the same store.
+func (store *Store) Derived(key string, build func() any) any {
+	store.derivedMu.Lock()
+	defer store.derivedMu.Unlock()
+	if value, found := store.derived[key]; found {
+		return value
+	}
+	value := build()
+	if store.derived == nil {
+		store.derived = map[string]any{}
+	}
+	store.derived[key] = value
+	return value
 }
 
 func (store *Store) Metadata() SourceMetadata {

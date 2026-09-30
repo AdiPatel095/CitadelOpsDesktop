@@ -122,41 +122,67 @@ func (manager *Manager) LoadCache() error {
 }
 
 func (manager *Manager) Refresh(ctx context.Context) error {
+	_, err := manager.RefreshChanged(ctx)
+	return err
+}
+
+// RefreshChanged refreshes the official data and reports whether the current
+// store or language changed. When the item and language versions are unchanged
+// it keeps the current store, and its lazily built catalogs and indexes, without
+// re-reading or re-parsing either document, and reports false so callers can
+// skip rehydrating every runtime.
+func (manager *Manager) RefreshChanged(ctx context.Context) (bool, error) {
 	manager.refreshMu.Lock()
 	defer manager.refreshMu.Unlock()
 	if err := ctx.Err(); err != nil {
-		return err
+		return false, err
 	}
 	if strings.TrimSpace(manager.config.CacheDir) == "" {
-		return fmt.Errorf("official-data cache directory is required")
+		return false, fmt.Errorf("official-data cache directory is required")
 	}
 	if err := os.MkdirAll(manager.config.CacheDir, 0o755); err != nil {
-		return fmt.Errorf("create official-data cache: %w", err)
+		return false, fmt.Errorf("create official-data cache: %w", err)
 	}
 
 	versionRaw, err := manager.fetch(ctx, manager.config.VersionURL, 1<<20)
 	if err != nil {
-		return fmt.Errorf("fetch official item version: %w", err)
+		return false, fmt.Errorf("fetch official item version: %w", err)
 	}
 	version, err := parseItemVersion(string(versionRaw))
 	if err != nil {
-		return err
+		return false, err
 	}
 	itemURL := strings.ReplaceAll(manager.config.ItemsURL, "{version}", version)
 	cachePath := filepath.Join(manager.config.CacheDir, "Items-v"+version+".json")
-	store, loadErr := loadStoreFile(cachePath, version, itemURL, time.Time{})
-	if loadErr != nil {
-		if err := manager.downloadAtomic(ctx, itemURL, cachePath, manager.config.MaxBytes); err != nil {
-			return fmt.Errorf("download official item data %s: %w", version, err)
-		}
-		store, err = loadStoreFile(cachePath, version, itemURL, time.Now().UTC())
+	manager.mu.RLock()
+	current, currentLanguage := manager.store, manager.language
+	manager.mu.RUnlock()
+	itemsUnchanged := current != nil && current.metadata.ItemVersion == version
+
+	var store *Store
+	if !itemsUnchanged {
+		store, err = manager.loadItemStore(ctx, version, itemURL, cachePath)
 		if err != nil {
-			return err
+			return false, err
 		}
 	}
-	language, warning, languageErr := manager.refreshLanguage(ctx)
+	language, warning, languageErr := manager.refreshLanguage(ctx, currentLanguage)
 	if languageErr != nil {
-		return languageErr
+		return false, languageErr
+	}
+	if itemsUnchanged && language == currentLanguage {
+		manager.mu.Lock()
+		manager.lastErr = warning
+		manager.mu.Unlock()
+		return false, nil
+	}
+	if store == nil {
+		// Same items, new language: the store carries the language metadata and
+		// published stores are immutable, so it is rebuilt from the cached file.
+		store, err = manager.loadItemStore(ctx, version, itemURL, cachePath)
+		if err != nil {
+			return false, err
+		}
 	}
 	store.metadata.Language = language.Metadata().Language
 	store.metadata.LanguageVersion = language.Metadata().Version
@@ -166,7 +192,18 @@ func (manager *Manager) Refresh(ctx context.Context) error {
 	manager.language = language
 	manager.lastErr = warning
 	manager.mu.Unlock()
-	return nil
+	return true, nil
+}
+
+func (manager *Manager) loadItemStore(ctx context.Context, version string, itemURL string, cachePath string) (*Store, error) {
+	store, loadErr := loadStoreFile(cachePath, version, itemURL, time.Time{})
+	if loadErr == nil {
+		return store, nil
+	}
+	if err := manager.downloadAtomic(ctx, itemURL, cachePath, manager.config.MaxBytes); err != nil {
+		return nil, fmt.Errorf("download official item data %s: %w", version, err)
+	}
+	return loadStoreFile(cachePath, version, itemURL, time.Now().UTC())
 }
 
 func (manager *Manager) Current() (*Store, bool) {
@@ -298,7 +335,9 @@ func (manager *Manager) downloadAtomic(ctx context.Context, url string, destinat
 	return nil
 }
 
-func (manager *Manager) refreshLanguage(ctx context.Context) (*LanguageStore, error, error) {
+// refreshLanguage returns the current language store itself when its version and
+// language are already the published ones, so callers can detect "unchanged".
+func (manager *Manager) refreshLanguage(ctx context.Context, current *LanguageStore) (*LanguageStore, error, error) {
 	metadataRaw, err := manager.fetch(ctx, manager.config.LanguageMetadataURL, 1<<20)
 	if err != nil {
 		cached, cacheErr := manager.loadNewestLanguageCache()
@@ -319,6 +358,9 @@ func (manager *Manager) refreshLanguage(ctx context.Context) (*LanguageStore, er
 	version := strings.TrimSpace(metadataDocument.Metadata.Version)
 	if !safeLanguageVersion(version) {
 		return nil, nil, fmt.Errorf("official language metadata has unsafe or missing version")
+	}
+	if current != nil && current.metadata.Version == version && current.metadata.Language == manager.config.Language {
+		return current, nil, nil
 	}
 	languageURL := strings.NewReplacer(
 		"{version}", version,
