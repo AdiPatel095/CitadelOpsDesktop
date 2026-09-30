@@ -29,6 +29,8 @@ export interface APIEnvelope<T = unknown> {
   revision?: number;
   sequence?: number;
   gap?: boolean;
+  /** `state.changed` only: the revision the patch builds on (older servers omit it). */
+  baseRevision?: number;
   payload?: T;
 }
 

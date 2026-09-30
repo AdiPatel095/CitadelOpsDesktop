@@ -11,10 +11,15 @@ import (
 	"time"
 )
 
+// Event describes one committed revision. BaseRevision is the store revision
+// its patch applies on top of: a plain event has Revision-1, and a coalesced
+// event keeps the oldest merged base, so its complete patch may be applied to
+// any client state in [BaseRevision, Revision) without a full-state refetch.
 type Event struct {
 	Sequence           uint64             `json:"sequence"`
 	Gap                bool               `json:"gap,omitempty"`
 	Revision           uint64             `json:"revision"`
+	BaseRevision       uint64             `json:"baseRevision,omitempty"`
 	Domains            []string           `json:"domains"`
 	Components         []Component        `json:"components,omitempty"`
 	Partitions         []PartitionVersion `json:"partitions,omitempty"`
@@ -834,8 +839,9 @@ func (store *Store) applyScoped(writes ComponentSet, mutation ScopedMutation) (E
 	store.generation.Store(next)
 	event := Event{
 		Sequence: candidate.Revision, Revision: candidate.Revision, Domains: domains,
-		Components: effectiveWrites.List(),
-		Partitions: changedPartitions, OccurredAt: candidate.UpdatedAt,
+		BaseRevision: current.state.Revision,
+		Components:   effectiveWrites.List(),
+		Partitions:   changedPartitions, OccurredAt: candidate.UpdatedAt,
 		generation: next, mapChanges: mapChanges, replaceMap: replaceMap,
 		castleIDs: castleIDs, replaceCastles: replaceCastles,
 		castleParts:    castleParts,
@@ -936,25 +942,70 @@ func (store *Store) publish(event Event) {
 		default:
 		}
 
+		// A full buffer folds every queued event into the new one, so the single
+		// merged event is complete for the whole span (oldest queued base, newest
+		// revision). Merging only the oldest queued event would leave the ones
+		// between it and the new event queued ahead of a patch that does not cover
+		// them, and no client could tell which changes it was missing.
 		coalesced := event
-		select {
-		case pending := <-channel:
-			coalesced = coalesceEvents(pending, event)
-		default:
+		var queued []Event
+	drain:
+		for {
+			select {
+			case pending := <-channel:
+				queued = append(queued, pending)
+			default:
+				break drain
+			}
+		}
+		if len(queued) > 0 {
+			coalesced = coalesceEventQueue(append(queued, event))
 		}
 		// The first send only fails when the buffered channel is full. After
-		// removing one pending event, no other Store publisher can refill it:
+		// removing the pending events, no other Store publisher can refill it:
 		// ApplyScoped holds store.writeMu until publication completes.
 		channel <- coalesced
 	}
 }
 
-func coalesceEvents(left Event, right Event) Event {
+// coalesceEventQueue merges events (oldest first, at least one) into a single
+// gap event whose complete patch covers every revision after the first event's
+// base. The patch is built once from the newest generation.
+func coalesceEventQueue(events []Event) Event {
+	merged := events[0]
+	for _, next := range events[1:] {
+		merged = mergeEventMetadata(merged, next)
+	}
+	merged.Gap = true
+	merged.Patch = componentPatch(merged.generation, Components(merged.Components...), componentChanges{
+		mapChanges: merged.mapChanges, replaceMap: merged.replaceMap,
+		castleIDs: merged.castleIDs, replaceCastles: merged.replaceCastles,
+		castleParts:    merged.castleParts,
+		inventoryParts: merged.inventoryParts, replaceInventory: merged.replaceInventory,
+		equipmentIDs: merged.equipmentIDs, replaceEquipment: merged.replaceEquipment,
+		gemIDs: merged.gemIDs, replaceGems: merged.replaceGems,
+		itemKeys: merged.itemKeys, replaceItems: merged.replaceItems,
+		stormTargetKeys: merged.stormTargetKeys, replaceStorm: merged.replaceStorm,
+		towerCooldownKeys: merged.towerCooldownKeys, replaceCooldowns: merged.replaceCooldowns,
+		towerQueueCastles: merged.towerQueueCastles, replaceTowerQueue: merged.replaceTowerQueue,
+		reportMessageIDs: merged.reportMessageIDs, replaceReports: merged.replaceReports,
+		eventScoreIDs: merged.eventScoreIDs, eventScoreMeta: merged.eventScoreMeta,
+		eventScoreShop: merged.eventScoreShop, replaceEventScores: merged.replaceEventScores,
+		movementIDs: merged.movementIDs, replaceMovements: merged.replaceMovements,
+	})
+	merged.clientEncoding = &clientEventEncoding{}
+	return merged
+}
+
+// mergeEventMetadata unions the change tracking of two events; the patch is not built here.
+func mergeEventMetadata(left Event, right Event) Event {
 	merged := Event{
 		Sequence: left.Sequence,
 		Gap:      true,
 		Revision: left.Revision,
-		Domains:  normalizeDomains(append(append([]string(nil), left.Domains...), right.Domains...)),
+		// The merged patch spans everything after the oldest constituent's base.
+		BaseRevision: left.BaseRevision,
+		Domains:      normalizeDomains(append(append([]string(nil), left.Domains...), right.Domains...)),
 		Components: normalizeComponents(
 			append(append([]Component(nil), left.Components...), right.Components...),
 		),
@@ -1003,23 +1054,6 @@ func coalesceEvents(left Event, right Event) Event {
 	if merged.generation == nil {
 		merged.generation = left.generation
 	}
-	merged.Patch = componentPatch(merged.generation, Components(merged.Components...), componentChanges{
-		mapChanges: merged.mapChanges, replaceMap: merged.replaceMap,
-		castleIDs: merged.castleIDs, replaceCastles: merged.replaceCastles,
-		castleParts:    merged.castleParts,
-		inventoryParts: merged.inventoryParts, replaceInventory: merged.replaceInventory,
-		equipmentIDs: merged.equipmentIDs, replaceEquipment: merged.replaceEquipment,
-		gemIDs: merged.gemIDs, replaceGems: merged.replaceGems,
-		itemKeys: merged.itemKeys, replaceItems: merged.replaceItems,
-		stormTargetKeys: merged.stormTargetKeys, replaceStorm: merged.replaceStorm,
-		towerCooldownKeys: merged.towerCooldownKeys, replaceCooldowns: merged.replaceCooldowns,
-		towerQueueCastles: merged.towerQueueCastles, replaceTowerQueue: merged.replaceTowerQueue,
-		reportMessageIDs: merged.reportMessageIDs, replaceReports: merged.replaceReports,
-		eventScoreIDs: merged.eventScoreIDs, eventScoreMeta: merged.eventScoreMeta,
-		eventScoreShop: merged.eventScoreShop, replaceEventScores: merged.replaceEventScores,
-		movementIDs: merged.movementIDs, replaceMovements: merged.replaceMovements,
-	})
-	merged.clientEncoding = &clientEventEncoding{}
 	return merged
 }
 
