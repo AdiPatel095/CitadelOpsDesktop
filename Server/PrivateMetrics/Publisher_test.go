@@ -2,6 +2,7 @@ package PrivateMetrics
 
 import (
 	"bytes"
+	"compress/gzip"
 	"context"
 	"encoding/json"
 	"errors"
@@ -63,6 +64,7 @@ type receivedPublication struct {
 	authorization  string
 	idempotencyKey string
 	body           []byte
+	encoding       string
 	request        PublishRequest
 	receivedAt     time.Time
 }
@@ -84,7 +86,17 @@ func publicationServer(t *testing.T, respond func(ordinal int, request *http.Req
 	received := make(chan receivedPublication, 32)
 	var ordinal atomic.Int64
 	server := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
-		body, _ := io.ReadAll(io.LimitReader(request.Body, 2<<20))
+		reader := io.Reader(request.Body)
+		if request.Header.Get("Content-Encoding") == "gzip" {
+			gzipReader, err := gzip.NewReader(request.Body)
+			if err != nil {
+				t.Errorf("gzip publication: %v", err)
+				writer.WriteHeader(http.StatusBadRequest)
+				return
+			}
+			reader = gzipReader
+		}
+		body, _ := io.ReadAll(io.LimitReader(reader, 2<<20))
 		var payload PublishRequest
 		if err := json.Unmarshal(body, &payload); err != nil {
 			t.Errorf("decode publication: %v", err)
@@ -94,7 +106,7 @@ func publicationServer(t *testing.T, respond func(ordinal int, request *http.Req
 		received <- receivedPublication{
 			authorization:  request.Header.Get("Authorization"),
 			idempotencyKey: request.Header.Get("Idempotency-Key"), body: body, request: payload,
-			receivedAt: time.Now(),
+			encoding: request.Header.Get("Content-Encoding"), receivedAt: time.Now(),
 		}
 		respond(int(ordinal.Add(1)), request, writer)
 	}))

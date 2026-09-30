@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"math/rand/v2"
@@ -28,6 +29,10 @@ const (
 	minimumGrantLength            = 32
 	resourceAggregatePublishBatch = 300
 	resourceAggregateBackfillPace = 10 * time.Second
+	// defaultSampleHeartbeat is the longest an unchanged runtime goes without
+	// sending a sample. The build-and-compare cadence stays at the publish
+	// interval; only the upload is skipped.
+	defaultSampleHeartbeat = 5 * time.Minute
 )
 
 const (
@@ -48,8 +53,14 @@ type PublisherConfig struct {
 	Reports   ReportReader
 	Client    *Client
 	Placement *Placement
-	// Interval is the steady-state publish cadence and the base retry delay.
+	// Interval is the steady-state evaluation cadence and the base retry delay.
 	Interval time.Duration
+	// Heartbeat is the longest an unchanged runtime goes without uploading.
+	Heartbeat time.Duration
+	// SettleWindow is how long after a new placement epoch every evaluation
+	// uploads (the pre-heartbeat behavior), because a handover waits for a
+	// fresh sample.
+	SettleWindow time.Duration
 	// Debounce delays the first publication after a burst of state changes.
 	Debounce time.Duration
 	// Timeout bounds one sample build plus upload attempt.
@@ -61,10 +72,14 @@ type PublisherConfig struct {
 }
 
 type PublisherStatus struct {
-	Enabled                      bool      `json:"enabled"`
-	State                        string    `json:"state"`
-	LastAttemptAt                time.Time `json:"lastAttemptAt,omitempty"`
-	LastPublishedAt              time.Time `json:"lastPublishedAt,omitempty"`
+	Enabled         bool      `json:"enabled"`
+	State           string    `json:"state"`
+	LastAttemptAt   time.Time `json:"lastAttemptAt,omitempty"`
+	LastPublishedAt time.Time `json:"lastPublishedAt,omitempty"`
+	// LastUnchangedAt and UnchangedSkips describe evaluations that found the
+	// sample content identical to the last upload and sent nothing.
+	LastUnchangedAt              time.Time `json:"lastUnchangedAt,omitempty"`
+	UnchangedSkips               int64     `json:"unchangedSkips,omitempty"`
 	NextAttemptAt                time.Time `json:"nextAttemptAt,omitempty"`
 	ConsecutiveFailures          int       `json:"consecutiveFailures,omitempty"`
 	LastError                    string    `json:"lastError,omitempty"`
@@ -95,6 +110,8 @@ type Publisher struct {
 	resourceOutbox ResourceAggregateOutbox
 	statsMigration ResourceAggregateMigrationReader
 	interval       time.Duration
+	heartbeat      time.Duration
+	settleWindow   time.Duration
 	debounce       time.Duration
 	timeout        time.Duration
 	now            func() time.Time
@@ -114,6 +131,7 @@ type pendingSample struct {
 	placementVersion   uint64
 	placement          Placement
 	sample             Sample
+	digest             [sha256.Size]byte
 	resourceAggregates []Reports.PendingResourceAggregate
 }
 
@@ -125,6 +143,15 @@ func NewPublisher(config PublisherConfig) (*Publisher, error) {
 	interval := config.Interval
 	if interval <= 0 {
 		interval = defaultPublishInterval
+	}
+	heartbeat := config.Heartbeat
+	if heartbeat <= 0 {
+		heartbeat = defaultSampleHeartbeat
+	}
+	heartbeat = max(heartbeat, interval)
+	settleWindow := config.SettleWindow
+	if settleWindow <= 0 {
+		settleWindow = defaultSettleWindow
 	}
 	debounce := config.Debounce
 	if debounce <= 0 {
@@ -145,7 +172,8 @@ func NewPublisher(config PublisherConfig) (*Publisher, error) {
 	publisher := &Publisher{
 		runtimeID: runtimeID, state: config.State,
 		builder: NewSampleBuilder(config.State, config.GameData, config.Reports),
-		client:  config.Client, interval: interval, debounce: debounce, timeout: timeout,
+		client:  config.Client, interval: interval, heartbeat: heartbeat, settleWindow: settleWindow,
+		debounce: debounce, timeout: timeout,
 		now: now, jitter: jitter, wake: make(chan struct{}, 1),
 		status: PublisherStatus{Enabled: true, State: StateWaitingForPlacement},
 	}
@@ -232,7 +260,14 @@ func (publisher *Publisher) Run(ctx context.Context) {
 	defer timer.stop()
 
 	var pending *pendingSample
-	var lastPublished time.Time
+	// lastCadence is the last completed evaluation (upload or unchanged skip);
+	// it paces state-event wakeups so a skipped evaluation still spaces them.
+	// lastUploaded, lastDigest and digestEpoch describe the backend's copy.
+	var lastCadence, lastUploaded time.Time
+	var lastDigest [sha256.Size]byte
+	var digestValid bool
+	var digestEpoch, settledEpoch uint64
+	var settleUntil time.Time
 	failures := 0
 
 	schedule := func(at time.Time) {
@@ -241,10 +276,10 @@ func (publisher *Publisher) Run(ctx context.Context) {
 		}
 	}
 	nextCadence := func(now time.Time) time.Time {
-		if lastPublished.IsZero() {
+		if lastCadence.IsZero() {
 			return now
 		}
-		if next := lastPublished.Add(publisher.interval); next.After(now) {
+		if next := lastCadence.Add(publisher.interval); next.After(now) {
 			return next
 		}
 		return now
@@ -351,11 +386,29 @@ func (publisher *Publisher) Run(ctx context.Context) {
 					return sample.ResourceAggregates[left].BucketSeconds < sample.ResourceAggregates[right].BucketSeconds
 				})
 			}
+			digest := sampleDigest(sample)
+			// A sample carrying resource aggregates always uploads: the
+			// outbox is only acknowledged by a successful upload.
+			if len(pendingAggregates) == 0 && digestValid && digest == lastDigest && digestEpoch == placement.PlacementEpoch &&
+				!now.Before(settleUntil) && now.Sub(lastUploaded) < publisher.heartbeat {
+				lastCadence = now
+				publisher.updateStatus(func(status *PublisherStatus) {
+					status.State = StatePublished
+					status.LastAttemptAt = now
+					status.LastUnchangedAt = now
+					status.UnchangedSkips++
+					status.ConsecutiveFailures = 0
+					status.LastError = ""
+				})
+				schedule(now.Add(publisher.interval))
+				return
+			}
 			sample.SampleID = sampleID(placement, sample)
 			pending = &pendingSample{
 				placementVersion:   version,
 				placement:          placement,
 				sample:             sample,
+				digest:             digest,
 				resourceAggregates: pendingAggregates,
 			}
 		}
@@ -382,7 +435,8 @@ func (publisher *Publisher) Run(ctx context.Context) {
 			}
 		}
 		if err == nil {
-			lastPublished = now
+			lastCadence, lastUploaded = now, now
+			lastDigest, digestValid, digestEpoch = pending.digest, true, pending.placement.PlacementEpoch
 			publishedAggregateCount := len(pending.resourceAggregates)
 			pending = nil
 			failures = 0
@@ -453,8 +507,16 @@ func (publisher *Publisher) Run(ctx context.Context) {
 		case <-publisher.wake:
 			pending = nil
 			failures = 0
-			if _, _, available := publisher.currentPlacement(); available {
-				schedule(nextCadence(publisher.now().UTC()))
+			if placement, _, available := publisher.currentPlacement(); available {
+				now := publisher.now().UTC()
+				if placement.PlacementEpoch != settledEpoch {
+					// A new epoch (or the first placement) restarts the
+					// settle window; a lease or grant renewal of the same
+					// epoch does not.
+					settledEpoch = placement.PlacementEpoch
+					settleUntil = now.Add(publisher.settleWindow)
+				}
+				schedule(nextCadence(now))
 			}
 		case <-timer.channel():
 			attempt()
@@ -540,6 +602,34 @@ func validatePlacement(placement Placement, runtimeID string, now time.Time) err
 		return fmt.Errorf("private metrics grant is invalid")
 	}
 	return nil
+}
+
+// sampleDigest fingerprints the sample content that matters to readers. The
+// sample id, observation time and state revision change on every evaluation
+// and are excluded, as is each event score's own observation time. An event's
+// end is derived from that observation (observed time plus remaining
+// seconds), so it jitters by a second or so on every refresh; it is compared
+// at minute resolution. The heartbeat keeps the backend copy fresh.
+func sampleDigest(sample Sample) [sha256.Size]byte {
+	sample.SampleID = ""
+	sample.ObservedAt = time.Time{}
+	sample.StateRevision = 0
+	if len(sample.Features.EventScores) > 0 {
+		scores := make([]EventScoreMetrics, len(sample.Features.EventScores))
+		copy(scores, sample.Features.EventScores)
+		for index := range scores {
+			scores[index].ObservedAt = time.Time{}
+			scores[index].OccurrenceEndsAt = scores[index].OccurrenceEndsAt.Truncate(time.Minute)
+		}
+		sample.Features.EventScores = scores
+	}
+	encoded, err := json.Marshal(sample)
+	if err != nil {
+		// An unencodable sample cannot be uploaded either; a fresh random-free
+		// digest of the error keeps the comparison from ever matching.
+		return sha256.Sum256([]byte(err.Error() + time.Now().String()))
+	}
+	return sha256.Sum256(encoded)
 }
 
 func sampleID(placement Placement, sample Sample) string {
