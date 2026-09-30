@@ -453,12 +453,12 @@ func TestPublisherStopsSpendingRefusedGrantUntilPlacementRotates(t *testing.T) {
 	}
 }
 
-func TestPlacementRotationFollowsCadenceInsteadOfBursting(t *testing.T) {
+func TestReadyNewEpochPublishesBeforeSteadyCadence(t *testing.T) {
 	server, received := publicationServer(t, func(_ int, _ *http.Request, writer http.ResponseWriter) {
 		writer.WriteHeader(http.StatusNoContent)
 	})
 	now := time.Now().UTC()
-	interval := 400 * time.Millisecond
+	interval := 800 * time.Millisecond
 	publisher := startPublisher(t, server, PublisherConfig{
 		Placement: testPlacement(now, 4, 10, strings.Repeat("a", 48)),
 		Interval:  interval, Debounce: time.Millisecond,
@@ -468,15 +468,12 @@ func TestPlacementRotationFollowsCadenceInsteadOfBursting(t *testing.T) {
 	if err := publisher.SetPlacement(testPlacement(now, 5, 11, rotatedToken)); err != nil {
 		t.Fatal(err)
 	}
-	if burst := drainPublications(received, interval/3); len(burst) != 0 {
-		t.Fatalf("placement rotation burst %d publications outside the cadence", len(burst))
-	}
 	next := awaitPublication(t, received)
 	if next.authorization != "Bearer "+rotatedToken || next.request.PlacementEpoch != 5 {
-		t.Fatalf("cadence publication after rotation = %+v", next)
+		t.Fatalf("new-epoch publication = %+v", next)
 	}
-	if elapsed := next.receivedAt.Sub(first.receivedAt); elapsed < interval-interval/10 {
-		t.Fatalf("publication after rotation arrived after %s, before the %s cadence", elapsed, interval)
+	if elapsed := next.receivedAt.Sub(first.receivedAt); elapsed >= interval/2 {
+		t.Fatalf("ready new epoch waited %s; should publish before the %s steady cadence", elapsed, interval)
 	}
 }
 
