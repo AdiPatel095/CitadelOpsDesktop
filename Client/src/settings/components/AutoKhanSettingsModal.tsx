@@ -74,6 +74,16 @@ import { collapsedSettingNote, SettingsSection } from './SettingsSection';
 import { englishGuidePack, useGuideLocale } from '../../config/useGuideLocale';
 import { useDraftRecovery } from '../useDraftRecovery';
 
+/** What the editor holds right after it loads a saved configuration: used by the load effect and by draft recovery. */
+function khanFromSections(sections: Record<string, unknown> | undefined) {
+  const draft = parseAutoKhanClientState(sections?.[AUTO_KHAN_SECTION]);
+  return {
+    draft,
+    attackRef: attackSetupRef(draft.attackPresetId, parseAttackPresetDocument(sections?.[ATTACK_PRESETS_SECTION]), AUTO_KHAN_SECTION, 'attack'),
+    defenseRef: defenseSetupRef(draft.defensePresetId, parseDefensePresetDocument(sections?.[DEFENSE_PRESETS_SECTION]), AUTO_KHAN_SECTION, 'defense'),
+  };
+}
+
 interface AutoKhanSettingsModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -147,10 +157,10 @@ export const AutoKhanSettingsModal: React.FC<AutoKhanSettingsModalProps> = ({ is
 
   useEffect(() => {
     if (!isOpen || !draftSession.initialSnapshot) return;
-    const saved = parseAutoKhanClientState(draftSession.initialSections?.[AUTO_KHAN_SECTION]);
-    setDraft(saved);
-    setAttackRef(attackSetupRef(saved.attackPresetId, parseAttackPresetDocument(draftSession.initialSections?.[ATTACK_PRESETS_SECTION]), AUTO_KHAN_SECTION, 'attack'));
-    setDefenseRef(defenseSetupRef(saved.defensePresetId, parseDefensePresetDocument(draftSession.initialSections?.[DEFENSE_PRESETS_SECTION]), AUTO_KHAN_SECTION, 'defense'));
+    const initial = khanFromSections(draftSession.initialSections);
+    setDraft(initial.draft);
+    setAttackRef(initial.attackRef);
+    setDefenseRef(initial.defenseRef);
   }, [draftSession.initialSections, draftSession.openKey, draftSession.initialSnapshot, isOpen]);
 
   const canSave = draft.sourceCastleId > 0
@@ -235,7 +245,8 @@ export const AutoKhanSettingsModal: React.FC<AutoKhanSettingsModalProps> = ({ is
     }
   };
 
-  const recovery = useDraftRecovery({ section: AUTO_KHAN_SECTION, isOpen, draftSession, draft: draft, extras: { attackRef, defenseRef } });
+  const loadedKhan = khanFromSections(draftSession.sections);
+  const recovery = useDraftRecovery({ section: AUTO_KHAN_SECTION, isOpen, draftSession, draft: draft, loaded: loadedKhan.draft, extras: { attackRef, defenseRef }, loadedExtras: { attackRef: loadedKhan.attackRef, defenseRef: loadedKhan.defenseRef } });
   useEffect(() => {
     const extras = draftSession.recoveredExtras?.value as { attackRef?: AttackSetupRef; defenseRef?: DefenseSetupRef } | undefined;
     if (!extras) return;

@@ -5,12 +5,13 @@ import { Button } from '../components/ui/Button';
 import { Modal } from '../components/ui/Modal';
 import { LocalizedText } from '../i18n/LocalizedText';
 import {
+  INITIAL_DRAFT_RECOVERY_MACHINE,
   classifyRecovered,
   clearDraft,
   compareDrafts,
   draftDigest,
-  savedWhileLoaded,
   isRecoverableSection,
+  nextDraftRecoveryMachine,
   readDraft,
   recordSavedAt,
   setEditorDirty,
@@ -18,6 +19,7 @@ import {
   writeDraft,
   type DraftDifference,
   type DraftRecoveryEntry,
+  type DraftRecoveryMachine,
 } from './DraftRecovery';
 import { scopeKey } from './onboarding/accountScope';
 import type { useConfigurationDraftSession } from './ConfigurationDraftSession';
@@ -34,8 +36,17 @@ export interface UseDraftRecoveryOptions {
   draftSession: DraftSessionApi;
   /** The section value the editor would save right now. Must be JSON. */
   draft: unknown;
+  /**
+   * The value `draft` has when the player has changed nothing: built in render from the saved section
+   * (`draftSession.sections?.[section]`) with the same function the editor's load effect uses. It is never derived from
+   * what the editor happens to hold, so it does not depend on when the editor applied its load. Save makes the saved
+   * value the new loaded value; a restored draft leaves it alone, so a restored draft is a change.
+   */
+  loaded: unknown;
   /** The editor's other unsaved sub-drafts (JSON), restored by the editor from `draftSession.recoveredExtras`. */
   extras?: unknown;
+  /** The value `extras` has when the player has changed nothing (what the editor's load effect leaves them as). */
+  loadedExtras?: unknown;
 }
 
 export interface DraftRecovery {
@@ -48,35 +59,37 @@ export interface DraftRecovery {
 const WRITE_DELAY_MS = 500;
 const digestOf = draftDigest;
 
-interface Baseline {
-  loadKey: string;
-  /** Digest of the editor's draft right after the saved section loaded. */
-  digest: string;
-  /** Digest of the saved section at that moment. */
-  savedDigest: string;
-  revision: number;
-}
-
 /**
  * Draft recovery for one editor (CIT-19). While the editor is open and its draft differs from what it loaded, the draft
  * is written (debounced) under this account/world and section. On the next open the editor shows a banner: Restore puts
  * the recovered draft into the editor (still unsaved), Discard drops it. If the saved settings changed since the draft
  * was made, Compare is required first. Restore never saves, never writes `automation.enabled` and never starts anything;
  * Save stays a normal compare-and-set against what is really saved. A successful save clears the record.
+ *
+ * What counts as a change is decided by `nextDraftRecoveryMachine` from digests of the saved data, not from timing.
  */
-export function useDraftRecovery({ section, isOpen, draftSession, draft, extras }: UseDraftRecoveryOptions): DraftRecovery {
+export function useDraftRecovery({ section, isOpen, draftSession, draft, loaded, extras, loadedExtras }: UseDraftRecoveryOptions): DraftRecovery {
   const { state } = useCitadelAPI();
   const key = scopeKey(state);
   const active = isOpen && key !== '' && isRecoverableSection(section) && draftSession.ready;
   const currentDigest = digestOf(draft, extras);
+  const loadedDigest = digestOf(loaded, loadedExtras);
   const savedDigest = stableDigest(draftSession.sections?.[section] ?? null);
   const loadKey = draftSession.loadKey;
   const revision = draftSession.snapshot?.revision ?? 0;
 
-  const latest = useRef({ draft, extras, digest: currentDigest, key, section, savedDigest, revision });
-  latest.current = { draft, extras, digest: currentDigest, key, section, savedDigest, revision };
-  const baselineRef = useRef<Baseline | null>(null);
-  const [baseline, setBaseline] = useState<Baseline | null>(null);
+  // What the effects and timers below read. Kept in an effect (declared first, so it runs first) rather than in render.
+  // `lastActive` is what the editor held the last time it was open and loaded: a write at close time is about that,
+  // not about whatever the next render shows (another account, a reload in progress).
+  const now = { draft, extras, digest: currentDigest, loadedDigest, key, section, savedDigest, revision };
+  const latest = useRef(now);
+  const lastActive = useRef(now);
+  useEffect(() => {
+    latest.current = now;
+    if (active) lastActive.current = now;
+  });
+  const machineRef = useRef<DraftRecoveryMachine>(INITIAL_DRAFT_RECOVERY_MACHINE);
+  const [machine, setMachine] = useState<DraftRecoveryMachine>(INITIAL_DRAFT_RECOVERY_MACHINE);
   const [entry, setEntry] = useState<DraftRecoveryEntry | null>(null);
   const [comparing, setComparing] = useState(false);
   const timer = useRef<number | null>(null);
@@ -88,80 +101,65 @@ export function useDraftRecovery({ section, isOpen, draftSession, draft, extras 
     }
   }, []);
 
-  const setBaselineBoth = useCallback((next: Baseline | null) => {
-    baselineRef.current = next;
-    setBaseline(next);
-  }, []);
-
-  // The baseline is taken once the editor has loaded the saved section and applied it to its draft (a macrotask later,
-  // after the editor's own load effect), and again only when the saved configuration is loaded again.
-  useEffect(() => {
-    if (!active) {
-      setBaselineBoth(null);
-      return undefined;
-    }
-    const handle = window.setTimeout(() => {
-      const current = latest.current;
-      setBaselineBoth({ loadKey, digest: current.digest, savedDigest: current.savedDigest, revision: current.revision });
-    }, 0);
-    return () => window.clearTimeout(handle);
-  }, [active, loadKey, setBaselineBoth]);
-
-  const dirty = active && baseline !== null && baseline.loadKey === loadKey && currentDigest !== baseline.digest;
-
-  const write = useCallback(() => {
-    const current = latest.current;
-    const base = baselineRef.current;
-    if (!base || current.digest === base.digest) return;
+  // Records what the editor held (default: right now). Never when it equals the loaded value.
+  const write = useCallback((from?: typeof latest.current) => {
+    const current = from ?? latest.current;
+    if (current.digest === current.loadedDigest) return;
     writeDraft({
       version: 1, section: current.section, accountKey: current.key, draft: current.draft,
       ...(current.extras !== undefined ? { extras: current.extras } : {}),
-      baseRevision: base.revision, baseDigest: base.savedDigest, savedAt: new Date().toISOString(),
+      baseRevision: current.revision, baseDigest: current.savedDigest, savedAt: new Date().toISOString(),
     });
   }, []);
 
-  // Debounced write while dirty.
+  // The state machine runs whenever what it looks at changes (no timer, no baseline). Its answer is carried out here.
   useEffect(() => {
-    if (!dirty) return undefined;
-    timer.current = window.setTimeout(() => { timer.current = null; write(); }, WRITE_DELAY_MS);
-    return cancelTimer;
-  }, [cancelTimer, currentDigest, dirty, write]);
-
-  // Presence for the checklist, and a final write when the editor closes with unsaved changes (Cancel keeps the draft).
-  useEffect(() => {
-    if (!dirty) return undefined;
-    setEditorDirty(key, section, true);
-    return () => {
+    // A pending write belongs to the load it was scheduled in (another account or a reload must not receive it).
+    if (machineRef.current.loadKey !== loadKey) cancelTimer();
+    const step = nextDraftRecoveryMachine(machineRef.current, { active, loadKey, loadedDigest, draftDigest: currentDigest, savedDigest });
+    machineRef.current = step.machine;
+    setMachine((current) => (current.loadKey === step.machine.loadKey && current.savedDigest === step.machine.savedDigest
+      && current.settled === step.machine.settled && current.dirty === step.machine.dirty ? current : step.machine));
+    if (step.action === 'write') {
       cancelTimer();
-      write();
-      setEditorDirty(key, section, false);
-    };
-  }, [cancelTimer, dirty, key, section, write]);
-
-  // A change of the SAVED section without a reload means this editor saved it: clear the record, note the time, and
-  // treat the saved draft as the new baseline.
-  const previousSaved = useRef<{ loadKey: string; digest: string } | null>(null);
-  useEffect(() => {
-    if (!active) {
-      previousSaved.current = null;
-      return;
-    }
-    const previous = previousSaved.current;
-    previousSaved.current = { loadKey, digest: savedDigest };
-    if (savedWhileLoaded(previous, { loadKey, digest: savedDigest })) {
+      if (active) {
+        timer.current = window.setTimeout(() => { timer.current = null; write(); }, WRITE_DELAY_MS);
+      } else {
+        // The editor closed with unsaved changes: Cancel keeps the draft.
+        write(lastActive.current);
+      }
+    } else if (step.action === 'clear') {
+      cancelTimer();
+      clearDraft(key, section);
+    } else if (step.action === 'saved') {
+      // A change of the SAVED section without a reload means this editor saved it.
       cancelTimer();
       clearDraft(key, section);
       recordSavedAt(key, section, new Date().toISOString());
-      const current = latest.current;
-      setBaselineBoth({ loadKey, digest: current.digest, savedDigest: current.savedDigest, revision: current.revision });
       setEntry(null);
     }
-  }, [active, cancelTimer, key, loadKey, savedDigest, section, setBaselineBoth]);
+  }, [active, cancelTimer, currentDigest, key, loadKey, loadedDigest, savedDigest, section, write]);
+
+  const dirty = active && machine.dirty;
+
+  // Presence for the checklist, and a final write if the editor goes away while it holds unsaved changes.
+  useEffect(() => {
+    if (!dirty) return undefined;
+    setEditorDirty(key, section, true);
+    return () => setEditorDirty(key, section, false);
+  }, [dirty, key, section]);
+  useEffect(() => () => {
+    cancelTimer();
+    if (machineRef.current.dirty) write(lastActive.current);
+  }, [cancelTimer, write]);
 
   // On open: read what is waiting. A record identical to what just loaded has nothing to recover and is dropped.
+  // The record lives in browser storage and is read once per load (never while the player edits), so it is set from an
+  // effect rather than derived in render.
+  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     setComparing(false);
-    if (!active || !baseline || baseline.loadKey !== loadKey) {
+    if (!active) {
       setEntry(null);
       return;
     }
@@ -170,15 +168,15 @@ export function useDraftRecovery({ section, isOpen, draftSession, draft, extras 
       setEntry(null);
       return;
     }
-    if (classifyRecovered(found, { draftDigest: baseline.digest, savedDigest: baseline.savedDigest }) === 'drop') {
+    if (classifyRecovered(found, { draftDigest: latest.current.loadedDigest, savedDigest: latest.current.savedDigest }) === 'drop') {
       clearDraft(key, section);
       setEntry(null);
       return;
     }
     setEntry(found);
     // Only when the editor (re)loads, never while the player edits.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [active, baseline?.loadKey, key, section]);
+  }, [active, loadKey, key, section]);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   const discard = useCallback(() => {
     clearDraft(key, section);
@@ -194,7 +192,7 @@ export function useDraftRecovery({ section, isOpen, draftSession, draft, extras 
     setComparing(false);
   }, [draftSession, entry, key, section]);
 
-  const savedSince = entry != null && baseline != null && entry.baseDigest !== baseline.savedDigest;
+  const savedSince = entry != null && entry.baseDigest !== savedDigest;
   const differences = useMemo<DraftDifference[]>(
     () => (comparing && entry ? compareDrafts(draftSession.sections?.[section] ?? null, entry.draft) : []),
     [comparing, draftSession.sections, entry, section],

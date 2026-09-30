@@ -851,7 +851,7 @@ export const QueueProductionSettingsModal: React.FC<QueueProductionSettingsModal
     </SectionCard>
   );
 
-  const recovery = useDraftRecovery({ section: definition.configurationSection, isOpen, draftSession, draft: settings });
+  const recovery = useDraftRecovery({ section: definition.configurationSection, isOpen, draftSession, draft: settings, loaded: definition.normalizeSettings(draftSession.sections?.[definition.configurationSection] ?? definition.defaultSettings()) });
 
   return (
     <>

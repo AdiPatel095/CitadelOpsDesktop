@@ -197,7 +197,7 @@ export const AutoAdvisorSettingsModal: React.FC<AutoAdvisorSettingsModalProps> =
     setActivationOpen(true);
   };
 
-  const recovery = useDraftRecovery({ section: AUTO_ADVISOR_SECTION, isOpen, draftSession, draft: draft });
+  const recovery = useDraftRecovery({ section: AUTO_ADVISOR_SECTION, isOpen, draftSession, draft: draft, loaded: parseAutoAdvisorClientState(draftSession.sections?.[AUTO_ADVISOR_SECTION]) });
 
   return (
     <>

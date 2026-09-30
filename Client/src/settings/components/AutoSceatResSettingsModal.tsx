@@ -260,7 +260,7 @@ export const AutoSceatResSettingsModal: React.FC<AutoSceatResSettingsModalProps>
     );
   };
 
-  const recovery = useDraftRecovery({ section: AUTO_SCEAT_SECTION, isOpen, draftSession, draft: normalizeAutoSceatResSettings(settings) });
+  const recovery = useDraftRecovery({ section: AUTO_SCEAT_SECTION, isOpen, draftSession, draft: normalizeAutoSceatResSettings(settings), loaded: normalizeAutoSceatResSettings(normalizeAutoSceatResSettings(draftSession.sections?.[AUTO_SCEAT_SECTION] ?? defaultAutoSceatResSettings())) });
 
   return (
     <>

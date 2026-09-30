@@ -111,7 +111,9 @@ export const SetupChecklist: React.FC<SetupChecklistProps> = ({ goal, collapsed,
   const { checklist, legend } = useGoalChecklist(goal);
   return (
     <section
-      className="rounded-2xl border border-primary/30 bg-bg-card/70 p-4"
+      id="setup-checklist"
+      tabIndex={-1}
+      className="rounded-2xl border border-primary/30 bg-bg-card/70 p-4 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
       aria-labelledby={`goal-title-${goal.id}`}
       data-setup-checklist={goal.featureId}
       data-checklist-complete={checklist.complete ? 'true' : 'false'}

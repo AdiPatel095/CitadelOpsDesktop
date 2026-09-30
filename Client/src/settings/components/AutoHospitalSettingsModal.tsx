@@ -138,7 +138,7 @@ export const AutoHospitalSettingsModal: React.FC<AutoHospitalSettingsModalProps>
     );
   };
 
-  const recovery = useDraftRecovery({ section: AUTO_HOSPITAL_SECTION, isOpen, draftSession, draft: normalizeAutoHospitalSettings(settings) });
+  const recovery = useDraftRecovery({ section: AUTO_HOSPITAL_SECTION, isOpen, draftSession, draft: normalizeAutoHospitalSettings(settings), loaded: normalizeAutoHospitalSettings(normalizeAutoHospitalSettings(draftSession.sections?.[AUTO_HOSPITAL_SECTION] ?? defaultAutoHospitalSettings())) });
 
   return (
     <SettingsModal

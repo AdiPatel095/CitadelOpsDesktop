@@ -184,7 +184,9 @@ export const AutoTowerSettingsModal: React.FC<AutoTowerSettingsModalProps> = ({ 
     if (!isSaving) onClose();
   };
 
-  const recovery = useDraftRecovery({ section: 'automation.autoTowers', isOpen, draftSession, draft: { ...parseAutoTowerClientState(draftSession.sections?.['automation.autoTowers']), version: 4, mapRefreshIntervalSec, dailyAttackLimit, horseTravelBoostId, useAdvisor, autoActivateAdvisor, maximumDailyTimeSkips, castles: settings } });
+  // What the editor holds once its load effect has applied the saved section (every field the draft lists is set from it).
+  const loadedTowers = parseAutoTowerClientState(draftSession.sections?.['automation.autoTowers'] ?? defaultAutoTowerClientState());
+  const recovery = useDraftRecovery({ section: 'automation.autoTowers', isOpen, draftSession, draft: { ...parseAutoTowerClientState(draftSession.sections?.['automation.autoTowers']), version: 4, mapRefreshIntervalSec, dailyAttackLimit, horseTravelBoostId, useAdvisor, autoActivateAdvisor, maximumDailyTimeSkips, castles: settings }, loaded: { ...loadedTowers, version: 4 } });
 
   return (
     <>

@@ -193,7 +193,7 @@ export const AutoFortressSettingsModal: React.FC<AutoFortressSettingsModalProps>
     }
   };
 
-  const recovery = useDraftRecovery({ section: AUTO_FORTRESS_SECTION, isOpen, draftSession, draft: settings });
+  const recovery = useDraftRecovery({ section: AUTO_FORTRESS_SECTION, isOpen, draftSession, draft: settings, loaded: parseAutoFortressClientState(draftSession.sections?.[AUTO_FORTRESS_SECTION]) });
 
   return (<>
     <SettingsModal

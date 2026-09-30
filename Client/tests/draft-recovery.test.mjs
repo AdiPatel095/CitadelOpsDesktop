@@ -183,6 +183,10 @@ test('every draft-session editor records and offers recovery; Equipment Cleanup 
     assert.match(text, /useConfigurationDraftSession/, modal);
     assert.match(text, /const recovery = useDraftRecovery\(\{ section: [^,]+, isOpen, draftSession, draft: /, modal);
     assert.match(text, /\{recovery\.banner\}/, modal);
+    // The loaded value is derived from the saved data (no timer): every editor must say what its draft is when nothing changed.
+    const call = text.slice(text.indexOf('const recovery = useDraftRecovery('), text.indexOf('{recovery.banner}'));
+    assert.match(call, /loaded: /, `${modal}: useDraftRecovery is given \`loaded\``);
+    assert.match(call, /draftSession\.sections|loaded[A-Z]\w*/, `${modal}: \`loaded\` is built from the saved section, not from editor state`);
   }
   const cleanup = await readFile(new URL('../src/settings/components/AutoEquipmentCleanupSettingsModal.tsx', import.meta.url), 'utf8').catch(() => '');
   assert.doesNotMatch(cleanup, /useDraftRecovery/);
@@ -191,6 +195,110 @@ test('every draft-session editor records and offers recovery; Equipment Cleanup 
     const text = await readFile(new URL(`../src/settings/components/${modal}.tsx`, import.meta.url), 'utf8');
     assert.match(text, /draftSession\.recoveredExtras/, modal);
     for (const name of names) assert.match(text, new RegExp(`extras: \\{[^}]*${name}`), `${modal}: ${name} is recorded with the draft`);
+    for (const name of names) assert.match(text, new RegExp(`loadedExtras: \\{[^}]*${name}`), `${modal}: ${name} has a loaded value`);
     assert.ok(text.indexOf('draftSession.recoveredExtras') > text.indexOf('draftSession.initialSections'), `${modal}: restores after the load effect`);
   }
+});
+
+test('the hook has no baseline timer: nothing in it waits for the editor to load', async () => {
+  const hook = await readFile(new URL('../src/settings/useDraftRecovery.tsx', import.meta.url), 'utf8');
+  const text = hook.replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*\/\/.*$/gm, "");
+  assert.doesNotMatch(text, /setTimeout\(\(\) => \{\s*const current = latest/, 'no timer takes a baseline');
+  assert.doesNotMatch(text, /baselineRef|setBaselineBoth|Baseline\b/, 'no baseline state');
+  assert.match(text, /nextDraftRecoveryMachine\(/, 'the hook is driven by the pure state machine');
+  assert.match(text, /loaded, extras, loadedExtras/, 'the hook takes the loaded value and its extras');
+  // The only timer left is the debounce of the write itself.
+  assert.equal([...text.matchAll(/window\.setTimeout\(/g)].length, 1);
+});
+
+// ——— The state machine, step by step ———
+const machine = () => {
+  let state = recovery.INITIAL_DRAFT_RECOVERY_MACHINE;
+  const digest = (value) => recovery.stableDigest(value);
+  return {
+    step(input) {
+      const base = { active: true, loadKey: 'k:1', ...input };
+      const result = recovery.nextDraftRecoveryMachine(state, {
+        active: base.active, loadKey: base.loadKey, loadedDigest: digest(base.loaded), draftDigest: digest(base.draft), savedDigest: digest(base.saved),
+      });
+      state = result.machine;
+      return { ...result.machine, action: result.action };
+    },
+  };
+};
+const DEFAULTS = { version: 4, castles: {} };
+const SAVED = { version: 4, castles: { 1: { enabled: true, unitId: 215 } } };
+
+test('sequence: the editor becomes ready before it has applied what it loaded, and nothing is recorded', () => {
+  const m = machine();
+  // Ready, the editor still holds its defaults, the saved section is not the defaults (the false-draft race).
+  assert.deepEqual(m.step({ loaded: SAVED, draft: DEFAULTS, saved: SAVED }), { loadKey: 'k:1', savedDigest: recovery.stableDigest(SAVED), settled: false, dirty: false, action: 'none' });
+  // The editor's load effect has applied the saved section.
+  const applied = m.step({ loaded: SAVED, draft: SAVED, saved: SAVED });
+  assert.deepEqual([applied.settled, applied.dirty, applied.action], [true, false, 'none']);
+  // Nothing else happens on re-renders.
+  assert.equal(m.step({ loaded: SAVED, draft: SAVED, saved: SAVED }).action, 'none');
+});
+
+test('sequence: a real edit is written, changing it back clears the record', () => {
+  const m = machine();
+  m.step({ loaded: SAVED, draft: DEFAULTS, saved: SAVED });
+  m.step({ loaded: SAVED, draft: SAVED, saved: SAVED });
+  const EDITED = { version: 4, castles: { 1: { enabled: true, unitId: 216 } } };
+  const edit = m.step({ loaded: SAVED, draft: EDITED, saved: SAVED });
+  assert.deepEqual([edit.dirty, edit.action], [true, 'write']);
+  assert.equal(m.step({ loaded: SAVED, draft: { ...EDITED, castles: { 1: { enabled: true, unitId: 217 } } }, saved: SAVED }).action, 'write', 'every further edit writes again');
+  const revert = m.step({ loaded: SAVED, draft: SAVED, saved: SAVED });
+  assert.deepEqual([revert.dirty, revert.action], [false, 'clear']);
+  assert.equal(m.step({ loaded: SAVED, draft: SAVED, saved: SAVED }).action, 'none');
+});
+
+test('sequence: Save clears the record and notes the time; the saved value becomes the loaded value', () => {
+  const m = machine();
+  m.step({ loaded: SAVED, draft: SAVED, saved: SAVED });
+  const EDITED = { version: 4, castles: { 1: { enabled: true, unitId: 216 } } };
+  assert.equal(m.step({ loaded: SAVED, draft: EDITED, saved: SAVED }).action, 'write');
+  // The save succeeded: the saved section (and so the loaded value) is now what the editor holds.
+  const saved = m.step({ loaded: EDITED, draft: EDITED, saved: EDITED });
+  assert.deepEqual([saved.dirty, saved.settled, saved.action], [false, true, 'saved']);
+  assert.equal(m.step({ loaded: EDITED, draft: EDITED, saved: EDITED }).action, 'none');
+  // And the next edit is a change again.
+  assert.equal(m.step({ loaded: EDITED, draft: SAVED, saved: EDITED }).action, 'write');
+});
+
+test('sequence: Save and close in one step is a save: the record is cleared and nothing is written', () => {
+  const m = machine();
+  m.step({ loaded: SAVED, draft: SAVED, saved: SAVED });
+  const EDITED = { version: 4, castles: { 1: { enabled: true, unitId: 216 } } };
+  assert.equal(m.step({ loaded: SAVED, draft: EDITED, saved: SAVED }).action, 'write');
+  const closed = m.step({ active: false, loaded: EDITED, draft: EDITED, saved: EDITED });
+  assert.equal(closed.action, 'saved', 'clear + savedAt, and no write of the values that were just saved');
+  assert.deepEqual([closed.settled, closed.dirty, closed.loadKey], [false, false, null], 'a closed editor holds no state');
+});
+
+test('sequence: closing with unsaved changes writes them; closing clean does not', () => {
+  const dirty = machine();
+  dirty.step({ loaded: SAVED, draft: SAVED, saved: SAVED });
+  dirty.step({ loaded: SAVED, draft: { version: 4, castles: {} }, saved: SAVED });
+  assert.equal(dirty.step({ active: false, loaded: SAVED, draft: { version: 4, castles: {} }, saved: SAVED }).action, 'write');
+  const clean = machine();
+  clean.step({ loaded: SAVED, draft: SAVED, saved: SAVED });
+  assert.equal(clean.step({ active: false, loaded: SAVED, draft: SAVED, saved: SAVED }).action, 'none');
+  // Closing before the editor ever settled (it never applied what it loaded) is not a change either.
+  const early = machine();
+  early.step({ loaded: SAVED, draft: DEFAULTS, saved: SAVED });
+  assert.equal(early.step({ active: false, loaded: SAVED, draft: DEFAULTS, saved: SAVED }).action, 'none');
+});
+
+test('sequence: an editor that never equals its loaded value records nothing (fail-safe); a reload starts a new load', () => {
+  const m = machine();
+  for (let index = 0; index < 4; index += 1) {
+    const step = m.step({ loaded: SAVED, draft: { ...SAVED, extra: index }, saved: SAVED });
+    assert.deepEqual([step.settled, step.dirty, step.action], [false, false, 'none']);
+  }
+  // Settled, then the saved configuration is loaded again: the editor must settle again before a change counts.
+  const reload = machine();
+  reload.step({ loaded: SAVED, draft: SAVED, saved: SAVED });
+  const next = reload.step({ loadKey: 'k:2', loaded: { ...SAVED, castles: {} }, draft: SAVED, saved: { ...SAVED, castles: {} } });
+  assert.deepEqual([next.settled, next.dirty, next.action], [false, false, 'none']);
 });

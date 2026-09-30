@@ -101,7 +101,7 @@ export const AutoBoosterSettingsModal: React.FC<AutoBoosterSettingsModalProps> =
     }
   };
 
-  const recovery = useDraftRecovery({ section: AUTO_BOOSTER_SECTION, isOpen, draftSession, draft: parseAutoBoosterClientState(settings) });
+  const recovery = useDraftRecovery({ section: AUTO_BOOSTER_SECTION, isOpen, draftSession, draft: parseAutoBoosterClientState(settings), loaded: parseAutoBoosterClientState(parseAutoBoosterClientState(draftSession.sections?.[AUTO_BOOSTER_SECTION])) });
 
   return (
     <SettingsModal

@@ -56,6 +56,15 @@ import { AutomationRunStrip } from './AutomationRunStrip';
 import { collapsedSettingNote, SettingsSection } from './SettingsSection';
 import { useDraftRecovery } from '../useDraftRecovery';
 
+/** What the editor holds right after it loads a saved configuration: used by the load effect and by draft recovery. */
+function invasionFromSections(sections: Record<string, unknown> | undefined) {
+  const draft = parseAutoInvasionClientState(sections?.[AUTO_INVASION_SECTION]);
+  return {
+    draft,
+    attackRef: attackSetupRef(draft.presetId, parseAttackPresetDocument(sections?.[ATTACK_PRESETS_SECTION]), AUTO_INVASION_SECTION, 'attack'),
+  };
+}
+
 interface AutoInvasionSettingsModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -135,14 +144,9 @@ export const AutoInvasionSettingsModal: React.FC<AutoInvasionSettingsModalProps>
 
   useEffect(() => {
     if (!isOpen || !draftSession.initialSnapshot) return;
-    const saved = parseAutoInvasionClientState(draftSession.initialSections?.[AUTO_INVASION_SECTION]);
-    setDraft(saved);
-    setAttackRef(attackSetupRef(
-      saved.presetId,
-      parseAttackPresetDocument(draftSession.initialSections?.[ATTACK_PRESETS_SECTION]),
-      AUTO_INVASION_SECTION,
-      'attack',
-    ));
+    const initial = invasionFromSections(draftSession.initialSections);
+    setDraft(initial.draft);
+    setAttackRef(initial.attackRef);
   }, [draftSession.initialSections, draftSession.openKey, draftSession.initialSnapshot, isOpen]);
 
   const sourceCastle = useMemo(() => {
@@ -225,7 +229,8 @@ export const AutoInvasionSettingsModal: React.FC<AutoInvasionSettingsModalProps>
     }
   };
 
-  const recovery = useDraftRecovery({ section: AUTO_INVASION_SECTION, isOpen, draftSession, draft: draft, extras: { attackRef } });
+  const loadedInvasion = invasionFromSections(draftSession.sections);
+  const recovery = useDraftRecovery({ section: AUTO_INVASION_SECTION, isOpen, draftSession, draft: draft, loaded: loadedInvasion.draft, extras: { attackRef }, loadedExtras: { attackRef: loadedInvasion.attackRef } });
   useEffect(() => {
     const extras = draftSession.recoveredExtras?.value as { attackRef?: AttackSetupRef } | undefined;
     if (extras?.attackRef) setAttackRef(extras.attackRef);

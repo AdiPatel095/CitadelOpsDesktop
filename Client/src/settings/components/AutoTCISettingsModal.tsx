@@ -47,6 +47,11 @@ import { useCitadelAPI } from '../../api/ApiContext';
 import { castleOptionsFromState } from '../../api/Selectors';
 import { useDraftRecovery } from '../useDraftRecovery';
 
+/** What the editor holds right after it loads a saved configuration: used by the load effect and by draft recovery. */
+function tciFromSection(section: unknown) {
+  return parseAutoTCIClientState(section ?? buildAutoTCIClientState({}, emptyPresetsFile()));
+}
+
 interface AutoTCISettingsModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -116,9 +121,7 @@ export const AutoTCISettingsModal: React.FC<AutoTCISettingsModalProps> = ({ isOp
       return;
     }
     if (!draftSession.initialSnapshot) return;
-    applyFullClientState(parseAutoTCIClientState(
-      draftSession.initialSections?.[AUTO_TCI_SECTION] ?? buildAutoTCIClientState({}, emptyPresetsFile()),
-    ));
+    applyFullClientState(tciFromSection(draftSession.initialSections?.[AUTO_TCI_SECTION]));
     setAppliedPresetId(null);
     setPresetName('');
     setPresetError('');
@@ -378,7 +381,8 @@ export const AutoTCISettingsModal: React.FC<AutoTCISettingsModalProps> = ({ isOp
     </div>
   );
 
-  const recovery = useDraftRecovery({ section: AUTO_TCI_SECTION, isOpen, draftSession, draft: buildAutoTCIClientState(settings, presetsState) });
+  const loadedTci = tciFromSection(draftSession.sections?.[AUTO_TCI_SECTION]);
+  const recovery = useDraftRecovery({ section: AUTO_TCI_SECTION, isOpen, draftSession, draft: buildAutoTCIClientState(settings, presetsState), loaded: buildAutoTCIClientState(loadedTci.targets, loadedTci.presets) });
 
   return (
     <SettingsModal

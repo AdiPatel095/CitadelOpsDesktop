@@ -837,7 +837,7 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
     focusReadinessTargetWhenReady(id);
   };
   const goalButton = (
-    <Button variant="outline" size="sm" onClick={() => setGoalPickerOpen(true)} data-goal-entry>
+    <Button variant="outline" size="sm" id="goal-entry" onClick={() => setGoalPickerOpen(true)} data-goal-entry>
       <LocalizedText messageKey="goalEntry.button" />
     </Button>
   );
@@ -850,7 +850,8 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
           onSetCollapsed={goalApi.setCollapsed}
           onOpenEditor={openGoalEditor}
           onGoToSwitch={goToGoalSwitch}
-          onDone={goalApi.clear}
+          // The opener that started the goal is gone once the checklist replaces it, so focus is placed on purpose (CIT-19 QA).
+          onDone={() => { goalApi.clear(); focusReadinessTargetWhenReady('goal-entry'); }}
           onChooseAnother={() => { goalApi.clear(); setGoalPickerOpen(true); }}
         />
       ) : (
@@ -867,7 +868,7 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
       {goalPickerOpen ? (
         <GoalPicker
           goals={AUTOMATION_GOALS}
-          onChoose={(goalId) => { goalApi.choose(goalId); setGoalPickerOpen(false); }}
+          onChoose={(goalId) => { goalApi.choose(goalId); setGoalPickerOpen(false); focusReadinessTargetWhenReady('setup-checklist'); }}
           onClose={() => setGoalPickerOpen(false)}
         />
       ) : null}

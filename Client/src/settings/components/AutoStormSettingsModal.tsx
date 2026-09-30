@@ -92,6 +92,19 @@ import { collapsedSettingNote, SettingsSection } from './SettingsSection';
 import { englishGuidePack, useGuideLocale } from '../../config/useGuideLocale';
 import { useDraftRecovery } from '../useDraftRecovery';
 
+/** What the editor holds right after it loads a saved configuration: used by the load effect and by draft recovery. */
+function stormFromSections(sections: Record<string, unknown> | undefined) {
+  const current = parseAutoStormClientState(sections?.[AUTO_STORM_SECTION]);
+  const blueprints = parseAutoStormBlueprintDocument(sections?.[AUTO_STORM_BLUEPRINTS_SECTION]);
+  const target = blueprints.blueprints[blueprints.activeId]?.target ?? current.target;
+  const presets = parseAttackPresetDocument(sections?.[ATTACK_PRESETS_SECTION]);
+  return {
+    draft: { ...current, ...(target ? { target } : {}) },
+    fortsRef: attackSetupRef(current.forts.presetId, presets, AUTO_STORM_SECTION, 'forts'),
+    islandsRef: attackSetupRef(current.islands.presetId, presets, AUTO_STORM_SECTION, 'islands'),
+  };
+}
+
 interface AutoStormSettingsModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -295,15 +308,11 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
   useEffect(() => {
     if (!isOpen || !draftSession.initialSnapshot) return;
     // Baseline at open (draft session): background refreshes never reset the draft.
-    const sections = draftSession.initialSections ?? {};
-    const current = parseAutoStormClientState(sections[AUTO_STORM_SECTION]);
-    const blueprints = parseAutoStormBlueprintDocument(sections[AUTO_STORM_BLUEPRINTS_SECTION]);
-    const target = blueprints.blueprints[blueprints.activeId]?.target ?? current.target;
-    const presets = parseAttackPresetDocument(sections[ATTACK_PRESETS_SECTION]);
-    setDraft({ ...current, ...(target ? { target } : {}) });
-    setFortsRef(attackSetupRef(current.forts.presetId, presets, AUTO_STORM_SECTION, 'forts'));
-    setIslandsRef(attackSetupRef(current.islands.presetId, presets, AUTO_STORM_SECTION, 'islands'));
-    setCaptureCastleId(target?.castleId ?? 0);
+    const initial = stormFromSections(draftSession.initialSections);
+    setDraft(initial.draft);
+    setFortsRef(initial.fortsRef);
+    setIslandsRef(initial.islandsRef);
+    setCaptureCastleId(initial.draft.target?.castleId ?? 0);
     setBlueprintPreview(null);
     setDraggedTargetPriority(null);
     setTargetPriorityDropTarget(null);
@@ -656,7 +665,8 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
   const targetCastle = target ? state?.castles[String(target.castleId)] : undefined;
   const aquamarineBalance = stormCastle?.resources['9']?.amount ?? 0;
 
-  const recovery = useDraftRecovery({ section: AUTO_STORM_SECTION, isOpen, draftSession, draft: draft, extras: { fortsRef, islandsRef } });
+  const loadedStorm = stormFromSections(draftSession.sections);
+  const recovery = useDraftRecovery({ section: AUTO_STORM_SECTION, isOpen, draftSession, draft: draft, loaded: loadedStorm.draft, extras: { fortsRef, islandsRef }, loadedExtras: { fortsRef: loadedStorm.fortsRef, islandsRef: loadedStorm.islandsRef } });
   useEffect(() => {
     const extras = draftSession.recoveredExtras?.value as { fortsRef?: AttackSetupRef; islandsRef?: AttackSetupRef } | undefined;
     if (!extras) return;

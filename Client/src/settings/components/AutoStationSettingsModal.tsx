@@ -157,7 +157,7 @@ export const AutoStationSettingsModal: React.FC<AutoStationSettingsModalProps> =
     if (!isSaving) onClose();
   };
 
-  const recovery = useDraftRecovery({ section: 'automation.autoStation', isOpen, draftSession, draft: parseAutoStationClientState(state) });
+  const recovery = useDraftRecovery({ section: 'automation.autoStation', isOpen, draftSession, draft: parseAutoStationClientState(state), loaded: parseAutoStationClientState(parseAutoStationClientState(draftSession.sections?.['automation.autoStation'])) });
 
   return (
     <>

@@ -85,7 +85,7 @@ export const AutoFoodBalanceSettingsModal: React.FC<AutoFoodBalanceSettingsModal
   const fixReadiness = (check: ReadinessCheck) => {
     if (!disclosure.fix(check)) focusReadinessTarget('auto-food-castles');
   };
-  const recovery = useDraftRecovery({ section: 'automation.autoFoodBalance', isOpen, draftSession, draft: parseAutoFoodBalanceSettings(settings) });
+  const recovery = useDraftRecovery({ section: 'automation.autoFoodBalance', isOpen, draftSession, draft: parseAutoFoodBalanceSettings(settings), loaded: parseAutoFoodBalanceSettings(parseAutoFoodBalanceSettings(asRecord(draftSession.sections?.['automation.autoFoodBalance']))) });
 
   return (
     <SettingsModal

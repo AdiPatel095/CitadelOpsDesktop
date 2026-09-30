@@ -199,6 +199,61 @@ export function savedWhileLoaded(
   return previous !== null && previous.loadKey === current.loadKey && previous.digest !== current.digest;
 }
 
+/**
+ * The recovery state machine of one open editor (CIT-19). It is pure: `useDraftRecovery` feeds it what it can see each
+ * time an input changes and does what it answers. There is no timer and no baseline taken "after the editor loaded":
+ * the loaded value is derived from the saved data (`loadedDigest`), so the order in which an editor applies its load
+ * cannot matter.
+ *
+ * - `settled`: the editor's draft has equalled the loaded value since this load (or since the last save). Before that the
+ *   editor is still applying what it loaded, so nothing it holds counts as a change. An editor whose draft never equals
+ *   the loaded value never settles and records nothing (fail-safe).
+ * - `dirty`: settled, and the draft now differs from the loaded value.
+ * - `action`: `write` (record the draft: debounced while open, at once when the editor closes), `clear` (the draft was
+ *   changed back to what was loaded: drop the record), `saved` (the saved section changed under an open editor: this
+ *   editor's save succeeded, so drop the record and note the time), or `none`.
+ */
+export interface DraftRecoveryMachine {
+  loadKey: string | null;
+  savedDigest: string | null;
+  settled: boolean;
+  dirty: boolean;
+}
+
+export type DraftRecoveryAction = 'none' | 'write' | 'clear' | 'saved';
+
+export interface DraftRecoveryInput {
+  active: boolean;
+  loadKey: string;
+  /** Digest of what the draft holds when the player changed nothing (derived from the saved data). */
+  loadedDigest: string;
+  /** Digest of what the editor holds right now. */
+  draftDigest: string;
+  /** Digest of the saved section. */
+  savedDigest: string;
+}
+
+export const INITIAL_DRAFT_RECOVERY_MACHINE: DraftRecoveryMachine = { loadKey: null, savedDigest: null, settled: false, dirty: false };
+
+export function nextDraftRecoveryMachine(
+  previous: DraftRecoveryMachine,
+  input: DraftRecoveryInput,
+): { machine: DraftRecoveryMachine; action: DraftRecoveryAction } {
+  const sameLoad = previous.loadKey !== null && previous.loadKey === input.loadKey;
+  // The saved section changed while the same load stayed open: this editor saved it. A save and a close in one step is
+  // still a save, so the close must not write what was just saved as a draft.
+  const saved = sameLoad && previous.savedDigest !== null && previous.savedDigest !== input.savedDigest;
+  if (!input.active) {
+    return { machine: INITIAL_DRAFT_RECOVERY_MACHINE, action: saved ? 'saved' : previous.dirty ? 'write' : 'none' };
+  }
+  const equal = input.draftDigest === input.loadedDigest;
+  // A save makes the saved value the new loaded value, so the editor must settle on it again.
+  const settled = equal || (sameLoad && previous.settled && !saved);
+  const dirty = settled && !equal;
+  const action: DraftRecoveryAction = saved ? 'saved' : dirty ? 'write' : previous.dirty && sameLoad ? 'clear' : 'none';
+  return { machine: { loadKey: input.loadKey, savedDigest: input.savedDigest, settled, dirty }, action };
+}
+
 // ——— Presence: what is unsaved in an open editor right now, and when this device last saw a section saved ———
 
 const dirtyEditors = new Map<string, number>();
