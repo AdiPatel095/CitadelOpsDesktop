@@ -27,7 +27,7 @@ func TestReplayOfAQuietAccountCommitsOnlyRealMovementChanges(t *testing.T) {
 	events, unsubscribe := store.Subscribe(256)
 	defer unsubscribe()
 
-	start := time.Date(2026, 9, 30, 12, 0, 0, 0, time.UTC)
+	start := movementTestStart()
 	var committedAt []int
 	frames := 0
 	scanner := bufio.NewScanner(file)

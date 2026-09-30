@@ -18,6 +18,15 @@ import (
 // nothing changes between polls: only the elapsed-travel counters (PT) advance.
 // Movements: an owned attack with a commander, an incoming foreign attack, an
 // owned outbound station with its total wait, and an advisor attack in flight.
+// movementTestStart is the frame time these tests build on. It is taken from the
+// clock, not pinned to a date: the reducers decide commander availability from
+// the real clock (commanderAvailable), so a fixed date makes the tests depend on
+// when they run. Frames are start plus an offset, so every relation between a
+// frame and "now" is the same at any time.
+func movementTestStart() time.Time {
+	return time.Now().UTC().Truncate(time.Second)
+}
+
 func pollPayload(elapsed int) json.RawMessage {
 	return json.RawMessage(fmt.Sprintf(`{"M":[
 		{"M":{"MID":50,"PT":%d,"TT":900,"D":0,"T":0,"KID":0,"OID":1,"TID":99,"SA":[0,10,11,100,1],"TA":[0,20,21,300,99]},"A":[[6,40],[7,10]],"UM":{"L":{"ID":7}}},
@@ -63,7 +72,7 @@ func sendPoll(t *testing.T, pipeline *Pipeline, payload json.RawMessage, at time
 // the dashboard), and still advances the freshness barrier.
 func TestIdenticalMovementPollsCreateNoRevisionOrEventButKeepTheBarrierFresh(t *testing.T) {
 	pipeline, store := quietPollFixture(t)
-	start := time.Date(2026, 9, 30, 12, 0, 0, 0, time.UTC)
+	start := movementTestStart()
 	first := sendPoll(t, pipeline, pollPayload(0), start)
 	if first.Revision == 0 || len(first.Domains) == 0 {
 		t.Fatalf("the first poll must commit: %+v", first)
@@ -110,7 +119,7 @@ func TestIdenticalMovementPollsCreateNoRevisionOrEventButKeepTheBarrierFresh(t *
 
 func TestMovementChangesStillCommitWithTheSameDomainsAndTiming(t *testing.T) {
 	pipeline, store := quietPollFixture(t)
-	start := time.Date(2026, 9, 30, 12, 0, 0, 0, time.UTC)
+	start := movementTestStart()
 	first := sendPoll(t, pipeline, pollPayload(0), start)
 	events, unsubscribe := store.Subscribe(64)
 	defer unsubscribe()
@@ -153,7 +162,7 @@ func TestMovementChangesStillCommitWithTheSameDomainsAndTiming(t *testing.T) {
 
 func TestOwnedCommanderAvailabilityStillFollowsARemovedMovement(t *testing.T) {
 	pipeline, store := quietPollFixture(t)
-	start := time.Date(2026, 9, 30, 12, 0, 0, 0, time.UTC)
+	start := movementTestStart()
 	sendPoll(t, pipeline, pollPayload(0), start)
 	if store.ReadOnlyView().Commanders[7].Available {
 		t.Fatal("commander 7 should be busy while its attack is in flight")
@@ -183,7 +192,7 @@ func replaceOnce(text string, old string, replacement string) string {
 }
 
 func TestMovementsEquivalentIgnoresOnlyReceiveTimeDerivedFields(t *testing.T) {
-	base := time.Date(2026, 9, 30, 12, 0, 0, 0, time.UTC)
+	base := movementTestStart()
 	arrives := base.Add(900 * time.Second)
 	commander := State.CommanderID(7)
 	original := State.MovementState{
@@ -244,11 +253,11 @@ func TestIdenticalPollsStayQuietWithKhanTauntAndPendingInvasionReservation(t *te
 		}()
 		gameState.Khan.TargetX, gameState.Khan.TargetY = 900, 901
 		gameState.Invasion.ReserveTarget(State.InvasionTargetReservation{
-			KingdomID: 0, EventID: 71, OccurrenceEndsAt: time.Date(2026, 10, 1, 0, 0, 0, 0, time.UTC),
+			KingdomID: 0, EventID: 71, OccurrenceEndsAt: movementTestStart().Add(12 * time.Hour),
 			TargetTypeID: State.MapTypeForeignLord, X: 101, Y: 102,
 			SourceCastleID: 100, SourceX: 10, SourceY: 11, SourceKnown: true,
 			CommanderID: 9, CommanderKnown: true, OperationID: "pending-op",
-			ReservedAt: time.Date(2026, 9, 30, 11, 59, 0, 0, time.UTC),
+			ReservedAt: movementTestStart().Add(-time.Minute),
 		})
 		return []string{"invasion"}, true, nil
 	}); err != nil {
@@ -259,7 +268,7 @@ func TestIdenticalPollsStayQuietWithKhanTauntAndPendingInvasionReservation(t *te
 			{"M":{"MID":70,"PT":%d,"TT":300,"D":0,"T":%d,"KID":0,"OID":-9,"TID":1,"SA":[%d,900,901,-5,-9],"TA":[1,10,11,100,1]},"A":[[6,100]],"UM":{"L":{"WID":4242}}}
 		],"O":[]}`, 20+elapsed, khanTauntMovementTypeID, khanCampMapTypeID))
 	}
-	start := time.Date(2026, 9, 30, 12, 0, 0, 0, time.UTC)
+	start := movementTestStart()
 	first := sendPoll(t, pipeline, payload(0), start)
 	if first.Revision == 0 {
 		t.Fatalf("first poll did not commit: %+v", first)
@@ -287,7 +296,7 @@ func TestIdenticalPollsStayQuietWithKhanTauntAndPendingInvasionReservation(t *te
 // real change even when the movements themselves did not change.
 func TestFirstSnapshotOfANewConnectionCommitsEvenWhenMovementsAreUnchanged(t *testing.T) {
 	pipeline, store := quietPollFixture(t)
-	start := time.Date(2026, 9, 30, 12, 0, 0, 0, time.UTC)
+	start := movementTestStart()
 	code := 0
 	empty := json.RawMessage(`{"M":[],"O":[]}`)
 	send := func(at time.Time) Protocol.CommittedFrame {
@@ -330,7 +339,7 @@ func TestFirstSnapshotOfANewConnectionCommitsEvenWhenMovementsAreUnchanged(t *te
 // would freeze ObservedAt and free the commander while the movement is listed.
 func TestLingeringMovementKeepsTheCommanderBusyUntilTheGameDropsIt(t *testing.T) {
 	pipeline, store := quietPollFixture(t)
-	start := time.Date(2026, 9, 30, 12, 0, 0, 0, time.UTC)
+	start := movementTestStart()
 	sendPoll(t, pipeline, pollPayload(0), start)
 	first, _ := store.ReadOnlyView().LookupMovement(50)
 	nominal := *State.CommanderMovementReleaseAt(first) // release = nominal end + grace

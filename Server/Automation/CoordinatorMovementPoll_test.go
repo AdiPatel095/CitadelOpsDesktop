@@ -21,6 +21,12 @@ type wakeCountingPolicy struct {
 	evaluations atomic.Int32
 }
 
+// movementTestStart is taken from the clock rather than pinned to a date so the
+// test does not depend on when it runs (see the Ingest movement tests).
+func movementTestStart() time.Time {
+	return time.Now().UTC().Truncate(time.Second)
+}
+
 func (*wakeCountingPolicy) ID() string         { return "movement-watcher" }
 func (*wakeCountingPolicy) EnabledKey() string { return "movement-watcher" }
 func (*wakeCountingPolicy) WakeDomains() []string {
@@ -82,7 +88,7 @@ func TestUnchangedMovementPollsWakeNoPolicyButRealChangesStillDo(t *testing.T) {
 	}
 	waitFor("the initial evaluation", func() bool { return policy.evaluations.Load() == 1 })
 
-	start := time.Date(2026, 9, 30, 12, 0, 0, 0, time.UTC)
+	start := movementTestStart()
 	poll(movementPollForCoordinator(0, false), start)
 	waitFor("the first poll's targeted wake", func() bool { return policy.evaluations.Load() == 2 })
 	revision := store.Revision()
