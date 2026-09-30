@@ -20,7 +20,7 @@
   ],
   "expect": [
     "Nomad and Invasion both use 'Shared wave' (shown as used by two modules); renaming or editing an app-created preset asks to promote it.",
-    "Duplicate copies the record only; deleting a preset in use is refused with the modules named.",
+    "Duplicate copies the record only; deleting a preset in use asks for confirmation and names the automations that use it, and is refused only for an app-created preset whose owner automation still uses it.",
     "'Managed by ...' and 'Not in use' labels appear in the presets views."
   ],
   "patch": {
