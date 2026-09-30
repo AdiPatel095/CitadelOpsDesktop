@@ -324,3 +324,54 @@ func TestFirstSnapshotOfANewConnectionCommitsEvenWhenMovementsAreUnchanged(t *te
 		t.Fatalf("an unchanged poll on connection 2 committed revision %d", again.Revision)
 	}
 }
+
+// A movement the game still lists at or after its nominal end pushes the
+// commander's release to that sighting plus the grace. Keeping the held record
+// would freeze ObservedAt and free the commander while the movement is listed.
+func TestLingeringMovementKeepsTheCommanderBusyUntilTheGameDropsIt(t *testing.T) {
+	pipeline, store := quietPollFixture(t)
+	start := time.Date(2026, 9, 30, 12, 0, 0, 0, time.UTC)
+	sendPoll(t, pipeline, pollPayload(0), start)
+	first, _ := store.ReadOnlyView().LookupMovement(50)
+	nominal := *State.CommanderMovementReleaseAt(first) // release = nominal end + grace
+	nominalEnd := nominal.Add(-State.CommanderMovementReturnGrace)
+
+	// Well before the end: identical polls stay quiet (the optimisation still works).
+	events, unsubscribe := store.Subscribe(16)
+	defer unsubscribe()
+	before := store.Revision()
+	sendPoll(t, pipeline, pollPayload(60), start.Add(60*time.Second))
+	if store.Revision() != before {
+		t.Fatal("an early identical poll committed")
+	}
+
+	// Ten seconds past the nominal end (arrival plus the return trip) the game still lists it.
+	late := nominalEnd.Add(10 * time.Second)
+	lateElapsed := int(late.Sub(start) / time.Second)
+	before = store.Revision()
+	committed := sendPoll(t, pipeline, pollPayload(lateElapsed), late)
+	if committed.Revision != before+1 {
+		t.Fatalf("a movement still listed past its nominal end must commit: revision %d, want %d", committed.Revision, before+1)
+	}
+	<-events
+	view := store.ReadOnlyView()
+	lingering, _ := view.LookupMovement(50)
+	if !lingering.ObservedAt.Equal(late) {
+		t.Fatalf("stored ObservedAt = %s, want the late sighting %s (a frozen ObservedAt frees the commander early)", lingering.ObservedAt, late)
+	}
+	if release := *State.CommanderMovementReleaseAt(lingering); !release.Equal(late.Add(State.CommanderMovementReturnGrace)) {
+		t.Fatalf("release = %s, want sighting + grace = %s", release, late.Add(State.CommanderMovementReturnGrace))
+	}
+	if view.Commanders[7].Available {
+		t.Fatal("commander 7 was freed while the game still lists his movement")
+	}
+
+	// The next reply without the movement releases him.
+	payload := string(pollPayload(lateElapsed + 5))
+	begin := strings.Index(payload, `{"M":{"MID":50`)
+	end := strings.Index(payload, `{"M":{"MID":51`)
+	sendPoll(t, pipeline, json.RawMessage(payload[:begin]+payload[end:]), late.Add(5*time.Second))
+	if !store.ReadOnlyView().Commanders[7].Available {
+		t.Fatal("commander 7 stayed busy after the game dropped the movement")
+	}
+}

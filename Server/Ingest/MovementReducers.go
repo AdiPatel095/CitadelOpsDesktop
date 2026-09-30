@@ -133,11 +133,19 @@ const movementTimeTolerance = 2 * time.Second
 // movementsEquivalent reports whether two observations describe the same
 // movement state: every field equal except those derived from when the reply was
 // received (ObservedAt, ProgressSeconds, StartedAt, ArrivesAt, ReturnsAt), whose
-// derived times must agree within movementTimeTolerance.
+// derived times, and the commander release time that depends on a late sighting,
+// must agree within movementTimeTolerance.
 func movementsEquivalent(left State.MovementState, right State.MovementState) bool {
 	if !timesWithin(left.StartedAt, right.StartedAt) ||
 		!optionalTimesWithin(left.ArrivesAt, right.ArrivesAt) ||
 		!optionalTimesWithin(left.ReturnsAt, right.ReturnsAt) {
+		return false
+	}
+	// The commander release time reads ObservedAt once a movement is still listed at
+	// or after its nominal end (a sighting pushes the release to sighting + grace), so
+	// keeping the held record would freeze that extension and free the commander
+	// while the game still lists the movement. Such sightings are real changes.
+	if !optionalTimesWithin(State.CommanderMovementReleaseAt(left), State.CommanderMovementReleaseAt(right)) {
 		return false
 	}
 	// A copy that is identical in the receive-time-dependent fields makes the
