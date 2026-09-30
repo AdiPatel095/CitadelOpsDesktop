@@ -117,7 +117,8 @@ func (uploader *CloudUploader) processNext(ctx context.Context) (bool, error) {
 	if err != nil || len(pending) == 0 {
 		return false, err
 	}
-	remote, err := uploader.client.RemoteLIDs(ctx)
+	lids := pendingCloudLIDs(pending)
+	remote, err := uploader.client.RemoteLIDsOf(ctx, lids)
 	if err != nil {
 		return false, err
 	}
@@ -130,7 +131,7 @@ func (uploader *CloudUploader) processNext(ctx context.Context) (bool, error) {
 	if err := uploader.client.Upload(ctx, pending); err != nil {
 		return false, err
 	}
-	remote, err = uploader.client.RemoteLIDs(ctx)
+	remote, err = uploader.client.RemoteLIDsOf(ctx, lids)
 	if err != nil {
 		return false, fmt.Errorf("confirm uploaded cloud battle reports: %w", err)
 	}
@@ -274,4 +275,20 @@ func enrichBattleReportAllianceIDs(report BattleReport, snapshot State.GameState
 	report.Attacker = resolve(report.Attacker)
 	report.Defender = resolve(report.Defender)
 	return report
+}
+
+func pendingCloudLIDs(reports []cloudBattleReportEnvelope) []int64 {
+	lids := make([]int64, 0, len(reports))
+	seen := make(map[int64]struct{}, len(reports))
+	for _, report := range reports {
+		if report.LID <= 0 {
+			continue
+		}
+		if _, duplicate := seen[report.LID]; duplicate {
+			continue
+		}
+		seen[report.LID] = struct{}{}
+		lids = append(lids, report.LID)
+	}
+	return lids
 }
