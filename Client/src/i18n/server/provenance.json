@@ -30807,11 +30807,11 @@
     "sha256": "3e5e8c970e3cfbb704719636d99733d3ef830e036fca4866bcc2bdeb04b003e2"
   },
   "schemaVersion": 1,
-  "sourceCatalogSha256": "3b27eef3f5712fed27a4be15b21f73d36877c620d8c46649310f21c0d35a0d69",
-  "sourceRevision": "4f464cd78500b24bad14e8a3a2d490630f9607bd",
+  "sourceCatalogSha256": "a81b64696189c6b3d6a33ed6669ea3ff155896dee9e65d070098a17a2f363aac",
+  "sourceRevision": "56c2acba0f847e2675c7842588213c66710eeadc",
   "playerLanguageBatch": {
     "story": "CIT-68",
-    "source": "Product/CIT-59 UI decisions M1-M8.md M3",
+    "source": "Engineering/Plans/CIT-68 Player-language copy.md Revision 1 §2a",
     "englishFallbackKeys": [
       "server.automation.event_gate.berimond.inactive",
       "server.automation.event_gate.berimond.opening",
@@ -30824,7 +30824,8 @@
       "server.automation.event_gate.khan.unobserved",
       "server.automation.event_gate.nomad_samurai.inactive",
       "server.automation.event_gate.nomad_samurai.opening",
-      "server.automation.event_gate.nomad_samurai.unobserved"
+      "server.automation.event_gate.nomad_samurai.unobserved",
+      "server.automation.watching_for_incoming_attacks.60f06f25"
     ],
     "translationStatus": "pending all-locale translation batch; old translations invalidated"
   }

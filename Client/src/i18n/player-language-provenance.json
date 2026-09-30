@@ -1,6 +1,6 @@
 {
   "story": "CIT-68",
-  "source": "Product/CIT-59 UI decisions M1-M8.md M3/M8; Engineering/Plans/CIT-68 Player-language copy.md",
+  "source": "Product/CIT-59 UI decisions M1-M8.md M3/M8; Engineering/Plans/CIT-68 Player-language copy.md; Revision 1 §2a",
   "policy": "English source; other locales fall back to English pending the translation batch",
   "keys": {
     "copy.queues": {
@@ -70,6 +70,15 @@
     "copy.khanPause": {
       "english": "At or above this threshold, Auto Khan opens the main castle gates once for six hours and immediately stops attacks, cooldown skips, and new taunts. Auto Khan pauses without changing your settings; after the gate expires, it refreshes defense and resumes only when the projected offensive wall count is below the threshold. This uses the game's current ruby cost for the six-hour open-gate option.",
       "sha256": "0d67ef0a62aa1b9e54201fd624c1a2a80330983c5d472be11e9c94b6fd3b5559"
+    },
+    "equipment.effectsGroupedDescription": {
+      "english": "Effects grouped by the game's own effect categories.",
+      "sha256": "cfc0c9a82e022159850c6ec238e4428a0bd24ece53aae6af3f000028dc749ca4"
+    },
+    "equipment.canonicalUnavailable": {
+      "english": "Effect data from the game isn't available right now. Your last results are kept, and Reconfigure is paused while CitadelOps retries.",
+      "sha256": "da0a40524f419bf1bfc7315ed1edad1b46efa059f284ba831e6d1a54d75535c2"
     }
-  }
+  },
+  "revision": 1
 }

@@ -1,3 +1,4 @@
+import type { MessageKey } from '../../i18n/messages';
 import { formatGameMessage } from '../../i18n/gameMessage';
 import type { EquipmentEffectV2 } from '../../api/Contracts';
 import type { MetadataItem } from '../../context/MetadataContext';
@@ -66,7 +67,7 @@ export interface EquipmentEffectGroup {
 export interface EquipmentEffectSection {
 	key: string;
 	title: string;
-	description: string;
+	description: MessageKey;
 	effectCount: number;
 	groups: EquipmentEffectGroup[];
 }
@@ -261,7 +262,7 @@ export function buildEquipmentEffectProfile(
 	const sections = Array.from(groupBy(detailed, (effect) => effect.category), ([category, rows]) => ({
 		key: String(category),
 		title: rows[0]?.categoryName || categoryNames[category] || 'Other effects',
-		description: 'Canonical effects grouped by the official game effect category.',
+		description: 'equipment.effectsGroupedDescription' as const,
 		effectCount: rows.length,
 		groups: Array.from(groupBy(rows, groupKey), ([key, groupRows]) => buildEffectGroup(key, groupRows))
 			.sort(compareEffectGroups),

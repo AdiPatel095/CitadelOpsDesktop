@@ -327,7 +327,8 @@ export const messages = {
   'equipment.slot.hero': 'Hero',
 
   'equipment.canonicalLoading': 'Loading authoritative effect data. Reconfiguration will be available when it is ready.',
-  'equipment.canonicalUnavailable': 'Authoritative effect data is unavailable. Previous calculations are retained; reconfiguration is paused while CitadelOps retries.',
+  "equipment.effectsGroupedDescription": "Effects grouped by the game's own effect categories.",
+  "equipment.canonicalUnavailable": "Effect data from the game isn't available right now. Your last results are kept, and Reconfigure is paused while CitadelOps retries.",
   'gameButton.startToEnable': 'Start Bot to enable this action',
   'gameButton.startToUse': 'Start Bot to use this action',
 
