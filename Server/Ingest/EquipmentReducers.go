@@ -601,9 +601,17 @@ func commanderAvailableAt(gameState *State.GameState, commanderID State.Commande
 	return gameState == nil || !State.CommanderHasActiveMovementAt(*gameState, commanderID, now)
 }
 
-func syncCommanderAvailability(gameState *State.GameState) {
+// syncCommanderAvailability recomputes every commander's availability and
+// reports whether any flag changed.
+func syncCommanderAvailability(gameState *State.GameState) bool {
+	changed := false
 	for id, commander := range gameState.Commanders {
-		commander.Available = commanderAvailable(gameState, id)
+		available := commanderAvailable(gameState, id)
+		if commander.Available != available {
+			changed = true
+		}
+		commander.Available = available
 		gameState.Commanders[id] = commander
 	}
+	return changed
 }
