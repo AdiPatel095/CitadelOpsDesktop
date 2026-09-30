@@ -1,7 +1,7 @@
 import { StopFooter } from '../../components/StopControl';
 import { castleCandidates } from '../copy/candidates';
 import { stationCopyDescriptor } from '../copy/features/station';
-import { useCastleCopyReplayRun, useCastleCopyReplayState } from '../copy/useCastleCopyReplay';
+import { copyReapplied, genericSaveError, useCastleCopyReplayRun, useCastleCopyReplayState } from '../copy/useCastleCopyReplay';
 import { CastleCopyButton } from './CastleCopyDialog';
 import { useLocale as useStaticLocale } from "../../i18n/LocaleContext";
 import { LocalizedText } from "../../i18n/LocalizedText";
@@ -147,7 +147,7 @@ export const AutoStationSettingsModal: React.FC<AutoStationSettingsModalProps> =
       await draftSession.save(parseAutoStationClientState(state));
       onClose();
     } catch (error) {
-      setSaveError(error instanceof Error ? error.message : 'Could not save Auto Station settings.');
+      setSaveError(genericSaveError(error, copyReplay, 'Could not save Auto Station settings.'));
     } finally {
       setIsSaving(false);
     }
@@ -157,7 +157,7 @@ export const AutoStationSettingsModal: React.FC<AutoStationSettingsModalProps> =
     if (!isSaving) onClose();
   };
 
-  const recovery = useDraftRecovery({ section: 'automation.autoStation', isOpen, draftSession, draft: parseAutoStationClientState(state), loaded: parseAutoStationClientState(parseAutoStationClientState(draftSession.sections?.['automation.autoStation'])) });
+  const recovery = useDraftRecovery({ section: 'automation.autoStation', isOpen, draftSession, draft: parseAutoStationClientState(state), loaded: parseAutoStationClientState(parseAutoStationClientState(draftSession.sections?.['automation.autoStation'])), copyReapplied: copyReapplied(copyReplay) });
 
   return (
     <>

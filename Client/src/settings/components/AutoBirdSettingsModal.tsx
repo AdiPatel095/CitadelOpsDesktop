@@ -1,7 +1,7 @@
 import { StopFooter } from '../../components/StopControl';
 import { castleCandidates } from '../copy/candidates';
 import { birdCandidateFlags, birdCopyDescriptor } from '../copy/features/bird';
-import { useCastleCopyReplayRun, useCastleCopyReplayState } from '../copy/useCastleCopyReplay';
+import { copyReapplied, genericSaveError, useCastleCopyReplayRun, useCastleCopyReplayState } from '../copy/useCastleCopyReplay';
 import { CastleCopyButton } from './CastleCopyDialog';
 import { useLocale as useStaticLocale } from "../../i18n/LocaleContext";
 import { LocalizedText } from "../../i18n/LocalizedText";
@@ -284,7 +284,7 @@ export const AutoBirdSettingsModal: React.FC<AutoBirdSettingsModalProps> = ({ is
       setAppliedPresetId(id);
       setActivePresetId(id);
     } catch (error) {
-      setSaveError(error instanceof Error ? error.message : 'Could not save the Auto Bird preset.');
+      setSaveError(genericSaveError(error, copyReplay, 'Could not save the Auto Bird preset.'));
     } finally {
       setIsSaving(false);
     }
@@ -319,7 +319,7 @@ export const AutoBirdSettingsModal: React.FC<AutoBirdSettingsModalProps> = ({ is
         setPresetName('');
       }
     } catch (error) {
-      setSaveError(error instanceof Error ? error.message : 'Could not delete the Auto Bird preset.');
+      setSaveError(genericSaveError(error, copyReplay, 'Could not delete the Auto Bird preset.'));
     } finally {
       setIsSaving(false);
     }
@@ -353,7 +353,7 @@ export const AutoBirdSettingsModal: React.FC<AutoBirdSettingsModalProps> = ({ is
       setActivePresetId(appliedPresetId);
       onClose();
     } catch (error) {
-      setSaveError(error instanceof Error ? error.message : 'Could not save Auto Bird settings.');
+      setSaveError(genericSaveError(error, copyReplay, 'Could not save Auto Bird settings.'));
     } finally {
       setIsSaving(false);
     }
@@ -375,7 +375,7 @@ export const AutoBirdSettingsModal: React.FC<AutoBirdSettingsModalProps> = ({ is
 
   const loadedBird = parseAutoBirdClientState(birdRawState(draftSession.sections?.['automation.autoBird']));
   const loadedBirdActive = birdActive(loadedBird);
-  const recovery = useDraftRecovery({ section: 'automation.autoBird', isOpen, draftSession, draft: buildAutoBirdClientState(currentIgnoreSettings(), presetsState, appliedPresetId), loaded: buildAutoBirdClientState(birdStoredSettings(loadedBirdActive.ig.settings, loadedBirdActive.ig.minDelay, loadedBirdActive.ig.maxDelay, loadedBirdActive.ig.minSend, loadedBirdActive.ig.minRPTDays), loadedBird.presets, loadedBirdActive.activePreset?.id ?? null) });
+  const recovery = useDraftRecovery({ section: 'automation.autoBird', isOpen, draftSession, draft: buildAutoBirdClientState(currentIgnoreSettings(), presetsState, appliedPresetId), loaded: buildAutoBirdClientState(birdStoredSettings(loadedBirdActive.ig.settings, loadedBirdActive.ig.minDelay, loadedBirdActive.ig.maxDelay, loadedBirdActive.ig.minSend, loadedBirdActive.ig.minRPTDays), loadedBird.presets, loadedBirdActive.activePreset?.id ?? null), copyReapplied: copyReapplied(copyReplay) });
 
   return (
     <>

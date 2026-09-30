@@ -3,7 +3,7 @@ import { useHostedRuntimePresence } from '../../config/Deployment';
 import { useSetupContext } from '../requirements/useSetupContext';
 import { castleCandidates } from '../copy/candidates';
 import { recruitCopyDescriptor, toolCopyDescriptor } from '../copy/features/queueProduction';
-import { useCastleCopyReplayRun, useCastleCopyReplayState } from '../copy/useCastleCopyReplay';
+import { copyReapplied, genericSaveError, useCastleCopyReplayRun, useCastleCopyReplayState } from '../copy/useCastleCopyReplay';
 import { CastleCopyButton } from './CastleCopyDialog';
 import { useLocale as useStaticLocale } from "../../i18n/LocaleContext";
 import { LocalizedText } from "../../i18n/LocalizedText";
@@ -459,7 +459,7 @@ export const QueueProductionSettingsModal: React.FC<QueueProductionSettingsModal
       await draftSession.save(nextSettings);
       onClose();
     } catch (error) {
-      setSaveError(error instanceof Error ? error.message : `Could not save ${definition.featureLabel} settings.`);
+      setSaveError(genericSaveError(error, copyReplay, `Could not save ${definition.featureLabel} settings.`));
     } finally {
       setIsSaving(false);
     }
@@ -851,7 +851,7 @@ export const QueueProductionSettingsModal: React.FC<QueueProductionSettingsModal
     </SectionCard>
   );
 
-  const recovery = useDraftRecovery({ section: definition.configurationSection, isOpen, draftSession, draft: settings, loaded: definition.normalizeSettings(draftSession.sections?.[definition.configurationSection] ?? definition.defaultSettings()) });
+  const recovery = useDraftRecovery({ section: definition.configurationSection, isOpen, draftSession, draft: settings, loaded: definition.normalizeSettings(draftSession.sections?.[definition.configurationSection] ?? definition.defaultSettings()), copyReapplied: copyReapplied(copyReplay) });
 
   return (
     <>
