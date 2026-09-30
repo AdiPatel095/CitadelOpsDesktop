@@ -12,6 +12,7 @@ import (
 
 	"CitadelDesktop/Server/GameData"
 	"CitadelDesktop/Server/Outbound"
+	"CitadelDesktop/Server/Profiling"
 	"CitadelDesktop/Server/Protocol"
 	"CitadelDesktop/Server/State"
 )
@@ -220,6 +221,19 @@ func (pipeline *Pipeline) CommitFrame(ctx context.Context, observed ObservedFram
 }
 
 func (pipeline *Pipeline) CommitFrameGuarded(
+	ctx context.Context,
+	observed ObservedFrame,
+	guard func() error,
+) (Protocol.CommittedFrame, error) {
+	var committed Protocol.CommittedFrame
+	var err error
+	Profiling.Do(ctx, func(labeled context.Context) {
+		committed, err = pipeline.commitFrameGuarded(labeled, observed, guard)
+	}, Profiling.LabelStage, Profiling.StageIngest, Profiling.LabelOpcode, observed.Frame.Opcode)
+	return committed, err
+}
+
+func (pipeline *Pipeline) commitFrameGuarded(
 	ctx context.Context,
 	observed ObservedFrame,
 	guard func() error,

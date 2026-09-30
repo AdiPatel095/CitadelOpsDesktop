@@ -25,6 +25,7 @@ import (
 	"CitadelDesktop/Server/Ingest"
 	"CitadelDesktop/Server/Intent"
 	"CitadelDesktop/Server/PrivateMetrics"
+	"CitadelDesktop/Server/Profiling"
 	"CitadelDesktop/Server/Reports"
 	"CitadelDesktop/Server/RiftTemplates"
 	RuntimeKernel "CitadelDesktop/Server/Runtime"
@@ -486,7 +487,9 @@ func (application *Application) start(ctx context.Context) {
 	application.Session.SetAutomationLocked(application.automationLocked())
 	go application.syncAutomationLock(ctx, configurationEvents, unsubscribeConfiguration)
 	persistenceReady := make(chan struct{})
-	go application.persistState(ctx, persistenceReady)
+	go Profiling.Do(ctx, func(ctx context.Context) {
+		application.persistState(ctx, persistenceReady)
+	}, Profiling.LabelStage, Profiling.StagePersist)
 	<-persistenceReady
 	application.statePersistenceStarted.Store(true)
 	go application.captureIntentLogs(ctx)
@@ -544,7 +547,7 @@ func (application *Application) start(ctx context.Context) {
 		go application.Checkpoints.Run(ctx)
 	}
 	go application.runMovementClock(ctx)
-	go application.Automation.Run(ctx)
+	go Profiling.Do(ctx, application.Automation.Run, Profiling.LabelStage, Profiling.StageAutomation)
 	go application.Reports.Run(ctx)
 	go application.Scheduler.Run(ctx)
 }

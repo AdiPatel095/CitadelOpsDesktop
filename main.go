@@ -14,6 +14,7 @@ import (
 	"CitadelDesktop/Server/App"
 	"CitadelDesktop/Server/AppUpdate"
 	"CitadelDesktop/Server/Paths"
+	"CitadelDesktop/Server/Profiling"
 	"CitadelDesktop/Server/Session"
 )
 
@@ -75,6 +76,7 @@ func main() {
 			CheckpointURL:           *tenantCheckpointURL,
 			DashboardOrigins:        *tenantDashboardOrigins,
 			SecureCookies:           !*tenantInsecureHTTP,
+			PprofAddr:               os.Getenv(Profiling.EnvAddr),
 		}); err != nil {
 			log.Fatal(err)
 		}

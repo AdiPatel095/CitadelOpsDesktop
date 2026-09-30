@@ -1,10 +1,13 @@
 package Accounts
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"net/url"
 	"strings"
+
+	"CitadelDesktop/Server/Profiling"
 )
 
 // Authenticator resolves the account identity from an authenticated session.
@@ -79,7 +82,9 @@ func (supervisor *Supervisor) HandlerWithOrigins(authenticator Authenticator, fr
 		forwarded.URL.RawPath = ""
 		if strings.HasPrefix(remainder, "api/") {
 			forwarded.Header.Del("Origin")
-			application.API.Handler().ServeHTTP(writer, forwarded)
+			Profiling.Do(Profiling.WithRuntime(request.Context(), string(requestedID)), func(context.Context) {
+				application.API.Handler().ServeHTTP(writer, forwarded)
+			}, Profiling.LabelStage, Profiling.StageAPI)
 			return
 		}
 		if frontend == nil {

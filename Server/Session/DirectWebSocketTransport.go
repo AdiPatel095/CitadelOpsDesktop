@@ -18,6 +18,7 @@ import (
 	"time"
 
 	"CitadelDesktop/Server/Outbound"
+	"CitadelDesktop/Server/Profiling"
 	"CitadelDesktop/Server/Protocol"
 	"CitadelDesktop/Server/State"
 	"github.com/gorilla/websocket"
@@ -369,7 +370,9 @@ func (transport *DirectWebSocketTransport) Start(ctx context.Context) error {
 	}) {
 		return nil
 	}
-	go transport.run(runContext, generation)
+	go Profiling.Do(runContext, func(labeled context.Context) {
+		transport.run(labeled, generation)
+	}, Profiling.LabelStage, Profiling.StageTransport)
 	return nil
 }
 
