@@ -400,8 +400,11 @@ func TestDirectTransportForwarderStopsWithTheRun(t *testing.T) {
 					t.Fatalf("forwarder overlap sent %d frames", len(transport.frames))
 				}
 				unblock()
-				collectFlood(t, ctx, transport, 3)
-				waitBackpressureCondition(t, func() bool { outbox.mu.Lock(); defer outbox.mu.Unlock(); return len(outbox.queue) == 0 })
+				receiveCtx, cancelReceive := context.WithTimeout(ctx, 5*time.Second)
+				defer cancelReceive()
+				// Only the three sequence-numbered server fixtures determine completion.
+				// Reconnect bootstrap producers may still append transport frames.
+				collectFlood(t, receiveCtx, transport, 3)
 				if err := transport.Stop(ctx); err != nil {
 					t.Fatal(err)
 				}
@@ -424,18 +427,43 @@ func TestDirectTransportForwarderStopsWithTheRun(t *testing.T) {
 				if !generations[1] {
 					t.Fatal("old forwarder did not exit")
 				}
+				// Both forwarders have exited, so accepted frames and the retained tail are
+				// stable. Successful forwards followed by that tail conserve every seq.
 				outbox.mu.Lock()
-				nextSeq, remaining := outbox.nextSeq, len(outbox.queue)
+				nextSeq := outbox.nextSeq
+				tail := append([]directOutboxFrame(nil), outbox.queue...)
 				outbox.mu.Unlock()
 				seenMu.Lock()
-				got := append([]uint64(nil), seen...)
+				forwarded := append([]uint64(nil), seen...)
 				seenMu.Unlock()
+				got := append([]uint64(nil), forwarded...)
+				drained := drainOutbox(transport)
+				if len(drained) != len(tail) {
+					t.Fatalf("drained=%d retained=%d", len(drained), len(tail))
+				}
+				for i, item := range tail {
+					if !reflect.DeepEqual(drained[i], item.frame) {
+						t.Fatalf("retained seq %d changed while draining", item.seq)
+					}
+					got = append(got, item.seq)
+				}
 				want := make([]uint64, nextSeq)
 				for i := range want {
 					want[i] = uint64(i + 1)
 				}
-				if !reflect.DeepEqual(got, want) || remaining != 0 {
-					t.Fatalf("forwarded=%v accepted=%v remaining=%d", got, want, remaining)
+				if !reflect.DeepEqual(got, want) {
+					t.Fatalf("forwarded=%v retained=%v accepted=%v", forwarded, got[len(forwarded):], want)
+				}
+				// No authoritative duplicate may hide behind transport-generated frames
+				// buffered after the last expected fixture was consumed.
+				remaining := append([]RawFrame(nil), drained...)
+				for len(transport.frames) > 0 {
+					remaining = append(remaining, <-transport.Frames())
+				}
+				for _, frame := range remaining {
+					if seq, ok := floodSequence(frame); ok {
+						t.Fatalf("server sequence %d remained after all fixtures arrived", seq)
+					}
 				}
 			})
 		}
