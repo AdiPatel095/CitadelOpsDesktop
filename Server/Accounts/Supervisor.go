@@ -22,6 +22,7 @@ import (
 	"CitadelDesktop/Server/GameData"
 	"CitadelDesktop/Server/Ingest"
 	"CitadelDesktop/Server/PrivateMetrics"
+	"CitadelDesktop/Server/Profiling"
 	"CitadelDesktop/Server/Reports"
 	"CitadelDesktop/Server/Session"
 	"CitadelDesktop/Server/State"
@@ -338,15 +339,17 @@ func (supervisor *Supervisor) runWorldMapPropagation(ready chan<- struct{}) {
 			return
 		case event := <-events:
 			supervisor.mu.RLock()
-			stores := make([]*State.Store, 0, len(supervisor.accounts))
-			for _, runtime := range supervisor.accounts {
+			stores := make(map[AccountID]*State.Store, len(supervisor.accounts))
+			for id, runtime := range supervisor.accounts {
 				if runtime.application != nil && runtime.application.State != nil && runtime.application.State != event.Source {
-					stores = append(stores, runtime.application.State)
+					stores[id] = runtime.application.State
 				}
 			}
 			supervisor.mu.RUnlock()
-			for _, store := range stores {
-				store.AdoptWorldMap(event)
+			for id, store := range stores {
+				Profiling.Do(Profiling.WithRuntime(supervisor.ctx, string(id)), func(context.Context) {
+					store.AdoptWorldMap(event)
+				}, Profiling.LabelStage, Profiling.StageWorldMapAdopt)
 			}
 		}
 	}
@@ -438,7 +441,9 @@ func (supervisor *Supervisor) AddAccount(ctx context.Context, config AccountConf
 	}()
 
 	accountContext, cancel := context.WithCancel(supervisor.ctx)
-	application, err := App.New(ctx, App.Config{
+	// Profiler label (CIT-42): goroutines the runtime starts inherit runtime=<id>.
+	accountContext = Profiling.WithRuntime(accountContext, string(id))
+	appConfig := App.Config{
 		DataDir: dataDir, AccountKey: string(id),
 		Offline: supervisor.config.Offline, GameData: supervisor.gameData,
 		WorldMaps:               supervisor.worldMaps,
@@ -453,7 +458,9 @@ func (supervisor *Supervisor) AddAccount(ctx context.Context, config AccountConf
 		BackgroundOnly: config.BackgroundOnly, RuntimeContext: accountContext,
 		UpdateEndpoint:         supervisor.config.UpdateEndpoint,
 		UpdateInstallSupported: supervisor.config.UpdateInstallSupported,
-	})
+	}
+	var application *App.Application
+	Profiling.Do(accountContext, func(context.Context) { application, err = App.New(ctx, appConfig) })
 	if err != nil {
 		cancel()
 		return nil, err
@@ -477,10 +484,12 @@ func (supervisor *Supervisor) AddAccount(ctx context.Context, config AccountConf
 	supervisor.accounts[id] = accountRuntime{application: application, cancel: cancel, config: config}
 	supervisor.mu.Unlock()
 	registered = true
-	application.Start(accountContext)
-	if config.StartSession {
-		go func() { _ = application.Session.Start(accountContext) }()
-	}
+	Profiling.Do(accountContext, func(context.Context) {
+		application.Start(accountContext)
+		if config.StartSession {
+			go func() { _ = application.Session.Start(accountContext) }()
+		}
+	})
 	return application, nil
 }
 

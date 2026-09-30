@@ -28,13 +28,54 @@ type ProcessSnapshot struct {
 	LastGC            uint64    `json:"lastGcUnixNano"`
 	GCPauseTotalNS    uint64    `json:"gcPauseTotalNs"`
 	GCTotalCPUSeconds float64   `json:"gcTotalCpuSeconds"`
-	GoMemoryLimit     uint64    `json:"goMemoryLimit"`
-	GoGCPercent       uint64    `json:"goGcPercent"`
+	// ProcessCPUSeconds is the cumulative user+system CPU time of the whole
+	// process. CPUCores is the CPU capacity it is measured against (GOMAXPROCS,
+	// which follows the container CPU limit). CPUShare is the process CPU time
+	// used over the last CPUWindowSeconds as a fraction of CPUCores of wall time;
+	// GCCPUShare is the garbage collector's part of it. Both use the same window
+	// and denominator so they compare directly. The first snapshot covers the
+	// whole process lifetime and reports CPUWindowSeconds 0.
+	ProcessCPUSeconds float64 `json:"processCpuSeconds"`
+	CPUCores          int     `json:"cpuCores"`
+	CPUShare          float64 `json:"cpuShare"`
+	GCCPUShare        float64 `json:"gcCpuShare"`
+	CPUWindowSeconds  float64 `json:"cpuWindowSeconds"`
+	GoMemoryLimit     uint64  `json:"goMemoryLimit"`
+	GoGCPercent       uint64  `json:"goGcPercent"`
 }
 
 var processCache struct {
 	sync.Mutex
 	snapshot ProcessSnapshot
+	previous cpuCounters
+}
+
+// processStart anchors the first snapshot's CPU window to the process lifetime.
+var processStart = time.Now()
+
+// cpuCounters are the cumulative CPU values at one sample.
+type cpuCounters struct {
+	process, gc float64
+	observedAt  time.Time
+}
+
+// cpuShares reports the process and GC CPU use between two samples as fractions
+// of cores of wall time, and the window length in seconds.
+func cpuShares(previous cpuCounters, current cpuCounters, cores int) (share float64, gc float64, window float64) {
+	wall := current.observedAt.Sub(previous.observedAt).Seconds()
+	if wall <= 0 || cores < 1 {
+		return 0, 0, 0
+	}
+	share = nonNegative((current.process - previous.process) / (wall * float64(cores)))
+	gc = nonNegative((current.gc - previous.gc) / (wall * float64(cores)))
+	return share, gc, wall
+}
+
+func nonNegative(value float64) float64 {
+	if value < 0 {
+		return 0
+	}
+	return value
 }
 
 func SampleProcess() ProcessSnapshot {
@@ -63,6 +104,22 @@ func SampleProcess() ProcessSnapshot {
 	if values[4].Value.Kind() == metrics.KindUint64 {
 		next.CompletedGCCycles = values[4].Value.Uint64()
 	}
+	current := cpuCounters{observedAt: next.ObservedAt, gc: next.GCTotalCPUSeconds}
+	if seconds, ok := processCPUSeconds(); ok {
+		current.process = seconds
+	}
+	next.ProcessCPUSeconds = current.process
+	next.CPUCores = runtime.GOMAXPROCS(0)
+	previous := processCache.previous
+	firstWindow := previous.observedAt.IsZero()
+	if firstWindow {
+		previous.observedAt = processStart.UTC()
+	}
+	next.CPUShare, next.GCCPUShare, next.CPUWindowSeconds = cpuShares(previous, current, next.CPUCores)
+	if firstWindow {
+		next.CPUWindowSeconds = 0
+	}
+	processCache.previous = current
 	processCache.snapshot = next
 	return next
 }

@@ -18,6 +18,7 @@ import (
 	"CitadelDesktop/Server/Configuration"
 	"CitadelDesktop/Server/GameData"
 	"CitadelDesktop/Server/Intent"
+	"CitadelDesktop/Server/Profiling"
 	"CitadelDesktop/Server/State"
 )
 
@@ -45,6 +46,18 @@ type Coordinator struct {
 	configurationWakeBySection     map[string][]string
 	started                        atomic.Bool
 	externalConfigurationAuthority atomic.Bool
+	labelBase                      atomic.Pointer[profilerLabelBase]
+}
+
+// profilerLabelBase is the context Run received; it carries the runtime and
+// stage profiler labels that per-policy labels are added to.
+type profilerLabelBase struct{ ctx context.Context }
+
+func (coordinator *Coordinator) profilerContext() context.Context {
+	if base := coordinator.labelBase.Load(); base != nil {
+		return base.ctx
+	}
+	return context.Background()
 }
 
 // SetTelemetry supplies confirmed feature-attack launches to policy snapshots.
@@ -187,6 +200,7 @@ func (coordinator *Coordinator) Run(ctx context.Context) {
 	if !coordinator.started.CompareAndSwap(false, true) {
 		return
 	}
+	coordinator.labelBase.Store(&profilerLabelBase{ctx: ctx})
 	stateEvents, unsubscribeState := coordinator.state.Subscribe(stateEventBuffer)
 	defer unsubscribeState()
 	configurationEvents, unsubscribeConfiguration := coordinator.configuration.Subscribe(configurationEventBuffer)
@@ -573,7 +587,11 @@ func (coordinator *Coordinator) evaluate(
 			ConfigurationExternallyOwned: coordinator.externalConfigurationAuthority.Load(),
 		}
 		current.controlExpiryPending = false
-		decision, err := policy.Evaluate(ctx, snapshot)
+		var decision Decision
+		var err error
+		Profiling.Do(ctx, func(labeled context.Context) {
+			decision, err = policy.Evaluate(labeled, snapshot)
+		}, Profiling.LabelPolicy, policy.ID())
 		if err == nil {
 			// The combat circuit breaker substitutes hostile attack launches
 			// with a standing-down wait; every other decision — rage taunts,
@@ -908,6 +926,12 @@ func (coordinator *Coordinator) cancelRunsForUnavailableSession(
 }
 
 func (coordinator *Coordinator) recordDecision(id string, enabled bool, decision Decision, traceReason ...string) {
+	Profiling.Do(coordinator.profilerContext(), func(context.Context) {
+		coordinator.recordDecisionLabeled(id, enabled, decision, traceReason...)
+	}, Profiling.LabelPolicy, id)
+}
+
+func (coordinator *Coordinator) recordDecisionLabeled(id string, enabled bool, decision Decision, traceReason ...string) {
 	coordinator.updateAutomation(id, func(current State.AutomationState) State.AutomationState {
 		current.ID = id
 		current.Enabled = enabled
