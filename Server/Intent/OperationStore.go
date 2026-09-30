@@ -21,6 +21,8 @@ import (
 
 var ErrIdempotencyConflict = errors.New("operation id was already used for a different request")
 
+var ErrUnknownOperationCursor = errors.New("operation cursor is not a stored operation")
+
 const operationHistoryLimit = 10_000
 
 type StoredOperation struct {
@@ -32,6 +34,7 @@ type OperationStore interface {
 	Reserve(ctx context.Context, requestHash string, receipt Receipt) (Receipt, bool, error)
 	Save(ctx context.Context, receipt Receipt) error
 	Get(ctx context.Context, id string) (StoredOperation, bool, error)
+	Page(ctx context.Context, beforeID string, limit int) ([]StoredOperation, error)
 	Recent(ctx context.Context, limit int) ([]StoredOperation, error)
 	Recover(ctx context.Context) ([]StoredOperation, error)
 	Close() error
@@ -266,6 +269,50 @@ func (store *SQLiteOperationStore) Recent(ctx context.Context, limit int) ([]Sto
 	}
 	if err := rows.Err(); err != nil {
 		return nil, fmt.Errorf("list recent operations: %w", err)
+	}
+	return operations, nil
+}
+
+// Page returns stored receipts in reservation order, strictly before the cursor.
+func (store *SQLiteOperationStore) Page(ctx context.Context, beforeID string, limit int) ([]StoredOperation, error) {
+	if store == nil || store.db == nil {
+		return nil, fmt.Errorf("operation database is unavailable")
+	}
+	limit = min(max(limit, 1), operationHistoryLimit)
+	query := "SELECT request_hash, receipt_json FROM intent_operations ORDER BY rowid DESC LIMIT ?"
+	arguments := []any{limit}
+	if beforeID != "" {
+		var rowID int64
+		err := store.db.QueryRowContext(ctx, "SELECT rowid FROM intent_operations WHERE operation_id = ?", beforeID).Scan(&rowID)
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, ErrUnknownOperationCursor
+		}
+		if err != nil {
+			return nil, fmt.Errorf("read operation cursor: %w", err)
+		}
+		query = "SELECT request_hash, receipt_json FROM intent_operations WHERE rowid < ? ORDER BY rowid DESC LIMIT ?"
+		arguments = []any{rowID, limit}
+	}
+	rows, err := store.db.QueryContext(ctx, query, arguments...)
+	if err != nil {
+		return nil, fmt.Errorf("page operations: %w", err)
+	}
+	defer rows.Close()
+	operations := make([]StoredOperation, 0)
+	for rows.Next() {
+		var requestHash string
+		var payload []byte
+		if err := rows.Scan(&requestHash, &payload); err != nil {
+			return nil, fmt.Errorf("scan paged operation: %w", err)
+		}
+		operation, err := decodeStoredOperation(requestHash, payload)
+		if err != nil {
+			return nil, err
+		}
+		operations = append(operations, operation)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("page operations: %w", err)
 	}
 	return operations, nil
 }

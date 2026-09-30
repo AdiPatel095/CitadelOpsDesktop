@@ -4,6 +4,7 @@ import (
 	"CitadelDesktop/Server/Localization"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -536,7 +537,27 @@ func (server *Server) handleOperations(writer http.ResponseWriter, request *http
 		}
 		limit = parsed
 	}
-	receipts, err := server.config.Intents.RecentOperations(request.Context(), limit)
+	history := strings.TrimSpace(request.URL.Query().Get("history"))
+	if history != "" && history != "stored" {
+		writeError(writer, http.StatusBadRequest, "invalid_history", "Operation history must be stored", Localization.New("server.api.operation_history_must_be.e857bc21", "Operation history must be stored", nil))
+		return
+	}
+	before := strings.TrimSpace(request.URL.Query().Get("before"))
+	var receipts []Intent.Receipt
+	var err error
+	if len(before) > 256 {
+		err = Intent.ErrUnknownOperationCursor
+	} else if before != "" || history == "stored" {
+		receipts, err = server.config.Intents.OperationsBefore(request.Context(), before, limit)
+	} else {
+		// The in-process recent-activity list is not a cursor start. Start a
+		// stored rowid walk with history=stored, then continue with before.
+		receipts, err = server.config.Intents.RecentOperations(request.Context(), limit)
+	}
+	if errors.Is(err, Intent.ErrUnknownOperationCursor) {
+		writeError(writer, http.StatusBadRequest, "invalid_cursor", "Operation cursor is not a stored operation", Localization.New("server.api.operation_cursor_is_not.416989c7", "Operation cursor is not a stored operation", nil))
+		return
+	}
 	if err != nil {
 		writeErrorFromError(writer, http.StatusServiceUnavailable, "operations_unavailable", err)
 		return
