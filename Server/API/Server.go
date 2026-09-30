@@ -16,6 +16,7 @@ import (
 
 	"CitadelDesktop/Server/AllianceTargets"
 	"CitadelDesktop/Server/AppUpdate"
+	"CitadelDesktop/Server/Automation"
 	"CitadelDesktop/Server/Configuration"
 	"CitadelDesktop/Server/Diagnostics"
 	"CitadelDesktop/Server/GameData"
@@ -31,14 +32,20 @@ import (
 )
 
 type Config struct {
-	Version         string
-	BuildRevision   string
-	BuildID         string
-	State           *State.Store
-	GameData        *GameData.Manager
-	Configuration   *Configuration.Store
-	History         *History.Store
-	Telemetry       *Telemetry.Store
+	Version       string
+	BuildRevision string
+	BuildID       string
+	State         *State.Store
+	GameData      *GameData.Manager
+	Configuration *Configuration.Store
+	History       *History.Store
+	// Telemetry is nil in the hosted worker, which keeps no frame or feature
+	// logs and serves no /api/v2/telemetry routes.
+	Telemetry *Telemetry.Store
+	// AttackLaunches counts confirmed feature attack launches: the telemetry
+	// store on desktop, a receipt-derived ledger when hosted. Nil means neither
+	// source exists.
+	AttackLaunches  Automation.AttackLaunchCountsProvider
 	Intents         *Intent.Engine
 	ReportAnalytics *Reports.SQLiteStore
 	CloudReports    *Reports.CloudClient
@@ -80,6 +87,9 @@ func NewServer(config Config) *Server {
 		ReadBufferSize:  4096,
 		WriteBufferSize: 4096,
 		CheckOrigin:     server.originAllowed,
+		// Hosted workers negotiate permessage-deflate; thresholdSocket.WriteJSON then
+		// compresses only messages of 1 KiB or more. Desktop keeps loopback traffic plain.
+		EnableCompression: config.BackgroundOnly,
 	}
 	return server
 }
@@ -142,15 +152,27 @@ func (server *Server) Handler() http.Handler {
 	mux.HandleFunc("GET /api/v2/history/battle-reports", server.handleBattleReportHistory)
 	mux.HandleFunc("GET /api/v2/analytics/battle-reports", server.handleBattleReportAnalytics)
 	mux.HandleFunc("GET /api/v2/analytics/resource-aggregates", server.handleResourceAggregates)
-	mux.HandleFunc("GET /api/v2/telemetry/channels", server.handleTelemetryChannels)
-	mux.HandleFunc("GET /api/v2/telemetry/attack-rates", server.handleAttackLaunchRates)
-	mux.HandleFunc("GET /api/v2/telemetry/{channel}", server.handleTelemetryTail)
+	if server.config.BackgroundOnly {
+		// The hosted worker keeps no logs, so it serves no telemetry routes at
+		// all (they answer 404). The attack-launch badges read a receipt-derived
+		// count from their own route.
+		mux.HandleFunc("GET /api/v2/automations/attack-rates", server.handleAttackLaunchRates)
+	} else {
+		mux.HandleFunc("GET /api/v2/telemetry/channels", server.handleTelemetryChannels)
+		mux.HandleFunc("GET /api/v2/telemetry/attack-rates", server.handleAttackLaunchRates)
+		mux.HandleFunc("GET /api/v2/telemetry/{channel}", server.handleTelemetryTail)
+	}
 	mux.HandleFunc("GET /api/v2/intents", server.handleIntentDefinitions)
 	mux.HandleFunc("POST /api/v2/intents/{name}", server.handleIntentSubmit)
 	mux.HandleFunc("GET /api/v2/operations", server.handleOperations)
 	mux.HandleFunc("GET /api/v2/operations/{id}", server.handleOperation)
 	mux.HandleFunc("POST /api/v2/operations/{id}/cancel", server.handleOperationCancel)
 	mux.HandleFunc("GET /api/v2/events", server.handleEvents)
+	if server.config.BackgroundOnly {
+		// Hosted workers compress JSON responses of 1 KiB or more (CIT-29); the desktop
+		// app talks to its own browser over loopback, where it would only cost CPU.
+		return compressResponses(mux)
+	}
 	return mux
 }
 
@@ -529,11 +551,16 @@ func (server *Server) handleOperationCancel(writer http.ResponseWriter, request 
 }
 
 func (server *Server) handleEvents(writer http.ResponseWriter, request *http.Request) {
-	connection, err := server.upgrader.Upgrade(writer, request, nil)
+	socket, err := server.upgrader.Upgrade(writer, request, nil)
 	if err != nil {
 		return
 	}
-	defer connection.Close()
+	defer socket.Close()
+	if server.config.BackgroundOnly {
+		newSocketCompression(socket)
+	}
+	// WriteJSON compresses only messages of 1 KiB or more (when negotiated).
+	connection := &thresholdSocket{Conn: socket}
 	connection.SetReadLimit(1 << 20)
 	_ = connection.SetReadDeadline(time.Now().Add(60 * time.Second))
 	connection.SetPongHandler(func(string) error {
@@ -555,7 +582,7 @@ func (server *Server) handleEvents(writer http.ResponseWriter, request *http.Req
 	incoming := make(chan Envelope, 8)
 	readErrors := make(chan error, 1)
 	responses := make(chan Envelope, 8)
-	go readEnvelopes(ctx, connection, incoming, readErrors)
+	go readEnvelopes(ctx, socket, incoming, readErrors)
 
 	initialState := server.config.State.ReadOnlyView()
 	initialRevision := initialState.Revision
@@ -600,7 +627,7 @@ func (server *Server) handleEvents(writer http.ResponseWriter, request *http.Req
 			if err != nil {
 				return
 			}
-			if err := connection.WriteJSON(streamEnvelopeRaw("", "state.changed", event.Revision, event.Sequence, event.Gap, payload)); err != nil {
+			if err := connection.WriteJSON(streamEnvelopeRaw("", "state.changed", event.Revision, event.Sequence, event.Gap, event.BaseRevision, payload)); err != nil {
 				return
 			}
 		case receipt := <-operationEvents:

@@ -6,6 +6,7 @@ import (
 	"runtime/pprof"
 	"strings"
 	"testing"
+	"time"
 
 	"CitadelDesktop/Server/Profiling"
 )
@@ -25,6 +26,21 @@ func goroutineLabelLines(t *testing.T) []string {
 		}
 	}
 	return labels
+}
+
+// awaitGoroutineLabels samples the goroutine labels until done reports true or
+// the deadline passes, and returns the last sample. The caller asserts on what
+// done left behind, so a genuine failure still names what is missing.
+func awaitGoroutineLabels(t *testing.T, deadline time.Duration, done func([]string) bool) []string {
+	t.Helper()
+	limit := time.Now().Add(deadline)
+	for {
+		labels := goroutineLabelLines(t)
+		if done(labels) || time.Now().After(limit) {
+			return labels
+		}
+		time.Sleep(10 * time.Millisecond)
+	}
 }
 
 func hasLabelSet(labels []string, want ...string) bool {
@@ -53,15 +69,25 @@ func TestAddAccountLabelsRuntimeGoroutinesByRuntimeAndStage(t *testing.T) {
 	addTestAccount(t, supervisor, "alpha")
 	addTestAccount(t, supervisor, "bravo")
 
-	labels := goroutineLabelLines(t)
-	for _, id := range []string{"alpha", "bravo"} {
-		runtimeLabel := `"runtime":"` + id + `"`
-		if !hasLabelSet(labels, runtimeLabel, `"stage":"automation"`) {
-			t.Errorf("no automation goroutine labelled for %s in %v", id, labels)
+	// AddAccount returns before every runtime goroutine has started and labelled
+	// itself (the automation coordinator's goroutine is spawned asynchronously),
+	// so wait for the labels with a deadline instead of sampling once.
+	var missing []string
+	labels := awaitGoroutineLabels(t, 10*time.Second, func(labels []string) bool {
+		missing = missing[:0]
+		for _, id := range []string{"alpha", "bravo"} {
+			runtimeLabel := `"runtime":"` + id + `"`
+			if !hasLabelSet(labels, runtimeLabel, `"stage":"automation"`) {
+				missing = append(missing, "automation goroutine for "+id)
+			}
+			if !hasLabelSet(labels, runtimeLabel, `"stage":"persist"`) {
+				missing = append(missing, "persistence goroutine for "+id)
+			}
 		}
-		if !hasLabelSet(labels, runtimeLabel, `"stage":"persist"`) {
-			t.Errorf("no persistence goroutine labelled for %s in %v", id, labels)
-		}
+		return len(missing) == 0
+	})
+	for _, absent := range missing {
+		t.Errorf("no labelled %s within the deadline; labels: %v", absent, labels)
 	}
 	// Runtimes stay separate: no goroutine carries both runtime labels.
 	if hasLabelSet(labels, `"runtime":"alpha"`, `"runtime":"bravo"`) {

@@ -243,9 +243,28 @@ func TestCoreAndOnDemandPoliciesAreNotGatedByEnablement(t *testing.T) {
 	}
 }
 
+// resetConfigurationMemos empties the process-wide parsed-section memos. They are
+// keyed by content, so a test that counts real parses must start from empty: a
+// repeat run (`-count=2`) or another test that parsed the same content would
+// otherwise turn an expected parse into a cache hit.
+func resetConfigurationMemos(t *testing.T) {
+	t.Helper()
+	reset := func() {
+		enabledControlsMemo.mu.Lock()
+		enabledControlsMemo.entries = nil
+		enabledControlsMemo.mu.Unlock()
+		schedulerMemo.mu.Lock()
+		schedulerMemo.entries = nil
+		schedulerMemo.mu.Unlock()
+	}
+	reset()
+	t.Cleanup(reset)
+}
+
 // CIT-43: the enabled controls and scheduler are parsed once per configuration
 // revision, not per evaluation, and evaluation no longer copies the configuration.
 func TestConfigurationIsParsedOncePerRevisionAndNotCopiedPerEvaluation(t *testing.T) {
+	resetConfigurationMemos(t)
 	state := State.NewStore(coordinatorReadyState())
 	configuration, err := Configuration.Open(t.TempDir(), map[string]json.RawMessage{
 		"automation.enabled": json.RawMessage(`{"a":true,"b":false}`),

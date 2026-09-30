@@ -238,6 +238,27 @@ func TestAutoStormTroopCapKeepsBaselineWhenResetTelemetryUnavailable(t *testing.
 	}
 }
 
+// A runtime with no attack-launch counter at all (no telemetry and no ledger)
+// keeps the baseline cap and explains itself in player language.
+func TestAutoStormTroopCapWithoutAnAttackCountSourceKeepsBaselineAndSaysSoPlainly(t *testing.T) {
+	now := time.Date(2026, time.July, 29, 12, 0, 0, 0, time.UTC)
+	state := State.NewGameState()
+	state.DailyAttacks.SessionStartedAt = now.Add(-time.Hour)
+	settings := defaultAutoStormSettings()
+	settings.Forts.Enabled = true
+	settings.Forts.PresetID = "fort"
+	preview, err := autoStormTroopCapPreview(Snapshot{
+		State: state, Configuration: autoStormTestTroopCapConfiguration(), GameData: autoStormTestGameData(t), Now: now,
+	}, settings)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !preview.Available || preview.ResetSessionAvailable || preview.CapBasis != autoStormTroopCapBasisBaseline ||
+		preview.Detail != "Confirmed attack count is not available yet." {
+		t.Fatalf("nil-provider preview = %#v", preview)
+	}
+}
+
 func TestAutoStormTroopCapKeepsLargestPresetAndReserveFeasible(t *testing.T) {
 	now := time.Date(2026, time.July, 29, 12, 0, 0, 0, time.UTC)
 	state := State.NewGameState()

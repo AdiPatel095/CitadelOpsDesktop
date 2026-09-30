@@ -35,9 +35,9 @@ import type {
 } from './Contracts';
 import { Notifications } from '../components/Notifications';
 import { hasExternalConfiguration } from './RuntimeURL';
+import { StateResync, type StateResyncOutcome } from './StateResync';
 
 const runtimeDiagnosticsEnabled = import.meta.env.DEV === true || import.meta.env.VITE_SHOW_HEADER_MEMORY === 'true';
-const stateRefreshIntervalMs = 1_000;
 
 interface APIContextValue {
   connectionStatus: APIConnectionStatus;
@@ -115,15 +115,48 @@ export function APIProvider({ children }: { children: ReactNode }) {
 	}, [state?.automations]);
 	const operationFailureNotifications = useRef(new OperationFailureNotificationCoordinator());
   const stateRefreshInFlight = useRef<Promise<void> | null>(null);
-  const stateRefreshPending = useRef(false);
+	// Revision bookkeeping for the state stream: applies in-order and merged (gap) events,
+	// buffers events across holes and resyncs, and asks for at most one snapshot at a time.
+	const stateResync = useRef(new StateResync<GameStateV2, GameStatePatchV2>(applyGameStatePatch)).current;
+	const stateResyncTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+	const stateResyncSequence = useRef(0);
+
+	const handleStateOutcome = useCallback(function handle(outcome: StateResyncOutcome<GameStateV2>) {
+		if (outcome.changed && outcome.state != null) {
+			stateRef.current = outcome.state;
+			stateReady.current = true;
+			setState(outcome.state);
+		}
+		if (stateResyncTimer.current != null) clearTimeout(stateResyncTimer.current);
+		stateResyncTimer.current = null;
+		if (outcome.wakeAt != null) {
+			stateResyncTimer.current = setTimeout(() => {
+				stateResyncTimer.current = null;
+				handle(stateResync.tick(Date.now()));
+			}, Math.max(0, outcome.wakeAt - Date.now()));
+		}
+		if (outcome.resync == null) return;
+		// Prefer the event socket: the snapshot then arrives in order with later events. REST only
+		// when the socket is down, or when the first socket request went unanswered.
+		if (outcome.resync.attempt <= 1 && CitadelAPI.requestState(`state-resync-${++stateResyncSequence.current}`)) return;
+		void CitadelAPI.getState().then(
+			(snapshot) => handle(stateResync.acceptSnapshot(snapshot, Date.now())),
+			(requestError) => {
+				setError(errorMessage(requestError));
+				handle(stateResync.resyncFailed(Date.now()));
+			},
+		);
+	}, [stateResync]);
+
+	const resetStateStream = useCallback(() => {
+		stateResync.connectionReset();
+		if (stateResyncTimer.current != null) clearTimeout(stateResyncTimer.current);
+		stateResyncTimer.current = null;
+	}, [stateResync]);
 
 	const acceptStateSnapshot = useCallback((snapshot: GameStateV2) => {
-		const current = stateRef.current;
-		if (current != null && current.revision > snapshot.revision) return;
-		stateRef.current = snapshot;
-		stateReady.current = true;
-		setState(snapshot);
-	}, []);
+		handleStateOutcome(stateResync.acceptSnapshot(snapshot, Date.now()));
+	}, [handleStateOutcome, stateResync]);
 
 	const acceptConfigurationSnapshot = useCallback((snapshot: ConfigurationSnapshot) => {
 		const current = configurationRef.current;
@@ -142,36 +175,22 @@ export function APIProvider({ children }: { children: ReactNode }) {
 	}, []);
 
   const refreshState = useCallback(async function refreshStateRequest() {
-    if (stateRefreshInFlight.current != null) {
-      stateRefreshPending.current = true;
-      await stateRefreshInFlight.current;
-      return;
-    }
+    // Explicit REST refresh (initial fallback, callers that just mutated state). One request at a
+    // time; never re-armed by stream events.
+    while (stateRefreshInFlight.current != null) await stateRefreshInFlight.current;
     const request = (async () => {
-      do {
-        stateRefreshPending.current = false;
-        const startedAt = Date.now();
-        try {
-		  acceptStateSnapshot(await CitadelAPI.getState());
-          setError(null);
-        } catch (requestError) {
-          setError(errorMessage(requestError));
-        }
-        if (stateRefreshPending.current) {
-          const remaining = stateRefreshIntervalMs - (Date.now() - startedAt);
-          if (remaining > 0) await new Promise((resolve) => setTimeout(resolve, remaining));
-        }
-      } while (stateRefreshPending.current);
+      try {
+        acceptStateSnapshot(await CitadelAPI.getState());
+        setError(null);
+      } catch (requestError) {
+        setError(errorMessage(requestError));
+      }
     })();
     stateRefreshInFlight.current = request;
     try {
       await request;
     } finally {
       if (stateRefreshInFlight.current === request) stateRefreshInFlight.current = null;
-    }
-    if (stateRefreshPending.current) {
-      await new Promise((resolve) => setTimeout(resolve, stateRefreshIntervalMs));
-      await refreshStateRequest();
     }
   }, [acceptStateSnapshot]);
 
@@ -238,7 +257,11 @@ export function APIProvider({ children }: { children: ReactNode }) {
 	}, []);
 
   useEffect(() => {
-    const unsubscribeStatus = CitadelAPI.subscribeStatus(setConnectionStatus);
+    const unsubscribeStatus = CitadelAPI.subscribeStatus((status) => {
+		setConnectionStatus(status);
+		// A reconnect greets with a fresh snapshot; whatever was buffered or requested belongs to the old socket.
+		if (status === 'Disconnected') resetStateStream();
+	});
 	const unsubscribeConfiguration = CitadelAPI.subscribeConfiguration(acceptConfigurationSnapshot);
     const unsubscribeEvents = CitadelAPI.subscribe((message) => {
       if (message.type === 'state.snapshot' && isGameState(message.payload)) {
@@ -246,22 +269,15 @@ export function APIProvider({ children }: { children: ReactNode }) {
         return;
       }
 	  if (message.type === 'state.changed' && isStateChangeEvent(message.payload)) {
-		const current = stateRef.current;
-		const patch = message.payload.patch;
-		if (current != null && patch.revision <= current.revision) return;
-		if (message.gap || current == null || patch.schemaVersion !== current.schemaVersion
-			|| patch.revision !== current.revision + 1) {
-			void refreshState();
-			return;
-		}
-		const next = applyGameStatePatch(current, patch);
-		stateRef.current = next;
-		stateReady.current = true;
-		setState(next);
+		handleStateOutcome(stateResync.receiveEvent({
+			patch: message.payload.patch,
+			gap: message.gap,
+			baseRevision: message.baseRevision,
+		}, Date.now()));
         return;
       }
 	  if (message.type === 'state.changed') {
-		void refreshState();
+		handleStateOutcome(stateResync.unusableEvent(Date.now()));
 		return;
 	  }
       if (message.type === 'catalog.changed' && isCatalogManifest(message.payload)) {
@@ -310,9 +326,10 @@ export function APIProvider({ children }: { children: ReactNode }) {
       unsubscribeStatus();
 	  unsubscribeConfiguration();
 	  if (initialSyncTimer.current != null) clearTimeout(initialSyncTimer.current);
+	  resetStateStream();
       CitadelAPI.disconnect();
     };
-  }, [acceptConfigurationSnapshot, acceptStateSnapshot, publishOperationFailure, refreshApplicationUpdate, refreshCatalogs, refreshConfiguration, refreshDiagnostics, refreshOperations, refreshState]);
+  }, [acceptConfigurationSnapshot, acceptStateSnapshot, handleStateOutcome, publishOperationFailure, refreshApplicationUpdate, refreshCatalogs, refreshConfiguration, refreshDiagnostics, refreshOperations, refreshState, resetStateStream, stateResync]);
 
 	useEffect(() => {
 		const interval = window.setInterval(() => void refreshApplicationUpdate(), 5_000);

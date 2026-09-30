@@ -439,3 +439,99 @@ func TestMapProjectionStripsFieldsOutsideOfficialObjectKind(t *testing.T) {
 		t.Fatalf("tower projection lost required fields: %+v", stored)
 	}
 }
+
+// adoptionFixture returns a same-world store and a function that makes another
+// account observe a new shared map fact and returns the world event bravo adopts.
+func adoptionFixture(t *testing.T) (bravo *Store, nextWorldEvent func(x int) WorldMapEvent) {
+	t.Helper()
+	worlds := NewWorldMapStore()
+	alphaInitial := NewGameState()
+	alphaInitial.Account.WorldID = "wss://world.example/socket"
+	alphaInitial.Player.ID = 101
+	alpha := NewStoreWithWorldMap(alphaInitial, worlds)
+	bravoInitial := NewGameState()
+	bravoInitial.Account.WorldID = "wss://world.example/socket"
+	bravoInitial.Player.ID = 202
+	bravo = NewStoreWithWorldMap(bravoInitial, worlds)
+	worldEvents, unsubscribe := worlds.Subscribe(8)
+	t.Cleanup(unsubscribe)
+	return bravo, func(x int) WorldMapEvent {
+		t.Helper()
+		shared := MapObservation{
+			KingdomID: 0, X: x, Y: 101, TypeID: 1, OwnerID: 500, ObjectID: int64(700 + x),
+			Name: "Shared castle", ObservedAt: time.Now().UTC(),
+		}
+		if _, err := alpha.ApplyComponents(Components(ComponentWorldMap), func(state *GameState) ([]string, bool, error) {
+			return []string{"map"}, state.SetMapObservation(shared), nil
+		}); err != nil {
+			t.Fatal(err)
+		}
+		return <-worldEvents
+	}
+}
+
+func bumpRevision(t *testing.T, store *Store, domain string) {
+	t.Helper()
+	if _, err := store.Apply(func(*GameState) ([]string, bool, error) { return []string{domain}, true, nil }); err != nil {
+		t.Fatal(err)
+	}
+}
+
+// A client that missed revisions must not treat an adoption event as building on revision 0.
+func TestAdoptWorldMapEventDeclaresPreviousRevisionAsBase(t *testing.T) {
+	bravo, nextWorldEvent := adoptionFixture(t)
+	events, unsubscribe := bravo.Subscribe(4)
+	defer unsubscribe()
+
+	for want := uint64(1); want <= 3; want++ {
+		returned, changed := bravo.AdoptWorldMap(nextWorldEvent(100 + int(want)))
+		if !changed || returned.Revision != want || returned.BaseRevision != want-1 {
+			t.Fatalf("adoption event = revision %d base %d changed %t, want revision %d base %d",
+				returned.Revision, returned.BaseRevision, changed, want, want-1)
+		}
+		event := <-events
+		if event.Revision != want || event.BaseRevision != want-1 || event.Gap || !slices.Contains(event.Components, ComponentWorldMap) {
+			t.Fatalf("published adoption = revision %d base %d gap %t components %v, want revision %d base %d",
+				event.Revision, event.BaseRevision, event.Gap, event.Components, want, want-1)
+		}
+	}
+}
+
+func TestAdoptWorldMapEventFoldsIntoQueueWithOldestBase(t *testing.T) {
+	bravo, nextWorldEvent := adoptionFixture(t)
+	events, unsubscribe := bravo.Subscribe(2)
+	defer unsubscribe()
+	for x := 101; x <= 102; x++ {
+		if _, changed := bravo.AdoptWorldMap(nextWorldEvent(x)); !changed {
+			t.Fatalf("adoption %d did not change the store", x)
+		}
+	}
+	bumpRevision(t, bravo, "beri") // the buffer of two is full: fold everything
+
+	merged := <-events
+	if !merged.Gap || merged.BaseRevision != 0 || merged.Revision != 3 {
+		t.Fatalf("merged event = revision %d base %d gap %t, want revision 3 base 0 gap", merged.Revision, merged.BaseRevision, merged.Gap)
+	}
+	if merged.Patch == nil || merged.Patch.MapChanges == nil || len(*merged.Patch.MapChanges) != 2 {
+		t.Fatalf("merged patch lost the adopted map changes: %+v", merged.Patch)
+	}
+	if !slices.Contains(merged.Components, ComponentWorldMap) {
+		t.Fatalf("merged components = %v, want the world map among them", merged.Components)
+	}
+}
+
+func TestPublishDefaultsAnUnsetBaseToThePreviousRevisionForPlainEvents(t *testing.T) {
+	store := NewStore(NewGameState())
+	events, unsubscribe := store.Subscribe(4)
+	defer unsubscribe()
+	store.publish(Event{Revision: 5, Sequence: 5})
+	store.publish(Event{Revision: 1, Sequence: 1})
+	store.publish(Event{Revision: 9, Sequence: 9, Gap: true})
+	store.publish(Event{Revision: 7, Sequence: 7, BaseRevision: 3})
+	for _, want := range []struct{ revision, base uint64 }{{5, 4}, {1, 0}, {9, 0}, {7, 3}} {
+		event := <-events
+		if event.Revision != want.revision || event.BaseRevision != want.base {
+			t.Fatalf("event revision %d = base %d, want %d", event.Revision, event.BaseRevision, want.base)
+		}
+	}
+}

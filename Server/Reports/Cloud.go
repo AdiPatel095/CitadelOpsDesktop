@@ -12,6 +12,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"sync/atomic"
 	"time"
 
 	"CitadelDesktop/Server/State"
@@ -22,12 +23,18 @@ const (
 	cloudReportBatchMax    = 25
 	cloudReportListMax     = 5000
 	cloudRequestTimeout    = 20 * time.Second
+	// A backend that predates the LID presence route is probed again after this long,
+	// so a rollout that finishes mid-run is picked up.
+	cloudLIDRouteRecheck = 30 * time.Minute
+	cloudLIDResponseMax  = 1 << 20
 )
 
 type CloudConfig struct {
-	Client      *http.Client
-	UploadURL   string
-	FetchURL    string
+	Client    *http.Client
+	UploadURL string
+	FetchURL  string
+	// LIDsURL is the LID presence route; it defaults to FetchURL + "/lids".
+	LIDsURL     string
 	TrainingURL string
 	UploadKey   string
 }
@@ -42,8 +49,13 @@ type CloudClient struct {
 	client      *http.Client
 	uploadURL   string
 	fetchURL    string
+	lidsURL     string
 	trainingURL string
 	uploadKey   string
+	// lidRouteMissingAt is when the backend last answered the presence route
+	// with 404/405 (Unix nanoseconds, 0 = never): older backends only have the list.
+	lidRouteMissingAt atomic.Int64
+	now               func() time.Time
 }
 
 type cloudBattleReportEnvelope struct {
@@ -94,8 +106,13 @@ func NewCloudClient(config CloudConfig) *CloudClient {
 	if uploadKey == "" {
 		uploadKey = reportUploadKey()
 	}
+	lidsURL := strings.TrimSpace(config.LIDsURL)
+	if lidsURL == "" {
+		lidsURL = cloudReportLIDsURL(fetchURL)
+	}
 	return &CloudClient{
-		client: client, uploadURL: uploadURL, fetchURL: fetchURL, trainingURL: trainingURL, uploadKey: uploadKey,
+		client: client, uploadURL: uploadURL, fetchURL: fetchURL, lidsURL: lidsURL,
+		trainingURL: trainingURL, uploadKey: uploadKey, now: time.Now,
 	}
 }
 
@@ -220,6 +237,63 @@ func (client *CloudClient) RemoteLIDs(ctx context.Context) (map[int64]struct{}, 
 	result := make(map[int64]struct{}, len(payloads))
 	for _, payload := range payloads {
 		if lid := cloudPayloadLID(payload); lid > 0 {
+			result[lid] = struct{}{}
+		}
+	}
+	return result, nil
+}
+
+// RemoteLIDsOf reports which of the given LIDs the cloud already stores, sending
+// only those LIDs and receiving only the ones present (a few hundred bytes for an
+// upload batch). A backend that predates the route answers 404/405; the client
+// then falls back to the full list for a while, exactly as before.
+func (client *CloudClient) RemoteLIDsOf(ctx context.Context, lids []int64) (map[int64]struct{}, error) {
+	if client == nil || client.client == nil {
+		return nil, fmt.Errorf("cloud battle report client is unavailable")
+	}
+	if len(lids) == 0 {
+		return map[int64]struct{}{}, nil
+	}
+	if missing := client.lidRouteMissingAt.Load(); missing != 0 &&
+		client.now().Sub(time.Unix(0, missing)) < cloudLIDRouteRecheck {
+		return client.RemoteLIDs(ctx)
+	}
+	body, err := json.Marshal(struct {
+		LIDs []int64 `json:"lids"`
+	}{LIDs: lids})
+	if err != nil {
+		return nil, fmt.Errorf("encode cloud battle report LID request: %w", err)
+	}
+	request, err := http.NewRequestWithContext(ctx, http.MethodPost, client.lidsURL, bytes.NewReader(body))
+	if err != nil {
+		return nil, fmt.Errorf("create cloud battle report LID request: %w", err)
+	}
+	request.Header.Set("Content-Type", "application/json")
+	client.applyUploadKey(request)
+	response, err := client.client.Do(request)
+	if err != nil {
+		return nil, fmt.Errorf("check cloud battle report LIDs: %w", err)
+	}
+	defer response.Body.Close()
+	if response.StatusCode == http.StatusNotFound || response.StatusCode == http.StatusMethodNotAllowed {
+		_, _ = io.Copy(io.Discard, io.LimitReader(response.Body, 4096))
+		client.lidRouteMissingAt.Store(client.now().UnixNano())
+		return client.RemoteLIDs(ctx)
+	}
+	if response.StatusCode < http.StatusOK || response.StatusCode >= http.StatusMultipleChoices {
+		message, _ := io.ReadAll(io.LimitReader(response.Body, 4096))
+		return nil, fmt.Errorf("check cloud battle report LIDs: %s: %s", response.Status, strings.TrimSpace(string(message)))
+	}
+	var payload struct {
+		LIDs []int64 `json:"lids"`
+	}
+	if err := json.NewDecoder(io.LimitReader(response.Body, cloudLIDResponseMax)).Decode(&payload); err != nil {
+		return nil, fmt.Errorf("decode cloud battle report LIDs: %w", err)
+	}
+	client.lidRouteMissingAt.Store(0)
+	result := make(map[int64]struct{}, len(payload.LIDs))
+	for _, lid := range payload.LIDs {
+		if lid > 0 {
 			result[lid] = struct{}{}
 		}
 	}
@@ -470,6 +544,18 @@ func cloudReportFetchURL() string {
 		return endpoint
 	}
 	return strings.TrimRight(cloudBackendURL(), "/") + "/reports/battle"
+}
+
+// cloudReportLIDsURL derives the presence route from the list URL: same path plus "/lids".
+func cloudReportLIDsURL(fetchURL string) string {
+	endpoint, err := url.Parse(fetchURL)
+	if err != nil {
+		return strings.TrimRight(fetchURL, "/") + "/lids"
+	}
+	endpoint.RawQuery, endpoint.Fragment = "", ""
+	endpoint.Path = strings.TrimRight(endpoint.Path, "/") + "/lids"
+	endpoint.RawPath = ""
+	return endpoint.String()
 }
 
 func cloudBattleTrainingUploadURL() string {

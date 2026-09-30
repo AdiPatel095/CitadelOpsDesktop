@@ -6,8 +6,8 @@ import { useAuth } from '../../context/AuthContext';
 import { useCastleFocus } from '../../context/CastleFocusContext';
 import { Badge, Button, EmptyState, Input, SectionCard, Select } from '../../components/ui';
 import { useMovement } from '../../Movement/context/MovementContext';
-import type { CommanderActivity, MovementViewModel } from '../../Movement/types/MovementState';
-import type { MovementStateV2 } from '../../api/Contracts';
+import type { CommanderActivity } from '../../Movement/types/MovementState';
+import { commanderStatusForLaunch } from '../../Movement/types/CommanderActivity';
 import { useRiftMap } from '../context/RiftMapContext';
 import { formatSavedAt, riftLaunchLabel, type RiftCRALaunchEntry } from '../types/RiftCRALaunch';
 import {
@@ -53,42 +53,6 @@ const COMMANDER_STATUS_META: Record<
   posted: { label: 'Posted', variant: 'warning' },
   returning: { label: 'Returning', variant: 'outline' },
 };
-
-function effectiveProgress(movement: MovementStateV2, nowUnix: number): number {
-  if (movement.arrivesAt && movement.travelSeconds) {
-    const remaining = Math.max(0, Math.floor(Date.parse(movement.arrivesAt) / 1000) - nowUnix);
-    return Math.max(0, movement.travelSeconds - remaining);
-  }
-  return movement.progressSeconds ?? 0;
-}
-
-function commanderStatusForLaunch(
-  movement: MovementViewModel | null,
-  commanderID: number | undefined,
-  gameLoggedIn: boolean,
-  nowUnix: number,
-  fallbackStatus: CommanderActivity | undefined
-): CommanderActivity {
-  if (!gameLoggedIn || commanderID == null || commanderID < 0) return 'unknown';
-  if (!movement) return fallbackStatus ?? 'syncing';
-  if (!movement?.snapshotReady) return 'syncing';
-  const snapshotFresh =
-    movement.lastSnapshotUnix > 0 &&
-    nowUnix >= movement.lastSnapshotUnix &&
-    nowUnix - movement.lastSnapshotUnix <= movement.freshnessWindowSec;
-  if (!snapshotFresh) return 'unknown';
-  const row = movement.commanderStatuses.find((candidate) => candidate.commanderId === commanderID);
-  if (!row) return 'unknown';
-  if (
-    row.status === 'outbound' &&
-    row.movement != null &&
-    (row.movement.travelSeconds ?? 0) > 0 &&
-    effectiveProgress(row.movement, nowUnix) >= (row.movement.travelSeconds ?? 0)
-  ) {
-    return row.movement.returnsAt ? 'posted' : 'busy';
-  }
-  return row.status;
-}
 
 function commanderStatusTitle(status: CommanderActivity, commanderID: number | undefined): string {
   const lid = commanderID ?? '—';
