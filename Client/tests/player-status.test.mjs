@@ -90,10 +90,11 @@ test('game descriptors win, mismatched descriptors are rejected, and future valu
 });
 
 const connection = (extra = {}) => ({ surface: 'desktop', status: 'Connected', loggedIn: true, started: true, now: NOW, ...extra });
-for (const status of ['connecting', 'starting', 'authenticating', 'reconnecting', 'cooldown']) test(`connection ${status} waits`, () => {
+for (const status of ['connecting', 'starting', 'authenticating', 'reconnecting', 'released', 'cooldown']) test(`connection ${status} waits`, () => {
   assert.equal(model.connectionPlayerStatus(connection({ status, loggedIn: false })).status, 'waiting');
 });
 test('connection connected, cooldown, suspended, fatal failure, before Start and unknown', () => {
+  assert.equal(model.connectionPlayerStatus(connection({ status: 'disconnected', loggedIn: false, dashboard: 'Connecting' })).status, 'waiting');
   const connected = model.connectionPlayerStatus(connection()); assert.equal(connected.status, 'running'); assert.equal(text(connected), 'Connected');
   assert.equal(model.connectionPlayerStatus(connection({ loginFailure: { class: 'cooldown', fatal: true } })).status, 'waiting');
   const suspended = model.connectionPlayerStatus(connection({ loginFailure: { class: 'suspended', fatal: true, suspendedUntil: '2026-10-01T12:00:00Z' } }));

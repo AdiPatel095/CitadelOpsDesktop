@@ -99,7 +99,7 @@ export function connectionPlayerStatus(input: ConnectionPlayerStatusInput): Play
     status = 'needs-attention'; reason = describeMessage('playerStatus.loginFailed');
   } else if (raw === 'connected' && input.loggedIn) {
     status = 'running'; reason = describeMessage('playerStatus.connected');
-  } else if (['connecting', 'starting', 'authenticating', 'reconnecting'].includes(raw)) {
+  } else if (['connecting', 'starting', 'authenticating', 'reconnecting', 'released'].includes(raw) || input.dashboard === 'Connecting') {
     status = 'waiting'; reason = describeMessage('playerStatus.connecting');
   } else if (input.surface === 'desktop' && input.started === false) {
     status = 'off'; reason = describeMessage('playerStatus.notStarted');

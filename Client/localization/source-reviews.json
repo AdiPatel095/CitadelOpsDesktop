@@ -11128,5 +11128,370 @@
     "classification": "technical",
     "reason": "Slot ids, feature id, readiness ids, DOM anchor ids, message keys and id fallbacks.",
     "evidence": "forts/islands slots, autoStorm feature id, readiness check ids, auto-storm-* element ids used by focusReadinessTarget, typed message keys and #<id> fallbacks."
+  },
+  "a2eaeaee9eac425b8f7ee35adde3f9869d1d289734028bea82fdabfba6eaa29b": {
+    "classification": "technical",
+    "reason": "CIT-66 status discriminator or semantic color role, not display text.",
+    "evidence": "settings/readiness/playerStatus.ts consumes raw statuses as mapping inputs and returns PlayerStatus/PLAYER_STATUS_ROLE enum identifiers; display labels live in playerStatus.* English keys and reasons are LocalizedMessage descriptors. PR-B adds no UI sink."
+  },
+  "964c10e414d4321443179d910bfe869b7f973c6147a2de71217d84d8c0039d5b": {
+    "classification": "technical",
+    "reason": "CIT-66 status discriminator or semantic color role, not display text.",
+    "evidence": "settings/readiness/playerStatus.ts consumes raw statuses as mapping inputs and returns PlayerStatus/PLAYER_STATUS_ROLE enum identifiers; display labels live in playerStatus.* English keys and reasons are LocalizedMessage descriptors. PR-B adds no UI sink."
+  },
+  "3371b744c152310cc6ed5438b86bc528355b6c0cbf54f11c1fcc028f19d51c34": {
+    "classification": "technical",
+    "reason": "CIT-66 status discriminator or semantic color role, not display text.",
+    "evidence": "settings/readiness/playerStatus.ts consumes raw statuses as mapping inputs and returns PlayerStatus/PLAYER_STATUS_ROLE enum identifiers; display labels live in playerStatus.* English keys and reasons are LocalizedMessage descriptors. PR-B adds no UI sink."
+  },
+  "624e72a0d1e58386ed757eb0fa9c3a70115573125372c147ddb60f6983aeff6d": {
+    "classification": "technical",
+    "reason": "CIT-66 status discriminator or semantic color role, not display text.",
+    "evidence": "settings/readiness/playerStatus.ts consumes raw statuses as mapping inputs and returns PlayerStatus/PLAYER_STATUS_ROLE enum identifiers; display labels live in playerStatus.* English keys and reasons are LocalizedMessage descriptors. PR-B adds no UI sink."
+  },
+  "4be0310f378ef0d4734a97e12656d436aef89ba51aa8e8024154c66e03e8451f": {
+    "classification": "technical",
+    "reason": "CIT-66 status discriminator or semantic color role, not display text.",
+    "evidence": "settings/readiness/playerStatus.ts consumes raw statuses as mapping inputs and returns PlayerStatus/PLAYER_STATUS_ROLE enum identifiers; display labels live in playerStatus.* English keys and reasons are LocalizedMessage descriptors. PR-B adds no UI sink."
+  },
+  "2732ae49da09737276946df727bf92eeed999e3a803d1e6c50f2c237711c2253": {
+    "classification": "technical",
+    "reason": "CIT-66 status discriminator or semantic color role, not display text.",
+    "evidence": "settings/readiness/playerStatus.ts consumes raw statuses as mapping inputs and returns PlayerStatus/PLAYER_STATUS_ROLE enum identifiers; display labels live in playerStatus.* English keys and reasons are LocalizedMessage descriptors. PR-B adds no UI sink."
+  },
+  "065e1995df6d6e4d5a8be63ca57a4961f0e081564c92dfab218c2a60310eb104": {
+    "classification": "technical",
+    "reason": "CIT-66 status discriminator or semantic color role, not display text.",
+    "evidence": "settings/readiness/playerStatus.ts consumes raw statuses as mapping inputs and returns PlayerStatus/PLAYER_STATUS_ROLE enum identifiers; display labels live in playerStatus.* English keys and reasons are LocalizedMessage descriptors. PR-B adds no UI sink."
+  },
+  "d1273dc4c67d6e80c7c2f9d00c24d38418fb48981404677894197e8eb0b43cc2": {
+    "classification": "technical",
+    "reason": "CIT-66 status discriminator or semantic color role, not display text.",
+    "evidence": "settings/readiness/playerStatus.ts consumes raw statuses as mapping inputs and returns PlayerStatus/PLAYER_STATUS_ROLE enum identifiers; display labels live in playerStatus.* English keys and reasons are LocalizedMessage descriptors. PR-B adds no UI sink."
+  },
+  "632c3a7e01402afcab1a914573d0bc9c2ef5eb994b4d734c18fa2cd203dfdf1f": {
+    "classification": "technical",
+    "reason": "CIT-66 status discriminator or semantic color role, not display text.",
+    "evidence": "settings/readiness/playerStatus.ts consumes raw statuses as mapping inputs and returns PlayerStatus/PLAYER_STATUS_ROLE enum identifiers; display labels live in playerStatus.* English keys and reasons are LocalizedMessage descriptors. PR-B adds no UI sink."
+  },
+  "b112f33617292e3a414e0c52e8852ecb027b9f98f5790f9be430575549d3a71d": {
+    "classification": "technical",
+    "reason": "CIT-66 status discriminator or semantic color role, not display text.",
+    "evidence": "settings/readiness/playerStatus.ts consumes raw statuses as mapping inputs and returns PlayerStatus/PLAYER_STATUS_ROLE enum identifiers; display labels live in playerStatus.* English keys and reasons are LocalizedMessage descriptors. PR-B adds no UI sink."
+  },
+  "5299193682d00835f424534d8e2fd3756ff327c613783da34696493359cfe986": {
+    "classification": "technical",
+    "reason": "CIT-66 status discriminator or semantic color role, not display text.",
+    "evidence": "settings/readiness/playerStatus.ts consumes raw statuses as mapping inputs and returns PlayerStatus/PLAYER_STATUS_ROLE enum identifiers; display labels live in playerStatus.* English keys and reasons are LocalizedMessage descriptors. PR-B adds no UI sink."
+  },
+  "740deea5c345b247eeb0b8a265d973d32d09d9093de79bdf4308e1ee1bc3d1e2": {
+    "classification": "technical",
+    "reason": "CIT-66 status discriminator or semantic color role, not display text.",
+    "evidence": "settings/readiness/playerStatus.ts consumes raw statuses as mapping inputs and returns PlayerStatus/PLAYER_STATUS_ROLE enum identifiers; display labels live in playerStatus.* English keys and reasons are LocalizedMessage descriptors. PR-B adds no UI sink."
+  },
+  "16807071329589397e864acb4e9d0de483518898dc235bccf3bd574e47d67591": {
+    "classification": "technical",
+    "reason": "CIT-66 status discriminator or semantic color role, not display text.",
+    "evidence": "settings/readiness/playerStatus.ts consumes raw statuses as mapping inputs and returns PlayerStatus/PLAYER_STATUS_ROLE enum identifiers; display labels live in playerStatus.* English keys and reasons are LocalizedMessage descriptors. PR-B adds no UI sink."
+  },
+  "f0cbeddd5847e65e3c8c5a9a5fa60877bf695f00c8e7f394ef1a4dd9cd36fd5f": {
+    "classification": "technical",
+    "reason": "CIT-66 status discriminator or semantic color role, not display text.",
+    "evidence": "settings/readiness/playerStatus.ts consumes raw statuses as mapping inputs and returns PlayerStatus/PLAYER_STATUS_ROLE enum identifiers; display labels live in playerStatus.* English keys and reasons are LocalizedMessage descriptors. PR-B adds no UI sink."
+  },
+  "a2061007c1b34e94cf9a3ec5edf19c9a1c0e859e9ad19a31c24dbc02886cfa61": {
+    "classification": "technical",
+    "reason": "CIT-66 status discriminator or semantic color role, not display text.",
+    "evidence": "settings/readiness/playerStatus.ts consumes raw statuses as mapping inputs and returns PlayerStatus/PLAYER_STATUS_ROLE enum identifiers; display labels live in playerStatus.* English keys and reasons are LocalizedMessage descriptors. PR-B adds no UI sink."
+  },
+  "355be58ece2b2603b47742c92e679e930451700efb6740798f305356a8e6d3d9": {
+    "classification": "technical",
+    "reason": "CIT-66 status discriminator or semantic color role, not display text.",
+    "evidence": "settings/readiness/playerStatus.ts consumes raw statuses as mapping inputs and returns PlayerStatus/PLAYER_STATUS_ROLE enum identifiers; display labels live in playerStatus.* English keys and reasons are LocalizedMessage descriptors. PR-B adds no UI sink."
+  },
+  "33d5e2be898aab450c4fca4bf8e7b91083e020deb92686c484b62367ad5d9cce": {
+    "classification": "technical",
+    "reason": "CIT-66 status discriminator or semantic color role, not display text.",
+    "evidence": "settings/readiness/playerStatus.ts consumes raw statuses as mapping inputs and returns PlayerStatus/PLAYER_STATUS_ROLE enum identifiers; display labels live in playerStatus.* English keys and reasons are LocalizedMessage descriptors. PR-B adds no UI sink."
+  },
+  "a5ee538508d53750a2e5d2a30a9d29a825183ab79b4a3de505828d6532a9c4a4": {
+    "classification": "technical",
+    "reason": "CIT-66 status discriminator or semantic color role, not display text.",
+    "evidence": "settings/readiness/playerStatus.ts consumes raw statuses as mapping inputs and returns PlayerStatus/PLAYER_STATUS_ROLE enum identifiers; display labels live in playerStatus.* English keys and reasons are LocalizedMessage descriptors. PR-B adds no UI sink."
+  },
+  "0001c50b69e9c86cf9a1a539399c5cae6f59ee37fb91b29af23deba42605edb3": {
+    "classification": "technical",
+    "reason": "CIT-66 status discriminator or semantic color role, not display text.",
+    "evidence": "settings/readiness/playerStatus.ts consumes raw statuses as mapping inputs and returns PlayerStatus/PLAYER_STATUS_ROLE enum identifiers; display labels live in playerStatus.* English keys and reasons are LocalizedMessage descriptors. PR-B adds no UI sink."
+  },
+  "c49682d6f491e15e3c93313a2cbd1560278353a22cdfc0369120ec4f2eb2ed7c": {
+    "classification": "technical",
+    "reason": "CIT-66 status discriminator or semantic color role, not display text.",
+    "evidence": "settings/readiness/playerStatus.ts consumes raw statuses as mapping inputs and returns PlayerStatus/PLAYER_STATUS_ROLE enum identifiers; display labels live in playerStatus.* English keys and reasons are LocalizedMessage descriptors. PR-B adds no UI sink."
+  },
+  "43a5b722c9b3e3537f1a718392dec6e77c7c0959c8911db7f5c82fb6798d7b51": {
+    "classification": "technical",
+    "reason": "CIT-66 status discriminator or semantic color role, not display text.",
+    "evidence": "settings/readiness/playerStatus.ts consumes raw statuses as mapping inputs and returns PlayerStatus/PLAYER_STATUS_ROLE enum identifiers; display labels live in playerStatus.* English keys and reasons are LocalizedMessage descriptors. PR-B adds no UI sink."
+  },
+  "27254997ade983dda9da6d8befc5116dbf8b445b21502040608f4557771c2db2": {
+    "classification": "technical",
+    "reason": "CIT-66 status discriminator or semantic color role, not display text.",
+    "evidence": "settings/readiness/playerStatus.ts consumes raw statuses as mapping inputs and returns PlayerStatus/PLAYER_STATUS_ROLE enum identifiers; display labels live in playerStatus.* English keys and reasons are LocalizedMessage descriptors. PR-B adds no UI sink."
+  },
+  "9ef031c6a4d62b78692eff2833aa3f6cf8de3412170d0b48ecfbfe3283ed4690": {
+    "classification": "technical",
+    "reason": "CIT-66 status discriminator or semantic color role, not display text.",
+    "evidence": "settings/readiness/playerStatus.ts consumes raw statuses as mapping inputs and returns PlayerStatus/PLAYER_STATUS_ROLE enum identifiers; display labels live in playerStatus.* English keys and reasons are LocalizedMessage descriptors. PR-B adds no UI sink."
+  },
+  "031f6273369f7aedf0c75a8b6e7288912eabb60333c934592c48c0ee333d16c7": {
+    "classification": "technical",
+    "reason": "CIT-66 status discriminator or semantic color role, not display text.",
+    "evidence": "settings/readiness/playerStatus.ts consumes raw statuses as mapping inputs and returns PlayerStatus/PLAYER_STATUS_ROLE enum identifiers; display labels live in playerStatus.* English keys and reasons are LocalizedMessage descriptors. PR-B adds no UI sink."
+  },
+  "86de2158eeeef4019b8bbda021de2ecdd9860cfce25e5d0a089ec0a9fb2535ef": {
+    "classification": "technical",
+    "reason": "CIT-66 status discriminator or semantic color role, not display text.",
+    "evidence": "settings/readiness/playerStatus.ts consumes raw statuses as mapping inputs and returns PlayerStatus/PLAYER_STATUS_ROLE enum identifiers; display labels live in playerStatus.* English keys and reasons are LocalizedMessage descriptors. PR-B adds no UI sink."
+  },
+  "6d1d9f6e07a1ef0335b33014ab500eb83c3d5d9fac0e7c7b02418fd7cd6b3a6b": {
+    "classification": "technical",
+    "reason": "CIT-66 status discriminator or semantic color role, not display text.",
+    "evidence": "settings/readiness/playerStatus.ts consumes raw statuses as mapping inputs and returns PlayerStatus/PLAYER_STATUS_ROLE enum identifiers; display labels live in playerStatus.* English keys and reasons are LocalizedMessage descriptors. PR-B adds no UI sink."
+  },
+  "549b64adfb1122b5ef9ac786899d6c9a267c9d16796eafa733c6e78a0ed9208f": {
+    "classification": "technical",
+    "reason": "CIT-66 status discriminator or semantic color role, not display text.",
+    "evidence": "settings/readiness/playerStatus.ts consumes raw statuses as mapping inputs and returns PlayerStatus/PLAYER_STATUS_ROLE enum identifiers; display labels live in playerStatus.* English keys and reasons are LocalizedMessage descriptors. PR-B adds no UI sink."
+  },
+  "075ccfb7b4b7f91969af6085b185920a2be0edbeb96e5a08566383c5ff8282d8": {
+    "classification": "technical",
+    "reason": "CIT-66 status discriminator or semantic color role, not display text.",
+    "evidence": "settings/readiness/playerStatus.ts consumes raw statuses as mapping inputs and returns PlayerStatus/PLAYER_STATUS_ROLE enum identifiers; display labels live in playerStatus.* English keys and reasons are LocalizedMessage descriptors. PR-B adds no UI sink."
+  },
+  "c2e5a5c7d90579811011ab50a28cf2febec1c714944de4d1c64d94465cba4b71": {
+    "classification": "technical",
+    "reason": "CIT-66 status discriminator or semantic color role, not display text.",
+    "evidence": "settings/readiness/playerStatus.ts consumes raw statuses as mapping inputs and returns PlayerStatus/PLAYER_STATUS_ROLE enum identifiers; display labels live in playerStatus.* English keys and reasons are LocalizedMessage descriptors. PR-B adds no UI sink."
+  },
+  "53645c7b6caed03cbb78cb71376ae897eab31e2e7084f592a646d7ceb7ac5041": {
+    "classification": "technical",
+    "reason": "CIT-66 status discriminator or semantic color role, not display text.",
+    "evidence": "settings/readiness/playerStatus.ts consumes raw statuses as mapping inputs and returns PlayerStatus/PLAYER_STATUS_ROLE enum identifiers; display labels live in playerStatus.* English keys and reasons are LocalizedMessage descriptors. PR-B adds no UI sink."
+  },
+  "e9c7f47e540b8ca21ca85c779d4801363e962005b3e732c93800a79fed000f9c": {
+    "classification": "technical",
+    "reason": "CIT-66 status discriminator or semantic color role, not display text.",
+    "evidence": "settings/readiness/playerStatus.ts consumes raw statuses as mapping inputs and returns PlayerStatus/PLAYER_STATUS_ROLE enum identifiers; display labels live in playerStatus.* English keys and reasons are LocalizedMessage descriptors. PR-B adds no UI sink."
+  },
+  "c03b1e9598de479df03bb4c91f3d46f2e160fb96701eae17b6051fcef1aa41fb": {
+    "classification": "technical",
+    "reason": "CIT-66 status discriminator or semantic color role, not display text.",
+    "evidence": "settings/readiness/playerStatus.ts consumes raw statuses as mapping inputs and returns PlayerStatus/PLAYER_STATUS_ROLE enum identifiers; display labels live in playerStatus.* English keys and reasons are LocalizedMessage descriptors. PR-B adds no UI sink."
+  },
+  "3f8b5fba5ef6c217281a5e3fb908e4a8a67aedbcfc47190f12111579589ee360": {
+    "classification": "technical",
+    "reason": "CIT-66 status discriminator or semantic color role, not display text.",
+    "evidence": "settings/readiness/playerStatus.ts consumes raw statuses as mapping inputs and returns PlayerStatus/PLAYER_STATUS_ROLE enum identifiers; display labels live in playerStatus.* English keys and reasons are LocalizedMessage descriptors. PR-B adds no UI sink."
+  },
+  "12c85c1a50fc5b900c33353d4486c44cc5a15ed2d2ae2682bfa4879cd9ab6d2f": {
+    "classification": "technical",
+    "reason": "CIT-66 status discriminator or semantic color role, not display text.",
+    "evidence": "settings/readiness/playerStatus.ts consumes raw statuses as mapping inputs and returns PlayerStatus/PLAYER_STATUS_ROLE enum identifiers; display labels live in playerStatus.* English keys and reasons are LocalizedMessage descriptors. PR-B adds no UI sink."
+  },
+  "899d751d05ef75c8c068b9caa2650776a65720f7d2cbe797779be3a588826024": {
+    "classification": "technical",
+    "reason": "CIT-66 status discriminator or semantic color role, not display text.",
+    "evidence": "settings/readiness/playerStatus.ts consumes raw statuses as mapping inputs and returns PlayerStatus/PLAYER_STATUS_ROLE enum identifiers; display labels live in playerStatus.* English keys and reasons are LocalizedMessage descriptors. PR-B adds no UI sink."
+  },
+  "e5e378e281975d86bad2a4215f0df0e069bd81d4885ead44909e2904465ff4df": {
+    "classification": "technical",
+    "reason": "CIT-66 status discriminator or semantic color role, not display text.",
+    "evidence": "settings/readiness/playerStatus.ts consumes raw statuses as mapping inputs and returns PlayerStatus/PLAYER_STATUS_ROLE enum identifiers; display labels live in playerStatus.* English keys and reasons are LocalizedMessage descriptors. PR-B adds no UI sink."
+  },
+  "4d630a45b64b7be15381d64cdb925f73c40778027a49884a74b835a43a2db3c3": {
+    "classification": "technical",
+    "reason": "CIT-66 status discriminator or semantic color role, not display text.",
+    "evidence": "settings/readiness/playerStatus.ts consumes raw statuses as mapping inputs and returns PlayerStatus/PLAYER_STATUS_ROLE enum identifiers; display labels live in playerStatus.* English keys and reasons are LocalizedMessage descriptors. PR-B adds no UI sink."
+  },
+  "606660a8a8d251fd4f1be1c15fce471cc7f752f42b14891692eefb3f508d75fe": {
+    "classification": "technical",
+    "reason": "CIT-66 status discriminator or semantic color role, not display text.",
+    "evidence": "settings/readiness/playerStatus.ts consumes raw statuses as mapping inputs and returns PlayerStatus/PLAYER_STATUS_ROLE enum identifiers; display labels live in playerStatus.* English keys and reasons are LocalizedMessage descriptors. PR-B adds no UI sink."
+  },
+  "2e970e24f6c6f747dae27ff6f8b36db93ce40717ba1c5fdb4b9e3ced762aa09c": {
+    "classification": "technical",
+    "reason": "CIT-66 status discriminator or semantic color role, not display text.",
+    "evidence": "settings/readiness/playerStatus.ts consumes raw statuses as mapping inputs and returns PlayerStatus/PLAYER_STATUS_ROLE enum identifiers; display labels live in playerStatus.* English keys and reasons are LocalizedMessage descriptors. PR-B adds no UI sink."
+  },
+  "0a8fce8a5f4c08e2457ea8ae86dc142336dfb09b666c2119d71fbe45edcca033": {
+    "classification": "technical",
+    "reason": "CIT-66 status discriminator or semantic color role, not display text.",
+    "evidence": "settings/readiness/playerStatus.ts consumes raw statuses as mapping inputs and returns PlayerStatus/PLAYER_STATUS_ROLE enum identifiers; display labels live in playerStatus.* English keys and reasons are LocalizedMessage descriptors. PR-B adds no UI sink."
+  },
+  "b6b9fcf0ff3c48b278fc7a48d1f6d21647be701404c4ab6e7a7410331cce06f5": {
+    "classification": "technical",
+    "reason": "CIT-66 status discriminator or semantic color role, not display text.",
+    "evidence": "settings/readiness/playerStatus.ts consumes raw statuses as mapping inputs and returns PlayerStatus/PLAYER_STATUS_ROLE enum identifiers; display labels live in playerStatus.* English keys and reasons are LocalizedMessage descriptors. PR-B adds no UI sink."
+  },
+  "9fe04e91f39adf74a402789fb94182ffc723ef4575da9bfd227394774e834e75": {
+    "classification": "technical",
+    "reason": "CIT-66 status discriminator or semantic color role, not display text.",
+    "evidence": "settings/readiness/playerStatus.ts consumes raw statuses as mapping inputs and returns PlayerStatus/PLAYER_STATUS_ROLE enum identifiers; display labels live in playerStatus.* English keys and reasons are LocalizedMessage descriptors. PR-B adds no UI sink."
+  },
+  "95b5982d86b884a29f7f217bd55b57cca9b5aafff95b867e0ad4b10e5f264839": {
+    "classification": "technical",
+    "reason": "CIT-66 status discriminator or semantic color role, not display text.",
+    "evidence": "settings/readiness/playerStatus.ts consumes raw statuses as mapping inputs and returns PlayerStatus/PLAYER_STATUS_ROLE enum identifiers; display labels live in playerStatus.* English keys and reasons are LocalizedMessage descriptors. PR-B adds no UI sink."
+  },
+  "17bafd431bc09cbc09364bedcf09444dc51c1fdac507cedbf437506a098aa2ff": {
+    "classification": "technical",
+    "reason": "CIT-66 status discriminator or semantic color role, not display text.",
+    "evidence": "settings/readiness/playerStatus.ts consumes raw statuses as mapping inputs and returns PlayerStatus/PLAYER_STATUS_ROLE enum identifiers; display labels live in playerStatus.* English keys and reasons are LocalizedMessage descriptors. PR-B adds no UI sink."
+  },
+  "0bb9649abfeb77a5959741e1a0b82ea039dd7990f70eb8cb33332dda7694b31c": {
+    "classification": "technical",
+    "reason": "CIT-66 status discriminator or semantic color role, not display text.",
+    "evidence": "settings/readiness/playerStatus.ts consumes raw statuses as mapping inputs and returns PlayerStatus/PLAYER_STATUS_ROLE enum identifiers; display labels live in playerStatus.* English keys and reasons are LocalizedMessage descriptors. PR-B adds no UI sink."
+  },
+  "f0618ea2dfad6e01e187a334f206cf202e58ff97378c295d5ff3f7ae57f0b323": {
+    "classification": "technical",
+    "reason": "CIT-66 status discriminator or semantic color role, not display text.",
+    "evidence": "settings/readiness/playerStatus.ts consumes raw statuses as mapping inputs and returns PlayerStatus/PLAYER_STATUS_ROLE enum identifiers; display labels live in playerStatus.* English keys and reasons are LocalizedMessage descriptors. PR-B adds no UI sink."
+  },
+  "17b6be6243dca2aa9329d6c346bfec5f601058c86ce2bdb455df1a101eee095f": {
+    "classification": "technical",
+    "reason": "CIT-66 status discriminator or semantic color role, not display text.",
+    "evidence": "settings/readiness/playerStatus.ts consumes raw statuses as mapping inputs and returns PlayerStatus/PLAYER_STATUS_ROLE enum identifiers; display labels live in playerStatus.* English keys and reasons are LocalizedMessage descriptors. PR-B adds no UI sink."
+  },
+  "185bc2b228429b25b0eba99620836dc2782de76c6cf7ea12b3150df71076f0a7": {
+    "classification": "technical",
+    "reason": "CIT-66 status discriminator or semantic color role, not display text.",
+    "evidence": "settings/readiness/playerStatus.ts consumes raw statuses as mapping inputs and returns PlayerStatus/PLAYER_STATUS_ROLE enum identifiers; display labels live in playerStatus.* English keys and reasons are LocalizedMessage descriptors. PR-B adds no UI sink."
+  },
+  "59c9be1f7a6559491d34434ec2fb061c54b3a995c39dc00b74959f4f368b7eb5": {
+    "classification": "technical",
+    "reason": "CIT-66 status discriminator or semantic color role, not display text.",
+    "evidence": "settings/readiness/playerStatus.ts consumes raw statuses as mapping inputs and returns PlayerStatus/PLAYER_STATUS_ROLE enum identifiers; display labels live in playerStatus.* English keys and reasons are LocalizedMessage descriptors. PR-B adds no UI sink."
+  },
+  "b2cfc62fac94e835b1d11b213b84aa276efb10bea7c51ce58b890ccfc016e8de": {
+    "classification": "technical",
+    "reason": "CIT-66 status discriminator or semantic color role, not display text.",
+    "evidence": "settings/readiness/playerStatus.ts consumes raw statuses as mapping inputs and returns PlayerStatus/PLAYER_STATUS_ROLE enum identifiers; display labels live in playerStatus.* English keys and reasons are LocalizedMessage descriptors. PR-B adds no UI sink."
+  },
+  "80ed81082584c2af9cea54606b5961e011dbad5ea2a10fc16cddeaa69f9a26c5": {
+    "classification": "technical",
+    "reason": "CIT-66 status discriminator or semantic color role, not display text.",
+    "evidence": "settings/readiness/playerStatus.ts consumes raw statuses as mapping inputs and returns PlayerStatus/PLAYER_STATUS_ROLE enum identifiers; display labels live in playerStatus.* English keys and reasons are LocalizedMessage descriptors. PR-B adds no UI sink."
+  },
+  "5996bebe0199c28da529d0433761f7f7d3fdccfa1e5542991cac0cbe9cbfc287": {
+    "classification": "technical",
+    "reason": "CIT-66 status discriminator or semantic color role, not display text.",
+    "evidence": "settings/readiness/playerStatus.ts consumes raw statuses as mapping inputs and returns PlayerStatus/PLAYER_STATUS_ROLE enum identifiers; display labels live in playerStatus.* English keys and reasons are LocalizedMessage descriptors. PR-B adds no UI sink."
+  },
+  "b68d1808d078311c14dd1344de819a0d67b4bc0af2f6a2c24f7b64ccff0c3edc": {
+    "classification": "technical",
+    "reason": "CIT-66 status discriminator or semantic color role, not display text.",
+    "evidence": "settings/readiness/playerStatus.ts consumes raw statuses as mapping inputs and returns PlayerStatus/PLAYER_STATUS_ROLE enum identifiers; display labels live in playerStatus.* English keys and reasons are LocalizedMessage descriptors. PR-B adds no UI sink."
+  },
+  "17844560439a29dcf30a47c3f388e4fff832f8c038a2141f9edb141ac92d6db5": {
+    "classification": "technical",
+    "reason": "CIT-66 status discriminator or semantic color role, not display text.",
+    "evidence": "settings/readiness/playerStatus.ts consumes raw statuses as mapping inputs and returns PlayerStatus/PLAYER_STATUS_ROLE enum identifiers; display labels live in playerStatus.* English keys and reasons are LocalizedMessage descriptors. PR-B adds no UI sink."
+  },
+  "cd05e21f23a956589dc18c7588f996e60aa3519d7181fdb12dd5b9097927fe64": {
+    "classification": "technical",
+    "reason": "CIT-66 status discriminator or semantic color role, not display text.",
+    "evidence": "settings/readiness/playerStatus.ts consumes raw statuses as mapping inputs and returns PlayerStatus/PLAYER_STATUS_ROLE enum identifiers; display labels live in playerStatus.* English keys and reasons are LocalizedMessage descriptors. PR-B adds no UI sink."
+  },
+  "83f6f4693d8c652cdb5694ebb584114ab1c47983766369a464fd340556099641": {
+    "classification": "technical",
+    "reason": "CIT-66 status discriminator or semantic color role, not display text.",
+    "evidence": "settings/readiness/playerStatus.ts consumes raw statuses as mapping inputs and returns PlayerStatus/PLAYER_STATUS_ROLE enum identifiers; display labels live in playerStatus.* English keys and reasons are LocalizedMessage descriptors. PR-B adds no UI sink."
+  },
+  "db2bf9a39791c360a3bbb95a5af55b4f77bae15dbdb78b871e69ab827944f559": {
+    "classification": "technical",
+    "reason": "CIT-66 status discriminator or semantic color role, not display text.",
+    "evidence": "settings/readiness/playerStatus.ts consumes raw statuses as mapping inputs and returns PlayerStatus/PLAYER_STATUS_ROLE enum identifiers; display labels live in playerStatus.* English keys and reasons are LocalizedMessage descriptors. PR-B adds no UI sink."
+  },
+  "019065b8afd5e966e5ea607f35b3719681336292d68d523623a6a7081857f01c": {
+    "classification": "technical",
+    "reason": "CIT-66 status discriminator or semantic color role, not display text.",
+    "evidence": "settings/readiness/playerStatus.ts consumes raw statuses as mapping inputs and returns PlayerStatus/PLAYER_STATUS_ROLE enum identifiers; display labels live in playerStatus.* English keys and reasons are LocalizedMessage descriptors. PR-B adds no UI sink."
+  },
+  "a9e9eb046047c09045e883d26b45fc7c026c58827c097f1660547e4ecf98d073": {
+    "classification": "technical",
+    "reason": "CIT-66 status discriminator or semantic color role, not display text.",
+    "evidence": "settings/readiness/playerStatus.ts consumes raw statuses as mapping inputs and returns PlayerStatus/PLAYER_STATUS_ROLE enum identifiers; display labels live in playerStatus.* English keys and reasons are LocalizedMessage descriptors. PR-B adds no UI sink."
+  },
+  "5e720221a8bcac267401d6b5faeb572245190e41102aa05f72c043ab87adc29a": {
+    "classification": "technical",
+    "reason": "CIT-66 status discriminator or semantic color role, not display text.",
+    "evidence": "settings/readiness/playerStatus.ts consumes raw statuses as mapping inputs and returns PlayerStatus/PLAYER_STATUS_ROLE enum identifiers; display labels live in playerStatus.* English keys and reasons are LocalizedMessage descriptors. PR-B adds no UI sink."
+  },
+  "4e3318a288165adc407e46e85bc5c192a79d8cf7e594df1a6fad66d6f254d1ba": {
+    "classification": "technical",
+    "reason": "CIT-66 status discriminator or semantic color role, not display text.",
+    "evidence": "settings/readiness/playerStatus.ts consumes raw statuses as mapping inputs and returns PlayerStatus/PLAYER_STATUS_ROLE enum identifiers; display labels live in playerStatus.* English keys and reasons are LocalizedMessage descriptors. PR-B adds no UI sink."
+  },
+  "47d5c6d9d2e5140717b71d8a64618cddb5bc642692894c459ea44a0ca4d805cf": {
+    "classification": "technical",
+    "reason": "CIT-66 status discriminator or semantic color role, not display text.",
+    "evidence": "settings/readiness/playerStatus.ts consumes raw statuses as mapping inputs and returns PlayerStatus/PLAYER_STATUS_ROLE enum identifiers; display labels live in playerStatus.* English keys and reasons are LocalizedMessage descriptors. PR-B adds no UI sink."
+  },
+  "a8eb67b435526cbe15968f35119d6710b6ad94e595e302969acec46c9598af4c": {
+    "classification": "technical",
+    "reason": "CIT-66 status discriminator or semantic color role, not display text.",
+    "evidence": "settings/readiness/playerStatus.ts consumes raw statuses as mapping inputs and returns PlayerStatus/PLAYER_STATUS_ROLE enum identifiers; display labels live in playerStatus.* English keys and reasons are LocalizedMessage descriptors. PR-B adds no UI sink."
+  },
+  "6bea41816451f2e16e8e69b11fca38f51dba6e7797842ed1f101842c5299c4c2": {
+    "classification": "technical",
+    "reason": "CIT-66 status discriminator or semantic color role, not display text.",
+    "evidence": "settings/readiness/playerStatus.ts consumes raw statuses as mapping inputs and returns PlayerStatus/PLAYER_STATUS_ROLE enum identifiers; display labels live in playerStatus.* English keys and reasons are LocalizedMessage descriptors. PR-B adds no UI sink."
+  },
+  "01f7d927b117ce442db6a59c16148f0e3004d81e93a3cd27b9b4e3feb7d569f3": {
+    "classification": "technical",
+    "reason": "CIT-66 status discriminator or semantic color role, not display text.",
+    "evidence": "settings/readiness/playerStatus.ts consumes raw statuses as mapping inputs and returns PlayerStatus/PLAYER_STATUS_ROLE enum identifiers; display labels live in playerStatus.* English keys and reasons are LocalizedMessage descriptors. PR-B adds no UI sink."
+  },
+  "e470eee92b0fe523087a5556bae29a11af9efe591d9557ac876679f81c0cb46b": {
+    "classification": "technical",
+    "reason": "CIT-66 status discriminator or semantic color role, not display text.",
+    "evidence": "settings/readiness/playerStatus.ts consumes raw statuses as mapping inputs and returns PlayerStatus/PLAYER_STATUS_ROLE enum identifiers; display labels live in playerStatus.* English keys and reasons are LocalizedMessage descriptors. PR-B adds no UI sink."
+  },
+  "7a01f49d6353add542347ac6eb6ffa7d48f8419423c7463f90ce0cb02bed66d9": {
+    "classification": "technical",
+    "reason": "CIT-66 status discriminator or semantic color role, not display text.",
+    "evidence": "settings/readiness/playerStatus.ts consumes raw statuses as mapping inputs and returns PlayerStatus/PLAYER_STATUS_ROLE enum identifiers; display labels live in playerStatus.* English keys and reasons are LocalizedMessage descriptors. PR-B adds no UI sink."
+  },
+  "266810f1bb8b0c21dfdea518ab9d7069596d4671532c794f5c5e7bfdc833f703": {
+    "classification": "technical",
+    "reason": "CIT-66 status discriminator or semantic color role, not display text.",
+    "evidence": "settings/readiness/playerStatus.ts consumes raw statuses as mapping inputs and returns PlayerStatus/PLAYER_STATUS_ROLE enum identifiers; display labels live in playerStatus.* English keys and reasons are LocalizedMessage descriptors. PR-B adds no UI sink."
+  },
+  "fd3ef2678b3c08bb04907136257b99da0f4e987d928236f582ea53c0dae8c36b": {
+    "classification": "technical",
+    "reason": "CIT-66 status discriminator or semantic color role, not display text.",
+    "evidence": "settings/readiness/playerStatus.ts consumes raw statuses as mapping inputs and returns PlayerStatus/PLAYER_STATUS_ROLE enum identifiers; display labels live in playerStatus.* English keys and reasons are LocalizedMessage descriptors. PR-B adds no UI sink."
+  },
+  "a9219b451158c89e4bcb01e09a8dc05095f7bd60ac37c7a41ac5bca88407e9d0": {
+    "classification": "technical",
+    "reason": "CIT-66 status discriminator or semantic color role, not display text.",
+    "evidence": "settings/readiness/playerStatus.ts consumes raw statuses as mapping inputs and returns PlayerStatus/PLAYER_STATUS_ROLE enum identifiers; display labels live in playerStatus.* English keys and reasons are LocalizedMessage descriptors. PR-B adds no UI sink."
+  },
+  "801a5d55f15fba50f2b7346447b3f4498c40118158c9764c1ea959504eecfcb4": {
+    "classification": "technical",
+    "reason": "CIT-66 status discriminator or semantic color role, not display text.",
+    "evidence": "settings/readiness/playerStatus.ts consumes raw statuses as mapping inputs and returns PlayerStatus/PLAYER_STATUS_ROLE enum identifiers; display labels live in playerStatus.* English keys and reasons are LocalizedMessage descriptors. PR-B adds no UI sink."
+  },
+  "98b01289acbd0e416a577d998bf382b7e073707b8ac181a0c26076b4b82b4bf4": {
+    "classification": "technical",
+    "reason": "CIT-66 status discriminator or semantic color role, not display text.",
+    "evidence": "settings/readiness/playerStatus.ts consumes raw statuses as mapping inputs and returns PlayerStatus/PLAYER_STATUS_ROLE enum identifiers; display labels live in playerStatus.* English keys and reasons are LocalizedMessage descriptors. PR-B adds no UI sink."
+  },
+  "bba677daf57549a50549de3957d7957cb68be311fb7f59ecfeb8c270a4afd87d": {
+    "classification": "technical",
+    "reason": "CIT-66 status discriminator or semantic color role, not display text.",
+    "evidence": "settings/readiness/playerStatus.ts consumes raw statuses as mapping inputs and returns PlayerStatus/PLAYER_STATUS_ROLE enum identifiers; display labels live in playerStatus.* English keys and reasons are LocalizedMessage descriptors. PR-B adds no UI sink."
   }
 }
