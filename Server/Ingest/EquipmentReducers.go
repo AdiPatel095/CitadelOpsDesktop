@@ -90,8 +90,8 @@ func reduceEquipmentStorage(
 	if !frameSucceeded(frame) || len(frame.Payload) == 0 {
 		return nil, false, nil
 	}
-	var root map[string]json.RawMessage
-	if err := json.Unmarshal(frame.Payload, &root); err != nil {
+	root, err := frame.PayloadRoot()
+	if err != nil {
 		return nil, false, fmt.Errorf("decode equipment storage: %w", err)
 	}
 	rows, ok := decodeRows(root["I"])
@@ -143,8 +143,8 @@ func reduceGemStorage(
 	if !frameSucceeded(frame) || len(frame.Payload) == 0 {
 		return nil, false, nil
 	}
-	var root map[string]json.RawMessage
-	if err := json.Unmarshal(frame.Payload, &root); err != nil {
+	root, err := frame.PayloadRoot()
+	if err != nil {
 		return nil, false, fmt.Errorf("decode gem storage: %w", err)
 	}
 	stackRows, hasStacks := decodeRows(root["GEM"])
@@ -200,8 +200,8 @@ func reduceEquipmentMutation(
 	if !frameSucceeded(frame) || len(frame.Payload) == 0 {
 		return nil, false, nil
 	}
-	var root map[string]json.RawMessage
-	if err := json.Unmarshal(frame.Payload, &root); err != nil {
+	root, err := frame.PayloadRoot()
+	if err != nil {
 		return nil, false, fmt.Errorf("decode equipment mutation: %w", err)
 	}
 	changed := false
@@ -271,8 +271,8 @@ func reduceConstructionInventory(
 	if !frameSucceeded(frame) || len(frame.Payload) == 0 {
 		return nil, false, nil
 	}
-	var root map[string]json.RawMessage
-	if err := json.Unmarshal(frame.Payload, &root); err != nil {
+	root, err := frame.PayloadRoot()
+	if err != nil {
 		return nil, false, fmt.Errorf("decode construction inventory: %w", err)
 	}
 	rows, ok := decodeRows(root["CI"])

@@ -49,6 +49,11 @@ type Status struct {
 }
 
 type RawFrame struct {
+	// Decoded is the transport's Protocol.Decode(Payload, Direction, ObservedAt) result,
+	// including its payload decode cache, or nil when the transport did not decode the
+	// frame. ResponseToken and CausationOperationID are left empty; the pipeline sets them
+	// from this RawFrame. The transport never modifies the frame after sending it.
+	Decoded              *Protocol.Frame
 	Payload              string
 	Direction            Protocol.Direction
 	ObservedAt           time.Time

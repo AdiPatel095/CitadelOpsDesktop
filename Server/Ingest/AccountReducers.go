@@ -25,8 +25,8 @@ func reduceInitialState(
 	if !frameSucceeded(frame) {
 		return nil, false, nil
 	}
-	var root map[string]json.RawMessage
-	if len(frame.Payload) == 0 || json.Unmarshal(frame.Payload, &root) != nil {
+	root, err := frame.PayloadRoot()
+	if len(frame.Payload) == 0 || err != nil {
 		return nil, false, fmt.Errorf("initial state payload is not a JSON object")
 	}
 	changed := false
@@ -328,8 +328,8 @@ func reducePlayerProtectionMode(
 	if !frameSucceeded(frame) || len(frame.Payload) == 0 {
 		return nil, false, nil
 	}
-	var root map[string]json.RawMessage
-	if err := json.Unmarshal(frame.Payload, &root); err != nil {
+	root, err := frame.PayloadRoot()
+	if err != nil {
 		return nil, false, fmt.Errorf("decode player protection mode envelope: %w", err)
 	}
 	membershipChanged := applyOwnAllianceSnapshot(root, frame.ReceivedAt, gameState)
@@ -764,8 +764,8 @@ func reducePlayerSummary(
 	if !frameSucceeded(frame) || len(frame.Payload) == 0 {
 		return nil, false, nil
 	}
-	var root map[string]json.RawMessage
-	if err := json.Unmarshal(frame.Payload, &root); err != nil {
+	root, err := frame.PayloadRoot()
+	if err != nil {
 		return nil, false, fmt.Errorf("decode player summary: %w", err)
 	}
 	beforePlayer := gameState.Player

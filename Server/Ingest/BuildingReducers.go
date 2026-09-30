@@ -19,8 +19,8 @@ func reduceExpansionMutation(
 	gameState *State.GameState,
 	gameData *GameData.Store,
 ) ([]string, bool, error) {
-	var root map[string]json.RawMessage
-	if json.Unmarshal(frame.Payload, &root) == nil && len(root["gca"]) > 0 {
+	root, err := frame.PayloadRoot()
+	if err == nil && len(root["gca"]) > 0 {
 		return reduceCastleSnapshot(ctx, frame, gameState, gameData)
 	}
 	return reduceBuildingMutation(ctx, frame, gameState, gameData)
@@ -41,8 +41,7 @@ func reduceBuildingMutation(
 	}
 	ensureCastleMaps(&castle)
 	cloneCastleBuildingMaps(&castle)
-	var root map[string]json.RawMessage
-	_ = json.Unmarshal(frame.Payload, &root)
+	root, _ := frame.PayloadRoot()
 	changed := false
 
 	if frame.Opcode == "sob" || frame.Opcode == "sbd" || frame.Opcode == "etc" {

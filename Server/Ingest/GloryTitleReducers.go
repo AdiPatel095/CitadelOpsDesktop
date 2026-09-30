@@ -28,13 +28,11 @@ func reducePlayerTitles(
 	if !frameSucceeded(frame) || len(frame.Payload) == 0 || gameState.Player.ID <= 0 || gameData == nil {
 		return nil, false, nil
 	}
-	var payload struct {
-		Owners []playerTitleOwnerWire `json:"O"`
+	owners, err := playerTitleOwners(frame)
+	if err != nil {
+		return nil, false, err
 	}
-	if err := json.Unmarshal(frame.Payload, &payload); err != nil {
-		return nil, false, fmt.Errorf("decode movement owners for player titles: %w", err)
-	}
-	for _, owner := range payload.Owners {
+	for _, owner := range owners {
 		if State.PlayerID(owner.PlayerID) != gameState.Player.ID {
 			continue
 		}
@@ -94,4 +92,28 @@ func reducePlayerTitles(
 		return domains, true, nil
 	}
 	return nil, false, nil
+}
+
+func playerTitleOwnersFromPayload(raw json.RawMessage) ([]playerTitleOwnerWire, error) {
+	var payload struct {
+		Owners []playerTitleOwnerWire `json:"O"`
+	}
+	if err := json.Unmarshal(raw, &payload); err != nil {
+		return nil, fmt.Errorf("decode movement owners for player titles: %w", err)
+	}
+	return payload.Owners, nil
+}
+
+func playerTitleOwners(frame Protocol.Frame) ([]playerTitleOwnerWire, error) {
+	root, err := frame.PayloadRoot()
+	if err != nil || Protocol.HasCaseFoldedAlias(root, "O") {
+		return playerTitleOwnersFromPayload(frame.Payload)
+	}
+	var owners []playerTitleOwnerWire
+	if raw := root["O"]; len(raw) > 0 {
+		if json.Unmarshal(raw, &owners) != nil {
+			return playerTitleOwnersFromPayload(frame.Payload)
+		}
+	}
+	return owners, nil
 }

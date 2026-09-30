@@ -3,10 +3,10 @@ package State
 import (
 	"database/sql"
 	"encoding/json"
-	"fmt"
 	"net/url"
 	"reflect"
 	"sort"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -760,9 +760,10 @@ func (state *GameState) SetMapObservation(observation MapObservation) bool {
 	if !retained {
 		return false
 	}
-	key := fmt.Sprintf("%d:%d", observation.X, observation.Y)
+	key := MapCoordinateKey(observation.X, observation.Y)
 	current, exists := state.LookupMapObservation(observation.KingdomID, key)
-	if exists && reflect.DeepEqual(current, observation) {
+	// Map times are UTC; value equality also guards future non-comparable fields.
+	if exists && current == observation {
 		return false
 	}
 	newKind, _ := MapProjectionKindForType(observation.TypeID)
@@ -861,7 +862,24 @@ func normalizeMapChanges(changes []MapChange) []MapChange {
 }
 
 func mapChangeKey(kingdomID KingdomID, key string) string {
-	return fmt.Sprintf("%020d:%s", kingdomID, key)
+	text := strconv.FormatInt(int64(kingdomID), 10)
+	var builder strings.Builder
+	builder.Grow(21 + len(key))
+	if text[0] == '-' {
+		builder.WriteByte('-')
+		text = text[1:]
+		for i := len(text); i < 19; i++ {
+			builder.WriteByte('0')
+		}
+	} else {
+		for i := len(text); i < 20; i++ {
+			builder.WriteByte('0')
+		}
+	}
+	builder.WriteString(text)
+	builder.WriteByte(':')
+	builder.WriteString(key)
+	return builder.String()
 }
 
 func (state GameState) materializedMap() WorldMap {
@@ -935,3 +953,5 @@ func (state *GameState) UnmarshalJSON(raw []byte) error {
 	state.mapOverlay = nil
 	return nil
 }
+
+func MapCoordinateKey(x, y int) string { return strconv.Itoa(x) + ":" + strconv.Itoa(y) }

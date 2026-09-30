@@ -1,6 +1,7 @@
 package Session
 
 import (
+	"bytes"
 	"context"
 	"crypto/rand"
 	"encoding/json"
@@ -1135,7 +1136,7 @@ func (transport *DirectWebSocketTransport) deliverInbound(payload string, genera
 	}
 	transport.frames <- RawFrame{
 		Payload: payload, Direction: Protocol.DirectionInbound, ObservedAt: frame.ReceivedAt,
-		ConnectionGeneration: generation, ResponseToken: transport.matchResponseToken(frame),
+		ConnectionGeneration: generation, ResponseToken: transport.matchResponseToken(frame), Decoded: &frame,
 	}
 }
 
@@ -1290,9 +1291,18 @@ func (transport *DirectWebSocketTransport) matchResponseToken(frame Protocol.Fra
 		smallestArea := int64(0)
 		ambiguous := false
 		matchedCount := 0
+		var responseArea directGAAArea
+		areaSet := false
+		getArea := func() directGAAArea {
+			if !areaSet {
+				responseArea = directGAAResponseArea(frame)
+				areaSet = true
+			}
+			return responseArea
+		}
 		for index, pending := range transport.pending {
 			if _, expected := pending.opcodes[opcode]; !expected ||
-				!directResponseMatchesRequest(pending, frame) {
+				(pending.requestOpcode == "gaa" && !getArea().matches(pending, frame)) {
 				continue
 			}
 			matchedCount++
@@ -1303,7 +1313,7 @@ func (transport *DirectWebSocketTransport) matchResponseToken(frame Protocol.Fra
 				ambiguous = true
 			}
 		}
-		if matchedIndex < 0 || ambiguous || matchedCount > 1 && !directGAAResponseHasCoordinates(frame) {
+		if matchedIndex < 0 || ambiguous || matchedCount > 1 && !getArea().hasCoordinates(frame) {
 			return ""
 		}
 		pending := transport.pending[matchedIndex]
@@ -1462,6 +1472,9 @@ func directGAAResponseMatches(pending directPendingResponse, frame Protocol.Fram
 }
 
 func directExactJSONInt(raw json.RawMessage) (int64, bool) {
+	if value, ok := Protocol.PlainInt64(bytes.TrimSpace(raw)); ok {
+		return value, true
+	}
 	text := strings.TrimSpace(string(raw))
 	if text == "" || text == "null" || strings.HasPrefix(text, `"`) {
 		return 0, false
@@ -1594,27 +1607,29 @@ func allianceHelpFocusIdentity(frame Protocol.Frame) (int64, int64, bool) {
 		frame.ResponseCode == nil || *frame.ResponseCode != 0 {
 		return 0, 0, false
 	}
-	var response struct {
-		Castle struct {
-			Owner struct {
-				PlayerID int64 `json:"OID"`
-			} `json:"O"`
-			Resources struct {
-				CastleID int64 `json:"AID"`
-			} `json:"grc"`
-			Address []json.RawMessage `json:"A"`
-		} `json:"gca"`
+	var castle allianceHelpFocusCastle
+	root, err := frame.PayloadRoot()
+	if err != nil || Protocol.HasCaseFoldedAlias(root, "gca") {
+		var response struct {
+			Castle allianceHelpFocusCastle `json:"gca"`
+		}
+		if json.Unmarshal(frame.Payload, &response) != nil {
+			return 0, 0, false
+		}
+		castle = response.Castle
+	} else if raw := root["gca"]; len(raw) > 0 {
+		if json.Unmarshal(raw, &castle) != nil {
+			return 0, 0, false
+		}
 	}
-	if json.Unmarshal(frame.Payload, &response) != nil {
-		return 0, 0, false
+
+	playerID := castle.Owner.PlayerID
+	castleID := castle.Resources.CastleID
+	if playerID <= 0 && len(castle.Address) > 4 {
+		_ = json.Unmarshal(castle.Address[4], &playerID)
 	}
-	playerID := response.Castle.Owner.PlayerID
-	castleID := response.Castle.Resources.CastleID
-	if playerID <= 0 && len(response.Castle.Address) > 4 {
-		_ = json.Unmarshal(response.Castle.Address[4], &playerID)
-	}
-	if castleID <= 0 && len(response.Castle.Address) > 3 {
-		_ = json.Unmarshal(response.Castle.Address[3], &castleID)
+	if castleID <= 0 && len(castle.Address) > 3 {
+		_ = json.Unmarshal(castle.Address[3], &castleID)
 	}
 	if playerID > 0 && castleID > 0 {
 		return playerID, castleID, true
@@ -2010,4 +2025,97 @@ func (transport *DirectWebSocketTransport) BrowserInventory() BrowserInventory {
 	// used if the user later restarts in Full application mode.
 	inventory.RestartRequired = false
 	return inventory
+}
+
+type allianceHelpFocusCastle struct {
+	Owner struct {
+		PlayerID int64 `json:"OID"`
+	} `json:"O"`
+	Resources struct {
+		CastleID int64 `json:"AID"`
+	} `json:"grc"`
+	Address []json.RawMessage `json:"A"`
+}
+
+// directGAAArea is the correlation scope computed once from a shared frame payload.
+type directGAAArea struct {
+	fallback               bool
+	codeKnown              bool
+	rejected               bool
+	decoded                bool
+	kingdomID              int64
+	kingdomKnown           bool
+	rowsOK                 bool
+	rowsNonNil             bool
+	rowCount               int
+	rowsValid              bool
+	minX, maxX, minY, maxY int
+}
+
+func directGAAResponseArea(frame Protocol.Frame) directGAAArea {
+	area := directGAAArea{codeKnown: frame.ResponseCode != nil, rowsValid: true}
+	if !area.codeKnown {
+		return area
+	}
+	area.rejected = *frame.ResponseCode != 0
+	if area.rejected {
+		return area
+	}
+	root, err := frame.PayloadRoot()
+	if err != nil {
+		return area
+	}
+	area.decoded = true
+	area.fallback = Protocol.HasCaseFoldedAlias(root, "KID", "AI")
+	if area.fallback {
+		return area
+	}
+	area.kingdomID, area.kingdomKnown = directExactJSONInt(root["KID"])
+	rows, ok := frame.PayloadRows("AI")
+	area.rowsOK = ok
+	area.rowsNonNil = ok && rows != nil
+	area.rowCount = len(rows)
+	for i, row := range rows {
+		if len(row) < 3 {
+			area.rowsValid = false
+			break
+		}
+		x, xKnown := directExactJSONInt(row[1])
+		y, yKnown := directExactJSONInt(row[2])
+		if !xKnown || !yKnown || int64(int(x)) != x || int64(int(y)) != y {
+			area.rowsValid = false
+			break
+		}
+		xx, yy := int(x), int(y)
+		if i == 0 {
+			area.minX, area.maxX, area.minY, area.maxY = xx, xx, yy, yy
+		} else {
+			area.minX = min(area.minX, xx)
+			area.maxX = max(area.maxX, xx)
+			area.minY = min(area.minY, yy)
+			area.maxY = max(area.maxY, yy)
+		}
+	}
+	return area
+}
+func (area directGAAArea) matches(pending directPendingResponse, frame Protocol.Frame) bool {
+	if area.fallback {
+		return directGAAResponseMatches(pending, frame)
+	}
+	if !pending.gaaScopeKnown || !area.codeKnown {
+		return false
+	}
+	if area.rejected {
+		return true
+	}
+	if !area.decoded || !area.kingdomKnown || area.kingdomID != pending.gaaKingdomID || !area.rowsNonNil || !area.rowsValid {
+		return false
+	}
+	return area.rowCount == 0 || area.minX >= pending.gaaX1 && area.maxX <= pending.gaaX2 && area.minY >= pending.gaaY1 && area.maxY <= pending.gaaY2
+}
+func (area directGAAArea) hasCoordinates(frame Protocol.Frame) bool {
+	if area.fallback {
+		return directGAAResponseHasCoordinates(frame)
+	}
+	return area.codeKnown && !area.rejected && area.decoded && area.rowsOK && area.rowCount > 0
 }

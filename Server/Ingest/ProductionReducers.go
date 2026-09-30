@@ -103,8 +103,8 @@ func reduceEmbeddedProductionSnapshots(
 	if !ok {
 		return nil, false, nil
 	}
-	var root map[string]json.RawMessage
-	if err := json.Unmarshal(frame.Payload, &root); err != nil {
+	root, err := frame.PayloadRoot()
+	if err != nil {
 		return nil, false, fmt.Errorf("decode embedded production snapshots: %w", err)
 	}
 	castle, ok = gameState.MutableCastleParts(castleID, State.CastlePartProduction)

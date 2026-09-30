@@ -29,6 +29,8 @@ type Frame struct {
 	Raw                  string          `json:"-"`
 	ResponseToken        string          `json:"-"`
 	CausationOperationID string          `json:"causationOperationId,omitempty"`
+	// decode cache for Payload; never serialized; see PayloadView.go.
+	view *payloadView
 }
 
 func Decode(raw string, direction Direction, receivedAt time.Time) (Frame, error) {
@@ -64,8 +66,10 @@ func Decode(raw string, direction Direction, receivedAt time.Time) (Frame, error
 		frame.ResponseCode = &responseCode
 	}
 	if payload != "" {
-		if json.Valid([]byte(payload)) {
-			frame.Payload = json.RawMessage(payload)
+		raw := []byte(payload)
+		if json.Valid(raw) {
+			frame.Payload = json.RawMessage(raw)
+			frame.view = newPayloadView(frame.Payload)
 		} else {
 			frame.PayloadText = payload
 		}
