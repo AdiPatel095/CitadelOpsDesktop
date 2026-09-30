@@ -41,7 +41,7 @@ const GameDataRefreshInterval = 6 * time.Hour
 const (
 	// defaultStatePersistenceWindow bounds background group-commit latency.
 	// Safety-critical changes use saveStateEvent's synchronous flush.
-	defaultStatePersistenceWindow = 2 * time.Second
+	defaultStatePersistenceWindow = 15 * time.Second
 	statePersistenceRetryDelay    = 2 * time.Second
 )
 

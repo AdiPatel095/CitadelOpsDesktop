@@ -68,14 +68,16 @@ type componentSaveResult struct {
 // successfully fsynced manifest avoids rereading and decoding a potentially
 // large shard index on every background group commit.
 type ComponentSnapshotWriter struct {
-	dataDir               string
-	mu                    sync.Mutex
-	current               *componentManifest
-	flushes               atomic.Uint64
-	fileSyncs             atomic.Uint64
-	directorySyncs        atomic.Uint64
-	skippedVolatileWrites atomic.Uint64
-	lastFlushAt           atomic.Int64
+	dataDir                     string
+	mu                          sync.Mutex
+	current                     *componentManifest
+	flushes                     atomic.Uint64
+	fileSyncs                   atomic.Uint64
+	directorySyncs              atomic.Uint64
+	skippedVolatileWrites       atomic.Uint64
+	lastFlushAt                 atomic.Int64
+	automationsFingerprint      [32]byte
+	automationsFingerprintKnown bool
 }
 
 func NewComponentSnapshotWriter(dataDir string) *ComponentSnapshotWriter {
@@ -89,11 +91,15 @@ func (writer *ComponentSnapshotWriter) Save(event Event, dirty ComponentSet) err
 	writer.mu.Lock()
 	defer writer.mu.Unlock()
 	var next componentManifest
-	result, err := saveComponentSnapshot(writer.dataDir, event, dirty, writer.current, &next)
+	result, err := saveComponentSnapshot(writer.dataDir, event, dirty, writer.current, &next, &volatileFingerprints{value: writer.automationsFingerprint, known: writer.automationsFingerprintKnown})
 	if err != nil {
 		return err
 	}
 	writer.current = &next
+	if result.automations != nil {
+		writer.automationsFingerprint = *result.automations
+		writer.automationsFingerprintKnown = true
+	}
 	if result.written > 0 {
 		writer.flushes.Add(1)
 		writer.fileSyncs.Add(uint64(result.written))
@@ -303,7 +309,7 @@ var inventoryPersistenceParts = []inventoryPersistencePart{
 // without a second full-state clone.
 func SaveComponentSnapshot(dataDir string, event Event, dirty ComponentSet) error {
 	var next componentManifest
-	_, err := saveComponentSnapshot(dataDir, event, dirty, nil, &next)
+	_, err := saveComponentSnapshot(dataDir, event, dirty, nil, &next, nil)
 	return err
 }
 
@@ -313,6 +319,7 @@ func saveComponentSnapshot(
 	dirty ComponentSet,
 	cached *componentManifest,
 	saved *componentManifest,
+	volatile *volatileFingerprints,
 ) (componentSaveResult, error) {
 	var result componentSaveResult
 	if strings.TrimSpace(dataDir) == "" {
@@ -494,6 +501,17 @@ func saveComponentSnapshot(
 			nextEventScoreFiles = files
 			nextPartitioned[component.String()] = true
 			continue
+		}
+		if component == ComponentAutomations && volatile != nil {
+			fingerprint, err := automationsPersistenceFingerprint(event.generation.state.Automations)
+			if err != nil {
+				return result, fmt.Errorf("fingerprint automations: %w", err)
+			}
+			if volatile.known && fingerprint == volatile.value && strings.TrimSpace(manifest.Files["automations"]) != "" {
+				result.skipped++
+				continue
+			}
+			result.automations = &fingerprint
 		}
 		patch := componentPatch(event.generation, Components(component), componentChanges{
 			replaceMap: false,

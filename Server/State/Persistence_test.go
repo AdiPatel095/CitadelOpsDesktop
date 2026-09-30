@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"math"
 	"os"
 	"path/filepath"
 	"strings"
@@ -1118,5 +1119,193 @@ func TestWriterStatsCountFilesAndSyncs(t *testing.T) {
 	total.Add(first)
 	if total.Flushes != 3 || total.FileSyncs != first.FileSyncs+second.FileSyncs || total.DirectorySyncs != 3 || total.LastFlushAt != second.LastFlushAt {
 		t.Fatalf("aggregated stats: %+v", total)
+	}
+}
+
+func saveAutomationPersistenceTestEvent(t *testing.T, store *Store, writer *ComponentSnapshotWriter, change func(map[string]AutomationState)) componentManifest {
+	t.Helper()
+	event, err := store.ApplyComponents(Components(ComponentAutomations), func(state *GameState) ([]string, bool, error) {
+		change(state.Automations)
+		return []string{"automations"}, true, nil
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := writer.Save(event, Components(ComponentAutomations)); err != nil {
+		t.Fatal(err)
+	}
+	manifest, err := readComponentManifest(writer.dataDir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return manifest
+}
+
+func TestWriterSkipsAutomationsWhenOnlyVolatileFieldsChanged(t *testing.T) {
+	directory := t.TempDir()
+	store := NewStore(NewGameState())
+	writer := NewComponentSnapshotWriter(directory)
+	t1 := time.Date(2026, 9, 30, 12, 0, 0, 0, time.UTC)
+	t2 := t1.Add(time.Minute)
+	first := saveAutomationPersistenceTestEvent(t, store, writer, func(automations map[string]AutomationState) {
+		automations["p1"] = AutomationState{ID: "p1", Status: "waiting", NextCheckAt: &t1, UpdatedAt: t1}
+	})
+	before := writer.Stats()
+	second := saveAutomationPersistenceTestEvent(t, store, writer, func(automations map[string]AutomationState) {
+		automation := automations["p1"]
+		automation.NextCheckAt, automation.UpdatedAt = &t2, t2
+		automations["p1"] = automation
+	})
+	after := writer.Stats()
+	if second.Revision <= first.Revision || second.Files["automations"] != first.Files["automations"] || after.SkippedVolatileWrites-before.SkippedVolatileWrites != 1 || after.FileSyncs-before.FileSyncs != 1 || after.DirectorySyncs-before.DirectorySyncs != 1 {
+		t.Fatalf("volatile save: first=%+v second=%+v before=%+v after=%+v", first, second, before, after)
+	}
+	loaded, err := LoadSnapshot(directory)
+	if err != nil {
+		t.Fatal(err)
+	}
+	automation := loaded.Automations["p1"]
+	if automation.Status != "waiting" || automation.NextCheckAt == nil || !automation.NextCheckAt.Equal(t1) || !automation.UpdatedAt.Equal(t1) || loaded.Revision != second.Revision {
+		t.Fatalf("skipped older document did not load: %+v", automation)
+	}
+	third := saveAutomationPersistenceTestEvent(t, store, writer, func(automations map[string]AutomationState) {
+		automation := automations["p1"]
+		automation.Status = "running"
+		automations["p1"] = automation
+	})
+	if third.Files["automations"] == first.Files["automations"] {
+		t.Fatal("substantive automation change skipped")
+	}
+	loaded, err = LoadSnapshot(directory)
+	if err != nil {
+		t.Fatal(err)
+	}
+	automation = loaded.Automations["p1"]
+	if automation.Status != "running" || automation.NextCheckAt == nil || !automation.NextCheckAt.Equal(t2) || !automation.UpdatedAt.Equal(t2) {
+		t.Fatalf("substantive update: %+v", automation)
+	}
+}
+
+func TestNewWriterAndPackageSaveNeverSkip(t *testing.T) {
+	directory := t.TempDir()
+	store := NewStore(NewGameState())
+	writer := NewComponentSnapshotWriter(directory)
+	now := time.Now().UTC()
+	first := saveAutomationPersistenceTestEvent(t, store, writer, func(automations map[string]AutomationState) {
+		automations["p1"] = AutomationState{ID: "p1", Status: "waiting", NextCheckAt: &now}
+	})
+	volatile := func(automations map[string]AutomationState) {
+		now = now.Add(time.Minute)
+		automation := automations["p1"]
+		next := now
+		automation.NextCheckAt, automation.UpdatedAt = &next, next
+		automations["p1"] = automation
+	}
+	fresh := NewComponentSnapshotWriter(directory)
+	second := saveAutomationPersistenceTestEvent(t, store, fresh, volatile)
+	if second.Files["automations"] == first.Files["automations"] || fresh.Stats().SkippedVolatileWrites != 0 {
+		t.Fatal("fresh writer skipped first write")
+	}
+	third := saveAutomationPersistenceTestEvent(t, store, fresh, volatile)
+	if third.Files["automations"] != second.Files["automations"] || fresh.Stats().SkippedVolatileWrites != 1 {
+		t.Fatal("fresh writer did not skip subsequent volatile update")
+	}
+	previous := third
+	for i := 0; i < 2; i++ {
+		event, err := store.ApplyComponents(Components(ComponentAutomations), func(state *GameState) ([]string, bool, error) {
+			volatile(state.Automations)
+			return []string{"automations"}, true, nil
+		})
+		if err != nil {
+			t.Fatal(err)
+		}
+		if err := SaveComponentSnapshot(directory, event, Components(ComponentAutomations)); err != nil {
+			t.Fatal(err)
+		}
+		manifest, err := readComponentManifest(directory)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if manifest.Files["automations"] == previous.Files["automations"] {
+			t.Fatal("package save skipped volatile update")
+		}
+		previous = manifest
+	}
+}
+
+func TestAutomationsFingerprintIgnoresOnlyVolatileFields(t *testing.T) {
+	now := time.Date(2026, 9, 30, 12, 0, 0, 0, time.UTC)
+	later := now.Add(time.Minute)
+	base := map[string]AutomationState{"p1": {ID: "p1", Status: "waiting", NextCheckAt: &now, UpdatedAt: now}}
+	expected, err := automationsPersistenceFingerprint(base)
+	if err != nil {
+		t.Fatal(err)
+	}
+	tests := []struct {
+		name   string
+		equal  bool
+		change func(*AutomationState)
+	}{
+		{"next check", true, func(a *AutomationState) { a.NextCheckAt = &later }},
+		{"updated", true, func(a *AutomationState) { a.UpdatedAt = later }},
+		{"both volatile", true, func(a *AutomationState) { a.NextCheckAt = nil; a.UpdatedAt = time.Time{} }},
+		{"status", false, func(a *AutomationState) { a.Status = "running" }},
+		{"detail", false, func(a *AutomationState) { a.Detail = "changed" }},
+		{"last run", false, func(a *AutomationState) { a.LastRunAt = &now }},
+		{"safety lock", false, func(a *AutomationState) { a.SafetyLock = AutomationSafetyLock{OperationID: "reserved"} }},
+		{"metrics", false, func(a *AutomationState) { a.Metrics = map[string]float64{"count": 1} }},
+		{"details", false, func(a *AutomationState) { a.Details = map[string]string{"key": "value"} }},
+		{"id", false, func(a *AutomationState) { a.ID = "different" }},
+		{"enabled", false, func(a *AutomationState) { a.Enabled = true }},
+		{"last operation", false, func(a *AutomationState) { a.LastOperationID = "op" }},
+		{"last error", false, func(a *AutomationState) { a.LastError = "failure" }},
+		{"operational cursors", false, func(a *AutomationState) { a.OperationalCursors = map[string]int{"cursor": 1} }},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			automation := base["p1"]
+			tt.change(&automation)
+			actual, err := automationsPersistenceFingerprint(map[string]AutomationState{"p1": automation})
+			if err != nil {
+				t.Fatal(err)
+			}
+			if (actual == expected) != tt.equal {
+				t.Fatalf("fingerprint equality=%t want=%t", actual == expected, tt.equal)
+			}
+		})
+	}
+	for _, added := range []bool{false, true} {
+		state := map[string]AutomationState{}
+		if added {
+			state["p1"] = base["p1"]
+			state["p2"] = AutomationState{ID: "p2"}
+		}
+		actual, err := automationsPersistenceFingerprint(state)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if actual == expected {
+			t.Fatalf("added=%t policy did not change fingerprint", added)
+		}
+	}
+	if base["p1"].NextCheckAt != &now || base["p1"].UpdatedAt != now {
+		t.Fatal("fingerprint mutated the source")
+	}
+	// JSON's sorted keys make insertion order irrelevant.
+	left := map[string]AutomationState{"p1": base["p1"], "p2": {ID: "p2"}}
+	right := map[string]AutomationState{"p2": {ID: "p2"}, "p1": base["p1"]}
+	a, err := automationsPersistenceFingerprint(left)
+	if err != nil {
+		t.Fatal(err)
+	}
+	b, err := automationsPersistenceFingerprint(right)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if a != b {
+		t.Fatal("fingerprint depends on map insertion order")
+	}
+	if _, err := automationsPersistenceFingerprint(map[string]AutomationState{"p1": {Metrics: map[string]float64{"bad": math.NaN()}}}); err == nil {
+		t.Fatal("invalid JSON metric did not fail fingerprinting")
 	}
 }
