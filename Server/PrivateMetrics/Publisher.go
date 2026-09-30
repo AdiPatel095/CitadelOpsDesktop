@@ -57,9 +57,11 @@ type PublisherConfig struct {
 	Interval time.Duration
 	// Heartbeat is the longest an unchanged runtime goes without uploading.
 	Heartbeat time.Duration
-	// SettleWindow is how long after a new placement epoch every evaluation
-	// uploads (the pre-heartbeat behavior), because a handover waits for a
-	// fresh sample.
+	// Settle is the window shared with the checkpoint publisher (see Settle):
+	// while it is open every evaluation uploads, because a handover waits for
+	// an actual sample. When nil the publisher uses its own window of
+	// SettleWindow.
+	Settle       *Settle
 	SettleWindow time.Duration
 	// Debounce delays the first publication after a burst of state changes.
 	Debounce time.Duration
@@ -111,7 +113,7 @@ type Publisher struct {
 	statsMigration ResourceAggregateMigrationReader
 	interval       time.Duration
 	heartbeat      time.Duration
-	settleWindow   time.Duration
+	settle         *Settle
 	debounce       time.Duration
 	timeout        time.Duration
 	now            func() time.Time
@@ -149,9 +151,9 @@ func NewPublisher(config PublisherConfig) (*Publisher, error) {
 		heartbeat = defaultSampleHeartbeat
 	}
 	heartbeat = max(heartbeat, interval)
-	settleWindow := config.SettleWindow
-	if settleWindow <= 0 {
-		settleWindow = defaultSettleWindow
+	settle := config.Settle
+	if settle == nil {
+		settle = NewSettle(config.SettleWindow)
 	}
 	debounce := config.Debounce
 	if debounce <= 0 {
@@ -172,7 +174,7 @@ func NewPublisher(config PublisherConfig) (*Publisher, error) {
 	publisher := &Publisher{
 		runtimeID: runtimeID, state: config.State,
 		builder: NewSampleBuilder(config.State, config.GameData, config.Reports),
-		client:  config.Client, interval: interval, heartbeat: heartbeat, settleWindow: settleWindow,
+		client:  config.Client, interval: interval, heartbeat: heartbeat, settle: settle,
 		debounce: debounce, timeout: timeout,
 		now: now, jitter: jitter, wake: make(chan struct{}, 1),
 		status: PublisherStatus{Enabled: true, State: StateWaitingForPlacement},
@@ -267,7 +269,7 @@ func (publisher *Publisher) Run(ctx context.Context) {
 	var lastDigest [sha256.Size]byte
 	var digestValid bool
 	var digestEpoch, settledEpoch uint64
-	var settleUntil time.Time
+	var lastSessionKey = publisher.sessionKey()
 	failures := 0
 
 	schedule := func(at time.Time) {
@@ -390,7 +392,7 @@ func (publisher *Publisher) Run(ctx context.Context) {
 			// A sample carrying resource aggregates always uploads: the
 			// outbox is only acknowledged by a successful upload.
 			if len(pendingAggregates) == 0 && digestValid && digest == lastDigest && digestEpoch == placement.PlacementEpoch &&
-				!now.Before(settleUntil) && now.Sub(lastUploaded) < publisher.heartbeat {
+				!publisher.settle.Active(now) && now.Sub(lastUploaded) < publisher.heartbeat {
 				lastCadence = now
 				publisher.updateStatus(func(status *PublisherStatus) {
 					status.State = StatePublished
@@ -497,10 +499,22 @@ func (publisher *Publisher) Run(ctx context.Context) {
 				events = nil
 				continue
 			}
+			// A session transition (login, release, reconnect) restarts the
+			// shared settle window: the backend's handover readiness needs a
+			// fresh sample and a fresh checkpoint right after it.
+			now := publisher.now().UTC()
+			if key := publisher.sessionKey(); key != lastSessionKey {
+				lastSessionKey = key
+				publisher.settle.Restart(now)
+				// The first evaluation after a transition must not wait for the
+				// steady cadence: pull it forward once the runtime is ready.
+				if pending == nil && failures == 0 {
+					schedule(now.Add(publisher.debounce))
+				}
+			}
 			// A state change only pulls the first publication forward (or the
 			// first one after the runtime recovers). Retry backoff and the
 			// steady cadence are never bypassed by a busy state stream.
-			now := publisher.now().UTC()
 			if pending == nil && failures == 0 && !nextCadence(now).After(now) {
 				schedule(now.Add(publisher.debounce))
 			}
@@ -514,7 +528,7 @@ func (publisher *Publisher) Run(ctx context.Context) {
 					// settle window; a lease or grant renewal of the same
 					// epoch does not.
 					settledEpoch = placement.PlacementEpoch
-					settleUntil = now.Add(publisher.settleWindow)
+					publisher.settle.Restart(now)
 				}
 				schedule(nextCadence(now))
 			}
@@ -548,6 +562,13 @@ func backoffDelay(interval time.Duration, failures int, jitterSource func() floa
 		jitter = 0
 	}
 	return base + time.Duration(float64(base)*0.2*jitter)
+}
+
+// sessionKey identifies the session situation the same way the checkpoint
+// publisher does, so both restart the shared settle window on the same events.
+func (publisher *Publisher) sessionKey() string {
+	session := publisher.state.Session()
+	return fmt.Sprintf("%s|%t|%t|%d", session.Status, session.LoggedIn, session.SocketReady, session.ConnectionGeneration)
 }
 
 func (publisher *Publisher) currentPlacement() (Placement, uint64, bool) {

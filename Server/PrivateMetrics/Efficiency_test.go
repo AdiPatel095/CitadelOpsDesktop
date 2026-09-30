@@ -230,16 +230,16 @@ func TestCheckpointDefaultsAreTheAgreedCadence(t *testing.T) {
 		t.Fatal(err)
 	}
 	if publisher.interval != 15*time.Minute || publisher.heartbeat != 30*time.Minute || publisher.retry != 5*time.Minute ||
-		publisher.settleEvery != 5*time.Minute || publisher.settleWindow != 10*time.Minute {
+		publisher.settleEvery != time.Minute || publisher.settle.window != 10*time.Minute {
 		t.Fatalf("defaults = interval %v heartbeat %v retry %v settle %v/%v",
-			publisher.interval, publisher.heartbeat, publisher.retry, publisher.settleEvery, publisher.settleWindow)
+			publisher.interval, publisher.heartbeat, publisher.retry, publisher.settleEvery, publisher.settle.window)
 	}
 	metrics, err := NewPublisher(PublisherConfig{RuntimeID: "runtime-one", State: State.NewStore(State.NewGameState()), Client: client})
 	if err != nil {
 		t.Fatal(err)
 	}
-	if metrics.interval != time.Minute || metrics.heartbeat != 5*time.Minute || metrics.settleWindow != 10*time.Minute {
-		t.Fatalf("metrics defaults = interval %v heartbeat %v settle %v", metrics.interval, metrics.heartbeat, metrics.settleWindow)
+	if metrics.interval != time.Minute || metrics.heartbeat != 5*time.Minute || metrics.settle.window != 10*time.Minute {
+		t.Fatalf("metrics defaults = interval %v heartbeat %v settle %v", metrics.interval, metrics.heartbeat, metrics.settle.window)
 	}
 }
 

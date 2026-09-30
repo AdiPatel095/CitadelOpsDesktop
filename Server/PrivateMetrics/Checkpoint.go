@@ -33,11 +33,16 @@ const (
 	// former five-minute cadence so a failure is not delayed by the longer
 	// steady-state interval.
 	defaultCheckpointRetryInterval = 5 * time.Minute
-	// defaultSettleWindow follows a new placement epoch (and process start):
-	// the runtime is still warming up, and a handover waits for a fresh
-	// checkpoint and metrics sample, so the former five-minute cadence and
-	// no content skipping apply until the window ends.
-	defaultSettleWindow       = 10 * time.Minute
+	// defaultSettleWindow follows a new placement epoch (and process start), a
+	// session transition and a configuration apply. A handover waits for an
+	// actual checkpoint upload and an actual metrics upload, each no older than
+	// two minutes, so while the window is open neither publisher skips an
+	// unchanged upload and the checkpoint cadence is defaultSettleInterval.
+	defaultSettleWindow = 10 * time.Minute
+	// defaultSettleInterval is the checkpoint cadence while settling, the same
+	// minute the metrics publisher evaluates on, so both stay inside the
+	// two-minute freshness a handover requires.
+	defaultSettleInterval     = time.Minute
 	defaultCheckpointDebounce = 2 * time.Second
 	defaultCheckpointTimeout  = 90 * time.Second
 	checkpointOperationLimit  = 100
@@ -248,9 +253,11 @@ type CheckpointPublisherConfig struct {
 	Interval time.Duration
 	// Heartbeat is the longest an unchanged runtime goes without uploading.
 	Heartbeat time.Duration
-	// SettleWindow is how long after a new placement epoch the runtime keeps
-	// the shorter SettleInterval (see defaultSettleWindow).
-	SettleWindow   time.Duration
+	// Settle is the window shared with the metrics publisher (see Settle). When
+	// nil the publisher uses its own window of SettleWindow.
+	Settle       *Settle
+	SettleWindow time.Duration
+	// SettleInterval is the checkpoint cadence while the window is open.
 	SettleInterval time.Duration
 	// RetryInterval is the base retry delay after a failed upload.
 	RetryInterval time.Duration
@@ -293,7 +300,7 @@ type CheckpointPublisher struct {
 	client        *Client
 	interval      time.Duration
 	heartbeat     time.Duration
-	settleWindow  time.Duration
+	settle        *Settle
 	settleEvery   time.Duration
 	retry         time.Duration
 	debounce      time.Duration
@@ -352,13 +359,13 @@ func NewCheckpointPublisher(config CheckpointPublisherConfig) (*CheckpointPublis
 		heartbeat = defaultCheckpointHeartbeat
 	}
 	heartbeat = max(heartbeat, interval)
-	settleWindow := config.SettleWindow
-	if settleWindow <= 0 {
-		settleWindow = defaultSettleWindow
+	settle := config.Settle
+	if settle == nil {
+		settle = NewSettle(config.SettleWindow)
 	}
 	settleEvery := config.SettleInterval
 	if settleEvery <= 0 {
-		settleEvery = min(interval, defaultCheckpointRetryInterval)
+		settleEvery = min(interval, defaultSettleInterval)
 	}
 	retry := config.RetryInterval
 	if retry <= 0 {
@@ -366,7 +373,7 @@ func NewCheckpointPublisher(config CheckpointPublisherConfig) (*CheckpointPublis
 	}
 	publisher := &CheckpointPublisher{
 		runtimeID: runtimeID, state: config.State, configuration: config.Configuration, intents: config.Intents,
-		client: config.Client, interval: interval, heartbeat: heartbeat, settleWindow: settleWindow,
+		client: config.Client, interval: interval, heartbeat: heartbeat, settle: settle,
 		settleEvery: settleEvery, retry: retry, debounce: debounce, timeout: timeout,
 		now: now, jitter: jitter, wake: make(chan struct{}, 1),
 		status: CheckpointStatus{Enabled: true, State: StateWaitingForPlacement},
@@ -494,7 +501,7 @@ func (publisher *CheckpointPublisher) publish(ctx context.Context, placement Pla
 	digest := checkpointDigest(checkpoint)
 	// Only the periodic evaluation is content-gated. Session, configuration and
 	// drain checkpoints are explicit triggers and always upload.
-	if reason == CheckpointReasonCadence && publisher.digestValid && publisher.digestEpoch == placement.PlacementEpoch &&
+	if reason == CheckpointReasonCadence && !publisher.settle.Active(now) && publisher.digestValid && publisher.digestEpoch == placement.PlacementEpoch &&
 		digest == publisher.digest && now.Sub(publisher.uploadedAt) < publisher.heartbeat {
 		publisher.evaluatedState, publisher.evaluatedConfig, publisher.evaluatedCurrent = checkpoint.StateRevision, checkpoint.ConfigurationRevision, true
 		publisher.recordUnchanged(now)
@@ -549,12 +556,12 @@ func (publisher *CheckpointPublisher) Run(ctx context.Context) {
 		return fmt.Sprintf("%s|%t|%t|%d", session.Status, session.LoggedIn, session.SocketReady, session.ConnectionGeneration)
 	}
 	lastSessionKey = sessionKey()
-	// settleUntil starts at the first placement and restarts on a new
-	// placement epoch, never on a lease or grant renewal of the same epoch.
-	var settleUntil time.Time
+	// The shared settle window restarts at the first placement and on a new
+	// placement epoch (never on a lease or grant renewal of the same epoch), on
+	// every session transition, and on every configuration apply.
 	var settledEpoch uint64
 	cadence := func(now time.Time) time.Duration {
-		if now.Before(settleUntil) {
+		if publisher.settle.Active(now) {
 			return publisher.settleEvery
 		}
 		return publisher.interval
@@ -579,7 +586,8 @@ func (publisher *CheckpointPublisher) Run(ctx context.Context) {
 		}
 		reason := pendingReason
 		pendingReason = CheckpointReasonCadence
-		if reason == CheckpointReasonCadence && failures == 0 &&
+		// While settling nothing is skipped: a handover needs an actual upload.
+		if reason == CheckpointReasonCadence && failures == 0 && !publisher.settle.Active(now) &&
 			publisher.unchangedAtRevisions(placement, publisher.state.Revision(), publisher.configurationRevision(), now) {
 			// Nothing changed since the last evaluation; keep the cadence
 			// without even building the checkpoint.
@@ -634,6 +642,7 @@ func (publisher *CheckpointPublisher) Run(ctx context.Context) {
 			}
 			if key := sessionKey(); key != lastSessionKey {
 				lastSessionKey = key
+				publisher.settle.Restart(publisher.now().UTC())
 				if failures == 0 {
 					pendingReason = CheckpointReasonSession
 					schedule(publisher.now().UTC().Add(publisher.debounce))
@@ -644,6 +653,7 @@ func (publisher *CheckpointPublisher) Run(ctx context.Context) {
 				configurationEvents = nil
 				continue
 			}
+			publisher.settle.Restart(publisher.now().UTC())
 			if pendingReason != CheckpointReasonSession {
 				pendingReason = CheckpointReasonConfiguration
 			}
@@ -666,7 +676,7 @@ func (publisher *CheckpointPublisher) Run(ctx context.Context) {
 			newEpoch := placement.PlacementEpoch != settledEpoch
 			if newEpoch {
 				settledEpoch = placement.PlacementEpoch
-				settleUntil = now.Add(publisher.settleWindow)
+				publisher.settle.Restart(now)
 			}
 			if newEpoch || hadFailures || !timer.armed {
 				schedule(now.Add(publisher.debounce))
