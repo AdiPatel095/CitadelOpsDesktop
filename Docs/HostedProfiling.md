@@ -42,19 +42,19 @@ Not labelled: the Chromium transport (desktop only), goroutines a runtime starts
 
 ## Reaching the listener
 
-The listener lives inside the cell container's network namespace, so it is not visible on the VM's interfaces. From an IAP SSH session on the cell VM, run a short-lived container in the worker's network namespace:
+The listener lives inside the cell container's network namespace, so it is not visible on the VM's interfaces. From an IAP SSH session on the cell VM, use `nsenter` to run the host's own `curl` inside the worker's network namespace: nothing is pulled onto the VM. This replaces the old sidecar commands, which pulled an unpinned Docker Hub image onto a production cell.
 
 ```sh
-gcloud compute ssh CELL_VM --zone ZONE --tunnel-through-iap
-
-# on the VM: a 120 s CPU profile of the busiest period
-sudo docker run --rm --network container:citadelops-cell -v /tmp:/out curlimages/curl \
-  -sS -o /out/cell-cpu.pb.gz 'http://127.0.0.1:6060/debug/pprof/profile?seconds=120'
-sudo docker run --rm --network container:citadelops-cell curlimages/curl \
-  -sS http://127.0.0.1:6060/debug/runtime/metrics
-
-# copy it off through the same tunnel
-gcloud compute scp --tunnel-through-iap CELL_VM:/tmp/cell-cpu.pb.gz . --zone ZONE
+gcloud compute ssh CELL_VM --zone us-east1-b --tunnel-through-iap
+# on the VM: nothing is pulled or published; the host curl runs in the worker's network namespace
+pid="$(sudo docker inspect --format '{{.State.Pid}}' citadelops-cell)"
+sudo nsenter --target "$pid" --net curl --silent --show-error --max-time 300 \
+  --output /tmp/cell-cpu.pb.gz 'http://127.0.0.1:6060/debug/pprof/profile?seconds=120'
+sudo nsenter --target "$pid" --net curl --silent --show-error --max-time 10 \
+  http://127.0.0.1:6060/debug/runtime/metrics
+sudo chown "$USER" /tmp/cell-cpu.pb.gz
+# from the workstation
+gcloud compute scp --tunnel-through-iap CELL_VM:/tmp/cell-cpu.pb.gz . --zone us-east1-b
 ```
 
 Slice it locally (Go toolchain):
@@ -70,4 +70,8 @@ Do not publish port 6060, add it to Caddy, or bind it to a non-loopback address;
 
 ## Enabling it on a cell
 
-The variable must be present in the worker container's environment (`--env CITADEL_PPROF_ADDR=127.0.0.1:6060`). `deploy/gce-cell-startup.sh` in CitadelOpsBackend does not pass it through yet; that is deferred to the cell startup contract change, and until then it is not enabled on any cell. The hosted worker image is built in the private release repository, so a profile can only be taken on a cell running an image that contains this change.
+Set instance metadata `citadelops-pprof-addr=127.0.0.1:6060`. The CitadelOpsBackend startup script validates the address (loopback only); otherwise it warns and profiling stays off. It then passes `CITADEL_PPROF_ADDR` into the worker container.
+
+The setting applies at the next boot or when `sudo google_metadata_script_runner startup` runs, which restarts every runtime on that cell. Remove the metadata attribute and re-run the startup script to switch profiling off.
+
+The cell needs a worker image that contains desktop `a001046d` (CIT-42) or later. The hosted worker image is built in the private release repository. See the CitadelOpsBackend [startup contract and profiling runbook](https://github.com/AdiPatel095/CitadelOpsBackend/blob/develop/deploy/README.md) for the metadata and startup details.
