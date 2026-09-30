@@ -33,7 +33,7 @@ func (server *Server) handleAutoStormTroopCapPreview(writer http.ResponseWriter,
 		server.config.State.ReadOnlyView(),
 		server.config.Configuration.Snapshot(),
 		gameData,
-		server.config.Telemetry,
+		server.attackLaunchSource(),
 		input.Settings,
 		time.Now().UTC(),
 	)

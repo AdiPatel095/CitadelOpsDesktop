@@ -77,15 +77,20 @@ type Config struct {
 }
 
 type Application struct {
-	DataDir          string
-	AccountKey       string
-	BackgroundOnly   bool
-	State            *State.Store
-	GameData         *GameData.Manager
-	WorldMaps        *State.WorldMapStore
-	Configuration    *Configuration.Store
-	History          *History.Store
-	Telemetry        *Telemetry.Store
+	DataDir        string
+	AccountKey     string
+	BackgroundOnly bool
+	State          *State.Store
+	GameData       *GameData.Manager
+	WorldMaps      *State.WorldMapStore
+	Configuration  *Configuration.Store
+	History        *History.Store
+	// Telemetry is nil in the hosted composition (BackgroundOnly), which never
+	// creates a store: no frame or feature log is written or buffered.
+	Telemetry *Telemetry.Store
+	// AttackLaunches is the hosted replacement for the telemetry-backed launch
+	// counters, derived from intent receipts. Nil when telemetry serves them.
+	AttackLaunches   *AttackLaunchLedger
 	Ingest           *Ingest.Pipeline
 	Session          *Session.Controller
 	Intents          *Intent.Engine
@@ -231,17 +236,23 @@ func New(ctx context.Context, config Config) (*Application, error) {
 	}
 	ingest := Ingest.NewPipeline(state, gameData, registry)
 	ingest.SetProfileID(profileLease.ProfileID)
-	telemetry := Telemetry.NewStore(5000)
-	closeTelemetry := true
+	// The hosted composition keeps no frame or feature logs at all: no store,
+	// no disk files, no in-memory tails, and nothing recording into one.
+	var telemetry *Telemetry.Store
+	closeTelemetry := false
 	defer func() {
 		if closeTelemetry {
 			_ = telemetry.CloseContext(context.Background())
 		}
 	}()
-	if telemetryErr := telemetry.SetDataDir(config.DataDir); telemetryErr != nil {
-		startupErr = errors.Join(startupErr, Localization.WithError(fmt.Errorf("initialize logger: %w", telemetryErr), Localization.ErrorContext(Localization.New("server.app.initialize_logger.453e61ce", "initialize logger", nil), telemetryErr)))
+	if !config.BackgroundOnly {
+		telemetry = Telemetry.NewStore(5000)
+		closeTelemetry = true
+		if telemetryErr := telemetry.SetDataDir(config.DataDir); telemetryErr != nil {
+			startupErr = errors.Join(startupErr, Localization.WithError(fmt.Errorf("initialize logger: %w", telemetryErr), Localization.ErrorContext(Localization.New("server.app.initialize_logger.453e61ce", "initialize logger", nil), telemetryErr)))
+		}
+		ingest.SetTelemetry(telemetry)
 	}
-	ingest.SetTelemetry(telemetry)
 	transport := config.Transport
 	if transport == nil && (config.Chromium != nil || config.BackgroundOnly) {
 		mode := Session.ConnectionModeFull
@@ -308,6 +319,18 @@ func New(ctx context.Context, config Config) (*Application, error) {
 	if err := intents.SetOperationStore(ctx, operationStore); err != nil {
 		return nil, Localization.WithError(fmt.Errorf("recover intent operations: %w", err), Localization.ErrorContext(Localization.New("server.app.recover_intent_operations.9d357f70", "recover intent operations", nil), err))
 	}
+	// Hosted runtimes have no telemetry store, so their confirmed attack
+	// launch counters come from a ledger over the same intent receipts. If it
+	// cannot open, the badges report unavailable rather than a wrong number.
+	var attackLaunches *AttackLaunchLedger
+	if config.BackgroundOnly {
+		ledger, ledgerErr := OpenAttackLaunchLedger(ctx, operationStore, nil)
+		if ledgerErr != nil {
+			startupErr = errors.Join(startupErr, fmt.Errorf("open attack launch ledger: %w", ledgerErr))
+		} else {
+			attackLaunches = ledger
+		}
+	}
 	reportStore, err := Reports.OpenSQLiteStore(config.DataDir)
 	if err != nil {
 		return nil, Localization.WithError(fmt.Errorf("open report analytics store: %w", err), Localization.ErrorContext(Localization.New("server.app.open_report_analytics_store.d17d5d65", "open report analytics store", nil), err))
@@ -367,7 +390,7 @@ func New(ctx context.Context, config Config) (*Application, error) {
 	application := &Application{
 		DataDir: config.DataDir, AccountKey: strings.TrimSpace(config.AccountKey),
 		BackgroundOnly: config.BackgroundOnly,
-		State:          state, GameData: gameData, WorldMaps: config.WorldMaps, Configuration: configuration, History: history, Telemetry: telemetry,
+		State:          state, GameData: gameData, WorldMaps: config.WorldMaps, Configuration: configuration, History: history, Telemetry: telemetry, AttackLaunches: attackLaunches,
 		Ingest: ingest, Session: session, Intents: intents, OperationStore: operationStore, ReportStore: reportStore,
 		ProfileLease: profileLease, StartupErr: startupErr,
 		Updates:              updates,
@@ -451,7 +474,18 @@ func New(ctx context.Context, config Config) (*Application, error) {
 		Automation.NewAutoStormShopPolicy(),
 		Automation.NewAutoStormBuildPolicy(),
 	)
-	application.Automation.SetTelemetry(telemetry)
+	// A typed-nil store must never reach the interface, so pick the provider
+	// explicitly: telemetry on desktop, the receipt ledger when hosted.
+	var attackLaunchProvider Automation.AttackLaunchCountsProvider
+	switch {
+	case telemetry != nil:
+		attackLaunchProvider = telemetry
+	case attackLaunches != nil:
+		attackLaunchProvider = attackLaunches
+	}
+	if attackLaunchProvider != nil {
+		application.Automation.SetTelemetry(attackLaunchProvider)
+	}
 	application.Automation.SetExternalConfigurationAuthority(config.BackgroundOnly)
 	application.Reports = Reports.NewManagerWithCloudClient(
 		state, history, intents, config.ReportsCloudClient, reportStore,
@@ -460,7 +494,7 @@ func New(ctx context.Context, config Config) (*Application, error) {
 	// storage for compatibility, but no runtime or status API is composed.
 	application.API = API.NewServer(API.Config{
 		Version: Version, BuildRevision: BuildRevision, BuildID: BuildID,
-		State: state, GameData: gameData, Configuration: configuration, History: history, Telemetry: telemetry,
+		State: state, GameData: gameData, Configuration: configuration, History: history, Telemetry: telemetry, AttackLaunches: attackLaunchProvider,
 		Intents: intents, ReportAnalytics: reportStore, Session: session, Updates: application.Updates, Diagnostics: application.Diagnostics,
 		CloudReports:    application.Reports.CloudClient(),
 		BackgroundLogin: application.BackgroundLogin, BackgroundOnly: config.BackgroundOnly, Persistence: application,
@@ -621,7 +655,7 @@ func (application *Application) Wait(ctx context.Context) error {
 }
 
 func (application *Application) captureIntentLogs(ctx context.Context) {
-	if application == nil || application.Intents == nil || application.Telemetry == nil {
+	if application == nil || application.Intents == nil || (application.Telemetry == nil && application.AttackLaunches == nil) {
 		return
 	}
 	events, unsubscribe := application.Intents.Subscribe(512)
@@ -637,7 +671,13 @@ func (application *Application) captureIntentLogs(ctx context.Context) {
 }
 
 func (application *Application) recordIntentLog(receipt Intent.Receipt) {
-	if application == nil || application.Telemetry == nil {
+	if application == nil {
+		return
+	}
+	if application.AttackLaunches != nil {
+		application.AttackLaunches.RecordReceipt(context.Background(), receipt)
+	}
+	if application.Telemetry == nil {
 		return
 	}
 	for _, activity := range featureActivities(receipt) {
