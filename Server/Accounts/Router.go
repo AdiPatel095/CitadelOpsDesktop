@@ -76,6 +76,7 @@ func (supervisor *Supervisor) HandlerWithOrigins(authenticator Authenticator, fr
 		}
 
 		forwarded := request.Clone(request.Context())
+		stripSessionSubprotocols(forwarded.Header)
 		forwardedURL := *request.URL
 		forwarded.URL = &forwardedURL
 		forwarded.URL.Path = "/" + remainder

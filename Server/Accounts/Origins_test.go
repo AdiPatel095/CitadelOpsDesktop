@@ -12,7 +12,9 @@ import (
 	"testing"
 	"time"
 
+	"CitadelDesktop/Server/API"
 	"CitadelDesktop/Server/PrivateMetrics"
+	"github.com/gorilla/websocket"
 )
 
 func TestDashboardOriginPolicyValidatesAndNormalizes(t *testing.T) {
@@ -199,3 +201,131 @@ func TestDrainPublishesAFinalDashboardCheckpoint(t *testing.T) {
 }
 
 var _ = context.Background
+
+func TestDirectDashboardBearerSessionOverTLS(t *testing.T) {
+	supervisor, auth, orchestrator, now := newTestOrchestrator(t)
+	assignments := []RuntimeAssignment{testAssignment("alpha", "tenant-one", 1, now.Add(10*time.Minute)), testAssignment("bravo", "tenant-two", 1, now.Add(10*time.Minute))}
+	if _, err := orchestrator.Reconcile(t.Context(), ReconcileRequest{SchemaVersion: 1, Revision: 1, Runtimes: assignments}); err != nil {
+		t.Fatal(err)
+	}
+	application, _ := supervisor.Application("alpha")
+	setTestPlayer(t, application.State, 101, "Alpha")
+	const origin = "https://app.citadelops.app"
+	policy, err := NewDashboardOriginPolicy([]string{origin})
+	if err != nil {
+		t.Fatal(err)
+	}
+	auth.SetDashboardOrigins(policy)
+	mux := http.NewServeMux()
+	mux.Handle("/tenant/login", auth.LoginHandler())
+	mux.Handle("/accounts/", supervisor.HandlerWithOrigins(auth, nil, policy))
+	server := httptest.NewTLSServer(mux)
+	defer server.Close()
+	bootstrap := strings.Repeat("x", 48)
+	if err := auth.SetDashboardBootstrap("alpha", bootstrap, time.Now().Add(time.Minute)); err != nil {
+		t.Fatal(err)
+	}
+	send := func(method, path, body, token string, preflight bool) (int, http.Header, []byte) {
+		t.Helper()
+		request, err := http.NewRequest(method, server.URL+path, strings.NewReader(body))
+		if err != nil {
+			t.Fatal(err)
+		}
+		request.Header.Set("Origin", origin)
+		if body != "" {
+			request.Header.Set("Content-Type", "application/json")
+		}
+		if token != "" {
+			request.Header.Set("Authorization", "Bearer "+token)
+		}
+		if preflight {
+			request.Header.Set("Access-Control-Request-Method", "POST")
+			request.Header.Set("Access-Control-Request-Headers", "content-type")
+		}
+		response, err := server.Client().Do(request)
+		if err != nil {
+			t.Fatal(err)
+		}
+		defer response.Body.Close()
+		data, err := io.ReadAll(response.Body)
+		if err != nil {
+			t.Fatal(err)
+		}
+		return response.StatusCode, response.Header, data
+	}
+	status, headers, _ := send(http.MethodOptions, "/tenant/login", "", "", true)
+	if status != http.StatusNoContent || headers.Get("Access-Control-Allow-Origin") != origin {
+		t.Fatalf("login preflight = %d, %v", status, headers)
+	}
+	loginBody := `{"accountId":"alpha","token":"` + bootstrap + `","credential":"bearer"}`
+	status, headers, body := send(http.MethodPost, "/tenant/login", loginBody, "", false)
+	if status != http.StatusOK || headers.Get("Access-Control-Allow-Origin") != origin || headers.Get("Set-Cookie") != "" || headers.Get("Cache-Control") != "no-store" {
+		t.Fatalf("bearer login status = %d", status)
+	}
+	var login struct {
+		SessionToken string `json:"sessionToken"`
+	}
+	if err := json.Unmarshal(body, &login); err != nil {
+		t.Fatal(err)
+	}
+	if login.SessionToken == "" {
+		t.Fatal("missing session token")
+	}
+	if status, _, _ := send(http.MethodPost, "/tenant/login", loginBody, "", false); status != http.StatusUnauthorized {
+		t.Fatalf("bootstrap replay status = %d", status)
+	}
+	status, headers, body = send(http.MethodGet, "/accounts/alpha/api/v2/state", "", login.SessionToken, false)
+	if status != http.StatusOK || headers.Get("Access-Control-Allow-Origin") != origin || !bytes.Contains(body, []byte(`"name":"Alpha"`)) {
+		t.Fatalf("state status = %d; player present = %t", status, bytes.Contains(body, []byte(`"name":"Alpha"`)))
+	}
+	if status, _, _ := send(http.MethodGet, "/accounts/bravo/api/v2/state", "", login.SessionToken, false); status != http.StatusNotFound {
+		t.Fatalf("wrong runtime status = %d", status)
+	}
+	transport := server.Client().Transport.(*http.Transport)
+	dialer := websocket.Dialer{TLSClientConfig: transport.TLSClientConfig, Subprotocols: []string{API.EventsSubprotocol, sessionSubprotocolPrefix + login.SessionToken}}
+	socket, response, err := dialer.Dial("wss"+strings.TrimPrefix(server.URL, "https")+"/accounts/alpha/api/v2/events", http.Header{"Origin": []string{origin}})
+	if err != nil {
+		t.Fatalf("authenticated socket failed: %v", err)
+	}
+	defer socket.Close()
+	if response.StatusCode != http.StatusSwitchingProtocols || response.Header.Get("Sec-WebSocket-Protocol") != API.EventsSubprotocol || socket.Subprotocol() != API.EventsSubprotocol {
+		t.Fatal("socket did not echo the contract subprotocol")
+	}
+	if err := socket.SetReadDeadline(time.Now().Add(5 * time.Second)); err != nil {
+		t.Fatal(err)
+	}
+	var frame API.Envelope
+	if err := socket.ReadJSON(&frame); err != nil {
+		t.Fatal(err)
+	}
+	if frame.Type != "state.snapshot" {
+		t.Fatalf("first frame = %q", frame.Type)
+	}
+	for _, test := range []struct {
+		name, origin string
+		protocols    []string
+		want         int
+	}{
+		{"no credential", origin, []string{API.EventsSubprotocol}, http.StatusUnauthorized},
+		{"rejected origin", "https://attacker.example", []string{API.EventsSubprotocol, sessionSubprotocolPrefix + login.SessionToken}, http.StatusForbidden},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			rejectedDialer := dialer
+			rejectedDialer.Subprotocols = test.protocols
+			connection, response, err := rejectedDialer.Dial("wss"+strings.TrimPrefix(server.URL, "https")+"/accounts/alpha/api/v2/events", http.Header{"Origin": []string{test.origin}})
+			if connection != nil {
+				connection.Close()
+			}
+			if response != nil {
+				defer response.Body.Close()
+			}
+			if err == nil || response == nil || response.StatusCode != test.want {
+				t.Fatalf("socket rejection = %v, response %v, want %d", err, response, test.want)
+			}
+		})
+	}
+	auth.RevokeRuntime("alpha")
+	if status, _, _ := send(http.MethodGet, "/accounts/alpha/api/v2/state", "", login.SessionToken, false); status != http.StatusUnauthorized {
+		t.Fatalf("revoked session status = %d", status)
+	}
+}

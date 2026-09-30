@@ -31,6 +31,8 @@ import (
 	"github.com/gorilla/websocket"
 )
 
+const EventsSubprotocol = "citadelops.v2"
+
 type Config struct {
 	Version       string
 	BuildRevision string
@@ -84,6 +86,7 @@ func NewServer(config Config) *Server {
 	}
 	server := &Server{config: config}
 	server.upgrader = websocket.Upgrader{
+		Subprotocols:    []string{EventsSubprotocol},
 		ReadBufferSize:  4096,
 		WriteBufferSize: 4096,
 		CheckOrigin:     server.originAllowed,
