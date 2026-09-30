@@ -91,10 +91,17 @@ func newMovementReducer(authoritative bool) Reducer {
 		}
 		khanChanged := reconcileKhanTaunts(gameState, next, frame.ReceivedAt, authoritative && completeSnapshot)
 		movementChanged := gameState.ReplaceMovements(next)
+		snapshotIdentityChanged := false
 		if authoritative && completeSnapshot {
-			// Freshness of the snapshot, not content: when nothing else changes the
-			// store publishes this without a revision (Store.applyScoped), so the
-			// barrier stays readable while an unchanged poll wakes nothing.
+			// The first snapshot of a game connection is a real change: the client
+			// treats the snapshot as ready only once its connection generation
+			// matches the session's. Later snapshots on the same connection only
+			// move the freshness time; when nothing else changes the store publishes
+			// that without a revision (Store.applyScoped), so the barrier stays
+			// readable while an unchanged poll wakes nothing.
+			previous := gameState.MovementSnapshot
+			snapshotIdentityChanged = previous.Version == 0 ||
+				previous.ConnectionGeneration != gameState.Session.ConnectionGeneration
 			gameState.MovementSnapshot.Version++
 			gameState.MovementSnapshot.ConnectionGeneration = gameState.Session.ConnectionGeneration
 			gameState.MovementSnapshot.ObservedAt = frame.ReceivedAt
@@ -103,7 +110,7 @@ func newMovementReducer(authoritative bool) Reducer {
 		if movementChanged || khanChanged || authoritative && completeSnapshot {
 			commandersChanged = syncCommanderAvailability(gameState)
 		}
-		if !movementChanged && !khanChanged && !commandersChanged {
+		if !movementChanged && !khanChanged && !commandersChanged && !snapshotIdentityChanged {
 			return nil, false, nil
 		}
 		domains := []string{"movements", "commanders"}

@@ -281,3 +281,46 @@ func TestIdenticalPollsStayQuietWithKhanTauntAndPendingInvasionReservation(t *te
 	default:
 	}
 }
+
+// The client treats the movement snapshot as ready only when its connection
+// generation matches the session's, so the first snapshot of a connection is a
+// real change even when the movements themselves did not change.
+func TestFirstSnapshotOfANewConnectionCommitsEvenWhenMovementsAreUnchanged(t *testing.T) {
+	pipeline, store := quietPollFixture(t)
+	start := time.Date(2026, 9, 30, 12, 0, 0, 0, time.UTC)
+	code := 0
+	empty := json.RawMessage(`{"M":[],"O":[]}`)
+	send := func(at time.Time) Protocol.CommittedFrame {
+		committed, err := pipeline.HandleFrame(context.Background(), Protocol.Frame{
+			Opcode: "gam", Direction: Protocol.DirectionInbound, ResponseCode: &code, ReceivedAt: at, Payload: empty,
+		})
+		if err != nil {
+			t.Fatal(err)
+		}
+		return committed
+	}
+	first := send(start)
+	if first.Revision == 0 || store.ReadOnlyView().MovementSnapshot.Version == 0 {
+		t.Fatalf("the very first snapshot must commit: %+v", first)
+	}
+	if again := send(start.Add(5 * time.Second)); again.Revision != first.Revision {
+		t.Fatalf("an unchanged poll on the same connection committed revision %d", again.Revision)
+	}
+	// A new game connection: the session generation moves on, movements are still empty.
+	if _, err := store.Apply(func(gameState *State.GameState) ([]string, bool, error) {
+		gameState.Session.ConnectionGeneration = 2
+		return []string{"session"}, true, nil
+	}); err != nil {
+		t.Fatal(err)
+	}
+	before := store.Revision()
+	committed := send(start.Add(10 * time.Second))
+	snapshot := store.ReadOnlyView().MovementSnapshot
+	if committed.Revision != before+1 || snapshot.ConnectionGeneration != 2 {
+		t.Fatalf("first snapshot of connection 2: revision %d (want %d), snapshot %+v", committed.Revision, before+1, snapshot)
+	}
+	// And the next poll on connection 2 is quiet again.
+	if again := send(start.Add(15 * time.Second)); again.Revision != committed.Revision {
+		t.Fatalf("an unchanged poll on connection 2 committed revision %d", again.Revision)
+	}
+}
