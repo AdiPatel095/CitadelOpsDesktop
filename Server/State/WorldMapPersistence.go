@@ -283,6 +283,7 @@ func (store *WorldMapStore) flushPersistence(ctx context.Context) error {
 		var deleteFact *sql.Stmt
 		var upsertFact *sql.Stmt
 		var upsertScan *sql.Stmt
+		var deleteScan *sql.Stmt
 		if len(batch) > 0 {
 			deleteFact, err = tx.PrepareContext(ctx, `
 				DELETE FROM world_map_facts
@@ -311,6 +312,15 @@ func (store *WorldMapStore) flushPersistence(ctx context.Context) error {
 					completed_at_ms = excluded.completed_at_ms
 			`)
 		}
+		if err == nil {
+			for _, pending := range scanBatch {
+				if pending.Deleted {
+					deleteScan, err = tx.PrepareContext(ctx, `DELETE FROM world_storm_scan_windows WHERE world_id = ? AND kingdom_id = ? AND window_key = ?`)
+					break
+				}
+			}
+		}
+
 		for _, pending := range batch {
 			if err != nil {
 				break
@@ -334,15 +344,19 @@ func (store *WorldMapStore) flushPersistence(ctx context.Context) error {
 		}
 		if err == nil {
 			for _, pending := range scanBatch {
-				_, err = upsertScan.ExecContext(ctx, pending.WorldID, pending.KingdomID, pending.Key,
-					pending.Bounds.X1, pending.Bounds.Y1, pending.Bounds.X2, pending.Bounds.Y2,
-					pending.CompletedAt.UnixMilli())
+				if pending.Deleted {
+					_, err = deleteScan.ExecContext(ctx, pending.WorldID, pending.KingdomID, pending.Key)
+				} else {
+					_, err = upsertScan.ExecContext(ctx, pending.WorldID, pending.KingdomID, pending.Key,
+						pending.Bounds.X1, pending.Bounds.Y1, pending.Bounds.X2, pending.Bounds.Y2,
+						pending.CompletedAt.UnixMilli())
+				}
 				if err != nil {
 					break
 				}
 			}
 		}
-		for _, statement := range []*sql.Stmt{deleteFact, upsertFact, upsertScan} {
+		for _, statement := range []*sql.Stmt{deleteFact, upsertFact, upsertScan, deleteScan} {
 			if statement != nil {
 				if closeErr := statement.Close(); err == nil {
 					err = closeErr

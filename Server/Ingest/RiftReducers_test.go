@@ -75,3 +75,36 @@ func TestRiftReducerKeepsDeletedTemplateHiddenUntilNewCapture(t *testing.T) {
 		t.Fatalf("new capture retained deletion marker for %q", launchID)
 	}
 }
+
+func TestRiftTombstonesExpireAfterADay(t *testing.T) {
+	now := time.Date(2026, 9, 30, 12, 0, 0, 0, time.UTC)
+	cutoff := now.Add(-24 * time.Hour).UnixMilli()
+	s := State.NewGameState()
+	s.Map[0] = map[string]State.MapObservation{"10:20": {KingdomID: 0, X: 10, Y: 20, TypeID: riftObservationTypeID}}
+	s.Rift.DeletedLaunchIDs = map[string]int64{"old": cutoff - 1, "boundary": cutoff, "recent": now.Add(-time.Hour).UnixMilli()}
+	frame := Protocol.Frame{Opcode: "cra", Direction: Protocol.DirectionOutbound, ReceivedAt: now, Payload: json.RawMessage(`{"TX":10,"TY":20,"KID":0,"A":[{"L":{"U":[[300,11]]}}]}`)}
+	_, changed, err := reduceRiftLaunchCapture(t.Context(), frame, &s, nil)
+	if err != nil || !changed {
+		t.Fatalf("capture: changed=%v err=%v", changed, err)
+	}
+	if _, ok := s.Rift.DeletedLaunchIDs["old"]; ok {
+		t.Fatal("expired tombstone survived")
+	}
+	for _, id := range []string{"boundary", "recent"} {
+		if _, ok := s.Rift.DeletedLaunchIDs[id]; !ok {
+			t.Fatalf("%s tombstone pruned", id)
+		}
+	}
+	var id string
+	for key := range s.Rift.Launches {
+		id = key
+	}
+	delete(s.Rift.Launches, id)
+	s.Rift.PendingLaunchID = ""
+	s.Rift.DeletedLaunchIDs[id] = now.UnixMilli()
+	frame.ReceivedAt = now.Add(-time.Minute)
+	_, changed, err = reduceRiftLaunchCapture(t.Context(), frame, &s, nil)
+	if err != nil || changed || len(s.Rift.Launches) != 0 {
+		t.Fatalf("delayed re-capture was accepted: changed=%v err=%v", changed, err)
+	}
+}

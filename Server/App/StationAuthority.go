@@ -85,7 +85,8 @@ func (a *Application) guardStationDispatch(ctx context.Context, args json.RawMes
 	if a.Configuration == nil || !Automation.FeatureEnabledAt(a.Configuration.Snapshot(), key, now) {
 		return fmt.Errorf("%w: Auto Station is disabled", Intent.ErrPlanStale)
 	}
-	s := a.State.Snapshot()
+	// read-only view: guards must not mutate state
+	s := a.State.ReadOnlyView()
 	if err := validateStationSession(s, g.Request.Purpose, g.Request.ConnectionGeneration, now); err != nil {
 		return err
 	}
