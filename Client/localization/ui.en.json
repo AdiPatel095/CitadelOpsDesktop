@@ -2303,7 +2303,7 @@
   "goal.autoTool.title": "Auto Tool",
   "goal.autoTool.outcome": "Maintains tool production queues across configured castles.",
   "goal.autoBird.title": "Auto Bird",
-  "goal.autoBird.outcome": "Sends each castle's troops to the nearest alliance member's castle in repeating Bird cycles, skipping members with fewer protection days than you set, and keeping only the troops you set aside at home.",
+  "goal.autoBird.outcome": "Sends each castle's troops to the nearest alliance member's castle in repeating Bird cycles, using only members with more protection days than you set, and keeping only the troops you set aside at home.",
   "goal.autoTCI.title": "Auto TCI",
   "goal.autoTCI.outcome": "Equips and renews temporary construction items automatically.",
   "goal.autoSceatRes.title": "Auto Sceat Resources",

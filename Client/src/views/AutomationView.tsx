@@ -508,7 +508,7 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
       enabledKey: 'auto_bird',
       group: 'support',
       name: 'Auto Bird',
-      description: "Sends each castle's troops to the nearest alliance member's castle in repeating Bird cycles, skipping members with fewer protection days than you set, and keeping only the troops you set aside at home.",
+      description: "Sends each castle's troops to the nearest alliance member's castle in repeating Bird cycles, using only members with more protection days than you set, and keeping only the troops you set aside at home.",
       enabled: autoBirdEnabled,
       detail: autoBirdEnabled ? automationStates.autoBird?.detail : undefined,
       status: automationStates.autoBird?.status ?? (autoBirdEnabled ? 'unknown' : 'disabled'),
