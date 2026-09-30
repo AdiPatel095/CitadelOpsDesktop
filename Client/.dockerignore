@@ -1,0 +1,4 @@
+.visual/
+playwright-report/
+test-results/
+tests/visual/__screenshots__/
