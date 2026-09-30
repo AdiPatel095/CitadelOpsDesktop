@@ -1,0 +1,797 @@
+{
+  "src/App.tsx": {
+    "arbitrary": 0,
+    "inline": 0,
+    "total": 0
+  },
+  "src/Main.tsx": {
+    "arbitrary": 0,
+    "inline": 0,
+    "total": 0
+  },
+  "src/Movement/components/CommanderRequirementModal.tsx": {
+    "arbitrary": 5,
+    "inline": 0,
+    "total": 5
+  },
+  "src/Movement/components/MovementView.tsx": {
+    "arbitrary": 11,
+    "inline": 0,
+    "total": 11
+  },
+  "src/Movement/context/MovementContext.tsx": {
+    "arbitrary": 0,
+    "inline": 0,
+    "total": 0
+  },
+  "src/Providers.tsx": {
+    "arbitrary": 0,
+    "inline": 0,
+    "total": 0
+  },
+  "src/Rift/components/RiftArrivalClock.tsx": {
+    "arbitrary": 2,
+    "inline": 0,
+    "total": 2
+  },
+  "src/Rift/components/RiftAttackTemplate.tsx": {
+    "arbitrary": 8,
+    "inline": 0,
+    "total": 8
+  },
+  "src/Rift/components/RiftCoordDisplay.tsx": {
+    "arbitrary": 3,
+    "inline": 0,
+    "total": 3
+  },
+  "src/Rift/components/RiftMaidenCommsPanel.tsx": {
+    "arbitrary": 2,
+    "inline": 0,
+    "total": 2
+  },
+  "src/Rift/components/RiftView.tsx": {
+    "arbitrary": 0,
+    "inline": 0,
+    "total": 0
+  },
+  "src/Rift/context/RiftMapContext.tsx": {
+    "arbitrary": 0,
+    "inline": 0,
+    "total": 0
+  },
+  "src/allianceTargets/components/AllianceTargetsView.tsx": {
+    "arbitrary": 16,
+    "inline": 0,
+    "total": 16
+  },
+  "src/api/ApiContext.tsx": {
+    "arbitrary": 0,
+    "inline": 0,
+    "total": 0
+  },
+  "src/attackAnalytics/components/AttackEconomyView.tsx": {
+    "arbitrary": 4,
+    "inline": 1,
+    "total": 5
+  },
+  "src/attackPresets/AttackPresetOptionLabel.tsx": {
+    "arbitrary": 0,
+    "inline": 0,
+    "total": 0
+  },
+  "src/battleStats/components/BattleStatsView.tsx": {
+    "arbitrary": 27,
+    "inline": 0,
+    "total": 27
+  },
+  "src/components/Alerts.tsx": {
+    "arbitrary": 9,
+    "inline": 0,
+    "total": 9
+  },
+  "src/components/AttackSetupModal.tsx": {
+    "arbitrary": 32,
+    "inline": 0,
+    "total": 32
+  },
+  "src/components/AutoBirdHoverPopover.tsx": {
+    "arbitrary": 9,
+    "inline": 0,
+    "total": 9
+  },
+  "src/components/AutoStationHoverPopover.tsx": {
+    "arbitrary": 1,
+    "inline": 0,
+    "total": 1
+  },
+  "src/components/AutomationFeatureFeedback.tsx": {
+    "arbitrary": 0,
+    "inline": 0,
+    "total": 0
+  },
+  "src/components/AutomationReadinessRow.tsx": {
+    "arbitrary": 1,
+    "inline": 0,
+    "total": 1
+  },
+  "src/components/AutomationSafetyPanel.tsx": {
+    "arbitrary": 0,
+    "inline": 0,
+    "total": 0
+  },
+  "src/components/CastleFocusBadge.tsx": {
+    "arbitrary": 1,
+    "inline": 0,
+    "total": 1
+  },
+  "src/components/CastleFocusHoverPopover.tsx": {
+    "arbitrary": 7,
+    "inline": 0,
+    "total": 7
+  },
+  "src/components/CastleFocusSwitcher.tsx": {
+    "arbitrary": 2,
+    "inline": 0,
+    "total": 2
+  },
+  "src/components/ConnectionRepairDialog.tsx": {
+    "arbitrary": 3,
+    "inline": 0,
+    "total": 3
+  },
+  "src/components/ConnectionRepairHost.tsx": {
+    "arbitrary": 0,
+    "inline": 0,
+    "total": 0
+  },
+  "src/components/DailyAttackTracker.tsx": {
+    "arbitrary": 0,
+    "inline": 0,
+    "total": 0
+  },
+  "src/components/DecorationPresetsPanel.tsx": {
+    "arbitrary": 10,
+    "inline": 0,
+    "total": 10
+  },
+  "src/components/DefensePresetEditor.tsx": {
+    "arbitrary": 36,
+    "inline": 0,
+    "total": 36
+  },
+  "src/components/DetailBackButton.tsx": {
+    "arbitrary": 0,
+    "inline": 0,
+    "total": 0
+  },
+  "src/components/FirstResultCard.tsx": {
+    "arbitrary": 1,
+    "inline": 0,
+    "total": 1
+  },
+  "src/components/GameButton.tsx": {
+    "arbitrary": 0,
+    "inline": 0,
+    "total": 0
+  },
+  "src/components/GoalPicker.tsx": {
+    "arbitrary": 2,
+    "inline": 0,
+    "total": 2
+  },
+  "src/components/Header.tsx": {
+    "arbitrary": 6,
+    "inline": 0,
+    "total": 6
+  },
+  "src/components/Icons.tsx": {
+    "arbitrary": 0,
+    "inline": 0,
+    "total": 0
+  },
+  "src/components/IntentConsole.tsx": {
+    "arbitrary": 0,
+    "inline": 0,
+    "total": 0
+  },
+  "src/components/LevelBadge.tsx": {
+    "arbitrary": 0,
+    "inline": 2,
+    "total": 2
+  },
+  "src/components/LoggerDock.tsx": {
+    "arbitrary": 1,
+    "inline": 0,
+    "total": 1
+  },
+  "src/components/SetupChecklist.tsx": {
+    "arbitrary": 4,
+    "inline": 0,
+    "total": 4
+  },
+  "src/components/SharedSvgDefs.tsx": {
+    "arbitrary": 0,
+    "inline": 0,
+    "total": 0
+  },
+  "src/components/Sidebar.tsx": {
+    "arbitrary": 0,
+    "inline": 0,
+    "total": 0
+  },
+  "src/components/StaleSessionBanner.tsx": {
+    "arbitrary": 0,
+    "inline": 0,
+    "total": 0
+  },
+  "src/components/StartConfirmDialog.tsx": {
+    "arbitrary": 0,
+    "inline": 0,
+    "total": 0
+  },
+  "src/components/StateLegend.tsx": {
+    "arbitrary": 1,
+    "inline": 0,
+    "total": 1
+  },
+  "src/components/StopControl.tsx": {
+    "arbitrary": 3,
+    "inline": 0,
+    "total": 3
+  },
+  "src/components/TCIImage.tsx": {
+    "arbitrary": 0,
+    "inline": 0,
+    "total": 0
+  },
+  "src/components/TCIPickerModal.tsx": {
+    "arbitrary": 0,
+    "inline": 0,
+    "total": 0
+  },
+  "src/components/ThemeToggle.tsx": {
+    "arbitrary": 0,
+    "inline": 0,
+    "total": 0
+  },
+  "src/components/ToolImage.tsx": {
+    "arbitrary": 0,
+    "inline": 0,
+    "total": 0
+  },
+  "src/components/ToolPickerModal.tsx": {
+    "arbitrary": 2,
+    "inline": 0,
+    "total": 2
+  },
+  "src/components/TroopPickerModal.tsx": {
+    "arbitrary": 3,
+    "inline": 0,
+    "total": 3
+  },
+  "src/components/UnitImage.tsx": {
+    "arbitrary": 0,
+    "inline": 0,
+    "total": 0
+  },
+  "src/components/UpdateModal.tsx": {
+    "arbitrary": 4,
+    "inline": 0,
+    "total": 4
+  },
+  "src/components/ui/AddSlot.tsx": {
+    "arbitrary": 0,
+    "inline": 0,
+    "total": 0
+  },
+  "src/components/ui/Badge.tsx": {
+    "arbitrary": 0,
+    "inline": 0,
+    "total": 0
+  },
+  "src/components/ui/Button.tsx": {
+    "arbitrary": 0,
+    "inline": 0,
+    "total": 0
+  },
+  "src/components/ui/Card.tsx": {
+    "arbitrary": 0,
+    "inline": 0,
+    "total": 0
+  },
+  "src/components/ui/CatalogPickerModal.tsx": {
+    "arbitrary": 0,
+    "inline": 0,
+    "total": 0
+  },
+  "src/components/ui/ChoiceChipGroup.tsx": {
+    "arbitrary": 1,
+    "inline": 0,
+    "total": 1
+  },
+  "src/components/ui/CollectionToolbar.tsx": {
+    "arbitrary": 2,
+    "inline": 0,
+    "total": 2
+  },
+  "src/components/ui/EmptyState.tsx": {
+    "arbitrary": 0,
+    "inline": 0,
+    "total": 0
+  },
+  "src/components/ui/Input.tsx": {
+    "arbitrary": 0,
+    "inline": 0,
+    "total": 0
+  },
+  "src/components/ui/MetricTile.tsx": {
+    "arbitrary": 2,
+    "inline": 0,
+    "total": 2
+  },
+  "src/components/ui/Modal.tsx": {
+    "arbitrary": 1,
+    "inline": 0,
+    "total": 1
+  },
+  "src/components/ui/ModalTitle.tsx": {
+    "arbitrary": 0,
+    "inline": 0,
+    "total": 0
+  },
+  "src/components/ui/NamedPresetControls.tsx": {
+    "arbitrary": 5,
+    "inline": 0,
+    "total": 5
+  },
+  "src/components/ui/PageHeader.tsx": {
+    "arbitrary": 0,
+    "inline": 0,
+    "total": 0
+  },
+  "src/components/ui/PillSelector.tsx": {
+    "arbitrary": 0,
+    "inline": 0,
+    "total": 0
+  },
+  "src/components/ui/QuantityAssetTile.tsx": {
+    "arbitrary": 2,
+    "inline": 0,
+    "total": 2
+  },
+  "src/components/ui/ScheduleSummaryRow.tsx": {
+    "arbitrary": 1,
+    "inline": 0,
+    "total": 1
+  },
+  "src/components/ui/SectionCard.tsx": {
+    "arbitrary": 0,
+    "inline": 0,
+    "total": 0
+  },
+  "src/components/ui/Select.tsx": {
+    "arbitrary": 1,
+    "inline": 0,
+    "total": 1
+  },
+  "src/components/ui/SettingsModal.tsx": {
+    "arbitrary": 0,
+    "inline": 0,
+    "total": 0
+  },
+  "src/components/ui/SettingsToggleRow.tsx": {
+    "arbitrary": 2,
+    "inline": 0,
+    "total": 2
+  },
+  "src/components/ui/StatusIndicator.tsx": {
+    "arbitrary": 0,
+    "inline": 0,
+    "total": 0
+  },
+  "src/components/ui/Switch.tsx": {
+    "arbitrary": 0,
+    "inline": 0,
+    "total": 0
+  },
+  "src/components/ui/ToggleGroup.tsx": {
+    "arbitrary": 0,
+    "inline": 0,
+    "total": 0
+  },
+  "src/config/GuideIllustration.tsx": {
+    "arbitrary": 0,
+    "inline": 14,
+    "total": 14
+  },
+  "src/config/Navigation.tsx": {
+    "arbitrary": 0,
+    "inline": 0,
+    "total": 0
+  },
+  "src/context/AuthContext.tsx": {
+    "arbitrary": 0,
+    "inline": 0,
+    "total": 0
+  },
+  "src/context/CastleFocusContext.tsx": {
+    "arbitrary": 0,
+    "inline": 0,
+    "total": 0
+  },
+  "src/context/MetadataContext.tsx": {
+    "arbitrary": 0,
+    "inline": 0,
+    "total": 0
+  },
+  "src/context/ThemeContext.tsx": {
+    "arbitrary": 0,
+    "inline": 0,
+    "total": 0
+  },
+  "src/currency/components/CurrencyView.tsx": {
+    "arbitrary": 1,
+    "inline": 0,
+    "total": 1
+  },
+  "src/dashboard/components/BarracksQueueSlot.tsx": {
+    "arbitrary": 4,
+    "inline": 0,
+    "total": 4
+  },
+  "src/dashboard/components/CastleQueuesCard.tsx": {
+    "arbitrary": 0,
+    "inline": 0,
+    "total": 0
+  },
+  "src/dashboard/components/CastleResourceCard.tsx": {
+    "arbitrary": 2,
+    "inline": 0,
+    "total": 2
+  },
+  "src/dashboard/components/CastleUnitCard.tsx": {
+    "arbitrary": 11,
+    "inline": 0,
+    "total": 11
+  },
+  "src/dashboard/components/CastleView.tsx": {
+    "arbitrary": 1,
+    "inline": 0,
+    "total": 1
+  },
+  "src/dashboard/components/CraftingQueueSlot.tsx": {
+    "arbitrary": 5,
+    "inline": 0,
+    "total": 5
+  },
+  "src/dashboard/components/EventScoreCard.tsx": {
+    "arbitrary": 1,
+    "inline": 0,
+    "total": 1
+  },
+  "src/equipment/components/EquipmentModals.tsx": {
+    "arbitrary": 8,
+    "inline": 0,
+    "total": 8
+  },
+  "src/equipment/components/EquipmentOptimizer.tsx": {
+    "arbitrary": 13,
+    "inline": 0,
+    "total": 13
+  },
+  "src/equipment/components/EquipmentView.tsx": {
+    "arbitrary": 11,
+    "inline": 0,
+    "total": 11
+  },
+  "src/events/components/EventActivityCard.tsx": {
+    "arbitrary": 1,
+    "inline": 0,
+    "total": 1
+  },
+  "src/events/components/EventRankingModal.tsx": {
+    "arbitrary": 2,
+    "inline": 0,
+    "total": 2
+  },
+  "src/events/components/FeatureEventHistory.tsx": {
+    "arbitrary": 0,
+    "inline": 0,
+    "total": 0
+  },
+  "src/i18n/LanguageSelector.tsx": {
+    "arbitrary": 0,
+    "inline": 0,
+    "total": 0
+  },
+  "src/i18n/LocaleContext.tsx": {
+    "arbitrary": 0,
+    "inline": 0,
+    "total": 0
+  },
+  "src/i18n/LocalizedRichText.tsx": {
+    "arbitrary": 0,
+    "inline": 0,
+    "total": 0
+  },
+  "src/i18n/LocalizedText.tsx": {
+    "arbitrary": 0,
+    "inline": 0,
+    "total": 0
+  },
+  "src/playerTracker/components/PlayerTrackerView.tsx": {
+    "arbitrary": 7,
+    "inline": 4,
+    "total": 11
+  },
+  "src/settings/ConfigurationDraftSession.tsx": {
+    "arbitrary": 0,
+    "inline": 0,
+    "total": 0
+  },
+  "src/settings/components/AutoAdvisorSettingsModal.tsx": {
+    "arbitrary": 9,
+    "inline": 0,
+    "total": 9
+  },
+  "src/settings/components/AutoBeriWorldSettingsModal.tsx": {
+    "arbitrary": 7,
+    "inline": 0,
+    "total": 7
+  },
+  "src/settings/components/AutoBirdGuideModal.tsx": {
+    "arbitrary": 0,
+    "inline": 0,
+    "total": 0
+  },
+  "src/settings/components/AutoBirdSettingsModal.tsx": {
+    "arbitrary": 11,
+    "inline": 0,
+    "total": 11
+  },
+  "src/settings/components/AutoBoosterSettingsModal.tsx": {
+    "arbitrary": 11,
+    "inline": 0,
+    "total": 11
+  },
+  "src/settings/components/AutoBuyerSettingsModal.tsx": {
+    "arbitrary": 9,
+    "inline": 0,
+    "total": 9
+  },
+  "src/settings/components/AutoFoodBalanceSettingsModal.tsx": {
+    "arbitrary": 6,
+    "inline": 0,
+    "total": 6
+  },
+  "src/settings/components/AutoFortressSettingsModal.tsx": {
+    "arbitrary": 18,
+    "inline": 0,
+    "total": 18
+  },
+  "src/settings/components/AutoHospitalSettingsModal.tsx": {
+    "arbitrary": 3,
+    "inline": 0,
+    "total": 3
+  },
+  "src/settings/components/AutoInvasionSettingsModal.tsx": {
+    "arbitrary": 7,
+    "inline": 0,
+    "total": 7
+  },
+  "src/settings/components/AutoKhanSettingsModal.tsx": {
+    "arbitrary": 8,
+    "inline": 0,
+    "total": 8
+  },
+  "src/settings/components/AutoNomadSettingsModal.tsx": {
+    "arbitrary": 10,
+    "inline": 0,
+    "total": 10
+  },
+  "src/settings/components/AutoSceatRecipePickerModal.tsx": {
+    "arbitrary": 5,
+    "inline": 0,
+    "total": 5
+  },
+  "src/settings/components/AutoSceatResSettingsModal.tsx": {
+    "arbitrary": 17,
+    "inline": 0,
+    "total": 17
+  },
+  "src/settings/components/AutoStationSettingsModal.tsx": {
+    "arbitrary": 5,
+    "inline": 0,
+    "total": 5
+  },
+  "src/settings/components/AutoStormSettingsModal.tsx": {
+    "arbitrary": 37,
+    "inline": 0,
+    "total": 37
+  },
+  "src/settings/components/AutoTCISettingsModal.tsx": {
+    "arbitrary": 6,
+    "inline": 0,
+    "total": 6
+  },
+  "src/settings/components/AutoToolSettingsModal.tsx": {
+    "arbitrary": 0,
+    "inline": 0,
+    "total": 0
+  },
+  "src/settings/components/AutoTowerGuideModal.tsx": {
+    "arbitrary": 0,
+    "inline": 0,
+    "total": 0
+  },
+  "src/settings/components/AutoTowerSettingsModal.tsx": {
+    "arbitrary": 10,
+    "inline": 0,
+    "total": 10
+  },
+  "src/settings/components/AutomationDurationModal.tsx": {
+    "arbitrary": 1,
+    "inline": 0,
+    "total": 1
+  },
+  "src/settings/components/AutomationRunStrip.tsx": {
+    "arbitrary": 3,
+    "inline": 0,
+    "total": 3
+  },
+  "src/settings/components/CastleCopyDialog.tsx": {
+    "arbitrary": 3,
+    "inline": 0,
+    "total": 3
+  },
+  "src/settings/components/CastleRequirementField.tsx": {
+    "arbitrary": 1,
+    "inline": 0,
+    "total": 1
+  },
+  "src/settings/components/CommanderAssignmentPanel.tsx": {
+    "arbitrary": 4,
+    "inline": 0,
+    "total": 4
+  },
+  "src/settings/components/DailyAttackLimitField.tsx": {
+    "arbitrary": 2,
+    "inline": 0,
+    "total": 2
+  },
+  "src/settings/components/DefenseSetupField.tsx": {
+    "arbitrary": 10,
+    "inline": 0,
+    "total": 10
+  },
+  "src/settings/components/EventAttackSetupField.tsx": {
+    "arbitrary": 10,
+    "inline": 0,
+    "total": 10
+  },
+  "src/settings/components/FeatureGuideModal.tsx": {
+    "arbitrary": 0,
+    "inline": 0,
+    "total": 0
+  },
+  "src/settings/components/FeatureScheduleModal.tsx": {
+    "arbitrary": 0,
+    "inline": 0,
+    "total": 0
+  },
+  "src/settings/components/FoodCastleTableRow.tsx": {
+    "arbitrary": 3,
+    "inline": 0,
+    "total": 3
+  },
+  "src/settings/components/HorseTravelBoostSelect.tsx": {
+    "arbitrary": 2,
+    "inline": 0,
+    "total": 2
+  },
+  "src/settings/components/QueueProductionSettingsModal.tsx": {
+    "arbitrary": 22,
+    "inline": 0,
+    "total": 22
+  },
+  "src/settings/components/ReadinessPanel.tsx": {
+    "arbitrary": 4,
+    "inline": 0,
+    "total": 4
+  },
+  "src/settings/components/RecruitTroopsSettingsModal.tsx": {
+    "arbitrary": 0,
+    "inline": 0,
+    "total": 0
+  },
+  "src/settings/components/SettingsSection.tsx": {
+    "arbitrary": 3,
+    "inline": 0,
+    "total": 3
+  },
+  "src/settings/components/UnitStockList.tsx": {
+    "arbitrary": 3,
+    "inline": 0,
+    "total": 3
+  },
+  "src/settings/components/WeeklyScheduler.tsx": {
+    "arbitrary": 0,
+    "inline": 0,
+    "total": 0
+  },
+  "src/settings/connection/repairSurface.tsx": {
+    "arbitrary": 0,
+    "inline": 0,
+    "total": 0
+  },
+  "src/settings/copy/useCastleCopyReplay.tsx": {
+    "arbitrary": 0,
+    "inline": 0,
+    "total": 0
+  },
+  "src/settings/useDraftRecovery.tsx": {
+    "arbitrary": 1,
+    "inline": 0,
+    "total": 1
+  },
+  "src/spyReports/components/SpyReportsView.tsx": {
+    "arbitrary": 5,
+    "inline": 0,
+    "total": 5
+  },
+  "src/views/AttackPresetsView.tsx": {
+    "arbitrary": 4,
+    "inline": 0,
+    "total": 4
+  },
+  "src/views/AutomationView.tsx": {
+    "arbitrary": 1,
+    "inline": 0,
+    "total": 1
+  },
+  "src/views/DefensePresetsView.tsx": {
+    "arbitrary": 4,
+    "inline": 0,
+    "total": 4
+  },
+  "src/views/EventsView.tsx": {
+    "arbitrary": 0,
+    "inline": 0,
+    "total": 0
+  },
+  "src/views/PatchNotesView.tsx": {
+    "arbitrary": 2,
+    "inline": 0,
+    "total": 2
+  },
+  "src/views/SettingsView.tsx": {
+    "arbitrary": 30,
+    "inline": 0,
+    "total": 30
+  },
+  "src/views/SupportPage.tsx": {
+    "arbitrary": 6,
+    "inline": 0,
+    "total": 6
+  },
+  "src/worldIntelligence/components/WorldAllianceDetailView.tsx": {
+    "arbitrary": 5,
+    "inline": 2,
+    "total": 7
+  },
+  "src/worldIntelligence/components/WorldEventHistory.tsx": {
+    "arbitrary": 13,
+    "inline": 0,
+    "total": 13
+  },
+  "src/worldIntelligence/components/WorldIntelligenceView.tsx": {
+    "arbitrary": 0,
+    "inline": 0,
+    "total": 0
+  },
+  "src/worldIntelligence/components/WorldPlayerDetailView.tsx": {
+    "arbitrary": 4,
+    "inline": 1,
+    "total": 5
+  }
+}

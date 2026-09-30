@@ -1,0 +1,52 @@
+{
+  "ignoreFiles": [
+    "src/**/tokens.css"
+  ],
+  "rules": {
+    "color-no-hex": [
+      true,
+      {
+        "severity": "warning"
+      }
+    ],
+    "function-disallowed-list": [
+      [
+        "rgb",
+        "rgba",
+        "hsl",
+        "hsla"
+      ],
+      {
+        "severity": "warning"
+      }
+    ],
+    "declaration-no-important": [
+      true,
+      {
+        "severity": "warning"
+      }
+    ],
+    "declaration-property-value-disallowed-list": [
+      {
+        "/^border(?:-[\\w-]+)?-radius$/": [
+          "/^(?!var\\(|inherit$|initial$|unset$|revert(?:-layer)?$).+/"
+        ],
+        "box-shadow": [
+          "/^(?!var\\(|none$|inherit$|initial$|unset$|revert(?:-layer)?$).+/"
+        ],
+        "font-size": [
+          "/^(?!var\\(|inherit$|initial$|unset$|revert(?:-layer)?$).+/"
+        ],
+        "font-weight": [
+          "/^(?!var\\(|inherit$|initial$|unset$|revert(?:-layer)?$).+/"
+        ],
+        "/^(?:animation|transition)(?:-duration|-delay)?$/": [
+          "/[\\d.]+m?s\\b/"
+        ]
+      },
+      {
+        "severity": "warning"
+      }
+    ]
+  }
+}
