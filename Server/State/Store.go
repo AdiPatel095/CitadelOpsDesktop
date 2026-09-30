@@ -556,14 +556,26 @@ func (store *Store) applyScoped(writes ComponentSet, mutation ScopedMutation) (E
 		return Event{}, err
 	}
 	if !change.Changed {
+		// Nothing observable changed, so no revision, event or persistence. Two
+		// pieces of freshness bookkeeping still advance in place: the protocol
+		// focus context, and the movement snapshot barrier (an unchanged movement
+		// poll proves the snapshot is current as of its receive time; policies and
+		// intent guards compare that time with their own planning times).
+		protocol := current.protocol
 		if change.FocusSubcontext != FocusSubcontextUnknown {
 			now := time.Now().UTC()
-			protocol := nextProtocolContext(current.protocol, *current.state, nil, nil, change.FocusSubcontext, now)
-			if protocol != current.protocol {
-				store.generation.Store(&storeGeneration{
-					state: current.state, versions: current.versions, protocol: protocol,
-				})
+			protocol = nextProtocolContext(current.protocol, *current.state, nil, nil, change.FocusSubcontext, now)
+		}
+		movementFreshness := writes.Has(ComponentMovementSnapshot) &&
+			candidate.MovementSnapshot != current.state.MovementSnapshot
+		if movementFreshness || protocol != current.protocol {
+			state := current.state
+			if movementFreshness {
+				fresh := *current.state
+				fresh.MovementSnapshot = candidate.MovementSnapshot
+				state = &fresh
 			}
+			store.generation.Store(&storeGeneration{state: state, versions: current.versions, protocol: protocol})
 		}
 		return Event{Revision: current.state.Revision}, nil
 	}

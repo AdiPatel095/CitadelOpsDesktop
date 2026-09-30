@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"reflect"
 	"sync"
 	"time"
 
@@ -81,19 +82,30 @@ func newMovementReducer(authoritative bool) Reducer {
 		}
 		for _, movement := range parsed {
 			discardSupersededCommanderMovements(gameState, next, movement)
+			if prior, known := before[movement.ID]; known && movementsEquivalent(prior, movement) {
+				// The same movement seen again: keep the record we hold. Its time
+				// fields only differ by when this reply happened to arrive.
+				movement = prior
+			}
 			next[movement.ID] = movement
 		}
 		khanChanged := reconcileKhanTaunts(gameState, next, frame.ReceivedAt, authoritative && completeSnapshot)
 		movementChanged := gameState.ReplaceMovements(next)
 		if authoritative && completeSnapshot {
+			// Freshness of the snapshot, not content: when nothing else changes the
+			// store publishes this without a revision (Store.applyScoped), so the
+			// barrier stays readable while an unchanged poll wakes nothing.
 			gameState.MovementSnapshot.Version++
 			gameState.MovementSnapshot.ConnectionGeneration = gameState.Session.ConnectionGeneration
 			gameState.MovementSnapshot.ObservedAt = frame.ReceivedAt
 		}
-		if !movementChanged && (!authoritative || !completeSnapshot) && !khanChanged {
+		commandersChanged := false
+		if movementChanged || khanChanged || authoritative && completeSnapshot {
+			commandersChanged = syncCommanderAvailability(gameState)
+		}
+		if !movementChanged && !khanChanged && !commandersChanged {
 			return nil, false, nil
 		}
-		syncCommanderAvailability(gameState)
 		domains := []string{"movements", "commanders"}
 		if authoritative && completeSnapshot {
 			domains = append(domains, "movement-snapshot")
@@ -103,6 +115,44 @@ func newMovementReducer(authoritative bool) Reducer {
 		}
 		return domains, true, nil
 	}
+}
+
+// movementTimeTolerance bounds how far apart two observations of one unchanged
+// movement may place its start and completion. The wire reports elapsed travel
+// in whole seconds and every reply is stamped when it arrives, so the derived
+// times jitter by up to a second or so between polls.
+const movementTimeTolerance = 2 * time.Second
+
+// movementsEquivalent reports whether two observations describe the same
+// movement state: every field equal except those derived from when the reply was
+// received (ObservedAt, ProgressSeconds, StartedAt, ArrivesAt, ReturnsAt), whose
+// derived times must agree within movementTimeTolerance.
+func movementsEquivalent(left State.MovementState, right State.MovementState) bool {
+	if !timesWithin(left.StartedAt, right.StartedAt) ||
+		!optionalTimesWithin(left.ArrivesAt, right.ArrivesAt) ||
+		!optionalTimesWithin(left.ReturnsAt, right.ReturnsAt) {
+		return false
+	}
+	// A copy that is identical in the receive-time-dependent fields makes the
+	// remaining comparison a plain deep equality.
+	right.ObservedAt, right.ProgressSeconds, right.StartedAt = left.ObservedAt, left.ProgressSeconds, left.StartedAt
+	right.ArrivesAt, right.ReturnsAt = left.ArrivesAt, left.ReturnsAt
+	return reflect.DeepEqual(left, right)
+}
+
+func timesWithin(left time.Time, right time.Time) bool {
+	if left.IsZero() || right.IsZero() {
+		return left.IsZero() && right.IsZero()
+	}
+	difference := left.Sub(right)
+	return difference >= -movementTimeTolerance && difference <= movementTimeTolerance
+}
+
+func optionalTimesWithin(left *time.Time, right *time.Time) bool {
+	if left == nil || right == nil {
+		return left == nil && right == nil
+	}
+	return timesWithin(*left, *right)
 }
 
 func discardSupersededCommanderMovements(
