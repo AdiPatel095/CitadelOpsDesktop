@@ -102,3 +102,15 @@ test('the panel writes only after an explicit confirmation and discards without 
   assert.match(panel, /onClick=\{\(\) => \{ setPending\(null\); setSaveError\(''\); \}\}/, 'discard clears the panel draft only');
   assert.doesNotMatch(panel, /automation\.enabled|submitIntent|refreshMovement/);
 });
+
+test('commander status describes the switch using activity or the localized off label', async () => {
+  const panel = await readFile(new URL('../src/settings/components/CommanderAssignmentPanel.tsx', import.meta.url), 'utf8');
+  assert.match(panel, /commanderRowStatus\(row\)/);
+  assert.match(panel, /commanderAssignment\.offForThisAutomation/);
+  assert.match(panel, /const stateId = `\$\{id\}-commander-\$\{row\.commanderId\}-state`/);
+  assert.match(panel, /<span id=\{stateId\}>/);
+  assert.match(panel, /ariaDescribedBy=\{stateId\}/);
+  const switchSource = await readFile(new URL('../src/components/ui/Switch.tsx', import.meta.url), 'utf8');
+  assert.match(switchSource, /ariaDescribedBy\?: string/);
+  assert.match(switchSource, /aria-describedby=\{ariaDescribedBy\}/);
+});
