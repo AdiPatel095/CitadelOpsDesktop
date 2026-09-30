@@ -145,7 +145,7 @@ func TestDeliverInboundPassesTheDecodedFrame(t *testing.T) {
 		t.Fatal(err)
 	}
 	transport.deliverInbound(raw, 1)
-	rf := <-transport.frames
+	rf := drainOutbox(transport)[0]
 	if rf.Decoded == nil {
 		t.Fatal("missing decode")
 	}

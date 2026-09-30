@@ -63,6 +63,11 @@ type DirectWebSocketConfig struct {
 	movementInterval  time.Duration
 	handshakeTimeout  time.Duration
 	buildResolver     func(context.Context, string) (string, error)
+	outboxPauseBytes  int
+	outboxResumeBytes int
+	ingestStallLimit  time.Duration
+	forwarderStopped  chan<- uint64 // test-only exit signal; nil in production
+	serveReturned     chan<- error  // test-only connection result; nil in production
 }
 
 type DirectWebSocketTransport struct {
@@ -71,8 +76,10 @@ type DirectWebSocketTransport struct {
 	profile    gameConnectionProfile
 	resolveErr error
 
-	frames   chan RawFrame
-	statuses chan Status
+	frames     chan RawFrame
+	statuses   chan Status
+	outbox     *directFrameOutbox
+	outboxOnce sync.Once
 
 	mu                 sync.RWMutex
 	status             Status
@@ -208,7 +215,8 @@ func NewDirectWebSocketTransport(config DirectWebSocketConfig) *DirectWebSocketT
 	}
 	return &DirectWebSocketTransport{
 		config: config, credential: credential, profile: profile, resolveErr: resolveErr,
-		frames: make(chan RawFrame, 8192), statuses: make(chan Status, 32),
+		frames: make(chan RawFrame, 64), statuses: make(chan Status, 32),
+		outbox: newDirectFrameOutbox(config.outboxPauseBytes, config.outboxResumeBytes),
 		status: Status{
 			Mode: ConnectionModeBackground, State: state, Namespace: profile.Namespace,
 			ServerURL: profile.ServerURL, Detail: detail, ChangedAt: time.Now().UTC(),
@@ -456,10 +464,37 @@ func (transport *DirectWebSocketTransport) PrepareBackgroundMode() error {
 //     doubling per repeat, capped at one hour;
 //   - invalid credentials, wrong server, permanent suspension, or a deactivated
 //     account: park until the saved login or server selection changes.
+func (transport *DirectWebSocketTransport) frameOutbox() *directFrameOutbox {
+	transport.outboxOnce.Do(func() {
+		if transport.outbox == nil {
+			transport.outbox = newDirectFrameOutbox(transport.config.outboxPauseBytes, transport.config.outboxResumeBytes)
+		}
+	})
+	return transport.outbox
+}
+
+var errDirectIngestStalled = errors.New("background game ingest stalled: no frame was accepted for the stall limit")
+
 func (transport *DirectWebSocketTransport) run(ctx context.Context, generation uint64) {
+	forwardCtx, cancelForward := context.WithCancel(ctx)
+	forwardDone := make(chan struct{})
+	defer func() { cancelForward(); <-forwardDone }()
+	go Profiling.Do(forwardCtx, func(c context.Context) {
+		defer close(forwardDone)
+		transport.frameOutbox().forward(c, transport.frames)
+		if transport.config.forwarderStopped != nil {
+			transport.config.forwarderStopped <- generation
+		}
+	}, Profiling.LabelStage, Profiling.StageTransport)
 	unknownFailures := 0
 	for {
 		err := transport.connectAndServe(ctx, generation)
+		if transport.config.serveReturned != nil {
+			select {
+			case transport.config.serveReturned <- err:
+			case <-ctx.Done():
+			}
+		}
 		if ctx.Err() != nil || !transport.isCurrent(generation) {
 			return
 		}
@@ -700,7 +735,7 @@ func (transport *DirectWebSocketTransport) connectAndServe(ctx context.Context, 
 	}()
 
 	connectedAt := time.Now()
-	reads := make(chan directReadResult, 32)
+	reads := make(chan directReadResult, 8)
 	go readDirectWebSocket(ctx, connection, reads)
 	decoder := &directWireDecoder{}
 	if !transport.publishRunStatus(generation, Status{
@@ -958,6 +993,14 @@ func (transport *DirectWebSocketTransport) serveConnected(
 	defer movementTicker.Stop()
 	subscriptionTicker := time.NewTicker(directSubscriptionRefreshInterval)
 	defer subscriptionTicker.Stop()
+	outbox := transport.frameOutbox()
+	stallLimit := transport.config.ingestStallLimit
+	if stallLimit <= 0 {
+		stallLimit = directIngestStallLimit
+	}
+	stallTicker := time.NewTicker(5 * time.Second)
+	defer stallTicker.Stop()
+	subscriptionRefreshDue := false
 	// The official client PULLS its subscription packages (C2S "sie") at
 	// startup — the server never volunteers them on login or in the gbd
 	// baseline. In browser mode the embedded official client makes that
@@ -989,10 +1032,14 @@ func (transport *DirectWebSocketTransport) serveConnected(
 		return err
 	}
 	for {
+		readable := reads
+		if outbox.isPaused() {
+			readable = nil
+		}
 		select {
 		case <-ctx.Done():
 			return ctx.Err()
-		case result := <-reads:
+		case result := <-readable:
 			if result.err != nil {
 				return result.err
 			}
@@ -1023,13 +1070,31 @@ func (transport *DirectWebSocketTransport) serveConnected(
 				return err
 			}
 		case <-movementTicker.C:
+			if outbox.isPaused() {
+				continue
+			}
 			frame := fmt.Sprintf("%%xt%%%s%%gam%%%d%%{}%%", transport.profile.Namespace, roomID)
 			if _, err := transport.sendInternal(
 				connection, frame, connectionGeneration, "session:background:movement-refresh", "gam",
 			); err != nil {
 				return err
 			}
+		case <-stallTicker.C:
+			if outbox.stalled(time.Now(), stallLimit) {
+				return errDirectIngestStalled
+			}
+		case <-outbox.resumed():
+			if subscriptionRefreshDue {
+				if err := requestSubscriptions(); err != nil {
+					return err
+				}
+				subscriptionRefreshDue = false
+			}
 		case <-subscriptionTicker.C:
+			if outbox.isPaused() {
+				subscriptionRefreshDue = true
+				continue
+			}
 			if err := requestSubscriptions(); err != nil {
 				return err
 			}
@@ -1073,10 +1138,10 @@ func (transport *DirectWebSocketTransport) Send(ctx context.Context, payload []b
 		_ = connection.Close()
 		return Outbound.MarkIndeterminate(err)
 	}
-	transport.frames <- RawFrame{
+	transport.frameOutbox().push(RawFrame{
 		Payload: string(payload), Direction: Protocol.DirectionOutbound, ObservedAt: time.Now().UTC(),
 		ConnectionGeneration: status.ConnectionGeneration, CausationOperationID: metadata.OperationID,
-	}
+	})
 	return nil
 }
 
@@ -1099,10 +1164,10 @@ func (transport *DirectWebSocketTransport) sendInternal(
 		_ = connection.Close()
 		return false, err
 	}
-	transport.frames <- RawFrame{
+	transport.frameOutbox().push(RawFrame{
 		Payload: payload, Direction: Protocol.DirectionOutbound, ObservedAt: time.Now().UTC(),
 		ConnectionGeneration: connectionGeneration, CausationOperationID: causation,
-	}
+	})
 	return true, nil
 }
 
@@ -1134,10 +1199,10 @@ func (transport *DirectWebSocketTransport) deliverInbound(payload string, genera
 	if err != nil {
 		return
 	}
-	transport.frames <- RawFrame{
+	transport.frameOutbox().push(RawFrame{
 		Payload: payload, Direction: Protocol.DirectionInbound, ObservedAt: frame.ReceivedAt,
 		ConnectionGeneration: generation, ResponseToken: transport.matchResponseToken(frame), Decoded: &frame,
-	}
+	})
 }
 
 func (transport *DirectWebSocketTransport) registerPending(
