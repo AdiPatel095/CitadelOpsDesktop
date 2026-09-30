@@ -32,8 +32,7 @@ const DailyAttackTracker: React.FC = () => {
       <span className="liquid-status-dock-icon" aria-hidden="true">
         <Gauge className="h-4 w-4" />
       </span>
-      <span className="liquid-desktop-status-label">{t('dailyAttacks.label')}</span>
-      <span className="liquid-daily-attacks-value font-mono tabular-nums">{formattedCount}</span>
+      <span className="liquid-desktop-status-label">{t('copy.attacksToday', { count: formattedCount })}</span>
     </div>
   );
 };

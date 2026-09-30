@@ -360,7 +360,7 @@ const RiftAttackTemplate: React.FC = () => {
             size="sm"
             title={localizeStatic("ui.rift.components.riftAttackTemplate.title.no.replay.templates.have.been.captured.yet.2678cbd0")}
             description={gameLoggedIn
-                ? 'Launch one castle attack on the Rift in-game. Citadel Ops will capture its commander, formation, and travel time here for reuse.'
+                ? localizeStatic('copy.riftCapture')
                 : 'Connect to the game and launch one castle attack on the Rift to create your first replay template.'}
             className="rounded-lg bg-bg-card/30"
           />

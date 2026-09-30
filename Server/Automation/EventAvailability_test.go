@@ -24,7 +24,7 @@ func TestLimitedEventGateUsesOpeningGraceBeforeSoftLock(t *testing.T) {
 
 	decision, locked = limitedEventGate(state, opening.Add(5*time.Minute), []int64{72, 80}, "Nomad or Samurai event")
 	if !locked || decision.Status != "soft-locked" ||
-		!decision.NextCheckAt.Equal(opening.Add(24*time.Hour)) || !strings.Contains(decision.Detail, "not active") {
+		!decision.NextCheckAt.Equal(opening.Add(24*time.Hour)) || !strings.Contains(decision.Detail, "isn't running right now") {
 		t.Fatalf("settled decision = %#v locked=%t", decision, locked)
 	}
 }
