@@ -46,6 +46,7 @@
   "server.api.no_p_item_has.9f0c9501": "No {p0} item has id {p1}",
   "server.api.official_game_data_is.c5e55e7e": "Official game data is unavailable",
   "server.api.official_language_data_is.803160d4": "Official language data is unavailable",
+  "server.api.operation_cursor_is_not.416989c7": "Operation cursor is not a stored operation",
   "server.api.operation_is_not_currently.e4e0ac62": "Operation is not currently running",
   "server.api.operation_limit_must_be.bb724cb5": "Operation limit must be between 1 and 1000",
   "server.api.operation_was_not_found.b8363d5a": "Operation was not found",

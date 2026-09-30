@@ -6,6 +6,7 @@ import (
 	"errors"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"strings"
 	"testing"
 	"time"
@@ -319,4 +320,80 @@ func TestIntentEndpointOwnsActorAndPriorityClassification(t *testing.T) {
 	if receipt.Actor != "ui" || receipt.Priority != Outbound.PriorityInteractive {
 		t.Fatalf("server-owned identity = actor %q priority %d", receipt.Actor, receipt.Priority)
 	}
+}
+
+func TestOperationsEndpointPagesWithBefore(t *testing.T) {
+	store, err := Intent.OpenOperationStore(t.TempDir())
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = store.Close() })
+	for _, id := range []string{"first", "second", "third"} {
+		if _, _, err := store.Reserve(t.Context(), "hash-"+id, Intent.Receipt{ID: id, Status: Intent.StatusSucceeded}); err != nil {
+			t.Fatal(err)
+		}
+	}
+	engine := Intent.NewEngine(nil, nil, nil, nil, nil)
+	if err := engine.SetOperationStore(t.Context(), store); err != nil {
+		t.Fatal(err)
+	}
+	handler := NewServer(Config{Intents: engine}).Handler()
+	for _, test := range []struct {
+		name, query, code string
+		status            int
+		ids               []string
+	}{
+		{name: "page", query: "before=third", status: 200, ids: []string{"second", "first"}},
+		{name: "trim cursor", query: "before=" + url.QueryEscape("  third  ") + "&limit=1", status: 200, ids: []string{"second"}},
+		{name: "empty page", query: "before=first", status: 200, ids: []string{}},
+		{name: "unknown", query: "before=missing", status: 400, code: "invalid_cursor"},
+		{name: "oversized", query: "before=" + strings.Repeat("x", 257), status: 400, code: "invalid_cursor"},
+		{name: "oversized UTF8", query: "before=" + url.QueryEscape(strings.Repeat("é", 129)), status: 400, code: "invalid_cursor"},
+		{name: "bad limit", query: "before=third&limit=bad", status: 400, code: "invalid_limit"},
+		{name: "zero limit", query: "before=third&limit=0", status: 400, code: "invalid_limit"},
+		{name: "large limit", query: "before=third&limit=1001", status: 400, code: "invalid_limit"},
+		{name: "blank cursor", query: "before=" + url.QueryEscape(" ") + "&limit=1", status: 200, ids: []string{"third"}},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			recorder := httptest.NewRecorder()
+			handler.ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, "/api/v2/operations?"+test.query, nil))
+			if recorder.Code != test.status {
+				t.Fatalf("HTTP %d: %s", recorder.Code, recorder.Body.String())
+			}
+			if test.status != http.StatusOK {
+				var response struct{ Error struct{ Code string } }
+				if err := json.Unmarshal(recorder.Body.Bytes(), &response); err != nil || response.Error.Code != test.code {
+					t.Fatalf("error response = %s, decode=%v", recorder.Body.String(), err)
+				}
+				return
+			}
+			var receipts []Intent.Receipt
+			if err := json.Unmarshal(recorder.Body.Bytes(), &receipts); err != nil || receipts == nil || len(receipts) != len(test.ids) {
+				t.Fatalf("page = %s, decode=%v", recorder.Body.String(), err)
+			}
+			for index, id := range test.ids {
+				if receipts[index].ID != id {
+					t.Fatalf("page[%d] = %s, want %s", index, receipts[index].ID, id)
+				}
+			}
+		})
+	}
+	t.Run("no store", func(t *testing.T) {
+		recorder := httptest.NewRecorder()
+		NewServer(Config{Intents: Intent.NewEngine(nil, nil, nil, nil, nil)}).Handler().ServeHTTP(recorder,
+			httptest.NewRequest(http.MethodGet, "/api/v2/operations?before=first", nil))
+		if recorder.Code != http.StatusServiceUnavailable || !strings.Contains(recorder.Body.String(), "operations_unavailable") {
+			t.Fatalf("no store response = %d %s", recorder.Code, recorder.Body.String())
+		}
+	})
+	t.Run("store error", func(t *testing.T) {
+		if err := store.Close(); err != nil {
+			t.Fatal(err)
+		}
+		recorder := httptest.NewRecorder()
+		handler.ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, "/api/v2/operations?before=first", nil))
+		if recorder.Code != http.StatusServiceUnavailable || !strings.Contains(recorder.Body.String(), "operations_unavailable") {
+			t.Fatalf("store error response = %d %s", recorder.Code, recorder.Body.String())
+		}
+	})
 }

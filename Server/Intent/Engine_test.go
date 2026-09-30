@@ -2248,26 +2248,78 @@ func TestEngineRejectsExecutableProductionPlanWithUnmappedLegacyClaim(t *testing
 	}
 }
 
-func TestEngineBoundsDurableInMemoryOperationHistory(t *testing.T) {
-	engine := NewEngine(nil, nil, nil, nil, nil)
-	engine.mu.Lock()
-	engine.operationStore = &SQLiteOperationStore{}
-	for index := 0; index < operationHistoryLimit+5; index++ {
-		id := fmt.Sprintf("operation-%d", index)
-		engine.cacheOperationLocked(Receipt{ID: id, Status: StatusSucceeded}, "hash-"+id)
+func TestEngineBoundsInMemoryReceiptsByCountAndBytes(t *testing.T) {
+	for _, test := range []struct {
+		name                string
+		count, payloadBytes int
+		active              bool
+	}{
+		{name: "count", count: 600},
+		{name: "bytes", count: 60, payloadBytes: 256 << 10},
+		{name: "active", count: 600, payloadBytes: 16 << 10, active: true},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			engine := NewEngine(nil, nil, nil, nil, nil)
+			engine.operationStore = &SQLiteOperationStore{}
+			engine.mu.Lock()
+			defer engine.mu.Unlock()
+			for index := 0; index < test.count; index++ {
+				id := fmt.Sprintf("operation-%d", index)
+				if test.active {
+					engine.active[id] = func() {}
+				}
+				engine.durableOperations[id] = struct{}{}
+				engine.cacheOperationLocked(Receipt{ID: id, Status: StatusSucceeded,
+					Plan: &Plan{Steps: []Step{{Payload: json.RawMessage(strings.Repeat("x", test.payloadBytes))}}},
+				}, "hash-"+id)
+			}
+			if test.active {
+				if len(engine.operations) != test.count || engine.cachedOperationBytes <= operationMemoryBytes {
+					t.Fatalf("active history = %d receipts, %d bytes", len(engine.operations), engine.cachedOperationBytes)
+				}
+				for id := range engine.active {
+					if _, ok := engine.operations[id]; !ok {
+						t.Fatalf("evicted active operation %s", id)
+					}
+				}
+			} else {
+				if len(engine.operations) > operationMemoryLimit || engine.cachedOperationBytes > operationMemoryBytes {
+					t.Fatalf("history exceeds cap: %d receipts, %d bytes", len(engine.operations), engine.cachedOperationBytes)
+				}
+				if test.payloadBytes == 0 && len(engine.operations) != operationMemoryLimit {
+					t.Fatalf("count = %d, want %d", len(engine.operations), operationMemoryLimit)
+				}
+				if _, ok := engine.operations["operation-0"]; ok {
+					t.Fatal("oldest receipt was not evicted")
+				}
+			}
+			newest := fmt.Sprintf("operation-%d", test.count-1)
+			if _, ok := engine.operations[newest]; !ok {
+				t.Fatal("newest receipt was evicted")
+			}
+			assertReceiptCacheConsistent(t, engine)
+			// Replacing a cached receipt must adjust, rather than add, its size.
+			engine.cacheOperationLocked(Receipt{ID: newest, Status: StatusSucceeded}, "")
+			assertReceiptCacheConsistent(t, engine)
+			if test.active {
+				clear(engine.active)
+				engine.evictOperationHistoryLocked()
+				if len(engine.operations) > operationMemoryLimit || engine.cachedOperationBytes > operationMemoryBytes {
+					t.Fatal("terminal receipts did not age out after active exemption ended")
+				}
+				assertReceiptCacheConsistent(t, engine)
+			}
+		})
 	}
-	operationCount := len(engine.operations)
-	hashCount := len(engine.requestHashes)
-	orderCount := len(engine.operationOrder)
-	_, oldestPresent := engine.operations["operation-0"]
-	_, newestPresent := engine.operations[fmt.Sprintf("operation-%d", operationHistoryLimit+4)]
-	engine.mu.Unlock()
-	if operationCount != operationHistoryLimit || hashCount != operationHistoryLimit || orderCount != operationHistoryLimit {
-		t.Fatalf("bounded history sizes = operations:%d hashes:%d order:%d", operationCount, hashCount, orderCount)
-	}
-	if oldestPresent || !newestPresent {
-		t.Fatalf("bounded history retained wrong entries: oldest=%t newest=%t", oldestPresent, newestPresent)
-	}
+	t.Run("no store", func(t *testing.T) {
+		engine := NewEngine(nil, nil, nil, nil, nil)
+		for index := 0; index < 600; index++ {
+			engine.cacheOperationLocked(Receipt{ID: fmt.Sprint(index)}, "")
+		}
+		if len(engine.operations) != 600 {
+			t.Fatal("process-local history was evicted without a store")
+		}
+	})
 }
 
 func TestEngineResumesCheckpointAndRebuildsOnlyContextSteps(t *testing.T) {

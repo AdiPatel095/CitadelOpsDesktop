@@ -4,6 +4,7 @@ import (
 	"CitadelDesktop/Server/Localization"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -533,7 +534,20 @@ func (server *Server) handleOperations(writer http.ResponseWriter, request *http
 		}
 		limit = parsed
 	}
-	receipts, err := server.config.Intents.RecentOperations(request.Context(), limit)
+	before := strings.TrimSpace(request.URL.Query().Get("before"))
+	var receipts []Intent.Receipt
+	var err error
+	if len(before) > 256 {
+		err = Intent.ErrUnknownOperationCursor
+	} else if before != "" {
+		receipts, err = server.config.Intents.OperationsBefore(request.Context(), before, limit)
+	} else {
+		receipts, err = server.config.Intents.RecentOperations(request.Context(), limit)
+	}
+	if errors.Is(err, Intent.ErrUnknownOperationCursor) {
+		writeError(writer, http.StatusBadRequest, "invalid_cursor", "Operation cursor is not a stored operation", Localization.New("server.api.operation_cursor_is_not.416989c7", "Operation cursor is not a stored operation", nil))
+		return
+	}
 	if err != nil {
 		writeErrorFromError(writer, http.StatusServiceUnavailable, "operations_unavailable", err)
 		return
