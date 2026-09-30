@@ -16,6 +16,7 @@ import (
 
 	"CitadelDesktop/Server/AllianceTargets"
 	"CitadelDesktop/Server/AppUpdate"
+	"CitadelDesktop/Server/Automation"
 	"CitadelDesktop/Server/Configuration"
 	"CitadelDesktop/Server/Diagnostics"
 	"CitadelDesktop/Server/GameData"
@@ -31,14 +32,20 @@ import (
 )
 
 type Config struct {
-	Version         string
-	BuildRevision   string
-	BuildID         string
-	State           *State.Store
-	GameData        *GameData.Manager
-	Configuration   *Configuration.Store
-	History         *History.Store
-	Telemetry       *Telemetry.Store
+	Version       string
+	BuildRevision string
+	BuildID       string
+	State         *State.Store
+	GameData      *GameData.Manager
+	Configuration *Configuration.Store
+	History       *History.Store
+	// Telemetry is nil in the hosted worker, which keeps no frame or feature
+	// logs and serves no /api/v2/telemetry routes.
+	Telemetry *Telemetry.Store
+	// AttackLaunches counts confirmed feature attack launches: the telemetry
+	// store on desktop, a receipt-derived ledger when hosted. Nil means neither
+	// source exists.
+	AttackLaunches  Automation.AttackLaunchCountsProvider
 	Intents         *Intent.Engine
 	ReportAnalytics *Reports.SQLiteStore
 	CloudReports    *Reports.CloudClient
@@ -145,9 +152,16 @@ func (server *Server) Handler() http.Handler {
 	mux.HandleFunc("GET /api/v2/history/battle-reports", server.handleBattleReportHistory)
 	mux.HandleFunc("GET /api/v2/analytics/battle-reports", server.handleBattleReportAnalytics)
 	mux.HandleFunc("GET /api/v2/analytics/resource-aggregates", server.handleResourceAggregates)
-	mux.HandleFunc("GET /api/v2/telemetry/channels", server.handleTelemetryChannels)
-	mux.HandleFunc("GET /api/v2/telemetry/attack-rates", server.handleAttackLaunchRates)
-	mux.HandleFunc("GET /api/v2/telemetry/{channel}", server.handleTelemetryTail)
+	if server.config.BackgroundOnly {
+		// The hosted worker keeps no logs, so it serves no telemetry routes at
+		// all (they answer 404). The attack-launch badges read a receipt-derived
+		// count from their own route.
+		mux.HandleFunc("GET /api/v2/automations/attack-rates", server.handleAttackLaunchRates)
+	} else {
+		mux.HandleFunc("GET /api/v2/telemetry/channels", server.handleTelemetryChannels)
+		mux.HandleFunc("GET /api/v2/telemetry/attack-rates", server.handleAttackLaunchRates)
+		mux.HandleFunc("GET /api/v2/telemetry/{channel}", server.handleTelemetryTail)
+	}
 	mux.HandleFunc("GET /api/v2/intents", server.handleIntentDefinitions)
 	mux.HandleFunc("POST /api/v2/intents/{name}", server.handleIntentSubmit)
 	mux.HandleFunc("GET /api/v2/operations", server.handleOperations)

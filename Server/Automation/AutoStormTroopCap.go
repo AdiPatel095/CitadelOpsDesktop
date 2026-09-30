@@ -115,7 +115,7 @@ func autoStormTroopCapPreview(snapshot Snapshot, settings autoStormSettings) (Au
 		result.CapBasis = autoStormTroopCapBasisReserve
 	}
 	if snapshot.Telemetry == nil {
-		result.Detail = "Confirmed attack telemetry is unavailable"
+		result.Detail = "Confirmed attack count is not available yet."
 		return result, nil
 	}
 	counts, resetAvailable := snapshot.Telemetry.AttackLaunchCountsSince(resetStartedAt, snapshot.Now)
