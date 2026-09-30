@@ -49,6 +49,37 @@ export function movementSnapshotFresh(
     || (movement.lastSnapshotUnix > 0 && nowUnix - movement.lastSnapshotUnix <= freshnessWindow);
 }
 
+/**
+ * Commander status for a launch control (Rift attack template): the row's activity, or
+ * `syncing`/`unknown` while the movement snapshot is missing or stale. Freshness follows
+ * movementSnapshotFresh, so a view model with no freshness window (the default: sparse
+ * movement frames keep a connection's baseline live, and unchanged polls do not advance
+ * the snapshot time) is fresh once the baseline is ready.
+ */
+export function commanderStatusForLaunch(
+  movement: MovementViewModel | null,
+  commanderID: number | undefined,
+  gameLoggedIn: boolean,
+  nowUnix: number,
+  fallbackStatus: CommanderActivity | undefined,
+): CommanderActivity {
+  if (!gameLoggedIn || commanderID == null || commanderID < 0) return 'unknown';
+  if (!movement) return fallbackStatus ?? 'syncing';
+  if (!movement.snapshotReady) return 'syncing';
+  if (!movementSnapshotFresh(movement, gameLoggedIn, nowUnix)) return 'unknown';
+  const row = movement.commanderStatuses.find((candidate) => candidate.commanderId === commanderID);
+  if (!row) return 'unknown';
+  if (
+    row.status === 'outbound' &&
+    row.movement != null &&
+    (row.movement.travelSeconds ?? 0) > 0 &&
+    effectiveProgress(row.movement, nowUnix) >= (row.movement.travelSeconds ?? 0)
+  ) {
+    return row.movement.returnsAt ? 'posted' : 'busy';
+  }
+  return row.status;
+}
+
 const message = (key: MessageKey): MessageKey => key;
 
 export const COMMANDER_ACTIVITY_LABEL_KEYS: Readonly<Record<CommanderActivity, MessageKey>> = {
