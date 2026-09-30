@@ -9,7 +9,7 @@ const hosted = existsSync(resolve(client, 'src/commandCenter/styles/fonts.css'))
 const repo = hosted ? client : resolve(client, '..');
 const manifest = JSON.parse(readFileSync(resolve(client, 'public/fonts/manrope/fonts-manifest.json'), 'utf8'));
 const css = readFileSync(resolve(client, hosted ? 'src/commandCenter/styles/fonts.css' : 'src/styles/fonts.css'), 'utf8');
-const origin = hosted ? 'http://127.0.0.1:18461' : 'http://127.0.0.1:41736';
+const origin = `http://127.0.0.1:${(hosted ? 18461 : 41736) + Number(process.env.CIT_VISUAL_PORT_OFFSET ?? 0)}`;
 const specimens = {
   latin: 'The kingdom 0123456789',
   'latin-ext': 'șțıİąėįųūěščřžďťňľĺŕőű',
@@ -18,7 +18,7 @@ const specimens = {
   greek: 'Ελληνικάάέήίόύώ',
 };
 
-test.describe('Manrope delivery — provenance-gated scaffold', () => {
+test.describe('Manrope delivery', () => {
   test.skip(!manifest.source.google_fonts_commit, 'Font provenance incomplete. Waiting for Oscar to pin google/fonts commit.');
   test.beforeAll(() => {
     // Once pinned, partial metadata/missing assets FAIL rather than silently skipping.
@@ -42,13 +42,22 @@ test.describe('Manrope delivery — provenance-gated scaffold', () => {
     });
     await page.goto(`${origin}/__manrope_specimen`);
     await page.evaluate(async (samples) => {
-      for (const [script, text] of Object.entries(samples)) {
-        const element = document.createElement('span');
-        element.id = script;
-        element.textContent = text;
-        element.style.font = '400 16px Manrope';
-        document.body.append(element);
-        await document.fonts.load('400 16px Manrope', text);
+      for (const weight of [400, 500, 600, 700]) {
+        for (const [script, text] of Object.entries(samples)) {
+          const element = document.createElement('span');
+          element.id = `${script}-${weight}`;
+          element.textContent = text;
+          element.style.font = `${weight} 16px Manrope`;
+          document.body.append(element);
+          await document.fonts.load(`${weight} 16px Manrope`, text);
+        }
+        for (const digit of '0123456789') {
+          const element = document.createElement('span');
+          element.dataset.weight = String(weight);
+          element.textContent = digit;
+          element.style.cssText = `display:inline-block;font:${weight} 64px Manrope;font-variant-numeric:tabular-nums`;
+          document.body.append(element);
+        }
       }
       await document.fonts.ready;
     }, specimens);
@@ -60,14 +69,17 @@ test.describe('Manrope delivery — provenance-gated scaffold', () => {
     await session.send('DOM.enable');
     await session.send('CSS.enable');
     const { root } = await session.send('DOM.getDocument');
-    for (const script of Object.keys(specimens)) {
-      const { nodeId } = await session.send('DOM.querySelector', { nodeId: root.nodeId, selector: `#${script}` });
-      const { fonts } = await session.send('CSS.getPlatformFontsForNode', { nodeId });
-      expect(fonts.length).toBeGreaterThan(0);
-      expect(fonts.every((font) => font.isCustomFont && font.familyName.includes('Manrope'))).toBe(true);
+    for (const weight of [400, 500, 600, 700]) {
+      const widths = await page.locator(`[data-weight="${weight}"]`).evaluateAll((elements) => elements.map((element) => element.getBoundingClientRect().width));
+      expect(widths).toHaveLength(10);
+      expect(Math.max(...widths) - Math.min(...widths)).toBeLessThan(0.01);
+      for (const script of Object.keys(specimens)) {
+        const { nodeId } = await session.send('DOM.querySelector', { nodeId: root.nodeId, selector: `#${script}-${weight}` });
+        const { fonts } = await session.send('CSS.getPlatformFontsForNode', { nodeId });
+        expect(fonts.length).toBeGreaterThan(0);
+        expect(fonts.every((font) => font.isCustomFont && font.familyName.includes('Manrope'))).toBe(true);
+      }
     }
     await session.detach();
   });
-  // After Oscar's gate: extend to all four weights, tnum and locale cases;
-  // record Lighthouse medians and baseline diffs before font-stack integration.
 });

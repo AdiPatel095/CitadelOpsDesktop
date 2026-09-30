@@ -11,6 +11,8 @@ from pathlib import Path
 GATE = "Font provenance incomplete. Waiting for Oscar to pin google/fonts commit."
 SOURCE_SHA = "3ae11c49db0455a3cc33e37d380f20fdb8c7f8b41dc07625c177e3d87a9d6ae6"
 SOURCE_SIZE = 164700
+SOURCE_COMMIT = "b31870aff700ab7a1d74fa0c6887d95beb9e0037"
+LICENSE_SHA = "58172e0c0fac2cda8a37b348164bb55e44b0e69051e557e92b1d3f6910141f7b"
 RANGES = {
     "latin": "U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+2000-201F,U+2021-206F,U+2074,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD",
     "latin-ext": "U+0100-0130,U+0132-0151,U+0154-024F,U+0259,U+1E00-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF",
@@ -56,6 +58,9 @@ def source_gate(manifest, provenance):
             raise ValueError("Font and OFL must be pinned to the same google/fonts commit.")
         if source["sha256"] != SOURCE_SHA or source["bytes"] != SOURCE_SIZE:
             raise ValueError("Manrope source differs from Oscar's accepted 164,700-byte font.")
+        if (source["google_fonts_commit"] != SOURCE_COMMIT
+                or license_entry["sha256"] != LICENSE_SHA or license_entry["bytes"] != 4387):
+            raise ValueError("Font provenance differs from the verified google/fonts pin.")
         return source
     except (KeyError, TypeError, StopIteration) as error:
         raise ValueError(GATE) from error
@@ -110,13 +115,15 @@ def build(source_path, manifest, output):
     with tempfile.TemporaryDirectory(dir=output) as directory:
         for script, unicode_range in RANGES.items():
             face = TTFont(source_path, recalcTimestamp=False)
-            face = instantiateVariableFont(face, {"wght": (400, 700)}, inplace=True)
             options = subset.Options()
             options.layout_features = ["*"]
             options.harfbuzz_repacker = False
             subsetter = subset.Subsetter(options=options)
             subsetter.populate(unicodes=subset.parse_unicodes(unicode_range))
             subsetter.subset(face)
+            # Subset before instancing: instancer removes empty gvar entries,
+            # which the subsetter otherwise expects for every retained glyph.
+            face = instantiateVariableFont(face, {"wght": (400, 700)}, inplace=True)
             if not face.getBestCmap():
                 raise ValueError(f"Empty Manrope subset: {script}")
             face.flavor = "woff2"

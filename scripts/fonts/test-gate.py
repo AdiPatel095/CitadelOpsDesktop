@@ -22,8 +22,8 @@ class GateTests(unittest.TestCase):
         self.output = Path(self.directory.name)
         self.manifest = json.loads((PUBLIC / "fonts/manrope/fonts-manifest.json").read_text())
         self.provenance = json.loads(SCRIPT.with_name("font-provenance.json").read_text())
-        # A fabricated pin and WOFF2-signature payload are exclusively integrity fixtures.
-        self.commit = "a" * 40
+        # WOFF2-signature payloads are exclusively integrity fixtures, not font validation.
+        self.commit = MODULE["SOURCE_COMMIT"]
         for record in self.provenance["files"]:
             record["google_fonts_commit"] = self.commit
         for key in ("source", "license"):
@@ -80,6 +80,14 @@ class GateTests(unittest.TestCase):
     def test_license_is_verified(self):
         (self.output / "OFL.txt").write_text("wrong license")
         with self.assertRaisesRegex(ValueError, "OFL.txt"):
+            self.check()
+
+    def test_unverified_pin_is_rejected_even_when_records_agree(self):
+        for record in self.provenance["files"]:
+            record["google_fonts_commit"] = "b" * 40
+        for key in ("source", "license"):
+            self.manifest[key]["google_fonts_commit"] = "b" * 40
+        with self.assertRaisesRegex(ValueError, "verified google/fonts pin"):
             self.check()
 
     def test_cli_generation_gate_runs_before_source_or_fonttools(self):

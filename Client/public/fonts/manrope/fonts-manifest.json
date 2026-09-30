@@ -1,16 +1,18 @@
 {
   "schema_version": 1,
-  "status": "waiting-for-oscar-commit",
+  "status": "complete",
   "source": {
     "file": "source/fonts/Manrope[wght].ttf",
     "bytes": 164700,
     "sha256": "3ae11c49db0455a3cc33e37d380f20fdb8c7f8b41dc07625c177e3d87a9d6ae6",
-    "google_fonts_commit": null
+    "google_fonts_commit": "b31870aff700ab7a1d74fa0c6887d95beb9e0037",
+    "git_blob": "75274da58537d6123b14f2cd0c355ad4681fc2b3"
   },
   "license": {
     "bytes": 4387,
     "sha256": "58172e0c0fac2cda8a37b348164bb55e44b0e69051e557e92b1d3f6910141f7b",
-    "google_fonts_commit": null
+    "google_fonts_commit": "b31870aff700ab7a1d74fa0c6887d95beb9e0037",
+    "git_blob": "e271172a9ed0cddc895aabb6509f1c7d880b492d"
   },
   "outputs": [
     {
@@ -21,9 +23,9 @@
         400,
         700
       ],
-      "sha256": null,
-      "bytes": null,
-      "google_fonts_commit": null
+      "sha256": "090c357ec6e87bb6ba6dc67aea3d4ad7d9b7c06054132e7fe08dc5ce9e925ec4",
+      "bytes": 22964,
+      "google_fonts_commit": "b31870aff700ab7a1d74fa0c6887d95beb9e0037"
     },
     {
       "script": "latin-ext",
@@ -33,9 +35,9 @@
         400,
         700
       ],
-      "sha256": null,
-      "bytes": null,
-      "google_fonts_commit": null
+      "sha256": "c255099083ccdb3a829cb88b52f1b012bcf60ac7cfb68fe12c9ba2a2f79180bf",
+      "bytes": 17228,
+      "google_fonts_commit": "b31870aff700ab7a1d74fa0c6887d95beb9e0037"
     },
     {
       "script": "cyrillic",
@@ -45,9 +47,9 @@
         400,
         700
       ],
-      "sha256": null,
-      "bytes": null,
-      "google_fonts_commit": null
+      "sha256": "96ca017db646bd25a6f94f7da83dbdeb59d716f31ca7eb9aad4a44bf9c90e83e",
+      "bytes": 12888,
+      "google_fonts_commit": "b31870aff700ab7a1d74fa0c6887d95beb9e0037"
     },
     {
       "script": "cyrillic-ext",
@@ -57,9 +59,9 @@
         400,
         700
       ],
-      "sha256": null,
-      "bytes": null,
-      "google_fonts_commit": null
+      "sha256": "959a07242eddc7cbe4db4d3c9c8ca88358766b462a3c641533218ff7c3e35e63",
+      "bytes": 1604,
+      "google_fonts_commit": "b31870aff700ab7a1d74fa0c6887d95beb9e0037"
     },
     {
       "script": "greek",
@@ -69,9 +71,9 @@
         400,
         700
       ],
-      "sha256": null,
-      "bytes": null,
-      "google_fonts_commit": null
+      "sha256": "c0043e2840ac2d790e046ac14dc1e2038190b56658c4570efecf8349920c821f",
+      "bytes": 8052,
+      "google_fonts_commit": "b31870aff700ab7a1d74fa0c6887d95beb9e0037"
     }
   ]
 }
