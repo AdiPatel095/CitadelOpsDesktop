@@ -809,6 +809,72 @@ func autoBirdEligibleTestState(t *testing.T, now time.Time) (State.GameState, *G
 	return gameState, gameData
 }
 
+func TestAutoStationBlocksWhenEvacuationUnavailable(t *testing.T) {
+	now := time.Date(2026, 9, 30, 12, 0, 0, 0, time.UTC)
+	for _, reason := range []string{"no protected target", "no stationable troops"} {
+		t.Run(reason, func(t *testing.T) {
+			gameState, gameData := autoBirdEligibleTestState(t, now)
+			gameState.Player.ID = 7
+			castle := gameState.Castles[10]
+			castle.SlotType = 1
+			if reason == "no protected target" {
+				gameState.Alliance.Holdings = nil
+			} else {
+				castle.Units.Stationed = nil
+			}
+			gameState.Castles[10] = castle
+			arrives := now.Add(30 * time.Second)
+			gameState.Movements[1] = State.MovementState{
+				ID: 1, TypeID: 0, Direction: 0, OwnerPlayerID: 8, TargetPlayerID: 7,
+				SourceTypeID: 1, SourceCastleID: 200, TargetTypeID: 1, TargetCastleID: 10, ArrivesAt: &arrives,
+			}
+			decision, err := NewAutoStationPolicy().Evaluate(t.Context(), Snapshot{State: gameState, GameData: gameData, Now: now})
+			if err != nil || decision.Status != "blocked" || decision.Request != nil || decision.FailureFallback != nil {
+				t.Fatalf("unavailable evacuation = %#v, err=%v", decision, err)
+			}
+			if decision.Detail != "Some threatened castles cannot station troops or are outside their evacuation window" || !decision.NextCheckAt.Equal(now.Add(10*time.Second)) {
+				t.Fatalf("unavailable evacuation detail or retry changed: %#v", decision)
+			}
+			if decision.Metrics["threatCount"] != 1 || decision.Metrics["nextImpactUnixMs"] != float64(arrives.UnixMilli()) {
+				t.Fatalf("unavailable evacuation metrics = %#v", decision.Metrics)
+			}
+		})
+	}
+}
+
+func TestAutoStationBlocksUnsupportedProtectionModeGates(t *testing.T) {
+	now := time.Date(2026, 9, 30, 12, 0, 0, 0, time.UTC)
+	for _, modeState := range []int{0, 1} {
+		t.Run(fmt.Sprintf("mode-%d", modeState), func(t *testing.T) {
+			gameState := State.NewGameState()
+			gameState.Player.ID = 7
+			gameState.Player.AllianceObservedAt = now
+			gameState.Player.ProtectionMode = State.PlayerProtectionModeState{
+				ModeState: modeState, RemainingSec: 3600, ObservedAt: now,
+			}
+			gameState.Castles[100] = State.CastleState{ID: 100, KingdomID: 10, SlotType: 4}
+			arrives := now.Add(30 * time.Second)
+			gameState.Movements[1] = State.MovementState{
+				ID: 1, TypeID: 0, Direction: 0, OwnerPlayerID: 8, TargetPlayerID: 7,
+				SourceTypeID: 1, SourceCastleID: 200, TargetTypeID: 4, TargetCastleID: 100, ArrivesAt: &arrives,
+			}
+			decision, err := NewAutoStationPolicy().Evaluate(t.Context(), Snapshot{State: gameState, Now: now})
+			if err != nil || decision.Status != "blocked" || decision.Request != nil || decision.FailureFallback != nil {
+				t.Fatalf("unsupported Protection Mode gates = %#v, err=%v", decision, err)
+			}
+			if decision.Detail != "Protection Mode suppresses stationing; Open Gates is not capture-confirmed for castle 100's kingdom" || !decision.NextCheckAt.Equal(now.Add(30*time.Second)) {
+				t.Fatalf("unsupported gates detail or retry changed: %#v", decision)
+			}
+			if decision.DetailDescriptor == nil || decision.DetailDescriptor.Key != "server.automation.protection_mode_suppresses_stationing.028adab4" {
+				t.Fatalf("unsupported gates descriptor = %#v", decision.DetailDescriptor)
+			}
+			if decision.Metrics["threatCount"] != 1 || decision.Metrics["nextImpactUnixMs"] != float64(arrives.UnixMilli()) {
+				t.Fatalf("unsupported gates metrics = %#v", decision.Metrics)
+			}
+		})
+	}
+}
+
 func TestAutoStationRefreshesStaleAllianceRosterBeforeEvacuating(t *testing.T) {
 	now := time.Now().UTC()
 	arrives := now.Add(30 * time.Second)
