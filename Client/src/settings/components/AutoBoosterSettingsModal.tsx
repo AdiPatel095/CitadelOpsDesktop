@@ -1,3 +1,4 @@
+import { StopFooter } from '../../components/StopControl';
 import { LocalizedRichText } from "../../i18n/LocalizedRichText";
 import { useLocale as useStaticLocale } from "../../i18n/LocaleContext";
 import { LocalizedText } from "../../i18n/LocalizedText";
@@ -101,6 +102,7 @@ export const AutoBoosterSettingsModal: React.FC<AutoBoosterSettingsModalProps> =
 
   return (
     <SettingsModal
+      footerLeading={<StopFooter featureId="autoBooster" />}
       isOpen={isOpen}
       onClose={() => { if (!isSaving) onClose(); }}
       maxWidth="lg"

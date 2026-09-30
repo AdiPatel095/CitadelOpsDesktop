@@ -1,3 +1,4 @@
+import { StopFooter } from '../../components/StopControl';
 import { useLocale as useStaticLocale } from "../../i18n/LocaleContext";
 import { LocalizedText } from "../../i18n/LocalizedText";
 import React, { useEffect, useMemo, useState } from 'react';
@@ -332,6 +333,7 @@ export const AutoBeriWorldSettingsModal: React.FC<AutoBeriWorldSettingsModalProp
 	return (
     <>
 		<SettingsModal
+			footerLeading={<StopFooter featureId="autoBeriWorld" />}
 			isOpen={isOpen}
 			onClose={onClose}
 			title={localizeStatic("ui.settings.components.autoBeriWorldSettingsModal.title.auto.beri.world.a579a63b")}

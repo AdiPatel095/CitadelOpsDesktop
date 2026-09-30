@@ -29,4 +29,3 @@ export const autoToolCheckIntervalSecToMinutes = autoToolState.checkIntervalSecT
 export const autoToolCheckIntervalMinutesToSec = autoToolState.checkIntervalMinutesToSec;
 export const defaultAutoToolSettings = autoToolState.defaultSettings;
 export const normalizeAutoToolSettings = autoToolState.normalizeSettings;
-export const persistAutoToolSettings = autoToolState.persistSettings;

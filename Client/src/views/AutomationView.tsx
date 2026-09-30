@@ -9,6 +9,7 @@ import { useLocale as useStaticLocale } from "../i18n/LocaleContext";
 import { LocalizedText } from "../i18n/LocalizedText";
 import React, { useEffect, useMemo, useState } from 'react';
 import {
+  Bird,
   Bot,
   Castle,
   Coins,
@@ -17,6 +18,7 @@ import {
   HeartPulse,
   MousePointerClick,
   Settings,
+  Shield,
   ShoppingCart,
   Trash2,
   Users,
@@ -47,7 +49,10 @@ import { useCitadelAPI } from '../api/ApiContext';
 import { parseAutoBeriWorldSettings } from '../settings/AutoBeriWorldClientState';
 import { configurationSection } from '../settings/Configuration';
 import { AutomationSafetyPanel } from '../components/AutomationSafetyPanel';
+import { AutomationFeatureFeedback } from '../components/AutomationFeatureFeedback';
+import { StopFooter } from '../components/StopControl';
 import { checkIntervalLine } from '../settings/disclosure/summaries';
+import type { SettingsFeatureId } from '../settings/disclosure/placement';
 import { useSettingsDisclosure } from '../settings/disclosure/useSettingsDisclosure';
 import { AutomationRunStrip } from '../settings/components/AutomationRunStrip';
 import { SettingsSection } from '../settings/components/SettingsSection';
@@ -69,6 +74,8 @@ interface AutomationViewProps {
   onOpenAutoKhanSettings: () => void;
   onOpenAutoBeriWorldSettings: () => void;
   onOpenAutoStormSettings: () => void;
+  onOpenAutoStationSettings: () => void;
+  onOpenAutoBirdSettings: () => void;
   autoEquipmentCleanup: AutoEquipmentCleanupController;
   onOpenFeatureSchedule: (id: string, label: string) => void;
   onOpenAutomationDuration: (featureKey: string, featureLabel: string) => void;
@@ -126,10 +133,6 @@ function formatTimedRemaining(expiresAt:number,now:number,locale:string,t:Displa
   return t('automation.timeLeft',timedRemainingParameters(expiresAt,now,locale));
 }
 
-function modeLabel(mode: 'global' | 'perCastle'): string {
-  return mode === 'perCastle' ? 'Per-castle plan' : 'Global plan';
-}
-
 function combinedAutomationStatus(
   statuses: Array<string | undefined>,
   enabled: boolean,
@@ -144,7 +147,7 @@ function combinedAutomationStatus(
     if (availableStatuses.includes(status)) return status;
   }
   if (availableStatuses.length > 0 && availableStatuses.every((status) => status === 'complete')) return 'complete';
-  return availableStatuses[0] ?? 'waiting';
+  return availableStatuses[0] ?? 'unknown';
 }
 
 function automationStatusLane(
@@ -156,14 +159,17 @@ function automationStatusLane(
   fallbackLane: string,
 ): AutomationStatusLane {
   const hasRuntimeDetail = typeof runtime?.detail === 'string';
-  const detail = enabled ? hasRuntimeDetail ? runtime.detail : fallbackDetail : undefined;
-  const detailDescriptor = !enabled ? undefined
+  // Fallback wording only while the game has reported nothing for this lane; a reported status without a
+  // detail is shown as is, never paired with an invented reason.
+  const useFallback = enabled && !runtime;
+  const detail = enabled ? hasRuntimeDetail ? runtime.detail : useFallback ? fallbackDetail : undefined : undefined;
+  const detailDescriptor = !enabled || !detail ? undefined
     : hasRuntimeDetail ? automationDetailMessage(detail, runtime.detailDescriptor)
     : describeMessage('automation.waitingLane', {lane: fallbackLane.replaceAll('-', '_')});
   return {
     id,
     label,
-    status: enabled ? runtime?.status ?? 'waiting' : 'disabled',
+    status: enabled ? runtime?.status ?? 'unknown' : 'disabled',
     detail,
     detailDescriptor,
   };
@@ -305,6 +311,8 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
   onOpenAutoKhanSettings,
   onOpenAutoBeriWorldSettings,
   onOpenAutoStormSettings,
+  onOpenAutoStationSettings,
+  onOpenAutoBirdSettings,
   autoEquipmentCleanup,
   onOpenFeatureSchedule,
   onOpenAutomationDuration,
@@ -314,9 +322,7 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
   const {
     gameLoggedIn,
     recruitTroopsEnabled,
-    autoRecruitMode,
     autoToolEnabled,
-    autoToolMode,
     autoSceatResEnabled,
     autoFoodBalanceEnabled,
     autoHospitalEnabled,
@@ -332,6 +338,8 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
     autoKhanEnabled,
     autoBeriWorldEnabled,
     autoStormEnabled,
+    autoStationEnabled,
+    autoBirdEnabled,
     toggleRecruitTroops,
     toggleAutoTool,
     toggleAutoSceatRes,
@@ -348,6 +356,8 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
 		toggleAutoKhan,
 		toggleAutoBeriWorld,
 		toggleAutoStorm,
+		toggleAutoStation,
+		toggleAutoBird,
 		automationStates,
 		automationTimedUntilByKey,
   } = useAuth();
@@ -439,10 +449,8 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
       name: 'Auto Recruit',
       description: 'Keeps troop recruitment queues stocked from the configured plans.',
       enabled: recruitTroopsEnabled,
-      detail: recruitTroopsEnabled
-			? automationStates.autoRecruit?.detail ?? `${modeLabel(autoRecruitMode)} · waiting for policy status`
-			: `${modeLabel(autoRecruitMode)} · paused`,
-      status: automationStates.autoRecruit?.status ?? (recruitTroopsEnabled ? 'waiting' : 'disabled'),
+      detail: recruitTroopsEnabled ? automationStates.autoRecruit?.detail : undefined,
+      status: automationStates.autoRecruit?.status ?? (recruitTroopsEnabled ? 'unknown' : 'disabled'),
       icon: Users,
       onToggle: toggleRecruitTroops,
       onOpenSettings: onOpenRecruitTroopsSettings,
@@ -454,10 +462,8 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
       name: 'Auto Tool',
       description: 'Maintains tool production queues across configured castles.',
       enabled: autoToolEnabled,
-      detail: autoToolEnabled
-			? automationStates.autoTool?.detail ?? `${modeLabel(autoToolMode)} · waiting for policy status`
-			: `${modeLabel(autoToolMode)} · paused`,
-      status: automationStates.autoTool?.status ?? (autoToolEnabled ? 'waiting' : 'disabled'),
+      detail: autoToolEnabled ? automationStates.autoTool?.detail : undefined,
+      status: automationStates.autoTool?.status ?? (autoToolEnabled ? 'unknown' : 'disabled'),
       icon: Wrench,
       onToggle: toggleAutoTool,
       onOpenSettings: onOpenAutoToolSettings,
@@ -469,13 +475,37 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
       name: 'Auto Hospital',
       description: 'Processes hospital queues using the configured healing priorities.',
       enabled: autoHospitalEnabled,
-      detail: autoHospitalEnabled
-			? automationStates.autoHospital?.detail ?? 'Waiting for hospital policy status'
-			: 'Automatic healing is paused',
-      status: automationStates.autoHospital?.status ?? (autoHospitalEnabled ? 'waiting' : 'disabled'),
+      detail: autoHospitalEnabled ? automationStates.autoHospital?.detail : undefined,
+      status: automationStates.autoHospital?.status ?? (autoHospitalEnabled ? 'unknown' : 'disabled'),
       icon: HeartPulse,
       onToggle: toggleAutoHospital,
       onOpenSettings: onOpenAutoHospitalSettings,
+    },
+    {
+      id: 'autoStation',
+      enabledKey: 'auto_station',
+      group: 'support',
+      name: 'Auto Station',
+      description: 'Moves troops out of a castle before an incoming attack lands, leaves behind only the troops you chose to defend, and recalls the rest when it is clear.',
+      enabled: autoStationEnabled,
+      detail: autoStationEnabled ? automationStates.autoStation?.detail : undefined,
+      status: automationStates.autoStation?.status ?? (autoStationEnabled ? 'unknown' : 'disabled'),
+      icon: Shield,
+      onToggle: toggleAutoStation,
+      onOpenSettings: onOpenAutoStationSettings,
+    },
+    {
+      id: 'autoBird',
+      enabledKey: 'auto_bird',
+      group: 'support',
+      name: 'Auto Bird',
+      description: "Sends each castle's troops to the nearest alliance member's castle in repeating Bird cycles, skipping members with fewer protection days than you set, and keeping only the troops you set aside at home.",
+      enabled: autoBirdEnabled,
+      detail: autoBirdEnabled ? automationStates.autoBird?.detail : undefined,
+      status: automationStates.autoBird?.status ?? (autoBirdEnabled ? 'unknown' : 'disabled'),
+      icon: Bird,
+      onToggle: toggleAutoBird,
+      onOpenSettings: onOpenAutoBirdSettings,
     },
     {
       id: 'autoTCI',
@@ -488,7 +518,7 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
 			? automationStates.autoTCI?.detail ?? formatNextWake(autoTCINextWakeUp, now,locale,localizeStatic)
 			: 'Construction-item automation is paused',
       detailDescriptor: autoTCIEnabled && automationStates.autoTCI?.detail===undefined ? describeMessage('automation.nextCheck',nextWakeParameters(autoTCINextWakeUp,now,locale)) : undefined,
-      status: automationStates.autoTCI?.status ?? (autoTCIEnabled ? 'waiting' : 'disabled'),
+      status: automationStates.autoTCI?.status ?? (autoTCIEnabled ? 'unknown' : 'disabled'),
       icon: Hammer,
       onToggle: toggleAutoTCI,
       onOpenSettings: onOpenAutoTCISettings,
@@ -500,9 +530,7 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
       name: 'Auto Sceat Resources',
       description: 'Balances kingdom resources and maintains Refinery, Toolsmith, Dragon Hoard, and Dragon Forge queues.',
       enabled: autoSceatResEnabled,
-      detail: autoSceatResEnabled
-			? autoSceatRuntime?.detail ?? 'Waiting for crafting policy status'
-			: 'Crafting and logistics are paused',
+      detail: autoSceatResEnabled ? autoSceatRuntime?.detail : undefined,
       status: autoSceatStatus,
       statusLanes: [
         automationStatusLane('crafting', 'Crafting', autoSceatRuntime, autoSceatResEnabled, 'Waiting for crafting policy status', 'crafting'),
@@ -519,10 +547,8 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
       name: 'Auto Food Balance',
       description: 'Protects Food, Honey, Mead, and Beef reserves across owned castles.',
       enabled: autoFoodBalanceEnabled,
-      detail: autoFoodBalanceEnabled
-			? automationStates.autoFoodBalance?.detail ?? 'Waiting for food-balance policy status'
-			: 'Food balancing is paused',
-      status: automationStates.autoFoodBalance?.status ?? (autoFoodBalanceEnabled ? 'waiting' : 'disabled'),
+      detail: autoFoodBalanceEnabled ? automationStates.autoFoodBalance?.detail : undefined,
+      status: automationStates.autoFoodBalance?.status ?? (autoFoodBalanceEnabled ? 'unknown' : 'disabled'),
       icon: Wheat,
       onToggle: toggleAutoFoodBalance,
       onOpenSettings: onOpenAutoFoodBalanceSettings,
@@ -534,10 +560,8 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
       name: 'Auto Booster',
       description: 'Buys only the 2,500-ruby daily global fortress-speed boost after a fresh exact-price and reserve check.',
       enabled: autoBoosterEnabled,
-      detail: autoBoosterEnabled
-        ? automationStates.autoBooster?.detail ?? 'Waiting for the current daily global-effect window'
-        : 'Daily global fortress-speed purchases are paused',
-      status: automationStates.autoBooster?.status ?? (autoBoosterEnabled ? 'waiting' : 'disabled'),
+      detail: autoBoosterEnabled ? automationStates.autoBooster?.detail : undefined,
+      status: automationStates.autoBooster?.status ?? (autoBoosterEnabled ? 'unknown' : 'disabled'),
       icon: Zap,
       onToggle: toggleAutoBooster,
       onOpenSettings: onOpenAutoBoosterSettings,
@@ -549,10 +573,8 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
       name: 'Auto Buyer',
       description: 'Buys selected reset stock and maintains specialist and feast duration floors within explicit reserves.',
       enabled: autoBuyerEnabled,
-      detail: autoBuyerEnabled
-        ? automationStates.autoBuyer?.detail ?? 'Waiting for configured stock or upkeep goals'
-        : 'Automatic purchases are paused',
-      status: automationStates.autoBuyer?.status ?? (autoBuyerEnabled ? 'waiting' : 'disabled'),
+      detail: autoBuyerEnabled ? automationStates.autoBuyer?.detail : undefined,
+      status: automationStates.autoBuyer?.status ?? (autoBuyerEnabled ? 'unknown' : 'disabled'),
       icon: ShoppingCart,
       onToggle: toggleAutoBuyer,
       onOpenSettings: onOpenAutoBuyerSettings,
@@ -564,10 +586,8 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
 		name: 'Auto Towers',
 		description: 'Attacks ready robber-baron towers with regular waves or Baron Advisor chains bounded by a daily Time Skip budget.',
 		enabled: autoTowerEnabled,
-		detail: autoTowerEnabled
-			? automationStates.autoTowers?.detail ?? 'Waiting for tower map coverage'
-			: 'Tower attacks are paused',
-		status: automationStates.autoTowers?.status ?? (autoTowerEnabled ? 'waiting' : 'disabled'),
+		detail: autoTowerEnabled ? automationStates.autoTowers?.detail : undefined,
+		status: automationStates.autoTowers?.status ?? (autoTowerEnabled ? 'unknown' : 'disabled'),
 		icon: Crosshair,
 		onToggle: toggleAutoTower,
 		onOpenSettings: onOpenAutoTowerSettings,
@@ -579,10 +599,8 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
 		name: 'Auto Fortress',
 		description: 'Wins outer-kingdom fortresses with a speed-first Direwolf wave, guarded supply, and exact cooldown tracking.',
 		enabled: autoFortressEnabled,
-		detail: autoFortressEnabled
-			? automationStates.autoFortress?.detail ?? 'Waiting for fortress map coverage'
-			: 'Fortress attacks and Direwolf supply are paused',
-		status: automationStates.autoFortress?.status ?? (autoFortressEnabled ? 'waiting' : 'disabled'),
+		detail: autoFortressEnabled ? automationStates.autoFortress?.detail : undefined,
+		status: automationStates.autoFortress?.status ?? (autoFortressEnabled ? 'unknown' : 'disabled'),
 		icon: Castle,
 		onToggle: toggleAutoFortress,
 		onOpenSettings: onOpenAutoFortressSettings,
@@ -599,7 +617,8 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
       icon: Trash2,
       onToggle: () => autoEquipmentCleanup.setEnabled(!autoEquipmentCleanup.enabled),
       onOpenSettings: () => setIsEquipmentCleanupSettingsOpen(true),
-      disabled: !gameLoggedIn,
+      // Turning it on needs the game connection; turning it off (Stop) never does.
+      disabled: !gameLoggedIn && !autoEquipmentCleanup.enabled,
     },
     {
       id: 'autoInvasion',
@@ -608,10 +627,8 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
       name: 'Auto Invasion',
       description: 'Uses a CitadelOps attack preset against Foreign Lords and Bloodcrow castles until the score target is reached.',
       enabled: autoInvasionEnabled,
-      detail: autoInvasionEnabled
-        ? automationStates.autoInvasion?.detail ?? 'Waiting for an active invasion event'
-        : 'Invasion attacks are paused',
-      status: automationStates.autoInvasion?.status ?? (autoInvasionEnabled ? 'waiting' : 'disabled'),
+      detail: autoInvasionEnabled ? automationStates.autoInvasion?.detail : undefined,
+      status: automationStates.autoInvasion?.status ?? (autoInvasionEnabled ? 'unknown' : 'disabled'),
       icon: Crosshair,
       onToggle: toggleAutoInvasion,
       onOpenSettings: onOpenAutoInvasionSettings,
@@ -623,10 +640,8 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
 		name: 'Auto Nomad / Samurai',
 		description: 'Maxes four regular camps, locks the weakest, and chains available commanders into that one camp.',
 		enabled: autoNomadEnabled,
-		detail: autoNomadEnabled
-			? automationStates.autoNomad?.detail ?? 'Waiting for an active Nomad or Samurai event'
-			: 'Nomad and Samurai camp attacks are paused',
-		status: automationStates.autoNomad?.status ?? (autoNomadEnabled ? 'waiting' : 'disabled'),
+		detail: autoNomadEnabled ? automationStates.autoNomad?.detail : undefined,
+		status: automationStates.autoNomad?.status ?? (autoNomadEnabled ? 'unknown' : 'disabled'),
 		icon: Crosshair,
 		onToggle: toggleAutoNomad,
 		onOpenSettings: onOpenAutoNomadSettings,
@@ -638,10 +653,8 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
 		name: 'Auto Advisor',
 		description: 'Starts one server-managed Nomad or Samurai advisor chain, sized to event time and current resources.',
 		enabled: autoAdvisorEnabled,
-		detail: autoAdvisorEnabled
-			? automationStates.autoAdvisor?.detail ?? 'Waiting for an active advisor-enabled event'
-			: 'Advisor attacks are paused',
-		status: automationStates.autoAdvisor?.status ?? (autoAdvisorEnabled ? 'waiting' : 'disabled'),
+		detail: autoAdvisorEnabled ? automationStates.autoAdvisor?.detail : undefined,
+		status: automationStates.autoAdvisor?.status ?? (autoAdvisorEnabled ? 'unknown' : 'disabled'),
 		icon: Bot,
 		onToggle: toggleAutoAdvisor,
 		onOpenSettings: onOpenAutoAdvisorSettings,
@@ -653,9 +666,7 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
 		name: 'Auto Khan',
 		description: 'Chains Khan camp hits and retaliations while keeping the Great Empire main castle on its defense preset.',
 		enabled: autoKhanEnabled,
-		detail: autoKhanEnabled
-			? autoKhanAttackRuntime?.detail ?? 'Waiting for the Nomad event and Khan camp'
-			: 'Khan camp attacks and taunts are paused',
+		detail: autoKhanEnabled ? autoKhanAttackRuntime?.detail : undefined,
 		status: autoKhanStatus,
 		statusLanes: [
 			automationStatusLane('attacks', 'Attacks', autoKhanAttackRuntime, autoKhanEnabled, 'Waiting for the Khan attack policy', 'khan-attacks'),
@@ -674,9 +685,7 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
 		name: 'Auto Beri World',
 		description: 'Transfers troops, attacks each next tower, brings the loot home, and spends confirmed Berimond resources on a captured camp build and upgrade target.',
 		enabled: autoBeriWorldEnabled,
-		detail: autoBeriWorldEnabled
-			? autoBeriTransferRuntime?.detail ?? 'Waiting for Berimond availability and configuration'
-			: 'Berimond transfers, tool purchases, tower attacks, and construction are paused',
+		detail: autoBeriWorldEnabled ? autoBeriTransferRuntime?.detail : undefined,
 		status: autoBeriWorldStatus,
 		statusLanes: [
 			automationStatusLane('transfers', 'Transfers', autoBeriTransferRuntime, autoBeriWorldEnabled, 'Waiting for the Berimond transfer policy', 'beri-transfers'),
@@ -702,9 +711,7 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
       name: 'Auto Storm',
       description: 'Builds a captured Storm castle target, attacks selected forts and islands, and spends Aquamarine by priority.',
       enabled: autoStormEnabled,
-      detail: autoStormEnabled
-        ? autoStormRuntime?.detail ?? 'Waiting for an unlocked Storm castle or configured goal'
-        : 'Storm construction and attacks are paused',
+      detail: autoStormEnabled ? autoStormRuntime?.detail : undefined,
       status: autoStormStatus,
       statusLanes: [
         automationStatusLane('combat', 'Combat', autoStormRuntime, autoStormEnabled, 'Waiting for the Storm combat policy', 'storm-combat'),
@@ -721,7 +728,6 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
     localizeStatic,
     autoHospitalEnabled,
     autoEquipmentCleanup,
-    autoRecruitMode,
     recruitTroopsEnabled,
     autoSceatResEnabled,
     autoSceatRuntime,
@@ -748,6 +754,8 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
     autoBeriToolRuntime,
     autoBeriBuildRuntime,
     autoBeriWorldStatus,
+    autoStationEnabled,
+    autoBirdEnabled,
     autoStormEnabled,
     autoStormRuntime,
     autoStormShopRuntime,
@@ -756,7 +764,6 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
     autoKhanStatus,
     autoSceatStatus,
     autoToolEnabled,
-    autoToolMode,
 		automationStates,
     equipmentCleanupScheduleLabel,
     gameLoggedIn,
@@ -776,6 +783,8 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
     onOpenAutoKhanSettings,
     onOpenAutoBeriWorldSettings,
     onOpenAutoStormSettings,
+    onOpenAutoStationSettings,
+    onOpenAutoBirdSettings,
     onOpenRecruitTroopsSettings,
     toggleAutoHospital,
     toggleAutoSceatRes,
@@ -791,6 +800,8 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
     toggleAutoKhan,
     toggleAutoBeriWorld,
     toggleAutoStorm,
+    toggleAutoStation,
+    toggleAutoBird,
     toggleAutoTool,
     toggleRecruitTroops,
   ]);
@@ -880,6 +891,13 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
                           detailDescriptor={feature.detailDescriptor ?? automationDetailMessage(feature.detail,automationStates[feature.id]?.detailDescriptor)}
                           lanes={feature.statusLanes}
                         />
+                        <AutomationFeatureFeedback
+                          featureId={feature.id as SettingsFeatureId}
+                          enabled={feature.enabled}
+                          onOpenSettings={feature.onOpenSettings}
+                          launchesByFeature={attackLaunchesByFeature}
+                          buildLaneActive={feature.id === 'autoBeriWorld' ? autoBeriBuildEnabled : undefined}
+                        />
                       </div>
                       <Button
                         variant="ghost"
@@ -907,10 +925,11 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
         title={
           <ModalTitle icon={<Trash2 className="h-5 w-5" />}><LocalizedText messageKey="ui.views.automationView.auto.equipment.cleanup.4116a164" /></ModalTitle>
         }
-        footer={<Button variant="ghost" onClick={() => setIsEquipmentCleanupSettingsOpen(false)}><LocalizedText messageKey="common.close" /></Button>}
+        footer={<><StopFooter featureId="autoEquipmentCleanup" /><Button variant="ghost" onClick={() => setIsEquipmentCleanupSettingsOpen(false)}><LocalizedText messageKey="common.close" /></Button></>}
       >
         <AutomationRunStrip
           featureId="autoEquipmentCleanup"
+          saveMode="immediate"
           onOpenDuration={() => {
             setIsEquipmentCleanupSettingsOpen(false);
             onOpenAutomationDuration(AUTO_EQUIPMENT_CLEANUP_ENABLED_KEY, 'Auto Equipment Cleanup');

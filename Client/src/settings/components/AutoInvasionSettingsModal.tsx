@@ -1,3 +1,4 @@
+import { StopFooter } from '../../components/StopControl';
 import { useLocale as useStaticLocale } from "../../i18n/LocaleContext";
 import { LocalizedText } from "../../i18n/LocalizedText";
 import React, { useEffect, useMemo, useState } from 'react';
@@ -225,6 +226,7 @@ export const AutoInvasionSettingsModal: React.FC<AutoInvasionSettingsModalProps>
 
   return (<>
     <SettingsModal
+      footerLeading={<StopFooter featureId="autoInvasion" />}
       isOpen={isOpen}
       onClose={() => { if (!saving) onClose(); }}
       maxWidth="3xl"

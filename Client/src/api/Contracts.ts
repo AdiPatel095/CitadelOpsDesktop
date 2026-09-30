@@ -686,6 +686,9 @@ export interface CastleStateV2 {
 	resources: Record<string, ResourceBalanceV2>;
 	units: CastleUnitsV2;
 	unitsObservedAt?: string;
+	/** Real per-castle observation times (CIT-20); the zero time from older runtimes means "not reported". */
+	foodStateObservedAt?: string;
+	contextSnapshotObservedAt?: string;
 	defense: CastleDefenseStateV2;
 	buildings: Record<string, CastleBuildingV2>;
 	layout: CastleLayoutV2;

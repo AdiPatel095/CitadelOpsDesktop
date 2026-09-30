@@ -1,3 +1,4 @@
+import { StopFooter } from '../../components/StopControl';
 import { useLocale as useStaticLocale } from "../../i18n/LocaleContext";
 import { LocalizedText } from "../../i18n/LocalizedText";
 import React, { useEffect, useState } from 'react';
@@ -138,6 +139,7 @@ export const AutoHospitalSettingsModal: React.FC<AutoHospitalSettingsModalProps>
 
   return (
     <SettingsModal
+      footerLeading={<StopFooter featureId="autoHospital" />}
       isOpen={isOpen}
       onClose={handleClose}
       maxWidth="4xl"

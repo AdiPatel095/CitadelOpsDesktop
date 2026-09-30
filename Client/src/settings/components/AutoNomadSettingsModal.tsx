@@ -1,3 +1,4 @@
+import { StopFooter } from '../../components/StopControl';
 import { useLocale as useStaticLocale } from "../../i18n/LocaleContext";
 import { LocalizedText } from "../../i18n/LocalizedText";
 import React, { useEffect, useMemo, useState } from 'react';
@@ -222,6 +223,7 @@ export const AutoNomadSettingsModal: React.FC<AutoNomadSettingsModalProps> = ({ 
   };
 
   return (<><SettingsModal
+      footerLeading={<StopFooter featureId="autoNomad" />}
       isOpen={isOpen}
       onClose={() => { if (!saving) onClose(); }}
       maxWidth="3xl"

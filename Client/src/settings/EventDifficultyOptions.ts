@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useCitadelAPI } from '../api/ApiContext';
+import type { CatalogResponse } from '../api/Contracts';
 
 type EventDifficultyRow = Record<string, unknown> & {
   difficultyID?: unknown;
@@ -30,6 +31,49 @@ interface EventDifficultyCatalogState {
   error: string;
 }
 
+type CatalogLoader = <T extends Record<string, unknown>>(name: string) => Promise<CatalogResponse<T>>;
+
+interface EventDifficultyRows {
+  difficulties: EventDifficultyRow[];
+  types: EventDifficultyTypeRow[];
+  achievements: AchievementRow[];
+}
+
+const CATALOG_CACHE_MS = 5 * 60_000;
+const rowCache = new Map<string, { at: number; rows: Promise<EventDifficultyRows> }>();
+
+/**
+ * The three official catalogs the difficulty options are built from, cached per catalog version (CIT-20): the
+ * Automation row, the Start check and the editors read the same rows, so they cannot disagree about which
+ * difficulties are unlocked. A failed load is not cached.
+ */
+export function loadEventDifficultyRows(getCatalog: CatalogLoader, catalogVersion: string, now: number = Date.now()): Promise<EventDifficultyRows> {
+  const cached = rowCache.get(catalogVersion);
+  if (cached && now - cached.at < CATALOG_CACHE_MS) return cached.rows;
+  const rows = Promise.all([
+    getCatalog<EventDifficultyRow>('eventAutoScalingDifficulties'),
+    getCatalog<EventDifficultyTypeRow>('eventAutoScalingDifficultyTypes'),
+    getCatalog<AchievementRow>('achievements'),
+  ]).then(([difficulties, types, achievements]) => ({ difficulties: difficulties.items, types: types.items, achievements: achievements.items }));
+  rowCache.set(catalogVersion, { at: now, rows });
+  rows.catch(() => { if (rowCache.get(catalogVersion)?.rows === rows) rowCache.delete(catalogVersion); });
+  return rows;
+}
+
+export async function loadEventDifficultyOptions(
+  getCatalog: CatalogLoader,
+  catalogVersion: string,
+  eventIDs: readonly number[],
+  completedAchievements: Record<string, boolean>,
+): Promise<Record<string, EventDifficultyOption[]>> {
+  const rows = await loadEventDifficultyRows(getCatalog, catalogVersion);
+  return buildEventDifficultyOptions(rows.difficulties, rows.types, rows.achievements, eventIDs, completedAchievements);
+}
+
+export function resetEventDifficultyCacheForTests(): void {
+  rowCache.clear();
+}
+
 export function useEventDifficultyOptions(
   enabled: boolean,
   eventIDs: readonly number[],
@@ -40,11 +84,7 @@ export function useEventDifficultyOptions(
   getCatalogRef.current = getCatalog;
   const eventKey = eventIDs.join(',');
   const catalogVersion = catalogs?.metadata.digestSha256 ?? catalogs?.metadata.itemVersion ?? '';
-  const [rows, setRows] = useState<{
-    difficulties: EventDifficultyRow[];
-    types: EventDifficultyTypeRow[];
-    achievements: AchievementRow[];
-  } | null>(null);
+  const [rows, setRows] = useState<EventDifficultyRows | null>(null);
   const [loadedKey, setLoadedKey] = useState('');
   const [error, setError] = useState('');
 
@@ -53,13 +93,9 @@ export function useEventDifficultyOptions(
     let cancelled = false;
     const key = `${catalogVersion}:${eventKey}`;
     setError('');
-    void Promise.all([
-      getCatalogRef.current<EventDifficultyRow>('eventAutoScalingDifficulties'),
-      getCatalogRef.current<EventDifficultyTypeRow>('eventAutoScalingDifficultyTypes'),
-      getCatalogRef.current<AchievementRow>('achievements'),
-    ]).then(([difficulties, types, achievements]) => {
+    void loadEventDifficultyRows((name) => getCatalogRef.current(name), catalogVersion).then((loaded) => {
       if (cancelled) return;
-      setRows({ difficulties: difficulties.items, types: types.items, achievements: achievements.items });
+      setRows(loaded);
       setLoadedKey(key);
     }).catch((reason: unknown) => {
       if (cancelled) return;

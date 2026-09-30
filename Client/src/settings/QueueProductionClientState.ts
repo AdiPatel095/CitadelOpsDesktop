@@ -1,5 +1,3 @@
-import { queueConfigurationUpdate } from './Configuration';
-
 const CHECK_INTERVAL_SEC_PER_MIN = 60;
 
 export type QueueProductionMode = 'global' | 'perCastle';
@@ -124,7 +122,6 @@ export function applyQueueProductionCastleIdentityMetadata(
 }
 
 export function createQueueProductionClientState({
-  configurationSection,
   schedulePrefix,
   defaultCheckIntervalSec = 300,
   minCheckIntervalSec = 30,
@@ -286,10 +283,6 @@ export function createQueueProductionClientState({
     };
   };
 
-  const persistSettings = (settings: QueueProductionClientSettingsV1) => (
-    queueConfigurationUpdate(configurationSection, normalizeSettings(settings))
-  );
-
   return {
     defaultCheckIntervalSec,
     minCheckIntervalSec,
@@ -303,6 +296,5 @@ export function createQueueProductionClientState({
     checkIntervalMinutesToSec,
     defaultSettings,
     normalizeSettings,
-    persistSettings,
   };
 }

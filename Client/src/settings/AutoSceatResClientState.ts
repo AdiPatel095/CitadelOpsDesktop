@@ -1,5 +1,3 @@
-import { queueConfigurationUpdate } from './Configuration';
-
 export const DEFAULT_AUTO_SCEAT_RES_CHECK_INTERVAL_SEC = 300;
 export const MIN_AUTO_SCEAT_RES_CHECK_INTERVAL_SEC = 30;
 export const MAX_AUTO_SCEAT_RES_CHECK_INTERVAL_SEC = 86400;
@@ -228,11 +226,6 @@ export function normalizeAutoSceatResSettings(raw: unknown): AutoSceatResClientS
     minimumRubyReserve: Math.max(0, Number.isFinite(Number(value.minimumRubyReserve)) ? Number(value.minimumRubyReserve) : 0),
     castles,
   };
-}
-
-export function persistAutoSceatResSettings(settings: AutoSceatResClientSettings) {
-  const normalized = normalizeAutoSceatResSettings(settings);
-  return queueConfigurationUpdate('automation.autoSceatResources', normalized);
 }
 
 export function emptyAutoSceatResCatalog(): AutoSceatResCatalog {

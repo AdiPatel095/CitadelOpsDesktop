@@ -1,3 +1,4 @@
+import { StopFooter } from '../../components/StopControl';
 import {useLocalizedMessages} from '../../i18n/useLocalizedMessages';
 import {parseMessageDescriptor} from '../../i18n/messageDescriptor';
 import {messageLanguageAttributes} from '../../i18n/messageLanguage';
@@ -193,6 +194,7 @@ export const AutoFortressSettingsModal: React.FC<AutoFortressSettingsModalProps>
 
   return (<>
     <SettingsModal
+      footerLeading={<StopFooter featureId="autoFortress" />}
       isOpen={isOpen}
       onClose={() => { if (!isSaving) onClose(); }}
       maxWidth="full"
@@ -315,7 +317,7 @@ export const AutoFortressSettingsModal: React.FC<AutoFortressSettingsModalProps>
                   {supplyDetail.text && <div className="mt-2 text-[10px] font-semibold text-text-muted" {...messageLanguageAttributes(supplyDetail)}>{supplyDetail.text}</div>}
                   {kingdomReadiness ? (
                     <div className="mt-2 space-y-1.5 border-t border-border-base/70 pt-2">
-                      {kingdomReadiness.stock ? <UnitStockList lines={kingdomReadiness.stock.lines} /> : null}
+                      {kingdomReadiness.stock ? <UnitStockList lines={kingdomReadiness.stock.lines} freshness={kingdomReadiness.stock.freshness} /> : null}
                       <ul className="space-y-1">
                         {kingdomReadiness.castleCheck.state !== 'valid' ? <ReadinessCheckLine check={kingdomReadiness.castleCheck} /> : null}
                         {kingdomReadiness.stock ? <ReadinessCheckLine check={kingdomReadiness.stock.check} /> : null}

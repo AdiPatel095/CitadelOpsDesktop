@@ -153,6 +153,8 @@ const AppContent: React.FC = () => {
       onOpenAutoKhanSettings={openSettings('khan')}
       onOpenAutoBeriWorldSettings={openSettings('beri')}
       onOpenAutoStormSettings={openSettings('storm')}
+      onOpenAutoStationSettings={openSettings('station')}
+      onOpenAutoBirdSettings={openSettings('bird')}
       autoEquipmentCleanup={autoEquipmentCleanup}
       onOpenFeatureSchedule={openSchedule}
       onOpenAutomationDuration={openDuration}

@@ -437,3 +437,102 @@ func TestClientStateSnapshotRedactsTowerAdvisorTimeSkipReceipts(t *testing.T) {
 		t.Fatalf("client projection exposed backend Advisor Time Skip receipts: %+v", projected.AttackAnalytics)
 	}
 }
+
+func testCastleState(id CastleID) CastleState {
+	return CastleState{
+		ID: id, Resources: map[ResourceID]ResourceBalance{}, Buildings: map[BuildingInstanceID]Building{},
+		BuildingProduction: map[BuildingInstanceID]BuildingProduction{},
+	}
+}
+
+func castleObservationFixture(observedAt time.Time) CastleState {
+	castle := testCastleState(11)
+	castle.Name = "Observed"
+	castle.UnitsObservedAt = observedAt
+	castle.FoodStateObservedAt = observedAt.Add(time.Minute)
+	castle.ContextSnapshotObservedAt = observedAt.Add(2 * time.Minute)
+	// Private collections and backend-only observation times stay stripped.
+	castle.ConstructionSlotsObservedAt = observedAt.Add(3 * time.Minute)
+	castle.QueueableObservedAt = observedAt.Add(4 * time.Minute)
+	castle.BuildingProduction = map[BuildingInstanceID]BuildingProduction{1: {}}
+	return castle
+}
+
+func TestClientProjectionPublishesCastleObservationTimesInSnapshot(t *testing.T) {
+	observedAt := time.Date(2026, time.September, 29, 12, 0, 0, 0, time.UTC)
+	state := NewGameState()
+	state.Castles[11] = castleObservationFixture(observedAt)
+	state.Castles[12] = testCastleState(12) // never observed: zero sentinel stays
+
+	raw, err := json.Marshal(NewClientStateSnapshot(state))
+	if err != nil {
+		t.Fatal(err)
+	}
+	var decoded GameState
+	if err := json.Unmarshal(raw, &decoded); err != nil {
+		t.Fatal(err)
+	}
+	castle := decoded.Castles[11]
+	if !castle.UnitsObservedAt.Equal(observedAt) ||
+		!castle.FoodStateObservedAt.Equal(observedAt.Add(time.Minute)) ||
+		!castle.ContextSnapshotObservedAt.Equal(observedAt.Add(2*time.Minute)) {
+		t.Fatalf("snapshot observation times = %v %v %v", castle.UnitsObservedAt, castle.FoodStateObservedAt, castle.ContextSnapshotObservedAt)
+	}
+	if !castle.ConstructionSlotsObservedAt.IsZero() || !castle.QueueableObservedAt.IsZero() || len(castle.BuildingProduction) != 0 {
+		t.Fatalf("private castle data leaked: %#v", castle)
+	}
+	var fields struct {
+		Castles map[string]map[string]json.RawMessage `json:"castles"`
+	}
+	if err := json.Unmarshal(raw, &fields); err != nil {
+		t.Fatal(err)
+	}
+	for _, name := range []string{"unitsObservedAt", "foodStateObservedAt", "contextSnapshotObservedAt"} {
+		if got := string(fields.Castles["12"][name]); got != `"0001-01-01T00:00:00Z"` {
+			t.Fatalf("unobserved castle %s = %s, want the zero-time sentinel", name, got)
+		}
+	}
+}
+
+func TestClientProjectionPublishesCastleObservationTimesInPatches(t *testing.T) {
+	observedAt := time.Date(2026, time.September, 29, 12, 0, 0, 0, time.UTC)
+	state := NewGameState()
+	state.Castles[11] = testCastleState(11)
+	store := NewStore(state)
+	event, err := store.ApplyComponents(Components(ComponentCastles), func(state *GameState) ([]string, bool, error) {
+		castle, found := state.MutableCastleParts(11, CastlePartIdentity|CastlePartResources|CastlePartUnits)
+		if !found {
+			t.Fatal("mutable castle 11 missing")
+		}
+		castle.UnitsObservedAt = observedAt
+		castle.FoodStateObservedAt = observedAt.Add(time.Minute)
+		castle.ContextSnapshotObservedAt = observedAt.Add(2 * time.Minute)
+		state.SetCastleParts(11, castle, CastlePartIdentity|CastlePartResources|CastlePartUnits)
+		return []string{"castles", "units"}, true, nil
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	// The durable patch already carried the times: projecting them adds no patch or revision.
+	if event.Patch == nil || event.Patch.CastleChanges == nil || len(*event.Patch.CastleChanges) != 1 {
+		t.Fatalf("durable castle delta = %#v", event.Patch)
+	}
+	projected := ClientEvent(event)
+	if projected.Revision != event.Revision {
+		t.Fatalf("client revision = %d, want %d", projected.Revision, event.Revision)
+	}
+	changes := *projected.Patch.CastleChanges
+	if len(changes) != 1 || changes[0].Patch == nil {
+		t.Fatalf("client castle delta = %#v", changes)
+	}
+	patch := changes[0].Patch
+	if patch.UnitsObservedAt == nil || !patch.UnitsObservedAt.Equal(observedAt) ||
+		patch.FoodStateObservedAt == nil || !patch.FoodStateObservedAt.Equal(observedAt.Add(time.Minute)) ||
+		patch.ContextSnapshotObservedAt == nil || !patch.ContextSnapshotObservedAt.Equal(observedAt.Add(2*time.Minute)) {
+		t.Fatalf("client patch observation times = %#v", patch)
+	}
+	if patch.ConstructionSlotsObservedAt != nil || patch.QueueableObservedAt != nil || patch.BuildingProduction != nil ||
+		patch.Layout != nil || patch.BuildingQueue != nil || patch.ConstructionSlots != nil {
+		t.Fatalf("private castle patch fields leaked: %#v", patch)
+	}
+}

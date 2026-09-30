@@ -6,6 +6,7 @@ import { useMetadata } from '../../context/MetadataContext';
 import { useLocale } from '../../i18n/LocaleContext';
 import { LocalizedText } from '../../i18n/LocalizedText';
 import type { MessageKey } from '../../i18n/messages';
+import type { ObservationFreshness } from '../requirements/observationFreshness';
 import type { UnitStockLine, UnitStockLineState } from '../requirements/unitRequirements';
 
 const LINE_ICON: Record<UnitStockLineState, { icon: LucideIcon; tone: string; label: MessageKey }> = {
@@ -21,10 +22,12 @@ export interface UnitStockListProps {
   mode?: 'required' | 'reserve';
   /** Shown under the list, for example when quantities are decided at launch. */
   note?: React.ReactNode;
+  /** How current the counts are; a real per-castle time is shown as "As of <time>" (CIT-20). */
+  freshness?: ObservationFreshness | null;
 }
 
 /** Required (or reserved) troops and tools versus observed stationed stock. */
-export const UnitStockList: React.FC<UnitStockListProps> = ({ lines, mode = 'required', note }) => {
+export const UnitStockList: React.FC<UnitStockListProps> = ({ lines, mode = 'required', note, freshness }) => {
   const { getTroop, getTool } = useMetadata();
   const { t: localizeStatic } = useLocale();
   if (lines.length === 0 && !note) return null;
@@ -55,6 +58,9 @@ export const UnitStockList: React.FC<UnitStockListProps> = ({ lines, mode = 'req
         </ul>
       ) : null}
       {note ? <p className="text-[11px] text-text-muted">{note}</p> : null}
+      {freshness?.state === 'observed' && freshness.scope === 'castle' && freshness.observedAt ? (
+        <p className="text-[11px] text-text-muted"><LocalizedText messageKey="observedAt.castleUnits" params={{ observedAt: Date.parse(freshness.observedAt) }} /></p>
+      ) : null}
     </div>
   );
 };

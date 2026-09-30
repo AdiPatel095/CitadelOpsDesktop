@@ -1,3 +1,4 @@
+import { StopFooter } from '../../components/StopControl';
 import { useLocale as useStaticLocale } from "../../i18n/LocaleContext";
 import { LocalizedText } from "../../i18n/LocalizedText";
 import React, { useEffect, useMemo, useState } from 'react';
@@ -15,6 +16,7 @@ import { AUTOMATION_ENABLED_KEYS } from '../disclosure/placement';
 import { countCustomValues, foodTimingSummary, timeSkipLines, travelLine } from '../disclosure/summaries';
 import { useSettingsDisclosure } from '../disclosure/useSettingsDisclosure';
 import { AutomationRunStrip } from './AutomationRunStrip';
+import { FoodCastleTableRow } from './FoodCastleTableRow';
 import { ReadinessPanel } from './ReadinessPanel';
 import { collapsedSettingNote, SettingsSection } from './SettingsSection';
 import {
@@ -84,6 +86,7 @@ export const AutoFoodBalanceSettingsModal: React.FC<AutoFoodBalanceSettingsModal
   };
   return (
     <SettingsModal
+      footerLeading={<StopFooter featureId="autoFoodBalance" />}
       isOpen={isOpen}
       onClose={onClose}
       maxWidth="lg"
@@ -137,16 +140,13 @@ export const AutoFoodBalanceSettingsModal: React.FC<AutoFoodBalanceSettingsModal
                   <tr>
                     <th scope="col" className="py-1 pr-2 font-bold"><LocalizedText messageKey="ui.settings.components.autoFoodBalanceSettingsModal.castle.419fb3b8" /></th>
                     <th scope="col" className="py-1 pr-2 text-right font-bold"><LocalizedText messageKey="ui.settings.components.autoFoodBalanceSettingsModal.food.e4eb1806" /></th>
-                    <th scope="col" className="py-1 font-bold"><LocalizedText messageKey="ui.settings.components.autoFoodBalanceSettingsModal.role.14736a2e" /></th>
+                    <th scope="col" className="py-1 pr-2 font-bold"><LocalizedText messageKey="ui.settings.components.autoFoodBalanceSettingsModal.role.14736a2e" /></th>
+                    <th scope="col" className="py-1 font-bold"><LocalizedText messageKey="observedAt.foodColumn" /></th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border-base">
                   {readiness.rows.map((row) => (
-                    <tr key={row.castleId}>
-                      <td className="max-w-0 truncate py-1 pr-2 text-text-main">{row.name}</td>
-                      <td className="py-1 pr-2 text-right font-mono tabular-nums">{row.food == null ? '—' : Math.floor(row.food).toLocaleString()}</td>
-                      <td className="py-1 text-text-muted"><LocalizedText messageKey="setupReadiness.foodRole" params={{ role: row.role }} /></td>
-                    </tr>
+                    <FoodCastleTableRow key={row.castleId} row={row} />
                   ))}
                 </tbody>
               </table>

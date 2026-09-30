@@ -197,6 +197,10 @@ export const AUTOMATION_ENABLED_KEYS: Readonly<Record<SettingsFeatureId, string>
   autoEquipmentCleanup: 'auto_equipment_cleanup',
 };
 
+export function featureIdForEnabledKey(enabledKey: string): SettingsFeatureId | undefined {
+  return (Object.keys(AUTOMATION_ENABLED_KEYS) as SettingsFeatureId[]).find((featureId) => AUTOMATION_ENABLED_KEYS[featureId] === enabledKey);
+}
+
 export function sectionPlacement(featureId: SettingsFeatureId, sectionId: string): SettingsSectionPlacement {
   const placement = SETTINGS_PLACEMENT[featureId].find((section) => section.id === sectionId);
   if (!placement) throw new Error(`Unknown settings section ${featureId}/${sectionId}`);

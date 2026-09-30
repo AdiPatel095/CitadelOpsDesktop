@@ -1,3 +1,4 @@
+import { StopFooter } from '../../components/StopControl';
 import { useLocale as useStaticLocale } from "../../i18n/LocaleContext";
 import { LocalizedText } from "../../i18n/LocalizedText";
 import React, { useEffect, useMemo, useState } from 'react';
@@ -148,6 +149,7 @@ export const AutoStationSettingsModal: React.FC<AutoStationSettingsModalProps> =
   return (
     <>
     <SettingsModal
+      footerLeading={<StopFooter featureId="autoStation" />}
       isOpen={isOpen}
       onClose={handleClose}
       maxWidth="full"
@@ -283,7 +285,7 @@ export const AutoStationSettingsModal: React.FC<AutoStationSettingsModalProps> =
                   )}
                   {stock ? (
                     <div className="mt-3 space-y-1.5 border-t border-border-base pt-2">
-                      <UnitStockList lines={stock.lines} mode="reserve" />
+                      <UnitStockList lines={stock.lines} mode="reserve" freshness={stock.freshness} />
                       <ul><ReadinessCheckLine check={stock.check} /></ul>
                     </div>
                   ) : null}

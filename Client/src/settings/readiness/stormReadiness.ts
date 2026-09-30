@@ -30,6 +30,11 @@ export interface StormReadinessInput {
   buildActive: boolean;
   /** Label of the selected decoration preset, when one is chosen. */
   decorationLabel?: string;
+  /**
+   * Official starter castles the game currently offers for the unlock (the `prebuiltcastles`
+   * catalog). Unset while unknown; the unlock check reads it only when the unlock is on.
+   */
+  unlockOffer?: { loaded: boolean; offeredIds: readonly number[] };
   commanders?: CommanderEligibilityReport;
 }
 
@@ -83,6 +88,22 @@ export function evaluateStormReadiness(input: StormReadinessInput): ReadinessRep
     checks.push({ id: 'unlock', state: 'pending', messageKey: message('ui.settings.readiness.stormReadiness.the.storm.castle.is.not.unlocked.yet.58e0fdef') });
   } else {
     checks.push({ id: 'unlock', state: 'blocked', messageKey: message('ui.settings.readiness.stormReadiness.the.storm.castle.is.not.unlocked.enable.686f9a36'), fix: 'settings' });
+  }
+
+  // The unlock needs a currently offered official castle (Maya, CIT-16 acceptance). Save is blocked on the
+  // same rule, so the panel must not read "Ready" while it holds; the toggle itself stays operable.
+  if (draft.unlock.enabled && input.unlockOffer?.loaded) {
+    const offered = input.unlockOffer.offeredIds;
+    const offerCheck: ReadinessCheck | null = offered.length === 0
+      ? { id: 'unlock', state: 'blocked', messageKey: message('stormReadiness.unlockNotOffered'), fix: 'settings' }
+      : !offered.includes(draft.unlock.prebuiltCastleId)
+        ? { id: 'unlock', state: 'blocked', messageKey: message('ui.settings.components.autoStormSettingsModal.choose.a.currently.available.official.storm.castle.25a907f3'), fix: 'settings' }
+        : null;
+    if (offerCheck) {
+      const withoutUnlock = checks.filter((check) => check.id !== 'unlock');
+      checks.length = 0;
+      checks.push(offerCheck, ...withoutUnlock);
+    }
   }
 
   if (!draft.forts.enabled && !draft.islands.enabled) {

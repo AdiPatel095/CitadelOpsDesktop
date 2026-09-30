@@ -4,7 +4,7 @@ import type { MessageKey } from '../../i18n/messages';
 import { aggregateReadiness, type CheckState, type ReadinessCheck, type ReadinessReport } from '../readiness/Readiness';
 import { castleMatchesPurpose } from './castleRequirements';
 import type { CommanderEligibilityReport } from './commanderEligibility';
-import { observationUnavailableMessage, unitObservationFreshness, type ObservationContext } from './observationFreshness';
+import { observationTimestamp, observationUnavailableMessage, unitObservationFreshness, type ObservationContext } from './observationFreshness';
 import { evaluateUnitStock, type UnitStockResult } from './unitRequirements';
 
 /**
@@ -286,8 +286,12 @@ export interface FoodCastleRow {
   kingdomId: number;
   food: number | null;
   role: FoodCastleRole;
-  /** False while the connection is not current: the row shows last-known data. */
+  /** False while the connection is not current, or this castle's own food time predates it: the row shows last-known data. */
   current: boolean;
+  /** The castle's real food-state observation time, when the runtime reports one (older runtimes do not). */
+  observedAt?: string;
+  /** Why the row is last-known: the connection is not current, or this castle's own time predates it. */
+  unavailableReason?: MessageKey;
 }
 
 export interface FoodBalanceReadiness {
@@ -312,7 +316,15 @@ export function evaluateFoodBalanceReadiness(input: FoodBalanceReadinessInput): 
       const balance = foodId != null ? castle.resources?.[String(foodId)] : undefined;
       const food = balance ? Math.max(0, Number(balance.amount) || 0) : null;
       const role: FoodCastleRole = food == null ? 'unobserved' : food > input.minimumSourceReserve ? 'donor' : 'recipient';
-      return { castleId: castle.id, name: castle.name?.trim() || `#${castle.id}`, kingdomId: castle.kingdomId, food, role, current: notCurrent == null };
+      const observedAt = observationTimestamp(castle.foodStateObservedAt);
+      const since = observationTimestamp(input.observation.session?.changedAt);
+      const beforeConnection = observedAt !== undefined && since !== undefined && Date.parse(observedAt) < Date.parse(since);
+      return {
+        castleId: castle.id, name: castle.name?.trim() || `#${castle.id}`, kingdomId: castle.kingdomId, food, role,
+        current: notCurrent == null && !beforeConnection,
+        ...(observedAt ? { observedAt } : {}),
+        ...(notCurrent != null || beforeConnection ? { unavailableReason: notCurrent ?? observationUnavailableMessage('stale-before-connection') } : {}),
+      };
     })
     .sort((left, right) => left.kingdomId - right.kingdomId || left.castleId - right.castleId);
 

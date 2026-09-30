@@ -1,3 +1,4 @@
+import { StopFooter } from '../../components/StopControl';
 import { useLocale as useStaticLocale } from "../../i18n/LocaleContext";
 import { LocalizedText } from "../../i18n/LocalizedText";
 import React, { useEffect, useMemo, useState } from 'react';
@@ -261,6 +262,7 @@ export const AutoSceatResSettingsModal: React.FC<AutoSceatResSettingsModalProps>
   return (
     <>
       <SettingsModal
+        footerLeading={<StopFooter featureId="autoSceatRes" />}
         isOpen={isOpen}
         onClose={handleClose}
         maxWidth="full"

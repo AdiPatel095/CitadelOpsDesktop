@@ -1,3 +1,4 @@
+import { StopFooter } from '../../components/StopControl';
 import { useLocale as useStaticLocale } from "../../i18n/LocaleContext";
 import { LocalizedText } from "../../i18n/LocalizedText";
 import React, { useState, useEffect } from 'react';
@@ -13,7 +14,6 @@ import {
   MIN_RECRUIT_CHECK_INTERVAL_MIN,
   defaultRecruitTroopsSettings,
   normalizeRecruitTroopsSettings,
-  persistRecruitTroopsSettings,
   recruitCheckIntervalMinutesToSec,
   recruitCheckIntervalSecToMinutes,
   recruitCastleScheduleID,
@@ -26,7 +26,6 @@ import {
   autoToolCastleScheduleID,
   defaultAutoToolSettings,
   normalizeAutoToolSettings,
-  persistAutoToolSettings,
 } from '../AutoToolClientState';
 import {
   applyQueueProductionCastleIdentityMetadata,
@@ -94,7 +93,6 @@ interface QueueProductionDefinition {
   minCheckIntervalMin: number;
   defaultSettings: () => QueueProductionClientSettingsV1;
   normalizeSettings: (raw: unknown) => QueueProductionClientSettingsV1;
-  persistSettings: (settings: QueueProductionClientSettingsV1) => Promise<unknown>;
   checkIntervalMinutesToSec: (value: number) => number;
   checkIntervalSecToMinutes: (value: number) => number;
   castleScheduleID: (castleID: number | string) => string;
@@ -122,7 +120,6 @@ const DEFINITIONS: Record<QueueProductionSettingsModalProps['kind'], QueueProduc
     minCheckIntervalMin: MIN_RECRUIT_CHECK_INTERVAL_MIN,
     defaultSettings: defaultRecruitTroopsSettings,
     normalizeSettings: normalizeRecruitTroopsSettings,
-    persistSettings: persistRecruitTroopsSettings,
     checkIntervalMinutesToSec: recruitCheckIntervalMinutesToSec,
     checkIntervalSecToMinutes: recruitCheckIntervalSecToMinutes,
     castleScheduleID: recruitCastleScheduleID,
@@ -148,7 +145,6 @@ const DEFINITIONS: Record<QueueProductionSettingsModalProps['kind'], QueueProduc
     minCheckIntervalMin: MIN_AUTO_TOOL_CHECK_INTERVAL_MIN,
     defaultSettings: defaultAutoToolSettings,
     normalizeSettings: normalizeAutoToolSettings,
-    persistSettings: persistAutoToolSettings,
     checkIntervalMinutesToSec: autoToolCheckIntervalMinutesToSec,
     checkIntervalSecToMinutes: autoToolCheckIntervalSecToMinutes,
     castleScheduleID: autoToolCastleScheduleID,
@@ -838,6 +834,7 @@ export const QueueProductionSettingsModal: React.FC<QueueProductionSettingsModal
   return (
     <>
       <SettingsModal
+        footerLeading={<StopFooter featureId={definition.featureID} />}
         isOpen={isOpen}
         onClose={handleClose}
         maxWidth={isGlobalMode ? '6xl' : 'full'}

@@ -72,3 +72,25 @@ export function observationUnavailableMessage(reason: ObservationUnavailableReas
   if (reason === 'awaiting-baseline') return message('ui.settings.requirements.observationFreshness.waiting.for.the.game.connection.to.finish.c661a838');
   return message('ui.settings.requirements.observationFreshness.troop.counts.are.older.than.the.current.a894b573');
 }
+
+export interface StockObservationNote {
+  messageKey: MessageKey;
+  params?: { observedAt: number };
+  /** Why the counts are last-known, when they are. */
+  reasonKey?: MessageKey;
+}
+
+/**
+ * The one-line caption for stationed counts shown outside a readiness report (the troop picker, CIT-20):
+ * "as of <time>" when the game reports a real per-castle time, "last known" with the reason when the counts
+ * cannot be treated as current, and nothing when they are simply current on this connection.
+ */
+export function stockObservationNote(freshness: ObservationFreshness): StockObservationNote | null {
+  if (freshness.state === 'unavailable') {
+    return { messageKey: message('observedAt.lastKnown'), reasonKey: observationUnavailableMessage(freshness.reason) };
+  }
+  if (freshness.scope === 'castle' && freshness.observedAt) {
+    return { messageKey: message('observedAt.castleUnits'), params: { observedAt: Date.parse(freshness.observedAt) } };
+  }
+  return null;
+}

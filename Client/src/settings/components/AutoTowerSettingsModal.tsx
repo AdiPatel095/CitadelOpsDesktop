@@ -1,3 +1,4 @@
+import { StopFooter } from '../../components/StopControl';
 import { useLocale as useStaticLocale } from "../../i18n/LocaleContext";
 import { LocalizedText } from "../../i18n/LocalizedText";
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
@@ -137,6 +138,7 @@ export const AutoTowerSettingsModal: React.FC<AutoTowerSettingsModalProps> = ({ 
       title: `Tower troop — ${castle?.name?.trim() || `Castle ${castleID}`}`,
       preselected: selected > 0 ? [selected] : [],
       stockQuantities: castle?.units.stationed,
+      stockObservation: { castle: castle ?? null, observation: setup.observation },
     });
     if (typeof result === 'number' && result > 0) updateCastle(castleID, { unitId: result });
   };
@@ -173,6 +175,7 @@ export const AutoTowerSettingsModal: React.FC<AutoTowerSettingsModalProps> = ({ 
   return (
     <>
     <SettingsModal
+      footerLeading={<StopFooter featureId="autoTowers" />}
       isOpen={isOpen}
       onClose={handleClose}
       maxWidth="full"
@@ -251,7 +254,7 @@ export const AutoTowerSettingsModal: React.FC<AutoTowerSettingsModalProps> = ({ 
 
                 {stockResult ? (
                   <div className="space-y-1.5 rounded-xl border border-border-base bg-bg-app/50 px-3 py-2.5">
-                    <UnitStockList lines={stockResult.lines} />
+                    <UnitStockList lines={stockResult.lines} freshness={stockResult.freshness} />
                     <ul><ReadinessCheckLine check={stockResult.check} /></ul>
                   </div>
                 ) : null}
