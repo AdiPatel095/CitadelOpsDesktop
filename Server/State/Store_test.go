@@ -107,6 +107,98 @@ func TestStoreCoalescesFullSubscriberBuffer(t *testing.T) {
 	}
 }
 
+func TestStoreEventsDeclareBaseRevision(t *testing.T) {
+	store := NewStore(NewGameState())
+	events, unsubscribe := store.Subscribe(8)
+	defer unsubscribe()
+	for _, domain := range []string{"units", "movements", "beri"} {
+		if _, err := store.Apply(func(*GameState) ([]string, bool, error) {
+			return []string{domain}, true, nil
+		}); err != nil {
+			t.Fatalf("apply %s mutation: %v", domain, err)
+		}
+	}
+	for revision := uint64(1); revision <= 3; revision++ {
+		event := <-events
+		if event.Revision != revision || event.BaseRevision != revision-1 || event.Gap {
+			t.Fatalf("event = revision %d base %d gap %t, want revision %d base %d plain",
+				event.Revision, event.BaseRevision, event.Gap, revision, revision-1)
+		}
+	}
+}
+
+// A full subscriber buffer folds every queued event into the new one. The single
+// merged event keeps the oldest queued base and must carry the changes of every
+// component any folded event touched, otherwise a client applying it directly
+// would miss the changes of the events that used to sit between the two ends.
+func TestStoreFullBufferMergesWholeQueueIntoOneCompleteEvent(t *testing.T) {
+	store := NewStore(NewGameState())
+	events, unsubscribe := store.Subscribe(3)
+	defer unsubscribe()
+
+	// Four commits touching four different components; the fourth finds the buffer full.
+	writes := []struct {
+		component Component
+		mutate    func(*GameState)
+	}{
+		{ComponentPlayer, func(state *GameState) { state.Player.Level = 11 }},
+		{ComponentSession, func(state *GameState) { state.Session.Mode = "background" }},
+		{ComponentAccount, func(state *GameState) { state.Account.PlayerID = 77 }},
+		{ComponentCatalog, func(state *GameState) { state.CatalogVersion = "v9" }},
+	}
+	for _, write := range writes {
+		if _, err := store.ApplyComponents(Components(write.component), func(state *GameState) ([]string, bool, error) {
+			write.mutate(state)
+			return []string{string(write.component)}, true, nil
+		}); err != nil {
+			t.Fatalf("apply %s: %v", write.component, err)
+		}
+	}
+	// One further plain commit fits behind the merged event.
+	if _, err := store.Apply(func(*GameState) ([]string, bool, error) { return []string{"units"}, true, nil }); err != nil {
+		t.Fatal(err)
+	}
+
+	merged := <-events
+	if !merged.Gap || merged.BaseRevision != 0 || merged.Revision != 4 {
+		t.Fatalf("merged event = revision %d base %d gap %t, want revision 4 base 0 gap", merged.Revision, merged.BaseRevision, merged.Gap)
+	}
+	patch := merged.Patch
+	if patch == nil || patch.Player == nil || patch.Session == nil || patch.Account == nil || patch.CatalogVersion == nil {
+		t.Fatalf("merged patch misses a folded component: %+v", patch)
+	}
+	if patch.Player.Level != 11 || patch.Session.Mode != "background" || patch.Account.PlayerID != 77 || *patch.CatalogVersion != "v9" {
+		t.Fatalf("merged patch does not carry the latest values: %+v", patch)
+	}
+	if patch.Revision != 4 {
+		t.Fatalf("merged patch revision = %d, want 4", patch.Revision)
+	}
+	if want := []Component{ComponentAccount, ComponentCatalog, ComponentPlayer, ComponentSession}; !reflect.DeepEqual(merged.Components, want) {
+		t.Fatalf("merged components = %v, want %v", merged.Components, want)
+	}
+	next := <-events
+	if next.Gap || next.Revision != 5 || next.BaseRevision != 4 {
+		t.Fatalf("event after the merge = revision %d base %d gap %t, want plain revision 5 base 4", next.Revision, next.BaseRevision, next.Gap)
+	}
+	select {
+	case extra := <-events:
+		t.Fatalf("unexpected extra queued event: %#v", extra)
+	default:
+	}
+}
+
+func TestCoalesceEventQueueKeepsOldestBaseAndNewestRevision(t *testing.T) {
+	merged := coalesceEventQueue([]Event{
+		{Revision: 5, BaseRevision: 3, Sequence: 5},
+		{Revision: 7, BaseRevision: 6, Sequence: 7},
+		{Revision: 9, BaseRevision: 8, Sequence: 9},
+	})
+	if merged.BaseRevision != 3 || merged.Revision != 9 || merged.Sequence != 9 || !merged.Gap {
+		t.Fatalf("merged = revision %d base %d sequence %d gap %t, want revision 9 base 3 sequence 9 gap",
+			merged.Revision, merged.BaseRevision, merged.Sequence, merged.Gap)
+	}
+}
+
 func TestStoreOnlyCoalescesSubscribersWithFullBuffers(t *testing.T) {
 	store := NewStore(NewGameState())
 	coalescedEvents, unsubscribeCoalesced := store.Subscribe(1)

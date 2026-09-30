@@ -141,6 +141,23 @@ class CitadelClient {
     };
   }
 
+  /**
+   * Asks the server for a fresh state snapshot over the open event socket. The
+   * reply arrives as a `state.snapshot` envelope carrying this id, in order with
+   * the state events, so events after the snapshot are guaranteed to follow it.
+   * Returns false when the socket is not open and the caller must use REST.
+   */
+  requestState(id: string): boolean {
+    const socket = this.socket;
+    if (socket == null || socket.readyState !== WebSocket.OPEN) return false;
+    try {
+      socket.send(JSON.stringify({ v: 2, id, type: 'query.state' }));
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
   disconnect() {
     this.intentionalClose = true;
     if (this.reconnectTimer != null) {

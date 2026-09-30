@@ -657,7 +657,8 @@ func (store *Store) AdoptWorldMap(worldEvent WorldMapEvent) (Event, bool) {
 	}
 	event := Event{
 		Sequence: candidate.Revision, Revision: candidate.Revision, Domains: domains,
-		Components: components, Partitions: changedPartitions,
+		BaseRevision: current.state.Revision,
+		Components:   components, Partitions: changedPartitions,
 		OccurredAt: candidate.UpdatedAt, generation: next, mapChanges: changes,
 	}
 	if len(changes) > 0 {

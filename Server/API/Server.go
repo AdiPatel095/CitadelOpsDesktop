@@ -600,7 +600,7 @@ func (server *Server) handleEvents(writer http.ResponseWriter, request *http.Req
 			if err != nil {
 				return
 			}
-			if err := connection.WriteJSON(streamEnvelopeRaw("", "state.changed", event.Revision, event.Sequence, event.Gap, payload)); err != nil {
+			if err := connection.WriteJSON(streamEnvelopeRaw("", "state.changed", event.Revision, event.Sequence, event.Gap, event.BaseRevision, payload)); err != nil {
 				return
 			}
 		case receipt := <-operationEvents:
