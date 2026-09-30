@@ -15,7 +15,7 @@ after(async () => {
 	globalThis.fetch = originalFetch;
 	await vite.close();
 });
-const { catalogPath, manifestDigest } = await vite.ssrLoadModule(`${API_ROOT}/CatalogURL.ts`);
+const { catalogPath, manifestDigest, catalogLoadKey, CATALOG_MANIFEST_WAIT_MS } = await vite.ssrLoadModule(`${API_ROOT}/CatalogURL.ts`);
 const { CitadelAPI: client } = await vite.ssrLoadModule(`${API_ROOT}/CitadelClient.ts`);
 
 const DIGEST = 'a'.repeat(64);
@@ -40,6 +40,20 @@ test('different locales and different digests are different URLs, so they never 
 test('the manifest digest is read defensively', () => {
 	assert.equal(manifestDigest({ metadata: { digestSha256: ` ${DIGEST} ` }, catalogs: [] }), DIGEST);
 	for (const value of [null, undefined, 'x', [], {}, { metadata: null }, { metadata: {} }, { metadata: { digestSha256: 5 } }]) assert.equal(manifestDigest(value), '');
+});
+
+test('catalog loads wait for a manifest and key each locale, digest and language version', () => {
+	assert.equal(CATALOG_MANIFEST_WAIT_MS, 5_000);
+	assert.equal(catalogLoadKey('en', null, true), null);
+	assert.equal(catalogLoadKey('en', undefined, true), null);
+	const manifest = { metadata: { digestSha256: ` ${DIGEST} `, languageVersion: '4351' } };
+	assert.equal(catalogLoadKey('en', manifest, true), `en:${DIGEST}:4351`);
+	assert.equal(catalogLoadKey('de', manifest, false), `de:${DIGEST}:4351`);
+	assert.equal(catalogLoadKey('en', null, false), 'en::');
+	assert.equal(catalogLoadKey('en', { metadata: {} }, true), 'en::');
+	assert.equal(catalogLoadKey('en', { metadata: { digestSha256: DIGEST, languageVersion: 4351 } }, true), `en:${DIGEST}:`);
+	assert.notEqual(catalogLoadKey('en', manifest, true), catalogLoadKey('en', { metadata: { ...manifest.metadata, digestSha256: 'b'.repeat(64) } }, true));
+	assert.notEqual(catalogLoadKey('en', manifest, true), catalogLoadKey('en', { metadata: { ...manifest.metadata, languageVersion: '4352' } }, true));
 });
 
 test('the client asks with the digest once a manifest names it, and follows a new digest without a reload', async () => {
