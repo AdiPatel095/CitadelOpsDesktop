@@ -11,6 +11,7 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 )
 
@@ -37,14 +38,44 @@ type componentManifest struct {
 	Partitioned        map[string]bool   `json:"partitioned,omitempty"`
 }
 
+// PersistenceStats counts one writer's durable component-snapshot writes.
+type PersistenceStats struct {
+	Flushes               uint64    `json:"flushes"`
+	FileSyncs             uint64    `json:"fileSyncs"`
+	DirectorySyncs        uint64    `json:"directorySyncs"`
+	SkippedVolatileWrites uint64    `json:"skippedVolatileWrites"`
+	LastFlushAt           time.Time `json:"lastFlushAt,omitempty"`
+}
+
+func (total *PersistenceStats) Add(other PersistenceStats) {
+	total.Flushes += other.Flushes
+	total.FileSyncs += other.FileSyncs
+	total.DirectorySyncs += other.DirectorySyncs
+	total.SkippedVolatileWrites += other.SkippedVolatileWrites
+	if other.LastFlushAt.After(total.LastFlushAt) {
+		total.LastFlushAt = other.LastFlushAt
+	}
+}
+
+type componentSaveResult struct {
+	written     int
+	skipped     int
+	automations *[32]byte
+}
+
 // ComponentSnapshotWriter owns the durable manifest for one account data
 // directory. Account persistence is single-writer, so retaining the last
 // successfully fsynced manifest avoids rereading and decoding a potentially
-// large shard index on every two-second group commit.
+// large shard index on every background group commit.
 type ComponentSnapshotWriter struct {
-	dataDir string
-	mu      sync.Mutex
-	current *componentManifest
+	dataDir               string
+	mu                    sync.Mutex
+	current               *componentManifest
+	flushes               atomic.Uint64
+	fileSyncs             atomic.Uint64
+	directorySyncs        atomic.Uint64
+	skippedVolatileWrites atomic.Uint64
+	lastFlushAt           atomic.Int64
 }
 
 func NewComponentSnapshotWriter(dataDir string) *ComponentSnapshotWriter {
@@ -58,11 +89,34 @@ func (writer *ComponentSnapshotWriter) Save(event Event, dirty ComponentSet) err
 	writer.mu.Lock()
 	defer writer.mu.Unlock()
 	var next componentManifest
-	if err := saveComponentSnapshot(writer.dataDir, event, dirty, writer.current, &next); err != nil {
+	result, err := saveComponentSnapshot(writer.dataDir, event, dirty, writer.current, &next)
+	if err != nil {
 		return err
 	}
 	writer.current = &next
+	if result.written > 0 {
+		writer.flushes.Add(1)
+		writer.fileSyncs.Add(uint64(result.written))
+		writer.directorySyncs.Add(1)
+		writer.skippedVolatileWrites.Add(uint64(result.skipped))
+		writer.lastFlushAt.Store(time.Now().UTC().UnixNano())
+	}
 	return nil
+}
+
+// Stats does not wait for an in-progress flush to release the writer mutex.
+func (writer *ComponentSnapshotWriter) Stats() PersistenceStats {
+	if writer == nil {
+		return PersistenceStats{}
+	}
+	stats := PersistenceStats{
+		Flushes: writer.flushes.Load(), FileSyncs: writer.fileSyncs.Load(),
+		DirectorySyncs: writer.directorySyncs.Load(), SkippedVolatileWrites: writer.skippedVolatileWrites.Load(),
+	}
+	if at := writer.lastFlushAt.Load(); at != 0 {
+		stats.LastFlushAt = time.Unix(0, at).UTC()
+	}
+	return stats
 }
 
 type persistedComponent struct {
@@ -249,7 +303,8 @@ var inventoryPersistenceParts = []inventoryPersistencePart{
 // without a second full-state clone.
 func SaveComponentSnapshot(dataDir string, event Event, dirty ComponentSet) error {
 	var next componentManifest
-	return saveComponentSnapshot(dataDir, event, dirty, nil, &next)
+	_, err := saveComponentSnapshot(dataDir, event, dirty, nil, &next)
+	return err
 }
 
 func saveComponentSnapshot(
@@ -258,19 +313,20 @@ func saveComponentSnapshot(
 	dirty ComponentSet,
 	cached *componentManifest,
 	saved *componentManifest,
-) error {
+) (componentSaveResult, error) {
+	var result componentSaveResult
 	if strings.TrimSpace(dataDir) == "" {
-		return fmt.Errorf("state data directory is required")
+		return result, fmt.Errorf("state data directory is required")
 	}
 	if event.generation == nil || event.Revision == 0 || event.generation.state.Revision != event.Revision {
-		return fmt.Errorf("state event does not retain committed generation %d", event.Revision)
+		return result, fmt.Errorf("state event does not retain committed generation %d", event.Revision)
 	}
 	if dirty == 0 || dirty&^AllComponents != 0 {
-		return fmt.Errorf("valid dirty state components are required")
+		return result, fmt.Errorf("valid dirty state components are required")
 	}
 	directory := componentStatePath(dataDir)
 	if err := os.MkdirAll(directory, 0o700); err != nil {
-		return fmt.Errorf("create component state directory: %w", err)
+		return result, fmt.Errorf("create component state directory: %w", err)
 	}
 
 	manifest := componentManifest{}
@@ -280,7 +336,7 @@ func saveComponentSnapshot(
 		loaded, err := readComponentManifest(dataDir)
 		if err != nil {
 			if !errors.Is(err, os.ErrNotExist) {
-				return err
+				return result, err
 			}
 			manifest = componentManifest{SchemaVersion: SchemaVersion, Files: map[string]string{}}
 			dirty = AllComponents
@@ -295,7 +351,7 @@ func saveComponentSnapshot(
 			if saved != nil {
 				*saved = manifest
 			}
-			return nil
+			return result, nil
 		}
 		// The manifest on disk outranks this process's revision counter: the
 		// process restarted below it (its snapshot could not be loaded, or the
@@ -304,10 +360,10 @@ func saveComponentSnapshot(
 		// error surfaced. Set the old snapshot aside for forensics and start a
 		// fresh manifest instead, so durability resumes now.
 		if err := quarantineComponentState(dataDir, manifest.Revision, time.Now().UTC()); err != nil {
-			return err
+			return result, err
 		}
 		if err := os.MkdirAll(directory, 0o700); err != nil {
-			return fmt.Errorf("recreate component state directory: %w", err)
+			return result, fmt.Errorf("recreate component state directory: %w", err)
 		}
 		manifest = componentManifest{SchemaVersion: SchemaVersion, Files: map[string]string{}}
 		dirty = AllComponents
@@ -346,7 +402,7 @@ func saveComponentSnapshot(
 		if component == ComponentMovements {
 			filename, files, saveErr := saveMovementComponent(directory, event, nextMovementFiles, now)
 			if saveErr != nil {
-				return saveErr
+				return result, saveErr
 			}
 			nextFiles[component.String()] = filename
 			nextMovementFiles = files
@@ -358,7 +414,7 @@ func saveComponentSnapshot(
 				directory, event, nextCastleFiles, now,
 			)
 			if saveErr != nil {
-				return saveErr
+				return result, saveErr
 			}
 			nextFiles[component.String()] = filename
 			nextCastleFiles = files
@@ -370,7 +426,7 @@ func saveComponentSnapshot(
 				directory, event, nextInventoryFiles, now,
 			)
 			if saveErr != nil {
-				return saveErr
+				return result, saveErr
 			}
 			nextFiles[component.String()] = filename
 			nextInventoryFiles = files
@@ -380,7 +436,7 @@ func saveComponentSnapshot(
 		if component == ComponentWorldMap {
 			filename, files, saveErr := saveMapComponent(directory, event, nextMapFiles, now)
 			if saveErr != nil {
-				return saveErr
+				return result, saveErr
 			}
 			nextFiles[component.String()] = filename
 			nextMapFiles = files
@@ -390,7 +446,7 @@ func saveComponentSnapshot(
 		if component == ComponentStorm {
 			filename, files, saveErr := saveStormComponent(directory, event, nextStormFiles, now)
 			if saveErr != nil {
-				return saveErr
+				return result, saveErr
 			}
 			nextFiles[component.String()] = filename
 			nextStormFiles = files
@@ -402,7 +458,7 @@ func saveComponentSnapshot(
 				directory, event, nextTowerCooldownFiles, now,
 			)
 			if saveErr != nil {
-				return saveErr
+				return result, saveErr
 			}
 			nextFiles[component.String()] = filename
 			nextTowerCooldownFiles = files
@@ -412,7 +468,7 @@ func saveComponentSnapshot(
 		if component == ComponentTowerQueue {
 			filename, files, saveErr := saveTowerQueueComponent(directory, event, nextTowerQueueFiles, now)
 			if saveErr != nil {
-				return saveErr
+				return result, saveErr
 			}
 			nextFiles[component.String()] = filename
 			nextTowerQueueFiles = files
@@ -422,7 +478,7 @@ func saveComponentSnapshot(
 		if component == ComponentReports {
 			filename, files, saveErr := saveReportComponent(directory, event, nextReportFiles, now)
 			if saveErr != nil {
-				return saveErr
+				return result, saveErr
 			}
 			nextFiles[component.String()] = filename
 			nextReportFiles = files
@@ -432,7 +488,7 @@ func saveComponentSnapshot(
 		if component == ComponentEventScores {
 			filename, files, saveErr := saveEventScoreComponent(directory, event, nextEventScoreFiles, now)
 			if saveErr != nil {
-				return saveErr
+				return result, saveErr
 			}
 			nextFiles[component.String()] = filename
 			nextEventScoreFiles = files
@@ -451,17 +507,17 @@ func saveComponentSnapshot(
 		}
 		contents, marshalErr := json.Marshal(document)
 		if marshalErr != nil {
-			return fmt.Errorf("encode %s state component: %w", component, marshalErr)
+			return result, fmt.Errorf("encode %s state component: %w", component, marshalErr)
 		}
 		filename := fmt.Sprintf("%s-%020d.json", component.String(), event.Revision)
 		if writeErr := writeAtomicStateFile(directory, filename, contents); writeErr != nil {
-			return fmt.Errorf("persist %s state component: %w", component, writeErr)
+			return result, fmt.Errorf("persist %s state component: %w", component, writeErr)
 		}
 		nextFiles[component.String()] = filename
 	}
 	for _, component := range AllComponents.List() {
 		if strings.TrimSpace(nextFiles[component.String()]) == "" {
-			return fmt.Errorf("component manifest is missing %s", component)
+			return result, fmt.Errorf("component manifest is missing %s", component)
 		}
 	}
 
@@ -484,18 +540,24 @@ func saveComponentSnapshot(
 	}
 	contents, err := json.Marshal(next)
 	if err != nil {
-		return fmt.Errorf("encode component state manifest: %w", err)
+		return result, fmt.Errorf("encode component state manifest: %w", err)
 	}
 	if err := writeAtomicStateFile(directory, componentManifestName, contents); err != nil {
-		return fmt.Errorf("persist component state manifest: %w", err)
+		return result, fmt.Errorf("persist component state manifest: %w", err)
 	}
 	if err := syncDirectory(directory); err != nil {
-		return fmt.Errorf("sync component state directory: %w", err)
+		return result, fmt.Errorf("sync component state directory: %w", err)
 	}
 
 	// The new manifest is durable. Files it no longer references are now safe
 	// to remove; an interrupted cleanup only leaves harmless old revisions.
 	nextReferences := componentManifestReferences(next)
+	result.written = 1 // manifest
+	for filename := range nextReferences {
+		if _, retained := oldReferences[filename]; !retained {
+			result.written++
+		}
+	}
 	for oldFilename := range oldReferences {
 		if _, retained := nextReferences[oldFilename]; retained || !safeComponentFilename(oldFilename) {
 			continue
@@ -505,7 +567,7 @@ func saveComponentSnapshot(
 	if saved != nil {
 		*saved = next
 	}
-	return nil
+	return result, nil
 }
 
 func saveMovementComponent(

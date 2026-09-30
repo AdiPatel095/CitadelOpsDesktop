@@ -1051,3 +1051,72 @@ func TestComponentSnapshotSupersedesManifestOutrankingARestartedStore(t *testing
 		t.Fatalf("manifest revision = %d after a stale save, want %d", after.Revision, newer.Revision)
 	}
 }
+
+func TestWriterStatsCountFilesAndSyncs(t *testing.T) {
+	directory := t.TempDir()
+	writer := NewComponentSnapshotWriter(directory)
+	if got := writer.Stats(); got != (PersistenceStats{}) {
+		t.Fatalf("new writer stats: %+v", got)
+	}
+	store := NewStore(NewGameState())
+	apply := func(level int) Event {
+		t.Helper()
+		event, err := store.ApplyComponents(Components(ComponentPlayer), func(state *GameState) ([]string, bool, error) {
+			state.Player.Level = level
+			return []string{"player"}, true, nil
+		})
+		if err != nil {
+			t.Fatal(err)
+		}
+		return event
+	}
+	event := apply(1)
+	if err := writer.Save(event, Components(ComponentPlayer)); err != nil {
+		t.Fatal(err)
+	}
+	manifest, err := readComponentManifest(directory)
+	if err != nil {
+		t.Fatal(err)
+	}
+	first := writer.Stats()
+	if first.Flushes != 1 || first.DirectorySyncs != 1 || first.FileSyncs != uint64(len(componentManifestReferences(manifest))+1) || first.LastFlushAt.IsZero() {
+		t.Fatalf("full save stats: %+v, references=%d", first, len(componentManifestReferences(manifest)))
+	}
+	event = apply(2)
+	if err := writer.Save(event, Components(ComponentPlayer)); err != nil {
+		t.Fatal(err)
+	}
+	second := writer.Stats()
+	if second.FileSyncs-first.FileSyncs != 2 || second.Flushes != 2 || second.DirectorySyncs != 2 || second.LastFlushAt.Before(first.LastFlushAt) {
+		t.Fatalf("single component stats: first=%+v second=%+v", first, second)
+	}
+	// Stats must remain available even while a flush owns the writer mutex.
+	writer.mu.Lock()
+	ready := make(chan PersistenceStats, 1)
+	go func() { ready <- writer.Stats() }()
+	select {
+	case got := <-ready:
+		if got != second {
+			t.Errorf("concurrent stats: %+v", got)
+		}
+	case <-time.After(time.Second):
+		t.Error("Stats waited for the writer mutex")
+	}
+	writer.mu.Unlock()
+	if err := os.Chmod(componentStatePath(directory), 0o500); err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = os.Chmod(componentStatePath(directory), 0o700) })
+	if err := writer.Save(apply(3), Components(ComponentPlayer)); err == nil {
+		t.Fatal("save to read-only directory succeeded")
+	}
+	if got := writer.Stats(); got != second {
+		t.Fatalf("failed save changed stats: before=%+v after=%+v", second, got)
+	}
+	var total PersistenceStats
+	total.Add(second)
+	total.Add(first)
+	if total.Flushes != 3 || total.FileSyncs != first.FileSyncs+second.FileSyncs || total.DirectorySyncs != 3 || total.LastFlushAt != second.LastFlushAt {
+		t.Fatalf("aggregated stats: %+v", total)
+	}
+}

@@ -2,6 +2,7 @@ package Accounts
 
 import (
 	"CitadelDesktop/Server/Diagnostics"
+	"CitadelDesktop/Server/State"
 	"CitadelDesktop/Server/Telemetry"
 	"net/http"
 )
@@ -12,11 +13,14 @@ func (orchestrator *Orchestrator) handleDiagnostics(w http.ResponseWriter, r *ht
 	for _, store := range stores {
 		total.Add(store.PersistenceSnapshot())
 	}
+	stateStats, stateRuntimes := orchestrator.supervisor.statePersistenceStats()
 	writeControlJSON(w, http.StatusOK, struct {
-		Process         Diagnostics.ProcessSnapshot `json:"process"`
-		Telemetry       Telemetry.PersistenceStats  `json:"telemetry"`
-		TelemetryStores int                         `json:"telemetryStores"`
-	}{Diagnostics.SampleProcess(), total, len(stores)})
+		Process                  Diagnostics.ProcessSnapshot `json:"process"`
+		Telemetry                Telemetry.PersistenceStats  `json:"telemetry"`
+		StatePersistence         State.PersistenceStats      `json:"statePersistence"`
+		StatePersistenceRuntimes int                         `json:"statePersistenceRuntimes"`
+		TelemetryStores          int                         `json:"telemetryStores"`
+	}{Diagnostics.SampleProcess(), total, stateStats, stateRuntimes, len(stores)})
 }
 func (supervisor *Supervisor) telemetryStores() []*Telemetry.Store {
 	supervisor.mu.RLock()
