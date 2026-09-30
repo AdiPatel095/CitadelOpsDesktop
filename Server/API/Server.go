@@ -564,12 +564,31 @@ func (server *Server) handleEvents(writer http.ResponseWriter, request *http.Req
 	)); err != nil {
 		return
 	}
+	var lastSignal ConfigurationRevisionSignal
 	if server.config.Configuration != nil {
-		snapshot := server.config.Configuration.Snapshot()
-		if err := connection.WriteJSON(streamEnvelope("", "config.changed", server.config.State.Revision(), snapshot.Revision, false, snapshot)); err != nil {
+		if server.externalConfiguration() {
+			lastSignal = server.configurationSignal()
+			if err := connection.WriteJSON(streamEnvelope("", "config.changed", server.config.State.Revision(), lastSignal.Revision, false, lastSignal)); err != nil {
+				return
+			}
+		} else {
+			snapshot := server.config.Configuration.Snapshot()
+			if err := connection.WriteJSON(streamEnvelope("", "config.changed", server.config.State.Revision(), snapshot.Revision, false, snapshot)); err != nil {
+				return
+			}
+		}
+	}
+	// Update status is pushed, not polled: the current status now, then every change.
+	var updateEvents <-chan AppUpdate.Snapshot
+	cancelUpdates := func() {}
+	if server.config.Updates != nil {
+		updateEvents, cancelUpdates = server.config.Updates.Subscribe()
+		if err := connection.WriteJSON(newEnvelope("", "update.changed", server.config.State.Revision(), server.config.Updates.Snapshot())); err != nil {
+			cancelUpdates()
 			return
 		}
 	}
+	defer cancelUpdates()
 	if receipts, err := server.config.Intents.RecentOperations(ctx, 100); err == nil {
 		if err := connection.WriteJSON(newEnvelope("", "operations.snapshot", server.config.State.Revision(), receipts)); err != nil {
 			return
@@ -610,7 +629,26 @@ func (server *Server) handleEvents(writer http.ResponseWriter, request *http.Req
 			)); err != nil {
 				return
 			}
+		case snapshot := <-updateEvents:
+			if err := connection.WriteJSON(newEnvelope("", "update.changed", server.config.State.Revision(), snapshot)); err != nil {
+				return
+			}
 		case event := <-configurationEvents:
+			if server.externalConfiguration() {
+				// Only a new canonical version is news: local section changes (for
+				// example installation-scoped settings) leave it as it was.
+				signal := server.configurationSignal()
+				if signal == lastSignal {
+					continue
+				}
+				lastSignal = signal
+				if err := connection.WriteJSON(streamEnvelope(
+					"", "config.changed", server.config.State.Revision(), signal.Revision, false, signal,
+				)); err != nil {
+					return
+				}
+				continue
+			}
 			if err := connection.WriteJSON(streamEnvelope(
 				"", "config.changed", server.config.State.Revision(), event.Sequence, event.Gap, event.Snapshot,
 			)); err != nil {
@@ -643,7 +681,12 @@ func (server *Server) handleEvents(writer http.ResponseWriter, request *http.Req
 					}
 				}
 			case "query.config":
-				if server.config.Configuration != nil {
+				if server.config.Configuration != nil && server.externalConfiguration() {
+					lastSignal = server.configurationSignal()
+					if err := connection.WriteJSON(newEnvelope(message.ID, "config.changed", server.config.State.Revision(), lastSignal)); err != nil {
+						return
+					}
+				} else if server.config.Configuration != nil {
 					if err := connection.WriteJSON(newEnvelope(message.ID, "config.changed", server.config.State.Revision(), server.config.Configuration.Snapshot())); err != nil {
 						return
 					}

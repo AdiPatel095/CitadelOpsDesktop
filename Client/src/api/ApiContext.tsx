@@ -137,8 +137,9 @@ export function APIProvider({ children }: { children: ReactNode }) {
 		}
 		if (outcome.resync == null) return;
 		// Prefer the event socket: the snapshot then arrives in order with later events. REST only
-		// when the socket is down, or when the first socket request went unanswered.
-		if (outcome.resync.attempt <= 1 && CitadelAPI.requestState(`state-resync-${++stateResyncSequence.current}`)) return;
+		// when the socket is down, or when the previous socket request went unanswered (the state
+		// machine says so through `transport`), however many resyncs happened within the backoff window.
+		if (outcome.resync.transport === 'socket' && CitadelAPI.requestState(`state-resync-${++stateResyncSequence.current}`)) return;
 		void CitadelAPI.getState().then(
 			(snapshot) => handle(stateResync.acceptSnapshot(snapshot, Date.now())),
 			(requestError) => {

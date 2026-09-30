@@ -635,6 +635,11 @@ func TestOrchestratorFencesAndAcknowledgesAccountConfiguration(t *testing.T) {
 		status.AppliedConfigurationDigest != digest {
 		t.Fatalf("status after sync = %+v", status)
 	}
+	// A connected dashboard learns the canonical version (not the local store
+	// revision) from the sync, through the configuration store.
+	if authority := application.Configuration.AuthorityVersion(); authority.Revision != snapshot.Revision || authority.Digest != digest {
+		t.Fatalf("authority version after sync = %+v, want revision %d digest %s", authority, snapshot.Revision, digest)
+	}
 	waitForSessionState(t, application, "unavailable", "starting", "reconnecting", "error")
 
 	withConsent := snapshot

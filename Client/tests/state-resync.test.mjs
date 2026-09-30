@@ -128,7 +128,7 @@ test('a hole that is never bridged triggers exactly one resync after the grace p
 	assert.equal(machine.receiveEvent(plain(4), 1_010).resync, null);
 	assert.equal(machine.tick(1_500).resync, null);
 	const fired = machine.tick(1_750);
-	assert.deepEqual(fired.resync, { reason: 'gap', attempt: 1 });
+	assert.deepEqual(fired.resync, { reason: 'gap', attempt: 1, transport: 'socket' });
 	assert.equal(machine.resyncInFlight, true);
 	// Further ticks and events while the snapshot is outstanding never ask again.
 	assert.equal(machine.tick(1_800).resync, null);
@@ -159,20 +159,20 @@ test('events received during a resync are buffered and replayed above the snapsh
 test('replay that cannot bridge asks again, spaced by backoff, and stops once settled', () => {
 	const machine = started(newMachine({ gapGraceMs: 100, retryBaseMs: 1_000 }), 0);
 	machine.receiveEvent(plain(20), 0);
-	assert.deepEqual(machine.tick(100).resync, { reason: 'gap', attempt: 1 });
+	assert.deepEqual(machine.tick(100).resync, { reason: 'gap', attempt: 1, transport: 'socket' });
 	// The snapshot lands at revision 10, still short of the buffered revision 20 (base 19).
 	const landed = machine.acceptSnapshot(snapshotAt(10), 150);
 	assert.equal(landed.resync, null);
 	assert.equal(landed.wakeAt, 1_100, 'grace restarted from the snapshot, but request starts are spaced 1000 ms apart');
 	assert.equal(machine.tick(250).resync, null);
 	const second = machine.tick(1_100);
-	assert.deepEqual(second.resync, { reason: 'gap', attempt: 2 });
+	assert.deepEqual(second.resync, { reason: 'gap', attempt: 2, transport: 'socket' });
 	// Second spacing doubles.
 	machine.acceptSnapshot(snapshotAt(15), 1_150);
 	assert.equal(machine.tick(1_300).resync, null);
 	assert.equal(machine.tick(3_000).resync, null, 'still inside 2000 ms from the second start');
 	const third = machine.tick(3_100);
-	assert.deepEqual(third.resync, { reason: 'gap', attempt: 3 });
+	assert.deepEqual(third.resync, { reason: 'gap', attempt: 3, transport: 'socket' });
 	// Finally the snapshot covers it.
 	const settled = machine.acceptSnapshot(snapshotAt(20), 3_200);
 	assert.equal(settled.wakeAt, null);
@@ -214,10 +214,10 @@ test('backoff is capped and the attempt counter resets after a quiet period', ()
 test('a snapshot request that goes unanswered times out and is retried', () => {
 	const machine = started(newMachine({ gapGraceMs: 0, resyncTimeoutMs: 5_000, retryBaseMs: 1_000 }));
 	machine.receiveEvent(plain(9), 0);
-	assert.deepEqual(machine.tick(0).resync, { reason: 'gap', attempt: 1 });
+	assert.deepEqual(machine.tick(0).resync, { reason: 'gap', attempt: 1, transport: 'socket' });
 	assert.equal(machine.tick(4_999).resync, null);
 	const retried = machine.tick(5_000);
-	assert.deepEqual(retried.resync, { reason: 'gap', attempt: 2 });
+	assert.deepEqual(retried.resync, { reason: 'gap', attempt: 2, transport: 'rest' });
 	machine.acceptSnapshot(snapshotAt(9), 5_100);
 	assertState(machine, 9);
 });
@@ -236,7 +236,7 @@ test('transport failure schedules a backed-off retry instead of retrying immedia
 test('a schema change requests one resync immediately and replays events of the new schema afterwards', () => {
 	const machine = started(newMachine(), 3);
 	const first = machine.receiveEvent(plain(4, 2), 0);
-	assert.deepEqual(first.resync, { reason: 'schema-change', attempt: 1 });
+	assert.deepEqual(first.resync, { reason: 'schema-change', attempt: 1, transport: 'socket' });
 	assert.equal(first.changed, false);
 	assert.equal(machine.receiveEvent(plain(5, 2), 5).resync, null);
 	assert.equal(machine.receiveEvent(plain(6, 2), 6).resync, null);
@@ -258,7 +258,7 @@ test('a snapshot with a schema older than the buffered events asks once more, ba
 test('before any state, events are buffered behind a single snapshot request', () => {
 	const machine = newMachine();
 	const first = machine.receiveEvent(plain(4), 0);
-	assert.deepEqual(first.resync, { reason: 'missing-state', attempt: 1 });
+	assert.deepEqual(first.resync, { reason: 'missing-state', attempt: 1, transport: 'socket' });
 	assert.equal(machine.receiveEvent(plain(5), 1).resync, null);
 	machine.acceptSnapshot(snapshotAt(3), 10);
 	assertState(machine, 5);
@@ -280,7 +280,7 @@ test('buffer overflow drops the buffer and requests one snapshot', () => {
 	for (let revision = 10; revision <= 14; revision += 1) outcome = machine.receiveEvent(plain(revision), revision);
 	assert.equal(machine.bufferedEvents, 0);
 	assert.equal(outcome.wakeAt, 14, 'resync is pending and due now');
-	assert.deepEqual(machine.tick(14).resync, { reason: 'buffer-overflow', attempt: 1 });
+	assert.deepEqual(machine.tick(14).resync, { reason: 'buffer-overflow', attempt: 1, transport: 'socket' });
 	machine.acceptSnapshot(snapshotAt(14), 20);
 	assertState(machine, 14);
 });
@@ -313,7 +313,7 @@ test('connection reset forgets the old socket but keeps the shown state and the 
 
 test('an undecodable event requests a snapshot once, rate limited', () => {
 	const machine = started(newMachine({ retryBaseMs: 1_000 }), 3);
-	assert.deepEqual(machine.unusableEvent(0).resync, { reason: 'gap', attempt: 1 });
+	assert.deepEqual(machine.unusableEvent(0).resync, { reason: 'gap', attempt: 1, transport: 'socket' });
 	assert.equal(machine.unusableEvent(10).resync, null);
 });
 
@@ -394,4 +394,55 @@ test('against the server coalescing model, a stalled writer never causes a snaps
 			if (capacity <= 8) assert.ok(coalesced > 0, 'the scenario must actually exercise coalescing');
 		}
 	}
+});
+
+// CIT-27 D1: REST is for a socket that is down or did not answer, not for "the second resync within 60 s".
+test('repeated resyncs within the backoff window keep using the socket while each is answered', () => {
+	const machine = started(newMachine());
+	let now = 100;
+	for (let episode = 1; episode <= 6; episode += 1) {
+		const outcome = machine.receiveEvent(plain(episode * 10 + 1000), now); // a hole: base far ahead
+		assert.equal(outcome.resync, null, 'a hole waits for a bridging event first');
+		const woke = machine.tick(now + 800);
+		assert.ok(woke.resync, `episode ${episode} must request a snapshot`);
+		assert.equal(woke.resync.transport, 'socket', `episode ${episode} (attempt ${woke.resync.attempt}) must ask over the socket`);
+		assert.equal(woke.resync.attempt, episode, 'each episode is within 60 s of the last request, so the attempt counter keeps growing');
+		machine.acceptSnapshot(snapshotAt(episode * 10 + 1000), now + 810);
+		// Inside the 60 s quiet window (the attempt counter keeps growing) and past the 30 s backoff cap.
+		now += 35_000;
+	}
+	assert.ok(now < 100 + 6 * 60_000, 'the episodes stayed within repeated-resync territory');
+});
+
+test('an unanswered socket request makes the retry use REST, and an answered REST snapshot returns to the socket', () => {
+	const machine = started(newMachine({ resyncTimeoutMs: 1_000, retryBaseMs: 100 }));
+	machine.receiveEvent(plain(50), 0);
+	const first = machine.tick(750);
+	assert.equal(first.resync.transport, 'socket');
+	const timedOut = machine.tick(750 + 1_000);
+	assert.ok(timedOut.resync, 'the timed-out request is retried');
+	assert.equal(timedOut.resync.transport, 'rest', 'the socket did not answer, so the retry goes over REST');
+	// REST fails too: still REST.
+	machine.resyncFailed(2_000);
+	const again = machine.tick(60_000);
+	assert.equal(again.resync?.transport, 'rest');
+	// The REST snapshot lands: the next episode is back on the socket.
+	machine.acceptSnapshot(snapshotAt(50), 61_000);
+	machine.receiveEvent(plain(9_000), 62_000);
+	const next = machine.tick(62_000 + 800);
+	assert.equal(next.resync?.transport, 'socket');
+});
+
+test('a delivery failure requests REST and a fresh connection starts on the socket again', () => {
+	const machine = newMachine({ retryBaseMs: 10 });
+	const first = machine.receiveEvent(plain(1), 0);
+	assert.equal(first.resync?.reason, 'missing-state');
+	assert.equal(first.resync?.transport, 'socket');
+	const failed = machine.resyncFailed(5);
+	assert.equal(failed.resync, null, 'backoff holds the retry');
+	const retry = machine.tick(1_000);
+	assert.equal(retry.resync?.transport, 'rest', 'the host could not deliver the socket request');
+	machine.connectionReset();
+	const afterReconnect = machine.receiveEvent(plain(2), 5_000);
+	assert.equal(afterReconnect.resync?.transport, 'socket', 'a new connection has not failed to answer anything');
 });

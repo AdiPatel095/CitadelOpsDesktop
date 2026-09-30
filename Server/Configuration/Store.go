@@ -50,7 +50,21 @@ type Store struct {
 
 	externalAuthority bool
 	locallyWritable   map[string]struct{}
+	authority         Authority
 }
+
+// Authority names the canonical configuration an external authority (the
+// hosted control plane) last applied here. Its revision is the authority's own
+// revision, not this store's local one, so a client that holds the canonical
+// copy can compare it directly.
+type Authority struct {
+	Revision uint64 `json:"revision"`
+	Digest   string `json:"digest"`
+}
+
+// SectionAuthority is the Event.Section of a change to the authority version
+// alone; the sections themselves did not change.
+const SectionAuthority = "authority"
 
 func Open(dataDir string, defaults map[string]json.RawMessage) (*Store, error) {
 	if strings.TrimSpace(dataDir) == "" {
@@ -167,6 +181,38 @@ func (store *Store) SetExternalAuthority(enabled bool, locallyWritable ...string
 		}
 	}
 	store.mu.Unlock()
+}
+
+// AuthorityVersion returns the canonical revision and digest last applied by
+// the external authority (zero before the first sync).
+func (store *Store) AuthorityVersion() Authority {
+	if store == nil {
+		return Authority{}
+	}
+	store.mu.RLock()
+	defer store.mu.RUnlock()
+	return store.authority
+}
+
+// SetAuthorityVersion records the canonical revision and digest the external
+// authority just applied and tells subscribers, so a connected dashboard learns
+// that its copy is stale without polling. Setting the same version again is a
+// no-op.
+func (store *Store) SetAuthorityVersion(revision uint64, digest string) {
+	if store == nil {
+		return
+	}
+	store.mu.Lock()
+	defer store.mu.Unlock()
+	next := Authority{Revision: revision, Digest: digest}
+	if store.authority == next {
+		return
+	}
+	store.authority = next
+	store.publishLocked(Event{
+		Sequence: store.snapshot.Revision, Revision: store.snapshot.Revision, Section: SectionAuthority,
+		UpdatedAt: time.Now().UTC(), Snapshot: cloneSnapshot(store.snapshot),
+	})
 }
 
 func (store *Store) Update(section string, value json.RawMessage) (Snapshot, error) {

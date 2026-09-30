@@ -341,3 +341,37 @@ func manifestDocument(schema int, version string, revision string, object string
 		}
 	}`, schema, version, revision, object, checksum, object, checksum, object, checksum, object, checksum)
 }
+
+func TestSubscribeDeliversEveryChangeAndKeepsOnlyTheNewestForASlowSubscriber(t *testing.T) {
+	manager := NewManager(Config{CurrentVersion: "2.0.0", Endpoint: "http://unused.invalid"})
+	events, unsubscribe := manager.Subscribe()
+	manager.update(func(snapshot *Snapshot) { snapshot.Status, snapshot.Progress = "downloading", 10 })
+	if got := <-events; got.Status != "downloading" || got.Progress != 10 {
+		t.Fatalf("first change = %+v", got)
+	}
+	// A subscriber that is not reading never blocks the manager and keeps the newest.
+	for progress := 20; progress <= 90; progress += 10 {
+		manager.update(func(snapshot *Snapshot) { snapshot.Progress = progress })
+	}
+	if got := <-events; got.Progress != 90 {
+		t.Fatalf("slow subscriber saw progress %d, want the newest (90)", got.Progress)
+	}
+	// An update that changes nothing is not an event.
+	manager.update(func(snapshot *Snapshot) {})
+	select {
+	case got := <-events:
+		t.Fatalf("no-op update produced %+v", got)
+	default:
+	}
+	unsubscribe()
+	manager.update(func(snapshot *Snapshot) { snapshot.Progress = 100 })
+	select {
+	case got := <-events:
+		t.Fatalf("unsubscribed channel received %+v", got)
+	default:
+	}
+	var nilManager *Manager
+	if _, stop := nilManager.Subscribe(); stop == nil {
+		t.Fatal("nil manager subscription must be safe")
+	}
+}
