@@ -28,7 +28,7 @@ func newMovementReducer(authoritative bool) Reducer {
 		if !frameSucceeded(frame) || len(frame.Payload) == 0 {
 			return nil, false, nil
 		}
-		items, fullSnapshot, err := movementItems(frame.Payload)
+		items, fullSnapshot, err := movementItems(frame)
 		if err != nil {
 			return nil, false, err
 		}
@@ -328,9 +328,9 @@ func movementBelongsToCurrentPlayer(gameState *State.GameState, movement State.M
 	return gameState != nil && State.MovementOwnedByCurrentPlayer(*gameState, movement)
 }
 
-func movementItems(raw json.RawMessage) ([]json.RawMessage, bool, error) {
-	var root map[string]json.RawMessage
-	if err := json.Unmarshal(raw, &root); err != nil {
+func movementItems(frame Protocol.Frame) ([]json.RawMessage, bool, error) {
+	root, err := frame.PayloadRoot()
+	if err != nil {
 		return nil, false, fmt.Errorf("decode movements: %w", err)
 	}
 	if rawItems, exists := root["M"]; exists {
@@ -340,7 +340,7 @@ func movementItems(raw json.RawMessage) ([]json.RawMessage, bool, error) {
 		}
 		var movement map[string]json.RawMessage
 		if json.Unmarshal(rawItems, &movement) == nil && movement != nil {
-			return []json.RawMessage{raw}, false, nil
+			return []json.RawMessage{frame.Payload}, false, nil
 		}
 	}
 	for _, wrapperName := range []string{"A", "AAM"} {

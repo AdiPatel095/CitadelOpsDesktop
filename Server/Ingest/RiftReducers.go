@@ -84,7 +84,7 @@ func reduceRiftLaunchAck(
 	if !frameSucceeded(frame) || gameState.Rift.PendingLaunchID == "" || len(frame.Payload) == 0 {
 		return nil, false, nil
 	}
-	items, _, err := movementItems(frame.Payload)
+	items, _, err := movementItems(frame)
 	if err != nil {
 		return nil, false, nil
 	}

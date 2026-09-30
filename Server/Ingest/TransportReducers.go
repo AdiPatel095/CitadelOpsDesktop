@@ -30,8 +30,8 @@ func reduceMarketInfo(
 	if !frameSucceeded(frame) || len(frame.Payload) == 0 {
 		return nil, false, nil
 	}
-	var root map[string]json.RawMessage
-	if err := json.Unmarshal(frame.Payload, &root); err != nil {
+	root, err := frame.PayloadRoot()
+	if err != nil {
 		return nil, false, fmt.Errorf("decode market info: %w", err)
 	}
 	if nested := root["cmi"]; len(nested) > 0 {
@@ -132,8 +132,8 @@ func reduceMarketBooster(
 		return nil, false, nil
 	}
 	var outerRoot map[string]json.RawMessage
-	var root map[string]json.RawMessage
-	if err := json.Unmarshal(frame.Payload, &root); err != nil {
+	root, err := frame.PayloadRoot()
+	if err != nil {
 		return nil, false, fmt.Errorf("decode market boosters: %w", err)
 	}
 	outerRoot = root
@@ -559,8 +559,8 @@ func reduceFeastCostReduction(
 	if len(frame.Payload) == 0 {
 		return nil, false, fmt.Errorf("decode feast cost reduction: response payload is empty")
 	}
-	var root map[string]json.RawMessage
-	if err := json.Unmarshal(frame.Payload, &root); err != nil {
+	root, err := frame.PayloadRoot()
+	if err != nil {
 		return nil, false, fmt.Errorf("decode feast cost reduction: %w", err)
 	}
 	if nested := root["fce"]; len(nested) > 0 {
@@ -595,8 +595,8 @@ func reduceKingdomTransport(
 	if !frameSucceeded(frame) || len(frame.Payload) == 0 {
 		return nil, false, nil
 	}
-	var root map[string]json.RawMessage
-	if err := json.Unmarshal(frame.Payload, &root); err != nil {
+	root, err := frame.PayloadRoot()
+	if err != nil {
 		return nil, false, fmt.Errorf("decode kingdom transport: %w", err)
 	}
 	if nested := root["kpi"]; len(nested) > 0 {

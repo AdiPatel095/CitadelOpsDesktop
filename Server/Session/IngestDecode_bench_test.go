@@ -92,10 +92,7 @@ func runDecodeBench(b *testing.B, raw string, pending int) {
 		}
 		transport.deliverInbound(raw, 1)
 		rf := <-transport.frames
-		observed, err := pipeline.DecodeTransportFrameAt(rf.Payload, rf.Direction, rf.ObservedAt, rf.ResponseToken, rf.CausationOperationID)
-		if err != nil {
-			b.Fatal(err)
-		}
+		observed := pipeline.ObserveTransportFrame(*rf.Decoded, rf.ResponseToken, rf.CausationOperationID)
 		// Advance frame time deterministically, so repeated map rows always change.
 		observed.Frame.ReceivedAt = start.Add(time.Duration(i) * time.Millisecond)
 		if _, err := pipeline.CommitFrame(ctx, observed); err != nil {
