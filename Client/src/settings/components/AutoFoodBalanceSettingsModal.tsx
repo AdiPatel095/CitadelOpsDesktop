@@ -26,6 +26,7 @@ import {
   type AutoFoodBalanceSettings,
 } from '../AutoFoodBalanceClientState';
 import HorseTravelBoostSelect from './HorseTravelBoostSelect';
+import { useDraftRecovery } from '../useDraftRecovery';
 
 interface AutoFoodBalanceSettingsModalProps {
   isOpen: boolean;
@@ -84,6 +85,8 @@ export const AutoFoodBalanceSettingsModal: React.FC<AutoFoodBalanceSettingsModal
   const fixReadiness = (check: ReadinessCheck) => {
     if (!disclosure.fix(check)) focusReadinessTarget('auto-food-castles');
   };
+  const recovery = useDraftRecovery({ section: 'automation.autoFoodBalance', isOpen, draftSession, draft: parseAutoFoodBalanceSettings(settings), loaded: parseAutoFoodBalanceSettings(parseAutoFoodBalanceSettings(asRecord(draftSession.sections?.['automation.autoFoodBalance']))) });
+
   return (
     <SettingsModal
       footerLeading={<StopFooter featureId="autoFoodBalance" />}
@@ -97,7 +100,7 @@ export const AutoFoodBalanceSettingsModal: React.FC<AutoFoodBalanceSettingsModal
       saveLabel="Save"
       saveDisabled={!draftSession.ready}
       contentDisabled={!draftSession.ready}
-      contentNotice={draftSession.conflictNotice}
+      contentNotice={<>{recovery.banner}{draftSession.conflictNotice}</>}
     >
       <AutomationRunStrip
         featureId="autoFoodBalance"

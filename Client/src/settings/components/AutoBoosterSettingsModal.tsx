@@ -26,6 +26,7 @@ import {
   formatObservedRubyChange,
   hasMeaningfulAutoBoosterTime,
 } from '../AutoBoosterViewState';
+import { useDraftRecovery } from '../useDraftRecovery';
 
 interface AutoBoosterSettingsModalProps {
   isOpen: boolean;
@@ -100,6 +101,8 @@ export const AutoBoosterSettingsModal: React.FC<AutoBoosterSettingsModalProps> =
     }
   };
 
+  const recovery = useDraftRecovery({ section: AUTO_BOOSTER_SECTION, isOpen, draftSession, draft: parseAutoBoosterClientState(settings), loaded: parseAutoBoosterClientState(parseAutoBoosterClientState(draftSession.sections?.[AUTO_BOOSTER_SECTION])) });
+
   return (
     <SettingsModal
       footerLeading={<StopFooter featureId="autoBooster" />}
@@ -114,7 +117,7 @@ export const AutoBoosterSettingsModal: React.FC<AutoBoosterSettingsModalProps> =
       isSaving={isSaving}
       saveDisabled={!draftSession.ready}
       contentDisabled={!draftSession.ready}
-      contentNotice={draftSession.conflictNotice}
+      contentNotice={<>{recovery.banner}{draftSession.conflictNotice}</>}
     >
       <AutomationRunStrip
         featureId="autoBooster"

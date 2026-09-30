@@ -58,6 +58,16 @@ import { beriAttackOptionsSummary, beriBuildOptionsSummary, countCustomValues, t
 import { useSettingsDisclosure } from '../disclosure/useSettingsDisclosure';
 import { AutomationRunStrip } from './AutomationRunStrip';
 import { collapsedSettingNote, SettingsSection } from './SettingsSection';
+import { useDraftRecovery } from '../useDraftRecovery';
+
+/** What the editor holds right after it loads a saved configuration: used by the load effect and by draft recovery. */
+function beriFromSections(sections: Record<string, unknown> | undefined) {
+	const settings = parseAutoBeriWorldSettings(sections?.['automation.autoBeriWorld']);
+	return {
+		settings,
+		attackRef: attackSetupRef(settings.presetId, parseAttackPresetDocument(sections?.[ATTACK_PRESETS_SECTION]), 'automation.autoBeriWorld', 'attack'),
+	};
+}
 
 interface AutoBeriWorldSettingsModalProps {
 	isOpen: boolean;
@@ -138,14 +148,9 @@ export const AutoBeriWorldSettingsModal: React.FC<AutoBeriWorldSettingsModalProp
 		const initialBlueprint = parseAutoBeriBlueprintDocument(
 			draftSession.initialSections?.[AUTO_BERI_WORLD_BLUEPRINTS_SECTION],
 		);
-		const savedSettings = parseAutoBeriWorldSettings(draftSession.initialSections?.['automation.autoBeriWorld']);
-		setSettings(savedSettings);
-		setAttackRef(attackSetupRef(
-			savedSettings.presetId,
-			parseAttackPresetDocument(draftSession.initialSections?.[ATTACK_PRESETS_SECTION]),
-			'automation.autoBeriWorld',
-			'attack',
-		));
+		const initial = beriFromSections(draftSession.initialSections);
+		setSettings(initial.settings);
+		setAttackRef(initial.attackRef);
 		setCaptureCastleId(initialBlueprint.blueprints[initialBlueprint.activeId]?.target.castleId ?? 0);
 		setBlueprintPreview(null);
 	}, [draftSession.initialSections, draftSession.openKey, draftSession.initialSnapshot, isOpen]);
@@ -330,6 +335,13 @@ export const AutoBeriWorldSettingsModal: React.FC<AutoBeriWorldSettingsModalProp
 		}
 	};
 
+	const loadedBeri = beriFromSections(draftSession.sections);
+	const recovery = useDraftRecovery({ section: 'automation.autoBeriWorld', isOpen, draftSession, draft: settings, loaded: loadedBeri.settings, extras: { attackRef }, loadedExtras: { attackRef: loadedBeri.attackRef } });
+	useEffect(() => {
+		const extras = draftSession.recoveredExtras?.value as { attackRef?: AttackSetupRef } | undefined;
+		if (extras?.attackRef) setAttackRef(extras.attackRef);
+	}, [draftSession.recoveredExtras]);
+
 	return (
     <>
 		<SettingsModal
@@ -346,7 +358,7 @@ export const AutoBeriWorldSettingsModal: React.FC<AutoBeriWorldSettingsModalProp
 			isSaving={saving}
 			saveDisabled={attackRefInvalid || !draftSession.ready}
 			contentDisabled={!draftSession.ready}
-			contentNotice={draftSession.conflictNotice}
+			contentNotice={<>{recovery.banner}{draftSession.conflictNotice}</>}
 		>
 			<AutomationRunStrip
 				featureId="autoBeriWorld"

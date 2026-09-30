@@ -88,6 +88,11 @@ export function useConfigurationDraftSession({
   const [snapshot, setSnapshot] = useState<ConfigurationDraftSnapshot | null>(null);
   const [initialSnapshot, setInitialSnapshot] = useState<ConfigurationDraftSnapshot | null>(null);
   const [openGeneration, setOpenGeneration] = useState(0);
+  // Counts loads of the saved configuration only (not a recovered draft being restored), so draft recovery can tell
+  // "the editor loaded" from "the player restored a draft".
+  const [loadGeneration, setLoadGeneration] = useState(0);
+  const [recoveredExtras, setRecoveredExtras] = useState<{ generation: number; value: unknown } | null>(null);
+  const recoveredCount = useRef(0);
   const [conflict, setConflict] = useState(false);
   const [loading, setLoading] = useState(false);
   const [loadError, setLoadError] = useState('');
@@ -120,6 +125,8 @@ export function useConfigurationDraftSession({
       setSnapshot(captured);
       setInitialSnapshot(captured);
       setOpenGeneration((current) => current + 1);
+      setLoadGeneration((current) => current + 1);
+      setRecoveredExtras(null);
       setConflict(false);
       return true;
     } catch (error) {
@@ -139,6 +146,7 @@ export function useConfigurationDraftSession({
       activeSessionKey.current = null;
       snapshotRef.current = null;
       setSnapshot(null);
+      setRecoveredExtras(null);
       setInitialSnapshot(null);
       setConflict(false);
       setLoading(false);
@@ -149,6 +157,7 @@ export function useConfigurationDraftSession({
     activeSessionKey.current = sessionKey;
     snapshotRef.current = null;
     setSnapshot(null);
+    setRecoveredExtras(null);
     setInitialSnapshot(null);
     setConflict(false);
     void loadLatest();
@@ -189,6 +198,8 @@ export function useConfigurationDraftSession({
     [saveSection, section],
   );
 
+  const latestSections = useCallback(() => snapshotRef.current?.sections, []);
+
   const reloadLatest = useCallback(async () => {
     await loadLatest();
   }, [loadLatest]);
@@ -202,6 +213,22 @@ export function useConfigurationDraftSession({
     copyReplay?.onDropped();
     await loadLatest();
   }, [copyReplay, loadLatest]);
+
+  /**
+   * Puts a recovered unsaved draft (CIT-19) into the editor: the editor's load effect reads it exactly as it reads a
+   * saved value. Only the editor's baseline for loading changes; the saved snapshot that guards Save (`snapshotRef`)
+   * is untouched, so Save still compares against what is really saved. Never saves and never touches
+   * `automation.enabled`.
+   */
+  const recoverDraft = useCallback((targetSection: string, value: unknown, extras?: unknown) => {
+    setInitialSnapshot((current) => (current == null ? current : {
+      ...current,
+      sections: { ...current.sections, [targetSection]: cloneConfigurationSections({ value }).value },
+    }));
+    setOpenGeneration((current) => current + 1);
+    recoveredCount.current += 1;
+    setRecoveredExtras(extras === undefined ? null : { generation: recoveredCount.current, value: extras });
+  }, []);
 
   const conflictNotice = useMemo(() => {
     if (loading && snapshot == null) {
@@ -278,6 +305,15 @@ export function useConfigurationDraftSession({
     sections: snapshot?.sections,
     initialSections: initialSnapshot?.sections,
     openKey: snapshot == null ? '' : `${snapshot.key}:${openGeneration}`,
+    /** Changes only when the saved configuration is (re)loaded, never for a restored draft. */
+    loadKey: snapshot == null ? '' : `${snapshot.key}:${loadGeneration}`,
+    recoverDraft,
+    /**
+     * The saved sections as of right now, read from the same reference Save advances synchronously. Unlike `sections`
+     * it does not wait for a render, so an editor that is unmounted in the same render as its Save can still see it.
+     */
+    latestSections,
+    recoveredExtras,
     save,
     saveSection,
     conflict,

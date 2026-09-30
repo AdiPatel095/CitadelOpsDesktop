@@ -50,9 +50,18 @@ import { parseAutoBeriWorldSettings } from '../settings/AutoBeriWorldClientState
 import { configurationSection } from '../settings/Configuration';
 import { AutomationSafetyPanel } from '../components/AutomationSafetyPanel';
 import { AutomationFeatureFeedback } from '../components/AutomationFeatureFeedback';
+import { GoalPicker } from '../components/GoalPicker';
+import { SetupChecklist } from '../components/SetupChecklist';
 import { StopFooter } from '../components/StopControl';
 import { checkIntervalLine } from '../settings/disclosure/summaries';
 import type { SettingsFeatureId } from '../settings/disclosure/placement';
+import { focusReadinessTargetWhenReady } from '../settings/readiness/focusReadinessTarget';
+import type { ReadinessCheck } from '../settings/readiness/Readiness';
+import { requestSettingsFix } from '../settings/readiness/settingsFixRequest';
+import { scopeKey } from '../settings/onboarding/accountScope';
+import { goalById } from '../settings/onboarding/goals';
+import { useGoal } from '../settings/onboarding/goalStore';
+import { AUTOMATION_GOALS } from '../settings/onboarding/goals';
 import { useSettingsDisclosure } from '../settings/disclosure/useSettingsDisclosure';
 import { AutomationRunStrip } from '../settings/components/AutomationRunStrip';
 import { SettingsSection } from '../settings/components/SettingsSection';
@@ -318,7 +327,7 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
   onOpenAutomationDuration,
 }) => {
   const { t: localizeStatic,locale } = useStaticLocale();
-  const { configuration } = useCitadelAPI();
+  const { configuration, state: gameState } = useCitadelAPI();
   const {
     gameLoggedIn,
     recruitTroopsEnabled,
@@ -809,9 +818,67 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
     .map((group) => ({ ...group, features: features.filter((feature) => feature.group === group.id) }))
     .filter((group) => group.features.length > 0);
 
+
+  // Goal-led entry (CIT-19): optional, never a gate. The panel exists only after the player chose a goal.
+  const goalApi = useGoal(scopeKey(gameState));
+  const [goalPickerOpen, setGoalPickerOpen] = useState(false);
+  const activeGoal = goalById(goalApi.goal?.goalId);
+  const activeGoalFeature = activeGoal ? features.find((feature) => feature.id === activeGoal.featureId) : undefined;
+  const anyAutomationOn = features.some((feature) => feature.enabled);
+  const openGoalEditor = (check?: ReadinessCheck) => {
+    if (!activeGoalFeature) return;
+    if (check) requestSettingsFix(activeGoalFeature.id as SettingsFeatureId, check, activeGoalFeature.onOpenSettings);
+    else activeGoalFeature.onOpenSettings();
+  };
+  const goToGoalSwitch = () => {
+    if (!activeGoal) return;
+    const id = `automation-switch-${activeGoal.featureId}`;
+    document.getElementById(id)?.scrollIntoView({ block: 'center', behavior: 'smooth' });
+    focusReadinessTargetWhenReady(id);
+  };
+  const goalButton = (
+    <Button variant="outline" size="sm" id="goal-entry" onClick={() => setGoalPickerOpen(true)} data-goal-entry>
+      <LocalizedText messageKey="goalEntry.button" />
+    </Button>
+  );
+  const goalEntry = (
+    <>
+      {activeGoal && activeGoalFeature ? (
+        <SetupChecklist
+          goal={activeGoal}
+          collapsed={goalApi.goal?.collapsed === true}
+          onSetCollapsed={goalApi.setCollapsed}
+          onOpenEditor={openGoalEditor}
+          onGoToSwitch={goToGoalSwitch}
+          // The opener that started the goal is gone once the checklist replaces it, so focus is placed on purpose (CIT-19 QA).
+          onDone={() => { goalApi.clear(); focusReadinessTargetWhenReady('goal-entry'); }}
+          onChooseAnother={() => { goalApi.clear(); setGoalPickerOpen(true); }}
+        />
+      ) : (
+        <div className="flex flex-wrap items-center justify-between gap-2" data-goal-entry-row>
+          {!anyAutomationOn ? (
+            <div className="min-w-0 text-xs" data-goal-empty>
+              <div className="font-bold text-text-main"><LocalizedText messageKey="goalEntry.emptyTitle" /></div>
+              <div className="text-text-muted"><LocalizedText messageKey="goalEntry.emptyBody" /></div>
+            </div>
+          ) : <span />}
+          {goalButton}
+        </div>
+      )}
+      {goalPickerOpen ? (
+        <GoalPicker
+          goals={AUTOMATION_GOALS}
+          onChoose={(goalId) => { goalApi.choose(goalId); setGoalPickerOpen(false); focusReadinessTargetWhenReady('setup-checklist'); }}
+          onClose={() => setGoalPickerOpen(false)}
+        />
+      ) : null}
+    </>
+  );
+
   return (
     <div className="mx-auto flex w-full max-w-[1800px] flex-col gap-4 pb-10">
       <AutomationSafetyPanel states={automationStates} now={now} />
+      {goalEntry}
       <div className="automation-function-groups">
         {groupedFeatures.map((group) => {
           const GroupIcon = group.icon;
@@ -844,6 +911,7 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
                       className={`automation-function-row ${feature.enabled ? 'automation-function-row-active' : ''}`}
                     >
                       <span
+                        id={`automation-switch-${feature.id}`}
                         className="shrink-0"
                         onContextMenu={(event) => {
                           event.preventDefault();

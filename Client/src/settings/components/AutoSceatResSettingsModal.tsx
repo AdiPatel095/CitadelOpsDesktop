@@ -49,6 +49,7 @@ import { AutomationRunStrip } from './AutomationRunStrip';
 import { SettingsSection } from './SettingsSection';
 import { AutoSceatRecipePickerModal } from './AutoSceatRecipePickerModal';
 import { useMetadata } from '../../context/MetadataContext';
+import { useDraftRecovery } from '../useDraftRecovery';
 
 interface AutoSceatResSettingsModalProps {
   isOpen: boolean;
@@ -259,6 +260,8 @@ export const AutoSceatResSettingsModal: React.FC<AutoSceatResSettingsModalProps>
     );
   };
 
+  const recovery = useDraftRecovery({ section: AUTO_SCEAT_SECTION, isOpen, draftSession, draft: normalizeAutoSceatResSettings(settings), loaded: normalizeAutoSceatResSettings(normalizeAutoSceatResSettings(draftSession.sections?.[AUTO_SCEAT_SECTION] ?? defaultAutoSceatResSettings())) });
+
   return (
     <>
       <SettingsModal
@@ -273,7 +276,7 @@ export const AutoSceatResSettingsModal: React.FC<AutoSceatResSettingsModalProps>
         isSaving={isSaving}
         saveDisabled={!draftSession.ready}
         contentDisabled={!draftSession.ready}
-        contentNotice={draftSession.conflictNotice}
+        contentNotice={<>{recovery.banner}{draftSession.conflictNotice}</>}
       >
         <AutomationRunStrip
           featureId="autoSceatRes"

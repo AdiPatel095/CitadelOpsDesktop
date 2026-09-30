@@ -54,6 +54,28 @@ import {
   mergeAutoBirdPickerItems,
   visibleAutoBirdReserveItems,
 } from '../AutoBirdFortressReserve';
+import { useDraftRecovery } from '../useDraftRecovery';
+
+/** The saved section as the editor's load effect reads it (a missing section is the default state). */
+function birdRawState(section: unknown) {
+  return section ?? buildAutoBirdClientState(defaultAutoBirdSettings(), emptyPresetsFile());
+}
+
+/** The preset the editor applies on load (if any) and the ignore settings it then shows. */
+function birdActive(state: ReturnType<typeof parseAutoBirdClientState>) {
+  const activePreset = state.activePresetId
+    ? state.presets.presets.find((preset) => preset.id === state.activePresetId)
+    : undefined;
+  return { activePreset, ig: activePreset ? applyPresetToStoredShape(activePreset) : state.ignoreSettings };
+}
+
+/** The ignore settings exactly as the editor saves them. */
+function birdStoredSettings(settings: AutoBirdStoredSettings['settings'], minDelay: number, maxDelay: number, minSend: number, minRPTDays: number): AutoBirdStoredSettings {
+  let maxD = clampDelayHours(maxDelay);
+  const minD = clampDelayHours(minDelay);
+  if (maxD < minD) maxD = minD;
+  return { settings, minDelay: minD, maxDelay: maxD, minSend: Math.max(0, minSend), minRPTDays: clampMinRPTDays(minRPTDays) };
+}
 
 interface AutoBirdSettingsModalProps {
   isOpen: boolean;
@@ -109,16 +131,7 @@ export const AutoBirdSettingsModal: React.FC<AutoBirdSettingsModalProps> = ({ is
   const loadedConfigurationSignature = useRef<string | null>(null);
 
   const currentIgnoreSettings = useCallback((): AutoBirdStoredSettings => {
-    let maxD = clampDelayHours(maxDelay);
-    const minD = clampDelayHours(minDelay);
-    if (maxD < minD) maxD = minD;
-    return {
-      settings,
-      minDelay: minD,
-      maxDelay: maxD,
-      minSend: Math.max(0, minSend),
-      minRPTDays: clampMinRPTDays(minRPTDays),
-    };
+    return birdStoredSettings(settings, minDelay, maxDelay, minSend, minRPTDays);
   }, [settings, minDelay, maxDelay, minSend, minRPTDays]);
 
   const fortressSection = draftSession.sections?.['automation.autoFortress'];
@@ -150,10 +163,7 @@ export const AutoBirdSettingsModal: React.FC<AutoBirdSettingsModalProps> = ({ is
   }, [draftSession.sections]);
 
   const applyFullClientState = useCallback((state: ReturnType<typeof parseAutoBirdClientState>) => {
-    const activePreset = state.activePresetId
-      ? state.presets.presets.find((preset) => preset.id === state.activePresetId)
-      : undefined;
-    const ig = activePreset ? applyPresetToStoredShape(activePreset) : state.ignoreSettings;
+    const { activePreset, ig } = birdActive(state);
     setSettings(ig.settings);
     setMinDelay(clampDelayHours(ig.minDelay));
     setMaxDelay(clampDelayHours(ig.maxDelay));
@@ -174,8 +184,7 @@ export const AutoBirdSettingsModal: React.FC<AutoBirdSettingsModalProps> = ({ is
       return;
     }
     if (!draftSession.initialSnapshot) return;
-    const rawState = draftSession.initialSections?.['automation.autoBird']
-      ?? buildAutoBirdClientState(defaultAutoBirdSettings(), emptyPresetsFile());
+    const rawState = birdRawState(draftSession.initialSections?.['automation.autoBird']);
     const signature = JSON.stringify(rawState);
     if (loadedConfigurationSignature.current === signature) return;
     loadedConfigurationSignature.current = signature;
@@ -364,6 +373,10 @@ export const AutoBirdSettingsModal: React.FC<AutoBirdSettingsModalProps> = ({ is
   const activePresetMissing = !!activePresetId &&
     !presetsState.presets.some((preset) => preset.id === activePresetId);
 
+  const loadedBird = parseAutoBirdClientState(birdRawState(draftSession.sections?.['automation.autoBird']));
+  const loadedBirdActive = birdActive(loadedBird);
+  const recovery = useDraftRecovery({ section: 'automation.autoBird', isOpen, draftSession, draft: buildAutoBirdClientState(currentIgnoreSettings(), presetsState, appliedPresetId), loaded: buildAutoBirdClientState(birdStoredSettings(loadedBirdActive.ig.settings, loadedBirdActive.ig.minDelay, loadedBirdActive.ig.maxDelay, loadedBirdActive.ig.minSend, loadedBirdActive.ig.minRPTDays), loadedBird.presets, loadedBirdActive.activePreset?.id ?? null) });
+
   return (
     <>
     <SettingsModal
@@ -373,7 +386,7 @@ export const AutoBirdSettingsModal: React.FC<AutoBirdSettingsModalProps> = ({ is
       maxWidth="full"
       saveDisabled={!draftSession.ready}
       contentDisabled={!draftSession.ready}
-      contentNotice={<>{copyRun.status}{draftSession.conflictNotice}{copyRun.dialog}</>}
+      contentNotice={<>{copyRun.status}{recovery.banner}{draftSession.conflictNotice}{copyRun.dialog}</>}
       title={localizeStatic("ui.settings.components.autoBirdSettingsModal.title.auto.bird.settings.158a0a4f")}
       icon={<Bird className="h-5 w-5" />}
       description={(

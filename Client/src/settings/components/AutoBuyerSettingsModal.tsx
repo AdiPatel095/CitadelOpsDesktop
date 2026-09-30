@@ -34,6 +34,12 @@ import { useConfigurationDraftSession } from '../ConfigurationDraftSession';
 import { checkIntervalLine, countCustomValues } from '../disclosure/summaries';
 import { useSettingsDisclosure } from '../disclosure/useSettingsDisclosure';
 import { SettingsSection } from './SettingsSection';
+import { useDraftRecovery } from '../useDraftRecovery';
+
+/** What the editor holds right after it loads a saved configuration: used by the load effect and by draft recovery. */
+function buyerDraftFrom(parsed: AutoBuyerClientStateV1, defaultCastleID: number): AutoBuyerClientStateV1 {
+  return { ...parsed, sourceCastleId: parsed.sourceCastleId || defaultCastleID, feast: { ...parsed.feast } };
+}
 
 interface AutoBuyerSettingsModalProps {
   isOpen: boolean;
@@ -78,11 +84,7 @@ export const AutoBuyerSettingsModal: React.FC<AutoBuyerSettingsModalProps> = ({ 
   useEffect(() => {
     if (!isOpen || !draftSession.initialSnapshot) return;
     const parsed = parseAutoBuyerClientState(JSON.parse(autoBuyerConfigurationKey));
-    setDraft({
-      ...parsed,
-      sourceCastleId: parsed.sourceCastleId || defaultCastleID,
-      feast: { ...parsed.feast },
-    });
+    setDraft(buyerDraftFrom(parsed, defaultCastleID));
     setFeastHoursInput(String(parsed.feast.minimumRemainingHours));
     setSection('shops');
     setSelectedShopId(parsed.packages.find((rule) => rule.enabled)?.shopId ?? '');
@@ -320,6 +322,8 @@ export const AutoBuyerSettingsModal: React.FC<AutoBuyerSettingsModalProps> = ({ 
     }
   };
 
+  const recovery = useDraftRecovery({ section: AUTO_BUYER_SECTION, isOpen, draftSession, draft: parseAutoBuyerClientState(draft), loaded: parseAutoBuyerClientState(buyerDraftFrom(parseAutoBuyerClientState(draftSession.sections?.[AUTO_BUYER_SECTION]), defaultCastleID)) });
+
   return (
     <SettingsModal
       footerLeading={<StopFooter featureId="autoBuyer" />}
@@ -333,7 +337,7 @@ export const AutoBuyerSettingsModal: React.FC<AutoBuyerSettingsModalProps> = ({ 
       isSaving={saving}
       saveDisabled={!configurationValid || Boolean(loadError) || !draftSession.ready}
       contentDisabled={!draftSession.ready}
-      contentNotice={draftSession.conflictNotice}
+      contentNotice={<>{recovery.banner}{draftSession.conflictNotice}</>}
     >
       <div className="space-y-3">
         <Card variant="solid" className="p-4">

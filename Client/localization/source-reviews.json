@@ -479,16 +479,6 @@
     "reason": "Configuration section key, slot id, feature id, ref discriminator, readiness check ids and DOM anchor ids.",
     "evidence": "automation.autoBeriWorld section, attack slot, autoBeriWorld feature id and auto-beri-* element ids used by focusReadinessTarget."
   },
-  "d99a59cea11b1b74904db1c0ee593319ec8937db3c507dd9477d469352dbea93": {
-    "classification": "technical",
-    "reason": "Configuration section key, slot id, feature id, ref discriminator, readiness check ids and DOM anchor ids.",
-    "evidence": "automation.autoBeriWorld section, attack slot, autoBeriWorld feature id and auto-beri-* element ids used by focusReadinessTarget."
-  },
-  "50c9114e1658f7fb725c3b5fbb12b55c8a9362e2961a6fd20669574e955f6096": {
-    "classification": "technical",
-    "reason": "Configuration section key, slot id, feature id, ref discriminator, readiness check ids and DOM anchor ids.",
-    "evidence": "automation.autoBeriWorld section, attack slot, autoBeriWorld feature id and auto-beri-* element ids used by focusReadinessTarget."
-  },
   "a9d95d1d084d684481348810fdf1733b792f4a2e5246712d16ee6868c9f59464": {
     "classification": "technical",
     "reason": "Configuration section key, slot id, feature id, ref discriminator, readiness check ids and DOM anchor ids.",
@@ -539,11 +529,6 @@
     "reason": "Module slot id, feature id, ref discriminator, readiness check ids and DOM anchor ids.",
     "evidence": "attack slot, autoInvasion feature id, readiness ids and auto-invasion-* element ids used by focusReadinessTarget."
   },
-  "0308b7034782f388214bd9490d2748e442f53a4b64aa8565dd15e2bbb1c11daf": {
-    "classification": "technical",
-    "reason": "Module slot id, feature id, ref discriminator, readiness check ids and DOM anchor ids.",
-    "evidence": "attack slot, autoInvasion feature id, readiness ids and auto-invasion-* element ids used by focusReadinessTarget."
-  },
   "10fad5d1e7a12d494ebf5ba0d14f1bf760172050844f51b3684c3fbedd20c5b2": {
     "classification": "technical",
     "reason": "Module slot id, feature id, ref discriminator, readiness check ids and DOM anchor ids.",
@@ -585,16 +570,6 @@
     "evidence": "nomad/samurai slots, autoNomad feature id, readiness ids and auto-nomad-* element ids used by focusReadinessTarget."
   },
   "571cb65647beb20c1a6e46db86ca4cac560e40086344d31f4a5d2603225ba833": {
-    "classification": "technical",
-    "reason": "Module slot ids, feature id, ref discriminators, readiness check ids and DOM anchor ids.",
-    "evidence": "nomad/samurai slots, autoNomad feature id, readiness ids and auto-nomad-* element ids used by focusReadinessTarget."
-  },
-  "f0044dcc6b796da6a1d183632cc48af97f504044b711fa4a47539af9fe3694fd": {
-    "classification": "technical",
-    "reason": "Module slot ids, feature id, ref discriminators, readiness check ids and DOM anchor ids.",
-    "evidence": "nomad/samurai slots, autoNomad feature id, readiness ids and auto-nomad-* element ids used by focusReadinessTarget."
-  },
-  "ad05b0cbf9093f055ec8745b7ce8f3438f97eed94e6ec379cab0444499ec9517": {
     "classification": "technical",
     "reason": "Module slot ids, feature id, ref discriminators, readiness check ids and DOM anchor ids.",
     "evidence": "nomad/samurai slots, autoNomad feature id, readiness ids and auto-nomad-* element ids used by focusReadinessTarget."
@@ -3324,16 +3299,6 @@
     "reason": "Slot ids, feature id, readiness ids, DOM anchor ids, message keys and id fallbacks.",
     "evidence": "attack/defense slots, autoKhan feature id, readiness check ids, auto-khan-* element ids used by focusReadinessTarget, typed message keys passed to localizeStatic and #<id> fallbacks for unnamed castles."
   },
-  "64460ce5572f0a3e802226750f2686a6c01d636b2d0e0e55730320bb20fb4a0a": {
-    "classification": "technical",
-    "reason": "Slot ids, feature id, readiness ids, DOM anchor ids, message keys and id fallbacks.",
-    "evidence": "attack/defense slots, autoKhan feature id, readiness check ids, auto-khan-* element ids used by focusReadinessTarget, typed message keys passed to localizeStatic and #<id> fallbacks for unnamed castles."
-  },
-  "23b27b3d8a0644ece200f39f6d3800649aaa5d10723840839827299fc648a2b6": {
-    "classification": "technical",
-    "reason": "Slot ids, feature id, readiness ids, DOM anchor ids, message keys and id fallbacks.",
-    "evidence": "attack/defense slots, autoKhan feature id, readiness check ids, auto-khan-* element ids used by focusReadinessTarget, typed message keys passed to localizeStatic and #<id> fallbacks for unnamed castles."
-  },
   "552c2f503dc65060d8c4ade4a7dab8afdaa0bd456477bd124577bbd4f15348d0": {
     "classification": "technical",
     "reason": "Slot ids, feature id, readiness ids, DOM anchor ids, message keys and id fallbacks.",
@@ -3405,16 +3370,6 @@
     "evidence": "forts/islands slots, autoStorm feature id, readiness check ids, auto-storm-* element ids used by focusReadinessTarget, typed message keys and #<id> fallbacks."
   },
   "4705e9baf4bb7e1227f5d42ce1de4a6571d7fa4e404effe25ba80dd391f6644a": {
-    "classification": "technical",
-    "reason": "Slot ids, feature id, readiness ids, DOM anchor ids, message keys and id fallbacks.",
-    "evidence": "forts/islands slots, autoStorm feature id, readiness check ids, auto-storm-* element ids used by focusReadinessTarget, typed message keys and #<id> fallbacks."
-  },
-  "c28870316fd22538e89b25478f597356550746e881b58c359058b9712edf712b": {
-    "classification": "technical",
-    "reason": "Slot ids, feature id, readiness ids, DOM anchor ids, message keys and id fallbacks.",
-    "evidence": "forts/islands slots, autoStorm feature id, readiness check ids, auto-storm-* element ids used by focusReadinessTarget, typed message keys and #<id> fallbacks."
-  },
-  "b2dd7a326483f9f7db3528d6e94fed80a786a8ef4c6569fb191d84a1e07cb845": {
     "classification": "technical",
     "reason": "Slot ids, feature id, readiness ids, DOM anchor ids, message keys and id fallbacks.",
     "evidence": "forts/islands slots, autoStorm feature id, readiness check ids, auto-storm-* element ids used by focusReadinessTarget, typed message keys and #<id> fallbacks."
@@ -9203,5 +9158,1975 @@
     "classification": "technical",
     "reason": "Typed MessageKey literal, checked against the message catalog by the compiler; the catalog entry carries the display text.",
     "evidence": "Readiness, runtime-state, first-result, Stop and Start-confirmation modules return typed message keys with ICU arguments; the keys are identifiers, not display prose."
+  },
+  "1af3920826bb26180fba9d9dd7e9fa7886685bb7483d0a08c8656d82d30dfacc": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "700c98355bfa5ce32ef9f195b91470f202df84a31234158cb4508e2d17e7c173": {
+    "classification": "technical",
+    "reason": "Component variant, size, CSS class or DOM option value, not human display text.",
+    "evidence": "Button/Badge/Modal variants and sizes, scrollIntoView options, ARIA/DOM attribute values and tone classes in the new CIT-20 components."
+  },
+  "8a5922a0e53c385509aae5d1474d69cfd82fb1b2de8cfeb67f19b11ec76bf099": {
+    "classification": "technical",
+    "reason": "Component variant, size, CSS class or DOM option value, not human display text.",
+    "evidence": "Button/Badge/Modal variants and sizes, scrollIntoView options, ARIA/DOM attribute values and tone classes in the new CIT-20 components."
+  },
+  "ead0f3d72f7393ad5a02d97fc5ab020ff460552cae36f62b8f23a78f17f346f1": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "2dbdc1244aaba9b6be1e9147a1af26806d5f3b1ac3b533cb7d9f096361db1d8e": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "31bce189191bdca1138e64d3b5553770a114bd26c59214edb3e4640b1660273f": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "93ed9ee13dca865758bde48f06b1c180581e03a2c945d1e7e1468b3efd19b787": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "78dea41c9c4141890afe70ca5b3a1aabfcf5084443f6da17294bb48ad18f7fdb": {
+    "classification": "technical",
+    "reason": "Typed MessageKey literal, checked against the message catalog by the compiler; the catalog entry carries the display text.",
+    "evidence": "Readiness, runtime-state, first-result, Stop and Start-confirmation modules return typed message keys with ICU arguments; the keys are identifiers, not display prose."
+  },
+  "6e3d8d2e0046c88d2b60bb332013b8e3fd15cb391567a81ffae744546f10da64": {
+    "classification": "technical",
+    "reason": "Typed MessageKey literal, checked against the message catalog by the compiler; the catalog entry carries the display text.",
+    "evidence": "Readiness, runtime-state, first-result, Stop and Start-confirmation modules return typed message keys with ICU arguments; the keys are identifiers, not display prose."
+  },
+  "35ee50ac7fd0c9878fe5545a1e71023fcdf7ad33e0597edb758c851e5ca73a65": {
+    "classification": "technical",
+    "reason": "Typed MessageKey literal, checked against the message catalog by the compiler; the catalog entry carries the display text.",
+    "evidence": "Readiness, runtime-state, first-result, Stop and Start-confirmation modules return typed message keys with ICU arguments; the keys are identifiers, not display prose."
+  },
+  "3d5ccbf3137f714aa912b3ffcf5e0b1b176a448aa2ac9c83b5c323b1d2336ba9": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "c51bf4c88f1aa9dc8d701dcc9a69a1706b9458cf687563a2601f04ba8a6818a7": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "d05c6e7a833ad5c7b6a398cecbb610b62fadcdec5593a900a8cae6f2366997c4": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "5b4c174caee5378a927618050a51c194e32b0b27a65f48321fdb09f69477811f": {
+    "classification": "technical",
+    "reason": "Component variant, size, CSS class or DOM option value, not human display text.",
+    "evidence": "Button/Badge/Modal variants and sizes, scrollIntoView options, ARIA/DOM attribute values and tone classes in the new CIT-20 components."
+  },
+  "daa96e48097795481af4a0ed09626ff085a0994fd073be5888d3623c32ce76e6": {
+    "classification": "technical",
+    "reason": "Component variant, size, CSS class or DOM option value, not human display text.",
+    "evidence": "Button/Badge/Modal variants and sizes, scrollIntoView options, ARIA/DOM attribute values and tone classes in the new CIT-20 components."
+  },
+  "98dff6b6c7d113365a3618230f91c9ae573f04f0ec2d32d8c4d289ddbe79d565": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "289f06073653cf8d95c0d3cb97de0d77bccb468e3c2cdcb3caf5b41df1f2a811": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "c0634db857bc250b53206e342b03e5f0fd38c54851c362bfdd50ca170e5874e6": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "eb838ace62a307b55d3f854c59c68ee7041c1d9404d0ae5f49c439793d88be07": {
+    "classification": "technical",
+    "reason": "Component variant, size, CSS class or DOM option value, not human display text.",
+    "evidence": "Button/Badge/Modal variants and sizes, scrollIntoView options, ARIA/DOM attribute values and tone classes in the new CIT-20 components."
+  },
+  "88cb5bd1890629357fd1dd5d9a5b556fc00f7869156a56e9346ed1f1dd68b335": {
+    "classification": "technical",
+    "reason": "Component variant, size, CSS class or DOM option value, not human display text.",
+    "evidence": "Button/Badge/Modal variants and sizes, scrollIntoView options, ARIA/DOM attribute values and tone classes in the new CIT-20 components."
+  },
+  "03eefe689a33dc986f0f5d4098636fdac0b5bf107202a9269e3b38e3251adc79": {
+    "classification": "technical",
+    "reason": "Component variant, size, CSS class or DOM option value, not human display text.",
+    "evidence": "Button/Badge/Modal variants and sizes, scrollIntoView options, ARIA/DOM attribute values and tone classes in the new CIT-20 components."
+  },
+  "b64ee30c701df2f24f5f238af9149c8d6db2b871d1fc4f8ff4d0912457d15ba2": {
+    "classification": "technical",
+    "reason": "Component variant, size, CSS class or DOM option value, not human display text.",
+    "evidence": "Button/Badge/Modal variants and sizes, scrollIntoView options, ARIA/DOM attribute values and tone classes in the new CIT-20 components."
+  },
+  "3ac6af975db4208a98ab425c9edd8208c3f0b9be86e937f13182a9c17e6f3eca": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "acc6a0fbb5e531c2e881111b784dc5db1dc51aee24d45fbb6ded02a09cc791ec": {
+    "classification": "technical",
+    "reason": "Component variant, size, CSS class or DOM option value, not human display text.",
+    "evidence": "Button/Badge/Modal variants and sizes, scrollIntoView options, ARIA/DOM attribute values and tone classes in the new CIT-20 components."
+  },
+  "b016601d5f05e2ca258770c9be08f888b13f88d33812e046606d4e36692d4e0c": {
+    "classification": "technical",
+    "reason": "Component variant, size, CSS class or DOM option value, not human display text.",
+    "evidence": "Button/Badge/Modal variants and sizes, scrollIntoView options, ARIA/DOM attribute values and tone classes in the new CIT-20 components."
+  },
+  "73282ea3422ab5098f9edbb86ba9a30e99ca837576852191c43fb189147d91cb": {
+    "classification": "technical",
+    "reason": "Component variant, size, CSS class or DOM option value, not human display text.",
+    "evidence": "Button/Badge/Modal variants and sizes, scrollIntoView options, ARIA/DOM attribute values and tone classes in the new CIT-20 components."
+  },
+  "30719939d3696b8877e80a0d5cfd8bd854c23b6bc17262751c0b08fb08448fea": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "b162ca2abca5c22e954a273724ceed47cb870d8f36adf817bd4a0b06ae5fe054": {
+    "classification": "technical",
+    "reason": "Component variant, size, CSS class or DOM option value, not human display text.",
+    "evidence": "Button/Badge/Modal variants and sizes, scrollIntoView options, ARIA/DOM attribute values and tone classes in the new CIT-20 components."
+  },
+  "5b37ca4ec7c8f81ebb6c57a6d3e28c68519fc053f6bc050b2643ab555854171a": {
+    "classification": "technical",
+    "reason": "Component variant, size, CSS class or DOM option value, not human display text.",
+    "evidence": "Button/Badge/Modal variants and sizes, scrollIntoView options, ARIA/DOM attribute values and tone classes in the new CIT-20 components."
+  },
+  "297740b36cc77ef35972bcd8fefbb5121509d72ec9091920efb914809d677628": {
+    "classification": "technical",
+    "reason": "Component variant, size, CSS class or DOM option value, not human display text.",
+    "evidence": "Button/Badge/Modal variants and sizes, scrollIntoView options, ARIA/DOM attribute values and tone classes in the new CIT-20 components."
+  },
+  "8844edd4bc0ce17efa4a0222715d74670f19450e1edb777721f91802426fb6cd": {
+    "classification": "technical",
+    "reason": "Typed MessageKey literal, checked against the message catalog by the compiler; the catalog entry carries the display text.",
+    "evidence": "Readiness, runtime-state, first-result, Stop and Start-confirmation modules return typed message keys with ICU arguments; the keys are identifiers, not display prose."
+  },
+  "a5fdeaa8dbd715b22be1363f872f6306fe354df8f669098033b6f762fd01bdc8": {
+    "classification": "technical",
+    "reason": "Typed MessageKey literal, checked against the message catalog by the compiler; the catalog entry carries the display text.",
+    "evidence": "Readiness, runtime-state, first-result, Stop and Start-confirmation modules return typed message keys with ICU arguments; the keys are identifiers, not display prose."
+  },
+  "4db98adbe9f9195db4996bb61e47cb1d9a007ed3f7534bb54bffee2de67b0ec0": {
+    "classification": "technical",
+    "reason": "Typed MessageKey literal, checked against the message catalog by the compiler; the catalog entry carries the display text.",
+    "evidence": "Readiness, runtime-state, first-result, Stop and Start-confirmation modules return typed message keys with ICU arguments; the keys are identifiers, not display prose."
+  },
+  "a8a34189b8b9a211dce60bbf6cc31992a8842787cdf1268a65a8684278fac0f2": {
+    "classification": "technical",
+    "reason": "Typed MessageKey literal, checked against the message catalog by the compiler; the catalog entry carries the display text.",
+    "evidence": "Readiness, runtime-state, first-result, Stop and Start-confirmation modules return typed message keys with ICU arguments; the keys are identifiers, not display prose."
+  },
+  "25b53a66612a5112c8fee6d41afedc69fb6619dd8bce180444fa0d6e22fab3be": {
+    "classification": "technical",
+    "reason": "Typed MessageKey literal, checked against the message catalog by the compiler; the catalog entry carries the display text.",
+    "evidence": "Readiness, runtime-state, first-result, Stop and Start-confirmation modules return typed message keys with ICU arguments; the keys are identifiers, not display prose."
+  },
+  "452d8a1dcd5f27561d9998f765eadfa627d5da8bbde077e60ff253162ffc90ae": {
+    "classification": "technical",
+    "reason": "Typed MessageKey literal, checked against the message catalog by the compiler; the catalog entry carries the display text.",
+    "evidence": "Readiness, runtime-state, first-result, Stop and Start-confirmation modules return typed message keys with ICU arguments; the keys are identifiers, not display prose."
+  },
+  "333d579393a05266c3a18e706775fecbd3fa8f278a52e1f23fc33ccfacb8f903": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "b3fc952803042aa023180879b82a9f90865a709d33b40e400ef4d8929cefb250": {
+    "classification": "technical",
+    "reason": "Typed MessageKey literal, checked against the message catalog by the compiler; the catalog entry carries the display text.",
+    "evidence": "Readiness, runtime-state, first-result, Stop and Start-confirmation modules return typed message keys with ICU arguments; the keys are identifiers, not display prose."
+  },
+  "6a6a71f938c3cfdeb01b9cc5256eef9aaf8e9ad0f7104e31e09cadaaa65dcfda": {
+    "classification": "technical",
+    "reason": "Component variant, size, CSS class or DOM option value, not human display text.",
+    "evidence": "Button/Badge/Modal variants and sizes, scrollIntoView options, ARIA/DOM attribute values and tone classes in the new CIT-20 components."
+  },
+  "89264323857258ba6921db7f0699094a0c8561a8bdb7d4183fd73a2e34fbafef": {
+    "classification": "technical",
+    "reason": "Component variant, size, CSS class or DOM option value, not human display text.",
+    "evidence": "Button/Badge/Modal variants and sizes, scrollIntoView options, ARIA/DOM attribute values and tone classes in the new CIT-20 components."
+  },
+  "b9563c632ee5fb09e6932ae056115bc043db3ec6966add3693cf48625247ee76": {
+    "classification": "technical",
+    "reason": "Component variant, size, CSS class or DOM option value, not human display text.",
+    "evidence": "Button/Badge/Modal variants and sizes, scrollIntoView options, ARIA/DOM attribute values and tone classes in the new CIT-20 components."
+  },
+  "c770556ec1c65dadc452475b9206ac3fb96d6d289d694786ef00430b80012b7d": {
+    "classification": "technical",
+    "reason": "Component variant, size, CSS class or DOM option value, not human display text.",
+    "evidence": "Button/Badge/Modal variants and sizes, scrollIntoView options, ARIA/DOM attribute values and tone classes in the new CIT-20 components."
+  },
+  "d49763ffe6a1a5715ae5ee8a4521d6c533c16dbfe3b4eedebdd2dbd70b20665e": {
+    "classification": "technical",
+    "reason": "Component variant, size, CSS class or DOM option value, not human display text.",
+    "evidence": "Button/Badge/Modal variants and sizes, scrollIntoView options, ARIA/DOM attribute values and tone classes in the new CIT-20 components."
+  },
+  "46b80ac41f844208593512cc589c0d0ac06c1c0f5abe54fe2c92c0cbdc15f5d8": {
+    "classification": "technical",
+    "reason": "Component variant, size, CSS class or DOM option value, not human display text.",
+    "evidence": "Button/Badge/Modal variants and sizes, scrollIntoView options, ARIA/DOM attribute values and tone classes in the new CIT-20 components."
+  },
+  "b28488cda1311ab88616ddf23f0c8673f718ba69ed2db673eef610f24b1d5189": {
+    "classification": "technical",
+    "reason": "Component variant, size, CSS class or DOM option value, not human display text.",
+    "evidence": "Button/Badge/Modal variants and sizes, scrollIntoView options, ARIA/DOM attribute values and tone classes in the new CIT-20 components."
+  },
+  "7f59277558f3e5fb088479e0cb461caef92b28aa79ea72a03fde46c52cdee30d": {
+    "classification": "technical",
+    "reason": "Component variant, size, CSS class or DOM option value, not human display text.",
+    "evidence": "Button/Badge/Modal variants and sizes, scrollIntoView options, ARIA/DOM attribute values and tone classes in the new CIT-20 components."
+  },
+  "b4777e211f29c51edf6100b8cf4767fd574011bf7c58fbfea586aa5db17c5a25": {
+    "classification": "technical",
+    "reason": "Component variant, size, CSS class or DOM option value, not human display text.",
+    "evidence": "Button/Badge/Modal variants and sizes, scrollIntoView options, ARIA/DOM attribute values and tone classes in the new CIT-20 components."
+  },
+  "1b052035ac622e3e8272af462d53f7bd7050270bd6432499613866e46a3f0268": {
+    "classification": "technical",
+    "reason": "Component variant, size, CSS class or DOM option value, not human display text.",
+    "evidence": "Button/Badge/Modal variants and sizes, scrollIntoView options, ARIA/DOM attribute values and tone classes in the new CIT-20 components."
+  },
+  "c67cd620ae543a0ed117133033b72796333719b174c4d87ae727c69639b1bbbb": {
+    "classification": "technical",
+    "reason": "Component variant, size, CSS class or DOM option value, not human display text.",
+    "evidence": "Button/Badge/Modal variants and sizes, scrollIntoView options, ARIA/DOM attribute values and tone classes in the new CIT-20 components."
+  },
+  "dc1aa2a7de3acd5de110b40f63174943a87d18d702774e7bdac938cdf327695a": {
+    "classification": "technical",
+    "reason": "Component variant, size, CSS class or DOM option value, not human display text.",
+    "evidence": "Button/Badge/Modal variants and sizes, scrollIntoView options, ARIA/DOM attribute values and tone classes in the new CIT-20 components."
+  },
+  "0cfac2cb8316dbc07ec43ab6d2dfc9c41b11c888b930adf7e661e9de3a624063": {
+    "classification": "technical",
+    "reason": "Component variant, size, CSS class or DOM option value, not human display text.",
+    "evidence": "Button/Badge/Modal variants and sizes, scrollIntoView options, ARIA/DOM attribute values and tone classes in the new CIT-20 components."
+  },
+  "de0077a1b0377009c23fd853c9f068255b569178b3ff07e4deeade704a867b98": {
+    "classification": "technical",
+    "reason": "Component variant, size, CSS class or DOM option value, not human display text.",
+    "evidence": "Button/Badge/Modal variants and sizes, scrollIntoView options, ARIA/DOM attribute values and tone classes in the new CIT-20 components."
+  },
+  "0a2d99fa071635b63407409ea6981a23479e43c71fd89cd7fb75a9331f67f6e7": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "017161d9c2269ee8bff68f780a7b10bdecb9ee94e1d8c411eb28daf19814d70a": {
+    "classification": "technical",
+    "reason": "Component variant, size, CSS class or DOM option value, not human display text.",
+    "evidence": "Button/Badge/Modal variants and sizes, scrollIntoView options, ARIA/DOM attribute values and tone classes in the new CIT-20 components."
+  },
+  "249f49b8c91a7b416a318684e70fd91156e40fb416546f871ca50913250a0772": {
+    "classification": "technical",
+    "reason": "Component variant, size, CSS class or DOM option value, not human display text.",
+    "evidence": "Button/Badge/Modal variants and sizes, scrollIntoView options, ARIA/DOM attribute values and tone classes in the new CIT-20 components."
+  },
+  "355d1d3d0365c22e4fb924e283a3d5bcf1af32475fc8936eeee0ab3195ed598d": {
+    "classification": "technical",
+    "reason": "Component variant, size, CSS class or DOM option value, not human display text.",
+    "evidence": "Button/Badge/Modal variants and sizes, scrollIntoView options, ARIA/DOM attribute values and tone classes in the new CIT-20 components."
+  },
+  "03813eb634e195576edb34413da251f2f4fa69228d21c6987ab7a6a45717a5a0": {
+    "classification": "technical",
+    "reason": "Component variant, size, CSS class or DOM option value, not human display text.",
+    "evidence": "Button/Badge/Modal variants and sizes, scrollIntoView options, ARIA/DOM attribute values and tone classes in the new CIT-20 components."
+  },
+  "7a6b72a1c0663603b025df9eff348d61f3e3f2425f6eb3a2b1662bad2727fc0f": {
+    "classification": "technical",
+    "reason": "Component variant, size, CSS class or DOM option value, not human display text.",
+    "evidence": "Button/Badge/Modal variants and sizes, scrollIntoView options, ARIA/DOM attribute values and tone classes in the new CIT-20 components."
+  },
+  "860c212f5761935352c402eaff8d12423d8f1895ba78810f85416a2c7a144a71": {
+    "classification": "technical",
+    "reason": "Component variant, size, CSS class or DOM option value, not human display text.",
+    "evidence": "Button/Badge/Modal variants and sizes, scrollIntoView options, ARIA/DOM attribute values and tone classes in the new CIT-20 components."
+  },
+  "7a3408c85e0815516425106195495b2cc34303b2a34df735813a6d477f9568e0": {
+    "classification": "technical",
+    "reason": "Component variant, size, CSS class or DOM option value, not human display text.",
+    "evidence": "Button/Badge/Modal variants and sizes, scrollIntoView options, ARIA/DOM attribute values and tone classes in the new CIT-20 components."
+  },
+  "d92368e2a843b381fe5b3cc302bb3cc095728b48a36ac5be035581f93c0065ed": {
+    "classification": "technical",
+    "reason": "Component variant, size, CSS class or DOM option value, not human display text.",
+    "evidence": "Button/Badge/Modal variants and sizes, scrollIntoView options, ARIA/DOM attribute values and tone classes in the new CIT-20 components."
+  },
+  "3989fd4f058fa5366f01a26f606ba551d598ade5b000d82788b95f79da5d3c6b": {
+    "classification": "technical",
+    "reason": "Component variant, size, CSS class or DOM option value, not human display text.",
+    "evidence": "Button/Badge/Modal variants and sizes, scrollIntoView options, ARIA/DOM attribute values and tone classes in the new CIT-20 components."
+  },
+  "b9dc2816c6f7b494961c0bba45fc673f27c8fc4c8a07a1456cc23b9c3e7a34d9": {
+    "classification": "technical",
+    "reason": "Typed MessageKey literal, checked against the message catalog by the compiler; the catalog entry carries the display text.",
+    "evidence": "Readiness, runtime-state, first-result, Stop and Start-confirmation modules return typed message keys with ICU arguments; the keys are identifiers, not display prose."
+  },
+  "e12387c925e50198024abecb4a62b4294130a0dbb0dbdf52cca8b9eca5405768": {
+    "classification": "technical",
+    "reason": "Typed MessageKey literal, checked against the message catalog by the compiler; the catalog entry carries the display text.",
+    "evidence": "Readiness, runtime-state, first-result, Stop and Start-confirmation modules return typed message keys with ICU arguments; the keys are identifiers, not display prose."
+  },
+  "1cd1add6f2742a8d5532ff2572ef10b58bd16f1c2ae9de8db5eca2f4b5e8311f": {
+    "classification": "technical",
+    "reason": "Typed MessageKey literal, checked against the message catalog by the compiler; the catalog entry carries the display text.",
+    "evidence": "Readiness, runtime-state, first-result, Stop and Start-confirmation modules return typed message keys with ICU arguments; the keys are identifiers, not display prose."
+  },
+  "decf49156ca471f34bf8f356c5016087c666d61517c48763e65fab928fec2b22": {
+    "classification": "technical",
+    "reason": "Typed MessageKey literal, checked against the message catalog by the compiler; the catalog entry carries the display text.",
+    "evidence": "Readiness, runtime-state, first-result, Stop and Start-confirmation modules return typed message keys with ICU arguments; the keys are identifiers, not display prose."
+  },
+  "374fa5a5d95e34f0d8b0547f7ced619040adc75f6bed348e17c2e1286d843159": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "cbd271010b9714abde34a2cc738aabc4132e45966eb1594b8505ccc2967a0573": {
+    "classification": "technical",
+    "reason": "Component variant, size, CSS class or DOM option value, not human display text.",
+    "evidence": "Button/Badge/Modal variants and sizes, scrollIntoView options, ARIA/DOM attribute values and tone classes in the new CIT-20 components."
+  },
+  "e0a945d50935a78ddbf819259c52c4fe74c6970e0ee396fbca9420edd2b85ff7": {
+    "classification": "technical",
+    "reason": "Component variant, size, CSS class or DOM option value, not human display text.",
+    "evidence": "Button/Badge/Modal variants and sizes, scrollIntoView options, ARIA/DOM attribute values and tone classes in the new CIT-20 components."
+  },
+  "255daa0e032e626c012ea73a994cf7372ef451557f7723f07527013e1a4ac9de": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "5258d43ea95712bc54c3932af77898b46e942f3af20e45e4e5668b5c01ecfef0": {
+    "classification": "technical",
+    "reason": "Typed MessageKey literal, checked against the message catalog by the compiler; the catalog entry carries the display text.",
+    "evidence": "Readiness, runtime-state, first-result, Stop and Start-confirmation modules return typed message keys with ICU arguments; the keys are identifiers, not display prose."
+  },
+  "60aefb2b241187df16e4b36ec68b9966eb60882d3707ce559349fc007b440c93": {
+    "classification": "technical",
+    "reason": "Typed MessageKey literal, checked against the message catalog by the compiler; the catalog entry carries the display text.",
+    "evidence": "Readiness, runtime-state, first-result, Stop and Start-confirmation modules return typed message keys with ICU arguments; the keys are identifiers, not display prose."
+  },
+  "5ed50053e65a60e4b2dd220f91ae43a821670f4ad33e28b350773d502aa4d8a9": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "e0f2fd3e015dee02d48fa84a710d86bf7948f1f395fee8c9cafdee29d0137c37": {
+    "classification": "technical",
+    "reason": "Component variant, size, CSS class or DOM option value, not human display text.",
+    "evidence": "Button/Badge/Modal variants and sizes, scrollIntoView options, ARIA/DOM attribute values and tone classes in the new CIT-20 components."
+  },
+  "ee1cf78cba9f6264ffc4b7775140aa6247cf49675bc3106d80d4e8bb2989c741": {
+    "classification": "technical",
+    "reason": "Component variant, size, CSS class or DOM option value, not human display text.",
+    "evidence": "Button/Badge/Modal variants and sizes, scrollIntoView options, ARIA/DOM attribute values and tone classes in the new CIT-20 components."
+  },
+  "fa7252dc29e33a23fa32004f3379902d704683afd2bb710129003b011ca1caaa": {
+    "classification": "technical",
+    "reason": "Component variant, size, CSS class or DOM option value, not human display text.",
+    "evidence": "Button/Badge/Modal variants and sizes, scrollIntoView options, ARIA/DOM attribute values and tone classes in the new CIT-20 components."
+  },
+  "02df565b74625052ac67b984ef6cd5e9cb57c7d25d9c20a359dd2e4f013a6552": {
+    "classification": "technical",
+    "reason": "Component variant, size, CSS class or DOM option value, not human display text.",
+    "evidence": "Button/Badge/Modal variants and sizes, scrollIntoView options, ARIA/DOM attribute values and tone classes in the new CIT-20 components."
+  },
+  "45ea28f2153bbe2e72da3d19b5aed325c8bf2419cb930324a54e17a1cd717229": {
+    "classification": "technical",
+    "reason": "Component variant, size, CSS class or DOM option value, not human display text.",
+    "evidence": "Button/Badge/Modal variants and sizes, scrollIntoView options, ARIA/DOM attribute values and tone classes in the new CIT-20 components."
+  },
+  "0c7c5f8461aea01d306b8f2dfeefa828840c6cd37ab3ecbc7129e109a70756ca": {
+    "classification": "technical",
+    "reason": "Component variant, size, CSS class or DOM option value, not human display text.",
+    "evidence": "Button/Badge/Modal variants and sizes, scrollIntoView options, ARIA/DOM attribute values and tone classes in the new CIT-20 components."
+  },
+  "2fe2a7abb598557ac8a1607ea4a782e8ac4953f57aa4aeb09bb8d54ecead3bdf": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "a48a4aa54fc22a67917eb22f5dc45adfd56a9f7b3c6ed37717388f7f8742c804": {
+    "classification": "technical",
+    "reason": "Component variant, size, CSS class or DOM option value, not human display text.",
+    "evidence": "Button/Badge/Modal variants and sizes, scrollIntoView options, ARIA/DOM attribute values and tone classes in the new CIT-20 components."
+  },
+  "f772b81bed1fb667791147cc06cd780ac919c6cba0aa44091166b00301d3ba08": {
+    "classification": "technical",
+    "reason": "Component variant, size, CSS class or DOM option value, not human display text.",
+    "evidence": "Button/Badge/Modal variants and sizes, scrollIntoView options, ARIA/DOM attribute values and tone classes in the new CIT-20 components."
+  },
+  "d9c8426ca92601b2796af07fe8522b025863d48b135f350197141b6895f7177e": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "dda57665eba2229d2cb392ce4b4249e36353b51f043b9a7b1b157eea86a39276": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "dd625fb710f4e2b8add609790d414704d8a242143df74ebb62419202cd44719a": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "22a351c6efa7871fe38f81d3f13924898cbb286c4bb82a0a89bbdb146a2e4716": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "d6edfc5c1f698e819e7a75f90ea7baa3ff58cd63aacfb8cf09cfa2181839a02b": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "2d5ae746d5e903ad26277e6155da0929faabc089f7089a8f78a05db29b117bf1": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "2d3b791bf3126d4a3a9fe84abdec1a4844ef2ee37a0efd794faa079fd2d96870": {
+    "classification": "technical",
+    "reason": "Component variant, size, CSS class or DOM option value, not human display text.",
+    "evidence": "Button/Badge/Modal variants and sizes, scrollIntoView options, ARIA/DOM attribute values and tone classes in the new CIT-20 components."
+  },
+  "13922def583e4850ccad138639f230ea94df69a29bfb56be5f0625594d724636": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "d53fc518210fc3c75275ebb0046c8cf57f9b861dbf6be8bd4e56500a1d009d92": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "1feed0e8b1d09eaaf13a8407df2005d18ad39bfd55caab33162619a795865d8c": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "48ef85f40a7822f92f3d3db6c86fb525021c95f70bb49bf4e4bbfc3b10ee7a50": {
+    "classification": "technical",
+    "reason": "Component variant, size, CSS class or DOM option value, not human display text.",
+    "evidence": "Button/Badge/Modal variants and sizes, scrollIntoView options, ARIA/DOM attribute values and tone classes in the new CIT-20 components."
+  },
+  "831555d457de3ebbb3e14ed0a718e8878591e26e32431b9d1ed689ffa7a886f1": {
+    "classification": "technical",
+    "reason": "Component variant, size, CSS class or DOM option value, not human display text.",
+    "evidence": "Button/Badge/Modal variants and sizes, scrollIntoView options, ARIA/DOM attribute values and tone classes in the new CIT-20 components."
+  },
+  "ca81349f0c148ea46d41f212d7b47ea103c67a14dff370f4de83014260809468": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "9910703696d378bce3de228d97cbb7fe6637ee41cfca3fd11fa674e93f7afb97": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "2869373d87e289216bbdf648c38b49bed37c545d2ef67563628fe6add0024486": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "fc6dcc63639fbddb205fc2302dc59fd19d3408078809955cc4581be431a90f43": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "25f1da1c2030b8a52a1f494cb2cef678ab0d416a26e2041b7aab47054c5ec0b4": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "fcdb24c8d0137a786fb841942cf6b7a343c0735ab23d3b1b103e65a962c64e0a": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "c35964e7520abe982a944142b24783ea3ae930312169ac9a6ae6bf6a784dcd4c": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "795cf0078fdd9a53b2d2168ff340d48aceb96f4f256ff21bc50e382dda27c429": {
+    "classification": "technical",
+    "reason": "Typed MessageKey literal, checked against the message catalog by the compiler; the catalog entry carries the display text.",
+    "evidence": "Readiness, runtime-state, first-result, Stop and Start-confirmation modules return typed message keys with ICU arguments; the keys are identifiers, not display prose."
+  },
+  "cf033edbc952e51ae10c2bd06ee1ef81e91d0a40dd9fc0b688e6b01382c55b6e": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "e0db9010b46ac03a0b12a95f18b23922c990c0294958faf54f35f917b52c7777": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "0b4304aea617fabd3d03bd6e156bafa974c1d98449a044ab25bc8e50a09c0557": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "4dd8d2c0504c09ea5b3559c31e4373e10da585a0d4dadff8d11fe6add5d7a2b1": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "a84a7aaa7c31bf09e296422ee9133c843f9efc0ea4371718ad24bb6b0c5ceaee": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "1fbaae5a963945ce476a8d2823ec1b36ca297a8edc97efb3ae4e7b545ba690dd": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "2396182f5e8295a7daf4caf72c93d2b462b20cbe15149f9a497c7a95f7e69076": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "34bb22613e7b20cca8324e29a31fb6d881a51e014f12c3216a2aa2035e01ce4b": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "cb5c856858041d85892c4b392b9bc478c3eef1ed29f61943efd376f603561cec": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "9a9f2da3a6f6ac1b3051efc64788eb70e72fee5d4f20c9d9816442a691e75df3": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "20ed6ad6e2219a52b799665b8c597f3717212a5a0363471394e75047713f2781": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "b17414e938dc7497effeb6f47289a449b478b3da7d61ebee1f478831cc825d74": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "9ee6fd79150bfae1e74a9af339745fe1ddc8a515355a75b460515e82a760003d": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "21dbab9174285647ad6d4711f8769ec40f05b551cab9dc26f46ecf3d0b7d7010": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "583b61f5fdfe245d6dc4e5fce30b0369dd674a4b1fa2472aedc2181490975092": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "35027d96054cf73dc7cf89ef08c833fddea056e9b527c4283214fbd920440d75": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "1cd42ccbeceff681f3a01929d971fd2879bdd2003d238dab46bbab7495604ca9": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "8e40d1a12a539f6c0d2ddfc28b8cf5687790541e7a2274dbb783622db25bac32": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "efef8e332cb2d9ff2adad91d1b0c7e1f5a2aa5b9a37e431874ea18c1bf1d715e": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "a8db2a9833ec335ba96528a32c668afde37ecffaab62eb43020c3cc1eb64b331": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "db3f8b8c5e572770b88c0df3aef7f7a65cba5f59f22919c6d2f7dadfcbc5cae1": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "c745d71394b946aec29eb0243e8bc3afa9b9839a0469c8bb451acaa8339f05b9": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "0706dfc4750dc10c44857381c28adc4edee37d05fd2c4ef3a43c43995f3deaf0": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "835a60eaf2827d7e476695c10d3c9c82c43603c17154323dddb827241c18647e": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "c71d30a240a14b97a9d56a92a84ed6bda0362b65a8cd7d428aa8e483849ff8ac": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "0bb97efe41caee610e2a3ed42ef39b7013f2685728de9f61ef748e89edd736ab": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "adf87e54c5fd18521db2e6d4b841080bbd2a864109a5117ca4852c7e3b1e59a7": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "5a7a0eae8b83178f687cf97c6cfe4dfd218b06a1b6b52cac9dcd77dacee12c7a": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "dbe6d05388a519d6df428d3bfdf8a514b80f39545247ed8761c73712c2e98dcd": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "d94f1ad59024064a631bbd26c8124a069528f87e6a1276f259a2d59884d5eab4": {
+    "classification": "technical",
+    "reason": "Component variant, size, CSS class or DOM option value, not human display text.",
+    "evidence": "Button/Badge/Modal variants and sizes, scrollIntoView options, ARIA/DOM attribute values and tone classes in the new CIT-20 components."
+  },
+  "21cc57bb8e91598ab9d8b322c93d483d897666fe8bfc718f0b30146e960b5cd6": {
+    "classification": "technical",
+    "reason": "Component variant, size, CSS class or DOM option value, not human display text.",
+    "evidence": "Button/Badge/Modal variants and sizes, scrollIntoView options, ARIA/DOM attribute values and tone classes in the new CIT-20 components."
+  },
+  "a7ddd9a5b90a1b184b2f028f8c96925279860383f31adc9c821f2b024eb073f0": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "01d974da717bef277a5b9e6978ae6ba247ddf59530d00874e30dee3b03e8ce49": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "048107d390bf7df2d79245df3f6a53587b037a7559b1771b24076c3207dfe99e": {
+    "classification": "technical",
+    "reason": "Typed MessageKey literal, checked against the message catalog by the compiler; the catalog entry carries the display text.",
+    "evidence": "Readiness, runtime-state, first-result, Stop and Start-confirmation modules return typed message keys with ICU arguments; the keys are identifiers, not display prose."
+  },
+  "b4737b0d3c5f1ad4eb6ea75af392584d6a468e57d80e31aac28d833c7e97d794": {
+    "classification": "technical",
+    "reason": "Typed MessageKey literal, checked against the message catalog by the compiler; the catalog entry carries the display text.",
+    "evidence": "Readiness, runtime-state, first-result, Stop and Start-confirmation modules return typed message keys with ICU arguments; the keys are identifiers, not display prose."
+  },
+  "a7502f9ddccfd194eaacbc351c93278cdd9bda6ae90e9f1b1c6c104f4b7faa30": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "714f94b947ecb02450a6785621f9bd6f2b1d0e8836a84500a002121ede2204bd": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "a6e9f250739072ae7358b575d5d705350a0240a97ac091c6a27fa96598a1840a": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "5ced3ea497768f8d00dc0eaf95fb6287b8ba26e49cec886176bff6e81adc3af9": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "bb94bd67bb619026c9c5ca322642dd5255b1638b41d0487274feecb8d360b2d4": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "5633a5df59193e4fa3096c73689605ebf4bea066afb8d7bb4dc0e31be086b522": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "cb7bf8b815b6791b9398a913bff32cce807eaf946dad17eae2a3adfa2b8a28c0": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "43861e2fcf774e73a36eb3ae0d222c6ae6312ce269286993349aad316a405b30": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "8e9daf7b3421c72332092d57cda3d6fe5d919bd10ecc57243ac08a689cbcd797": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "868799c2626763ebb9616e726b97abc7d2d40a04e9f025f2a8370906f23489ae": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "b9798ee213a891eba03375d398147d9f2b2328453250eb173fa4cbdf71df2398": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "efe357c9c72636d2377a9096c152d2e301c8cea3b5f45da249e6560639287bca": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "2b723a4f9a6455adf7ce60e0659807c8793add501c3bf8b6fc85548fe8e9def5": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "9f879f4175f6e3c9d08cf78cfa19eccd23cf1350618ebe2f0174c84e789f623c": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "4157c9b6ca31eb13c135ce0890d08450acb2db906dc7f3d1fa378a805e88eec8": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "d4ebe0bf4512764386914377cbaa5af8b7cfb0fab97fca1a281549358c4469b9": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "93eda5e343a65c0638062c010564095452c88ff38a97bfe291a022faf2e17a05": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "90c05619ea361212dbf625f6a28c66302fd786b31cce6197899731588a32319e": {
+    "classification": "technical",
+    "reason": "Typed MessageKey literal, checked against the message catalog by the compiler; the catalog entry carries the display text.",
+    "evidence": "Readiness, runtime-state, first-result, Stop and Start-confirmation modules return typed message keys with ICU arguments; the keys are identifiers, not display prose."
+  },
+  "851269006a79f8c0360d5b8df71e4b69ce5b04f1cd18c56b1eecb440aa276228": {
+    "classification": "technical",
+    "reason": "Typed MessageKey literal, checked against the message catalog by the compiler; the catalog entry carries the display text.",
+    "evidence": "Readiness, runtime-state, first-result, Stop and Start-confirmation modules return typed message keys with ICU arguments; the keys are identifiers, not display prose."
+  },
+  "c9dfcae9878db53ca2bc1c162c94567e5314ec62672ab9d4d8c5a7f01dcf33d8": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "90f403a97a7da5b38c6b5e5f0842e1f1323a56637cccdc002aa925b79bc02fc4": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "97a3f01449c11df90755aa0203ef70d36ae858b3133a03b74c95745edb56eb34": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "d717fb305e1c957c3d7e337cf63aa5197b5004589d4a35ba9f6eaaf7e9298a62": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "a0f3e2627ca4c053a4346d8bc3df8f84a8f9c4da5faef299ba4ea94a36db4937": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "a744370e9adb749494e6f788510ca743f04776e8929ce583f54e4b1bc56d8257": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "cc42cbb4fad7519f1fb715c7ccf760da9589c017e9cacca235dbf7fb3709344d": {
+    "classification": "technical",
+    "reason": "Typed MessageKey literal, checked against the message catalog by the compiler; the catalog entry carries the display text.",
+    "evidence": "Readiness, runtime-state, first-result, Stop and Start-confirmation modules return typed message keys with ICU arguments; the keys are identifiers, not display prose."
+  },
+  "7dbb7632945c9fbed02266a0951a1f0e66343adb5056e70d9160b7d1642dedbe": {
+    "classification": "technical",
+    "reason": "Typed MessageKey literal, checked against the message catalog by the compiler; the catalog entry carries the display text.",
+    "evidence": "Readiness, runtime-state, first-result, Stop and Start-confirmation modules return typed message keys with ICU arguments; the keys are identifiers, not display prose."
+  },
+  "b86b1f8b7386ac53ab5e332fc1b9048a413f8c318e94a6c825ec43579f42de1f": {
+    "classification": "technical",
+    "reason": "Typed MessageKey literal, checked against the message catalog by the compiler; the catalog entry carries the display text.",
+    "evidence": "Readiness, runtime-state, first-result, Stop and Start-confirmation modules return typed message keys with ICU arguments; the keys are identifiers, not display prose."
+  },
+  "ac034e2bdce201356962d2a636b4a5b98c847cac2c80f510d85d3ee7017b95c4": {
+    "classification": "technical",
+    "reason": "Typed MessageKey literal, checked against the message catalog by the compiler; the catalog entry carries the display text.",
+    "evidence": "Readiness, runtime-state, first-result, Stop and Start-confirmation modules return typed message keys with ICU arguments; the keys are identifiers, not display prose."
+  },
+  "15c177b59669661b458fac41c536be317251b3202d2f63ee3e68b8488d103692": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "19f88322a0b0d6e25a6716bd448fc103859cdb6f1d98705fa63234662f1e739a": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "6d68358c9887d5b6ae4d60ab02163245bb379cc62734408e09ad0c3ad0f43452": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "5b468789b200e541cfcbdf3d5f1eea9de6f57edfc0cabaa7ce0cc8fa2a077cdb": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "86bf1f40be62e6ff3bc2b222b53abfc587f7630f7a0e6f28e4226690f55de5b8": {
+    "classification": "technical",
+    "reason": "Typed MessageKey literal, checked against the message catalog by the compiler; the catalog entry carries the display text.",
+    "evidence": "Readiness, runtime-state, first-result, Stop and Start-confirmation modules return typed message keys with ICU arguments; the keys are identifiers, not display prose."
+  },
+  "eb3b5185558981d7bc7f8872c3a68a8ae10c6ee41cc19460dc9ed680bc0799b6": {
+    "classification": "technical",
+    "reason": "Typed MessageKey literal, checked against the message catalog by the compiler; the catalog entry carries the display text.",
+    "evidence": "Readiness, runtime-state, first-result, Stop and Start-confirmation modules return typed message keys with ICU arguments; the keys are identifiers, not display prose."
+  },
+  "96bfa9e4f4c49e3c40624d9ea0d399490f3e345aba1e15364cc6cff792f1fc2d": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "8abf00c958e47af568e2781f4da7de8ade94025410b547806a77e8c0ee80cc25": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "719f3afc82eb7105eee6249b265cdb6a93f22bae36ecb5ca230b12ddb2cf308b": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "600b37bb94eb1fc606f4d00e11455fdc8b47b6da7dbe0f50c892f06a20698cfd": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "f8523fbf929d445485bb2ba9bd715c130301c4739ed332b2932a19e8fd5ce80b": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "8959f6f2ff33aee08b632bcb70ce7eebeb90d391184bdb533bfba2e5291cd183": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "dee23719f8803e8ff64fe6dd4964933589d1cd10efbe28b35deb3debeb9c63d1": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "6cf7da95ff0764c5d82930e726ce598c91cd5c63a581c3bb287f7d53c1422b93": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "2fdbfc62175b23c995ba43c0b2058b8c074d46fff6095988045a4ba2f6c60b3a": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "f84417c58b2cd8824a64b509cea4a65ae027ce98922329807fda119ce2b1a7b5": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "e141faa32a79eb90518b99e0b9b1ff4fb16df9da215ff5d316926db47e7c40bd": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "6c271b9c23634704b5c5feb310e5ba613aa5c2dd92a6c8c916394f9f7f26c3fe": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "067c59f3942ee3bea5c67d672d7cfb2ac45c167ffaac88111a69d5c1766db74b": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "fc9574bc658043363a188c9d5c9c8a7b11a078edce6b6c7603943473a423702e": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "46b49af2a9d7f2370037f12e2269d45a17efcc1412823e5685755f2156d76844": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "7b0629e766ce42d888e95448d786ef64c39222339a282d0dcdd1e5b36a31e4d3": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "0e2aaff436beab4f133448a1e3afcab1b520fa01004b7524394a76855c8593ed": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "e797eccb717278241c3739d67422d131afb9db18beaaad64053b04ae9cf93d0e": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "bb79fb628325c4ac812a0f014bc752d28ee7f3065fa02cf9709f8f762968e62b": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "a75118aeb73a98faae518b044df3bc64fd535a772df9120038beaf810a3b5284": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "30472da398f6ebcdbaa7b97edf4f82f511ce48990be0b8c1340293cb9e21b555": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "2d8e2359e97e8737da9a7d8c81f2cd936ec8e0746389c6debeef12e39fc8269f": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "63cb88ab33e11843bcf13541800a758d6119d36cd9c9cd22df6e79b491bd5dd0": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "4f48a89e181f282486f0d737738a3d4ecae83019ba07ba10c541c4160676f885": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "cd3fa054fe389ea091ebd797634ad5bbbf8ccabf784bdbe8b4586759b07fdd16": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "ebf646e380a652d6e1f97d1448cb7428894c6a66563c3cedb32a9aa562cd310d": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "b6b341d2758c617942b3371bb07022ad9eb97e78872aec1d097d632962677eac": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "7f72f5c4c9d8408dc84ea040891197d7950c950febe0c4eb1a76ac0424776119": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "a292a00e02634383a3c88cec5d1b4230ff25ae0d49de91feb6759ac2617272f4": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "451c1802c564b0b7c39b8a1c0541326d25f06c46023cac3728bf99c18baa7e8a": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "aed50b842a3b6dac3cd344e88b3ff127e0892dcf58586230d40297db3537e191": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "09ecffdfcfde4ddde431aca995be7047090f794484da67b47aed5db2cc875f8f": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "75903c055e56948677e6c457a9240096ec517e0c13c572ce67ed411d36a79604": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "4dc1f8e4feccc3b02d4cb1fb84b6d9442b7ce50fbe5ac9dcd0409339f8457745": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "2fa5e89242f598012ff8b7dcf8988c5b138ab42f11ae4b2e5317df6ed22e383d": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "3722722585daeb7be2fa181f5990ebe98aa4879d261ef24beff440e233b5a43d": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "949e5667d2de36f1d342f8d0f9b1412ff1a9f1403b1190db3c82418475a6d4f1": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "0506ae03e554018b174dc4a27cea80f027dc0be9e6b3684a1641f49c0e7b7229": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "be376ce1103a96cd918ab4c91989377ec99b6c046712298520b73cfb47cb1486": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "ce281eb1e2a39a429b62a2ab7e3ef18b801f25859b819e2916af4e2e606d29d1": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "334a97a15a9fa7a4363d9298f71311e66cd0ba70104782209f70ee63ec86251a": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "35d2f375c3e63dc6ecd94203037ee36fe6b185a632080f1356a9b9a03a65317d": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "114530d8fdb011d6f31e5c86f0412f240a6a31d669e349be57f43f0b43d99d55": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "4f053f6293201d233a3c7106a53bf1d742a0cf61428adf37cc815360ed2b7572": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "1d9b0c14197878b5dfc91559d0f5d17d5f71c1292431f4c32ff41de02c1d121e": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "caf99d9b09dc7ba7cf42c4412d09c4d0c9878b87599616a2391e0094c40d568d": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "7454c5ef51bfb7b4c7fde1e2f07863276beaad2b392219829edb053b5a110115": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "1799f6a93e85f3300b49df1c7b97574ad3204218919aa7a97632cc8afd892580": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "26485979cbb18050e371bc9c981ac18e921ec30f8bc5bd037eec3a546262672a": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "0c9e069adcca3addb19abcfeb055983fcdcd0bab680d9441df5887d199e4f9f5": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "e410026ce654868384184793a64930bafda35f846131d61ee3bdfec4d9276fb4": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "357750d8521936302f766e4b7e759f92796b2e0847533b41b11e5b519f717b42": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "26d27f95789e68417a81fad4d46dc43ea683dd518f93ad2ce52c5c6cfce92056": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "e07df71d668e62996ea6a8099039a1f8c36a3f384ec12926b63da62998050b39": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "6473339dcab874239618c380252a83def937095e955af0edd1f0d9c3f05c1a9e": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "45d0ba5cf54d794a0136d27877a15e22c92bd609f8a68c7860dd33f099df9bf1": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "791aa35147af3404c65ac8c88b3669f29809a93ff38cc9e50f2d5b4a04cfa2ae": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "bc91d99624ab4a238cfc170ed56216afcfa65e26f5cacd9c4bc58e50f33b77db": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "2f381e661a97a7042e8cd2e75c52e54abdbf4cefe9cfc3278162317a807bcfdb": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "3e4e3beeff8ec89a7d06ed2cc5b2bd6f7d437dc28845fdd4cf07c3fe254dadf3": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "89e0624489f1d52b69d5812c4b78954dc7803e83117b65ef261d4a454774f46c": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "3e08f4b3bde729986df76933b4bea3dfa06591c7190676ca95406c3c249b15ca": {
+    "classification": "technical",
+    "reason": "Typed MessageKey literal, checked against the message catalog by the compiler; the catalog entry carries the display text.",
+    "evidence": "Readiness, runtime-state, first-result, Stop and Start-confirmation modules return typed message keys with ICU arguments; the keys are identifiers, not display prose."
+  },
+  "6cd04e8564640247b565c5dba1f69537d50711260fc7a80fca90bb1447446159": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "4bdb836b9eaffaaf5ead990f7188e3fd0b2d3adf9374d1e64c6503a189eeed11": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "f77c4ac08ecb27836b334a91bef7cabf8315ff96abf1f88b839b67a1da9dec6c": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "5b65c44103126347d30f8d0696d4ff621515fb32328539f5d7325547c25d5105": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "ed9bfc252569c236da9838ca8cf5c1b55049882c49c5d6646ba6026cb8cf2778": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "dd504932af90842c0e4a8fb783dbf5dea988173b7f69b4401183cefe73b1c3bb": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "6ea81ebde5dcb61d3a0ce85067c70e0ac0587af9ede257676feac517b8b08045": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "64c1e94752c6aaf90146151bdff91797269395b18694af7faab4eb4cd9086388": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "a3aa388b19dcf91411e99391a6e75adb4c6e3cc7e988ca0bdb81f43aa6eeea62": {
+    "classification": "technical",
+    "reason": "Typed MessageKey literal, checked against the message catalog by the compiler; the catalog entry carries the display text.",
+    "evidence": "Readiness, runtime-state, first-result, Stop and Start-confirmation modules return typed message keys with ICU arguments; the keys are identifiers, not display prose."
+  },
+  "36e4aa1ddcac4c87e1526ca914d11d90ea54cf4354db4c4e381bdadcbf1c8090": {
+    "classification": "technical",
+    "reason": "Typed MessageKey literal, checked against the message catalog by the compiler; the catalog entry carries the display text.",
+    "evidence": "Readiness, runtime-state, first-result, Stop and Start-confirmation modules return typed message keys with ICU arguments; the keys are identifiers, not display prose."
+  },
+  "bcb67f3dcee01d492b435b4fbdc012ce4fee0c64bfd8d3027fa19ae970994383": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "a83c51631b5bb7d282949e46fb383e5ae46d59b63240e32fc46240aa46a804c1": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "cee2e96f5165b7deed4e0ea72fcba182de1840cde853e68e60f18699c5e49f12": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "ecdedba832ee5a062a882bc6c3c62fd353fe172f077331d316abbfcde00f5ca1": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "eb37e7afc183ed9ba9763012f0e83c2abd6201bcaf64c3af3dba8f43f5f89e4b": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "424a47fee09f68d0d091f65eaa1d7135490bf7cbfc15fd63878270fdeabd0faa": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "890ff6712bf8af92470ec820b37edf67ac00f071dd10731141ba9949eda4185c": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "cf424ce2872574f9e9cbef3b257e36e970f3088dd6b94a8a37c298884210a159": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "e5092f5d1f99428407bcba8e42784739090a60c154e63ee946fdda63a9ba69ce": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "d693a94b8ad15b28ce138ce5f7f2fe81ae4fb993e3f1e06a782d27ea25880e31": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "1ab36e8ef21fd348b30b4c50b4c3f8d21e4c15f825823725abefacccb0d4f490": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "fdecf16d379d6b5aa99d1a59eaa6b331978bd3bfc6dafed2d0b81c730d422cae": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "c9570c0206cd767154807141333eb4a91e44481dff39434f98ddcf356c44f162": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "e7a1367b4eabf18440b7cf2aa67a30790a8412f1e35c19982efa0a8476798a50": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "4839a38a0b29bf42a6fa5bb99c4474175dfecc670031b1e95cd36d4ee07bcf5f": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "8d92416057889f6e4a94e68f82c6b1312714390cbeefa269f283b23397391bd2": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "24996d5c436a77507bc3a6a4453603429112ebfe63c03726046b533b6d565117": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "52e5972ffd6c5d571e87283476a0bac6a215bc237190e105a4c587ed7bfb94be": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "499df2e85cb0e49f92667d6b30382fd2efe54eb5e3415cdc5a874830f5591350": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "3e315ae3eec4218064bc88816d6efdf40ed463c105cd217d5674983cc8d72e1a": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "de7c7c38c3c55205423ba46eb6215936258b9306808211f125342e12e9bfa919": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "030fbe219c3743cc1e12983ef1c0f933e5b78f287ed64754857fddcc3b6e568d": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "3d8f776500e23560392dca298c3649c586c0fa20785f247d7f85a6de728f40d8": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "2c11cf0e342068f0f5f06e7a4b282f121dfcae1581a446eb4cbeb9e3c437143b": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "6d3d8ceda228708cf76a47056569abc008efa6fd1c6501c62a8eabcf0510a395": {
+    "classification": "technical",
+    "reason": "Typed MessageKey literal, checked against the message catalog by the compiler; the catalog entry carries the display text.",
+    "evidence": "Readiness, runtime-state, first-result, Stop and Start-confirmation modules return typed message keys with ICU arguments; the keys are identifiers, not display prose."
+  },
+  "46950b92e3175a4764de28b8f4aa782f6e44bf8d02ad062530d19eba76fb91ac": {
+    "classification": "technical",
+    "reason": "Typed MessageKey literal, checked against the message catalog by the compiler; the catalog entry carries the display text.",
+    "evidence": "Readiness, runtime-state, first-result, Stop and Start-confirmation modules return typed message keys with ICU arguments; the keys are identifiers, not display prose."
+  },
+  "154830ef0ab9e8d0724e7137d6a51526dbcb9b95664ad17d3a765ef11e653ad7": {
+    "classification": "technical",
+    "reason": "Typed MessageKey literal, checked against the message catalog by the compiler; the catalog entry carries the display text.",
+    "evidence": "Readiness, runtime-state, first-result, Stop and Start-confirmation modules return typed message keys with ICU arguments; the keys are identifiers, not display prose."
+  },
+  "5b7d28bb60a1b22206641c8c54ff6889707ec73ef4d218efbec503e6a2f8ab61": {
+    "classification": "technical",
+    "reason": "Typed MessageKey literal, checked against the message catalog by the compiler; the catalog entry carries the display text.",
+    "evidence": "Readiness, runtime-state, first-result, Stop and Start-confirmation modules return typed message keys with ICU arguments; the keys are identifiers, not display prose."
+  },
+  "ef1ace6ade07a3649a0353af42bd296d0881bc91e6578777d26c0b2040792093": {
+    "classification": "technical",
+    "reason": "Typed MessageKey literal, checked against the message catalog by the compiler; the catalog entry carries the display text.",
+    "evidence": "Readiness, runtime-state, first-result, Stop and Start-confirmation modules return typed message keys with ICU arguments; the keys are identifiers, not display prose."
+  },
+  "11f39ff8b08f938caa35b98573d0839fdeecd362507a73a10c7fbaf31b64a2a5": {
+    "classification": "technical",
+    "reason": "Typed MessageKey literal, checked against the message catalog by the compiler; the catalog entry carries the display text.",
+    "evidence": "Readiness, runtime-state, first-result, Stop and Start-confirmation modules return typed message keys with ICU arguments; the keys are identifiers, not display prose."
+  },
+  "40bc2f283055173dabaffe413ddadae1b47d34ce5469519356fccf6eee287e10": {
+    "classification": "technical",
+    "reason": "Typed MessageKey literal, checked against the message catalog by the compiler; the catalog entry carries the display text.",
+    "evidence": "Readiness, runtime-state, first-result, Stop and Start-confirmation modules return typed message keys with ICU arguments; the keys are identifiers, not display prose."
+  },
+  "c41192fd256d80d0c2dceaf182589aa0e6f7b1f6bf208c323595d5de1483fdf1": {
+    "classification": "technical",
+    "reason": "Typed MessageKey literal, checked against the message catalog by the compiler; the catalog entry carries the display text.",
+    "evidence": "Readiness, runtime-state, first-result, Stop and Start-confirmation modules return typed message keys with ICU arguments; the keys are identifiers, not display prose."
+  },
+  "9893f2855050b3f122186c79f1a2294aac5b17cb25ad574fca3598d4e4d9e1ca": {
+    "classification": "technical",
+    "reason": "Typed MessageKey literal, checked against the message catalog by the compiler; the catalog entry carries the display text.",
+    "evidence": "Readiness, runtime-state, first-result, Stop and Start-confirmation modules return typed message keys with ICU arguments; the keys are identifiers, not display prose."
+  },
+  "5d2e5193ebae8da6db9838a2ca391ece92d3a115b2e82cec3d7c80bb976ef2b9": {
+    "classification": "technical",
+    "reason": "Typed MessageKey literal, checked against the message catalog by the compiler; the catalog entry carries the display text.",
+    "evidence": "Readiness, runtime-state, first-result, Stop and Start-confirmation modules return typed message keys with ICU arguments; the keys are identifiers, not display prose."
+  },
+  "03bae17c43af50b8fcfbd6c96d0696ab1c94a825fcb0a665fd5130c48534e47c": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "b315cb7416b06fcfb6b49f878f35c2b93005ef140114f6890aab9383481f096f": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "098cfa6810ed83ae669e7ed8d766f8caed5eaa75de1c3ceae392467c6732cc57": {
+    "classification": "technical",
+    "reason": "Typed MessageKey literal, checked against the message catalog by the compiler; the catalog entry carries the display text.",
+    "evidence": "Readiness, runtime-state, first-result, Stop and Start-confirmation modules return typed message keys with ICU arguments; the keys are identifiers, not display prose."
+  },
+  "4c2457a93b1858a4f321bf22b14c028e9ac30ee69945581fafc945c2bc3cce37": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "c2187c9fb3c3da60e363866b2838cb486f1fadf639d196587f9621f322c00f8b": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "6714543a709c34e5d803928150f29e1cdc855cf21ff03c4c3c1b0df4408eda63": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "6f13e81cfe962c86c15c13d5664b1129aad9c0cc44d95186ef28bd96e04663cd": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "237a9704ef887ac10f2881ff117a20c3833c7bca30d61e651962219517dd77be": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "6d5cce6c39ee7fc188b18fdb7426781b8f3ddef2358e779ad17e7759b4e38c5f": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "b2d1a8515772d9fc77012c6ae9e291ab50b8eeafda6d6721bde53c7c98cbc163": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "37208137c73bd7873e2545b73fec6ed6b1f2a6ff7bd0f3def876f189ee33762f": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "695f96fa12adb08bf1214f8fcffead1562e4322da29227e28be759b9b5657e3a": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "2235457f959d54ce429074515c0995e5abbc7b0d402c7eaef22eb4eada9f103c": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "e9b87760858c0b4878c76cf23de71186013d59a9f1ece31587e8257fc7b08de4": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "3ead805b583cd7ba94c80719f2ecd253f3225c02ae8e5fbe14d447b76b27feeb": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "2c9530be80e58080970689f9f239f5d1b344ca2501da51d5d199e3f039a78557": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "ce84406b77b6544b39414a9b2feb5e651385ad113d3c86fae0b16d3e99b6a21d": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "1aa3d687c275405a4dc6cce5be715b96c09aec312b272e8bb1c145f2181c8734": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "069645d5a24d80c7ff78947c839650cb2768c4e04825863196fff23b508d09a4": {
+    "classification": "technical",
+    "reason": "Typed MessageKey literal, checked against the message catalog by the compiler; the catalog entry carries the display text.",
+    "evidence": "Readiness, runtime-state, first-result, Stop and Start-confirmation modules return typed message keys with ICU arguments; the keys are identifiers, not display prose."
+  },
+  "64f2d9cc81a660c57dc6d2162481b3c4185c90238e66cb2243efb31f14089a06": {
+    "classification": "technical",
+    "reason": "Typed MessageKey literal, checked against the message catalog by the compiler; the catalog entry carries the display text.",
+    "evidence": "Readiness, runtime-state, first-result, Stop and Start-confirmation modules return typed message keys with ICU arguments; the keys are identifiers, not display prose."
+  },
+  "bd2c13aa0dfd144046d73cfc176a8ed7b9d22e711460458146c0440e8f6ebb34": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "c2381a7e9b9d9ea2a4a06e0595ab25b4015492265a795efb78949320dac1aacf": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "87686146273d248123367585c3f8a0e2404c9e58bd5de55d2e9aed80ffa65f48": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "dc6263c42f56b3d54683f261891532126e76b925ca1b9930618dd8f87c3c4b35": {
+    "classification": "technical",
+    "reason": "Typed MessageKey literal, checked against the message catalog by the compiler; the catalog entry carries the display text.",
+    "evidence": "Readiness, runtime-state, first-result, Stop and Start-confirmation modules return typed message keys with ICU arguments; the keys are identifiers, not display prose."
+  },
+  "871589d94517b06510efc3649f949e34e91f26d10d7f9c1a7131181ccbfe8de2": {
+    "classification": "technical",
+    "reason": "Typed MessageKey literal, checked against the message catalog by the compiler; the catalog entry carries the display text.",
+    "evidence": "Readiness, runtime-state, first-result, Stop and Start-confirmation modules return typed message keys with ICU arguments; the keys are identifiers, not display prose."
+  },
+  "eb94011f7c9644380a175074bd1d3e4e2211b742a4ecad478bfbb9a805fcec89": {
+    "classification": "technical",
+    "reason": "Typed MessageKey literal, checked against the message catalog by the compiler; the catalog entry carries the display text.",
+    "evidence": "Readiness, runtime-state, first-result, Stop and Start-confirmation modules return typed message keys with ICU arguments; the keys are identifiers, not display prose."
+  },
+  "9bc411903c95be251ab29291c61792eb5c4e1a2a889d9a367d37965124159381": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "2a42a8c1b3d29893f7ed0f5d4cfb44f769541b22ea9d4b3a97479bc5b837ec4e": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "22a498ddc554d119df2bdbdeeb7d741ab3bf30630ae1d267f8c6605429563bb6": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "d7c55b2787cf5672223b6d0898fb5b894f71bc4f89a86aeac125faf3e4619032": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "3f64f9c538827fa2f1fa450dd5bf3722393dad9871325670793caaf3ebc66274": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "3d1052f809d783809eb36a728c7d3a6cef6e8dff3b71acb0dc60cef065d482d3": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "7e77707f7fb303cb2ee4e4042acbdebf30aa2a5fd82cfe6ffc53cbe7d3a25c4f": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "6f98bd4aaf6e767f2a054c31f868077e2b7a1728d359def51976a1cb5e30e940": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "737e332956046c4d62bdde8669ca49f1b68e025409aa470a632d57ade2a417be": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "398c2a9bc90021210e4416aeaed2365b7000bf2e5d9a662073997b724045c3ff": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "615fa770570312fa109e39c0e875b731f1e76c783d1c2977090e5f46a14e8ad5": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "85779945d72434319dc17227b3ff8c5a56686993c4c03636e152f5883d4f8888": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "521e47a94cd69848d18dfbfcd5a2fc1ce81c1140b540dafd95e24fb37afa5d2b": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "ce25a009ef90ca06f75b89959b2d7bdd5e3136f26a6db2eb93db150fc2b1feff": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "3a9ca2732866404a83694c8793a2709411fcec049e0d787ee4f3e68cd67d3b55": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "a3917e4d20651a4549e4ed9661c4fcd7aa71fae1a4ffe999649822f5a6324207": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "d10ce568f06607eddf7bfc299d70d3deab10b6320b8daff3ffd056480e94e169": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "134bfe5bbae8f3604d0d584574e485e22975d4074614e0c3557c91e87cbf7263": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "18ff11d1c7d66ecb4b2dd6a06708d1ab1c9bbb58a14984a40e57c8af0f426716": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "6b4cd1491ffd07826919274b41a6f3ddcd771cc0d1c24916fd231846443dff02": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "2d86d800d0f3e2fa8024b605e1dd29f336a6492f2db166841aa0b3adc6659df0": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "42f71ea80c383b9899bb033686ca1072f76057bc4354b2544e67f493c753499e": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "ad21ebe7e4686270eac9fe32cdb1459c70ef65d1e0087407c90b2ff215bf31d2": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "56b5aac6fb8a667a2df12f5888129307ea8d6f39bc9630af0933fde656a280de": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "51cff831681820e4336b37966b86553130a5dfb1619cc6d1095dcc4a3fd54a36": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "086094db7e35df0108cdeafaa354bc828025c3b304956435361f9f5dab052107": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "c435e05ced7c92c24cf9bfbd9a4a21fa8554dc175a4f7f692074a91e95aa5b6b": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "bb3d79566864b8049090b28a7f88600eecfc3e7371a05dd5be751b1f0029a9b9": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "4eb294b98cc44be10d159d79b8b5ffa8fb19c06aeeae949747b701b7a0e15032": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "6ea97cebd4e8a6431ea595f663d1dce0f57f2e3f4e8d3d42f456b785f2747c27": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "192e384e5b3ab6df05eb20fc8c4daaec28583bfc24addc37a60d4e420ab0b505": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "9cb15643d80321b40c9f9d9555e63c4e1ef1898bc53db03c2519097bc692ee6b": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "a03639b64f2c0ca9de9d19910a7b472c9426edae9d10bfabc56156816fe6310f": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "946e38849bcdb7f5664fcb6ff81516dbdc4b044887c0f8cea466a3c0d37711bf": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "f938880fb3c27ee4a233fc1ba5a1e107fc230fd9108fd070397157962a3523be": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "2210897b8401d6727a42abec36e1eb5669a182efbb7bcccc7cb4e3592cb115c0": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "0d502cca48055145e3cf8b99b84cb88596dda478005de4522641b6897696f9d8": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "4a59684eab460f1382dcf7c047ecb55ad59b19adccf2390ed81480118cfa2401": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "3b0f6ffb9dfaa5390166afbd330dc06b620af26a9a261291fc3e0eb21dfbff91": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "964b503116e2737865be36d8400de9ad3963eddb3d67aafe4a5e11bfce8aa11e": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "92174156195477a300920fb3772877473c1007b96173597e507b8f617195f05b": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "ca11a27eaeee7ca45a6212d3efedd88a2f8fe42aa8e67004844ee81e5c140207": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "200bf6167cf2603fe1089171ebd40344bf7d8f459169db6fccb7a2c6ee9d34d6": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "5d2363ae6d33d673a611475aced0a9acad4e261472b08b6bf4dbe1e952cb439b": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "6516c1f5936f981358e89de1f4232711abb47d615df90e152f9c380102fa6073": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "47cf808ecbb772573cb94d5742db0bbe7c1e18de2e0cdae38f1db339b6c59b7a": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "f3f080159700f239ad1a41f52a21fa6ee5315ff62c0448b91dd597b3a78cd621": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "1ebb67b5f3768c5eb717f11c2ef178027d6d26e5178d2a557f1f62d8e9e15ab8": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "8f66481b020f71a05c5d684ae9170c293bd8dba45f2844956bf9e34829b4d50e": {
+    "classification": "technical",
+    "reason": "Typed MessageKey literal, checked against the message catalog by the compiler; the catalog entry carries the display text.",
+    "evidence": "Readiness, runtime-state, first-result, Stop and Start-confirmation modules return typed message keys with ICU arguments; the keys are identifiers, not display prose."
+  },
+  "85901898ca44ef502c5b33cf6b624a79103461cce5988cdf9e4228243bd6d0a0": {
+    "classification": "technical",
+    "reason": "Typed MessageKey literal, checked against the message catalog by the compiler; the catalog entry carries the display text.",
+    "evidence": "Readiness, runtime-state, first-result, Stop and Start-confirmation modules return typed message keys with ICU arguments; the keys are identifiers, not display prose."
+  },
+  "3968c069154e9df0133e003e7e1150d9f4740ccf3cda1c1da00949e5b37a149d": {
+    "classification": "technical",
+    "reason": "Component variant, size, CSS class or DOM option value, not human display text.",
+    "evidence": "Button/Badge/Modal variants and sizes, scrollIntoView options, ARIA/DOM attribute values and tone classes in the new CIT-20 components."
+  },
+  "7617e48c466a4cf11620e6b2c2937514afb32d9374c0b44293562818563bc1b8": {
+    "classification": "technical",
+    "reason": "Component variant, size, CSS class or DOM option value, not human display text.",
+    "evidence": "Button/Badge/Modal variants and sizes, scrollIntoView options, ARIA/DOM attribute values and tone classes in the new CIT-20 components."
+  },
+  "6906d098f5d490ff67d300a26c00b91198ec58f89b10a620752b10d49768fb62": {
+    "classification": "technical",
+    "reason": "Component variant, size, CSS class or DOM option value, not human display text.",
+    "evidence": "Button/Badge/Modal variants and sizes, scrollIntoView options, ARIA/DOM attribute values and tone classes in the new CIT-20 components."
+  },
+  "b48df24ba7f14e1f067a0968fb502bcaac204442a26a17cbb3595dc71f9350de": {
+    "classification": "technical",
+    "reason": "Component variant, size, CSS class or DOM option value, not human display text.",
+    "evidence": "Button/Badge/Modal variants and sizes, scrollIntoView options, ARIA/DOM attribute values and tone classes in the new CIT-20 components."
+  },
+  "6de9170e1ba486d7542861783d4ce0b963d5a48bacae5be27006d9415f8bd379": {
+    "classification": "technical",
+    "reason": "Component variant, size, CSS class or DOM option value, not human display text.",
+    "evidence": "Button/Badge/Modal variants and sizes, scrollIntoView options, ARIA/DOM attribute values and tone classes in the new CIT-20 components."
+  },
+  "68ed0e661e6d3bfc38589dfed423d2db990b5cdbae72fe616e07278146750028": {
+    "classification": "technical",
+    "reason": "Component variant, size, CSS class or DOM option value, not human display text.",
+    "evidence": "Button/Badge/Modal variants and sizes, scrollIntoView options, ARIA/DOM attribute values and tone classes in the new CIT-20 components."
+  },
+  "98b24383a3fed132cfbc58753a00af37ee0f55dbd1cb62033c005090cb8dd572": {
+    "classification": "technical",
+    "reason": "Component variant, size, CSS class or DOM option value, not human display text.",
+    "evidence": "Button/Badge/Modal variants and sizes, scrollIntoView options, ARIA/DOM attribute values and tone classes in the new CIT-20 components."
+  },
+  "cacf543fcb39a30027640a847d1aa5f730813dd4404219ce997152cd5272ec79": {
+    "classification": "technical",
+    "reason": "Component variant, size, CSS class or DOM option value, not human display text.",
+    "evidence": "Button/Badge/Modal variants and sizes, scrollIntoView options, ARIA/DOM attribute values and tone classes in the new CIT-20 components."
+  },
+  "6cd45d2ef14d0fea893c7d7813b1e85dd1cb8b65353fc9a2befeea0b2517eff4": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "eac1a7ee39f3211ac4e026ddc9394e51aaae6d9dc871c50b25138946a701b6c1": {
+    "classification": "technical",
+    "reason": "Component variant, size, CSS class or DOM option value, not human display text.",
+    "evidence": "Button/Badge/Modal variants and sizes, scrollIntoView options, ARIA/DOM attribute values and tone classes in the new CIT-20 components."
+  },
+  "bbbad2187acbb314669cddba55cdf052951581d3b5b7ad445a9c04f490ad9c69": {
+    "classification": "technical",
+    "reason": "Component variant, size, CSS class or DOM option value, not human display text.",
+    "evidence": "Button/Badge/Modal variants and sizes, scrollIntoView options, ARIA/DOM attribute values and tone classes in the new CIT-20 components."
+  },
+  "a77f27d6880edac4452f018b47222f245ddd7bac6819eb7da3168d5fb55bcaf4": {
+    "classification": "technical",
+    "reason": "Component variant, size, CSS class or DOM option value, not human display text.",
+    "evidence": "Button/Badge/Modal variants and sizes, scrollIntoView options, ARIA/DOM attribute values and tone classes in the new CIT-20 components."
+  },
+  "03609a21debe83436a926ea2c716d13d0187e4b806abc142290776531da2e829": {
+    "classification": "technical",
+    "reason": "Component variant, size, CSS class or DOM option value, not human display text.",
+    "evidence": "Button/Badge/Modal variants and sizes, scrollIntoView options, ARIA/DOM attribute values and tone classes in the new CIT-20 components."
+  },
+  "5f8ec1c6ca5e0374bec78437ad691b6678240e1b491753d21a48e0d1768dc5f5": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "004a7c3fd69ccbb08c2cf9fd05ed73868aeb603fbb95511fd364b7a324996286": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "379e6bac39737753994ce1829b4bc58022f41582d9762afe0c066354376e63de": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "6a3f114a0735e5a6028eea4551e7ed9f84c1441c50e3f8e0695ab57e300ae381": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "2b154d9cb28785d0a9f2e96c4a49ac97295465f344aa69edf7575d59b05e9261": {
+    "classification": "technical",
+    "reason": "Component variant, size, CSS class or DOM option value, not human display text.",
+    "evidence": "Button/Badge/Modal variants and sizes, scrollIntoView options, ARIA/DOM attribute values and tone classes in the new CIT-20 components."
+  },
+  "d394fff81a46e444993e636615bc90482ed554bdd102b4a7193192f1a8c76d81": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "110c673a8a5e1e1b6ef482e398f2301ff2185fa8a88ccf6077235d357b6327b4": {
+    "classification": "technical",
+    "reason": "Component variant, size, CSS class or DOM option value, not human display text.",
+    "evidence": "Button/Badge/Modal variants and sizes, scrollIntoView options, ARIA/DOM attribute values and tone classes in the new CIT-20 components."
+  },
+  "f4fd6c9354f733101a3f3e0dee75627cc8f72c8942b75da1bfe7e04a23cd8c1d": {
+    "classification": "technical",
+    "reason": "Component variant, size, CSS class or DOM option value, not human display text.",
+    "evidence": "Button/Badge/Modal variants and sizes, scrollIntoView options, ARIA/DOM attribute values and tone classes in the new CIT-20 components."
+  },
+  "36d74201a13a7c7f74f62389b874b6e05e493d635e838eae08da0dd4c2805508": {
+    "classification": "technical",
+    "reason": "Component variant, size, CSS class or DOM option value, not human display text.",
+    "evidence": "Button/Badge/Modal variants and sizes, scrollIntoView options, ARIA/DOM attribute values and tone classes in the new CIT-20 components."
+  },
+  "c8f27d0d082ac08330361f76ea4fd393933c09e22bfb77904bea2cda75c6d1d1": {
+    "classification": "technical",
+    "reason": "CSS class list, not display text.",
+    "evidence": "Read in the CIT-19 source; the value is an identifier, class list or matcher, not player-facing prose."
+  },
+  "9d5d383190dde19f7ff3b95390b7cfcc245055ad70eef7587a5e29ff6eded05b": {
+    "classification": "technical",
+    "reason": "Serialization template for a stable digest, not display text.",
+    "evidence": "Read in the CIT-19 source; the value is an identifier, class list or matcher, not player-facing prose."
+  },
+  "bc88e76cce7a7440b203064cdadaea02c9975059f1fb077a6b2154f7a1e33a45": {
+    "classification": "technical",
+    "reason": "Marker matched inside the game's own login detail text (never displayed by this code); the same marker Settings already matched.",
+    "evidence": "Read in the CIT-19 source; the value is an identifier, class list or matcher, not player-facing prose."
+  },
+  "3ed31a7c5a433027ae2ec2b848d516c5a560c695f54bca15710c381b7bf46dc2": {
+    "classification": "technical",
+    "reason": "Evidence label recorded for tests and QA, never rendered.",
+    "evidence": "Read in the CIT-19 source; the value is an identifier, class list or matcher, not player-facing prose."
+  },
+  "8379b4208d652dde94ef1bea04b8c5a71af5bd9af063dd4f53f05969005eba76": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "030a678ce0ea41ba80632e0176c472ace7a84a91bd144f3c548323ad94bc8f2d": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "96bee666f747ed7c363f7b8372b14a3ba6adbbe6973064eed54c58cb2e57b54f": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "13227d1a876379642969575382578aaabbd69005ba4d15ab5299976e99a5cd5e": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "8fde8a3241ac7668d61cf9909aaa243861896bec250616cd8968b70ebe3ccb24": {
+    "classification": "technical",
+    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
+    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "d819ed619302ff7277a0287fc34366392f6694c820080a596fcc2eba952a729c": {
+    "classification": "technical",
+    "reason": "Configuration section key, slot id, feature id, ref discriminator, readiness check ids and DOM anchor ids.",
+    "evidence": "automation.autoBeriWorld section, attack slot, autoBeriWorld feature id and auto-beri-* element ids used by focusReadinessTarget."
+  },
+  "c3f3ff44689ce61aaabd3059bad6180a41cb3d068c6445fe468f13807c53f947": {
+    "classification": "technical",
+    "reason": "Configuration section key, slot id, feature id, ref discriminator, readiness check ids and DOM anchor ids.",
+    "evidence": "automation.autoBeriWorld section, attack slot, autoBeriWorld feature id and auto-beri-* element ids used by focusReadinessTarget."
+  },
+  "b8ae5fe184e6f1f1647560220460493d76a02c75cc195c6aad0bbd261f705820": {
+    "classification": "technical",
+    "reason": "Module slot id, feature id, ref discriminator, readiness check ids and DOM anchor ids.",
+    "evidence": "attack slot, autoInvasion feature id, readiness ids and auto-invasion-* element ids used by focusReadinessTarget."
+  },
+  "d44138449aa2a991dbd9a327a29421093e3666519c1e61e660d78d5db27c6cf7": {
+    "classification": "technical",
+    "reason": "Module slot ids, feature id, ref discriminators, readiness check ids and DOM anchor ids.",
+    "evidence": "nomad/samurai slots, autoNomad feature id, readiness ids and auto-nomad-* element ids used by focusReadinessTarget."
+  },
+  "1ced863a46dc50aa6f613dc2986de686305aad3298d6b4bb2feca272b14927e2": {
+    "classification": "technical",
+    "reason": "Module slot ids, feature id, ref discriminators, readiness check ids and DOM anchor ids.",
+    "evidence": "nomad/samurai slots, autoNomad feature id, readiness ids and auto-nomad-* element ids used by focusReadinessTarget."
+  },
+  "a49a9abe298738e5148356f5d6be6f01f39335edb32e4ef08bca794f6d3bd4ca": {
+    "classification": "technical",
+    "reason": "Slot ids, feature id, readiness ids, DOM anchor ids, message keys and id fallbacks.",
+    "evidence": "attack/defense slots, autoKhan feature id, readiness check ids, auto-khan-* element ids used by focusReadinessTarget, typed message keys passed to localizeStatic and #<id> fallbacks for unnamed castles."
+  },
+  "057dc50d8e148b4c9a769267b92293bc7ca33c5e4b01ccd0c58d959abb13c47a": {
+    "classification": "technical",
+    "reason": "Slot ids, feature id, readiness ids, DOM anchor ids, message keys and id fallbacks.",
+    "evidence": "attack/defense slots, autoKhan feature id, readiness check ids, auto-khan-* element ids used by focusReadinessTarget, typed message keys passed to localizeStatic and #<id> fallbacks for unnamed castles."
+  },
+  "477a668af464456e5fb1845916b527d4e73d33cd94f26554b7e5d3fa9c3b6e64": {
+    "classification": "technical",
+    "reason": "Slot ids, feature id, readiness ids, DOM anchor ids, message keys and id fallbacks.",
+    "evidence": "forts/islands slots, autoStorm feature id, readiness check ids, auto-storm-* element ids used by focusReadinessTarget, typed message keys and #<id> fallbacks."
+  },
+  "6ab1200b829a50cb3dfe8f53821dfb0aa2c44d805c6f4119a7991522748ac2c4": {
+    "classification": "technical",
+    "reason": "Slot ids, feature id, readiness ids, DOM anchor ids, message keys and id fallbacks.",
+    "evidence": "forts/islands slots, autoStorm feature id, readiness check ids, auto-storm-* element ids used by focusReadinessTarget, typed message keys and #<id> fallbacks."
   }
 }

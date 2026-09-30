@@ -51,6 +51,7 @@ import { countCustomValues, toggleLine, travelLine } from '../disclosure/summari
 import { useSettingsDisclosure } from '../disclosure/useSettingsDisclosure';
 import { AutomationRunStrip } from './AutomationRunStrip';
 import { collapsedSettingNote, SettingsSection } from './SettingsSection';
+import { useDraftRecovery } from '../useDraftRecovery';
 
 interface AutoFortressSettingsModalProps {
   isOpen: boolean;
@@ -192,6 +193,8 @@ export const AutoFortressSettingsModal: React.FC<AutoFortressSettingsModalProps>
     }
   };
 
+  const recovery = useDraftRecovery({ section: AUTO_FORTRESS_SECTION, isOpen, draftSession, draft: settings, loaded: parseAutoFortressClientState(draftSession.sections?.[AUTO_FORTRESS_SECTION]) });
+
   return (<>
     <SettingsModal
       footerLeading={<StopFooter featureId="autoFortress" />}
@@ -209,7 +212,7 @@ export const AutoFortressSettingsModal: React.FC<AutoFortressSettingsModalProps>
       isSaving={isSaving}
       saveDisabled={!draftSession.ready}
       contentDisabled={!draftSession.ready}
-      contentNotice={draftSession.conflictNotice}
+      contentNotice={<>{recovery.banner}{draftSession.conflictNotice}</>}
     >
       <AutomationRunStrip
         featureId="autoFortress"

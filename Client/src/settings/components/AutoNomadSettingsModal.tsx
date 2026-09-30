@@ -54,6 +54,18 @@ import { useSettingsDisclosure } from '../disclosure/useSettingsDisclosure';
 import { AutomationRunStrip } from './AutomationRunStrip';
 import { collapsedSettingNote, SettingsSection } from './SettingsSection';
 import { englishGuidePack, useGuideLocale } from '../../config/useGuideLocale';
+import { useDraftRecovery } from '../useDraftRecovery';
+
+/** What the editor holds right after it loads a saved configuration: used by the load effect and by draft recovery. */
+function nomadFromSections(sections: Record<string, unknown> | undefined) {
+  const draft = parseAutoNomadClientState(sections?.[AUTO_NOMAD_SECTION]);
+  const presets = parseAttackPresetDocument(sections?.[ATTACK_PRESETS_SECTION]);
+  return {
+    draft,
+    nomadRef: attackSetupRef(draft.nomadPresetId, presets, AUTO_NOMAD_SECTION, 'nomad'),
+    samuraiRef: attackSetupRef(draft.samuraiPresetId, presets, AUTO_NOMAD_SECTION, 'samurai'),
+  };
+}
 
 interface AutoNomadSettingsModalProps {
   isOpen: boolean;
@@ -118,11 +130,10 @@ export const AutoNomadSettingsModal: React.FC<AutoNomadSettingsModalProps> = ({ 
 
   useEffect(() => {
     if (!isOpen || !draftSession.initialSnapshot) return;
-    const saved = parseAutoNomadClientState(draftSession.initialSections?.[AUTO_NOMAD_SECTION]);
-    const savedPresets = parseAttackPresetDocument(draftSession.initialSections?.[ATTACK_PRESETS_SECTION]);
-    setDraft(saved);
-    setNomadRef(attackSetupRef(saved.nomadPresetId, savedPresets, AUTO_NOMAD_SECTION, 'nomad'));
-    setSamuraiRef(attackSetupRef(saved.samuraiPresetId, savedPresets, AUTO_NOMAD_SECTION, 'samurai'));
+    const initial = nomadFromSections(draftSession.initialSections);
+    setDraft(initial.draft);
+    setNomadRef(initial.nomadRef);
+    setSamuraiRef(initial.samuraiRef);
   }, [draftSession.initialSections, draftSession.openKey, draftSession.initialSnapshot, isOpen]);
 
   const nomadUsable = attackSetupRefUsable(nomadRef, presetDocument);
@@ -222,6 +233,15 @@ export const AutoNomadSettingsModal: React.FC<AutoNomadSettingsModalProps> = ({ 
     }
   };
 
+  const loadedNomad = nomadFromSections(draftSession.sections);
+  const recovery = useDraftRecovery({ section: AUTO_NOMAD_SECTION, isOpen, draftSession, draft: draft, loaded: loadedNomad.draft, extras: { nomadRef, samuraiRef }, loadedExtras: { nomadRef: loadedNomad.nomadRef, samuraiRef: loadedNomad.samuraiRef } });
+  useEffect(() => {
+    const extras = draftSession.recoveredExtras?.value as { nomadRef?: AttackSetupRef; samuraiRef?: AttackSetupRef } | undefined;
+    if (!extras) return;
+    if (extras.nomadRef) setNomadRef(extras.nomadRef);
+    if (extras.samuraiRef) setSamuraiRef(extras.samuraiRef);
+  }, [draftSession.recoveredExtras]);
+
   return (<><SettingsModal
       footerLeading={<StopFooter featureId="autoNomad" />}
       isOpen={isOpen}
@@ -235,7 +255,7 @@ export const AutoNomadSettingsModal: React.FC<AutoNomadSettingsModalProps> = ({ 
       isSaving={saving}
       saveDisabled={!canSave || !draftSession.ready}
       contentDisabled={!draftSession.ready}
-      contentNotice={draftSession.conflictNotice}
+      contentNotice={<>{recovery.banner}{draftSession.conflictNotice}</>}
     >
       <AutomationRunStrip
         featureId="autoNomad"
