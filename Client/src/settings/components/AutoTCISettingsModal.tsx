@@ -45,6 +45,7 @@ import {
 } from '../../components/ui';
 import { useCitadelAPI } from '../../api/ApiContext';
 import { castleOptionsFromState } from '../../api/Selectors';
+import { useDraftRecovery } from '../useDraftRecovery';
 
 interface AutoTCISettingsModalProps {
   isOpen: boolean;
@@ -377,6 +378,8 @@ export const AutoTCISettingsModal: React.FC<AutoTCISettingsModalProps> = ({ isOp
     </div>
   );
 
+  const recovery = useDraftRecovery({ section: AUTO_TCI_SECTION, isOpen, draftSession, draft: buildAutoTCIClientState(settings, presetsState) });
+
   return (
     <SettingsModal
       footerLeading={<StopFooter featureId="autoTCI" />}
@@ -396,7 +399,7 @@ export const AutoTCISettingsModal: React.FC<AutoTCISettingsModalProps> = ({ isOp
       isSaving={isSaving}
       saveDisabled={!draftSession.ready}
       contentDisabled={!draftSession.ready}
-      contentNotice={draftSession.conflictNotice}
+      contentNotice={<>{recovery.banner}{draftSession.conflictNotice}</>}
     >
       <AutomationRunStrip
         featureId="autoTCI"

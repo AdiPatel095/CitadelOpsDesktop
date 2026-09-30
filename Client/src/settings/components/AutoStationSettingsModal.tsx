@@ -40,6 +40,7 @@ import { AutomationRunStrip } from './AutomationRunStrip';
 import { ReadinessCheckLine, ReadinessPanel } from './ReadinessPanel';
 import { collapsedSettingNote, SettingsSection } from './SettingsSection';
 import { UnitStockList } from './UnitStockList';
+import { useDraftRecovery } from '../useDraftRecovery';
 
 interface AutoStationSettingsModalProps {
   isOpen: boolean;
@@ -156,6 +157,8 @@ export const AutoStationSettingsModal: React.FC<AutoStationSettingsModalProps> =
     if (!isSaving) onClose();
   };
 
+  const recovery = useDraftRecovery({ section: 'automation.autoStation', isOpen, draftSession, draft: parseAutoStationClientState(state) });
+
   return (
     <>
     <SettingsModal
@@ -172,7 +175,7 @@ export const AutoStationSettingsModal: React.FC<AutoStationSettingsModalProps> =
       isSaving={isSaving}
       saveDisabled={!draftSession.ready}
       contentDisabled={!draftSession.ready}
-      contentNotice={<>{copyRun.status}{draftSession.conflictNotice}{copyRun.dialog}</>}
+      contentNotice={<>{copyRun.status}{recovery.banner}{draftSession.conflictNotice}{copyRun.dialog}</>}
     >
       {saveError && (
         <div className="mb-4 rounded-global border border-error/30 bg-error/10 px-4 py-3 text-sm font-semibold text-error" role="alert">

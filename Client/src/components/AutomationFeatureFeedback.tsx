@@ -12,12 +12,30 @@ import { accountKey } from '../settings/requirements/castleRequirements';
 import { AutomationReadinessRow } from './AutomationReadinessRow';
 import { FirstResultCard } from './FirstResultCard';
 import { StopControl } from './StopControl';
+import { scopeKey } from '../settings/onboarding/accountScope';
+import { goalById } from '../settings/onboarding/goals';
+import { useGoal } from '../settings/onboarding/goalStore';
+import { useGoalChecklist } from '../settings/onboarding/useChecklist';
+import { StateLegend } from './StateLegend';
 import { Badge } from './ui/Badge';
 import { Button } from './ui/Button';
 
 const PHASE_BADGE: Record<AutomationPhase, 'primary' | 'secondary' | 'success' | 'warning' | 'danger' | 'outline'> = {
   disabled: 'outline', stopped: 'outline', 'enabled-waiting': 'secondary', running: 'primary',
   blocked: 'warning', error: 'danger', locked: 'warning', completed: 'secondary', unknown: 'outline',
+};
+
+const GoalLegendInner: React.FC<{ goal: NonNullable<ReturnType<typeof goalById>> }> = ({ goal }) => {
+  const { legend } = useGoalChecklist(goal);
+  return <StateLegend values={legend} compact />;
+};
+
+/** The compact state legend, only under the automation the player chose as their goal (CIT-19). */
+const GoalLegendLine: React.FC<{ featureId: SettingsFeatureId }> = ({ featureId }) => {
+  const { state } = useCitadelAPI();
+  const { goal } = useGoal(scopeKey(state));
+  const active = goalById(goal?.goalId);
+  return active && active.featureId === featureId ? <GoalLegendInner goal={active} /> : null;
 };
 
 /**
@@ -83,6 +101,7 @@ export const AutomationFeatureFeedback: React.FC<{
       <StopControl enabledKey={enabledKey} featureId={featureId} variant="notice" />
       {enabled ? <FirstResultCard result={result} accountLabel={accountLabel} /> : null}
       {compact ? null : <AutomationReadinessRow featureId={featureId} onOpenSettings={onOpenSettings} />}
+      {compact ? null : <GoalLegendLine featureId={featureId} />}
     </div>
   );
 };

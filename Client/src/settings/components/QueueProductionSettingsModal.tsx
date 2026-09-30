@@ -69,6 +69,7 @@ import { checkIntervalLine, countCustomValues } from '../disclosure/summaries';
 import { useSettingsDisclosure } from '../disclosure/useSettingsDisclosure';
 import { AutomationRunStrip } from './AutomationRunStrip';
 import { SettingsSection } from './SettingsSection';
+import { useDraftRecovery } from '../useDraftRecovery';
 
 export interface QueueProductionSettingsModalProps {
   isOpen: boolean;
@@ -850,6 +851,8 @@ export const QueueProductionSettingsModal: React.FC<QueueProductionSettingsModal
     </SectionCard>
   );
 
+  const recovery = useDraftRecovery({ section: definition.configurationSection, isOpen, draftSession, draft: settings });
+
   return (
     <>
       <SettingsModal
@@ -864,7 +867,7 @@ export const QueueProductionSettingsModal: React.FC<QueueProductionSettingsModal
         isSaving={isSaving}
         saveDisabled={!draftSession.ready}
         contentDisabled={!draftSession.ready}
-        contentNotice={<>{copyRun.status}{draftSession.conflictNotice}{copyRun.dialog}</>}
+        contentNotice={<>{copyRun.status}{recovery.banner}{draftSession.conflictNotice}{copyRun.dialog}</>}
       >
         <AutomationRunStrip
           featureId={definition.featureID}

@@ -29,6 +29,7 @@ import type {
 	SettingsBundleV1,
 } from '../api/Contracts';
 import { Badge, Button, Input, PageHeader, SectionCard, Select, SettingsToggleRow } from '../components/ui';
+import { backgroundLoginNeedsReauthorization as backgroundLoginNeedsReauthorizationFor, reauthorizeSavedLogin } from '../settings/connection/connectionControls';
 import { asRecord, configurationSection, numericSetting } from '../settings/Configuration';
 import {
 	applyPortableClientPreferences,
@@ -449,10 +450,7 @@ const SettingsView: React.FC = () => {
 		? 'background'
 		: 'full';
 	const connectionModeRestartRequired = configuredConnectionMode !== activeConnectionMode;
-	const backgroundLoginNeedsReauthorization = configuredConnectionMode === 'background'
-		&& activeConnectionMode === 'background'
-		&& !state?.session.loggedIn
-		&& state?.session.detail?.toLowerCase().includes('saved login that has been disabled');
+	const backgroundLoginNeedsReauthorization = backgroundLoginNeedsReauthorizationFor(configuredConnectionMode, state?.session);
 
 	const selectConnectionMode = (mode: GameConnectionMode) => {
 		if (mode === configuredConnectionMode || connectionModePending) return;
@@ -472,8 +470,7 @@ const SettingsView: React.FC = () => {
 		if (connectionModePending) return;
 		setConnectionModePending(true);
 		setConnectionModeError('');
-		void submitIntent('session.background.prepare')
-			.then(() => submitIntent('session.start'))
+		void reauthorizeSavedLogin(submitIntent)
 			.catch((error) => {
 				setConnectionModeError(error instanceof Error ? error : 'Could not re-enable the saved game login');
 			})

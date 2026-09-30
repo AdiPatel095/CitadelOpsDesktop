@@ -90,6 +90,7 @@ import { useSettingsDisclosure } from '../disclosure/useSettingsDisclosure';
 import { AutomationRunStrip } from './AutomationRunStrip';
 import { collapsedSettingNote, SettingsSection } from './SettingsSection';
 import { englishGuidePack, useGuideLocale } from '../../config/useGuideLocale';
+import { useDraftRecovery } from '../useDraftRecovery';
 
 interface AutoStormSettingsModalProps {
   isOpen: boolean;
@@ -655,6 +656,14 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
   const targetCastle = target ? state?.castles[String(target.castleId)] : undefined;
   const aquamarineBalance = stormCastle?.resources['9']?.amount ?? 0;
 
+  const recovery = useDraftRecovery({ section: AUTO_STORM_SECTION, isOpen, draftSession, draft: draft, extras: { fortsRef, islandsRef } });
+  useEffect(() => {
+    const extras = draftSession.recoveredExtras?.value as { fortsRef?: AttackSetupRef; islandsRef?: AttackSetupRef } | undefined;
+    if (!extras) return;
+    if (extras.fortsRef) setFortsRef(extras.fortsRef);
+    if (extras.islandsRef) setIslandsRef(extras.islandsRef);
+  }, [draftSession.recoveredExtras]);
+
   return (
     <>
     <SettingsModal
@@ -670,7 +679,7 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
       saveDisabled={!canSave || !draftSession.ready}
       cancelDisabled={capturing != null}
       contentDisabled={!draftSession.ready}
-      contentNotice={draftSession.conflictNotice}
+      contentNotice={<>{recovery.banner}{draftSession.conflictNotice}</>}
     >
       <div className="space-y-4">
         <div className="flex justify-end"><Button variant="outline" size="sm" onClick={() => setIsGuideOpen(true)} leftIcon={<BookOpen className="h-4 w-4" />}><span lang={stormPack === englishGuidePack ? "en" : stormGuideLocale}>{stormPack.ui.guideButton}</span></Button></div>

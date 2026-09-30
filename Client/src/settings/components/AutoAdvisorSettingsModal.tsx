@@ -36,6 +36,7 @@ import { useSettingsDisclosure } from '../disclosure/useSettingsDisclosure';
 import { AutomationRunStrip } from './AutomationRunStrip';
 import { SettingsSection } from './SettingsSection';
 import { englishGuidePack, useGuideLocale } from '../../config/useGuideLocale';
+import { useDraftRecovery } from '../useDraftRecovery';
 
 interface AutoAdvisorSettingsModalProps {
   isOpen: boolean;
@@ -196,6 +197,8 @@ export const AutoAdvisorSettingsModal: React.FC<AutoAdvisorSettingsModalProps> =
     setActivationOpen(true);
   };
 
+  const recovery = useDraftRecovery({ section: AUTO_ADVISOR_SECTION, isOpen, draftSession, draft: draft });
+
   return (
     <>
       <SettingsModal
@@ -211,7 +214,7 @@ export const AutoAdvisorSettingsModal: React.FC<AutoAdvisorSettingsModalProps> =
         isSaving={saving}
         saveDisabled={!canSave || !draftSession.ready}
         contentDisabled={!draftSession.ready}
-        contentNotice={draftSession.conflictNotice}
+        contentNotice={<>{recovery.banner}{draftSession.conflictNotice}</>}
       >
         <AutomationRunStrip
           featureId="autoAdvisor"

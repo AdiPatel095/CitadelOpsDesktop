@@ -28,6 +28,7 @@ import { checkIntervalLine, countCustomValues } from '../disclosure/summaries';
 import { useSettingsDisclosure } from '../disclosure/useSettingsDisclosure';
 import { AutomationRunStrip } from './AutomationRunStrip';
 import { SettingsSection } from './SettingsSection';
+import { useDraftRecovery } from '../useDraftRecovery';
 
 interface AutoHospitalSettingsModalProps {
   isOpen: boolean;
@@ -137,6 +138,8 @@ export const AutoHospitalSettingsModal: React.FC<AutoHospitalSettingsModalProps>
     );
   };
 
+  const recovery = useDraftRecovery({ section: AUTO_HOSPITAL_SECTION, isOpen, draftSession, draft: normalizeAutoHospitalSettings(settings) });
+
   return (
     <SettingsModal
       footerLeading={<StopFooter featureId="autoHospital" />}
@@ -150,7 +153,7 @@ export const AutoHospitalSettingsModal: React.FC<AutoHospitalSettingsModalProps>
       isSaving={isSaving}
       saveDisabled={!draftSession.ready}
       contentDisabled={!draftSession.ready}
-      contentNotice={draftSession.conflictNotice}
+      contentNotice={<>{recovery.banner}{draftSession.conflictNotice}</>}
     >
       <AutomationRunStrip
         featureId="autoHospital"

@@ -54,6 +54,7 @@ import { countCustomValues, travelLine } from '../disclosure/summaries';
 import { useSettingsDisclosure } from '../disclosure/useSettingsDisclosure';
 import { AutomationRunStrip } from './AutomationRunStrip';
 import { collapsedSettingNote, SettingsSection } from './SettingsSection';
+import { useDraftRecovery } from '../useDraftRecovery';
 
 interface AutoInvasionSettingsModalProps {
   isOpen: boolean;
@@ -224,6 +225,12 @@ export const AutoInvasionSettingsModal: React.FC<AutoInvasionSettingsModalProps>
     }
   };
 
+  const recovery = useDraftRecovery({ section: AUTO_INVASION_SECTION, isOpen, draftSession, draft: draft, extras: { attackRef } });
+  useEffect(() => {
+    const extras = draftSession.recoveredExtras?.value as { attackRef?: AttackSetupRef } | undefined;
+    if (extras?.attackRef) setAttackRef(extras.attackRef);
+  }, [draftSession.recoveredExtras]);
+
   return (<>
     <SettingsModal
       footerLeading={<StopFooter featureId="autoInvasion" />}
@@ -238,7 +245,7 @@ export const AutoInvasionSettingsModal: React.FC<AutoInvasionSettingsModalProps>
       isSaving={saving}
       saveDisabled={!canSave || !draftSession.ready}
       contentDisabled={!draftSession.ready}
-      contentNotice={draftSession.conflictNotice}
+      contentNotice={<>{recovery.banner}{draftSession.conflictNotice}</>}
     >
       <AutomationRunStrip
         featureId="autoInvasion"

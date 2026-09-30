@@ -4,6 +4,7 @@ import { Badge } from '../../components/ui/Badge';
 import { Button } from '../../components/ui/Button';
 import { LocalizedText } from '../../i18n/LocalizedText';
 import type { MessageKey } from '../../i18n/messages';
+import { requestConnectionRepair } from '../connection/repairRequest';
 import type { CheckState, ReadinessCheck, ReadinessReport } from '../readiness/Readiness';
 
 const STATE_TONE: Record<CheckState, string> = {
@@ -50,6 +51,11 @@ export const ReadinessCheckLine: React.FC<{
         <span className="block text-[11px] text-text-muted"><LocalizedText messageKey="ui.settings.components.readinessPanel.this.updates.by.itself.once.the.game.7b60fd8c" /></span>
       ) : null}
     </span>
+    {check.fix === 'connection' && check.state !== 'valid' ? (
+      <Button variant="ghost" size="sm" className="shrink-0" onClick={() => requestConnectionRepair()} data-repair-connection>
+        <LocalizedText messageKey="readiness.checkConnection" />
+      </Button>
+    ) : null}
     {onFix && check.state !== 'valid' && (check.fix === 'settings' || check.fix === 'presets' || check.fix === 'assignment') ? (
       <Button variant="ghost" size="sm" className="shrink-0" onClick={() => onFix(check)}>
         <LocalizedText messageKey="ui.settings.components.readinessPanel.fix.21f1595b" />

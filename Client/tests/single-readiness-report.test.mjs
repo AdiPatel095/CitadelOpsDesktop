@@ -94,15 +94,19 @@ test('catalog loaders are cached so Start does not refetch what the row just loa
   assert.equal(calls, 9, 'a failure was not remembered: the next load read the catalogs again');
 });
 
-test('the row and the Start check share the same loaders and evaluator', async () => {
+test('the row, the checklist and the Start check share the same loaders and evaluator', async () => {
+  const hook = await readFile(new URL('../src/settings/readiness/useFeatureReadiness.ts', import.meta.url), 'utf8');
   const row = await readFile(new URL('../src/components/AutomationReadinessRow.tsx', import.meta.url), 'utf8');
   const auth = await readFile(new URL('../src/context/AuthContext.tsx', import.meta.url), 'utf8');
-  for (const [name, text] of [['row', row], ['Start', auth]]) {
+  for (const [name, text] of [['readiness hook', hook], ['Start', auth]]) {
     assert.match(text, /catalogInputsFor\(/, `${name} builds catalog inputs with the shared helper`);
     assert.match(text, /loadStormUnlockOffer/, `${name} reads the Storm offer through the cached loader`);
     assert.match(text, /READINESS_DIFFICULTY_EVENTS/, `${name} reads the same difficulty events`);
   }
-  assert.match(row, /publishReadiness\(/);
+  assert.match(row, /useFeatureReadiness\(featureId, \{ publish: true \}\)/, 'the row is built from the shared hook and is the only publisher');
+  assert.match(hook, /publishReadiness\(/);
   assert.match(auth, /latestReadiness\(/);
   assert.match(auth, /savedSectionsDigest\(/);
+  const checklist = await readFile(new URL('../src/settings/onboarding/useChecklist.ts', import.meta.url), 'utf8');
+  assert.match(checklist, /useFeatureReadiness\(featureId\)/, 'the goal checklist reads the same report and never publishes');
 });

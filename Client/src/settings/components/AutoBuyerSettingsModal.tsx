@@ -34,6 +34,7 @@ import { useConfigurationDraftSession } from '../ConfigurationDraftSession';
 import { checkIntervalLine, countCustomValues } from '../disclosure/summaries';
 import { useSettingsDisclosure } from '../disclosure/useSettingsDisclosure';
 import { SettingsSection } from './SettingsSection';
+import { useDraftRecovery } from '../useDraftRecovery';
 
 interface AutoBuyerSettingsModalProps {
   isOpen: boolean;
@@ -320,6 +321,8 @@ export const AutoBuyerSettingsModal: React.FC<AutoBuyerSettingsModalProps> = ({ 
     }
   };
 
+  const recovery = useDraftRecovery({ section: AUTO_BUYER_SECTION, isOpen, draftSession, draft: parseAutoBuyerClientState(draft) });
+
   return (
     <SettingsModal
       footerLeading={<StopFooter featureId="autoBuyer" />}
@@ -333,7 +336,7 @@ export const AutoBuyerSettingsModal: React.FC<AutoBuyerSettingsModalProps> = ({ 
       isSaving={saving}
       saveDisabled={!configurationValid || Boolean(loadError) || !draftSession.ready}
       contentDisabled={!draftSession.ready}
-      contentNotice={draftSession.conflictNotice}
+      contentNotice={<>{recovery.banner}{draftSession.conflictNotice}</>}
     >
       <div className="space-y-3">
         <Card variant="solid" className="p-4">

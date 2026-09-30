@@ -180,7 +180,7 @@ test('the four editors keep the replay record from Apply until close, and a pres
     assert.match(text, /copyReplay: copyReplay\.sessionOption/, modal);
     assert.match(text, /onApply=\{\(next, replay\) => \{.*copyReplay\.setReplay\(replay\)/, modal);
     assert.match(text, /useCastleCopyReplayRun\(copyReplay, \{ descriptor: /, modal);
-    assert.match(text, /contentNotice=\{<>\{copyRun\.status\}\{draftSession\.conflictNotice\}\{copyRun\.dialog\}<\/>\}/, modal);
+    assert.match(text, /contentNotice=\{<>\{copyRun\.status\}(?:\{recovery\.banner\})?\{draftSession\.conflictNotice\}\{copyRun\.dialog\}<\/>\}/, modal);
     assert.doesNotMatch(text, /copiedSetup|copyApplied/, modal);
   }
   const bird = await readFile(new URL('../src/settings/components/AutoBirdSettingsModal.tsx', import.meta.url), 'utf8');

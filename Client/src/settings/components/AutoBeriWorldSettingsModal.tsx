@@ -58,6 +58,7 @@ import { beriAttackOptionsSummary, beriBuildOptionsSummary, countCustomValues, t
 import { useSettingsDisclosure } from '../disclosure/useSettingsDisclosure';
 import { AutomationRunStrip } from './AutomationRunStrip';
 import { collapsedSettingNote, SettingsSection } from './SettingsSection';
+import { useDraftRecovery } from '../useDraftRecovery';
 
 interface AutoBeriWorldSettingsModalProps {
 	isOpen: boolean;
@@ -330,6 +331,12 @@ export const AutoBeriWorldSettingsModal: React.FC<AutoBeriWorldSettingsModalProp
 		}
 	};
 
+	const recovery = useDraftRecovery({ section: 'automation.autoBeriWorld', isOpen, draftSession, draft: settings, extras: { attackRef } });
+	useEffect(() => {
+		const extras = draftSession.recoveredExtras?.value as { attackRef?: AttackSetupRef } | undefined;
+		if (extras?.attackRef) setAttackRef(extras.attackRef);
+	}, [draftSession.recoveredExtras]);
+
 	return (
     <>
 		<SettingsModal
@@ -346,7 +353,7 @@ export const AutoBeriWorldSettingsModal: React.FC<AutoBeriWorldSettingsModalProp
 			isSaving={saving}
 			saveDisabled={attackRefInvalid || !draftSession.ready}
 			contentDisabled={!draftSession.ready}
-			contentNotice={draftSession.conflictNotice}
+			contentNotice={<>{recovery.banner}{draftSession.conflictNotice}</>}
 		>
 			<AutomationRunStrip
 				featureId="autoBeriWorld"

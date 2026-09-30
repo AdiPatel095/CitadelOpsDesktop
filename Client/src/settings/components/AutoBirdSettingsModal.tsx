@@ -54,6 +54,7 @@ import {
   mergeAutoBirdPickerItems,
   visibleAutoBirdReserveItems,
 } from '../AutoBirdFortressReserve';
+import { useDraftRecovery } from '../useDraftRecovery';
 
 interface AutoBirdSettingsModalProps {
   isOpen: boolean;
@@ -364,6 +365,8 @@ export const AutoBirdSettingsModal: React.FC<AutoBirdSettingsModalProps> = ({ is
   const activePresetMissing = !!activePresetId &&
     !presetsState.presets.some((preset) => preset.id === activePresetId);
 
+  const recovery = useDraftRecovery({ section: 'automation.autoBird', isOpen, draftSession, draft: buildAutoBirdClientState(currentIgnoreSettings(), presetsState, appliedPresetId) });
+
   return (
     <>
     <SettingsModal
@@ -373,7 +376,7 @@ export const AutoBirdSettingsModal: React.FC<AutoBirdSettingsModalProps> = ({ is
       maxWidth="full"
       saveDisabled={!draftSession.ready}
       contentDisabled={!draftSession.ready}
-      contentNotice={<>{copyRun.status}{draftSession.conflictNotice}{copyRun.dialog}</>}
+      contentNotice={<>{copyRun.status}{recovery.banner}{draftSession.conflictNotice}{copyRun.dialog}</>}
       title={localizeStatic("ui.settings.components.autoBirdSettingsModal.title.auto.bird.settings.158a0a4f")}
       icon={<Bird className="h-5 w-5" />}
       description={(

@@ -64,12 +64,14 @@ test('declining leaves the switch off: no write happens after Fix first', async 
 });
 
 test('the client preflight never proves dispatch or success: no readiness path submits an intent', async () => {
-  for (const file of ['components/StartConfirmDialog.tsx', 'components/AutomationReadinessRow.tsx', 'components/FirstResultCard.tsx', 'settings/readiness/featureReadiness.ts', 'settings/readiness/firstResult.ts', 'settings/readiness/runtimeState.ts']) {
+  for (const file of ['components/StartConfirmDialog.tsx', 'components/AutomationReadinessRow.tsx', 'settings/readiness/useFeatureReadiness.ts', 'components/FirstResultCard.tsx', 'settings/readiness/featureReadiness.ts', 'settings/readiness/firstResult.ts', 'settings/readiness/runtimeState.ts']) {
     const text = await source(file);
     assert.doesNotMatch(text, /submitIntent|updateConfiguration|cancelOperation\(|queueConfigurationUpdate/, file);
   }
   const row = await source('components/AutomationReadinessRow.tsx');
-  assert.match(row, /loadStormUnlockOffer\(getCatalog/, 'the only request is the read-only official catalog, through the shared cached loader');
+  const hook = await source('settings/readiness/useFeatureReadiness.ts');
+  assert.match(hook, /loadStormUnlockOffer\(getCatalog/, 'the only request is the read-only official catalog, through the shared cached loader');
+  assert.doesNotMatch(hook, /submitIntent|updateConfiguration/, 'the shared readiness hook only reads');
   assert.doesNotMatch(row, /CitadelAPI\./);
   assert.doesNotMatch(row, /\bgetCatalog\(/, 'the row itself requests no catalog directly');
   assert.match(row, /it never disables the switch/, 'readiness never disables the switch');

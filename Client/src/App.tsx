@@ -1,4 +1,5 @@
 import { useLocale } from './i18n/LocaleContext';
+import { ConnectionRepairHost } from './components/ConnectionRepairHost';
 import React, { lazy, Suspense, useEffect, useRef, useState, type ComponentType } from 'react';
 import { Providers } from './Providers';
 import Header from './components/Header';
@@ -189,6 +190,7 @@ const AppContent: React.FC = () => {
       </main>
 
       <Alerts />
+      <ConnectionRepairHost onOpenSettings={() => setActiveView('settings')} />
       {SettingsModal && (
         <Suspense fallback={null}>
           <SettingsModal

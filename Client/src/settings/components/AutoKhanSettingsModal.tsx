@@ -72,6 +72,7 @@ import { useSettingsDisclosure } from '../disclosure/useSettingsDisclosure';
 import { AutomationRunStrip } from './AutomationRunStrip';
 import { collapsedSettingNote, SettingsSection } from './SettingsSection';
 import { englishGuidePack, useGuideLocale } from '../../config/useGuideLocale';
+import { useDraftRecovery } from '../useDraftRecovery';
 
 interface AutoKhanSettingsModalProps {
   isOpen: boolean;
@@ -234,6 +235,14 @@ export const AutoKhanSettingsModal: React.FC<AutoKhanSettingsModalProps> = ({ is
     }
   };
 
+  const recovery = useDraftRecovery({ section: AUTO_KHAN_SECTION, isOpen, draftSession, draft: draft, extras: { attackRef, defenseRef } });
+  useEffect(() => {
+    const extras = draftSession.recoveredExtras?.value as { attackRef?: AttackSetupRef; defenseRef?: DefenseSetupRef } | undefined;
+    if (!extras) return;
+    if (extras.attackRef) setAttackRef(extras.attackRef);
+    if (extras.defenseRef) setDefenseRef(extras.defenseRef);
+  }, [draftSession.recoveredExtras]);
+
   return (
     <>
     <SettingsModal
@@ -249,7 +258,7 @@ export const AutoKhanSettingsModal: React.FC<AutoKhanSettingsModalProps> = ({ is
       isSaving={saving}
       saveDisabled={!canSave || !draftSession.ready}
       contentDisabled={!draftSession.ready}
-      contentNotice={draftSession.conflictNotice}
+      contentNotice={<>{recovery.banner}{draftSession.conflictNotice}</>}
     >
       <AutomationRunStrip
         featureId="autoKhan"

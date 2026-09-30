@@ -44,6 +44,7 @@ import { countCustomValues, towerAdvisorSummary, towerScanSummary, travelLine } 
 import { useSettingsDisclosure } from '../disclosure/useSettingsDisclosure';
 import { AutomationRunStrip } from './AutomationRunStrip';
 import { collapsedSettingNote, SettingsSection } from './SettingsSection';
+import { useDraftRecovery } from '../useDraftRecovery';
 
 interface AutoTowerSettingsModalProps {
   isOpen: boolean;
@@ -183,6 +184,8 @@ export const AutoTowerSettingsModal: React.FC<AutoTowerSettingsModalProps> = ({ 
     if (!isSaving) onClose();
   };
 
+  const recovery = useDraftRecovery({ section: 'automation.autoTowers', isOpen, draftSession, draft: { ...parseAutoTowerClientState(draftSession.sections?.['automation.autoTowers']), version: 4, mapRefreshIntervalSec, dailyAttackLimit, horseTravelBoostId, useAdvisor, autoActivateAdvisor, maximumDailyTimeSkips, castles: settings } });
+
   return (
     <>
     <SettingsModal
@@ -199,7 +202,7 @@ export const AutoTowerSettingsModal: React.FC<AutoTowerSettingsModalProps> = ({ 
       isSaving={isSaving}
       saveDisabled={!draftSession.ready}
       contentDisabled={!draftSession.ready}
-      contentNotice={<>{copyRun.status}{draftSession.conflictNotice}{copyRun.dialog}</>}
+      contentNotice={<>{copyRun.status}{recovery.banner}{draftSession.conflictNotice}{copyRun.dialog}</>}
     >
       <AutomationRunStrip
         featureId="autoTowers"

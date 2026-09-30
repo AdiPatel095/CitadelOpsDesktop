@@ -54,6 +54,7 @@ import { useSettingsDisclosure } from '../disclosure/useSettingsDisclosure';
 import { AutomationRunStrip } from './AutomationRunStrip';
 import { collapsedSettingNote, SettingsSection } from './SettingsSection';
 import { englishGuidePack, useGuideLocale } from '../../config/useGuideLocale';
+import { useDraftRecovery } from '../useDraftRecovery';
 
 interface AutoNomadSettingsModalProps {
   isOpen: boolean;
@@ -222,6 +223,14 @@ export const AutoNomadSettingsModal: React.FC<AutoNomadSettingsModalProps> = ({ 
     }
   };
 
+  const recovery = useDraftRecovery({ section: AUTO_NOMAD_SECTION, isOpen, draftSession, draft: draft, extras: { nomadRef, samuraiRef } });
+  useEffect(() => {
+    const extras = draftSession.recoveredExtras?.value as { nomadRef?: AttackSetupRef; samuraiRef?: AttackSetupRef } | undefined;
+    if (!extras) return;
+    if (extras.nomadRef) setNomadRef(extras.nomadRef);
+    if (extras.samuraiRef) setSamuraiRef(extras.samuraiRef);
+  }, [draftSession.recoveredExtras]);
+
   return (<><SettingsModal
       footerLeading={<StopFooter featureId="autoNomad" />}
       isOpen={isOpen}
@@ -235,7 +244,7 @@ export const AutoNomadSettingsModal: React.FC<AutoNomadSettingsModalProps> = ({ 
       isSaving={saving}
       saveDisabled={!canSave || !draftSession.ready}
       contentDisabled={!draftSession.ready}
-      contentNotice={draftSession.conflictNotice}
+      contentNotice={<>{recovery.banner}{draftSession.conflictNotice}</>}
     >
       <AutomationRunStrip
         featureId="autoNomad"
