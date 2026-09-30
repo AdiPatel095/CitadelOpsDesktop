@@ -64,6 +64,8 @@ test('the harness needs no product change, no new dependency and one documented 
   const config = code(await read('vite.config.ts'));
   assert.match(config, /host: '127\.0\.0\.1', port: 41734, strictPort: true/);
   assert.doesNotMatch(config, /proxy/, 'no proxy: there is no server behind the preview');
+  assert.match(config, /publicDir: fileURLToPath\(new URL\('\.\.\/\.\.\/public', import\.meta\.url\)\)/, 'the game images (/game-data/**) are served from Client/public');
+  assert.ok((await readdir(new URL('../public/game-data/', import.meta.url))).length > 0, 'and that directory holds them');
   const allowed = new Set(['react', 'react-dom/client', 'vite', '@vitejs/plugin-react', '@tailwindcss/vite', 'node:child_process', 'node:url']);
   for (const file of harnessFiles.filter((name) => /\.(ts|tsx)$/.test(name))) {
     for (const [, source] of code(await read(file)).matchAll(/from '([^']+)'/g)) {

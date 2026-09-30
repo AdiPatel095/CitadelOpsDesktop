@@ -18,6 +18,8 @@ const candidate = (() => {
  */
 export default defineConfig({
   root: harnessRoot,
+  // The harness page lives outside `Client/`, so the game's static images (`/game-data/**`) must be served explicitly.
+  publicDir: fileURLToPath(new URL('../../public', import.meta.url)),
   plugins: [react(), tailwindcss()],
   define: { __CANDIDATE_SHA__: JSON.stringify(candidate) },
   server: { host: '127.0.0.1', port: 41734, strictPort: true, fs: { allow: [clientRoot] } },
