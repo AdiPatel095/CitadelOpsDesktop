@@ -41,7 +41,7 @@ func TestDailyAttackLimitGuardRunsOnlyForPositiveNormalAttackCap(t *testing.T) {
 	now := time.Now().UTC()
 	gameState := State.NewGameState()
 	gameState.DailyAttacks = State.DailyAttackState{Count: 1000, ObservedAt: now}
-	application := &Application{State: State.NewStore(gameState)}
+	application := &Application{State: State.NewStore(&gameState)}
 	arguments, _ := json.Marshal(dailyAttackLimitGuardRequest{Limit: 1000})
 	if err := application.guardDailyAttackLimit(t.Context(), arguments); err == nil || !strings.Contains(err.Error(), "1000 / 1000") {
 		t.Fatalf("send guard accepted reached cap: %v", err)

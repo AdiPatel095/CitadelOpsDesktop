@@ -17,18 +17,18 @@ func buildingReadSet(
 		return nil, err
 	}
 	keys := []State.PartitionKey{
-		State.SessionPartition(input.State, State.CapabilitySessionContext),
-		State.AccountPartition(input.State, State.CapabilityCastleDirectory),
-		State.AccountPartition(input.State, State.CapabilityAccountWallet),
-		State.AccountPartition(input.State, State.CapabilityEconomy),
-		State.AccountPartition(input.State, State.CapabilityInventory),
+		State.SessionPartition(&input.State, State.CapabilitySessionContext),
+		State.AccountPartition(&input.State, State.CapabilityCastleDirectory),
+		State.AccountPartition(&input.State, State.CapabilityAccountWallet),
+		State.AccountPartition(&input.State, State.CapabilityEconomy),
+		State.AccountPartition(&input.State, State.CapabilityInventory),
 	}
 	if castleID > 0 {
 		keys = append(keys,
-			State.CastlePartition(input.State, State.CapabilityBuildings, castleID),
-			State.CastlePartition(input.State, State.CapabilityBuildingQueue, castleID),
-			State.CastlePartition(input.State, State.CapabilityConstructionItems, castleID),
-			State.CastlePartition(input.State, State.CapabilityEconomy, castleID),
+			State.CastlePartition(&input.State, State.CapabilityBuildings, castleID),
+			State.CastlePartition(&input.State, State.CapabilityBuildingQueue, castleID),
+			State.CastlePartition(&input.State, State.CapabilityConstructionItems, castleID),
+			State.CastlePartition(&input.State, State.CapabilityEconomy, castleID),
 		)
 	}
 	return keys, nil
@@ -44,19 +44,19 @@ func constructionReadSet(
 		return nil, err
 	}
 	keys := []State.PartitionKey{
-		State.SessionPartition(input.State, State.CapabilitySessionContext),
-		State.AccountPartition(input.State, State.CapabilityCastleDirectory),
-		State.AccountPartition(input.State, State.CapabilityAccountWallet),
-		State.AccountPartition(input.State, State.CapabilityEconomy),
-		State.AccountPartition(input.State, State.CapabilityConstructionInventory),
+		State.SessionPartition(&input.State, State.CapabilitySessionContext),
+		State.AccountPartition(&input.State, State.CapabilityCastleDirectory),
+		State.AccountPartition(&input.State, State.CapabilityAccountWallet),
+		State.AccountPartition(&input.State, State.CapabilityEconomy),
+		State.AccountPartition(&input.State, State.CapabilityConstructionInventory),
 	}
 	if castleID > 0 {
 		keys = append(keys,
-			State.CastlePartition(input.State, State.CapabilityBuildings, castleID),
-			State.CastlePartition(input.State, State.CapabilityBuildingQueue, castleID),
-			State.CastlePartition(input.State, State.CapabilityConstructionItems, castleID),
-			State.CastlePartition(input.State, State.CapabilityEconomy, castleID),
-			State.CastlePartition(input.State, State.CapabilityConstructionCommerce, castleID),
+			State.CastlePartition(&input.State, State.CapabilityBuildings, castleID),
+			State.CastlePartition(&input.State, State.CapabilityBuildingQueue, castleID),
+			State.CastlePartition(&input.State, State.CapabilityConstructionItems, castleID),
+			State.CastlePartition(&input.State, State.CapabilityEconomy, castleID),
+			State.CastlePartition(&input.State, State.CapabilityConstructionCommerce, castleID),
 		)
 	}
 	return keys, nil
@@ -68,15 +68,15 @@ func equipmentReconfigureReadSet(
 	plan Intent.Plan,
 ) ([]State.PartitionKey, error) {
 	keys := []State.PartitionKey{
-		State.SessionPartition(input.State, State.CapabilitySessionContext),
-		State.AccountPartition(input.State, State.CapabilityLeaders),
-		State.AccountPartition(input.State, State.CapabilityEquipment),
+		State.SessionPartition(&input.State, State.CapabilitySessionContext),
+		State.AccountPartition(&input.State, State.CapabilityLeaders),
+		State.AccountPartition(&input.State, State.CapabilityEquipment),
 	}
 	for _, claim := range plan.Claims {
 		if len(claim) > len("currency:") && claim[:len("currency:")] == "currency:" {
 			keys = append(keys,
-				State.AccountPartition(input.State, State.CapabilityAccountWallet),
-				State.AccountPartition(input.State, State.CapabilityEconomy),
+				State.AccountPartition(&input.State, State.CapabilityAccountWallet),
+				State.AccountPartition(&input.State, State.CapabilityEconomy),
 			)
 			break
 		}
@@ -90,14 +90,14 @@ func riftMaidenReadSet(
 	_ Intent.Plan,
 ) ([]State.PartitionKey, error) {
 	return []State.PartitionKey{
-		State.SessionPartition(input.State, State.CapabilitySessionContext),
-		State.AccountPartition(input.State, State.CapabilityCastleDirectory),
-		State.AccountPartition(input.State, State.CapabilityBuildings),
-		State.AccountPartition(input.State, State.CapabilityGarrison),
-		State.AccountPartition(input.State, State.CapabilityLeaders),
-		State.AccountPartition(input.State, State.CapabilityEquipment),
-		State.AccountPartition(input.State, State.CapabilityWorldMap),
-		State.AccountPartition(input.State, State.CapabilityEvents),
+		State.SessionPartition(&input.State, State.CapabilitySessionContext),
+		State.AccountPartition(&input.State, State.CapabilityCastleDirectory),
+		State.AccountPartition(&input.State, State.CapabilityBuildings),
+		State.AccountPartition(&input.State, State.CapabilityGarrison),
+		State.AccountPartition(&input.State, State.CapabilityLeaders),
+		State.AccountPartition(&input.State, State.CapabilityEquipment),
+		State.AccountPartition(&input.State, State.CapabilityWorldMap),
+		State.AccountPartition(&input.State, State.CapabilityEvents),
 	}, nil
 }
 
@@ -107,13 +107,13 @@ func riftReplayReadSet(
 	_ Intent.Plan,
 ) ([]State.PartitionKey, error) {
 	return []State.PartitionKey{
-		State.SessionPartition(input.State, State.CapabilitySessionContext),
-		State.AccountPartition(input.State, State.CapabilityCastleDirectory),
-		State.AccountPartition(input.State, State.CapabilityBuildings),
-		State.AccountPartition(input.State, State.CapabilityGarrison),
-		State.AccountPartition(input.State, State.CapabilityLeaders),
-		State.AccountPartition(input.State, State.CapabilityEvents),
-		State.AccountPartition(input.State, State.CapabilityAutomation),
+		State.SessionPartition(&input.State, State.CapabilitySessionContext),
+		State.AccountPartition(&input.State, State.CapabilityCastleDirectory),
+		State.AccountPartition(&input.State, State.CapabilityBuildings),
+		State.AccountPartition(&input.State, State.CapabilityGarrison),
+		State.AccountPartition(&input.State, State.CapabilityLeaders),
+		State.AccountPartition(&input.State, State.CapabilityEvents),
+		State.AccountPartition(&input.State, State.CapabilityAutomation),
 	}, nil
 }
 
@@ -123,7 +123,7 @@ func riftTemplateReadSet(
 	_ Intent.Plan,
 ) ([]State.PartitionKey, error) {
 	return []State.PartitionKey{
-		State.AccountPartition(input.State, State.CapabilityEvents),
+		State.AccountPartition(&input.State, State.CapabilityEvents),
 	}, nil
 }
 
@@ -133,8 +133,8 @@ func riftTemplateDeleteReadSet(
 	_ Intent.Plan,
 ) ([]State.PartitionKey, error) {
 	return []State.PartitionKey{
-		State.AccountPartition(input.State, State.CapabilityEvents),
-		State.AccountPartition(input.State, State.CapabilityAutomation),
+		State.AccountPartition(&input.State, State.CapabilityEvents),
+		State.AccountPartition(&input.State, State.CapabilityAutomation),
 	}, nil
 }
 

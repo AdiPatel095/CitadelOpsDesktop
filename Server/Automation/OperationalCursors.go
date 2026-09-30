@@ -6,7 +6,7 @@ import (
 	"CitadelDesktop/Server/State"
 )
 
-func operationalCursor(state State.GameState, policyID string, key string) (int, bool) {
+func operationalCursor(state *State.GameState, policyID string, key string) (int, bool) {
 	policyID = strings.TrimSpace(policyID)
 	key = strings.TrimSpace(key)
 	if policyID == "" || key == "" {

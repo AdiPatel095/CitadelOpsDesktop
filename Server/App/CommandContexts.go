@@ -235,7 +235,7 @@ func (application *Application) resolveCRACommandDependencies(
 		}
 	}
 	if State.AttackFeatureTargetPendingAt(
-		input.State, State.AttackFeatureAutoTowers, fields.KingdomID, kingdomTowerMapTypeID,
+		&input.State, State.AttackFeatureAutoTowers, fields.KingdomID, kingdomTowerMapTypeID,
 		fields.TargetX, fields.TargetY, time.Now().UTC(),
 	) {
 		return Intent.CommandDependencyPlan{}, Localization.WithError(fmt.Errorf(
@@ -320,7 +320,7 @@ func (application *Application) resolveCRACommandDependencies(
 	target, towerTarget := input.State.LookupMapObservation(fields.KingdomID, fmt.Sprintf("%d:%d", fields.TargetX, fields.TargetY))
 	towerTarget = towerTarget && target.TypeID == kingdomTowerMapTypeID
 	if target.TypeID == State.MapTypeKingdomFortress && State.AttackFeatureTargetPendingAt(
-		input.State, State.AttackFeatureAutoFortress, fields.KingdomID, State.MapTypeKingdomFortress,
+		&input.State, State.AttackFeatureAutoFortress, fields.KingdomID, State.MapTypeKingdomFortress,
 		fields.TargetX, fields.TargetY, time.Now().UTC(),
 	) {
 		return Intent.CommandDependencyPlan{}, Localization.WithError(fmt.Errorf(
@@ -395,8 +395,8 @@ func (application *Application) guardCRASend(_ context.Context, arguments json.R
 		}
 		commander, found := state.Commanders[*request.CommanderID]
 		if !found || !commander.Available ||
-			State.CommanderHasActiveMovementAt(state, *request.CommanderID, time.Now().UTC()) ||
-			State.InvasionCommanderReserved(state, *request.CommanderID) {
+			State.CommanderHasActiveMovementAt(&state, *request.CommanderID, time.Now().UTC()) ||
+			State.InvasionCommanderReserved(&state, *request.CommanderID) {
 			return Localization.WithError(fmt.Errorf("%w: CRA commander %d is no longer available", Intent.ErrPlanStale, *request.CommanderID), Localization.New("server.app.intent_plan_became_stale.97faff4d", "intent plan became stale before dispatch: CRA commander {p1} is no longer available", Localization.Params{"p1": fmt.Sprintf("%d", *request.CommanderID)}))
 		}
 	}
@@ -443,7 +443,7 @@ func (application *Application) guardCRASend(_ context.Context, arguments json.R
 			), Localization.New("server.app.intent_plan_became_stale.e3a9f3c9", "intent plan became stale before dispatch: CRA invasion target {p1}:{p2} has an unresolved launch", Localization.Params{"p1": fmt.Sprintf("%d", request.TargetX), "p2": fmt.Sprintf("%d", request.TargetY)}))
 		}
 		if State.AttackFeatureTargetPendingAt(
-			state, State.AttackFeatureAutoInvasion, request.KingdomID, dialog.Target.TypeID,
+			&state, State.AttackFeatureAutoInvasion, request.KingdomID, dialog.Target.TypeID,
 			request.TargetX, request.TargetY, time.Now().UTC(),
 		) {
 			return Localization.WithError(fmt.Errorf(
@@ -451,7 +451,7 @@ func (application *Application) guardCRASend(_ context.Context, arguments json.R
 				Intent.ErrPlanStale, request.TargetX, request.TargetY,
 			), Localization.New("server.app.intent_plan_became_stale.d4513ec1", "intent plan became stale before dispatch: CRA invasion target {p1}:{p2} has a prior attack awaiting settlement", Localization.Params{"p1": fmt.Sprintf("%d", request.TargetX), "p2": fmt.Sprintf("%d", request.TargetY)}))
 		}
-		if State.AnyActiveMovementAtMapTarget(state, State.MapTargetKey{
+		if State.AnyActiveMovementAtMapTarget(&state, State.MapTargetKey{
 			KingdomID: request.KingdomID, TypeID: dialog.Target.TypeID,
 			X: request.TargetX, Y: request.TargetY,
 		}, time.Now().UTC()) {

@@ -107,7 +107,7 @@ func (*AutoBoosterPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decisi
 			return autoBoosterWaiting(snapshot.Now, settings.CheckIntervalSec, "Boost purchase outcome is unresolved; waiting for an authoritative account snapshot", metrics, Localization.New("server.automation.boost_purchase_outcome_is.e151f4a8", "Boost purchase outcome is unresolved; waiting for an authoritative account snapshot", nil)), nil
 		}
 	}
-	if cursor, found := operationalCursor(snapshot.State, "autoBooster", autoBoosterCursorKey); found &&
+	if cursor, found := operationalCursor(&snapshot.State, "autoBooster", autoBoosterCursorKey); found &&
 		State.SameEventOccurrence(time.Unix(int64(cursor), 0).UTC(), effect.EndsAt) {
 		return Decision{
 			Status: "waiting", Detail: "Daily fortress-speed boost purchase was accepted; awaiting current active-state confirmation", DetailDescriptor: Localization.New("server.automation.daily_fortress_speed_boost.d49271ad", "Daily fortress-speed boost purchase was accepted; awaiting current active-state confirmation", nil),
@@ -142,7 +142,7 @@ func (*AutoBoosterPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decisi
 		return autoBoosterWaiting(snapshot.Now, settings.CheckIntervalSec,
 			fmt.Sprintf("Server quote is not the approved 2,500-ruby fortress-speed offer (quoted %d); no purchase was sent", offer.RubyCost), metrics, Localization.New("server.automation.server_quote_is_not.8efefa0a", "Server quote is not the approved 2,500-ruby fortress-speed offer (quoted {p0, number}); no purchase was sent", Localization.Params{"p0": offer.RubyCost})), nil
 	}
-	rubies, balanceAvailable := autoBoosterRubyBalance(snapshot.State, snapshot.GameData)
+	rubies, balanceAvailable := autoBoosterRubyBalance(&snapshot.State, snapshot.GameData)
 	resourceID, resourceFound := snapshot.GameData.ResourceIDForJSONKey("C2")
 	resourceObservation := snapshot.State.Player.ResourceObservations[State.ResourceID(resourceID)]
 	if !balanceAvailable || !resourceFound || resourceID <= 0 || resourceObservation.ObservedAt.IsZero() ||
@@ -182,7 +182,7 @@ func defaultAutoBoosterSettings() autoBoosterSettings {
 	}
 }
 
-func autoBoosterRubyBalance(gameState State.GameState, gameData *GameData.Store) (int64, bool) {
+func autoBoosterRubyBalance(gameState *State.GameState, gameData *GameData.Store) (int64, bool) {
 	if gameData == nil {
 		return 0, false
 	}

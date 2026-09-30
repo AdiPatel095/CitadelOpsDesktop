@@ -346,7 +346,7 @@ func SnapshotFingerprint(gameState State.GameState, gameData *GameData.Store, ki
 		return "", err
 	}
 	digest := sha256.New()
-	worldID, playerID := State.BoundAccount(gameState)
+	worldID, playerID := State.BoundAccount(&gameState)
 	catalogVersion, catalogDigest := "", ""
 	if gameData != nil {
 		metadata := gameData.Metadata()

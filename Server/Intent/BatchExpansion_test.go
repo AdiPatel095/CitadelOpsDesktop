@@ -15,7 +15,8 @@ import (
 
 func supportBatchEngine(t *testing.T, codes []int) (*Engine, *responseSequenceSender, *atomic.Int32, *atomic.Int32) {
 	t.Helper()
-	store := State.NewStore(State.NewGameState())
+	accessorState1 := State.NewGameState()
+	store := State.NewStore(&accessorState1)
 	pipeline := Ingest.NewPipeline(store, nil, Ingest.NewRegistry())
 	sender := &responseSequenceSender{pipeline: pipeline, responseCodes: codes}
 	registry := NewRegistry()

@@ -19,7 +19,7 @@ func TestCaptureAttackFeatureLaunchAllowsCommanderZero(t *testing.T) {
 		ID: 123, Direction: 0, SourceCastleID: 1928, CommanderID: &commanderID,
 		KingdomID: 4, TargetX: 605, TargetY: 689, ArrivesAt: &arrivesAt, ObservedAt: now,
 	}
-	application := &Application{State: State.NewStore(state)}
+	application := &Application{State: State.NewStore(&state)}
 	arguments, err := json.Marshal(attackFeatureCaptureRequest{
 		FeatureID: State.AttackFeatureAutoStorm, SourceCastleID: 1928, CommanderID: commanderID,
 		KingdomID: 4, TargetTypeID: 25, TargetX: 605, TargetY: 689,
@@ -50,7 +50,7 @@ func TestCaptureAutoBeriAttackFeatureLaunch(t *testing.T) {
 		ID: 456, Direction: 0, SourceCastleID: 900, CommanderID: &commanderID,
 		KingdomID: 10, TargetX: 1438, TargetY: 82, ArrivesAt: &arrivesAt, ObservedAt: now,
 	}
-	application := &Application{State: State.NewStore(state)}
+	application := &Application{State: State.NewStore(&state)}
 	arguments, err := json.Marshal(attackFeatureCaptureRequest{
 		FeatureID: State.AttackFeatureAutoBeriWorld, SourceCastleID: 900, CommanderID: commanderID,
 		KingdomID: 10, TargetTypeID: 17, TargetX: 1438, TargetY: 82,
@@ -80,7 +80,7 @@ func TestCaptureRiftMaidenRunLaunchCountsConfirmedMovementOnce(t *testing.T) {
 		ID: 456, Direction: 0, SourceCastleID: 1, CommanderID: &commanderID,
 		KingdomID: 0, TargetX: 10, TargetY: 20, ArrivesAt: &arrivesAt, ObservedAt: now,
 	}
-	application := &Application{State: State.NewStore(state)}
+	application := &Application{State: State.NewStore(&state)}
 	arguments, err := json.Marshal(attackFeatureCaptureRequest{
 		FeatureID: State.AttackFeatureRiftMaiden, SourceCastleID: 1, CommanderID: commanderID,
 		KingdomID: 0, TargetTypeID: 43, TargetX: 10, TargetY: 20, RunID: "run",
@@ -127,7 +127,7 @@ func TestCaptureAutoTowerLaunchRecordsConfirmedAdvisorTimeSkipsOnlyOnce(t *testi
 		KingdomID: 0, TargetTypeID: 2, TargetX: 101, TargetY: 102, ArrivesAt: &arrivesAt, ObservedAt: now,
 		AdvisorType: 4, AdvisorAttackNumber: 1, AdvisorAttackCount: 4,
 	}
-	application := &Application{State: State.NewStore(state)}
+	application := &Application{State: State.NewStore(&state)}
 	arguments, err := json.Marshal(attackFeatureCaptureRequest{
 		FeatureID: State.AttackFeatureAutoTowers, SourceCastleID: 100, CommanderID: commanderID,
 		KingdomID: 0, TargetTypeID: 2, TargetX: 101, TargetY: 102,
@@ -162,7 +162,7 @@ func TestCaptureAutoTowerAdvisorTimeSkipsRejectsNonAdvisorMovement(t *testing.T)
 		ID: 321, Direction: 0, SourceCastleID: 100, CommanderID: &commanderID,
 		KingdomID: 0, TargetTypeID: 2, TargetX: 101, TargetY: 102, ArrivesAt: &arrivesAt, ObservedAt: now,
 	}
-	application := &Application{State: State.NewStore(state)}
+	application := &Application{State: State.NewStore(&state)}
 	arguments, err := json.Marshal(attackFeatureCaptureRequest{
 		FeatureID: State.AttackFeatureAutoTowers, SourceCastleID: 100, CommanderID: commanderID,
 		KingdomID: 0, TargetTypeID: 2, TargetX: 101, TargetY: 102,

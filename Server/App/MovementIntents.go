@@ -57,7 +57,7 @@ func planTroopsStation(_ context.Context, input Intent.PlanningContext, argument
 	}
 	if operation, exists := input.State.Stationing[request.TrackingID]; exists &&
 		(request.Purpose == "autoBird" || request.Purpose == "autoStation") &&
-		operation.ActiveInState(input.State, now) {
+		operation.ActiveInState(&input.State, now) {
 		return Intent.Plan{
 			Summary: fmt.Sprintf("Skip %s stationing from castle %d; its tracked movement is already active", request.Purpose, request.SourceCastleID), SummaryDescriptor: Localization.New("server.app.skip_p_stationing_from.4ffdd147", "Skip {p0} stationing from castle {p1}; its tracked movement is already active", Localization.Params{"p0": fmt.Sprintf("%s", request.Purpose), "p1": fmt.Sprintf("%d", request.SourceCastleID)}),
 		}, nil
@@ -177,7 +177,7 @@ func resolveTroopsStationStep(_ context.Context, input Intent.PlanningContext, a
 		return Intent.Step{}, Localization.WithError(fmt.Errorf("%s stationing is disabled while Protection Mode is preparing or active", request.Purpose), Localization.New("server.app.p_stationing_is_disabled.3de346af", "{p0} stationing is disabled while Protection Mode is preparing or active", Localization.Params{"p0": fmt.Sprintf("%s", request.Purpose)}))
 	}
 	if operation, exists := input.State.Stationing[request.TrackingID]; exists && automation &&
-		operation.ActiveInState(input.State, now) {
+		operation.ActiveInState(&input.State, now) {
 		return Intent.Step{}, Localization.WithError(fmt.Errorf("%s stationing is already active from castle %d", request.Purpose, request.SourceCastleID), Localization.New("server.app.p_stationing_is_already.a02fbe4c", "{p0} stationing is already active from castle {p1}", Localization.Params{"p0": fmt.Sprintf("%s", request.Purpose), "p1": fmt.Sprintf("%d", request.SourceCastleID)}))
 	}
 	source, exists := input.State.Castles[request.SourceCastleID]

@@ -12,7 +12,7 @@ import (
 func TestStoreHotPathMetadataDoesNotWaitForLongMutation(t *testing.T) {
 	initial := NewGameState()
 	initial.Session.ConnectionGeneration = 7
-	store := NewStore(initial)
+	store := NewStore(&initial)
 	mutationStarted := make(chan struct{})
 	releaseMutation := make(chan struct{})
 	finished := make(chan struct{})
@@ -50,7 +50,7 @@ func TestStoreSnapshotKeepsEquipmentEffectsAsArrays(t *testing.T) {
 	initial.Inventory.Gems[1] = GemInstance{ID: 1, Effects: EquipmentEffects{}}
 	initial.Inventory.Gems[2] = GemInstance{ID: 2}
 
-	snapshot := NewStore(initial).Snapshot()
+	snapshot := NewStore(&initial).Snapshot()
 	for id, item := range snapshot.Inventory.Equipment {
 		if item.Effects == nil {
 			t.Fatalf("equipment %d effects serialized as null", id)
@@ -68,7 +68,7 @@ func TestStoreSnapshotIsolatesAutomationMetricsAndDetails(t *testing.T) {
 	initial.Automations["autoFortress"] = AutomationState{
 		Metrics: map[string]float64{"allocated": 100}, Details: map[string]string{"supply": "ready"},
 	}
-	store := NewStore(initial)
+	store := NewStore(&initial)
 	snapshot := store.Snapshot()
 	automation := snapshot.Automations["autoFortress"]
 	automation.Metrics["allocated"] = 999
@@ -80,7 +80,8 @@ func TestStoreSnapshotIsolatesAutomationMetricsAndDetails(t *testing.T) {
 }
 
 func TestStoreCoalescesFullSubscriberBuffer(t *testing.T) {
-	store := NewStore(NewGameState())
+	accessorState1 := NewGameState()
+	store := NewStore(&accessorState1)
 	events, unsubscribe := store.Subscribe(1)
 	defer unsubscribe()
 
@@ -108,7 +109,8 @@ func TestStoreCoalescesFullSubscriberBuffer(t *testing.T) {
 }
 
 func TestStoreEventsDeclareBaseRevision(t *testing.T) {
-	store := NewStore(NewGameState())
+	accessorState2 := NewGameState()
+	store := NewStore(&accessorState2)
 	events, unsubscribe := store.Subscribe(8)
 	defer unsubscribe()
 	for _, domain := range []string{"units", "movements", "beri"} {
@@ -132,7 +134,8 @@ func TestStoreEventsDeclareBaseRevision(t *testing.T) {
 // component any folded event touched, otherwise a client applying it directly
 // would miss the changes of the events that used to sit between the two ends.
 func TestStoreFullBufferMergesWholeQueueIntoOneCompleteEvent(t *testing.T) {
-	store := NewStore(NewGameState())
+	accessorState3 := NewGameState()
+	store := NewStore(&accessorState3)
 	events, unsubscribe := store.Subscribe(3)
 	defer unsubscribe()
 
@@ -200,7 +203,8 @@ func TestCoalesceEventQueueKeepsOldestBaseAndNewestRevision(t *testing.T) {
 }
 
 func TestStoreOnlyCoalescesSubscribersWithFullBuffers(t *testing.T) {
-	store := NewStore(NewGameState())
+	accessorState4 := NewGameState()
+	store := NewStore(&accessorState4)
 	coalescedEvents, unsubscribeCoalesced := store.Subscribe(1)
 	defer unsubscribeCoalesced()
 	discreteEvents, unsubscribeDiscrete := store.Subscribe(2)
@@ -236,7 +240,7 @@ func TestPlanningViewKeepsImmutableGenerationAfterMutation(t *testing.T) {
 		Resources: map[ResourceID]ResourceBalance{3: {Amount: 100}},
 		Buildings: map[BuildingInstanceID]Building{},
 	}
-	store := NewStore(initial)
+	store := NewStore(&initial)
 	view := store.PlanningView()
 
 	if _, err := store.Apply(func(state *GameState) ([]string, bool, error) {
@@ -271,7 +275,7 @@ func TestApplyComponentsClonesOnlyMutableCastle(t *testing.T) {
 		Resources: map[ResourceID]ResourceBalance{3: {Amount: 200}},
 		Buildings: map[BuildingInstanceID]Building{202: {InstanceID: 202, Level: 9}},
 	}
-	store := NewStore(initial)
+	store := NewStore(&initial)
 	before := store.PlanningView().State
 
 	event, err := store.ApplyComponents(Components(ComponentCastles), func(state *GameState) ([]string, bool, error) {
@@ -329,7 +333,7 @@ func TestApplyComponentsClonesOnlyMutableInventoryParts(t *testing.T) {
 	initial.Inventory.Items["storage:1"] = map[int64]int64{100: 3}
 	initial.Inventory.Items["storage:2"] = map[int64]int64{200: 5}
 	initial.Inventory.ItemsObservedAt["storage:1"] = oldStorageObservedAt
-	store := NewStore(initial)
+	store := NewStore(&initial)
 	before := store.PlanningView().State
 
 	event, err := store.ApplyComponents(Components(ComponentInventory), func(state *GameState) ([]string, bool, error) {
@@ -391,7 +395,7 @@ func TestConstructionOffersRemainScopedAcrossCastleUpdates(t *testing.T) {
 	now := time.Date(2026, 8, 14, 10, 0, 0, 0, time.UTC)
 	initial := NewGameState()
 	initial.ReplaceInventoryConstructionOffers(map[PackageID]int64{100: 2}, now, 10, 0)
-	store := NewStore(initial)
+	store := NewStore(&initial)
 	before := store.ReadOnlyView()
 
 	event, err := store.ApplyComponents(Components(ComponentInventory), func(state *GameState) ([]string, bool, error) {
@@ -427,7 +431,7 @@ func TestApplyWithoutMapMutationKeepsSharedMapImmutableAcrossLaterMapWrite(t *te
 	initial.Map[4] = map[string]MapObservation{
 		"100:101": {KingdomID: 4, X: 100, Y: 101, TypeID: MapTypePlayerCastle, Name: "before"},
 	}
-	store := NewStore(initial)
+	store := NewStore(&initial)
 	before := store.ReadOnlyView()
 
 	if _, err := store.ApplyWithoutMapMutation(func(state *GameState) ([]string, bool, error) {
@@ -455,7 +459,8 @@ func TestApplyWithoutMapMutationKeepsSharedMapImmutableAcrossLaterMapWrite(t *te
 	if !beforeFound || !sharedFound || beforeMap.Name != "before" || sharedMap.Name != "before" {
 		t.Fatal("a later full map mutation changed an immutable earlier generation")
 	}
-	if latest, found := store.ReadOnlyView().LookupMapObservation(4, "100:101"); !found || latest.Name != "after" {
+	accessorState5 := store.ReadOnlyView()
+	if latest, found := accessorState5.LookupMapObservation(4, "100:101"); !found || latest.Name != "after" {
 		t.Fatalf("latest map observation = %+v, found %t", latest, found)
 	}
 }
@@ -466,7 +471,7 @@ func TestApplyComponentsPublishesOnlyPrivateWriteComponents(t *testing.T) {
 	initial.Map[4] = map[string]MapObservation{
 		"100:101": {KingdomID: 4, X: 100, Y: 101, TypeID: MapTypePlayerCastle, Name: "before"},
 	}
-	store := NewStore(initial)
+	store := NewStore(&initial)
 	before := store.ReadOnlyView()
 
 	event, err := store.ApplyComponents(Components(ComponentPlayer), func(state *GameState) ([]string, bool, error) {
@@ -493,7 +498,7 @@ func TestApplyComponentsPublishesOnlyPrivateWriteComponents(t *testing.T) {
 func TestApplyComponentsDiscardsFailedPrivateCandidate(t *testing.T) {
 	initial := NewGameState()
 	initial.Player.Resources[1] = 100
-	store := NewStore(initial)
+	store := NewStore(&initial)
 	wantErr := errors.New("reject candidate")
 
 	_, err := store.ApplyComponents(Components(ComponentPlayer), func(state *GameState) ([]string, bool, error) {
@@ -517,7 +522,7 @@ func TestApplyComponentsPublishesSparsePatchWithNamedComponents(t *testing.T) {
 	initial.Map[4] = map[string]MapObservation{
 		"100:101": {KingdomID: 4, X: 100, Y: 101},
 	}
-	store := NewStore(initial)
+	store := NewStore(&initial)
 
 	event, err := store.ApplyComponents(Components(ComponentPlayer), func(state *GameState) ([]string, bool, error) {
 		state.Player.Resources[1] = 250
@@ -554,7 +559,7 @@ func TestCoalescedPatchContainsLatestValuesForEveryChangedComponent(t *testing.T
 	initial.Map[4] = map[string]MapObservation{
 		"100:101": {KingdomID: 4, X: 100, Y: 101, TypeID: MapTypePlayerCastle, Name: "before"},
 	}
-	store := NewStore(initial)
+	store := NewStore(&initial)
 	events, unsubscribe := store.Subscribe(1)
 	defer unsubscribe()
 
@@ -593,7 +598,7 @@ func TestCoalescedPatchContainsLatestValuesForEveryChangedComponent(t *testing.T
 func TestSparsePatchCanExplicitlyClearCollection(t *testing.T) {
 	initial := NewGameState()
 	initial.Movements[1] = MovementState{ID: 1}
-	store := NewStore(initial)
+	store := NewStore(&initial)
 
 	event, err := store.ApplyComponents(Components(ComponentMovements), func(state *GameState) ([]string, bool, error) {
 		state.Movements = map[MovementID]MovementState{}
@@ -617,9 +622,9 @@ func TestApplyScopedAdvancesOnlyDeclaredPartition(t *testing.T) {
 	initial.Player.ID = 7
 	initial.Castles[11] = CastleState{ID: 11, KingdomID: 1}
 	initial.Castles[12] = CastleState{ID: 12, KingdomID: 1}
-	store := NewStore(initial)
-	changedKey := CastlePartition(initial, CapabilityConstruction, 11)
-	unchangedKey := CastlePartition(initial, CapabilityConstruction, 12)
+	store := NewStore(&initial)
+	changedKey := CastlePartition(&initial, CapabilityConstruction, 11)
+	unchangedKey := CastlePartition(&initial, CapabilityConstruction, 12)
 
 	event, err := store.ApplyScoped(func(state *GameState) (ScopedChange, error) {
 		state.Player.Level++
@@ -653,7 +658,7 @@ func TestProtocolContextUsesExplicitFocusEpoch(t *testing.T) {
 	initial := NewGameState()
 	initial.Castles[11] = CastleState{ID: 11, KingdomID: 1, Focused: true}
 	initial.Castles[12] = CastleState{ID: 12, KingdomID: 1}
-	store := NewStore(initial)
+	store := NewStore(&initial)
 	if context := store.ProtocolContext(); context.FocusedCastleID != 11 ||
 		context.FocusSubcontext != FocusSubcontextCastle || context.FocusEpoch != 1 {
 		t.Fatalf("initial protocol context = %#v", context)
@@ -667,7 +672,7 @@ func TestProtocolContextUsesExplicitFocusEpoch(t *testing.T) {
 		second.Focused = true
 		state.Castles[12] = second
 		return ScopedChange{
-			Partitions: []PartitionKey{SessionPartition(*state, CapabilitySessionContext)},
+			Partitions: []PartitionKey{SessionPartition(state, CapabilitySessionContext)},
 			Changed:    true,
 		}, nil
 	})
@@ -683,11 +688,11 @@ func TestProtocolContextUsesExplicitFocusEpoch(t *testing.T) {
 func TestProtocolContextTracksMapSubcontextForFocusedCastle(t *testing.T) {
 	initial := NewGameState()
 	initial.Castles[11] = CastleState{ID: 11, KingdomID: 1, Focused: true}
-	store := NewStore(initial)
+	store := NewStore(&initial)
 	setSubcontext := func(subcontext FocusSubcontext) {
 		if _, err := store.ApplyScoped(func(state *GameState) (ScopedChange, error) {
 			return ScopedChange{
-				Partitions:      []PartitionKey{SessionPartition(*state, CapabilitySessionContext)},
+				Partitions:      []PartitionKey{SessionPartition(state, CapabilitySessionContext)},
 				FocusSubcontext: subcontext, Changed: true,
 			}, nil
 		}); err != nil {
@@ -720,7 +725,7 @@ func TestRecruitmentBUPAllianceHelpBatchIsScopedToFocusEpoch(t *testing.T) {
 		OwnRecruitmentRequests: []RecruitmentAllianceHelpRequest{}, OwnRecruitmentObservedGeneration: 7,
 	}
 	initial.Castles[11] = CastleState{ID: 11, KingdomID: 1, Focused: true}
-	store := NewStore(initial)
+	store := NewStore(&initial)
 	context := store.ProtocolContext()
 	if !store.ObserveRecruitmentBUP(11, 7, 3, context.FocusEpoch) ||
 		!store.ObserveRecruitmentBUP(11, 7, 3, context.FocusEpoch) {
@@ -810,7 +815,7 @@ func TestRecruitmentBUPInheritsCurrentLifecycleAcrossFocusEpoch(t *testing.T) {
 		OwnRecruitmentObservedGeneration: 7,
 	}
 	initial.Castles[11] = CastleState{ID: 11, KingdomID: 1, Focused: true}
-	store := NewStore(initial)
+	store := NewStore(&initial)
 	store.ObserveProtocolFocus(FocusSubcontextMap, now)
 	store.ObserveProtocolFocus(FocusSubcontextCastle, now)
 	protocol := store.ProtocolContext()
@@ -837,7 +842,7 @@ func TestStandaloneRecruitmentAHRMarkerIsFocusScopedWhileLifecycleCoversAcrossFo
 		OwnRecruitmentObservedGeneration: 7,
 	}
 	initial.Castles[11] = CastleState{ID: 11, KingdomID: 1, Focused: true}
-	store := NewStore(initial)
+	store := NewStore(&initial)
 	protocol := store.ProtocolContext()
 	if !store.PrepareStandaloneRecruitmentAHR(11, 7, 3, protocol.FocusEpoch) {
 		t.Fatal("standalone AHR did not bind current focus")
@@ -895,7 +900,7 @@ func TestStandaloneRecruitmentAHRPendingMarkerCannotCrossFocusEpoch(t *testing.T
 		OwnRecruitmentObservedGeneration: 7,
 	}
 	initial.Castles[11] = CastleState{ID: 11, KingdomID: 1, Focused: true}
-	store := NewStore(initial)
+	store := NewStore(&initial)
 	protocol := store.ProtocolContext()
 	if !store.PrepareStandaloneRecruitmentAHR(11, 7, 3, protocol.FocusEpoch) {
 		t.Fatal("standalone AHR did not bind initial focus")
@@ -916,7 +921,7 @@ func TestStoreNormalizesMultipleRecoveredFocusFlagsDeterministically(t *testing.
 	initial := NewGameState()
 	initial.Castles[12] = CastleState{ID: 12, KingdomID: 1, Focused: true}
 	initial.Castles[11] = CastleState{ID: 11, KingdomID: 1, Focused: true}
-	store := NewStore(initial)
+	store := NewStore(&initial)
 	snapshot := store.Snapshot()
 	if !snapshot.Castles[11].Focused || snapshot.Castles[12].Focused {
 		t.Fatalf("recovered focus was not normalized: %+v", snapshot.Castles)
@@ -930,7 +935,7 @@ func TestStorePreservesCurrentFocusWhenMutationSetsMultipleFlags(t *testing.T) {
 	initial := NewGameState()
 	initial.Castles[11] = CastleState{ID: 11, KingdomID: 1, Focused: true}
 	initial.Castles[12] = CastleState{ID: 12, KingdomID: 1}
-	store := NewStore(initial)
+	store := NewStore(&initial)
 	if _, err := store.Apply(func(state *GameState) ([]string, bool, error) {
 		second := state.Castles[12]
 		second.Focused = true
@@ -963,7 +968,7 @@ func TestStoreReconcilesTrackedStormTargetWithNewerLiveMap(t *testing.T) {
 		},
 	}
 
-	tracked := NewStore(initial).Snapshot().Storm.Map.Targets["612:667"]
+	tracked := NewStore(&initial).Snapshot().Storm.Map.Targets["612:667"]
 	if tracked.StormIsleID != 7 || tracked.StormCooldownRemaining != 36_000 || !tracked.StormReadyAt().Equal(readyAt) {
 		t.Fatalf("reconciled Storm target = %#v", tracked)
 	}
@@ -979,7 +984,7 @@ func TestStoreCompactsStormTargetsToMapBackedMembership(t *testing.T) {
 	initial.Map[stormKingdomID] = map[string]MapObservation{"612:667": target}
 	initial.Storm.Map.Targets["612:667"] = target
 
-	store := NewStore(initial)
+	store := NewStore(&initial)
 	view := store.ReadOnlyView()
 	if len(view.Storm.Map.Targets) != 0 {
 		t.Fatalf("tenant generation retained duplicate Storm observations: %#v", view.Storm.Map.Targets)
@@ -1008,13 +1013,15 @@ func TestStoreCompactsStormTargetsToMapBackedMembership(t *testing.T) {
 	if event.Revision == 0 || len(event.stormTargetKeys) != 1 || event.stormTargetKeys[0] != "612:667" {
 		t.Fatalf("Storm membership event = %#v", event)
 	}
-	if store.ReadOnlyView().StormTargetCount() != 0 {
+	accessorState6 := store.ReadOnlyView()
+	if accessorState6.StormTargetCount() != 0 {
 		t.Fatal("deleted Storm membership remained visible")
 	}
 }
 
 func TestApplyScopedComponentsPrunesUntouchedTrackedComponents(t *testing.T) {
-	store := NewStore(NewGameState())
+	accessorState7 := NewGameState()
+	store := NewStore(&accessorState7)
 	writes := Components(
 		ComponentWorldMap,
 		ComponentTowerCooldowns,
@@ -1049,7 +1056,7 @@ func TestStoreMultiComponentMutationPublishesOnlyChangedProjection(t *testing.T)
 	initial.Castles[91] = CastleState{
 		ID: 91, Resources: map[ResourceID]ResourceBalance{1: {Amount: 10}},
 	}
-	store := NewStore(initial)
+	store := NewStore(&initial)
 	event, err := store.ApplyComponents(Components(ComponentPlayer, ComponentCastles), func(state *GameState) ([]string, bool, error) {
 		castle, found := state.MutableCastleParts(91, CastlePartResources)
 		if !found {
@@ -1074,8 +1081,8 @@ func TestStoreMultiComponentMutationPublishesOnlyChangedProjection(t *testing.T)
 
 func TestPlanningViewPublishesStateAndVersionsAsOneGeneration(t *testing.T) {
 	initial := NewGameState()
-	store := NewStore(initial)
-	key := AccountPartition(initial, CapabilityAccountProfile)
+	store := NewStore(&initial)
+	key := AccountPartition(&initial, CapabilityAccountProfile)
 	writerResult := make(chan error, 1)
 	go func() {
 		for range 1000 {

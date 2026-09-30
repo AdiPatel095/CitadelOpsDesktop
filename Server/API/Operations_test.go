@@ -247,7 +247,8 @@ func TestOperationCancellationEndpointStopsIntent(t *testing.T) {
 	}); err != nil {
 		t.Fatal(err)
 	}
-	state := State.NewStore(State.NewGameState())
+	accessorState1 := State.NewGameState()
+	state := State.NewStore(&accessorState1)
 	engine := Intent.NewEngine(registry, state, nil, nil, nil)
 	started := make(chan struct{})
 	if err := engine.RegisterAction("test.block", func(ctx context.Context, _ json.RawMessage) error {
@@ -307,7 +308,8 @@ func TestIntentSubmissionOutlivesTheDashboardConnection(t *testing.T) {
 	}); err != nil {
 		t.Fatal(err)
 	}
-	state := State.NewStore(State.NewGameState())
+	accessorState2 := State.NewGameState()
+	state := State.NewStore(&accessorState2)
 	engine := Intent.NewEngine(registry, state, nil, nil, nil)
 	runtimeContext, stopRuntime := context.WithCancel(context.Background())
 	defer stopRuntime()
@@ -410,7 +412,8 @@ func TestRecentOperationsEndpointReturnsLatestReceipts(t *testing.T) {
 	}); err != nil {
 		t.Fatal(err)
 	}
-	state := State.NewStore(State.NewGameState())
+	accessorState3 := State.NewGameState()
+	state := State.NewStore(&accessorState3)
 	engine := Intent.NewEngine(registry, state, nil, nil, nil)
 	for _, id := range []string{"first", "second"} {
 		receipt := engine.Submit(context.Background(), Intent.Request{ID: id, Name: "test.read"})
@@ -507,7 +510,8 @@ func TestIntentEndpointOwnsActorAndPriorityClassification(t *testing.T) {
 	}); err != nil {
 		t.Fatal(err)
 	}
-	state := State.NewStore(State.NewGameState())
+	accessorState4 := State.NewGameState()
+	state := State.NewStore(&accessorState4)
 	engine := Intent.NewEngine(registry, state, nil, nil, nil)
 	server := httptest.NewServer(NewServer(Config{State: state, Intents: engine}).Handler())
 	defer server.Close()

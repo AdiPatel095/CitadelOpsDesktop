@@ -163,8 +163,10 @@ func TestSettleWindowIsSharedAndOnlyExtends(t *testing.T) {
 	}
 	client, _ := NewClient(ClientConfig{Endpoint: "https://backend.example/m", CheckpointEndpoint: "https://backend.example/c"})
 	shared := NewSettle(0)
-	metrics, _ := NewPublisher(PublisherConfig{RuntimeID: "runtime-one", State: State.NewStore(State.NewGameState()), Client: client, Settle: shared})
-	checkpoints, _ := NewCheckpointPublisher(CheckpointPublisherConfig{RuntimeID: "runtime-one", State: State.NewStore(State.NewGameState()), Client: client, Settle: shared})
+	accessorState1 := State.NewGameState()
+	metrics, _ := NewPublisher(PublisherConfig{RuntimeID: "runtime-one", State: State.NewStore(&accessorState1), Client: client, Settle: shared})
+	accessorState2 := State.NewGameState()
+	checkpoints, _ := NewCheckpointPublisher(CheckpointPublisherConfig{RuntimeID: "runtime-one", State: State.NewStore(&accessorState2), Client: client, Settle: shared})
 	if metrics.settle != shared || checkpoints.settle != shared {
 		t.Fatal("both publishers must use the one window they were given")
 	}

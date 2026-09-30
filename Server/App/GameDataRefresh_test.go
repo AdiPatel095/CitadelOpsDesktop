@@ -40,7 +40,8 @@ func TestRefreshGameDataRehydratesRuntimeOnlyWhenTheStoreChanges(t *testing.T) {
 		LanguageURL:         server.URL + "/lang?v={version}&l={language}",
 		RequestTimeout:      5 * time.Second,
 	})
-	state := State.NewStore(State.NewGameState())
+	accessorState1 := State.NewGameState()
+	state := State.NewStore(&accessorState1)
 	var pending atomic.Bool
 	ctx := context.Background()
 	catalogVersion := func() string { return state.ReadOnlyView().CatalogVersion }

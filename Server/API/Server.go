@@ -356,7 +356,8 @@ func (server *Server) handleState(writer http.ResponseWriter, _ *http.Request) {
 		writeError(writer, http.StatusServiceUnavailable, "state_unavailable", "State store is unavailable", Localization.New("server.api.state_store_is_unavailable.e4a65fe1", "State store is unavailable", nil))
 		return
 	}
-	writeJSON(writer, http.StatusOK, State.NewClientStateSnapshot(server.config.State.ReadOnlyView()))
+	accessorState1 := server.config.State.ReadOnlyView()
+	writeJSON(writer, http.StatusOK, State.NewClientStateSnapshot(&accessorState1))
 }
 
 func (server *Server) handleGameDataManifest(writer http.ResponseWriter, request *http.Request) {
@@ -615,7 +616,7 @@ func (server *Server) handleEvents(writer http.ResponseWriter, request *http.Req
 	initialState := server.config.State.ReadOnlyView()
 	initialRevision := initialState.Revision
 	if err := connection.WriteJSON(streamEnvelope(
-		"", "state.snapshot", initialRevision, initialRevision, false, State.NewClientStateSnapshot(initialState),
+		"", "state.snapshot", initialRevision, initialRevision, false, State.NewClientStateSnapshot(&initialState),
 	)); err != nil {
 		return
 	}
@@ -719,7 +720,7 @@ func (server *Server) handleEvents(writer http.ResponseWriter, request *http.Req
 				state := server.config.State.ReadOnlyView()
 				revision := state.Revision
 				if err := connection.WriteJSON(newEnvelope(
-					message.ID, "state.snapshot", revision, State.NewClientStateSnapshot(state),
+					message.ID, "state.snapshot", revision, State.NewClientStateSnapshot(&state),
 				)); err != nil {
 					return
 				}

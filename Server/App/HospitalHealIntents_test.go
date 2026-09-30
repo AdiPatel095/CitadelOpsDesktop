@@ -148,7 +148,7 @@ func TestHospitalHealSubscriptionExactExpiryHasNoBonus(t *testing.T) {
 
 func TestHospitalHealFinalDispatchRejectsProtocolFocusChange(t *testing.T) {
 	input := hospitalHealTestContext(t)
-	stateStore := State.NewStore(input.State)
+	stateStore := State.NewStore(&input.State)
 	cacheDir := t.TempDir()
 	if err := os.WriteFile(filepath.Join(cacheDir, "Items-vtest.json"), []byte(hospitalHealTestCatalog), 0o600); err != nil {
 		t.Fatal(err)

@@ -52,10 +52,10 @@ func craftingOverflowRedistributionDecision(settings craftingSettings, snapshot 
 			if target.ID == source.ID || target.KingdomID == source.KingdomID || len(demands[target.ID]) == 0 {
 				continue
 			}
-			if _, pending := pendingKingdomResourceTransport(snapshot.State, target.KingdomID); pending {
+			if _, pending := pendingKingdomResourceTransport(&snapshot.State, target.KingdomID); pending {
 				continue
 			}
-			if _, settling := kingdomResourceTransportWorkflow(snapshot.State, target.KingdomID); settling {
+			if _, settling := kingdomResourceTransportWorkflow(&snapshot.State, target.KingdomID); settling {
 				continue
 			}
 			unlock, observed := snapshot.State.KingdomTransport.Unlocks[target.KingdomID]
@@ -171,7 +171,7 @@ func marketOverflowDecision(settings craftingSettings, snapshot Snapshot, interv
 			continue
 		}
 		market, observed := snapshot.State.Market.Castles[source.ID]
-		availableBarrows := State.AvailableMarketBarrowsAt(snapshot.State, market, snapshot.Now)
+		availableBarrows := State.AvailableMarketBarrowsAt(&snapshot.State, market, snapshot.Now)
 		if !observed || availableBarrows <= 0 {
 			continue
 		}
@@ -240,7 +240,7 @@ func stormOverflowDecision(settings craftingSettings, snapshot Snapshot, interva
 			return Decision{}, false
 		}
 	}
-	if _, settling := kingdomResourceTransportWorkflow(snapshot.State, storm.KingdomID); settling {
+	if _, settling := kingdomResourceTransportWorkflow(&snapshot.State, storm.KingdomID); settling {
 		return Decision{}, false
 	}
 	unlock, observed := snapshot.State.KingdomTransport.Unlocks[storm.KingdomID]

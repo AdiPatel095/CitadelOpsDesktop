@@ -85,7 +85,7 @@ func MovementOccupiesMapTargetAt(movement MovementState, target MapTargetKey, no
 	return releaseAt == nil || releaseAt.IsZero() || releaseAt.After(now)
 }
 
-func AnyActiveMovementAtMapTarget(gameState GameState, target MapTargetKey, now time.Time) bool {
+func AnyActiveMovementAtMapTarget(gameState *GameState, target MapTargetKey, now time.Time) bool {
 	occupied := false
 	gameState.RangeMovements(func(_ MovementID, movement MovementState) bool {
 		if MovementOccupiesMapTargetAt(movement, target, now) {
@@ -105,7 +105,7 @@ func AnyActiveMovementAtMapTarget(gameState GameState, target MapTargetKey, now 
 // falls inside the narrow dispatch-reconciliation window; a later same-route
 // manual return cannot satisfy a stale reservation.
 func InvasionReservationMovement(
-	gameState GameState,
+	gameState *GameState,
 	reservation InvasionTargetReservation,
 ) (MovementState, bool) {
 	if reservation.SourceCastleID <= 0 || !reservation.CommanderKnown || reservation.ReservedAt.IsZero() ||
@@ -168,7 +168,7 @@ func InvasionReservationMovement(
 }
 
 func invasionMovementCastleEndpointMatches(
-	gameState GameState,
+	gameState *GameState,
 	expectedCastleID CastleID,
 	expectedX int,
 	expectedY int,
@@ -281,7 +281,7 @@ func (state InvasionState) TargetReservation(
 // InvasionCommanderReserved reports whether a complete, unresolved CRA launch
 // marker owns the commander. Target-only ADI/cooldown locks and malformed
 // legacy markers do not hold a commander.
-func InvasionCommanderReserved(gameState GameState, commanderID CommanderID) bool {
+func InvasionCommanderReserved(gameState *GameState, commanderID CommanderID) bool {
 	for _, reservation := range gameState.Invasion.TargetReservations {
 		if reservation.CommanderKnown && reservation.CommanderID == commanderID &&
 			reservation.EventID > 0 && !reservation.OccurrenceEndsAt.IsZero() &&

@@ -106,7 +106,7 @@ func TestCaptureNomadRBCTestLaunchAllowsCommanderReuseInANewBatch(t *testing.T) 
 		ID: 1, Direction: 0, SourceCastleID: 1, KingdomID: 0, TargetX: 101, TargetY: 102,
 		CommanderID: &commanderID, ArrivesAt: timePointer(now.Add(time.Minute)),
 	}
-	application := &Application{State: State.NewStore(gameState)}
+	application := &Application{State: State.NewStore(&gameState)}
 	first, _ := json.Marshal(nomadRBCTestLaunchCapture{RunID: "trial-1", BatchID: "batch-1", CommanderID: commanderID})
 	if err := application.captureNomadRBCTestLaunch(t.Context(), first); err != nil {
 		t.Fatal(err)

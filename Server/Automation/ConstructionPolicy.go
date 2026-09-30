@@ -331,7 +331,7 @@ func constructionPurchaseDecision(
 			NextCheckAt: snapshot.Now.Add(constructionCheckInterval),
 		}, "inventory-full"
 	}
-	mainCastle, exists := constructionShopCastle(snapshot.State)
+	mainCastle, exists := constructionShopCastle(&snapshot.State)
 	if !exists {
 		return Decision{}, "no-main-castle"
 	}
@@ -400,7 +400,7 @@ func constructionPurchaseDecision(
 	return Decision{Status: "blocked", Detail: "No matching live or official trivial construction-item shop offer", DetailDescriptor: Localization.New("server.automation.no_matching_live_or.c7c2e496", "No matching live or official trivial construction-item shop offer", nil), NextCheckAt: snapshot.Now.Add(constructionCheckInterval)}, "no-offer"
 }
 
-func constructionShopCastle(gameState State.GameState) (State.CastleState, bool) {
+func constructionShopCastle(gameState *State.GameState) (State.CastleState, bool) {
 	castleIDs := sortedCastleIDs(gameState.Castles)
 	for _, castleID := range castleIDs {
 		castle := gameState.Castles[castleID]

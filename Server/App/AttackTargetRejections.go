@@ -23,7 +23,7 @@ func attackTargetRejectedError(rejection State.AttackTargetRejection) error {
 }
 
 func refuseRejectedAttackTarget(gameState State.GameState, kingdomID State.KingdomID, typeID, x, y int, now time.Time) error {
-	if rejection, rejected := State.AttackTargetRejectedAt(gameState, kingdomID, typeID, x, y, now); rejected {
+	if rejection, rejected := State.AttackTargetRejectedAt(&gameState, kingdomID, typeID, x, y, now); rejected {
 		return attackTargetRejectedError(rejection)
 	}
 	return nil

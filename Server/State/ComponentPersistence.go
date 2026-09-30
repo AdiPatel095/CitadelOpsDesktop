@@ -1307,7 +1307,7 @@ func loadComponentSnapshot(dataDir string) (GameState, error) {
 			continue
 		}
 		if component == ComponentStorm && manifest.Partitioned[component.String()] {
-			storm, loadErr := loadStormComponent(componentStatePath(dataDir), manifest, filename, state)
+			storm, loadErr := loadStormComponent(componentStatePath(dataDir), manifest, filename, &state)
 			if loadErr != nil {
 				return GameState{}, loadErr
 			}
@@ -1588,7 +1588,7 @@ func loadStormComponent(
 	directory string,
 	manifest componentManifest,
 	indexFilename string,
-	state GameState,
+	state *GameState,
 ) (StormState, error) {
 	contents, err := os.ReadFile(filepath.Join(directory, indexFilename))
 	if err != nil {

@@ -43,7 +43,7 @@ func TestStateMarshalMatchesGolden(t *testing.T) {
 		Pointer        json.RawMessage `json:"pointer"`
 		Projection     json.RawMessage `json:"projection"`
 		ClientSnapshot json.RawMessage `json:"clientSnapshot"`
-	}{value, pointer, marshal(state.clientStateProjection()), marshal(NewClientStateSnapshot(state))})
+	}{value, pointer, marshal(state.clientStateProjection()), marshal(NewClientStateSnapshot(&state))})
 	actual = append(actual, '\n')
 	const path = "testdata/state_marshal.golden.json"
 	if os.Getenv("CITADEL_UPDATE_STATE_MARSHAL_GOLDEN") == "1" {

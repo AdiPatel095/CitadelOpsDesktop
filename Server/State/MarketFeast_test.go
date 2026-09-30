@@ -91,7 +91,8 @@ func TestMarketFeastFreshAtRequiresCurrentCoherentObservation(t *testing.T) {
 func TestFeastLastPurchaseAtPersistsButIsNotClientProjected(t *testing.T) {
 	directory := t.TempDir()
 	purchasedAt := time.Date(2026, time.September, 8, 18, 30, 0, 0, time.UTC)
-	store := NewStore(NewGameState())
+	accessorState1 := NewGameState()
+	store := NewStore(&accessorState1)
 	bootstrap, err := store.ApplyComponents(Components(ComponentPlayer), func(state *GameState) ([]string, bool, error) {
 		state.Player.Level = 1
 		return []string{"player"}, true, nil
@@ -119,7 +120,7 @@ func TestFeastLastPurchaseAtPersistsButIsNotClientProjected(t *testing.T) {
 	if !loaded.Market.FeastLastPurchaseAt.Equal(purchasedAt) {
 		t.Fatalf("persisted feast purchase time = %s, want %s", loaded.Market.FeastLastPurchaseAt, purchasedAt)
 	}
-	client, err := json.Marshal(NewClientStateSnapshot(loaded))
+	client, err := json.Marshal(NewClientStateSnapshot(&loaded))
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -31,7 +31,7 @@ func TestCapturePlayerHistoryConfigurationEventClearsAndNoneSuppressesRecapture(
 	state := State.NewGameState()
 	state.Player.ID = 42
 	state.Player.Might = 100
-	stateStore := State.NewStore(state)
+	stateStore := State.NewStore(&state)
 	application := &Application{
 		State:         stateStore,
 		Configuration: configuration,
@@ -100,8 +100,9 @@ func TestCapturePlayerHistoryConfigurationEventAppliesNewRecordingCadence(t *tes
 			t.Fatal(err)
 		}
 	}
+	accessorState1 := State.NewGameState()
 	application := &Application{
-		State:         State.NewStore(State.NewGameState()),
+		State:         State.NewStore(&accessorState1),
 		Configuration: configuration,
 		History:       history,
 	}

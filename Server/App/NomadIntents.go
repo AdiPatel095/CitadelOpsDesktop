@@ -781,7 +781,7 @@ func guardNomadSequentialArrivalAt(gameState State.GameState, arguments json.Raw
 		return Localization.WithError(fmt.Errorf("%w: camp %d:%d is on cooldown", Intent.ErrPlanStale, request.TargetX, request.TargetY), Localization.New("server.app.intent_plan_became_stale.f2baea1d", "intent plan became stale before dispatch: camp {p1}:{p2} is on cooldown", Localization.Params{"p1": fmt.Sprintf("%d", request.TargetX), "p2": fmt.Sprintf("%d", request.TargetY)}))
 	}
 	if block, found := State.NomadSequentialArrivalBlockAt(
-		gameState, request.EventID, request.KingdomID, request.TargetTypeID, request.TargetX, request.TargetY, now,
+		&gameState, request.EventID, request.KingdomID, request.TargetTypeID, request.TargetX, request.TargetY, now,
 	); found {
 		if block.Unknown {
 			return Localization.WithError(fmt.Errorf(

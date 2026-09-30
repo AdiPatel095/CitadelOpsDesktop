@@ -134,12 +134,12 @@ type GlobalEffectPurchaseRecord struct {
 	Detail               string    `json:"detail,omitempty"`
 }
 
-func (state GameState) EventAvailable(eventID int64, now time.Time) (EventAvailability, bool) {
+func (state *GameState) EventAvailable(eventID int64, now time.Time) (EventAvailability, bool) {
 	availability, found := state.EventScores.Inventory.ActiveByEvent[eventID]
 	return availability, found && availability.ActiveAt(now)
 }
 
-func (state GameState) AnyEventAvailable(eventIDs []int64, now time.Time) (EventAvailability, bool) {
+func (state *GameState) AnyEventAvailable(eventIDs []int64, now time.Time) (EventAvailability, bool) {
 	for _, eventID := range eventIDs {
 		if availability, found := state.EventAvailable(eventID, now); found {
 			return availability, true
@@ -231,7 +231,7 @@ type EventShopRoute struct {
 	ObservedAt   time.Time `json:"observedAt"`
 }
 
-func (state GameState) ActiveScalableEventScore() (ScalableEventScore, bool) {
+func (state *GameState) ActiveScalableEventScore() (ScalableEventScore, bool) {
 	if state.EventScores.ActiveEventID <= 0 {
 		return ScalableEventScore{}, false
 	}
@@ -239,12 +239,12 @@ func (state GameState) ActiveScalableEventScore() (ScalableEventScore, bool) {
 	return score, found
 }
 
-func (state GameState) ScalableEventScoreReached(eventID int64, threshold int64) bool {
+func (state *GameState) ScalableEventScoreReached(eventID int64, threshold int64) bool {
 	score, found := state.LookupScalableEventScore(eventID)
 	return threshold > 0 && found && score.PlayerScore >= threshold
 }
 
-func (state GameState) ActiveScalableEventScoreReached(threshold int64) bool {
+func (state *GameState) ActiveScalableEventScoreReached(threshold int64) bool {
 	score, found := state.ActiveScalableEventScore()
 	return threshold > 0 && found && score.PlayerScore >= threshold
 }
@@ -393,7 +393,7 @@ func SameEventOccurrence(left, right time.Time) bool {
 	return delta >= -10*time.Minute && delta <= 10*time.Minute
 }
 
-func (state GameState) ActiveShopForPackage(packageID PackageID, now time.Time) (EventShopRoute, bool) {
+func (state *GameState) ActiveShopForPackage(packageID PackageID, now time.Time) (EventShopRoute, bool) {
 	route, found := state.EventScores.ShopByPackage[packageID]
 	if !found || route.EventID <= 0 || route.RemainingSec <= 0 || route.ObservedAt.IsZero() {
 		return EventShopRoute{}, false

@@ -51,7 +51,7 @@ func (*InvasionRecoveryPolicy) Evaluate(_ context.Context, snapshot Snapshot) (D
 	}
 	next := nextInvasionReservationReconciliation(snapshot)
 	if next.IsZero() {
-		if reservation, exhausted := firstExhaustedInvasionReservation(snapshot.State); exhausted {
+		if reservation, exhausted := firstExhaustedInvasionReservation(&snapshot.State); exhausted {
 			nextCheckAt := time.Time{}
 			if reservation.OccurrenceEndsAt.After(snapshot.Now) {
 				nextCheckAt = reservation.OccurrenceEndsAt
@@ -90,7 +90,7 @@ func nextInvasionMovementProbe(snapshot Snapshot) (time.Time, bool) {
 			reservation.OperationID == "" || reservation.ReservedAt.IsZero() {
 			continue
 		}
-		if _, matched := State.InvasionReservationMovement(snapshot.State, reservation); matched {
+		if _, matched := State.InvasionReservationMovement(&snapshot.State, reservation); matched {
 			continue
 		}
 		probeAt := reservation.ReservedAt.Add(invasionRecoveryMovementProbeDelay)
@@ -126,7 +126,7 @@ func nextInvasionReservationReconciliation(snapshot Snapshot) time.Time {
 	return next
 }
 
-func firstExhaustedInvasionReservation(gameState State.GameState) (State.InvasionTargetReservation, bool) {
+func firstExhaustedInvasionReservation(gameState *State.GameState) (State.InvasionTargetReservation, bool) {
 	keys := make([]string, 0, len(gameState.Invasion.TargetReservations))
 	for key := range gameState.Invasion.TargetReservations {
 		keys = append(keys, key)

@@ -598,7 +598,7 @@ func commanderAvailable(gameState *State.GameState, commanderID State.CommanderI
 }
 
 func commanderAvailableAt(gameState *State.GameState, commanderID State.CommanderID, now time.Time) bool {
-	return gameState == nil || !State.CommanderHasActiveMovementAt(*gameState, commanderID, now)
+	return gameState == nil || !State.CommanderHasActiveMovementAt(gameState, commanderID, now)
 }
 
 // syncCommanderAvailability recomputes every commander's availability and

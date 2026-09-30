@@ -16,7 +16,7 @@ var focusedCastleOpcodes = map[string]struct{}{
 
 func scopedPartitionsForFrame(
 	frame Protocol.Frame,
-	gameState State.GameState,
+	gameState *State.GameState,
 	domains []string,
 ) []State.PartitionKey {
 	opcode := strings.ToLower(strings.TrimSpace(frame.Opcode))
@@ -41,7 +41,7 @@ func scopedPartitionsForFrame(
 		}
 	}
 	if _, focused := focusedCastleOpcodes[opcode]; focused {
-		if castleID, _, found := focusedCastle(&gameState); found {
+		if castleID, _, found := focusedCastle(gameState); found {
 			keys = append(keys, scopedCastleDomainPartitions(gameState, castleID, domains)...)
 		}
 	}
@@ -82,7 +82,7 @@ func protocolFocusSubcontextForFrame(frame Protocol.Frame) State.FocusSubcontext
 }
 
 func scopedCastleDomainPartitions(
-	gameState State.GameState,
+	gameState *State.GameState,
 	castleID State.CastleID,
 	domains []string,
 ) []State.PartitionKey {
@@ -121,7 +121,7 @@ func castleCapabilityForDomain(domain string) string {
 	}
 }
 
-func scopedMapKingdoms(frame Protocol.Frame, gameState State.GameState) []State.KingdomID {
+func scopedMapKingdoms(frame Protocol.Frame, gameState *State.GameState) []State.KingdomID {
 	for range 2 {
 		root, err := frame.PayloadRoot()
 		if err != nil {

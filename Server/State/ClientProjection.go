@@ -66,14 +66,14 @@ type ClientStormMapState struct {
 	NextTargetReadyAt *time.Time                `json:"nextTargetReadyAt,omitempty"`
 }
 
-func NewClientStateSnapshot(state GameState) ClientStateSnapshot {
-	return ClientStateSnapshot{state: state}
+func NewClientStateSnapshot(state *GameState) ClientStateSnapshot {
+	return ClientStateSnapshot{state: *state}
 }
 
 func (snapshot ClientStateSnapshot) MarshalJSON() ([]byte, error) {
 	type wireState GameState
 	projected := snapshot.state.clientStateProjection()
-	storm := newClientStormState(snapshot.state, time.Now().UTC())
+	storm := newClientStormState(&snapshot.state, time.Now().UTC())
 	return json.Marshal(struct {
 		wireState
 		Map    WorldMap          `json:"map"`
@@ -98,12 +98,14 @@ func ClientEvent(source Event) ClientStateEvent {
 	}
 	var storm *ClientStormState
 	if clientEventRefreshesStorm(source) && source.generation != nil {
-		value := newClientStormState(*source.generation.state, time.Now().UTC())
+		state := *source.generation.state
+		value := newClientStormState(&state, time.Now().UTC())
 		storm = &value
 	}
 	var reports *ReportState
 	if source.Patch.Reports != nil && source.generation != nil {
-		value := clientReports(*source.generation.state)
+		state := *source.generation.state
+		value := clientReports(&state)
 		reports = &value
 	}
 	var market *ClientMarketState
@@ -237,9 +239,9 @@ func (state GameState) clientStateProjection() GameState {
 		LaunchIDs: []MovementID{}, PendingAttacks: []AttackFeatureLaunch{}, RecentAutoStormLaunches: []AttackFeatureLaunch{},
 		RecentTowerAdvisorTimeSkips: []TowerAdvisorTimeSkipUsage{},
 	}
-	projected.EventScores = clientEventScores(state)
+	projected.EventScores = clientEventScores(&state)
 	projected.CommandContext = CommandContextState{}
-	projected.Reports = clientReports(state)
+	projected.Reports = clientReports(&state)
 	projected.Observations = clientObservations(state.Observations)
 	return projected
 }
@@ -462,7 +464,7 @@ func clientInvasion(source InvasionState) InvasionState {
 	}
 }
 
-func newClientStormState(state GameState, now time.Time) ClientStormState {
+func newClientStormState(state *GameState, now time.Time) ClientStormState {
 	source := state.Storm
 	mapState := ClientStormMapState{
 		StormMapState: source.Map,
@@ -506,7 +508,7 @@ func clientKhan(source KhanState) KhanState {
 	}
 }
 
-func clientEventScores(state GameState) EventScoreState {
+func clientEventScores(state *GameState) EventScoreState {
 	result := EventScoreState{
 		ActiveEventID: state.EventScores.ActiveEventID,
 		ByEvent:       map[int64]ScalableEventScore{}, ShopByPackage: map[PackageID]EventShopRoute{},
@@ -558,7 +560,7 @@ func clientEventActivity(source EventActivityState) EventActivityState {
 	return source
 }
 
-func clientReports(state GameState) ReportState {
+func clientReports(state *GameState) ReportState {
 	spies := map[int64]SpyReportCapture{}
 	state.RangeSpyReportCaptures(func(id int64, capture SpyReportCapture) bool {
 		spies[id] = SpyReportCapture{
@@ -582,7 +584,7 @@ func clientObservations(source map[string]ProtocolObservation) map[string]Protoc
 	return result
 }
 
-func (state GameState) clientMapProjection() WorldMap {
+func (state *GameState) clientMapProjection() WorldMap {
 	result := WorldMap{}
 	for _, kingdomID := range state.MapKingdomIDs() {
 		state.RangeMapObservationsByKind(kingdomID, MapProjectionRift, func(key string, observation MapObservation) bool {

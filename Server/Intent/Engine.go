@@ -712,7 +712,7 @@ func (engine *Engine) execute(prepared *preparedSubmission) Receipt {
 		}))
 		dispatches := 0
 		expectedProtocolContext := currentInput.ProtocolContext
-		expectedWorldID, expectedPlayerID := State.BoundAccount(currentInput.State)
+		expectedWorldID, expectedPlayerID := State.BoundAccount(&currentInput.State)
 		expectedCatalogVersion := plan.CatalogVersion
 		attemptContext = context.WithValue(attemptContext, dispatchPermitContextKey{}, dispatchPermit(func(expectedRevision uint64) error {
 			if err := engine.checkLaneSafety(request); err != nil {
@@ -736,7 +736,7 @@ func (engine *Engine) execute(prepared *preparedSubmission) Receipt {
 				view.ProtocolContext.ConnectionGeneration != expectedProtocolContext.ConnectionGeneration {
 				return fmt.Errorf("%w: connection generation changed", ErrPlanStale)
 			}
-			currentWorldID, currentPlayerID := State.BoundAccount(view.State)
+			currentWorldID, currentPlayerID := State.BoundAccount(&view.State)
 			if expectedWorldID != "" && !strings.EqualFold(expectedWorldID, currentWorldID) {
 				return fmt.Errorf("%w: bound game world changed", ErrPlanStale)
 			}

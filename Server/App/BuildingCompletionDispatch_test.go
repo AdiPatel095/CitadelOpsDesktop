@@ -51,7 +51,7 @@ func TestConstructionCompletionRecheckedBeforeFCOAndMSB(t *testing.T) {
 		castle.Layout.Objects[42] = b
 		castle.Buildings[42] = b
 		state.Castles[10] = castle
-		app := &Application{State: State.NewStore(state), GameData: manager}
+		app := &Application{State: State.NewStore(&state), GameData: manager}
 		if free {
 			err = app.guardBuildingFinishFree(context.Background(), step.FinalDispatchArguments)
 		} else {
@@ -73,7 +73,7 @@ func TestConstructionCompletionRecheckedBeforeFCOAndMSB(t *testing.T) {
 		castle.Layout.Objects[42], castle.Buildings[42] = b, b
 		castle.BuildingQueue.Slots[0] = State.BuildingConstructionQueueSlot{Status: State.BuildingQueueSlotAvailable}
 		state.Castles[10] = castle
-		app.State = State.NewStore(state)
+		app.State = State.NewStore(&state)
 		if free {
 			err = app.guardBuildingFinishFree(context.Background(), args)
 		} else {

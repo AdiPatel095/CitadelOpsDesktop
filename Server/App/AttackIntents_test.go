@@ -135,7 +135,7 @@ func TestRiftTemplateMutationsPersistImmediately(t *testing.T) {
 	gameState.Rift.Launches["launch"] = State.RiftLaunch{
 		ID: "launch", Body: json.RawMessage(`{"LID":5,"A":[{}]}`),
 	}
-	application := &Application{DataDir: dataDir, State: State.NewStore(gameState)}
+	application := &Application{DataDir: dataDir, State: State.NewStore(&gameState)}
 
 	if err := application.renameRiftTemplate(
 		context.Background(), json.RawMessage(`{"launchId":"launch","displayName":"Saved name"}`),
@@ -722,7 +722,7 @@ func TestMaidenWavePassesTypedResourceAdmission(t *testing.T) {
 		t.Fatal(err)
 	}
 	engine := Intent.NewEngine(
-		registry, State.NewStore(gameState), beriIntentGameDataProvider{store: gameData}, nil, nil,
+		registry, State.NewStore(&gameState), beriIntentGameDataProvider{store: gameData}, nil, nil,
 	)
 	receipt := engine.Submit(t.Context(), Intent.Request{
 		Name: "rift.maiden_wave.launch", DryRun: true,

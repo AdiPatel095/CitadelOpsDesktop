@@ -64,7 +64,8 @@ func TestCoordinatorTimedEnableExpiresAndCancelsRunningIntent(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	state := State.NewStore(coordinatorReadyState())
+	accessorState1 := coordinatorReadyState()
+	state := State.NewStore(&accessorState1)
 	policy := &coordinatorTestPolicy{id: "timed", decision: Decision{
 		Status: "ready", Detail: "Run until the timed enable expires", NextCheckAt: time.Now().UTC().Add(time.Hour),
 		Request: &Intent.Request{Name: "test.block"},
@@ -124,7 +125,8 @@ func TestHostedCoordinatorTimedEnableExpiresWithoutPersistingAccountConfiguratio
 		t.Fatal(err)
 	}
 	before := configuration.Snapshot()
-	state := State.NewStore(coordinatorReadyState())
+	accessorState2 := coordinatorReadyState()
+	state := State.NewStore(&accessorState2)
 	policy := &coordinatorTestPolicy{id: "timed", decision: Decision{
 		Status: "ready", Detail: "Run until the timed enable expires", NextCheckAt: time.Now().UTC().Add(time.Hour),
 		Request: &Intent.Request{Name: "test.block"},

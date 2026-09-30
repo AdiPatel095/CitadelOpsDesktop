@@ -72,7 +72,7 @@ func (state *GameState) initializeEventScores() {
 	state.EventScores.RankingByEvent = nil
 }
 
-func (state *GameState) prepareEventScoreMutation(source GameState) {
+func (state *GameState) prepareEventScoreMutation(source *GameState) {
 	state.EventScores = source.EventScores
 	base := source.eventScoreRecords
 	if base == nil {
@@ -104,7 +104,7 @@ func cloneEventRanking(ranking EventRankingState) EventRankingState {
 	return ranking
 }
 
-func (state GameState) eventScoreRecord(eventID int64) (eventScoreRecord, bool) {
+func (state *GameState) eventScoreRecord(eventID int64) (eventScoreRecord, bool) {
 	if eventID <= 0 {
 		return eventScoreRecord{}, false
 	}
@@ -156,17 +156,17 @@ func (state *GameState) storeEventScoreRecord(eventID int64, record eventScoreRe
 	state.markEventScore(eventID)
 }
 
-func (state GameState) LookupScalableEventScore(eventID int64) (ScalableEventScore, bool) {
+func (state *GameState) LookupScalableEventScore(eventID int64) (ScalableEventScore, bool) {
 	record, found := state.eventScoreRecord(eventID)
 	return record.Score, found && record.HasScore
 }
 
-func (state GameState) LookupEventActivity(eventID int64) (EventActivityState, bool) {
+func (state *GameState) LookupEventActivity(eventID int64) (EventActivityState, bool) {
 	record, found := state.eventScoreRecord(eventID)
 	return record.Activity, found && record.HasActivity
 }
 
-func (state GameState) LookupEventOccurrence(eventID int64) (EventOccurrence, bool) {
+func (state *GameState) LookupEventOccurrence(eventID int64) (EventOccurrence, bool) {
 	score, scoreFound := state.LookupScalableEventScore(eventID)
 	endsAt := time.Time{}
 	if scoreFound {
@@ -187,30 +187,30 @@ func (state GameState) LookupEventOccurrence(eventID int64) (EventOccurrence, bo
 	return occurrence, true
 }
 
-func (state GameState) LookupEventRanking(eventID int64) (EventRankingState, bool) {
+func (state *GameState) LookupEventRanking(eventID int64) (EventRankingState, bool) {
 	record, found := state.eventScoreRecord(eventID)
 	return record.Ranking, found && record.HasRanking
 }
 
-func (state GameState) RangeScalableEventScores(visit func(int64, ScalableEventScore) bool) {
+func (state *GameState) RangeScalableEventScores(visit func(int64, ScalableEventScore) bool) {
 	state.rangeEventScoreRecords(func(eventID int64, record eventScoreRecord) bool {
 		return !record.HasScore || visit(eventID, record.Score)
 	})
 }
 
-func (state GameState) RangeEventActivities(visit func(int64, EventActivityState) bool) {
+func (state *GameState) RangeEventActivities(visit func(int64, EventActivityState) bool) {
 	state.rangeEventScoreRecords(func(eventID int64, record eventScoreRecord) bool {
 		return !record.HasActivity || visit(eventID, record.Activity)
 	})
 }
 
-func (state GameState) RangeEventRankings(visit func(int64, EventRankingState) bool) {
+func (state *GameState) RangeEventRankings(visit func(int64, EventRankingState) bool) {
 	state.rangeEventScoreRecords(func(eventID int64, record eventScoreRecord) bool {
 		return !record.HasRanking || visit(eventID, record.Ranking)
 	})
 }
 
-func (state GameState) rangeEventScoreRecords(visit func(int64, eventScoreRecord) bool) {
+func (state *GameState) rangeEventScoreRecords(visit func(int64, eventScoreRecord) bool) {
 	if visit == nil {
 		return
 	}
@@ -433,7 +433,7 @@ func (state *GameState) ReplaceEventScores(value EventScoreState) {
 	}
 }
 
-func (state GameState) materializedEventScores() EventScoreState {
+func (state *GameState) materializedEventScores() EventScoreState {
 	result := EventScoreState{
 		ActiveEventID: state.EventScores.ActiveEventID,
 		ByEvent:       map[int64]ScalableEventScore{}, ShopByPackage: cloneMap(state.EventScores.ShopByPackage),
@@ -489,7 +489,7 @@ func globalEffectPurchaseEqual(left, right GlobalEffectPurchaseRecord) bool {
 	return leftCode == rightCode && left == right
 }
 
-func (state GameState) eventScoreChangeIDs() []int64 {
+func (state *GameState) eventScoreChangeIDs() []int64 {
 	ids := make([]int64, 0, len(state.pendingEventScoreIDs))
 	for id := range state.pendingEventScoreIDs {
 		ids = append(ids, id)
@@ -498,7 +498,7 @@ func (state GameState) eventScoreChangeIDs() []int64 {
 	return ids
 }
 
-func (state GameState) eventScoreIDs() []int64 {
+func (state *GameState) eventScoreIDs() []int64 {
 	ids := []int64{}
 	state.rangeEventScoreRecords(func(eventID int64, _ eventScoreRecord) bool {
 		ids = append(ids, eventID)

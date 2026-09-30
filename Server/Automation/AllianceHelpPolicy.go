@@ -64,7 +64,7 @@ func (*AllianceHelpPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decis
 			ReevaluateOnStale:   true,
 		}, nil
 	}
-	pending := State.PendingOtherAllianceHelpListIDs(snapshot.State)
+	pending := State.PendingOtherAllianceHelpListIDs(&snapshot.State)
 	metrics := map[string]float64{"pendingRequests": float64(len(pending))}
 	if len(pending) == 0 {
 		return Decision{

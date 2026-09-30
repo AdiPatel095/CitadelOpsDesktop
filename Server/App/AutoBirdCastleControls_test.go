@@ -19,7 +19,7 @@ func TestCastleBirdControlsAreIsolatedAndInvalidateOldCommands(t *testing.T) {
 	}
 	game.Stationing["autoStation:10"] = State.StationingOperation{ID: "autoStation:10", Purpose: "autoStation"}
 	game.Movements[50] = State.MovementState{ID: 50, SourceCastleID: 10}
-	app := &Application{State: State.NewStore(game)}
+	app := &Application{State: State.NewStore(&game)}
 	registry := Intent.NewRegistry()
 	registry.EnforceResourceDeclarations()
 	if err := registry.Register(Intent.Definition{Name: "auto_bird.castle_control", Effect: Intent.EffectWrite, Planner: planAutoBirdCastleControl}); err != nil {
@@ -60,7 +60,8 @@ func TestCastleBirdControlsAreIsolatedAndInvalidateOldCommands(t *testing.T) {
 	if err := app.clearAutoBirdTracking(t.Context(), json.RawMessage(`{}`)); err != nil {
 		t.Fatal(err)
 	}
-	if !app.State.Snapshot().AutoBirdPaused(10, time.Now()) {
+	accessorState1 := app.State.Snapshot()
+	if !accessorState1.AutoBirdPaused(10, time.Now()) {
 		t.Fatal("clear-all erased pause")
 	}
 	submit(`{"sourceCastleId":10,"action":"resume"}`)

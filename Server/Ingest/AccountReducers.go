@@ -41,7 +41,7 @@ func reduceInitialState(
 		incomingPlayerID := State.PlayerID(player.ID)
 		incomingUID := int64(player.UID)
 		incomingWorldID := strings.TrimSpace(gameState.Session.ServerURL)
-		boundWorldID, boundPlayerID := State.BoundAccount(*gameState)
+		boundWorldID, boundPlayerID := State.BoundAccount(gameState)
 		if incomingPlayerID > 0 && ((boundPlayerID > 0 && incomingPlayerID != boundPlayerID) ||
 			(incomingWorldID != "" && boundWorldID != "" && !strings.EqualFold(incomingWorldID, boundWorldID))) {
 			resetInitialAccountState(gameState)

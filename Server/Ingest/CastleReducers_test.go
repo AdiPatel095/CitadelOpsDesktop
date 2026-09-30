@@ -237,7 +237,7 @@ func TestConstructionSlotsSurviveLaterTransactions(t *testing.T) {
 		castle.ConstructionSlots[4000] = []State.ConstructionSlot{{DefinitionID: 379, Slot: 0}}
 		return castle
 	}(gameState.Castles[100])
-	store := State.NewStore(gameState)
+	store := State.NewStore(&gameState)
 	pipeline := NewPipeline(store, nil, NewRegistry())
 	if _, err := pipeline.HandleFrame(context.Background(), Protocol.Frame{
 		Direction: Protocol.DirectionInbound, Opcode: "unknown", ReceivedAt: time.Now().UTC(),

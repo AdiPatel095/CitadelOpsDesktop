@@ -173,7 +173,8 @@ func TestOperationsBeforePagesStoredHistory(t *testing.T) {
 	}); err != nil {
 		t.Fatal(err)
 	}
-	engine := NewEngine(registry, State.NewStore(State.NewGameState()), nil, nil, nil)
+	accessorState1 := State.NewGameState()
+	engine := NewEngine(registry, State.NewStore(&accessorState1), nil, nil, nil)
 	if err := engine.SetOperationStore(t.Context(), store); err != nil {
 		t.Fatal(err)
 	}
@@ -240,7 +241,8 @@ func TestCapturedResponsesDropTheRawFrame(t *testing.T) {
 				Payload: json.RawMessage(`{"value":1}`), PayloadText: `{"value":1}`, ResponseCode: &code}
 			observer := &wireCleanupObserver{frames: make(chan Protocol.CommittedFrame, 1), forgot: make(map[uint64]bool)}
 			observer.frames <- Protocol.CommittedFrame{Frame: frame}
-			engine := NewEngine(nil, State.NewStore(State.NewGameState()), nil, &performanceSender{}, observer)
+			accessorState2 := State.NewGameState()
+			engine := NewEngine(nil, State.NewStore(&accessorState2), nil, &performanceSender{}, observer)
 			exchange, err := engine.executeStep(t.Context(), 0, Step{Opcode: "test", AwaitOpcode: "test",
 				Payload: json.RawMessage(`{}`), CaptureResponse: true, ResponseBarrier: barrier, TimeoutMillis: 1000})
 			if err != nil || exchange == nil || exchange.Response == nil {

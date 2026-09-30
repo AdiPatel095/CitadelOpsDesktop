@@ -6,7 +6,7 @@ import "time"
 // a production or alliance-help command. It deliberately does not expire a
 // valid long-running queue by age alone; the active completion time supplies
 // the authoritative point at which its slot state must be read again.
-func ProductionQueueNeedsRefresh(state GameState, queue ProductionQueue, now time.Time) bool {
+func ProductionQueueNeedsRefresh(state *GameState, queue ProductionQueue, now time.Time) bool {
 	if queue.ObservedAt.IsZero() {
 		return true
 	}

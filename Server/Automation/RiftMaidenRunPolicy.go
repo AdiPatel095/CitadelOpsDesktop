@@ -22,7 +22,7 @@ func (*RiftMaidenRunPolicy) ActorID() string     { return "riftMaiden" }
 func (*RiftMaidenRunPolicy) EnabledKey() string  { return "rift_maiden_run" }
 func (*RiftMaidenRunPolicy) ScheduleKey() string { return "riftMaiden" }
 
-func (*RiftMaidenRunPolicy) Active(state State.GameState) bool {
+func (*RiftMaidenRunPolicy) Active(state *State.GameState) bool {
 	return state.Rift.MaidenRun != nil && state.Rift.MaidenRun.Status == "running"
 }
 

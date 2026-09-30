@@ -32,7 +32,8 @@ func TestStreamEnvelopeRawKeepsZeroBaseRevisionDistinctFromAbsent(t *testing.T) 
 }
 
 func TestEventsSocketDeclaresBaseRevisionAndAnswersQueryState(t *testing.T) {
-	store := State.NewStore(State.NewGameState())
+	accessorState1 := State.NewGameState()
+	store := State.NewStore(&accessorState1)
 	engine := Intent.NewEngine(nil, store, nil, nil, nil)
 	server := httptest.NewServer(NewServer(Config{
 		State: store, Intents: engine, GameData: GameData.NewManager(GameData.UpdaterConfig{}),
@@ -96,7 +97,8 @@ func TestEventsSocketDeclaresBaseRevisionAndAnswersQueryState(t *testing.T) {
 }
 
 func TestEventsSocketEchoesTheContractSubprotocolOnlyWhenOffered(t *testing.T) {
-	store := State.NewStore(State.NewGameState())
+	accessorState2 := State.NewGameState()
+	store := State.NewStore(&accessorState2)
 	server := httptest.NewServer(NewServer(Config{State: store, Intents: Intent.NewEngine(nil, store, nil, nil, nil), GameData: GameData.NewManager(GameData.UpdaterConfig{})}).Handler())
 	defer server.Close()
 	for _, test := range []struct {

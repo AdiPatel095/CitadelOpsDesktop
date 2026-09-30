@@ -24,7 +24,7 @@ func TestSafetyRefreshPersistsLegacyExpiryAndWhitelistWithoutReset(t *testing.T)
 		initial.Automations[item.lane] = State.AutomationState{ID: item.lane, Status: "gated", Detail: lock.Detail(), SafetyLock: lock}
 	}
 	dir := t.TempDir()
-	store := State.NewStore(initial)
+	store := State.NewStore(&initial)
 	engine := NewEngine(NewRegistry(), store, nil, nil, nil)
 	engine.SetLaneSafetyPersistence(func(_ context.Context, event State.Event) error {
 		return State.SaveComponentSnapshot(dir, event, State.Components(State.ComponentAutomations))
@@ -55,7 +55,7 @@ func TestSafetyRefreshPersistsLegacyExpiryAndWhitelistWithoutReset(t *testing.T)
 			t.Fatalf("release not audited: %#v", loaded.Automations[lane])
 		}
 	}
-	restarted := NewEngine(NewRegistry(), State.NewStore(loaded), nil, nil, nil)
+	restarted := NewEngine(NewRegistry(), State.NewStore(&loaded), nil, nil, nil)
 	saves := 0
 	restarted.SetLaneSafetyPersistence(func(context.Context, State.Event) error { saves++; return nil })
 	if err := restarted.RefreshAutomationLaneLocks(); err != nil || saves != 0 {
@@ -66,7 +66,7 @@ func TestSafetyRefreshPersistsLegacyExpiryAndWhitelistWithoutReset(t *testing.T)
 func TestSafetyRefreshFailsIfMigrationCannotPersist(t *testing.T) {
 	initial := State.NewGameState()
 	initial.Automations["lane"] = State.AutomationState{SafetyLock: State.AutomationSafetyLock{OperationID: "legacy", Opcode: "ahr", Code: 273, ObservedAt: time.Now()}}
-	engine := NewEngine(NewRegistry(), State.NewStore(initial), nil, nil, nil)
+	engine := NewEngine(NewRegistry(), State.NewStore(&initial), nil, nil, nil)
 	engine.SetLaneSafetyPersistence(func(context.Context, State.Event) error { return errors.New("disk failed") })
 	if err := engine.RefreshAutomationLaneLocks(); err == nil {
 		t.Fatal("migration persistence failure ignored")

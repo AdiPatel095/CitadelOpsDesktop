@@ -295,7 +295,7 @@ func (*AutoBuyerPolicy) Evaluate(_ context.Context, snapshot Snapshot) (result D
 	}
 
 	if availablePackageGoals > 0 {
-		packageSource, sourceFound := autoBuyerSourceCastle(snapshot.State, settings.SourceCastleID)
+		packageSource, sourceFound := autoBuyerSourceCastle(&snapshot.State, settings.SourceCastleID)
 		if !sourceFound {
 			if blockedDetail == "" {
 				blockedDetail = "Choose an owned Great Empire main castle for Auto Buyer packages"
@@ -306,7 +306,7 @@ func (*AutoBuyerPolicy) Evaluate(_ context.Context, snapshot Snapshot) (result D
 			_, packageHistoryObservedAt, packageHistoryFound := snapshot.State.ConstructionOffersFor(packageSource.ID, packageSource.KingdomID)
 			if !packageHistoryFound || packageHistoryObservedAt.IsZero() ||
 				snapshot.Now.Sub(packageHistoryObservedAt) >= refreshAge ||
-				!State.PackageCountersAfterLastPurchase(snapshot.State, packageHistoryObservedAt) {
+				!State.PackageCountersAfterLastPurchase(&snapshot.State, packageHistoryObservedAt) {
 				return autoBuyerRequestDecision(snapshot.Now, metrics, "Refresh shop stock and reset counters", "autoBuyer.package.history", map[string]any{
 					"sourceCastleId": packageSource.ID,
 				}, Localization.New("server.automation.refresh_shop_stock_and.f65001ab", "Refresh shop stock and reset counters", nil)), nil
@@ -599,7 +599,7 @@ func evaluateAutoBuyerFeast(
 			}, ""
 		}
 	}
-	balance, available := autoBuyerPriceBalance(snapshot.State, source, feast.Price)
+	balance, available := autoBuyerPriceBalance(&snapshot.State, source, feast.Price)
 	if !available {
 		return nil, fmt.Sprintf("%s balance is unavailable", feast.Price.Name)
 	}
@@ -712,7 +712,7 @@ func evaluateAutoBuyerPackages(
 		if product.MaxBuyPerClick > 0 {
 			amount = min(amount, product.MaxBuyPerClick)
 		}
-		balance, available := autoBuyerPriceBalance(snapshot.State, source, product.Price)
+		balance, available := autoBuyerPriceBalance(&snapshot.State, source, product.Price)
 		if !available {
 			if firstBlocked == "" {
 				firstBlocked = fmt.Sprintf("%s balance is unavailable", product.Price.Name)
@@ -772,7 +772,7 @@ func evaluateAutoBuyerPackages(
 	return nil, firstBlocked, firstDescriptor
 }
 
-func autoBuyerSourceCastle(gameState State.GameState, configured State.CastleID) (State.CastleState, bool) {
+func autoBuyerSourceCastle(gameState *State.GameState, configured State.CastleID) (State.CastleState, bool) {
 	if configured > 0 {
 		castle, found := gameState.Castles[configured]
 		return castle, found && castle.KingdomID == 0 && castle.SlotType == 1
@@ -797,7 +797,7 @@ func autoBuyerLevelEligible(player State.PlayerState, minLevel, maxLevel, minLeg
 	return true
 }
 
-func autoBuyerPriceBalance(gameState State.GameState, source State.CastleState, price GameData.AutoBuyerPrice) (int64, bool) {
+func autoBuyerPriceBalance(gameState *State.GameState, source State.CastleState, price GameData.AutoBuyerPrice) (int64, bool) {
 	switch price.Scope {
 	case GameData.AutoBuyerPricePlayerResource:
 		balance, found := gameState.Player.Resources[State.ResourceID(price.ResourceID)]

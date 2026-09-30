@@ -31,7 +31,7 @@ func (state *GameState) initializeTowerCooldowns() {
 	state.TowerCooldowns = nil
 }
 
-func (state *GameState) prepareTowerCooldownMutation(source GameState) {
+func (state *GameState) prepareTowerCooldownMutation(source *GameState) {
 	base := source.towerCooldowns
 	if base == nil {
 		base = towerCooldownGenerationFromMap(source.TowerCooldowns)
@@ -45,7 +45,7 @@ func (state *GameState) prepareTowerCooldownMutation(source GameState) {
 	state.replaceTowerCooldowns = false
 }
 
-func (state GameState) LookupTowerCooldown(key string) (TowerCooldownState, bool) {
+func (state *GameState) LookupTowerCooldown(key string) (TowerCooldownState, bool) {
 	if cooldown, found := state.TowerCooldowns[key]; found {
 		return cooldown, true
 	}
@@ -56,7 +56,7 @@ func (state GameState) LookupTowerCooldown(key string) (TowerCooldownState, bool
 	return cooldown, found
 }
 
-func (state GameState) RangeTowerCooldowns(visit func(string, TowerCooldownState) bool) {
+func (state *GameState) RangeTowerCooldowns(visit func(string, TowerCooldownState) bool) {
 	if visit == nil {
 		return
 	}
@@ -82,7 +82,7 @@ func (state GameState) RangeTowerCooldowns(visit func(string, TowerCooldownState
 	}
 }
 
-func (state GameState) TowerCooldownCount() int {
+func (state *GameState) TowerCooldownCount() int {
 	count := 0
 	state.RangeTowerCooldowns(func(string, TowerCooldownState) bool {
 		count++
@@ -91,7 +91,7 @@ func (state GameState) TowerCooldownCount() int {
 	return count
 }
 
-func (state GameState) materializedTowerCooldowns() map[string]TowerCooldownState {
+func (state *GameState) materializedTowerCooldowns() map[string]TowerCooldownState {
 	result := map[string]TowerCooldownState{}
 	state.RangeTowerCooldowns(func(key string, cooldown TowerCooldownState) bool {
 		result[key] = cooldown
@@ -173,7 +173,7 @@ func (state *GameState) ReplaceTowerCooldowns(values map[string]TowerCooldownSta
 	state.mutableTowerCooldownShards = [4]uint64{}
 }
 
-func (state GameState) towerCooldownChangeKeys() []string {
+func (state *GameState) towerCooldownChangeKeys() []string {
 	keys := make([]string, 0, len(state.pendingTowerCooldownChanges))
 	for key := range state.pendingTowerCooldownChanges {
 		keys = append(keys, key)
@@ -182,7 +182,7 @@ func (state GameState) towerCooldownChangeKeys() []string {
 	return keys
 }
 
-func (state GameState) rangeTowerCooldownShards(visit func(uint8)) {
+func (state *GameState) rangeTowerCooldownShards(visit func(uint8)) {
 	if visit == nil {
 		return
 	}
@@ -198,7 +198,7 @@ func (state GameState) rangeTowerCooldownShards(visit func(uint8)) {
 	})
 }
 
-func (state GameState) towerCooldownShard(shard uint8) map[string]TowerCooldownState {
+func (state *GameState) towerCooldownShard(shard uint8) map[string]TowerCooldownState {
 	result := map[string]TowerCooldownState{}
 	state.RangeTowerCooldowns(func(key string, cooldown TowerCooldownState) bool {
 		if mapShardIndex(key) == shard {

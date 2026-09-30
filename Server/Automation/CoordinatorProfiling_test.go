@@ -43,7 +43,8 @@ func TestEvaluateLabelsEachPolicyUnderItsRuntimeAndStage(t *testing.T) {
 		coordinatorTestPolicy: coordinatorTestPolicy{id: "autoStorm"},
 		entered:               make(chan struct{}), release: make(chan struct{}),
 	}
-	state := State.NewStore(coordinatorReadyState())
+	accessorState1 := coordinatorReadyState()
+	state := State.NewStore(&accessorState1)
 	configuration := openCoordinatorTestConfiguration(t, policy.ID())
 	coordinator := NewCoordinator(state, configuration, nil, &coordinatorTestSubmitter{}, policy)
 	ctx := Profiling.WithRuntime(context.Background(), "acct-9")
@@ -86,7 +87,8 @@ func TestEvaluateAddsNoLabelsWithoutProfiling(t *testing.T) {
 		entered:               make(chan struct{}), release: make(chan struct{}),
 	}
 	close(policy.release)
-	state := State.NewStore(coordinatorReadyState())
+	accessorState2 := coordinatorReadyState()
+	state := State.NewStore(&accessorState2)
 	configuration := openCoordinatorTestConfiguration(t, policy.ID())
 	coordinator := NewCoordinator(state, configuration, nil, &coordinatorTestSubmitter{}, policy)
 	coordinator.evaluate(t.Context(), map[string]*policyRuntime{policy.ID(): {}}, make(chan operationResult, 1))

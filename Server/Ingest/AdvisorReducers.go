@@ -60,7 +60,7 @@ func reduceAdvisorActivation(
 	if payload.AdvisorType != 1 {
 		return nil, false, nil
 	}
-	eventID, found := activeAdvisorEvent(*gameState)
+	eventID, found := activeAdvisorEvent(gameState)
 	if !found {
 		return nil, false, nil
 	}
@@ -113,7 +113,7 @@ func reduceAdvisorOverview(
 		return nil, false, nil
 	}
 	gameState.Advisor.Summary = summary
-	if eventID, found := activeAdvisorEvent(*gameState); found {
+	if eventID, found := activeAdvisorEvent(gameState); found {
 		currentAttack := int64(0)
 		if gameState.Advisor.Run != nil && gameState.Advisor.Run.EventID == eventID {
 			currentAttack = int64(gameState.Advisor.Run.CurrentAttack)
@@ -200,14 +200,14 @@ func applyAdvisorMovement(opcode string, observedAt time.Time, envelope advisorM
 	targetTypeID := int(advisorRowInt(targetRow, 0))
 	eventID := advisorEventForTarget(targetTypeID)
 	if eventID == 0 {
-		eventID, _ = activeAdvisorEvent(*gameState)
+		eventID, _ = activeAdvisorEvent(gameState)
 	}
 	if eventID == 0 {
 		return false
 	}
 
 	next := State.AdvisorRunState{
-		EventID: eventID, EventEndsAt: advisorEventEndsAt(*gameState, eventID),
+		EventID: eventID, EventEndsAt: advisorEventEndsAt(gameState, eventID),
 		SourceCastleID: State.CastleID(advisorRowInt(sourceRow, 3)),
 		KingdomID:      envelope.Movement.KingdomID, TargetTypeID: targetTypeID,
 		TargetX: int(advisorRowInt(targetRow, 1)), TargetY: int(advisorRowInt(targetRow, 2)),
@@ -268,7 +268,7 @@ func advisorSameRunOccurrence(left State.AdvisorRunState, right State.AdvisorRun
 	return delta >= -10*time.Minute && delta <= 10*time.Minute
 }
 
-func advisorEventEndsAt(gameState State.GameState, eventID int64) time.Time {
+func advisorEventEndsAt(gameState *State.GameState, eventID int64) time.Time {
 	score, found := gameState.LookupScalableEventScore(eventID)
 	if !found || score.ObservedAt.IsZero() || score.RemainingSec <= 0 {
 		return time.Time{}
@@ -318,7 +318,7 @@ func advisorEventForTarget(targetTypeID int) int64 {
 	}
 }
 
-func activeAdvisorEvent(gameState State.GameState) (int64, bool) {
+func activeAdvisorEvent(gameState *State.GameState) (int64, bool) {
 	if eventID := gameState.EventScores.ActiveEventID; eventID == advisorNomadEventID || eventID == advisorSamuraiEventID {
 		if _, found := gameState.LookupScalableEventScore(eventID); found {
 			return eventID, true

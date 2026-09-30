@@ -172,7 +172,7 @@ func TestConstructionEquipEngineDoesNotSendRPCAgainstCapturedOccupiedSlots(t *te
 			}
 			sender := &constructionIntentCountingSender{}
 			engine := Intent.NewEngine(
-				registry, State.NewStore(gameState), constructionIntentGameDataProvider{store: gameData}, sender, nil,
+				registry, State.NewStore(&gameState), constructionIntentGameDataProvider{store: gameData}, sender, nil,
 			)
 			if err := engine.RegisterStepResolver("construction.equip.build", resolveConstructionEquipStep); err != nil {
 				t.Fatal(err)

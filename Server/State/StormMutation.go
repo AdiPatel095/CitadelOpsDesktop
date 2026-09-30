@@ -75,7 +75,7 @@ func (state *GameState) initializeStormTargets() {
 	state.Storm.Map.suppressedTargets = nil
 }
 
-func (state *GameState) prepareStormMutation(source GameState) {
+func (state *GameState) prepareStormMutation(source *GameState) {
 	state.Storm = source.Storm
 	state.Storm.Map.Targets = nil
 	base := source.stormTargets
@@ -123,7 +123,7 @@ func (state *GameState) MutableStormIslandReturns() map[string]StormIslandReturn
 	return state.Storm.IslandReturns
 }
 
-func (state GameState) stormTargetSuppressed(key string) bool {
+func (state *GameState) stormTargetSuppressed(key string) bool {
 	if state.stormTargets == nil || key == "" {
 		return false
 	}
@@ -131,7 +131,7 @@ func (state GameState) stormTargetSuppressed(key string) bool {
 	return found
 }
 
-func (state GameState) hasStormTargetKey(key string) bool {
+func (state *GameState) hasStormTargetKey(key string) bool {
 	if key == "" || state.stormTargetSuppressed(key) {
 		return false
 	}
@@ -145,7 +145,7 @@ func (state GameState) hasStormTargetKey(key string) bool {
 // LookupStormTarget resolves one authoritative target through the official map
 // domain. Callers see the same MapObservation model as the game payload while
 // tenant storage keeps only one physical observation copy.
-func (state GameState) LookupStormTarget(key string) (MapObservation, bool) {
+func (state *GameState) LookupStormTarget(key string) (MapObservation, bool) {
 	if observation, found := state.Storm.Map.Targets[key]; found {
 		return observation, true
 	}
@@ -162,7 +162,7 @@ func (state GameState) LookupStormTarget(key string) (MapObservation, bool) {
 // RangeStormMapObservations traverses the official Storm feature partition,
 // including account-suppressed targets. Full-scan reconciliation uses this
 // view; attack selection uses RangeStormTargets below.
-func (state GameState) RangeStormMapObservations(visit func(string, MapObservation) bool) {
+func (state *GameState) RangeStormMapObservations(visit func(string, MapObservation) bool) {
 	if visit == nil {
 		return
 	}
@@ -189,7 +189,7 @@ func (state GameState) RangeStormMapObservations(visit func(string, MapObservati
 	})
 }
 
-func (state GameState) RangeStormTargets(visit func(string, MapObservation) bool) {
+func (state *GameState) RangeStormTargets(visit func(string, MapObservation) bool) {
 	if visit == nil {
 		return
 	}
@@ -201,7 +201,7 @@ func (state GameState) RangeStormTargets(visit func(string, MapObservation) bool
 	})
 }
 
-func (state GameState) StormTargetCount() int {
+func (state *GameState) StormTargetCount() int {
 	count := 0
 	state.RangeStormTargets(func(string, MapObservation) bool {
 		count++
@@ -210,7 +210,7 @@ func (state GameState) StormTargetCount() int {
 	return count
 }
 
-func (state GameState) materializedStormTargets() map[string]MapObservation {
+func (state *GameState) materializedStormTargets() map[string]MapObservation {
 	targets := map[string]MapObservation{}
 	state.RangeStormTargets(func(key string, observation MapObservation) bool {
 		targets[key] = observation
@@ -326,7 +326,7 @@ func (state *GameState) ReplaceStormMap(value StormMapState) {
 	}
 }
 
-func (state GameState) stormTargetChangeKeys() []string {
+func (state *GameState) stormTargetChangeKeys() []string {
 	keys := make([]string, 0, len(state.pendingStormTargetChanges))
 	for key := range state.pendingStormTargetChanges {
 		keys = append(keys, key)
@@ -335,7 +335,7 @@ func (state GameState) stormTargetChangeKeys() []string {
 	return keys
 }
 
-func (state GameState) stormTargetKeys() []string {
+func (state *GameState) stormTargetKeys() []string {
 	keys := []string{}
 	if state.stormTargets != nil {
 		for _, shard := range state.stormTargets.shards {

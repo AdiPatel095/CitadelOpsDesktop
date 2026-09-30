@@ -18,7 +18,7 @@ func TestPlanAllianceInspectVerifiesMatchingRoster(t *testing.T) {
 	}
 
 	gameState := State.NewGameState()
-	application := &Application{State: State.NewStore(gameState)}
+	application := &Application{State: State.NewStore(&gameState)}
 	if err := application.verifyAllianceInspection(t.Context(), json.RawMessage(`{"allianceId":9}`)); err == nil {
 		t.Fatal("missing alliance inspection passed verification")
 	}

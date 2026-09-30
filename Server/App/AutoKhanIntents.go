@@ -517,10 +517,10 @@ func validateKhanLaneGuard(
 	if !exists || main.KingdomID != 0 || main.SlotType != 1 {
 		return Localization.WithError(fmt.Errorf("Auto Khan requires the Great Empire main castle"), Localization.New("server.app.auto_khan_requires_the.6a6d9358", "Auto Khan requires the Great Empire main castle", nil))
 	}
-	if State.HasIncomingPlayerAttack(gameState, now) {
+	if State.HasIncomingPlayerAttack(&gameState, now) {
 		return Localization.WithError(fmt.Errorf("Auto Khan yielded to an incoming player attack for Auto Station"), Localization.New("server.app.auto_khan_yielded_to.a67a2a93", "Auto Khan yielded to an incoming player attack for Auto Station", nil))
 	}
-	if State.KhanAutoStationYieldActiveAt(gameState, now) {
+	if State.KhanAutoStationYieldActiveAt(&gameState, now) {
 		return Localization.WithError(fmt.Errorf("Auto Khan yielded while Auto Station is moving troops"), Localization.New("server.app.auto_khan_yielded_while.824ea287", "Auto Khan yielded while Auto Station is moving troops", nil))
 	}
 	if main.Defense.OpenGateUntil != nil && main.Defense.OpenGateUntil.After(now) {
@@ -1036,7 +1036,7 @@ func (application *Application) guardKhanProtection(_ context.Context, arguments
 		return err
 	}
 	state := application.State.ReadOnlyView()
-	if State.HasIncomingPlayerAttack(state, time.Now().UTC()) || State.KhanAutoStationYieldActiveAt(state, time.Now().UTC()) {
+	if State.HasIncomingPlayerAttack(&state, time.Now().UTC()) || State.KhanAutoStationYieldActiveAt(&state, time.Now().UTC()) {
 		return Localization.WithError(fmt.Errorf("Auto Khan yielded gate protection to Auto Station"), Localization.New("server.app.auto_khan_yielded_gate.f4a2e7e0", "Auto Khan yielded gate protection to Auto Station", nil))
 	}
 	if castle.Defense.OpenGateUntil != nil && castle.Defense.OpenGateUntil.After(time.Now().UTC()) {

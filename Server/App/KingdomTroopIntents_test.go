@@ -139,7 +139,7 @@ func TestActionPlannerOwnsForwardedArguments(t *testing.T) {
 
 func newRegisteredKingdomTroopReconciliationEngine(t *testing.T, state State.GameState) (*Application, *Intent.Engine) {
 	t.Helper()
-	stateStore := State.NewStore(state)
+	stateStore := State.NewStore(&state)
 	if workflow := state.KingdomTransport.TroopWorkflows[2]; workflow.Status == "skip_inventory_pending" {
 		if _, err := stateStore.ApplyComponents(State.Components(State.ComponentPlayer), func(current *State.GameState) ([]string, bool, error) {
 			current.Player.Currencies[1005] = state.Player.Currencies[1005]
@@ -314,7 +314,7 @@ func TestOwnedKingdomTroopDispatchStopsWhenDestinationIsDisabled(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	application := &Application{State: State.NewStore(gameState), Configuration: configuration}
+	application := &Application{State: State.NewStore(&gameState), Configuration: configuration}
 	err = application.guardKingdomTroopWorkflowDispatch(t.Context(), json.RawMessage(`{
 		"sourceCastleId":10,"targetCastleId":20,"targetKingdomId":2,"owner":"autoFortress","workflowId":"owned",
 		"units":[{"unitId":10,"amount":5}]
@@ -328,7 +328,7 @@ func TestOwnedKingdomTroopArmIsDurableBeforeDispatch(t *testing.T) {
 	state := State.NewGameState()
 	state.Session.ConnectionGeneration = 9
 	dataDir := t.TempDir()
-	application := &Application{DataDir: dataDir, State: State.NewStore(state)}
+	application := &Application{DataDir: dataDir, State: State.NewStore(&state)}
 	arguments := json.RawMessage(`{
 		"sourceCastleId":10,"targetCastleId":20,"targetKingdomId":2,"owner":"autoFortress","workflowId":"owned",
 		"units":[{"unitId":10,"amount":5}]
@@ -366,7 +366,7 @@ func TestOwnedKingdomTroopDonorConsumptionAvoidsAuthoritativeDoubleDebit(t *test
 				ID: "owned", Owner: "autoFortress", Status: "pending", KingdomID: 2, SourceCastleID: 10,
 				TransportObservedAt: now.Add(-time.Minute), Units: []State.KingdomTransportUnit{{UnitID: 10, Amount: 10}},
 			}
-			application := &Application{State: State.NewStore(state)}
+			application := &Application{State: State.NewStore(&state)}
 			if err := application.consumeKingdomTroopSource(t.Context(), json.RawMessage(`{"sourceCastleId":10,"targetKingdomId":2,"owner":"autoFortress","workflowId":"owned","units":[{"unitId":10,"amount":10}]}`)); err != nil {
 				t.Fatal(err)
 			}
@@ -430,7 +430,7 @@ func TestOwnedKingdomTroopReconnectEvidenceRestoresDonorReconciliation(t *testin
 			state.Castles[20] = kingdomTroopIntentCastle(20, 2, "Sands")
 			state.KingdomTransport.TroopWorkflows[2] = test.workflow
 
-			store := State.NewStore(state)
+			store := State.NewStore(&state)
 			registry := Ingest.NewRegistry()
 			if err := Ingest.RegisterCoreReducers(registry); err != nil {
 				t.Fatal(err)
@@ -484,7 +484,7 @@ func TestOwnedKingdomTroopSkipRequiresDurationProgressAndInventoryConsumption(t 
 		SkipCurrencyID: 1005, SkipWireKey: "MS5", SkipBalanceBefore: 2, SkipRemainingBefore: 3600,
 		SkipDurationSec: 3600, SkipRequestedAt: now.Add(-10 * time.Second),
 	}
-	application := &Application{State: State.NewStore(state)}
+	application := &Application{State: State.NewStore(&state)}
 	arguments := json.RawMessage(`{"targetKingdomId":2,"owner":"autoFortress","workflowId":"owned"}`)
 	if err := application.verifyKingdomTroopSkipTimer(t.Context(), arguments); err == nil || !strings.Contains(err.Error(), "natural countdown") {
 		t.Fatalf("natural countdown confirmed skip progress: %v", err)
@@ -574,7 +574,7 @@ func TestKingdomTroopShipmentRejectsToolsAndSkipUsesTroopTransportType(t *testin
 		t.Fatalf("troop time-skip plan is missing its currency claim: %#v", plan.Claims)
 	}
 
-	application := &Application{State: State.NewStore(gameState)}
+	application := &Application{State: State.NewStore(&gameState)}
 	if err := application.consumeTimeSkip(t.Context(), plan.Steps[1].ActionArguments); err != nil {
 		t.Fatal(err)
 	}

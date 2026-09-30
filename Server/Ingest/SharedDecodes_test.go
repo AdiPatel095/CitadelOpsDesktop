@@ -184,7 +184,7 @@ func sharedPipeline(t *testing.T) *Pipeline {
 	if err := RegisterCoreReducers(registry); err != nil {
 		t.Fatal(err)
 	}
-	return NewPipeline(State.NewStore(state), staticGameDataProvider{data}, registry)
+	return NewPipeline(State.NewStore(&state), staticGameDataProvider{data}, registry)
 }
 func TestSharedRootDecodedOncePerCommit(t *testing.T) {
 	for _, tc := range []struct {

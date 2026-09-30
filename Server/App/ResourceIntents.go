@@ -121,7 +121,7 @@ func resourceLogisticsMarketCastle(input Intent.PlanningContext) (State.CastleSt
 	if !hasSameKingdomPair {
 		return State.CastleState{}, false, nil
 	}
-	if !State.NextMarketBarrowLeaseRelease(input.State, time.Now().UTC()).IsZero() {
+	if !State.NextMarketBarrowLeaseRelease(&input.State, time.Now().UTC()).IsZero() {
 		return State.CastleState{}, false, nil
 	}
 	if input.GameData == nil {
@@ -271,7 +271,7 @@ func planMarketResourceShipment(ctx context.Context, input Intent.PlanningContex
 		}
 	}
 	market, observed := input.State.Market.Castles[source.ID]
-	availableBarrows := State.AvailableMarketBarrowsAt(input.State, market, time.Now().UTC())
+	availableBarrows := State.AvailableMarketBarrowsAt(&input.State, market, time.Now().UTC())
 	if !observed || input.State.Market.ObservedAt.IsZero() || availableBarrows <= 0 {
 		return Intent.Plan{}, Localization.WithError(fmt.Errorf("source castle %d has no observed available market barrows", source.ID), Localization.New("server.app.source_castle_p_has.f0ba5631", "source castle {p0} has no observed available market barrows", Localization.Params{"p0": fmt.Sprintf("%d", source.ID)}))
 	}

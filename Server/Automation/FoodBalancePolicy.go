@@ -271,7 +271,7 @@ func foodBalanceLogisticsStale(snapshot Snapshot, interval time.Duration, includ
 	if err != nil {
 		return false, time.Time{}, err
 	}
-	kingdomRequired := includeKingdomTransport && kingdomLogisticsRequired(snapshot.State)
+	kingdomRequired := includeKingdomTransport && kingdomLogisticsRequired(&snapshot.State)
 	if !marketRequired && !kingdomRequired {
 		return false, time.Time{}, nil
 	}
@@ -295,7 +295,7 @@ func foodBalanceLogisticsStale(snapshot Snapshot, interval time.Duration, includ
 		return true, time.Time{}, nil
 	}
 	if marketStale {
-		if releasesAt := State.NextMarketBarrowLeaseRelease(snapshot.State, snapshot.Now); !releasesAt.IsZero() {
+		if releasesAt := State.NextMarketBarrowLeaseRelease(&snapshot.State, snapshot.Now); !releasesAt.IsZero() {
 			return false, releasesAt, nil
 		}
 		return true, time.Time{}, nil
@@ -575,7 +575,7 @@ func foodBalanceMarketShipmentFromDonor(
 		return Decision{}, false, nil
 	}
 	market, observed := snapshot.State.Market.Castles[donor.projection.castle.ID]
-	availableBarrows := State.AvailableMarketBarrowsAt(snapshot.State, market, snapshot.Now)
+	availableBarrows := State.AvailableMarketBarrowsAt(&snapshot.State, market, snapshot.Now)
 	if !observed || availableBarrows <= 0 {
 		return Decision{}, false, nil
 	}
@@ -661,7 +661,7 @@ func foodBalanceKingdomShipmentFromDonor(
 	interval time.Duration,
 	donor foodBalanceDonor,
 ) (Decision, bool) {
-	if pending, found := pendingKingdomResourceTransport(snapshot.State, risk.target.castle.KingdomID); found {
+	if pending, found := pendingKingdomResourceTransport(&snapshot.State, risk.target.castle.KingdomID); found {
 		detail := fmt.Sprintf("Kingdom %d already has a resource shipment in flight", pending.KingdomID)
 		var detailLocalizationMessage *Localization.Message = Localization.New("server.automation.kingdom_p_already_has.ff03a00e", "Kingdom {p0} already has a resource shipment in flight", Localization.Params{"p0": fmt.Sprintf("%d", pending.KingdomID)})
 		nextCheck := snapshot.Now.Add(coordinatorTick)
@@ -673,7 +673,7 @@ func foodBalanceKingdomShipmentFromDonor(
 		}
 		return Decision{Status: "waiting", Detail: detail, DetailDescriptor: Localization.Clone(detailLocalizationMessage), NextCheckAt: nextCheck}, true
 	}
-	if workflow, found := kingdomResourceTransportWorkflow(snapshot.State, risk.target.castle.KingdomID); found {
+	if workflow, found := kingdomResourceTransportWorkflow(&snapshot.State, risk.target.castle.KingdomID); found {
 		return Decision{
 			Status: "waiting",
 			Detail: fmt.Sprintf("Waiting for %s to refresh the kingdom %d resource destination", workflow.Owner, workflow.KingdomID), DetailDescriptor: Localization.New("server.automation.waiting_for_p_to.3a604b59", "Waiting for {p0} to refresh the kingdom {p1} resource destination", Localization.Params{"p0": fmt.Sprintf("%s", workflow.Owner), "p1": fmt.Sprintf("%d", workflow.KingdomID)}),

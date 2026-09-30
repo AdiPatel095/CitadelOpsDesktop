@@ -64,18 +64,18 @@ func TestAttackTargetRejectionsAreBoundedAndOnlyActiveBeforeUntil(t *testing.T) 
 	if len(state.AttackAnalytics.RejectedTargets) != AttackTargetRejectionLimit {
 		t.Fatalf("registry size = %d", len(state.AttackAnalytics.RejectedTargets))
 	}
-	if _, found := AttackTargetRejectedAt(state, 4, MapTypeStormFort, 0, 0, now); found {
+	if _, found := AttackTargetRejectedAt(&state, 4, MapTypeStormFort, 0, 0, now); found {
 		t.Fatal("oldest rejection survived the bound")
 	}
 	last := AttackTargetRejectionLimit + 19
-	rejection, found := AttackTargetRejectedAt(state, 4, MapTypeStormFort, last, last, now.Add(time.Hour))
+	rejection, found := AttackTargetRejectedAt(&state, 4, MapTypeStormFort, last, last, now.Add(time.Hour))
 	if !found {
 		t.Fatal("newest rejection missing")
 	}
-	if _, found := AttackTargetRejectedAt(state, 4, MapTypeStormFort, last, last, rejection.Until); found {
+	if _, found := AttackTargetRejectedAt(&state, 4, MapTypeStormFort, last, last, rejection.Until); found {
 		t.Fatal("rejection active at its Until")
 	}
-	if _, found := AttackTargetRejectedAt(state, 4, MapTypeStormIsland, last, last, now.Add(time.Hour)); found {
+	if _, found := AttackTargetRejectedAt(&state, 4, MapTypeStormIsland, last, last, now.Add(time.Hour)); found {
 		t.Fatal("rejection matched a different target type")
 	}
 }
@@ -83,7 +83,8 @@ func TestAttackTargetRejectionsAreBoundedAndOnlyActiveBeforeUntil(t *testing.T) 
 func TestRejectedTargetsAndPackageDispatchPersist(t *testing.T) {
 	directory := t.TempDir()
 	now := time.Date(2026, 9, 29, 12, 0, 0, 0, time.UTC)
-	store := NewStore(NewGameState())
+	accessorState1 := NewGameState()
+	store := NewStore(&accessorState1)
 	event, err := store.ApplyComponents(Components(ComponentAttackAnalytics, ComponentInventory), func(state *GameState) ([]string, bool, error) {
 		RecordAttackTargetRejection(state, AttackTargetRejection{
 			KingdomID: 1, TargetTypeID: MapTypeKingdomFortress, X: 10, Y: 20, Opcode: "abi", Code: 95, ObservedAt: now,
@@ -125,7 +126,7 @@ func TestStormFortRejectionIgnoresMapObjectID(t *testing.T) {
 		if rejection.Key() != "4:25:50:60" {
 			t.Fatalf("rejection key = %q", rejection.Key())
 		}
-		if _, found := AttackTargetRejectedAt(state, 4, MapTypeStormFort, 50, 60, now.Add(time.Minute)); !found {
+		if _, found := AttackTargetRejectedAt(&state, 4, MapTypeStormFort, 50, 60, now.Add(time.Minute)); !found {
 			t.Fatalf("fort rejection not found with map ObjectID %d", objectID)
 		}
 	}

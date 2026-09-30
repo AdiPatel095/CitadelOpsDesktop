@@ -58,7 +58,7 @@ func (*AutoStormBuildPolicy) Evaluate(_ context.Context, snapshot Snapshot) (res
 			EventDriven: true,
 		}, nil
 	}
-	castle, found := autoStormCastle(snapshot.State, settings.Target)
+	castle, found := autoStormCastle(&snapshot.State, settings.Target)
 	if !found {
 		return autoStormBuildWaiting(snapshot.Now, "No unlocked Storm castle is present", nil, Localization.New("server.automation.no_unlocked_storm_castle.de248812", "No unlocked Storm castle is present", nil)), nil
 	}

@@ -245,7 +245,7 @@ func TestControllerOrdersConnectionStatusBeforeCurrentFramesAndDropsStaleFrames(
 		Generation: 5, BaselineGeneration: 5, ConnectionGeneration: 1,
 		Status: "connected", LoggedIn: true, SocketReady: true, ChangedAt: time.Now().UTC(),
 	}
-	state := State.NewStore(gameState)
+	state := State.NewStore(&gameState)
 	transport := newPacingTransport()
 	controller := NewController(context.Background(), transport, nil, state)
 	defer controller.outbound.Close()
@@ -274,7 +274,7 @@ func TestControllerCancellationDiscardsQueuedObservedFrames(t *testing.T) {
 		Status: "connected", LoggedIn: true, SocketReady: true,
 		Namespace: "EmpireEx_21", ChangedAt: transport.status.ChangedAt,
 	}
-	state := State.NewStore(gameState)
+	state := State.NewStore(&gameState)
 	registry := Ingest.NewRegistry()
 	reducerStarted := make(chan struct{})
 	releaseReducer := make(chan struct{})
@@ -460,7 +460,7 @@ func TestControllerSessionGenerationTracksReadyTransitions(t *testing.T) {
 	gameState := State.NewGameState()
 	gameState.Session.Generation = 40
 	gameState.Session.BaselineGeneration = 40
-	state := State.NewStore(gameState)
+	state := State.NewStore(&gameState)
 	controller := NewController(context.Background(), nil, nil, state)
 	defer controller.outbound.Close()
 
@@ -508,7 +508,7 @@ func TestControllerIgnoresStaleBufferedSessionStatus(t *testing.T) {
 	gameState := State.NewGameState()
 	gameState.Session.Generation = 9
 	gameState.Session.BaselineGeneration = 9
-	state := State.NewStore(gameState)
+	state := State.NewStore(&gameState)
 	controller := NewController(context.Background(), nil, nil, state)
 	defer controller.outbound.Close()
 
@@ -536,7 +536,7 @@ func TestControllerAdvancesGenerationForReadySocketReplacement(t *testing.T) {
 		Generation: 20, BaselineGeneration: 20, ConnectionGeneration: 4,
 		Status: "connected", LoggedIn: true, SocketReady: true, ChangedAt: connectedAt,
 	}
-	state := State.NewStore(gameState)
+	state := State.NewStore(&gameState)
 	controller := NewController(context.Background(), nil, nil, state)
 	defer controller.outbound.Close()
 
@@ -564,7 +564,7 @@ func TestControllerKeepsFortressVerificationOnlyWithinReadyConnection(t *testing
 		Status: "connected", LoggedIn: true, SocketReady: true, ChangedAt: connectedAt,
 		FortressTargetVerification: proof,
 	}
-	state := State.NewStore(gameState)
+	state := State.NewStore(&gameState)
 	controller := NewController(context.Background(), nil, nil, state)
 	defer controller.outbound.Close()
 

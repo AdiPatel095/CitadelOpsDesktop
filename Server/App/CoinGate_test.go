@@ -56,7 +56,7 @@ func TestEngineCoinGatePreventsAuditedOpcodesFromReachingTransport(t *testing.T)
 		t.Run(testCase.opcode, func(t *testing.T) {
 			gameState := coinGateInput(store, 1).State
 			coinGateReadySession(&gameState)
-			stateStore := State.NewStore(gameState)
+			stateStore := State.NewStore(&gameState)
 			coinGatePrimeStore(t, stateStore, 1)
 			sender := &coinGateEngineSender{}
 			registry := Intent.NewRegistry()
@@ -79,7 +79,7 @@ func TestEngineCoinGateRefreshesUncorrelatedDebitsWithinHeldClaims(t *testing.T)
 	store := coinGateGameData(t)
 	gameState := coinGateInput(store, 120).State
 	coinGateReadySession(&gameState)
-	stateStore := State.NewStore(gameState)
+	stateStore := State.NewStore(&gameState)
 	coinGatePrimeStore(t, stateStore, 120)
 	observer := newCoinGateEngineObserver()
 	sender := &coinGateEngineSender{state: stateStore, observer: observer}
@@ -106,7 +106,7 @@ func TestEngineCoinGateRechecksConsumedEquipmentRetryWithFreshResponseToken(t *t
 	gameState := coinGateInput(store, 1_000).State
 	coinGateReadySession(&gameState)
 	gameState.Inventory.Equipment[1] = State.EquipmentInstance{ID: 1, Level: 0}
-	stateStore := State.NewStore(gameState)
+	stateStore := State.NewStore(&gameState)
 	coinGatePrimeStore(t, stateStore, 1_000)
 	observer := newCoinGateEngineObserver()
 	sender := &coinGateEngineSender{state: stateStore, observer: observer, retryEquipment227: true}
@@ -138,7 +138,7 @@ func TestEngineCoinGateDoesNotReplayConfirmedSpendWhenRefreshTimesOut(t *testing
 	store := coinGateGameData(t)
 	gameState := coinGateInput(store, 100).State
 	coinGateReadySession(&gameState)
-	stateStore := State.NewStore(gameState)
+	stateStore := State.NewStore(&gameState)
 	coinGatePrimeStore(t, stateStore, 100)
 	observer := newCoinGateEngineObserver()
 	sender := &coinGateEngineSender{state: stateStore, observer: observer, dropGBD: true}
@@ -165,7 +165,7 @@ func TestEngineCoinGateMarksMalformedPostSendResponseIndeterminate(t *testing.T)
 	store := coinGateGameData(t)
 	gameState := coinGateInput(store, 100).State
 	coinGateReadySession(&gameState)
-	stateStore := State.NewStore(gameState)
+	stateStore := State.NewStore(&gameState)
 	coinGatePrimeStore(t, stateStore, 100)
 	observer := newCoinGateEngineObserver()
 	sender := &coinGateEngineSender{state: stateStore, observer: observer, missingResponseCode: true}

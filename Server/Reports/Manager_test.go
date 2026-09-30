@@ -45,7 +45,7 @@ func TestManagerArchivesBattleReportsWithoutBlockingIngest(t *testing.T) {
 		Waves:   json.RawMessage(`{"LID":202,"W":[]}`),
 		Details: json.RawMessage(`{"LID":202,"Y":[]}`),
 	}
-	state := State.NewStore(gameState)
+	state := State.NewStore(&gameState)
 	manager := NewManager(state, history, &managerTestIntents{}, analytics)
 	started := make(chan struct{})
 	release := make(chan struct{})
@@ -129,7 +129,7 @@ func TestManagerHoldsPossibleInvasionReportUntilRecoveryExhausts(t *testing.T) {
 		CommanderID: 7, CommanderKnown: true,
 		OperationID: "unresolved-cra", ReservedAt: reservedAt,
 	})
-	state := State.NewStore(gameState)
+	state := State.NewStore(&gameState)
 	manager := NewManager(state, history, &managerTestIntents{})
 
 	next := manager.processNext(t.Context())
@@ -193,7 +193,7 @@ func TestManagerUsesHistoryToCompleteStalePersistedNotice(t *testing.T) {
 	}
 	gameState := State.NewGameState()
 	gameState.Reports.Notices[99] = State.ReportNotice{MessageID: 99, TypeID: 6, Status: "error"}
-	state := State.NewStore(gameState)
+	state := State.NewStore(&gameState)
 	intents := &managerTestIntents{}
 	manager := NewManager(state, history, intents)
 	manager.loadArchivedMessages()
@@ -216,7 +216,7 @@ func TestManagerSuccessfulFetchUsesOneSecondSettleTimer(t *testing.T) {
 	gameState.Session.SocketReady = true
 	gameState.Reports.Notices[7] = State.ReportNotice{MessageID: 7, TypeID: 3, Status: "pending"}
 	intents := &managerTestIntents{}
-	manager := NewManager(State.NewStore(gameState), history, intents)
+	manager := NewManager(State.NewStore(&gameState), history, intents)
 
 	before := time.Now()
 	next := manager.processNext(t.Context())
@@ -245,13 +245,14 @@ func TestManagerBoundsOnlyTerminalReportNotices(t *testing.T) {
 	gameState.Reports.Notices[activeID] = State.ReportNotice{
 		MessageID: activeID, TypeID: 3, Status: "pending", ObservedAt: base.Add(-time.Hour),
 	}
-	state := State.NewStore(gameState)
+	state := State.NewStore(&gameState)
 	manager := NewManager(state, history, &managerTestIntents{})
 	manager.processNext(t.Context())
 
 	terminal := 0
 	activeRetained := false
-	state.ReadOnlyView().RangeReportNotices(func(messageID int64, notice State.ReportNotice) bool {
+	accessorState1 := state.ReadOnlyView()
+	accessorState1.RangeReportNotices(func(messageID int64, notice State.ReportNotice) bool {
 		if reportNoticeTerminal(notice.Status) {
 			terminal++
 		}

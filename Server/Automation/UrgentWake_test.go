@@ -61,7 +61,7 @@ func TestCoordinatorUrgentDomainSkipsStateChangeDebounce(t *testing.T) {
 		t.Run(testCase.name, func(t *testing.T) {
 			gameState := coordinatorReadyState()
 			gameState.Khan.PlayerRageCap = 100
-			state := State.NewStore(gameState)
+			state := State.NewStore(&gameState)
 			configuration := openCoordinatorTestConfiguration(t, "rage")
 			policy := &urgentWakeTestPolicy{id: "rage", domains: []string{"khan"}, urgent: testCase.urgent}
 			submitter := &urgentWakeTestSubmitter{observed: make(chan time.Time, 1)}

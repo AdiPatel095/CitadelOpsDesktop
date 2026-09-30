@@ -166,7 +166,7 @@ func (*AutoKhanPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision,
 	if !exists || source.KingdomID != 0 {
 		return autoKhanWaiting(snapshot.Now, "Auto Khan attack source must be an available Great Empire castle", settings.CheckIntervalSec, nil, Localization.New("server.automation.auto_khan_attack_source.e1806a89", "Auto Khan attack source must be an available Great Empire castle", nil)), nil
 	}
-	main, found := autoKhanMainCastle(snapshot.State)
+	main, found := autoKhanMainCastle(&snapshot.State)
 	if !found {
 		return autoKhanWaiting(snapshot.Now, "The Great Empire main castle is unavailable", settings.CheckIntervalSec, nil, Localization.New("server.automation.the_great_empire_main.af78541b", "The Great Empire main castle is unavailable", nil)), nil
 	}
@@ -177,14 +177,14 @@ func (*AutoKhanPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision,
 	score, active := snapshot.State.LookupScalableEventScore(autoKhanEventID)
 	if !active || score.RemainingSec <= 0 || score.ObservedAt.IsZero() {
 		if decision, locked := limitedEventGate(
-			snapshot.State, snapshot.Now, []int64{autoKhanEventID}, "Nomad Khan event",
+			&snapshot.State, snapshot.Now, []int64{autoKhanEventID}, "Nomad Khan event",
 		); locked {
 			return decision, nil
 		}
 		return autoKhanWaiting(snapshot.Now, "Waiting for the Nomad event and Khan camp", settings.CheckIntervalSec, nil, Localization.New("server.automation.waiting_for_the_nomad.9a6fce53", "Waiting for the Nomad event and Khan camp", nil)), nil
 	}
 	remaining := autoKhanRemaining(score, snapshot.Now)
-	metrics := autoKhanMetrics(snapshot.State, main)
+	metrics := autoKhanMetrics(&snapshot.State, main)
 	metrics["eventRemainingSec"] = float64(max(int64(0), remaining))
 	metrics["nomadPoints"] = float64(score.PlayerScore)
 	metrics["nomadPointThreshold"] = float64(settings.NomadPointThreshold)
@@ -201,7 +201,7 @@ func (*AutoKhanPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision,
 		metrics["attackLaunchesEnabled"] = 0
 	}
 	if settings.NomadPointThreshold > 0 && score.PlayerScore >= settings.NomadPointThreshold {
-		outgoing := autoKhanOutgoingMovementIDs(snapshot.State, snapshot.Now)
+		outgoing := autoKhanOutgoingMovementIDs(&snapshot.State, snapshot.Now)
 		metrics["outgoingKhanMovements"] = float64(len(outgoing))
 		gateOpen := main.Defense.OpenGateUntil != nil && main.Defense.OpenGateUntil.After(snapshot.Now)
 		if gateOpen && len(outgoing) == 0 {
@@ -248,7 +248,7 @@ func (*AutoKhanPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision,
 		return autoKhanWaiting(snapshot.Now, err.Error(), settings.CheckIntervalSec, nil, Localization.FromError(err)), nil
 	}
 
-	if _, threatCount, earliestImpact, _ := incomingThreats(snapshot.State, snapshot.Now); threatCount > 0 {
+	if _, threatCount, earliestImpact, _ := incomingThreats(&snapshot.State, snapshot.Now); threatCount > 0 {
 		metrics["playerThreatCount"] = float64(threatCount)
 		next := snapshot.Now.Add(2 * time.Second)
 		if !earliestImpact.IsZero() && earliestImpact.Before(next) {
@@ -259,7 +259,7 @@ func (*AutoKhanPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision,
 			NextCheckAt: next, Metrics: metrics,
 		}, nil
 	}
-	if State.KhanAutoStationYieldActiveAt(snapshot.State, snapshot.Now) {
+	if State.KhanAutoStationYieldActiveAt(&snapshot.State, snapshot.Now) {
 		return Decision{
 			Status: "yielding", Detail: "Auto Station is moving troops; Khan attacks and defense changes are paused", DetailDescriptor: Localization.New("server.automation.auto_station_is_moving.39073bf6", "Auto Station is moving troops; Khan attacks and defense changes are paused", nil),
 			NextCheckAt: snapshot.Now.Add(2 * time.Second), Metrics: metrics,
@@ -411,7 +411,7 @@ func (*AutoKhanPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision,
 		}, nil
 	}
 
-	target, found := autoKhanTarget(snapshot.State)
+	target, found := autoKhanTarget(&snapshot.State)
 	if !found {
 		return autoKhanMapJump(snapshot.Now, "Jump directly to the active Khan camp", metrics, Localization.New("server.automation.jump_directly_to_the.ffe2a9ff", "Jump directly to the active Khan camp", nil)), nil
 	}
@@ -441,7 +441,7 @@ func (*AutoKhanPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision,
 		return autoKhanTileRefresh(snapshot.Now, target, "Refresh the located Khan camp", metrics, Localization.New("server.automation.refresh_the_located_khan.2fee8f5c", "Refresh the located Khan camp", nil)), nil
 	}
 	key := towerTargetKey(target.KingdomID, target.X, target.Y)
-	pendingCooldownReports := pendingKhanCooldownReports(snapshot.State)
+	pendingCooldownReports := pendingKhanCooldownReports(&snapshot.State)
 	metrics["pendingCooldownReports"] = float64(len(pendingCooldownReports))
 	if cooldown, exists := snapshot.State.NomadCamps.Cooldowns[key]; exists && cooldown.PendingCooldownRefresh {
 		if len(pendingCooldownReports) == 0 {
@@ -474,11 +474,11 @@ func (*AutoKhanPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision,
 			NextCheckAt: snapshot.Now.Add(time.Second), Metrics: metrics,
 		}, nil
 	}
-	remainingCooldown := nomadCampCooldownRemaining(snapshot.State, target, snapshot.Now)
+	remainingCooldown := nomadCampCooldownRemaining(&snapshot.State, target, snapshot.Now)
 	metrics["cooldownRemaining"] = float64(remainingCooldown)
 	if remainingCooldown > 0 {
 		if len(pendingCooldownReports) == 0 {
-			if responseGatedDungeonCooldownCount(snapshot.State, settings.TimeSkipReserve, int64(remainingCooldown)) < 1 {
+			if responseGatedDungeonCooldownCount(&snapshot.State, settings.TimeSkipReserve, int64(remainingCooldown)) < 1 {
 				return Decision{
 					Status: "waiting", Detail: fmt.Sprintf(
 						"Khan attacks are paused: no cooldown skip is available for the remaining %d seconds",
@@ -574,8 +574,8 @@ func (*AutoKhanPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision,
 		return *blocked, nil
 	}
 
-	commanderIDs, restricted := commanderFeatureCandidates(snapshot.State, snapshot.Configuration, "autoKhan")
-	available := availableNomadCommanders(snapshot.State, commanderIDs, restricted)
+	commanderIDs, restricted := commanderFeatureCandidates(&snapshot.State, snapshot.Configuration, "autoKhan")
+	available := availableNomadCommanders(&snapshot.State, commanderIDs, restricted)
 	if restricted && len(commanderIDs) == 0 {
 		return autoKhanWaiting(snapshot.Now, "Assign at least one commander to Auto Khan", settings.CheckIntervalSec, metrics, Localization.New("server.automation.assign_at_least_one.673e67fc", "Assign at least one commander to Auto Khan", nil)), nil
 	}
@@ -591,9 +591,9 @@ func (*AutoKhanPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision,
 	outstandingSkips := int64(0)
 	if activeRun {
 		inFlight := max(0, snapshot.State.Khan.AttacksLaunched-snapshot.State.Khan.VictoriesConfirmed)
-		outstandingSkips = int64(inFlight + len(pendingKhanCooldownReports(snapshot.State)))
+		outstandingSkips = int64(inFlight + len(pendingKhanCooldownReports(&snapshot.State)))
 	}
-	availableSkips := responseGatedDungeonCooldownCount(snapshot.State, settings.TimeSkipReserve, 3*60*60)
+	availableSkips := responseGatedDungeonCooldownCount(&snapshot.State, settings.TimeSkipReserve, 3*60*60)
 	usableSkips := max(int64(0), availableSkips-outstandingSkips)
 	metrics["availableCooldownSkips"] = float64(availableSkips)
 	metrics["committedCooldownSkips"] = float64(outstandingSkips)
@@ -723,7 +723,7 @@ func (*AutoKhanCooldownPolicy) Evaluate(_ context.Context, snapshot Snapshot) (D
 	if !lane.Settings.SkipCooldowns {
 		return autoKhanWaiting(snapshot.Now, "Khan cooldown time skips are disabled", lane.Settings.CheckIntervalSec, lane.Metrics, Localization.New("server.automation.khan_cooldown_time_skips.70f8787f", "Khan cooldown time skips are disabled", nil)), nil
 	}
-	reports := pendingKhanCooldownReports(snapshot.State)
+	reports := pendingKhanCooldownReports(&snapshot.State)
 	lane.Metrics["pendingCooldownReports"] = float64(len(reports))
 	if len(reports) == 0 {
 		return Decision{
@@ -762,7 +762,7 @@ func (*AutoKhanCooldownPolicy) Evaluate(_ context.Context, snapshot Snapshot) (D
 		}, nil
 	}
 	reportIDs := khanCooldownReportGroup(reports, selected, observation.ObservedAt)
-	remaining := nomadCampCooldownRemaining(snapshot.State, observation, snapshot.Now)
+	remaining := nomadCampCooldownRemaining(&snapshot.State, observation, snapshot.Now)
 	lane.Metrics["cooldownRemaining"] = float64(remaining)
 	lane.Metrics["cooldownReportsInMSD"] = float64(len(reportIDs))
 	if remaining <= 0 {
@@ -779,7 +779,7 @@ func (*AutoKhanCooldownPolicy) Evaluate(_ context.Context, snapshot Snapshot) (D
 			ReevaluateOnSuccess: true, ReevaluateOnStale: true,
 		}, nil
 	}
-	if responseGatedDungeonCooldownCount(snapshot.State, lane.Settings.TimeSkipReserve, int64(remaining)) < 1 {
+	if responseGatedDungeonCooldownCount(&snapshot.State, lane.Settings.TimeSkipReserve, int64(remaining)) < 1 {
 		return autoKhanWaiting(
 			snapshot.Now,
 			"No Khan cooldown time skip is available above the configured reserves",
@@ -821,7 +821,7 @@ func (*AutoKhanRagePolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decis
 		}, nil
 	}
 	lane.Metrics["rageTriggerEnabled"] = 1
-	target, found := autoKhanTarget(snapshot.State)
+	target, found := autoKhanTarget(&snapshot.State)
 	if !found {
 		return autoKhanWaiting(snapshot.Now, "Waiting for the attack lane to locate the type-35 Khan camp", 1, lane.Metrics, Localization.New("server.automation.waiting_for_the_attack.0053a758", "Waiting for the attack lane to locate the type-35 Khan camp", nil)), nil
 	}
@@ -966,7 +966,7 @@ func autoKhanAsyncLaneContext(
 	if !found || source.KingdomID != 0 {
 		return wait("Auto Khan attack source must be an available Great Empire castle", nil, Localization.New("server.automation.khan_lane.e1806a89", "Auto Khan attack source must be an available Great Empire castle", nil))
 	}
-	main, found := autoKhanMainCastle(snapshot.State)
+	main, found := autoKhanMainCastle(&snapshot.State)
 	if !found {
 		return wait("The Great Empire main castle is unavailable", nil, Localization.New("server.automation.khan_lane.af78541b", "The Great Empire main castle is unavailable", nil))
 	}
@@ -976,7 +976,7 @@ func autoKhanAsyncLaneContext(
 	score, active := snapshot.State.LookupScalableEventScore(autoKhanEventID)
 	if !active || score.RemainingSec <= 0 || score.ObservedAt.IsZero() {
 		if decision, locked := limitedEventGate(
-			snapshot.State, snapshot.Now, []int64{autoKhanEventID}, "Nomad Khan event",
+			&snapshot.State, snapshot.Now, []int64{autoKhanEventID}, "Nomad Khan event",
 		); locked {
 			return autoKhanLaneContext{}, &decision, nil
 		}
@@ -988,7 +988,7 @@ func autoKhanAsyncLaneContext(
 	if err != nil {
 		return wait(err.Error(), nil, Localization.FromError(err))
 	}
-	metrics := autoKhanMetrics(snapshot.State, main)
+	metrics := autoKhanMetrics(&snapshot.State, main)
 	metrics["eventRemainingSec"] = float64(max(int64(0), autoKhanRemaining(score, snapshot.Now)))
 	metrics["nomadPoints"] = float64(score.PlayerScore)
 	metrics["nomadPointThreshold"] = float64(settings.NomadPointThreshold)
@@ -1001,14 +1001,14 @@ func autoKhanAsyncLaneContext(
 	if settings.NomadPointThreshold > 0 && score.PlayerScore >= settings.NomadPointThreshold {
 		return wait("Nomad point threshold reached; the protection lane is stopping Auto Khan", metrics, Localization.New("server.automation.khan_lane.b1c35faf", "Nomad point threshold reached; the protection lane is stopping Auto Khan", nil))
 	}
-	if _, threatCount, _, _ := incomingThreats(snapshot.State, snapshot.Now); threatCount > 0 {
+	if _, threatCount, _, _ := incomingThreats(&snapshot.State, snapshot.Now); threatCount > 0 {
 		decision := Decision{
 			Status: "yielding", Detail: "Incoming player attack detected; Auto Khan yielded to Auto Station", DetailDescriptor: Localization.New("server.automation.incoming_player_attack_detected.06a05c21", "Incoming player attack detected; Auto Khan yielded to Auto Station", nil),
 			NextCheckAt: snapshot.Now.Add(2 * time.Second), Metrics: metrics,
 		}
 		return autoKhanLaneContext{}, &decision, nil
 	}
-	if State.KhanAutoStationYieldActiveAt(snapshot.State, snapshot.Now) {
+	if State.KhanAutoStationYieldActiveAt(&snapshot.State, snapshot.Now) {
 		decision := Decision{
 			Status: "yielding", Detail: "Auto Station is moving troops; Auto Khan lanes are paused", DetailDescriptor: Localization.New("server.automation.auto_station_is_moving.161d7692", "Auto Station is moving troops; Auto Khan lanes are paused", nil),
 			NextCheckAt: snapshot.Now.Add(2 * time.Second), Metrics: metrics,
@@ -1078,7 +1078,7 @@ func autoKhanRageBoosterGate(snapshot Snapshot, settings autoKhanSettings, metri
 	}
 }
 
-func pendingKhanCooldownReports(gameState State.GameState) []State.KhanCooldownReportState {
+func pendingKhanCooldownReports(gameState *State.GameState) []State.KhanCooldownReportState {
 	reports := make([]State.KhanCooldownReportState, 0, len(gameState.Khan.CooldownReports))
 	for _, report := range gameState.Khan.CooldownReports {
 		if !report.ResolvedAt.IsZero() {
@@ -1113,7 +1113,7 @@ func khanCooldownReportGroup(
 	return result
 }
 
-func autoKhanMainCastle(gameState State.GameState) (State.CastleState, bool) {
+func autoKhanMainCastle(gameState *State.GameState) (State.CastleState, bool) {
 	for _, castle := range gameState.Castles {
 		if castle.KingdomID == 0 && castle.SlotType == 1 {
 			return castle, true
@@ -1122,7 +1122,7 @@ func autoKhanMainCastle(gameState State.GameState) (State.CastleState, bool) {
 	return State.CastleState{}, false
 }
 
-func autoKhanTarget(gameState State.GameState) (State.MapObservation, bool) {
+func autoKhanTarget(gameState *State.GameState) (State.MapObservation, bool) {
 	if gameState.Khan.RunID != "" {
 		if target, found := gameState.LookupMapObservation(0, fmt.Sprintf("%d:%d", gameState.Khan.TargetX, gameState.Khan.TargetY)); found && autoKhanTargetCandidate(target) {
 			return target, true
@@ -1154,7 +1154,7 @@ func autoKhanTargetCandidate(target State.MapObservation) bool {
 	return target.KingdomID == 0 && target.TypeID == autoKhanCampTypeID
 }
 
-func autoKhanCooldownSkipDue(gameState State.GameState, target State.MapObservation) bool {
+func autoKhanCooldownSkipDue(gameState *State.GameState, target State.MapObservation) bool {
 	key := towerTargetKey(target.KingdomID, target.X, target.Y)
 	cooldown, exists := gameState.NomadCamps.Cooldowns[key]
 	if !exists {
@@ -1366,7 +1366,7 @@ func autoKhanDefenseToolPurchase(
 			) {
 				continue
 			}
-			route, active := autoKhanDefenseToolShopRoute(snapshot.State, item, snapshot.Now)
+			route, active := autoKhanDefenseToolShopRoute(&snapshot.State, item, snapshot.Now)
 			if !active {
 				continue
 			}
@@ -1377,7 +1377,7 @@ func autoKhanDefenseToolPurchase(
 					continue
 				}
 			}
-			balance, available := autoKhanDefenseToolBalance(snapshot.State, main, item)
+			balance, available := autoKhanDefenseToolBalance(&snapshot.State, main, item)
 			if !available || item.Price <= 0 || balance < item.Price {
 				continue
 			}
@@ -1425,7 +1425,7 @@ func autoKhanDefenseToolPurchase(
 }
 
 func autoKhanDefenseToolShopRoute(
-	gameState State.GameState,
+	gameState *State.GameState,
 	item GameData.DefenseToolShopPackage,
 	now time.Time,
 ) (State.EventShopRoute, bool) {
@@ -1440,7 +1440,7 @@ func autoKhanDefenseToolShopRoute(
 }
 
 func autoKhanDefenseToolBalance(
-	gameState State.GameState,
+	gameState *State.GameState,
 	main State.CastleState,
 	item GameData.DefenseToolShopPackage,
 ) (int64, bool) {
@@ -1514,7 +1514,7 @@ func autoKhanWaitingUntilTaunt(snapshot Snapshot, detail string, intervalSec int
 	return decision
 }
 
-func autoKhanMetrics(gameState State.GameState, main State.CastleState) map[string]float64 {
+func autoKhanMetrics(gameState *State.GameState, main State.CastleState) map[string]float64 {
 	metrics := map[string]float64{
 		"mainCastleId": float64(main.ID), "attacksLaunched": float64(gameState.Khan.AttacksLaunched),
 		"victoriesConfirmed": float64(gameState.Khan.VictoriesConfirmed),
@@ -1526,7 +1526,7 @@ func autoKhanMetrics(gameState State.GameState, main State.CastleState) map[stri
 	return metrics
 }
 
-func autoKhanOutgoingMovementIDs(gameState State.GameState, now time.Time) []State.MovementID {
+func autoKhanOutgoingMovementIDs(gameState *State.GameState, now time.Time) []State.MovementID {
 	seen := map[State.MovementID]struct{}{}
 	result := make([]State.MovementID, 0, len(gameState.Khan.Launches))
 	for _, launch := range gameState.Khan.Launches {

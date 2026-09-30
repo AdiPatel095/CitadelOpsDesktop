@@ -80,7 +80,7 @@ func sessionDecodePipeline(t *testing.T) (*Ingest.Pipeline, *State.Store) {
 	s := State.NewGameState()
 	s.Player.ID = 424242
 	s.Session = State.SessionState{LoggedIn: true, Generation: 1, ConnectionGeneration: 1}
-	store := State.NewStore(s)
+	store := State.NewStore(&s)
 	reg := Ingest.NewRegistry()
 	if err := Ingest.RegisterCoreReducers(reg); err != nil {
 		t.Fatal(err)

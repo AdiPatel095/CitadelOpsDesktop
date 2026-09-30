@@ -67,7 +67,7 @@ func attackTargetRejectionMatches(rejection AttackTargetRejection, kingdomID Kin
 // map observation never clears it; only its deferral end, a confirmed launch
 // or an own victory does.
 func AttackTargetRejectedAt(
-	gameState GameState,
+	gameState *GameState,
 	kingdomID KingdomID,
 	targetTypeID, x, y int,
 	now time.Time,

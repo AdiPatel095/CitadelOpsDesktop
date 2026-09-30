@@ -550,7 +550,7 @@ func TestAutoBuyerSpecialistRestartRecoveryRequiresCorrelatedActivationEvidence(
 			if err != nil {
 				t.Fatal(err)
 			}
-			store := State.NewStore(loaded)
+			store := State.NewStore(&loaded)
 			application := &Application{DataDir: dataDir, State: store, GameData: autoBuyerIntentTestManager(t)}
 			if err := application.reconcileAutoBuyerSpecialistPurchase(t.Context(), json.RawMessage(`{"specialistId":0}`)); err != nil {
 				t.Fatal(err)
@@ -717,7 +717,7 @@ func newAutoBuyerSpecialistIntegrationHarness(t *testing.T) (*Application, *Inte
 	state := autoBuyerIntentTestState(now)
 	state.Player.Resources[2] = 100_000
 	state.Automations["autoBuyer"] = State.AutomationState{ID: "autoBuyer", Enabled: true}
-	store := State.NewStore(state)
+	store := State.NewStore(&state)
 	_, _ = store.ApplyComponents(State.Components(State.ComponentPlayer), func(current *State.GameState) ([]string, bool, error) {
 		current.Player.Resources[2] = 100_000
 		current.Player.ResourceObservations[2] = State.PlayerResourceObservation{ObservedAt: now, ConnectionGeneration: 1}
@@ -924,7 +924,7 @@ func newAutoBuyerFeastIntegrationHarness(
 	gameState.Market.FeastCostReductionPercent = 25
 	gameState.Automations["autoBuyer"] = State.AutomationState{ID: "autoBuyer", Enabled: true}
 
-	stateStore := State.NewStore(gameState)
+	stateStore := State.NewStore(&gameState)
 	gameData := autoBuyerIntentTestManager(t)
 	registry := Ingest.NewRegistry()
 	if err := Ingest.RegisterCoreReducers(registry); err != nil {
@@ -1107,7 +1107,7 @@ func TestAutoBuyerFeastReconciliationRequiresTimerProgressAndFreshChargedCastle(
 	gameState.Market.LatestFeastPurchase = State.FeastPurchaseEvidence{
 		Outcome: "uncertain", FeastID: 0, ChargedCastleID: 10, ChargedKingdomID: 0, AttemptedAt: attemptedAt,
 	}
-	application := &Application{State: State.NewStore(gameState), GameData: autoBuyerIntentTestManager(t)}
+	application := &Application{State: State.NewStore(&gameState), GameData: autoBuyerIntentTestManager(t)}
 	if err := application.verifyAutoBuyerFeastReconciliation(t.Context(), arguments); err == nil ||
 		!strings.Contains(err.Error(), "authoritative increased timer") {
 		t.Fatalf("pending reconciliation error = %v", err)
@@ -1120,7 +1120,7 @@ func TestAutoBuyerFeastReconciliationRequiresTimerProgressAndFreshChargedCastle(
 	castle := gameState.Castles[10]
 	castle.FoodBalanceObservedAt = jitterObservedAt
 	gameState.Castles[10] = castle
-	application.State = State.NewStore(gameState)
+	application.State = State.NewStore(&gameState)
 	if err := application.verifyAutoBuyerFeastReconciliation(t.Context(), arguments); err == nil ||
 		!strings.Contains(err.Error(), "authoritative increased timer") || !application.State.ReadOnlyView().Market.FeastPurchasePending {
 		t.Fatalf("fractional timer jitter reconciliation error = %v market=%+v", err, application.State.ReadOnlyView().Market)
@@ -1134,7 +1134,7 @@ func TestAutoBuyerFeastReconciliationRequiresTimerProgressAndFreshChargedCastle(
 	castle.FoodBalanceObservedAt = refreshedAt
 	castle.Resources[5] = autoBuyerIntentFoodBalance(60000)
 	gameState.Castles[10] = castle
-	application.State = State.NewStore(gameState)
+	application.State = State.NewStore(&gameState)
 	if err := application.verifyAutoBuyerFeastReconciliation(t.Context(), arguments); err != nil {
 		t.Fatalf("lost-response reconciliation rejected: %v", err)
 	}
@@ -1153,7 +1153,7 @@ func TestAutoBuyerFeastDefinitiveFailureOnlyDisarmsMatchingDispatch(t *testing.T
 		gameState.Market.FeastPurchaseExpectedID = 0
 		gameState.Market.FeastPurchaseOperationID = "expected-operation"
 		gameState.Market.FeastPurchaseResponseToken = "expected-token"
-		return &Application{State: State.NewStore(gameState)}
+		return &Application{State: State.NewStore(&gameState)}
 	}
 	testCases := []struct {
 		name        string
@@ -1499,7 +1499,7 @@ func TestValidateAutoBuyerFeastDispatchFailsClosedAtFinalBoundary(t *testing.T) 
 				t.Fatal(openErr)
 			}
 			application := &Application{
-				State: State.NewStore(gameState), GameData: autoBuyerIntentTestManager(t), Configuration: configuration,
+				State: State.NewStore(&gameState), GameData: autoBuyerIntentTestManager(t), Configuration: configuration,
 			}
 			dispatchErr := application.validateAutoBuyerFeastDispatch(arguments, now.Add(time.Second))
 			if testCase.wantError == "" {

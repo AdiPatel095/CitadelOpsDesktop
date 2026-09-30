@@ -748,7 +748,7 @@ func beriTowerAttackContext(
 		return request, State.CastleState{}, State.MapObservation{}, Localization.WithError(fmt.Errorf("%w: the Battle for Berimond is no longer unlocked", Intent.ErrPlanStale), Localization.New("server.app.intent_plan_became_stale.c4e00f6a", "intent plan became stale before dispatch: the Battle for Berimond is no longer unlocked", nil))
 	}
 	commander, exists := input.State.Commanders[request.CommanderID]
-	if !exists || !commander.Available || State.CommanderHasActiveMovementAt(input.State, request.CommanderID, now) {
+	if !exists || !commander.Available || State.CommanderHasActiveMovementAt(&input.State, request.CommanderID, now) {
 		return request, State.CastleState{}, State.MapObservation{},
 			Localization.WithError(fmt.Errorf("%w: Berimond commander %d is no longer available", Intent.ErrPlanStale, request.CommanderID), Localization.New("server.app.intent_plan_became_stale.726864f6", "intent plan became stale before dispatch: Berimond commander {p1} is no longer available", Localization.Params{"p1": fmt.Sprintf("%d", request.CommanderID)}))
 	}
