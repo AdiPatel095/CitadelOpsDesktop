@@ -21,6 +21,7 @@ import (
 
 	"CitadelDesktop/Server/App"
 	"CitadelDesktop/Server/Configuration"
+	"CitadelDesktop/Server/Diagnostics"
 	"CitadelDesktop/Server/History"
 	"CitadelDesktop/Server/PrivateMetrics"
 	"CitadelDesktop/Server/Reports"
@@ -52,6 +53,7 @@ type OrchestratorConfig struct {
 	DashboardAuth           *TenantAuthenticator
 	DrainTimeout            time.Duration
 	Now                     func() time.Time
+	LoadSampler             *Diagnostics.LoadSampler
 }
 
 // RuntimeAssignment is one desired account runtime on this cell.
@@ -203,21 +205,22 @@ type RuntimeStatus struct {
 }
 
 type CellStatus struct {
-	SettingsSwitchSchema  int             `json:"settingsSwitchSchema,omitempty"`
-	ProfileAvailableBytes uint64          `json:"profileAvailableBytes,omitempty"`
-	HandoverSchema        int             `json:"handoverSchema,omitempty"`
-	ControlFenceSchema    int             `json:"controlFenceSchema"`
-	ControlEpoch          uint64          `json:"controlEpoch"`
-	SchemaVersion         int             `json:"schemaVersion"`
-	Version               string          `json:"version"`
-	BuildRevision         string          `json:"buildRevision"`
-	BuildID               string          `json:"buildId"`
-	CellID                string          `json:"cellId"`
-	DesiredRevision       uint64          `json:"desiredRevision"`
-	GameDataReady         bool            `json:"gameDataReady"`
-	Capacity              Capacity        `json:"capacity"`
-	Runtimes              []RuntimeStatus `json:"runtimes"`
-	ObservedAt            time.Time       `json:"observedAt"`
+	Load                  *Diagnostics.LoadSnapshot `json:"load,omitempty"`
+	SettingsSwitchSchema  int                       `json:"settingsSwitchSchema,omitempty"`
+	ProfileAvailableBytes uint64                    `json:"profileAvailableBytes,omitempty"`
+	HandoverSchema        int                       `json:"handoverSchema,omitempty"`
+	ControlFenceSchema    int                       `json:"controlFenceSchema"`
+	ControlEpoch          uint64                    `json:"controlEpoch"`
+	SchemaVersion         int                       `json:"schemaVersion"`
+	Version               string                    `json:"version"`
+	BuildRevision         string                    `json:"buildRevision"`
+	BuildID               string                    `json:"buildId"`
+	CellID                string                    `json:"cellId"`
+	DesiredRevision       uint64                    `json:"desiredRevision"`
+	GameDataReady         bool                      `json:"gameDataReady"`
+	Capacity              Capacity                  `json:"capacity"`
+	Runtimes              []RuntimeStatus           `json:"runtimes"`
+	ObservedAt            time.Time                 `json:"observedAt"`
 }
 
 type Orchestrator struct {
@@ -229,6 +232,7 @@ type Orchestrator struct {
 	dashboardAuth     *TenantAuthenticator
 	drainTimeout      time.Duration
 	now               func() time.Time
+	load              *Diagnostics.LoadSampler
 
 	reconcileMu        sync.Mutex
 	mu                 sync.RWMutex
@@ -292,11 +296,15 @@ func NewOrchestrator(config OrchestratorConfig) (*Orchestrator, error) {
 	if err != nil {
 		return nil, fmt.Errorf("load controller fence: %w", err)
 	}
+	load := config.LoadSampler
+	if load == nil {
+		load = Diagnostics.NewLoadSampler()
+	}
 	orchestrator := &Orchestrator{
 		handoverTransport: config.EnableHandoverTransport,
 		cellID:            string(cellID), tokenHash: sha256.Sum256([]byte(config.Token)),
 		supervisor: config.Supervisor, dashboardAuth: config.DashboardAuth,
-		drainTimeout: drainTimeout, now: now,
+		drainTimeout: drainTimeout, now: now, load: load,
 		runtimes: map[AccountID]RuntimeAssignment{}, configurationSyncs: map[AccountID]configurationSyncState{},
 		subscribers: map[chan CellStatus]struct{}{},
 	}
@@ -311,7 +319,10 @@ func (orchestrator *Orchestrator) Start(ctx context.Context) {
 	if ctx == nil {
 		ctx = context.Background()
 	}
-	orchestrator.startOnce.Do(func() { go orchestrator.run(ctx) })
+	orchestrator.startOnce.Do(func() {
+		go orchestrator.load.Run(ctx)
+		go orchestrator.run(ctx)
+	})
 }
 
 // run republishes cell status on a fixed cadence so lease lapses, session
@@ -1185,7 +1196,7 @@ func (orchestrator *Orchestrator) Status() CellStatus {
 			profileAvailable = usage.Free
 		}
 	}
-	return CellStatus{
+	status := CellStatus{
 		SettingsSwitchSchema:  orchestrator.handoverSchema(),
 		ProfileAvailableBytes: profileAvailable,
 		HandoverSchema:        orchestrator.handoverSchema(),
@@ -1196,6 +1207,10 @@ func (orchestrator *Orchestrator) Status() CellStatus {
 		DesiredRevision: revision, GameDataReady: gameDataReady, Capacity: orchestrator.supervisor.Capacity(),
 		Runtimes: runtimes, ObservedAt: now,
 	}
+	if load, ok := orchestrator.load.Snapshot(); ok {
+		status.Load = &load
+	}
+	return status
 }
 
 // placementLeaseState reports whether a placement lease is still current. A

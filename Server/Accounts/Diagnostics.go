@@ -12,11 +12,16 @@ func (orchestrator *Orchestrator) handleDiagnostics(w http.ResponseWriter, r *ht
 	for _, store := range stores {
 		total.Add(store.PersistenceSnapshot())
 	}
+	var load *Diagnostics.LoadSnapshot
+	if snapshot, ok := orchestrator.load.Snapshot(); ok {
+		load = &snapshot
+	}
 	writeControlJSON(w, http.StatusOK, struct {
+		Load            *Diagnostics.LoadSnapshot   `json:"load,omitempty"`
 		Process         Diagnostics.ProcessSnapshot `json:"process"`
 		Telemetry       Telemetry.PersistenceStats  `json:"telemetry"`
 		TelemetryStores int                         `json:"telemetryStores"`
-	}{Diagnostics.SampleProcess(), total, len(stores)})
+	}{load, Diagnostics.SampleProcess(), total, len(stores)})
 }
 func (supervisor *Supervisor) telemetryStores() []*Telemetry.Store {
 	supervisor.mu.RLock()
