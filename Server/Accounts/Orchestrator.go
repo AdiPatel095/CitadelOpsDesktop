@@ -950,6 +950,9 @@ func (orchestrator *Orchestrator) handleConfigurationSync(writer http.ResponseWr
 		digest: input.Digest, application: application,
 	}
 	orchestrator.mu.Unlock()
+	// The canonical revision, not the local store revision, is what a portal
+	// holding the account's configuration compares against.
+	application.Configuration.SetAuthorityVersion(input.Configuration.Revision, input.Digest)
 	application.SetControlConfigurationReady(true, true)
 	// Reconcile normally starts the session on its next pass. This extra guard
 	// supports an idempotent controller retry where StartSession was already

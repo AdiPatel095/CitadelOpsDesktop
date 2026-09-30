@@ -390,13 +390,14 @@ func TestShardWebSocketReceivesOnlyItsAccountEvents(t *testing.T) {
 	if snapshot.Player.ID != 101 {
 		t.Fatalf("alpha websocket opened on player %d", snapshot.Player.ID)
 	}
-	// Configuration and operation snapshots complete the deterministic opening
-	// sequence before live state events begin.
-	for range 2 {
+	// Configuration, update and operation snapshots complete the deterministic
+	// opening sequence before live state events begin.
+	for opening := false; !opening; {
 		var ignored API.Envelope
 		if err := connection.ReadJSON(&ignored); err != nil {
 			t.Fatal(err)
 		}
+		opening = ignored.Type == "operations.snapshot"
 	}
 
 	applyDomain(t, bravo.State, "bravo-only")

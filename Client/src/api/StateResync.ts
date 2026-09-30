@@ -50,6 +50,14 @@ export interface ResyncRequest {
 	reason: ResyncReason;
 	/** 1 for the first request of an episode; grows while requests keep failing to settle. */
 	attempt: number;
+	/**
+	 * Where the host should ask. `socket` while the previous request (if any) was
+	 * answered: the snapshot then arrives in order with later events and costs no
+	 * REST egress. `rest` once a request went unanswered or failed, so a socket
+	 * that swallows requests cannot stall recovery. The host may still downgrade
+	 * `socket` to REST when the socket is not open.
+	 */
+	transport: 'socket' | 'rest';
 }
 
 export interface StateResyncOutcome<S> {
@@ -98,6 +106,8 @@ export class StateResync<S extends VersionedState, P extends VersionedPatch> {
 	private gapSince: number | null = null;
 	private pendingReason: ResyncReason | null = null;
 	private eventsLost = false;
+	/** The last snapshot request timed out or failed and no snapshot has arrived since. */
+	private unanswered = false;
 	private attempt = 0;
 	private lastRequestAt = Number.NEGATIVE_INFINITY;
 	private nextRequestAt = Number.NEGATIVE_INFINITY;
@@ -132,6 +142,7 @@ export class StateResync<S extends VersionedState, P extends VersionedPatch> {
 		}
 		this.state = snapshot;
 		this.awaiting = null;
+		this.unanswered = false;
 		this.pendingReason = null;
 		this.gapSince = null;
 		const mismatch = this.drain(now);
@@ -189,6 +200,7 @@ export class StateResync<S extends VersionedState, P extends VersionedPatch> {
 		if (this.awaiting != null && now - this.awaiting.since >= this.options.resyncTimeoutMs) {
 			this.pendingReason = this.awaiting.reason;
 			this.awaiting = null;
+			this.unanswered = true;
 		}
 		let resync: ResyncRequest | null = null;
 		if (this.awaiting == null) {
@@ -206,6 +218,7 @@ export class StateResync<S extends VersionedState, P extends VersionedPatch> {
 		if (this.awaiting != null) {
 			this.pendingReason = this.awaiting.reason;
 			this.awaiting = null;
+			this.unanswered = true;
 		}
 		return this.tick(now);
 	}
@@ -217,6 +230,8 @@ export class StateResync<S extends VersionedState, P extends VersionedPatch> {
 	 */
 	connectionReset(): void {
 		this.awaiting = null;
+		// A new socket has not failed to answer anything yet.
+		this.unanswered = false;
 		this.pendingReason = null;
 		this.gapSince = null;
 		this.eventsLost = false;
@@ -236,7 +251,7 @@ export class StateResync<S extends VersionedState, P extends VersionedPatch> {
 		this.nextRequestAt = now + spacing;
 		this.pendingReason = null;
 		this.awaiting = { since: now, reason };
-		return { reason, attempt: this.attempt };
+		return { reason, attempt: this.attempt, transport: this.unanswered ? 'rest' : 'socket' };
 	}
 
 	private enqueue(event: BufferedEvent<P>): void {
