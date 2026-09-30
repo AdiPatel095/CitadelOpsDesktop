@@ -165,7 +165,7 @@ test('the banner and Compare copy are the accepted wording; Restore appears only
   assert.equal(messages['draftRecovery.compare'], 'Compare');
   const hook = await readFile(new URL('../src/settings/useDraftRecovery.tsx', import.meta.url), 'utf8');
   const banner = hook.slice(hook.indexOf('const banner ='), hook.indexOf('{comparing ? ('));
-  assert.match(banner, /savedSince \? \(\s*<Button[^>]*onClick=\{\(\) => setComparing\(true\)\}/, 'Compare replaces Restore when the saved settings changed');
+  assert.match(banner, /savedSince \? \(\s*<Button[^>]*onClick=\{\(\) => setComparingFor\(entry\.savedAt\)\}/, 'Compare replaces Restore when the saved settings changed');
   assert.match(banner, /\) : \(\s*<Button[^>]*onClick=\{restore\}/, 'Restore is offered only when the baseline is unchanged');
   assert.match(hook, /role="status"/);
   assert.match(hook, /<Button variant="primary" onClick=\{restore\}>/, 'Restore inside the Compare view');

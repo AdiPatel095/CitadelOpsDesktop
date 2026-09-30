@@ -91,7 +91,8 @@ export function useDraftRecovery({ section, isOpen, draftSession, draft, loaded,
   const machineRef = useRef<DraftRecoveryMachine>(INITIAL_DRAFT_RECOVERY_MACHINE);
   const [machine, setMachine] = useState<DraftRecoveryMachine>(INITIAL_DRAFT_RECOVERY_MACHINE);
   const [entry, setEntry] = useState<DraftRecoveryEntry | null>(null);
-  const [comparing, setComparing] = useState(false);
+  // Compare is open for one recorded draft (identified by when it was recorded); a different record starts closed.
+  const [comparingFor, setComparingFor] = useState<string | null>(null);
   const timer = useRef<number | null>(null);
 
   const cancelTimer = useCallback(() => {
@@ -154,34 +155,24 @@ export function useDraftRecovery({ section, isOpen, draftSession, draft, loaded,
   }, [cancelTimer, write]);
 
   // On open: read what is waiting. A record identical to what just loaded has nothing to recover and is dropped.
-  // The record lives in browser storage and is read once per load (never while the player edits), so it is set from an
-  // effect rather than derived in render.
-  /* eslint-disable react-hooks/set-state-in-effect */
+  // Read once per load (never while the player edits); the banner state is set on the next microtask, and a load that
+  // has already gone away never receives it.
   useEffect(() => {
-    setComparing(false);
-    if (!active) {
-      setEntry(null);
-      return;
+    let cancelled = false;
+    let waiting: DraftRecoveryEntry | null = null;
+    const found = active ? readDraft(key, section) : null;
+    if (found) {
+      if (classifyRecovered(found, { draftDigest: latest.current.loadedDigest, savedDigest: latest.current.savedDigest }) === 'drop') clearDraft(key, section);
+      else waiting = found;
     }
-    const found = readDraft(key, section);
-    if (!found) {
-      setEntry(null);
-      return;
-    }
-    if (classifyRecovered(found, { draftDigest: latest.current.loadedDigest, savedDigest: latest.current.savedDigest }) === 'drop') {
-      clearDraft(key, section);
-      setEntry(null);
-      return;
-    }
-    setEntry(found);
-    // Only when the editor (re)loads, never while the player edits.
+    queueMicrotask(() => { if (!cancelled) setEntry(waiting); });
+    return () => { cancelled = true; };
   }, [active, loadKey, key, section]);
-  /* eslint-enable react-hooks/set-state-in-effect */
 
   const discard = useCallback(() => {
     clearDraft(key, section);
     setEntry(null);
-    setComparing(false);
+    setComparingFor(null);
   }, [key, section]);
 
   const restore = useCallback(() => {
@@ -189,9 +180,10 @@ export function useDraftRecovery({ section, isOpen, draftSession, draft, loaded,
     draftSession.recoverDraft(section, entry.draft, entry.extras);
     clearDraft(key, section);
     setEntry(null);
-    setComparing(false);
+    setComparingFor(null);
   }, [draftSession, entry, key, section]);
 
+  const comparing = entry != null && comparingFor === entry.savedAt;
   const savedSince = entry != null && entry.baseDigest !== savedDigest;
   const differences = useMemo<DraftDifference[]>(
     () => (comparing && entry ? compareDrafts(draftSession.sections?.[section] ?? null, entry.draft) : []),
@@ -209,7 +201,7 @@ export function useDraftRecovery({ section, isOpen, draftSession, draft, loaded,
         </p>
         <div className="flex flex-wrap gap-2">
           {savedSince ? (
-            <Button variant="outline" size="sm" onClick={() => setComparing(true)} leftIcon={<RotateCcw className="h-4 w-4" />}>
+            <Button variant="outline" size="sm" onClick={() => setComparingFor(entry.savedAt)} leftIcon={<RotateCcw className="h-4 w-4" />}>
               <LocalizedText messageKey="draftRecovery.compare" />
             </Button>
           ) : (
@@ -225,14 +217,14 @@ export function useDraftRecovery({ section, isOpen, draftSession, draft, loaded,
       {comparing ? (
         <Modal
           isOpen
-          onClose={() => setComparing(false)}
+          onClose={() => setComparingFor(null)}
           maxWidth="2xl"
           title={<LocalizedText messageKey="draftRecovery.compareTitle" />}
           footer={(
             <>
               <Button variant="primary" onClick={restore}><LocalizedText messageKey="draftRecovery.restore" /></Button>
               <Button variant="outline" onClick={discard}><LocalizedText messageKey="draftRecovery.discard" /></Button>
-              <Button variant="ghost" onClick={() => setComparing(false)}><LocalizedText messageKey="draftRecovery.close" /></Button>
+              <Button variant="ghost" onClick={() => setComparingFor(null)}><LocalizedText messageKey="draftRecovery.close" /></Button>
             </>
           )}
         >

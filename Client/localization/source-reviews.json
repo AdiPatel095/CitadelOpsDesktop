@@ -479,16 +479,6 @@
     "reason": "Configuration section key, slot id, feature id, ref discriminator, readiness check ids and DOM anchor ids.",
     "evidence": "automation.autoBeriWorld section, attack slot, autoBeriWorld feature id and auto-beri-* element ids used by focusReadinessTarget."
   },
-  "d99a59cea11b1b74904db1c0ee593319ec8937db3c507dd9477d469352dbea93": {
-    "classification": "technical",
-    "reason": "Configuration section key, slot id, feature id, ref discriminator, readiness check ids and DOM anchor ids.",
-    "evidence": "automation.autoBeriWorld section, attack slot, autoBeriWorld feature id and auto-beri-* element ids used by focusReadinessTarget."
-  },
-  "50c9114e1658f7fb725c3b5fbb12b55c8a9362e2961a6fd20669574e955f6096": {
-    "classification": "technical",
-    "reason": "Configuration section key, slot id, feature id, ref discriminator, readiness check ids and DOM anchor ids.",
-    "evidence": "automation.autoBeriWorld section, attack slot, autoBeriWorld feature id and auto-beri-* element ids used by focusReadinessTarget."
-  },
   "a9d95d1d084d684481348810fdf1733b792f4a2e5246712d16ee6868c9f59464": {
     "classification": "technical",
     "reason": "Configuration section key, slot id, feature id, ref discriminator, readiness check ids and DOM anchor ids.",
@@ -539,11 +529,6 @@
     "reason": "Module slot id, feature id, ref discriminator, readiness check ids and DOM anchor ids.",
     "evidence": "attack slot, autoInvasion feature id, readiness ids and auto-invasion-* element ids used by focusReadinessTarget."
   },
-  "0308b7034782f388214bd9490d2748e442f53a4b64aa8565dd15e2bbb1c11daf": {
-    "classification": "technical",
-    "reason": "Module slot id, feature id, ref discriminator, readiness check ids and DOM anchor ids.",
-    "evidence": "attack slot, autoInvasion feature id, readiness ids and auto-invasion-* element ids used by focusReadinessTarget."
-  },
   "10fad5d1e7a12d494ebf5ba0d14f1bf760172050844f51b3684c3fbedd20c5b2": {
     "classification": "technical",
     "reason": "Module slot id, feature id, ref discriminator, readiness check ids and DOM anchor ids.",
@@ -585,16 +570,6 @@
     "evidence": "nomad/samurai slots, autoNomad feature id, readiness ids and auto-nomad-* element ids used by focusReadinessTarget."
   },
   "571cb65647beb20c1a6e46db86ca4cac560e40086344d31f4a5d2603225ba833": {
-    "classification": "technical",
-    "reason": "Module slot ids, feature id, ref discriminators, readiness check ids and DOM anchor ids.",
-    "evidence": "nomad/samurai slots, autoNomad feature id, readiness ids and auto-nomad-* element ids used by focusReadinessTarget."
-  },
-  "f0044dcc6b796da6a1d183632cc48af97f504044b711fa4a47539af9fe3694fd": {
-    "classification": "technical",
-    "reason": "Module slot ids, feature id, ref discriminators, readiness check ids and DOM anchor ids.",
-    "evidence": "nomad/samurai slots, autoNomad feature id, readiness ids and auto-nomad-* element ids used by focusReadinessTarget."
-  },
-  "ad05b0cbf9093f055ec8745b7ce8f3438f97eed94e6ec379cab0444499ec9517": {
     "classification": "technical",
     "reason": "Module slot ids, feature id, ref discriminators, readiness check ids and DOM anchor ids.",
     "evidence": "nomad/samurai slots, autoNomad feature id, readiness ids and auto-nomad-* element ids used by focusReadinessTarget."
@@ -3324,16 +3299,6 @@
     "reason": "Slot ids, feature id, readiness ids, DOM anchor ids, message keys and id fallbacks.",
     "evidence": "attack/defense slots, autoKhan feature id, readiness check ids, auto-khan-* element ids used by focusReadinessTarget, typed message keys passed to localizeStatic and #<id> fallbacks for unnamed castles."
   },
-  "64460ce5572f0a3e802226750f2686a6c01d636b2d0e0e55730320bb20fb4a0a": {
-    "classification": "technical",
-    "reason": "Slot ids, feature id, readiness ids, DOM anchor ids, message keys and id fallbacks.",
-    "evidence": "attack/defense slots, autoKhan feature id, readiness check ids, auto-khan-* element ids used by focusReadinessTarget, typed message keys passed to localizeStatic and #<id> fallbacks for unnamed castles."
-  },
-  "23b27b3d8a0644ece200f39f6d3800649aaa5d10723840839827299fc648a2b6": {
-    "classification": "technical",
-    "reason": "Slot ids, feature id, readiness ids, DOM anchor ids, message keys and id fallbacks.",
-    "evidence": "attack/defense slots, autoKhan feature id, readiness check ids, auto-khan-* element ids used by focusReadinessTarget, typed message keys passed to localizeStatic and #<id> fallbacks for unnamed castles."
-  },
   "552c2f503dc65060d8c4ade4a7dab8afdaa0bd456477bd124577bbd4f15348d0": {
     "classification": "technical",
     "reason": "Slot ids, feature id, readiness ids, DOM anchor ids, message keys and id fallbacks.",
@@ -3405,16 +3370,6 @@
     "evidence": "forts/islands slots, autoStorm feature id, readiness check ids, auto-storm-* element ids used by focusReadinessTarget, typed message keys and #<id> fallbacks."
   },
   "4705e9baf4bb7e1227f5d42ce1de4a6571d7fa4e404effe25ba80dd391f6644a": {
-    "classification": "technical",
-    "reason": "Slot ids, feature id, readiness ids, DOM anchor ids, message keys and id fallbacks.",
-    "evidence": "forts/islands slots, autoStorm feature id, readiness check ids, auto-storm-* element ids used by focusReadinessTarget, typed message keys and #<id> fallbacks."
-  },
-  "c28870316fd22538e89b25478f597356550746e881b58c359058b9712edf712b": {
-    "classification": "technical",
-    "reason": "Slot ids, feature id, readiness ids, DOM anchor ids, message keys and id fallbacks.",
-    "evidence": "forts/islands slots, autoStorm feature id, readiness check ids, auto-storm-* element ids used by focusReadinessTarget, typed message keys and #<id> fallbacks."
-  },
-  "b2dd7a326483f9f7db3528d6e94fed80a786a8ef4c6569fb191d84a1e07cb845": {
     "classification": "technical",
     "reason": "Slot ids, feature id, readiness ids, DOM anchor ids, message keys and id fallbacks.",
     "evidence": "forts/islands slots, autoStorm feature id, readiness check ids, auto-storm-* element ids used by focusReadinessTarget, typed message keys and #<id> fallbacks."
@@ -11128,5 +11083,50 @@
     "classification": "technical",
     "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
     "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
+  },
+  "d819ed619302ff7277a0287fc34366392f6694c820080a596fcc2eba952a729c": {
+    "classification": "technical",
+    "reason": "Configuration section key, slot id, feature id, ref discriminator, readiness check ids and DOM anchor ids.",
+    "evidence": "automation.autoBeriWorld section, attack slot, autoBeriWorld feature id and auto-beri-* element ids used by focusReadinessTarget."
+  },
+  "c3f3ff44689ce61aaabd3059bad6180a41cb3d068c6445fe468f13807c53f947": {
+    "classification": "technical",
+    "reason": "Configuration section key, slot id, feature id, ref discriminator, readiness check ids and DOM anchor ids.",
+    "evidence": "automation.autoBeriWorld section, attack slot, autoBeriWorld feature id and auto-beri-* element ids used by focusReadinessTarget."
+  },
+  "b8ae5fe184e6f1f1647560220460493d76a02c75cc195c6aad0bbd261f705820": {
+    "classification": "technical",
+    "reason": "Module slot id, feature id, ref discriminator, readiness check ids and DOM anchor ids.",
+    "evidence": "attack slot, autoInvasion feature id, readiness ids and auto-invasion-* element ids used by focusReadinessTarget."
+  },
+  "d44138449aa2a991dbd9a327a29421093e3666519c1e61e660d78d5db27c6cf7": {
+    "classification": "technical",
+    "reason": "Module slot ids, feature id, ref discriminators, readiness check ids and DOM anchor ids.",
+    "evidence": "nomad/samurai slots, autoNomad feature id, readiness ids and auto-nomad-* element ids used by focusReadinessTarget."
+  },
+  "1ced863a46dc50aa6f613dc2986de686305aad3298d6b4bb2feca272b14927e2": {
+    "classification": "technical",
+    "reason": "Module slot ids, feature id, ref discriminators, readiness check ids and DOM anchor ids.",
+    "evidence": "nomad/samurai slots, autoNomad feature id, readiness ids and auto-nomad-* element ids used by focusReadinessTarget."
+  },
+  "a49a9abe298738e5148356f5d6be6f01f39335edb32e4ef08bca794f6d3bd4ca": {
+    "classification": "technical",
+    "reason": "Slot ids, feature id, readiness ids, DOM anchor ids, message keys and id fallbacks.",
+    "evidence": "attack/defense slots, autoKhan feature id, readiness check ids, auto-khan-* element ids used by focusReadinessTarget, typed message keys passed to localizeStatic and #<id> fallbacks for unnamed castles."
+  },
+  "057dc50d8e148b4c9a769267b92293bc7ca33c5e4b01ccd0c58d959abb13c47a": {
+    "classification": "technical",
+    "reason": "Slot ids, feature id, readiness ids, DOM anchor ids, message keys and id fallbacks.",
+    "evidence": "attack/defense slots, autoKhan feature id, readiness check ids, auto-khan-* element ids used by focusReadinessTarget, typed message keys passed to localizeStatic and #<id> fallbacks for unnamed castles."
+  },
+  "477a668af464456e5fb1845916b527d4e73d33cd94f26554b7e5d3fa9c3b6e64": {
+    "classification": "technical",
+    "reason": "Slot ids, feature id, readiness ids, DOM anchor ids, message keys and id fallbacks.",
+    "evidence": "forts/islands slots, autoStorm feature id, readiness check ids, auto-storm-* element ids used by focusReadinessTarget, typed message keys and #<id> fallbacks."
+  },
+  "6ab1200b829a50cb3dfe8f53821dfb0aa2c44d805c6f4119a7991522748ac2c4": {
+    "classification": "technical",
+    "reason": "Slot ids, feature id, readiness ids, DOM anchor ids, message keys and id fallbacks.",
+    "evidence": "forts/islands slots, autoStorm feature id, readiness check ids, auto-storm-* element ids used by focusReadinessTarget, typed message keys and #<id> fallbacks."
   }
 }
