@@ -21,7 +21,28 @@ import (
 const (
 	CheckpointSchemaVersion = 1
 
-	defaultCheckpointInterval = 5 * time.Minute
+	// defaultCheckpointInterval is how often a live runtime re-evaluates
+	// whether its dashboard-visible content changed. Session, configuration
+	// and drain events still publish promptly on their own.
+	defaultCheckpointInterval = 15 * time.Minute
+	// defaultCheckpointHeartbeat bounds how old the backend's copy may get when
+	// nothing visible changed, so an offline dashboard always shows a recent
+	// checkpoint.
+	defaultCheckpointHeartbeat = 30 * time.Minute
+	// defaultCheckpointRetryInterval is the base retry delay. It stays at the
+	// former five-minute cadence so a failure is not delayed by the longer
+	// steady-state interval.
+	defaultCheckpointRetryInterval = 5 * time.Minute
+	// defaultSettleWindow follows a new placement epoch (and process start), a
+	// session transition and a configuration apply. A handover waits for an
+	// actual checkpoint upload and an actual metrics upload, each no older than
+	// two minutes, so while the window is open neither publisher skips an
+	// unchanged upload and the checkpoint cadence is defaultSettleInterval.
+	defaultSettleWindow = 10 * time.Minute
+	// defaultSettleInterval is the checkpoint cadence while settling, the same
+	// minute the metrics publisher evaluates on, so both stay inside the
+	// two-minute freshness a handover requires.
+	defaultSettleInterval     = time.Minute
 	defaultCheckpointDebounce = 2 * time.Second
 	defaultCheckpointTimeout  = 90 * time.Second
 	checkpointOperationLimit  = 100
@@ -156,6 +177,60 @@ func BuildCheckpoint(
 	return checkpoint, nil
 }
 
+// checkpointDigest fingerprints exactly what the dashboard shows. The
+// observation time, checkpoint id, reason and state revision are excluded, as
+// are fields that change without the dashboard content changing: the state
+// document's own revision and update time, and each automation's next-check
+// and update timestamps.
+func checkpointDigest(checkpoint Checkpoint) [sha256.Size]byte {
+	digest := sha256.New()
+	write := func(label string, value []byte) {
+		_, _ = fmt.Fprintf(digest, "%s\x00%d\x00", label, len(value))
+		_, _ = digest.Write(value)
+	}
+	session, _ := json.Marshal(checkpoint.Session)
+	write("session", session)
+	if checkpoint.Account != nil {
+		account, _ := json.Marshal(checkpoint.Account)
+		write("account", account)
+	}
+	write("state", stableStateDocument(checkpoint.State))
+	write("configuration", checkpoint.Configuration)
+	write("operations", checkpoint.Operations)
+	var result [sha256.Size]byte
+	copy(result[:], digest.Sum(nil))
+	return result
+}
+
+// stableStateDocument re-serializes the client state document without its
+// volatile fields, with keys in a fixed order. An undecodable document is used
+// verbatim, which can only cause an extra upload, never a missed one.
+func stableStateDocument(document json.RawMessage) []byte {
+	var root map[string]json.RawMessage
+	if err := json.Unmarshal(document, &root); err != nil {
+		return document
+	}
+	delete(root, "revision")
+	delete(root, "updatedAt")
+	if raw, exists := root["automations"]; exists {
+		var automations map[string]map[string]json.RawMessage
+		if err := json.Unmarshal(raw, &automations); err == nil {
+			for _, fields := range automations {
+				delete(fields, "nextCheckAt")
+				delete(fields, "updatedAt")
+			}
+			if stable, err := json.Marshal(automations); err == nil {
+				root["automations"] = stable
+			}
+		}
+	}
+	stable, err := json.Marshal(root)
+	if err != nil {
+		return document
+	}
+	return stable
+}
+
 func checkpointID(placement Placement, checkpoint Checkpoint) string {
 	digest := sha256.New()
 	_, _ = fmt.Fprintf(
@@ -173,9 +248,19 @@ type CheckpointPublisherConfig struct {
 	Intents       *Intent.Engine
 	Client        *Client
 	Placement     *Placement
-	// Interval is the cadence at which a changed state or configuration
-	// revision is checkpointed; it is also the base retry delay.
+	// Interval is the steady-state cadence at which changed dashboard-visible
+	// content is checkpointed.
 	Interval time.Duration
+	// Heartbeat is the longest an unchanged runtime goes without uploading.
+	Heartbeat time.Duration
+	// Settle is the window shared with the metrics publisher (see Settle). When
+	// nil the publisher uses its own window of SettleWindow.
+	Settle       *Settle
+	SettleWindow time.Duration
+	// SettleInterval is the checkpoint cadence while the window is open.
+	SettleInterval time.Duration
+	// RetryInterval is the base retry delay after a failed upload.
+	RetryInterval time.Duration
 	// Debounce delays the checkpoint that follows a session transition so a
 	// burst of status changes yields one checkpoint.
 	Debounce time.Duration
@@ -193,9 +278,13 @@ type CheckpointStatus struct {
 	LastRevision              uint64           `json:"lastRevision,omitempty"`
 	LastConfigurationRevision uint64           `json:"lastConfigurationRevision,omitempty"`
 	LastReason                CheckpointReason `json:"lastReason,omitempty"`
-	NextAttemptAt             time.Time        `json:"nextAttemptAt,omitempty"`
-	ConsecutiveFailures       int              `json:"consecutiveFailures,omitempty"`
-	LastError                 string           `json:"lastError,omitempty"`
+	// LastUnchangedAt and UnchangedSkips describe cadence evaluations that
+	// found the dashboard-visible content identical and uploaded nothing.
+	LastUnchangedAt     time.Time `json:"lastUnchangedAt,omitempty"`
+	UnchangedSkips      int64     `json:"unchangedSkips,omitempty"`
+	NextAttemptAt       time.Time `json:"nextAttemptAt,omitempty"`
+	ConsecutiveFailures int       `json:"consecutiveFailures,omitempty"`
+	LastError           string    `json:"lastError,omitempty"`
 }
 
 // CheckpointPublisher keeps the backend's copy of the dashboard read model
@@ -210,6 +299,10 @@ type CheckpointPublisher struct {
 	intents       *Intent.Engine
 	client        *Client
 	interval      time.Duration
+	heartbeat     time.Duration
+	settle        *Settle
+	settleEvery   time.Duration
+	retry         time.Duration
 	debounce      time.Duration
 	timeout       time.Duration
 	now           func() time.Time
@@ -221,7 +314,16 @@ type CheckpointPublisher struct {
 	wake             chan struct{}
 	started          atomic.Bool
 
-	uploadMu sync.Mutex
+	// uploadMu serializes uploads and guards the last-uploaded evidence the
+	// content gate compares against.
+	uploadMu         sync.Mutex
+	digest           [sha256.Size]byte
+	digestValid      bool
+	digestEpoch      uint64
+	uploadedAt       time.Time
+	evaluatedState   uint64
+	evaluatedConfig  uint64
+	evaluatedCurrent bool
 
 	statusMu sync.RWMutex
 	status   CheckpointStatus
@@ -252,9 +354,27 @@ func NewCheckpointPublisher(config CheckpointPublisherConfig) (*CheckpointPublis
 	if jitter == nil {
 		jitter = rand.Float64
 	}
+	heartbeat := config.Heartbeat
+	if heartbeat <= 0 {
+		heartbeat = defaultCheckpointHeartbeat
+	}
+	heartbeat = max(heartbeat, interval)
+	settle := config.Settle
+	if settle == nil {
+		settle = NewSettle(config.SettleWindow)
+	}
+	settleEvery := config.SettleInterval
+	if settleEvery <= 0 {
+		settleEvery = min(interval, defaultSettleInterval)
+	}
+	retry := config.RetryInterval
+	if retry <= 0 {
+		retry = min(interval, defaultCheckpointRetryInterval)
+	}
 	publisher := &CheckpointPublisher{
 		runtimeID: runtimeID, state: config.State, configuration: config.Configuration, intents: config.Intents,
-		client: config.Client, interval: interval, debounce: debounce, timeout: timeout,
+		client: config.Client, interval: interval, heartbeat: heartbeat, settle: settle,
+		settleEvery: settleEvery, retry: retry, debounce: debounce, timeout: timeout,
 		now: now, jitter: jitter, wake: make(chan struct{}, 1),
 		status: CheckpointStatus{Enabled: true, State: StateWaitingForPlacement},
 	}
@@ -332,7 +452,36 @@ func (publisher *CheckpointPublisher) Checkpoint(ctx context.Context, reason Che
 	if !available || !placement.LeaseExpiresAt.After(now) || !placement.Grant.ExpiresAt.After(now) {
 		return nil
 	}
-	return publisher.publish(ctx, placement, reason, now)
+	if err := publisher.publish(ctx, placement, reason, now); err != nil && !errors.Is(err, errCheckpointUnchanged) {
+		return err
+	}
+	return nil
+}
+
+// errCheckpointUnchanged reports a cadence evaluation that found the
+// dashboard-visible content identical to the last upload and sent nothing.
+var errCheckpointUnchanged = errors.New("dashboard checkpoint content unchanged")
+
+// unchangedAtRevisions reports whether a cadence tick can skip without even
+// building a checkpoint: the last evaluation already matched the backend's
+// copy at these exact revisions, and the heartbeat is not yet due.
+func (publisher *CheckpointPublisher) unchangedAtRevisions(placement Placement, stateRevision, configurationRevision uint64, now time.Time) bool {
+	publisher.uploadMu.Lock()
+	defer publisher.uploadMu.Unlock()
+	return publisher.evaluatedCurrent && publisher.digestValid && publisher.digestEpoch == placement.PlacementEpoch &&
+		publisher.evaluatedState == stateRevision && publisher.evaluatedConfig == configurationRevision &&
+		now.Sub(publisher.uploadedAt) < publisher.heartbeat
+}
+
+func (publisher *CheckpointPublisher) recordUnchanged(now time.Time) {
+	publisher.updateStatus(func(status *CheckpointStatus) {
+		status.State = StatePublished
+		status.LastAttemptAt = now
+		status.LastUnchangedAt = now
+		status.UnchangedSkips++
+		status.ConsecutiveFailures = 0
+		status.LastError = ""
+	})
 }
 
 func (publisher *CheckpointPublisher) publish(ctx context.Context, placement Placement, reason CheckpointReason, now time.Time) error {
@@ -349,6 +498,15 @@ func (publisher *CheckpointPublisher) publish(ctx context.Context, placement Pla
 		})
 		return err
 	}
+	digest := checkpointDigest(checkpoint)
+	// Only the periodic evaluation is content-gated. Session, configuration and
+	// drain checkpoints are explicit triggers and always upload.
+	if reason == CheckpointReasonCadence && !publisher.settle.Active(now) && publisher.digestValid && publisher.digestEpoch == placement.PlacementEpoch &&
+		digest == publisher.digest && now.Sub(publisher.uploadedAt) < publisher.heartbeat {
+		publisher.evaluatedState, publisher.evaluatedConfig, publisher.evaluatedCurrent = checkpoint.StateRevision, checkpoint.ConfigurationRevision, true
+		publisher.recordUnchanged(now)
+		return errCheckpointUnchanged
+	}
 	checkpoint.CheckpointID = checkpointID(placement, checkpoint)
 	publisher.updateStatus(func(status *CheckpointStatus) {
 		status.State = StatePublishing
@@ -357,6 +515,8 @@ func (publisher *CheckpointPublisher) publish(ctx context.Context, placement Pla
 	if err := publisher.client.UploadCheckpoint(attemptContext, placement, checkpoint); err != nil {
 		return err
 	}
+	publisher.digest, publisher.digestValid, publisher.digestEpoch, publisher.uploadedAt = digest, true, placement.PlacementEpoch, now
+	publisher.evaluatedState, publisher.evaluatedConfig, publisher.evaluatedCurrent = checkpoint.StateRevision, checkpoint.ConfigurationRevision, true
 	publisher.updateStatus(func(status *CheckpointStatus) {
 		status.State = StatePublished
 		status.LastCheckpointAt = now
@@ -396,6 +556,16 @@ func (publisher *CheckpointPublisher) Run(ctx context.Context) {
 		return fmt.Sprintf("%s|%t|%t|%d", session.Status, session.LoggedIn, session.SocketReady, session.ConnectionGeneration)
 	}
 	lastSessionKey = sessionKey()
+	// The shared settle window restarts at the first placement and on a new
+	// placement epoch (never on a lease or grant renewal of the same epoch), on
+	// every session transition, and on every configuration apply.
+	var settledEpoch uint64
+	cadence := func(now time.Time) time.Duration {
+		if publisher.settle.Active(now) {
+			return publisher.settleEvery
+		}
+		return publisher.interval
+	}
 
 	schedule := func(at time.Time) {
 		if timer.schedule(publisher.now().UTC(), at) {
@@ -416,30 +586,31 @@ func (publisher *CheckpointPublisher) Run(ctx context.Context) {
 		}
 		reason := pendingReason
 		pendingReason = CheckpointReasonCadence
-		status := publisher.Status()
-		if reason == CheckpointReasonCadence &&
-			publisher.state.Revision() == status.LastRevision &&
-			publisher.configurationRevision() == status.LastConfigurationRevision && failures == 0 {
-			// Nothing changed since the last checkpoint; keep the cadence.
-			schedule(now.Add(publisher.interval))
+		// While settling nothing is skipped: a handover needs an actual upload.
+		if reason == CheckpointReasonCadence && failures == 0 && !publisher.settle.Active(now) &&
+			publisher.unchangedAtRevisions(placement, publisher.state.Revision(), publisher.configurationRevision(), now) {
+			// Nothing changed since the last evaluation; keep the cadence
+			// without even building the checkpoint.
+			publisher.recordUnchanged(now)
+			schedule(now.Add(cadence(now)))
 			return
 		}
 		err := publisher.publish(ctx, placement, reason, now)
-		if err == nil {
+		if err == nil || errors.Is(err, errCheckpointUnchanged) {
 			failures = 0
-			schedule(now.Add(publisher.interval))
+			schedule(now.Add(cadence(now)))
 			return
 		}
 		if ctx.Err() != nil {
 			return
 		}
 		failures++
-		delay := backoffDelay(publisher.interval, failures, publisher.jitter)
+		delay := backoffDelay(publisher.retry, failures, publisher.jitter)
 		state := StateRetrying
 		switch OutcomeOf(err) {
 		case OutcomeUnauthorized:
 			state = StateGrantRejected
-			delay = backoffDelay(publisher.interval, maximumBackoffFactor, publisher.jitter)
+			delay = backoffDelay(publisher.retry, maximumBackoffFactor, publisher.jitter)
 		case OutcomeRejected:
 			state = StateRejected
 		default:
@@ -471,6 +642,7 @@ func (publisher *CheckpointPublisher) Run(ctx context.Context) {
 			}
 			if key := sessionKey(); key != lastSessionKey {
 				lastSessionKey = key
+				publisher.settle.Restart(publisher.now().UTC())
 				if failures == 0 {
 					pendingReason = CheckpointReasonSession
 					schedule(publisher.now().UTC().Add(publisher.debounce))
@@ -481,6 +653,7 @@ func (publisher *CheckpointPublisher) Run(ctx context.Context) {
 				configurationEvents = nil
 				continue
 			}
+			publisher.settle.Restart(publisher.now().UTC())
 			if pendingReason != CheckpointReasonSession {
 				pendingReason = CheckpointReasonConfiguration
 			}
@@ -488,9 +661,25 @@ func (publisher *CheckpointPublisher) Run(ctx context.Context) {
 				schedule(publisher.now().UTC().Add(publisher.debounce))
 			}
 		case <-publisher.wake:
+			// A placement change alone does not force a checkpoint. The
+			// controller renews the lease and grant about every six minutes;
+			// that must not rebuild the dashboard. Schedule only for the first
+			// placement, a new epoch, a retry after failures, or when no
+			// attempt is armed (for example after the placement was cleared).
+			hadFailures := failures > 0
 			failures = 0
-			if _, _, available := publisher.currentPlacement(); available {
-				schedule(publisher.now().UTC().Add(publisher.debounce))
+			placement, _, available := publisher.currentPlacement()
+			if !available {
+				continue
+			}
+			now := publisher.now().UTC()
+			newEpoch := placement.PlacementEpoch != settledEpoch
+			if newEpoch {
+				settledEpoch = placement.PlacementEpoch
+				publisher.settle.Restart(now)
+			}
+			if newEpoch || hadFailures || !timer.armed {
+				schedule(now.Add(publisher.debounce))
 			}
 		case <-timer.channel():
 			attempt()

@@ -361,10 +361,13 @@ func New(ctx context.Context, config Config) (*Application, error) {
 	var privateMetricsPublisher *PrivateMetrics.Publisher
 	var checkpointPublisher *PrivateMetrics.CheckpointPublisher
 	if config.PrivateMetricsClient != nil && config.PrivateMetricsClient.Enabled() {
+		// One settle window for both publishers: a handover needs an actual
+		// checkpoint upload and an actual metrics upload at the same moment.
+		publishSettle := PrivateMetrics.NewSettle(0)
 		privateMetricsPublisher, err = PrivateMetrics.NewPublisher(PrivateMetrics.PublisherConfig{
 			RuntimeID: strings.TrimSpace(config.AccountKey), State: state, GameData: gameData,
 			Reports: reportStore, Client: config.PrivateMetricsClient,
-			Placement: config.PrivateMetricsPlacement,
+			Placement: config.PrivateMetricsPlacement, Settle: publishSettle,
 		})
 		if err != nil {
 			return nil, Localization.WithError(fmt.Errorf("initialize private metrics publisher: %w", err), Localization.ErrorContext(Localization.New("server.app.initialize_private_metrics_publisher.b0796171", "initialize private metrics publisher", nil), err))
@@ -373,6 +376,7 @@ func New(ctx context.Context, config Config) (*Application, error) {
 			checkpointPublisher, err = PrivateMetrics.NewCheckpointPublisher(PrivateMetrics.CheckpointPublisherConfig{
 				RuntimeID: strings.TrimSpace(config.AccountKey), State: state, Configuration: configuration,
 				Intents: intents, Client: config.PrivateMetricsClient, Placement: config.PrivateMetricsPlacement,
+				Settle: publishSettle,
 			})
 			if err != nil {
 				return nil, Localization.WithError(fmt.Errorf("initialize dashboard checkpoint publisher: %w", err), Localization.ErrorContext(Localization.New("server.app.initialize_dashboard_checkpoint_publisher.db9f6578", "initialize dashboard checkpoint publisher", nil), err))
