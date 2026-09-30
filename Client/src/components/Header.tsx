@@ -1,8 +1,11 @@
+import { useHostedRuntimePresence } from '../config/Deployment';
+import { ConnectionStatus } from './ConnectionStatus';
+import { headerPlayerStatus } from './playerStatusDisplay';
 import { useLocale as useStaticLocale } from "../i18n/LocaleContext";
 import { LocalizedText } from "../i18n/LocalizedText";
 import { useLocale } from '../i18n/LocaleContext';
 import React, { useEffect, useMemo, useState } from 'react';
-import { Bird, Lock, Menu, Radio, Settings, Shield, Trash2, Unlock } from 'lucide-react';
+import { Bird, Lock, Menu, Settings, Shield, Trash2, Unlock } from 'lucide-react';
 import { useCitadelAPI } from '../api/ApiContext';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
@@ -25,13 +28,6 @@ function formatNextBirdIn(msLeft: number): string {
   return `${Math.max(1, m)}m`;
 }
 
-function formatConnectionSeconds(seconds: number): string {
-  if (seconds < 60) return `${seconds}s`;
-  const minutes = Math.floor(seconds / 60);
-  const remainder = seconds % 60;
-  return remainder > 0 ? `${minutes}m ${remainder}s` : `${minutes}m`;
-}
-
 interface HeaderProps {
   onOpenAutoBirdSettings: () => void;
   onOpenAutoStationSettings: () => void;
@@ -52,12 +48,8 @@ const Header: React.FC<HeaderProps> = ({
   const { state, submitIntent } = useCitadelAPI();
   const {
     gameLoggedIn,
-    gameLoginCooldown,
-    gameLoginRetrySeconds,
     gameConnectionState,
-    gameSocketConnected,
     gameBrowserRunning,
-		gameBrowserName,
     gameConnectionDetail,
     dashboardConnectionStatus,
     hasGameConnectionStatus,
@@ -80,7 +72,6 @@ const Header: React.FC<HeaderProps> = ({
 		automationTimedUntilByKey,
   } = useAuth();
   const { theme } = useTheme();
-	const backgroundConnection = state?.session.mode === 'background';
 	const autoBirdStatus = automationStates.autoBird?.status ?? '';
 	const hasAutoBirdCycles = autoBirdCastleCycles.some((cycle) => cycle.nextCycleAtMs > 0 || !!cycle.pausedUntilMs);
   const [clearingAutoBirdTracking, setClearingAutoBirdTracking] = useState(false);
@@ -154,156 +145,16 @@ const Header: React.FC<HeaderProps> = ({
     blockedLabel: t('runtimeState.phase', { phase: 'blocked' }),
   }), [autoStationEnabled, autoStationNextImpact, autoStationState, autoStationThreatCount, nowTick, t]);
 
-  const connectionPill = useMemo(() => {
-    if (dashboardConnectionStatus !== 'Connected') {
-      return {
-        tone: 'warning' as const,
-        pulse: true,
-        label: dashboardConnectionStatus === 'Connecting' ? 'Dashboard connecting…' : 'Dashboard reconnecting…',
-        title: 'Game connection status is unavailable while the dashboard reconnects to CitadelOps.',
-      };
-    }
-    if (!hasGameConnectionStatus) {
-      return {
-        tone: 'warning' as const,
-        pulse: true,
-        label: 'Checking game status…',
-        title: 'Dashboard connected; waiting for the current game WebSocket status.',
-      };
-    }
+  const presence = useHostedRuntimePresence();
+  const connectionValue = headerPlayerStatus({
+    surface: 'desktop', status: gameConnectionState, loggedIn: gameLoggedIn,
+    dashboard: dashboardConnectionStatus, started: hasGameConnectionStatus || gameBrowserRunning,
+    loginFailure: state?.session.loginFailure, cooldownUntil: state?.session.cooldownUntil,
+    retryAt: state?.session.retryAt, now: nowTick,
+    checkpoint: presence.mode === 'checkpoint', checkpointObservedAt: presence.checkpointObservedAt,
+    detail: gameConnectionDetail ? { text: gameConnectionDetail } : undefined,
+  });
 
-    switch (gameConnectionState) {
-      case 'connected':
-        return {
-          tone: gameLoggedIn ? 'success' as const : 'warning' as const,
-          pulse: true,
-          label: gameLoggedIn ? 'Game connected' : 'Checking game status…',
-          title: gameSocketConnected
-            ? 'Game WebSocket is open and the game login is confirmed.'
-            : 'Game login was reported, but the WebSocket is not currently open.',
-        };
-      case 'starting':
-        return {
-          tone: 'warning' as const,
-          pulse: true,
-          label: 'Starting game…',
-			title: backgroundConnection
-				? 'The direct background game connection is starting.'
-				: `${gameBrowserName} is starting and loading the game client.`,
-        };
-      case 'reconnecting':
-        return {
-          tone: 'warning' as const,
-          pulse: true,
-          label: backgroundConnection ? 'Reconnecting game…' : 'Reloading game…',
-          title: backgroundConnection
-				? 'CitadelOps is reconnecting directly to the game server.'
-				: 'The game tab is reloading to establish a fresh WebSocket.',
-        };
-      case 'connecting':
-        return {
-          tone: 'warning' as const,
-          pulse: true,
-          label: 'Opening game socket…',
-          title: 'The game WebSocket handshake is in progress.',
-        };
-      case 'authenticating':
-        return {
-          tone: 'warning' as const,
-          pulse: true,
-          label: 'Authenticating game…',
-          title: 'Game WebSocket is open; waiting for the game login to complete.',
-        };
-      case 'cooldown':
-        return {
-          tone: 'warning' as const,
-          pulse: true,
-          label: gameLoginCooldown > 0
-            ? `Login cooldown (${formatConnectionSeconds(gameLoginCooldown)})`
-            : gameLoginRetrySeconds > 0
-              ? `Retrying in ${formatConnectionSeconds(gameLoginRetrySeconds)}`
-              : 'Retrying login…',
-          title: gameConnectionDetail || 'The game server requested a login cooldown; CitadelOps will retry automatically.',
-        };
-      case 'suspended':
-        return {
-          tone: 'error' as const,
-          pulse: false,
-          label: gameLoginRetrySeconds > 0
-            ? `Account suspended (resumes in ${formatConnectionSeconds(gameLoginRetrySeconds)})`
-            : 'Account suspended',
-          title: gameConnectionDetail || 'The game reported the account as suspended; CitadelOps resumes automatically when the suspension ends.',
-        };
-      case 'released':
-        return {
-          tone: 'warning' as const,
-          pulse: false,
-          label: gameLoginRetrySeconds > 0
-            ? `Session released (retry in ${formatConnectionSeconds(gameLoginRetrySeconds)})`
-            : 'Session released',
-          title: gameConnectionDetail || 'The game session was released until the retry time; use Reconnect to try now.',
-        };
-      case 'error':
-        return {
-          tone: 'error' as const,
-          pulse: false,
-          label: 'Connection error',
-          title: gameConnectionDetail || 'The game connection failed. Start the bot to retry.',
-        };
-      case 'stopped':
-        return {
-          tone: 'error' as const,
-          pulse: false,
-          label: 'Game stopped',
-			title: backgroundConnection
-				? 'The direct background game connection is stopped.'
-				: gameBrowserRunning
-				? `The ${gameBrowserName} session is stopping.`
-				: 'The game browser and WebSocket are stopped.',
-        };
-      default:
-        return {
-          tone: 'error' as const,
-          pulse: gameLoginRetrySeconds > 0,
-          label: gameLoginRetrySeconds > 0
-            ? `Retrying in ${formatConnectionSeconds(gameLoginRetrySeconds)}`
-            : 'Game disconnected',
-          title: gameConnectionDetail || (gameLoginRetrySeconds > 0
-			? backgroundConnection
-				? 'CitadelOps will reconnect directly and retry the saved login automatically.'
-				: 'CitadelOps will reload the game and retry the saved login automatically.'
-            : 'No active game WebSocket is available.'),
-        };
-    }
-  }, [
-		backgroundConnection,
-    dashboardConnectionStatus,
-    gameBrowserRunning,
-		gameBrowserName,
-    gameConnectionDetail,
-    gameConnectionState,
-    gameLoggedIn,
-    gameLoginCooldown,
-    gameLoginRetrySeconds,
-    gameSocketConnected,
-    hasGameConnectionStatus,
-  ]);
-
-  const connectionIconClass = connectionPill.tone === 'success'
-    ? 'liquid-header-connection-success'
-    : connectionPill.tone === 'warning'
-      ? 'liquid-header-connection-warning'
-      : 'liquid-header-connection-danger';
-  const desktopConnectionToneClass = connectionPill.tone === 'success'
-    ? 'm3-status-chip-success text-success'
-    : connectionPill.tone === 'warning'
-      ? 'm3-status-chip-warning text-warning'
-      : 'm3-status-chip-danger text-error';
-  const desktopConnectionDotClass = connectionPill.tone === 'success'
-    ? 'bg-success shadow-success/50'
-    : connectionPill.tone === 'warning'
-      ? 'bg-warning shadow-warning/50'
-      : 'bg-error shadow-error/50';
   const gameConnectionActive = hasGameConnectionStatus && (
     gameConnectionState === 'connecting' ||
     gameConnectionState === 'authenticating' ||
@@ -353,14 +204,7 @@ const Header: React.FC<HeaderProps> = ({
             <div className="text-lg font-bold leading-tight text-text-main">Citadel Ops</div>
             <div className="text-[11px] font-medium leading-tight text-text-muted"><LocalizedText messageKey="navigation.commandCenter" /></div>
           </div>
-          <span
-            className={`liquid-header-connection ${connectionIconClass} ${connectionPill.pulse ? 'liquid-header-connection-pulse' : ''}`}
-            role="status"
-            aria-label={connectionPill.label}
-            title={`${connectionPill.label}. ${connectionPill.title}`}
-          >
-            <Radio className="h-4 w-4" aria-hidden="true" />
-          </span>
+          <span className="liquid-header-connection"><ConnectionStatus value={connectionValue} /></span>
         </div>
 
         {/* Center: Status Indicators */}
@@ -371,14 +215,7 @@ const Header: React.FC<HeaderProps> = ({
           <div className="liquid-status-dock" role="group" aria-label={localizeStatic("ui.components.header.aria-label.daily.attacks.and.automation.status.1f099931")}>
             <DailyAttackTracker />
 
-            <div
-              className={`m3-status-chip liquid-desktop-connection-pill ${desktopConnectionToneClass}`}
-              title={connectionPill.title}
-              aria-live="polite"
-            >
-              <span className={`liquid-desktop-connection-dot ${connectionPill.pulse ? 'animate-pulse' : ''} ${desktopConnectionDotClass}`} aria-hidden="true" />
-              <span className="liquid-desktop-status-text">{connectionPill.label}</span>
-            </div>
+            <div className="liquid-desktop-connection-pill"><ConnectionStatus value={connectionValue} /></div>
 
             <div className={`liquid-status-dock-item liquid-status-dock-action-group liquid-header-automation-pill ${autoBirdPill.on ? 'liquid-status-dock-item-success' : 'liquid-status-dock-item-muted'}`}>
               <AutoBirdHoverPopover

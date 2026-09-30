@@ -5,8 +5,8 @@ import { useAuth } from '../context/AuthContext';
 import { LocalizedText } from '../i18n/LocalizedText';
 import { describeStopSemantics } from '../settings/readiness/stopSemantics';
 import { AUTOMATION_ENABLED_KEYS, type SettingsFeatureId } from '../settings/disclosure/placement';
-import { useAutomationDescription } from '../settings/readiness/useAutomationDescription';
-import { Badge } from './ui/Badge';
+import { useAutomationPlayerStatus } from '../settings/readiness/useAutomationPlayerStatus';
+import { StatusBadge } from './ui/StatusBadge';
 import { Button } from './ui/Button';
 
 /**
@@ -93,12 +93,10 @@ export const StopControl: React.FC<StopControlProps> = ({ enabledKey, featureId,
 
 /** Footer of a settings editor: the current phase and Stop, reachable without scrolling. Never starts anything. */
 export const StopFooter: React.FC<{ featureId: SettingsFeatureId }> = ({ featureId }) => {
-  const description = useAutomationDescription(featureId);
+  const player = useAutomationPlayerStatus(featureId).overall;
   return (
     <div className="mr-auto flex min-w-0 flex-wrap items-start gap-2" data-settings-stop-footer={featureId}>
-      <Badge variant={description.phase === 'disabled' || description.phase === 'stopped' ? 'outline' : 'primary'} className="normal-case tracking-normal">
-        <LocalizedText messageKey="runtimeState.phase" params={{ phase: description.phase.replaceAll('-', '_') }} />
-      </Badge>
+      <StatusBadge {...player} />
       <StopControl enabledKey={AUTOMATION_ENABLED_KEYS[featureId]} featureId={featureId} />
     </div>
   );

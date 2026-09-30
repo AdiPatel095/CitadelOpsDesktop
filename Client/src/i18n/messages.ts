@@ -414,6 +414,11 @@ export const messages = {
   "khanRageBooster.none": "No active Rage points booster detected",
 
   // CIT-66 PR-B: shared player vocabulary; other locales use the English fallback.
+  "playerRole.owner": "Owner",
+  "playerRole.admin": "Admin",
+  "playerRole.editor": "Editor",
+  "playerStatus.connectionPanel": "Connection status",
+  "playerStatus.connectionDetails": "Show connection status and full reason",
   "playerStatus.running": "Running",
   "playerStatus.waiting": "Waiting",
   "playerStatus.done": "Done",
