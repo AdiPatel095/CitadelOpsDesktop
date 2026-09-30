@@ -133,15 +133,15 @@ test('the four editors expose an explicit Copy button, and Food Balance and Hosp
     const text = await source(`settings/components/${modal}.tsx`);
     assert.match(text, /<CastleCopyButton/, modal);
     assert.match(text, new RegExp(`descriptor=\\{${descriptor}\\}`), modal);
-    assert.match(text, /copiedSetup: copyApplied/, `${modal}: the conflict notice knows about a copied setup`);
+    assert.match(text, /copyReplay: copyReplay\.sessionOption/, `${modal}: the conflict notice knows about a copied setup and can re-apply it`);
     assert.doesNotMatch(text, /new CastleCopyDialog|<CastleCopyDialog/, `${modal}: only the button opens the dialog`);
   }
   for (const modal of ['AutoFoodBalanceSettingsModal', 'AutoHospitalSettingsModal']) {
     assert.doesNotMatch(await source(`settings/components/${modal}.tsx`), /CastleCopy|castleCopy/, `${modal}: account-wide settings only, no per-castle copy`);
   }
   const session = await source('settings/ConfigurationDraftSession.tsx');
-  assert.match(session, /castleCopy\.conflictKept/);
-  assert.equal(messages['castleCopy.conflictKept'], 'Your copied castle setup is still in this draft; review it and save again.');
+  assert.match(session, /castleCopy\.conflictNotice/);
+  assert.equal(messages['castleCopy.conflictKept'], undefined, 'replaced by the notice that re-applies the copy (see castle-copy-replay.test.mjs)');
 });
 
 test('Queue Production offers Copy only per castle, never in shared mode or for calendar-slot castles', async () => {

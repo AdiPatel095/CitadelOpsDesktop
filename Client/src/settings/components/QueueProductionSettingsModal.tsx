@@ -3,6 +3,7 @@ import { useHostedRuntimePresence } from '../../config/Deployment';
 import { useSetupContext } from '../requirements/useSetupContext';
 import { castleCandidates } from '../copy/candidates';
 import { recruitCopyDescriptor, toolCopyDescriptor } from '../copy/features/queueProduction';
+import { useCastleCopyReplayRun, useCastleCopyReplayState } from '../copy/useCastleCopyReplay';
 import { CastleCopyButton } from './CastleCopyDialog';
 import { useLocale as useStaticLocale } from "../../i18n/LocaleContext";
 import { LocalizedText } from "../../i18n/LocalizedText";
@@ -169,8 +170,8 @@ export const QueueProductionSettingsModal: React.FC<QueueProductionSettingsModal
   const definition = DEFINITIONS[kind];
   const { configuration, state } = useCitadelAPI();
   const setup = useSetupContext(definition.configurationSection, useHostedRuntimePresence());
-  const [copyApplied, setCopyApplied] = useState(false);
-  const draftSession = useConfigurationDraftSession({ isOpen, section: definition.configurationSection, copiedSetup: copyApplied });
+  const copyReplay = useCastleCopyReplayState();
+  const draftSession = useConfigurationDraftSession({ isOpen, section: definition.configurationSection, copyReplay: copyReplay.sessionOption });
   const disclosure = useSettingsDisclosure(definition.featureID);
   const { getTroop, getTool, buildings, troops, tools, isLoading: metadataLoading } = useMetadata();
   const castles = castleOptionsFromState(state);
@@ -204,7 +205,6 @@ export const QueueProductionSettingsModal: React.FC<QueueProductionSettingsModal
     }
     // Baseline at open: a nested calendar save never resets unsaved mode and item edits.
     if (!draftSession.initialSnapshot) return;
-    setCopyApplied(false);
     setSettings(definition.normalizeSettings(
       draftSession.initialSections?.[definition.configurationSection] ?? definition.defaultSettings(),
     ));
@@ -485,6 +485,7 @@ export const QueueProductionSettingsModal: React.FC<QueueProductionSettingsModal
       return !isGlobalMode && !!schedule?.enabled && !!schedule.slotOptionsEnabled;
     },
   };
+  const copyRun = useCastleCopyReplayRun(copyReplay, { descriptor: copyDescriptor, draft: settings, context: copyContext, featureLabel: definition.featureLabel, applyDraft: setSettings, isOpen });
   const globalSchedule = featureSchedules[definition.featureID];
   const globalScheduleEnabled = !!globalSchedule?.enabled;
   const globalUsesScheduledItems = !!(globalScheduleEnabled && globalSchedule?.slotOptionsEnabled);
@@ -863,7 +864,7 @@ export const QueueProductionSettingsModal: React.FC<QueueProductionSettingsModal
         isSaving={isSaving}
         saveDisabled={!draftSession.ready}
         contentDisabled={!draftSession.ready}
-        contentNotice={draftSession.conflictNotice}
+        contentNotice={<>{copyRun.status}{draftSession.conflictNotice}{copyRun.dialog}</>}
       >
         <AutomationRunStrip
           featureId={definition.featureID}
@@ -1015,7 +1016,7 @@ export const QueueProductionSettingsModal: React.FC<QueueProductionSettingsModal
                               sourceKey={castleId}
                               context={copyContext}
                               featureLabel={definition.featureLabel}
-                              onApply={(next) => { setSettings(next); setCopyApplied(true); }}
+                              onApply={(next, replay) => { setSettings(next); copyReplay.setReplay(replay); copyReplay.setStatus(false); }}
                             />
                           ) : null}
                           <Switch

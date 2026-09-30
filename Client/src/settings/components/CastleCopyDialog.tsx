@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Copy } from 'lucide-react';
+import { ArrowRight, Copy } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { Badge } from '../../components/ui/Badge';
 import { Button } from '../../components/ui/Button';
@@ -29,6 +29,8 @@ import {
   type CastleCopySelectionInput,
   type CastleCopyState,
 } from '../copy/castleCopy';
+import { makeReplay, type CastleCopyReplay } from '../copy/castleCopyReplay';
+import type { MessageKey } from '../../i18n/messages';
 import { AUTOMATION_ENABLED_KEYS } from '../disclosure/placement';
 import { ReadinessCheckLine } from './ReadinessPanel';
 import { browserFrames, moveFocusAfterDialog } from './dialogFocus';
@@ -51,10 +53,12 @@ interface CastleCopyBodyProps<Draft, T> {
   running: boolean;
   /** Minutes to its next check, when the game reported one (0 = unknown). */
   minutes: number;
+  /** A line shown first, for example why the dialog reopened for review. */
+  noticeKey?: MessageKey;
 }
 
 /** The dialog content, separate from the modal frame so it renders and tests without a portal. */
-export function CastleCopyBody<Draft, T>({ descriptor, context, featureLabel, preview, input, onInput, sources, sourceKey, onSource, running, minutes }: CastleCopyBodyProps<Draft, T>) {
+export function CastleCopyBody<Draft, T>({ descriptor, context, featureLabel, preview, input, onInput, sources, sourceKey, onSource, running, minutes, noticeKey }: CastleCopyBodyProps<Draft, T>) {
   const { locale } = useLocale();
   const source = context.candidates.find((candidate) => candidate.key === sourceKey);
   const consequential = descriptor.fields.find((field) => field.consequential);
@@ -74,7 +78,7 @@ export function CastleCopyBody<Draft, T>({ descriptor, context, featureLabel, pr
             onChange={(event) => setInput((current) => withDestination(current, destination.key, event.target.checked))}
             className="h-4 w-4"
           />
-          <label htmlFor={inputId} className="min-w-0 truncate text-sm font-bold text-text-main">{destination.castle.name}</label>
+          <label htmlFor={inputId} className="min-w-0 whitespace-normal break-words text-sm font-bold text-text-main">{destination.castle.name}</label>
           <Badge variant={STATE_BADGE[destination.state]} className="normal-case tracking-normal">
             <LocalizedText messageKey="castleCopy.state" params={{ state: destination.state }} />
           </Badge>
@@ -91,7 +95,7 @@ export function CastleCopyBody<Draft, T>({ descriptor, context, featureLabel, pr
             <thead className="text-[10px] uppercase tracking-wider text-text-muted">
               <tr>
                 <th scope="col" className="py-1 pr-2 font-bold"><LocalizedText messageKey="castleCopy.fields" /></th>
-                <th scope="col" className="py-1 font-bold">→</th>
+                <th scope="col" className="py-1 font-bold"><LocalizedText messageKey="castleCopy.toColumn" /></th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border-base">
@@ -106,9 +110,9 @@ export function CastleCopyBody<Draft, T>({ descriptor, context, featureLabel, pr
                         <LocalizedText messageKey="castleCopy.same" />
                       ) : (
                         <>
-                          <span className="text-text-muted"><LocalizedText {...describeProps(field.describe(change.from, context))} /></span>
-                          <span aria-hidden="true"> → </span>
-                          <span className="font-semibold text-text-main"><LocalizedText {...describeProps(field.describe(change.to, context))} /></span>
+                          <bdi className="text-text-muted"><LocalizedText {...describeProps(field.describe(change.from, context))} /></bdi>
+                          <ArrowRight className="mx-1 inline h-3.5 w-3.5 shrink-0 align-text-bottom rtl:-scale-x-100" aria-hidden="true" />
+                          <bdi className="font-semibold text-text-main"><LocalizedText {...describeProps(field.describe(change.to, context))} /></bdi>
                           {change.kind === 'kept-difference' ? (
                             <span className="ml-2 inline-flex items-center gap-1 text-warning">
                               <LocalizedText messageKey="castleCopy.kept" />
@@ -141,6 +145,9 @@ export function CastleCopyBody<Draft, T>({ descriptor, context, featureLabel, pr
 
   return (
       <div className="space-y-4 text-sm" data-castle-copy={descriptor.featureId}>
+        {noticeKey ? (
+          <p role="status" className="rounded-global border border-warning/30 bg-warning/10 px-3 py-2 text-xs font-semibold text-text-main" data-castle-copy-notice><LocalizedText messageKey={noticeKey} /></p>
+        ) : null}
         <label className="flex flex-wrap items-center gap-2">
           <span className="text-xs font-bold uppercase tracking-wider text-text-muted"><LocalizedText messageKey="castleCopy.source" /></span>
           <select
@@ -210,8 +217,13 @@ interface CastleCopyDialogProps<Draft, T> {
   context: CastleCopyContext;
   /** Player-facing feature name, for example "Auto Towers". */
   featureLabel: string;
-  onApply: (next: Draft) => void;
+  /** The new draft and the record of what was applied, so a save conflict can re-apply the reviewed copy. */
+  onApply: (next: Draft, replay: CastleCopyReplay) => void;
   onClose: () => void;
+  /** Choices to pre-fill instead of the defaults (a copy re-checked against newer settings). */
+  initialInput?: CastleCopySelectionInput;
+  /** A line shown first in the dialog. */
+  noticeKey?: MessageKey;
 }
 
 /**
@@ -219,7 +231,7 @@ interface CastleCopyDialogProps<Draft, T> {
  * draft on "Apply to draft"; Cancel changes nothing. Nothing is written or started here: the editor's own Save
  * persists the section once, and saving never starts an automation.
  */
-export function CastleCopyDialog<Draft, T>({ descriptor, draft, sourceKey: initialSource, context, featureLabel, onApply, onClose }: CastleCopyDialogProps<Draft, T>) {
+export function CastleCopyDialog<Draft, T>({ descriptor, draft, sourceKey: initialSource, context, featureLabel, onApply, onClose, initialInput, noticeKey }: CastleCopyDialogProps<Draft, T>) {
   const { automationEnabledByKey, automationStates } = useAuth();
   const [sourceKey, setSourceKey] = useState(initialSource);
   const allKeys = useMemo(() => context.candidates.map((candidate) => candidate.key), [context.candidates]);
@@ -227,7 +239,7 @@ export function CastleCopyDialog<Draft, T>({ descriptor, draft, sourceKey: initi
     () => previewCastleCopy(descriptor, draft, sourceKey, allKeys, context),
     [allKeys, context, descriptor, draft, sourceKey],
   );
-  const [input, setInput] = useState(() => defaultCopyInput(descriptor, preview));
+  const [input, setInput] = useState(() => initialInput ?? defaultCopyInput(descriptor, preview));
   const sourceRef = useRef(initialSource);
   useEffect(() => {
     // A different source castle has different destinations and defaults; nothing else resets the choices.
@@ -251,7 +263,7 @@ export function CastleCopyDialog<Draft, T>({ descriptor, draft, sourceKey: initi
   const size = selectionSize(selection);
 
   const apply = () => {
-    onApply(applyCastleCopy(descriptor, draft, preview, selection));
+    onApply(applyCastleCopy(descriptor, draft, preview, selection), makeReplay(sourceKey, input, preview, selection));
     onClose();
   };
 
@@ -260,7 +272,7 @@ export function CastleCopyDialog<Draft, T>({ descriptor, draft, sourceKey: initi
       isOpen
       onClose={onClose}
       maxWidth="3xl"
-      title={<ModalTitle icon={<Copy className="h-5 w-5" />}><LocalizedText messageKey="castleCopy.title" params={{ feature: featureLabel, castle: source?.name ?? '' }} /></ModalTitle>}
+      title={<ModalTitle className="castle-copy-title" icon={<Copy className="h-5 w-5" />}><LocalizedText messageKey="castleCopy.title" params={{ feature: featureLabel, castle: source?.name ?? '' }} /></ModalTitle>}
       footer={(
         <div className="flex w-full flex-wrap items-center justify-between gap-2">
           <span className="text-xs text-text-muted"><LocalizedText messageKey="castleCopy.selected" params={{ count: size }} /></span>
@@ -283,6 +295,7 @@ export function CastleCopyDialog<Draft, T>({ descriptor, draft, sourceKey: initi
         onSource={setSourceKey}
         running={running}
         minutes={minutes}
+        noticeKey={noticeKey}
       />
     </Modal>
   );

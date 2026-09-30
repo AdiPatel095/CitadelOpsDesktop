@@ -1,6 +1,7 @@
 import { StopFooter } from '../../components/StopControl';
 import { castleCandidates } from '../copy/candidates';
 import { birdCandidateFlags, birdCopyDescriptor } from '../copy/features/bird';
+import { useCastleCopyReplayRun, useCastleCopyReplayState } from '../copy/useCastleCopyReplay';
 import { CastleCopyButton } from './CastleCopyDialog';
 import { useLocale as useStaticLocale } from "../../i18n/LocaleContext";
 import { LocalizedText } from "../../i18n/LocalizedText";
@@ -79,13 +80,13 @@ export const AutoBirdSettingsModal: React.FC<AutoBirdSettingsModalProps> = ({ is
   const { t: localizeStatic } = useStaticLocale();
   const { state } = useCitadelAPI();
   const setup = useSetupContext('automation.autoBird');
-  const [copyApplied, setCopyApplied] = useState(false);
+  const copyReplay = useCastleCopyReplayState();
   const draftSession = useConfigurationDraftSession({
     isOpen,
     section: 'automation.autoBird',
     configurationDependencies: ['automation.autoFortress'],
     sessionKey: setup.sessionKey,
-    copiedSetup: copyApplied,
+    copyReplay: copyReplay.sessionOption,
   });
   const { troops, tools, unitsLoading, unitsError } = useMetadata();
   const { autoFortressEnabled } = useAuth();
@@ -106,8 +107,6 @@ export const AutoBirdSettingsModal: React.FC<AutoBirdSettingsModalProps> = ({ is
   const [isGuideOpen, setIsGuideOpen] = useState(false);
   useEffect(() => { if (!isOpen) setIsGuideOpen(false); }, [isOpen]);
   const loadedConfigurationSignature = useRef<string | null>(null);
-  // A reloaded or preset-replaced draft no longer holds the copied setup.
-  useEffect(() => { setCopyApplied(false); }, [draftSession.openKey]);
 
   const currentIgnoreSettings = useCallback((): AutoBirdStoredSettings => {
     let maxD = clampDelayHours(maxDelay);
@@ -130,6 +129,7 @@ export const AutoBirdSettingsModal: React.FC<AutoBirdSettingsModalProps> = ({ is
     };
     return { ...base, candidates: castleCandidates(castles, state, { flagsFor: (castle) => birdCandidateFlags(castle, base) }) };
   }, [autoFortressEnabled, castles, fortressSection, setup.observation, state, tools, troops, unitsError, unitsLoading]);
+  const copyRun = useCastleCopyReplayRun(copyReplay, { descriptor: birdCopyDescriptor, draft: settings, context: copyContext, featureLabel: 'Auto Bird', applyDraft: setSettings, isOpen });
   const birdReadiness = useMemo(() => evaluateReserveReadiness({
     featureId: 'autoBird',
     state,
@@ -228,7 +228,8 @@ export const AutoBirdSettingsModal: React.FC<AutoBirdSettingsModalProps> = ({ is
 
   const handleApplyPreset = () => {
     if (isSaving) return;
-    setCopyApplied(false);
+    // A preset replaces the draft: it no longer holds the copied setup.
+    copyReplay.setReplay(null);
     setPresetError('');
     if (!presetDropdownId) {
       hydrateFromConfiguration();
@@ -372,7 +373,7 @@ export const AutoBirdSettingsModal: React.FC<AutoBirdSettingsModalProps> = ({ is
       maxWidth="full"
       saveDisabled={!draftSession.ready}
       contentDisabled={!draftSession.ready}
-      contentNotice={draftSession.conflictNotice}
+      contentNotice={<>{copyRun.status}{draftSession.conflictNotice}{copyRun.dialog}</>}
       title={localizeStatic("ui.settings.components.autoBirdSettingsModal.title.auto.bird.settings.158a0a4f")}
       icon={<Bird className="h-5 w-5" />}
       description={(
@@ -571,7 +572,7 @@ export const AutoBirdSettingsModal: React.FC<AutoBirdSettingsModalProps> = ({ is
                     sourceKey={cid}
                     context={copyContext}
                     featureLabel="Auto Bird"
-                    onApply={(next) => { setSettings(next); setCopyApplied(true); }}
+                    onApply={(next, replay) => { setSettings(next); copyReplay.setReplay(replay); copyReplay.setStatus(false); }}
                     className="mt-3 self-start"
                   />
                   {stock ? (

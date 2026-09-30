@@ -1,6 +1,7 @@
 import { StopFooter } from '../../components/StopControl';
 import { castleCandidates } from '../copy/candidates';
 import { towersCopyDescriptor } from '../copy/features/towers';
+import { useCastleCopyReplayRun, useCastleCopyReplayState } from '../copy/useCastleCopyReplay';
 import { CastleCopyButton } from './CastleCopyDialog';
 import { useLocale as useStaticLocale } from "../../i18n/LocaleContext";
 import { LocalizedText } from "../../i18n/LocalizedText";
@@ -58,13 +59,13 @@ export const AutoTowerSettingsModal: React.FC<AutoTowerSettingsModalProps> = ({ 
   const { t: localizeStatic } = useStaticLocale();
   const { state } = useCitadelAPI();
   const setup = useSetupContext('automation.autoTowers');
-  const [copyApplied, setCopyApplied] = useState(false);
+  const copyReplay = useCastleCopyReplayState();
   const draftSession = useConfigurationDraftSession({
     isOpen,
     section: 'automation.autoTowers',
     configurationDependencies: [COMMANDER_FEATURE_SECTION],
     sessionKey: setup.sessionKey,
-    copiedSetup: copyApplied,
+    copyReplay: copyReplay.sessionOption,
   });
   const { troops, tools, unitsLoading, unitsError } = useMetadata();
   const [commandersOpen, setCommandersOpen] = useState(false);
@@ -88,7 +89,6 @@ export const AutoTowerSettingsModal: React.FC<AutoTowerSettingsModalProps> = ({ 
       return;
     }
     if (!draftSession.initialSnapshot) return;
-    setCopyApplied(false);
     const current = parseAutoTowerClientState(
       draftSession.initialSections?.['automation.autoTowers'] ?? defaultAutoTowerClientState(),
     );
@@ -106,6 +106,7 @@ export const AutoTowerSettingsModal: React.FC<AutoTowerSettingsModalProps> = ({ 
     state, troops, tools, metadataReady: !unitsLoading && !unitsError, observation: setup.observation,
     candidates: castleCandidates(castles, state),
   }), [castles, setup.observation, state, tools, troops, unitsError, unitsLoading]);
+  const copyRun = useCastleCopyReplayRun(copyReplay, { descriptor: towersCopyDescriptor, draft: settings, context: copyContext, featureLabel: 'Auto Towers', applyDraft: setSettings, isOpen });
   const readiness = useMemo(() => evaluateTowerReadiness({
     state,
     castles: settings,
@@ -198,7 +199,7 @@ export const AutoTowerSettingsModal: React.FC<AutoTowerSettingsModalProps> = ({ 
       isSaving={isSaving}
       saveDisabled={!draftSession.ready}
       contentDisabled={!draftSession.ready}
-      contentNotice={draftSession.conflictNotice}
+      contentNotice={<>{copyRun.status}{draftSession.conflictNotice}{copyRun.dialog}</>}
     >
       <AutomationRunStrip
         featureId="autoTowers"
@@ -278,7 +279,7 @@ export const AutoTowerSettingsModal: React.FC<AutoTowerSettingsModalProps> = ({ 
                   sourceKey={String(castle.id)}
                   context={copyContext}
                   featureLabel="Auto Towers"
-                  onApply={(next) => { setSettings(next); setCopyApplied(true); }}
+                  onApply={(next, replay) => { setSettings(next); copyReplay.setReplay(replay); copyReplay.setStatus(false); }}
                   className="self-start"
                 />
               </Card>

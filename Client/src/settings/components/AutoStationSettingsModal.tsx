@@ -1,6 +1,7 @@
 import { StopFooter } from '../../components/StopControl';
 import { castleCandidates } from '../copy/candidates';
 import { stationCopyDescriptor } from '../copy/features/station';
+import { useCastleCopyReplayRun, useCastleCopyReplayState } from '../copy/useCastleCopyReplay';
 import { CastleCopyButton } from './CastleCopyDialog';
 import { useLocale as useStaticLocale } from "../../i18n/LocaleContext";
 import { LocalizedText } from "../../i18n/LocalizedText";
@@ -63,8 +64,8 @@ export const AutoStationSettingsModal: React.FC<AutoStationSettingsModalProps> =
   const { t: localizeStatic } = useStaticLocale();
   const { state: gameState } = useCitadelAPI();
   const setup = useSetupContext('automation.autoStation');
-  const [copyApplied, setCopyApplied] = useState(false);
-  const draftSession = useConfigurationDraftSession({ isOpen, section: 'automation.autoStation', sessionKey: setup.sessionKey, copiedSetup: copyApplied });
+  const copyReplay = useCastleCopyReplayState();
+  const draftSession = useConfigurationDraftSession({ isOpen, section: 'automation.autoStation', sessionKey: setup.sessionKey, copyReplay: copyReplay.sessionOption });
   const disclosure = useSettingsDisclosure('autoStation');
   const { troops, tools, unitsLoading, unitsError } = useMetadata();
   const castles = castleOptionsFromState(gameState);
@@ -78,7 +79,6 @@ export const AutoStationSettingsModal: React.FC<AutoStationSettingsModalProps> =
       return;
     }
     if (!draftSession.initialSnapshot) return;
-    setCopyApplied(false);
     setState(parseAutoStationClientState(
       draftSession.initialSections?.['automation.autoStation'],
     ));
@@ -88,6 +88,7 @@ export const AutoStationSettingsModal: React.FC<AutoStationSettingsModalProps> =
     state: gameState, troops, tools, metadataReady: !unitsLoading && !unitsError, observation: setup.observation,
     candidates: castleCandidates(castles, gameState),
   }), [castles, gameState, setup.observation, tools, troops, unitsError, unitsLoading]);
+  const copyRun = useCastleCopyReplayRun(copyReplay, { descriptor: stationCopyDescriptor, draft: state.settings, context: copyContext, featureLabel: 'Auto Station', applyDraft: (next) => setState((previous) => ({ ...previous, settings: next })), isOpen });
   const readiness = useMemo(() => evaluateReserveReadiness({
     featureId: 'autoStation',
     state: gameState,
@@ -171,7 +172,7 @@ export const AutoStationSettingsModal: React.FC<AutoStationSettingsModalProps> =
       isSaving={isSaving}
       saveDisabled={!draftSession.ready}
       contentDisabled={!draftSession.ready}
-      contentNotice={draftSession.conflictNotice}
+      contentNotice={<>{copyRun.status}{draftSession.conflictNotice}{copyRun.dialog}</>}
     >
       {saveError && (
         <div className="mb-4 rounded-global border border-error/30 bg-error/10 px-4 py-3 text-sm font-semibold text-error" role="alert">
@@ -298,7 +299,7 @@ export const AutoStationSettingsModal: React.FC<AutoStationSettingsModalProps> =
                     sourceKey={castleID}
                     context={copyContext}
                     featureLabel="Auto Station"
-                    onApply={(next) => { setState((previous) => ({ ...previous, settings: next })); setCopyApplied(true); }}
+                    onApply={(next, replay) => { setState((previous) => ({ ...previous, settings: next })); copyReplay.setReplay(replay); copyReplay.setStatus(false); }}
                     className="mt-3 self-start"
                   />
                   {stock ? (

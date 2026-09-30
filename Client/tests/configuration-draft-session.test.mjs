@@ -93,7 +93,8 @@ test('migrated editors use the fresh-open draft session and block edits while lo
     assert.match(source, /useConfigurationDraftSession/, editor);
     assert.match(source, /saveDisabled=.*draftSession\.ready/, editor);
     assert.match(source, /contentDisabled=\{!draftSession\.ready\}/, editor);
-    assert.match(source, /contentNotice=\{draftSession\.conflictNotice\}/, editor);
+    // The castle-copy editors add their re-apply status and review dialog beside the conflict notice (CIT-21).
+    assert.match(source, /contentNotice=\{(?:draftSession\.conflictNotice|<>\{copyRun\.status\}\{draftSession\.conflictNotice\}\{copyRun\.dialog\}<\/>)\}/, editor);
     assert.doesNotMatch(source, /draftSession\.snapshot\b/, editor);
     assert.doesNotMatch(source, /configuration\??\.sections/, editor);
   }

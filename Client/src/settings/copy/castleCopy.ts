@@ -148,6 +148,20 @@ function destinationState(reasons: readonly CastleCopyReason[], remainingPrimary
   return state;
 }
 
+/**
+ * An entry a reason drops from the copy is not also reported as short stock or as an unknown item by another reason:
+ * no descriptor can emit both. The reason that drops the entry stays; `stock:<id>` and `unknown-item:<id>` reasons of
+ * another reason's dropped ids are removed.
+ */
+export function suppressDroppedEntryReasons(reasons: CastleCopyReason[]): CastleCopyReason[] {
+  return reasons.filter((reason) => {
+    const match = /^(?:stock|unknown-item):(\d+)$/.exec(reason.id);
+    if (!match) return true;
+    const id = Number(match[1]);
+    return !reasons.some((other) => other !== reason && other.dropEntryIds?.includes(id));
+  });
+}
+
 export function previewCastleCopy<Draft, T>(
   descriptor: CastleCopyDescriptor<Draft, T>,
   draft: Draft,
@@ -167,7 +181,7 @@ export function previewCastleCopy<Draft, T>(
       destinations.push({ key, castle, state: 'compatible', reasons: [], changes: [] });
       continue;
     }
-    const reasons = descriptor.validate(source, castle, context);
+    const reasons = suppressDroppedEntryReasons(descriptor.validate(source, castle, context));
     const destinationRecord = descriptor.recordFor(draft, key);
     const dropped = new Map<string, Set<number>>();
     for (const reason of reasons) {

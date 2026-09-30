@@ -45,7 +45,9 @@ export const birdCopyDescriptor: CastleCopyDescriptor<BirdCopyDraft, ReserveEntr
   recordFor: (draft, key) => draft[key],
   isConfigured: (record) => record.length > 0,
   validate: (source, destination, context) => {
-    const reasons = troopEntryReasons('keep', reserveDemands(source), destination, context);
+    // Reserved Direwolves are dropped by their own reason below; they are not also checked against stock.
+    const demands = reserveDemands(reserved(destination) ? withoutDirewolves(source) : source);
+    const reasons = troopEntryReasons('keep', demands, destination, context);
     if (reserved(destination) && source.some((entry) => entry.id === AUTO_FORTRESS_DIREWOLF_ID)) {
       reasons.push({
         id: 'direwolves-reserved', state: 'incompatible', messageKey: message('castleCopy.reason.direwolves'),
