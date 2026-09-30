@@ -1,0 +1,57 @@
+{
+  "id": "copy-absent-unit",
+  "title": "Copy: a unit the game does not know",
+  "purpose": "The source reserve names troop 999999.",
+  "step": "10",
+  "platforms": [
+    "desktop",
+    "hosted"
+  ],
+  "modules": [
+    "autoStation"
+  ],
+  "simulated": [
+    "banner: Simulated preview: sample data only. Nothing here reaches the game or an account.",
+    "dock: Candidate <short SHA>"
+  ],
+  "expect": [
+    "The unknown unit is dropped at every destination and named; it is never replaced by another unit."
+  ],
+  "patch": {
+    "state": {
+      "castles": {
+        "4106": {
+          "units": {
+            "stationed": {
+              "39": 1000
+            }
+          }
+        }
+      }
+    },
+    "config": {
+      "automation.autoStation": {
+        "version": 1,
+        "leadTimeSec": 120,
+        "recallWhenClear": true,
+        "minRPTDays": 3,
+        "openGateFallback": false,
+        "settings": {
+          "4101": [
+            {
+              "id": 39,
+              "amount": 500
+            },
+            {
+              "id": 999999,
+              "amount": 10
+            }
+          ]
+        }
+      }
+    }
+  },
+  "columns": [
+    "copy"
+  ]
+}

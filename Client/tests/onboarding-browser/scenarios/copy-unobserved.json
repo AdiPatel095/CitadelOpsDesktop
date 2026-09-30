@@ -1,0 +1,43 @@
+{
+  "id": "copy-unobserved",
+  "title": "Copy: troop counts not current on this connection",
+  "purpose": "Waiting for the first sync: counts are unknown.",
+  "step": "10",
+  "platforms": [
+    "desktop",
+    "hosted"
+  ],
+  "modules": [
+    "autoStation"
+  ],
+  "simulated": [
+    "banner: Simulated preview: sample data only. Nothing here reaches the game or an account.",
+    "dock: Candidate <short SHA>"
+  ],
+  "expect": [
+    "Destinations are 'unknown' with the connection fix; 'Select all compatible' selects none of them."
+  ],
+  "session": "awaiting-baseline",
+  "patch": {
+    "config": {
+      "automation.autoStation": {
+        "version": 1,
+        "leadTimeSec": 120,
+        "recallWhenClear": true,
+        "minRPTDays": 3,
+        "openGateFallback": false,
+        "settings": {
+          "4101": [
+            {
+              "id": 39,
+              "amount": 500
+            }
+          ]
+        }
+      }
+    }
+  },
+  "columns": [
+    "copy"
+  ]
+}

@@ -10,6 +10,7 @@
     "client:dev": "npm --prefix Client run dev",
     "client:build": "npm --prefix Client run build",
     "client:test": "npm --prefix Client test",
+    "preview:onboarding": "npm --prefix Client run preview:onboarding",
     "server:dev": "go run .",
     "build": "npm run client:build && go build -tags desktop -o CitadelOpsDesktop .",
     "build:server": "go build -o CitadelOpsDesktop .",

@@ -54,6 +54,12 @@ official distribution builds supply that trusted origin outside this
 repository. Update downloads still require both an allowlisted HTTPS location
 and a matching SHA-256 digest.
 
+## Onboarding preview
+
+`npm run preview:onboarding` serves the production UI with synthetic data and no Go server at
+`http://127.0.0.1:41734/`, for inspecting the onboarding experience without a game account. See
+`Docs/OnboardingPreview.md`.
+
 ## Run the application
 
 CitadelOps writes runtime state, its isolated browser profile, settings, and

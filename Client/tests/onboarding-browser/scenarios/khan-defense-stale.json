@@ -1,0 +1,83 @@
+{
+  "id": "khan-defense-stale",
+  "title": "Khan: defense read before this connection started",
+  "purpose": "Same account, but the defense was observed before session.changedAt.",
+  "step": "4",
+  "platforms": [
+    "desktop",
+    "hosted"
+  ],
+  "modules": [
+    "autoKhan"
+  ],
+  "simulated": [
+    "banner: Simulated preview: sample data only. Nothing here reaches the game or an account.",
+    "dock: Candidate <short SHA>"
+  ],
+  "expect": [
+    "The starter is refused with 'The main castle defense was read before this game connection.'; nothing is applied and Fix points at the connection."
+  ],
+  "patch": {
+    "state": {
+      "castles": {
+        "4101": {
+          "defense": {
+            "observedAt": "@now-8h",
+            "inventoryObservedAt": "@now-8h",
+            "wall": {
+              "left": {
+                "toolSlots": [
+                  {
+                    "definitionId": 201,
+                    "amount": 200
+                  }
+                ],
+                "unitPercent": 30,
+                "unitTypePercent": 60
+              },
+              "middle": {
+                "toolSlots": [
+                  {
+                    "definitionId": 203,
+                    "amount": 150
+                  }
+                ],
+                "unitPercent": 40,
+                "unitTypePercent": 60
+              },
+              "right": {
+                "toolSlots": [
+                  {
+                    "definitionId": 201,
+                    "amount": 200
+                  }
+                ],
+                "unitPercent": 30,
+                "unitTypePercent": 60
+              }
+            },
+            "moat": {
+              "leftToolSlots": [
+                {
+                  "definitionId": 204,
+                  "amount": 100
+                }
+              ],
+              "middleToolSlots": [],
+              "rightToolSlots": []
+            }
+          }
+        }
+      }
+    },
+    "config": {
+      "automation.autoKhan": {
+        "version": 1,
+        "sourceCastleId": 4101
+      }
+    }
+  },
+  "columns": [
+    "inline"
+  ]
+}

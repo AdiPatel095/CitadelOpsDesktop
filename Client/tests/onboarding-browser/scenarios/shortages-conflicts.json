@@ -1,0 +1,90 @@
+{
+  "id": "shortages-conflicts",
+  "title": "Shortages, commander conflict and castles not in this world",
+  "purpose": "Towers castles short of troops, one commander assigned to two features, saved castle references that are not in this world.",
+  "step": "8",
+  "platforms": [
+    "desktop",
+    "hosted"
+  ],
+  "modules": [
+    "autoTowers",
+    "autoFortress",
+    "autoKhan",
+    "movement-assignments"
+  ],
+  "simulated": [
+    "banner: Simulated preview: sample data only. Nothing here reaches the game or an account.",
+    "dock: Candidate <short SHA>"
+  ],
+  "expect": [
+    "Shortage lines name the castle and unit ('Castle has 0 of 1 ...'); the commander panel shows one commander shared by two features ('Also: ...'); a saved castle that is not in this world is named and asks to reselect.",
+    "Observation: a commander toggled off in explicit-list mode can still show FREE. Record whether FREE reads as 'will be used'."
+  ],
+  "patch": {
+    "state": {
+      "castles": {
+        "4101": {
+          "units": {
+            "stationed": {
+              "2": 0
+            }
+          }
+        }
+      }
+    },
+    "config": {
+      "automation.autoTowers": {
+        "version": 4,
+        "checkIntervalSec": 30,
+        "mapRefreshIntervalSec": 1800,
+        "dailyAttackLimit": 0,
+        "horseTravelBoostId": -1,
+        "useAdvisor": false,
+        "autoActivateAdvisor": false,
+        "maximumDailyTimeSkips": 0,
+        "castles": {
+          "4101": {
+            "enabled": true,
+            "radius": 15,
+            "unitId": 2,
+            "maidenOnly": false
+          },
+          "999001": {
+            "enabled": true,
+            "radius": 15,
+            "unitId": 2,
+            "maidenOnly": false
+          }
+        }
+      },
+      "automation.autoFortress": {
+        "version": 1,
+        "kingdoms": {
+          "1": {
+            "enabled": true
+          }
+        },
+        "direwolfPurchaseLimit": 0
+      },
+      "automation.commanderFeatures": {
+        "version": 1,
+        "assignments": {
+          "autoTowers": [
+            501
+          ],
+          "autoFortress": [
+            501,
+            502
+          ],
+          "autoKhan": [
+            502
+          ]
+        }
+      }
+    }
+  },
+  "columns": [
+    "readiness"
+  ]
+}

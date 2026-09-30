@@ -1,0 +1,53 @@
+{
+  "id": "storm-donor-unavailable",
+  "title": "Storm: donor castles short or not in this account",
+  "purpose": "Troop import is on with one donor short of troops and one that is not in this account.",
+  "step": "5",
+  "platforms": [
+    "desktop",
+    "hosted"
+  ],
+  "modules": [
+    "autoStorm"
+  ],
+  "simulated": [
+    "banner: Simulated preview: sample data only. Nothing here reaches the game or an account.",
+    "dock: Candidate <short SHA>"
+  ],
+  "expect": [
+    "The donor lines say 'waiting/unavailable' with the reason; a donor that is not in the world is named; nothing is called blocked while data is only missing."
+  ],
+  "patch": {
+    "state": {
+      "castles": {
+        "4103": {
+          "units": {
+            "stationed": {
+              "1": 0,
+              "6": 0,
+              "39": 0
+            }
+          }
+        }
+      }
+    },
+    "config": {
+      "automation.autoStorm": {
+        "version": 1,
+        "troopImport": {
+          "enabled": true,
+          "donorCastleIds": [
+            4103,
+            999002
+          ],
+          "minimumTroops": 1000,
+          "historyHours": 24
+        }
+      }
+    }
+  },
+  "columns": [
+    "readiness",
+    "inline"
+  ]
+}

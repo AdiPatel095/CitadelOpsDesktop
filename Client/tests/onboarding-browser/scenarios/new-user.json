@@ -1,0 +1,48 @@
+{
+  "id": "new-user",
+  "title": "New user: nothing saved, no presets",
+  "purpose": "First use of every preset-dependent family with an account that has castles, troops and free commanders but no presets and nothing saved.",
+  "step": "2",
+  "platforms": [
+    "desktop",
+    "hosted"
+  ],
+  "modules": [
+    "autoNomad",
+    "autoInvasion",
+    "autoBeriWorld",
+    "autoKhan",
+    "autoStorm",
+    "autoTowers",
+    "autoFortress",
+    "autoFoodBalance",
+    "autoStation",
+    "autoBird",
+    "autoRecruit",
+    "autoTool",
+    "autoHospital",
+    "autoTCI",
+    "autoSceatRes",
+    "autoBooster",
+    "autoBuyer",
+    "autoAdvisor",
+    "autoEquipmentCleanup",
+    "presets-views"
+  ],
+  "simulated": [
+    "banner: Simulated preview: sample data only. Nothing here reaches the game or an account.",
+    "dock: Candidate <short SHA>"
+  ],
+  "expect": [
+    "Auto Nomad opens with a recommended one-wave setup built from the source castle's most numerous attack troops; Save stores it as an app-created preset ('Created by app' in Attack Presets).",
+    "Reopening the editor keeps hidden Advanced values; 'Save as preset' makes a normal user preset.",
+    "Invasion, Berimond attack, Khan and Storm each offer the same inline recommendation; nothing is saved or started by opening an editor.",
+    "Disclosure defaults: Advanced groups collapsed with summaries."
+  ],
+  "session": "live",
+  "columns": [
+    "inline",
+    "goal",
+    "disclosure"
+  ]
+}

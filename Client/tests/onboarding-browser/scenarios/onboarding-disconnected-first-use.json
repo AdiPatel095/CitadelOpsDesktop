@@ -1,0 +1,37 @@
+{
+  "id": "onboarding-disconnected-first-use",
+  "title": "Goal-led first use: disconnected, nothing saved",
+  "purpose": "No session and no account yet.",
+  "step": "2",
+  "platforms": [
+    "desktop",
+    "hosted"
+  ],
+  "modules": [
+    "autoNomad",
+    "settings-connection-desktop"
+  ],
+  "simulated": [
+    "banner: Simulated preview: sample data only. Nothing here reaches the game or an account.",
+    "dock: Candidate <short SHA>"
+  ],
+  "expect": [
+    "Set up with a goal \u2192 Play the Nomad or Samurai event: connection is Blocked with 'Check the connection'; the repair dialog opens over the page (desktop) and offers Start Bot.",
+    "Choices, readiness, turned on and first result are 'not started'; no step is done."
+  ],
+  "session": "disconnected",
+  "startedPatch": {
+    "state": {}
+  },
+  "patch": {
+    "state": {
+      "=account": {},
+      "=castles": {}
+    }
+  },
+  "hostedOnly": "Hosted shows the panel with 'Start the hosted runtime' (Account Center) instead of Start Bot.",
+  "columns": [
+    "goal",
+    "readiness"
+  ]
+}

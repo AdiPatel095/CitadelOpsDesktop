@@ -1,0 +1,99 @@
+{
+  "id": "onboarding-existing-custom-setup",
+  "title": "Existing custom setup: everything already done",
+  "purpose": "Towers saved, on, running, with a confirmed receipt.",
+  "step": "11",
+  "platforms": [
+    "desktop",
+    "hosted"
+  ],
+  "modules": [
+    "autoTowers"
+  ],
+  "simulated": [
+    "banner: Simulated preview: sample data only. Nothing here reaches the game or an account.",
+    "dock: Candidate <short SHA>",
+    "receipt summaries: Simulated: ..."
+  ],
+  "expect": [
+    "The goal panel (chosen goal) shows all five steps Done and 'All five steps are done for this goal'; it never appears uninvited."
+  ],
+  "patch": {
+    "state": {
+      "automations": {
+        "autoTowers": {
+          "id": "autoTowers",
+          "enabled": true,
+          "updatedAt": "@now-30s",
+          "status": "ready",
+          "detail": "Ready for the next opportunity"
+        }
+      }
+    },
+    "config": {
+      "automation.autoTowers": {
+        "version": 4,
+        "checkIntervalSec": 30,
+        "mapRefreshIntervalSec": 1800,
+        "dailyAttackLimit": 0,
+        "horseTravelBoostId": -1,
+        "useAdvisor": false,
+        "autoActivateAdvisor": false,
+        "maximumDailyTimeSkips": 0,
+        "castles": {
+          "4101": {
+            "enabled": true,
+            "radius": 15,
+            "unitId": 2,
+            "maidenOnly": false
+          }
+        }
+      },
+      "automation.enabled": {
+        "auto_towers": true
+      }
+    },
+    "operations": [
+      {
+        "id": "op-sim-existing",
+        "intent": "attack.launch",
+        "actor": "automation:autoTowers",
+        "priority": 10,
+        "status": "succeeded",
+        "phase": "completed",
+        "attempt": 1,
+        "plan": {
+          "intent": "attack.launch",
+          "effect": "launch",
+          "stateRevision": 1,
+          "steps": [],
+          "summary": "Simulated: attack on tower 12"
+        },
+        "completedStepIndexes": [
+          0
+        ],
+        "submittedAt": "@now-90m",
+        "completedAt": "@now-89m"
+      }
+    ]
+  },
+  "storage": [
+    {
+      "key": "citadelops.automation.enabledSince.v1.@accountKey",
+      "value": {
+        "auto_towers": "@now-180m"
+      }
+    },
+    {
+      "key": "citadelops.goal.v1.@accountKey",
+      "value": {
+        "version": 1,
+        "goalId": "autoTowers",
+        "startedAt": "@now-4h"
+      }
+    }
+  ],
+  "columns": [
+    "goal"
+  ]
+}

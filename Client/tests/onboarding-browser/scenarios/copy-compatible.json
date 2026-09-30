@@ -1,0 +1,53 @@
+{
+  "id": "copy-compatible",
+  "title": "Copy: compatible destinations",
+  "purpose": "Auto Station reserves on Stonehaven copy to Ashford Keep and Marrow Court.",
+  "step": "10",
+  "platforms": [
+    "desktop",
+    "hosted"
+  ],
+  "modules": [
+    "autoStation"
+  ],
+  "simulated": [
+    "banner: Simulated preview: sample data only. Nothing here reaches the game or an account.",
+    "dock: Candidate <short SHA>"
+  ],
+  "expect": [
+    "The copy dialog lists compatible destinations; Apply to draft changes only the open editor; Save is the only write."
+  ],
+  "patch": {
+    "state": {
+      "castles": {
+        "4106": {
+          "units": {
+            "stationed": {
+              "39": 1000
+            }
+          }
+        }
+      }
+    },
+    "config": {
+      "automation.autoStation": {
+        "version": 1,
+        "leadTimeSec": 120,
+        "recallWhenClear": true,
+        "minRPTDays": 3,
+        "openGateFallback": false,
+        "settings": {
+          "4101": [
+            {
+              "id": 39,
+              "amount": 500
+            }
+          ]
+        }
+      }
+    }
+  },
+  "columns": [
+    "copy"
+  ]
+}

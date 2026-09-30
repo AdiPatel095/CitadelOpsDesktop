@@ -1,0 +1,265 @@
+{
+  "id": "disclosure-matrix",
+  "title": "Disclosure matrix: a custom Advanced value in every module",
+  "purpose": "One saved section per feature with at least one custom Advanced value.",
+  "step": "6",
+  "platforms": [
+    "desktop",
+    "hosted"
+  ],
+  "modules": [
+    "autoNomad",
+    "autoInvasion",
+    "autoKhan",
+    "autoBeriWorld",
+    "autoTowers",
+    "autoFortress",
+    "autoStorm",
+    "autoFoodBalance",
+    "autoStation",
+    "autoBird",
+    "autoRecruit",
+    "autoTool",
+    "autoHospital",
+    "autoTCI",
+    "autoSceatRes",
+    "autoBooster",
+    "autoBuyer",
+    "autoAdvisor",
+    "autoEquipmentCleanup"
+  ],
+  "simulated": [
+    "banner: Simulated preview: sample data only. Nothing here reaches the game or an account.",
+    "dock: Candidate <short SHA>"
+  ],
+  "expect": [
+    "Every editor shows Essentials first; each Advanced group is collapsed with a summary stating its consequential values and a 'N custom values' badge.",
+    "Consequential values (paid travel, time skips, Ruby permissions, demolition, custom timing) are visible in the collapsed summaries."
+  ],
+  "patch": {
+    "config": {
+      "automation.autoNomad": {
+        "version": 5,
+        "sourceCastleId": 4101,
+        "skipCooldowns": true,
+        "horseTravelBoostId": 1009,
+        "minimumRemainingSec": 900,
+        "checkIntervalSec": 60
+      },
+      "automation.autoInvasion": {
+        "version": 1,
+        "sourceCastleId": 4101,
+        "horseTravelBoostId": 1009,
+        "checkIntervalSec": 60,
+        "dailyAttackLimit": 40
+      },
+      "automation.autoKhan": {
+        "version": 1,
+        "sourceCastleId": 4101,
+        "minimumRemainingSec": 600,
+        "maxRageChain": 3,
+        "nomadPointThreshold": 5000,
+        "openGateProtection": true
+      },
+      "automation.autoBeriWorld": {
+        "version": 1,
+        "sourceCastleId": 4101,
+        "dailyAttackLimit": 20
+      },
+      "automation.autoTowers": {
+        "version": 4,
+        "checkIntervalSec": 30,
+        "mapRefreshIntervalSec": 900,
+        "dailyAttackLimit": 0,
+        "horseTravelBoostId": -1,
+        "useAdvisor": true,
+        "autoActivateAdvisor": false,
+        "maximumDailyTimeSkips": 5,
+        "castles": {
+          "4101": {
+            "enabled": true,
+            "radius": 15,
+            "unitId": 2,
+            "maidenOnly": false
+          }
+        }
+      },
+      "automation.autoFortress": {
+        "version": 1,
+        "checkIntervalSec": 10,
+        "mapRefreshIntervalSec": 900,
+        "dailyAttackLimit": 10,
+        "horseTravelBoostId": 1009,
+        "direwolfPurchaseLimit": 500,
+        "minimumTabletReserve": 1000,
+        "useTimeSkips": true,
+        "timeSkipReserve": {},
+        "kingdoms": {
+          "1": {
+            "enabled": true
+          }
+        }
+      },
+      "automation.autoStorm": {
+        "version": 1,
+        "mapRefreshIntervalSec": 3600,
+        "aquamarine": {
+          "reserve": 500,
+          "shopTableId": 0,
+          "purchases": []
+        },
+        "build": {
+          "allowPremium": true,
+          "allowDemolition": true,
+          "allowResourceTransport": true,
+          "allowTimeSkips": true,
+          "resourceReserves": {},
+          "sourceResourceReserves": {},
+          "timeSkipReserve": {}
+        }
+      },
+      "automation.autoFoodBalance": {
+        "version": 1,
+        "minimumSourceReserve": 250000,
+        "minimumCoinReserve": 50000,
+        "autoKingdomTransport": true,
+        "useKingdomTimeSkips": true
+      },
+      "automation.autoStation": {
+        "version": 1,
+        "leadTimeSec": 180,
+        "recallWhenClear": true,
+        "minRPTDays": 5,
+        "openGateFallback": true,
+        "settings": {
+          "4101": [
+            {
+              "id": 39,
+              "amount": 2000
+            }
+          ]
+        }
+      },
+      "automation.autoBird": {
+        "version": 2,
+        "ignoreSettings": {
+          "settings": {
+            "4101": [
+              {
+                "id": 1,
+                "amount": 500
+              }
+            ]
+          },
+          "minDelay": 8,
+          "maxDelay": 16,
+          "minSend": 50,
+          "minRPTDays": 5
+        },
+        "activePresetId": null
+      },
+      "automation.recruitTroops": {
+        "version": 1,
+        "mode": "castle",
+        "checkIntervalSec": 120,
+        "recruitLevel10OnTitleLoss": true,
+        "globalItems": [],
+        "castles": {
+          "4101": {
+            "enabled": true,
+            "items": [
+              {
+                "id": 1,
+                "amount": 500
+              }
+            ]
+          }
+        }
+      },
+      "automation.autoTool": {
+        "version": 1,
+        "mode": "castle",
+        "checkIntervalSec": 120,
+        "globalItems": [],
+        "castles": {
+          "4101": {
+            "enabled": true,
+            "items": [
+              {
+                "id": 101,
+                "amount": 200
+              }
+            ]
+          }
+        }
+      },
+      "automation.autoHospital": {
+        "version": 1,
+        "checkIntervalSec": 600
+      },
+      "automation.autoSceatResources": {
+        "checkIntervalSec": 600,
+        "minimumShipmentSize": 20000,
+        "sourceReservePercent": 20,
+        "overflowThresholdPercent": 80,
+        "autoKingdomTransport": true,
+        "allowRubyRecipes": true,
+        "minimumRubyReserve": 2000,
+        "castles": {}
+      },
+      "automation.autoBooster": {
+        "version": 1,
+        "checkIntervalSec": 120,
+        "rubyCostCeiling": 2500,
+        "minimumRubyReserve": 10000
+      },
+      "automation.autoBuyer": {
+        "version": 1,
+        "checkIntervalSec": 900,
+        "historyRefreshSec": 3600,
+        "sourceCastleId": 4101,
+        "minimumRubyReserve": 10000,
+        "allowRubyPackages": true,
+        "packages": [],
+        "specialists": [],
+        "feast": {
+          "enabled": true,
+          "feastId": 8,
+          "minimumRemainingHours": 12,
+          "sourceCastleId": 0,
+          "minimumFoodReserve": 100000,
+          "allowRubies": true,
+          "maximumRubyCostPerPurchase": 500
+        }
+      },
+      "automation.autoAdvisor": {
+        "version": 1,
+        "sourceCastleId": 4101,
+        "presetId": "",
+        "maxAttackCount": 5,
+        "minimumRemainingSec": 1800,
+        "coinCostPerAttack": 500,
+        "minimumCoinReserve": 50000,
+        "rubyCostPerAttack": 0,
+        "minimumRubyReserve": 0,
+        "minimumFeatherReserve": 0,
+        "timeSkipReserve": {},
+        "checkIntervalSec": 60,
+        "mapRefreshIntervalSec": 300,
+        "horseTravelBoostId": -1
+      },
+      "automation.constructionItems": {
+        "version": 1,
+        "checkIntervalSec": 900
+      },
+      "automation.autoEquipmentCleanup": {
+        "version": 1,
+        "intervalMinutes": 15
+      }
+    }
+  },
+  "columns": [
+    "disclosure",
+    "readiness"
+  ]
+}

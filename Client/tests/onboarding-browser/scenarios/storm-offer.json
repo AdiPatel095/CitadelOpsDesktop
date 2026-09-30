@@ -1,0 +1,49 @@
+{
+  "id": "storm-offer",
+  "title": "Storm: an official starter castle is on offer",
+  "purpose": "prebuiltcastles offers a kingdom-4 castle within the player's level; the unlock is on.",
+  "step": "5",
+  "platforms": [
+    "desktop",
+    "hosted"
+  ],
+  "modules": [
+    "autoStorm"
+  ],
+  "simulated": [
+    "banner: Simulated preview: sample data only. Nothing here reaches the game or an account.",
+    "dock: Candidate <short SHA>"
+  ],
+  "expect": [
+    "The unlock plan is valid and names the offered castle; Save goes through the UI and stores the section; nothing starts."
+  ],
+  "patch": {
+    "catalogs": {
+      "prebuiltcastles": [
+        {
+          "preBuiltCastleID": 5101,
+          "spaceIDs": "4",
+          "minLevel": 50,
+          "costWood": 0,
+          "costStone": 0,
+          "costFood": 0,
+          "costC1": 0,
+          "costC2": 0,
+          "comment2": "Synthetic Storm starter"
+        }
+      ]
+    },
+    "config": {
+      "automation.autoStorm": {
+        "version": 1,
+        "unlock": {
+          "enabled": true,
+          "prebuiltCastleId": 5101
+        }
+      }
+    }
+  },
+  "columns": [
+    "inline"
+  ]
+}

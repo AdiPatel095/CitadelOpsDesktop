@@ -1,0 +1,23 @@
+{
+  "id": "hosted-account-center",
+  "title": "Hosted Account Center with the fictional Demo Keep account",
+  "purpose": "Hosted only.",
+  "step": "11",
+  "platforms": [
+    "hosted"
+  ],
+  "modules": [
+    "account-center-hosted"
+  ],
+  "simulated": [
+    "banner: Simulated preview: sample data only. Nothing here reaches the game or an account.",
+    "dock: Candidate <short SHA>"
+  ],
+  "expect": [
+    "The Account Center shows the fictional 'Demo Keep' account; the repair panel shows Start the hosted runtime, Turn on <Feature> and First result with the accepted copy; the Add-account form is never opened."
+  ],
+  "hostedOnly": "No desktop equivalent: the desktop shows Start Bot and Settings.",
+  "columns": [
+    "goal"
+  ]
+}

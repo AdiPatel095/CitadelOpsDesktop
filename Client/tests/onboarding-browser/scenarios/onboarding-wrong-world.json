@@ -1,0 +1,42 @@
+{
+  "id": "onboarding-wrong-world",
+  "title": "Login rejected with a typed reason",
+  "purpose": "The game reports the typed login failure 'wrong_server'.",
+  "step": "11",
+  "platforms": [
+    "desktop",
+    "hosted"
+  ],
+  "modules": [
+    "autoNomad",
+    "settings-connection-desktop",
+    "account-center-hosted"
+  ],
+  "simulated": [
+    "banner: Simulated preview: sample data only. Nothing here reaches the game or an account.",
+    "dock: Candidate <short SHA>"
+  ],
+  "expect": [
+    "Repair names the typed cause ('The game says this account does not play on the saved world...'); an untyped rejection would list both checks and never say 'wrong world'."
+  ],
+  "patch": {
+    "state": {
+      "session": {
+        "loggedIn": false,
+        "socketReady": true,
+        "detail": "Game login was not accepted",
+        "loginFailure": {
+          "code": 21,
+          "class": "wrong_server",
+          "fatal": true,
+          "observedAt": "@now-1m"
+        }
+      }
+    }
+  },
+  "hostedOnly": "Hosted wording: 'The saved server does not match this login. Change the server in the Account Center.'",
+  "columns": [
+    "goal",
+    "readiness"
+  ]
+}

@@ -1,0 +1,59 @@
+{
+  "id": "phases-completed",
+  "title": "Completed",
+  "purpose": "The game reports the automation complete.",
+  "step": "9",
+  "platforms": [
+    "desktop",
+    "hosted"
+  ],
+  "modules": [
+    "autoTowers"
+  ],
+  "simulated": [
+    "banner: Simulated preview: sample data only. Nothing here reaches the game or an account.",
+    "dock: Candidate <short SHA>"
+  ],
+  "expect": [
+    "Phase Completed; no success claim beyond what the game reported."
+  ],
+  "patch": {
+    "state": {
+      "automations": {
+        "autoTowers": {
+          "id": "autoTowers",
+          "enabled": true,
+          "updatedAt": "@now-30s",
+          "status": "complete",
+          "detail": "The score target was reached"
+        }
+      }
+    },
+    "config": {
+      "automation.autoTowers": {
+        "version": 4,
+        "checkIntervalSec": 30,
+        "mapRefreshIntervalSec": 1800,
+        "dailyAttackLimit": 0,
+        "horseTravelBoostId": -1,
+        "useAdvisor": false,
+        "autoActivateAdvisor": false,
+        "maximumDailyTimeSkips": 0,
+        "castles": {
+          "4101": {
+            "enabled": true,
+            "radius": 15,
+            "unitId": 2,
+            "maidenOnly": false
+          }
+        }
+      },
+      "automation.enabled": {
+        "auto_towers": true
+      }
+    }
+  },
+  "columns": [
+    "phases"
+  ]
+}

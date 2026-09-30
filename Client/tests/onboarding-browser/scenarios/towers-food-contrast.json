@@ -1,0 +1,81 @@
+{
+  "id": "towers-food-contrast",
+  "title": "Contrast: Towers and Food Balance (no presets)",
+  "purpose": "Two non-preset families: Towers with one castle short of its troop, Food Balance with donor, recipient and unobserved rows.",
+  "step": "6",
+  "platforms": [
+    "desktop",
+    "hosted"
+  ],
+  "modules": [
+    "autoTowers",
+    "autoFoodBalance"
+  ],
+  "simulated": [
+    "banner: Simulated preview: sample data only. Nothing here reaches the game or an account.",
+    "dock: Candidate <short SHA>"
+  ],
+  "expect": [
+    "Towers castle cards show stationed stock; the short castle is named without the setup being called blocked.",
+    "Food Balance rows show Donor / Below reserve / Not observed and a 'Last checked' column; 'Last known' appears only where the connection is not current.",
+    "A Fix into a collapsed Advanced group expands it and focuses the control; collapsed groups show summaries."
+  ],
+  "patch": {
+    "config": {
+      "automation.autoTowers": {
+        "version": 4,
+        "checkIntervalSec": 30,
+        "mapRefreshIntervalSec": 1800,
+        "dailyAttackLimit": 0,
+        "horseTravelBoostId": -1,
+        "useAdvisor": false,
+        "autoActivateAdvisor": false,
+        "maximumDailyTimeSkips": 0,
+        "castles": {
+          "4101": {
+            "enabled": true,
+            "radius": 15,
+            "unitId": 2,
+            "maidenOnly": false
+          },
+          "4103": {
+            "enabled": true,
+            "radius": 20,
+            "unitId": 7,
+            "maidenOnly": false
+          }
+        }
+      },
+      "automation.autoFoodBalance": {
+        "version": 1,
+        "minimumSourceReserve": 300000,
+        "minimumCoinReserve": 100000,
+        "autoKingdomTransport": false
+      }
+    },
+    "state": {
+      "castles": {
+        "4101": {
+          "foodStateObservedAt": "@now-2m"
+        },
+        "4103": {
+          "foodStateObservedAt": "@now-3h",
+          "units": {
+            "stationed": {
+              "7": 0
+            }
+          }
+        },
+        "4106": {
+          "resources": {
+            "3": null
+          }
+        }
+      }
+    }
+  },
+  "columns": [
+    "readiness",
+    "disclosure"
+  ]
+}

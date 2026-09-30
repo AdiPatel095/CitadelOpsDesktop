@@ -1,0 +1,69 @@
+{
+  "id": "phases-locked",
+  "title": "Locked after a rejected action",
+  "purpose": "A safety lock is holding the attack lane.",
+  "step": "9",
+  "platforms": [
+    "desktop",
+    "hosted"
+  ],
+  "modules": [
+    "autoTowers"
+  ],
+  "simulated": [
+    "banner: Simulated preview: sample data only. Nothing here reaches the game or an account.",
+    "dock: Candidate <short SHA>"
+  ],
+  "expect": [
+    "Phase Locked with the lock reason, time left and the way to review it."
+  ],
+  "patch": {
+    "state": {
+      "automations": {
+        "autoTowers": {
+          "id": "autoTowers",
+          "enabled": true,
+          "updatedAt": "@now-30s",
+          "status": "waiting",
+          "detail": "Waiting for the attack lane to unlock",
+          "safetyLock": {
+            "lane": "autoTowers",
+            "opcode": "msd",
+            "code": 1,
+            "operationId": "op-sim-lock",
+            "intent": "attack.launch",
+            "observedAt": "@now-5m",
+            "reason": "The game rejected an action",
+            "until": "@now+25m"
+          }
+        }
+      }
+    },
+    "config": {
+      "automation.autoTowers": {
+        "version": 4,
+        "checkIntervalSec": 30,
+        "mapRefreshIntervalSec": 1800,
+        "dailyAttackLimit": 0,
+        "horseTravelBoostId": -1,
+        "useAdvisor": false,
+        "autoActivateAdvisor": false,
+        "maximumDailyTimeSkips": 0,
+        "castles": {
+          "4101": {
+            "enabled": true,
+            "radius": 15,
+            "unitId": 2,
+            "maidenOnly": false
+          }
+        }
+      },
+      "automation.enabled": {
+        "auto_towers": true
+      }
+    }
+  },
+  "columns": [
+    "phases"
+  ]
+}

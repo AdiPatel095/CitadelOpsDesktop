@@ -1,0 +1,334 @@
+{
+  "id": "custom-presets",
+  "title": "Existing custom and shared presets",
+  "purpose": "User presets for every event family, one preset shared by two modules and one app-created preset.",
+  "step": "3",
+  "platforms": [
+    "desktop",
+    "hosted"
+  ],
+  "modules": [
+    "autoNomad",
+    "autoInvasion",
+    "autoBeriWorld",
+    "autoKhan",
+    "presets-views"
+  ],
+  "simulated": [
+    "banner: Simulated preview: sample data only. Nothing here reaches the game or an account.",
+    "dock: Candidate <short SHA>"
+  ],
+  "expect": [
+    "Nomad and Invasion both use 'Shared wave' (shown as used by two modules); renaming or editing an app-created preset asks to promote it.",
+    "Duplicate copies the record only; deleting a preset in use is refused with the modules named.",
+    "'Managed by ...' and 'Not in use' labels appear in the presets views."
+  ],
+  "patch": {
+    "config": {
+      "attacks.presets": {
+        "version": 1,
+        "presets": [
+          {
+            "id": "preset-shared",
+            "name": "Shared wave",
+            "targetType": "pve",
+            "useTroopFamilies": false,
+            "createdAt": "@now-30d",
+            "updatedAt": "@now-2d",
+            "waves": [
+              {
+                "L": {
+                  "troops": [
+                    {
+                      "itemId": 2,
+                      "quantity": 120
+                    }
+                  ],
+                  "tools": []
+                },
+                "M": {
+                  "troops": [
+                    {
+                      "itemId": 6,
+                      "quantity": 80
+                    }
+                  ],
+                  "tools": []
+                },
+                "R": {
+                  "troops": [
+                    {
+                      "itemId": 2,
+                      "quantity": 120
+                    }
+                  ],
+                  "tools": []
+                }
+              }
+            ],
+            "courtyardSupport": {
+              "troops": [],
+              "tools": []
+            }
+          },
+          {
+            "id": "preset-nomad-own",
+            "name": "Nomad own",
+            "targetType": "pve",
+            "useTroopFamilies": false,
+            "createdAt": "@now-30d",
+            "updatedAt": "@now-2d",
+            "waves": [
+              {
+                "L": {
+                  "troops": [
+                    {
+                      "itemId": 1,
+                      "quantity": 150
+                    }
+                  ],
+                  "tools": []
+                },
+                "M": {
+                  "troops": [
+                    {
+                      "itemId": 7,
+                      "quantity": 60
+                    }
+                  ],
+                  "tools": []
+                },
+                "R": {
+                  "troops": [
+                    {
+                      "itemId": 1,
+                      "quantity": 150
+                    }
+                  ],
+                  "tools": []
+                }
+              }
+            ],
+            "courtyardSupport": {
+              "troops": [],
+              "tools": []
+            }
+          },
+          {
+            "id": "preset-beri",
+            "name": "Beri towers",
+            "targetType": "pve",
+            "useTroopFamilies": false,
+            "createdAt": "@now-30d",
+            "updatedAt": "@now-2d",
+            "waves": [
+              {
+                "L": {
+                  "troops": [
+                    {
+                      "itemId": 1,
+                      "quantity": 100
+                    }
+                  ],
+                  "tools": []
+                },
+                "M": {
+                  "troops": [
+                    {
+                      "itemId": 6,
+                      "quantity": 50
+                    }
+                  ],
+                  "tools": []
+                },
+                "R": {
+                  "troops": [
+                    {
+                      "itemId": 1,
+                      "quantity": 100
+                    }
+                  ],
+                  "tools": []
+                }
+              }
+            ],
+            "courtyardSupport": {
+              "troops": [],
+              "tools": []
+            }
+          },
+          {
+            "id": "preset-khan-attack",
+            "name": "Khan camps",
+            "targetType": "pve",
+            "useTroopFamilies": false,
+            "createdAt": "@now-30d",
+            "updatedAt": "@now-2d",
+            "waves": [
+              {
+                "L": {
+                  "troops": [
+                    {
+                      "itemId": 2,
+                      "quantity": 200
+                    }
+                  ],
+                  "tools": []
+                },
+                "M": {
+                  "troops": [
+                    {
+                      "itemId": 7,
+                      "quantity": 100
+                    }
+                  ],
+                  "tools": []
+                },
+                "R": {
+                  "troops": [
+                    {
+                      "itemId": 2,
+                      "quantity": 200
+                    }
+                  ],
+                  "tools": []
+                }
+              }
+            ],
+            "courtyardSupport": {
+              "troops": [],
+              "tools": []
+            }
+          },
+          {
+            "id": "preset-app-nomad",
+            "name": "Auto Nomad / Nomad (auto)",
+            "targetType": "pve",
+            "useTroopFamilies": false,
+            "createdAt": "@now-30d",
+            "updatedAt": "@now-2d",
+            "waves": [
+              {
+                "L": {
+                  "troops": [
+                    {
+                      "itemId": 2,
+                      "quantity": 60
+                    }
+                  ],
+                  "tools": []
+                },
+                "M": {
+                  "troops": [],
+                  "tools": []
+                },
+                "R": {
+                  "troops": [],
+                  "tools": []
+                }
+              }
+            ],
+            "courtyardSupport": {
+              "troops": [],
+              "tools": []
+            },
+            "app": {
+              "section": "automation.autoNomad",
+              "slot": "nomad"
+            }
+          }
+        ]
+      },
+      "defense.presets": {
+        "version": 1,
+        "presets": [
+          {
+            "id": "defense-khan-main",
+            "name": "Khan main castle",
+            "createdAt": "@now-20d",
+            "updatedAt": "@now-3d",
+            "sourceCastleId": 4101,
+            "sourceCastleName": "Stonehaven",
+            "wall": {
+              "left": {
+                "toolSlots": [
+                  {
+                    "definitionId": 201,
+                    "amount": 250
+                  }
+                ],
+                "unitPercent": 30,
+                "unitTypePercent": 60
+              },
+              "middle": {
+                "toolSlots": [
+                  {
+                    "definitionId": 201,
+                    "amount": 300
+                  }
+                ],
+                "unitPercent": 40,
+                "unitTypePercent": 60
+              },
+              "right": {
+                "toolSlots": [
+                  {
+                    "definitionId": 201,
+                    "amount": 250
+                  }
+                ],
+                "unitPercent": 30,
+                "unitTypePercent": 60
+              }
+            },
+            "moat": {
+              "leftToolSlots": [
+                {
+                  "definitionId": 204,
+                  "amount": 120
+                }
+              ],
+              "middleToolSlots": [],
+              "rightToolSlots": []
+            },
+            "keep": {
+              "mauct": 2,
+              "unitTypePercent": 50
+            }
+          }
+        ]
+      },
+      "automation.autoNomad": {
+        "version": 5,
+        "sourceCastleId": 4101,
+        "nomadPresetId": "preset-shared",
+        "samuraiPresetId": "preset-nomad-own",
+        "nomadDifficultyId": 721,
+        "samuraiDifficultyId": 801,
+        "scoreTarget": 250000
+      },
+      "automation.autoInvasion": {
+        "version": 1,
+        "sourceCastleId": 4101,
+        "presetId": "preset-shared",
+        "foreignLordsDifficultyId": 711,
+        "bloodcrowDifficultyId": 1031,
+        "scoreTarget": 100000
+      },
+      "automation.autoBeriWorld": {
+        "version": 1,
+        "sourceCastleId": 4101,
+        "presetId": "preset-beri"
+      },
+      "automation.autoKhan": {
+        "version": 1,
+        "sourceCastleId": 4101,
+        "attackPresetId": "preset-khan-attack",
+        "defensePresetId": "defense-khan-main"
+      }
+    }
+  },
+  "columns": [
+    "inline"
+  ]
+}
