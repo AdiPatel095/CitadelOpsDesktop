@@ -3,6 +3,7 @@ import { responseMessageDescriptor, parseMessageDescriptor } from '../i18n/messa
 import { configurationBaseURL, configurationFetch, runtimeBasePath, runtimeFetch, runtimeURL } from './RuntimeURL';
 import { isOperationFailureStatus, operationFailureText } from './OperationNotifications';
 import { operationFailureReceiptFromHTTP } from './OperationHTTPFailure';
+import { catalogPath, manifestDigest } from './CatalogURL';
 import type {
   APIConnectionStatus,
   APIEnvelope,
@@ -102,6 +103,7 @@ class CitadelClient {
 	private configurationListeners = new Map<ConfigurationListener, string>();
   private reconnectTimer: ReturnType<typeof setTimeout> | null = null;
   private reconnectAttempt = 0;
+  private catalogDigest = '';
   private intentionalClose = false;
   private pendingIntents = new Map<string, Promise<IntentReceipt>>();
   private operationWaiters = new Map<string, Set<(receipt: IntentReceipt) => void>>();
@@ -297,12 +299,23 @@ class CitadelClient {
     return this.request('/api/v2/locales');
   }
 
-  getCatalogManifest(): Promise<CatalogManifest> {
-    return this.request<CatalogManifest>('/api/v2/game-data');
+  async getCatalogManifest(): Promise<CatalogManifest> {
+    const manifest = await this.request<CatalogManifest>('/api/v2/game-data');
+    this.noteCatalogManifest(manifest);
+    return manifest;
   }
 
   getCatalog<T extends Record<string, unknown>>(name: string, locale?: string): Promise<CatalogResponse<T>> {
-    return this.request<CatalogResponse<T>>(`/api/v2/game-data/${encodeURIComponent(name)}${locale ? `?locale=${encodeURIComponent(locale)}` : ''}`);
+    return this.request<CatalogResponse<T>>(catalogPath(name, locale, this.catalogDigest));
+  }
+
+  /**
+   * Records the content digest the worker's catalog manifest names. Collection
+   * requests carry it from then on, so the worker can mark them immutable and the
+   * browser downloads each catalog version once (CIT-35).
+   */
+  noteCatalogManifest(manifest: unknown): void {
+    this.catalogDigest = manifestDigest(manifest);
   }
 
   getProjection<T>(name: string, locale?: string): Promise<T> {

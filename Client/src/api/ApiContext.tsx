@@ -281,6 +281,7 @@ export function APIProvider({ children }: { children: ReactNode }) {
 		return;
 	  }
       if (message.type === 'catalog.changed' && isCatalogManifest(message.payload)) {
+        CitadelAPI.noteCatalogManifest(message.payload);
         setCatalogs(message.payload);
 		catalogsReady.current = true;
         return;

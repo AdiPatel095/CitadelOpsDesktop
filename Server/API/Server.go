@@ -388,13 +388,17 @@ func (server *Server) handleGameDataCollection(writer http.ResponseWriter, reque
 		}{store.Metadata(), catalog.Summary(), item, locale})
 		return
 	}
+	metadata := store.Metadata()
+	if collectionCacheHeaders(writer, request, metadata.DigestSHA256, name, locale) {
+		return
+	}
 	raw, _ := store.RawCollection(name)
 	writeJSON(writer, http.StatusOK, struct {
 		Metadata GameData.SourceMetadata    `json:"metadata"`
 		Catalog  GameData.CatalogSummary    `json:"catalog"`
 		Items    json.RawMessage            `json:"items"`
 		Locale   *GameData.LocaleResolution `json:"locale,omitempty"`
-	}{store.Metadata(), catalog.Summary(), raw, locale})
+	}{metadata, catalog.Summary(), raw, locale})
 }
 
 func (server *Server) handleIntentDefinitions(writer http.ResponseWriter, _ *http.Request) {
