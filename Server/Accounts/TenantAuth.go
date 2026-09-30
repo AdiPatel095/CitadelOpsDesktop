@@ -19,6 +19,7 @@ import (
 
 const (
 	tenantSessionCookie              = "citadelops_tenant_session"
+	sessionSubprotocolPrefix         = "citadelops.session."
 	dynamicTenantSessionTTL          = 15 * time.Minute
 	maximumActiveDashboardBootstraps = 256
 )
@@ -273,8 +274,17 @@ func (auth *TenantAuthenticator) Authenticate(request *http.Request) (AccountID,
 	if authorization := strings.TrimSpace(request.Header.Get("Authorization")); authorization != "" {
 		const prefix = "Bearer "
 		if len(authorization) > len(prefix) && strings.EqualFold(authorization[:len(prefix)], prefix) {
-			return auth.authenticateToken(authorization[len(prefix):])
+			token := authorization[len(prefix):]
+			if sessionShaped(token) {
+				if id, valid := auth.authenticateSession(token, time.Now()); valid {
+					return id, true
+				}
+			}
+			return auth.authenticateToken(token)
 		}
+	}
+	if token, present := sessionSubprotocolToken(request); present {
+		return auth.authenticateSession(token, time.Now())
 	}
 	for _, cookie := range request.Cookies() {
 		if cookie.Name == tenantSessionCookie {
@@ -284,6 +294,48 @@ func (auth *TenantAuthenticator) Authenticate(request *http.Request) (AccountID,
 		}
 	}
 	return "", false
+}
+
+func sessionShaped(token string) bool {
+	return strings.HasPrefix(token, "v2.") && strings.Count(token, ".") == 4
+}
+
+// A present but empty or ambiguous credential must not fall through to cookies.
+func sessionSubprotocolToken(request *http.Request) (string, bool) {
+	if request.Method != http.MethodGet || !strings.EqualFold(request.Header.Get("Upgrade"), "websocket") {
+		return "", false
+	}
+	var token string
+	count := 0
+	for _, value := range request.Header.Values("Sec-WebSocket-Protocol") {
+		for _, entry := range strings.Split(value, ",") {
+			entry = strings.TrimSpace(entry)
+			if strings.HasPrefix(entry, sessionSubprotocolPrefix) {
+				token = strings.TrimPrefix(entry, sessionSubprotocolPrefix)
+				count++
+			}
+		}
+	}
+	if count != 1 {
+		return "", count > 0
+	}
+	return token, true
+}
+
+func stripSessionSubprotocols(header http.Header) {
+	var remaining []string
+	for _, value := range header.Values("Sec-WebSocket-Protocol") {
+		for _, entry := range strings.Split(value, ",") {
+			entry = strings.TrimSpace(entry)
+			if entry != "" && !strings.HasPrefix(entry, sessionSubprotocolPrefix) {
+				remaining = append(remaining, entry)
+			}
+		}
+	}
+	header.Del("Sec-WebSocket-Protocol")
+	if len(remaining) > 0 {
+		header.Set("Sec-WebSocket-Protocol", strings.Join(remaining, ", "))
+	}
 }
 
 func (auth *TenantAuthenticator) authenticateToken(token string) (AccountID, bool) {
@@ -425,8 +477,8 @@ func (auth *TenantAuthenticator) login(writer http.ResponseWriter, request *http
 		return
 	}
 	request.Body = http.MaxBytesReader(writer, request.Body, 4096)
-	accountValue, token, next, isJSON, err := readTenantLogin(request)
-	if err != nil {
+	accountValue, token, next, credential, isJSON, err := readTenantLogin(request)
+	if err != nil || (credential != "" && credential != "bearer") {
 		writeRouterError(writer, http.StatusBadRequest, "invalid_login")
 		return
 	}
@@ -443,6 +495,14 @@ func (auth *TenantAuthenticator) login(writer http.ResponseWriter, request *http
 		writeRouterError(writer, http.StatusUnauthorized, "invalid_credentials")
 		return
 	}
+	if credential == "bearer" {
+		writer.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(writer).Encode(map[string]any{
+			"accountId": string(id), "path": path, "expiresAt": expiresAt,
+			"expiresIn": int(expiresAt.Sub(now).Seconds()), "sessionToken": session,
+		})
+		return
+	}
 	http.SetCookie(writer, &http.Cookie{
 		Name: tenantSessionCookie, Value: session,
 		Path: "/accounts/" + string(id) + "/", MaxAge: int(auth.sessionTTL.Seconds()),
@@ -456,28 +516,29 @@ func (auth *TenantAuthenticator) login(writer http.ResponseWriter, request *http
 	_ = json.NewEncoder(writer).Encode(map[string]any{"accountId": string(id), "path": path, "expiresAt": expiresAt})
 }
 
-func readTenantLogin(request *http.Request) (account string, token string, next string, isJSON bool, err error) {
+func readTenantLogin(request *http.Request) (account string, token string, next string, credential string, isJSON bool, err error) {
 	mediaType := strings.ToLower(strings.TrimSpace(strings.Split(request.Header.Get("Content-Type"), ";")[0]))
 	if mediaType == "application/json" {
 		var input struct {
-			AccountID string `json:"accountId"`
-			Token     string `json:"token"`
-			Next      string `json:"next,omitempty"`
+			AccountID  string `json:"accountId"`
+			Token      string `json:"token"`
+			Next       string `json:"next,omitempty"`
+			Credential string `json:"credential,omitempty"`
 		}
 		decoder := json.NewDecoder(request.Body)
 		decoder.DisallowUnknownFields()
 		if decodeErr := decoder.Decode(&input); decodeErr != nil {
-			return "", "", "", true, decodeErr
+			return "", "", "", "", true, decodeErr
 		}
 		if eofErr := requireJSONEOF(decoder); eofErr != nil {
-			return "", "", "", true, eofErr
+			return "", "", "", "", true, eofErr
 		}
-		return input.AccountID, input.Token, input.Next, true, nil
+		return input.AccountID, input.Token, input.Next, input.Credential, true, nil
 	}
 	if parseErr := request.ParseForm(); parseErr != nil {
-		return "", "", "", false, parseErr
+		return "", "", "", "", false, parseErr
 	}
-	return request.Form.Get("accountId"), request.Form.Get("token"), request.Form.Get("next"), false, nil
+	return request.Form.Get("accountId"), request.Form.Get("token"), request.Form.Get("next"), "", false, nil
 }
 
 func safeTenantRedirect(id AccountID, candidate string) string {

@@ -356,6 +356,7 @@ export const messages = {
   "commanderEligibility.assigned": "{count, plural, one {# assigned commander qualifies} other {# assigned commanders qualify}}.",
   "commanderEligibility.freeNow": "{count, plural, one {# eligible commander is free now} other {# eligible commanders are free now}}.",
   "commanderAssignment.alsoAssigned": "Also: {features}",
+  "commanderAssignment.offForThisAutomation": "Off for this automation",
   "commanderAssignment.impactAdded": "Allow {commander} for {feature}",
   "commanderAssignment.impactRemoved": "Remove {commander} from {feature}",
   "commanderAssignment.impactEmpty": "{feature} will have no allowed commander.",

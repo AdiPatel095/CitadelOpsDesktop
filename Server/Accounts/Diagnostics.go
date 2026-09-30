@@ -14,13 +14,18 @@ func (orchestrator *Orchestrator) handleDiagnostics(w http.ResponseWriter, r *ht
 		total.Add(store.PersistenceSnapshot())
 	}
 	stateStats, stateRuntimes := orchestrator.supervisor.statePersistenceStats()
+	var load *Diagnostics.LoadSnapshot
+	if snapshot, ok := orchestrator.load.Snapshot(); ok {
+		load = &snapshot
+	}
 	writeControlJSON(w, http.StatusOK, struct {
+		Load                     *Diagnostics.LoadSnapshot   `json:"load,omitempty"`
 		Process                  Diagnostics.ProcessSnapshot `json:"process"`
 		Telemetry                Telemetry.PersistenceStats  `json:"telemetry"`
 		StatePersistence         State.PersistenceStats      `json:"statePersistence"`
 		StatePersistenceRuntimes int                         `json:"statePersistenceRuntimes"`
 		TelemetryStores          int                         `json:"telemetryStores"`
-	}{Diagnostics.SampleProcess(), total, stateStats, stateRuntimes, len(stores)})
+	}{load, Diagnostics.SampleProcess(), total, stateStats, stateRuntimes, len(stores)})
 }
 func (supervisor *Supervisor) telemetryStores() []*Telemetry.Store {
 	supervisor.mu.RLock()

@@ -1,11 +1,12 @@
 import type { FixtureServer } from './fixtureServer';
+import { catalogManifest } from './catalogs';
 
 type SocketListener = ((event: MessageEvent) => void) | null;
 
 /**
  * The event stream the production client opens (`/api/v2/events`), answered by the fixture server (CIT-22). It carries the
- * same three envelopes a real stream opens with and repeats them whenever the fixture's state changes. It never opens a
- * connection: there is nothing behind it.
+ * envelopes a real stream opens with, including the catalog manifest, and repeats the state envelopes whenever the
+ * fixture's state changes. It never opens a connection: there is nothing behind it.
  */
 export class FixtureSocket {
   static readonly CONNECTING = 0;
@@ -29,6 +30,7 @@ export class FixtureSocket {
       this.readyState = FixtureSocket.OPEN;
       this.onopen?.();
       this.pushAll();
+      this.push('catalog.changed', catalogManifest());
     }, 60);
     this.off = server.onEvent((event) => { if (event === 'snapshot' && this.readyState === FixtureSocket.OPEN) this.pushAll(); });
   }
