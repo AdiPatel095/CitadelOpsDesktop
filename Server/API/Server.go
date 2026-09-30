@@ -80,6 +80,9 @@ func NewServer(config Config) *Server {
 		ReadBufferSize:  4096,
 		WriteBufferSize: 4096,
 		CheckOrigin:     server.originAllowed,
+		// Hosted workers negotiate permessage-deflate; thresholdSocket.WriteJSON then
+		// compresses only messages of 1 KiB or more. Desktop keeps loopback traffic plain.
+		EnableCompression: config.BackgroundOnly,
 	}
 	return server
 }
@@ -151,6 +154,11 @@ func (server *Server) Handler() http.Handler {
 	mux.HandleFunc("GET /api/v2/operations/{id}", server.handleOperation)
 	mux.HandleFunc("POST /api/v2/operations/{id}/cancel", server.handleOperationCancel)
 	mux.HandleFunc("GET /api/v2/events", server.handleEvents)
+	if server.config.BackgroundOnly {
+		// Hosted workers compress JSON responses of 1 KiB or more (CIT-29); the desktop
+		// app talks to its own browser over loopback, where it would only cost CPU.
+		return compressResponses(mux)
+	}
 	return mux
 }
 
@@ -529,11 +537,16 @@ func (server *Server) handleOperationCancel(writer http.ResponseWriter, request 
 }
 
 func (server *Server) handleEvents(writer http.ResponseWriter, request *http.Request) {
-	connection, err := server.upgrader.Upgrade(writer, request, nil)
+	socket, err := server.upgrader.Upgrade(writer, request, nil)
 	if err != nil {
 		return
 	}
-	defer connection.Close()
+	defer socket.Close()
+	if server.config.BackgroundOnly {
+		newSocketCompression(socket)
+	}
+	// WriteJSON compresses only messages of 1 KiB or more (when negotiated).
+	connection := &thresholdSocket{Conn: socket}
 	connection.SetReadLimit(1 << 20)
 	_ = connection.SetReadDeadline(time.Now().Add(60 * time.Second))
 	connection.SetPongHandler(func(string) error {
@@ -555,7 +568,7 @@ func (server *Server) handleEvents(writer http.ResponseWriter, request *http.Req
 	incoming := make(chan Envelope, 8)
 	readErrors := make(chan error, 1)
 	responses := make(chan Envelope, 8)
-	go readEnvelopes(ctx, connection, incoming, readErrors)
+	go readEnvelopes(ctx, socket, incoming, readErrors)
 
 	initialState := server.config.State.ReadOnlyView()
 	initialRevision := initialState.Revision
