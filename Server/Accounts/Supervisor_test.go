@@ -478,9 +478,11 @@ func TestSupervisorEnforcesProcessAccountLimit(t *testing.T) {
 		t.Fatal(err)
 	}
 	t.Cleanup(func() {
-		shutdown, stop := context.WithTimeout(context.Background(), 3*time.Second)
-		defer stop()
-		_ = supervisor.Close(shutdown)
+		// Close waits for Application.Wait, including the final persistence flush.
+		// TempDir cleanup must not race a shutdown that outlives a test deadline.
+		if err := supervisor.Close(context.Background()); err != nil {
+			t.Errorf("close test supervisor: %v", err)
+		}
 	})
 	addTestAccount(t, supervisor, "alpha")
 	if _, err := supervisor.AddAccount(context.Background(), AccountConfig{
@@ -499,9 +501,11 @@ func newTestSupervisor(t *testing.T) *Supervisor {
 		t.Fatal(err)
 	}
 	t.Cleanup(func() {
-		shutdown, stop := context.WithTimeout(context.Background(), 3*time.Second)
-		defer stop()
-		_ = supervisor.Close(shutdown)
+		// Close waits for Application.Wait, including the final persistence flush.
+		// TempDir cleanup must not race a shutdown that outlives a test deadline.
+		if err := supervisor.Close(context.Background()); err != nil {
+			t.Errorf("close test supervisor: %v", err)
+		}
 		cancel()
 	})
 	return supervisor
