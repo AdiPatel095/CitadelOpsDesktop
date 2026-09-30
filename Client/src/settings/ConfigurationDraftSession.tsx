@@ -198,6 +198,8 @@ export function useConfigurationDraftSession({
     [saveSection, section],
   );
 
+  const latestSections = useCallback(() => snapshotRef.current?.sections, []);
+
   const reloadLatest = useCallback(async () => {
     await loadLatest();
   }, [loadLatest]);
@@ -306,6 +308,11 @@ export function useConfigurationDraftSession({
     /** Changes only when the saved configuration is (re)loaded, never for a restored draft. */
     loadKey: snapshot == null ? '' : `${snapshot.key}:${loadGeneration}`,
     recoverDraft,
+    /**
+     * The saved sections as of right now, read from the same reference Save advances synchronously. Unlike `sections`
+     * it does not wait for a render, so an editor that is unmounted in the same render as its Save can still see it.
+     */
+    latestSections,
     recoveredExtras,
     save,
     saveSection,

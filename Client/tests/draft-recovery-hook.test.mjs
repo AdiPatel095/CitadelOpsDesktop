@@ -57,8 +57,13 @@ function Host({ isOpen, session }) {
   return { draft, setDraft, ...result };
 }
 
-const sessionOf = (sections, loadKey = 'k:1') => ({ ready: true, loadKey, sections, initialSections: sections, snapshot: { revision: 3 }, recoverDraft() {} });
-const unready = () => ({ ready: false, loadKey: '', sections: undefined, initialSections: undefined, snapshot: null, recoverDraft() {} });
+// `backing` is the session's live saved configuration (what `latestSections()` reads); `sections` is what the last render
+// saw. They differ between a Save and the next render, which is exactly the window an unmounting editor lives in.
+const sessionOf = (sections, loadKey = 'k:1') => {
+  const backing = { sections };
+  return { ready: true, loadKey, sections, initialSections: sections, snapshot: { revision: 3 }, recoverDraft() {}, latestSections: () => backing.sections, backing };
+};
+const unready = () => ({ ready: false, loadKey: '', sections: undefined, initialSections: undefined, snapshot: null, recoverDraft() {}, latestSections: () => undefined });
 
 /** Opens an editor: not ready first, ready a macrotask later (a late configuration load), then the browser's ordering. */
 async function open(handle, sections, { loadKey = 'k:1' } = {}) {
@@ -207,4 +212,78 @@ test('a record from another account is never offered', async () => {
   await open(handle, { [SECTION]: SAVED });
   assert.equal(handle.value.banner, null);
   handle.unmount();
+});
+
+// ——— Editors close by UNMOUNTING (App.tsx drops the modal), and Save + close can land in one render ———
+
+async function editThenSaveWithoutRender(handle, { hops = 0, waitBeforeSave = 650 } = {}) {
+  const session = await open(handle, { [SECTION]: SAVED });
+  handle.value.setDraft(EDITED);
+  handle.settle();
+  if (waitBeforeSave > 0) await wait(waitBeforeSave);
+  // Save succeeded: the session's live configuration moved on, and the editor is unmounted before any render saw it.
+  session.backing.sections = { [SECTION]: EDITED };
+  await macrotask();
+  for (let index = 0; index < hops; index += 1) await Promise.resolve();
+  return session;
+}
+
+for (const strict of [false, true]) {
+  test(`Towers ordering: Save, then the editor unmounts before a render sees the new saved section, clears the record${strict ? ' (strict effects)' : ''}`, async () => {
+    const handle = mount(Host, { strict });
+    await editThenSaveWithoutRender(handle);
+    assert.equal(draftKeys().length, 1, 'the edit had been recorded');
+    handle.unmount();
+    assert.deepEqual(draftKeys(), [], 'the just-saved values are not written back as a draft');
+    assert.equal(savedKeys().length, 1, 'the save time is noted');
+    assert.equal(recovery.isEditorDirty('77:EmpireEx_2', SECTION), false, 'the legend does not say "unsaved" or "recovered"');
+    assert.equal(recovery.draftLine('77:EmpireEx_2', SECTION), 'none');
+    await wait(700);
+    assert.deepEqual(draftKeys(), []);
+  });
+}
+
+test('Food Balance ordering: the same with promise hops between the save and the unmount', async () => {
+  const handle = mount(Host);
+  await editThenSaveWithoutRender(handle, { hops: 2 });
+  handle.unmount();
+  assert.deepEqual(draftKeys(), []);
+  assert.equal(savedKeys().length, 1);
+  assert.equal(recovery.isEditorDirty('77:EmpireEx_2', SECTION), false);
+  await wait(700);
+  assert.deepEqual(draftKeys(), []);
+});
+
+test('Save within 100 ms of the edit (nothing recorded yet), then unmount: no record at all', async () => {
+  const handle = mount(Host);
+  const session = await open(handle, { [SECTION]: SAVED });
+  handle.value.setDraft(EDITED);
+  handle.settle();
+  session.backing.sections = { [SECTION]: EDITED };
+  handle.unmount();
+  await wait(700);
+  assert.deepEqual(draftKeys(), []);
+  assert.equal(savedKeys().length, 1);
+});
+
+test('guard: Cancel by unmounting without a save still records the unsaved edit, exactly once', async () => {
+  const handle = mount(Host);
+  await open(handle, { [SECTION]: SAVED });
+  handle.value.setDraft(EDITED);
+  handle.settle();
+  handle.unmount();
+  assert.equal(draftKeys().length, 1);
+  assert.deepEqual(JSON.parse(store.get(draftKeys()[0])).draft, EDITED);
+  assert.deepEqual(savedKeys(), []);
+  await wait(700);
+  assert.equal(draftKeys().length, 1);
+});
+
+test('guard: an editor that never became active writes and clears nothing when it unmounts', async () => {
+  const handle = mount(Host);
+  handle.render({ isOpen: true, session: unready() });
+  store.set('citadelops.draft.v1.77:EmpireEx_2.automation.autoTowers', JSON.stringify({ version: 1, section: SECTION, accountKey: '77:EmpireEx_2', draft: EDITED, baseRevision: 1, baseDigest: 'x', savedAt: new Date().toISOString() }));
+  handle.unmount();
+  assert.equal(draftKeys().length, 1, 'a record waiting for review is not touched');
+  assert.deepEqual(savedKeys(), []);
 });

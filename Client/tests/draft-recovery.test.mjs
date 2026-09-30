@@ -302,3 +302,14 @@ test('sequence: an editor that never equals its loaded value records nothing (fa
   const next = reload.step({ loadKey: 'k:2', loaded: { ...SAVED, castles: {} }, draft: SAVED, saved: { ...SAVED, castles: {} } });
   assert.deepEqual([next.settled, next.dirty, next.action], [false, false, 'none']);
 });
+
+test('the unmount path reads the live saved section from the session and never sets state (editors close by unmounting)', async () => {
+  const hook = (await readFile(new URL('../src/settings/useDraftRecovery.tsx', import.meta.url), 'utf8')).replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
+  assert.match(hook, /'ready' \| 'loadKey' \| 'sections' \| 'snapshot' \| 'recoverDraft' \| 'latestSections'/, 'the hook picks latestSections from the session');
+  const cleanup = hook.slice(hook.indexOf('useEffect(() => () => {'), hook.indexOf('}, [cancelTimer, write]);'));
+  assert.match(cleanup, /if \(last\.loadKey === null\) return;/, 'an editor that never became active does nothing');
+  assert.match(cleanup, /current\.latestSections\(\)\?\.\[current\.section\]/);
+  assert.match(cleanup, /clearDraft\(current\.key, current\.section\);\s*recordSavedAt\(/, 'a save clears the record and notes the time');
+  assert.match(cleanup, /else if \(last\.dirty\) \{\s*write\(lastActive\.current\);/, 'otherwise unsaved changes are written');
+  assert.doesNotMatch(cleanup, /set[A-Z]\w*\(/, 'no state is set in a cleanup');
+});

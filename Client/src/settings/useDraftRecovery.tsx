@@ -26,7 +26,7 @@ import type { useConfigurationDraftSession } from './ConfigurationDraftSession';
 
 type DraftSessionApi = Pick<
   ReturnType<typeof useConfigurationDraftSession>,
-  'ready' | 'loadKey' | 'sections' | 'snapshot' | 'recoverDraft'
+  'ready' | 'loadKey' | 'sections' | 'snapshot' | 'recoverDraft' | 'latestSections'
 >;
 
 export interface UseDraftRecoveryOptions {
@@ -81,7 +81,8 @@ export function useDraftRecovery({ section, isOpen, draftSession, draft, loaded,
   // What the effects and timers below read. Kept in an effect (declared first, so it runs first) rather than in render.
   // `lastActive` is what the editor held the last time it was open and loaded: a write at close time is about that,
   // not about whatever the next render shows (another account, a reload in progress).
-  const now = { draft, extras, digest: currentDigest, loadedDigest, key, section, savedDigest, revision };
+  const latestSections = draftSession.latestSections;
+  const now = { draft, extras, digest: currentDigest, loadedDigest, key, section, savedDigest, revision, latestSections };
   const latest = useRef(now);
   const lastActive = useRef(now);
   useEffect(() => {
@@ -149,9 +150,21 @@ export function useDraftRecovery({ section, isOpen, draftSession, draft, loaded,
     setEditorDirty(key, section, true);
     return () => setEditorDirty(key, section, false);
   }, [dirty, key, section]);
+  // The editor going away. Editors close by unmounting, and a Save and that close can land in one render, so the state
+  // machine never sees the new saved section: read it from the session as it is right now. Saved means clear the record
+  // and note the time; otherwise unsaved changes are written. Nothing here sets state.
   useEffect(() => () => {
     cancelTimer();
-    if (machineRef.current.dirty) write(lastActive.current);
+    const last = machineRef.current;
+    if (last.loadKey === null) return;
+    const current = latest.current;
+    const savedNow = stableDigest(current.latestSections()?.[current.section] ?? null);
+    if (last.savedDigest !== null && savedNow !== last.savedDigest) {
+      clearDraft(current.key, current.section);
+      recordSavedAt(current.key, current.section, new Date().toISOString());
+    } else if (last.dirty) {
+      write(lastActive.current);
+    }
   }, [cancelTimer, write]);
 
   // On open: read what is waiting. A record identical to what just loaded has nothing to recover and is dropped.
