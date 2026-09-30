@@ -8,6 +8,7 @@ import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import AutoBirdHoverPopover from './AutoBirdHoverPopover';
 import AutoStationHoverPopover from './AutoStationHoverPopover';
+import { stationHeaderPill } from './stationHeaderPill';
 import { AutomationFeatureFeedback } from './AutomationFeatureFeedback';
 import CastleFocusSwitcher from './CastleFocusSwitcher';
 import DailyAttackTracker from './DailyAttackTracker';
@@ -25,15 +26,6 @@ function formatNextBirdIn(msLeft: number): string {
 }
 
 function formatConnectionSeconds(seconds: number): string {
-  if (seconds < 60) return `${seconds}s`;
-  const minutes = Math.floor(seconds / 60);
-  const remainder = seconds % 60;
-  return remainder > 0 ? `${minutes}m ${remainder}s` : `${minutes}m`;
-}
-
-function formatStationImpact(msLeft: number): string {
-  if (msLeft <= 0) return 'now';
-  const seconds = Math.ceil(msLeft / 1000);
   if (seconds < 60) return `${seconds}s`;
   const minutes = Math.floor(seconds / 60);
   const remainder = seconds % 60;
@@ -152,29 +144,15 @@ const Header: React.FC<HeaderProps> = ({
     }
   };
 
-  const autoStationPill = useMemo(() => {
-    if (!autoStationEnabled) return { tone: 'off' as const, text: 'Auto Station off' };
-    const impact = autoStationNextImpact > 0 ? formatStationImpact(autoStationNextImpact - nowTick) : '';
-    switch (autoStationState) {
-      case 'threat':
-        return { tone: 'warning' as const, text: `${autoStationThreatCount} incoming · ${impact || 'checking'}` };
-      case 'evacuating':
-        return { tone: 'warning' as const, text: 'Auto Station evacuating…' };
-      case 'protected':
-        return {
-          tone: 'on' as const,
-          text: autoStationThreatCount > 0 ? `${autoStationThreatCount} incoming protected` : 'Troops protected',
-        };
-      case 'recalling':
-        return { tone: 'on' as const, text: 'Auto Station recalling…' };
-      case 'waiting':
-        return { tone: 'warning' as const, text: 'Auto Station waiting' };
-      case 'error':
-        return { tone: 'error' as const, text: 'Auto Station error' };
-      default:
-        return { tone: 'on' as const, text: 'Auto Station armed' };
-    }
-  }, [autoStationEnabled, autoStationNextImpact, autoStationState, autoStationThreatCount, nowTick]);
+  const autoStationPill = useMemo(() => stationHeaderPill({
+    enabled: autoStationEnabled,
+    status: autoStationState,
+    threatCount: autoStationThreatCount,
+    nextImpact: autoStationNextImpact,
+    now: nowTick,
+    stationName: t('automationPopover.station.title'),
+    blockedLabel: t('runtimeState.phase', { phase: 'blocked' }),
+  }), [autoStationEnabled, autoStationNextImpact, autoStationState, autoStationThreatCount, nowTick, t]);
 
   const connectionPill = useMemo(() => {
     if (dashboardConnectionStatus !== 'Connected') {

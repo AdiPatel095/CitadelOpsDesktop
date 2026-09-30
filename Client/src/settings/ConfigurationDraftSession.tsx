@@ -175,7 +175,10 @@ export function useConfigurationDraftSession({
       const updated = await updateConfiguration(
         targetSection,
         value,
-        configurationDraftSaveCondition(baseline, targetSection, configurationWideBaseline),
+        {
+          ...configurationDraftSaveCondition(baseline, targetSection, configurationWideBaseline),
+          conflictShownByEditor: copyReplay !== undefined,
+        },
       );
       if (request !== loadRequest.current) return updated;
       const captured = advanceConfigurationDraftAfterSave(baseline, updated);
@@ -191,7 +194,7 @@ export function useConfigurationDraftSession({
       }
       throw error;
     }
-  }, [hasConfigurationDependencies, localizeStatic, updateConfiguration]);
+  }, [copyReplay, hasConfigurationDependencies, localizeStatic, updateConfiguration]);
 
   const save = useCallback(
     (value: unknown) => saveSection(section, value),
