@@ -48,6 +48,8 @@ type Coordinator struct {
 	externalConfigurationAuthority atomic.Bool
 	labelBase                      atomic.Pointer[profilerLabelBase]
 	fingerprints                   policyFingerprintCache
+	batchMu                        sync.Mutex
+	batch                          *automationBatch
 }
 
 // profilerLabelBase is the context Run received; it carries the runtime and
@@ -427,6 +429,8 @@ func (coordinator *Coordinator) evaluate(
 	runtime map[string]*policyRuntime,
 	results chan<- operationResult,
 ) {
+	// Every decision of this pass is committed in one transaction when it ends.
+	defer coordinator.beginAutomationBatch()()
 	now := time.Now().UTC()
 	configuration := coordinator.configuration.SharedSnapshot()
 	state := coordinator.state.ReadOnlyView()
@@ -1433,7 +1437,142 @@ func resetContinuation(current *policyRuntime) {
 	current.blockedDecisionFingerprint = ""
 }
 
+// automationUpdate is one pending change to a policy's recorded automation state.
+type automationUpdate struct {
+	id     string
+	update func(State.AutomationState) State.AutomationState
+}
+
+// automationBatch collects the updates of one evaluation pass so they are
+// committed in a single state transaction (CIT-44).
+type automationBatch struct {
+	mu      sync.Mutex
+	updates []automationUpdate
+}
+
+// updateAutomation records a change to a policy's automation state. During an
+// evaluation pass it is queued and committed with the rest of the pass; outside
+// one it is committed immediately.
 func (coordinator *Coordinator) updateAutomation(id string, update func(State.AutomationState) State.AutomationState) {
+	coordinator.batchMu.Lock()
+	batch := coordinator.batch
+	coordinator.batchMu.Unlock()
+	if batch != nil {
+		batch.mu.Lock()
+		batch.updates = append(batch.updates, automationUpdate{id: id, update: update})
+		batch.mu.Unlock()
+		return
+	}
+	coordinator.applyAutomationUpdates([]automationUpdate{{id: id, update: update}})
+}
+
+// beginAutomationBatch starts collecting updates; the returned function commits them.
+func (coordinator *Coordinator) beginAutomationBatch() func() {
+	batch := &automationBatch{}
+	coordinator.batchMu.Lock()
+	previous := coordinator.batch
+	coordinator.batch = batch
+	coordinator.batchMu.Unlock()
+	return func() {
+		coordinator.batchMu.Lock()
+		coordinator.batch = previous
+		coordinator.batchMu.Unlock()
+		batch.mu.Lock()
+		updates := batch.updates
+		batch.mu.Unlock()
+		if len(updates) > 0 {
+			coordinator.applyAutomationUpdates(updates)
+		}
+	}
+}
+
+// automationCheckGranularity is the precision of the stored next-check time. The
+// dashboard reads it in minutes, and an exact "now + 30 s" changed on nearly
+// every evaluation, so every evaluation was a new state revision.
+const automationCheckGranularity = time.Minute
+
+func roundNextCheck(value *time.Time) *time.Time {
+	if value == nil || value.IsZero() {
+		return value
+	}
+	rounded := value.UTC().Truncate(automationCheckGranularity)
+	if rounded.Before(value.UTC()) {
+		rounded = rounded.Add(automationCheckGranularity)
+	}
+	return &rounded
+}
+
+// computeAutomation derives the next recorded state of a policy from its current
+// one: the update, the active safety lock, Humanize (outside any store lock),
+// descriptor binding and the rounded next-check time. UpdatedAt is left as it was.
+func (coordinator *Coordinator) computeAutomation(
+	current State.AutomationState,
+	update func(State.AutomationState) State.AutomationState,
+	labels GameData.IdentifierLabels,
+) State.AutomationState {
+	updateInput := current
+	updateInput.Details = copyDetails(current.Details)
+	updateInput.DetailsDescriptors = Localization.CloneMap(current.DetailsDescriptors)
+	next := update(updateInput)
+	if lock := current.SafetyLock; lock.Active(time.Now().UTC()) {
+		next.Status = "gated"
+		next.Detail = lock.Detail()
+		next.DetailDescriptor = lock.DetailDescriptor()
+		next.LastErrorDescriptor = lock.DetailDescriptor()
+		next.LastError = next.Detail
+		next.LastOperationID = lock.OperationID
+		next.NextCheckAt = timePointer(lock.ExpiresAt())
+	}
+	if next.DetailDescriptor == current.DetailDescriptor && next.Detail != current.Detail {
+		next.DetailDescriptor = nil
+	}
+	if next.LastErrorDescriptor == current.LastErrorDescriptor && next.LastError != current.LastError {
+		next.LastErrorDescriptor = nil
+	}
+	beforeDetail := next.Detail
+	next.Detail = labels.Humanize(next.Detail)
+	if beforeDetail != next.Detail {
+		next.DetailDescriptor = nil
+	}
+	beforeLastError := next.LastError
+	next.LastError = labels.Humanize(next.LastError)
+	if beforeLastError != next.LastError {
+		next.LastErrorDescriptor = nil
+	}
+	next.DetailDescriptor = Localization.Bind(next.DetailDescriptor, next.Detail)
+	next.LastErrorDescriptor = Localization.Bind(next.LastErrorDescriptor, next.LastError)
+	boundDetails := map[string]*Localization.Message{}
+	for key, descriptor := range next.DetailsDescriptors {
+		raw, exists := next.Details[key]
+		if !exists || descriptor == nil {
+			continue
+		}
+		if reflect.DeepEqual(descriptor, current.DetailsDescriptors[key]) && raw != current.Details[key] {
+			continue
+		}
+		if labels.Humanize(raw) != raw {
+			continue
+		}
+		boundDetails[key] = Localization.Bind(descriptor, raw)
+	}
+	if len(boundDetails) == 0 {
+		next.DetailsDescriptors = nil
+	} else {
+		next.DetailsDescriptors = boundDetails
+	}
+	next.DetailTranslationStatus = Localization.Status(next.DetailDescriptor)
+	next.NextCheckAt = roundNextCheck(next.NextCheckAt)
+	next.UpdatedAt = current.UpdatedAt
+	return next
+}
+
+// applyAutomationUpdates computes every update outside the store's write lock,
+// against a read-only view, and commits all that changed in one transaction.
+// A pass whose decisions equal the recorded ones does not take the lock at all.
+// If a policy's recorded state moved between the view and the commit (a safety
+// lock, an intent's own write) its updates are replayed inside the transaction.
+func (coordinator *Coordinator) applyAutomationUpdates(updates []automationUpdate) {
+	view := coordinator.state.ReadOnlyView()
 	gameData := coordinator.currentGameData()
 	var language *GameData.LanguageStore
 	if provider, ok := coordinator.gameData.(interface {
@@ -1441,69 +1580,63 @@ func (coordinator *Coordinator) updateAutomation(id string, update func(State.Au
 	}); ok {
 		language, _ = provider.Language()
 	}
+	labels := GameData.NewIdentifierLabels(view, gameData, language)
+
+	type prepared struct {
+		base  State.AutomationState
+		next  State.AutomationState
+		steps []func(State.AutomationState) State.AutomationState
+	}
+	order := make([]string, 0, len(updates))
+	byID := map[string]*prepared{}
+	for _, item := range updates {
+		entry := byID[item.id]
+		if entry == nil {
+			base := view.Automations[item.id]
+			entry = &prepared{base: base, next: base}
+			byID[item.id] = entry
+			order = append(order, item.id)
+		}
+		entry.next = coordinator.computeAutomation(entry.next, item.update, labels)
+		entry.steps = append(entry.steps, item.update)
+	}
+	changed := order[:0:0]
+	for _, id := range order {
+		entry := byID[id]
+		if !reflect.DeepEqual(entry.base, entry.next) {
+			changed = append(changed, id)
+		}
+	}
+	if len(changed) == 0 {
+		return
+	}
 	_, _ = coordinator.state.ApplyComponents(State.Components(State.ComponentAutomations), func(gameState *State.GameState) ([]string, bool, error) {
 		if gameState.Automations == nil {
 			gameState.Automations = map[string]State.AutomationState{}
 		}
-		current := gameState.Automations[id]
-		updateInput := current
-		updateInput.Details = copyDetails(current.Details)
-		updateInput.DetailsDescriptors = Localization.CloneMap(current.DetailsDescriptors)
-		next := update(updateInput)
-		if lock := current.SafetyLock; lock.Active(time.Now().UTC()) {
-			next.Status = "gated"
-			next.Detail = lock.Detail()
-			next.DetailDescriptor = lock.DetailDescriptor()
-			next.LastErrorDescriptor = lock.DetailDescriptor()
-			next.LastError = next.Detail
-			next.LastOperationID = lock.OperationID
-			next.NextCheckAt = timePointer(lock.ExpiresAt())
-		}
-		if next.DetailDescriptor == current.DetailDescriptor && next.Detail != current.Detail {
-			next.DetailDescriptor = nil
-		}
-		if next.LastErrorDescriptor == current.LastErrorDescriptor && next.LastError != current.LastError {
-			next.LastErrorDescriptor = nil
-		}
-		labels := GameData.NewIdentifierLabels(*gameState, gameData, language)
-		beforeDetail := next.Detail
-		next.Detail = labels.Humanize(next.Detail)
-		if beforeDetail != next.Detail {
-			next.DetailDescriptor = nil
-		}
-		beforeLastError := next.LastError
-		next.LastError = labels.Humanize(next.LastError)
-		if beforeLastError != next.LastError {
-			next.LastErrorDescriptor = nil
-		}
-		next.DetailDescriptor = Localization.Bind(next.DetailDescriptor, next.Detail)
-		next.LastErrorDescriptor = Localization.Bind(next.LastErrorDescriptor, next.LastError)
-		boundDetails := map[string]*Localization.Message{}
-		for key, descriptor := range next.DetailsDescriptors {
-			raw, exists := next.Details[key]
-			if !exists || descriptor == nil {
-				continue
+		now := time.Now().UTC()
+		commit := false
+		for _, id := range changed {
+			entry := byID[id]
+			current := gameState.Automations[id]
+			next := entry.next
+			if !reflect.DeepEqual(current, entry.base) {
+				// Moved since the view: replay against what is stored now.
+				next = current
+				for _, step := range entry.steps {
+					next = coordinator.computeAutomation(next, step, labels)
+				}
+				if reflect.DeepEqual(current, next) {
+					continue
+				}
 			}
-			if reflect.DeepEqual(descriptor, current.DetailsDescriptors[key]) && raw != current.Details[key] {
-				continue
-			}
-			if labels.Humanize(raw) != raw {
-				continue
-			}
-			boundDetails[key] = Localization.Bind(descriptor, raw)
+			next.UpdatedAt = now
+			gameState.Automations[id] = next
+			commit = true
 		}
-		if len(boundDetails) == 0 {
-			next.DetailsDescriptors = nil
-		} else {
-			next.DetailsDescriptors = boundDetails
-		}
-		next.DetailTranslationStatus = Localization.Status(next.DetailDescriptor)
-		next.UpdatedAt = current.UpdatedAt
-		if reflect.DeepEqual(current, next) {
+		if !commit {
 			return nil, false, nil
 		}
-		next.UpdatedAt = time.Now().UTC()
-		gameState.Automations[id] = next
 		return []string{"automation"}, true, nil
 	})
 }
