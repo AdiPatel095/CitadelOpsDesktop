@@ -47,7 +47,8 @@ function metadata(built) {
     const item = { ...row, id: row.wodID, name: catalogs.LOCALIZED[row.name] ?? row.name };
     if (Array.isArray(row.slotTypes) && row.slotTypes.length > 0) tools[row.wodID] = item; else troops[row.wodID] = item;
   }
-  const resources = Object.fromEntries(built.catalogRows.resources.map((row) => [row.wodID, { ...row, id: row.wodID }]));
+  // The product keys resources by `resourceID` (MetadataContext), not by `wodID`: build them the way it does.
+  const resources = Object.fromEntries(built.catalogRows.resources.map((row) => [row.resourceID, { ...row, id: row.resourceID }]));
   return { troops, tools, resources };
 }
 
@@ -364,4 +365,94 @@ test('every browser-storage seed uses a key the product reads', () => {
     }
   }
   assert.ok(seeds >= 8);
+});
+
+test('class: every receipt a runtime step adds is dated now, never before the turn-on it follows', () => {
+  let steps = 0;
+  for (const [id, file] of files) {
+    for (const step of file.runtime ?? []) {
+      for (const operation of step.operations ?? []) {
+        for (const field of ['submittedAt', 'startedAt', 'completedAt']) {
+          if (operation[field] === undefined || operation[field] === null) continue;
+          steps += 1;
+          assert.equal(operation[field], '@now', `${id}: runtime step "${step.label}" receipt ${operation.id}.${field} must be "@now" (no offsets): the product keeps only receipts submitted after the turn-on`);
+        }
+      }
+    }
+  }
+  assert.ok(steps >= 4);
+});
+
+test('class: every static automation receipt that succeeded has a turn-on time seeded before it', () => {
+  let checked = 0;
+  for (const [id] of files) {
+    const built = build(id);
+    const seeds = built.storage.filter((seed) => seed.key.startsWith('citadelops.automation.enabledSince.v1.'));
+    for (const operation of built.operations) {
+      if (!String(operation.actor).startsWith('automation:') || operation.status !== 'succeeded') continue;
+      checked += 1;
+      const featureKey = String(operation.actor).slice('automation:'.length).replace(/[A-Z]/g, (letter) => `_${letter.toLowerCase()}`);
+      const since = seeds.map((seed) => JSON.parse(seed.value)[featureKey]).find((value) => value !== undefined);
+      assert.ok(since, `${id}: ${operation.id} needs an enabledSince seed for ${featureKey}`);
+      assert.ok(Date.parse(since) <= Date.parse(operation.submittedAt), `${id}: the turn-on time is before ${operation.id} was submitted`);
+    }
+  }
+  assert.ok(checked >= 1);
+});
+
+test('phases-enabled-waiting end to end: turn on now, advance every step, and the first result is confirmed', async () => {
+  const { FixtureServer } = await load('/tests/onboarding-browser/fixtureServer.ts');
+  const server = new FixtureServer({ file: files.get('phases-enabled-waiting'), nowMs: () => NOW });
+  const enabledSince = new Date(NOW).toISOString(); // the product records it from the switch write's updatedAt
+  const results = [];
+  while (server.advance()) {
+    results.push(firstResult.firstConfirmedResult('autoTowers', {
+      operations: Object.fromEntries(server.operations().map((entry) => [entry.id, entry])), runtime: server.state().automations?.autoTowers, enabledSince, accountKey: server.built.accountKey,
+    }).state);
+  }
+  assert.deepEqual(results, ['none', 'in-progress', 'confirmed', 'confirmed'].map((state, index) => (index === 0 ? results[0] : state)));
+  assert.equal(results[1], 'in-progress');
+  assert.equal(results[2], 'confirmed', 'the receipt is not dated before the turn-on');
+  assert.equal(server.state().automations.autoTowers.status, 'disabled', 'the last step reports it stopped');
+});
+
+test('class: every scenario with a second account switches to a different account and leaves a saved reference behind', () => {
+  let checked = 0;
+  for (const [id, file] of files) {
+    if (!file.alternate) continue;
+    checked += 1;
+    const built = build(id);
+    const alternate = scenario.mergePatch(built.state, file.alternate);
+    assert.notEqual(scenario.ACCOUNT_KEY_FOR(alternate), built.accountKey, `${id}: the second account is another account/world`);
+    for (const seed of built.storage) {
+      if (seed.key.includes('.draft.v1.') || seed.key.includes('.goal.v1.')) assert.ok(seed.key.includes(built.accountKey), `${id}: ${seed.key} belongs to the first account`);
+    }
+    const referenced = Object.keys(built.configuration.sections['automation.autoTowers']?.castles ?? {});
+    assert.ok(referenced.some((castleId) => alternate.castles[castleId] === undefined), `${id}: a saved castle is missing from the second account`);
+  }
+  assert.ok(checked >= 2);
+});
+
+test('account-switch-editor: after the switch the saved Towers setup says a castle is not in the other world', () => {
+  const built = build('account-switch-editor');
+  const alternate = scenario.mergePatch(built.state, files.get('account-switch-editor').alternate);
+  assert.deepEqual(Object.keys(built.configuration.sections['automation.autoTowers'].castles).sort(), ['4101', '4103']);
+  const before = report(built, 'autoTowers').checks.find((check) => check.id === 'enabled-castles');
+  assert.equal(before.state, 'valid', 'both saved castles exist in the first account');
+  const after = report({ ...built, state: alternate }, 'autoTowers').checks.find((check) => check.id === 'enabled-castles');
+  assert.equal(after.state, 'blocked');
+  assert.equal(after.messageKey, 'setupReadiness.castlesNotInWorld');
+  assert.equal(after.params.count, 1);
+  assert.equal(after.fix, 'settings');
+  assert.match(messages['setupReadiness.castlesNotInWorld'], /not in this account or world\. Reselect or disable/);
+});
+
+test('disclosure-matrix: Auto Khan with a required rage booster and none active is blocked with a Fix into settings', () => {
+  const built = build('disclosure-matrix');
+  const state = served(built);
+  assert.ok(state.market.boostersObservedAt, 'the booster snapshot has been observed');
+  assert.equal(state.market.boosters?.['27'], undefined, 'and no rage booster is active');
+  const check = report(built, 'autoKhan').checks.find((entry) => entry.id === 'rage-booster');
+  assert.equal(check?.state, 'blocked');
+  assert.equal(check?.fix, 'settings');
 });

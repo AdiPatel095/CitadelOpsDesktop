@@ -18,7 +18,7 @@
     "dock: Candidate <short SHA>"
   ],
   "expect": [
-    "Shortage lines name the castle and unit ('Castle has 0 of 1 ...'); the commander panel shows one commander shared by two features ('Also: ...'); a saved castle that is not in this world is named and asks to reselect.",
+    "Auto Towers reports '1 troop or tool type in this setup is not stationed in the source castle.'; the commander panel shows one commander shared by two features ('Also: ...'); a saved castle that is not in this world is named and asks to reselect.",
     "Observation: a commander toggled off in explicit-list mode can still show FREE. Record whether FREE reads as 'will be used'."
   ],
   "patch": {

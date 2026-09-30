@@ -18,7 +18,7 @@
   "expect": [
     "Towers castle cards show stationed stock; the short castle is named without the setup being called blocked.",
     "Food Balance rows show Donor / Below reserve / Not observed and a 'Last checked' column; 'Last known' appears only where the connection is not current.",
-    "A Fix into a collapsed Advanced group expands it and focuses the control; collapsed groups show summaries."
+    "Collapsed Advanced groups show summaries (the Fix-into-a-collapsed-group demo is Auto Khan in disclosure-matrix)."
   ],
   "patch": {
     "config": {

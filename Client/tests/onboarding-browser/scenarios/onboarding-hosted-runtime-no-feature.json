@@ -17,7 +17,7 @@
   ],
   "expect": [
     "Connected is done; Required choices saved is next; Turned on is not offered yet.",
-    "Hosted: the repair panel offers no runtime action and says 'A hosted runtime is running for this account.'"
+    "Hosted: this scenario checks the Account Center card (ready, running) and the checklist. The running-runtime panel text is checked on zero-castles or stale-data-awaiting-baseline, where the repair panel can be opened."
   ],
   "hostedOnly": "Hosted Account Center shows the fictional 'Demo Keep' account with the three-way copy (Start the hosted runtime / Turn on <Feature> / First result); the Add-account form is never opened.",
   "hostedAccount": {

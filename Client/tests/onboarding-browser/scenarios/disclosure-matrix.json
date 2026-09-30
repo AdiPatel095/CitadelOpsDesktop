@@ -34,7 +34,8 @@
   ],
   "expect": [
     "Every editor shows Essentials first; each Advanced group is collapsed with a summary stating its consequential values and a 'N custom values' badge.",
-    "Consequential values (paid travel, time skips, Ruby permissions, demolition, custom timing) are visible in the collapsed summaries."
+    "Consequential values (paid travel, time skips, Ruby permissions, demolition, custom timing) are visible in the collapsed summaries.",
+    "Fix into a collapsed Advanced group: Auto Khan requires an active rage booster and none is active, so 'No Khan rage points booster is active' is blocked with a Fix; pressing it expands Auto Khan's collapsed 'Stop limits' group and focuses the control."
   ],
   "patch": {
     "config": {
@@ -59,7 +60,8 @@
         "minimumRemainingSec": 600,
         "maxRageChain": 3,
         "nomadPointThreshold": 5000,
-        "openGateProtection": true
+        "openGateProtection": true,
+        "requireActiveRageBooster": true
       },
       "automation.autoBeriWorld": {
         "version": 1,
@@ -255,6 +257,11 @@
       "automation.autoEquipmentCleanup": {
         "version": 1,
         "intervalMinutes": 15
+      }
+    },
+    "state": {
+      "market": {
+        "boostersObservedAt": "@now-5m"
       }
     }
   },

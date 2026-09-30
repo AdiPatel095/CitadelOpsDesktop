@@ -15,7 +15,7 @@
     "dock: Candidate <short SHA>"
   ],
   "expect": [
-    "The donor lines say 'waiting/unavailable' with the reason; a donor that is not in the world is named; nothing is called blocked while data is only missing."
+    "Storm says '1 donor castle is not in this account or world. Choose donors again.' (the only donor line it emits); nothing is called blocked while data is only missing."
   ],
   "patch": {
     "state": {

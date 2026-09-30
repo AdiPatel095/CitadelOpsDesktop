@@ -80,3 +80,18 @@ test('fixtures use fictional names only: the realm, the accounts and the worlds'
   for (const name of ['Preview Commander', 'demo-world', 'Stonehaven', 'Ironwatch Pact']) assert.ok(realm.includes(name), name);
   assert.match(realm, /fixture:\/\/synthetic-world/);
 });
+
+test('the guard lets the dev server\'s own hot-reload sockets through and nothing else; reset clears only citadelops keys', async () => {
+  const guard = code(await read('networkGuard.ts'));
+  assert.match(guard, /protocols\.some\(\(protocol\) => protocol === 'vite-hmr' \|\| protocol === 'vite-ping'\)/, 'only Vite\'s two protocols');
+  assert.match(guard, /new URL\(url, window\.location\.href\)\.host === window\.location\.host/, 'and only on this page\'s own host');
+  assert.match(guard, /isDevServerSocket\(url, protocols\)\) return Reflect\.construct\(target, args\)/);
+  const sockets = guard.slice(guard.indexOf('window.WebSocket = new Proxy'), guard.indexOf('if (typeof window.EventSource'));
+  assert.ok(sockets.indexOf('options.socket?.(url)') < sockets.indexOf('isDevServerSocket(url, protocols)') && sockets.indexOf('isDevServerSocket(url, protocols)') < sockets.indexOf('record(`WebSocket'), 'the fixture socket first, then the dev server, then refusal');
+  const main = code(await read('main.tsx'));
+  assert.doesNotMatch(main, /sessionStorage\.clear\(\)/, 'reset never clears keys the preview did not write');
+  assert.match(main, /Object\.keys\(window\.sessionStorage\)\) if \(key\.startsWith\('citadelops'\)\)/);
+  const server = code(await read('fixtureServer.ts'));
+  assert.match(server, /route\.split\('\?'\)\[0\] === '\/game-data\/localize'\) return this\.handleLocalize/, 'the localize POST is routed before non-GET requests are refused');
+  assert.match(server, /\/automations\/auto-storm\/troop-cap-preview/);
+});

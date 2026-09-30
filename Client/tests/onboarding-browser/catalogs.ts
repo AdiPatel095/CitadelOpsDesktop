@@ -72,21 +72,21 @@ export const DEFAULT_CATALOG_ROWS: Readonly<Record<string, Row[]>> = {
     { wodID: 7, name: 'toolsmith', type: 'toolsmith', level: 1 },
   ],
   resources: [
-    { wodID: 1, name: 'Wood', assetName: 'Wood', JSONKey: 'W' },
-    { wodID: 2, name: 'Stone', assetName: 'Stone', JSONKey: 'S' },
-    { wodID: 3, name: 'Food', assetName: 'Food', JSONKey: 'F' },
-    { wodID: 4, name: 'Coins', assetName: 'Coins', JSONKey: 'C1' },
+    { wodID: 1, resourceID: 1, name: 'Wood', assetName: 'Wood', JSONKey: 'W' },
+    { wodID: 2, resourceID: 2, name: 'Stone', assetName: 'Stone', JSONKey: 'S' },
+    { wodID: 3, resourceID: 3, name: 'Food', assetName: 'Food', JSONKey: 'F' },
+    { wodID: 4, resourceID: 4, name: 'Coins', assetName: 'Coins', JSONKey: 'C1' },
   ],
   currencies: [
     { currencyID: 1, Name: 'C1', assetName: 'C1' },
     { currencyID: 2, Name: 'C2', assetName: 'C2' },
   ],
   kingdoms: [
-    { kingdomID: 0, kingdomName: 'Great Empire' },
-    { kingdomID: 1, kingdomName: 'Everwinter Glacier' },
-    { kingdomID: 2, kingdomName: 'Burning Sands' },
-    { kingdomID: 3, kingdomName: 'Fire Peaks' },
-    { kingdomID: 4, kingdomName: 'Storm Islands' },
+    { kingdomID: 0, kID: 0, kingdomName: 'Great Empire' },
+    { kingdomID: 1, kID: 1, kingdomName: 'Everwinter Glacier' },
+    { kingdomID: 2, kID: 2, kingdomName: 'Burning Sands' },
+    { kingdomID: 3, kID: 3, kingdomName: 'Fire Peaks' },
+    { kingdomID: 4, kID: 4, kingdomName: 'Storm Islands' },
   ],
   // Event difficulties: events 72/80 (Nomad, Samurai) and 71/103 (Foreign Lords, Bloodcrows).
   eventAutoScalingDifficultyTypes: [

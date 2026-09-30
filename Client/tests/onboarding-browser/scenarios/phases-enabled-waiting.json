@@ -17,7 +17,7 @@
   ],
   "expect": [
     "Before you start reads Ready; Start writes only the saved switch; the row then says 'On, waiting' with the game's own detail.",
-    "Advance runtime 1: Waiting; 2: Running (in-flight count); 3: a first attributed receipt 'Simulated: attack on tower 12' and the first-result card confirms it, labelled as simulated."
+    "Advance runtime 1: Waiting; 2: Running (in-flight count); 3: a first attributed receipt 'Simulated: attack on tower 12' and the first-result card confirms it, labelled as simulated; 4: after you press Stop, the game reports it stopped and the phase reads Stopped."
   ],
   "patch": {
     "config": {
@@ -94,9 +94,9 @@
             "summary": "Simulated: attack on tower 12"
           },
           "completedStepIndexes": [],
-          "submittedAt": "@now-1m",
+          "submittedAt": "@now",
           "completedAt": null,
-          "startedAt": "@now-1m"
+          "startedAt": "@now"
         }
       ]
     },
@@ -132,10 +132,24 @@
           "completedStepIndexes": [
             0
           ],
-          "submittedAt": "@now-1m",
-          "completedAt": "@now-30s"
+          "submittedAt": "@now",
+          "completedAt": "@now"
         }
       ]
+    },
+    {
+      "label": "The game reports it stopped",
+      "state": {
+        "automations": {
+          "autoTowers": {
+            "id": "autoTowers",
+            "enabled": false,
+            "status": "disabled",
+            "detail": "Stopped: automation is off in your saved settings",
+            "updatedAt": "@now"
+          }
+        }
+      }
     }
   ],
   "columns": [

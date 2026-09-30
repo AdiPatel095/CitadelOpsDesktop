@@ -134,6 +134,15 @@ export class FixtureServer {
       this.record('intent', `cancel ${route.split('/')[2]}`);
       return json({ id: route.split('/')[2], cancelled: false });
     }
+    // The client asks for names with a POST that reads (`{ keys }`), whatever the method says.
+    if (route.split('?')[0] === '/game-data/localize') return this.handleLocalize(route, body);
+    if (route === '/automations/auto-storm/troop-cap-preview' && verb === 'POST') {
+      this.record('scenario', 'Storm troop-cap preview answered with synthetic numbers');
+      return json({
+        available: true, maximumTroops: 120_000, troopsPerAttack: 40_000, minimumTroops: 20_000, baselineTroops: 100_000,
+        capBasis: 'baseline', detail: 'Simulated: sample troop numbers, not read from a game.',
+      });
+    }
     if (verb !== 'GET') {
       this.record('blocked', `${verb} ${route}: no fixture route (nothing was sent)`);
       return error(501, 'preview_unavailable', 'Simulated preview: this action is not available in the preview.');
@@ -141,10 +150,18 @@ export class FixtureServer {
     return this.handleRead(route);
   }
 
+  /** Names for the keys asked for (`<name>` and `<name>_name` are both held); a locale other than English falls back. */
+  private handleLocalize(route: string, body: unknown): Response {
+    const requested = new URLSearchParams(route.split('?')[1] ?? '').get('locale') ?? 'en';
+    const keys = isRecord(body) && Array.isArray(body.keys) ? body.keys.filter((key): key is string => typeof key === 'string') : Object.keys(LOCALIZED);
+    const values: Record<string, string> = {};
+    for (const key of keys) if (Object.prototype.hasOwnProperty.call(LOCALIZED, key)) values[key] = LOCALIZED[key];
+    return json({ values, locale: { requestedLocale: requested, resolvedLocale: 'en', fallback: requested !== 'en' } });
+  }
+
   private handleRead(route: string): Response {
     const path = route.split('?')[0];
     if (path === '/game-data') return json(catalogManifest());
-    if (path === '/game-data/localize') return json({ values: LOCALIZED, locale: { resolvedLocale: 'en' } });
     if (path.startsWith('/game-data/')) return json(catalogFor(decodeURIComponent(path.slice('/game-data/'.length)), this.built.catalogRows));
     if (path === '/locales') return json({ locales: [{ code: 'en' }] });
     if (path === '/update') return json({ currentVersion: '0.0.0-preview', latestVersion: '0.0.0-preview', available: false, installSupported: false, status: 'current', progress: 0, restartRequired: false, checkedAt: new Date(this.now()).toISOString() });
@@ -167,7 +184,8 @@ export class FixtureServer {
 
   private handleIntent(name: string, body: unknown): Response {
     const args = isRecord(body) && isRecord(body.arguments) ? body.arguments : {};
-    this.record('intent', `${name}${Object.keys(args).length ? ` ${JSON.stringify(args)}` : ''} (recorded, not sent)`);
+    const asked = isRecord(body) && typeof body.actor === 'string' ? body.actor : 'ui';
+    this.record('intent', `${name}${Object.keys(args).length ? ` ${JSON.stringify(args)}` : ''} (actor ${asked}; recorded, not sent)`);
     if (name === 'session.start' || name === 'session.reconnect') this.startBot();
     else if (name === 'session.stop') this.setSessionMode('disconnected');
     const at = new Date(this.now()).toISOString();

@@ -25,7 +25,7 @@ const file = scenarios.find((entry) => entry.id === params.get('scenario')) ?? s
 const clearPreviewStorage = () => {
   try {
     for (const key of Object.keys(window.localStorage)) if (key.startsWith('citadelops')) window.localStorage.removeItem(key);
-    window.sessionStorage.clear();
+    for (const key of Object.keys(window.sessionStorage)) if (key.startsWith('citadelops')) window.sessionStorage.removeItem(key);
   } catch { /* storage unavailable: the scenario starts as loaded */ }
 };
 if (params.get('reset') === '1') {

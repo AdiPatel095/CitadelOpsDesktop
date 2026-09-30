@@ -17,7 +17,8 @@
     "dock: Candidate <short SHA>"
   ],
   "expect": [
-    "Repair names the typed cause ('The game says this account does not play on the saved world...'); an untyped rejection would list both checks and never say 'wrong world'."
+    "Repair names the typed cause ('The game says this account does not play on the saved world...'); an untyped rejection would list both checks and never say 'wrong world'.",
+    "Hosted: the panel still says 'A hosted runtime is running for this account.' because the runtime is up; only the game login was rejected."
   ],
   "patch": {
     "state": {

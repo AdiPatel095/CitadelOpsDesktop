@@ -16,7 +16,7 @@
     "dock: Candidate <short SHA>"
   ],
   "expect": [
-    "The open editor re-captures its baseline for the new account; saved castle references that are not in the new world read 'Saved castle #... (not in this account or world)' and ask to reselect; nothing is cleared automatically."
+    "Open Auto Towers, then press Switch account: saved castles that are not in the new world (Ashford Keep) read '1 enabled castle is not in this account or world. Reselect or disable it.'; the open editor re-captures its baseline; nothing is cleared automatically."
   ],
   "patch": {
     "config": {
@@ -31,6 +31,12 @@
         "maximumDailyTimeSkips": 0,
         "castles": {
           "4101": {
+            "enabled": true,
+            "radius": 15,
+            "unitId": 2,
+            "maidenOnly": false
+          },
+          "4103": {
             "enabled": true,
             "radius": 15,
             "unitId": 2,

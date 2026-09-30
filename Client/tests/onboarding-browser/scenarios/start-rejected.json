@@ -16,7 +16,7 @@
   ],
   "expect": [
     "Turning it on opens 'Start with unresolved setup?' listing the blocked check, with Fix first (default) and Start anyway; Fix first returns to the row and writes nothing.",
-    "Start anyway: the write is rejected once and the row stays off with 'could not be turned on' and a Retry that succeeds."
+    "Start anyway: the first write is rejected and the failure line offers Start anyway again; the second write succeeds and the row turns on."
   ],
   "fail": "start",
   "patch": {

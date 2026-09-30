@@ -143,6 +143,8 @@ test('runtime steps advance a scenario and Start Bot restores a disconnected fir
   assert.ok(server.operations().some((entry) => entry.id === 'op-sim-running'));
   assert.ok(server.advance());
   assert.ok(server.operations().some((entry) => entry.id === 'op-sim-first' && /^Simulated: /.test(entry.plan.summary)));
+  assert.ok(server.advance(), 'the game reports it stopped');
+  assert.equal(server.state().automations.autoTowers.status, 'disabled');
   assert.equal(server.advance(), false);
 
   const first = new FixtureServer({ file: scenarios.find(({ data }) => data.id === 'onboarding-disconnected-first-use').data, session: 'disconnected', nowMs: () => NOW });
@@ -180,4 +182,46 @@ test('hosted account blocks are well formed and agree with the session a scenari
     if (data.hostedAccount) assert.doesNotMatch(JSON.stringify(data.hostedAccount), /token|password|secret/i);
   }
   assert.ok(blocks >= 8, `${blocks} scenarios describe their hosted account`);
+});
+
+test('class: every non-GET route the walkthrough issues is answered, nothing the client sends at load is blocked', async () => {
+  const server = new FixtureServer({ file: scenarios.find(({ data }) => data.id === 'new-user').data, nowMs: () => NOW });
+  const ok = async (path, method, body) => { const response = await server.handle(path, method, body); assert.equal(response.status, 200, `${method} ${path}`); return response.json(); };
+  const names = await ok('/runtime/accounts/x/api/v2/game-data/localize', 'POST', { keys: [Object.keys(catalogs.LOCALIZED)[0], 'not-a-key'] });
+  assert.deepEqual(Object.keys(names.values), [Object.keys(catalogs.LOCALIZED)[0]], 'only the keys asked for that exist');
+  assert.deepEqual(names.locale, { requestedLocale: 'en', resolvedLocale: 'en', fallback: false });
+  const german = await ok('/api/v2/game-data/localize?locale=de', 'POST', { keys: [Object.keys(catalogs.LOCALIZED)[0]] });
+  assert.deepEqual(german.locale, { requestedLocale: 'de', resolvedLocale: 'en', fallback: true });
+  const cap = await ok('/api/v2/automations/auto-storm/troop-cap-preview', 'POST', { settings: {} });
+  assert.equal(cap.available, true);
+  for (const field of ['maximumTroops', 'troopsPerAttack', 'minimumTroops', 'baselineTroops']) assert.equal(typeof cap[field], 'number', field);
+  assert.equal(cap.capBasis, 'baseline');
+  assert.match(cap.detail, /^Simulated: /);
+  await ok('/api/v2/intents/session.start', 'POST', { actor: 'ui' });
+  await ok('/api/v2/operations/op-1/cancel', 'POST', {});
+  const config = await ok('/api/v2/config', 'GET');
+  await ok('/api/v2/config/automation.enabled', 'PUT', { value: { auto_towers: true }, expectedRevision: config.revision });
+  // What the production client asks for when a page loads.
+  const manifest = await ok('/api/v2/game-data', 'GET');
+  for (const entry of manifest.catalogs ?? []) await ok(`/api/v2/game-data/${entry.name}`, 'GET');
+  for (const path of ['/state', '/operations', '/intents', '/config', '/update', '/diagnostics', '/telemetry/attack-rates', '/browsers', '/session/game-servers', '/session/background-login', '/locales']) await ok(`/api/v2${path}`, 'GET');
+  assert.deepEqual(server.log.filter((entry) => entry.kind === 'blocked'), [], 'a page load leaves nothing blocked');
+  // Unknown writes are still refused.
+  assert.equal((await server.handle('/api/v2/somewhere/else', 'POST', {})).status, 501);
+  assert.equal(server.log.filter((entry) => entry.kind === 'blocked').length, 1);
+});
+
+test('the intent log line names the actor the client asked for', async () => {
+  const server = new FixtureServer({ file: scenarios.find(({ data }) => data.id === 'new-user').data, nowMs: () => NOW });
+  await server.handle('/api/v2/intents/attack.launch', 'POST', { actor: 'automation:autoTowers', arguments: {} });
+  assert.match(server.log.at(-1).detail, /actor automation:autoTowers; recorded, not sent/);
+});
+
+test('class: every catalog row carries the id field the production loader reads', () => {
+  const TABLE = { units: 'wodID', buildings: 'wodID', resources: 'resourceID', currencies: 'currencyID', equipments: 'equipmentID', gems: 'gemID', effects: 'effectID', effecttypes: 'effectTypeID', kingdoms: 'kID' };
+  for (const [name, field] of Object.entries(TABLE)) {
+    const rows = catalogs.DEFAULT_CATALOG_ROWS[name];
+    assert.ok(Array.isArray(rows) && rows.length > 0, `${name} has rows`);
+    for (const row of rows) assert.equal(typeof row[field], 'number', `${name} row ${JSON.stringify(row).slice(0, 60)} carries ${field}`);
+  }
 });

@@ -17,6 +17,12 @@ export interface NetworkGuardOptions {
 
 const REFUSED = 'Simulated preview: network access is disabled.';
 
+/** Vite's HMR / ping socket: same host as the page and one of its two protocols. Nothing else qualifies. */
+function isDevServerSocket(url: string, protocols: string[]): boolean {
+  if (!protocols.some((protocol) => protocol === 'vite-hmr' || protocol === 'vite-ping')) return false;
+  try { return new URL(url, window.location.href).host === window.location.host; } catch { return false; }
+}
+
 export function installNetworkGuard(options: NetworkGuardOptions): void {
   const { record } = options;
   const realFetch = window.fetch.bind(window);
@@ -40,10 +46,13 @@ export function installNetworkGuard(options: NetworkGuardOptions): void {
   }) as typeof window.fetch;
 
   window.WebSocket = new Proxy(window.WebSocket, {
-    construct(_target, args: [string | URL, (string | string[])?]) {
+    construct(target, args: [string | URL, (string | string[])?]) {
       const url = String(args[0]);
       const answered = options.socket?.(url) ?? null;
       if (answered) return answered as WebSocket;
+      // The development server's own hot-reload and ping sockets (same host, its two protocols) reach only that server.
+      const protocols = args[1] === undefined ? [] : Array.isArray(args[1]) ? args[1] : [args[1]];
+      if (isDevServerSocket(url, protocols)) return Reflect.construct(target, args) as WebSocket;
       record(`WebSocket ${url}`);
       throw new DOMException(REFUSED, 'SecurityError');
     },

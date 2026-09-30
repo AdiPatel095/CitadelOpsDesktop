@@ -15,7 +15,7 @@
     "dock: Candidate <short SHA>"
   ],
   "expect": [
-    "The switch keeps following the saved value (still on) with the failure and Retry; Retry succeeds and the phase becomes Stopped."
+    "Stop fails once: the switch keeps following the saved value (still on) with the failure and Retry. Retry succeeds and the saved switch turns off; the row keeps showing the last game report until you press Advance runtime, which applies 'The game reports it stopped' and the phase becomes Stopped."
   ],
   "fail": "stop",
   "patch": {
@@ -64,5 +64,21 @@
   ],
   "columns": [
     "phases"
+  ],
+  "runtime": [
+    {
+      "label": "The game reports it stopped",
+      "state": {
+        "automations": {
+          "autoTowers": {
+            "id": "autoTowers",
+            "enabled": false,
+            "status": "disabled",
+            "detail": "Stopped: automation is off in your saved settings",
+            "updatedAt": "@now"
+          }
+        }
+      }
+    }
   ]
 }
