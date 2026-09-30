@@ -47,15 +47,25 @@ func TestProtectedProcessDiagnosticsPrivacy(t *testing.T) {
 			}
 		}
 		var body struct {
-			Process         struct{ Scope string }
-			Telemetry       map[string]any
-			TelemetryStores int
+			Process                  struct{ Scope string }
+			Telemetry                map[string]any
+			TelemetryStores          int
+			StatePersistence         map[string]any
+			StatePersistenceRuntimes int
 		}
 		if err := json.Unmarshal(w.Body.Bytes(), &body); err != nil {
 			t.Fatal(err)
 		}
 		if body.Process.Scope != "process" || body.TelemetryStores != 0 {
 			t.Fatal("wrong aggregation scope")
+		}
+		if body.StatePersistenceRuntimes != 1 || body.StatePersistence == nil {
+			t.Fatal("missing state persistence aggregation")
+		}
+		for _, name := range []string{"flushes", "fileSyncs", "directorySyncs", "skippedVolatileWrites"} {
+			if _, ok := body.StatePersistence[name].(float64); !ok {
+				t.Fatalf("statePersistence.%s is not numeric", name)
+			}
 		}
 		// The fields stay in the response (rollout gates read them) and are zero.
 		if body.Telemetry == nil {

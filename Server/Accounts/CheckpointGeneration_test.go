@@ -57,9 +57,9 @@ func TestDelayedDrainCheckpointCannotUnregisterReplacement(t *testing.T) {
 	}
 	defer func() {
 		unblock()
-		ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
-		defer cancel()
-		_ = supervisor.Close(ctx)
+		if err := supervisor.Close(context.Background()); err != nil {
+			t.Errorf("close test supervisor: %v", err)
+		}
 	}()
 	now := time.Now()
 	placement := &PrivateMetrics.Placement{CellID: "cell", TenantID: "tenant", RuntimeID: "alpha", PlacementEpoch: 1, DesiredRevision: 1, LeaseExpiresAt: now.Add(time.Minute), Grant: PrivateMetrics.Grant{Token: strings.Repeat("x", 48), ExpiresAt: now.Add(time.Minute)}}
@@ -77,12 +77,12 @@ func TestDelayedDrainCheckpointCannotUnregisterReplacement(t *testing.T) {
 	// Supported parent cancellation can finish old application teardown while
 	// RemoveAccount's independent checkpoint request remains blocked.
 	cancelParent()
-	waitCtx, cancelWait := context.WithTimeout(t.Context(), 2*time.Second)
-	defer cancelWait()
-	if err := old.Wait(waitCtx); err != nil {
+	// Cancellation starts the final flush immediately; wait for it to finish
+	// before reusing the profile rather than imposing a wall-clock I/O budget.
+	if err := old.Wait(t.Context()); err != nil {
 		t.Fatal(err)
 	}
-	if err := supervisor.RemoveAccount(waitCtx, "alpha"); err != nil {
+	if err := supervisor.RemoveAccount(t.Context(), "alpha"); err != nil {
 		t.Fatal(err)
 	}
 	replacement, err := supervisor.AddAccount(t.Context(), AccountConfig{ID: "alpha", BackgroundOnly: true, Transport: Session.NewUnavailableTransport()})
