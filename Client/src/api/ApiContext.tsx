@@ -9,6 +9,7 @@ import {
   type ReactNode,
 } from 'react';
 import { APIError, CitadelAPI, OperationError } from './CitadelClient';
+import { shouldToastConfigurationError } from './configurationErrorToast';
 import { OperationFailureNotificationCoordinator, RubyUpgradeNotificationCoordinator } from './OperationNotifications';
 import type {
   APIConnectionStatus,
@@ -83,8 +84,8 @@ interface APIContextValue {
 }
 
 export type ConfigurationUpdateOptions =
-	| { expectedValue: unknown; expectedRevision?: never }
-	| { expectedRevision: number; expectedValue?: never };
+	| { expectedValue: unknown; expectedRevision?: never; conflictShownByEditor?: boolean }
+	| { expectedRevision: number; expectedValue?: never; conflictShownByEditor?: boolean };
 
 const APIContext = createContext<APIContextValue | undefined>(undefined);
 
@@ -412,7 +413,9 @@ export function APIProvider({ children }: { children: ReactNode }) {
 				// Preserve the original conflict; the regular snapshot stream can retry the refresh.
 			}
 		}
-		Notifications.error(errorMessage(requestError));
+		if (shouldToastConfigurationError(requestError, options?.conflictShownByEditor)) {
+			Notifications.error(errorMessage(requestError));
+		}
 		throw requestError;
 	  }
 	};
