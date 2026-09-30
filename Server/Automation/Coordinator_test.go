@@ -327,8 +327,9 @@ func TestCoordinatorUnchangedEarlyStateWakeDoesNotSlideDeadlineOrReviseState(t *
 	coordinator.evaluate(t.Context(), runtime, make(chan operationResult, 1))
 	first := state.Snapshot()
 	firstAutomation := first.Automations[policy.ID()]
-	if firstAutomation.NextCheckAt == nil || !firstAutomation.NextCheckAt.Equal(base) {
-		t.Fatalf("initial passive deadline = %+v, want %s", firstAutomation.NextCheckAt, base)
+	// The recorded next-check time is rounded up to the minute (CIT-44); the coordinator's own deadline stays exact.
+	if firstAutomation.NextCheckAt == nil || !firstAutomation.NextCheckAt.Equal(*roundNextCheck(&base)) {
+		t.Fatalf("initial passive deadline = %+v, want %s", firstAutomation.NextCheckAt, *roundNextCheck(&base))
 	}
 
 	event, err := state.ApplyComponents(State.Components(State.ComponentPlayer), func(gameState *State.GameState) ([]string, bool, error) {
@@ -372,7 +373,7 @@ func TestCoordinatorUnchangedEarlyStateWakeDoesNotSlideDeadlineOrReviseState(t *
 	}
 	changedAutomation := afterChangedEvaluation.Automations[policy.ID()]
 	if changedAutomation.Detail != "One task is ready" || changedAutomation.Metrics["ready"] != 1 ||
-		changedAutomation.NextCheckAt == nil || !changedAutomation.NextCheckAt.Equal(base.Add(2*time.Hour)) {
+		changedAutomation.NextCheckAt == nil || !changedAutomation.NextCheckAt.Equal(*roundNextCheck(&[]time.Time{base.Add(2 * time.Hour)}[0])) {
 		t.Fatalf("changed passive decision was not published immediately: %+v", changedAutomation)
 	}
 	if policy.calls != 3 {
