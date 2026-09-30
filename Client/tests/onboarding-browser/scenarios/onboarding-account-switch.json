@@ -50,8 +50,8 @@
         "draft": {
           "version": 4,
           "checkIntervalSec": 30,
-          "mapRefreshIntervalSec": 900,
-          "dailyAttackLimit": 0,
+          "mapRefreshIntervalSec": 1800,
+          "dailyAttackLimit": 5,
           "horseTravelBoostId": -1,
           "useAdvisor": false,
           "autoActivateAdvisor": false,
@@ -59,7 +59,7 @@
           "castles": {
             "4101": {
               "enabled": true,
-              "radius": 15,
+              "radius": 12,
               "unitId": 2,
               "maidenOnly": false
             }

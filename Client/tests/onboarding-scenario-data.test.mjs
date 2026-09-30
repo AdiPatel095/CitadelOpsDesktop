@@ -22,6 +22,7 @@ const { stationCopyDescriptor } = await load('/src/settings/copy/features/statio
 const { birdCopyDescriptor, birdCandidateFlags } = await load('/src/settings/copy/features/bird.ts');
 const { recruitCopyDescriptor, toolCopyDescriptor } = await load('/src/settings/copy/features/queueProduction.ts');
 const draftRecovery = await load('/src/settings/DraftRecovery.ts');
+const { parseAutoTowerClientState } = await load('/src/settings/AutoTowerClientState.ts');
 const { movementViewFromState } = await load('/src/Movement/types/MovementState.ts');
 const { messages } = await load('/src/i18n/messages.ts');
 
@@ -317,4 +318,50 @@ test('merge patch: null deletes, = replaces, tokens resolve', () => {
   assert.deepEqual(scenario.mergePatch({ castles: { 1: 1, 2: 2 } }, { '=castles': {} }), { castles: {} });
   assert.equal(scenario.resolveTokens('@now-90m', NOW, 'k'), '2026-09-29T10:30:00.000Z');
   assert.equal(scenario.resolveTokens('a.@accountKey.b', NOW, '1:w'), 'a.1:w.b');
+});
+
+test('recorded drafts are read back by the real recovery code: Restore or Discard, a visible in-range difference, and Compare when settings changed', () => {
+  const store = new Map();
+  const storage = { getItem: (key) => store.get(key) ?? null, setItem: (key, value) => { store.set(key, value); }, removeItem: (key) => { store.delete(key); } };
+  const SECTION = 'automation.autoTowers';
+  let checked = 0;
+  for (const [id, file] of files) {
+    const built = build(id);
+    const seeds = built.storage.filter((seed) => seed.key.includes('.draft.v1.'));
+    if (file.storage === undefined || seeds.length === 0) continue;
+    checked += 1;
+    store.clear();
+    for (const seed of seeds) storage.setItem(seed.key, seed.value);
+    assert.equal(draftRecovery.DRAFT_STORAGE_PREFIX, 'citadelops.draft.v1.');
+    // `readDraft` validates the record (version, section, account, digest, age): a record it drops is invisible to the player.
+    const entry = draftRecovery.readDraft(built.accountKey, SECTION, NOW, storage);
+    assert.ok(entry, `${id}: the recorded draft is accepted by readDraft (not dropped silently)`);
+    const saved = built.configuration.sections[SECTION];
+    // The hook compares against the value its editor holds when nothing changed: the parsed saved section.
+    const loaded = { draftDigest: draftRecovery.draftDigest(parseAutoTowerClientState(saved), undefined), savedDigest: draftRecovery.stableDigest(saved) };
+    assert.equal(entry.baseDigest, loaded.savedDigest, `${id}: the seeded baseDigest equals the digest the hook computes for the saved section`);
+    assert.equal(draftRecovery.classifyRecovered(entry, loaded), 'baseline-unchanged', `${id}: Restore and Discard, not Compare and not silently dropped`);
+    // A difference the editor can actually show: every changed field survives the parser, so Restore visibly changes the editor.
+    const parsedDraft = parseAutoTowerClientState(entry.draft);
+    const differences = draftRecovery.compareDrafts(parseAutoTowerClientState(saved), parsedDraft);
+    assert.ok(differences.length >= 2, `${id}: the draft differs from the saved settings in at least two visible settings (${differences.map((difference) => difference.path).join(', ')})`);
+    assert.deepEqual(parseAutoTowerClientState(parsedDraft), parsedDraft, `${id}: the draft is already inside the accepted ranges`);
+    // ?draft=changed: the saved settings moved on since the draft was made.
+    const changed = { ...entry, baseDigest: '0:changed' };
+    assert.equal(draftRecovery.classifyRecovered(changed, loaded), 'saved-since', `${id}: Compare first`);
+  }
+  assert.ok(checked >= 2, 'the interrupted-return and account-switch scenarios seed a draft');
+});
+
+test('every browser-storage seed uses a key the product reads', () => {
+  const PREFIXES = ['citadelops.draft.v1.', 'citadelops.goal.v1.', 'citadelops.automation.enabledSince.v1.'];
+  let seeds = 0;
+  for (const [id] of files) {
+    for (const seed of build(id).storage) {
+      seeds += 1;
+      assert.ok(PREFIXES.some((prefix) => seed.key.startsWith(prefix)), `${id}: ${seed.key}`);
+      assert.doesNotMatch(seed.key, /@/, `${id}: no unresolved token in the key`);
+    }
+  }
+  assert.ok(seeds >= 8);
 });

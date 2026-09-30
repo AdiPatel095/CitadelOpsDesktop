@@ -15,7 +15,7 @@
     "dock: Candidate <short SHA>"
   ],
   "expect": [
-    "Reopen Auto Towers: the banner 'You have unsaved changes from ...' with Restore / Discard; Restore only fills the editor and saves nothing.",
+    "Reopen Auto Towers: the banner 'You have unsaved changes from ...' with Restore / Discard; Restore fills the editor with a visibly different draft (radius 12 instead of 15, daily attack limit 5 instead of unlimited) and saves nothing.",
     "Add ?draft=changed to see the 'saved again since then' banner with Compare first."
   ],
   "patch": {
@@ -51,8 +51,8 @@
         "draft": {
           "version": 4,
           "checkIntervalSec": 30,
-          "mapRefreshIntervalSec": 900,
-          "dailyAttackLimit": 0,
+          "mapRefreshIntervalSec": 1800,
+          "dailyAttackLimit": 5,
           "horseTravelBoostId": -1,
           "useAdvisor": false,
           "autoActivateAdvisor": false,
@@ -60,7 +60,7 @@
           "castles": {
             "4101": {
               "enabled": true,
-              "radius": 15,
+              "radius": 12,
               "unitId": 2,
               "maidenOnly": false
             }
