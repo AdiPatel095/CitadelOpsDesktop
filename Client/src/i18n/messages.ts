@@ -663,6 +663,7 @@ export const messages = {
   "draftRecovery.close": "Close",
   "draftRecovery.compareTitle": "Compare recovered changes",
   "draftRecovery.compareIntro": "Restoring puts the recovered values into this editor as unsaved changes. Nothing is saved until you press Save, and saving never starts an automation.",
+  "draftRecovery.compareIntroReappliedCopy": "Restoring these changes replaces the copy you just re-applied in this editor; you can run the copy again afterwards.",
   "draftRecovery.noDifferences": "The recovered changes match the saved settings.",
   "draftRecovery.columnSetting": "Setting",
   "draftRecovery.columnSaved": "Saved now",

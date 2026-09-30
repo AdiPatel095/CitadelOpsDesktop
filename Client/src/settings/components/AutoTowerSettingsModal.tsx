@@ -1,7 +1,7 @@
 import { StopFooter } from '../../components/StopControl';
 import { castleCandidates } from '../copy/candidates';
 import { towersCopyDescriptor } from '../copy/features/towers';
-import { useCastleCopyReplayRun, useCastleCopyReplayState } from '../copy/useCastleCopyReplay';
+import { copyReapplied, genericSaveError, useCastleCopyReplayRun, useCastleCopyReplayState } from '../copy/useCastleCopyReplay';
 import { CastleCopyButton } from './CastleCopyDialog';
 import { useLocale as useStaticLocale } from "../../i18n/LocaleContext";
 import { LocalizedText } from "../../i18n/LocalizedText";
@@ -174,7 +174,7 @@ export const AutoTowerSettingsModal: React.FC<AutoTowerSettingsModalProps> = ({ 
       });
       onClose();
     } catch (error) {
-      setSaveError(error instanceof Error ? error.message : 'Could not save Auto Towers settings.');
+      setSaveError(genericSaveError(error, copyReplay, 'Could not save Auto Towers settings.'));
     } finally {
       setIsSaving(false);
     }
@@ -186,7 +186,7 @@ export const AutoTowerSettingsModal: React.FC<AutoTowerSettingsModalProps> = ({ 
 
   // What the editor holds once its load effect has applied the saved section (every field the draft lists is set from it).
   const loadedTowers = parseAutoTowerClientState(draftSession.sections?.['automation.autoTowers'] ?? defaultAutoTowerClientState());
-  const recovery = useDraftRecovery({ section: 'automation.autoTowers', isOpen, draftSession, draft: { ...parseAutoTowerClientState(draftSession.sections?.['automation.autoTowers']), version: 4, mapRefreshIntervalSec, dailyAttackLimit, horseTravelBoostId, useAdvisor, autoActivateAdvisor, maximumDailyTimeSkips, castles: settings }, loaded: { ...loadedTowers, version: 4 } });
+  const recovery = useDraftRecovery({ section: 'automation.autoTowers', isOpen, draftSession, draft: { ...parseAutoTowerClientState(draftSession.sections?.['automation.autoTowers']), version: 4, mapRefreshIntervalSec, dailyAttackLimit, horseTravelBoostId, useAdvisor, autoActivateAdvisor, maximumDailyTimeSkips, castles: settings }, loaded: { ...loadedTowers, version: 4 }, copyReapplied: copyReapplied(copyReplay) });
 
   return (
     <>

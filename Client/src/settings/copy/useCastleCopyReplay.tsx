@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { APIError } from '../../api/CitadelClient';
 import { LocalizedText } from '../../i18n/LocalizedText';
 import { CastleCopyDialog } from '../components/CastleCopyDialog';
 import { applyCastleCopy, previewCastleCopy, type CastleCopyContext, type CastleCopyDescriptor, type CastleCopySelectionInput } from './castleCopy';
@@ -24,6 +25,18 @@ export interface CastleCopyReplayState {
   setStatus: (value: boolean) => void;
   review: { input: CastleCopySelectionInput; sourceKey: string; empty: boolean } | null;
   setReview: (review: CastleCopyReplayState['review']) => void;
+}
+
+/** The re-applied status line is showing (CIT-77). */
+export function copyReapplied(state: CastleCopyReplayState): boolean { return state.status && state.replay != null; }
+
+/**
+ * The editor's generic save-error line. It returns null for a configuration conflict while a copy is recorded:
+ * the copy-conflict notice, and after re-apply the status line, are then the one message for that event (CIT-77).
+ */
+export function genericSaveError(error: unknown, state: CastleCopyReplayState, fallback: string): string | null {
+  if (state.replay != null && error instanceof APIError && error.code === 'configuration_conflict') return null;
+  return error instanceof Error ? error.message : fallback;
 }
 
 export function useCastleCopyReplayState(): CastleCopyReplayState {
