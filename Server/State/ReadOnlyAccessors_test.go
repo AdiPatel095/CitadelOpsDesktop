@@ -12,7 +12,7 @@ import (
 	"testing"
 )
 
-// This inventory is the commit-B conversion set, against commit A c6e94a6.
+// This inventory is the commit-B conversion set, against rebased commit A 70bc4ba.
 // Existing mutators can have converted read-only source parameters; only that
 // source identifier is protected, not the separate mutable receiver.
 var gameStateReadOnlyConversions = []struct {
@@ -498,36 +498,134 @@ func TestGameStateReadOnlyAccessors(t *testing.T) {
 			if identifier == nil || identifier.Name != conversion.identifier {
 				t.Fatal("converted identifier missing")
 			}
-			rooted := func(expression ast.Expr) bool {
-				root := gameStateGuardRoot(expression)
-				return root != nil && root.Obj == identifier.Obj && root.Name == identifier.Name
+			for _, violation := range gameStateReadOnlyViolations(function.Body, identifier, mutators) {
+				t.Error(violation)
 			}
-			ast.Inspect(function.Body, func(node ast.Node) bool {
-				switch node := node.(type) {
-				case *ast.AssignStmt:
-					for _, left := range node.Lhs {
-						if rooted(left) {
-							t.Error("assignment through read-only identifier")
-						}
+		})
+	}
+}
+
+// Shared by the production-source guard and its mutation regression fixtures.
+func gameStateReadOnlyViolations(body *ast.BlockStmt, identifier *ast.Ident, mutators map[string]bool) []string {
+	var violations []string
+	rooted := func(expression ast.Expr) bool {
+		root := gameStateGuardRoot(expression)
+		return root != nil && root.Obj == identifier.Obj && root.Name == identifier.Name
+	}
+	// Reject aliases at creation rather than attempting incomplete flow tracking.
+	// Scalar field reads and explicit value copies remain allowed; passing the
+	// pointer directly to a read-only call does not create a local alias.
+	alias := func(expression ast.Expr) bool {
+		for {
+			parenthesized, ok := expression.(*ast.ParenExpr)
+			if !ok {
+				break
+			}
+			expression = parenthesized.X
+		}
+		if _, ok := expression.(*ast.Ident); ok {
+			return rooted(expression)
+		}
+		address, ok := expression.(*ast.UnaryExpr)
+		return ok && address.Op == token.AND && rooted(address.X)
+	}
+	ast.Inspect(body, func(node ast.Node) bool {
+		switch node := node.(type) {
+		case *ast.AssignStmt:
+			for _, left := range node.Lhs {
+				if rooted(left) {
+					violations = append(violations, "assignment through read-only identifier")
+				}
+			}
+			for index, right := range node.Rhs {
+				if index < len(node.Lhs) {
+					if name, ok := node.Lhs[index].(*ast.Ident); ok && name.Name == "_" {
+						continue
 					}
-				case *ast.IncDecStmt:
-					if rooted(node.X) {
-						t.Error("increment through read-only identifier")
-					}
-				case *ast.CallExpr:
-					if method, ok := node.Fun.(*ast.SelectorExpr); ok && rooted(method.X) && mutators[method.Sel.Name] {
-						t.Errorf("calls base mutator %s", method.Sel.Name)
-					}
-				case *ast.GoStmt:
-					ast.Inspect(node, func(node ast.Node) bool {
-						if name, ok := node.(*ast.Ident); ok && name.Obj == identifier.Obj && name.Name == identifier.Name {
-							t.Error("goroutine retains read-only identifier")
-						}
-						return true
-					})
+				}
+				if alias(right) {
+					violations = append(violations, "creates pointer alias of read-only identifier")
+				}
+			}
+		case *ast.ValueSpec:
+			for index, value := range node.Values {
+				if index < len(node.Names) && node.Names[index].Name == "_" {
+					continue
+				}
+				if alias(value) {
+					violations = append(violations, "creates pointer alias of read-only identifier")
+				}
+			}
+		case *ast.IncDecStmt:
+			if rooted(node.X) {
+				violations = append(violations, "increment through read-only identifier")
+			}
+		case *ast.CallExpr:
+			if method, ok := node.Fun.(*ast.SelectorExpr); ok && rooted(method.X) && mutators[method.Sel.Name] {
+				violations = append(violations, "calls base mutator "+method.Sel.Name)
+			}
+			if builtin, ok := node.Fun.(*ast.Ident); ok && builtin.Obj == nil && (builtin.Name == "delete" || builtin.Name == "clear") && len(node.Args) > 0 && rooted(node.Args[0]) {
+				violations = append(violations, "builtin mutation through read-only identifier: "+builtin.Name)
+			}
+		case *ast.GoStmt:
+			ast.Inspect(node, func(node ast.Node) bool {
+				if name, ok := node.(*ast.Ident); ok && name.Obj == identifier.Obj && name.Name == identifier.Name {
+					violations = append(violations, "goroutine retains read-only identifier")
 				}
 				return true
 			})
+		}
+		return true
+	})
+	return violations
+}
+
+func TestGameStateReadOnlyGuardMutations(t *testing.T) {
+	cases := []struct {
+		name, body, want string
+	}{
+		{"delete", "delete(gameState.Castles, 1)", "builtin mutation"},
+		{"clear", "clear(gameState.Castles)", "builtin mutation"},
+		{"alias", `alias := gameState; alias.Player.Name = "x"`, "pointer alias"},
+		{"address", `p := &gameState.Player; p.Name = "x"`, "pointer alias"},
+		{"declared alias", `var alias = gameState; alias.Player.Name = "x"`, "pointer alias"},
+		{"assigned alias", `var alias *GameState; alias = (gameState); alias.Player.Name = "x"`, "pointer alias"},
+		{"declared address", `var p = &(gameState.Player); p.Name = "x"`, "pointer alias"},
+		{"parenthesized address", `p := (&gameState.Player); p.Name = "x"`, "pointer alias"},
+		{"nested clear", "clear((gameState.Castles))", "builtin mutation"},
+		{"field write", `gameState.Player.Name = "x"`, "assignment"},
+		{"map write", "gameState.Castles[1] = Castle{}", "assignment"},
+		{"increment", "gameState.Player.ID++", "increment"},
+		{"mutator", "gameState.DeleteCastle(1)", "base mutator"},
+		{"goroutine", "go func(){ _ = gameState }()", "goroutine"},
+		{"read-only call", "MovementOwnedByCurrentPlayer(gameState, movement)", ""},
+		{"discard pointer", "_ = gameState", ""},
+		{"read-only method", "gameState.LookupMovement(1)", ""},
+		{"shadowed builtin", "delete := func(any, int) {}; delete(gameState.Castles, 1)", ""},
+		{"field read", "name := gameState.Player.Name; _ = name", ""},
+		{"owned copy", `owned := *gameState; owned.Player.Name = "x"`, ""},
+		{"shadowed identifier", "{ gameState := &GameState{}; gameState.Player.Name = \"x\" }", ""},
+	}
+	for _, test := range cases {
+		t.Run(test.name, func(t *testing.T) {
+			file, err := parser.ParseFile(token.NewFileSet(), "guard_fixture.go", "package State; func check(gameState *GameState) {"+test.body+"}", 0)
+			if err != nil {
+				t.Fatal(err)
+			}
+			function := file.Decls[0].(*ast.FuncDecl)
+			violations := gameStateReadOnlyViolations(function.Body, function.Type.Params.List[0].Names[0], map[string]bool{"DeleteCastle": true})
+			if test.want == "" {
+				if len(violations) != 0 {
+					t.Fatalf("read-only fixture rejected: %v", violations)
+				}
+				return
+			}
+			for _, violation := range violations {
+				if strings.Contains(violation, test.want) {
+					return
+				}
+			}
+			t.Fatalf("mutation not rejected with %q: %v", test.want, violations)
 		})
 	}
 }
