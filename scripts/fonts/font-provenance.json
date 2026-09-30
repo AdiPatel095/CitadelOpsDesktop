@@ -1,0 +1,33 @@
+{
+  "authorization": "CEO explicitly approved both font downloads, 2026-09-30",
+  "network_download_count": 2,
+  "files": [
+    {
+      "file": "source/fonts/Manrope[wght].ttf",
+      "bytes": 164700,
+      "sha256": "3ae11c49db0455a3cc33e37d380f20fdb8c7f8b41dc07625c177e3d87a9d6ae6",
+      "requested_url": "https://raw.githubusercontent.com/google/fonts/main/ofl/manrope/Manrope%5Bwght%5D.ttf",
+      "git_ref": "main",
+      "google_fonts_commit": null,
+      "commit_status": "UNRESOLVED \u2014 allowed response headers expose no commit; no extra API/network request made",
+      "http_etag": "\"3d03f3bec8684416f330dcd2b43baee4d4e83ede1cf5ee96199fdb054aedb508\"",
+      "http_date": "Wed, 30 Sep 2026 17:05:38 GMT",
+      "response_headers": "source/evidence/manrope-download.headers"
+    },
+    {
+      "file": "source/fonts/OFL.txt",
+      "bytes": 4387,
+      "sha256": "58172e0c0fac2cda8a37b348164bb55e44b0e69051e557e92b1d3f6910141f7b",
+      "requested_url": "https://raw.githubusercontent.com/google/fonts/main/ofl/manrope/OFL.txt",
+      "git_ref": "main",
+      "google_fonts_commit": null,
+      "commit_status": "UNRESOLVED \u2014 allowed response headers expose no commit; no extra API/network request made",
+      "http_etag": "\"b2c22e99fa4b7459229cd7fc9abda00e72443db000714af4e244caba302758b4\"",
+      "http_date": "Wed, 30 Sep 2026 17:06:28 GMT",
+      "response_headers": "source/evidence/manrope-license-download.headers"
+    }
+  ],
+  "checks": "source/evidence/font-checks.json",
+  "embedding": "Unmodified TTF bytes embedded as data URI in self-contained HTML; no conversion, replacement or third download.",
+  "provenance_question": "Supply the google/fonts commit or authorize a separate commit lookup; the two main-branch raw responses cannot establish a commit."
+}

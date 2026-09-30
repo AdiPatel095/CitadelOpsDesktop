@@ -2,7 +2,7 @@ import { defineConfig } from '@playwright/test';
 
 export default defineConfig({
   testDir: './tests/visual',
-  testMatch: ['snapshots.spec.ts', 'copy.spec.ts'],
+  testMatch: ['snapshots.spec.ts', 'copy.spec.ts', 'fonts.spec.ts'],
   timeout: 60_000,
   retries: 0,
   workers: 1,
