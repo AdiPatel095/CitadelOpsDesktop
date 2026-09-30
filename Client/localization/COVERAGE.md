@@ -1,12 +1,12 @@
 # Desktop localization coverage ledger
 
-Status: partial implementation, not a translated release. Baseline: `e77ed022c2f926ae3509527fdabf54dca9e22586`. Current source has **1,890 typed keys: 1,812 custom and 78 official routes**. Each of 25 non-English UI packs contains **304 authored entries**, leaving **1,508 custom keys missing per locale**. Complete authored groups are equipment (63), activity (32), and battle presentation (66), and event/history presentation (41), and automation lane presentation (11 compound templates); those group counts do not certify their entire screens. Native-speaker review remains pending. English fallbacks are not credited as translations; legitimate language-neutral numeric/ID templates preserve their semantics.
+Status: partial implementation, not a translated release. Baseline: `e77ed022c2f926ae3509527fdabf54dca9e22586`. Current source has **2,624 typed keys: 2,546 custom and 78 official routes**. German and Arabic UI packs each contain **1,036 authored entries**, leaving **1,510 custom keys missing** in each. The other 23 non-English packs each contain **306 authored entries**, leaving **2,240 custom keys missing** per locale. Complete authored groups are equipment (63), activity (32), and battle presentation (66), and event/history presentation (41), and automation lane presentation (11 compound templates); those group counts do not certify their entire screens. Native-speaker review remains pending. English fallbacks are not credited as translations; legitimate language-neutral numeric/ID templates preserve their semantics.
 
 Backend catalogs contain 25 complete 329-key packs from approved Backend98 `3f55544cadc758f69154e3e0b9d815b3e983a275` through Frontend63 `93607ec68898e0d4b649a5dee70e8941ed9ed3d4`. Server catalogs contain 228 of 3,181 entries per locale, synchronized from approved runtime PR84 `e0f6bf1e9acdbf676bc26815d240e03ce6157dac`. Its full source lineage, including PR78 ruby notification behavior, is integrated. The strict gate compares the copied English catalog against the actual Server catalog in this checkout, so internally consistent stale copies cannot pass.
 
 ## Source inventory
 
-The latest inventory has **6,696 unreviewed conservative candidates**, 47 source-bound reviewed records and 10,065 structural exclusions. Candidate count is not a count of visible messages: property selectors, raw identity values and other dataflow candidates still need review. Run `npm run check:localization` from Client to regenerate the inventory and exact coverage counts.
+The latest inventory has **6,751 unreviewed conservative candidates**. Source-bound reviewed records and structural exclusions are reported in `source-inventory.json`. Candidate count is not a count of visible messages: property selectors, raw identity values and other dataflow candidates still need review. Run `npm run check:localization` from Client to regenerate the inventory and exact coverage counts.
 
 Source assignments are retained in `static-migrations.json` (729 standalone sinks), `attribute-migrations.json` (505 static attributes), `icon-label-migrations.json` (79 whole icon-adjacent labels) and `patch-note-migrations.json` (263 release subtitles/items). `common-key-map.json` records reviewed semantic consolidation. Source keys live in `messages.ts`, `sourceMessages.ts` and `richMessages.ts`; `ui.en.json` is generated for tooling.
 
@@ -58,3 +58,22 @@ Browser `/lanes.html` on the integrated working tree uses actual candidate packs
 ## Viewer locale preference fix — 2026-09-27
 
 Settings now exposes Automatic/device language alongside explicit viewer overrides. Two new keys (`locale.automatic`, `locale.help`) have direct model-authored translations in all 25 non-English packs; matching authored subsets/source hashes are recorded in module-authorship.json. Human linguistic review remains pending. This bounded addition does not close the deferred whole-application coverage gaps or change game/account language.
+
+## CIT-78 onboarding (German and Arabic)
+
+Model-authored by Ethan, native-speaker review pending. The sorted
+`tests/fixtures/cit-15-22-translation-keys.json` records 728 keys added by
+CIT-15..22, the two merged CIT-77/CIT-80 keys, and `automation.status`
+(731 checked keys). German and Arabic each gain 730 entries and update
+the existing status entry. Their catalogs are byte-identical to the hosted
+command center. This does not establish a translated release or cover other locales.
+
+Three explicit unchanged-template exceptions are checked, rather than counted
+as English fallbacks: `castleCopy.value.unit` contains only the localized game
+unit parameter; `observedAt.castleFoodShort` contains only date/time formats
+rendered by Intl in the viewer locale; and German `castleCopy.field.radius`
+uses the standard German word “Radius”. Arabic translates that label.
+
+“Off” uses “Aus” / “إيقاف” throughout the status, runtime and commander
+assignment strings. The aggregate missing-castle message names the lowest
+enabled missing castle ID and separately counts the remaining castles.
