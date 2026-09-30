@@ -535,7 +535,7 @@ func (server *Server) handleOperations(writer http.ResponseWriter, request *http
 		limit = parsed
 	}
 	history := strings.TrimSpace(request.URL.Query().Get("history"))
-	if history != "" && history != "recent" && history != "stored" {
+	if history != "" && history != "stored" {
 		writeError(writer, http.StatusBadRequest, "invalid_history", "Operation history must be stored", Localization.New("server.api.operation_history_must_be.e857bc21", "Operation history must be stored", nil))
 		return
 	}

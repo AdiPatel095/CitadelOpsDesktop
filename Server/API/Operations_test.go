@@ -552,7 +552,7 @@ func TestOperationsEndpointPagesWithBefore(t *testing.T) {
 		{name: "page", query: "before=third", status: 200, ids: []string{"second", "first"}},
 		{name: "stored start", query: "history=stored&limit=2", status: 200, ids: []string{"third", "second"}},
 		{name: "stored continuation", query: "history=stored&before=third", status: 200, ids: []string{"second", "first"}},
-		{name: "recent", query: "history=recent&limit=1", status: 200, ids: []string{"third"}},
+		{name: "recent is invalid", query: "history=recent&limit=1", status: 400, code: "invalid_history"},
 		{name: "invalid history", query: "history=invalid", status: 400, code: "invalid_history"},
 		{name: "invalid history with cursor", query: "history=invalid&before=third", status: 400, code: "invalid_history"},
 		{name: "trim cursor", query: "before=" + url.QueryEscape("  third  ") + "&limit=1", status: 200, ids: []string{"second"}},
