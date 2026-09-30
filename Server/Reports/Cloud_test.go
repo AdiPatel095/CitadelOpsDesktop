@@ -78,6 +78,11 @@ func TestCloudOutboxUploadsOnlyPvPAndPurgesAfterConfirmation(t *testing.T) {
 	cloud := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
 		mu.Lock()
 		defer mu.Unlock()
+		if request.URL.Path == "/lids" {
+			// A backend that predates the LID presence route.
+			http.NotFound(writer, request)
+			return
+		}
 		switch request.Method {
 		case http.MethodGet:
 			_ = json.NewEncoder(writer).Encode(map[string]any{"reports": remote})
