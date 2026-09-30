@@ -94,3 +94,29 @@ func TestEventsSocketDeclaresBaseRevisionAndAnswersQueryState(t *testing.T) {
 		return
 	}
 }
+
+func TestEventsSocketEchoesTheContractSubprotocolOnlyWhenOffered(t *testing.T) {
+	store := State.NewStore(State.NewGameState())
+	server := httptest.NewServer(NewServer(Config{State: store, Intents: Intent.NewEngine(nil, store, nil, nil, nil), GameData: GameData.NewManager(GameData.UpdaterConfig{})}).Handler())
+	defer server.Close()
+	for _, test := range []struct {
+		name    string
+		offered []string
+		want    string
+	}{
+		{"offered", []string{EventsSubprotocol}, EventsSubprotocol},
+		{"not offered", nil, ""},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			dialer := websocket.Dialer{Subprotocols: test.offered}
+			socket, response, err := dialer.Dial("ws"+strings.TrimPrefix(server.URL, "http")+"/api/v2/events", nil)
+			if err != nil {
+				t.Fatal(err)
+			}
+			defer socket.Close()
+			if socket.Subprotocol() != test.want || response.Header.Get("Sec-WebSocket-Protocol") != test.want {
+				t.Fatalf("negotiated protocol = %q, want %q", socket.Subprotocol(), test.want)
+			}
+		})
+	}
+}
