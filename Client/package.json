@@ -13,7 +13,11 @@
     "preview": "tsc && vite preview",
     "check:localization": "node scripts/inventory-localization.mjs && node scripts/check-localization-coverage.mjs",
     "typecheck:app": "tsc -p tsconfig.app.json --noEmit",
-    "typecheck:node": "tsc -p tsconfig.node.json --noEmit"
+    "typecheck:node": "tsc -p tsconfig.node.json --noEmit",
+    "test:visual": "node scripts/visual/run.mjs compare",
+    "test:visual:update": "node scripts/visual/run.mjs update",
+    "test:visual:docker": "node scripts/visual/docker.mjs",
+    "test:visual:host": "node scripts/visual/run.mjs host"
   },
   "dependencies": {
     "@formatjs/icu-messageformat-parser": "^3.5.20",
@@ -26,6 +30,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.39.1",
+    "@playwright/test": "1.63.0",
     "@tailwindcss/vite": "^4.1.17",
     "@types/node": "^24.10.1",
     "@types/react": "^19.2.5",

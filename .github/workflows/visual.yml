@@ -1,0 +1,97 @@
+name: Visual snapshots
+on:
+  pull_request:
+    branches: [develop]
+    paths:
+      - 'Client/src/**'
+      - 'Client/public/**'
+      - 'Client/index.html'
+      - 'Client/package*.json'
+      - 'Client/vite.config.ts'
+      - 'Client/playwright.config.ts'
+      - 'Client/tests/visual/**'
+      - 'Client/tests/visual-baseline-guard.test.mjs'
+      - 'Client/scripts/visual/**'
+      - '.github/workflows/visual.yml'
+permissions:
+  contents: read
+concurrency:
+  group: visual-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+jobs:
+  snapshots:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    container:
+      image: mcr.microsoft.com/playwright:v1.63.0-noble
+      options: --ipc=host
+    defaults:
+      run:
+        working-directory: Client
+    env:
+      PLAYWRIGHT_CONTAINER: '1'
+    steps:
+      - uses: actions/checkout@v4
+      - run: npm ci
+      - name: Compare snapshots
+        id: compare
+        run: npm run test:visual
+        env:
+          VISUAL_REPORT_DIR: playwright-report/compare
+          VISUAL_OUTPUT_DIR: test-results/compare
+      - name: Capture missing or changed Linux baselines
+        if: failure() && steps.compare.outcome == 'failure'
+        run: npx playwright test --update-snapshots=changed
+        env:
+          VISUAL_REPORT_DIR: playwright-report/capture
+          VISUAL_OUTPUT_DIR: test-results/capture
+      - name: Upload Linux baselines
+        if: failure() && steps.compare.outcome == 'failure'
+        uses: actions/upload-artifact@v4
+        with:
+          name: visual-baselines
+          path: Client/tests/visual/__screenshots__/
+          if-no-files-found: error
+          retention-days: 7
+      - name: Verify a throwaway CSS change is detected
+        if: success()
+        run: |
+          cp src/index.css /tmp/cit-61-index.css
+          trap 'cp /tmp/cit-61-index.css src/index.css' EXIT
+          node --input-type=module -e 'import {appendFileSync} from "node:fs"; appendFileSync("src/index.css", "\n:root { filter: grayscale(1); }\n")'
+          set +e
+          npx playwright test --project=1440 --grep '^castle-dark$'
+          probe_status=$?
+          set -e
+          if [ "$probe_status" -eq 0 ]; then
+            echo 'The deliberate CSS change was not detected.'
+            exit 1
+          fi
+          node --input-type=module -e 'import {readdirSync} from "node:fs"; import {join} from "node:path"; const walk=p=>readdirSync(p,{withFileTypes:true}).flatMap(e=>e.isDirectory()?walk(join(p,e.name)):[join(p,e.name)]); if(!walk("test-results/probe").some(p=>p.endsWith("-diff.png"))) throw new Error("Probe failed without a visible screenshot diff")'
+        env:
+          VISUAL_REPORT_DIR: playwright-report/probe
+          VISUAL_OUTPUT_DIR: test-results/probe
+      - name: Upload visual report and diff screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: visual-report
+          path: |
+            Client/playwright-report/
+            Client/test-results/
+          if-no-files-found: warn
+          retention-days: 7
+  baseline-guard:
+    runs-on: ubuntu-24.04
+    defaults:
+      run:
+        working-directory: Client
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node --test tests/visual-baseline-guard.test.mjs
+      - run: node scripts/visual/check-baseline-changes.mjs

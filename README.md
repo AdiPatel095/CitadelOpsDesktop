@@ -141,3 +141,5 @@ commit or share those local files.
 For the application boundaries and package ownership model, see
 [`Architecture.md`](Architecture.md). Feature-specific notes are under
 [`Docs/`](Docs/).
+
+[Desktop visual snapshot checks](Client/Docs/VisualSnapshots.md) cover the fixture dashboard in the canonical Linux renderer.
