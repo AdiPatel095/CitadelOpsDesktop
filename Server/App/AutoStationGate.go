@@ -40,7 +40,8 @@ func (a *Application) guardOpenGate(ctx context.Context, arguments json.RawMessa
 			return err
 		}
 	}
-	state := a.State.Snapshot()
+	// read-only view: guards must not mutate state
+	state := a.State.ReadOnlyView()
 	if err := validateStationSession(state, "autoStation", request.ConnectionGeneration, now); err != nil {
 		return err
 	}

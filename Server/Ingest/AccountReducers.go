@@ -893,6 +893,8 @@ func reduceAllianceInfo(
 	}
 	directoryChanged := !reflect.DeepEqual(gameState.Alliances[next.ID], next)
 	gameState.Alliances[next.ID] = next
+	pruned := pruneAllianceDirectory(gameState, frame.ReceivedAt, next.ID)
+	directoryChanged = directoryChanged || pruned
 	allianceChanged := false
 	if containsCurrentPlayer {
 		allianceChanged = !reflect.DeepEqual(gameState.Alliance, next)
@@ -909,6 +911,42 @@ func reduceAllianceInfo(
 		return nil, false, nil
 	}
 	return []string{"alliance", "alliances", "player"}, true, nil
+}
+
+const (
+	allianceDirectoryRetention = 7 * 24 * time.Hour
+	allianceDirectoryLimit     = 64 // entries besides the kept ones
+)
+
+func pruneAllianceDirectory(gameState *State.GameState, observedAt time.Time, observedID State.AllianceID) bool {
+	cutoff := observedAt.Add(-allianceDirectoryRetention)
+	others := make([]State.AllianceID, 0, len(gameState.Alliances))
+	changed := false
+	for id, alliance := range gameState.Alliances {
+		if id == observedID || id == gameState.Player.AllianceID || id == gameState.Alliance.ID {
+			continue
+		}
+		if alliance.ObservedAt.IsZero() || alliance.ObservedAt.Before(cutoff) {
+			delete(gameState.Alliances, id)
+			changed = true
+		} else {
+			others = append(others, id)
+		}
+	}
+	if len(others) > allianceDirectoryLimit {
+		sort.Slice(others, func(i, j int) bool {
+			a, b := gameState.Alliances[others[i]], gameState.Alliances[others[j]]
+			if a.ObservedAt.Equal(b.ObservedAt) {
+				return others[i] < others[j]
+			}
+			return a.ObservedAt.Before(b.ObservedAt)
+		})
+		for _, id := range others[:len(others)-allianceDirectoryLimit] {
+			delete(gameState.Alliances, id)
+		}
+		changed = true
+	}
+	return changed
 }
 
 type wirePlayerInfo struct {

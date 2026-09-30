@@ -1017,6 +1017,8 @@ func (application *Application) renameRiftTemplate(ctx context.Context, argument
 	return application.saveStateEvent(ctx, event)
 }
 
+const riftTombstoneRetention = 24 * time.Hour
+
 func (application *Application) deleteRiftTemplate(ctx context.Context, arguments json.RawMessage) error {
 	var request struct {
 		LaunchID string `json:"launchId"`
@@ -1031,7 +1033,14 @@ func (application *Application) deleteRiftTemplate(ctx context.Context, argument
 		if gameState.Rift.DeletedLaunchIDs == nil {
 			gameState.Rift.DeletedLaunchIDs = map[string]int64{}
 		}
-		gameState.Rift.DeletedLaunchIDs[request.LaunchID] = time.Now().UTC().UnixMilli()
+		now := time.Now().UTC()
+		cutoff := now.Add(-riftTombstoneRetention).UnixMilli()
+		for launchID, deletedAt := range gameState.Rift.DeletedLaunchIDs {
+			if deletedAt < cutoff {
+				delete(gameState.Rift.DeletedLaunchIDs, launchID)
+			}
+		}
+		gameState.Rift.DeletedLaunchIDs[request.LaunchID] = now.UnixMilli()
 		delete(gameState.Rift.Launches, request.LaunchID)
 		if gameState.Rift.PendingLaunchID == request.LaunchID {
 			gameState.Rift.PendingLaunchID = ""
