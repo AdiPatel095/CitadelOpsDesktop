@@ -12,6 +12,8 @@ export interface SettingsToggleRowProps extends Omit<HTMLAttributes<HTMLDivEleme
   disabledReason?: ReactNode;
   ariaLabel?: string;
   tone?: 'default' | 'warning' | 'danger';
+  /** Legacy caller prop, forwarded unchanged; only tone controls styling. */
+  warning?: boolean;
   switchSize?: 'sm' | 'md' | 'lg';
 }
 

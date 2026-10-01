@@ -28,7 +28,7 @@ import type {
 	PlayerHistoryRetentionV1,
 	SettingsBundleV1,
 } from '../api/Contracts';
-import { Badge, Button, Input, PageHeader, SectionCard, Select, SettingsToggleRow } from '../components/ui';
+import { Badge, Button, Input, PageHeader, SectionCard, Select } from '../components/ui';
 import { backgroundLoginNeedsReauthorization as backgroundLoginNeedsReauthorizationFor, reauthorizeSavedLogin } from '../settings/connection/connectionControls';
 import { asRecord, configurationSection, numericSetting } from '../settings/Configuration';
 import {
@@ -82,7 +82,7 @@ function retentionMagnitude(value: string): number | null {
 	if (!match) return null;
 	const amount = Number(match[1]);
 	const hoursPerUnit = { h: 1, d: 24, w: 7 * 24, y: 365 * 24 }[match[2]];
-	return amount * hoursPerUnit;
+	return hoursPerUnit == null ? Number.NaN : amount * hoursPerUnit;
 }
 
 function retentionDays(value: string): number | null {
