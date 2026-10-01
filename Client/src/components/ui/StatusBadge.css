@@ -9,7 +9,7 @@
 .player-status-badge[data-player-status="unknown"] { background: transparent; border: 1px dashed var(--border-default); }
 .player-status-glyph { width: var(--font-size-14); height: var(--font-size-14); flex: none; }
 .player-status-word { white-space: nowrap; flex: none; }
-.player-status-card-reason { display: block; color: var(--text-secondary); font-size: var(--font-size-14); line-height: var(--line-height-14); font-weight: var(--font-weight-400); overflow-wrap: anywhere; }
+.player-status-card-reason { display: block; flex: 0 0 auto; width: max-content; max-width: 100%; min-width: 0; color: var(--text-secondary); font-size: var(--font-size-14); line-height: var(--line-height-14); font-weight: var(--font-weight-400); overflow-wrap: anywhere; }
 /* Keep the separator's measured width so hiding it cannot toggle flex wrapping.
    Only the first line is outdented; subsequent lines already start flush. */
 .player-status-reason-separator { display: inline-block; white-space: pre; text-indent: 0; }
