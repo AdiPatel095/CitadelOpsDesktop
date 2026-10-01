@@ -372,7 +372,7 @@
   "copy.today": "{state, select, known {{count, number} tänään} other {Tänään: ei vielä laskettu}}",
   "copy.todayTitle": "{state, select, known {Toiminnon {feature} tänään lähettämät vahvistetut hyökkäykset: {count, number}.} other {Laskenta alkaa pelin seuraavan päivittäisen nollauksen jälkeen.}}",
   "copy.updated": "Päivitetty {time}",
-  "equipment.canonicalUnavailable": "Pelin vaikutustiedot eivät ole saatavilla juuri nyt. Viimeisimmät tuloksesi säilytetään, ja uudelleenmääritys on keskeytetty, kunnes CitadelOps yrittää uudelleen.",
+  "equipment.canonicalUnavailable": "Pelin vaikutustiedot eivät ole saatavilla juuri nyt. Viimeisimmät tuloksesi säilytetään, ja uudelleenmääritys on keskeytetty CitadelOpsin yrittäessä uudelleen.",
   "equipment.effectsGroupedDescription": "Vaikutukset ryhmiteltyinä pelin omien vaikutusluokkien mukaan.",
   "setupReadiness.castlesNotInWorld": "{count, plural, one {Tallennettu linna {castle} ei kuulu tähän tiliin tai maailmaan. Valitse se uudelleen tai poista se käytöstä.} other {Tallennettu linna {castle} ja {others, plural, one {# muu käytössä oleva linna} other {# muuta käytössä olevaa linnaa}} eivät kuulu tähän tiliin tai maailmaan. Valitse ne uudelleen tai poista ne käytöstä.}}",
   "ui.components.header.alt.citadel.ops.logo.ab367a3c": "CitadelOps-logo"
