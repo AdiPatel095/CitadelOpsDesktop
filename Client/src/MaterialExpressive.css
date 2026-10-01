@@ -1,154 +1,13 @@
 /* Material 3 Expressive theme for the CitadelOps command center. */
 
 :root {
-    --md-sys-color-primary: #5b47d6;
-    --md-sys-color-on-primary: #ffffff;
-    --md-sys-color-primary-container: #e7deff;
-    --md-sys-color-on-primary-container: #21105f;
-    --md-sys-color-secondary: #9b3f67;
-    --md-sys-color-on-secondary: #ffffff;
-    --md-sys-color-secondary-container: #ffd9e6;
-    --md-sys-color-on-secondary-container: #3e0021;
-    --md-sys-color-tertiary: #006b5e;
-    --md-sys-color-on-tertiary: #ffffff;
-    --md-sys-color-tertiary-container: #91f7e2;
-    --md-sys-color-on-tertiary-container: #00201a;
-    --md-sys-color-error: #ba1a1a;
-    --md-sys-color-on-error: #ffffff;
-    --md-sys-color-error-container: #ffdad6;
-    --md-sys-color-on-error-container: #410002;
-    --md-sys-color-surface: #fcf8ff;
-    --md-sys-color-surface-dim: #ddd8e1;
-    --md-sys-color-surface-bright: #fcf8ff;
-    --md-sys-color-surface-container-lowest: #ffffff;
-    --md-sys-color-surface-container-low: #f6f1fa;
-    --md-sys-color-surface-container: #f0ebf4;
-    --md-sys-color-surface-container-high: #eae5ee;
-    --md-sys-color-surface-container-highest: #e4dfe8;
-    --md-sys-color-on-surface: #1d1a22;
-    --md-sys-color-on-surface-variant: #49454e;
-    --md-sys-color-outline: #7a757f;
-    --md-sys-color-outline-variant: #cbc5cf;
-    --md-sys-color-inverse-surface: #322f37;
-    --md-sys-color-inverse-on-surface: #f5eff8;
-
-    --md-sys-shape-corner-extra-small: 8px;
-    --md-sys-shape-corner-small: 12px;
-    --md-sys-shape-corner-medium: 18px;
-    --md-sys-shape-corner-large: 28px;
-    --md-sys-shape-corner-extra-large: 36px;
-    --md-sys-shape-corner-full: 9999px;
-    --md-expressive-shape-card: 32px 14px 32px 32px;
-    --md-expressive-shape-card-alt: 14px 32px 32px 32px;
-    --md-expressive-shape-hero: 48px 18px 48px 48px;
-    --md-expressive-shape-shell: 32px 16px 32px 32px;
-
-    --md-sys-motion-duration-short: 160ms;
-    --md-sys-motion-duration-medium: 280ms;
-    --md-sys-motion-duration-long: 480ms;
-    --md-sys-motion-easing-standard: cubic-bezier(0.2, 0, 0, 1);
-    --md-sys-motion-easing-emphasized: cubic-bezier(0.05, 0.7, 0.1, 1);
-
-    --surface-canvas: var(--md-sys-color-surface);
-    --surface-default: var(--md-sys-color-surface-container-lowest);
-    --surface-subtle: var(--md-sys-color-surface-container);
-    --surface-shell: var(--md-sys-color-surface-container-lowest);
-    --surface-panel: var(--md-sys-color-surface-container-low);
-    --surface-raised: var(--md-sys-color-surface-container-lowest);
-    --surface-control: var(--md-sys-color-surface-container-high);
-    --bg-app: var(--md-sys-color-surface);
-    --bg-card: var(--md-sys-color-surface-container-lowest);
-    --bg-card-hover: var(--md-sys-color-surface-container-high);
-    --bg-input: var(--md-sys-color-surface-container-highest);
-    --border-base: var(--md-sys-color-outline-variant);
-    --border-light: color-mix(in srgb, var(--md-sys-color-outline-variant) 72%, transparent);
-    --border-control: var(--md-sys-color-outline);
-    --content-strong: var(--md-sys-color-on-surface);
-    --content-muted: var(--md-sys-color-on-surface-variant);
-    --text-main: var(--md-sys-color-on-surface);
-    --text-muted: var(--md-sys-color-on-surface-variant);
-    --text-inverted: var(--md-sys-color-on-primary);
-    --action-primary: var(--md-sys-color-primary);
-    --action-primary-hover: #4934bd;
-    --primary: var(--md-sys-color-primary);
-    --primary-hover: var(--action-primary-hover);
-    --primary-glow: color-mix(in srgb, var(--md-sys-color-primary) 22%, transparent);
-    --status-success: #146c43;
-    --status-warning: #7b5800;
-    --status-danger: var(--md-sys-color-error);
-    --status-info: #006a6a;
-    --status-inactive: #6f6875;
-    --success: var(--status-success);
-    --warning: var(--status-warning);
-    --error: var(--status-danger);
-    --info: var(--status-info);
-    --radius-control: var(--md-sys-shape-corner-medium);
-    --radius-surface: var(--md-sys-shape-corner-large);
-    --radius-global: var(--md-sys-shape-corner-large);
-    --radius-pill: var(--md-sys-shape-corner-full);
-    --font-sans: "Google Sans Flex", "Roboto Flex", "Avenir Next", "Segoe UI Variable", "Segoe UI", system-ui, sans-serif;
-    --font-mono-ui: "SFMono-Regular", "Cascadia Code", "Roboto Mono", Consolas, monospace;
-
-    --shadow-shell: 0 1px 2px rgba(34, 22, 56, 0.08), 0 10px 32px rgba(34, 22, 56, 0.08);
-    --shadow-raised: 0 1px 2px rgba(34, 22, 56, 0.08), 0 6px 18px rgba(34, 22, 56, 0.07);
-    --shadow-panel: 0 1px 2px rgba(34, 22, 56, 0.08);
-    --shadow-modal: 0 24px 64px rgba(34, 22, 56, 0.25);
-    --shadow-glow: none;
-    --shadow-glow-active: none;
-    --control-background: var(--md-sys-color-surface-container-high);
-    --control-active-background: var(--md-sys-color-primary-container);
-    --control-shadow: none;
-
-    --app-header-height: clamp(5rem, 6.2dvh, 5.75rem);
-    --app-sidebar-width: clamp(16.5rem, 15vw, 18.25rem);
-    --app-shell-gap: clamp(0.75rem, 0.9vw, 1.15rem);
-    --app-content-pad: clamp(1rem, 1.45vw, 2.25rem);
-    --app-content-max: 1880px;
+    --shadow-raised: var(--compat-command-shadow-raised);
+    --shadow-panel: var(--compat-command-shadow-panel);
 }
 
 [data-theme="dark"] {
-    --md-sys-color-primary: #cbbcff;
-    --md-sys-color-on-primary: #302070;
-    --md-sys-color-primary-container: #47379a;
-    --md-sys-color-on-primary-container: #e7deff;
-    --md-sys-color-secondary: #ffb0cc;
-    --md-sys-color-on-secondary: #5e1137;
-    --md-sys-color-secondary-container: #7d294f;
-    --md-sys-color-on-secondary-container: #ffd9e6;
-    --md-sys-color-tertiary: #72dcc8;
-    --md-sys-color-on-tertiary: #00372f;
-    --md-sys-color-tertiary-container: #005047;
-    --md-sys-color-on-tertiary-container: #91f7e2;
-    --md-sys-color-error: #ffb4ab;
-    --md-sys-color-on-error: #690005;
-    --md-sys-color-error-container: #93000a;
-    --md-sys-color-on-error-container: #ffdad6;
-    --md-sys-color-surface: #131117;
-    --md-sys-color-surface-dim: #131117;
-    --md-sys-color-surface-bright: #3a363e;
-    --md-sys-color-surface-container-lowest: #0e0d12;
-    --md-sys-color-surface-container-low: #1c1a20;
-    --md-sys-color-surface-container: #211f25;
-    --md-sys-color-surface-container-high: #2b292f;
-    --md-sys-color-surface-container-highest: #36333a;
-    --md-sys-color-on-surface: #e7e1e9;
-    --md-sys-color-on-surface-variant: #cbc4cf;
-    --md-sys-color-outline: #958e99;
-    --md-sys-color-outline-variant: #4a454f;
-    --md-sys-color-inverse-surface: #e7e1e9;
-    --md-sys-color-inverse-on-surface: #322f36;
-
-    --action-primary-hover: #dbd1ff;
-    --border-light: color-mix(in srgb, var(--md-sys-color-outline-variant) 82%, transparent);
-    --status-success: #78dca2;
-    --status-warning: #e8c36d;
-    --status-danger: var(--md-sys-color-error);
-    --status-info: #62d4d4;
-    --status-inactive: #aaa2af;
-    --shadow-shell: 0 1px 2px rgba(0, 0, 0, 0.42), 0 14px 36px rgba(0, 0, 0, 0.2);
-    --shadow-raised: 0 1px 2px rgba(0, 0, 0, 0.46), 0 8px 24px rgba(0, 0, 0, 0.18);
-    --shadow-panel: 0 1px 2px rgba(0, 0, 0, 0.42);
-    --shadow-modal: 0 28px 72px rgba(0, 0, 0, 0.62);
+    --shadow-raised: var(--compat-command-shadow-raised);
+    --shadow-panel: var(--compat-command-shadow-panel);
 }
 
 [data-theme="dark"] .m3-expressive-shape {
@@ -336,13 +195,6 @@ select {
     gap: 0.55rem;
 }
 
-.liquid-auto-bird-actions {
-    gap: 0.25rem;
-    padding: 0.18rem;
-    border-radius: var(--md-sys-shape-corner-full);
-    background: var(--md-sys-color-surface-container-low);
-}
-
 .liquid-auto-bird-actions .m3-button-icon {
     width: 2.25rem;
     min-width: 2.25rem;
@@ -485,35 +337,6 @@ select {
     box-shadow: 0 0 0.45rem currentColor;
 }
 
-.liquid-status-dock-copy {
-    display: flex;
-    min-width: 0;
-    flex-direction: column;
-    align-items: flex-start;
-    justify-content: center;
-    gap: 0.08rem;
-    line-height: 1.05;
-}
-
-.liquid-status-dock-label {
-    color: color-mix(in srgb, var(--dock-accent) 78%, var(--md-sys-color-on-surface));
-    font-size: 0.55rem;
-    font-weight: 800;
-    letter-spacing: 0.075em;
-    text-transform: uppercase;
-}
-
-.liquid-status-dock-value {
-    max-width: 10.75rem;
-    overflow: hidden;
-    color: var(--md-sys-color-on-surface);
-    font-size: 0.72rem;
-    font-weight: 750;
-    letter-spacing: -0.01em;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
-
 .liquid-daily-attacks-dock .liquid-status-dock-value {
     max-width: 5.5rem;
 }
@@ -525,10 +348,6 @@ select {
     font-weight: 850;
     line-height: 1;
     text-align: center;
-}
-
-.liquid-bot-status {
-    padding-right: 0.34rem;
 }
 
 .liquid-status-dock-action-group {
@@ -857,12 +676,6 @@ select {
     gap: 0.22rem;
 }
 
-.liquid-nav-divider {
-    height: 1px;
-    margin: 0.9rem 0.8rem 0.65rem;
-    background: var(--md-sys-color-outline-variant);
-}
-
 .liquid-nav-item {
     position: relative;
     min-height: 2.9rem;
@@ -934,19 +747,6 @@ select {
 .liquid-nav-item-active .liquid-nav-active-indicator {
     width: 1.15rem;
     opacity: 1;
-}
-
-.liquid-sidebar-theme-toggle {
-    position: static;
-    right: auto;
-    bottom: auto;
-    width: 2.6rem;
-    height: 2.6rem;
-    border: 0;
-    background: var(--md-sys-color-secondary-container);
-    color: var(--md-sys-color-on-secondary-container);
-    box-shadow: none;
-    pointer-events: auto;
 }
 
 .liquid-sidebar-system-toggle {
@@ -2182,10 +1982,6 @@ select {
         width: 2.75rem;
         min-width: 2.75rem;
         min-height: 2.75rem;
-    }
-
-    .liquid-bot-status {
-        padding: 0.24rem;
     }
 
     .liquid-daily-attacks-dock {
