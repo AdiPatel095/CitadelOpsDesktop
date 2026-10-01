@@ -1773,7 +1773,7 @@ select {
 /* --------------------------------------------------------------------------
    Mobile command-center shell
 
-   The desktop layout above 760px remains the existing baseline for the next
+   The desktop layout from 768px remains the existing baseline for the next
    resolution pass. Phones get off-canvas navigation, safe-area spacing, and
    workspace surfaces that size from the available viewport.
    -------------------------------------------------------------------------- */
@@ -1784,7 +1784,7 @@ select {
     display: none;
 }
 
-@media (max-width: 760px), (max-width: 920px) and (max-aspect-ratio: 10 / 21) {
+@media (max-width: 767px), (max-width: 920px) and (max-aspect-ratio: 10 / 21) {
     :root {
         --app-header-height: 7.5rem;
         --app-sidebar-width: min(21.5rem, calc(100vw - 1rem));
@@ -2001,7 +2001,7 @@ select {
     .liquid-sidebar-scrim {
         position: fixed;
         inset: 0;
-        z-index: 74;
+        z-index: calc(var(--layer-drawer) - 1);
         display: block;
         border: 0;
         background: color-mix(in srgb, var(--md-sys-color-scrim, var(--scrim)) 56%, transparent);
@@ -2022,7 +2022,7 @@ select {
         right: auto;
         bottom: max(var(--app-shell-gap), env(safe-area-inset-bottom));
         left: max(var(--app-shell-gap), env(safe-area-inset-left));
-        z-index: 80;
+        z-index: var(--layer-drawer);
         width: var(--app-sidebar-width);
         transform: translateX(calc(-100% - 2rem));
         visibility: hidden;

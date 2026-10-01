@@ -427,7 +427,7 @@
         top: var(--app-shell-gap);
         left: var(--app-shell-gap);
         right: var(--app-shell-gap);
-        z-index: 50;
+        z-index: var(--layer-sticky);
         display: flex;
         min-width: 0;
         height: var(--app-header-height);
@@ -508,7 +508,7 @@
         top: calc(var(--app-header-height) + (var(--app-shell-gap) * 2));
         bottom: var(--app-shell-gap);
         left: var(--app-shell-gap);
-        z-index: 40;
+        z-index: calc(var(--layer-sticky) - 1);
         display: flex;
         width: var(--app-sidebar-width);
         min-width: 0;
@@ -1222,7 +1222,7 @@
     .liquid-modal-overlay {
         position: fixed;
         inset: 0;
-        z-index: 120;
+        z-index: var(--layer-modal);
         display: flex;
         align-items: center;
         justify-content: center;
