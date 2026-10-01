@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { execFileSync } from 'node:child_process';
-import { readFileSync, existsSync } from 'node:fs';
+import { readFileSync, existsSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { arbitraryValueCount, ratchetFailures } from '../scripts/check-arbitrary-values.mjs';
@@ -59,9 +59,9 @@ test('R4 segment tokens match spec section 3.6 in both themes', () => {
   assert.equal(resolve('dark', '--segment-track'), '#2C241C');
   assert.equal(resolve('dark', '--segment-thumb'), '#46392C');
 });
-test('held-back values are explicitly marked beside their spec values', () => {
-  assert.match(source, /HELD-BACK VALUES[\s\S]*light --surface-control:[^\n]+\| #ECDEC7/);
-  assert.match(source, /light --text-muted:[^\n]+\| #766754/);
+test('non-colour held values remain marked for PR-3 and CIT-63', () => {
+  assert.match(source, /HELD-BACK NON-COLOUR VALUES[\s\S]*light --radius-xs: 0\.125rem \| 4px/);
+  assert.match(source, /light --font-sans:[^\n]+\| "Manrope"/);
   assert.match(source, /LEGACY ALIAS LAYER/);
 });
 test('every Tailwind theme color references a token in both themes', () => {
@@ -82,7 +82,7 @@ function luminance(hex) {
 }
 function lightness(hex) { const y = luminance(hex); return 116 * (y > (6 / 29) ** 3 ? Math.cbrt(y) : y / (3 * (6 / 29) ** 2) + 4 / 29) - 16; }
 function contrast(a, b) { const [low, high] = [luminance(a), luminance(b)].sort((a, b) => a - b); return (high + 0.05) / (low + 0.05); }
-for (const theme of ['light', 'dark']) test(`${theme}: R9/R10 report mode (PR-1 compatibility values)`, (t) => {
+for (const theme of ['light', 'dark']) test(`${theme}: R9/R10 enforced (spec colour values)`, (t) => {
   const value = (name) => resolve(theme, `--${name}`);
   const gaps = [['canvas', 'card'], ['card', 'inset'], ['inset', 'control'], ['card', 'control'], ['control', 'control-strong']].map(([a, b]) => ({ pair: `${a}→${b}`, delta: Math.abs(lightness(value(`surface-${a}`)) - lightness(value(`surface-${b}`))) }));
   const checks = [];
@@ -95,8 +95,10 @@ for (const theme of ['light', 'dark']) test(`${theme}: R9/R10 report mode (PR-1 
   check('border-strong', ['surface-canvas', 'surface-card', 'surface-inset', 'surface-control'], 3);
   check('focus-ring', surfaces, 3);
   for (const tone of ['success', 'warning', 'danger', 'info', 'neutral']) check(`status-${tone}`, ['surface-canvas', 'surface-card', 'surface-inset', `status-${tone}-bg`], 4.5);
-  t.diagnostic(`REPORT ONLY R9: ${gaps.map((p) => `${p.pair}=${p.delta.toFixed(2)}${p.delta < 4 ? ' (<4)' : ''}`).join(', ')}`);
-  t.diagnostic(`REPORT ONLY R10: ${checks.length} pairs; ${checks.filter((p) => p.ratio < p.min).map((p) => `${p.pair}=${p.ratio.toFixed(2)} (<${p.min})`).join(', ') || 'all minimums met'}. Enforced in PR-2.`);
+  for (const pair of gaps) assert.ok(pair.delta >= 4, `R9 ${theme} ${pair.pair}: ${pair.delta} < 4`);
+  for (const pair of checks) assert.ok(pair.ratio >= pair.min, `R10 ${theme} ${pair.pair}: ${pair.ratio} < ${pair.min}`);
+  t.diagnostic(`R9: ${gaps.map((p) => `${p.pair}=${p.delta.toFixed(2)}${p.delta < 4 ? ' (<4)' : ''}`).join(', ')}`);
+  t.diagnostic(`R10: ${checks.length} pairs; ${checks.filter((p) => p.ratio < p.min).map((p) => `${p.pair}=${p.ratio.toFixed(2)} (<${p.min})`).join(', ') || 'all minimums met'}.`);
 });
 test('ratchet counts arbitrary values and inline styles, including referenced objects', () => {
   const count = arbitraryValueCount(`const styles = { color: '#fff', borderRadius: 7, fontSize: 'var(--font-size-14)' }; const view = <div className="bg-[#fff] hover:rounded-[7px]" style={{ ...styles, boxShadow: '0 1px 4px #000' }} />;`);
@@ -120,4 +122,21 @@ test('before metrics use repository paths correctly from either package root', (
 
 test('ratchet includes raw inline fallback colors and border shorthands', () => {
   assert.deepEqual(arbitraryValueCount(`<div style={{ color: 'var(--text-primary, #fff)', border: '1px solid #000', fontSize: 'var(--font-size-14)' }} />`), { arbitrary: 0, inline: 2, total: 2 });
+});
+
+
+test('legacy muted references migrate before the new muted role is used', () => {
+  const files = (dir) => readdirSync(dir, { withFileTypes: true }).flatMap((entry) => entry.isDirectory() ? files(join(dir, entry.name)) : [join(dir, entry.name)]);
+  for (const path of files(join(root, 'src')).filter((path) => path.endsWith('.css') && !path.endsWith('tokens.css'))) {
+    assert.doesNotMatch(readFileSync(path, 'utf8'), /var\(--text-muted\s*[,)]/, path);
+  }
+  const theme = readFileSync(join(root, desktop ? 'src/index.css' : 'src/tailwind-theme.css'), 'utf8');
+  assert.match(theme, /--color-text-muted:\s*var\(--text-secondary\)/);
+});
+
+test('colour rules are enforced while typography and shape remain warnings', () => {
+  const rules = JSON.parse(readFileSync(join(root, '.stylelintrc.json'), 'utf8')).rules;
+  assert.equal(rules['color-no-hex'][1].severity, 'error');
+  assert.equal(rules['function-disallowed-list'][1].severity, 'error');
+  assert.equal(rules['declaration-property-value-disallowed-list'][1].severity, 'warning');
 });
