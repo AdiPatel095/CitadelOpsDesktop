@@ -6,7 +6,7 @@
     "color-no-hex": [
       true,
       {
-        "severity": "warning"
+        "severity": "error"
       }
     ],
     "function-disallowed-list": [
@@ -17,7 +17,7 @@
         "hsla"
       ],
       {
-        "severity": "warning"
+        "severity": "error"
       }
     ],
     "declaration-no-important": [

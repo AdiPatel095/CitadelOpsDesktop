@@ -1,7 +1,11 @@
+import { StatusBadge } from '../components/ui/StatusBadge';
+import { useAutomationPlayerStatus } from '../settings/readiness/useAutomationPlayerStatus';
+import { automationPlayerStatus } from '../settings/readiness/playerStatus';
+import type { SettingsFeatureId as StatusFeatureId } from '../settings/disclosure/placement';
 import { rateView, dailyView, type CountView } from '../components/automation/attackCounts';
 import { useHostedRuntimePresence } from '../config/Deployment';
 import {nextWakeParameters,timedRemainingParameters} from '../i18n/automationDuration';
-import {automationDetailMessage, automationStatusMessage, automationLaneMessage} from '../i18n/automationMessages';
+import {automationDetailMessage, automationLaneMessage} from '../i18n/automationMessages';
 import {useLocalizedMessage} from '../i18n/useLocalizedMessage';
 import {messageLanguageAttributes} from '../i18n/messageLanguage';
 import {describeMessage, type MessageKey, type MessageParameters} from '../i18n/messages';
@@ -37,7 +41,6 @@ import {
   ModalTitle,
   ScheduleSummaryRow,
   Switch,
-  type StatusTone,
 } from '../components/ui';
 import type { AttackLaunchRatesV2, AutomationStateV2 } from '../api/Contracts';
 import {
@@ -202,43 +205,24 @@ function stormMissingDecorationWarningLanes(
   }];
 }
 
-function automationStatusTone(status: string): StatusTone {
-  switch (status.toLowerCase()) {
-    case 'complete':
-    case 'completed':
-    case 'success':
-      return 'success';
-    case 'failed':
-    case 'error':
-      return 'danger';
-    case 'blocked':
-    case 'gated':
-    case 'retrying':
-    case 'warning':
-      return 'warning';
-    case 'running':
-      return 'info';
-    case 'enabled':
-    case 'scheduled':
-      return 'brand';
-    default:
-      return 'neutral';
-  }
-}
-
 export function AutomationStatusLines({
+  featureId,
+  buildLaneActive,
   featureName,
   status,
   detail,
   detailDescriptor,
   lanes,
 }: {
+  featureId: StatusFeatureId;
+  buildLaneActive?: boolean;
   featureName: string;
   status: string;
   detail?: string;
   detailDescriptor?: LocalizedMessage;
   lanes?: AutomationStatusLane[];
 }) {
+  const player = useAutomationPlayerStatus(featureId, { buildLaneActive });
   const {t,locale,direction} = useStaticLocale();
   const hasLanes = Boolean(lanes?.length);
   const lines: AutomationStatusLane[] = hasLanes
@@ -252,20 +236,21 @@ export function AutomationStatusLines({
       lang={locale}
       dir={direction}
     >
-      {lines.map((line) => <AutomationStatusLine key={line.id} line={line} />)}
+      {lines.map((line, index) => {
+        const value = index === 0 ? player.overall : line.id === 'builder-missing-decorations'
+          ? player.lanes.find(lane => lane.id === line.id)?.value ?? player.overall
+          : player.lanes[index - 1]?.value ?? player.overall;
+        return <AutomationStatusLine key={line.id} line={line} value={value} />;
+      })}
     </div>
   );
 }
 
-function AutomationStatusLine({line}:{line:AutomationStatusLane}) {
+function AutomationStatusLine({line, value}:{line:AutomationStatusLane; value:ReturnType<typeof automationPlayerStatus>}) {
   const label=useLocalizedMessage(automationLaneMessage(line.id),line.label);
-  const status=useLocalizedMessage(automationStatusMessage(line.status),line.status);
-  const detail=useLocalizedMessage(line.detailDescriptor,line.detail ?? '');
-  return <div className={`ui-status ui-status-${automationStatusTone(line.status)} automation-function-status-line ${line.label ? 'automation-function-status-line-lane' : ''} ${line.toggle ? 'automation-function-status-line-toggle' : ''}`}>
-    <span className="ui-status-symbol" aria-hidden="true" />
+  return <div className="automation-function-status-line">
     {line.label ? <span className="automation-function-status-lane" {...messageLanguageAttributes(label)}>{label.text}</span> : null}
-    <span className="ui-status-label" {...messageLanguageAttributes(status)}>{status.text}</span>
-    {line.detail || line.toggle ? <span className="ui-status-detail" {...messageLanguageAttributes(detail)}>{detail.text}</span> : null}
+    <StatusBadge {...value} />
     {line.toggle ? <Switch checked={line.toggle.checked} onChange={line.toggle.onChange} size="sm" ariaLabel={line.toggle.ariaLabel} disabled={line.toggle.disabled} className="automation-function-status-toggle" /> : null}
   </div>;
 }
@@ -949,6 +934,8 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
                         </div>
                         <p>{feature.description}</p>
                         <AutomationStatusLines
+                          featureId={feature.id as StatusFeatureId}
+                          buildLaneActive={feature.id === 'autoBeriWorld' ? autoBeriBuildEnabled : undefined}
                           featureName={feature.name}
                           status={feature.status}
                           detail={feature.detail}

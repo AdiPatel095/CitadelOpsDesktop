@@ -1,0 +1,30 @@
+/* CIT-60 §7.4. Token values are owned by CIT-62. */
+.player-status-row { display: inline-flex; align-items: baseline; flex-wrap: wrap; gap: var(--space-4); min-width: 0; max-width: 100%; }
+.player-status-badge { display: inline-flex; align-items: center; flex: 0 0 auto; height: var(--space-24); padding-inline: calc(var(--space-2) + var(--space-4)) var(--space-8); gap: var(--space-4); border: 1px solid var(--player-status-border); border-radius: var(--radius-full); color: var(--player-status-fg); background: var(--player-status-bg); font-size: var(--font-size-12); line-height: var(--line-height-12); font-weight: var(--font-weight-600); }
+.player-status-badge[data-status-role="success"] { --player-status-fg: var(--status-success); --player-status-bg: var(--status-success-bg); --player-status-border: var(--status-success-border); }
+.player-status-badge[data-status-role="info"] { --player-status-fg: var(--status-info); --player-status-bg: var(--status-info-bg); --player-status-border: var(--status-info-border); }
+.player-status-badge[data-status-role="warning"] { --player-status-fg: var(--status-warning); --player-status-bg: var(--status-warning-bg); --player-status-border: var(--status-warning-border); }
+.player-status-badge[data-status-role="danger"] { --player-status-fg: var(--status-danger); --player-status-bg: var(--status-danger-bg); --player-status-border: var(--status-danger-border); }
+.player-status-badge[data-status-role="neutral"] { --player-status-fg: var(--status-neutral); --player-status-bg: var(--status-neutral-bg); --player-status-border: var(--status-neutral-border); }
+.player-status-badge[data-player-status="unknown"] { background: transparent; border: 1px dashed var(--border-default); }
+.player-status-glyph { width: var(--font-size-14); height: var(--font-size-14); flex: none; }
+.player-status-word { white-space: nowrap; flex: none; }
+.player-status-card-reason { display: block; flex: 0 0 auto; width: max-content; max-width: 100%; min-width: 0; color: var(--text-secondary); font-size: var(--font-size-14); line-height: var(--line-height-14); font-weight: var(--font-weight-400); overflow-wrap: anywhere; }
+/* Keep the separator's measured width so hiding it cannot toggle flex wrapping.
+   Only the first line is outdented; subsequent lines already start flush. */
+.player-status-reason-separator { display: inline-block; white-space: pre; text-indent: 0; }
+.player-status-card-reason[data-wrapped="true"] .player-status-reason-separator { visibility: hidden; }
+.player-status-inline { position: relative; display: inline-flex; min-width: min-content; max-width: 320px; }
+.player-status-inline .player-status-badge { display: grid; grid-template-columns: var(--font-size-14) max-content minmax(0, 1fr); flex: 0 1 auto; min-width: min-content; max-width: 320px; }
+.player-status-inline-reason { font-weight: var(--font-weight-400); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+.player-status-tooltip { display: none; position: absolute; inset-block-start: 100%; inset-inline-start: 0; z-index: var(--layer-tooltip); width: max-content; max-width: 280px; padding: var(--space-8); background: var(--surface-inverse); color: var(--text-inverse); border-radius: var(--radius-sm); box-shadow: var(--elevation-3); font-size: var(--font-size-12); line-height: var(--line-height-12); white-space: normal; }
+.player-status-inline:hover .player-status-tooltip, .player-status-inline:focus-within .player-status-tooltip { display: block; }
+.player-status-indicator { border: none; border-radius: initial; background: transparent; padding: 0; }
+.player-role-tag { display: inline-flex; align-items: center; height: var(--space-24); padding-inline: var(--space-8); border-radius: var(--radius-sm); border: 1px solid var(--border-default); background: transparent; color: var(--text-secondary); font-size: var(--font-size-12); line-height: var(--line-height-12); font-weight: var(--font-weight-500); white-space: nowrap; }
+@media (max-width: 767px) { .player-status-inline, .player-status-inline .player-status-badge { max-width: 240px; } }
+@media (forced-colors: active) { .player-status-badge, .player-role-tag { border-color: CanvasText; } .player-status-inline:focus-visible { outline: 2px solid Highlight; } }
+
+.player-connection-panel { position: relative; min-width: 0; }
+.player-connection-panel > summary { cursor: pointer; list-style: none; }
+.player-connection-panel > summary::-webkit-details-marker { display: none; }
+.player-connection-details { position: absolute; inset-block-start: 100%; inset-inline-start: 0; z-index: 60; width: 320px; max-width: 90vw; padding: var(--space-12); background: var(--surface-overlay); border: 1px solid var(--border-default); border-radius: var(--radius-sm); color: var(--text-primary); display: flex; flex-direction: column; gap: var(--space-8); }

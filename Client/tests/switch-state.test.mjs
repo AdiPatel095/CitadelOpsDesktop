@@ -67,8 +67,8 @@ test('defense courtyard inclusion uses the shared binary switch', async () => {
   assert.ok(Object.entries(sourceMessages).some(([key,text]) => text === 'Include courtyard setup in this defense preset' && editor.includes(`ariaLabel={localizeStatic("${key}")}`)));
 });
 
-test('the final palette gives every switch distinct danger and success colors', async () => {
-  const palette = await readFile(new URL('../src/KingdomPalette.css', import.meta.url), 'utf8');
+test('the consolidated stylesheet preserves the existing switch colour contract', async () => {
+  const palette = await readFile(new URL('../src/MaterialExpressive.css', import.meta.url), 'utf8');
   const automationView = await readFile(new URL('../src/views/AutomationView.tsx', import.meta.url), 'utf8');
 
   assert.match(palette, /\.liquid-switch-off \.liquid-switch-rail[\s\S]*var\(--status-danger\)/);
