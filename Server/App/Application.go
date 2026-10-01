@@ -232,7 +232,7 @@ func New(ctx context.Context, config Config) (*Application, error) {
 		initial.LanguageVersion = current.Metadata().LanguageVersion
 		EquipmentDomain.HydrateState(&initial, current)
 	}
-	state := State.NewStoreWithWorldMap(initial, config.WorldMaps)
+	state := State.NewStoreWithWorldMap(&initial, config.WorldMaps)
 	if migrationErr := Reports.MigrateLegacyHistory(config.DataDir, history, initial.Player.ID); migrationErr != nil {
 		startupErr = errors.Join(startupErr, migrationErr)
 	}

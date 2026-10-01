@@ -33,7 +33,7 @@ func TestSupportResolversBatchEveryTroopExactlyOnce(t *testing.T) {
 			}
 			state.Castles[10] = State.CastleState{ID: 10, Focused: true, UnitsObservedAt: now, Units: State.CastleUnits{Stationed: amounts}}
 			state.Stationing["autoBird:10"] = State.StationingOperation{ID: "autoBird:10", Purpose: "autoBird", Phase: State.StationingPhaseDispatchReady, SourceCastleID: 10, TargetCastleID: 20, DelayHours: 6, Units: amounts, UnitsObservedAt: now}
-			app := &Application{State: State.NewStore(state), Configuration: autoBirdFortressConfiguration(t, json.RawMessage(`{"auto_bird":true}`), 1)}
+			app := &Application{State: State.NewStore(&state), Configuration: autoBirdFortressConfiguration(t, json.RawMessage(`{"auto_bird":true}`), 1)}
 			input := Intent.PlanningContext{State: state, GameData: data}
 			manualArgs, _ := json.Marshal(stationRequest{SourceCastleID: 10, TargetCastleID: 20, DelayHours: 6, Units: units})
 			manual, err := resolveTroopsStationStep(t.Context(), input, manualArgs)
@@ -114,7 +114,7 @@ func TestSupportResolversBatchEveryTroopExactlyOnce(t *testing.T) {
 								changed.Stationing[control.ID] = control
 							}
 							changed.Castles[10] = castle
-							rejected := &Application{State: State.NewStore(changed)}
+							rejected := &Application{State: State.NewStore(&changed)}
 							if err := rejected.guardAutoBirdBatch(t.Context(), step.PreDispatchArguments); err == nil {
 								t.Fatalf("Auto Bird batch guard accepted changed %s", invalidation)
 							}
@@ -153,7 +153,7 @@ func TestSupportBatchesTrackAllMovementsAndLatestReturn(t *testing.T) {
 		id := State.MovementID(30 + i)
 		state.Movements[id] = State.MovementState{ID: id, SourceCastleID: 10, TargetCastleID: 20, TargetX: 40, TargetY: 50, ObservedAt: now, StartedAt: now, ReturnsAt: &end, Units: map[State.UnitID]int64{State.UnitID(i + 1): 100}}
 	}
-	app := &Application{State: State.NewStore(state)}
+	app := &Application{State: State.NewStore(&state)}
 	args, _ := json.Marshal(autoBirdCycleRequest{SourceCastleID: 10, TrackingID: "autoBird:10", DispatchStartedAt: now})
 	if err := app.captureAutoBirdMovement(t.Context(), args); err != nil {
 		t.Fatal(err)
@@ -165,7 +165,7 @@ func TestSupportBatchesTrackAllMovementsAndLatestReturn(t *testing.T) {
 	// The legacy newest movement may return first; older batches must stay active.
 	delete(state.Movements, 32)
 	delete(state.Movements, 31)
-	if !op.ActiveInState(state, now) {
+	if !op.ActiveInState(&state, now) {
 		t.Fatal("earlier batch still active but tracking ended")
 	}
 	snap := app.State.Snapshot()
@@ -178,7 +178,7 @@ func TestSupportBatchesTrackAllMovementsAndLatestReturn(t *testing.T) {
 func TestSupportBatchGuardRejectsChangedInventory(t *testing.T) {
 	state := State.NewGameState()
 	state.Castles[10] = State.CastleState{ID: 10, Focused: true, Units: State.CastleUnits{Stationed: map[State.UnitID]int64{215: 99}}}
-	app := &Application{State: State.NewStore(state)}
+	app := &Application{State: State.NewStore(&state)}
 	if err := app.guardSupportBatch(t.Context(), json.RawMessage(`{"SID":10,"A":[[215,100]]}`)); err == nil {
 		t.Fatal("stale batch accepted")
 	}
@@ -194,7 +194,7 @@ func TestAutoStationTracksEveryAcceptedBatch(t *testing.T) {
 		end := now.Add(time.Duration(8-i) * time.Hour)
 		state.Movements[id] = State.MovementState{ID: id, SourceCastleID: 10, TargetCastleID: 20, TargetX: 40, TargetY: 50, StartedAt: now, ReturnsAt: &end, Units: map[State.UnitID]int64{units[i].UnitID: units[i].Amount}}
 	}
-	app := &Application{State: State.NewStore(state)}
+	app := &Application{State: State.NewStore(&state)}
 	args, _ := json.Marshal(stationRequest{SourceCastleID: 10, TargetCastleID: 20, TrackingID: "autoStation:10", Purpose: "autoStation", DelayHours: 6, DispatchStartedAt: now, Units: units})
 	if err := app.trackStationMovement(t.Context(), args); err != nil {
 		t.Fatal(err)

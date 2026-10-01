@@ -70,7 +70,7 @@ func TestPlanTroopsStationSkipsAnActiveTrackedAutomationMovement(t *testing.T) {
 
 func TestTrackStationMovementSetsSuccessCooldownThroughConfiguredDelay(t *testing.T) {
 	gameState := State.NewGameState()
-	application := &Application{State: State.NewStore(gameState)}
+	application := &Application{State: State.NewStore(&gameState)}
 	startedAt := time.Now().UTC()
 	err := application.trackStationMovement(t.Context(), json.RawMessage(`{
 		"sourceCastleId":10,"targetCastleId":20,"delayHours":6,
@@ -300,7 +300,7 @@ func TestTrackStationMovementUsesResolvedManifest(t *testing.T) {
 		Units:      map[State.UnitID]int64{215: 67_644, 216: 39_237, 489: 92},
 		ObservedAt: now,
 	}
-	application := &Application{State: State.NewStore(gameState)}
+	application := &Application{State: State.NewStore(&gameState)}
 	err := application.trackStationMovement(t.Context(), json.RawMessage(`{
 		"sourceCastleId":10,"targetCastleId":20,"delayHours":1,
 		"purpose":"autoStation","trackingId":"autoStation:10",
@@ -330,7 +330,7 @@ func TestTrackAutoBirdMovementUsesFreshResolvedManifest(t *testing.T) {
 		Units:      map[State.UnitID]int64{215: 90, 216: 45},
 		ObservedAt: now,
 	}
-	application := &Application{State: State.NewStore(gameState)}
+	application := &Application{State: State.NewStore(&gameState)}
 	err := application.trackStationMovement(t.Context(), json.RawMessage(`{
 		"sourceCastleId":10,"targetCastleId":20,"delayHours":1,
 		"purpose":"autoBird","trackingId":"autoBird:10","freshManifest":true,

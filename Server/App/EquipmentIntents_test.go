@@ -215,7 +215,7 @@ func TestValidateEquipmentExtractionDispatchAllowsFutureCarrierInSameSlot(t *tes
 			{GemID: -301, CarrierID: 301, DefinitionID: 490, RubyCost: 200},
 		},
 	}
-	stateStore := State.NewStore(gameState)
+	stateStore := State.NewStore(&gameState)
 	if _, err := stateStore.ApplyComponents(State.Components(State.ComponentPlayer), func(state *State.GameState) ([]string, bool, error) {
 		state.Player.ResourceObservations[2] = State.PlayerResourceObservation{ObservedAt: now, ConnectionGeneration: 7}
 		return []string{"player"}, true, nil
@@ -402,7 +402,7 @@ func TestVerifyEquipmentReconfigureAcceptsNormalGemReidentificationAndRejectsMis
 	}
 	gameState.Commanders[0] = leader
 	gameState.Inventory.Gems[-999] = State.GemInstance{ID: -999, DefinitionID: 55, EquipmentInstanceID: 101, WearerKind: "commander", WearerID: 0}
-	application := &Application{State: State.NewStore(gameState)}
+	application := &Application{State: State.NewStore(&gameState)}
 	arguments, _ := json.Marshal(equipmentReconfigureVerification{
 		LeaderKind: "commander", LeaderID: 0, Equipment: leader.Equipment,
 		Gems: map[string]equipmentReconfigureGemVerification{"1": {InstanceID: -501, DefinitionID: 55, Normal: true}},
@@ -929,7 +929,7 @@ func newEquipmentExtractionIntegrationHarnessWithGameData(
 	gameState.Inventory.Gems[-301] = State.GemInstance{
 		ID: -301, DefinitionID: 490, Slot: 1, CompatibleWearerID: 2, CombatMode: "pvp", EquipmentInstanceID: 301,
 	}
-	stateStore := State.NewStore(gameState)
+	stateStore := State.NewStore(&gameState)
 	if _, err := stateStore.ApplyComponents(State.Components(State.ComponentPlayer), func(state *State.GameState) ([]string, bool, error) {
 		state.Player.ResourceObservations[2] = State.PlayerResourceObservation{ObservedAt: now, ConnectionGeneration: 1}
 		return []string{"resources"}, true, nil
@@ -1002,7 +1002,7 @@ func TestPlanEquipmentUpgradeHonorsConfiguredDelayFromFirstCommand(t *testing.T)
 	if err != nil {
 		t.Fatal(err)
 	}
-	application := &Application{State: State.NewStore(gameState), Configuration: configuration}
+	application := &Application{State: State.NewStore(&gameState), Configuration: configuration}
 
 	plan, err := application.planEquipmentUpgrade(
 		t.Context(),
@@ -1053,7 +1053,7 @@ func TestPlanEquipmentUpgradeUsesOfficialRarityCapsAndOpcodes(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			application := &Application{State: State.NewStore(gameState), Configuration: configuration}
+			application := &Application{State: State.NewStore(&gameState), Configuration: configuration}
 			plan, err := application.planEquipmentUpgrade(
 				t.Context(),
 				Intent.PlanningContext{State: gameState},
@@ -1101,7 +1101,7 @@ func TestPlanEquipmentUpgradeUsesRelicGemWireContract(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	application := &Application{State: State.NewStore(gameState), Configuration: configuration}
+	application := &Application{State: State.NewStore(&gameState), Configuration: configuration}
 	plan, err := application.planEquipmentUpgrade(
 		t.Context(), Intent.PlanningContext{State: gameState},
 		json.RawMessage(`{"itemKind":"gem","itemId":501,"targetLevel":2}`),
@@ -1138,7 +1138,7 @@ func TestPlanEquipmentUpgradeRejectsUnverifiedTypesAndTravellingWearer(t *testin
 			if err != nil {
 				t.Fatal(err)
 			}
-			application := &Application{State: State.NewStore(gameState), Configuration: configuration}
+			application := &Application{State: State.NewStore(&gameState), Configuration: configuration}
 			_, err = application.planEquipmentUpgrade(
 				t.Context(), Intent.PlanningContext{State: gameState},
 				json.RawMessage(`{"itemKind":"equipment","itemId":101,"targetLevel":2}`),
@@ -1160,7 +1160,7 @@ func TestPlanEquipmentUpgradeRejectsUnverifiedTypesAndTravellingWearer(t *testin
 		if err != nil {
 			t.Fatal(err)
 		}
-		application := &Application{State: State.NewStore(gameState), Configuration: configuration}
+		application := &Application{State: State.NewStore(&gameState), Configuration: configuration}
 		_, err = application.planEquipmentUpgrade(
 			t.Context(), Intent.PlanningContext{State: gameState},
 			json.RawMessage(`{"itemKind":"equipment","itemId":101,"targetLevel":2}`),
@@ -1180,7 +1180,7 @@ func TestPlanEquipmentUpgradeRejectsUnverifiedTypesAndTravellingWearer(t *testin
 			ID: 50, Direction: 0, OwnerPlayerID: 1, SourceCastleID: 100,
 			CommanderID: &commanderID, ArrivesAt: &arrivesAt,
 		}
-		application.State = State.NewStore(gameState)
+		application.State = State.NewStore(&gameState)
 		_, err = application.planEquipmentUpgrade(
 			t.Context(), Intent.PlanningContext{State: gameState},
 			json.RawMessage(`{"itemKind":"equipment","itemId":101,"targetLevel":2}`),
@@ -1190,7 +1190,7 @@ func TestPlanEquipmentUpgradeRejectsUnverifiedTypesAndTravellingWearer(t *testin
 		}
 
 		delete(gameState.Movements, 50)
-		application.State = State.NewStore(gameState)
+		application.State = State.NewStore(&gameState)
 		plan, err := application.planEquipmentUpgrade(
 			t.Context(), Intent.PlanningContext{State: gameState},
 			json.RawMessage(`{"itemKind":"equipment","itemId":101,"targetLevel":2}`),

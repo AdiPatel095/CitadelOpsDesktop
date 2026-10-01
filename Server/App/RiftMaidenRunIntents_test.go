@@ -44,7 +44,7 @@ func TestRiftMaidenRunStartPersistsExactGoalAndBusyCandidates(t *testing.T) {
 		!containsString(plan.Claims, "rift-launch:maiden-wave") {
 		t.Fatalf("start plan = %#v", plan)
 	}
-	application := &Application{State: State.NewStore(gameState)}
+	application := &Application{State: State.NewStore(&gameState)}
 	if err := application.startRiftMaidenRun(context.Background(), plan.Steps[0].ActionArguments); err != nil {
 		t.Fatal(err)
 	}

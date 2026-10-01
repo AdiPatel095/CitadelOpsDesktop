@@ -285,7 +285,7 @@ func captureHeldForInvasionRecovery(snapshot State.GameState, capture State.Batt
 		if !reservation.RecoveryExhaustedAt.IsZero() {
 			continue
 		}
-		if Ingest.InvasionReservationReportCandidate(snapshot, reservation, capture) {
+		if Ingest.InvasionReservationReportCandidate(&snapshot, reservation, capture) {
 			return true
 		}
 	}
@@ -459,7 +459,8 @@ func (manager *Manager) Wait() {
 
 func (manager *Manager) loadArchivedMessages() {
 	current := map[int64]struct{}{}
-	manager.state.ReadOnlyView().RangeReportNotices(func(messageID int64, _ State.ReportNotice) bool {
+	accessorState1 := manager.state.ReadOnlyView()
+	accessorState1.RangeReportNotices(func(messageID int64, _ State.ReportNotice) bool {
 		current[messageID] = struct{}{}
 		return true
 	})

@@ -1,0 +1,32 @@
+{
+  "statuses": [
+    "armed",
+    "blocked",
+    "complete",
+    "cooldown",
+    "defending",
+    "disabled",
+    "discovering",
+    "error",
+    "evacuating",
+    "gated",
+    "idle",
+    "opening-check",
+    "preparing",
+    "protected",
+    "protecting",
+    "ready",
+    "recalling",
+    "reconciling",
+    "refreshing",
+    "replenishing",
+    "resolving",
+    "running",
+    "scheduled",
+    "soft-locked",
+    "taunting",
+    "threat",
+    "waiting",
+    "yielding"
+  ]
+}

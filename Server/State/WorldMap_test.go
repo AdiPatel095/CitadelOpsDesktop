@@ -27,14 +27,14 @@ func TestWorldMapSharesObjectiveFactsWithoutPrivateTargets(t *testing.T) {
 	alphaInitial := NewGameState()
 	alphaInitial.Account.WorldID = " WSS://WORLD.EXAMPLE/socket "
 	alphaInitial.Player.ID = 101
-	alpha := NewStoreWithWorldMap(alphaInitial, worlds)
+	alpha := NewStoreWithWorldMap(&alphaInitial, worlds)
 	bravoInitial := NewGameState()
 	bravoInitial.Account.WorldID = "wss://world.example/socket"
 	bravoInitial.Player.ID = 202
-	bravo := NewStoreWithWorldMap(bravoInitial, worlds)
+	bravo := NewStoreWithWorldMap(&bravoInitial, worlds)
 	otherInitial := NewGameState()
 	otherInitial.Account.WorldID = "wss://other.example/socket"
-	other := NewStoreWithWorldMap(otherInitial, worlds)
+	other := NewStoreWithWorldMap(&otherInitial, worlds)
 
 	worldEvents, unsubscribe := worlds.Subscribe(4)
 	defer unsubscribe()
@@ -56,10 +56,12 @@ func TestWorldMapSharesObjectiveFactsWithoutPrivateTargets(t *testing.T) {
 	if _, changed := other.AdoptWorldMap(worldEvent); changed {
 		t.Fatal("different-world account adopted objective map fact")
 	}
-	if got, found := bravo.ReadOnlyView().LookupMapObservation(0, "100:101"); !found || got.OwnerID != 500 {
+	accessorState1 := bravo.ReadOnlyView()
+	if got, found := accessorState1.LookupMapObservation(0, "100:101"); !found || got.OwnerID != 500 {
 		t.Fatalf("shared observation = %+v, found %t", got, found)
 	}
-	if _, found := other.ReadOnlyView().LookupMapObservation(0, "100:101"); found {
+	accessorState2 := other.ReadOnlyView()
+	if _, found := accessorState2.LookupMapObservation(0, "100:101"); found {
 		t.Fatal("shared observation leaked across worlds")
 	}
 	if alphaEvent.Patch == nil || alphaEvent.Patch.Map != nil || alphaEvent.Patch.MapChanges == nil || len(*alphaEvent.Patch.MapChanges) != 1 {
@@ -76,7 +78,8 @@ func TestWorldMapSharesObjectiveFactsWithoutPrivateTargets(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if _, found := bravo.ReadOnlyView().LookupMapObservation(0, "200:201"); found {
+	accessorState3 := bravo.ReadOnlyView()
+	if _, found := accessorState3.LookupMapObservation(0, "200:201"); found {
 		t.Fatal("account-relative tower target leaked to another account")
 	}
 	if privateEvent.Patch == nil || privateEvent.Patch.MapChanges == nil || len(*privateEvent.Patch.MapChanges) != 1 {
@@ -95,7 +98,7 @@ func TestWorldMapSharesStormFactsOnlyWithAccountsThatUnlockedKingdom(t *testing.
 				ID: CastleID(playerID), KingdomID: stormKingdomID,
 			}
 		}
-		return NewStoreWithWorldMap(initial, worlds)
+		return NewStoreWithWorldMap(&initial, worlds)
 	}
 	alpha := newAccount(101, true)
 	bravo := newAccount(202, true)
@@ -121,13 +124,15 @@ func TestWorldMapSharesStormFactsOnlyWithAccountsThatUnlockedKingdom(t *testing.
 	if _, changed := locked.AdoptWorldMap(event); changed {
 		t.Fatal("locked account received an observable Storm map revision")
 	}
-	if got, found := bravo.ReadOnlyView().LookupStormTarget("612:667"); !found || got != fort {
+	accessorState4 := bravo.ReadOnlyView()
+	if got, found := accessorState4.LookupStormTarget("612:667"); !found || got != fort {
 		t.Fatalf("shared Storm fort = %+v, found %t", got, found)
 	}
 	if alpha.ReadOnlyView().sharedMap == nil || alpha.ReadOnlyView().sharedMap != bravo.ReadOnlyView().sharedMap {
 		t.Fatal("same-world accounts retained separate physical Storm generations")
 	}
-	if _, found := locked.ReadOnlyView().LookupMapObservation(stormKingdomID, "612:667"); found {
+	accessorState5 := locked.ReadOnlyView()
+	if _, found := accessorState5.LookupMapObservation(stormKingdomID, "612:667"); found {
 		t.Fatal("Storm fact leaked to an account without kingdom access")
 	}
 
@@ -136,13 +141,16 @@ func TestWorldMapSharesStormFactsOnlyWithAccountsThatUnlockedKingdom(t *testing.
 	}); err != nil {
 		t.Fatal(err)
 	}
-	if _, found := alpha.ReadOnlyView().LookupStormTarget("612:667"); found {
+	accessorState6 := alpha.ReadOnlyView()
+	if _, found := accessorState6.LookupStormTarget("612:667"); found {
 		t.Fatal("account-private suppression did not hide consumed target")
 	}
-	if got, found := alpha.ReadOnlyView().LookupMapObservation(stormKingdomID, "612:667"); !found || got != fort {
+	accessorState7 := alpha.ReadOnlyView()
+	if got, found := accessorState7.LookupMapObservation(stormKingdomID, "612:667"); !found || got != fort {
 		t.Fatalf("suppression removed shared fact: %+v, found %t", got, found)
 	}
-	if _, found := bravo.ReadOnlyView().LookupStormTarget("612:667"); !found {
+	accessorState8 := bravo.ReadOnlyView()
+	if _, found := accessorState8.LookupStormTarget("612:667"); !found {
 		t.Fatal("one account's target consumption leaked into another account")
 	}
 }
@@ -206,7 +214,7 @@ func TestMapFeaturePartitionsTargetReadsAndCloneOnlyTouchedKind(t *testing.T) {
 		"10:10": {KingdomID: 0, X: 10, Y: 10, TypeID: MapTypeKingdomTower, ObservedAt: observedAt},
 		"20:20": {KingdomID: 0, X: 20, Y: 20, TypeID: MapTypeRift, ObservedAt: observedAt},
 	}
-	store := NewStore(initial)
+	store := NewStore(&initial)
 	before := store.ReadOnlyView()
 	regionBefore := before.mapOverlay.regions[0]
 	towerBefore := regionBefore.kinds[MapProjectionTower]
@@ -285,7 +293,7 @@ func TestGameStateJSONMaterializesSharedAndPrivateMapLayers(t *testing.T) {
 		"1:1": {KingdomID: 0, X: 1, Y: 1, TypeID: 1, OwnerID: 42, ObservedAt: time.Now().UTC()},
 		"2:2": {KingdomID: 0, X: 2, Y: 2, TypeID: 2, TowerVictoryCount: 10, ObservedAt: time.Now().UTC()},
 	}
-	state := NewStoreWithWorldMap(initial, worlds).ReadOnlyView()
+	state := NewStoreWithWorldMap(&initial, worlds).ReadOnlyView()
 	raw, err := json.Marshal(state)
 	if err != nil {
 		t.Fatal(err)
@@ -308,7 +316,7 @@ func TestWorldMapPersistenceRoundTripStoresOnlySharedFacts(t *testing.T) {
 	worlds.StartPersistence()
 	initial := NewGameState()
 	initial.Account.WorldID = " World-One "
-	store := NewStoreWithWorldMap(initial, worlds)
+	store := NewStoreWithWorldMap(&initial, worlds)
 	now := time.Now().UTC().Truncate(time.Millisecond)
 	shared := MapObservation{
 		KingdomID: 0, X: 11, Y: 12, TypeID: 1, OwnerID: 88, ObjectID: 99,
@@ -352,7 +360,7 @@ func TestWorldMapPersistenceRoundTripStoresOnlySharedFacts(t *testing.T) {
 	}()
 	loadedInitial := NewGameState()
 	loadedInitial.Account.WorldID = "world-one"
-	loaded := NewStoreWithWorldMap(loadedInitial, reopened).ReadOnlyView()
+	loaded := NewStoreWithWorldMap(&loadedInitial, reopened).ReadOnlyView()
 	if observation, exists := loaded.LookupMapObservation(0, "11:12"); !exists || observation.Name != shared.Name || !observation.ObservedAt.Equal(now) {
 		t.Fatalf("persisted shared observation = %+v, exists %t", observation, exists)
 	}
@@ -369,7 +377,7 @@ func TestMapMutationCopiesOnlyTouchedRegionAndPreservesPriorGeneration(t *testin
 	initial.Map[1] = map[string]MapObservation{
 		"2:2": {KingdomID: 1, X: 2, Y: 2, TypeID: 2, TowerVictoryCount: 2},
 	}
-	store := NewStore(initial)
+	store := NewStore(&initial)
 	before := store.ReadOnlyView()
 	beforeTouchedRegion := before.mapOverlay.regions[0]
 	beforeUntouchedRegion := before.mapOverlay.regions[1]
@@ -448,11 +456,11 @@ func adoptionFixture(t *testing.T) (bravo *Store, nextWorldEvent func(x int) Wor
 	alphaInitial := NewGameState()
 	alphaInitial.Account.WorldID = "wss://world.example/socket"
 	alphaInitial.Player.ID = 101
-	alpha := NewStoreWithWorldMap(alphaInitial, worlds)
+	alpha := NewStoreWithWorldMap(&alphaInitial, worlds)
 	bravoInitial := NewGameState()
 	bravoInitial.Account.WorldID = "wss://world.example/socket"
 	bravoInitial.Player.ID = 202
-	bravo = NewStoreWithWorldMap(bravoInitial, worlds)
+	bravo = NewStoreWithWorldMap(&bravoInitial, worlds)
 	worldEvents, unsubscribe := worlds.Subscribe(8)
 	t.Cleanup(unsubscribe)
 	return bravo, func(x int) WorldMapEvent {
@@ -521,7 +529,8 @@ func TestAdoptWorldMapEventFoldsIntoQueueWithOldestBase(t *testing.T) {
 }
 
 func TestPublishDefaultsAnUnsetBaseToThePreviousRevisionForPlainEvents(t *testing.T) {
-	store := NewStore(NewGameState())
+	accessorState9 := NewGameState()
+	store := NewStore(&accessorState9)
 	events, unsubscribe := store.Subscribe(4)
 	defer unsubscribe()
 	store.publish(Event{Revision: 5, Sequence: 5})

@@ -84,7 +84,7 @@ func TestAllianceDirectoryRetention(t *testing.T) {
 		s := State.NewGameState()
 		s.Alliances[99] = State.AllianceState{ID: 99, Name: "Observed", Members: []State.AllianceMember{}, Holdings: []State.AllianceHolding{}, ObservedAt: now}
 		s.Alliances[1] = State.AllianceState{ID: 1, ObservedAt: cutoff.Add(-time.Second)}
-		store := State.NewStore(s)
+		store := State.NewStore(&s)
 		domains, changed, err := reduceAllianceInfo(t.Context(), Protocol.Frame{Opcode: "ain", Direction: Protocol.DirectionInbound, ResponseCode: new(int), ReceivedAt: now, Payload: json.RawMessage(`{"A":{"AID":99,"N":"Observed","M":[]}}`)}, &s, nil)
 		if err != nil || !changed || !slices.Contains(domains, "alliances") {
 			t.Fatalf("prune alone: changed=%v domains=%v err=%v", changed, domains, err)

@@ -86,13 +86,13 @@ func TestNomadCooldownSkipUsesLockedTargetAndOfficialRubyCeiling(t *testing.T) {
 		t.Fatalf("cooldown reset ignored the configured ruby ceiling: %v", err)
 	}
 	application := &Application{
-		State: State.NewStore(gameState), GameData: appTestGameDataManagerFromCatalog(t, nomadCooldownSkipCatalog),
+		State: State.NewStore(&gameState), GameData: appTestGameDataManagerFromCatalog(t, nomadCooldownSkipCatalog),
 	}
 	pending := gameState
 	pending.NomadCamps.Cooldowns["0:101:102"] = State.NomadCampCooldownState{
 		KingdomID: 0, X: 101, Y: 102, LastSuccessfulBattleAt: now.Add(time.Second), PendingCooldownRefresh: true,
 	}
-	application.State = State.NewStore(pending)
+	application.State = State.NewStore(&pending)
 	if err := application.guardNomadCooldownSkip(t.Context(), plan.Steps[1].FinalDispatchArguments); !errors.Is(err, Intent.ErrPlanStale) {
 		t.Fatalf("pending post-victory cooldown reached SDC dispatch: %v", err)
 	}
@@ -105,7 +105,7 @@ func TestNomadCooldownSkipUsesLockedTargetAndOfficialRubyCeiling(t *testing.T) {
 		KingdomID: 0, X: 101, Y: 102, LastSuccessfulBattleAt: now.Add(time.Second),
 		CooldownObservedAt: observation.ObservedAt,
 	}
-	application.State = State.NewStore(cleared)
+	application.State = State.NewStore(&cleared)
 	if err := application.guardNomadCooldownSkip(t.Context(), plan.Steps[1].FinalDispatchArguments); !errors.Is(err, Intent.ErrPlanStale) {
 		t.Fatalf("clear camp reached duplicate SDC dispatch: %v", err)
 	}
@@ -274,7 +274,7 @@ func TestNomadChainLaunchesClearedCampWithoutSpeculativeCooldownSkips(t *testing
 		}
 		blockedState := gameState
 		blockedState.DailyAttacks.Count = 100
-		if err := (&Application{State: State.NewStore(blockedState)}).guardNomadCampAttack(
+		if err := (&Application{State: State.NewStore(&blockedState)}).guardNomadCampAttack(
 			t.Context(), concrete.PreDispatchArguments,
 		); !errors.Is(err, Intent.ErrPlanStale) || !strings.Contains(err.Error(), "100 / 100") {
 			t.Fatalf("concrete Nomad CRA guard accepted reached daily limit: %v", err)
@@ -288,7 +288,7 @@ func TestNomadChainLaunchesClearedCampWithoutSpeculativeCooldownSkips(t *testing
 	}
 	finalStep.AwaitOpcode = ""
 	finalStep.SuccessCodes = nil
-	stateStore := State.NewStore(gameState)
+	stateStore := State.NewStore(&gameState)
 	manager := appTestGameDataManagerFromCatalog(t, nomadCooldownSkipCatalog)
 	sender := &nomadFinalDispatchSender{}
 	registry := Intent.NewRegistry()
@@ -350,7 +350,7 @@ func TestNomadChainLaunchesClearedCampWithoutSpeculativeCooldownSkips(t *testing
 		ID: 86115613, Direction: 0, SourceCastleID: 1, KingdomID: 0, TargetX: 101, TargetY: 100,
 		CommanderID: &first.CommanderID, ArrivesAt: &arrival, ObservedAt: now.Add(time.Second),
 	}
-	application := &Application{State: State.NewStore(gameState)}
+	application := &Application{State: State.NewStore(&gameState)}
 	if err := application.captureNomadCampLaunch(t.Context(), launches[0].ResolverArguments); err != nil {
 		t.Fatalf("capture accepted 62-second camp movement: %v", err)
 	}
@@ -550,7 +550,7 @@ func TestNomadChainArrivalGuardRejectsOvertaking(t *testing.T) {
 		ID: 11, Direction: 0, SourceCastleID: 1, KingdomID: 0, TargetX: 101, TargetY: 100,
 		CommanderID: &currentCommander, ArrivesAt: &currentArrival,
 	}
-	application := &Application{State: State.NewStore(gameState)}
+	application := &Application{State: State.NewStore(&gameState)}
 	arguments, _ := json.Marshal(nomadChainArrivalGuard{
 		SourceCastleID: 1, KingdomID: 0, TargetX: 101, TargetY: 100,
 		PreviousCommander: previousCommander, CurrentCommander: currentCommander,

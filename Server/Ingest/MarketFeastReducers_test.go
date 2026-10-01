@@ -186,7 +186,7 @@ func TestMalformedBOIFeastRejectsMarketMutationAtomically(t *testing.T) {
 	initial.Market.BoostersObservedAt = observedAt
 	initial.Market.Feast = State.MarketFeastState{ObservedAt: observedAt}
 	initial.Market.FeastLastPurchaseAt = observedAt.Add(-time.Hour)
-	store := State.NewStore(initial)
+	store := State.NewStore(&initial)
 	before := store.Snapshot().Market
 	registry := NewRegistry()
 	if err := registry.RegisterComponents("boi", State.Components(State.ComponentMarket), reduceMarketBooster); err != nil {

@@ -92,7 +92,7 @@ func EventActivityFeature(kind EventActivityKind) AttackFeatureID {
 }
 
 func AttackFeatureTargetPendingAt(
-	gameState GameState,
+	gameState *GameState,
 	featureID AttackFeatureID,
 	kingdomID KingdomID,
 	targetTypeID int,
@@ -247,7 +247,7 @@ func RecordTowerAdvisorTimeSkipUsage(
 }
 
 func TowerAdvisorTimeSkipsUsedSince(
-	gameState GameState,
+	gameState *GameState,
 	since time.Time,
 	now time.Time,
 ) (int64, bool) {

@@ -103,7 +103,7 @@ func TestCloudOutboxUploadsOnlyPvPAndPurgesAfterConfirmation(t *testing.T) {
 	}))
 	t.Cleanup(cloud.Close)
 
-	state := State.NewStore(snapshot)
+	state := State.NewStore(&snapshot)
 	client := NewCloudClient(CloudConfig{UploadURL: cloud.URL, FetchURL: cloud.URL})
 	uploader := NewCloudUploader(state, history, store, client)
 	processed, err := uploader.processNext(ctx)

@@ -53,7 +53,7 @@ func TestFortressABICoolingDownDefersTargetWithoutLaunch(t *testing.T) {
 			if len(view.AttackAnalytics.PendingAttacks) != 0 {
 				t.Fatalf("ABI 95 recorded a launch: %#v", view.AttackAnalytics.PendingAttacks)
 			}
-			rejection, rejected := State.AttackTargetRejectedAt(view, 1, State.MapTypeKingdomFortress, 101, 100, time.Now().UTC())
+			rejection, rejected := State.AttackTargetRejectedAt(&view, 1, State.MapTypeKingdomFortress, 101, 100, time.Now().UTC())
 			if !rejected || rejection.Opcode != "abi" || rejection.Code != 95 || rejection.Count != 1 ||
 				rejection.Until.Sub(rejection.ObservedAt) != test.deferral || rejection.ObservedAt.Before(before) {
 				t.Fatalf("fortress rejection = %#v found=%t", rejection, rejected)
@@ -79,7 +79,7 @@ func TestAttackGuardsRefuseRejectedTargets(t *testing.T) {
 	State.RecordAttackTargetRejection(&gameState, State.AttackTargetRejection{
 		KingdomID: 1, TargetTypeID: State.MapTypeKingdomFortress, X: 101, Y: 100, Opcode: "abi", Code: 95, ObservedAt: now,
 	})
-	application := &Application{State: State.NewStore(gameState)}
+	application := &Application{State: State.NewStore(&gameState)}
 	guardArguments, _ := json.Marshal(craSendGuardRequest{
 		SourceX: 100, SourceY: 100, TargetX: 101, TargetY: 100, KingdomID: 1,
 		DialogObservedAt: now.Add(-time.Second),
@@ -102,7 +102,7 @@ func TestStormCRACoolingDownRecordsNoLaunchAndDefersTarget(t *testing.T) {
 		"101:102": {KingdomID: stormIntentKingdomID, X: 101, Y: 102, TypeID: stormIntentFortMapTypeID, StormIsleID: 7, ObservedAt: now},
 		"110:110": {KingdomID: stormIntentKingdomID, X: 110, Y: 110, TypeID: stormIntentFortMapTypeID, StormIsleID: 7, ObservedAt: now},
 	}
-	stateStore := State.NewStore(gameState)
+	stateStore := State.NewStore(&gameState)
 	registry := Ingest.NewRegistry()
 	if err := Ingest.RegisterCoreReducers(registry); err != nil {
 		t.Fatal(err)
@@ -142,10 +142,10 @@ func TestStormCRACoolingDownRecordsNoLaunchAndDefersTarget(t *testing.T) {
 	if _, stillMapped := view.LookupMapObservation(stormIntentKingdomID, "101:102"); !stillMapped {
 		t.Fatal("Storm target left map state after a rejected launch")
 	}
-	if _, rejected := State.AttackTargetRejectedAt(view, stormIntentKingdomID, stormIntentFortMapTypeID, 101, 102, now.Add(time.Second)); !rejected {
+	if _, rejected := State.AttackTargetRejectedAt(&view, stormIntentKingdomID, stormIntentFortMapTypeID, 101, 102, now.Add(time.Second)); !rejected {
 		t.Fatal("CRA 95 did not defer the Storm fort")
 	}
-	if _, rejected := State.AttackTargetRejectedAt(view, stormIntentKingdomID, stormIntentFortMapTypeID, 110, 110, now.Add(time.Second)); rejected {
+	if _, rejected := State.AttackTargetRejectedAt(&view, stormIntentKingdomID, stormIntentFortMapTypeID, 110, 110, now.Add(time.Second)); rejected {
 		t.Fatal("another Storm fort was deferred")
 	}
 }

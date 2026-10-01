@@ -695,7 +695,7 @@ func matchBattleResearchMovement(
 	var selected State.MovementState
 	best := battleResearchFormationMatch + time.Second
 	snapshot.RangeMovements(func(_ State.MovementID, movement State.MovementState) bool {
-		if _, used := assigned[movement.ID]; used || !State.IsOutgoingPlayerAttack(snapshot, movement, now) ||
+		if _, used := assigned[movement.ID]; used || !State.IsOutgoingPlayerAttack(&snapshot, movement, now) ||
 			movement.KingdomID != trial.Formation.KingdomID || movement.TargetX != trial.Formation.TargetX ||
 			movement.TargetY != trial.Formation.TargetY || movement.SourceX != trial.Formation.SourceX ||
 			movement.SourceY != trial.Formation.SourceY {

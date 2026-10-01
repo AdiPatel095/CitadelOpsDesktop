@@ -8,7 +8,7 @@ import (
 func TestPartitionVersionsUseImmutableCommonCapabilitySlots(t *testing.T) {
 	state := NewGameState()
 	state.Account = AccountBindingState{WorldID: "world-1", PlayerID: 42}
-	key := AccountPartition(state, CapabilityMovement)
+	key := AccountPartition(&state, CapabilityMovement)
 	first, changed := advancePartitionVersions(nil, []PartitionKey{key}, 1, time.Unix(1, 0).UTC())
 	if len(changed) != 1 || changed[0].Version != 1 {
 		t.Fatalf("first change = %#v", changed)
@@ -28,8 +28,8 @@ func TestPartitionVersionsUseImmutableCommonCapabilitySlots(t *testing.T) {
 func TestPartitionVersionsRetainIndependentCastleFallbackKeys(t *testing.T) {
 	state := NewGameState()
 	state.Account = AccountBindingState{WorldID: "world-1", PlayerID: 42}
-	left := CastlePartition(state, CapabilityConstruction, 10)
-	right := CastlePartition(state, CapabilityConstruction, 20)
+	left := CastlePartition(&state, CapabilityConstruction, 10)
+	right := CastlePartition(&state, CapabilityConstruction, 20)
 	first, _ := advancePartitionVersions(nil, []PartitionKey{left, right}, 1, time.Unix(1, 0).UTC())
 	second, _ := advancePartitionVersions(first, []PartitionKey{left}, 2, time.Unix(2, 0).UTC())
 	versions := PartitionVersions{snapshot: second}
@@ -50,11 +50,11 @@ func TestPartitionVersionsRetainIndependentCastleFallbackKeys(t *testing.T) {
 func TestSessionPartitionIdentityDoesNotGrowWithGeneration(t *testing.T) {
 	state := NewGameState()
 	state.Session.Generation = 1
-	firstKey := SessionPartition(state, CapabilitySession)
+	firstKey := SessionPartition(&state, CapabilitySession)
 	first, _ := advancePartitionVersions(nil, []PartitionKey{firstKey}, 1, time.Unix(1, 0).UTC())
 	state.Session.Generation = 99
 	state.Session.ConnectionGeneration = 12
-	secondKey := SessionPartition(state, CapabilitySession)
+	secondKey := SessionPartition(&state, CapabilitySession)
 	second, _ := advancePartitionVersions(first, []PartitionKey{secondKey}, 2, time.Unix(2, 0).UTC())
 	versions := PartitionVersions{snapshot: second}
 	if got := versions.Version(firstKey); got != 2 {

@@ -83,10 +83,10 @@ func (*AutoAdvisorPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decisi
 	if autoAdvisorUsesRubyHorse(settings.HorseTravelBoostID) && settings.RubyCostPerAttack <= 0 {
 		return autoAdvisorWaiting(snapshot.Now, "Set a positive ruby cost per attack before using a ruby horse", nil, Localization.New("server.automation.set_a_positive_ruby.fe2ebd52", "Set a positive ruby cost per attack before using a ruby horse", nil)), nil
 	}
-	score, found := activeNomadEventScore(snapshot.State, snapshot.Now)
+	score, found := activeNomadEventScore(&snapshot.State, snapshot.Now)
 	if !found {
 		if decision, locked := limitedEventGate(
-			snapshot.State, snapshot.Now, []int64{nomadEventID, samuraiEventID}, "Nomad or Samurai event",
+			&snapshot.State, snapshot.Now, []int64{nomadEventID, samuraiEventID}, "Nomad or Samurai event",
 		); locked {
 			return decision, nil
 		}
@@ -190,15 +190,15 @@ func (*AutoAdvisorPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decisi
 			Request: &Intent.Request{Name: "nomad.map.scan", Arguments: arguments}, ReevaluateOnSuccess: true,
 		}, nil
 	}
-	camps := nomadCampCandidates(snapshot.State, snapshot.GameData, source, score.EventID, score.DifficultyID, targetTypeID, lastScan)
+	camps := nomadCampCandidates(&snapshot.State, snapshot.GameData, source, score.EventID, score.DifficultyID, targetTypeID, lastScan)
 	metrics["knownCamps"] = float64(len(camps))
 	if len(camps) < nomadCampCount {
 		return autoAdvisorWaiting(snapshot.Now, fmt.Sprintf("Found %d of the expected %d regular camps", len(camps), nomadCampCount), metrics, Localization.New("server.automation.found_p_of_the.41ee06ca", "Found {p0, number} of the expected {p1, number} regular camps", Localization.Params{"p0": len(camps), "p1": nomadCampCount})), nil
 	}
 	camps = camps[:nomadCampCount]
 	target := weakestNomadCamp(camps)
-	commanderIDs, restricted := commanderFeatureCandidates(snapshot.State, snapshot.Configuration, "autoAdvisor")
-	availableCommanders := availableNomadCommanders(snapshot.State, commanderIDs, restricted)
+	commanderIDs, restricted := commanderFeatureCandidates(&snapshot.State, snapshot.Configuration, "autoAdvisor")
+	availableCommanders := availableNomadCommanders(&snapshot.State, commanderIDs, restricted)
 	if len(availableCommanders) == 0 {
 		detail := "No commander is currently available"
 		var detailLocalizationMessage *Localization.Message = Localization.New("server.automation.no_commander_is_currently.25dd6b1e", "No commander is currently available", nil)
@@ -227,7 +227,7 @@ func (*AutoAdvisorPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decisi
 	timeSkipCapacity := autoAdvisorMaxAttackCount
 	if target.Definition.CooldownSec > 0 {
 		timeSkipCapacity = min(autoAdvisorMaxAttackCount, 1+int(oneCommandDungeonSkipCount(
-			snapshot.State, settings.TimeSkipReserve, int64(target.Definition.CooldownSec),
+			&snapshot.State, settings.TimeSkipReserve, int64(target.Definition.CooldownSec),
 		)))
 	}
 	attackCount := min(settings.MaxAttackCount, eventCapacity, inventoryCapacity, coinCapacity, rubyCapacity, featherCapacity, timeSkipCapacity)

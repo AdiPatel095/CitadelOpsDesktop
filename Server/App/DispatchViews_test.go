@@ -57,7 +57,7 @@ func dispatchGuardFixture(tb testing.TB) (*Application, json.RawMessage, json.Ra
 	if err != nil {
 		tb.Fatal(err)
 	}
-	return &Application{State: State.NewStore(state), Configuration: config}, station, bird, gate
+	return &Application{State: State.NewStore(&state), Configuration: config}, station, bird, gate
 }
 
 func BenchmarkStationDispatchGuard(b *testing.B) {

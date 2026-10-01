@@ -27,10 +27,10 @@ func TestPendingCommandRequestsCorrelateFIFOWithinSessionAndWindow(t *testing.T)
 	if _, found = state.TakePendingCommandRequest("seq", "other-operation", base.Add(time.Second)); found {
 		t.Fatal("reply of another operation consumed a pending sale")
 	}
-	if got := PendingCommandRequests(state, "seq"); len(got) != 1 || got[0].EquipmentID != 6558434873 {
+	if got := PendingCommandRequests(&state, "seq"); len(got) != 1 || got[0].EquipmentID != 6558434873 {
 		t.Fatalf("remaining seq requests = %#v", got)
 	}
-	if got := PendingCommandRequests(state, "ahr"); len(got) != 1 || got[0].CastleID != 77 {
+	if got := PendingCommandRequests(&state, "ahr"); len(got) != 1 || got[0].CastleID != 77 {
 		t.Fatalf("other opcode requests = %#v", got)
 	}
 
@@ -40,7 +40,7 @@ func TestPendingCommandRequestsCorrelateFIFOWithinSessionAndWindow(t *testing.T)
 	if taken, found = state.TakePendingCommandRequest("seq", "", base.Add(41*time.Second)); found {
 		t.Fatalf("ambiguous reply was correlated to %#v", taken)
 	}
-	if got := PendingCommandRequests(state, "seq"); len(got) != 1 || got[0].EquipmentID != 9 {
+	if got := PendingCommandRequests(&state, "seq"); len(got) != 1 || got[0].EquipmentID != 9 {
 		t.Fatalf("expired request was not dropped or fresh request was lost: %#v", got)
 	}
 
@@ -50,10 +50,10 @@ func TestPendingCommandRequestsCorrelateFIFOWithinSessionAndWindow(t *testing.T)
 	if !state.DropPendingCommandRequestsBefore("seq", base.Add(45*time.Second)) {
 		t.Fatal("sales sent before the storage refresh were retained")
 	}
-	if got := PendingCommandRequests(state, "seq"); len(got) != 1 || got[0].EquipmentID != 10 {
+	if got := PendingCommandRequests(&state, "seq"); len(got) != 1 || got[0].EquipmentID != 10 {
 		t.Fatalf("storage refresh dropped the wrong sales: %#v", got)
 	}
-	if got := PendingCommandRequests(state, "ahr"); len(got) != 1 {
+	if got := PendingCommandRequests(&state, "ahr"); len(got) != 1 {
 		t.Fatalf("storage refresh dropped another opcode: %#v", got)
 	}
 	if taken, found = state.TakePendingCommandRequest("seq", "", base.Add(51*time.Second)); !found || taken.EquipmentID != 10 {
@@ -61,7 +61,7 @@ func TestPendingCommandRequestsCorrelateFIFOWithinSessionAndWindow(t *testing.T)
 	}
 
 	state.Session.Generation = 5
-	if got := PendingCommandRequests(state, "seq"); len(got) != 0 {
+	if got := PendingCommandRequests(&state, "seq"); len(got) != 0 {
 		t.Fatalf("previous session requests are still pending: %#v", got)
 	}
 	if _, found = state.TakePendingCommandRequest("seq", "", base.Add(42*time.Second)); found {
@@ -82,9 +82,9 @@ func TestPendingCommandRequestsAreBoundedPerOpcode(t *testing.T) {
 			Opcode: "seq", SentAt: base.Add(time.Duration(index) * time.Millisecond), EquipmentID: EquipmentInstanceID(index + 1),
 		})
 	}
-	seq := PendingCommandRequests(state, "seq")
-	if len(seq) != PendingCommandRequestLimit || seq[0].EquipmentID != 11 || len(PendingCommandRequests(state, "ahr")) != 1 {
-		t.Fatalf("bounded requests seq=%d first=%d ahr=%d", len(seq), seq[0].EquipmentID, len(PendingCommandRequests(state, "ahr")))
+	seq := PendingCommandRequests(&state, "seq")
+	if len(seq) != PendingCommandRequestLimit || seq[0].EquipmentID != 11 || len(PendingCommandRequests(&state, "ahr")) != 1 {
+		t.Fatalf("bounded requests seq=%d first=%d ahr=%d", len(seq), seq[0].EquipmentID, len(PendingCommandRequests(&state, "ahr")))
 	}
 }
 
@@ -94,7 +94,7 @@ func TestPendingCommandRequestsNeverMutateAnEarlierStoreGeneration(t *testing.T)
 	initial.Session.Generation = 1
 	initial.RecordPendingCommandRequest(PendingCommandRequest{Opcode: "seq", SentAt: base, EquipmentID: 1})
 	initial.RecordPendingCommandRequest(PendingCommandRequest{Opcode: "seq", SentAt: base, EquipmentID: 2})
-	store := NewStore(initial)
+	store := NewStore(&initial)
 	before := store.ReadOnlyView()
 	if _, err := store.ApplyComponents(Components(ComponentCommandContext), func(state *GameState) ([]string, bool, error) {
 		state.TakePendingCommandRequest("seq", "", base.Add(time.Second))
@@ -102,10 +102,11 @@ func TestPendingCommandRequestsNeverMutateAnEarlierStoreGeneration(t *testing.T)
 	}); err != nil {
 		t.Fatal(err)
 	}
-	if got := PendingCommandRequests(before, "seq"); len(got) != 2 || got[0].EquipmentID != 1 {
+	if got := PendingCommandRequests(&before, "seq"); len(got) != 2 || got[0].EquipmentID != 1 {
 		t.Fatalf("earlier generation changed: %#v", got)
 	}
-	if got := PendingCommandRequests(store.ReadOnlyView(), "seq"); len(got) != 1 || got[0].EquipmentID != 2 {
+	accessorState1 := store.ReadOnlyView()
+	if got := PendingCommandRequests(&accessorState1, "seq"); len(got) != 1 || got[0].EquipmentID != 2 {
 		t.Fatalf("current generation = %#v", got)
 	}
 }
@@ -130,17 +131,17 @@ func TestRecruitmentHelpIneligibilityCoversRejectedListUntilItChanges(t *testing
 	}
 	queue := state.Castles[77].Production[0]
 	for _, item := range []QueueItem{*queue.Active, queue.Queued[0]} {
-		if RecruitmentAllianceHelpItemEligible(state, 77, item, now.Add(time.Minute)) {
+		if RecruitmentAllianceHelpItemEligible(&state, 77, item, now.Add(time.Minute)) {
 			t.Fatalf("rejected job %d is still eligible", item.ProductionID)
 		}
 	}
-	if !RecruitmentAllianceHelpItemEligible(state, 88, state.Castles[88].Production[0].Queued[0], now.Add(time.Minute)) {
+	if !RecruitmentAllianceHelpItemEligible(&state, 88, state.Castles[88].Production[0].Queued[0], now.Add(time.Minute)) {
 		t.Fatal("another castle's job was disabled")
 	}
-	if !RecruitmentAllianceHelpItemEligible(state, 77, QueueItem{ProductionID: 203, Amount: 8}, now.Add(time.Minute)) {
+	if !RecruitmentAllianceHelpItemEligible(&state, 77, QueueItem{ProductionID: 203, Amount: 8}, now.Add(time.Minute)) {
 		t.Fatal("a job added after the rejection was disabled")
 	}
-	if !RecruitmentAllianceHelpItemEligible(state, 77, queue.Queued[0], completes) {
+	if !RecruitmentAllianceHelpItemEligible(&state, 77, queue.Queued[0], completes) {
 		t.Fatal("rejection outlived its bounded window")
 	}
 
@@ -166,11 +167,11 @@ func TestRecruitmentHelpEligibilityRefusesInferredOrCompletedJobs(t *testing.T) 
 		"completed job": {ProductionID: 2, Amount: 8, CompletesAt: &past},
 		"below minimum": {ProductionID: 4, Amount: RecruitmentAllianceHelpMinimumUnits - 1},
 	} {
-		if RecruitmentAllianceHelpItemEligible(state, 77, item, now) {
+		if RecruitmentAllianceHelpItemEligible(&state, 77, item, now) {
 			t.Errorf("%s was eligible", name)
 		}
 	}
-	if !RecruitmentAllianceHelpItemEligible(state, 77, QueueItem{ProductionID: 3, Amount: RecruitmentAllianceHelpMinimumUnits}, now) {
+	if !RecruitmentAllianceHelpItemEligible(&state, 77, QueueItem{ProductionID: 3, Amount: RecruitmentAllianceHelpMinimumUnits}, now) {
 		t.Fatal("queued explicit-RAH-false job was refused")
 	}
 }
@@ -178,7 +179,8 @@ func TestRecruitmentHelpEligibilityRefusesInferredOrCompletedJobs(t *testing.T) 
 func TestInventoryEquipmentMutationPersistsWithGemStacks(t *testing.T) {
 	directory := t.TempDir()
 	mutatedAt := time.Date(2026, 9, 29, 12, 0, 0, 0, time.UTC)
-	store := NewStore(NewGameState())
+	accessorState2 := NewGameState()
+	store := NewStore(&accessorState2)
 	event, err := store.ApplyComponents(Components(ComponentInventory), func(state *GameState) ([]string, bool, error) {
 		return []string{"inventory"}, state.MarkInventoryEquipmentMutated(mutatedAt), nil
 	})

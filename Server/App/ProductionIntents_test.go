@@ -407,7 +407,7 @@ func TestVerifyProductionQueueCapacityRejectsStaleFullQueue(t *testing.T) {
 			1: {LineID: 1, Capacity: 5, ObservedAt: time.Now().UTC(), Queued: make([]State.QueueItem, 5)},
 		},
 	}
-	application := &Application{State: State.NewStore(gameState)}
+	application := &Application{State: State.NewStore(&gameState)}
 	arguments, _ := json.Marshal(productionQueueCapacityGuard{
 		CastleID: 77, LineID: 1, ExpectedFreeSlots: 2, FillAvailable: true,
 	})
@@ -470,7 +470,7 @@ func TestVerifyProductionQueueCapacityRejectsDefinitionThatBecameUnavailable(t *
 			0: {{Collection: "units", ID: 516}},
 		},
 	}
-	application := &Application{State: State.NewStore(gameState)}
+	application := &Application{State: State.NewStore(&gameState)}
 	arguments, _ := json.Marshal(productionQueueCapacityGuard{
 		CastleID: 77, LineID: 0, DefinitionID: 515, ExpectedFreeSlots: 1,
 	})
@@ -496,7 +496,7 @@ func TestVerifyProductionQueueCapacityRequiresPostFocusObservation(t *testing.T)
 		CastleID: 77, LineID: 0, DefinitionID: 489, ExpectedFreeSlots: 1,
 		QueueObservedAt: observedAt, RequireNewerQueue: true,
 	})
-	application := &Application{State: State.NewStore(gameState)}
+	application := &Application{State: State.NewStore(&gameState)}
 	if err := application.verifyProductionQueueCapacityAt(arguments, now); !errors.Is(err, Intent.ErrPlanStale) {
 		t.Fatalf("unchanged post-focus queue error = %v, want stale", err)
 	}
@@ -507,7 +507,7 @@ func TestVerifyProductionQueueCapacityRequiresPostFocusObservation(t *testing.T)
 	replannedArguments, _ := json.Marshal(productionQueueCapacityGuard{
 		CastleID: 77, LineID: 0, DefinitionID: 489, ExpectedFreeSlots: 1,
 	})
-	application = &Application{State: State.NewStore(gameState)}
+	application = &Application{State: State.NewStore(&gameState)}
 	if err := application.verifyProductionQueueCapacityAt(replannedArguments, now); !errors.Is(err, Intent.ErrPlanStale) {
 		t.Fatalf("replanned guard accepted a queue omitted by the committed castle snapshot: %v", err)
 	}
@@ -516,7 +516,7 @@ func TestVerifyProductionQueueCapacityRequiresPostFocusObservation(t *testing.T)
 	queue.ObservedAt = castle.ContextSnapshotObservedAt
 	castle.Production[0] = queue
 	gameState.Castles[77] = castle
-	application = &Application{State: State.NewStore(gameState)}
+	application = &Application{State: State.NewStore(&gameState)}
 	if err := application.verifyProductionQueueCapacityAt(arguments, now); err != nil {
 		t.Fatalf("new post-focus queue observation rejected: %v", err)
 	}
@@ -539,7 +539,7 @@ func TestVerifyProductionQueueCapacityRejectsElapsedActiveQueue(t *testing.T) {
 	arguments, _ := json.Marshal(productionQueueCapacityGuard{
 		CastleID: 77, LineID: 0, DefinitionID: 489, ExpectedFreeSlots: 1,
 	})
-	application := &Application{State: State.NewStore(gameState)}
+	application := &Application{State: State.NewStore(&gameState)}
 	if err := application.verifyProductionQueueCapacityAt(arguments, now); !errors.Is(err, Intent.ErrPlanStale) {
 		t.Fatalf("elapsed production queue guard error = %v, want stale", err)
 	}
@@ -554,7 +554,7 @@ func TestVerifyProductionQueueCapacityRejectsExpiredScheduledSelection(t *testin
 			0: {LineID: 0, Capacity: 5, ObservedAt: now},
 		},
 	}
-	application := &Application{State: State.NewStore(gameState)}
+	application := &Application{State: State.NewStore(&gameState)}
 	expiredAt := now.Add(-time.Second)
 	arguments, _ := json.Marshal(productionQueueCapacityGuard{
 		CastleID: 77, LineID: 0, ExpectedFreeSlots: 1,

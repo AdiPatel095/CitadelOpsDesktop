@@ -11,7 +11,7 @@ import (
 
 func commandCorrelationPipeline(t *testing.T, gameState State.GameState) (*State.Store, *Pipeline) {
 	t.Helper()
-	store := State.NewStore(gameState)
+	store := State.NewStore(&gameState)
 	registry := NewRegistry()
 	if err := RegisterCoreReducers(registry); err != nil {
 		t.Fatal(err)
@@ -65,13 +65,14 @@ func TestEquipmentSaleResponsesReconcileOnlyTheCorrelatedInstance(t *testing.T) 
 	if _, kept := view.Inventory.Equipment[6558434872]; !kept || len(view.Inventory.Equipment) != 2 {
 		t.Fatalf("SEQ 214 was treated as a sale: %#v", view.Inventory.Equipment)
 	}
-	if !view.Inventory.EquipmentMutatedAt.Equal(base.Add(time.Second)) || len(State.PendingCommandRequests(view, "seq")) != 0 {
+	if !view.Inventory.EquipmentMutatedAt.Equal(base.Add(time.Second)) || len(State.PendingCommandRequests(&view, "seq")) != 0 {
 		t.Fatalf("SEQ 214 state = mutated %v pending %#v", view.Inventory.EquipmentMutatedAt, view.CommandContext.PendingRequests)
 	}
 
 	// No reply: nothing is inferred and the unresolved identity dies with the session.
 	sell(6558434873, base.Add(2*time.Second))
-	if got := State.PendingCommandRequests(store.ReadOnlyView(), "seq"); len(got) != 1 || got[0].EquipmentID != 6558434873 {
+	accessorState1 := store.ReadOnlyView()
+	if got := State.PendingCommandRequests(&accessorState1, "seq"); len(got) != 1 || got[0].EquipmentID != 6558434873 {
 		t.Fatalf("unanswered sale identity = %#v", got)
 	}
 	if _, err := store.ApplyComponents(State.Components(State.ComponentSession), func(state *State.GameState) ([]string, bool, error) {
@@ -97,7 +98,8 @@ func TestGemSaleResponsesOnlyResolvePendingIdentity(t *testing.T) {
 		Direction: Protocol.DirectionOutbound, Opcode: "sge", ReceivedAt: base,
 		Payload: json.RawMessage(`{"GID":20,"RGEM":0,"LFID":-1}`),
 	})
-	pending := State.PendingCommandRequests(store.ReadOnlyView(), "sge")
+	accessorState2 := store.ReadOnlyView()
+	pending := State.PendingCommandRequests(&accessorState2, "sge")
 	if len(pending) != 1 || pending[0].GemID != 20 || pending[0].RelicGem {
 		t.Fatalf("pending gem sale = %#v", pending)
 	}
@@ -204,7 +206,8 @@ func TestStorageRefreshResolvesLostSaleRepliesBeforeTheNextSale(t *testing.T) {
 	outbound("seq", `{"EID":6558434871,"LID":-1,"EX":0,"LFID":-1}`, base) // reply lost
 	outbound("gei", `{}`, base.Add(time.Second))
 	inbound("gei", `{"I":[[6558434871,1,0,2,100,[],100],[6558434872,1,0,2,100,[],100]]}`, base.Add(2*time.Second))
-	if pending := State.PendingCommandRequests(store.ReadOnlyView(), "seq"); len(pending) != 0 {
+	accessorState3 := store.ReadOnlyView()
+	if pending := State.PendingCommandRequests(&accessorState3, "seq"); len(pending) != 0 {
 		t.Fatalf("storage refresh left the lost sale pending: %#v", pending)
 	}
 	outbound("seq", `{"EID":6558434872,"LID":-1,"EX":0,"LFID":-1}`, base.Add(3*time.Second))

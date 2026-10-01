@@ -652,7 +652,7 @@ func fortressAttackContext(input Intent.PlanningContext, arguments json.RawMessa
 	if err := refuseRejectedAttackTarget(input.State, target.KingdomID, target.TypeID, target.X, target.Y, now); err != nil {
 		return request, State.CastleState{}, State.MapObservation{}, 0, err
 	}
-	if State.AttackFeatureTargetPendingAt(input.State, State.AttackFeatureAutoFortress, target.KingdomID, target.TypeID, target.X, target.Y, now) {
+	if State.AttackFeatureTargetPendingAt(&input.State, State.AttackFeatureAutoFortress, target.KingdomID, target.TypeID, target.X, target.Y, now) {
 		return request, State.CastleState{}, State.MapObservation{}, 0, Localization.WithError(fmt.Errorf("%w: fortress at %d:%d already has an unsettled attack", Intent.ErrPlanStale, target.X, target.Y), Localization.New("server.app.intent_plan_became_stale.57437f4b", "intent plan became stale before dispatch: fortress at {p1}:{p2} already has an unsettled attack", Localization.Params{"p1": fmt.Sprintf("%d", target.X), "p2": fmt.Sprintf("%d", target.Y)}))
 	}
 	commander, err := fortressCommander(input, request.CommanderIDs, source, target)
@@ -681,8 +681,8 @@ func fortressCommander(
 	best, found := 0.0, false
 	for _, id := range candidates {
 		commander := input.State.Commanders[id]
-		if !commander.Available || State.CommanderHasActiveMovementAt(input.State, id, now) ||
-			State.InvasionCommanderReserved(input.State, id) || input.CommanderHolds != nil && input.CommanderHolds.CommanderHeldAt(id, now) {
+		if !commander.Available || State.CommanderHasActiveMovementAt(&input.State, id, now) ||
+			State.InvasionCommanderReserved(&input.State, id) || input.CommanderHolds != nil && input.CommanderHolds.CommanderHeldAt(id, now) {
 			continue
 		}
 		speed, err := resolveFortressCommanderSpeed(input.State, input.GameData, source, target, id)

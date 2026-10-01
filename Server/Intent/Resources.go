@@ -50,7 +50,7 @@ func legacyClaimsToResources(gameState State.GameState, claims []string) []Resou
 }
 
 func resourceAccount(gameState State.GameState) string {
-	worldID, playerID := State.BoundAccount(gameState)
+	worldID, playerID := State.BoundAccount(&gameState)
 	server := strings.ToLower(strings.TrimSpace(worldID))
 	if server == "" && playerID == 0 {
 		return ""

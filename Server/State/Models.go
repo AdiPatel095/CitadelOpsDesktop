@@ -608,7 +608,7 @@ const RecruitmentAllianceHelpCompletionGrace = 3 * time.Minute
 // a different eligible hospital job.
 const MaximumOutstandingHospitalAllianceHelpRequests = 1
 
-func OwnAllianceHelpStateCurrent(state GameState) bool {
+func OwnAllianceHelpStateCurrent(state *GameState) bool {
 	generation := state.Session.Generation
 	observedGeneration := state.AllianceHelpRequests.OwnObservedGeneration
 	if generation == 0 {
@@ -621,7 +621,7 @@ func OwnAllianceHelpStateCurrent(state GameState) bool {
 
 // OwnAllianceHelpListCurrent reports whether a full own-request list was
 // observed in the active game session.
-func OwnAllianceHelpListCurrent(state GameState) bool {
+func OwnAllianceHelpListCurrent(state *GameState) bool {
 	if state.Session.Generation == 0 || !OwnAllianceHelpStateCurrent(state) ||
 		state.AllianceHelpRequests.ObservedAt.IsZero() {
 		return false
@@ -692,7 +692,7 @@ func prepareOwnAllianceHelpGeneration(state *GameState) bool {
 	return true
 }
 
-func PendingOtherAllianceHelpListIDs(state GameState) []int64 {
+func PendingOtherAllianceHelpListIDs(state *GameState) []int64 {
 	requests := state.AllianceHelpRequests
 	if state.Session.Generation == 0 || requests.OthersObservedGeneration != state.Session.Generation {
 		return nil
@@ -706,7 +706,7 @@ func PendingOtherAllianceHelpListIDs(state GameState) []int64 {
 	return result
 }
 
-func OutstandingHospitalAllianceHelpRequests(state GameState) int {
+func OutstandingHospitalAllianceHelpRequests(state *GameState) int {
 	if !OwnAllianceHelpStateCurrent(state) {
 		return 0
 	}
@@ -737,7 +737,7 @@ func OutstandingHospitalAllianceHelpRequests(state GameState) int {
 	return len(productionIDs)
 }
 
-func HasOutstandingHospitalAllianceHelpRequest(state GameState, productionID int64) bool {
+func HasOutstandingHospitalAllianceHelpRequest(state *GameState, productionID int64) bool {
 	if productionID <= 0 || !OwnAllianceHelpStateCurrent(state) {
 		return false
 	}
@@ -766,7 +766,7 @@ func HasOutstandingHospitalAllianceHelpRequest(state GameState, productionID int
 	return false
 }
 
-func HasOutstandingRecruitmentAllianceHelpRequest(state GameState, castleID CastleID) bool {
+func HasOutstandingRecruitmentAllianceHelpRequest(state *GameState, castleID CastleID) bool {
 	if castleID <= 0 || !OwnAllianceHelpStateCurrent(state) {
 		return false
 	}
@@ -815,7 +815,7 @@ func HasOutstandingRecruitmentAllianceHelpRequest(state GameState, castleID Cast
 // requests cover only until the bounded completion grace expires, even after
 // their server AHD removal.
 func RecruitmentAllianceHelpCovers(
-	state GameState,
+	state *GameState,
 	castleID CastleID,
 	now time.Time,
 	executionHorizon time.Duration,
@@ -1094,7 +1094,7 @@ type SubscriptionState struct {
 // Learned production batch sizes are valid only within one scope: the game
 // sizes batches by entitlement, so a change in the active set (either
 // direction) must invalidate what was learned under the old set.
-func (state GameState) SubscriptionScope() string {
+func (state *GameState) SubscriptionScope() string {
 	if len(state.Subscriptions) == 0 {
 		return ""
 	}

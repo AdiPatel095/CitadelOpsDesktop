@@ -14,7 +14,7 @@ func TestStoreMapRetentionExpiresOnlyPrivateStaleFacts(t *testing.T) {
 		"20:20": {KingdomID: 0, X: 20, Y: 20, TypeID: MapTypeRift, ObservedAt: now},
 		"30:30": {KingdomID: 0, X: 30, Y: 30, TypeID: MapTypeRift},
 	}
-	store := NewStore(state)
+	store := NewStore(&state)
 	removed, err := store.PruneMap(now.Add(15 * 24 * time.Hour))
 	if err != nil {
 		t.Fatal(err)

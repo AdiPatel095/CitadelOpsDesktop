@@ -125,7 +125,7 @@ func planTowerAttack(_ context.Context, input Intent.PlanningContext, arguments 
 		}
 	}
 	if State.AttackFeatureTargetPendingAt(
-		input.State, State.AttackFeatureAutoTowers, target.KingdomID, kingdomTowerMapTypeID,
+		&input.State, State.AttackFeatureAutoTowers, target.KingdomID, kingdomTowerMapTypeID,
 		target.X, target.Y, now,
 	) {
 		return deferredSkipPlan(fmt.Sprintf(
@@ -522,7 +522,7 @@ func towerAdvisorTimeSkipLimitStatus(
 	if attacks.ObservedAt.IsZero() || attacks.SessionStartedAt.IsZero() {
 		return 0, "Waiting for the authoritative server daily reset before using Advisor Time Skips", true, nil
 	}
-	used, exact := State.TowerAdvisorTimeSkipsUsedSince(gameState, attacks.SessionStartedAt, now)
+	used, exact := State.TowerAdvisorTimeSkipsUsedSince(&gameState, attacks.SessionStartedAt, now)
 	if !exact {
 		return 0, "Cannot establish exact Auto Towers Advisor Time Skip usage for the current server day", true, nil
 	}

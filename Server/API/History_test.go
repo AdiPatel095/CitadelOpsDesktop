@@ -416,7 +416,7 @@ func TestPlayerTrackerHistoryNoneStillReturnsCurrentValues(t *testing.T) {
 	NewServer(Config{
 		Configuration: configuration,
 		History:       history,
-		State:         State.NewStore(state),
+		State:         State.NewStore(&state),
 	}).Handler().ServeHTTP(recorder, request)
 	if recorder.Code != http.StatusOK {
 		t.Fatalf("history returned HTTP %d: %s", recorder.Code, recorder.Body.String())
@@ -473,7 +473,7 @@ func TestResourceAggregatesFilterByViewAndPageOnMinuteBoundary(t *testing.T) {
 	state.Account.UID = 77
 	state.Account.WorldID = "world.example"
 	state.Player.ID = 42
-	server := NewServer(Config{ReportAnalytics: reportStore, State: State.NewStore(state)})
+	server := NewServer(Config{ReportAnalytics: reportStore, State: State.NewStore(&state)})
 
 	firstRecorder := httptest.NewRecorder()
 	server.Handler().ServeHTTP(firstRecorder, httptest.NewRequest(

@@ -17,14 +17,14 @@ func TestMarketBarrowLeaseUsesReturnLegAndCapsStaleAvailability(t *testing.T) {
 	}
 	market := MarketCastleState{CastleID: 10, TotalBarrows: 100, AvailableBarrows: 100}
 
-	lease := MarketBarrowLeaseAt(gameState, 10, now)
+	lease := MarketBarrowLeaseAt(&gameState, 10, now)
 	if lease.Barrows != 75 || !lease.ReleasesAt.Equal(returnsAt) {
 		t.Fatalf("market lease = %+v", lease)
 	}
-	if available := AvailableMarketBarrowsAt(gameState, market, now); available != 25 {
+	if available := AvailableMarketBarrowsAt(&gameState, market, now); available != 25 {
 		t.Fatalf("lease-adjusted available barrows = %d, want 25", available)
 	}
-	if available := AvailableMarketBarrowsAt(gameState, market, returnsAt); available != 100 {
+	if available := AvailableMarketBarrowsAt(&gameState, market, returnsAt); available != 100 {
 		t.Fatalf("returned barrows remained leased: %d", available)
 	}
 }
@@ -61,13 +61,13 @@ func TestMarketBarrowLeaseKeepsHomeFleetReservedAcrossReturnTransition(t *testin
 	}
 	check := func(at time.Time) {
 		t.Helper()
-		if lease := MarketBarrowLeaseAt(state, 10, at); lease.Barrows != 125 || !lease.ReleasesAt.Equal(returnsAt) {
+		if lease := MarketBarrowLeaseAt(&state, 10, at); lease.Barrows != 125 || !lease.ReleasesAt.Equal(returnsAt) {
 			t.Fatalf("home fleet reservation = %+v", lease)
 		}
-		if lease := MarketBarrowLeaseAt(state, 20, at); lease.Barrows != 0 {
+		if lease := MarketBarrowLeaseAt(&state, 20, at); lease.Barrows != 0 {
 			t.Fatalf("recipient incorrectly owns returning carts: %+v", lease)
 		}
-		if available := AvailableMarketBarrowsAt(state, market, at); available != 0 {
+		if available := AvailableMarketBarrowsAt(&state, market, at); available != 0 {
 			t.Fatalf("home carts reused before returning: %d", available)
 		}
 	}
@@ -83,7 +83,7 @@ func TestMarketBarrowLeaseKeepsHomeFleetReservedAcrossReturnTransition(t *testin
 	state.Movements[99] = MovementState{ID: 99, Direction: 1, OwnerPlayerID: 2,
 		SourceCastleID: 20, TargetCastleID: 10, MarketBarrows: 50, ReturnsAt: &returnsAt}
 	check(returnsAt.Add(-time.Nanosecond))
-	if available := AvailableMarketBarrowsAt(state, market, returnsAt); available != 125 {
+	if available := AvailableMarketBarrowsAt(&state, market, returnsAt); available != 125 {
 		t.Fatalf("completed return did not release fleet: %d", available)
 	}
 }

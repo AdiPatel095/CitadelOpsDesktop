@@ -267,7 +267,7 @@ func TestAutoKhanPolicyStopsAtNomadPointThreshold(t *testing.T) {
 func TestAutoKhanDefenseToolShopRouteUsesCapturedLunaTable(t *testing.T) {
 	gameState := State.NewGameState()
 	gameState.Storm.LunaShopTableID = 14
-	route, active := autoKhanDefenseToolShopRoute(gameState, GameData.DefenseToolShopPackage{
+	route, active := autoKhanDefenseToolShopRoute(&gameState, GameData.DefenseToolShopPackage{
 		PackageID: 244, PriceScope: GameData.DefenseToolPriceCastleResource, PriceID: GameData.StormAquamarineID,
 	}, time.Now().UTC())
 	if !active || route.EventID != 14 {

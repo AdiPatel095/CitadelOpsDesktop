@@ -29,7 +29,7 @@ func (stub *stubAttackLaunches) AttackLaunchCountsSince(since time.Time, now tim
 func hostedRatesServer(source *stubAttackLaunches) *Server {
 	gameState := State.NewGameState()
 	gameState.DailyAttacks.SessionStartedAt = time.Now().Add(-6 * time.Hour).UTC()
-	config := Config{BackgroundOnly: true, State: State.NewStore(gameState)}
+	config := Config{BackgroundOnly: true, State: State.NewStore(&gameState)}
 	if source != nil {
 		config.AttackLaunches = source
 	}
@@ -118,7 +118,8 @@ func TestDesktopKeepsTelemetryRoutesAndDoesNotServeTheHostedRoute(t *testing.T) 
 	telemetry := Telemetry.NewStore(100)
 	defer telemetry.Close()
 	telemetry.RecordFeatureActivity("automation:autoTowers", "tower.attack", "INFO", "ATTACK", "Launched test attack")
-	handler := NewServer(Config{Telemetry: telemetry, State: State.NewStore(State.NewGameState())}).Handler()
+	accessorState1 := State.NewGameState()
+	handler := NewServer(Config{Telemetry: telemetry, State: State.NewStore(&accessorState1)}).Handler()
 	for _, path := range []string{"/api/v2/telemetry/channels", "/api/v2/telemetry/attack-rates", "/api/v2/telemetry/autotowers"} {
 		if code, _ := getJSON(t, handler, path); code != http.StatusOK {
 			t.Errorf("desktop GET %s = %d, want 200", path, code)

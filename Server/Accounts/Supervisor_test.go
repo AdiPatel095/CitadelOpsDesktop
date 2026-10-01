@@ -75,7 +75,8 @@ func TestSupervisorSharesOnlySameWorldObjectiveMapFacts(t *testing.T) {
 	}
 	deadline := time.Now().Add(2 * time.Second)
 	for {
-		if observation, found := bravo.State.ReadOnlyView().LookupMapObservation(0, "100:101"); found && observation.OwnerID == 500 {
+		accessorState1 := bravo.State.ReadOnlyView()
+		if observation, found := accessorState1.LookupMapObservation(0, "100:101"); found && observation.OwnerID == 500 {
 			break
 		}
 		if time.Now().After(deadline) {
@@ -83,7 +84,8 @@ func TestSupervisorSharesOnlySameWorldObjectiveMapFacts(t *testing.T) {
 		}
 		time.Sleep(time.Millisecond)
 	}
-	if _, found := charlie.State.ReadOnlyView().LookupMapObservation(0, "100:101"); found {
+	accessorState2 := charlie.State.ReadOnlyView()
+	if _, found := accessorState2.LookupMapObservation(0, "100:101"); found {
 		t.Fatal("objective map fact leaked to a different world")
 	}
 
@@ -97,7 +99,8 @@ func TestSupervisorSharesOnlySameWorldObjectiveMapFacts(t *testing.T) {
 		t.Fatal(err)
 	}
 	time.Sleep(10 * time.Millisecond)
-	if _, found := bravo.State.ReadOnlyView().LookupMapObservation(0, "200:201"); found {
+	accessorState3 := bravo.State.ReadOnlyView()
+	if _, found := accessorState3.LookupMapObservation(0, "200:201"); found {
 		t.Fatal("account-private tower progress leaked to a sibling account")
 	}
 
@@ -112,7 +115,8 @@ func TestSupervisorSharesOnlySameWorldObjectiveMapFacts(t *testing.T) {
 	}
 	deadline = time.Now().Add(2 * time.Second)
 	for {
-		if observation, found := bravo.State.ReadOnlyView().LookupStormTarget("612:667"); found && observation.StormIsleID == 10 {
+		accessorState4 := bravo.State.ReadOnlyView()
+		if observation, found := accessorState4.LookupStormTarget("612:667"); found && observation.StormIsleID == 10 {
 			break
 		}
 		if time.Now().After(deadline) {
@@ -120,7 +124,8 @@ func TestSupervisorSharesOnlySameWorldObjectiveMapFacts(t *testing.T) {
 		}
 		time.Sleep(time.Millisecond)
 	}
-	if _, found := charlie.State.ReadOnlyView().LookupStormTarget("612:667"); found {
+	accessorState5 := charlie.State.ReadOnlyView()
+	if _, found := accessorState5.LookupStormTarget("612:667"); found {
 		t.Fatal("shared Storm fact leaked to a different game world")
 	}
 }

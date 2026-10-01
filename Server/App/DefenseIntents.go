@@ -123,7 +123,7 @@ func planDefenseOpenGate(_ context.Context, input Intent.PlanningContext, argume
 	if request.RequireIncomingAttack {
 		incoming := false
 		input.State.RangeMovements(func(_ State.MovementID, movement State.MovementState) bool {
-			if movement.TargetCastleID == castle.ID && State.IsIncomingPlayerAttack(input.State, movement, now) {
+			if movement.TargetCastleID == castle.ID && State.IsIncomingPlayerAttack(&input.State, movement, now) {
 				incoming = true
 				return false
 			}

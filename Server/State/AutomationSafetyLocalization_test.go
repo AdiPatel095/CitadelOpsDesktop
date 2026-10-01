@@ -47,7 +47,7 @@ func TestSafetyLockReasonBindingPersistenceAndClones(t *testing.T) {
 	}
 	state := NewGameState()
 	state.Automations["test"] = AutomationState{SafetyLock: lock}
-	store := NewStore(state)
+	store := NewStore(&state)
 	snapshot := store.Snapshot()
 	changed := snapshot.Automations["test"]
 	changed.SafetyLock.MeaningDescriptor.OfficialKey = "changed"

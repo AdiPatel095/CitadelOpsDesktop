@@ -34,7 +34,7 @@ func TestMovementFrameImmediatelyReconcilesReservedInvasionLaunch(t *testing.T) 
 		Details: json.RawMessage(`{"LID":601,"W":[[[10,[[[1,100,-12]],[[702,7,-7]]] ],[-603,[[],[]]]]]}`),
 	})
 
-	store := State.NewStore(gameState)
+	store := State.NewStore(&gameState)
 	registry := NewRegistry()
 	if err := RegisterCoreReducers(registry); err != nil {
 		t.Fatal(err)
@@ -133,7 +133,7 @@ func TestRawShortReturnFrameReconcilesReservedInvasionLaunch(t *testing.T) {
 		SourceCastleID: 100, SourceX: 10, SourceY: 11, SourceKnown: true,
 		CommanderID: 7, CommanderKnown: true, OperationID: "short-return-cra", ReservedAt: reservedAt,
 	})
-	store := State.NewStore(gameState)
+	store := State.NewStore(&gameState)
 	registry := NewRegistry()
 	if err := RegisterCoreReducers(registry); err != nil {
 		t.Fatal(err)

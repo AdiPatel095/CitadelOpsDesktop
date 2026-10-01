@@ -65,7 +65,7 @@ func TestOwnJAAThenCurrentAINGrantsDispatchAuthority(t *testing.T) {
 	s := State.NewGameState()
 	s.Player.ID = 99
 	s.Castles[10] = State.CastleState{ID: 10}
-	store := State.NewStore(s)
+	store := State.NewStore(&s)
 	registry := Ingest.NewRegistry()
 	if err := Ingest.RegisterCoreReducers(registry); err != nil {
 		t.Fatal(err)

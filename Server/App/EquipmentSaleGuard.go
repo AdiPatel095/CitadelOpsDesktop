@@ -61,7 +61,7 @@ func validateEquipmentSaleDispatch(gameState State.GameState, request equipmentS
 			), Localization.New("server.app.intent_plan_became_stale.388ea395", "intent plan became stale before dispatch: equipment {p1} is no longer an unworn storage item eligible for this sale", Localization.Params{"p1": fmt.Sprintf("%d", request.EquipmentID)}))
 		}
 		storageAt := storageSnapshotAt(gameState, "gei")
-		for _, pending := range State.PendingCommandRequests(gameState, "seq") {
+		for _, pending := range State.PendingCommandRequests(&gameState, "seq") {
 			if pending.EquipmentID == request.EquipmentID && !pending.SentAt.Before(storageAt) {
 				return Localization.WithError(fmt.Errorf(
 					"%w: equipment %d already has an unresolved sale", Intent.ErrPlanStale, request.EquipmentID,
@@ -89,7 +89,7 @@ func validateEquipmentSaleDispatch(gameState State.GameState, request equipmentS
 	}
 	storageAt := storageSnapshotAt(gameState, "ggm")
 	unresolved := int64(0)
-	for _, pending := range State.PendingCommandRequests(gameState, "sge") {
+	for _, pending := range State.PendingCommandRequests(&gameState, "sge") {
 		if pending.GemID == request.GemID && pending.RelicGem == request.RelicGem && !pending.SentAt.Before(storageAt) {
 			unresolved++
 		}

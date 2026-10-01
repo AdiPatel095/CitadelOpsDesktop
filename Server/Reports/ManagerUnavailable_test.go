@@ -108,13 +108,14 @@ func TestManagerClassifiesSpyReportUnavailabilityFromStructuredResponse(t *testi
 				Status: "connected", LoggedIn: true, SocketReady: true, Namespace: "EmpireEx_21",
 			}
 			gameState.Reports.Notices[test.messageID] = State.ReportNotice{MessageID: test.messageID, TypeID: 3, Status: "pending"}
-			store := State.NewStore(gameState)
+			store := State.NewStore(&gameState)
 			engine, sender := newReportFetchEngine(t, store, test.code)
 			manager := NewManager(store, history, engine)
 
 			before := time.Now()
 			manager.processNext(t.Context())
-			notice, _ := store.ReadOnlyView().LookupReportNotice(test.messageID)
+			accessorState1 := store.ReadOnlyView()
+			notice, _ := accessorState1.LookupReportNotice(test.messageID)
 			wantSends := 1
 			if test.code == planFailureCode {
 				wantSends = 0

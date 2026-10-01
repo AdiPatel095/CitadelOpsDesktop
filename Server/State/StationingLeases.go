@@ -24,7 +24,7 @@ func StationMovementActiveAt(movement MovementState, now time.Time) bool {
 	return releasesAt != nil && !releasesAt.IsZero() && releasesAt.After(now)
 }
 
-func TrackedStationMovementReleaseAt(gameState GameState, movement MovementState) *time.Time {
+func TrackedStationMovementReleaseAt(gameState *GameState, movement MovementState) *time.Time {
 	for _, operation := range gameState.Stationing {
 		if operation.MatchesMovement(movement) {
 			return StationMovementReleaseAt(movement)
@@ -33,7 +33,7 @@ func TrackedStationMovementReleaseAt(gameState GameState, movement MovementState
 	return nil
 }
 
-func TrackedStationMovementActiveAt(gameState GameState, movement MovementState, now time.Time) bool {
+func TrackedStationMovementActiveAt(gameState *GameState, movement MovementState, now time.Time) bool {
 	releasesAt := TrackedStationMovementReleaseAt(gameState, movement)
 	return releasesAt != nil && !releasesAt.IsZero() && releasesAt.After(now)
 }
@@ -42,7 +42,7 @@ func TrackedStationMovementActiveAt(gameState GameState, movement MovementState,
 // authoritative Auto Station operation. Movement ids are the ownership
 // boundary: batch ids replace the legacy scalar id, and route similarity alone
 // never makes an unrelated movement part of the operation.
-func KhanAutoStationYieldActiveAt(gameState GameState, now time.Time) bool {
+func KhanAutoStationYieldActiveAt(gameState *GameState, now time.Time) bool {
 	if now.IsZero() {
 		now = time.Now().UTC()
 	}

@@ -89,7 +89,7 @@ func TestClearAutoBirdTrackingKeepsAutoStationAndGameMovements(t *testing.T) {
 	gameState.Movements[50] = State.MovementState{
 		ID: 50, SourceCastleID: 10, TargetCastleID: 20,
 	}
-	state := State.NewStore(gameState)
+	state := State.NewStore(&gameState)
 	application := &Application{State: state}
 	registry := Intent.NewRegistry()
 	registry.EnforceResourceDeclarations()
@@ -317,7 +317,7 @@ func TestAutoBirdDispatchGuardReturnsOnlyThatCastleToJAAPhaseWhenFocusChanges(t 
 		SourceCastleID: 10, TargetCastleID: 20, Units: map[State.UnitID]int64{489: 100},
 		DelayHours: 8, UnitsObservedAt: now, UpdatedAt: now,
 	}
-	application := &Application{State: State.NewStore(gameState)}
+	application := &Application{State: State.NewStore(&gameState)}
 	arguments, _ := json.Marshal(autoBirdCycleRequest{
 		SourceCastleID: 10, TrackingID: "autoBird:10",
 		MinimumDelayHours: 6, MaximumDelayHours: 12,
@@ -354,7 +354,7 @@ func TestResolveAutoBirdDispatchRebuildsEveryEligibleTroopFromLatestJAA(t *testi
 		Reserves:          []stationUnitRequest{{UnitID: 215, Amount: 10}},
 		DispatchStartedAt: now.Add(-time.Second), ExpectedTargetCastle: 20,
 	})
-	application := &Application{State: State.NewStore(gameState)}
+	application := &Application{State: State.NewStore(&gameState)}
 	step, err := application.resolveAutoBirdDispatchStep(t.Context(), Intent.PlanningContext{
 		State: gameState, GameData: gameData,
 	}, request)
@@ -394,7 +394,7 @@ func TestResolveAutoBirdDispatchDefersOnlyThatCastleWhenFreshJAAIsEmpty(t *testi
 		SourceCastleID: 10, TargetCastleID: 20, Units: map[State.UnitID]int64{489: 100},
 		DelayHours: 8, UnitsObservedAt: now, UpdatedAt: now,
 	}
-	application := &Application{State: State.NewStore(gameState)}
+	application := &Application{State: State.NewStore(&gameState)}
 	request, _ := json.Marshal(autoBirdCycleRequest{
 		SourceCastleID: 10, TrackingID: "autoBird:10",
 		MinimumDelayHours: 6, MaximumDelayHours: 12,
@@ -431,7 +431,7 @@ func TestCaptureAutoBirdMovementRecordsTravelWaitAndExpectedReturn(t *testing.T)
 		TravelSeconds: 600, WaitSeconds: 8 * 3600, ArrivesAt: &arrivesAt,
 		ObservedAt: now, Units: map[State.UnitID]int64{489: 125},
 	}
-	application := &Application{State: State.NewStore(gameState)}
+	application := &Application{State: State.NewStore(&gameState)}
 	arguments, _ := json.Marshal(autoBirdCycleRequest{
 		SourceCastleID: 10, TrackingID: "autoBird:10",
 		MinimumDelayHours: 6, MaximumDelayHours: 12,
@@ -487,7 +487,7 @@ func TestDeferredBirdDispatchBindsOrClearsStatusDescriptor(t *testing.T) {
 	for _, descriptor := range []*Localization.Message{nil, Localization.New("test.bird_hold", "Hold castle {castle}", Localization.Params{"castle": "17"})} {
 		state := State.NewGameState()
 		state.Stationing["bird"] = State.StationingOperation{ID: "bird", Purpose: "autoBird", SourceCastleID: 17, Phase: State.StationingPhaseDispatchReady, StatusDetail: "old", StatusDetailDescriptor: Localization.New("old", "Old reason", nil)}
-		application := &Application{State: State.NewStore(state)}
+		application := &Application{State: State.NewStore(&state)}
 		retry := time.Now().UTC().Add(time.Minute)
 		application.deferAutoBirdDispatch(autoBirdCycleRequest{TrackingID: "bird", SourceCastleID: 17}, "Hold castle 17", retry, descriptor)
 		current := application.State.ReadOnlyView().Stationing["bird"]

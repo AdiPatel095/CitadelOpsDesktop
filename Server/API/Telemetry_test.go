@@ -37,7 +37,7 @@ func TestAttackLaunchRatesExposeHourlyAndDailyResetSessionCountsForEveryFeature(
 		telemetry.RecordFeatureActivity(feature.actor, "test.attack", "INFO", "ATTACK", "Launched test attack")
 	}
 
-	server := &Server{config: Config{Telemetry: telemetry, State: State.NewStore(gameState)}}
+	server := &Server{config: Config{Telemetry: telemetry, State: State.NewStore(&gameState)}}
 	recorder := httptest.NewRecorder()
 	server.handleAttackLaunchRates(recorder, httptest.NewRequest(http.MethodGet, "/api/v2/telemetry/attack-rates", nil))
 	if recorder.Code != http.StatusOK {
@@ -71,7 +71,8 @@ func TestAttackLaunchRatesExposeHourlyAndDailyResetSessionCountsForEveryFeature(
 func TestAttackLaunchRatesWithholdDailySessionUntilResetBoundaryIsKnown(t *testing.T) {
 	telemetry := Telemetry.NewStore(100)
 	defer telemetry.Close()
-	server := &Server{config: Config{Telemetry: telemetry, State: State.NewStore(State.NewGameState())}}
+	accessorState1 := State.NewGameState()
+	server := &Server{config: Config{Telemetry: telemetry, State: State.NewStore(&accessorState1)}}
 	recorder := httptest.NewRecorder()
 
 	server.handleAttackLaunchRates(recorder, httptest.NewRequest(http.MethodGet, "/api/v2/telemetry/attack-rates", nil))

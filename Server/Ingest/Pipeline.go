@@ -374,7 +374,7 @@ func (pipeline *Pipeline) commitFrameGuarded(
 			return State.ScopedChange{}, validateErr
 		}
 		return State.ScopedChange{
-			Domains: domains, Partitions: scopedPartitionsForFrame(frame, *gameState, domains),
+			Domains: domains, Partitions: scopedPartitionsForFrame(frame, gameState, domains),
 			FocusSubcontext: focusSubcontext, Changed: retainsObservation || baselineChanged || reducerChanged,
 			DirtyComponents: dirtyComponents, DirtyComponentsSet: true,
 		}, nil
@@ -415,7 +415,7 @@ func (pipeline *Pipeline) commitFrameGuarded(
 					dirtyComponents = dirtyComponents.Union(State.Components(State.ComponentSession))
 				}
 				return State.ScopedChange{
-					Domains: domains, Partitions: scopedPartitionsForFrame(frame, *gameState, domains),
+					Domains: domains, Partitions: scopedPartitionsForFrame(frame, gameState, domains),
 					FocusSubcontext: focusSubcontext, Changed: true,
 					DirtyComponents: dirtyComponents, DirtyComponentsSet: true,
 				}, nil

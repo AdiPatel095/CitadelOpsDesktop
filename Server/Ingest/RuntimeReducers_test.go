@@ -421,7 +421,7 @@ func TestRuntimeNestedResponseReducers(t *testing.T) {
 		t.Fatal(err)
 	}
 	provider := staticGameDataProvider{store: gameData}
-	store := State.NewStore(gameState)
+	store := State.NewStore(&gameState)
 	pipeline := NewPipeline(store, provider, registry)
 	_, err := pipeline.HandleFrame(context.Background(), Protocol.Frame{
 		Opcode: "bup", Direction: Protocol.DirectionInbound, ResponseCode: &code, ReceivedAt: observedAt,
@@ -677,7 +677,7 @@ func TestSpecialistResponseKeepsRubyAndBoosterAuthorityAtomic(t *testing.T) {
 	if err := RegisterCoreReducers(registry); err != nil {
 		t.Fatal(err)
 	}
-	store := State.NewStore(state)
+	store := State.NewStore(&state)
 	_, err = store.ApplyComponents(State.Components(State.ComponentPlayer), func(current *State.GameState) ([]string, bool, error) {
 		current.Player.ResourceObservations[2] = State.PlayerResourceObservation{ObservedAt: base, ConnectionGeneration: 3}
 		return []string{"resources"}, true, nil

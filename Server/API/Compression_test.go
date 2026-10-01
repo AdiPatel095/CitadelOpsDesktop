@@ -346,7 +346,8 @@ func (conn *capturingConn) messageFrames(t *testing.T) []bool {
 
 func newSocketServer(t *testing.T, hosted bool) (*State.Store, string) {
 	t.Helper()
-	store := State.NewStore(State.NewGameState())
+	accessorState1 := State.NewGameState()
+	store := State.NewStore(&accessorState1)
 	engine := Intent.NewEngine(nil, store, nil, nil, nil)
 	server := httptest.NewServer(NewServer(Config{
 		State: store, Intents: engine, GameData: GameData.NewManager(GameData.UpdaterConfig{}), BackgroundOnly: hosted,
@@ -438,7 +439,8 @@ func TestDesktopSocketStaysUncompressed(t *testing.T) {
 
 func TestHostedAPIResponsesAreCompressedAndDesktopOnesAreNot(t *testing.T) {
 	for _, hosted := range []bool{true, false} {
-		store := State.NewStore(State.NewGameState())
+		accessorState2 := State.NewGameState()
+		store := State.NewStore(&accessorState2)
 		engine := Intent.NewEngine(nil, store, nil, nil, nil)
 		server := httptest.NewServer(NewServer(Config{State: store, Intents: engine, GameData: GameData.NewManager(GameData.UpdaterConfig{}), BackgroundOnly: hosted}).Handler())
 		request, _ := http.NewRequest(http.MethodGet, server.URL+"/api/v2/state", nil)
@@ -490,7 +492,7 @@ func benchmarkClientState(tb testing.TB) []byte {
 			ArrivesAt: &arrives, Units: map[State.UnitID]int64{6: 40, 7: 10}, TargetX: 20 + index, TargetY: 21,
 		})
 	}
-	raw, err := json.Marshal(State.NewClientStateSnapshot(gameState))
+	raw, err := json.Marshal(State.NewClientStateSnapshot(&gameState))
 	if err != nil {
 		tb.Fatal(err)
 	}

@@ -44,7 +44,7 @@ func (*SharedStormScanPolicy) WakeDomains() []string {
 }
 
 func (policy *SharedStormScanPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision, error) {
-	castle, found := autoStormCastle(snapshot.State, nil)
+	castle, found := autoStormCastle(&snapshot.State, nil)
 	if !found {
 		return Decision{
 			Status: "waiting", Detail: "Shared Storm scanning is waiting for this account to unlock the Storm kingdom", DetailDescriptor: Localization.New("server.automation.shared_storm_scanning_is.62cbc313", "Shared Storm scanning is waiting for this account to unlock the Storm kingdom", nil),

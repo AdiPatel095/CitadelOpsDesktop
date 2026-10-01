@@ -91,12 +91,12 @@ type Store struct {
 	worldMaps   *WorldMapStore
 }
 
-func NewStore(initial GameState) *Store {
-	return newStore(initial, nil)
+func NewStore(initial *GameState) *Store {
+	return newStore(*initial, nil)
 }
 
-func NewStoreWithWorldMap(initial GameState, worldMaps *WorldMapStore) *Store {
-	return newStore(initial, worldMaps)
+func NewStoreWithWorldMap(initial *GameState, worldMaps *WorldMapStore) *Store {
+	return newStore(*initial, worldMaps)
 }
 
 func newStore(initial GameState, worldMaps *WorldMapStore) *Store {
@@ -114,7 +114,7 @@ func newStore(initial GameState, worldMaps *WorldMapStore) *Store {
 	store := &Store{subscribers: map[uint64]chan Event{}, worldMaps: worldMaps}
 	if worldMaps != nil {
 		pruneIrrelevantMapObservations(&owned)
-		worldID := gameStateWorldID(owned)
+		worldID := gameStateWorldID(&owned)
 		if worldID != "" {
 			owned.worldSharing = true
 			changes := extractShareableMapObservations(&owned)
@@ -130,7 +130,7 @@ func newStore(initial GameState, worldMaps *WorldMapStore) *Store {
 	store.generation.Store(&storeGeneration{
 		state:    &owned,
 		versions: &partitionVersionSnapshot{},
-		protocol: initialProtocolContext(owned),
+		protocol: initialProtocolContext(&owned),
 	})
 	return store
 }
@@ -285,7 +285,7 @@ func (store *Store) ObserveProtocolFocus(subcontext FocusSubcontext, observedAt 
 	if observedAt.IsZero() {
 		observedAt = time.Now().UTC()
 	}
-	protocol := nextProtocolContext(current.protocol, *current.state, nil, nil, subcontext, observedAt)
+	protocol := nextProtocolContext(current.protocol, current.state, nil, nil, subcontext, observedAt)
 	if protocol != current.protocol {
 		store.generation.Store(&storeGeneration{state: current.state, versions: current.versions, protocol: protocol})
 	}
@@ -325,7 +325,7 @@ func (store *Store) ObserveRecruitmentBUP(
 		protocol.RecruitmentAHRFocusCovered = false
 		protocol.RecruitmentAHRPending = false
 	}
-	lifecycleCovers := RecruitmentAllianceHelpCovers(*current.state, castleID, time.Now().UTC(), 0)
+	lifecycleCovers := RecruitmentAllianceHelpCovers(current.state, castleID, time.Now().UTC(), 0)
 	if !lifecycleCovers {
 		protocol.RecruitmentAHRFocusCovered = false
 	}
@@ -364,7 +364,7 @@ func (store *Store) ObserveRecruitmentAHRCovered(
 		current.protocol.RecruitmentBUPFocusEpoch != focusEpoch ||
 		current.protocol.RecruitmentBUPSerial != bupSerial ||
 		current.protocol.RecruitmentAHRCoveredSerial >= bupSerial ||
-		!RecruitmentAllianceHelpCovers(*current.state, castleID, time.Now().UTC(), 0) {
+		!RecruitmentAllianceHelpCovers(current.state, castleID, time.Now().UTC(), 0) {
 		return false
 	}
 	protocol := current.protocol
@@ -437,7 +437,7 @@ func (store *Store) ObserveStandaloneRecruitmentAHRCovered(
 		current.protocol.RecruitmentBUPCastleID != castleID ||
 		current.protocol.RecruitmentBUPFocusEpoch != focusEpoch ||
 		!current.protocol.RecruitmentAHRPending ||
-		!RecruitmentAllianceHelpCovers(*current.state, castleID, observedAt, 0) {
+		!RecruitmentAllianceHelpCovers(current.state, castleID, observedAt, 0) {
 		return false
 	}
 	protocol := current.protocol
@@ -550,7 +550,7 @@ func (store *Store) applyScoped(writes ComponentSet, mutation ScopedMutation) (E
 		current = &storeGeneration{
 			state:    &initial,
 			versions: &partitionVersionSnapshot{},
-			protocol: initialProtocolContext(initial),
+			protocol: initialProtocolContext(&initial),
 		}
 	}
 	candidate := cloneGameStateForMutation(*current.state, writes)
@@ -569,7 +569,7 @@ func (store *Store) applyScoped(writes ComponentSet, mutation ScopedMutation) (E
 		protocol := current.protocol
 		if change.FocusSubcontext != FocusSubcontextUnknown {
 			now := time.Now().UTC()
-			protocol = nextProtocolContext(current.protocol, *current.state, nil, nil, change.FocusSubcontext, now)
+			protocol = nextProtocolContext(current.protocol, current.state, nil, nil, change.FocusSubcontext, now)
 		}
 		movementFreshness := writes.Has(ComponentMovementSnapshot) &&
 			candidate.MovementSnapshot != current.state.MovementSnapshot
@@ -631,12 +631,12 @@ func (store *Store) applyScoped(writes ComponentSet, mutation ScopedMutation) (E
 	mapCOW := candidate.mapMutationCOW
 	replaceMap := candidate.replaceMap
 	if store.worldMaps != nil {
-		currentWorldID := gameStateWorldID(*current.state)
-		nextWorldID := gameStateWorldID(*candidate)
+		currentWorldID := gameStateWorldID(current.state)
+		nextWorldID := gameStateWorldID(candidate)
 		worldChanged := currentWorldID != nextWorldID
 		replaceMap = worldChanged || candidate.replaceMap
 		if worldChanged && !effectiveWrites.Has(ComponentWorldMap) {
-			candidate.prepareMapMutation(*current.state)
+			candidate.prepareMapMutation(current.state)
 			candidate.mutationWrites |= Components(ComponentWorldMap)
 			effectiveWrites |= Components(ComponentWorldMap)
 		}
@@ -840,12 +840,12 @@ func (store *Store) applyScoped(writes ComponentSet, mutation ScopedMutation) (E
 	candidate.Revision++
 	candidate.UpdatedAt = time.Now().UTC()
 	domains := normalizeDomains(change.Domains)
-	partitions := append(defaultPartitionKeys(*candidate, domains), change.Partitions...)
+	partitions := append(defaultPartitionKeys(candidate, domains), change.Partitions...)
 	partitionSnapshot, changedPartitions := advancePartitionVersions(
 		current.versions, partitions, candidate.Revision, candidate.UpdatedAt,
 	)
 	protocol := nextProtocolContext(
-		current.protocol, *candidate, domains, change.Partitions, change.FocusSubcontext, candidate.UpdatedAt,
+		current.protocol, candidate, domains, change.Partitions, change.FocusSubcontext, candidate.UpdatedAt,
 	)
 	next := &storeGeneration{state: candidate, versions: partitionSnapshot, protocol: protocol}
 	store.generation.Store(next)
@@ -1202,64 +1202,64 @@ func cloneGameStateForMutation(source GameState, components ComponentSet) *GameS
 	)
 	clone := cloneGameStateComponents(source, withoutKeyed)
 	if components.Has(ComponentWorldMap) {
-		clone.prepareMapMutation(source)
+		clone.prepareMapMutation(&source)
 	}
 	if components.Has(ComponentCastles) {
-		clone.prepareCastleMutation(source)
+		clone.prepareCastleMutation(&source)
 	}
 	if components.Has(ComponentInventory) {
-		clone.prepareInventoryMutation(source)
+		clone.prepareInventoryMutation(&source)
 	}
 	if components.Has(ComponentStorm) {
-		clone.prepareStormMutation(source)
+		clone.prepareStormMutation(&source)
 	}
 	if components.Has(ComponentTowerCooldowns) {
-		clone.prepareTowerCooldownMutation(source)
+		clone.prepareTowerCooldownMutation(&source)
 	}
 	if components.Has(ComponentTowerQueue) {
-		clone.prepareTowerQueueMutation(source)
+		clone.prepareTowerQueueMutation(&source)
 	}
 	if components.Has(ComponentReports) {
-		clone.prepareReportMutation(source)
+		clone.prepareReportMutation(&source)
 	}
 	if components.Has(ComponentEventScores) {
-		clone.prepareEventScoreMutation(source)
+		clone.prepareEventScoreMutation(&source)
 	}
 	if components.Has(ComponentAttackAnalytics) {
-		clone.prepareAttackAnalyticsMutation(source)
+		clone.prepareAttackAnalyticsMutation(&source)
 	}
 	if components.Has(ComponentPlayer) {
-		clone.preparePlayerMutation(source)
+		clone.preparePlayerMutation(&source)
 	}
 	if components.Has(ComponentCommanders) {
-		clone.prepareCommanderMutation(source)
+		clone.prepareCommanderMutation(&source)
 	}
 	if components.Has(ComponentGenerals) {
-		clone.prepareGeneralMutation(source)
+		clone.prepareGeneralMutation(&source)
 	}
 	if components.Has(ComponentCastellans) {
-		clone.prepareCastellanMutation(source)
+		clone.prepareCastellanMutation(&source)
 	}
 	if components.Has(ComponentMovements) {
-		clone.prepareMovementMutation(source)
+		clone.prepareMovementMutation(&source)
 	}
 	if components.Has(ComponentStationing) {
-		clone.prepareStationingMutation(source)
+		clone.prepareStationingMutation(&source)
 	}
 	if components.Has(ComponentMarket) {
-		clone.prepareMarketMutation(source)
+		clone.prepareMarketMutation(&source)
 	}
 	if components.Has(ComponentAttackDialog) {
-		clone.prepareAttackDialogMutation(source)
+		clone.prepareAttackDialogMutation(&source)
 	}
 	if components.Has(ComponentAttackPresets) {
-		clone.prepareAttackPresetMutation(source)
+		clone.prepareAttackPresetMutation(&source)
 	}
 	if components.Has(ComponentAutomations) {
-		clone.prepareAutomationMutation(source)
+		clone.prepareAutomationMutation(&source)
 	}
 	if components.Has(ComponentObservations) {
-		clone.prepareObservationMutation(source)
+		clone.prepareObservationMutation(&source)
 	}
 	return &clone
 }

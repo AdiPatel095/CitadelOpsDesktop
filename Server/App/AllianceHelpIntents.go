@@ -49,7 +49,7 @@ func planAllianceHelpAnswerAll(
 	if err := decodeIntentArguments(arguments, &options); err != nil {
 		return Intent.Plan{}, err
 	}
-	listIDs := State.PendingOtherAllianceHelpListIDs(input.State)
+	listIDs := State.PendingOtherAllianceHelpListIDs(&input.State)
 	if len(listIDs) == 0 {
 		if !options.AllowUnobserved || input.State.Session.Generation == 0 ||
 			input.State.AllianceHelpRequests.LastHelpAllGeneration == input.State.Session.Generation {
@@ -99,7 +99,7 @@ func resolveAllianceHelpAnswerAllStep(
 	if request.SessionGeneration == 0 || request.SessionGeneration != input.State.Session.Generation {
 		return Intent.Step{}, Localization.WithError(fmt.Errorf("%w: alliance-help session changed", Intent.ErrPlanStale), Localization.New("server.app.intent_plan_became_stale.c4717979", "intent plan became stale before dispatch: alliance-help session changed", nil))
 	}
-	pending := State.PendingOtherAllianceHelpListIDs(input.State)
+	pending := State.PendingOtherAllianceHelpListIDs(&input.State)
 	currentObservation := input.State.AllianceHelpRequests.OthersObservedGeneration == input.State.Session.Generation &&
 		!input.State.AllianceHelpRequests.OthersObservedAt.IsZero()
 	bootstrapAllowed := request.AllowUnobserved &&
@@ -194,7 +194,7 @@ func planAllianceHelpRequest(_ context.Context, input Intent.PlanningContext, ar
 		return Intent.Plan{}, Localization.WithError(fmt.Errorf("production line %d does not support alliance help requests", job.LineID), Localization.New("server.app.production_line_p_does.cc1eadf7", "production line {p0} does not support alliance help requests", Localization.Params{"p0": fmt.Sprintf("%d", job.LineID)}))
 	}
 	if job.LineID == hospitalProductionLineID &&
-		State.OutstandingHospitalAllianceHelpRequests(input.State) >=
+		State.OutstandingHospitalAllianceHelpRequests(&input.State) >=
 			State.MaximumOutstandingHospitalAllianceHelpRequests {
 		return Intent.Plan{Summary: "Skip alliance help: hospital already has an outstanding request", SummaryDescriptor: Localization.New("server.app.skip_alliance_help_hospital.d12487ed", "Skip alliance help: hospital already has an outstanding request", nil)}, nil
 	}
@@ -202,12 +202,12 @@ func planAllianceHelpRequest(_ context.Context, input Intent.PlanningContext, ar
 	if !exists {
 		return Intent.Plan{}, Localization.WithError(fmt.Errorf("castle %d is not in the current player state", job.CastleID), Localization.New("server.app.castle_p_is_not.47524bcb", "castle {p0} is not in the current player state", Localization.Params{"p0": fmt.Sprintf("%d", job.CastleID)}))
 	}
-	if State.CastleFocusKnownUnavailable(input.State, castle) {
+	if State.CastleFocusKnownUnavailable(&input.State, castle) {
 		return Intent.Plan{}, Localization.WithError(fmt.Errorf(
 			"%w: castle %d cannot be focused in the current kingdom session", Intent.ErrPlanStale, job.CastleID,
 		), Localization.New("server.app.intent_plan_became_stale.f50ee7dc", "intent plan became stale before dispatch: castle {p1} cannot be focused in the current kingdom session", Localization.Params{"p1": fmt.Sprintf("%d", job.CastleID)}))
 	}
-	if job.LineID == hospitalProductionLineID && !State.OwnAllianceHelpListCurrent(input.State) {
+	if job.LineID == hospitalProductionLineID && !State.OwnAllianceHelpListCurrent(&input.State) {
 		return Intent.Plan{Summary: "Skip alliance help: waiting for the current hospital request list", SummaryDescriptor: Localization.New("server.app.skip_alliance_help_waiting.7bd5e4c3", "Skip alliance help: waiting for the current hospital request list", nil)}, nil
 	}
 	if job.LineID == recruitmentProductionLineID &&
@@ -273,7 +273,7 @@ func (application *Application) resolveAllianceHelpRequestStep(
 		), Localization.New("server.app.intent_plan_became_stale.77e5e464", "intent plan became stale before dispatch: production job {p1} is no longer eligible for alliance help", Localization.Params{"p1": fmt.Sprintf("%d", request.ProductionID)}))
 	}
 	castle, exists := input.State.Castles[job.CastleID]
-	if !exists || State.CastleFocusKnownUnavailable(input.State, castle) {
+	if !exists || State.CastleFocusKnownUnavailable(&input.State, castle) {
 		return Intent.Step{}, Localization.WithError(fmt.Errorf(
 			"%w: castle %d cannot be focused in the current kingdom session", Intent.ErrPlanStale, job.CastleID,
 		), Localization.New("server.app.intent_plan_became_stale.f50ee7dc", "intent plan became stale before dispatch: castle {p1} cannot be focused in the current kingdom session", Localization.Params{"p1": fmt.Sprintf("%d", job.CastleID)}))
@@ -291,13 +291,13 @@ func (application *Application) resolveAllianceHelpRequestStep(
 			Intent.ErrPlanStale, job.CastleID,
 		), Localization.New("server.app.intent_plan_became_stale.abdda625", "intent plan became stale before dispatch: recruitment castle {p1} is not the current committed castle context", Localization.Params{"p1": fmt.Sprintf("%d", job.CastleID)}))
 	}
-	if job.LineID == hospitalProductionLineID && !State.OwnAllianceHelpListCurrent(input.State) {
+	if job.LineID == hospitalProductionLineID && !State.OwnAllianceHelpListCurrent(&input.State) {
 		return Intent.Step{}, Localization.WithError(fmt.Errorf(
 			"%w: hospital alliance help needs the current request list", Intent.ErrPlanStale,
 		), Localization.New("server.app.intent_plan_became_stale.b6ede151", "intent plan became stale before dispatch: hospital alliance help needs the current request list", nil))
 	}
 	if job.LineID == hospitalProductionLineID &&
-		State.OutstandingHospitalAllianceHelpRequests(input.State) >=
+		State.OutstandingHospitalAllianceHelpRequests(&input.State) >=
 			State.MaximumOutstandingHospitalAllianceHelpRequests {
 		return Intent.Step{}, Localization.WithError(fmt.Errorf(
 			"%w: hospital alliance help already has an outstanding request",
@@ -327,7 +327,7 @@ func (application *Application) resolveRecruitmentBUPAllianceHelpStep(
 		return Intent.Step{}, err
 	}
 	castle, exists := input.State.Castles[request.CastleID]
-	if !exists || State.CastleFocusKnownUnavailable(input.State, castle) ||
+	if !exists || State.CastleFocusKnownUnavailable(&input.State, castle) ||
 		!recruitmentAllianceHelpContextCurrent(input, castle) {
 		return Intent.Step{}, Localization.WithError(fmt.Errorf(
 			"%w: recruitment castle %d is not the current committed castle context",
@@ -416,7 +416,7 @@ func (application *Application) markRecruitmentBUPAllianceHelpCovered(
 	input := Intent.PlanningContext{State: view.State, ProtocolContext: view.ProtocolContext}
 	protocol := view.ProtocolContext
 	if !exists || !recruitmentAllianceHelpContextCurrent(input, castle) ||
-		!State.RecruitmentAllianceHelpCovers(view.State, request.CastleID, time.Now().UTC(), 0) ||
+		!State.RecruitmentAllianceHelpCovers(&view.State, request.CastleID, time.Now().UTC(), 0) ||
 		protocol.RecruitmentBUPCastleID != request.CastleID ||
 		protocol.RecruitmentBUPFocusEpoch != protocol.FocusEpoch ||
 		protocol.RecruitmentBUPSerial == 0 ||
@@ -510,7 +510,7 @@ func (application *Application) prepareStandaloneRecruitmentBUPAllianceHelp(
 
 func recruitmentAllianceHelpQueueCurrent(state State.GameState, castle State.CastleState, now time.Time) bool {
 	queue, exists := castle.Production[recruitmentProductionLineID]
-	return exists && !State.ProductionQueueNeedsRefresh(state, queue, now) &&
+	return exists && !State.ProductionQueueNeedsRefresh(&state, queue, now) &&
 		!State.ProductionQueuePredatesCastleSnapshot(castle, queue)
 }
 
@@ -629,10 +629,10 @@ func allianceHelpJobEligible(
 		return false
 	}
 	if lineID == recruitmentProductionLineID {
-		return State.RecruitmentAllianceHelpItemEligible(state, castleID, item, time.Now().UTC())
+		return State.RecruitmentAllianceHelpItemEligible(&state, castleID, item, time.Now().UTC())
 	}
 	return lineID != hospitalProductionLineID ||
-		!State.HasOutstandingHospitalAllianceHelpRequest(state, item.ProductionID)
+		!State.HasOutstandingHospitalAllianceHelpRequest(&state, item.ProductionID)
 }
 
 func allianceHelpLineSupported(lineID int) bool {

@@ -85,7 +85,7 @@ func TestInvasionEventOccurrenceFlowsFromPolicyThroughPersistedReservation(t *te
 		t.Fatalf("final invasion guard lost resolved request: guarded=%#v planned=%#v", guarded, planned)
 	}
 
-	application := &Application{DataDir: t.TempDir(), State: State.NewStore(gameState)}
+	application := &Application{DataDir: t.TempDir(), State: State.NewStore(&gameState)}
 	resolved, err := application.resolveInvasionAttackStep(
 		t.Context(), Intent.PlanningContext{State: gameState, GameData: gameData}, launch.ResolverArguments,
 	)
@@ -144,7 +144,7 @@ func TestInvasionCapturePersistsReducerAccountingFence(t *testing.T) {
 		EventID: 71, RemainingSec: 14_400, ObservedAt: now,
 	})
 	dataDir := t.TempDir()
-	application := &Application{DataDir: dataDir, State: State.NewStore(gameState)}
+	application := &Application{DataDir: dataDir, State: State.NewStore(&gameState)}
 	arguments, _ := json.Marshal(resolvedInvasionAttackRequest{
 		invasionAttackRequest: invasionAttackRequest{
 			SourceCastleID: 1, EventID: 71, EventEndsAt: occurrenceEndsAt,
@@ -227,7 +227,7 @@ func TestInvasionReconciliationReleasesPriorOccurrenceWithoutAttributingMovement
 		t.Fatalf("planned reconciliation boundary = %#v", verification)
 	}
 
-	store := State.NewStore(gameState)
+	store := State.NewStore(&gameState)
 	application := &Application{State: store}
 	if err := application.reconcileInvasionTargetReservation(t.Context(), verificationArguments); err != nil {
 		t.Fatal(err)
@@ -306,7 +306,7 @@ func TestInvasionReconciliationRecordsLostSourceReturnWithoutRefocus(t *testing.
 	if err := json.Unmarshal(verificationArguments, &verification); err != nil {
 		t.Fatal(err)
 	}
-	store := State.NewStore(gameState)
+	store := State.NewStore(&gameState)
 	application := &Application{State: store}
 	if err := application.reconcileInvasionTargetReservation(t.Context(), verificationArguments); err != nil {
 		t.Fatal(err)
@@ -354,14 +354,15 @@ func TestInvasionReconciliationPersistsFullMarkerBackoffAfterScopedGAMOmission(t
 	gameState.Map[0]["101:100"] = target
 
 	dataDir := t.TempDir()
-	application := &Application{DataDir: dataDir, State: State.NewStore(gameState)}
+	application := &Application{DataDir: dataDir, State: State.NewStore(&gameState)}
 	if err := application.reconcileInvasionTargetReservation(t.Context(), verificationArguments); err != nil {
 		t.Fatal(err)
 	}
 	reservation, found := application.State.ReadOnlyView().Invasion.TargetReservation(0, 101, 100)
+	accessorState1 := application.State.ReadOnlyView()
 	if !found || !reservation.ReconcileAfter.After(verification.ReconcileStartedAt) ||
 		!reservation.CommanderKnown || reservation.CommanderID != 0 || reservation.ReconcileAttempts != 1 ||
-		!State.InvasionCommanderReserved(application.State.ReadOnlyView(), 0) {
+		!State.InvasionCommanderReserved(&accessorState1, 0) {
 		t.Fatalf("scoped GAM reconciliation backoff = %#v, found=%t", reservation, found)
 	}
 	loaded, err := State.LoadSnapshot(dataDir)
@@ -407,7 +408,7 @@ func TestTargetOnlyInvasionReservationReconcilesWithoutMovementProbe(t *testing.
 	target := gameState.Map[0]["101:100"]
 	target.ObservedAt = verification.ReconcileStartedAt.Add(time.Second)
 	gameState.Map[0]["101:100"] = target
-	application := &Application{State: State.NewStore(gameState)}
+	application := &Application{State: State.NewStore(&gameState)}
 	if err := application.reconcileInvasionTargetReservation(t.Context(), verificationArguments); err != nil {
 		t.Fatal(err)
 	}
@@ -454,7 +455,7 @@ func TestInvasionReconciliationAccountsJustEndedOccurrence(t *testing.T) {
 		t.Fatal(err)
 	}
 	gameState.MovementSnapshot.ObservedAt = verification.ReconcileStartedAt.Add(time.Second)
-	application := &Application{State: State.NewStore(gameState)}
+	application := &Application{State: State.NewStore(&gameState)}
 	if err := application.reconcileInvasionTargetReservation(t.Context(), verificationArguments); err != nil {
 		t.Fatal(err)
 	}

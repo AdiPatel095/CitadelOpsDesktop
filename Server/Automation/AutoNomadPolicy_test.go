@@ -514,13 +514,13 @@ func TestAutoNomadRBCTestSizesChainToResponseGatedSkipSequences(t *testing.T) {
 func TestResponseGatedDungeonCooldownCountCombinesSmallerSkipsAndHonorsReserves(t *testing.T) {
 	gameState := State.NewGameState()
 	gameState.Player.Currencies[1002] = 13
-	if got := oneCommandDungeonSkipCount(gameState, map[string]int64{}, 3600); got != 0 {
+	if got := oneCommandDungeonSkipCount(&gameState, map[string]int64{}, 3600); got != 0 {
 		t.Fatalf("five-minute skips unexpectedly counted as single-command one-hour clears: %d", got)
 	}
-	if got := responseGatedDungeonCooldownCount(gameState, map[string]int64{"MS2": 1}, 3600); got != 1 {
+	if got := responseGatedDungeonCooldownCount(&gameState, map[string]int64{"MS2": 1}, 3600); got != 1 {
 		t.Fatalf("response-gated one-hour cooldown capacity = %d, want 1", got)
 	}
-	if got := responseGatedDungeonCooldownCount(gameState, map[string]int64{"ms2": 2}, 3600); got != 0 {
+	if got := responseGatedDungeonCooldownCount(&gameState, map[string]int64{"ms2": 2}, 3600); got != 0 {
 		t.Fatalf("response-gated capacity crossed the case-insensitive reserve: %d", got)
 	}
 }

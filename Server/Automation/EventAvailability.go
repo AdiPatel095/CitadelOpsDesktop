@@ -28,7 +28,7 @@ var limitedEventLocation = func() *time.Location {
 }()
 
 func limitedEventGate(
-	state State.GameState,
+	state *State.GameState,
 	now time.Time,
 	eventIDs []int64,
 	label string,

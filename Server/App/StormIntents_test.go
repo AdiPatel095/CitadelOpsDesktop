@@ -593,7 +593,7 @@ func TestCaptureStormScanBuildsAuthoritativeMapState(t *testing.T) {
 			ObservedAt: startedAt.Add(2 * time.Second),
 		},
 	}
-	application := &Application{State: State.NewStore(state)}
+	application := &Application{State: State.NewStore(&state)}
 	scanRequest := stormMapScanRequest{
 		SourceCastleID: 40,
 		FullMap:        true,
@@ -657,7 +657,7 @@ func TestCaptureTargetedStormScanRefreshesTrackedCooldown(t *testing.T) {
 			StormCooldownRemaining: 36_000, ObservedAt: startedAt.Add(time.Second),
 		},
 	}
-	application := &Application{State: State.NewStore(state)}
+	application := &Application{State: State.NewStore(&state)}
 	request, err := json.Marshal(stormMapScanRequest{
 		SourceCastleID: 40, Targeted: true,
 		Bounds: State.StormMapBounds{X1: 612, Y1: 667, X2: 612, Y2: 667}, ScanStartedAt: startedAt,
@@ -777,7 +777,7 @@ func TestConsumeStormIslandTargetRecordsReportGatedReturn(t *testing.T) {
 		"101:102": {KingdomID: 4, X: 101, Y: 102, TypeID: stormIntentIslandMapTypeID, ObjectID: 777},
 	}
 	state.Storm.Map.Targets["101:102"] = state.Map[4]["101:102"]
-	application := &Application{State: State.NewStore(state)}
+	application := &Application{State: State.NewStore(&state)}
 	arguments, err := json.Marshal(stormTargetConsumeRequest{
 		SourceCastleID: 40, KingdomID: 4, TargetTypeID: stormIntentIslandMapTypeID,
 		TargetX: 101, TargetY: 102, IslandObjectID: 777, LeaveBehind: 1,
@@ -984,7 +984,7 @@ func TestCooperativeCaptureBindsIdentityForTargetedRefresh(t *testing.T) {
 	}
 	worldMaps := State.NewWorldMapStore()
 	application := &Application{
-		State: State.NewStoreWithWorldMap(state, worldMaps), WorldMaps: worldMaps, AccountKey: "acct-test",
+		State: State.NewStoreWithWorldMap(&state, worldMaps), WorldMaps: worldMaps, AccountKey: "acct-test",
 	}
 	worldID := state.Session.ServerURL
 	// The first heartbeat establishes the anonymous roster. Acquire again after
@@ -1029,7 +1029,7 @@ func TestTargetedRefreshBindsUnboundIdentity(t *testing.T) {
 	state.Session.ServerURL = "wss://ep-live-us1-game.goodgamestudios.com:443"
 	state.Player.ID = 901
 	state.Castles[40] = State.CastleState{ID: 40, KingdomID: stormIntentKingdomID, Focused: true}
-	application := &Application{State: State.NewStore(state)}
+	application := &Application{State: State.NewStore(&state)}
 	if err := application.captureStormScanRequest(stormMapScanRequest{
 		SourceCastleID: 40, Targeted: true,
 		Bounds:        State.StormMapBounds{X1: 650, Y1: 650, X2: 650, Y2: 650},
@@ -1116,11 +1116,12 @@ func TestStormFortWithoutObjectIDPlansConsumesAndResolves(t *testing.T) {
 		consume.TargetTypeID != stormIntentFortMapTypeID {
 		t.Fatalf("fort consume arguments = %s err=%v", consumeArguments, err)
 	}
-	stateStore := State.NewStore(state)
+	stateStore := State.NewStore(&state)
 	if err := (&Application{State: stateStore}).consumeStormTarget(t.Context(), consumeArguments); err != nil {
 		t.Fatalf("fort consumption with ObjectID 0 rejected: %v", err)
 	}
-	if _, tracked := stateStore.ReadOnlyView().LookupStormTarget("101:102"); tracked {
+	accessorState1 := stateStore.ReadOnlyView()
+	if _, tracked := accessorState1.LookupStormTarget("101:102"); tracked {
 		t.Fatal("consumed fort remained tracked")
 	}
 
@@ -1163,7 +1164,7 @@ func TestStormIslandConsumeKeepsOfficialObjectID(t *testing.T) {
 		SourceCastleID: 40, KingdomID: stormIntentKingdomID, TargetTypeID: stormIntentIslandMapTypeID,
 		TargetX: 100, TargetY: 101, IslandObjectID: island.ObjectID, LeaveBehind: 1,
 	})
-	stateStore := State.NewStore(state)
+	stateStore := State.NewStore(&state)
 	if err := (&Application{State: stateStore}).consumeStormTarget(t.Context(), arguments); err != nil {
 		t.Fatal(err)
 	}
@@ -1230,7 +1231,7 @@ func TestHiddenStormFortIsRefusedByPlannerAndCRAGuard(t *testing.T) {
 			SourceCastleID: 40, KingdomID: stormIntentKingdomID, ObservedAt: now,
 			Target: State.AttackDialogTarget{TypeID: stormIntentFortMapTypeID, X: 101, Y: 102, StormIsleID: 7, StormHidden: test.dialogHidden},
 		}
-		err := (&Application{State: State.NewStore(guardState)}).guardCRASend(t.Context(), guardArguments)
+		err := (&Application{State: State.NewStore(&guardState)}).guardCRASend(t.Context(), guardArguments)
 		if err == nil || errors.Is(err, Intent.ErrPlanStale) || !strings.Contains(err.Error(), test.fragment) {
 			t.Fatalf("%s: CRA guard accepted a hidden fort: %v", name, err)
 		}

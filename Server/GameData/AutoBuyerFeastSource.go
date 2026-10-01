@@ -101,7 +101,7 @@ func (store *Store) SelectAutoBuyerFeastSource(
 
 func AutoBuyerFeastCastleUsable(gameState State.GameState, key State.CastleID, castle State.CastleState) bool {
 	return key > 0 && castle.ID == key && castle.KingdomID >= 0 && castle.SlotType > 0 &&
-		!State.CastleFocusKnownUnavailable(gameState, castle)
+		!State.CastleFocusKnownUnavailable(&gameState, castle)
 }
 
 func autoBuyerFeastObservationFresh(observedAt, sessionChangedAt, now time.Time, maxAge time.Duration) bool {

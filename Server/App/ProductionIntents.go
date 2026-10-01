@@ -54,7 +54,7 @@ func planProductionEnqueue(_ context.Context, input Intent.PlanningContext, argu
 	if !ok || request.CastleID <= 0 {
 		return Intent.Plan{}, Localization.WithError(fmt.Errorf("castle %d is not in the current player state", request.CastleID), Localization.New("server.app.castle_p_is_not.47524bcb", "castle {p0} is not in the current player state", Localization.Params{"p0": fmt.Sprintf("%d", request.CastleID)}))
 	}
-	if State.CastleFocusKnownUnavailable(input.State, castle) {
+	if State.CastleFocusKnownUnavailable(&input.State, castle) {
 		return Intent.Plan{}, Localization.WithError(fmt.Errorf(
 			"%w: castle %d cannot be focused in the current kingdom session", Intent.ErrPlanStale, request.CastleID,
 		), Localization.New("server.app.intent_plan_became_stale.f50ee7dc", "intent plan became stale before dispatch: castle {p1} cannot be focused in the current kingdom session", Localization.Params{"p1": fmt.Sprintf("%d", request.CastleID)}))
@@ -74,7 +74,7 @@ func planProductionEnqueue(_ context.Context, input Intent.PlanningContext, argu
 		}
 	}
 	queue, ok := castle.Production[request.LineID]
-	if !ok || State.ProductionQueueNeedsRefresh(input.State, queue, time.Now().UTC()) ||
+	if !ok || State.ProductionQueueNeedsRefresh(&input.State, queue, time.Now().UTC()) ||
 		State.ProductionQueuePredatesCastleSnapshot(castle, queue) {
 		return Intent.Plan{}, Localization.WithError(fmt.Errorf(
 			"%w: production line %d needs a current slot observation for castle %d",
@@ -247,13 +247,13 @@ func (application *Application) verifyProductionQueueCapacityAt(arguments json.R
 	if !exists || !castle.Focused {
 		return Localization.WithError(fmt.Errorf("%w: castle %d is no longer focused", Intent.ErrPlanStale, request.CastleID), Localization.New("server.app.intent_plan_became_stale.5b97c8ab", "intent plan became stale before dispatch: castle {p1} is no longer focused", Localization.Params{"p1": fmt.Sprintf("%d", request.CastleID)}))
 	}
-	if State.CastleFocusKnownUnavailable(gameState, castle) {
+	if State.CastleFocusKnownUnavailable(&gameState, castle) {
 		return Localization.WithError(fmt.Errorf(
 			"%w: castle %d cannot be focused in the current kingdom session", Intent.ErrPlanStale, request.CastleID,
 		), Localization.New("server.app.intent_plan_became_stale.f50ee7dc", "intent plan became stale before dispatch: castle {p1} cannot be focused in the current kingdom session", Localization.Params{"p1": fmt.Sprintf("%d", request.CastleID)}))
 	}
 	queue, exists := castle.Production[request.LineID]
-	if !exists || State.ProductionQueueNeedsRefresh(gameState, queue, now) ||
+	if !exists || State.ProductionQueueNeedsRefresh(&gameState, queue, now) ||
 		State.ProductionQueuePredatesCastleSnapshot(castle, queue) {
 		return Localization.WithError(fmt.Errorf("%w: production line %d needs a current slot observation", Intent.ErrPlanStale, request.LineID), Localization.New("server.app.intent_plan_became_stale.c137896e", "intent plan became stale before dispatch: production line {p1} needs a current slot observation", Localization.Params{"p1": fmt.Sprintf("%d", request.LineID)}))
 	}
@@ -408,7 +408,7 @@ func planHospitalOperation(input Intent.PlanningContext, arguments json.RawMessa
 	if !ok || request.CastleID <= 0 {
 		return Intent.Plan{}, Localization.WithError(fmt.Errorf("castle %d is not in the current player state", request.CastleID), Localization.New("server.app.castle_p_is_not.47524bcb", "castle {p0} is not in the current player state", Localization.Params{"p0": fmt.Sprintf("%d", request.CastleID)}))
 	}
-	if State.CastleFocusKnownUnavailable(input.State, castle) {
+	if State.CastleFocusKnownUnavailable(&input.State, castle) {
 		return Intent.Plan{}, Localization.WithError(fmt.Errorf(
 			"%w: castle %d cannot be focused in the current kingdom session", Intent.ErrPlanStale, request.CastleID,
 		), Localization.New("server.app.intent_plan_became_stale.f50ee7dc", "intent plan became stale before dispatch: castle {p1} cannot be focused in the current kingdom session", Localization.Params{"p1": fmt.Sprintf("%d", request.CastleID)}))
