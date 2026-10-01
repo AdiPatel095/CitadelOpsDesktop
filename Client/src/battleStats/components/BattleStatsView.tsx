@@ -570,16 +570,6 @@ const ReportResultBadges: React.FC<{ result: string; size?: 'sm' | 'lg'; classNa
   );
 };
 
-const ResultBadge: React.FC<{ result: string }> = ({ result }) => {
-  if (result === 'Attack won' || result === 'Defense win') {
-    return <Badge variant="success"><LocalizedText messageKey={result === 'Attack won' ? 'battle.attackWon' : 'battle.defenseWon'}/></Badge>;
-  }
-  if (result === 'Attack lost' || result === 'Defense lost') {
-    return <Badge variant="danger"><LocalizedText messageKey={result === 'Attack lost' ? 'battle.attackLost' : 'battle.defenseLost'}/></Badge>;
-  }
-  return <Badge variant="secondary"><LocalizedText messageKey="ui.battleStats.components.battleStatsView.unknown.b764cdc0" /></Badge>;
-};
-
 interface PlayerAggregate {
   key: string;
   name: string;
@@ -741,7 +731,6 @@ const ReportDetailPage: React.FC<{
 
 const ReportDetails: React.FC<{ report: ParsedReport; outcome: string; perspectiveSide: CombatantSide | '' }> = ({
   report,
-  outcome,
   perspectiveSide,
 }) => {
   const { t: localizeStatic,locale } = useStaticLocale();
@@ -2145,7 +2134,7 @@ function battlePhaseTotals(
   side: 'attacker' | 'defender',
   phase: string
 ): { started: number; lost: number } {
-  return items.reduce(
+  return items.reduce<{ started: number; lost: number }>(
     (totals, item) => {
       if (stringValue(item.side).toLowerCase() !== side || stringValue(item.phase).toLowerCase() !== phase) {
         return totals;

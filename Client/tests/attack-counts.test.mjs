@@ -82,7 +82,7 @@ test('header unknown renders an em dash and the unknown accessible tooltip', () 
   }
 });
 test('observed header zero is a real count; checkpoint count only renders its saved form', () => {
-  assert.match(header({dailyAttacks:{count:0,observedAt}}),/>0<\/span>/);
+  assert.match(header({dailyAttacks:{count:0,observedAt}}),/>0 attacks today<\/span>/);
   const html=header({dailyAttacks:{count:19,observedAt}}, {mode:'checkpoint',checkpointObservedAt:observedAt});
   assert.match(html,/19 attacks, saved /);
   assert.doesNotMatch(html,/today/i);

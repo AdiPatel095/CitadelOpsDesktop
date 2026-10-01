@@ -477,7 +477,7 @@ function EquipmentStatsPane({
 						<div className="mb-2 flex items-start justify-between gap-3">
 							<div>
 								<h3 className="text-xs font-bold uppercase tracking-wider text-text-muted">{section.title}</h3>
-								<p className="mt-1 text-[11px] text-text-muted/80">{section.description}</p>
+								<p className="mt-1 text-[11px] text-text-muted/80"><LocalizedText messageKey={section.description} /></p>
 							</div>
 							<Badge variant="outline" className="shrink-0 text-[10px]">{section.effectCount}</Badge>
 						</div>

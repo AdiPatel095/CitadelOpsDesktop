@@ -159,7 +159,7 @@ const Header: React.FC<HeaderProps> = ({
       return {
         tone: 'warning' as const,
         pulse: true,
-        label: dashboardConnectionStatus === 'Connecting' ? 'Dashboard connecting…' : 'Dashboard reconnecting…',
+        label: dashboardConnectionStatus === 'Connecting' ? t('copy.connecting') : t('copy.reconnecting'),
         title: 'Game connection status is unavailable while the dashboard reconnects to CitadelOps.',
       };
     }
@@ -204,14 +204,14 @@ const Header: React.FC<HeaderProps> = ({
         return {
           tone: 'warning' as const,
           pulse: true,
-          label: 'Opening game socket…',
+          label: t('copy.connectingGame'),
           title: 'The game WebSocket handshake is in progress.',
         };
       case 'authenticating':
         return {
           tone: 'warning' as const,
           pulse: true,
-          label: 'Authenticating game…',
+          label: t('copy.loggingIn'),
           title: 'Game WebSocket is open; waiting for the game login to complete.',
         };
       case 'cooldown':
@@ -276,6 +276,7 @@ const Header: React.FC<HeaderProps> = ({
         };
     }
   }, [
+    t,
 		backgroundConnection,
     dashboardConnectionStatus,
     gameBrowserRunning,
@@ -350,7 +351,7 @@ const Header: React.FC<HeaderProps> = ({
             />
           </div>
           <div className="liquid-brand-copy">
-            <div className="text-lg font-bold leading-tight text-text-main">Citadel Ops</div>
+            <div className="text-lg font-bold leading-tight text-text-main">CitadelOps</div>
             <div className="text-[11px] font-medium leading-tight text-text-muted"><LocalizedText messageKey="navigation.commandCenter" /></div>
           </div>
           <span

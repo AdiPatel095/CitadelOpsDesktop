@@ -282,22 +282,22 @@ function attackRateLabel(view: CountView, t: DisplayTranslator): string {
 }
 
 function attackRateTitle(feature: string, view: CountView, locale: string, t: DisplayTranslator): string {
-  if (view.kind === 'unknown') return t('attackCounts.unknownTitle');
+  if (view.kind === 'unknown') return t('copy.countUnknownTitle');
   return view.window === 'since'
-    ? t('automation.countSinceTitle', { feature, count: view.count, time: countTime(view.since, locale) })
+    ? t('copy.sinceTitle', { feature, count: view.count, time: countTime(view.since, locale) })
     : t('automation.rateTitle', { state: 'known', feature, count: view.count });
 }
 
 function dailyAttackCountLabel(view: CountView, locale: string, t: DisplayTranslator): string {
   if (view.kind === 'unknown') return '—';
   return view.window === 'since'
-    ? t('automation.dailySince', { count: view.count, time: countTime(view.since, locale) })
-    : t('automation.dailyToday', { count: view.count });
+    ? t('copy.since', { count: view.count, time: countTime(view.since, locale) })
+    : t('copy.today', { count: view.count });
 }
 
 function dailyAttackCountTitle(feature: string, view: CountView, locale: string, t: DisplayTranslator): string {
-  if (view.kind === 'unknown') return t('attackCounts.unknownTitle');
-  return t(view.window === 'since' ? 'automation.countSinceTitle' : 'automation.dailyTodayTitle',
+  if (view.kind === 'unknown') return t('copy.countUnknownTitle');
+  return t(view.window === 'since' ? 'copy.sinceTitle' : 'copy.todayTitle',
     { feature, count: view.count, time: countTime(view.since, locale) });
 }
 

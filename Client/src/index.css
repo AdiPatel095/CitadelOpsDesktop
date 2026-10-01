@@ -1,3 +1,5 @@
+@import "./styles/tokens.css";
+
 @import "tailwindcss" source("..");
 
 @custom-variant dark (&:where([data-theme=dark], [data-theme=dark] *));
@@ -23,15 +25,15 @@
     --color-error: var(--error);
     --color-info: var(--info);
 
-    --radius-global: 12px;
-    --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Segoe UI", system-ui, sans-serif;
+    --radius-global: var(--compat-theme-desktop-radius-global);
+    --font-sans: var(--compat-theme-desktop-font-sans);
 
-    --shadow-glow: 0 0 18px var(--primary-glow);
-    --shadow-glow-active: 0 0 28px var(--primary-glow);
+    --shadow-glow: var(--compat-theme-desktop-shadow-glow);
+    --shadow-glow-active: var(--compat-theme-desktop-shadow-glow-active);
 
-    --animate-fade-in: fadeIn 0.28s ease-out forwards;
-    --animate-fade-in-right: fadeInRight 0.36s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-    --animate-fade-out-right: fadeOutRight 0.32s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    --animate-fade-in: var(--compat-theme-desktop-animate-fade-in);
+    --animate-fade-in-right: var(--compat-theme-desktop-animate-fade-in-right);
+    --animate-fade-out-right: var(--compat-theme-desktop-animate-fade-out-right);
 
     @keyframes fadeIn {
         from {
@@ -68,106 +70,116 @@
             transform: translateX(100%);
         }
     }
+
+    --color-surface-canvas: var(--surface-canvas);
+
+    --color-surface-card: var(--surface-card);
+
+    --color-surface-inset: var(--surface-inset);
+
+    --color-surface-control: var(--surface-control);
+
+    --color-surface-control-strong: var(--surface-control-strong);
+
+    --color-surface-overlay: var(--surface-overlay);
+
+    --color-surface-field: var(--surface-field);
+
+    --color-surface-inverse: var(--surface-inverse);
+
+    --color-text-primary: var(--text-primary);
+
+    --color-text-secondary: var(--text-secondary);
+
+    --color-text-disabled: var(--text-disabled);
+
+    --color-text-inverse: var(--text-inverse);
+
+    --color-text-on-accent: var(--text-on-accent);
+
+    --color-border-subtle: var(--border-subtle);
+
+    --color-border-default: var(--border-default);
+
+    --color-border-strong: var(--border-strong);
+
+    --color-accent: var(--accent);
+
+    --color-accent-hover: var(--accent-hover);
+
+    --color-accent-pressed: var(--accent-pressed);
+
+    --color-accent-container: var(--accent-container);
+
+    --color-text-on-accent-container: var(--text-on-accent-container);
+
+    --color-state-hover: var(--state-hover);
+
+    --color-state-pressed: var(--state-pressed);
+
+    --color-state-selected: var(--state-selected);
+
+    --color-focus-ring: var(--focus-ring);
+
+    --color-fill-disabled: var(--fill-disabled);
+
+    --color-scrim: var(--scrim);
+
+    --color-selection: var(--selection);
+
+    --color-control-on: var(--control-on);
+
+    --color-control-on-thumb: var(--control-on-thumb);
+
+    --color-data-1: var(--data-1);
+
+    --color-data-2: var(--data-2);
+
+    --color-data-3: var(--data-3);
+
+    --color-data-4: var(--data-4);
+
+    --color-status-success: var(--status-success);
+
+    --color-status-success-bg: var(--status-success-bg);
+
+    --color-status-success-border: var(--status-success-border);
+
+    --color-status-warning: var(--status-warning);
+
+    --color-status-warning-bg: var(--status-warning-bg);
+
+    --color-status-warning-border: var(--status-warning-border);
+
+    --color-status-danger: var(--status-danger);
+
+    --color-status-danger-bg: var(--status-danger-bg);
+
+    --color-status-danger-border: var(--status-danger-border);
+
+    --color-status-info: var(--status-info);
+
+    --color-status-info-bg: var(--status-info-bg);
+
+    --color-status-info-border: var(--status-info-border);
+
+    --color-status-neutral: var(--status-neutral);
+
+    --color-status-neutral-bg: var(--status-neutral-bg);
+
+    --color-status-neutral-border: var(--status-neutral-border)
 }
 
 :root {
+    /* Preserve the desktop Tailwind mono stack; the portal has its own stack. */
+    --font-mono: var(--compat-command-font-mono);
     color-scheme: light;
 
-    --app-header-height: clamp(4rem, 4.4dvh, 5.25rem);
-    --app-sidebar-width: clamp(15.75rem, 14vw, 18.5rem);
-    --app-shell-gap: clamp(0.75rem, 1vw, 1.5rem);
-    --app-content-pad: clamp(1rem, 1.35vw, 2rem);
-    --app-content-max: 1800px;
-
     /* Semantic design tokens. Legacy aliases below keep existing screens compatible. */
-    --surface-canvas: #f4f7fa;
-    --surface-default: #ffffff;
-    --surface-subtle: #eaf0f5;
-    --border-subtle: #c9d5e1;
-    --border-control: #8292a4;
-    --content-strong: #102033;
-    --content-muted: #52687d;
-    --action-primary: #5a4bcb;
-    --action-primary-hover: #493bac;
-    --status-success: #147a46;
-    --status-warning: #8b5800;
-    --status-danger: #b42338;
-    --status-info: #007b99;
-    --status-inactive: #6f8194;
-    --radius-control: 8px;
-    --radius-surface: 12px;
-    --radius-pill: 9999px;
-    --font-mono-ui: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-
-    --bg-app: var(--surface-canvas);
-    --bg-card: var(--surface-default);
-    --bg-card-hover: var(--surface-subtle);
-    --bg-input: var(--surface-subtle);
-    --border-base: var(--border-subtle);
-    --border-light: rgba(255, 255, 255, 0.82);
-    --text-main: var(--content-strong);
-    --text-muted: var(--content-muted);
-    --text-inverted: #ffffff;
-    --primary: var(--action-primary);
-    --primary-hover: var(--action-primary-hover);
-    --primary-glow: rgba(90, 75, 203, 0.24);
-    --success: var(--status-success);
-    --warning: var(--status-warning);
-    --error: var(--status-danger);
-    --info: var(--status-info);
-
-    --surface-shell: var(--surface-default);
-    --surface-panel: var(--surface-default);
-    --surface-raised: var(--surface-default);
-    --surface-control: var(--surface-subtle);
-    --shadow-shell: 0 10px 28px rgba(15, 23, 42, 0.12);
-    --shadow-raised: 0 6px 18px rgba(15, 23, 42, 0.1);
-    --shadow-panel: 0 8px 24px rgba(15, 23, 42, 0.1);
-    --shadow-modal: 0 24px 64px rgba(15, 23, 42, 0.3);
-    --control-background: var(--bg-input);
-    --control-shadow: none;
-    --control-active-background: color-mix(in srgb, var(--primary) 16%, var(--bg-card));
 }
 
 [data-theme="dark"] {
     color-scheme: dark;
-
-    --surface-canvas: #07111f;
-    --surface-default: #0d1b2a;
-    --surface-subtle: #13263a;
-    --border-subtle: #29425d;
-    --border-control: #526d89;
-    --content-strong: #f4f8fc;
-    --content-muted: #9db0c3;
-    --action-primary: #9b8cff;
-    --action-primary-hover: #b5aaff;
-    --status-success: #4cd58a;
-    --status-warning: #f4be53;
-    --status-danger: #ff6b76;
-    --status-info: #48c6e8;
-    --status-inactive: #8292a6;
-
-    --bg-app: var(--surface-canvas);
-    --bg-card: var(--surface-default);
-    --bg-card-hover: var(--surface-subtle);
-    --bg-input: var(--surface-canvas);
-    --border-base: var(--border-subtle);
-    --border-light: rgba(82, 109, 137, 0.54);
-    --text-main: var(--content-strong);
-    --text-muted: var(--content-muted);
-    --text-inverted: #0b1024;
-    --primary: var(--action-primary);
-    --primary-hover: var(--action-primary-hover);
-    --primary-glow: rgba(155, 140, 255, 0.24);
-    --success: var(--status-success);
-    --warning: var(--status-warning);
-    --error: var(--status-danger);
-    --info: var(--status-info);
-
-    --shadow-shell: 0 10px 28px rgba(0, 0, 0, 0.34);
-    --shadow-raised: 0 6px 18px rgba(0, 0, 0, 0.28);
-    --shadow-panel: 0 8px 24px rgba(0, 0, 0, 0.3);
-    --shadow-modal: 0 24px 64px rgba(0, 0, 0, 0.56);
 }
 
 @media (max-width: 1180px) {
@@ -476,22 +488,8 @@
         gap: 0.75rem;
     }
 
-    .liquid-auto-bird-actions {
-        display: flex;
-        flex-shrink: 0;
-        align-items: center;
-        gap: 0.5rem;
-    }
-
     .liquid-auto-bird-button {
         max-width: min(22rem, 38vw);
-    }
-
-    .liquid-auto-bird-text {
-        min-width: 0;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
     }
 
     .liquid-brand-mark {
@@ -664,26 +662,6 @@
         opacity: 1;
         pointer-events: auto;
         transform: translateY(0);
-    }
-
-    .liquid-sidebar-theme-toggle {
-        position: absolute;
-        right: calc(-2.12rem - 0.42rem);
-        bottom: 0.58rem;
-        z-index: 4;
-        width: 2.12rem;
-        height: 2.12rem;
-        flex-shrink: 0;
-        padding: 0;
-        border-color: color-mix(in srgb, var(--primary) 30%, var(--border-base));
-        background: var(--surface-raised);
-        box-shadow: var(--shadow-raised);
-        pointer-events: auto;
-    }
-
-    .liquid-sidebar-theme-toggle svg {
-        width: 1.05rem;
-        height: 1.05rem;
     }
 
     .liquid-section-label {
@@ -1173,10 +1151,6 @@
         word-break: break-word;
     }
 
-    .liquid-log-message-summary {
-        color: color-mix(in srgb, var(--text-main) 84%, var(--text-muted));
-    }
-
     .liquid-log-row-actions,
     .liquid-log-detail-heading {
         display: flex;
@@ -1187,108 +1161,6 @@
 
     .liquid-log-row-actions {
         margin-top: 0.48rem;
-    }
-
-    .liquid-log-details-toggle,
-    .liquid-log-copy-button {
-        display: inline-flex;
-        align-items: center;
-        gap: 0.32rem;
-        border: 1px solid color-mix(in srgb, var(--border-base) 88%, transparent);
-        border-radius: calc(var(--radius-global) - 9px);
-        background: color-mix(in srgb, var(--bg-input) 74%, var(--bg-card));
-        padding: 0.26rem 0.48rem;
-        color: var(--text-muted);
-        font-size: 0.7rem;
-        font-weight: 800;
-        line-height: 1.2;
-        transition: border-color 160ms ease, background-color 160ms ease, color 160ms ease;
-    }
-
-    .liquid-log-details-toggle:hover,
-    .liquid-log-copy-button:hover {
-        border-color: color-mix(in srgb, var(--primary) 40%, var(--border-base));
-        background: color-mix(in srgb, var(--primary) 9%, var(--bg-card));
-        color: var(--text-main);
-    }
-
-    .liquid-log-details-toggle svg,
-    .liquid-log-copy-button svg {
-        width: 0.78rem;
-        height: 0.78rem;
-        flex: 0 0 auto;
-    }
-
-    .liquid-log-details-icon {
-        transition: transform 160ms ease;
-    }
-
-    .liquid-log-details-toggle-open .liquid-log-details-icon {
-        transform: rotate(90deg);
-    }
-
-    .liquid-log-details {
-        display: flex;
-        min-width: 0;
-        flex-direction: column;
-        gap: 0.72rem;
-        margin-top: 0.72rem;
-        border-top: 1px solid color-mix(in srgb, var(--border-base) 78%, transparent);
-        padding-top: 0.7rem;
-    }
-
-    .liquid-log-detail-section {
-        min-width: 0;
-    }
-
-    .liquid-log-detail-heading {
-        justify-content: space-between;
-        margin-bottom: 0.34rem;
-        color: var(--text-muted);
-        font-size: 0.67rem;
-        font-weight: 850;
-        letter-spacing: 0.045em;
-        text-transform: uppercase;
-    }
-
-    .liquid-log-json-pre,
-    .liquid-log-frame-pre {
-        max-height: 24rem;
-        min-width: 0;
-        overflow: auto;
-        border: 1px solid color-mix(in srgb, var(--border-base) 82%, transparent);
-        border-radius: calc(var(--radius-global) - 8px);
-        background: color-mix(in srgb, var(--bg-input) 82%, var(--bg-card));
-        padding: 0.68rem 0.76rem;
-        color: color-mix(in srgb, var(--text-main) 92%, var(--primary));
-        font-family: var(--font-mono-ui);
-        font-size: 0.75rem;
-        line-height: 1.45;
-        white-space: pre;
-    }
-
-    .liquid-log-frame-pre {
-        max-height: 12rem;
-        white-space: pre-wrap;
-        word-break: break-all;
-    }
-
-    .liquid-log-raw-row {
-        display: grid;
-        grid-template-columns: minmax(0, 1fr) auto;
-        gap: 0.65rem;
-        align-items: flex-start;
-        padding: 0.58rem 0.68rem;
-    }
-
-    .liquid-log-raw-row code {
-        overflow-wrap: anywhere;
-        color: color-mix(in srgb, var(--text-main) 90%, var(--primary));
-        font-family: var(--font-mono-ui);
-        font-size: 0.74rem;
-        line-height: 1.45;
-        white-space: pre-wrap;
-        word-break: break-all;
     }
 
     @media (max-width: 1250px) {
@@ -1328,10 +1200,6 @@
 
         .liquid-log-time {
             width: auto;
-        }
-
-        .liquid-log-raw-row {
-            grid-template-columns: minmax(0, 1fr);
         }
     }
 
@@ -4383,10 +4251,6 @@
             display: none;
         }
 
-        .liquid-memory-badge {
-            display: none !important;
-        }
-
         .liquid-main {
             margin-left: calc(var(--app-sidebar-width) + (var(--app-shell-gap) * 2));
         }
@@ -4414,13 +4278,6 @@
         .liquid-nav-item-active > div:last-child {
             display: none;
         }
-
-        .liquid-sidebar-theme-toggle {
-            right: calc(-2rem - 0.32rem);
-            bottom: 0.52rem;
-            width: 2rem;
-            height: 2rem;
-        }
     }
 
     @media (max-width: 680px) {
@@ -4447,17 +4304,6 @@
 
         .liquid-auto-bird-button {
             max-width: 11rem;
-        }
-
-        .liquid-bot-status {
-            padding-inline: 0.72rem;
-        }
-
-        .liquid-bot-status-text {
-            max-width: 8.5rem;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
         }
 
         .liquid-sidebar-scroll {
@@ -4527,10 +4373,8 @@
 }
 
 /* Viewer-local controls use logical spacing and inherit document direction. */
-.viewer-language { display: flex; align-items: center; gap: .4rem; margin-inline: .4rem; font-size: .75rem; min-width: 0; color: #eee9da; }
-.viewer-language select { max-width: 9rem; background: var(--surface, #172033); color: inherit; border-radius: .35rem; padding-block: .3rem; padding-inline: .4rem; }
 html[dir="rtl"] input[type="number"], html[dir="rtl"] code { direction: ltr; unicode-bidi: isolate; }
-@media (max-width: 640px) { .viewer-language > span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); } .viewer-language select { max-width: 6rem; } }
+@media (max-width: 640px) { }
 
 /* The castle copy dialog title names two castles and a feature; it wraps instead of clipping (CIT-21, RTL and 375 px). */
 .castle-copy-title .scheduler-modal-title-text {

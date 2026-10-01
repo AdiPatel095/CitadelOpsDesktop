@@ -1,4 +1,4 @@
-import { useLocale as useStaticLocale } from "../../i18n/LocaleContext";
+import { useLocale } from "../../i18n/LocaleContext";
 import { LocalizedText } from "../../i18n/LocalizedText";
 import React, { useEffect, useMemo, useState } from 'react';
 import { TimerReset } from 'lucide-react';
@@ -17,13 +17,13 @@ interface AutomationDurationModalProps {
 type DurationUnit = 'minutes' | 'hours' | 'days';
 
 const durationPresets = [
-  { label: '30 min', minutes: 30 },
-  { label: '1 hr', minutes: 60 },
-  { label: '2 hr', minutes: 120 },
-  { label: '4 hr', minutes: 240 },
-  { label: '8 hr', minutes: 480 },
-  { label: '24 hr', minutes: 1440 },
-];
+  { key: 'automationDurationDialog.presetMinutes', count: 30, minutes: 30 },
+  { key: 'automationDurationDialog.presetHours', count: 1, minutes: 60 },
+  { key: 'automationDurationDialog.presetHours', count: 2, minutes: 120 },
+  { key: 'automationDurationDialog.presetHours', count: 4, minutes: 240 },
+  { key: 'automationDurationDialog.presetHours', count: 8, minutes: 480 },
+  { key: 'automationDurationDialog.presetHours', count: 24, minutes: 1440 },
+] as const;
 
 const durationMultipliers: Record<DurationUnit, number> = {
   minutes: 1,
@@ -39,7 +39,7 @@ export const AutomationDurationModal: React.FC<AutomationDurationModalProps> = (
   onPauseFor,
   pausedUntil,
 }) => {
-  const { t: localizeStatic } = useStaticLocale();
+  const { t } = useLocale();
   const { enableAutomationFor, automationTimedUntilByKey } = useAuth();
   const [amount, setAmount] = useState('1');
   const [unit, setUnit] = useState<DurationUnit>('hours');
@@ -86,7 +86,7 @@ export const AutomationDurationModal: React.FC<AutomationDurationModalProps> = (
       else await enableAutomationFor(featureKey, durationMinutes);
       onClose();
     } catch (value) {
-      setError(value instanceof Error ? value.message : 'Could not save the timed automation duration');
+      setError(value instanceof Error ? value.message : t('automationDurationDialog.saveFailed'));
       setSaving(false);
     }
   };
@@ -96,17 +96,17 @@ export const AutomationDurationModal: React.FC<AutomationDurationModalProps> = (
       isOpen={isOpen}
       onClose={onClose}
       maxWidth="md"
-      title={<ModalTitle icon={<TimerReset className="h-5 w-5" />}>{onPauseFor ? 'Pause' : 'Run'} {featureLabel} for a duration</ModalTitle>}
+      title={<ModalTitle icon={<TimerReset className="h-5 w-5" />}>{t(onPauseFor ? 'automationDurationDialog.pauseTitle' : 'automationDurationDialog.runTitle', { feature: featureLabel })}</ModalTitle>}
       footer={(
         <div className="flex w-full justify-end gap-2">
           <Button variant="ghost" onClick={onClose} disabled={saving}><LocalizedText messageKey="game.cancel" /></Button>
-          <Button onClick={() => void save()} disabled={!valid} isLoading={saving}>{onPauseFor ? 'Pause for this duration' : 'Turn on for this duration'}</Button>
+          <Button onClick={() => void save()} disabled={!valid} isLoading={saving}>{t(onPauseFor ? 'automationDurationDialog.pauseButton' : 'automationDurationDialog.runButton')}</Button>
         </div>
       )}
     >
       <div className="flex flex-col gap-4">
         <div className="rounded-global border border-primary/20 bg-primary/5 p-4">
-          <div className="text-sm font-bold text-text-main"><LocalizedText messageKey="ui.settings.components.automationDurationModal.quick.durations.e1a95cd2" /></div>
+          <div className="text-sm font-bold text-text-main">{t('automationDurationDialog.quickDurations')}</div>
           <div className="mt-3 grid grid-cols-3 gap-2">
             {durationPresets.map((preset) => (
               <Button
@@ -115,14 +115,14 @@ export const AutomationDurationModal: React.FC<AutomationDurationModalProps> = (
                 size="sm"
                 onClick={() => selectPreset(preset.minutes)}
               >
-                {preset.label}
+                {t(preset.key, { count: preset.count })}
               </Button>
             ))}
           </div>
         </div>
 
         <div className="rounded-global border border-border-base bg-bg-card/45 p-4">
-          <div className="text-sm font-bold text-text-main"><LocalizedText messageKey="ui.settings.components.automationDurationModal.custom.duration.37421efc" /></div>
+          <div className="text-sm font-bold text-text-main">{t('automationDurationDialog.customDuration')}</div>
           <div className="mt-3 grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)] gap-3">
             <Input
               type="number"
@@ -131,32 +131,32 @@ export const AutomationDurationModal: React.FC<AutomationDurationModalProps> = (
               value={amount}
               onChange={(event) => setAmount(event.target.value)}
               className="font-mono"
-              aria-label={localizeStatic("ui.settings.components.automationDurationModal.aria-label.automation.duration.amount.11388035")}
+              aria-label={t('automationDurationDialog.amountLabel')}
             />
             <Select
               value={unit}
               onChange={(value) => setUnit(value as DurationUnit)}
               options={[
-                { value: 'minutes', label: 'Minutes' },
-                { value: 'hours', label: 'Hours' },
-                { value: 'days', label: 'Days' },
+                { value: 'minutes', label: t('automationDurationDialog.minutes') },
+                { value: 'hours', label: t('automationDurationDialog.hours') },
+                { value: 'days', label: t('automationDurationDialog.days') },
               ]}
-              ariaLabel={localizeStatic("ui.settings.components.automationDurationModal.ariaLabel.automation.duration.unit.c82ad9ba")}
+              ariaLabel={t('automationDurationDialog.unitLabel')}
             />
           </div>
-          {!valid ? <p className="mt-2 text-xs text-error"><LocalizedText messageKey="ui.settings.components.automationDurationModal.choose.a.duration.from.1.minute.through.270a3657" /></p> : null}
+          {!valid ? <p className="mt-2 text-xs text-error">{t('automationDurationDialog.invalidDuration')}</p> : null}
         </div>
 
         <div className="rounded-global border border-border-base bg-bg-app/40 px-4 py-3 text-xs leading-relaxed text-text-muted">
           {turnsOffAt ? (
             <p>
-              {featureLabel} {onPauseFor ? 'pauses immediately and resumes at' : 'turns on immediately and the server turns it off at'}{' '}
+              {t(onPauseFor ? 'automationDurationDialog.pauseStarts' : 'automationDurationDialog.runStarts', { feature: featureLabel })}{' '}
               <span className="font-semibold text-text-main">{turnsOffAt.toLocaleString()}</span>.
             </p>
           ) : null}
-          <p className="mt-1"><LocalizedText messageKey="ui.settings.components.automationDurationModal.weekly.schedules.and.the.global.automation.lock.a4fd4bf2" /></p>
+          <p className="mt-1">{t('automationDurationDialog.scheduleNotice')}</p>
           {currentUntil ? (
-            <p className="mt-2 text-primary">{onPauseFor ? 'Current pause ends' : 'Current timed run ends'} {new Date(currentUntil).toLocaleString()}.</p>
+            <p className="mt-2 text-primary">{t(onPauseFor ? 'automationDurationDialog.currentPauseEnds' : 'automationDurationDialog.currentRunEnds', { date: new Date(currentUntil).toLocaleString() })}</p>
           ) : null}
         </div>
 

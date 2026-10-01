@@ -22,22 +22,21 @@ const DailyAttackTracker: React.FC = () => {
   const savedTime = Number.isFinite(savedAt)
     ? new Intl.DateTimeFormat(locale, { dateStyle: 'short', timeStyle: 'short' }).format(savedAt) : '';
   const formattedCount = known
-    ? saved ? t('dailyAttacks.saved', { count, time: savedTime }) : number(count)
+    ? saved ? t('copy.attacksSaved', { count, time: savedTime }) : t('copy.attacksToday', { count: number(count) })
     : '—';
   const title = known
-    ? saved ? t('dailyAttacks.saved', { count, time: savedTime }) : t('dailyAttacks.observed', { count, observedAt: observedAtMs })
-    : t('attackCounts.unknownTitle');
+    ? saved ? t('copy.offlineSavedTitle', { time: savedTime }) : t('dailyAttacks.observed', { count, observedAt: observedAtMs })
+    : t('copy.countUnknownTitle');
 
   return (
     <div
       lang={messageLocale}
       className={`liquid-status-dock-item liquid-daily-attacks-dock ${known ? 'liquid-status-dock-item-primary' : 'liquid-status-dock-item-muted'}`}
       title={title}
-      aria-label={known ? saved ? title : t('dailyAttacks.accessible', { count }) : title}
+      aria-label={known ? formattedCount : title}
     >
       <span className="liquid-status-dock-icon" aria-hidden="true"><Gauge className="h-4 w-4" /></span>
-      <span className="liquid-desktop-status-label">{saved ? formattedCount : t('dailyAttacks.label')}</span>
-      {!saved ? <span className="liquid-daily-attacks-value font-mono tabular-nums">{formattedCount}</span> : null}
+      <span className="liquid-desktop-status-label">{formattedCount}</span>
     </div>
   );
 };
