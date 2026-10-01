@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import stylelint from 'stylelint';
 import { test } from 'node:test';
 import { execFileSync } from 'node:child_process';
 import { readFileSync, existsSync, readdirSync } from 'node:fs';
@@ -24,10 +25,11 @@ const expected = [...colors,
   ...['sticky', 'drawer', 'popover', 'modal', 'toast', 'tooltip'].map((n) => `layer-${n}`),
   'font-sans', ...['ar', 'ja', 'ko', 'zh-CN', 'zh-TW'].map((n) => `font-sans-${n}`),
 ].map((name) => `--${name}`);
-function blocks(css, pattern) {
+function blocks(css, pattern, topLevelOnly = false) {
   const clean = css.replace(/\/\*[\s\S]*?\*\//g, '');
   const result = [];
   for (const match of clean.matchAll(pattern)) {
+    if (topLevelOnly && [...clean.slice(0, match.index)].reduce((depth, ch) => depth + Number(ch === '{') - Number(ch === '}'), 0) !== 0) continue;
     const start = match.index + match[0].length;
     let depth = 1; let end = start;
     while (depth && end < clean.length) { if (clean[end] === '{') depth++; else if (clean[end] === '}') depth--; end++; }
@@ -37,6 +39,13 @@ function blocks(css, pattern) {
   return result;
 }
 const themes = { light: {}, dark: {} };
+// Theme-independent illustration tokens are inherited by both themes.
+for (const block of blocks(source, /(?:^|\n)\s*:root,\s*\[data-theme="light"\],\s*\[data-theme="dark"\]\s*\{/g, true)) {
+  for (const declaration of block.body.matchAll(/(--[\w-]+)\s*:\s*([^;]+);/g)) {
+    themes.light[declaration[1]] = declaration[2].trim();
+    themes.dark[declaration[1]] = declaration[2].trim();
+  }
+}
 for (const block of blocks(source, /(?:^|\n)(?:\s*:root,\s*\[data-theme="light"\]|\s*\[data-theme="dark"\])\s*\{/g)) {
   const theme = block.header.includes(':root') ? 'light' : 'dark';
   for (const d of block.body.matchAll(/(--[\w-]+)\s*:\s*([^;]+);/g)) themes[theme][d[1]] = d[2].trim();
@@ -139,9 +148,15 @@ test('legacy muted references migrate before the new muted role is used', () => 
   assert.match(theme, /--color-text-muted:\s*var\(--text-secondary\)/);
 });
 
-test('colour rules are enforced while typography and shape remain warnings', () => {
-  const rules = JSON.parse(readFileSync(join(root, '.stylelintrc.json'), 'utf8')).rules;
-  assert.equal(rules['color-no-hex'][1].severity, 'error');
-  assert.equal(rules['function-disallowed-list'][1].severity, 'error');
-  assert.equal(rules['declaration-property-value-disallowed-list'][1].severity, 'warning');
+test('raw shape and motion fail lint while typography stays in warning mode', async () => {
+  const configFile = join(root, '.stylelintrc.json');
+  const codeFilename = join(root, 'src/lint-contract.css');
+  const invalid = await stylelint.lint({ configFile, codeFilename, code: 'div { border-radius: 7px; box-shadow: 0 1px 2px black; transition: opacity 150ms; opacity: 1 !important; font-size: 15px; font-weight: 600; }' });
+  const warnings = invalid.results[0].warnings;
+  assert.ok(invalid.errored);
+  assert.equal(warnings.filter((warning) => warning.severity === 'error').length, 4);
+  assert.equal(warnings.filter((warning) => warning.severity === 'warning').length, 2);
+  const valid = await stylelint.lint({ configFile, codeFilename, code: 'div { border-radius: var(--radius-md); box-shadow: var(--elevation-1); transition: opacity var(--duration-fast) var(--ease-standard); font-size: 15px; font-weight: 600; }' });
+  assert.equal(valid.errored, false);
+  assert.equal(valid.results[0].warnings.length, 2);
 });

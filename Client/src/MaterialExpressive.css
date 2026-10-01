@@ -10,9 +10,7 @@
     --shadow-panel: var(--compat-command-shadow-panel);
 }
 
-[data-theme="dark"] .m3-expressive-shape {
-    opacity: 0.12;
-}
+[data-theme="dark"] .m3-expressive-shape { opacity: 0.12; }
 
 html,
 body,
@@ -53,7 +51,7 @@ select {
     right: -9rem;
     width: 28rem;
     height: 28rem;
-    border-radius: 42% 58% 68% 32% / 38% 34% 66% 62%;
+    border-radius: var(--compat-art-radius-1);
     background: color-mix(in srgb, var(--md-sys-color-primary-container) 74%, transparent);
     transform: rotate(18deg);
 }
@@ -63,7 +61,7 @@ select {
     left: 17rem;
     width: 32rem;
     height: 21rem;
-    border-radius: 70% 30% 48% 52% / 48% 62% 38% 52%;
+    border-radius: var(--compat-art-radius-2);
     background: color-mix(in srgb, var(--md-sys-color-secondary-container) 62%, transparent);
     transform: rotate(-12deg);
 }
@@ -73,14 +71,12 @@ select {
     left: 46%;
     width: 14rem;
     height: 14rem;
-    border-radius: 28% 72% 38% 62% / 66% 34% 66% 34%;
+    border-radius: var(--compat-art-radius-3);
     background: color-mix(in srgb, var(--md-sys-color-tertiary-container) 32%, transparent);
     transform: rotate(28deg);
 }
 
-.liquid-app {
-    background: transparent;
-}
+.liquid-app { background: transparent; }
 
 .liquid-header {
     overflow: hidden;
@@ -103,27 +99,21 @@ select {
     opacity: 0.72;
 }
 
-.liquid-header-inner {
-    gap: clamp(0.7rem, 1vw, 1.15rem);
-}
+.liquid-header-inner { gap: clamp(0.7rem, 1vw, 1.15rem); }
 
-.liquid-brand {
-    gap: 0.8rem;
-}
+.liquid-brand { gap: 0.8rem; }
 
 .liquid-brand-mark {
     width: 3rem;
     height: 3rem;
     border: 0;
-    border-radius: 19px 8px 19px 19px;
+    border-radius: var(--shape-card);
     background: var(--md-sys-color-primary-container);
-    box-shadow: none;
+    box-shadow: var(--elevation-0);
     transform: rotate(-2deg);
 }
 
-.liquid-brand-mark img {
-    filter: none;
-}
+.liquid-brand-mark img { filter: none; }
 
 .liquid-header-connection {
     --connection-accent: var(--md-sys-color-on-surface-variant);
@@ -134,27 +124,19 @@ select {
     align-items: center;
     justify-content: center;
     border: 1px solid color-mix(in srgb, var(--connection-accent) 34%, var(--md-sys-color-outline-variant));
-    border-radius: 0.78rem 0.4rem 0.78rem 0.78rem;
+    border-radius: var(--shape-card);
     background: color-mix(in srgb, var(--connection-accent) 12%, var(--md-sys-color-surface-container));
     color: var(--connection-accent);
-    box-shadow: inset 0 1px 0 color-mix(in srgb, white 10%, transparent);
+    box-shadow: var(--compat-ring-shadow-16);
 }
 
-.liquid-header-connection-success {
-    --connection-accent: var(--success);
-}
+.liquid-header-connection-success { --connection-accent: var(--success); }
 
-.liquid-header-connection-warning {
-    --connection-accent: var(--warning);
-}
+.liquid-header-connection-warning { --connection-accent: var(--warning); }
 
-.liquid-header-connection-danger {
-    --connection-accent: var(--error);
-}
+.liquid-header-connection-danger { --connection-accent: var(--error); }
 
-.liquid-header-connection-pulse svg {
-    animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-}
+.liquid-header-connection-pulse svg { animation: none; }
 
 .liquid-brand-copy > :first-child {
     color: var(--md-sys-color-on-surface);
@@ -177,9 +159,7 @@ select {
     scrollbar-width: none;
 }
 
-.liquid-header-status-strip::-webkit-scrollbar {
-    display: none;
-}
+.liquid-header-status-strip::-webkit-scrollbar { display: none; }
 
 .liquid-header-status-strip > :first-child {
     min-width: max-content;
@@ -191,9 +171,7 @@ select {
     margin-inline: 0;
 }
 
-.liquid-header-controls {
-    gap: 0.55rem;
-}
+.liquid-header-controls { gap: 0.55rem; }
 
 .liquid-auto-bird-actions .m3-button-icon {
     width: 2.25rem;
@@ -211,11 +189,10 @@ select {
     isolation: isolate;
     padding: 0.3rem;
     border: 1px solid color-mix(in srgb, var(--md-sys-color-outline-variant) 76%, transparent);
-    border-radius: 1.45rem 0.9rem 1.45rem 1.45rem;
+    border-radius: var(--shape-card);
     background: color-mix(in srgb, var(--md-sys-color-surface-container-high) 82%, transparent);
     box-shadow:
-        inset 0 1px 0 color-mix(in srgb, white 16%, transparent),
-        0 9px 24px color-mix(in srgb, var(--md-sys-color-shadow, var(--compat-shadow-tint-000)) 16%, transparent);
+        var(--elevation-1);
     backdrop-filter: blur(18px) saturate(1.22);
     -webkit-backdrop-filter: blur(18px) saturate(1.22);
 }
@@ -242,38 +219,24 @@ select {
     gap: 0.52rem;
     padding: 0.28rem 0.62rem 0.28rem 0.34rem;
     border: 1px solid color-mix(in srgb, var(--dock-accent) 18%, var(--md-sys-color-outline-variant));
-    border-radius: 1.05rem 0.62rem 1.05rem 1.05rem;
+    border-radius: var(--shape-card);
     background: color-mix(in srgb, var(--dock-accent) 5%, var(--md-sys-color-surface-container-lowest));
     color: var(--md-sys-color-on-surface);
     box-shadow:
-        inset 0 1px 0 color-mix(in srgb, white 10%, transparent),
-        0 2px 7px color-mix(in srgb, var(--md-sys-color-shadow, var(--compat-shadow-tint-000)) 11%, transparent);
+        var(--elevation-1);
     transition:
-        transform 180ms var(--md-sys-motion-easing-emphasized),
-        border-color 180ms ease,
-        background-color 180ms ease,
-        box-shadow 180ms ease;
+        transform var(--duration-base) var(--md-sys-motion-easing-emphasized), border-color var(--duration-base) var(--ease-standard), background-color var(--duration-base) var(--ease-standard);
 }
 
-.liquid-status-dock-item-primary {
-    --dock-accent: var(--md-sys-color-primary);
-}
+.liquid-status-dock-item-primary { --dock-accent: var(--md-sys-color-primary); }
 
-.liquid-status-dock-item-success {
-    --dock-accent: var(--success);
-}
+.liquid-status-dock-item-success { --dock-accent: var(--success); }
 
-.liquid-status-dock-item-warning {
-    --dock-accent: var(--warning);
-}
+.liquid-status-dock-item-warning { --dock-accent: var(--warning); }
 
-.liquid-status-dock-item-danger {
-    --dock-accent: var(--error);
-}
+.liquid-status-dock-item-danger { --dock-accent: var(--error); }
 
-.liquid-status-dock-item-muted {
-    --dock-accent: var(--md-sys-color-on-surface-variant);
-}
+.liquid-status-dock-item-muted { --dock-accent: var(--md-sys-color-on-surface-variant); }
 
 .liquid-status-dock-icon {
     position: relative;
@@ -283,15 +246,13 @@ select {
     flex: 0 0 2rem;
     align-items: center;
     justify-content: center;
-    border-radius: 0.72rem 0.36rem 0.72rem 0.72rem;
+    border-radius: var(--shape-card);
     background: color-mix(in srgb, var(--dock-accent) 16%, var(--md-sys-color-surface-container-high));
     color: var(--dock-accent);
-    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--dock-accent) 18%, transparent);
+    box-shadow: var(--compat-ring-shadow-19);
 }
 
-.liquid-mobile-status-icon {
-    display: none;
-}
+.liquid-mobile-status-icon { display: none; }
 
 .liquid-desktop-status-label {
     font-size: 0.5625rem;
@@ -312,7 +273,7 @@ select {
 .liquid-desktop-connection-dot {
     display: inline-block;
     flex: 0 0 auto;
-    border-radius: 50%;
+    border-radius: var(--radius-full);
 }
 
 .liquid-desktop-status-dot {
@@ -332,14 +293,12 @@ select {
     width: 0.46rem;
     height: 0.46rem;
     border: 2px solid var(--md-sys-color-surface-container-lowest);
-    border-radius: 50%;
+    border-radius: var(--radius-full);
     box-sizing: content-box;
-    box-shadow: 0 0 0.45rem currentColor;
+    box-shadow: var(--compat-ring-shadow-20);
 }
 
-.liquid-daily-attacks-dock .liquid-status-dock-value {
-    max-width: 5.5rem;
-}
+.liquid-daily-attacks-dock .liquid-status-dock-value { max-width: 5.5rem; }
 
 .liquid-daily-attacks-value {
     min-width: 1.25rem;
@@ -355,9 +314,7 @@ select {
     padding: 0.18rem;
 }
 
-.liquid-status-dock-action-group > .inline-flex {
-    min-width: 0;
-}
+.liquid-status-dock-action-group > .inline-flex { min-width: 0; }
 
 .liquid-status-dock-main.m3-button {
     min-width: 0;
@@ -366,16 +323,14 @@ select {
     justify-content: flex-start;
     gap: 0.5rem;
     padding: 0.18rem 0.42rem 0.18rem 0.18rem;
-    border: 0 !important;
-    border-radius: 0.88rem 0.45rem 0.88rem 0.88rem;
-    background: transparent !important;
-    color: inherit !important;
-    box-shadow: none !important;
+    border: 0;
+    border-radius: var(--radius-full);
+    background: transparent;
+    color: inherit;
+    box-shadow: var(--elevation-0);
 }
 
-.liquid-status-dock-main.m3-button:hover {
-    background: color-mix(in srgb, var(--dock-accent) 10%, transparent) !important;
-}
+.liquid-status-dock-main.m3-button:hover { background: color-mix(in srgb, var(--dock-accent) 10%, transparent); }
 
 .liquid-status-dock-icon-button.m3-button {
     width: 2.35rem;
@@ -396,7 +351,7 @@ select {
     min-width: 2.05rem;
     min-height: 2.05rem;
     padding: 0;
-    border-radius: 0.72rem 0.38rem 0.72rem 0.72rem;
+    border-radius: var(--radius-full);
     color: color-mix(in srgb, var(--dock-accent) 74%, var(--md-sys-color-on-surface));
 }
 
@@ -406,33 +361,26 @@ select {
         border-color: color-mix(in srgb, var(--dock-accent) 35%, var(--md-sys-color-outline-variant));
         background: color-mix(in srgb, var(--dock-accent) 9%, var(--md-sys-color-surface-container-lowest));
         box-shadow:
-            inset 0 1px 0 color-mix(in srgb, white 14%, transparent),
-            0 8px 18px color-mix(in srgb, var(--dock-accent) 14%, transparent);
-        transform: translateY(-2px) scale(1.015);
+            var(--elevation-2);
+        transform: scale(1.015);
     }
 }
 
 /* Preserve the original labeled status badges for desktop-sized shells. The
    icon dock below is reserved for the tall phone viewport. */
 @media (min-width: 921px), (min-width: 761px) and (min-aspect-ratio: 10 / 21) {
-    .liquid-header-connection {
-        display: none;
-    }
+    .liquid-header-connection { display: none; }
 
-    .liquid-status-dock {
-        display: contents;
-    }
+    .liquid-status-dock { display: contents; }
 
-    .liquid-status-dock::before {
-        display: none;
-    }
+    .liquid-status-dock::before { display: none; }
 
     .liquid-daily-attacks-dock {
         min-height: 1.75rem;
         gap: 0.5rem;
         padding: 0.375rem 0.75rem;
         border-radius: var(--md-sys-shape-corner-small);
-        box-shadow: none;
+        box-shadow: var(--elevation-0);
         transform: none;
     }
 
@@ -452,10 +400,10 @@ select {
         width: 0.875rem;
         height: 0.875rem;
         flex-basis: 0.875rem;
-        border-radius: 0;
+        border-radius: var(--radius-none);
         background: transparent;
         color: currentColor;
-        box-shadow: none;
+        box-shadow: var(--elevation-0);
     }
 
     .liquid-daily-attacks-dock .liquid-status-dock-icon svg {
@@ -491,14 +439,12 @@ select {
         border: 0;
         border-radius: var(--md-sys-shape-corner-full);
         background: var(--md-sys-color-surface-container-low);
-        box-shadow: none;
+        box-shadow: var(--elevation-0);
         transform: none;
         transition: none;
     }
 
-    .liquid-header-automation-pill:last-child {
-        margin-right: auto;
-    }
+    .liquid-header-automation-pill:last-child { margin-right: auto; }
 
     .liquid-header-automation-pill .liquid-status-dock-main.m3-button {
         width: auto;
@@ -508,14 +454,14 @@ select {
         justify-content: flex-start;
         gap: 0.375rem;
         padding: 0.375rem 0.75rem;
-        border: 1px solid color-mix(in srgb, var(--dock-accent) 40%, var(--md-sys-color-outline-variant)) !important;
-        border-radius: var(--md-sys-shape-corner-full) !important;
-        background: color-mix(in srgb, var(--dock-accent) 10%, transparent) !important;
-        color: var(--dock-accent) !important;
+        border: 1px solid color-mix(in srgb, var(--dock-accent) 40%, var(--md-sys-color-outline-variant));
+        border-radius: var(--md-sys-shape-corner-full);
+        background: color-mix(in srgb, var(--dock-accent) 10%, transparent);
+        color: var(--dock-accent);
     }
 
     .liquid-header-automation-pill .liquid-status-dock-main.m3-button:hover:not(:disabled) {
-        background: color-mix(in srgb, var(--dock-accent) 16%, transparent) !important;
+        background: color-mix(in srgb, var(--dock-accent) 16%, transparent);
     }
 
     .liquid-header-automation-pill .liquid-desktop-status-text {
@@ -547,7 +493,7 @@ select {
     .liquid-header-automation-pill:hover {
         border-color: transparent;
         background: var(--md-sys-color-surface-container-low);
-        box-shadow: none;
+        box-shadow: var(--elevation-0);
         transform: none;
     }
 }
@@ -555,14 +501,14 @@ select {
 .liquid-surface-edge {
     border: 1px solid var(--md-sys-color-outline-variant);
     background: var(--md-sys-color-surface-container);
-    box-shadow: none;
+    box-shadow: var(--elevation-0);
 }
 
 .m3-status-chip {
     min-height: 2.35rem;
     border: 1px solid var(--md-sys-color-outline-variant);
     background: var(--md-sys-color-surface-container);
-    box-shadow: none;
+    box-shadow: var(--elevation-0);
 }
 
 .m3-status-chip-success {
@@ -580,13 +526,9 @@ select {
     background: color-mix(in srgb, var(--error) 9%, var(--md-sys-color-surface-container));
 }
 
-.liquid-bot-status .animate-pulse {
-    animation-duration: 1.8s;
-}
+.liquid-bot-status .animate-pulse { animation-duration: var(--duration-reduced); }
 
-.liquid-sidebar {
-    gap: var(--app-shell-gap);
-}
+.liquid-sidebar { gap: var(--app-shell-gap); }
 
 .liquid-sidebar-main-island {
     display: flex;
@@ -633,9 +575,7 @@ select {
     letter-spacing: -0.02em;
 }
 
-.liquid-sidebar-scroll {
-    padding: 0.8rem 0.7rem;
-}
+.liquid-sidebar-scroll { padding: 0.8rem 0.7rem; }
 
 .liquid-sidebar-system-row {
     position: relative;
@@ -643,9 +583,7 @@ select {
     min-width: 0;
 }
 
-.liquid-sidebar-system-row > .liquid-sidebar-system-island {
-    width: 100%;
-}
+.liquid-sidebar-system-row > .liquid-sidebar-system-island { width: 100%; }
 
 .liquid-sidebar-system-island {
     border-color: color-mix(in srgb, var(--border-base) 82%, transparent);
@@ -656,7 +594,7 @@ select {
 .liquid-section-label {
     padding: 0.5rem 0.85rem 0.4rem;
     border: 0;
-    border-radius: 0;
+    border-radius: var(--radius-none);
     background: transparent;
     color: var(--md-sys-color-on-surface-variant);
     cursor: default;
@@ -689,11 +627,9 @@ select {
     font-size: 0.86rem;
     font-weight: 650;
     letter-spacing: 0.005em;
-    box-shadow: none;
+    box-shadow: var(--elevation-0);
     transition:
-        color var(--md-sys-motion-duration-short) var(--md-sys-motion-easing-standard),
-        background-color var(--md-sys-motion-duration-short) var(--md-sys-motion-easing-standard),
-        transform var(--md-sys-motion-duration-medium) var(--md-sys-motion-easing-emphasized);
+        color var(--md-sys-motion-duration-short) var(--md-sys-motion-easing-standard), background-color var(--md-sys-motion-duration-short) var(--md-sys-motion-easing-standard), transform var(--md-sys-motion-duration-medium) var(--md-sys-motion-easing-emphasized);
 }
 
 .liquid-nav-item:hover {
@@ -707,7 +643,7 @@ select {
     border-color: transparent;
     background: var(--md-sys-color-primary-container);
     color: var(--md-sys-color-on-primary-container);
-    box-shadow: none;
+    box-shadow: var(--elevation-0);
 }
 
 .liquid-nav-item-active:hover {
@@ -740,7 +676,6 @@ select {
     background: var(--md-sys-color-primary);
     opacity: 0;
     transition:
-        width var(--md-sys-motion-duration-medium) var(--md-sys-motion-easing-emphasized),
         opacity var(--md-sys-motion-duration-short) linear;
 }
 
@@ -773,9 +708,7 @@ select {
     height: 1.05rem;
 }
 
-.liquid-main {
-    background: transparent;
-}
+.liquid-main { background: transparent; }
 
 .liquid-content {
     display: flex;
@@ -795,7 +728,7 @@ select {
     border-radius: var(--md-expressive-shape-hero);
     background: var(--md-sys-color-primary-container);
     color: var(--md-sys-color-on-primary-container);
-    box-shadow: none;
+    box-shadow: var(--elevation-0);
 }
 
 .m3-page-header-shape {
@@ -805,7 +738,7 @@ select {
     right: -4%;
     width: clamp(14rem, 26vw, 28rem);
     aspect-ratio: 1;
-    border-radius: 42% 58% 32% 68% / 62% 36% 64% 38%;
+    border-radius: var(--compat-art-radius-8);
     background: color-mix(in srgb, var(--md-sys-color-secondary-container) 72%, transparent);
     transform: rotate(18deg);
 }
@@ -818,7 +751,7 @@ select {
     bottom: -4.4rem;
     width: 9rem;
     height: 9rem;
-    border-radius: 28% 72% 58% 42% / 58% 34% 66% 42%;
+    border-radius: var(--compat-art-radius-9);
     background: color-mix(in srgb, var(--md-sys-color-tertiary-container) 48%, transparent);
     transform: rotate(-24deg);
 }
@@ -833,10 +766,10 @@ select {
     width: clamp(3.65rem, 5vw, 5rem);
     height: clamp(3.65rem, 5vw, 5rem);
     border: 0;
-    border-radius: 26px 10px 26px 26px;
+    border-radius: var(--shape-card);
     background: var(--md-sys-color-primary);
     color: var(--md-sys-color-on-primary);
-    box-shadow: none;
+    box-shadow: var(--elevation-0);
     transform: rotate(-3deg);
 }
 
@@ -876,9 +809,7 @@ select {
     z-index: 1;
 }
 
-.ui-section-card-actions {
-    display: contents;
-}
+.ui-section-card-actions { display: contents; }
 
 .ui-section-card-actions > * {
     min-width: 0;
@@ -900,12 +831,9 @@ select {
 
 .m3-card {
     overflow: hidden;
-    border-radius: var(--md-expressive-shape-card) !important;
+    border-radius: var(--md-expressive-shape-card);
     transition:
-        background-color var(--md-sys-motion-duration-short) var(--md-sys-motion-easing-standard),
-        border-color var(--md-sys-motion-duration-short) var(--md-sys-motion-easing-standard),
-        box-shadow var(--md-sys-motion-duration-medium) var(--md-sys-motion-easing-standard),
-        transform var(--md-sys-motion-duration-medium) var(--md-sys-motion-easing-emphasized);
+        background-color var(--md-sys-motion-duration-short) var(--md-sys-motion-easing-standard), border-color var(--md-sys-motion-duration-short) var(--md-sys-motion-easing-standard), transform var(--md-sys-motion-duration-medium) var(--md-sys-motion-easing-emphasized);
 }
 
 .m3-card-solid {
@@ -917,14 +845,14 @@ select {
 .m3-card-interactive {
     border: 1px solid transparent;
     background: var(--md-sys-color-surface-container);
-    box-shadow: none;
+    box-shadow: var(--elevation-0);
 }
 
 .m3-card-interactive:hover {
     border-color: color-mix(in srgb, var(--md-sys-color-primary) 26%, var(--md-sys-color-outline-variant));
     background: var(--md-sys-color-surface-container-high);
     box-shadow: var(--shadow-raised);
-    transform: translateY(-3px) rotate(-0.2deg);
+    transform: translateY(-2px);
 }
 
 .m3-card-header {
@@ -938,17 +866,12 @@ select {
     letter-spacing: -0.025em;
 }
 
-.m3-section-card:nth-child(even),
-.castle-dashboard-left > .m3-section-card:nth-child(even) {
-    border-radius: var(--shape-card) !important;
-}
-
 .liquid-prominent-header-card {
-    overflow: hidden !important;
-    border: 1px solid var(--md-sys-color-outline-variant) !important;
-    border-radius: var(--md-expressive-shape-card) !important;
-    background: var(--md-sys-color-surface-container-low) !important;
-    box-shadow: var(--shadow-panel) !important;
+    overflow: hidden;
+    border: 1px solid var(--md-sys-color-outline-variant);
+    border-radius: var(--md-expressive-shape-card);
+    background: var(--md-sys-color-surface-container-low);
+    box-shadow: var(--shadow-panel);
 }
 
 .liquid-card-header-prominent {
@@ -958,23 +881,21 @@ select {
     padding: 1.15rem 1.35rem 1.15rem 1.75rem;
     border: 0;
     border-bottom: 1px solid var(--md-sys-color-outline-variant);
-    border-radius: 0;
+    border-radius: var(--radius-none);
     background: var(--md-sys-color-surface-container);
-    box-shadow: inset 0.42rem 0 var(--md-sys-color-primary);
+    box-shadow: var(--compat-ring-shadow-22);
 }
 
-.liquid-card-header-prominent::before {
-    display: none;
-}
+.liquid-card-header-prominent::before { display: none; }
 
-.liquid-prominent-header-content {
+.liquid-prominent-header-card > .liquid-prominent-header-content {
     --liquid-header-overlap: 0px;
     margin: 0;
-    padding: clamp(1rem, 1.2vw, 1.4rem) !important;
+    padding: clamp(1rem, 1.2vw, 1.4rem);
     border: 0;
-    border-radius: 0;
+    border-radius: var(--radius-none);
     background: transparent;
-    box-shadow: none;
+    box-shadow: var(--elevation-0);
 }
 
 .liquid-prominent-header-content::before,
@@ -982,94 +903,78 @@ select {
     display: none;
 }
 
-.liquid-prominent-header-content-flush {
-    padding: 0 !important;
-}
+.liquid-prominent-header-card > .liquid-prominent-header-content-flush { padding: 0; }
 
 @layer components {
     .liquid-prominent-header-card {
-        overflow: hidden !important;
-        border: 1px solid var(--md-sys-color-outline-variant) !important;
-        border-radius: var(--md-expressive-shape-card) !important;
-        background: var(--md-sys-color-surface-container-low) !important;
-        box-shadow: var(--shadow-panel) !important;
+        overflow: hidden;
+        border: 1px solid var(--md-sys-color-outline-variant);
+        border-radius: var(--md-expressive-shape-card);
+        background: var(--md-sys-color-surface-container-low);
+        box-shadow: var(--shadow-panel);
     }
 
     .liquid-prominent-header-content {
-        margin: 0 !important;
-        padding: clamp(1rem, 1.2vw, 1.4rem) !important;
-        border: 0 !important;
-        border-radius: 0 !important;
-        background: transparent !important;
-        box-shadow: none !important;
+        margin: 0;
+        padding: clamp(1rem, 1.2vw, 1.4rem);
+        border: 0;
+        border-radius: var(--radius-none);
+        background: transparent;
+        box-shadow: var(--elevation-0);
     }
 
-    .liquid-prominent-header-content-flush {
-        padding: 0 !important;
-    }
+    .liquid-prominent-header-content-flush { padding: 0; }
 }
 
 .m3-metric-tile {
     border-color: transparent;
-    border-radius: 22px 10px 22px 22px !important;
+    border-radius: var(--shape-card);
     background: var(--md-sys-color-surface-container-high);
-    box-shadow: none;
+    box-shadow: var(--elevation-0);
 }
 
-.m3-metric-tile .ui-metric-value {
-    letter-spacing: -0.025em;
-}
+.m3-metric-tile .ui-metric-value { letter-spacing: -0.025em; }
 
 .m3-empty-state {
     border-color: color-mix(in srgb, var(--md-sys-color-primary) 28%, var(--md-sys-color-outline-variant));
-    border-radius: var(--md-expressive-shape-hero) !important;
+    border-radius: var(--md-expressive-shape-hero);
     background: var(--md-sys-color-surface-container-low);
 }
 
 .m3-empty-state-icon {
     border: 0;
-    border-radius: 22px 8px 22px 22px !important;
+    border-radius: var(--shape-card);
     background: var(--md-sys-color-primary-container);
 }
 
 .m3-status-banner {
     border: 0;
-    border-radius: 24px 10px 24px 24px !important;
-    box-shadow: none;
+    border-radius: var(--shape-card);
+    box-shadow: var(--elevation-0);
 }
 
-.m3-status-banner-warning {
-    background: color-mix(in srgb, var(--warning) 13%, var(--md-sys-color-surface-container));
-}
+.m3-status-banner-warning { background: color-mix(in srgb, var(--warning) 13%, var(--md-sys-color-surface-container)); }
 
 .m3-button {
     position: relative;
     min-height: 2.5rem;
     overflow: hidden;
     border: 0;
-    border-radius: var(--md-sys-shape-corner-full) !important;
-    box-shadow: none;
+    border-radius: var(--md-sys-shape-corner-full);
+    box-shadow: var(--elevation-0);
     letter-spacing: 0.01em;
     transition:
-        background-color var(--md-sys-motion-duration-short) var(--md-sys-motion-easing-standard),
-        color var(--md-sys-motion-duration-short) var(--md-sys-motion-easing-standard),
-        border-color var(--md-sys-motion-duration-short) var(--md-sys-motion-easing-standard),
-        transform var(--md-sys-motion-duration-medium) var(--md-sys-motion-easing-emphasized),
-        border-radius var(--md-sys-motion-duration-medium) var(--md-sys-motion-easing-emphasized);
+        background-color var(--md-sys-motion-duration-short) var(--md-sys-motion-easing-standard), color var(--md-sys-motion-duration-short) var(--md-sys-motion-easing-standard), border-color var(--md-sys-motion-duration-short) var(--md-sys-motion-easing-standard), transform var(--md-sys-motion-duration-medium) var(--md-sys-motion-easing-emphasized), border-radius var(--md-sys-motion-duration-medium) var(--md-sys-motion-easing-emphasized);
 }
 
-.m3-button:hover:not(:disabled) {
-    transform: translateY(-2px);
-}
+.m3-button:hover:not(:disabled) { transform: none; }
 
 .m3-button:active:not(:disabled) {
-    border-radius: var(--md-sys-shape-corner-medium) !important;
+    border-radius: var(--md-sys-shape-corner-medium);
     transform: translateY(0) scale(0.97);
 }
 
-.m3-button:disabled {
-    opacity: 0.45;
-}
+.m3-button:disabled { opacity: 0.45; }
 
 .m3-button-filled {
     border: 1px solid var(--md-sys-color-primary);
@@ -1079,7 +984,7 @@ select {
 
 .m3-button-filled:hover:not(:disabled) {
     background: var(--primary-hover);
-    box-shadow: 0 6px 18px color-mix(in srgb, var(--md-sys-color-primary) 24%, transparent);
+    box-shadow: var(--elevation-0);
 }
 
 .m3-button-tonal {
@@ -1098,9 +1003,7 @@ select {
     color: var(--md-sys-color-primary);
 }
 
-.m3-button-text:hover:not(:disabled) {
-    background: color-mix(in srgb, var(--md-sys-color-primary) 10%, transparent);
-}
+.m3-button-text:hover:not(:disabled) { background: color-mix(in srgb, var(--md-sys-color-primary) 10%, transparent); }
 
 .m3-button-outlined {
     border: 1px solid var(--md-sys-color-outline);
@@ -1123,13 +1026,9 @@ select {
     background: color-mix(in srgb, var(--md-sys-color-error) 16%, var(--md-sys-color-error-container));
 }
 
-.m3-button-sm {
-    min-height: 2.25rem;
-}
+.m3-button-sm { min-height: 2.25rem; }
 
-.m3-button-md {
-    min-height: 2.75rem;
-}
+.m3-button-md { min-height: 2.75rem; }
 
 .m3-button-lg {
     min-height: 3.5rem;
@@ -1142,19 +1041,19 @@ select {
     min-width: 2.75rem;
     height: 2.75rem;
     min-height: 2.75rem;
-    border-radius: 50% !important;
+    border-radius: var(--radius-full);
 }
 
 .m3-chip {
     min-height: 1.75rem;
     gap: 0.35rem;
-    border-radius: var(--md-sys-shape-corner-small) !important;
+    border-radius: var(--md-sys-shape-corner-small);
     font-size: 0.68rem;
     font-weight: 720;
     letter-spacing: 0.045em;
     line-height: 1.1;
     text-transform: uppercase;
-    box-shadow: none;
+    box-shadow: var(--elevation-0);
 }
 
 .m3-chip-primary {
@@ -1197,14 +1096,12 @@ select {
 .m3-select-trigger {
     min-height: 3rem;
     border: 1px solid var(--md-sys-color-outline-variant);
-    border-radius: 18px 18px 7px 7px !important;
+    border-radius: var(--radius-md);
     background: var(--md-sys-color-surface-container-highest);
     color: var(--md-sys-color-on-surface);
-    box-shadow: none;
+    box-shadow: var(--elevation-0);
     transition:
-        border-color var(--md-sys-motion-duration-short) var(--md-sys-motion-easing-standard),
-        background-color var(--md-sys-motion-duration-short) var(--md-sys-motion-easing-standard),
-        box-shadow var(--md-sys-motion-duration-short) var(--md-sys-motion-easing-standard);
+        border-color var(--md-sys-motion-duration-short) var(--md-sys-motion-easing-standard), background-color var(--md-sys-motion-duration-short) var(--md-sys-motion-easing-standard);
 }
 
 .m3-input:hover:not(:disabled),
@@ -1216,13 +1113,13 @@ select {
 .m3-select-trigger:focus {
     border-color: var(--md-sys-color-primary);
     background: var(--md-sys-color-surface-container-high);
-    box-shadow: inset 0 -2px 0 var(--md-sys-color-primary);
+    box-shadow: var(--compat-ring-shadow-23);
     outline: none;
 }
 
 .m3-select-menu {
     border: 1px solid var(--md-sys-color-outline-variant);
-    border-radius: var(--md-sys-shape-corner-large) !important;
+    border-radius: var(--md-sys-shape-corner-large);
     background: var(--md-sys-color-surface-container);
     box-shadow: var(--shadow-modal);
 }
@@ -1234,9 +1131,7 @@ select {
     border-radius: var(--md-sys-shape-corner-medium);
 }
 
-.m3-select-option:not(:disabled):hover {
-    background: var(--md-sys-color-surface-container-high);
-}
+.m3-select-option:not(:disabled):hover { background: var(--md-sys-color-surface-container-high); }
 
 .m3-select-option[aria-selected="true"]:not(:disabled) {
     background: var(--md-sys-color-primary-container);
@@ -1248,39 +1143,29 @@ select {
     background: transparent;
 }
 
-.liquid-switch-rail {
-    border-color: var(--md-sys-color-outline);
-    background: var(--md-sys-color-surface-container-highest);
-    box-shadow: none;
-}
+.liquid-switch-rail { box-shadow: var(--elevation-0); }
 
 .liquid-switch-thumb {
     border: 0;
-    background: var(--md-sys-color-outline);
-    box-shadow: none;
+    box-shadow: var(--elevation-0);
 }
 
-.liquid-switch-on .liquid-switch-rail {
-    border-color: var(--md-sys-color-primary);
-    background: var(--md-sys-color-primary);
-    box-shadow: none;
-}
+.liquid-switch-on .liquid-switch-rail { box-shadow: var(--elevation-0); }
 
 .liquid-switch-on .liquid-switch-thumb {
     border: 0;
-    background: var(--md-sys-color-on-primary);
-    box-shadow: none;
+    box-shadow: var(--elevation-0);
 }
 
 .liquid-toggle-group {
     border-color: var(--md-sys-color-outline-variant);
     background: var(--md-sys-color-surface-container-high);
-    box-shadow: none;
+    box-shadow: var(--elevation-0);
 }
 
 .liquid-toggle-indicator-primary {
     background: var(--md-sys-color-primary-container);
-    box-shadow: none;
+    box-shadow: var(--elevation-0);
     outline: 0;
 }
 
@@ -1292,14 +1177,10 @@ select {
 
 .liquid-toggle-indicator-ready {
     transition:
-        transform var(--md-sys-motion-duration-medium) var(--md-sys-motion-easing-emphasized),
-        width var(--md-sys-motion-duration-medium) var(--md-sys-motion-easing-emphasized),
-        opacity var(--md-sys-motion-duration-short) linear;
+        transform var(--md-sys-motion-duration-medium) var(--md-sys-motion-easing-emphasized), opacity var(--md-sys-motion-duration-short) linear;
 }
 
-.liquid-toggle-btn-active-primary {
-    color: var(--md-sys-color-on-primary-container);
-}
+.liquid-toggle-btn-active-primary { color: var(--md-sys-color-on-primary-container); }
 
 .liquid-modal-overlay {
     background: color-mix(in srgb, var(--md-sys-color-inverse-surface) 44%, transparent);
@@ -1310,7 +1191,7 @@ select {
 .liquid-modal-surface {
     overflow: hidden;
     border: 1px solid var(--md-sys-color-outline-variant);
-    border-radius: 38px 16px 38px 38px;
+    border-radius: var(--shape-card);
     background: var(--md-sys-color-surface-container-low);
     box-shadow: var(--shadow-modal);
 }
@@ -1327,17 +1208,13 @@ select {
 }
 
 .liquid-modal-close {
-    border-radius: 50%;
+    border-radius: var(--radius-full);
     color: var(--md-sys-color-on-primary-container);
 }
 
-.liquid-modal-close:hover {
-    background: color-mix(in srgb, var(--md-sys-color-primary) 12%, transparent);
-}
+.liquid-modal-close:hover { background: color-mix(in srgb, var(--md-sys-color-primary) 12%, transparent); }
 
-.liquid-modal-body {
-    background: var(--md-sys-color-surface-container-low);
-}
+.liquid-modal-body { background: var(--md-sys-color-surface-container-low); }
 
 .liquid-modal-footer {
     border-top: 1px solid var(--md-sys-color-outline-variant);
@@ -1347,9 +1224,9 @@ select {
 .ui-workspace-surface,
 .picker-shell {
     border-color: var(--md-sys-color-outline-variant);
-    border-radius: var(--md-expressive-shape-card) !important;
+    border-radius: var(--md-expressive-shape-card);
     background: var(--md-sys-color-surface-container-low);
-    box-shadow: none;
+    box-shadow: var(--elevation-0);
 }
 
 .picker-toolbar {
@@ -1362,24 +1239,20 @@ select {
     border-collapse: separate;
 }
 
-.liquid-content thead {
-    background: var(--md-sys-color-surface-container-high);
-}
+.liquid-content thead { background: var(--md-sys-color-surface-container-high); }
 
 .liquid-content tbody tr {
     transition: background-color var(--md-sys-motion-duration-short) var(--md-sys-motion-easing-standard);
 }
 
-.liquid-content tbody tr:hover {
-    background: color-mix(in srgb, var(--md-sys-color-primary) 6%, transparent);
-}
+.liquid-content tbody tr:hover { background: color-mix(in srgb, var(--md-sys-color-primary) 6%, transparent); }
 
 .automation-right-click-banner {
     border-color: color-mix(in srgb, var(--md-sys-color-on-primary-container) 22%, transparent);
     border-radius: var(--md-sys-shape-corner-full);
     background: color-mix(in srgb, var(--md-sys-color-surface-container-lowest) 62%, transparent);
     color: var(--md-sys-color-on-primary-container);
-    box-shadow: none;
+    box-shadow: var(--elevation-0);
 }
 
 .automation-right-click-banner.automation-right-click-inline {
@@ -1407,13 +1280,9 @@ select {
     font-weight: 900;
 }
 
-.automation-function-groups {
-    gap: 2rem;
-}
+.automation-function-groups { gap: 2rem; }
 
-.automation-function-group-heading {
-    margin-bottom: 0.9rem;
-}
+.automation-function-group-heading { margin-bottom: 0.9rem; }
 
 .automation-function-group-heading h2 {
     font-size: 1.05rem;
@@ -1425,42 +1294,34 @@ select {
     width: 2rem;
     height: 2rem;
     border: 0;
-    border-radius: 14px 5px 14px 14px;
+    border-radius: var(--shape-card);
     background: var(--md-sys-color-primary-container);
     color: var(--md-sys-color-on-primary-container);
 }
 
-.automation-function-group-rule {
-    background: var(--md-sys-color-outline-variant);
-}
+.automation-function-group-rule { background: var(--md-sys-color-outline-variant); }
 
-.automation-function-grid {
-    gap: 0.8rem;
-}
+.automation-function-grid { gap: 0.8rem; }
 
 .automation-function-row {
     min-height: 8.5rem;
     gap: 0.85rem;
     padding: 1rem;
     border: 1px solid var(--md-sys-color-outline-variant);
-    border-radius: 26px 10px 26px 26px;
+    border-radius: var(--shape-card);
     background: var(--md-sys-color-surface-container-low);
     box-shadow: var(--shadow-panel);
     transition:
-        border-color var(--md-sys-motion-duration-short) var(--md-sys-motion-easing-standard),
-        background-color var(--md-sys-motion-duration-short) var(--md-sys-motion-easing-standard),
-        transform var(--md-sys-motion-duration-medium) var(--md-sys-motion-easing-emphasized);
+        border-color var(--md-sys-motion-duration-short) var(--md-sys-motion-easing-standard), background-color var(--md-sys-motion-duration-short) var(--md-sys-motion-easing-standard), transform var(--md-sys-motion-duration-medium) var(--md-sys-motion-easing-emphasized);
 }
 
-.automation-function-row:nth-child(even) {
-    border-radius: 10px 26px 26px 26px;
-}
+.automation-function-row:nth-child(even) { border-radius: var(--shape-card); }
 
 .automation-function-row:hover,
 .automation-function-row:focus-within {
     border-color: color-mix(in srgb, var(--md-sys-color-primary) 38%, var(--md-sys-color-outline-variant));
     background: var(--md-sys-color-surface-container);
-    transform: translateY(-2px);
+    transform: none;
 }
 
 .automation-function-row-active {
@@ -1474,21 +1335,19 @@ select {
 }
 
 .automation-function-settings {
-    border-color: var(--md-sys-color-outline-variant) !important;
-    background: var(--md-sys-color-surface-container-high) !important;
-    box-shadow: none;
+    border-color: var(--md-sys-color-outline-variant);
+    background: var(--md-sys-color-surface-container-high);
+    box-shadow: var(--elevation-0);
 }
 
 .automation-function-settings:hover,
 .automation-function-settings:focus-visible {
-    border-color: var(--md-sys-color-primary) !important;
-    background: var(--md-sys-color-primary-container) !important;
-    box-shadow: none;
+    border-color: var(--md-sys-color-primary);
+    background: var(--md-sys-color-primary-container);
+    box-shadow: var(--elevation-0);
 }
 
-.liquid-logger-panel {
-    border-radius: var(--md-expressive-shape-card);
-}
+.liquid-logger-panel { border-radius: var(--md-expressive-shape-card); }
 
 .liquid-log-header,
 .liquid-logger-body {
@@ -1503,9 +1362,7 @@ select {
 }
 
 @media (min-width: 1100px) {
-    .castle-dashboard-left {
-        display: contents;
-    }
+    .castle-dashboard-left { display: contents; }
 
     .castle-dashboard-left > .m3-section-card:first-child {
         grid-column: 1 / -1;
@@ -1545,9 +1402,7 @@ select {
     background: color-mix(in srgb, var(--md-sys-color-tertiary-container) 26%, var(--md-sys-color-surface-container));
 }
 
-.feature-event-score-header > div:first-child {
-    flex: 0 1 auto;
-}
+.feature-event-score-header > div:first-child { flex: 0 1 auto; }
 
 .feature-event-score-actions {
     display: flex;
@@ -1569,13 +1424,9 @@ select {
     gap: 0.45rem;
 }
 
-.feature-event-balance-list {
-    flex: 1 1 auto;
-}
+.feature-event-balance-list { flex: 1 1 auto; }
 
-.feature-event-score-controls {
-    flex: 0 0 auto;
-}
+.feature-event-score-controls { flex: 0 0 auto; }
 
 .feature-event-balance-chip {
     display: grid;
@@ -1585,7 +1436,7 @@ select {
     gap: 0.5rem;
     padding: 0.35rem 0.65rem 0.35rem 0.4rem;
     border: 1px solid color-mix(in srgb, var(--md-sys-color-secondary) 22%, var(--md-sys-color-outline-variant));
-    border-radius: 999px;
+    border-radius: var(--radius-full);
     background: color-mix(in srgb, var(--md-sys-color-surface-container-highest) 78%, transparent);
     color: var(--md-sys-color-on-surface);
 }
@@ -1597,7 +1448,7 @@ select {
     align-items: center;
     justify-content: center;
     overflow: hidden;
-    border-radius: 50%;
+    border-radius: var(--radius-full);
     background: var(--md-sys-color-secondary-container);
     color: var(--md-sys-color-on-secondary-container);
 }
@@ -1640,14 +1491,14 @@ select {
 .castle-dashboard-units .liquid-prominent-header-content > div > div,
 .castle-dashboard-units .relative.flex.min-h-\[164px\] {
     border-color: transparent;
-    border-radius: 26px 10px 26px 26px !important;
+    border-radius: var(--shape-card);
     background: var(--md-sys-color-surface-container);
-    box-shadow: none;
+    box-shadow: var(--elevation-0);
 }
 
 .castle-dashboard-units .relative.flex.min-h-\[164px\]:hover {
     background: var(--md-sys-color-primary-container);
-    transform: translateY(-2px);
+    transform: none;
 }
 
 @media (max-width: 1180px) {
@@ -1667,13 +1518,9 @@ select {
         display: none;
     }
 
-    .liquid-sidebar-scroll {
-        padding-inline: 0.45rem;
-    }
+    .liquid-sidebar-scroll { padding-inline: 0.45rem; }
 
-    .liquid-sidebar-system-island {
-        padding-inline: 0.45rem;
-    }
+    .liquid-sidebar-system-island { padding-inline: 0.45rem; }
 
     .feature-event-score-actions,
     .feature-event-balance-list {
@@ -1708,9 +1555,7 @@ select {
         --app-content-pad: 0.75rem;
     }
 
-    .liquid-header {
-        border-radius: 24px 10px 24px 24px;
-    }
+    .liquid-header { border-radius: var(--shape-card); }
 
     .liquid-brand-mark {
         width: 2.45rem;
@@ -1722,52 +1567,36 @@ select {
         display: none;
     }
 
-    .liquid-header-status-strip {
-        scrollbar-width: none;
-    }
+    .liquid-header-status-strip { scrollbar-width: none; }
 
     .m3-page-header {
         min-height: 8rem;
         align-items: flex-start;
-        border-radius: 32px 12px 32px 32px;
+        border-radius: var(--shape-card);
     }
 
-    .ui-page-header-heading {
-        align-items: flex-start;
-    }
+    .ui-page-header-heading { align-items: flex-start; }
 
-    .ui-page-header-title {
-        font-size: clamp(1.8rem, 8vw, 2.6rem);
-    }
+    .ui-page-header-title { font-size: clamp(1.8rem, 8vw, 2.6rem); }
 
     .ui-page-header-aside {
         width: 100%;
         justify-content: flex-start;
     }
 
-    .liquid-card-header-prominent::before {
-        display: none;
-    }
+    .liquid-card-header-prominent::before { display: none; }
 }
 
 @media (max-height: 760px) {
-    .liquid-sidebar-toolbar {
-        min-height: 3.5rem;
-    }
+    .liquid-sidebar-toolbar { min-height: 3.5rem; }
 
-    .liquid-nav-item {
-        min-height: 2.45rem;
-    }
+    .liquid-nav-item { min-height: 2.45rem; }
 
-    .m3-page-header {
-        min-height: 8.25rem;
-    }
+    .m3-page-header { min-height: 8.25rem; }
 }
 
 @media (prefers-reduced-motion: reduce) {
-    .m3-expressive-shape {
-        transform: none;
-    }
+    .m3-expressive-shape { transform: none; }
 }
 
 /* --------------------------------------------------------------------------
@@ -1809,9 +1638,7 @@ select {
         min-width: 0;
     }
 
-    .liquid-content :is(input, textarea, select, table) {
-        max-width: 100%;
-    }
+    .liquid-content :is(input, textarea, select, table) { max-width: 100%; }
 
     .liquid-content :is(.overflow-x-auto, .overflow-auto, .custom-scrollbar) {
         overscroll-behavior-inline: contain;
@@ -1827,12 +1654,10 @@ select {
         align-items: stretch;
         overflow: hidden;
         padding: 0.375rem 0.45rem;
-        border-radius: 26px 10px 26px 26px;
+        border-radius: var(--shape-card);
     }
 
-    .liquid-header::after {
-        display: none;
-    }
+    .liquid-header::after { display: none; }
 
     .liquid-header-inner {
         display: grid;
@@ -1853,7 +1678,7 @@ select {
         align-items: center;
         justify-content: center;
         border: 1px solid var(--md-sys-color-outline-variant);
-        border-radius: 15px 6px 15px 15px;
+        border-radius: var(--shape-card);
         background: var(--md-sys-color-surface-container);
         color: var(--md-sys-color-on-surface);
         touch-action: manipulation;
@@ -1875,7 +1700,7 @@ select {
         width: 2.45rem;
         height: 2.45rem;
         flex: 0 0 2.45rem;
-        border-radius: 15px 6px 15px 15px;
+        border-radius: var(--shape-card);
     }
 
     .liquid-brand-copy {
@@ -1910,7 +1735,7 @@ select {
         min-width: 2.75rem;
         min-height: 2.75rem;
         padding: 0;
-        border-radius: 50%;
+        border-radius: var(--radius-full);
     }
 
     .liquid-header-control-label {
@@ -1937,9 +1762,7 @@ select {
         scrollbar-width: none;
     }
 
-    .liquid-header-status-strip::-webkit-scrollbar {
-        display: none;
-    }
+    .liquid-header-status-strip::-webkit-scrollbar { display: none; }
 
     .liquid-header-status-strip > :first-child,
     .liquid-header-status-strip > :last-child {
@@ -1949,7 +1772,7 @@ select {
     .liquid-status-dock {
         gap: 0.18rem;
         padding: 0.18rem;
-        border-radius: 1.35rem 0.78rem 1.35rem 1.35rem;
+        border-radius: var(--shape-card);
     }
 
     .liquid-header-connection,
@@ -1962,20 +1785,14 @@ select {
     .liquid-desktop-status-text,
     .liquid-desktop-status-dot,
     .liquid-desktop-status-icon {
-        display: none !important;
+        display: none;
     }
 
-    .liquid-header-status-strip > .liquid-status-dock {
-        margin-inline: auto;
-    }
+    .liquid-header-status-strip > .liquid-status-dock { margin-inline: auto; }
 
-    .liquid-status-dock-item {
-        min-height: 2.75rem;
-    }
+    .liquid-status-dock-item { min-height: 2.75rem; }
 
-    .liquid-status-dock-action-group {
-        padding: 0;
-    }
+    .liquid-status-dock-action-group { padding: 0; }
 
     .liquid-status-dock-icon-button.m3-button,
     .liquid-status-dock-utility.m3-button-icon {
@@ -1984,19 +1801,15 @@ select {
         min-height: 2.75rem;
     }
 
-    .liquid-daily-attacks-dock {
-        padding-right: 0.55rem;
-    }
+    .liquid-daily-attacks-dock { padding-right: 0.55rem; }
 
     .liquid-castle-focus-slot,
     .castle-focus-shell,
     .liquid-log-handle {
-        display: none !important;
+        display: none;
     }
 
-    .liquid-auto-bird-button {
-        max-width: 12.5rem;
-    }
+    .liquid-auto-bird-button { max-width: 12.5rem; }
 
     .liquid-sidebar-scrim {
         position: fixed;
@@ -2008,7 +1821,7 @@ select {
         opacity: 0;
         visibility: hidden;
         pointer-events: none;
-        transition: opacity 200ms ease, visibility 200ms ease;
+        transition: opacity var(--duration-base) var(--ease-standard), visibility var(--duration-base) var(--ease-standard);
     }
 
     .liquid-sidebar-scrim-visible {
@@ -2027,7 +1840,7 @@ select {
         transform: translateX(calc(-100% - 2rem));
         visibility: hidden;
         pointer-events: none;
-        transition: transform 240ms var(--md-sys-motion-easing-emphasized), visibility 240ms ease;
+        transition: transform var(--duration-base) var(--md-sys-motion-easing-emphasized), visibility var(--duration-base) var(--ease-standard);
     }
 
     .liquid-sidebar-mobile-open {
@@ -2053,9 +1866,7 @@ select {
         display: flex;
     }
 
-    .liquid-sidebar-toolbar-copy {
-        flex-direction: column;
-    }
+    .liquid-sidebar-toolbar-copy { flex-direction: column; }
 
     .liquid-sidebar-mobile-close {
         display: inline-flex;
@@ -2065,15 +1876,13 @@ select {
         align-items: center;
         justify-content: center;
         border: 1px solid var(--md-sys-color-outline-variant);
-        border-radius: 50%;
+        border-radius: var(--radius-full);
         background: var(--md-sys-color-surface-container);
         color: var(--md-sys-color-on-surface-variant);
         touch-action: manipulation;
     }
 
-    .liquid-sidebar-scroll {
-        padding: 0.65rem 0.55rem;
-    }
+    .liquid-sidebar-scroll { padding: 0.65rem 0.55rem; }
 
     .liquid-section-label {
         justify-content: space-between;
@@ -2142,7 +1951,7 @@ select {
         align-items: stretch;
         gap: 1rem;
         padding: 1.15rem;
-        border-radius: 28px 10px 28px 28px;
+        border-radius: var(--shape-card);
     }
 
     .m3-page-header-shape {
@@ -2167,7 +1976,7 @@ select {
         width: 3.1rem;
         height: 3.1rem;
         flex: 0 0 3.1rem;
-        border-radius: 19px 7px 19px 19px;
+        border-radius: var(--shape-card);
     }
 
     .ui-page-header-title {
@@ -2195,9 +2004,7 @@ select {
         max-width: 100%;
     }
 
-    .ui-page-header-aside > .m3-button {
-        flex: 1 1 10rem;
-    }
+    .ui-page-header-aside > .m3-button { flex: 1 1 10rem; }
 
     .liquid-card-header-prominent {
         flex-wrap: wrap;
@@ -2205,9 +2012,7 @@ select {
         padding: 1rem;
     }
 
-    .liquid-card-header-prominent > * {
-        max-width: 100%;
-    }
+    .liquid-card-header-prominent > * { max-width: 100%; }
 
     .ui-section-card-actions {
         display: flex;
@@ -2222,21 +2027,15 @@ select {
         flex-wrap: wrap;
     }
 
-    .ui-section-card-actions > .m3-button {
-        flex: 1 1 10rem;
-    }
+    .ui-section-card-actions > .m3-button { flex: 1 1 10rem; }
 
-    .liquid-prominent-header-content {
-        padding: 1rem;
-    }
+    .liquid-prominent-header-content { padding: 1rem; }
 
-    .liquid-prominent-header-content-flush {
-        padding: 0;
-    }
+    .liquid-prominent-header-content-flush { padding: 0; }
 
     .m3-card,
     .liquid-prominent-header-card {
-        border-radius: 25px 9px 25px 25px !important;
+        border-radius: var(--shape-card);
     }
 
     .m3-button:not(.m3-button-icon),
@@ -2257,22 +2056,16 @@ select {
         scrollbar-width: none;
     }
 
-    .liquid-toggle-group::-webkit-scrollbar {
-        display: none;
-    }
+    .liquid-toggle-group::-webkit-scrollbar { display: none; }
 
     .liquid-toggle-btn {
         min-height: 2.75rem;
         flex: 0 0 auto;
     }
 
-    .liquid-content table {
-        font-size: 0.78rem;
-    }
+    .liquid-content table { font-size: 0.78rem; }
 
-    .liquid-content :is(th, td) {
-        padding-inline: 0.65rem;
-    }
+    .liquid-content :is(th, td) { padding-inline: 0.65rem; }
 
     .liquid-modal-overlay {
         align-items: stretch;
@@ -2282,12 +2075,12 @@ select {
 
     .liquid-modal-surface {
         width: 100vw;
-        max-width: none !important;
+        max-width: none;
         height: 100dvh;
         max-height: 100dvh;
         margin: 0;
         border: 0;
-        border-radius: 0 !important;
+        border-radius: var(--radius-none);
     }
 
     .liquid-modal-header {
@@ -2297,9 +2090,7 @@ select {
         padding-left: max(0.85rem, env(safe-area-inset-left));
     }
 
-    .liquid-modal-body {
-        padding: 0.85rem max(0.75rem, env(safe-area-inset-right)) 1rem max(0.75rem, env(safe-area-inset-left));
-    }
+    .liquid-modal-body { padding: 0.85rem max(0.75rem, env(safe-area-inset-right)) 1rem max(0.75rem, env(safe-area-inset-left)); }
 
     .liquid-modal-footer {
         display: grid;
@@ -2310,9 +2101,7 @@ select {
         padding-left: max(0.75rem, env(safe-area-inset-left));
     }
 
-    .liquid-modal-footer > * {
-        min-width: 0;
-    }
+    .liquid-modal-footer > * { min-width: 0; }
 
     .liquid-modal-footer > .m3-button {
         width: 100%;
@@ -2326,7 +2115,7 @@ select {
         padding-right: env(safe-area-inset-right);
         padding-bottom: env(safe-area-inset-bottom);
         padding-left: env(safe-area-inset-left);
-        border-radius: 0;
+        border-radius: var(--radius-none);
         background: var(--md-sys-color-surface-container-low);
     }
 
@@ -2335,12 +2124,10 @@ select {
         overflow-y: auto;
         margin: 0;
         padding: 0.8rem;
-        border-radius: 0 0 24px 24px;
+        border-radius: var(--shape-card);
     }
 
-    .liquid-logger-toolbar-main {
-        align-items: flex-start;
-    }
+    .liquid-logger-toolbar-main { align-items: flex-start; }
 
     .liquid-log-subtitle,
     .liquid-log-live-status {
@@ -2363,9 +2150,7 @@ select {
         justify-content: flex-start;
     }
 
-    .liquid-logger-body {
-        border-radius: 0;
-    }
+    .liquid-logger-body { border-radius: var(--radius-none); }
 
     .liquid-log-stream {
         padding: 0.7rem;
@@ -2381,22 +2166,16 @@ select {
         padding-top: 0;
     }
 
-    [data-view="world-intelligence"] .world-intelligence-detail-nav {
-        position: static;
-    }
+    [data-view="world-intelligence"] .world-intelligence-detail-nav { position: static; }
 
-    [data-view="player-tracker"] [class~="h-[500px]"] {
-        height: min(22rem, 48dvh);
-    }
+    [data-view="player-tracker"] [class~="h-[500px]"] { height: min(22rem, 48dvh); }
 
     .equipment-report-sidebar,
     .equipment-stats-pane {
         min-height: 18rem;
     }
 
-    .equipment-loadout-item {
-        width: min(14rem, 74vw);
-    }
+    .equipment-loadout-item { width: min(14rem, 74vw); }
 
     .automation-function-row {
         min-height: 0;
@@ -2410,9 +2189,7 @@ select {
         --app-content-pad: 0.5rem;
     }
 
-    .liquid-header {
-        padding-inline: 0.4rem;
-    }
+    .liquid-header { padding-inline: 0.4rem; }
 
     .liquid-header-inner {
         grid-template-columns: 2.75rem minmax(0, 1fr) auto;
@@ -2431,30 +2208,20 @@ select {
         height: 2.35rem;
     }
 
-    .liquid-brand-copy {
-        display: none;
-    }
+    .liquid-brand-copy { display: none; }
 
-    .m3-page-header {
-        padding: 1rem;
-    }
+    .m3-page-header { padding: 1rem; }
 
-    .ui-page-header-title {
-        font-size: clamp(1.55rem, 8.2vw, 2rem);
-    }
+    .ui-page-header-title { font-size: clamp(1.55rem, 8.2vw, 2rem); }
 
     .liquid-card-header-prominent,
     .liquid-prominent-header-content {
         padding: 0.85rem;
     }
 
-    .liquid-modal-footer {
-        grid-template-columns: minmax(0, 1fr);
-    }
+    .liquid-modal-footer { grid-template-columns: minmax(0, 1fr); }
 
-    .liquid-logger-controls {
-        grid-template-columns: minmax(0, 1fr);
-    }
+    .liquid-logger-controls { grid-template-columns: minmax(0, 1fr); }
 
     .liquid-log-control,
     .liquid-log-channel-control,
@@ -2471,18 +2238,7 @@ select {
     background: var(--md-sys-color-tertiary-container);
 }
 
-.liquid-switch-thumb {
-    background: var(--md-sys-color-tertiary);
-}
-
-.liquid-switch-on .liquid-switch-rail {
-    border-color: var(--md-sys-color-tertiary);
-    background: var(--md-sys-color-tertiary);
-}
-
-.liquid-switch-on .liquid-switch-thumb {
-    background: var(--md-sys-color-on-tertiary);
-}
+.liquid-switch-thumb { background: var(--md-sys-color-tertiary); }
 
 /* Every binary switch uses the same persisted-state language in every surface. */
 .liquid-switch-off .liquid-switch-rail {
@@ -2490,18 +2246,14 @@ select {
     background: color-mix(in srgb, var(--status-danger) 22%, var(--md-sys-color-surface-container-highest));
 }
 
-.liquid-switch-off .liquid-switch-thumb {
-    background: var(--status-danger);
-}
+.liquid-switch-off .liquid-switch-thumb { background: var(--status-danger); }
 
 .liquid-switch-on .liquid-switch-rail {
     border-color: color-mix(in srgb, var(--status-success) 72%, var(--md-sys-color-outline));
     background: color-mix(in srgb, var(--status-success) 30%, var(--md-sys-color-surface-container-highest));
 }
 
-.liquid-switch-on .liquid-switch-thumb {
-    background: var(--status-success);
-}
+.liquid-switch-on .liquid-switch-thumb { background: var(--status-success); }
 
 .liquid-switch-off:focus-visible {
     filter: drop-shadow(0 0 0.35rem color-mix(in srgb, var(--status-danger) 58%, transparent));
