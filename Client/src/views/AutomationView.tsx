@@ -2,6 +2,8 @@ import { StatusBadge } from '../components/ui/StatusBadge';
 import { useAutomationPlayerStatus } from '../settings/readiness/useAutomationPlayerStatus';
 import { automationPlayerStatus } from '../settings/readiness/playerStatus';
 import type { SettingsFeatureId as StatusFeatureId } from '../settings/disclosure/placement';
+import { rateView, dailyView, type CountView } from '../components/automation/attackCounts';
+import { useHostedRuntimePresence } from '../config/Deployment';
 import {nextWakeParameters,timedRemainingParameters} from '../i18n/automationDuration';
 import {automationDetailMessage, automationLaneMessage} from '../i18n/automationMessages';
 import {useLocalizedMessage} from '../i18n/useLocalizedMessage';
@@ -40,7 +42,7 @@ import {
   ScheduleSummaryRow,
   Switch,
 } from '../components/ui';
-import type { AttackLaunchDailySessionV2, AutomationStateV2 } from '../api/Contracts';
+import type { AttackLaunchRatesV2, AutomationStateV2 } from '../api/Contracts';
 import {
   AUTO_EQUIPMENT_CLEANUP_FEATURE_ID,
   AUTO_EQUIPMENT_CLEANUP_ENABLED_KEY,
@@ -253,37 +255,35 @@ function AutomationStatusLine({line, value}:{line:AutomationStatusLane; value:Re
   </div>;
 }
 
-function attackRateLabel(count:number|null|undefined,t:DisplayTranslator):string {
-  return t('automation.rate',{state:count===undefined?'loading':count===null?'unavailable':'known',count:count??0});
+function countTime(since: string | undefined, locale: string): string {
+  const timestamp = since ? Date.parse(since) : NaN;
+  if (!Number.isFinite(timestamp)) return '';
+  const today = new Date(timestamp).toDateString() === new Date().toDateString();
+  return new Intl.DateTimeFormat(locale, { ...(today ? {} : { dateStyle: 'short' as const }), timeStyle: 'short' }).format(timestamp);
 }
 
-function attackRateCount(
-  launchesByFeature: Record<string, number> | null | undefined,
-  featureID: string,
-): number | null | undefined {
-  if (launchesByFeature === undefined) return undefined;
-  if (launchesByFeature === null) return null;
-  return launchesByFeature[featureID] ?? 0;
+function attackRateLabel(view: CountView, t: DisplayTranslator): string {
+  return view.kind === 'unknown' ? '—' : t('automation.rate', { state: 'known', count: view.count });
 }
 
-function attackRateTitle(featureName:string,count:number|null|undefined,t:DisplayTranslator):string {
-  return t('automation.rateTitle',{state:count===undefined?'loading':count===null?'unavailable':'known',feature:featureName,count:count??0});
+function attackRateTitle(feature: string, view: CountView, locale: string, t: DisplayTranslator): string {
+  if (view.kind === 'unknown') return t('copy.countUnknownTitle');
+  return view.window === 'since'
+    ? t('copy.sinceTitle', { feature, count: view.count, time: countTime(view.since, locale) })
+    : t('automation.rateTitle', { state: 'known', feature, count: view.count });
 }
 
-function dailyAttackSessionCount(
-  session: AttackLaunchDailySessionV2 | null | undefined,
-  featureID: string,
-): number | null | undefined {
-  if (session === undefined) return undefined;
-  if (session === null) return null;
-  return session.launchesByFeature[featureID] ?? 0;
+function dailyAttackCountLabel(view: CountView, locale: string, t: DisplayTranslator): string {
+  if (view.kind === 'unknown') return '—';
+  return view.window === 'since'
+    ? t('copy.since', { count: view.count, time: countTime(view.since, locale) })
+    : t('copy.today', { count: view.count });
 }
 
-function dailyAttackCountLabel(count:number|null|undefined,t:DisplayTranslator):string {
-  return t('copy.today',{state:count===undefined?'loading':count===null?'unavailable':'known',count:count??0});
-}
-function dailyAttackCountTitle(featureName:string,count:number|null|undefined,_sessionStartedAt:string|undefined,_locale:string,t:DisplayTranslator):string {
-  return t('copy.todayTitle',{state:count===undefined?'loading':count===null?'unavailable':'known',feature:featureName,count:count??0});
+function dailyAttackCountTitle(feature: string, view: CountView, locale: string, t: DisplayTranslator): string {
+  if (view.kind === 'unknown') return t('copy.countUnknownTitle');
+  return t(view.window === 'since' ? 'copy.sinceTitle' : 'copy.todayTitle',
+    { feature, count: view.count, time: countTime(view.since, locale) });
 }
 
 export const AutomationView: React.FC<AutomationViewProps> = ({
@@ -356,8 +356,10 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
   const [now, setNow] = useState(() => Date.now());
   const [isEquipmentCleanupSettingsOpen, setIsEquipmentCleanupSettingsOpen] = useState(false);
   const cleanupDisclosure = useSettingsDisclosure('autoEquipmentCleanup');
-  const [attackLaunchesByFeature, setAttackLaunchesByFeature] = useState<Record<string, number> | null | undefined>(undefined);
-  const [dailyAttackSession, setDailyAttackSession] = useState<AttackLaunchDailySessionV2 | null | undefined>(undefined);
+  const [attackRates, setAttackRates] = useState<AttackLaunchRatesV2 | null | undefined>(undefined);
+  const presence = useHostedRuntimePresence();
+  const offline = presence.mode === 'checkpoint';
+  const attackLaunchesByFeature = offline ? null : attackRates?.launchesByFeature;
 
   useEffect(() => {
     const interval = window.setInterval(() => setNow(Date.now()), 30000);
@@ -370,13 +372,11 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
       try {
         const rates = await CitadelAPI.getAttackLaunchRates();
         if (!cancelled) {
-          setAttackLaunchesByFeature(rates.launchesByFeature);
-          setDailyAttackSession(rates.dailySession ?? null);
+          setAttackRates(rates);
         }
       } catch {
         if (!cancelled) {
-          setAttackLaunchesByFeature(null);
-          setDailyAttackSession(null);
+          setAttackRates(null);
         }
       }
     };
@@ -882,12 +882,8 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
                 {group.features.map((feature) => {
                   const FeatureIcon = feature.icon;
                   const timedUntil = automationTimedUntilByKey[feature.enabledKey];
-                  const attackLaunchCount = feature.group === 'offense'
-                    ? attackRateCount(attackLaunchesByFeature, feature.id)
-                    : undefined;
-                  const dailyAttackLaunchCount = feature.group === 'offense'
-                    ? dailyAttackSessionCount(dailyAttackSession, feature.id)
-                    : undefined;
+                  const attackLaunchCount = rateView(attackRates, feature.id, offline);
+                  const dailyAttackLaunchCount = dailyView(attackRates, feature.id, offline);
                   return (
                     <div
                       key={feature.id}
@@ -919,16 +915,18 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
                               <Badge
                                 variant="outline"
                                 className="shrink-0 whitespace-nowrap"
-                                title={attackRateTitle(feature.name, attackLaunchCount,localizeStatic)}
+                                title={attackRateTitle(feature.name, attackLaunchCount,locale,localizeStatic)}
+                                aria-label={attackRateTitle(feature.name, attackLaunchCount,locale,localizeStatic)}
                               >
                                 {attackRateLabel(attackLaunchCount,localizeStatic)}
                               </Badge>
                               <Badge
                                 variant="outline"
                                 className="shrink-0 whitespace-nowrap"
-                                title={dailyAttackCountTitle(feature.name, dailyAttackLaunchCount, dailyAttackSession?.startedAt,locale,localizeStatic)}
+                                title={dailyAttackCountTitle(feature.name, dailyAttackLaunchCount,locale,localizeStatic)}
+                                aria-label={dailyAttackCountTitle(feature.name, dailyAttackLaunchCount,locale,localizeStatic)}
                               >
-                                {dailyAttackCountLabel(dailyAttackLaunchCount,localizeStatic)}
+                                {dailyAttackCountLabel(dailyAttackLaunchCount,locale,localizeStatic)}
                               </Badge>
                             </>
                           ) : null}

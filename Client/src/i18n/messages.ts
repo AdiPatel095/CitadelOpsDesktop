@@ -5,9 +5,13 @@ import { officialMessageKeys, officialMessageNouns } from './officialKeys';
 import { formatMessage, validateMessageCatalog } from './formatMessage';
 /** Add explicit descriptors here; never translate user names, IDs, or free-form input. */
 export const messages = {
+  "copy.countUnknownTitle": "The attack count isn't available right now",
+  "copy.attacksSaved": "{count, number} attacks, saved {time}",
+  "copy.since": "{count, number} since {time}",
+  "copy.sinceTitle": "Confirmed attacks launched by {feature} since {time}: {count, number}.",
   "copy.queues": "Recruitment, tools and production in progress",
-  "copy.today": "{state, select, known {{count, number} today} other {Today: not counted yet}}",
-  "copy.todayTitle": "{state, select, known {Confirmed attacks launched by {feature} today: {count, number}.} other {Counting starts after the game''s next daily reset.}}",
+  "copy.today": "{count, number} today",
+  "copy.todayTitle": "Confirmed attacks launched by {feature} today: {count, number}.",
   "copy.connecting": "Connecting…",
   "copy.reconnecting": "Reconnecting…",
   "copy.connectingGame": "Connecting to the game…",
