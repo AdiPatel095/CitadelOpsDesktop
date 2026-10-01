@@ -1,4 +1,7 @@
-/* CIT-63 PR-A: registered faces only; --font-sans waits for CIT-62 PR-1. */
+/* CIT-63 PR-A: self-hosted faces used by the shared --font-sans stacks. */
+
+/* Manrope supplies upright faces only; never synthesize italic or bold. */
+:root { font-synthesis: none; }
 
 @font-face {
   font-family: "Manrope";
@@ -48,7 +51,7 @@
 /* Measured from Oscar's SHA-pinned TTF and Arial/Arial Bold, all four weights.
    Match x-height, then divide Manrope's OS/2 line metrics by size-adjust.
    No local Manrope lookup: brand bytes always come from self.
-   Full font-stack integration and measured CLS are gated follow-up work. */
+   The shared token stack selects this fallback during font swap. */
 
 @font-face {
   font-family: "Manrope Fallback";

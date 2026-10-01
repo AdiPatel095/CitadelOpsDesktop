@@ -1,3 +1,10 @@
 [
-  "styles/fonts.css"
+  {
+    "portal": "src/commandCenter/styles/tokens.css",
+    "desktop": "Client/src/styles/tokens.css"
+  },
+  {
+    "portal": "src/commandCenter/styles/fonts.css",
+    "desktop": "Client/src/styles/fonts.css"
+  }
 ]

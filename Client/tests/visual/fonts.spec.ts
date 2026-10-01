@@ -3,6 +3,7 @@ import { execFileSync } from 'node:child_process';
 import { readFileSync, existsSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { prepare } from './harness';
 
 const client = fileURLToPath(new URL('../../', import.meta.url));
 const hosted = existsSync(resolve(client, 'src/commandCenter/styles/fonts.css'));
@@ -23,6 +24,37 @@ test.describe('Manrope delivery', () => {
   test.beforeAll(() => {
     // Once pinned, partial metadata/missing assets FAIL rather than silently skipping.
     execFileSync('python3', [resolve(repo, 'scripts/fonts/build-manrope'), '--check']);
+  });
+
+  test('application stacks follow language in both themes', async ({ page }) => {
+    const verifyNetwork = await prepare(page, 'dark');
+    if (hosted) await page.goto(origin);
+    await page.waitForLoadState('networkidle');
+    expect(await page.evaluate(() => getComputedStyle(document.body).fontSynthesis)).toBe('none');
+    for (const theme of ['dark', 'light']) {
+      const families = await page.evaluate((theme) => {
+        document.documentElement.dataset.theme = theme;
+        const samples = ['en', 'ar', 'ja', 'ko', 'zh-CN', 'zh-TW'].map((lang) => {
+          const element = document.createElement('span');
+          element.lang = lang;
+          element.style.fontFamily = 'var(--font-sans)';
+          element.textContent = 'CitadelOps 0123456789';
+          document.body.append(element);
+          const family = getComputedStyle(element).fontFamily;
+          element.remove();
+          return family;
+        });
+        return { body: getComputedStyle(document.body).fontFamily, samples };
+      }, theme);
+      expect(families.body).toMatch(/^Manrope,/);
+      for (const family of families.samples) expect(family).toMatch(/^Manrope,/);
+      for (const [index, system] of ['Manrope Fallback', 'SF Arabic', 'Hiragino Sans', 'Apple SD Gothic Neo', 'PingFang SC', 'PingFang TC'].entries()) {
+        expect(families.samples[index]).toContain(system);
+      }
+    }
+    await page.evaluate(() => document.fonts.ready);
+    expect(await page.evaluate(() => document.fonts.check('16px Manrope'))).toBe(true);
+    verifyNetwork();
   });
 
   test('every script uses Manrope from self with no fallback glyphs', async ({ page, context }) => {

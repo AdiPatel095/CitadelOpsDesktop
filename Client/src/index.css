@@ -27,7 +27,6 @@
     --color-info: var(--info);
 
     --radius-global: var(--compat-theme-desktop-radius-global);
-    --font-sans: var(--compat-theme-desktop-font-sans);
 
     --shadow-glow: var(--compat-theme-desktop-shadow-glow);
     --shadow-glow-active: var(--compat-theme-desktop-shadow-glow-active);

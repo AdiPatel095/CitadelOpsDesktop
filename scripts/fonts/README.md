@@ -36,8 +36,9 @@ script specimen from self with no fallback glyphs and equal tnum digit widths
 at 400, 500, 600 and 700. CIT_VISUAL_PORT_OFFSET=100 npm run test:visual uses
 separate local servers when unrelated previews occupy the default ports.
 
---font-sans and language-specific stacks still wait for CIT-62 PR-1. Existing
-application font stacks are unchanged. Client/dist is embedded in Go desktop
+--font-sans uses Manrope and the metric-matched fallback in shared tokens.css.
+Arabic and CJK stacks follow the element language via :lang(). Font synthesis
+is disabled: Manrope supplies upright faces only. Client/dist is embedded in Go desktop
 builds; the fonts require no packaging change.
 
 ## Fallback metrics
@@ -47,11 +48,11 @@ fonts.css registers Manrope Fallback via local Arial (400-500) and Arial Bold
 x-height 1080, OS/2 typo ascent 2132, descent -600 and line gap zero.
 Arial/Arial Bold x-height is 1062/2048. size-adjust = (1080/2000)/(1062/2048);
 each override = 100 * Manrope metric / 2000 / size-adjust. Matching metrics
-does not guarantee identical string widths. Repeat performance checks when
-CIT-62 permits application font-stack integration.
+does not guarantee identical string widths. Repeat performance checks after
+application font-stack changes.
 
 ## Mirror
 
 Portal: npm run check:mirror -- --desktop /path/to/desktop
 Desktop Client: npm run check:mirror -- --portal /path/to/portal
-When CIT-62 PR-1 lands, preserve its token list/checker and append styles/fonts.css.
+The CIT-62 explicit path manifest covers tokens.css and fonts.css in both clients.
