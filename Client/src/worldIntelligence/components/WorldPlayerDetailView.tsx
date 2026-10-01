@@ -1,3 +1,4 @@
+import { useServerLabel } from '../useServerLabel';
 import { useLocale as useStaticLocale } from "../../i18n/LocaleContext";
 import { LocalizedText } from "../../i18n/LocalizedText";
 import { useEffect, useMemo, useState } from 'react';
@@ -104,6 +105,7 @@ const historyRanges: Array<{ value: RangeKey; label: string; seconds: number | n
 ];
 
 const WorldPlayerDetailView = ({ profile, onOpenAlliance }: WorldPlayerDetailViewProps) => {
+	const displayWorld = useServerLabel();
   const { t: localizeStatic } = useStaticLocale();
 	const [selectedMetric, setSelectedMetric] = useState<PlayerMetricKey>('might');
 	const [selectedRange, setSelectedRange] = useState<RangeKey>('24h');
@@ -517,17 +519,6 @@ function progressionLabel(observation: WorldIntelligencePlayerObservationV1): st
 	return 'Not observed';
 }
 
-function displayWorld(value: string): string {
-	const trimmed = value.trim();
-	if (!trimmed) return 'Unknown world';
-	try {
-		const parsed = new URL(trimmed.includes('://') ? trimmed : `https://${trimmed}`);
-		const port = parsed.port && parsed.port !== '443' && parsed.port !== '80' ? `:${parsed.port}` : '';
-		return `${parsed.hostname}${port}` || trimmed;
-	} catch {
-		return trimmed.replace(/^wss?:\/\//, '').split('/')[0].replace(/:(443|80)$/, '');
-	}
-}
 
 function formatNumber(value?: number): string {
 	if (value == null || !Number.isFinite(value)) return '—';

@@ -5,6 +5,23 @@ import { officialMessageKeys, officialMessageNouns } from './officialKeys';
 import { formatMessage, validateMessageCatalog } from './formatMessage';
 /** Add explicit descriptors here; never translate user names, IDs, or free-form input. */
 export const messages = {
+  "copy.queues": "Recruitment, tools and production in progress",
+  "copy.today": "{state, select, known {{count, number} today} other {Today: not counted yet}}",
+  "copy.todayTitle": "{state, select, known {Confirmed attacks launched by {feature} today: {count, number}.} other {Counting starts after the game''s next daily reset.}}",
+  "copy.connecting": "Connecting…",
+  "copy.reconnecting": "Reconnecting…",
+  "copy.connectingGame": "Connecting to the game…",
+  "copy.loggingIn": "Logging in to the game…",
+  "copy.offlineSaved": "Offline · saved data from {time}",
+  "copy.offlineSavedTitle": "CitadelOps isn''t playing this account right now. You''re seeing data saved at {time}. Reconnect to start it again.",
+  "copy.attacksToday": "{count} attacks today",
+  "copy.rankings": "Player rankings for {server}: Might, Honor and alliance.",
+  "copy.loadingHistory": "Loading public history for {server}…",
+  "copy.noProfile": "No public profile found on {server}.",
+  "copy.updated": "Updated {time}",
+  "copy.ranked": "Ranked",
+  "copy.riftCapture": "Launch one castle attack on the Rift in-game. CitadelOps will capture its commander, formation, and travel time here for reuse.",
+  "copy.khanPause": "At or above this threshold, Auto Khan opens the main castle gates once for six hours and immediately stops attacks, cooldown skips, and new taunts. Auto Khan pauses without changing your settings; after the gate expires, it refreshes defense and resumes only when the projected offensive wall count is below the threshold. This uses the game's current ruby cost for the six-hour open-gate option.",
   "automationDurationDialog.runTitle": "Run {feature} for a duration",
   "automationDurationDialog.pauseTitle": "Pause {feature} for a duration",
   "automationDurationDialog.presetMinutes": "{count, plural, one {# min} other {# min}}",
@@ -330,7 +347,8 @@ export const messages = {
   'equipment.slot.hero': 'Hero',
 
   'equipment.canonicalLoading': 'Loading authoritative effect data. Reconfiguration will be available when it is ready.',
-  'equipment.canonicalUnavailable': 'Authoritative effect data is unavailable. Previous calculations are retained; reconfiguration is paused while CitadelOps retries.',
+  "equipment.effectsGroupedDescription": "Effects grouped by the game's own effect categories.",
+  "equipment.canonicalUnavailable": "Effect data from the game isn't available right now. Your last results are kept, and Reconfigure is paused while CitadelOps retries.",
   'gameButton.startToEnable': 'Start Bot to enable this action',
   'gameButton.startToUse': 'Start Bot to use this action',
 

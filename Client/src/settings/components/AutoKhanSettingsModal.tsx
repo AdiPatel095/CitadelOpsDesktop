@@ -450,7 +450,7 @@ export const AutoKhanSettingsModal: React.FC<AutoKhanSettingsModalProps> = ({ is
                 />
               </label>
               <div className="mt-3 rounded-global border border-warning/30 bg-warning/10 p-3 text-xs text-text-main">
-                <LocalizedText messageKey="ui.settings.components.autoKhanSettingsModal.at.or.above.this.threshold.auto.khan.e1d0e5a1" /></div>
+                <LocalizedText messageKey="copy.khanPause" /></div>
             </div>
           ) : null}
         </Card>

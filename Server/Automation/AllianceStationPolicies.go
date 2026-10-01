@@ -660,7 +660,7 @@ func (*AutoStationPolicy) Evaluate(_ context.Context, snapshot Snapshot) (decisi
 		}, nil
 	}
 	return Decision{
-		Status: "armed", Detail: "Monitoring canonical movement snapshots for incoming attacks", DetailDescriptor: Localization.New("server.automation.monitoring_canonical_movement_snapshots.e588c775", "Monitoring canonical movement snapshots for incoming attacks", nil),
+		Status: "armed", Detail: "Watching for incoming attacks", DetailDescriptor: Localization.New("server.automation.watching_for_incoming_attacks.60f06f25", "Watching for incoming attacks", nil),
 		EventDriven: true, Metrics: metrics,
 	}, nil
 }

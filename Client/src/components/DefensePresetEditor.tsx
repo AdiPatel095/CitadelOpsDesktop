@@ -629,7 +629,6 @@ const ToolSlotGroup: React.FC<{
           <div className="rounded-global border border-dashed border-border-base px-3 py-4 text-center text-xs text-text-muted"><LocalizedText messageKey="ui.components.defensePresetEditor.no.slots.in.this.preset.6b67dec4" /></div>
         ) : renderedSlots.map((slot, index) => {
           const tool = slot.definitionId > 0 ? tools[slot.definitionId] : undefined;
-          const slotSpec = fixedSlotSpecs?.[index];
           return (
             <div key={index} className="grid grid-cols-[2.25rem_minmax(0,1fr)_5.5rem_auto] items-end gap-2 rounded-global border border-border-base bg-bg-input/35 p-2">
               <button
@@ -642,7 +641,7 @@ const ToolSlotGroup: React.FC<{
               </button>
               <div className="min-w-0">
                 <label className="mb-1 block truncate text-[9px] font-black uppercase tracking-wider text-text-muted">
-                  {slotSpec ? `${slotSpec.label}${tool?.name ? ` · ${tool.name}` : ''}` : tool?.name || 'Tool ID'}
+                  {tool?.name || 'Tool ID'}
                 </label>
                 <Input
                   type="number"

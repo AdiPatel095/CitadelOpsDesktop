@@ -55,7 +55,7 @@ const CastleQueuesCard: React.FC<CastleQueuesCardProps> = ({ title = 'Queues' })
     <SectionCard
       variant="solid"
       title={title}
-      description={localizeStatic("ui.dashboard.components.castleQueuesCard.description.canonical.game.queues.e2552ff6")}
+      description={localizeStatic("copy.queues")}
       titleClassName="text-primary"
       descriptionClassName="font-bold uppercase tracking-wider"
       className="flex min-h-0 flex-col"
