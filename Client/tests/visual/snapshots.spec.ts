@@ -77,7 +77,7 @@ test('CIT-66 wrapped reasons omit the separator and start flush in LTR and RTL',
     await expect(reason).toHaveAttribute('data-wrapped', 'true');
     await expect(reason.locator('.player-status-reason-separator')).toBeHidden();
     // Measure the first visible word, including its bidi run, not the hidden separator.
-    const geometry = await reason.evaluate(element => {
+    const measureGeometry = () => reason.evaluate(element => {
       const range = document.createRange();
       const text = [...element.childNodes].find(node => node.nodeType === Node.TEXT_NODE && node.textContent?.trim());
       if (!text) throw new Error('Card reason must contain visible text');
@@ -87,8 +87,12 @@ test('CIT-66 wrapped reasons omit the separator and start flush in LTR and RTL',
       const badge = element.previousElementSibling!.getBoundingClientRect();
       return { left: first.left - row.left, right: row.right - first.right, top: first.top - badge.bottom };
     });
-    expect(geometry.top).toBeGreaterThanOrEqual(0);
-    expect(Math.abs(direction === 'ltr' ? geometry.left : geometry.right)).toBeLessThan(1);
+    // A wrapped attribute/top can belong to the previous width; wait for both
+    // axes of the first visible word to reflect the resized row.
+    await expect.poll(async () => {
+      const geometry = await measureGeometry();
+      return { belowBadge: geometry.top >= 0, flush: Math.abs(direction === 'ltr' ? geometry.left : geometry.right) < 1 };
+    }).toEqual({ belowBadge: true, flush: true });
     await expect(row).toHaveAttribute('aria-label', full!);
   }
   // Resizing back restores the inline separator without remounting the badge.
