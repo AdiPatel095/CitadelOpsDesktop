@@ -1,90 +1,1229 @@
-[
-  {
-    "portal": "src/commandCenter/styles/tokens.css",
-    "desktop": "Client/src/styles/tokens.css"
-  },
-  {
-    "portal": "src/commandCenter/styles/fonts.css",
-    "desktop": "Client/src/styles/fonts.css"
-  },
-  {
-    "portal": "src/commandCenter/components/automation/attackCounts.ts",
-    "desktop": "Client/src/components/automation/attackCounts.ts"
-  },
-  {
-    "portal": "src/commandCenter/components/ConnectionStatus.tsx",
-    "desktop": "Client/src/components/ConnectionStatus.tsx"
-  },
-  {
-    "portal": "src/commandCenter/components/playerStatusDisplay.ts",
-    "desktop": "Client/src/components/playerStatusDisplay.ts"
-  },
-  {
-    "portal": "src/commandCenter/components/ui/StatusBadge.tsx",
-    "desktop": "Client/src/components/ui/StatusBadge.tsx"
-  },
-  {
-    "portal": "src/commandCenter/components/ui/StatusBadge.css",
-    "desktop": "Client/src/components/ui/StatusBadge.css"
-  },
-  {
-    "portal": "src/commandCenter/components/ui/RoleTag.tsx",
-    "desktop": "Client/src/components/ui/RoleTag.tsx"
-  },
-  {
-    "portal": "src/commandCenter/components/AutomationFeatureFeedback.tsx",
-    "desktop": "Client/src/components/AutomationFeatureFeedback.tsx"
-  },
-  {
-    "portal": "src/commandCenter/components/StopControl.tsx",
-    "desktop": "Client/src/components/StopControl.tsx"
-  },
-  {
-    "portal": "src/commandCenter/settings/components/AutomationRunStrip.tsx",
-    "desktop": "Client/src/settings/components/AutomationRunStrip.tsx"
-  },
-  {
-    "portal": "src/commandCenter/settings/readiness/automationPlayerStatusDisplay.ts",
-    "desktop": "Client/src/settings/readiness/automationPlayerStatusDisplay.ts"
-  },
-  {
-    "portal": "src/commandCenter/settings/readiness/useAutomationPlayerStatus.ts",
-    "desktop": "Client/src/settings/readiness/useAutomationPlayerStatus.ts"
-  },
-  {
-    "portal": "src/commandCenter/settings/readiness/playerStatus.ts",
-    "desktop": "Client/src/settings/readiness/playerStatus.ts"
-  },
-  {
-    "portal": "src/commandCenter/components/stationHeaderPill.ts",
-    "desktop": "Client/src/components/stationHeaderPill.ts"
-  },
-  {
-    "portal": "tests/status-badges.test.mjs",
-    "desktop": "Client/tests/status-badges.test.mjs"
-  },
-  {
-    "portal": "src/commandCenter/components/ui/viewStatus.ts",
-    "desktop": "Client/src/components/ui/viewStatus.ts"
-  },
-  {
-    "portal": "src/commandCenter/components/ui/tabsLogic.ts",
-    "desktop": "Client/src/components/ui/tabsLogic.ts"
-  },
-  {
-    "portal": "src/commandCenter/mock/onboarding/visualStates.ts",
-    "desktop": "Client/tests/onboarding-browser/visualStates.ts"
-  },
-  {
-    "portal": "scripts/check-retired-classes.mjs",
-    "desktop": "Client/scripts/check-retired-classes.mjs"
-  },
-  {
-    "portal": "tests/view-states-logic.test.mjs",
-    "desktop": "Client/tests/view-states-logic.test.mjs"
-  },
-  {
-    "portal": "tests/check-retired-classes.test.mjs",
-    "desktop": "Client/tests/check-retired-classes.test.mjs"
-  }
-]
+{
+  "files": [
+    {
+      "portal": "Docs/OnboardingCoverage.md",
+      "desktop": "Docs/OnboardingCoverage.md"
+    },
+    {
+      "portal": "Docs/OnboardingEvaluation.md",
+      "desktop": "Docs/OnboardingEvaluation.md"
+    },
+    {
+      "portal": "scripts/check-retired-classes.mjs",
+      "desktop": "Client/scripts/check-retired-classes.mjs"
+    },
+    {
+      "portal": "src/commandCenter/Movement/context/MovementContext.tsx",
+      "desktop": "Client/src/Movement/context/MovementContext.tsx"
+    },
+    {
+      "portal": "src/commandCenter/Movement/types/CommanderActivity.ts",
+      "desktop": "Client/src/Movement/types/CommanderActivity.ts"
+    },
+    {
+      "portal": "src/commandCenter/Movement/types/CommanderFeatureAssignments.ts",
+      "desktop": "Client/src/Movement/types/CommanderFeatureAssignments.ts"
+    },
+    {
+      "portal": "src/commandCenter/Rift/types/MainCastleTroops.ts",
+      "desktop": "Client/src/Rift/types/MainCastleTroops.ts"
+    },
+    {
+      "portal": "src/commandCenter/Rift/types/RiftArrivalTime.ts",
+      "desktop": "Client/src/Rift/types/RiftArrivalTime.ts"
+    },
+    {
+      "portal": "src/commandCenter/Rift/types/RiftAttackPreferences.ts",
+      "desktop": "Client/src/Rift/types/RiftAttackPreferences.ts"
+    },
+    {
+      "portal": "src/commandCenter/Rift/types/RiftCRALaunch.ts",
+      "desktop": "Client/src/Rift/types/RiftCRALaunch.ts"
+    },
+    {
+      "portal": "src/commandCenter/Rift/types/RiftMaidenCommsSettings.ts",
+      "desktop": "Client/src/Rift/types/RiftMaidenCommsSettings.ts"
+    },
+    {
+      "portal": "src/commandCenter/Rift/types/RiftMapCoords.ts",
+      "desktop": "Client/src/Rift/types/RiftMapCoords.ts"
+    },
+    {
+      "portal": "src/commandCenter/api/CatalogURL.ts",
+      "desktop": "Client/src/api/CatalogURL.ts"
+    },
+    {
+      "portal": "src/commandCenter/api/OperationHTTPFailure.ts",
+      "desktop": "Client/src/api/OperationHTTPFailure.ts"
+    },
+    {
+      "portal": "src/commandCenter/api/Selectors.ts",
+      "desktop": "Client/src/api/Selectors.ts"
+    },
+    {
+      "portal": "src/commandCenter/api/StateResync.ts",
+      "desktop": "Client/src/api/StateResync.ts"
+    },
+    {
+      "portal": "src/commandCenter/api/configurationErrorToast.ts",
+      "desktop": "Client/src/api/configurationErrorToast.ts"
+    },
+    {
+      "portal": "src/commandCenter/attackAnalytics/components/AttackEconomyHistory.ts",
+      "desktop": "Client/src/attackAnalytics/components/AttackEconomyHistory.ts"
+    },
+    {
+      "portal": "src/commandCenter/attackPresets/AppCreatedPresets.ts",
+      "desktop": "Client/src/attackPresets/AppCreatedPresets.ts"
+    },
+    {
+      "portal": "src/commandCenter/attackPresets/AttackPresetCraCodec.ts",
+      "desktop": "Client/src/attackPresets/AttackPresetCraCodec.ts"
+    },
+    {
+      "portal": "src/commandCenter/attackPresets/AttackPresetEdits.ts",
+      "desktop": "Client/src/attackPresets/AttackPresetEdits.ts"
+    },
+    {
+      "portal": "src/commandCenter/attackPresets/AttackPresetOptionLabel.tsx",
+      "desktop": "Client/src/attackPresets/AttackPresetOptionLabel.tsx"
+    },
+    {
+      "portal": "src/commandCenter/attackPresets/AttackPresetReferences.ts",
+      "desktop": "Client/src/attackPresets/AttackPresetReferences.ts"
+    },
+    {
+      "portal": "src/commandCenter/attackPresets/AttackPresetTypes.ts",
+      "desktop": "Client/src/attackPresets/AttackPresetTypes.ts"
+    },
+    {
+      "portal": "src/commandCenter/battleStats/types/BattleStats.ts",
+      "desktop": "Client/src/battleStats/types/BattleStats.ts"
+    },
+    {
+      "portal": "src/commandCenter/battleStats/utils/BattleEffectNumber.ts",
+      "desktop": "Client/src/battleStats/utils/BattleEffectNumber.ts"
+    },
+    {
+      "portal": "src/commandCenter/battleStats/utils/BattleLaneIdentity.ts",
+      "desktop": "Client/src/battleStats/utils/BattleLaneIdentity.ts"
+    },
+    {
+      "portal": "src/commandCenter/components/Alerts.tsx",
+      "desktop": "Client/src/components/Alerts.tsx"
+    },
+    {
+      "portal": "src/commandCenter/components/AutoStationHoverPopover.tsx",
+      "desktop": "Client/src/components/AutoStationHoverPopover.tsx"
+    },
+    {
+      "portal": "src/commandCenter/components/AutomationFeatureFeedback.tsx",
+      "desktop": "Client/src/components/AutomationFeatureFeedback.tsx"
+    },
+    {
+      "portal": "src/commandCenter/components/AutomationReadinessRow.tsx",
+      "desktop": "Client/src/components/AutomationReadinessRow.tsx"
+    },
+    {
+      "portal": "src/commandCenter/components/CastleFocusHoverPopover.tsx",
+      "desktop": "Client/src/components/CastleFocusHoverPopover.tsx"
+    },
+    {
+      "portal": "src/commandCenter/components/CastleFocusSwitcher.tsx",
+      "desktop": "Client/src/components/CastleFocusSwitcher.tsx"
+    },
+    {
+      "portal": "src/commandCenter/components/ConnectionRepairDialog.tsx",
+      "desktop": "Client/src/components/ConnectionRepairDialog.tsx"
+    },
+    {
+      "portal": "src/commandCenter/components/ConnectionRepairHost.tsx",
+      "desktop": "Client/src/components/ConnectionRepairHost.tsx"
+    },
+    {
+      "portal": "src/commandCenter/components/ConnectionStatus.tsx",
+      "desktop": "Client/src/components/ConnectionStatus.tsx"
+    },
+    {
+      "portal": "src/commandCenter/components/DailyAttackTracker.tsx",
+      "desktop": "Client/src/components/DailyAttackTracker.tsx"
+    },
+    {
+      "portal": "src/commandCenter/components/DetailBackButton.tsx",
+      "desktop": "Client/src/components/DetailBackButton.tsx"
+    },
+    {
+      "portal": "src/commandCenter/components/FirstResultCard.tsx",
+      "desktop": "Client/src/components/FirstResultCard.tsx"
+    },
+    {
+      "portal": "src/commandCenter/components/GoalPicker.tsx",
+      "desktop": "Client/src/components/GoalPicker.tsx"
+    },
+    {
+      "portal": "src/commandCenter/components/Icons.tsx",
+      "desktop": "Client/src/components/Icons.tsx"
+    },
+    {
+      "portal": "src/commandCenter/components/IntentConsole.tsx",
+      "desktop": "Client/src/components/IntentConsole.tsx"
+    },
+    {
+      "portal": "src/commandCenter/components/LevelBadge.tsx",
+      "desktop": "Client/src/components/LevelBadge.tsx"
+    },
+    {
+      "portal": "src/commandCenter/components/Notifications.ts",
+      "desktop": "Client/src/components/Notifications.ts"
+    },
+    {
+      "portal": "src/commandCenter/components/SetupChecklist.tsx",
+      "desktop": "Client/src/components/SetupChecklist.tsx"
+    },
+    {
+      "portal": "src/commandCenter/components/SharedSvgDefs.tsx",
+      "desktop": "Client/src/components/SharedSvgDefs.tsx"
+    },
+    {
+      "portal": "src/commandCenter/components/StartConfirmDialog.tsx",
+      "desktop": "Client/src/components/StartConfirmDialog.tsx"
+    },
+    {
+      "portal": "src/commandCenter/components/StateLegend.tsx",
+      "desktop": "Client/src/components/StateLegend.tsx"
+    },
+    {
+      "portal": "src/commandCenter/components/StopControl.tsx",
+      "desktop": "Client/src/components/StopControl.tsx"
+    },
+    {
+      "portal": "src/commandCenter/components/TCIImage.tsx",
+      "desktop": "Client/src/components/TCIImage.tsx"
+    },
+    {
+      "portal": "src/commandCenter/components/ThemeToggle.tsx",
+      "desktop": "Client/src/components/ThemeToggle.tsx"
+    },
+    {
+      "portal": "src/commandCenter/components/UnitAtlasFrames.ts",
+      "desktop": "Client/src/components/UnitAtlasFrames.ts"
+    },
+    {
+      "portal": "src/commandCenter/components/automation/attackCounts.ts",
+      "desktop": "Client/src/components/automation/attackCounts.ts"
+    },
+    {
+      "portal": "src/commandCenter/components/header/headerStatus.ts",
+      "desktop": "Client/src/components/header/headerStatus.ts"
+    },
+    {
+      "portal": "src/commandCenter/components/playerStatusDisplay.ts",
+      "desktop": "Client/src/components/playerStatusDisplay.ts"
+    },
+    {
+      "portal": "src/commandCenter/components/stationHeaderPill.ts",
+      "desktop": "Client/src/components/stationHeaderPill.ts"
+    },
+    {
+      "portal": "src/commandCenter/components/ui/AddSlot.tsx",
+      "desktop": "Client/src/components/ui/AddSlot.tsx"
+    },
+    {
+      "portal": "src/commandCenter/components/ui/CatalogPickerModal.tsx",
+      "desktop": "Client/src/components/ui/CatalogPickerModal.tsx"
+    },
+    {
+      "portal": "src/commandCenter/components/ui/ChoiceChipGroup.tsx",
+      "desktop": "Client/src/components/ui/ChoiceChipGroup.tsx"
+    },
+    {
+      "portal": "src/commandCenter/components/ui/CollectionToolbar.tsx",
+      "desktop": "Client/src/components/ui/CollectionToolbar.tsx"
+    },
+    {
+      "portal": "src/commandCenter/components/ui/EmptyState.tsx",
+      "desktop": "Client/src/components/ui/EmptyState.tsx"
+    },
+    {
+      "portal": "src/commandCenter/components/ui/Input.tsx",
+      "desktop": "Client/src/components/ui/Input.tsx"
+    },
+    {
+      "portal": "src/commandCenter/components/ui/MetricTile.tsx",
+      "desktop": "Client/src/components/ui/MetricTile.tsx"
+    },
+    {
+      "portal": "src/commandCenter/components/ui/ModalTitle.tsx",
+      "desktop": "Client/src/components/ui/ModalTitle.tsx"
+    },
+    {
+      "portal": "src/commandCenter/components/ui/PageHeader.tsx",
+      "desktop": "Client/src/components/ui/PageHeader.tsx"
+    },
+    {
+      "portal": "src/commandCenter/components/ui/PillSelector.tsx",
+      "desktop": "Client/src/components/ui/PillSelector.tsx"
+    },
+    {
+      "portal": "src/commandCenter/components/ui/QuantityAssetTile.tsx",
+      "desktop": "Client/src/components/ui/QuantityAssetTile.tsx"
+    },
+    {
+      "portal": "src/commandCenter/components/ui/RoleTag.tsx",
+      "desktop": "Client/src/components/ui/RoleTag.tsx"
+    },
+    {
+      "portal": "src/commandCenter/components/ui/ScheduleSummaryRow.tsx",
+      "desktop": "Client/src/components/ui/ScheduleSummaryRow.tsx"
+    },
+    {
+      "portal": "src/commandCenter/components/ui/SectionCard.tsx",
+      "desktop": "Client/src/components/ui/SectionCard.tsx"
+    },
+    {
+      "portal": "src/commandCenter/components/ui/SettingsModal.tsx",
+      "desktop": "Client/src/components/ui/SettingsModal.tsx"
+    },
+    {
+      "portal": "src/commandCenter/components/ui/StatusBadge.css",
+      "desktop": "Client/src/components/ui/StatusBadge.css"
+    },
+    {
+      "portal": "src/commandCenter/components/ui/StatusBadge.tsx",
+      "desktop": "Client/src/components/ui/StatusBadge.tsx"
+    },
+    {
+      "portal": "src/commandCenter/components/ui/StatusIndicator.tsx",
+      "desktop": "Client/src/components/ui/StatusIndicator.tsx"
+    },
+    {
+      "portal": "src/commandCenter/components/ui/ToggleGroup.tsx",
+      "desktop": "Client/src/components/ui/ToggleGroup.tsx"
+    },
+    {
+      "portal": "src/commandCenter/components/ui/index.ts",
+      "desktop": "Client/src/components/ui/index.ts"
+    },
+    {
+      "portal": "src/commandCenter/components/ui/tabsLogic.ts",
+      "desktop": "Client/src/components/ui/tabsLogic.ts"
+    },
+    {
+      "portal": "src/commandCenter/components/ui/viewStatus.ts",
+      "desktop": "Client/src/components/ui/viewStatus.ts"
+    },
+    {
+      "portal": "src/commandCenter/config/Api.ts",
+      "desktop": "Client/src/config/Api.ts"
+    },
+    {
+      "portal": "src/commandCenter/config/Navigation.tsx",
+      "desktop": "Client/src/config/Navigation.tsx"
+    },
+    {
+      "portal": "src/commandCenter/configuration/PresetDocumentUpdate.ts",
+      "desktop": "Client/src/configuration/PresetDocumentUpdate.ts"
+    },
+    {
+      "portal": "src/commandCenter/context/CastleFocusContext.tsx",
+      "desktop": "Client/src/context/CastleFocusContext.tsx"
+    },
+    {
+      "portal": "src/commandCenter/dashboard/CastleQueueVisibility.ts",
+      "desktop": "Client/src/dashboard/CastleQueueVisibility.ts"
+    },
+    {
+      "portal": "src/commandCenter/dashboard/castleOverview.ts",
+      "desktop": "Client/src/dashboard/castleOverview.ts"
+    },
+    {
+      "portal": "src/commandCenter/dashboard/components/BarracksQueueSlot.tsx",
+      "desktop": "Client/src/dashboard/components/BarracksQueueSlot.tsx"
+    },
+    {
+      "portal": "src/commandCenter/dashboard/components/CastleUnitCard.tsx",
+      "desktop": "Client/src/dashboard/components/CastleUnitCard.tsx"
+    },
+    {
+      "portal": "src/commandCenter/dashboard/components/CraftingQueueSlot.tsx",
+      "desktop": "Client/src/dashboard/components/CraftingQueueSlot.tsx"
+    },
+    {
+      "portal": "src/commandCenter/defensePresets/AppCreatedDefensePresets.ts",
+      "desktop": "Client/src/defensePresets/AppCreatedDefensePresets.ts"
+    },
+    {
+      "portal": "src/commandCenter/defensePresets/DefensePresetEdits.ts",
+      "desktop": "Client/src/defensePresets/DefensePresetEdits.ts"
+    },
+    {
+      "portal": "src/commandCenter/defensePresets/DefensePresetTypes.ts",
+      "desktop": "Client/src/defensePresets/DefensePresetTypes.ts"
+    },
+    {
+      "portal": "src/commandCenter/equipment/EquipmentEffectApplicability.ts",
+      "desktop": "Client/src/equipment/EquipmentEffectApplicability.ts"
+    },
+    {
+      "portal": "src/commandCenter/equipment/EquipmentEventLoadouts.ts",
+      "desktop": "Client/src/equipment/EquipmentEventLoadouts.ts"
+    },
+    {
+      "portal": "src/commandCenter/equipment/EquipmentUpgradeCaps.ts",
+      "desktop": "Client/src/equipment/EquipmentUpgradeCaps.ts"
+    },
+    {
+      "portal": "src/commandCenter/equipment/components/EquipmentOptimizerLifecycle.ts",
+      "desktop": "Client/src/equipment/components/EquipmentOptimizerLifecycle.ts"
+    },
+    {
+      "portal": "src/commandCenter/equipment/components/EquipmentTypes.ts",
+      "desktop": "Client/src/equipment/components/EquipmentTypes.ts"
+    },
+    {
+      "portal": "src/commandCenter/events/components/FeatureEventScores.ts",
+      "desktop": "Client/src/events/components/FeatureEventScores.ts"
+    },
+    {
+      "portal": "src/commandCenter/events/components/FeatureEventWorld.ts",
+      "desktop": "Client/src/events/components/FeatureEventWorld.ts"
+    },
+    {
+      "portal": "src/commandCenter/i18n/LanguageSelector.tsx",
+      "desktop": "Client/src/i18n/LanguageSelector.tsx"
+    },
+    {
+      "portal": "src/commandCenter/i18n/LocaleContext.tsx",
+      "desktop": "Client/src/i18n/LocaleContext.tsx"
+    },
+    {
+      "portal": "src/commandCenter/i18n/LocalizedError.ts",
+      "desktop": "Client/src/i18n/LocalizedError.ts"
+    },
+    {
+      "portal": "src/commandCenter/i18n/LocalizedRichText.tsx",
+      "desktop": "Client/src/i18n/LocalizedRichText.tsx"
+    },
+    {
+      "portal": "src/commandCenter/i18n/LocalizedText.tsx",
+      "desktop": "Client/src/i18n/LocalizedText.tsx"
+    },
+    {
+      "portal": "src/commandCenter/i18n/RichMessage.ts",
+      "desktop": "Client/src/i18n/RichMessage.ts"
+    },
+    {
+      "portal": "src/commandCenter/i18n/activityEventMessages.ts",
+      "desktop": "Client/src/i18n/activityEventMessages.ts"
+    },
+    {
+      "portal": "src/commandCenter/i18n/activityMessages.ts",
+      "desktop": "Client/src/i18n/activityMessages.ts"
+    },
+    {
+      "portal": "src/commandCenter/i18n/automationDuration.ts",
+      "desktop": "Client/src/i18n/automationDuration.ts"
+    },
+    {
+      "portal": "src/commandCenter/i18n/automationMessages.ts",
+      "desktop": "Client/src/i18n/automationMessages.ts"
+    },
+    {
+      "portal": "src/commandCenter/i18n/backendCatalog.ts",
+      "desktop": "Client/src/i18n/backendCatalog.ts"
+    },
+    {
+      "portal": "src/commandCenter/i18n/bundledOfficial.ts",
+      "desktop": "Client/src/i18n/bundledOfficial.ts"
+    },
+    {
+      "portal": "src/commandCenter/i18n/catalogs.ts",
+      "desktop": "Client/src/i18n/catalogs.ts"
+    },
+    {
+      "portal": "src/commandCenter/i18n/eventDisplayMessage.ts",
+      "desktop": "Client/src/i18n/eventDisplayMessage.ts"
+    },
+    {
+      "portal": "src/commandCenter/i18n/formatMessage.ts",
+      "desktop": "Client/src/i18n/formatMessage.ts"
+    },
+    {
+      "portal": "src/commandCenter/i18n/gameMessage.ts",
+      "desktop": "Client/src/i18n/gameMessage.ts"
+    },
+    {
+      "portal": "src/commandCenter/i18n/locales.ts",
+      "desktop": "Client/src/i18n/locales.ts"
+    },
+    {
+      "portal": "src/commandCenter/i18n/messageDescriptor.ts",
+      "desktop": "Client/src/i18n/messageDescriptor.ts"
+    },
+    {
+      "portal": "src/commandCenter/i18n/messageLanguage.ts",
+      "desktop": "Client/src/i18n/messageLanguage.ts"
+    },
+    {
+      "portal": "src/commandCenter/i18n/messages.ts",
+      "desktop": "Client/src/i18n/messages.ts"
+    },
+    {
+      "portal": "src/commandCenter/i18n/officialCatalogCache.ts",
+      "desktop": "Client/src/i18n/officialCatalogCache.ts"
+    },
+    {
+      "portal": "src/commandCenter/i18n/officialKeys.ts",
+      "desktop": "Client/src/i18n/officialKeys.ts"
+    },
+    {
+      "portal": "src/commandCenter/i18n/officialMetadata.ts",
+      "desktop": "Client/src/i18n/officialMetadata.ts"
+    },
+    {
+      "portal": "src/commandCenter/i18n/patchNoteLiteralText.ts",
+      "desktop": "Client/src/i18n/patchNoteLiteralText.ts"
+    },
+    {
+      "portal": "src/commandCenter/i18n/player-language-provenance.json",
+      "desktop": "Client/src/i18n/player-language-provenance.json"
+    },
+    {
+      "portal": "src/commandCenter/i18n/richMessages.ts",
+      "desktop": "Client/src/i18n/richMessages.ts"
+    },
+    {
+      "portal": "src/commandCenter/i18n/serverCatalog.ts",
+      "desktop": "Client/src/i18n/serverCatalog.ts"
+    },
+    {
+      "portal": "src/commandCenter/i18n/sourceMessages.ts",
+      "desktop": "Client/src/i18n/sourceMessages.ts"
+    },
+    {
+      "portal": "src/commandCenter/i18n/telemetryChannelFallbacks.json",
+      "desktop": "Client/src/i18n/telemetryChannelFallbacks.json"
+    },
+    {
+      "portal": "src/commandCenter/i18n/telemetryChannelMessages.ts",
+      "desktop": "Client/src/i18n/telemetryChannelMessages.ts"
+    },
+    {
+      "portal": "src/commandCenter/i18n/telemetryMessages.ts",
+      "desktop": "Client/src/i18n/telemetryMessages.ts"
+    },
+    {
+      "portal": "src/commandCenter/i18n/useEventDisplayNames.ts",
+      "desktop": "Client/src/i18n/useEventDisplayNames.ts"
+    },
+    {
+      "portal": "src/commandCenter/i18n/useLocalizedErrorState.ts",
+      "desktop": "Client/src/i18n/useLocalizedErrorState.ts"
+    },
+    {
+      "portal": "src/commandCenter/i18n/useLocalizedMessage.ts",
+      "desktop": "Client/src/i18n/useLocalizedMessage.ts"
+    },
+    {
+      "portal": "src/commandCenter/i18n/useLocalizedMessages.ts",
+      "desktop": "Client/src/i18n/useLocalizedMessages.ts"
+    },
+    {
+      "portal": "src/commandCenter/i18n/viewerLocaleStore.ts",
+      "desktop": "Client/src/i18n/viewerLocaleStore.ts"
+    },
+    {
+      "portal": "src/commandCenter/mock/onboarding/catalogs.ts",
+      "desktop": "Client/tests/onboarding-browser/catalogs.ts"
+    },
+    {
+      "portal": "src/commandCenter/mock/onboarding/coverage.mjs",
+      "desktop": "Client/tests/onboarding-browser/coverage.mjs"
+    },
+    {
+      "portal": "src/commandCenter/mock/onboarding/dock.tsx",
+      "desktop": "Client/tests/onboarding-browser/dock.tsx"
+    },
+    {
+      "portal": "src/commandCenter/mock/onboarding/networkGuard.ts",
+      "desktop": "Client/tests/onboarding-browser/networkGuard.ts"
+    },
+    {
+      "portal": "src/commandCenter/mock/onboarding/realm.ts",
+      "desktop": "Client/tests/onboarding-browser/realm.ts"
+    },
+    {
+      "portal": "src/commandCenter/mock/onboarding/scenario.ts",
+      "desktop": "Client/tests/onboarding-browser/scenario.ts"
+    },
+    {
+      "portal": "src/commandCenter/mock/onboarding/scenarios/account-switch-editor.json",
+      "desktop": "Client/tests/onboarding-browser/scenarios/account-switch-editor.json"
+    },
+    {
+      "portal": "src/commandCenter/mock/onboarding/scenarios/copy-absent-unit.json",
+      "desktop": "Client/tests/onboarding-browser/scenarios/copy-absent-unit.json"
+    },
+    {
+      "portal": "src/commandCenter/mock/onboarding/scenarios/copy-compatible.json",
+      "desktop": "Client/tests/onboarding-browser/scenarios/copy-compatible.json"
+    },
+    {
+      "portal": "src/commandCenter/mock/onboarding/scenarios/copy-conflict-changed.json",
+      "desktop": "Client/tests/onboarding-browser/scenarios/copy-conflict-changed.json"
+    },
+    {
+      "portal": "src/commandCenter/mock/onboarding/scenarios/copy-conflict.json",
+      "desktop": "Client/tests/onboarding-browser/scenarios/copy-conflict.json"
+    },
+    {
+      "portal": "src/commandCenter/mock/onboarding/scenarios/copy-differences.json",
+      "desktop": "Client/tests/onboarding-browser/scenarios/copy-differences.json"
+    },
+    {
+      "portal": "src/commandCenter/mock/onboarding/scenarios/copy-mixed.json",
+      "desktop": "Client/tests/onboarding-browser/scenarios/copy-mixed.json"
+    },
+    {
+      "portal": "src/commandCenter/mock/onboarding/scenarios/copy-queue-production.json",
+      "desktop": "Client/tests/onboarding-browser/scenarios/copy-queue-production.json"
+    },
+    {
+      "portal": "src/commandCenter/mock/onboarding/scenarios/copy-unobserved.json",
+      "desktop": "Client/tests/onboarding-browser/scenarios/copy-unobserved.json"
+    },
+    {
+      "portal": "src/commandCenter/mock/onboarding/scenarios/custom-presets.json",
+      "desktop": "Client/tests/onboarding-browser/scenarios/custom-presets.json"
+    },
+    {
+      "portal": "src/commandCenter/mock/onboarding/scenarios/disclosure-matrix.json",
+      "desktop": "Client/tests/onboarding-browser/scenarios/disclosure-matrix.json"
+    },
+    {
+      "portal": "src/commandCenter/mock/onboarding/scenarios/first-failed.json",
+      "desktop": "Client/tests/onboarding-browser/scenarios/first-failed.json"
+    },
+    {
+      "portal": "src/commandCenter/mock/onboarding/scenarios/first-result.json",
+      "desktop": "Client/tests/onboarding-browser/scenarios/first-result.json"
+    },
+    {
+      "portal": "src/commandCenter/mock/onboarding/scenarios/hosted-account-center.json",
+      "desktop": "Client/tests/onboarding-browser/scenarios/hosted-account-center.json"
+    },
+    {
+      "portal": "src/commandCenter/mock/onboarding/scenarios/khan-defense-fresh.json",
+      "desktop": "Client/tests/onboarding-browser/scenarios/khan-defense-fresh.json"
+    },
+    {
+      "portal": "src/commandCenter/mock/onboarding/scenarios/khan-defense-stale.json",
+      "desktop": "Client/tests/onboarding-browser/scenarios/khan-defense-stale.json"
+    },
+    {
+      "portal": "src/commandCenter/mock/onboarding/scenarios/khan-missing-defense.json",
+      "desktop": "Client/tests/onboarding-browser/scenarios/khan-missing-defense.json"
+    },
+    {
+      "portal": "src/commandCenter/mock/onboarding/scenarios/khan-missing-main.json",
+      "desktop": "Client/tests/onboarding-browser/scenarios/khan-missing-main.json"
+    },
+    {
+      "portal": "src/commandCenter/mock/onboarding/scenarios/khan-skip-dependency.json",
+      "desktop": "Client/tests/onboarding-browser/scenarios/khan-skip-dependency.json"
+    },
+    {
+      "portal": "src/commandCenter/mock/onboarding/scenarios/locale-ar.json",
+      "desktop": "Client/tests/onboarding-browser/scenarios/locale-ar.json"
+    },
+    {
+      "portal": "src/commandCenter/mock/onboarding/scenarios/locale-de.json",
+      "desktop": "Client/tests/onboarding-browser/scenarios/locale-de.json"
+    },
+    {
+      "portal": "src/commandCenter/mock/onboarding/scenarios/new-user.json",
+      "desktop": "Client/tests/onboarding-browser/scenarios/new-user.json"
+    },
+    {
+      "portal": "src/commandCenter/mock/onboarding/scenarios/onboarding-account-switch.json",
+      "desktop": "Client/tests/onboarding-browser/scenarios/onboarding-account-switch.json"
+    },
+    {
+      "portal": "src/commandCenter/mock/onboarding/scenarios/onboarding-disconnected-first-use.json",
+      "desktop": "Client/tests/onboarding-browser/scenarios/onboarding-disconnected-first-use.json"
+    },
+    {
+      "portal": "src/commandCenter/mock/onboarding/scenarios/onboarding-existing-custom-setup.json",
+      "desktop": "Client/tests/onboarding-browser/scenarios/onboarding-existing-custom-setup.json"
+    },
+    {
+      "portal": "src/commandCenter/mock/onboarding/scenarios/onboarding-hosted-runtime-no-feature.json",
+      "desktop": "Client/tests/onboarding-browser/scenarios/onboarding-hosted-runtime-no-feature.json"
+    },
+    {
+      "portal": "src/commandCenter/mock/onboarding/scenarios/onboarding-interrupted-return.json",
+      "desktop": "Client/tests/onboarding-browser/scenarios/onboarding-interrupted-return.json"
+    },
+    {
+      "portal": "src/commandCenter/mock/onboarding/scenarios/onboarding-wrong-world.json",
+      "desktop": "Client/tests/onboarding-browser/scenarios/onboarding-wrong-world.json"
+    },
+    {
+      "portal": "src/commandCenter/mock/onboarding/scenarios/phases-blocked.json",
+      "desktop": "Client/tests/onboarding-browser/scenarios/phases-blocked.json"
+    },
+    {
+      "portal": "src/commandCenter/mock/onboarding/scenarios/phases-completed.json",
+      "desktop": "Client/tests/onboarding-browser/scenarios/phases-completed.json"
+    },
+    {
+      "portal": "src/commandCenter/mock/onboarding/scenarios/phases-enabled-waiting.json",
+      "desktop": "Client/tests/onboarding-browser/scenarios/phases-enabled-waiting.json"
+    },
+    {
+      "portal": "src/commandCenter/mock/onboarding/scenarios/phases-locked.json",
+      "desktop": "Client/tests/onboarding-browser/scenarios/phases-locked.json"
+    },
+    {
+      "portal": "src/commandCenter/mock/onboarding/scenarios/phases-running.json",
+      "desktop": "Client/tests/onboarding-browser/scenarios/phases-running.json"
+    },
+    {
+      "portal": "src/commandCenter/mock/onboarding/scenarios/phases-stopped.json",
+      "desktop": "Client/tests/onboarding-browser/scenarios/phases-stopped.json"
+    },
+    {
+      "portal": "src/commandCenter/mock/onboarding/scenarios/presets-edit-promotion.json",
+      "desktop": "Client/tests/onboarding-browser/scenarios/presets-edit-promotion.json"
+    },
+    {
+      "portal": "src/commandCenter/mock/onboarding/scenarios/rich-account.json",
+      "desktop": "Client/tests/onboarding-browser/scenarios/rich-account.json"
+    },
+    {
+      "portal": "src/commandCenter/mock/onboarding/scenarios/shortages-conflicts.json",
+      "desktop": "Client/tests/onboarding-browser/scenarios/shortages-conflicts.json"
+    },
+    {
+      "portal": "src/commandCenter/mock/onboarding/scenarios/stale-data-awaiting-baseline.json",
+      "desktop": "Client/tests/onboarding-browser/scenarios/stale-data-awaiting-baseline.json"
+    },
+    {
+      "portal": "src/commandCenter/mock/onboarding/scenarios/stale-data-checkpoint.json",
+      "desktop": "Client/tests/onboarding-browser/scenarios/stale-data-checkpoint.json"
+    },
+    {
+      "portal": "src/commandCenter/mock/onboarding/scenarios/stale-data-disconnected.json",
+      "desktop": "Client/tests/onboarding-browser/scenarios/stale-data-disconnected.json"
+    },
+    {
+      "portal": "src/commandCenter/mock/onboarding/scenarios/start-rejected.json",
+      "desktop": "Client/tests/onboarding-browser/scenarios/start-rejected.json"
+    },
+    {
+      "portal": "src/commandCenter/mock/onboarding/scenarios/stop-failed.json",
+      "desktop": "Client/tests/onboarding-browser/scenarios/stop-failed.json"
+    },
+    {
+      "portal": "src/commandCenter/mock/onboarding/scenarios/storm-donor-unavailable.json",
+      "desktop": "Client/tests/onboarding-browser/scenarios/storm-donor-unavailable.json"
+    },
+    {
+      "portal": "src/commandCenter/mock/onboarding/scenarios/storm-no-offer.json",
+      "desktop": "Client/tests/onboarding-browser/scenarios/storm-no-offer.json"
+    },
+    {
+      "portal": "src/commandCenter/mock/onboarding/scenarios/storm-offer.json",
+      "desktop": "Client/tests/onboarding-browser/scenarios/storm-offer.json"
+    },
+    {
+      "portal": "src/commandCenter/mock/onboarding/scenarios/support-production.json",
+      "desktop": "Client/tests/onboarding-browser/scenarios/support-production.json"
+    },
+    {
+      "portal": "src/commandCenter/mock/onboarding/scenarios/towers-food-contrast.json",
+      "desktop": "Client/tests/onboarding-browser/scenarios/towers-food-contrast.json"
+    },
+    {
+      "portal": "src/commandCenter/mock/onboarding/scenarios/zero-castles.json",
+      "desktop": "Client/tests/onboarding-browser/scenarios/zero-castles.json"
+    },
+    {
+      "portal": "src/commandCenter/mock/onboarding/visualStates.ts",
+      "desktop": "Client/tests/onboarding-browser/visualStates.ts"
+    },
+    {
+      "portal": "src/commandCenter/playerTracker/components/PlayerTrackerWallet.ts",
+      "desktop": "Client/src/playerTracker/components/PlayerTrackerWallet.ts"
+    },
+    {
+      "portal": "src/commandCenter/presets/AppCreatedRecords.ts",
+      "desktop": "Client/src/presets/AppCreatedRecords.ts"
+    },
+    {
+      "portal": "src/commandCenter/settings/AppCreatedPresetSave.ts",
+      "desktop": "Client/src/settings/AppCreatedPresetSave.ts"
+    },
+    {
+      "portal": "src/commandCenter/settings/AutoAdvisorClientState.ts",
+      "desktop": "Client/src/settings/AutoAdvisorClientState.ts"
+    },
+    {
+      "portal": "src/commandCenter/settings/AutoBeriWorldClientState.ts",
+      "desktop": "Client/src/settings/AutoBeriWorldClientState.ts"
+    },
+    {
+      "portal": "src/commandCenter/settings/AutoBirdClientState.ts",
+      "desktop": "Client/src/settings/AutoBirdClientState.ts"
+    },
+    {
+      "portal": "src/commandCenter/settings/AutoBirdFortressReserve.ts",
+      "desktop": "Client/src/settings/AutoBirdFortressReserve.ts"
+    },
+    {
+      "portal": "src/commandCenter/settings/AutoBirdPresets.ts",
+      "desktop": "Client/src/settings/AutoBirdPresets.ts"
+    },
+    {
+      "portal": "src/commandCenter/settings/AutoBoosterClientState.ts",
+      "desktop": "Client/src/settings/AutoBoosterClientState.ts"
+    },
+    {
+      "portal": "src/commandCenter/settings/AutoBoosterViewState.ts",
+      "desktop": "Client/src/settings/AutoBoosterViewState.ts"
+    },
+    {
+      "portal": "src/commandCenter/settings/AutoBuyerClientState.ts",
+      "desktop": "Client/src/settings/AutoBuyerClientState.ts"
+    },
+    {
+      "portal": "src/commandCenter/settings/AutoEquipmentCleanup.ts",
+      "desktop": "Client/src/settings/AutoEquipmentCleanup.ts"
+    },
+    {
+      "portal": "src/commandCenter/settings/AutoFoodBalanceClientState.ts",
+      "desktop": "Client/src/settings/AutoFoodBalanceClientState.ts"
+    },
+    {
+      "portal": "src/commandCenter/settings/AutoHospitalClientState.ts",
+      "desktop": "Client/src/settings/AutoHospitalClientState.ts"
+    },
+    {
+      "portal": "src/commandCenter/settings/AutoInvasionClientState.ts",
+      "desktop": "Client/src/settings/AutoInvasionClientState.ts"
+    },
+    {
+      "portal": "src/commandCenter/settings/AutoKhanClientState.ts",
+      "desktop": "Client/src/settings/AutoKhanClientState.ts"
+    },
+    {
+      "portal": "src/commandCenter/settings/AutoNomadClientState.ts",
+      "desktop": "Client/src/settings/AutoNomadClientState.ts"
+    },
+    {
+      "portal": "src/commandCenter/settings/AutoSceatResClientState.ts",
+      "desktop": "Client/src/settings/AutoSceatResClientState.ts"
+    },
+    {
+      "portal": "src/commandCenter/settings/AutoStationClientState.ts",
+      "desktop": "Client/src/settings/AutoStationClientState.ts"
+    },
+    {
+      "portal": "src/commandCenter/settings/AutoStormClientState.ts",
+      "desktop": "Client/src/settings/AutoStormClientState.ts"
+    },
+    {
+      "portal": "src/commandCenter/settings/AutoStormTroopCapPresentation.ts",
+      "desktop": "Client/src/settings/AutoStormTroopCapPresentation.ts"
+    },
+    {
+      "portal": "src/commandCenter/settings/AutoTCIClientState.ts",
+      "desktop": "Client/src/settings/AutoTCIClientState.ts"
+    },
+    {
+      "portal": "src/commandCenter/settings/AutoTCIPresets.ts",
+      "desktop": "Client/src/settings/AutoTCIPresets.ts"
+    },
+    {
+      "portal": "src/commandCenter/settings/AutoToolClientState.ts",
+      "desktop": "Client/src/settings/AutoToolClientState.ts"
+    },
+    {
+      "portal": "src/commandCenter/settings/AutoTowerClientState.ts",
+      "desktop": "Client/src/settings/AutoTowerClientState.ts"
+    },
+    {
+      "portal": "src/commandCenter/settings/AutomationEnabled.ts",
+      "desktop": "Client/src/settings/AutomationEnabled.ts"
+    },
+    {
+      "portal": "src/commandCenter/settings/DraftRecovery.ts",
+      "desktop": "Client/src/settings/DraftRecovery.ts"
+    },
+    {
+      "portal": "src/commandCenter/settings/EventDifficultyOptions.ts",
+      "desktop": "Client/src/settings/EventDifficultyOptions.ts"
+    },
+    {
+      "portal": "src/commandCenter/settings/HorseTravelBoost.ts",
+      "desktop": "Client/src/settings/HorseTravelBoost.ts"
+    },
+    {
+      "portal": "src/commandCenter/settings/QueueProductionClientState.ts",
+      "desktop": "Client/src/settings/QueueProductionClientState.ts"
+    },
+    {
+      "portal": "src/commandCenter/settings/QueueableProductionCatalog.ts",
+      "desktop": "Client/src/settings/QueueableProductionCatalog.ts"
+    },
+    {
+      "portal": "src/commandCenter/settings/RecruitTroopsClientState.ts",
+      "desktop": "Client/src/settings/RecruitTroopsClientState.ts"
+    },
+    {
+      "portal": "src/commandCenter/settings/SchedulerTypes.ts",
+      "desktop": "Client/src/settings/SchedulerTypes.ts"
+    },
+    {
+      "portal": "src/commandCenter/settings/SettingsTransfer.ts",
+      "desktop": "Client/src/settings/SettingsTransfer.ts"
+    },
+    {
+      "portal": "src/commandCenter/settings/StormCastleOptions.ts",
+      "desktop": "Client/src/settings/StormCastleOptions.ts"
+    },
+    {
+      "portal": "src/commandCenter/settings/UnitRole.ts",
+      "desktop": "Client/src/settings/UnitRole.ts"
+    },
+    {
+      "portal": "src/commandCenter/settings/UnitUpgradeFamily.ts",
+      "desktop": "Client/src/settings/UnitUpgradeFamily.ts"
+    },
+    {
+      "portal": "src/commandCenter/settings/automationFeatureNames.ts",
+      "desktop": "Client/src/settings/automationFeatureNames.ts"
+    },
+    {
+      "portal": "src/commandCenter/settings/castleAutomations.ts",
+      "desktop": "Client/src/settings/castleAutomations.ts"
+    },
+    {
+      "portal": "src/commandCenter/settings/components/AutoBirdGuideModal.tsx",
+      "desktop": "Client/src/settings/components/AutoBirdGuideModal.tsx"
+    },
+    {
+      "portal": "src/commandCenter/settings/components/AutoToolSettingsModal.tsx",
+      "desktop": "Client/src/settings/components/AutoToolSettingsModal.tsx"
+    },
+    {
+      "portal": "src/commandCenter/settings/components/AutoTowerGuideModal.tsx",
+      "desktop": "Client/src/settings/components/AutoTowerGuideModal.tsx"
+    },
+    {
+      "portal": "src/commandCenter/settings/components/AutomationRunStrip.tsx",
+      "desktop": "Client/src/settings/components/AutomationRunStrip.tsx"
+    },
+    {
+      "portal": "src/commandCenter/settings/components/CastleCopyDialog.tsx",
+      "desktop": "Client/src/settings/components/CastleCopyDialog.tsx"
+    },
+    {
+      "portal": "src/commandCenter/settings/components/CastleRequirementField.tsx",
+      "desktop": "Client/src/settings/components/CastleRequirementField.tsx"
+    },
+    {
+      "portal": "src/commandCenter/settings/components/CommanderAssignmentPanel.tsx",
+      "desktop": "Client/src/settings/components/CommanderAssignmentPanel.tsx"
+    },
+    {
+      "portal": "src/commandCenter/settings/components/DefenseSetupField.tsx",
+      "desktop": "Client/src/settings/components/DefenseSetupField.tsx"
+    },
+    {
+      "portal": "src/commandCenter/settings/components/EventAttackSetupField.tsx",
+      "desktop": "Client/src/settings/components/EventAttackSetupField.tsx"
+    },
+    {
+      "portal": "src/commandCenter/settings/components/FoodCastleTableRow.tsx",
+      "desktop": "Client/src/settings/components/FoodCastleTableRow.tsx"
+    },
+    {
+      "portal": "src/commandCenter/settings/components/ReadinessPanel.tsx",
+      "desktop": "Client/src/settings/components/ReadinessPanel.tsx"
+    },
+    {
+      "portal": "src/commandCenter/settings/components/RecruitTroopsSettingsModal.tsx",
+      "desktop": "Client/src/settings/components/RecruitTroopsSettingsModal.tsx"
+    },
+    {
+      "portal": "src/commandCenter/settings/components/SettingsSection.tsx",
+      "desktop": "Client/src/settings/components/SettingsSection.tsx"
+    },
+    {
+      "portal": "src/commandCenter/settings/components/UnitStockList.tsx",
+      "desktop": "Client/src/settings/components/UnitStockList.tsx"
+    },
+    {
+      "portal": "src/commandCenter/settings/components/dialogFocus.ts",
+      "desktop": "Client/src/settings/components/dialogFocus.ts"
+    },
+    {
+      "portal": "src/commandCenter/settings/connection/connectionControls.ts",
+      "desktop": "Client/src/settings/connection/connectionControls.ts"
+    },
+    {
+      "portal": "src/commandCenter/settings/connection/connectionExplain.ts",
+      "desktop": "Client/src/settings/connection/connectionExplain.ts"
+    },
+    {
+      "portal": "src/commandCenter/settings/connection/repairRequest.ts",
+      "desktop": "Client/src/settings/connection/repairRequest.ts"
+    },
+    {
+      "portal": "src/commandCenter/settings/connection/repairSurface.tsx",
+      "desktop": "Client/src/settings/connection/repairSurface.tsx"
+    },
+    {
+      "portal": "src/commandCenter/settings/copy/candidates.ts",
+      "desktop": "Client/src/settings/copy/candidates.ts"
+    },
+    {
+      "portal": "src/commandCenter/settings/copy/castleCopy.ts",
+      "desktop": "Client/src/settings/copy/castleCopy.ts"
+    },
+    {
+      "portal": "src/commandCenter/settings/copy/castleCopyReplay.ts",
+      "desktop": "Client/src/settings/copy/castleCopyReplay.ts"
+    },
+    {
+      "portal": "src/commandCenter/settings/copy/features/bird.ts",
+      "desktop": "Client/src/settings/copy/features/bird.ts"
+    },
+    {
+      "portal": "src/commandCenter/settings/copy/features/queueProduction.ts",
+      "desktop": "Client/src/settings/copy/features/queueProduction.ts"
+    },
+    {
+      "portal": "src/commandCenter/settings/copy/features/reserveList.ts",
+      "desktop": "Client/src/settings/copy/features/reserveList.ts"
+    },
+    {
+      "portal": "src/commandCenter/settings/copy/features/station.ts",
+      "desktop": "Client/src/settings/copy/features/station.ts"
+    },
+    {
+      "portal": "src/commandCenter/settings/copy/features/towers.ts",
+      "desktop": "Client/src/settings/copy/features/towers.ts"
+    },
+    {
+      "portal": "src/commandCenter/settings/copy/features/unitChecks.ts",
+      "desktop": "Client/src/settings/copy/features/unitChecks.ts"
+    },
+    {
+      "portal": "src/commandCenter/settings/copy/useCastleCopyReplay.tsx",
+      "desktop": "Client/src/settings/copy/useCastleCopyReplay.tsx"
+    },
+    {
+      "portal": "src/commandCenter/settings/disclosure/fixTargets.ts",
+      "desktop": "Client/src/settings/disclosure/fixTargets.ts"
+    },
+    {
+      "portal": "src/commandCenter/settings/disclosure/placement.ts",
+      "desktop": "Client/src/settings/disclosure/placement.ts"
+    },
+    {
+      "portal": "src/commandCenter/settings/disclosure/summaries.ts",
+      "desktop": "Client/src/settings/disclosure/summaries.ts"
+    },
+    {
+      "portal": "src/commandCenter/settings/disclosure/useSettingsDisclosure.ts",
+      "desktop": "Client/src/settings/disclosure/useSettingsDisclosure.ts"
+    },
+    {
+      "portal": "src/commandCenter/settings/onboarding/EventAttackRecommendation.ts",
+      "desktop": "Client/src/settings/onboarding/EventAttackRecommendation.ts"
+    },
+    {
+      "portal": "src/commandCenter/settings/onboarding/KhanDefenseStarter.ts",
+      "desktop": "Client/src/settings/onboarding/KhanDefenseStarter.ts"
+    },
+    {
+      "portal": "src/commandCenter/settings/onboarding/StarterRecipes.ts",
+      "desktop": "Client/src/settings/onboarding/StarterRecipes.ts"
+    },
+    {
+      "portal": "src/commandCenter/settings/onboarding/accountScope.ts",
+      "desktop": "Client/src/settings/onboarding/accountScope.ts"
+    },
+    {
+      "portal": "src/commandCenter/settings/onboarding/checklist.ts",
+      "desktop": "Client/src/settings/onboarding/checklist.ts"
+    },
+    {
+      "portal": "src/commandCenter/settings/onboarding/goalStore.ts",
+      "desktop": "Client/src/settings/onboarding/goalStore.ts"
+    },
+    {
+      "portal": "src/commandCenter/settings/onboarding/goals.ts",
+      "desktop": "Client/src/settings/onboarding/goals.ts"
+    },
+    {
+      "portal": "src/commandCenter/settings/onboarding/useChecklist.ts",
+      "desktop": "Client/src/settings/onboarding/useChecklist.ts"
+    },
+    {
+      "portal": "src/commandCenter/settings/onboarding/useConnectionEvidence.ts",
+      "desktop": "Client/src/settings/onboarding/useConnectionEvidence.ts"
+    },
+    {
+      "portal": "src/commandCenter/settings/readiness/Readiness.ts",
+      "desktop": "Client/src/settings/readiness/Readiness.ts"
+    },
+    {
+      "portal": "src/commandCenter/settings/readiness/automationAttribution.ts",
+      "desktop": "Client/src/settings/readiness/automationAttribution.ts"
+    },
+    {
+      "portal": "src/commandCenter/settings/readiness/automationPlayerStatusDisplay.ts",
+      "desktop": "Client/src/settings/readiness/automationPlayerStatusDisplay.ts"
+    },
+    {
+      "portal": "src/commandCenter/settings/readiness/eventAttackReadiness.ts",
+      "desktop": "Client/src/settings/readiness/eventAttackReadiness.ts"
+    },
+    {
+      "portal": "src/commandCenter/settings/readiness/featureReadiness.ts",
+      "desktop": "Client/src/settings/readiness/featureReadiness.ts"
+    },
+    {
+      "portal": "src/commandCenter/settings/readiness/firstResult.ts",
+      "desktop": "Client/src/settings/readiness/firstResult.ts"
+    },
+    {
+      "portal": "src/commandCenter/settings/readiness/focusReadinessTarget.ts",
+      "desktop": "Client/src/settings/readiness/focusReadinessTarget.ts"
+    },
+    {
+      "portal": "src/commandCenter/settings/readiness/khanReadiness.ts",
+      "desktop": "Client/src/settings/readiness/khanReadiness.ts"
+    },
+    {
+      "portal": "src/commandCenter/settings/readiness/latestReadiness.ts",
+      "desktop": "Client/src/settings/readiness/latestReadiness.ts"
+    },
+    {
+      "portal": "src/commandCenter/settings/readiness/playerStatus.ts",
+      "desktop": "Client/src/settings/readiness/playerStatus.ts"
+    },
+    {
+      "portal": "src/commandCenter/settings/readiness/runtimeState.ts",
+      "desktop": "Client/src/settings/readiness/runtimeState.ts"
+    },
+    {
+      "portal": "src/commandCenter/settings/readiness/settingsFixRequest.ts",
+      "desktop": "Client/src/settings/readiness/settingsFixRequest.ts"
+    },
+    {
+      "portal": "src/commandCenter/settings/readiness/stopSemantics.ts",
+      "desktop": "Client/src/settings/readiness/stopSemantics.ts"
+    },
+    {
+      "portal": "src/commandCenter/settings/readiness/stormReadiness.ts",
+      "desktop": "Client/src/settings/readiness/stormReadiness.ts"
+    },
+    {
+      "portal": "src/commandCenter/settings/readiness/useAutomationDescription.ts",
+      "desktop": "Client/src/settings/readiness/useAutomationDescription.ts"
+    },
+    {
+      "portal": "src/commandCenter/settings/readiness/useAutomationPlayerStatus.ts",
+      "desktop": "Client/src/settings/readiness/useAutomationPlayerStatus.ts"
+    },
+    {
+      "portal": "src/commandCenter/settings/readiness/useFeatureReadiness.ts",
+      "desktop": "Client/src/settings/readiness/useFeatureReadiness.ts"
+    },
+    {
+      "portal": "src/commandCenter/settings/requirements/castleRequirements.ts",
+      "desktop": "Client/src/settings/requirements/castleRequirements.ts"
+    },
+    {
+      "portal": "src/commandCenter/settings/requirements/commanderAssignmentDraft.ts",
+      "desktop": "Client/src/settings/requirements/commanderAssignmentDraft.ts"
+    },
+    {
+      "portal": "src/commandCenter/settings/requirements/commanderEligibility.ts",
+      "desktop": "Client/src/settings/requirements/commanderEligibility.ts"
+    },
+    {
+      "portal": "src/commandCenter/settings/requirements/observationFreshness.ts",
+      "desktop": "Client/src/settings/requirements/observationFreshness.ts"
+    },
+    {
+      "portal": "src/commandCenter/settings/requirements/setupReadiness.ts",
+      "desktop": "Client/src/settings/requirements/setupReadiness.ts"
+    },
+    {
+      "portal": "src/commandCenter/settings/requirements/unitRequirements.ts",
+      "desktop": "Client/src/settings/requirements/unitRequirements.ts"
+    },
+    {
+      "portal": "src/commandCenter/settings/requirements/useSetupContext.ts",
+      "desktop": "Client/src/settings/requirements/useSetupContext.ts"
+    },
+    {
+      "portal": "src/commandCenter/settings/useDraftRecovery.tsx",
+      "desktop": "Client/src/settings/useDraftRecovery.tsx"
+    },
+    {
+      "portal": "src/commandCenter/styles/fonts.css",
+      "desktop": "Client/src/styles/fonts.css"
+    },
+    {
+      "portal": "src/commandCenter/styles/tokens.css",
+      "desktop": "Client/src/styles/tokens.css"
+    },
+    {
+      "portal": "src/commandCenter/utils/UpgradeCoinReserve.ts",
+      "desktop": "Client/src/utils/UpgradeCoinReserve.ts"
+    },
+    {
+      "portal": "src/commandCenter/worldIntelligence/components/StormRanking.ts",
+      "desktop": "Client/src/worldIntelligence/components/StormRanking.ts"
+    },
+    {
+      "portal": "src/commandCenter/worldIntelligence/components/WorldEventFinals.ts",
+      "desktop": "Client/src/worldIntelligence/components/WorldEventFinals.ts"
+    },
+    {
+      "portal": "src/commandCenter/worldIntelligence/components/WorldEventPagination.ts",
+      "desktop": "Client/src/worldIntelligence/components/WorldEventPagination.ts"
+    },
+    {
+      "portal": "src/commandCenter/worldIntelligence/components/WorldIntelligenceLoadGeneration.ts",
+      "desktop": "Client/src/worldIntelligence/components/WorldIntelligenceLoadGeneration.ts"
+    },
+    {
+      "portal": "src/commandCenter/worldIntelligence/serverLabel.ts",
+      "desktop": "Client/src/worldIntelligence/serverLabel.ts"
+    },
+    {
+      "portal": "src/commandCenter/worldIntelligence/useServerLabel.ts",
+      "desktop": "Client/src/worldIntelligence/useServerLabel.ts"
+    },
+    {
+      "portal": "tests/check-retired-classes.test.mjs",
+      "desktop": "Client/tests/check-retired-classes.test.mjs"
+    },
+    {
+      "portal": "tests/status-badges.test.mjs",
+      "desktop": "Client/tests/status-badges.test.mjs"
+    },
+    {
+      "portal": "tests/view-states-logic.test.mjs",
+      "desktop": "Client/tests/view-states-logic.test.mjs"
+    }
+  ],
+  "unmirrored": []
+}
