@@ -23,7 +23,7 @@
     "prebuild": "python3 ../scripts/fonts/build-manrope --check",
     "check:fonts": "python3 ../scripts/fonts/build-manrope --check",
     "test:fonts": "python3 ../scripts/fonts/test-gate.py",
-    "check:mirror": "node ../scripts/check-mirror.mjs --desktop .."
+    "check:mirror": "npm --prefix .. run check:mirror --"
   },
   "dependencies": {
     "@formatjs/icu-messageformat-parser": "^3.5.20",
