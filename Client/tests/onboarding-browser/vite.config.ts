@@ -18,6 +18,7 @@ const candidate = (() => {
  */
 export default defineConfig({
   root: harnessRoot,
+  cacheDir: fileURLToPath(new URL('../../.visual/vite-cache', import.meta.url)),
   // The harness page lives outside `Client/`, so the game's static images (`/game-data/**`) must be served explicitly.
   publicDir: fileURLToPath(new URL('../../public', import.meta.url)),
   plugins: [react(), tailwindcss()],

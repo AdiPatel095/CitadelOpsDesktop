@@ -13,7 +13,7 @@
     --color-border-light: var(--border-light);
 
     --color-text-main: var(--text-main);
-    --color-text-muted: var(--text-muted);
+    --color-text-muted: var(--text-secondary);
     --color-text-inverted: var(--text-inverted);
 
     --color-primary: var(--primary);
@@ -323,21 +323,21 @@
     .ui-page-header-description {
         max-width: 72ch;
         margin: 0.3rem 0 0;
-        color: var(--text-muted);
+        color: var(--text-secondary);
         font-size: 0.875rem;
         line-height: 1.45;
     }
 
     .ui-modal-title-description {
         margin-top: 0.25rem;
-        color: var(--text-muted);
+        color: var(--text-secondary);
         font-size: 0.75rem;
         font-weight: 650;
         line-height: 1.35;
     }
 
     .ui-kicker {
-        color: var(--text-muted);
+        color: var(--text-secondary);
         font-size: 0.62rem;
         font-weight: 900;
         letter-spacing: 0.1em;
@@ -382,7 +382,7 @@
     .ui-status-detail {
         min-width: 0;
         overflow: hidden;
-        color: var(--text-muted);
+        color: var(--text-secondary);
         font-weight: 600;
         text-overflow: ellipsis;
         white-space: nowrap;
@@ -400,7 +400,7 @@
         align-items: center;
         justify-content: center;
         gap: 0.65rem;
-        color: var(--text-muted);
+        color: var(--text-secondary);
         font-size: 0.875rem;
         font-weight: 700;
     }
@@ -672,7 +672,7 @@
         justify-content: space-between;
         gap: 0.5rem;
         padding: 0.45rem 0.65rem;
-        color: var(--text-muted);
+        color: var(--text-secondary);
         font-size: 0.68rem;
         font-weight: 700;
         text-transform: uppercase;
@@ -697,7 +697,7 @@
         border: 1px solid transparent;
         border-radius: var(--radius-global);
         padding: 0.68rem 0.75rem;
-        color: var(--text-muted);
+        color: var(--text-secondary);
         background: transparent;
         cursor: pointer;
         text-align: left;
@@ -809,7 +809,7 @@
     .liquid-log-subtitle {
         overflow: hidden;
         margin-top: 0.16rem;
-        color: var(--text-muted);
+        color: var(--text-secondary);
         font-size: 0.75rem;
         line-height: 1.35;
         text-overflow: ellipsis;
@@ -825,7 +825,7 @@
         display: inline-flex;
         align-items: center;
         gap: 0.42rem;
-        color: var(--text-muted);
+        color: var(--text-secondary);
         font-size: 0.72rem;
         font-weight: 700;
         white-space: nowrap;
@@ -840,7 +840,7 @@
     }
 
     .liquid-log-live-status-paused {
-        color: color-mix(in srgb, var(--warning) 76%, var(--text-muted));
+        color: color-mix(in srgb, var(--warning) 76%, var(--text-secondary));
     }
 
     .liquid-log-live-status-paused .liquid-log-live-dot {
@@ -849,7 +849,7 @@
     }
 
     .liquid-log-live-status-error {
-        color: color-mix(in srgb, var(--error) 78%, var(--text-muted));
+        color: color-mix(in srgb, var(--error) 78%, var(--text-secondary));
     }
 
     .liquid-log-live-status-error .liquid-log-live-dot {
@@ -863,7 +863,7 @@
         flex: 0 0 auto;
         border: 1px solid var(--border-base);
         background: var(--surface-control);
-        color: var(--text-muted);
+        color: var(--text-secondary);
     }
 
     .liquid-log-close-button:hover {
@@ -893,7 +893,7 @@
         align-items: center;
         justify-content: space-between;
         gap: 0.75rem;
-        color: var(--text-muted);
+        color: var(--text-secondary);
         font-size: 0.64rem;
         font-weight: 850;
         letter-spacing: 0.055em;
@@ -971,14 +971,14 @@
 
     .liquid-logger-body::before {
         left: 0;
-        -webkit-mask: radial-gradient(circle at var(--liquid-header-curve-offset) calc(var(--liquid-header-overlap) - var(--radius-global)), transparent calc(var(--radius-global) - 1px), #000 var(--radius-global));
-        mask: radial-gradient(circle at var(--liquid-header-curve-offset) calc(var(--liquid-header-overlap) - var(--radius-global)), transparent calc(var(--radius-global) - 1px), #000 var(--radius-global));
+        -webkit-mask: radial-gradient(circle at var(--liquid-header-curve-offset) calc(var(--liquid-header-overlap) - var(--radius-global)), transparent calc(var(--radius-global) - 1px), var(--compat-mask-opaque) var(--radius-global));
+        mask: radial-gradient(circle at var(--liquid-header-curve-offset) calc(var(--liquid-header-overlap) - var(--radius-global)), transparent calc(var(--radius-global) - 1px), var(--compat-mask-opaque) var(--radius-global));
     }
 
     .liquid-logger-body::after {
         right: 0;
-        -webkit-mask: radial-gradient(circle at 0 calc(var(--liquid-header-overlap) - var(--radius-global)), transparent calc(var(--radius-global) - 1px), #000 var(--radius-global));
-        mask: radial-gradient(circle at 0 calc(var(--liquid-header-overlap) - var(--radius-global)), transparent calc(var(--radius-global) - 1px), #000 var(--radius-global));
+        -webkit-mask: radial-gradient(circle at 0 calc(var(--liquid-header-overlap) - var(--radius-global)), transparent calc(var(--radius-global) - 1px), var(--compat-mask-opaque) var(--radius-global));
+        mask: radial-gradient(circle at 0 calc(var(--liquid-header-overlap) - var(--radius-global)), transparent calc(var(--radius-global) - 1px), var(--compat-mask-opaque) var(--radius-global));
     }
 
     .liquid-log-stream {
@@ -1019,7 +1019,7 @@
 
     .liquid-log-empty {
         margin: auto;
-        color: color-mix(in srgb, var(--text-muted) 72%, transparent);
+        color: color-mix(in srgb, var(--text-secondary) 72%, transparent);
         font-size: 0.95rem;
         font-style: italic;
     }
@@ -1027,7 +1027,7 @@
     .liquid-log-row,
     .liquid-log-raw-row {
         border: 1px solid color-mix(in srgb, var(--border-base) 82%, transparent);
-        border-left-color: color-mix(in srgb, var(--text-muted) 34%, var(--border-base));
+        border-left-color: color-mix(in srgb, var(--text-secondary) 34%, var(--border-base));
         border-left-width: 3px;
         border-radius: calc(var(--radius-global) - 6px);
         background: color-mix(in srgb, var(--bg-card-hover) 50%, var(--bg-card));
@@ -1063,7 +1063,7 @@
     }
 
     .liquid-log-row-debug {
-        border-left-color: color-mix(in srgb, var(--text-muted) 72%, var(--border-base));
+        border-left-color: color-mix(in srgb, var(--text-secondary) 72%, var(--border-base));
     }
 
     .liquid-log-row-meta {
@@ -1077,7 +1077,7 @@
     .liquid-log-time {
         width: 100%;
         overflow: hidden;
-        color: var(--text-muted);
+        color: var(--text-secondary);
         font-family: var(--font-mono-ui);
         font-size: 0.7rem;
         font-weight: 700;
@@ -1133,7 +1133,7 @@
     .liquid-log-badge-plain,
     .liquid-log-chip {
         background: color-mix(in srgb, var(--bg-input) 78%, var(--bg-card));
-        color: var(--text-muted);
+        color: var(--text-secondary);
     }
 
     .liquid-log-row-content {
@@ -1228,11 +1228,11 @@
         justify-content: center;
         overflow: hidden;
         padding: clamp(0.75rem, 1.2vw, 1.5rem);
-        background: rgba(2, 6, 23, 0.64);
+        background: var(--scrim);
     }
 
     [data-theme="dark"] .liquid-modal-overlay {
-        background: rgba(2, 6, 23, 0.72);
+        background: var(--scrim);
     }
 
     .liquid-modal-surface {
@@ -1414,7 +1414,7 @@
     }
 
     .schedule-kicker {
-        color: var(--text-muted);
+        color: var(--text-secondary);
         font-size: 0.62rem;
         font-weight: 900;
         letter-spacing: 0.12em;
@@ -1453,7 +1453,7 @@
 
     .schedule-hero-metric span {
         display: block;
-        color: var(--text-muted);
+        color: var(--text-secondary);
         font-size: 0.58rem;
         font-weight: 900;
         letter-spacing: 0.1em;
@@ -1502,7 +1502,7 @@
     }
 
     .schedule-control-chip span {
-        color: var(--text-muted);
+        color: var(--text-secondary);
         font-size: 0.68rem;
         font-weight: 900;
         letter-spacing: 0.08em;
@@ -1538,7 +1538,7 @@
         border-bottom: 1px solid color-mix(in srgb, var(--primary) 18%, var(--border-base));
         background:
             linear-gradient(180deg, var(--surface-raised), var(--surface-control));
-        box-shadow: 0 8px 18px rgba(0, 0, 0, 0.06);
+        box-shadow: 0 8px 18px var(--compat-shadow-tint-0-0-0-0p06);
     }
 
     .schedule-time-heading,
@@ -1556,7 +1556,7 @@
         align-items: center;
         justify-content: center;
         gap: 0.35rem;
-        color: var(--text-muted);
+        color: var(--text-secondary);
         font-size: 0.62rem;
         font-weight: 900;
         letter-spacing: 0.1em;
@@ -1592,7 +1592,7 @@
 
     .schedule-day-name {
         overflow: hidden;
-        color: var(--text-muted);
+        color: var(--text-secondary);
         font-size: 0.62rem;
         font-weight: 800;
         line-height: 1;
@@ -1651,7 +1651,7 @@
         transform: translateY(-50%);
         padding-inline: 0.5rem;
         text-align: center;
-        color: var(--text-muted);
+        color: var(--text-secondary);
         font-size: 0.58rem;
         font-weight: 850;
     }
@@ -1735,7 +1735,7 @@
     }
 
     .schedule-slot-duration {
-        color: var(--text-muted);
+        color: var(--text-secondary);
         font-size: clamp(0.5rem, 0.5vw, 0.56rem);
         font-weight: 850;
     }
@@ -1893,7 +1893,7 @@
     .schedule-field label {
         display: block;
         margin-bottom: 0.38rem;
-        color: var(--text-muted);
+        color: var(--text-secondary);
         font-size: 0.62rem;
         font-weight: 900;
         letter-spacing: 0.1em;
@@ -1948,7 +1948,7 @@
 
     .schedule-troop-picker-id {
         margin-top: 0.12rem;
-        color: var(--text-muted);
+        color: var(--text-secondary);
         font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
         font-size: 0.72rem;
         font-weight: 700;
@@ -1967,7 +1967,7 @@
         justify-content: center;
         border: 1px dashed color-mix(in srgb, var(--primary) 26%, var(--border-base));
         border-radius: var(--radius-global);
-        color: var(--text-muted);
+        color: var(--text-secondary);
     }
 
     .schedule-form-error {
@@ -2127,7 +2127,7 @@
         flex: 1;
         place-items: center;
         padding: clamp(2rem, 4vw, 4rem);
-        color: var(--text-muted);
+        color: var(--text-secondary);
         text-align: center;
     }
 
@@ -2221,7 +2221,7 @@
         background:
             linear-gradient(180deg, var(--surface-raised), var(--surface-control)),
             color-mix(in srgb, var(--bg-card) 32%, transparent);
-        box-shadow: 0 10px 24px rgba(0, 0, 0, 0.08);
+        box-shadow: 0 10px 24px var(--compat-shadow-tint-0-0-0-0p08);
         transition: transform 170ms ease, border-color 170ms ease, background-color 170ms ease, box-shadow 170ms ease;
     }
 
@@ -2258,7 +2258,7 @@
     }
 
     .picker-card-id {
-        color: color-mix(in srgb, var(--text-muted) 78%, transparent);
+        color: color-mix(in srgb, var(--text-secondary) 78%, transparent);
         font-family: var(--font-mono-ui);
         font-size: 0.62rem;
         font-weight: 850;
@@ -2285,7 +2285,7 @@
         border: 0;
         border-radius: var(--radius-pill);
         background: transparent;
-        color: var(--text-muted);
+        color: var(--text-secondary);
         transition: color 160ms ease, background-color 160ms ease, border-color 160ms ease, transform 160ms ease;
     }
 
@@ -2358,7 +2358,7 @@
 
     .tci-level-label {
         width: 2rem;
-        color: var(--text-muted);
+        color: var(--text-secondary);
         font-size: 0.6rem;
         font-weight: 850;
         letter-spacing: 0.06em;
@@ -2455,7 +2455,7 @@
         background:
             radial-gradient(circle at 18% 31%, color-mix(in srgb, var(--primary) 10%, transparent), transparent 32%),
             linear-gradient(155deg, var(--surface-raised), var(--surface-control));
-        box-shadow: 0 9px 22px rgba(0, 0, 0, 0.07);
+        box-shadow: 0 9px 22px var(--compat-shadow-tint-0-0-0-0p07);
         color: var(--text-main);
         padding: 0.75rem;
         text-align: left;
@@ -2492,7 +2492,7 @@
     .tci-browser-category {
         min-width: 0;
         overflow: hidden;
-        color: var(--text-muted);
+        color: var(--text-secondary);
         font-size: 0.58rem;
         font-weight: 900;
         letter-spacing: 0.08em;
@@ -2550,14 +2550,14 @@
         flex: 0 0 auto;
         align-items: center;
         justify-content: center;
-        color: color-mix(in srgb, var(--text-muted) 78%, var(--primary));
+        color: color-mix(in srgb, var(--text-secondary) 78%, var(--primary));
     }
 
     .tci-image img {
         width: 100%;
         height: 100%;
         object-fit: contain;
-        filter: drop-shadow(0 8px 10px rgba(0, 0, 0, 0.2));
+        filter: drop-shadow(0 8px 10px var(--compat-shadow-tint-0-0-0-0p2));
     }
 
     .tci-image > svg {
@@ -2618,7 +2618,7 @@
     .tci-browser-level-summary {
         display: block;
         margin-top: 0.42rem;
-        color: var(--text-muted);
+        color: var(--text-secondary);
         font-size: 0.59rem;
         font-weight: 850;
         letter-spacing: 0.06em;
@@ -2637,7 +2637,7 @@
     }
 
     .tci-browser-mini-tier {
-        --tci-rarity: color-mix(in srgb, var(--text-muted) 64%, var(--border-light));
+        --tci-rarity: color-mix(in srgb, var(--text-secondary) 64%, var(--border-light));
         display: flex;
         min-width: 2.55rem;
         flex-direction: column;
@@ -2655,36 +2655,36 @@
     }
 
     .tci-browser-mini-tier small {
-        color: var(--text-muted);
+        color: var(--text-secondary);
         font-size: 0.5rem;
         font-weight: 750;
         white-space: nowrap;
     }
 
     .tci-browser-mini-arrow {
-        color: color-mix(in srgb, var(--primary) 52%, var(--text-muted));
+        color: color-mix(in srgb, var(--primary) 52%, var(--text-secondary));
         font-size: 0.65rem;
         font-weight: 900;
     }
 
     .tci-browser-mini-tier[data-rarity="1"],
     .tci-detail-tier[data-rarity="1"] {
-        --tci-rarity: #9ca3af;
+        --tci-rarity: var(--text-secondary);
     }
 
     .tci-browser-mini-tier[data-rarity="2"],
     .tci-detail-tier[data-rarity="2"] {
-        --tci-rarity: #60a5fa;
+        --tci-rarity: var(--data-2);
     }
 
     .tci-browser-mini-tier[data-rarity="3"],
     .tci-detail-tier[data-rarity="3"] {
-        --tci-rarity: #c084fc;
+        --tci-rarity: var(--data-4);
     }
 
     .tci-browser-mini-tier[data-rarity="4"],
     .tci-detail-tier[data-rarity="4"] {
-        --tci-rarity: #fbbf24;
+        --tci-rarity: var(--data-1);
     }
 
     .tci-detail-panel {
@@ -2702,7 +2702,7 @@
         display: grid;
         place-content: center;
         gap: 0.75rem;
-        color: var(--text-muted);
+        color: var(--text-secondary);
         text-align: center;
     }
 
@@ -2710,7 +2710,7 @@
         width: 2rem;
         height: 2rem;
         margin: 0 auto;
-        color: color-mix(in srgb, var(--primary) 62%, var(--text-muted));
+        color: color-mix(in srgb, var(--primary) 62%, var(--text-secondary));
     }
 
     .tci-detail-panel-empty p {
@@ -2737,7 +2737,7 @@
         background:
             radial-gradient(circle at 50% 46%, color-mix(in srgb, var(--primary) 20%, transparent), transparent 66%),
             color-mix(in srgb, var(--bg-app) 44%, transparent);
-        box-shadow: 0 13px 28px rgba(0, 0, 0, 0.09);
+        box-shadow: 0 13px 28px var(--compat-shadow-tint-0-0-0-0p09);
     }
 
     .tci-detail-heading {
@@ -2774,7 +2774,7 @@
         border: 1px solid color-mix(in srgb, var(--primary) 16%, var(--border-base));
         border-radius: var(--radius-pill);
         background: var(--surface-raised);
-        color: var(--text-muted);
+        color: var(--text-secondary);
         font-size: 0.55rem;
         font-weight: 800;
         padding: 0.28rem 0.45rem;
@@ -2800,7 +2800,7 @@
     }
 
     .tci-detail-effect-empty {
-        color: var(--text-muted);
+        color: var(--text-secondary);
         font-style: italic;
     }
 
@@ -2817,7 +2817,7 @@
         align-items: center;
         justify-content: space-between;
         gap: 0.75rem;
-        color: var(--text-muted);
+        color: var(--text-secondary);
         font-size: 0.62rem;
         font-weight: 850;
         letter-spacing: 0.06em;
@@ -2859,7 +2859,7 @@
     }
 
     .tci-detail-chain-heading small {
-        color: var(--text-muted);
+        color: var(--text-secondary);
         font-size: 0.58rem;
         font-weight: 650;
     }
@@ -2871,7 +2871,7 @@
     }
 
     .tci-detail-tier {
-        --tci-rarity: #9ca3af;
+        --tci-rarity: var(--text-secondary);
         position: relative;
         display: grid;
         min-width: 0;
@@ -2911,7 +2911,7 @@
     }
 
     .tci-detail-tier-level small {
-        color: var(--text-muted);
+        color: var(--text-secondary);
         font-family: var(--font-mono-ui);
         font-size: 0.5rem;
     }
@@ -2932,7 +2932,7 @@
         display: inline-flex;
         align-items: center;
         gap: 0.25rem;
-        color: var(--text-muted);
+        color: var(--text-secondary);
         font-size: 0.54rem;
         font-weight: 800;
     }
@@ -2964,7 +2964,7 @@
         width: 0.9rem;
         height: 0.9rem;
         margin: 0.12rem auto;
-        color: color-mix(in srgb, var(--primary) 58%, var(--text-muted));
+        color: color-mix(in srgb, var(--primary) 58%, var(--text-secondary));
         stroke-width: 2.6;
     }
 
@@ -3150,13 +3150,13 @@
             radial-gradient(
                 circle at var(--liquid-header-curve-offset) calc(var(--liquid-header-overlap) - var(--radius-global)),
                 transparent calc(var(--radius-global) - 1px),
-                #000 var(--radius-global)
+                var(--compat-mask-opaque) var(--radius-global)
             );
         mask:
             radial-gradient(
                 circle at var(--liquid-header-curve-offset) calc(var(--liquid-header-overlap) - var(--radius-global)),
                 transparent calc(var(--radius-global) - 1px),
-                #000 var(--radius-global)
+                var(--compat-mask-opaque) var(--radius-global)
             );
     }
 
@@ -3166,13 +3166,13 @@
             radial-gradient(
                 circle at 0 calc(var(--liquid-header-overlap) - var(--radius-global)),
                 transparent calc(var(--radius-global) - 1px),
-                #000 var(--radius-global)
+                var(--compat-mask-opaque) var(--radius-global)
             );
         mask:
             radial-gradient(
                 circle at 0 calc(var(--liquid-header-overlap) - var(--radius-global)),
                 transparent calc(var(--radius-global) - 1px),
-                #000 var(--radius-global)
+                var(--compat-mask-opaque) var(--radius-global)
             );
     }
 
@@ -3295,7 +3295,7 @@
         font-weight: 900;
         letter-spacing: 0.13em;
         text-transform: uppercase;
-        color: var(--text-muted);
+        color: var(--text-secondary);
     }
 
     .battle-report-dossier-title {
@@ -3399,7 +3399,7 @@
         white-space: nowrap;
         font-size: 0.82rem;
         font-weight: 800;
-        color: var(--text-muted);
+        color: var(--text-secondary);
     }
 
     .battle-report-side-castle {
@@ -3508,7 +3508,7 @@
         font-weight: 900;
         letter-spacing: 0.12em;
         text-transform: uppercase;
-        color: var(--text-muted);
+        color: var(--text-secondary);
     }
 
     .battle-report-intel-value {
@@ -3575,7 +3575,7 @@
         background: color-mix(in srgb, var(--primary) 12%, var(--surface-raised));
         box-shadow: 0 10px 24px color-mix(in srgb, var(--primary) 20%, transparent);
         padding: 0.7rem 1rem;
-        color: var(--text-muted);
+        color: var(--text-secondary);
         font-size: 1rem;
         font-weight: 750;
         line-height: 1.25;
@@ -3686,7 +3686,7 @@
         display: -webkit-box;
         margin: 0.22rem 0 0;
         overflow: hidden;
-        color: var(--text-muted);
+        color: var(--text-secondary);
         font-size: 0.75rem;
         font-weight: 600;
         line-height: 1.4;
@@ -4011,7 +4011,7 @@
     }
 
     .liquid-toggle-btn-inactive {
-        color: var(--text-muted);
+        color: var(--text-secondary);
         background: transparent;
     }
 
