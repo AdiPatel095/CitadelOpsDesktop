@@ -6,5 +6,9 @@
   {
     "portal": "src/commandCenter/styles/fonts.css",
     "desktop": "Client/src/styles/fonts.css"
+  },
+  {
+    "portal": "src/commandCenter/components/automation/attackCounts.ts",
+    "desktop": "Client/src/components/automation/attackCounts.ts"
   }
 ]

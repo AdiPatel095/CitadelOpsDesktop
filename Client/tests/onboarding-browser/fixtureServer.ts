@@ -166,7 +166,7 @@ export class FixtureServer {
     if (path === '/locales') return json({ locales: [{ code: 'en' }] });
     if (path === '/update') return json({ currentVersion: '0.0.0-preview', latestVersion: '0.0.0-preview', available: false, installSupported: false, status: 'current', progress: 0, restartRequired: false, checkedAt: new Date(this.now()).toISOString() });
     if (path === '/diagnostics') return json({ applicationMemoryMb: 0, browserMemoryMb: 0, observedAt: new Date(this.now()).toISOString() });
-    if (path === '/telemetry/attack-rates') return json({ observedAt: new Date(this.now()).toISOString(), windowMinutes: 60, launchesByFeature: {} });
+    if (path === '/telemetry/attack-rates') return json({ observedAt: new Date(this.now()).toISOString(), windowMinutes: 60, windowStartedAt: new Date(this.now() - 3600000).toISOString(), launchesByFeature: {}, dailySession: { startedAt: new Date(this.now()).toISOString(), window: 'since', launchesByFeature: {} } });
     if (path === '/browsers') return json({ selected: null, current: null, available: [], restartRequired: false, selectionIntent: 'session.select_browser' });
     if (path === '/session/game-servers') return json({ version: 'fixture', source: 'fixture', updatedAt: new Date(this.now()).toISOString(), servers: [
       { code: 'DEMO1', label: 'Demo World', zone: 'demo-world', host: 'fixture.invalid', url: 'wss://fixture.invalid:443', international: false, instance: 1 },
