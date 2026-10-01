@@ -17,8 +17,6 @@
  * dark --radius-2xl: 1rem | 32px
  * light --radius-3xl: 1.5rem | 48px
  * dark --radius-3xl: 1.5rem | 48px
- * light --font-sans: "Google Sans Flex", "Roboto Flex", "Avenir Next", "Segoe UI Variable", "Segoe UI", system-ui, sans-serif | "Manrope", system-ui, "Segoe UI Variable Text", "Segoe UI", Roboto, "Noto Sans", "Helvetica Neue", Arial, sans-serif
- * dark --font-sans: "Google Sans Flex", "Roboto Flex", "Avenir Next", "Segoe UI Variable", "Segoe UI", system-ui, sans-serif | "Manrope", system-ui, "Segoe UI Variable Text", "Segoe UI", Roboto, "Noto Sans", "Helvetica Neue", Arial, sans-serif
  */
 
 :root,
@@ -138,7 +136,8 @@
     --layer-modal: 400;
     --layer-toast: 500;
     --layer-tooltip: 600;
-    --font-sans: "Google Sans Flex", "Roboto Flex", "Avenir Next", "Segoe UI Variable", "Segoe UI", system-ui, sans-serif;
+    --font-sans: "Manrope", "Manrope Fallback", system-ui, "Segoe UI Variable Text", "Segoe UI", Roboto, "Noto Sans", "Helvetica Neue", Arial, sans-serif;
+    --font-system: system-ui, "Segoe UI Variable Text", "Segoe UI", Roboto, "Noto Sans", "Helvetica Neue", Arial, sans-serif;
     --font-sans-ar: "Manrope", "SF Arabic", "Geeza Pro", "Segoe UI", "Noto Sans Arabic", "Noto Naskh Arabic", Tahoma, sans-serif;
     --font-sans-ja: "Manrope", "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Yu Gothic UI", "Meiryo UI", Meiryo, "Noto Sans CJK JP", "Noto Sans JP", sans-serif;
     --font-sans-ko: "Manrope", "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans CJK KR", "Noto Sans KR", sans-serif;
@@ -267,7 +266,8 @@
     --layer-modal: 400;
     --layer-toast: 500;
     --layer-tooltip: 600;
-    --font-sans: "Google Sans Flex", "Roboto Flex", "Avenir Next", "Segoe UI Variable", "Segoe UI", system-ui, sans-serif;
+    --font-sans: "Manrope", "Manrope Fallback", system-ui, "Segoe UI Variable Text", "Segoe UI", Roboto, "Noto Sans", "Helvetica Neue", Arial, sans-serif;
+    --font-system: system-ui, "Segoe UI Variable Text", "Segoe UI", Roboto, "Noto Sans", "Helvetica Neue", Arial, sans-serif;
     --font-sans-ar: "Manrope", "SF Arabic", "Geeza Pro", "Segoe UI", "Noto Sans Arabic", "Noto Naskh Arabic", Tahoma, sans-serif;
     --font-sans-ja: "Manrope", "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Yu Gothic UI", "Meiryo UI", Meiryo, "Noto Sans CJK JP", "Noto Sans JP", sans-serif;
     --font-sans-ko: "Manrope", "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans CJK KR", "Noto Sans KR", sans-serif;
@@ -279,6 +279,13 @@
     --elevation-3: 0 4px 8px rgb(0 0 0 / 48%), 0 16px 40px rgb(0 0 0 / 36%);
     --elevation-4: 0 8px 16px rgb(0 0 0 / 52%), 0 24px 64px rgb(0 0 0 / 56%);
 }
+
+/* CIT-63: script stacks follow the element language, including nested text. */
+:lang(ar) { --font-sans: var(--font-sans-ar); }
+:lang(ja) { --font-sans: var(--font-sans-ja); }
+:lang(ko) { --font-sans: var(--font-sans-ko); }
+:lang(zh-CN) { --font-sans: var(--font-sans-zh-CN); }
+:lang(zh-TW) { --font-sans: var(--font-sans-zh-TW); }
 
 /* LEGACY ALIAS LAYER — semantic colours; non-colour values remain compatible.
  * --compat-* stores values without a spec equivalent. Existing stylesheet

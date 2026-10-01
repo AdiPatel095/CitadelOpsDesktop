@@ -1,0 +1,90 @@
+[
+  {
+    "portal": "src/commandCenter/styles/tokens.css",
+    "desktop": "Client/src/styles/tokens.css"
+  },
+  {
+    "portal": "src/commandCenter/styles/fonts.css",
+    "desktop": "Client/src/styles/fonts.css"
+  },
+  {
+    "portal": "src/commandCenter/components/automation/attackCounts.ts",
+    "desktop": "Client/src/components/automation/attackCounts.ts"
+  },
+  {
+    "portal": "src/commandCenter/components/ConnectionStatus.tsx",
+    "desktop": "Client/src/components/ConnectionStatus.tsx"
+  },
+  {
+    "portal": "src/commandCenter/components/playerStatusDisplay.ts",
+    "desktop": "Client/src/components/playerStatusDisplay.ts"
+  },
+  {
+    "portal": "src/commandCenter/components/ui/StatusBadge.tsx",
+    "desktop": "Client/src/components/ui/StatusBadge.tsx"
+  },
+  {
+    "portal": "src/commandCenter/components/ui/StatusBadge.css",
+    "desktop": "Client/src/components/ui/StatusBadge.css"
+  },
+  {
+    "portal": "src/commandCenter/components/ui/RoleTag.tsx",
+    "desktop": "Client/src/components/ui/RoleTag.tsx"
+  },
+  {
+    "portal": "src/commandCenter/components/AutomationFeatureFeedback.tsx",
+    "desktop": "Client/src/components/AutomationFeatureFeedback.tsx"
+  },
+  {
+    "portal": "src/commandCenter/components/StopControl.tsx",
+    "desktop": "Client/src/components/StopControl.tsx"
+  },
+  {
+    "portal": "src/commandCenter/settings/components/AutomationRunStrip.tsx",
+    "desktop": "Client/src/settings/components/AutomationRunStrip.tsx"
+  },
+  {
+    "portal": "src/commandCenter/settings/readiness/automationPlayerStatusDisplay.ts",
+    "desktop": "Client/src/settings/readiness/automationPlayerStatusDisplay.ts"
+  },
+  {
+    "portal": "src/commandCenter/settings/readiness/useAutomationPlayerStatus.ts",
+    "desktop": "Client/src/settings/readiness/useAutomationPlayerStatus.ts"
+  },
+  {
+    "portal": "src/commandCenter/settings/readiness/playerStatus.ts",
+    "desktop": "Client/src/settings/readiness/playerStatus.ts"
+  },
+  {
+    "portal": "src/commandCenter/components/stationHeaderPill.ts",
+    "desktop": "Client/src/components/stationHeaderPill.ts"
+  },
+  {
+    "portal": "tests/status-badges.test.mjs",
+    "desktop": "Client/tests/status-badges.test.mjs"
+  },
+  {
+    "portal": "src/commandCenter/components/ui/viewStatus.ts",
+    "desktop": "Client/src/components/ui/viewStatus.ts"
+  },
+  {
+    "portal": "src/commandCenter/components/ui/tabsLogic.ts",
+    "desktop": "Client/src/components/ui/tabsLogic.ts"
+  },
+  {
+    "portal": "src/commandCenter/mock/onboarding/visualStates.ts",
+    "desktop": "Client/tests/onboarding-browser/visualStates.ts"
+  },
+  {
+    "portal": "scripts/check-retired-classes.mjs",
+    "desktop": "Client/scripts/check-retired-classes.mjs"
+  },
+  {
+    "portal": "tests/view-states-logic.test.mjs",
+    "desktop": "Client/tests/view-states-logic.test.mjs"
+  },
+  {
+    "portal": "tests/check-retired-classes.test.mjs",
+    "desktop": "Client/tests/check-retired-classes.test.mjs"
+  }
+]

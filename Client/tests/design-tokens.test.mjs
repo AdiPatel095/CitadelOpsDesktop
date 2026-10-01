@@ -59,9 +59,11 @@ test('R4 segment tokens match spec section 3.6 in both themes', () => {
   assert.equal(resolve('dark', '--segment-track'), '#2C241C');
   assert.equal(resolve('dark', '--segment-thumb'), '#46392C');
 });
-test('non-colour held values remain marked for PR-3 and CIT-63', () => {
+test('radii remain held for PR-3 and Manrope is active in both themes', () => {
   assert.match(source, /HELD-BACK NON-COLOUR VALUES[\s\S]*light --radius-xs: 0\.125rem \| 4px/);
-  assert.match(source, /light --font-sans:[^\n]+\| "Manrope"/);
+  for (const theme of ['light', 'dark']) {
+    assert.match(resolve(theme, '--font-sans'), /^"Manrope", "Manrope Fallback",/);
+  }
   assert.match(source, /LEGACY ALIAS LAYER/);
 });
 test('every Tailwind theme color references a token in both themes', () => {

@@ -19,7 +19,11 @@
     "lint:css": "stylelint \"src/**/*.css\"",
     "css:metrics": "node scripts/css-metrics.mjs",
     "check:arbitrary-values": "node scripts/check-arbitrary-values.mjs",
-    "test:tokens": "node --test tests/design-tokens.test.mjs"
+    "test:tokens": "node --test tests/design-tokens.test.mjs",
+    "prebuild": "python3 ../scripts/fonts/build-manrope --check",
+    "check:fonts": "python3 ../scripts/fonts/build-manrope --check",
+    "test:fonts": "python3 ../scripts/fonts/test-gate.py",
+    "check:mirror": "npm --prefix .. run check:mirror --"
   },
   "dependencies": {
     "@formatjs/icu-messageformat-parser": "^3.5.20",
