@@ -69,6 +69,11 @@ test('CIT-66 wrapped reasons omit the separator and start flush in LTR and RTL',
       const badge = element.querySelector('.player-status-badge')!;
       element.style.width = `${badge.getBoundingClientRect().width + 20}px`;
     });
+    // The boundary was already wrapped, so its previous data attribute is not
+    // enough to await this resize. Wait for the new measured geometry too.
+    await expect.poll(() => reason.evaluate(element =>
+      element.getBoundingClientRect().top - element.previousElementSibling!.getBoundingClientRect().bottom
+    )).toBeGreaterThanOrEqual(0);
     await expect(reason).toHaveAttribute('data-wrapped', 'true');
     await expect(reason.locator('.player-status-reason-separator')).toBeHidden();
     // Measure the first visible word, including its bidi run, not the hidden separator.
