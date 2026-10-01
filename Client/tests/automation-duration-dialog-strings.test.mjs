@@ -6,6 +6,7 @@ import vm from 'node:vm';
 import ts from 'typescript';
 import React from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
+import { parse, TYPE } from '@formatjs/icu-messageformat-parser';
 
 const sourceRoot = new URL('../src/', import.meta.url);
 const require = createRequire(import.meta.url);
@@ -39,13 +40,13 @@ const inventory = [
   ['amountLabel', {}, 'Automation duration amount'], ['unitLabel', {}, 'Automation duration unit'],
   ['minutes', {}, 'Minutes'], ['hours', {}, 'Hours'], ['days', {}, 'Days'],
   ['invalidDuration', {}, 'Choose a duration from 1 minute through 7 days.'],
-  ['runStarts', { feature: 'Auto Bird' }, 'Auto Bird turns on immediately and the server turns it off at'],
-  ['pauseStarts', { feature: 'Auto Bird' }, 'Auto Bird pauses immediately and resumes at'],
+  ['runStarts', { feature: 'Auto Bird', endsAt: '10/1/2026, 1:00:00 AM' }, 'Auto Bird turns on immediately and the server turns it off at 10/1/2026, 1:00:00 AM.'],
+  ['pauseStarts', { feature: 'Auto Bird', endsAt: '10/1/2026, 1:00:00 AM' }, 'Auto Bird pauses immediately and resumes at 10/1/2026, 1:00:00 AM.'],
   ['scheduleNotice', {}, 'Weekly schedules and the global automation lock still apply during this window.'],
   ['currentRunEnds', { date: 'DATE' }, 'Current timed run ends DATE.'],
   ['currentPauseEnds', { date: 'DATE' }, 'Current pause ends DATE.'],
 ];
-const translate = (key, params, locale = 'en') => formatMessage({ key, fallback: messages[key], params }, locale, {}).text;
+const translate = (key, params, locale = 'en', catalog = {}) => formatMessage({ key, fallback: messages[key], params }, locale, catalog).text;
 
 test('every duration key formats to the exact old English, including all preset counts', () => {
   assert.equal(Object.keys(messages).filter(key => key.startsWith(prefix)).length, 20);
@@ -74,7 +75,7 @@ test('no inventoried literal remains in the dialog source', () => {
 });
 
 // Render the real dialog with isolated UI/auth boundaries and deterministic hooks/time.
-function renderDialog({ pause = false, amount = '1', locale = 'en', saveError } = {}) {
+function renderDialog({ pause = false, amount = '1', locale = 'en', catalog = {}, saveError } = {}) {
   const setters = [];
   let stateIndex = 0;
   const react = { ...React, useEffect: () => {}, useMemo: fn => fn(), useState: initial => {
@@ -94,9 +95,9 @@ function renderDialog({ pause = false, amount = '1', locale = 'en', saveError } 
   class FixedDate extends NativeDate {
     constructor(...args) { super(...(args.length ? args : ['2026-10-01T00:00:00Z'])); }
     static now() { return 1790812800000; }
-    toLocaleString() { return 'DATE'; }
+    toLocaleString(locales, options) { return super.toLocaleString(locales ?? 'en-US', { ...options, timeZone: 'UTC' }); }
   }
-  const t = (key, params) => translate(key, params, locale);
+  const t = (key, params) => translate(key, params, locale, catalog);
   const auth = { automationTimedUntilByKey: { autoBird: 1790816400000 },
     enableAutomationFor: async () => { if (saveError !== undefined) throw saveError; } };
   const imports = {
@@ -119,8 +120,8 @@ test('rendered run/pause English, whitespace, punctuation and aria labels match 
   for (const pause of [false, true]) {
     const { html } = renderDialog({ pause });
     const expected = `${pause ? 'Pause' : 'Run'} Auto Bird for a durationQuick durations30 min1 hr2 hr4 hr8 hr24 hrCustom durationMinutesHoursDays` +
-      `Auto Bird ${pause ? 'pauses immediately and resumes at' : 'turns on immediately and the server turns it off at'} DATE.` +
-      `Weekly schedules and the global automation lock still apply during this window.Current ${pause ? 'pause' : 'timed run'} ends DATE.Cancel` +
+      `Auto Bird ${pause ? 'pauses immediately and resumes at' : 'turns on immediately and the server turns it off at'} 10/1/2026, 1:00:00 AM.` +
+      `Weekly schedules and the global automation lock still apply during this window.Current ${pause ? 'pause' : 'timed run'} ends 10/1/2026, 1:00:00 AM.Cancel` +
       `${pause ? 'Pause' : 'Turn on'} for this duration`;
     assert.equal(text(html), expected);
     assert.ok(html.includes('aria-label="Automation duration amount"'));
@@ -142,4 +143,34 @@ test('non-Error save failures use the exact old fallback message', async () => {
 test('German missing keys fall back to exact English without raw keys', () => {
   for (const [suffix, params, expected] of inventory) assert.equal(translate(prefix + suffix, params, 'de'), expected);
   for (const pause of [false, true]) assert.equal(text(renderDialog({ pause, locale: 'de' }).html), text(renderDialog({ pause }).html));
+});
+
+
+test('both preset units are ICU plurals with one and other branches', () => {
+  for (const suffix of ['presetMinutes', 'presetHours']) {
+    const ast = parse(messages[prefix + suffix]);
+    assert.equal(ast.length, 1);
+    assert.equal(ast[0].type, TYPE.plural);
+    assert.equal(ast[0].value, 'count');
+    assert.ok(ast[0].options.one);
+    assert.ok(ast[0].options.other);
+    for (const count of [1, 2, 4, 8, 24, 30]) {
+      assert.equal(translate(prefix + suffix, { count }), `${count} ${suffix === 'presetMinutes' ? 'min' : 'hr'}`);
+    }
+  }
+});
+
+test('endsAt-first pseudo catalog reorders the full rendered run and pause messages', () => {
+  const catalog = {
+    [prefix + 'runStarts']: '{endsAt}: {feature} turns on immediately.',
+    [prefix + 'pauseStarts']: '{endsAt}: {feature} pauses immediately.',
+  };
+  const english = Object.fromEntries(Object.keys(catalog).map(key => [key, messages[key]]));
+  assert.equal(JSON.stringify(validateMessageCatalog(english, catalog)), '[]');
+  for (const pause of [false, true]) {
+    const { html } = renderDialog({ pause, locale: 'de', catalog });
+    const expected = `10/1/2026, 1:00:00 AM: Auto Bird ${pause ? 'pauses' : 'turns on'} immediately.`;
+    assert.equal((html.match(/<p>(.*?)<\/p>/)?.[1] ?? ''), expected);
+    assert.equal(text(html).split('10/1/2026, 1:00:00 AM').length - 1, 2, 'end date appears once in the message and once in the existing current-run notice');
+  }
 });
