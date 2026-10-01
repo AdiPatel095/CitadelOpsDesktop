@@ -265,7 +265,7 @@ function observedBonusTroopStats(
           const metadata = effects[effect.definitionId];
           if (!isBonusTroopEffect(metadata)) continue;
           const troopValues = pairedTroopValues(effect.values, troops);
-          const values = troopValues.length > 0
+          const values: Array<{ unitId?: number; value: number }> = troopValues.length > 0
             ? troopValues
             : scalarEffectValue(effect.values).map((value) => ({ value }));
           for (const entry of values) {

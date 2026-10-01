@@ -1693,7 +1693,7 @@ function normalizeSeries(
         .map((point) => ({
           timestampUnix: point.timestampUnix,
           value: point.value,
-          source: 'local',
+          source: 'local' as const,
         }))
         .sort((a, b) => a.timestampUnix - b.timestampUnix);
     }
