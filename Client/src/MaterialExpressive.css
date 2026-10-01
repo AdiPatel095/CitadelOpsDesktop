@@ -940,7 +940,7 @@ select {
 
 .m3-section-card:nth-child(even),
 .castle-dashboard-left > .m3-section-card:nth-child(even) {
-    border-radius: var(--md-expressive-shape-card-alt) !important;
+    border-radius: var(--shape-card) !important;
 }
 
 .liquid-prominent-header-card {

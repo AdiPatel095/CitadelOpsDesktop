@@ -1,23 +1,8 @@
-/* CIT-62 PR-2. Desktop is upstream; mirror this file byte-for-byte.
- * Semantic names from CIT-60 §§3–5. Colour roles follow spec; non-colour compatibility values remain held.
+/* CIT-62 PR-3. Desktop is upstream; mirror this file byte-for-byte.
+ * Semantic names from CIT-60 §§3–5. Colour, radius, shape and elevation roles follow spec; typography and spacing stay held.
  */
 
-/* HELD-BACK NON-COLOUR VALUES — current | spec; radii in PR-3, face in CIT-63 A.
- * light --radius-xs: 0.125rem | 4px
- * dark --radius-xs: 0.125rem | 4px
- * light --radius-sm: 0.25rem | 8px
- * dark --radius-sm: 0.25rem | 8px
- * light --radius-md: 0.375rem | 12px
- * dark --radius-md: 0.375rem | 12px
- * light --radius-lg: 0.5rem | 16px
- * dark --radius-lg: 0.5rem | 16px
- * light --radius-xl: 0.75rem | 24px
- * dark --radius-xl: 0.75rem | 24px
- * light --radius-2xl: 1rem | 32px
- * dark --radius-2xl: 1rem | 32px
- * light --radius-3xl: 1.5rem | 48px
- * dark --radius-3xl: 1.5rem | 48px
- */
+/* Typography and spacing are owned by CIT-63/CIT-74; preserve develop values. */
 
 :root,
 [data-theme="light"] {
@@ -108,13 +93,13 @@
     --space-48: 48px;
     --space-64: 64px;
     --space-96: 96px;
-    --radius-xs: 0.125rem;
-    --radius-sm: 0.25rem;
-    --radius-md: 0.375rem;
-    --radius-lg: 0.5rem;
-    --radius-xl: 0.75rem;
-    --radius-2xl: 1rem;
-    --radius-3xl: 1.5rem;
+    --radius-xs: 4px;
+    --radius-sm: 8px;
+    --radius-md: 12px;
+    --radius-lg: 16px;
+    --radius-xl: 24px;
+    --radius-2xl: 32px;
+    --radius-3xl: 48px;
     --radius-full: 9999px;
     --control-height-badge: 24px;
     --control-height-sm: 32px;
@@ -238,13 +223,13 @@
     --space-48: 48px;
     --space-64: 64px;
     --space-96: 96px;
-    --radius-xs: 0.125rem;
-    --radius-sm: 0.25rem;
-    --radius-md: 0.375rem;
-    --radius-lg: 0.5rem;
-    --radius-xl: 0.75rem;
-    --radius-2xl: 1rem;
-    --radius-3xl: 1.5rem;
+    --radius-xs: 4px;
+    --radius-sm: 8px;
+    --radius-md: 12px;
+    --radius-lg: 16px;
+    --radius-xl: 24px;
+    --radius-2xl: 32px;
+    --radius-3xl: 48px;
     --radius-full: 9999px;
     --control-height-badge: 24px;
     --control-height-sm: 32px;
@@ -304,10 +289,10 @@
     --compat-font-mono-ui: "SFMono-Regular", "Cascadia Code", "Roboto Mono", Consolas, monospace;
     --compat-border-light: var(--border-subtle);
     --compat-primary-glow: color-mix(in srgb, var(--md-sys-color-primary) 22%, transparent);
-    --compat-shadow-shell: 0 1px 2px rgba(34, 22, 56, 0.08), 0 10px 32px rgba(34, 22, 56, 0.08);
-    --compat-shadow-raised: 0 2px 4px rgba(34, 22, 56, 0.1), 0 18px 44px rgba(34, 22, 56, 0.12);
-    --compat-shadow-panel: 0 1px 2px rgba(34, 22, 56, 0.08), 0 8px 28px rgba(34, 22, 56, 0.06);
-    --compat-shadow-modal: 0 24px 64px rgba(34, 22, 56, 0.25);
+    --compat-shadow-shell: var(--elevation-1);
+    --compat-shadow-raised: var(--elevation-2);
+    --compat-shadow-panel: var(--elevation-1);
+    --compat-shadow-modal: var(--elevation-4);
     --compat-md-sys-color-on-secondary: var(--text-inverse);
     --compat-md-sys-color-secondary-container: var(--surface-control);
     --compat-md-sys-color-on-secondary-container: var(--text-primary);
@@ -323,25 +308,24 @@
     --compat-md-sys-color-surface-container-highest: var(--surface-field);
     --compat-md-sys-color-inverse-surface: var(--surface-inverse);
     --compat-md-sys-color-inverse-on-surface: var(--text-inverse);
-    --compat-md-sys-shape-corner-extra-large: 36px;
-    --compat-md-expressive-shape-card: 32px 14px 32px 32px;
-    --compat-md-expressive-shape-card-alt: 14px 32px 32px 32px;
-    --compat-md-expressive-shape-hero: 48px 18px 48px 48px;
-    --compat-md-expressive-shape-shell: 32px 16px 32px 32px;
-    --compat-md-sys-motion-duration-short: 160ms;
-    --compat-md-sys-motion-duration-long: 480ms;
+    --compat-md-sys-shape-corner-extra-large: var(--radius-2xl);
+    --compat-md-expressive-shape-card: var(--shape-card);
+    --compat-md-expressive-shape-hero: var(--shape-hero);
+    --compat-md-expressive-shape-shell: var(--shape-card);
+    --compat-md-sys-motion-duration-short: var(--duration-fast);
+    --compat-md-sys-motion-duration-long: var(--duration-slow);
     --compat-secondary-hover: var(--data-1);
     --compat-secondary-glow: color-mix(in srgb, var(--md-sys-color-secondary) 18%, transparent);
     --compat-font-mono: "SFMono-Regular", "Cascadia Code", "Roboto Mono", Consolas, monospace;
-    --compat-shadow-floating: 0 22px 60px rgba(34, 22, 56, 0.2);
+    --compat-shadow-floating: var(--elevation-3);
     --compat-theme-portal-animate-fade-in: fadeIn 0.28s ease-out forwards;
     --compat-theme-portal-shadow-glow: 0 0 18px var(--primary-glow);
     --compat-theme-portal-shadow-glow-active: 0 0 28px var(--primary-glow);
     --compat-theme-portal-animate-fade-in-right: fadeInRight 0.36s cubic-bezier(0.16, 1, 0.3, 1) forwards;
     --compat-theme-portal-animate-fade-out-right: fadeOutRight 0.32s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-    --compat-command-shadow-raised: 0 1px 2px rgba(34, 22, 56, 0.08), 0 6px 18px rgba(34, 22, 56, 0.07);
-    --compat-command-shadow-panel: 0 1px 2px rgba(34, 22, 56, 0.08);
-    --compat-theme-desktop-radius-global: 12px;
+    --compat-command-shadow-raised: var(--elevation-2);
+    --compat-command-shadow-panel: var(--elevation-1);
+    --compat-theme-desktop-radius-global: var(--radius-xl);
     --compat-theme-desktop-font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Segoe UI", system-ui, sans-serif;
     --compat-theme-desktop-shadow-glow: 0 0 18px var(--primary-glow);
     --compat-theme-desktop-shadow-glow-active: 0 0 28px var(--primary-glow);
@@ -362,9 +346,9 @@
     --action-primary: var(--accent);
     --action-primary-hover: var(--accent-hover);
     --status-inactive: var(--status-neutral);
-    --radius-control: var(--md-sys-shape-corner-medium);
-    --radius-surface: var(--md-sys-shape-corner-large);
-    --radius-pill: var(--md-sys-shape-corner-full);
+    --radius-control: var(--radius-md);
+    --radius-surface: var(--radius-2xl);
+    --radius-pill: var(--radius-full);
     --font-mono-ui: var(--compat-font-mono-ui);
     --bg-app: var(--surface-canvas);
     --bg-card: var(--surface-card);
@@ -384,10 +368,10 @@
     --surface-shell: var(--surface-card);
     --surface-panel: var(--surface-card);
     --surface-raised: var(--surface-card);
-    --shadow-shell: var(--compat-shadow-shell);
-    --shadow-raised: var(--compat-shadow-raised);
-    --shadow-panel: var(--compat-shadow-panel);
-    --shadow-modal: var(--compat-shadow-modal);
+    --shadow-shell: var(--elevation-1);
+    --shadow-raised: var(--elevation-2);
+    --shadow-panel: var(--elevation-1);
+    --shadow-modal: var(--elevation-4);
     --control-background: var(--surface-control);
     --control-shadow: var(--elevation-0);
     --control-active-background: var(--accent-container);
@@ -421,29 +405,28 @@
     --md-sys-color-outline-variant: var(--border-default);
     --md-sys-color-inverse-surface: var(--surface-inverse);
     --md-sys-color-inverse-on-surface: var(--text-inverse);
-    --md-sys-shape-corner-extra-small: var(--space-8);
-    --md-sys-shape-corner-small: var(--font-size-12);
-    --md-sys-shape-corner-medium: var(--line-height-13);
-    --md-sys-shape-corner-large: var(--line-height-20);
-    --md-sys-shape-corner-extra-large: var(--compat-md-sys-shape-corner-extra-large);
+    --md-sys-shape-corner-extra-small: var(--radius-xs);
+    --md-sys-shape-corner-small: var(--radius-sm);
+    --md-sys-shape-corner-medium: var(--radius-md);
+    --md-sys-shape-corner-large: var(--radius-xl);
+    --md-sys-shape-corner-extra-large: var(--radius-2xl);
     --md-sys-shape-corner-full: var(--radius-full);
-    --md-expressive-shape-card: var(--compat-md-expressive-shape-card);
-    --md-expressive-shape-card-alt: var(--compat-md-expressive-shape-card-alt);
-    --md-expressive-shape-hero: var(--compat-md-expressive-shape-hero);
-    --md-expressive-shape-shell: var(--compat-md-expressive-shape-shell);
-    --md-sys-motion-duration-short: var(--compat-md-sys-motion-duration-short);
-    --md-sys-motion-duration-medium: var(--duration-slow);
-    --md-sys-motion-duration-long: var(--compat-md-sys-motion-duration-long);
+    --md-expressive-shape-card: var(--shape-card);
+    --md-expressive-shape-hero: var(--shape-hero);
+    --md-expressive-shape-shell: var(--shape-card);
+    --md-sys-motion-duration-short: var(--duration-fast);
+    --md-sys-motion-duration-medium: var(--duration-base);
+    --md-sys-motion-duration-long: var(--duration-slow);
     --md-sys-motion-easing-standard: var(--ease-standard);
     --md-sys-motion-easing-emphasized: var(--ease-enter);
-    --radius-global: var(--md-sys-shape-corner-large);
+    --radius-global: var(--radius-xl);
     --shadow-glow: var(--elevation-0);
     --shadow-glow-active: var(--elevation-0);
     --secondary: var(--data-1);
     --secondary-hover: var(--data-1);
     --secondary-glow: var(--compat-secondary-glow);
     --font-mono: var(--compat-font-mono);
-    --shadow-floating: var(--compat-shadow-floating);
+    --shadow-floating: var(--elevation-3);
     --portal-sidebar-width: var(--app-sidebar-width);
     --portal-header-height: var(--app-header-height);
     --portal-content-max: var(--app-content-max);
@@ -462,10 +445,10 @@
     --compat-font-mono-ui: "SFMono-Regular", "Cascadia Code", "Roboto Mono", Consolas, monospace;
     --compat-border-light: var(--border-subtle);
     --compat-primary-glow: color-mix(in srgb, var(--md-sys-color-primary) 22%, transparent);
-    --compat-shadow-shell: 0 1px 2px rgba(0, 0, 0, 0.42), 0 14px 36px rgba(0, 0, 0, 0.2);
-    --compat-shadow-raised: 0 2px 4px rgba(0, 0, 0, 0.52), 0 20px 48px rgba(0, 0, 0, 0.24);
-    --compat-shadow-panel: 0 1px 2px rgba(0, 0, 0, 0.42), 0 12px 34px rgba(0, 0, 0, 0.15);
-    --compat-shadow-modal: 0 28px 72px rgba(0, 0, 0, 0.62);
+    --compat-shadow-shell: var(--elevation-1);
+    --compat-shadow-raised: var(--elevation-2);
+    --compat-shadow-panel: var(--elevation-1);
+    --compat-shadow-modal: var(--elevation-4);
     --compat-md-sys-color-on-secondary: var(--text-inverse);
     --compat-md-sys-color-secondary-container: var(--surface-control);
     --compat-md-sys-color-on-secondary-container: var(--text-primary);
@@ -479,25 +462,24 @@
     --compat-md-sys-color-surface-container-low: var(--surface-card);
     --compat-md-sys-color-surface-container: var(--surface-inset);
     --compat-md-sys-color-inverse-on-surface: var(--text-inverse);
-    --compat-md-sys-shape-corner-extra-large: 36px;
-    --compat-md-expressive-shape-card: 32px 14px 32px 32px;
-    --compat-md-expressive-shape-card-alt: 14px 32px 32px 32px;
-    --compat-md-expressive-shape-hero: 48px 18px 48px 48px;
-    --compat-md-expressive-shape-shell: 32px 16px 32px 32px;
-    --compat-md-sys-motion-duration-short: 160ms;
-    --compat-md-sys-motion-duration-long: 480ms;
+    --compat-md-sys-shape-corner-extra-large: var(--radius-2xl);
+    --compat-md-expressive-shape-card: var(--shape-card);
+    --compat-md-expressive-shape-hero: var(--shape-hero);
+    --compat-md-expressive-shape-shell: var(--shape-card);
+    --compat-md-sys-motion-duration-short: var(--duration-fast);
+    --compat-md-sys-motion-duration-long: var(--duration-slow);
     --compat-secondary-hover: var(--data-1);
     --compat-secondary-glow: color-mix(in srgb, var(--md-sys-color-secondary) 18%, transparent);
     --compat-font-mono: "SFMono-Regular", "Cascadia Code", "Roboto Mono", Consolas, monospace;
-    --compat-shadow-floating: 0 28px 76px rgba(0, 0, 0, 0.64);
+    --compat-shadow-floating: var(--elevation-3);
     --compat-theme-portal-animate-fade-in: fadeIn 0.28s ease-out forwards;
     --compat-theme-portal-shadow-glow: 0 0 18px var(--primary-glow);
     --compat-theme-portal-shadow-glow-active: 0 0 28px var(--primary-glow);
     --compat-theme-portal-animate-fade-in-right: fadeInRight 0.36s cubic-bezier(0.16, 1, 0.3, 1) forwards;
     --compat-theme-portal-animate-fade-out-right: fadeOutRight 0.32s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-    --compat-command-shadow-raised: 0 1px 2px rgba(0, 0, 0, 0.46), 0 8px 24px rgba(0, 0, 0, 0.18);
-    --compat-command-shadow-panel: 0 1px 2px rgba(0, 0, 0, 0.42);
-    --compat-theme-desktop-radius-global: 12px;
+    --compat-command-shadow-raised: var(--elevation-2);
+    --compat-command-shadow-panel: var(--elevation-1);
+    --compat-theme-desktop-radius-global: var(--radius-xl);
     --compat-theme-desktop-font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Segoe UI", system-ui, sans-serif;
     --compat-theme-desktop-shadow-glow: 0 0 18px var(--primary-glow);
     --compat-theme-desktop-shadow-glow-active: 0 0 28px var(--primary-glow);
@@ -518,9 +500,9 @@
     --action-primary: var(--accent);
     --action-primary-hover: var(--accent-hover);
     --status-inactive: var(--status-neutral);
-    --radius-control: var(--md-sys-shape-corner-medium);
-    --radius-surface: var(--md-sys-shape-corner-large);
-    --radius-pill: var(--md-sys-shape-corner-full);
+    --radius-control: var(--radius-md);
+    --radius-surface: var(--radius-2xl);
+    --radius-pill: var(--radius-full);
     --font-mono-ui: var(--compat-font-mono-ui);
     --bg-app: var(--surface-canvas);
     --bg-card: var(--surface-card);
@@ -540,10 +522,10 @@
     --surface-shell: var(--surface-card);
     --surface-panel: var(--surface-card);
     --surface-raised: var(--surface-card);
-    --shadow-shell: var(--compat-shadow-shell);
-    --shadow-raised: var(--compat-shadow-raised);
-    --shadow-panel: var(--compat-shadow-panel);
-    --shadow-modal: var(--compat-shadow-modal);
+    --shadow-shell: var(--elevation-1);
+    --shadow-raised: var(--elevation-2);
+    --shadow-panel: var(--elevation-1);
+    --shadow-modal: var(--elevation-4);
     --control-background: var(--surface-control);
     --control-shadow: var(--elevation-0);
     --control-active-background: var(--accent-container);
@@ -577,29 +559,28 @@
     --md-sys-color-outline-variant: var(--border-default);
     --md-sys-color-inverse-surface: var(--surface-inverse);
     --md-sys-color-inverse-on-surface: var(--text-inverse);
-    --md-sys-shape-corner-extra-small: var(--space-8);
-    --md-sys-shape-corner-small: var(--font-size-12);
-    --md-sys-shape-corner-medium: var(--line-height-13);
-    --md-sys-shape-corner-large: var(--line-height-20);
-    --md-sys-shape-corner-extra-large: var(--compat-md-sys-shape-corner-extra-large);
+    --md-sys-shape-corner-extra-small: var(--radius-xs);
+    --md-sys-shape-corner-small: var(--radius-sm);
+    --md-sys-shape-corner-medium: var(--radius-md);
+    --md-sys-shape-corner-large: var(--radius-xl);
+    --md-sys-shape-corner-extra-large: var(--radius-2xl);
     --md-sys-shape-corner-full: var(--radius-full);
-    --md-expressive-shape-card: var(--compat-md-expressive-shape-card);
-    --md-expressive-shape-card-alt: var(--compat-md-expressive-shape-card-alt);
-    --md-expressive-shape-hero: var(--compat-md-expressive-shape-hero);
-    --md-expressive-shape-shell: var(--compat-md-expressive-shape-shell);
-    --md-sys-motion-duration-short: var(--compat-md-sys-motion-duration-short);
-    --md-sys-motion-duration-medium: var(--duration-slow);
-    --md-sys-motion-duration-long: var(--compat-md-sys-motion-duration-long);
+    --md-expressive-shape-card: var(--shape-card);
+    --md-expressive-shape-hero: var(--shape-hero);
+    --md-expressive-shape-shell: var(--shape-card);
+    --md-sys-motion-duration-short: var(--duration-fast);
+    --md-sys-motion-duration-medium: var(--duration-base);
+    --md-sys-motion-duration-long: var(--duration-slow);
     --md-sys-motion-easing-standard: var(--ease-standard);
     --md-sys-motion-easing-emphasized: var(--ease-enter);
-    --radius-global: var(--md-sys-shape-corner-large);
+    --radius-global: var(--radius-xl);
     --shadow-glow: var(--elevation-0);
     --shadow-glow-active: var(--elevation-0);
     --secondary: var(--data-1);
     --secondary-hover: var(--data-1);
     --secondary-glow: var(--compat-secondary-glow);
     --font-mono: var(--compat-font-mono);
-    --shadow-floating: var(--compat-shadow-floating);
+    --shadow-floating: var(--elevation-3);
     --portal-sidebar-width: var(--app-sidebar-width);
     --portal-header-height: var(--app-header-height);
     --portal-content-max: var(--app-content-max);
@@ -670,4 +651,22 @@
     --compat-shadow-tint-0-0-0-0p2: rgba(0, 0, 0, 0.2);
     --compat-shadow-tint-0-0-0-0p07: rgba(0, 0, 0, 0.07);
     --compat-shadow-tint-18-27-18-0p3: rgba(18, 27, 18, 0.3);
+}
+
+/* CIT-60 §5.2: the signature corner follows reading direction and compact cards. */
+[dir="rtl"] {
+    --shape-card: 12px 32px 32px 32px;
+    --shape-hero: 16px 48px 48px 48px;
+}
+
+@media (max-width: 767px) {
+    :root,
+    [data-theme="light"],
+    [data-theme="dark"] {
+        --shape-card: 24px 12px 24px 24px;
+    }
+
+    [dir="rtl"] {
+        --shape-card: 12px 24px 24px 24px;
+    }
 }

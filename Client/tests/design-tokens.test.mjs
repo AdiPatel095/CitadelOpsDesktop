@@ -59,10 +59,13 @@ test('R4 segment tokens match spec section 3.6 in both themes', () => {
   assert.equal(resolve('dark', '--segment-track'), '#2C241C');
   assert.equal(resolve('dark', '--segment-thumb'), '#46392C');
 });
-test('radii remain held for PR-3 and Manrope is active in both themes', () => {
-  assert.match(source, /HELD-BACK NON-COLOUR VALUES[\s\S]*light --radius-xs: 0\.125rem \| 4px/);
+test('Manrope remains active while radius roles match spec', () => {
   for (const theme of ['light', 'dark']) {
     assert.match(resolve(theme, '--font-sans'), /^"Manrope", "Manrope Fallback",/);
+    for (const [name, value] of Object.entries({ xs: 4, sm: 8, md: 12, lg: 16, xl: 24, '2xl': 32, '3xl': 48, full: 9999 })) assert.equal(resolve(theme, `--radius-${name}`), `${value}px`);
+    assert.equal(resolve(theme, '--md-expressive-shape-card'), resolve(theme, '--shape-card'));
+    assert.doesNotMatch(source, /--md-expressive-shape-card-alt/);
+    assert.equal(resolve(theme, '--shadow-modal'), resolve(theme, '--elevation-4'));
   }
   assert.match(source, /LEGACY ALIAS LAYER/);
 });
