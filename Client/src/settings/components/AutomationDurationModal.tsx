@@ -150,8 +150,7 @@ export const AutomationDurationModal: React.FC<AutomationDurationModalProps> = (
         <div className="rounded-global border border-border-base bg-bg-app/40 px-4 py-3 text-xs leading-relaxed text-text-muted">
           {turnsOffAt ? (
             <p>
-              {t(onPauseFor ? 'automationDurationDialog.pauseStarts' : 'automationDurationDialog.runStarts', { feature: featureLabel })}{' '}
-              <span className="font-semibold text-text-main">{turnsOffAt.toLocaleString()}</span>.
+              {t(onPauseFor ? 'automationDurationDialog.pauseStarts' : 'automationDurationDialog.runStarts', { feature: featureLabel, endsAt: turnsOffAt.toLocaleString() })}
             </p>
           ) : null}
           <p className="mt-1">{t('automationDurationDialog.scheduleNotice')}</p>
