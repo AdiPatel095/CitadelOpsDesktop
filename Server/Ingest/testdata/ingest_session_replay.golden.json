@@ -74,7 +74,7 @@
             "combatCooldown",
             "research"
           ],
-          "patch": "75c6e69060ca66db6217c17e4a65e21782590cd957f2022979ec50c3130ccce5"
+          "patch": "7963a76967739bc9c34887d0bfb37429f44016d5fee14493aa6d679829131fdd"
         }
       ]
     },
@@ -924,6 +924,7 @@
     "commanders": {},
     "dailyAttacks": {
       "count": 0,
+      "countingStartedAt": "0001-01-01T00:00:00Z",
       "growthRate": 0,
       "observedAt": "0001-01-01T00:00:00Z",
       "serverThreshold": 0,

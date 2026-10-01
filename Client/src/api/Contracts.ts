@@ -1677,13 +1677,15 @@ export interface AutoStormTroopCapPreviewV2 {
 
 export interface AttackLaunchDailySessionV2 {
 	startedAt: string;
-	launchesByFeature: Record<string, number>;
+	window?: 'day' | 'since';
+	launchesByFeature: Record<string, number> | null;
 }
 
 export interface AttackLaunchRatesV2 {
 	observedAt: string;
 	windowMinutes: number;
-	launchesByFeature: Record<string, number>;
+	windowStartedAt?: string;
+	launchesByFeature: Record<string, number> | null;
 	dailySession?: AttackLaunchDailySessionV2 | null;
 }
 
@@ -2078,6 +2080,7 @@ export interface KhanStateV2 {
 }
 
 export interface DailyAttackStateV2 {
+	countingStartedAt?: string;
 	count: number;
 	serverThreshold: number;
 	growthRate: number;
