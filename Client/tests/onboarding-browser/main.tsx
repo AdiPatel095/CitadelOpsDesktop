@@ -2,7 +2,6 @@ import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import '../../src/index.css';
 import '../../src/MaterialExpressive.css';
-import '../../src/KingdomPalette.css';
 import './fixture.css';
 import { Dock, SIMULATION_BANNER } from './dock';
 import { FixtureServer } from './fixtureServer';

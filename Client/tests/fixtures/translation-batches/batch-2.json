@@ -4,11 +4,11 @@
   "cuts": {
     "desktop": {
       "since": "90a15fa3f7fcdb2a1864dd74a0debf1bffa5e959",
-      "until": "d945e0e2524d3e5cb09c9a2c0ebc93ffc58a0460"
+      "until": "3b3066d87fb98cb89b01908a508cde13745fc2fe"
     },
     "portal": {
       "since": "a80e5a8bb612f446956f82d1668ecc62d9a82a9e",
-      "until": "8b2f7d06d1aedba143019685786300afec80e826"
+      "until": "89e8011a9aeeac2a822a32bf87c124d7eebab468"
     }
   },
   "command": [
@@ -19,13 +19,13 @@
     "--since",
     "90a15fa3f7fcdb2a1864dd74a0debf1bffa5e959",
     "--until",
-    "d945e0e2524d3e5cb09c9a2c0ebc93ffc58a0460",
+    "3b3066d87fb98cb89b01908a508cde13745fc2fe",
     "--peer-repo",
     "../../cit-92-translation-batch-2-portal",
     "--peer-since",
     "a80e5a8bb612f446956f82d1668ecc62d9a82a9e",
     "--peer-until",
-    "8b2f7d06d1aedba143019685786300afec80e826",
+    "89e8011a9aeeac2a822a32bf87c124d7eebab468",
     "--families",
     "shared"
   ],
@@ -58,9 +58,11 @@
         "automationDurationDialog.saveFailed",
         "automationDurationDialog.scheduleNotice",
         "automationDurationDialog.unitLabel",
+        "copy.attacksSaved",
         "copy.attacksToday",
         "copy.connecting",
         "copy.connectingGame",
+        "copy.countUnknownTitle",
         "copy.khanPause",
         "copy.loadingHistory",
         "copy.loggingIn",
@@ -72,6 +74,8 @@
         "copy.rankings",
         "copy.reconnecting",
         "copy.riftCapture",
+        "copy.since",
+        "copy.sinceTitle",
         "copy.today",
         "copy.todayTitle",
         "copy.updated",

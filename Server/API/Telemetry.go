@@ -40,19 +40,30 @@ func (server *Server) handleAttackLaunchRates(writer http.ResponseWriter, _ *htt
 		writeError(writer, http.StatusServiceUnavailable, "telemetry_unavailable", "Telemetry is unavailable", Localization.New("server.api.telemetry_is_unavailable.3daba4e0", "Telemetry is unavailable", nil))
 		return
 	}
-	// A window the source cannot fully cover is null, never a smaller number:
-	// the badge shows its existing unavailable state.
+	// Display windows do not change the reset boundary used by automation.
+	var daily State.DailyAttackState
+	if server.config.State != nil {
+		daily = server.config.State.ReadOnlyView().DailyAttacks
+	}
+	windowStartedAt := observedAt.Add(-time.Hour)
+	if daily.CountingStartedAt.After(windowStartedAt) {
+		windowStartedAt = daily.CountingStartedAt
+	}
+	// A window the source cannot fully cover is null, never a smaller number.
 	var hourly map[string]int
 	var dailySession *attackLaunchDailySession
 	if source != nil {
-		if counts, available := source.AttackLaunchCountsSince(observedAt.Add(-time.Hour), observedAt); available {
+		if counts, available := source.AttackLaunchCountsSince(windowStartedAt, observedAt); available {
 			hourly = attackLaunchCountsByFeature(counts)
 		}
-		if server.config.State != nil {
-			startedAt := server.config.State.ReadOnlyView().DailyAttacks.SessionStartedAt
+		startedAt, window := daily.SessionStartedAt, "day"
+		if startedAt.IsZero() {
+			startedAt, window = daily.CountingStartedAt, "since"
+		}
+		if !startedAt.IsZero() {
 			if dailyCounts, available := source.AttackLaunchCountsSince(startedAt, observedAt); available {
 				dailySession = &attackLaunchDailySession{
-					StartedAt:         startedAt.UTC(),
+					StartedAt: startedAt.UTC(), Window: window,
 					LaunchesByFeature: attackLaunchCountsByFeature(dailyCounts),
 				}
 			}
@@ -61,12 +72,14 @@ func (server *Server) handleAttackLaunchRates(writer http.ResponseWriter, _ *htt
 	writeJSON(writer, http.StatusOK, map[string]any{
 		"observedAt":        observedAt.UTC(),
 		"windowMinutes":     int(time.Hour / time.Minute),
+		"windowStartedAt":   windowStartedAt.UTC(),
 		"launchesByFeature": hourly,
 		"dailySession":      dailySession,
 	})
 }
 
 type attackLaunchDailySession struct {
+	Window            string         `json:"window"`
 	StartedAt         time.Time      `json:"startedAt"`
 	LaunchesByFeature map[string]int `json:"launchesByFeature"`
 }
