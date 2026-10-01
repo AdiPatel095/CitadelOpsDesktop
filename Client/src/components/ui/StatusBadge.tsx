@@ -1,4 +1,4 @@
-import { useId } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 import { CirclePlay, Clock, CircleCheck, CirclePause, CircleMinus, TriangleAlert, Power, CircleHelp } from 'lucide-react';
 import { useLocale } from '../../i18n/LocaleContext';
 import { useLocalizedMessage } from '../../i18n/useLocalizedMessage';
@@ -30,14 +30,40 @@ export function StatusBadge({ status, reason, inline = false, canRevealReason = 
   const Icon = PLAYER_STATUS_ICON[status];
   const full = `${label.text} · ${detail.text}`;
   const compact = inline && canRevealReason;
-  const badge = <span className={`player-status-badge${indicator ? ' player-status-indicator' : ''}`} data-player-status={status} data-status-role={PLAYER_STATUS_ROLE[status]}>
+  const rowRef = useRef<HTMLSpanElement>(null);
+  const badgeRef = useRef<HTMLSpanElement>(null);
+  const reasonRef = useRef<HTMLSpanElement>(null);
+  const separatorRef = useRef<HTMLSpanElement>(null);
+  const [reasonLayout, setReasonLayout] = useState({ wrapped: false, separatorWidth: 0 });
+  useEffect(() => {
+    if (compact) return;
+    const row = rowRef.current;
+    const badge = badgeRef.current;
+    const detail = reasonRef.current;
+    const separator = separatorRef.current;
+    if (!row || !badge || !detail || !separator) return;
+    const measure = () => {
+      const wrapped = detail.getBoundingClientRect().top >= badge.getBoundingClientRect().bottom;
+      const separatorWidth = separator.getBoundingClientRect().width;
+      setReasonLayout(previous => previous.wrapped === wrapped && previous.separatorWidth === separatorWidth
+        ? previous : { wrapped, separatorWidth });
+    };
+    measure();
+    const observer = new ResizeObserver(measure);
+    for (const element of [row, badge, detail, separator]) observer.observe(element);
+    return () => observer.disconnect();
+  }, [compact, label.text, detail.text]);
+  const badge = <span ref={badgeRef} className={`player-status-badge${indicator ? ' player-status-indicator' : ''}`} data-player-status={status} data-status-role={PLAYER_STATUS_ROLE[status]}>
     <Icon aria-hidden="true" className="player-status-glyph" />
     <span className="player-status-word" {...messageLanguageAttributes(label)}>{label.text}</span>
     {compact ? <span className="player-status-inline-reason" {...messageLanguageAttributes(detail)}> · {detail.text}</span> : null}
   </span>;
   return compact ? <span className="player-status-inline" role="status" aria-label={full} aria-describedby={tooltipId} tabIndex={0}>
     {badge}<span className="player-status-tooltip" id={tooltipId} role="tooltip">{full}</span>
-  </span> : <span className="player-status-row" role="status" aria-label={full}>
-    {badge}<span className="player-status-card-reason" {...messageLanguageAttributes(detail)}> · {detail.text}</span>
+  </span> : <span ref={rowRef} className="player-status-row" role="status" aria-label={full}>
+    {badge}<span ref={reasonRef} className="player-status-card-reason" data-wrapped={reasonLayout.wrapped}
+      style={reasonLayout.wrapped ? { textIndent: -reasonLayout.separatorWidth, paddingInlineEnd: reasonLayout.separatorWidth } : undefined} {...messageLanguageAttributes(detail)}>
+      <span ref={separatorRef} className="player-status-reason-separator" aria-hidden={true}>{'· '}</span>{detail.text}
+    </span>
   </span>;
 }

@@ -35,3 +35,60 @@ test('CIT-66 connection status disclosure supports pointer and keyboard', async 
   await expect(panel.locator('.player-connection-details')).toBeVisible();
   verifyNetwork();
 });
+
+test('CIT-66 wrapped reasons omit the separator and start flush in LTR and RTL', async ({ page }) => {
+  const verifyNetwork = await prepare(page, 'dark');
+  await settle(page);
+  const panel = page.locator('.player-connection-panel:visible').first();
+  await panel.locator('summary').click();
+  const row = panel.locator('.player-connection-details .player-status-row').first();
+  const reason = row.locator('.player-status-card-reason');
+  const full = await row.getAttribute('aria-label');
+  for (const direction of ['ltr', 'rtl']) {
+    await row.evaluate((element, direction) => {
+      const panel = element.closest('.player-connection-details') as HTMLElement;
+      panel.style.width = '1000px'; panel.style.maxWidth = 'none';
+      element.style.width = '1000px'; element.style.maxWidth = 'none';
+      element.dir = direction;
+      (element.querySelector('.player-status-card-reason') as HTMLElement).dir = direction;
+    }, direction);
+    await expect(reason).toHaveAttribute('data-wrapped', 'false');
+    await expect(reason.locator('.player-status-reason-separator')).toBeVisible();
+    // Exercise the exact wrap boundary too: removing the visible separator must
+    // not make the reason fit again and oscillate between lines.
+    await row.evaluate(element => {
+      const badge = element.querySelector('.player-status-badge')!;
+      const reason = element.querySelector('.player-status-card-reason')!;
+      const gap = parseFloat(getComputedStyle(element).columnGap);
+      element.style.width = `${badge.getBoundingClientRect().width + reason.getBoundingClientRect().width + gap - 1}px`;
+    });
+    await expect(reason).toHaveAttribute('data-wrapped', 'true');
+    await page.waitForTimeout(300);
+    await expect(reason).toHaveAttribute('data-wrapped', 'true');
+    await row.evaluate(element => {
+      const badge = element.querySelector('.player-status-badge')!;
+      element.style.width = `${badge.getBoundingClientRect().width + 20}px`;
+    });
+    await expect(reason).toHaveAttribute('data-wrapped', 'true');
+    await expect(reason.locator('.player-status-reason-separator')).toBeHidden();
+    // Measure the first visible word, including its bidi run, not the hidden separator.
+    const geometry = await reason.evaluate(element => {
+      const range = document.createRange();
+      const text = [...element.childNodes].find(node => node.nodeType === Node.TEXT_NODE && node.textContent?.trim());
+      if (!text) throw new Error('Card reason must contain visible text');
+      range.setStart(text, 0); range.setEnd(text, text.textContent!.indexOf(' ') === -1 ? text.textContent!.length : text.textContent!.indexOf(' '));
+      const first = range.getBoundingClientRect();
+      const row = element.parentElement!.getBoundingClientRect();
+      const badge = element.previousElementSibling!.getBoundingClientRect();
+      return { left: first.left - row.left, right: row.right - first.right, top: first.top - badge.bottom };
+    });
+    expect(geometry.top).toBeGreaterThanOrEqual(0);
+    expect(Math.abs(direction === 'ltr' ? geometry.left : geometry.right)).toBeLessThan(1);
+    await expect(row).toHaveAttribute('aria-label', full!);
+  }
+  // Resizing back restores the inline separator without remounting the badge.
+  await row.evaluate(element => { element.style.width = '1000px'; });
+  await expect(reason).toHaveAttribute('data-wrapped', 'false');
+  await expect(reason.locator('.player-status-reason-separator')).toBeVisible();
+  verifyNetwork();
+});

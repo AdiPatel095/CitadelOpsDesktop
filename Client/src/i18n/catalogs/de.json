@@ -1034,5 +1034,6 @@
   "unitStock.state.short": "Unter der Menge",
   "unitStock.state.unknown": "Unbekannte Einheit",
   "unitStock.state.valid": "Genügend stationiert",
-  "unitStock.unknownUnits": "{count, plural, one {# Einheit fehlt in den offiziellen Einheitendaten. Wähle sie erneut.} other {# Einheiten fehlen in den offiziellen Einheitendaten. Wähle sie erneut.}}"
+  "unitStock.unknownUnits": "{count, plural, one {# Einheit fehlt in den offiziellen Einheitendaten. Wähle sie erneut.} other {# Einheiten fehlen in den offiziellen Einheitendaten. Wähle sie erneut.}}",
+  "playerStatus.off": "Aus"
 }

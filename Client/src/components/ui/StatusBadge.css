@@ -9,7 +9,11 @@
 .player-status-badge[data-player-status="unknown"] { background: transparent; border: 1px dashed var(--border-default); }
 .player-status-glyph { width: var(--font-size-14); height: var(--font-size-14); flex: none; }
 .player-status-word { white-space: nowrap; flex: none; }
-.player-status-card-reason { color: var(--text-secondary); font-size: var(--font-size-14); line-height: var(--line-height-14); font-weight: var(--font-weight-400); overflow-wrap: anywhere; }
+.player-status-card-reason { display: block; color: var(--text-secondary); font-size: var(--font-size-14); line-height: var(--line-height-14); font-weight: var(--font-weight-400); overflow-wrap: anywhere; }
+/* Keep the separator's measured width so hiding it cannot toggle flex wrapping.
+   Only the first line is outdented; subsequent lines already start flush. */
+.player-status-reason-separator { display: inline-block; white-space: pre; text-indent: 0; }
+.player-status-card-reason[data-wrapped="true"] .player-status-reason-separator { visibility: hidden; }
 .player-status-inline { position: relative; display: inline-flex; min-width: min-content; max-width: 320px; }
 .player-status-inline .player-status-badge { display: grid; grid-template-columns: var(--font-size-14) max-content minmax(0, 1fr); flex: 0 1 auto; min-width: min-content; max-width: 320px; }
 .player-status-inline-reason { font-weight: var(--font-weight-400); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
