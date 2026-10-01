@@ -80,7 +80,11 @@
         "setupReadiness.castlesNotInWorld",
         "ui.components.header.alt.citadel.ops.logo.ab367a3c"
       ],
-      "allowEnglish": {}
+      "allowEnglish": {
+        "automationDurationDialog.minutes": {
+          "fr": "The French plural time-unit label Minutes is spelled identically in English."
+        }
+      }
     }
   }
 }
