@@ -5,6 +5,27 @@ import { officialMessageKeys, officialMessageNouns } from './officialKeys';
 import { formatMessage, validateMessageCatalog } from './formatMessage';
 /** Add explicit descriptors here; never translate user names, IDs, or free-form input. */
 export const messages = {
+  "automationDurationDialog.runTitle": "Run {feature} for a duration",
+  "automationDurationDialog.pauseTitle": "Pause {feature} for a duration",
+  "automationDurationDialog.presetMinutes": "{count, number} min",
+  "automationDurationDialog.presetHours": "{count, number} hr",
+  "automationDurationDialog.saveFailed": "Could not save the timed automation duration",
+  "automationDurationDialog.runButton": "Turn on for this duration",
+  "automationDurationDialog.pauseButton": "Pause for this duration",
+  "automationDurationDialog.quickDurations": "Quick durations",
+  "automationDurationDialog.customDuration": "Custom duration",
+  "automationDurationDialog.amountLabel": "Automation duration amount",
+  "automationDurationDialog.unitLabel": "Automation duration unit",
+  "automationDurationDialog.minutes": "Minutes",
+  "automationDurationDialog.hours": "Hours",
+  "automationDurationDialog.days": "Days",
+  "automationDurationDialog.invalidDuration": "Choose a duration from 1 minute through 7 days.",
+  "automationDurationDialog.runStarts": "{feature} turns on immediately and the server turns it off at",
+  "automationDurationDialog.pauseStarts": "{feature} pauses immediately and resumes at",
+  "automationDurationDialog.scheduleNotice": "Weekly schedules and the global automation lock still apply during this window.",
+  "automationDurationDialog.currentRunEnds": "Current timed run ends {date}.",
+  "automationDurationDialog.currentPauseEnds": "Current pause ends {date}.",
+
   "automation.status": "{status, select, complete {Complete} completed {Completed} success {Success} failed {Failed} error {Error} blocked {Blocked} gated {Gated} retrying {Retrying} warning {Warning} running {Running} enabled {Enabled} scheduled {Scheduled} ready {Ready} waiting {Waiting} disabled {Off} idle {Idle} armed {Armed} cooldown {Cooldown} defending {Defending} discovering {Discovering} evacuating {Evacuating} preparing {Preparing} protected {Protected} protecting {Protecting} recalling {Recalling} reconciling {Reconciling} refreshing {Refreshing} replenishing {Replenishing} resolving {Resolving} taunting {Taunting} threat {Threat} yielding {Yielding} other {Unknown}}",
   "automation.lane": "{lane, select, overall {Overall} crafting {Crafting} logistics {Logistics} attacks {Attacks} cooldowns {Cooldowns} rage {Rage} defense {Defense} transfers {Transfers} tools {Tools} combat {Combat} aquamarine_shop {Aquamarine shop} builder {Builder} builder_missing_decorations {Builder warning} other {Lane}}",
   "automation.accessibleStatus": "{feature} status",
