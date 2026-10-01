@@ -108,7 +108,7 @@ def build(source_path, manifest, output):
     missing = [char for char in specimen if ord(char) not in font.getBestCmap()]
     if missing:
         raise ValueError(f"Manrope specimen glyphs missing: {''.join(missing)}")
-    # Preserve tnum and all shaping/localized features in every subset.
+    # Preserve default shaping/localized features and tabular figures in every subset.
     if "tnum" not in {x.FeatureTag for x in font["GSUB"].table.FeatureList.FeatureRecord}:
         raise ValueError("Manrope has no tnum feature.")
     entries = []
@@ -116,7 +116,7 @@ def build(source_path, manifest, output):
         for script, unicode_range in RANGES.items():
             face = TTFont(source_path, recalcTimestamp=False)
             options = subset.Options()
-            options.layout_features = ["*"]
+            options.layout_features = [*options.layout_features, "tnum"]
             options.harfbuzz_repacker = False
             subsetter = subset.Subsetter(options=options)
             subsetter.populate(unicodes=subset.parse_unicodes(unicode_range))
