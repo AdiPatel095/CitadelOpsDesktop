@@ -65,6 +65,8 @@
     --selection: color-mix(in srgb, var(--accent) 24%, transparent);
     --control-on: #47752F;
     --control-on-thumb: #FFFDF7;
+    --segment-track: #ECDEC7;
+    --segment-thumb: #FFFDF7;
     --data-1: #83591F;
     --data-2: #376B7B;
     --data-3: #4D713E;
@@ -192,6 +194,8 @@
     --selection: color-mix(in srgb, var(--accent) 24%, transparent);
     --control-on: #91C56E;
     --control-on-thumb: #15110D;
+    --segment-track: #2C241C;
+    --segment-thumb: #46392C;
     --data-1: #E1BB65;
     --data-2: #76ADBD;
     --data-3: #9BC38A;

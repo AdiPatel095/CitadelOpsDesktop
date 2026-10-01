@@ -10,7 +10,7 @@ import { cssMetrics } from '../scripts/css-metrics.mjs';
 const root = fileURLToPath(new URL('../', import.meta.url));
 const desktop = existsSync(join(root, 'src/styles/tokens.css'));
 const source = readFileSync(join(root, desktop ? 'src/styles/tokens.css' : 'src/commandCenter/styles/tokens.css'), 'utf8');
-const colors = `surface-canvas surface-card surface-inset surface-control surface-control-strong surface-overlay surface-field surface-inverse text-primary text-secondary text-muted text-disabled text-inverse text-on-accent border-subtle border-default border-strong accent accent-hover accent-pressed accent-container text-on-accent-container state-hover state-pressed state-selected focus-ring fill-disabled scrim selection control-on control-on-thumb data-1 data-2 data-3 data-4`.split(' ');
+const colors = `surface-canvas surface-card surface-inset surface-control surface-control-strong surface-overlay surface-field surface-inverse text-primary text-secondary text-muted text-disabled text-inverse text-on-accent border-subtle border-default border-strong accent accent-hover accent-pressed accent-container text-on-accent-container state-hover state-pressed state-selected focus-ring fill-disabled scrim selection control-on control-on-thumb segment-track segment-thumb data-1 data-2 data-3 data-4`.split(' ');
 const expected = [...colors,
   ...['success', 'warning', 'danger', 'info', 'neutral'].flatMap((t) => [`status-${t}`, `status-${t}-bg`, `status-${t}-border`]),
   ...[12, 13, 14, 16, 20, 24, 32, 48, 64].flatMap((n) => [`font-size-${n}`, `line-height-${n}`]),
@@ -47,12 +47,18 @@ function resolve(theme, name, stack = new Set()) {
   return value.replace(/var\((--[\w-]+)\)/g, (_, key) => resolve(theme, key, new Set([...stack, name])));
 }
 for (const theme of ['light', 'dark']) {
-  test(`${theme}: all 123 spec tokens exist and their references resolve`, () => {
-    assert.equal(expected.length, 123);
+  test(`${theme}: all 125 spec tokens exist and their references resolve`, () => {
+    assert.equal(expected.length, 125);
     for (const name of expected) assert.ok(resolve(theme, name).length, name);
     for (const name of Object.keys(themes[theme])) resolve(theme, name);
   });
 }
+test('R4 segment tokens match spec section 3.6 in both themes', () => {
+  assert.equal(resolve('light', '--segment-track'), '#ECDEC7');
+  assert.equal(resolve('light', '--segment-thumb'), '#FFFDF7');
+  assert.equal(resolve('dark', '--segment-track'), '#2C241C');
+  assert.equal(resolve('dark', '--segment-thumb'), '#46392C');
+});
 test('held-back values are explicitly marked beside their spec values', () => {
   assert.match(source, /HELD-BACK VALUES[\s\S]*light --surface-control:[^\n]+\| #ECDEC7/);
   assert.match(source, /light --text-muted:[^\n]+\| #766754/);
