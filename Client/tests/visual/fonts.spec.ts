@@ -26,6 +26,41 @@ test.describe('Manrope delivery', () => {
     execFileSync('python3', [resolve(repo, 'scripts/fonts/build-manrope'), '--check']);
   });
 
+  for (const locale of ['en', 'ru']) {
+    test(`${locale} landing requests only the required Manrope subsets`, async ({ page }) => {
+      test.skip(!hosted, 'The public landing page belongs to the portal.');
+      const verifyNetwork = await prepare(page, 'dark');
+      const requested = new Set<string>();
+      const loaded = new Set<string>();
+      page.on('request', (request) => {
+        const url = new URL(request.url());
+        if (url.pathname.endsWith('.woff2')) requested.add(url.pathname);
+      });
+      page.on('response', (response) => {
+        const url = new URL(response.url());
+        if (url.pathname.endsWith('.woff2') && response.ok()) loaded.add(url.pathname);
+      });
+      await page.addInitScript((locale) => localStorage.setItem('citadelops.viewer-locale', locale), locale);
+      await page.goto(origin);
+      await expect(page.locator('html')).toHaveAttribute('lang', locale);
+      await expect(page.locator('.portal-language select').first()).toHaveValue(locale);
+      await expect(page.locator('.cop-landing__activity-updated').first()).toBeVisible();
+      await page.waitForLoadState('networkidle');
+      await page.evaluate(() => document.fonts.ready);
+      if (locale === 'en') {
+        expect([...requested]).toEqual(['/fonts/manrope/manrope-latin.woff2']);
+        expect([...loaded]).toEqual(['/fonts/manrope/manrope-latin.woff2']);
+      } else {
+        expect(requested).toContain('/fonts/manrope/manrope-cyrillic.woff2');
+        expect(loaded).toContain('/fonts/manrope/manrope-cyrillic.woff2');
+        expect(await page.evaluate(() => Array.from(document.fonts).some((face) =>
+          face.family === 'Manrope' && face.unicodeRange.includes('U+400-45F') && face.status === 'loaded'
+        ))).toBe(true);
+      }
+      verifyNetwork();
+    });
+  }
+
   test('application stacks follow language in both themes', async ({ page }) => {
     const verifyNetwork = await prepare(page, 'dark');
     if (hosted) await page.goto(origin);
