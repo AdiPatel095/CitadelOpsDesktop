@@ -3,6 +3,7 @@ package Automation
 import (
 	"encoding/json"
 	"fmt"
+	"strings"
 	"testing"
 	"time"
 
@@ -842,9 +843,9 @@ func TestAutoStationBlocksWhenEvacuationUnavailable(t *testing.T) {
 	}
 }
 
-func TestAutoStationBlocksUnsupportedProtectionModeGates(t *testing.T) {
+func TestAutoStationBlocksUnsupportedGatesWithCauseSpecificReason(t *testing.T) {
 	now := time.Date(2026, 9, 30, 12, 0, 0, 0, time.UTC)
-	for _, modeState := range []int{0, 1} {
+	for _, modeState := range []int{-1, 0, 1} {
 		t.Run(fmt.Sprintf("mode-%d", modeState), func(t *testing.T) {
 			gameState := State.NewGameState()
 			gameState.Player.ID = 7
@@ -852,20 +853,36 @@ func TestAutoStationBlocksUnsupportedProtectionModeGates(t *testing.T) {
 			gameState.Player.ProtectionMode = State.PlayerProtectionModeState{
 				ModeState: modeState, RemainingSec: 3600, ObservedAt: now,
 			}
-			gameState.Castles[100] = State.CastleState{ID: 100, KingdomID: 10, SlotType: 4}
+			if modeState < 0 {
+				gameState.Player.ProtectionMode.RemainingSec = 0
+			}
+			gameState.Castles[100] = State.CastleState{ID: 100, KingdomID: 10, SlotType: 4, Name: "Berimond Camp"}
 			arrives := now.Add(30 * time.Second)
 			gameState.Movements[1] = State.MovementState{
 				ID: 1, TypeID: 0, Direction: 0, OwnerPlayerID: 8, TargetPlayerID: 7,
 				SourceTypeID: 1, SourceCastleID: 200, TargetTypeID: 4, TargetCastleID: 100, ArrivesAt: &arrives,
 			}
-			decision, err := NewAutoStationPolicy().Evaluate(t.Context(), Snapshot{State: gameState, Now: now})
+			configuration := Configuration.Snapshot{Sections: map[string]json.RawMessage{
+				"automation.autoStation": json.RawMessage(`{"openGateFallback":true}`),
+			}}
+			decision, err := NewAutoStationPolicy().Evaluate(t.Context(), Snapshot{State: gameState, Configuration: configuration, Now: now})
 			if err != nil || decision.Status != "blocked" || decision.Request != nil || decision.FailureFallback != nil {
 				t.Fatalf("unsupported Protection Mode gates = %#v, err=%v", decision, err)
 			}
-			if decision.Detail != "Protection Mode suppresses stationing; Open Gates is not capture-confirmed for castle 100's kingdom" || !decision.NextCheckAt.Equal(now.Add(30*time.Second)) {
+			expectedDetail := "Troops at Berimond Camp can't be stationed safely, and its kingdom doesn't support Open Gates"
+			expectedKey := "server.automation.stationing_unsafe_unsupported_gates"
+			expectedFallback := "Troops at {castle} can't be stationed safely, and its kingdom doesn't support Open Gates"
+			if modeState >= 0 {
+				expectedDetail = "Protection Mode stops troops being stationed, and Berimond Camp's kingdom doesn't support Open Gates"
+				expectedKey = "server.automation.protection_mode_unsupported_gates"
+				expectedFallback = "Protection Mode stops troops being stationed, and {castle}'s kingdom doesn't support Open Gates"
+			} else if strings.Contains(decision.Detail, "Protection Mode") {
+				t.Fatalf("Protection Mode off shows misleading detail: %q", decision.Detail)
+			}
+			if decision.Detail != expectedDetail || !decision.NextCheckAt.Equal(now.Add(30*time.Second)) {
 				t.Fatalf("unsupported gates detail or retry changed: %#v", decision)
 			}
-			if decision.DetailDescriptor == nil || decision.DetailDescriptor.Key != "server.automation.protection_mode_suppresses_stationing.028adab4" {
+			if decision.DetailDescriptor == nil || decision.DetailDescriptor.Key != expectedKey || decision.DetailDescriptor.Fallback != expectedFallback || decision.DetailDescriptor.Params["castle"] != "Berimond Camp" {
 				t.Fatalf("unsupported gates descriptor = %#v", decision.DetailDescriptor)
 			}
 			if decision.Metrics["threatCount"] != 1 || decision.Metrics["nextImpactUnixMs"] != float64(arrives.UnixMilli()) {
