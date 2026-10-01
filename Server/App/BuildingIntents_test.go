@@ -397,7 +397,7 @@ func TestVerifyBuildingFinishFreeWaitsForAsyncCompletion(t *testing.T) {
 	}
 	gameState.Castles[10] = castle
 
-	store := State.NewStore(gameState)
+	store := State.NewStore(&gameState)
 	application := &Application{State: store}
 	mutationErr := make(chan error, 1)
 	go func() {

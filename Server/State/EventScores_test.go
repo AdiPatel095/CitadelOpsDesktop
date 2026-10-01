@@ -27,14 +27,16 @@ func TestRecordEventAttackLaunchForOccurrencePreservesPublishedEventActivity(t *
 		LaunchIDs:        launchIDs,
 		PendingAttacks:   pendingAttacks,
 	}
-	store := NewStore(NewGameState())
+	accessorState1 := NewGameState()
+	store := NewStore(&accessorState1)
 	if _, err := store.ApplyComponents(Components(ComponentEventScores), func(state *GameState) ([]string, bool, error) {
 		state.SetEventActivity(77, activity)
 		return []string{"event-scores"}, true, nil
 	}); err != nil {
 		t.Fatal(err)
 	}
-	before, found := store.ReadOnlyView().LookupEventActivity(77)
+	accessorState2 := store.ReadOnlyView()
+	before, found := accessorState2.LookupEventActivity(77)
 	if !found || cap(before.LaunchIDs) < 2 || cap(before.PendingAttacks) < 2 {
 		t.Fatalf("published activity does not retain spare capacity: %#v", before)
 	}
@@ -57,7 +59,8 @@ func TestRecordEventAttackLaunchForOccurrencePreservesPublishedEventActivity(t *
 	if got := before.PendingAttacks[:2][1]; got != (EventAttackRecord{}) {
 		t.Fatalf("prior generation pending backing array mutated to %#v", got)
 	}
-	after, found := store.ReadOnlyView().LookupEventActivity(77)
+	accessorState3 := store.ReadOnlyView()
+	after, found := accessorState3.LookupEventActivity(77)
 	if !found || len(after.LaunchIDs) != 2 || after.LaunchIDs[1] != newAttack.MovementID ||
 		len(after.PendingAttacks) != 2 || after.PendingAttacks[1] != newAttack || after.Invasion.Launches != 2 {
 		t.Fatalf("updated activity = %#v", after)

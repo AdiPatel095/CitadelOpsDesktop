@@ -123,7 +123,7 @@ func TestSharedStormCompletionPublishesOneActionableDomainWithoutMapChanges(t *t
 	initial := NewGameState()
 	initial.Account.WorldID = "world-one"
 	initial.Castles[1] = CastleState{ID: 1, KingdomID: stormKingdomID}
-	observer := NewStoreWithWorldMap(initial, worlds)
+	observer := NewStoreWithWorldMap(&initial, worlds)
 	now := time.Date(2026, time.August, 13, 12, 0, 0, 0, time.UTC)
 	worlds.AcquireStormScan("alpha", "world-one", stormKingdomID, now)
 	leaseAt := now.Add(sharedStormRosterSettleDelay + time.Millisecond)

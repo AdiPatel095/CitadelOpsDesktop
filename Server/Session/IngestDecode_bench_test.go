@@ -36,7 +36,7 @@ func decodeBenchPipeline(b *testing.B) *Ingest.Pipeline {
 	if err := Ingest.RegisterCoreReducers(registry); err != nil {
 		b.Fatal(err)
 	}
-	return Ingest.NewPipeline(State.NewStore(state), decodeBenchGameData{data}, registry)
+	return Ingest.NewPipeline(State.NewStore(&state), decodeBenchGameData{data}, registry)
 }
 func decodeBenchGaa() string {
 	var rows, owners []any

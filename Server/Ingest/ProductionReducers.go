@@ -58,8 +58,8 @@ func reduceProductionSnapshot(
 	if !ok {
 		return nil, false, nil
 	}
-	recruitmentHelpOutstanding := State.HasOutstandingRecruitmentAllianceHelpRequest(*gameState, castleID)
-	preserveRequestedHelp := State.OwnAllianceHelpStateCurrent(*gameState)
+	recruitmentHelpOutstanding := State.HasOutstandingRecruitmentAllianceHelpRequest(gameState, castleID)
+	preserveRequestedHelp := State.OwnAllianceHelpStateCurrent(gameState)
 	castle, ok = gameState.MutableCastleParts(castleID, State.CastlePartProduction)
 	if !ok {
 		return nil, false, nil
@@ -113,8 +113,8 @@ func reduceEmbeddedProductionSnapshots(
 	}
 	changed := false
 	helpChanged := false
-	recruitmentHelpOutstanding := State.HasOutstandingRecruitmentAllianceHelpRequest(*gameState, castleID)
-	preserveRequestedHelp := State.OwnAllianceHelpStateCurrent(*gameState)
+	recruitmentHelpOutstanding := State.HasOutstandingRecruitmentAllianceHelpRequest(gameState, castleID)
+	preserveRequestedHelp := State.OwnAllianceHelpStateCurrent(gameState)
 	for key, raw := range root {
 		if !strings.HasPrefix(key, "spl") || key == "spl" || len(raw) == 0 {
 			continue

@@ -96,7 +96,7 @@ func cit13SaleState(now time.Time) State.GameState {
 
 func newEquipmentSaleEngine(t *testing.T, gameState State.GameState, sender *equipmentSaleEngineSender) (*Intent.Engine, *Application, *State.Store) {
 	t.Helper()
-	stateStore := State.NewStore(gameState)
+	stateStore := State.NewStore(&gameState)
 	ingestRegistry := Ingest.NewRegistry()
 	if err := Ingest.RegisterCoreReducers(ingestRegistry); err != nil {
 		t.Fatal(err)

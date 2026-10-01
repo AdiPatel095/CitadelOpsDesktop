@@ -524,7 +524,7 @@ func TestAutoTowerCommanderRejectsActiveMovementEvenWhenRosterSaysAvailable(t *t
 		CommanderID: &commanderID, ArrivesAt: &arrivesAt,
 	}
 
-	selected, found := nextAutoTowerCommander(gameState, []State.CommanderID{1, 2}, true, false, now)
+	selected, found := nextAutoTowerCommander(&gameState, []State.CommanderID{1, 2}, true, false, now)
 	if !found || selected != 2 {
 		t.Fatalf("active movement commander was selected: commander=%d found=%t", selected, found)
 	}
@@ -541,7 +541,7 @@ func TestAutoTowerCommanderIgnoresForeignMovementWithSameLeaderID(t *testing.T) 
 		ID: 10, Direction: 0, OwnerPlayerID: 2, CommanderID: &commanderID, ArrivesAt: &arrivesAt,
 	}
 
-	selected, found := nextAutoTowerCommander(gameState, []State.CommanderID{1}, true, false, now)
+	selected, found := nextAutoTowerCommander(&gameState, []State.CommanderID{1}, true, false, now)
 	if !found || selected != 1 {
 		t.Fatalf("foreign movement blocked own commander: commander=%d found=%t", selected, found)
 	}

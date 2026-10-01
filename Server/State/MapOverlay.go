@@ -86,7 +86,7 @@ func (state *GameState) compactMapOverlay() {
 	state.Map = nil
 }
 
-func (state GameState) lookupPrivateMapObservation(kingdomID KingdomID, key string) (MapObservation, bool) {
+func (state *GameState) lookupPrivateMapObservation(kingdomID KingdomID, key string) (MapObservation, bool) {
 	if observation, exists := state.Map[kingdomID][key]; exists {
 		return observation, true
 	}
@@ -108,7 +108,7 @@ func (state GameState) lookupPrivateMapObservation(kingdomID KingdomID, key stri
 	return MapObservation{}, false
 }
 
-func (state GameState) hasPrivateMapObservations(kingdomID KingdomID) bool {
+func (state *GameState) hasPrivateMapObservations(kingdomID KingdomID) bool {
 	if len(state.Map[kingdomID]) > 0 {
 		return true
 	}
@@ -131,11 +131,11 @@ func (state GameState) hasPrivateMapObservations(kingdomID KingdomID) bool {
 	return false
 }
 
-func (state GameState) rangePrivateMapObservations(kingdomID KingdomID, visit func(string, MapObservation) bool) bool {
+func (state *GameState) rangePrivateMapObservations(kingdomID KingdomID, visit func(string, MapObservation) bool) bool {
 	return state.rangePrivateMapObservationsByKind(kingdomID, MapProjectionNone, visit)
 }
 
-func (state GameState) rangePrivateMapObservationsByKind(
+func (state *GameState) rangePrivateMapObservationsByKind(
 	kingdomID KingdomID,
 	kind MapProjectionKind,
 	visit func(string, MapObservation) bool,
@@ -184,7 +184,7 @@ func (state GameState) rangePrivateMapObservationsByKind(
 	return true
 }
 
-func (state GameState) materializedPrivateMap() WorldMap {
+func (state *GameState) materializedPrivateMap() WorldMap {
 	result := make(WorldMap, len(state.Map))
 	if state.mapOverlay != nil {
 		for kingdomID, region := range state.mapOverlay.regions {
@@ -218,7 +218,7 @@ func (state GameState) materializedPrivateMap() WorldMap {
 	return result
 }
 
-func (state *GameState) prepareMapMutation(source GameState) {
+func (state *GameState) prepareMapMutation(source *GameState) {
 	base := source.mapOverlay
 	if base == nil {
 		base = accountMapFromWorldMap(source.Map)
@@ -277,7 +277,7 @@ func (state *GameState) mutableMapShard(
 	return mutableKind.region.shards[shard]
 }
 
-func (state GameState) privateMapKingdomIDs(add func(KingdomID)) {
+func (state *GameState) privateMapKingdomIDs(add func(KingdomID)) {
 	for kingdomID := range state.Map {
 		add(kingdomID)
 	}
@@ -300,7 +300,7 @@ func (state GameState) privateMapKingdomIDs(add func(KingdomID)) {
 	}
 }
 
-func (state GameState) rangePrivateMapShards(visit func(KingdomID, uint8)) {
+func (state *GameState) rangePrivateMapShards(visit func(KingdomID, uint8)) {
 	if visit == nil {
 		return
 	}
@@ -335,7 +335,7 @@ func (state GameState) rangePrivateMapShards(visit func(KingdomID, uint8)) {
 	})
 }
 
-func (state GameState) privateMapShard(kingdomID KingdomID, shard uint8) map[string]MapObservation {
+func (state *GameState) privateMapShard(kingdomID KingdomID, shard uint8) map[string]MapObservation {
 	result := map[string]MapObservation{}
 	// Persist one physical shard without scanning the other 255. State.Map is
 	// normally empty after compactMapOverlay, but retain its overlay semantics

@@ -16,7 +16,7 @@ func TestIsIncomingPlayerAttackRequiresCompletePlayerIdentity(t *testing.T) {
 		SourceTypeID: 1, SourceCastleID: 200, TargetTypeID: 4, TargetCastleID: 100,
 		ArrivesAt: &arrives,
 	}
-	if !IsIncomingPlayerAttack(gameState, attack, now) {
+	if !IsIncomingPlayerAttack(&gameState, attack, now) {
 		t.Fatal("fully identified hostile player attack was rejected")
 	}
 
@@ -44,7 +44,7 @@ func TestIsIncomingPlayerAttackRequiresCompletePlayerIdentity(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			candidate := attack
 			test.mutate(&candidate)
-			if IsIncomingPlayerAttack(gameState, candidate, now) {
+			if IsIncomingPlayerAttack(&gameState, candidate, now) {
 				t.Fatalf("ambiguous movement was accepted: %#v", candidate)
 			}
 		})
@@ -68,10 +68,10 @@ func TestIsIncomingPlayerAttackRejectsKhanAndNPCMovements(t *testing.T) {
 		SourceTypeID: 2, SourceCastleID: -2, TargetTypeID: 4, TargetCastleID: 100,
 		ArrivesAt: &arrives,
 	}
-	if IsIncomingPlayerAttack(gameState, khanTaunt, now) {
+	if IsIncomingPlayerAttack(&gameState, khanTaunt, now) {
 		t.Fatal("Khan taunt was classified as a player attack")
 	}
-	if IsIncomingPlayerAttack(gameState, npcAttackShape, now) {
+	if IsIncomingPlayerAttack(&gameState, npcAttackShape, now) {
 		t.Fatal("NPC-shaped movement was classified as a player attack")
 	}
 }
@@ -87,7 +87,7 @@ func TestIsOutgoingPlayerAttackRequiresOwnedSourceAndRealPlayerTarget(t *testing
 		SourceTypeID: 4, SourceCastleID: 100, TargetTypeID: 4, TargetCastleID: 200,
 		ArrivesAt: &arrives,
 	}
-	if !IsOutgoingPlayerAttack(gameState, attack, now) {
+	if !IsOutgoingPlayerAttack(&gameState, attack, now) {
 		t.Fatal("fully identified outgoing PvP attack was rejected")
 	}
 	for _, mutate := range []func(*MovementState){
@@ -101,7 +101,7 @@ func TestIsOutgoingPlayerAttackRequiresOwnedSourceAndRealPlayerTarget(t *testing
 	} {
 		candidate := attack
 		mutate(&candidate)
-		if IsOutgoingPlayerAttack(gameState, candidate, now) {
+		if IsOutgoingPlayerAttack(&gameState, candidate, now) {
 			t.Fatalf("ambiguous outgoing movement was accepted: %#v", candidate)
 		}
 	}

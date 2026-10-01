@@ -15,7 +15,8 @@ import (
 )
 
 func TestStatePersistenceFenceCarriesEventPublishedBeforeSubscription(t *testing.T) {
-	stateStore := State.NewStore(State.NewGameState())
+	accessorState1 := State.NewGameState()
+	stateStore := State.NewStore(&accessorState1)
 	reservedAt := time.Date(2026, 9, 9, 12, 0, 0, 0, time.UTC)
 	event, err := stateStore.ApplyComponents(
 		State.Components(State.ComponentInvasion),
@@ -76,7 +77,8 @@ func TestStatePersistenceFenceCarriesEventPublishedBeforeSubscription(t *testing
 
 func TestStatePersistenceLaterFenceCannotSkipEarlierSparsePatch(t *testing.T) {
 	dataDir := t.TempDir()
-	stateStore := State.NewStore(State.NewGameState())
+	accessorState2 := State.NewGameState()
+	stateStore := State.NewStore(&accessorState2)
 	bootstrap, err := stateStore.ApplyComponents(
 		State.Components(State.ComponentPlayer),
 		func(gameState *State.GameState) ([]string, bool, error) {
@@ -199,7 +201,8 @@ func TestStatePersistenceSyncBudget(t *testing.T) {
 	const scale = 60
 	const simulatedSeconds = 180
 	window := defaultStatePersistenceWindow / scale
-	store := State.NewStore(State.NewGameState())
+	accessorState3 := State.NewGameState()
+	store := State.NewStore(&accessorState3)
 	app := startPersistenceTestWorker(t, t.TempDir(), store, window)
 	initial := applyPersistenceTestChange(t, store, State.Components(State.ComponentAutomations), func(state *State.GameState) {
 		for i := 0; i < 10; i++ {
@@ -299,7 +302,8 @@ func TestStatePersistenceSyncBudget(t *testing.T) {
 func TestStatePersistenceWaitsForTheWindow(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
 		const window = 300 * time.Millisecond
-		store := State.NewStore(State.NewGameState())
+		accessorState4 := State.NewGameState()
+		store := State.NewStore(&accessorState4)
 		directory := t.TempDir()
 		app := startPersistenceTestWorker(t, directory, store, window)
 		initial := applyPersistenceTestChange(t, store, State.Components(State.ComponentPlayer), func(state *State.GameState) { state.Player.Name = "before" })
@@ -367,7 +371,8 @@ func copyPersistenceTestImage(t *testing.T, source string) string {
 func TestStatePersistenceCrashLosesAtMostTheWindowAndRecovers(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
 		const window = 300 * time.Millisecond
-		store := State.NewStore(State.NewGameState())
+		accessorState5 := State.NewGameState()
+		store := State.NewStore(&accessorState5)
 		app := startPersistenceTestWorker(t, t.TempDir(), store, window)
 		a := applyPersistenceTestChange(t, store, State.Components(State.ComponentPlayer), func(state *State.GameState) { state.Player.Name = "A" })
 		if err := app.saveStateEvent(t.Context(), a); err != nil {
@@ -403,7 +408,7 @@ func TestStatePersistenceCrashLosesAtMostTheWindowAndRecovers(t *testing.T) {
 		if forced.Revision != c.Revision || forced.Revision <= b.Revision || forced.Player.Name != "B" || !found || reservation.OperationID != "crash-C" {
 			t.Fatalf("forced crash image lost B or C: revision=%d player=%s reservation=%+v", forced.Revision, forced.Player.Name, reservation)
 		}
-		recovered := State.NewStore(loaded)
+		recovered := State.NewStore(&loaded)
 		startPersistenceTestWorker(t, image2, recovered, window)
 		d := applyPersistenceTestChange(t, recovered, State.Components(State.ComponentPlayer), func(state *State.GameState) { state.Player.Name = "D" })
 		if d.Revision != loaded.Revision+1 {

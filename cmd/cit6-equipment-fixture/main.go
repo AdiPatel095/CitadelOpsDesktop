@@ -162,7 +162,7 @@ func (handlers fixtureHandlers) ServeHTTP(writer http.ResponseWriter, request *h
 }
 
 func productionHandler(gameData *GameData.Manager, state State.GameState) http.Handler {
-	return API.NewServer(API.Config{State: State.NewStore(state), GameData: gameData}).Handler()
+	return API.NewServer(API.Config{State: State.NewStore(&state), GameData: gameData}).Handler()
 }
 
 func syntheticState(kind string, equipmentCount, gemCount int) State.GameState {

@@ -503,7 +503,7 @@ func TestKingdomSkipGuardUsesRefreshedPendingState(t *testing.T) {
 	gameState := State.NewGameState()
 	gameState.KingdomTransport.ObservedAt = now
 	gameState.KingdomTransport.Pending = []State.KingdomResourceTransport{{KingdomID: 4, RemainingSec: 1_440}}
-	application := &Application{State: State.NewStore(gameState)}
+	application := &Application{State: State.NewStore(&gameState)}
 	arguments := json.RawMessage(`{"targetKingdomId":4}`)
 
 	if err := application.verifyKingdomResourceTransportPending(t.Context(), arguments); err != nil {
@@ -591,7 +591,7 @@ func TestKingdomShipmentRejectsSettlingTransportBeforeAndAfterRefresh(t *testing
 		t.Fatalf("automated settling shipment error = %v, want stale replan", err)
 	}
 
-	application := &Application{State: State.NewStore(gameState)}
+	application := &Application{State: State.NewStore(&gameState)}
 	guardArguments, _ := json.Marshal(kingdomTransportAvailabilityGuard{
 		TargetKingdomID: target.KingdomID, TransportKind: "resource",
 	})
@@ -605,7 +605,7 @@ func TestKingdomShipmentGuardAndConfirmedConsumptionUseFreshDonorBalance(t *test
 	donor := resourceIntentCastle(10, 1, 100, 200)
 	donor.Resources[3] = State.ResourceBalance{Amount: 14_999}
 	gameState.Castles[donor.ID] = donor
-	application := &Application{State: State.NewStore(gameState)}
+	application := &Application{State: State.NewStore(&gameState)}
 	goods := []kingdomResourceShipmentGood{{ResourceID: 3, Amount: 15_000}}
 	guardArguments, _ := json.Marshal(kingdomTransportAvailabilityGuard{
 		TargetKingdomID: 2, TransportKind: "resource", SourceCastleID: donor.ID, Goods: goods,
@@ -645,7 +645,7 @@ func TestAutomationKingdomShipmentRecordsAndSettlesItsWorkflow(t *testing.T) {
 	donor.Resources[3] = State.ResourceBalance{Amount: 50_000}
 	gameState.Castles[donor.ID] = donor
 	gameState.Castles[target.ID] = target
-	application := &Application{State: State.NewStore(gameState)}
+	application := &Application{State: State.NewStore(&gameState)}
 	arguments, _ := json.Marshal(kingdomResourceShipmentRequest{
 		SourceCastleID: donor.ID, TargetCastleID: target.ID, TargetKingdomID: target.KingdomID,
 		Goods: []kingdomResourceShipmentGood{{ResourceID: 3, Amount: 15_000}}, WorkflowOwner: "autoFoodBalance",
@@ -735,7 +735,7 @@ func TestAutoFoodBalanceMarketShipmentRechecksDestinationCapacityBeforeSend(t *t
 
 	target.Resources[3] = State.ResourceBalance{Amount: 20_000, Capacity: &capacity}
 	gameState.Castles[target.ID] = target
-	application := &Application{State: State.NewStore(gameState)}
+	application := &Application{State: State.NewStore(&gameState)}
 	if err := application.verifyResourceTargetCapacity(
 		t.Context(), plan.Steps[0].ActionArguments,
 	); !errors.Is(err, Intent.ErrPlanStale) {
@@ -779,7 +779,7 @@ func TestAutoFoodBalanceKingdomShipmentAccountsForDeliveryRatio(t *testing.T) {
 
 	target.Resources[3] = State.ResourceBalance{Amount: 20_000, Capacity: &capacity}
 	gameState.Castles[target.ID] = target
-	application := &Application{State: State.NewStore(gameState)}
+	application := &Application{State: State.NewStore(&gameState)}
 	if err := application.verifyKingdomTransportAvailable(
 		t.Context(), plan.Steps[2].ActionArguments,
 	); !errors.Is(err, Intent.ErrPlanStale) {
@@ -922,7 +922,7 @@ func TestAutoFoodBalanceReceiptLogsActualDonorAndTargetCastles(t *testing.T) {
 	}); err != nil {
 		t.Fatal(err)
 	}
-	engine := Intent.NewEngine(registry, State.NewStore(gameState), resourceIntentGameDataProvider{store: gameData}, nil, nil)
+	engine := Intent.NewEngine(registry, State.NewStore(&gameState), resourceIntentGameDataProvider{store: gameData}, nil, nil)
 	receipt := engine.Submit(t.Context(), Intent.Request{
 		Name: "resource.ship", Actor: "automation:autoFoodBalance", AutomationLane: "autoFoodBalance", DryRun: true,
 		Arguments: json.RawMessage(`{"sourceCastleId":10,"targetCastleId":20,"resourceId":3,"amount":12000}`),

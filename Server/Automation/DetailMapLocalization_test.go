@@ -10,7 +10,8 @@ import (
 )
 
 func TestDetailMapPresentationIsBoundIsolatedAndInvalidated(t *testing.T) {
-	store := State.NewStore(coordinatorReadyState())
+	accessorState1 := coordinatorReadyState()
+	store := State.NewStore(&accessorState1)
 	coordinator := NewCoordinator(store, openCoordinatorTestConfiguration(t, "lane"), nil, nil)
 	message := Localization.New("supply", "Allocating {amount} units", Localization.Params{"amount": 10})
 	decision := Decision{Status: "ready", Detail: "Ready", Details: map[string]string{"supply": "Allocating 10 units"}, DetailsDescriptors: map[string]*Localization.Message{"supply": message, "orphan": message}}

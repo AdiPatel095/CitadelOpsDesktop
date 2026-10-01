@@ -23,7 +23,8 @@ func TestLaneSafetyMeaningPersistsAndRefreshPreservesTimerAndContext(t *testing.
 	}{
 		{"cra", 90, "Please wait 4 sec to attack"}, {"mbr", 109, "All market barrows are moving."}, {"eup", 440, "This ruby purchase requires confirmation in the game."}, {"future", 98765, ""},
 	} {
-		store := State.NewStore(State.NewGameState())
+		accessorState1 := State.NewGameState()
+		store := State.NewStore(&accessorState1)
 		engine := NewEngine(NewRegistry(), store, &responseCodeTestProvider{language: language}, nil, nil)
 		dir := t.TempDir()
 		engine.SetLaneSafetyPersistence(func(_ context.Context, event State.Event) error {
@@ -62,7 +63,7 @@ func TestLaneSafetyMeaningPersistsAndRefreshPreservesTimerAndContext(t *testing.
 	state := State.NewGameState()
 	lock := State.AutomationSafetyLock{Opcode: "cra", Code: 90, OperationID: "legacy", ObservedAt: time.Now().Add(-time.Minute), Context: "Original contextual explanation"}
 	state.Automations["test"] = State.AutomationState{ID: "test", Status: "gated", SafetyLock: lock}
-	store := State.NewStore(state)
+	store := State.NewStore(&state)
 	engine := NewEngine(NewRegistry(), store, &responseCodeTestProvider{language: language}, nil, nil)
 	engine.SetLaneSafetyPersistence(func(context.Context, State.Event) error { return nil })
 	if err := engine.RefreshAutomationLaneLocks(); err != nil {
@@ -83,7 +84,7 @@ func TestEUPLockContextUsesUpgradeCostAndGameSetting(t *testing.T) {
 	state.Session = State.SessionState{Generation: 1, LoggedIn: true, SocketReady: true}
 	state.Player.RubyConfirmation = State.RubyConfirmationState{Known: true, Amount: 2500, Generation: 1}
 	state.Castles[10] = State.CastleState{Layout: State.CastleLayout{Objects: map[State.BuildingInstanceID]State.Building{20: {InstanceID: 20, DefinitionID: 1}}}}
-	engine := NewEngine(NewRegistry(), State.NewStore(state), localizedGameDataProvider{store: data}, nil, nil)
+	engine := NewEngine(NewRegistry(), State.NewStore(&state), localizedGameDataProvider{store: data}, nil, nil)
 	request := Request{Name: "building.upgrade", Arguments: json.RawMessage(`{"castleId":10,"buildingInstanceId":20}`)}
 	detail := engine.rubyRejectionContext(request, State.AutomationSafetyLock{Opcode: "eup", Code: 440})
 	if !strings.Contains(detail, "3,100 rubies") || !strings.Contains(detail, "2,500 rubies") {
@@ -94,7 +95,7 @@ func TestEUPLockContextUsesUpgradeCostAndGameSetting(t *testing.T) {
 		t.Fatal("context lost typed source values")
 	}
 	state.Player.RubyConfirmation.Known = false
-	engine.state = State.NewStore(state)
+	engine.state = State.NewStore(&state)
 	if got := engine.rubyRejectionContext(request, State.AutomationSafetyLock{Opcode: "eup", Code: 440}); got != "" {
 		t.Fatal(got)
 	}

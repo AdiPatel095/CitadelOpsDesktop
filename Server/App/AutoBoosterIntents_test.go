@@ -76,7 +76,7 @@ func TestAutoBoosterFinalControlsRejectQueuedSettingChanges(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	application := &Application{State: State.NewStore(gameState), Configuration: configuration}
+	application := &Application{State: State.NewStore(&gameState), Configuration: configuration}
 	request := autoBoosterPurchaseRequest{MinimumRubyReserve: 1000, ExpectedCheckIntervalSec: 60}
 	if err := application.validateAutoBoosterControls(time.Now().UTC(), request); err != nil {
 		t.Fatalf("valid controls rejected: %v", err)
@@ -126,7 +126,7 @@ func TestAutoBoosterReconcileRecoversAcceptedAGBFromDurableReceipt(t *testing.T)
 	if err != nil {
 		t.Fatal(err)
 	}
-	stateStore := State.NewStore(loaded)
+	stateStore := State.NewStore(&loaded)
 	operationStore, err := Intent.OpenOperationStore(dataDir)
 	if err != nil {
 		t.Fatal(err)
@@ -182,7 +182,7 @@ func TestAutoBoosterEnginePipelinePurchasesOnceForBothResponseOrderings(t *testi
 			gameState.Session.SocketReady = true
 			gameState.Session.ConnectionGeneration = 8
 			gameState.Session.ChangedAt = now.Add(-time.Minute)
-			stateStore := State.NewStore(gameState)
+			stateStore := State.NewStore(&gameState)
 			manager := autoBoosterIntentGameDataManager(t)
 			registry := Ingest.NewRegistry()
 			if err := Ingest.RegisterCoreReducers(registry); err != nil {
@@ -263,7 +263,7 @@ func TestAutoBoosterEnginePipelinePurchasesOnceForBothResponseOrderings(t *testi
 			persisted.Session.SocketReady = true
 			persisted.Session.ConnectionGeneration = 9
 			persisted.Session.ChangedAt = time.Now().UTC().Add(-time.Second)
-			restartedStore := State.NewStore(persisted)
+			restartedStore := State.NewStore(&persisted)
 			restartedRegistry := Ingest.NewRegistry()
 			if err := Ingest.RegisterCoreReducers(restartedRegistry); err != nil {
 				t.Fatal(err)
@@ -303,7 +303,7 @@ func TestAutoBoosterRefreshExecutesWithEnforcedResourceDeclarations(t *testing.T
 	gameState.Session.LoggedIn = true
 	gameState.Session.SocketReady = true
 	gameState.Session.ConnectionGeneration = 12
-	stateStore := State.NewStore(gameState)
+	stateStore := State.NewStore(&gameState)
 	manager := autoBoosterIntentGameDataManager(t)
 	registry := Ingest.NewRegistry()
 	if err := Ingest.RegisterCoreReducers(registry); err != nil {
@@ -335,7 +335,7 @@ func TestAutoBoosterIndeterminateDispatchStaysBlockedUntilTerminalGBDReconciliat
 	gameState.Session.SocketReady = true
 	gameState.Session.ConnectionGeneration = 12
 	gameState.Session.ChangedAt = now.Add(-time.Minute)
-	stateStore := State.NewStore(gameState)
+	stateStore := State.NewStore(&gameState)
 	manager := autoBoosterIntentGameDataManager(t)
 	registry := Ingest.NewRegistry()
 	if err := Ingest.RegisterCoreReducers(registry); err != nil {

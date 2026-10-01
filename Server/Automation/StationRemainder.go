@@ -33,7 +33,7 @@ func EligibleStationRemainder(data *GameData.Store, castle State.CastleState, re
 func trackedStationRemainder(snapshot Snapshot, castle State.CastleState, reserves []reserveSetting) (active, fresh bool, remaining int64, known bool) {
 	var updated time.Time
 	for _, op := range snapshot.State.Stationing {
-		if op.SourceCastleID == castle.ID && op.ActiveInState(snapshot.State, snapshot.Now) {
+		if op.SourceCastleID == castle.ID && op.ActiveInState(&snapshot.State, snapshot.Now) {
 			active = true
 			if op.UpdatedAt.After(updated) {
 				updated = op.UpdatedAt

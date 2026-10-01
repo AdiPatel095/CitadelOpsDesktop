@@ -29,8 +29,9 @@ func (server *Server) handleAutoStormTroopCapPreview(writer http.ResponseWriter,
 		writeErrorFromError(writer, http.StatusBadRequest, "invalid_request", err)
 		return
 	}
+	accessorState1 := server.config.State.ReadOnlyView()
 	result, err := Automation.PreviewAutoStormTroopCap(
-		server.config.State.ReadOnlyView(),
+		&accessorState1,
 		server.config.Configuration.Snapshot(),
 		gameData,
 		server.attackLaunchSource(),

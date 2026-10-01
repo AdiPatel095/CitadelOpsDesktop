@@ -47,7 +47,8 @@ func TestCIT13MappedPairsStillLockTheirLaneWithoutRecovery(t *testing.T) {
 			if State.AutomationRejectionWhitelisted(test.opcode, test.code) || rejectionAllowsRecovery(test.opcode, test.code) {
 				t.Fatalf("%s %d entered the safety whitelist", test.opcode, test.code)
 			}
-			store := State.NewStore(State.NewGameState())
+			accessorState1 := State.NewGameState()
+			store := State.NewStore(&accessorState1)
 			pipeline := Ingest.NewPipeline(store, nil, Ingest.NewRegistry())
 			sender := &responseSequenceSender{pipeline: pipeline, responseCodes: []int{test.code}}
 			registry := NewRegistry()

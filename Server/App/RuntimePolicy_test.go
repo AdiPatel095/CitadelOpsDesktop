@@ -252,7 +252,7 @@ func TestExecutionGateRechecksAutoBeriGallantryBooster(t *testing.T) {
 	}
 	gameState := State.NewGameState()
 	gameState.Market.BoostersObservedAt = time.Now().UTC()
-	application := &Application{Configuration: configuration, State: State.NewStore(gameState)}
+	application := &Application{Configuration: configuration, State: State.NewStore(&gameState)}
 	request := Intent.Request{Actor: "automation:autoBeriWorld"}
 	plan := Intent.Plan{Effect: Intent.EffectRead}
 
@@ -292,7 +292,7 @@ func TestExecutionGateRechecksRageBoosterOnlyForAutoKhanAttackAdmission(t *testi
 	now := time.Now().UTC()
 	gameState := State.NewGameState()
 	gameState.Market.BoostersObservedAt = now
-	application := &Application{Configuration: configuration, State: State.NewStore(gameState)}
+	application := &Application{Configuration: configuration, State: State.NewStore(&gameState)}
 	attackPlan := Intent.Plan{
 		Effect:    Intent.EffectLaunch,
 		Admission: &Intent.Admission{Class: Intent.AdmissionAttackLaunch, Module: "autoKhan"},
@@ -350,7 +350,8 @@ func TestKhanAttackResolverRechecksLatestRageBoosterRequirement(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	application := &Application{Configuration: configuration, State: State.NewStore(State.NewGameState())}
+	accessorState1 := State.NewGameState()
+	application := &Application{Configuration: configuration, State: State.NewStore(&accessorState1)}
 	_, err = application.resolveKhanAttackStep(t.Context(), Intent.PlanningContext{}, json.RawMessage(`{}`))
 	if err == nil || !errors.Is(err, Intent.ErrPlanStale) || !strings.Contains(err.Error(), "boi ID 27") {
 		t.Fatalf("deferred Khan CRA resolver did not apply the latest booster setting: %v", err)
@@ -416,7 +417,7 @@ func TestExecutionGateEnforcesCommanderEquipmentRequirements(t *testing.T) {
 			DefinitionID: 22012, Values: []float64{195, 16},
 		}},
 	}
-	application := &Application{Configuration: configuration, State: State.NewStore(gameState)}
+	application := &Application{Configuration: configuration, State: State.NewStore(&gameState)}
 	plan := Intent.Plan{
 		Effect:    Intent.EffectLaunch,
 		Claims:    []string{"commander:16", "leader:commander:16"},

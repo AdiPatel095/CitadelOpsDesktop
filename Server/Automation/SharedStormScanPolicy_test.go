@@ -60,7 +60,7 @@ func TestSharedStormScanPolicySplitsCoverageAcrossCapableAccounts(t *testing.T) 
 		state.Account.WorldID = "world-one"
 		castleID := State.CastleID(index + 1)
 		state.Castles[castleID] = State.CastleState{ID: castleID, KingdomID: autoStormKingdomID, Focused: true}
-		store := State.NewStoreWithWorldMap(state, worlds)
+		store := State.NewStoreWithWorldMap(&state, worlds)
 		participants = append(participants, participant{
 			policy: NewSharedStormScanPolicy(fmt.Sprintf("account-%d", index), worlds),
 			state:  store.ReadOnlyView(),
@@ -140,7 +140,7 @@ func TestSharedStormScanWindowGeometryIgnoresPrivateSuppression(t *testing.T) {
 	state := State.NewGameState()
 	state.Account.WorldID = "world-one"
 	state.Castles[1] = State.CastleState{ID: 1, KingdomID: autoStormKingdomID, Focused: true}
-	store := State.NewStoreWithWorldMap(state, worlds)
+	store := State.NewStoreWithWorldMap(&state, worlds)
 	if _, err := store.ApplyComponents(State.Components(State.ComponentWorldMap), func(state *State.GameState) ([]string, bool, error) {
 		changed := state.SetMapObservation(State.MapObservation{
 			KingdomID: autoStormKingdomID, X: 400, Y: 650, TypeID: State.MapTypeStormFort,
@@ -150,7 +150,8 @@ func TestSharedStormScanWindowGeometryIgnoresPrivateSuppression(t *testing.T) {
 	}); err != nil {
 		t.Fatal(err)
 	}
-	before := store.ReadOnlyView().SharedStormScanCoverage(autoStormKingdomID, time.Now().UTC())
+	accessorState1 := store.ReadOnlyView()
+	before := accessorState1.SharedStormScanCoverage(autoStormKingdomID, time.Now().UTC())
 	if before.WindowCount != 30 {
 		t.Fatalf("one-sided edge observation expanded to %d windows, want 30", before.WindowCount)
 	}
@@ -159,7 +160,8 @@ func TestSharedStormScanWindowGeometryIgnoresPrivateSuppression(t *testing.T) {
 	}); err != nil {
 		t.Fatal(err)
 	}
-	after := store.ReadOnlyView().SharedStormScanCoverage(autoStormKingdomID, time.Now().UTC())
+	accessorState2 := store.ReadOnlyView()
+	after := accessorState2.SharedStormScanCoverage(autoStormKingdomID, time.Now().UTC())
 	if before.Bounds != after.Bounds || before.WindowCount != after.WindowCount {
 		t.Fatalf("private suppression changed shared scan geometry: before=%v after=%v", before, after)
 	}

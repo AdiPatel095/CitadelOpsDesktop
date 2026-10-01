@@ -152,13 +152,13 @@ func TestPlanBeriCapacityRefreshScansExactDonorWithoutChangingFocus(t *testing.T
 	source.UnitsObservedAt = observedAt
 	gameState.Castles[100] = source
 	gameState.Beri = State.BeriState{ObservedAt: observedAt}
-	application := &Application{State: State.NewStore(gameState)}
+	application := &Application{State: State.NewStore(&gameState)}
 	if err := application.verifyBeriCapacity(t.Context(), plan.Steps[2].ActionArguments); err != nil {
 		t.Fatalf("capacity verification rejected donor-less FUC source metadata: %v", err)
 	}
 
 	gameState.Beri.ParsedSourceID = 101
-	application = &Application{State: State.NewStore(gameState)}
+	application = &Application{State: State.NewStore(&gameState)}
 	if err := application.verifyBeriCapacity(t.Context(), plan.Steps[2].ActionArguments); err == nil ||
 		!strings.Contains(err.Error(), "instead of selected donor") {
 		t.Fatalf("capacity verification accepted a mismatched donor: %v", err)
@@ -167,7 +167,7 @@ func TestPlanBeriCapacityRefreshScansExactDonorWithoutChangingFocus(t *testing.T
 	gameState.Beri.ParsedSourceID = 0
 	source.UnitsObservedAt = request.RequestedAt.Add(-time.Millisecond)
 	gameState.Castles[100] = source
-	application = &Application{State: State.NewStore(gameState)}
+	application = &Application{State: State.NewStore(&gameState)}
 	if err := application.verifyBeriCapacity(t.Context(), plan.Steps[2].ActionArguments); err == nil ||
 		!strings.Contains(err.Error(), "did not refresh the selected Berimond donor inventory") {
 		t.Fatalf("capacity verification accepted stale donor inventory: %v", err)
@@ -253,7 +253,7 @@ func TestBeriTransferPassesProductionResourceAdmission(t *testing.T) {
 		t.Fatal(err)
 	}
 	engine := Intent.NewEngine(
-		registry, State.NewStore(gameState), beriIntentGameDataProvider{store: gameData}, nil, nil,
+		registry, State.NewStore(&gameState), beriIntentGameDataProvider{store: gameData}, nil, nil,
 	)
 	receipt := engine.Submit(t.Context(), Intent.Request{
 		Name: "beri.transfer", DryRun: true,
@@ -389,8 +389,9 @@ func TestAllOtherBeriPhasesPassProductionResourceAdmission(t *testing.T) {
 			if err := registry.Register(test.definition); err != nil {
 				t.Fatal(err)
 			}
+			accessorState1 := test.state()
 			engine := Intent.NewEngine(
-				registry, State.NewStore(test.state()), beriIntentGameDataProvider{store: gameData}, nil, nil,
+				registry, State.NewStore(&accessorState1), beriIntentGameDataProvider{store: gameData}, nil, nil,
 			)
 			receipt := engine.Submit(t.Context(), Intent.Request{
 				Name: test.definition.Name, DryRun: true, Arguments: test.arguments,
@@ -698,7 +699,7 @@ func TestPlanBeriTowerAttackUsesFNTAndOmitsADIAndGAS(t *testing.T) {
 	); err == nil {
 		t.Fatal("tower attack accepted the cached target before its targeted GAA refresh")
 	}
-	guardStore := State.NewStore(gameState)
+	guardStore := State.NewStore(&gameState)
 	guardApplication := &Application{State: guardStore}
 	if err := guardApplication.guardBeriTowerAttack(t.Context(), guardArguments); err == nil {
 		t.Fatal("GAA guard accepted a target that was not returned by the targeted refresh")

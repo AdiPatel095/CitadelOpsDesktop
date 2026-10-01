@@ -231,7 +231,8 @@ func TestCheckpointDefaultsAreTheAgreedCadence(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	publisher, err := NewCheckpointPublisher(CheckpointPublisherConfig{RuntimeID: "runtime-one", State: State.NewStore(State.NewGameState()), Client: client})
+	accessorState1 := State.NewGameState()
+	publisher, err := NewCheckpointPublisher(CheckpointPublisherConfig{RuntimeID: "runtime-one", State: State.NewStore(&accessorState1), Client: client})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -240,7 +241,8 @@ func TestCheckpointDefaultsAreTheAgreedCadence(t *testing.T) {
 		t.Fatalf("defaults = interval %v heartbeat %v retry %v settle %v/%v",
 			publisher.interval, publisher.heartbeat, publisher.retry, publisher.settleEvery, publisher.settle.window)
 	}
-	metrics, err := NewPublisher(PublisherConfig{RuntimeID: "runtime-one", State: State.NewStore(State.NewGameState()), Client: client})
+	accessorState2 := State.NewGameState()
+	metrics, err := NewPublisher(PublisherConfig{RuntimeID: "runtime-one", State: State.NewStore(&accessorState2), Client: client})
 	if err != nil {
 		t.Fatal(err)
 	}

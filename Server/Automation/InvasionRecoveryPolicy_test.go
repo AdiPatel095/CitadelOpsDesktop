@@ -15,9 +15,11 @@ func TestInvasionRecoveryPolicyIsCoreAndAttributedToAutoInvasion(t *testing.T) {
 	if _, ok := any(policy).(CorePolicy); !ok {
 		t.Fatal("invasion recovery must bypass feature enable and schedule gates")
 	}
-	if !policyEnabled(policy, map[string]bool{}, State.GameState{}) || policyScheduleKey(policy) != "" || policyActorID(policy) != "autoInvasion" {
+	accessorState1 := State.GameState{}
+	if !policyEnabled(policy, map[string]bool{}, &accessorState1) || policyScheduleKey(policy) != "" || policyActorID(policy) != "autoInvasion" {
+		accessorState2 := State.GameState{}
 		t.Fatalf("recovery policy routing: enabled=%t schedule=%q actor=%q",
-			policyEnabled(policy, map[string]bool{}, State.GameState{}), policyScheduleKey(policy), policyActorID(policy))
+			policyEnabled(policy, map[string]bool{}, &accessorState2), policyScheduleKey(policy), policyActorID(policy))
 	}
 }
 
@@ -169,7 +171,7 @@ func TestCoordinatorRunsPersistedInvasionRecoveryWhenParentDisabledOrScheduleClo
 				KingdomID: 0, TargetTypeID: foreignLordsMapTypeID, TargetX: 101, TargetY: 102,
 				StartedAt: reservedAt.Add(time.Second), ObservedAt: now, ArrivesAt: &arrivesAt,
 			}
-			state := State.NewStore(gameState)
+			state := State.NewStore(&gameState)
 			configuration, err := Configuration.Open(t.TempDir(), map[string]json.RawMessage{
 				"automation.enabled": test.enabled,
 				"scheduler":          test.scheduler,

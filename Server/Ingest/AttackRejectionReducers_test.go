@@ -39,7 +39,8 @@ func TestAttackCoolingDownRepliesDeferOnlyTheCorrelatedTarget(t *testing.T) {
 	// ABI 95 on a fortress this player defeated: personal deferral.
 	send("abi", `{"SX":100,"SY":100,"TX":101,"TY":100,"KID":1}`, base)
 	reply("abi", 95, "", base.Add(100*time.Millisecond))
-	fortress, found := State.AttackTargetRejectedAt(store.ReadOnlyView(), 1, State.MapTypeKingdomFortress, 101, 100, base.Add(time.Second))
+	accessorState1 := store.ReadOnlyView()
+	fortress, found := State.AttackTargetRejectedAt(&accessorState1, 1, State.MapTypeKingdomFortress, 101, 100, base.Add(time.Second))
 	if !found || !fortress.Personal || fortress.Until.Sub(fortress.ObservedAt) != State.AttackTargetRejectionPersonalBase ||
 		fortress.OperationID != "op-abi" {
 		t.Fatalf("fortress rejection = %#v found=%t", fortress, found)
@@ -51,7 +52,7 @@ func TestAttackCoolingDownRepliesDeferOnlyTheCorrelatedTarget(t *testing.T) {
 	send("cra", `{"SX":1,"SY":1,"TX":300,"TY":300,"KID":1,"LID":5}`, base.Add(2*time.Second))
 	reply("cra", 95, "", base.Add(2*time.Second+100*time.Millisecond))
 	view := store.ReadOnlyView()
-	if _, found := State.AttackTargetRejectedAt(view, 4, State.MapTypeStormFort, 50, 60, base.Add(3*time.Second)); !found {
+	if _, found := State.AttackTargetRejectedAt(&view, 4, State.MapTypeStormFort, 50, 60, base.Add(3*time.Second)); !found {
 		t.Fatal("Storm CRA 95 did not defer the fort")
 	}
 	if len(view.AttackAnalytics.RejectedTargets) != 2 || len(view.CommandContext.PendingRequests) != 0 {
@@ -64,7 +65,8 @@ func TestAttackCoolingDownRepliesDeferOnlyTheCorrelatedTarget(t *testing.T) {
 		Direction: Protocol.DirectionInbound, Opcode: "gaa", ResponseCode: &ok, ReceivedAt: base.Add(3 * time.Second),
 		Payload: json.RawMessage(`{"KID":1,"AI":[[11,101,100,-1,45,0,42,0]]}`),
 	})
-	if _, found := State.AttackTargetRejectedAt(store.ReadOnlyView(), 1, State.MapTypeKingdomFortress, 101, 100, base.Add(4*time.Second)); !found {
+	accessorState2 := store.ReadOnlyView()
+	if _, found := State.AttackTargetRejectedAt(&accessorState2, 1, State.MapTypeKingdomFortress, 101, 100, base.Add(4*time.Second)); !found {
 		t.Fatal("fresh GAA zero erased an active rejection")
 	}
 

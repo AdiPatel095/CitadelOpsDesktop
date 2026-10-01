@@ -169,7 +169,7 @@ func (server *Server) handleAllianceTargetAttackPreview(writer http.ResponseWrit
 func firstAvailableCommander(gameState State.GameState, now time.Time) (State.CommanderID, bool) {
 	ids := make([]State.CommanderID, 0, len(gameState.Commanders))
 	for id, commander := range gameState.Commanders {
-		if id >= 0 && commander.Available && !State.CommanderHasActiveMovementAt(gameState, id, now) {
+		if id >= 0 && commander.Available && !State.CommanderHasActiveMovementAt(&gameState, id, now) {
 			ids = append(ids, id)
 		}
 	}

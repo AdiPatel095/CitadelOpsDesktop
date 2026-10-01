@@ -5,7 +5,7 @@ import (
 	"time"
 )
 
-func (state *GameState) prepareTowerQueueMutation(source GameState) {
+func (state *GameState) prepareTowerQueueMutation(source *GameState) {
 	state.TowerQueue = source.TowerQueue
 	state.TowerQueue.EntriesByCastle = cloneMap(source.TowerQueue.EntriesByCastle)
 	state.TowerQueue.LastScannedAt = cloneMap(source.TowerQueue.LastScannedAt)
@@ -125,7 +125,7 @@ func (state *GameState) ReplaceTowerQueue(value TowerQueueState) {
 	}
 }
 
-func (state GameState) towerQueueChangeCastleIDs() []CastleID {
+func (state *GameState) towerQueueChangeCastleIDs() []CastleID {
 	ids := make([]CastleID, 0, len(state.pendingTowerQueueCastles))
 	for id := range state.pendingTowerQueueCastles {
 		ids = append(ids, id)
@@ -134,7 +134,7 @@ func (state GameState) towerQueueChangeCastleIDs() []CastleID {
 	return ids
 }
 
-func (state GameState) towerQueueCastleIDs() []CastleID {
+func (state *GameState) towerQueueCastleIDs() []CastleID {
 	set := map[CastleID]struct{}{}
 	for id := range state.TowerQueue.EntriesByCastle {
 		set[id] = struct{}{}

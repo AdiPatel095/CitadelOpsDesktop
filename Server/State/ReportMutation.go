@@ -64,7 +64,7 @@ func (state *GameState) initializeReports() {
 	state.Reports.BattleCaptures = nil
 }
 
-func (state *GameState) prepareReportMutation(source GameState) {
+func (state *GameState) prepareReportMutation(source *GameState) {
 	state.Reports = source.Reports
 	base := source.reportRecords
 	if base == nil {
@@ -81,7 +81,7 @@ func (state *GameState) prepareReportMutation(source GameState) {
 	state.replaceReports = false
 }
 
-func (state GameState) reportRecord(messageID int64) (reportRecord, bool) {
+func (state *GameState) reportRecord(messageID int64) (reportRecord, bool) {
 	if messageID <= 0 {
 		return reportRecord{}, false
 	}
@@ -133,40 +133,40 @@ func (state *GameState) storeReportRecord(messageID int64, record reportRecord) 
 	state.markReportMessage(messageID)
 }
 
-func (state GameState) LookupReportNotice(messageID int64) (ReportNotice, bool) {
+func (state *GameState) LookupReportNotice(messageID int64) (ReportNotice, bool) {
 	record, found := state.reportRecord(messageID)
 	return record.Notice, found && record.HasNotice
 }
 
-func (state GameState) LookupSpyReportCapture(messageID int64) (SpyReportCapture, bool) {
+func (state *GameState) LookupSpyReportCapture(messageID int64) (SpyReportCapture, bool) {
 	record, found := state.reportRecord(messageID)
 	return record.Spy, found && record.HasSpy
 }
 
-func (state GameState) LookupBattleReportCapture(messageID int64) (BattleReportCapture, bool) {
+func (state *GameState) LookupBattleReportCapture(messageID int64) (BattleReportCapture, bool) {
 	record, found := state.reportRecord(messageID)
 	return record.Battle, found && record.HasBattle
 }
 
-func (state GameState) RangeReportNotices(visit func(int64, ReportNotice) bool) {
+func (state *GameState) RangeReportNotices(visit func(int64, ReportNotice) bool) {
 	state.rangeReportRecords(func(id int64, record reportRecord) bool {
 		return !record.HasNotice || visit(id, record.Notice)
 	})
 }
 
-func (state GameState) RangeSpyReportCaptures(visit func(int64, SpyReportCapture) bool) {
+func (state *GameState) RangeSpyReportCaptures(visit func(int64, SpyReportCapture) bool) {
 	state.rangeReportRecords(func(id int64, record reportRecord) bool {
 		return !record.HasSpy || visit(id, record.Spy)
 	})
 }
 
-func (state GameState) RangeBattleReportCaptures(visit func(int64, BattleReportCapture) bool) {
+func (state *GameState) RangeBattleReportCaptures(visit func(int64, BattleReportCapture) bool) {
 	state.rangeReportRecords(func(id int64, record reportRecord) bool {
 		return !record.HasBattle || visit(id, record.Battle)
 	})
 }
 
-func (state GameState) rangeReportRecords(visit func(int64, reportRecord) bool) {
+func (state *GameState) rangeReportRecords(visit func(int64, reportRecord) bool) {
 	if visit == nil {
 		return
 	}
@@ -297,7 +297,7 @@ func (state *GameState) ReplaceReports(value ReportState) {
 	}
 }
 
-func (state GameState) materializedReports() ReportState {
+func (state *GameState) materializedReports() ReportState {
 	reports := ReportState{
 		Notices: map[int64]ReportNotice{}, SpyCaptures: map[int64]SpyReportCapture{},
 		BattleCaptures: map[int64]BattleReportCapture{}, ActiveBattleReport: state.Reports.ActiveBattleReport,
@@ -323,7 +323,7 @@ func (state GameState) materializedReports() ReportState {
 	return reports
 }
 
-func (state GameState) reportMessageChangeIDs() []int64 {
+func (state *GameState) reportMessageChangeIDs() []int64 {
 	ids := make([]int64, 0, len(state.pendingReportMessages))
 	for id := range state.pendingReportMessages {
 		ids = append(ids, id)
@@ -332,7 +332,7 @@ func (state GameState) reportMessageChangeIDs() []int64 {
 	return ids
 }
 
-func (state GameState) reportMessageIDs() []int64 {
+func (state *GameState) reportMessageIDs() []int64 {
 	ids := []int64{}
 	state.rangeReportRecords(func(id int64, _ reportRecord) bool {
 		ids = append(ids, id)

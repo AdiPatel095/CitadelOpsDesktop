@@ -136,7 +136,7 @@ func TestOpenGateCallbackUsesAbsentSettingsDefaults(t *testing.T) {
 				s.Castles[10] = State.CastleState{ID: 10, SlotType: 1}
 				arrival := now.Add(30 * time.Second)
 				s.Movements[1] = State.MovementState{ID: 1, TypeID: 0, Direction: 0, OwnerPlayerID: 8, TargetPlayerID: 7, SourceTypeID: 1, SourceCastleID: 20, TargetTypeID: 1, TargetCastleID: 10, ArrivesAt: &arrival}
-				application := &Application{Configuration: configuration, State: State.NewStore(s)}
+				application := &Application{Configuration: configuration, State: State.NewStore(&s)}
 				args, _ := json.Marshal(defenseOpenGateRequest{CastleID: 10, AutoStation: true, RequireIncomingAttack: true, PlannedAt: now.Add(-time.Second), ConnectionGeneration: 3})
 				err = application.guardOpenGate(t.Context(), args)
 				if want := protection && !section.malformed; (err == nil) != want {

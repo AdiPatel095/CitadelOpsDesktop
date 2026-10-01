@@ -27,7 +27,8 @@ type signalRig struct {
 
 func newSignalRig(t *testing.T, config Config) *signalRig {
 	t.Helper()
-	store := State.NewStore(State.NewGameState())
+	accessorState1 := State.NewGameState()
+	store := State.NewStore(&accessorState1)
 	configuration, err := Configuration.Open(t.TempDir(), map[string]json.RawMessage{"scheduler": json.RawMessage(`{"minAttackDelay":4}`)})
 	if err != nil {
 		t.Fatal(err)

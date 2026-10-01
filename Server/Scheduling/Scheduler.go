@@ -74,7 +74,7 @@ func (scheduler *Scheduler) Schedule(request Request) error {
 	_, err := scheduler.state.ApplyComponents(State.Components(State.ComponentScheduled), func(gameState *State.GameState) ([]string, bool, error) {
 		now := time.Now().UTC()
 		current, exists := gameState.Scheduled[request.ID]
-		worldID, playerID := State.BoundAccount(*gameState)
+		worldID, playerID := State.BoundAccount(gameState)
 		if exists && (current.Status == "scheduled" || current.Status == "running") &&
 			current.Intent == request.Intent && current.ExecuteAt.Equal(request.ExecuteAt.UTC()) &&
 			bytes.Equal(current.Arguments, request.Arguments) &&
@@ -229,10 +229,10 @@ func (scheduler *Scheduler) dispatchDue(ctx context.Context) time.Time {
 				return nil, false, nil
 			}
 			if current.WorldID == "" {
-				current.WorldID, _ = State.BoundAccount(*gameState)
+				current.WorldID, _ = State.BoundAccount(gameState)
 			}
 			if current.PlayerID == 0 {
-				_, current.PlayerID = State.BoundAccount(*gameState)
+				_, current.PlayerID = State.BoundAccount(gameState)
 			}
 			if current.LastOperationID != "" {
 				operationID = current.LastOperationID
@@ -341,7 +341,7 @@ func (scheduler *Scheduler) clearRunning(id string, version uint64) {
 }
 
 func scheduledOperationMatchesAccount(gameState State.GameState, operation State.ScheduledOperation) bool {
-	worldID, playerID := State.BoundAccount(gameState)
+	worldID, playerID := State.BoundAccount(&gameState)
 	if operation.PlayerID > 0 && operation.PlayerID != playerID {
 		return false
 	}
@@ -355,12 +355,12 @@ func scheduledIntentOperationID(gameState State.GameState, operation State.Sched
 	}
 	worldID := strings.ToLower(strings.TrimSpace(operation.WorldID))
 	if worldID == "" {
-		boundWorldID, _ := State.BoundAccount(gameState)
+		boundWorldID, _ := State.BoundAccount(&gameState)
 		worldID = strings.ToLower(strings.TrimSpace(boundWorldID))
 	}
 	playerID := operation.PlayerID
 	if playerID == 0 {
-		_, playerID = State.BoundAccount(gameState)
+		_, playerID = State.BoundAccount(&gameState)
 	}
 	scope := worldID + "\x00" + strconv.FormatInt(int64(playerID), 10) + "\x00" + operation.ID
 	digest := sha256.Sum256([]byte(scope))

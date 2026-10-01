@@ -34,7 +34,7 @@ func ReconcileInvasionReservationMovement(
 	if gameState == nil {
 		return InvasionLaunchReconciliation{}, nil
 	}
-	matched, found := State.InvasionReservationMovement(*gameState, reservation)
+	matched, found := State.InvasionReservationMovement(gameState, reservation)
 	if !found || matched.ID != movement.ID {
 		return InvasionLaunchReconciliation{}, nil
 	}
@@ -92,7 +92,7 @@ func reduceInvasionReservationMovements(
 		if !exists {
 			continue
 		}
-		movement, matched := State.InvasionReservationMovement(*gameState, reservation)
+		movement, matched := State.InvasionReservationMovement(gameState, reservation)
 		if !matched {
 			continue
 		}

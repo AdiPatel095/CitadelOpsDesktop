@@ -107,7 +107,7 @@ func (policy *BeriPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decisi
 		policy.resetBeriRefill()
 	}
 	if decision, locked := limitedEventGate(
-		snapshot.State, snapshot.Now, []int64{GameData.BerimondEventID}, "Battle for Berimond",
+		&snapshot.State, snapshot.Now, []int64{GameData.BerimondEventID}, "Battle for Berimond",
 	); locked {
 		policy.resetBeriRefill()
 		return decision, nil
@@ -140,7 +140,7 @@ func (policy *BeriPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decisi
 			NextCheckAt: snapshot.Now.Add(interval),
 		}, nil
 	}
-	beriCamp, found := beriCastle(snapshot.State)
+	beriCamp, found := beriCastle(&snapshot.State)
 	if !found {
 		policy.resetBeriRefill()
 		return Decision{
@@ -156,7 +156,7 @@ func (policy *BeriPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decisi
 			NextCheckAt: snapshot.Now.Add(interval),
 		}, nil
 	}
-	sourceID := beriSourceCastle(snapshot.State, settings.SourceCastleID)
+	sourceID := beriSourceCastle(&snapshot.State, settings.SourceCastleID)
 	refillScope := fmt.Sprintf("%s|%d|%d", configSignature, beriCastleID, sourceID)
 	if policy.refillScope != "" && policy.refillScope != refillScope {
 		policy.resetBeriRefill()
@@ -628,7 +628,7 @@ func beriTroopTransportTimeSkipID(raw string) (string, bool) {
 	}
 }
 
-func beriCastle(gameState State.GameState) (State.CastleState, bool) {
+func beriCastle(gameState *State.GameState) (State.CastleState, bool) {
 	ids := make([]State.CastleID, 0, len(gameState.Castles))
 	for id := range gameState.Castles {
 		ids = append(ids, id)
@@ -655,7 +655,7 @@ func beriAttackPreset(snapshot Snapshot, settings beriSettings) (AttackPresets.P
 	return preset, nil
 }
 
-func beriSourceCastle(gameState State.GameState, requested State.CastleID) State.CastleID {
+func beriSourceCastle(gameState *State.GameState, requested State.CastleID) State.CastleID {
 	if requested > 0 {
 		return requested
 	}

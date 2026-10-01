@@ -42,7 +42,8 @@ func decisionFixture(t *testing.T, ids ...string) (*Coordinator, *State.Store, [
 	if err != nil {
 		t.Fatal(err)
 	}
-	state := State.NewStore(coordinatorReadyState())
+	accessorState1 := coordinatorReadyState()
+	state := State.NewStore(&accessorState1)
 	coordinator := NewCoordinator(state, configuration, nil, &coordinatorTestSubmitter{calls: make(chan Intent.Request, 1)}, asPolicies...)
 	runtime := map[string]*policyRuntime{}
 	for _, id := range ids {

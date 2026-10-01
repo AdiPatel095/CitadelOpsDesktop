@@ -38,7 +38,8 @@ func TestLaneSafetyPolicyIsAnExactAllowlist(t *testing.T) {
 }
 
 func TestLaneSafetyRejectsMissingOriginWithoutGuessingFeatureLock(t *testing.T) {
-	store := State.NewStore(State.NewGameState())
+	accessorState1 := State.NewGameState()
+	store := State.NewStore(&accessorState1)
 	registry := NewRegistry()
 	planned := false
 	if err := registry.Register(Definition{Name: "test.missing-lane", Effect: EffectWrite,
@@ -62,7 +63,8 @@ func TestLaneSafetyRejectsMissingOriginWithoutGuessingFeatureLock(t *testing.T) 
 func TestLaneSafetyStopsRetriesCompensationAndChains(t *testing.T) {
 	for _, mode := range []string{"retry", "stale", "compensation", "no-success-codes", "response-alias", "no-await-opcode"} {
 		t.Run(mode, func(t *testing.T) {
-			store := State.NewStore(State.NewGameState())
+			accessorState2 := State.NewGameState()
+			store := State.NewStore(&accessorState2)
 			pipeline := Ingest.NewPipeline(store, nil, Ingest.NewRegistry())
 			sender := &responseSequenceSender{pipeline: pipeline, responseCodes: []int{226, 0}}
 			registry := NewRegistry()
@@ -134,7 +136,8 @@ func safetyContext(id, lane string) context.Context {
 }
 
 func TestLaneSafetyWhitelistIgnoresExistingAHRLock(t *testing.T) {
-	store := State.NewStore(State.NewGameState())
+	accessorState3 := State.NewGameState()
+	store := State.NewStore(&accessorState3)
 	engine := NewEngine(NewRegistry(), store, nil, nil, nil)
 	lock := State.AutomationSafetyLock{Lane: "autoRecruit", Opcode: "ahr", Code: 273,
 		OperationID: "existing-ahr-incident", ObservedAt: time.Now().UTC(), Reason: "unclassified_rejection"}
@@ -153,7 +156,8 @@ func TestLaneSafetyAllowlistedRejectionsRemainFailuresWithoutLocking(t *testing.
 		code   int
 	}{{"adi", 95}, {"ere", 227}, {"eqe", 227}, {"bup", 87}, {"ahr", 273}} {
 		t.Run(fmt.Sprintf("%s-%d", pair.opcode, pair.code), func(t *testing.T) {
-			store := State.NewStore(State.NewGameState())
+			accessorState4 := State.NewGameState()
+			store := State.NewStore(&accessorState4)
 			pipeline := Ingest.NewPipeline(store, nil, Ingest.NewRegistry())
 			sender := &responseSequenceSender{pipeline: pipeline, responseCodes: []int{pair.code, 0}}
 			registry := NewRegistry()
@@ -188,7 +192,8 @@ func TestLaneSafetyAllowlistedRejectionsRemainFailuresWithoutLocking(t *testing.
 func TestLaneSafetyAllowlistedEnchantmentRetriesStillCheckReserves(t *testing.T) {
 	for _, opcode := range []string{"ere", "eqe"} {
 		t.Run(opcode, func(t *testing.T) {
-			store := State.NewStore(State.NewGameState())
+			accessorState5 := State.NewGameState()
+			store := State.NewStore(&accessorState5)
 			pipeline := Ingest.NewPipeline(store, nil, Ingest.NewRegistry())
 			sender := &responseSequenceSender{pipeline: pipeline, responseCodes: []int{227, 227, 0}}
 			registry := NewRegistry()
@@ -231,7 +236,8 @@ func TestLaneSafetyDurableRestartReviewAndCooldown(t *testing.T) {
 		})
 		return engine
 	}
-	engine := newEngine(State.NewStore(State.NewGameState()))
+	accessorState6 := State.NewGameState()
+	engine := newEngine(State.NewStore(&accessorState6))
 	ctx, cancel := context.WithCancel(safetyContext("unknown-incident", "attack"))
 	cancel() // Persistence cannot depend on the canceled operation.
 	engine.guardRejection(ctx, NewResponseCodeError(nil, "cra", 256))
@@ -247,7 +253,7 @@ func TestLaneSafetyDurableRestartReviewAndCooldown(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	engine = newEngine(State.NewStore(loaded))
+	engine = newEngine(State.NewStore(&loaded))
 	if err := engine.checkLaneSafety(Request{Actor: "automation:attack", AutomationLane: "attack"}); err == nil {
 		t.Fatal("restart cleared unknown lock")
 	}
@@ -297,7 +303,8 @@ func TestLaneSafetyDurableRestartReviewAndCooldown(t *testing.T) {
 }
 
 func TestLaneSafetyActionErrorsAndPersistenceFailureStayClosed(t *testing.T) {
-	engine := NewEngine(NewRegistry(), State.NewStore(State.NewGameState()), nil, nil, nil)
+	accessorState7 := State.NewGameState()
+	engine := NewEngine(NewRegistry(), State.NewStore(&accessorState7), nil, nil, nil)
 	engine.SetLaneSafetyPersistence(func(context.Context, State.Event) error { return errors.New("disk unavailable") })
 	err := engine.guardRejection(safetyContext("incident", "lane"), fmt.Errorf("action failed: %w", NewResponseCodeError(nil, "new", 311)))
 	var locked *LaneLockedError

@@ -211,7 +211,7 @@ func runReplay(t *testing.T, start time.Time) replayTrace {
 	}
 	state := State.NewGameState()
 	state.Session = State.SessionState{LoggedIn: true, SocketReady: true, Generation: 1, ConnectionGeneration: 1, ChangedAt: start.Add(-time.Second)}
-	store := State.NewStore(state)
+	store := State.NewStore(&state)
 	registry := NewRegistry()
 	if err := RegisterCoreReducers(registry); err != nil {
 		t.Fatal(err)
@@ -256,7 +256,8 @@ func runReplay(t *testing.T, start time.Time) replayTrace {
 	if err := scanner.Err(); err != nil {
 		t.Fatal(err)
 	}
-	trace.Final = normalizeReplay(t, State.NewClientStateSnapshot(store.ReadOnlyView()), start)
+	accessorState1 := store.ReadOnlyView()
+	trace.Final = normalizeReplay(t, State.NewClientStateSnapshot(&accessorState1), start)
 	return trace
 }
 

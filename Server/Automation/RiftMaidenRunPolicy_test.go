@@ -43,11 +43,11 @@ func TestRiftMaidenRunPolicyCapsRoundAtExactRemainingGoal(t *testing.T) {
 	if request.RunID != "run" || request.CommanderSelection.Count != 2 {
 		t.Fatalf("round request = %#v", request)
 	}
-	if !policyEnabled(policy, map[string]bool{}, gameState) {
+	if !policyEnabled(policy, map[string]bool{}, &gameState) {
 		t.Fatal("active on-demand Rift run was disabled by automation.enabled")
 	}
 	gameState.Rift.MaidenRun.Status = "completed"
-	if policyEnabled(policy, map[string]bool{"rift_maiden_run": true}, gameState) {
+	if policyEnabled(policy, map[string]bool{"rift_maiden_run": true}, &gameState) {
 		t.Fatal("completed on-demand Rift run remained active")
 	}
 }

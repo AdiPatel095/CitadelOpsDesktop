@@ -22,7 +22,7 @@ type NomadSequentialArrivalBlock struct {
 // outgoing movements are authoritative; persisted analytics retain the guard
 // across batches and process restarts. Source castle is intentionally ignored.
 func NomadSequentialArrivalBlockAt(
-	gameState GameState,
+	gameState *GameState,
 	eventID int64,
 	kingdomID KingdomID,
 	targetTypeID int,
@@ -107,7 +107,7 @@ func NomadSequentialArrivalBlockAt(
 }
 
 func nomadPendingLaunchSettled(
-	gameState GameState,
+	gameState *GameState,
 	kingdomID KingdomID,
 	targetTypeID int,
 	targetX int,

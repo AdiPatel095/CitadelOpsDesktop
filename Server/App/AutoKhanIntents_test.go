@@ -253,7 +253,7 @@ func TestRecordAcceptedKhanTauntReplacesPriorEventRageCursor(t *testing.T) {
 	}
 	gameState.Khan.LastTauntTriggeredRage = 682_930
 	gameState.Khan.LastTauntTriggeredAt = observedAt.Add(-7 * 24 * time.Hour)
-	application := &Application{State: State.NewStore(gameState)}
+	application := &Application{State: State.NewStore(&gameState)}
 	arguments, _ := json.Marshal(khanTauntRequest{
 		EventEndsAt: eventEndsAt, PlayerTotalRage: 10_080, RageObservedAt: observedAt,
 	})
@@ -270,7 +270,7 @@ func TestRecordAcceptedKhanTauntReplacesPriorEventRageCursor(t *testing.T) {
 
 func TestLegacyUnconfirmedKhanTauntDispatchFailsClosed(t *testing.T) {
 	gameState := State.NewGameState()
-	application := &Application{State: State.NewStore(gameState)}
+	application := &Application{State: State.NewStore(&gameState)}
 	if err := application.rejectUnconfirmedKhanTauntDispatch(t.Context(), json.RawMessage(`{}`)); err == nil || !errors.Is(err, Intent.ErrPlanStale) {
 		t.Fatalf("legacy unconfirmed dispatch error = %v", err)
 	}
@@ -448,7 +448,7 @@ func newKhanTauntExecutionHarness(
 		RageCampID: 1147, RageCampRevision: 1, PlayerRageCap: 1740, PlayerTotalRage: 52_140, RageObservedAt: now,
 		KhanGuard: khanLaneGuardRequest{MainCastleID: 1},
 	})
-	stateStore := State.NewStore(gameState)
+	stateStore := State.NewStore(&gameState)
 	application := &Application{State: stateStore}
 	registry := Intent.NewRegistry()
 	if err := registry.Register(Intent.Definition{
@@ -630,7 +630,7 @@ func TestKhanDefenseToolPurchasePassesProductionResourceAdmission(t *testing.T) 
 		t.Fatal(err)
 	}
 	engine := Intent.NewEngine(
-		registry, State.NewStore(gameState), beriIntentGameDataProvider{store: gameData}, nil, nil,
+		registry, State.NewStore(&gameState), beriIntentGameDataProvider{store: gameData}, nil, nil,
 	)
 	arguments, _ := json.Marshal(khanDefenseToolPurchaseRequest{
 		CastleID: 1, PackageID: 10, ToolID: 731, Amount: 1, ShopTableID: 72, DefensePreset: preset,
@@ -672,7 +672,7 @@ func TestCaptureKhanLaunchAcceptsSubsecondArrivalProjectionJitter(t *testing.T) 
 		ID: 11, Direction: 0, SourceCastleID: 2, KingdomID: 0, TargetX: 210, TargetY: 942,
 		CommanderID: &commanderID, ArrivesAt: &currentArrival, ObservedAt: now,
 	}
-	application := &Application{State: State.NewStore(gameState)}
+	application := &Application{State: State.NewStore(&gameState)}
 	arguments, _ := json.Marshal(khanLaunchCapture{
 		RunID: "run", SourceCastleID: 2, MainCastleID: 1, KingdomID: 0,
 		TargetX: 210, TargetY: 942, CommanderID: commanderID,
@@ -702,7 +702,7 @@ func TestCaptureKhanLaunchRecordsAndBlocksMaterialOvertake(t *testing.T) {
 		ID: 11, Direction: 0, SourceCastleID: 2, KingdomID: 0, TargetX: 210, TargetY: 942,
 		CommanderID: &commanderID, ArrivesAt: &currentArrival, ObservedAt: now,
 	}
-	application := &Application{State: State.NewStore(gameState)}
+	application := &Application{State: State.NewStore(&gameState)}
 	arguments, _ := json.Marshal(khanLaunchCapture{
 		RunID: "run", SourceCastleID: 2, MainCastleID: 1, KingdomID: 0,
 		TargetX: 210, TargetY: 942, CommanderID: commanderID,
@@ -740,7 +740,7 @@ func TestCaptureKhanLaunchClearsFinishedArrivalErrorAfterOrderedLaunch(t *testin
 		ID: 11, Direction: 0, SourceCastleID: 2, KingdomID: 0, TargetX: 210, TargetY: 942,
 		CommanderID: &commanderID, ArrivesAt: &currentArrival, ObservedAt: now,
 	}
-	application := &Application{State: State.NewStore(gameState)}
+	application := &Application{State: State.NewStore(&gameState)}
 	arguments, _ := json.Marshal(khanLaunchCapture{
 		RunID: "run", SourceCastleID: 2, MainCastleID: 1, KingdomID: 0,
 		TargetX: 210, TargetY: 942, CommanderID: commanderID,

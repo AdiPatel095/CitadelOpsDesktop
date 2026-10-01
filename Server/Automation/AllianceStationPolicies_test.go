@@ -1241,7 +1241,7 @@ func TestIncomingThreatsOnlyIncludeHostileAttacksOnOwnedCastles(t *testing.T) {
 	gameState.Movements[5] = State.MovementState{
 		ID: 5, TypeID: 0, Direction: 0, OwnerPlayerID: 8, TargetCastleID: 100, ArrivesAt: &arrives,
 	}
-	threats, count, earliest, latest := incomingThreats(gameState, now)
+	threats, count, earliest, latest := incomingThreats(&gameState, now)
 	if count != 1 || len(threats) != 1 || !earliest.Equal(arrives) || !latest.Equal(arrives) {
 		t.Fatalf("unexpected threats: count=%d threats=%#v earliest=%v latest=%v", count, threats, earliest, latest)
 	}
@@ -1253,7 +1253,7 @@ func TestTrackedStationRecallAdvancesThroughEveryBatch(t *testing.T) {
 	state.Movements[30] = State.MovementState{ID: 30, Direction: 1}
 	state.Movements[31] = State.MovementState{ID: 31, Direction: 0}
 	state.Movements[32] = State.MovementState{ID: 32, Direction: 1}
-	movement, ok := trackedStationMovement(state, op)
+	movement, ok := trackedStationMovement(&state, op)
 	if !ok || movement.ID != 31 {
 		t.Fatal("remaining outbound batch was not selected")
 	}

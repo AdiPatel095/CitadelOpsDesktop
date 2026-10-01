@@ -25,7 +25,7 @@ func TestComponentSnapshotWritesOnlyDirtyComponentsAfterBootstrap(t *testing.T) 
 	initial.AttackAnalytics.RecentTowerAdvisorTimeSkips = []TowerAdvisorTimeSkipUsage{{
 		MovementID: 700, TimeSkips: 3, UsedAt: dailySessionStartedAt.Add(30 * time.Minute),
 	}}
-	store := NewStore(initial)
+	store := NewStore(&initial)
 
 	playerEvent, err := store.ApplyComponents(Components(ComponentPlayer), func(state *GameState) ([]string, bool, error) {
 		state.Player.Level = 11
@@ -123,7 +123,7 @@ func TestInvasionAvailabilityAndReservationsPersistAcrossRestart(t *testing.T) {
 		CommanderID: 0, CommanderKnown: true,
 		OperationID: "indeterminate-cra", ReservedAt: observedAt.Add(time.Second), ReconcileAfter: reconcileAfter,
 	})
-	store := NewStore(initial)
+	store := NewStore(&initial)
 	event, err := store.ApplyComponents(Components(ComponentInvasion), func(state *GameState) ([]string, bool, error) {
 		state.Invasion.FortifyResourceCount = 1
 		return []string{"invasion"}, true, nil
@@ -159,7 +159,7 @@ func TestGlobalEffectPurchasePersistsButResourceFreshnessDoesNot(t *testing.T) {
 	initial.Session.ConnectionGeneration = 11
 	initial.Player.Resources[2] = 7500
 	initial.Player.ResourceObservations[2] = PlayerResourceObservation{ObservedAt: observedAt, ConnectionGeneration: 11}
-	store := NewStore(initial)
+	store := NewStore(&initial)
 	event, err := store.ApplyComponents(Components(ComponentEventScores), func(state *GameState) ([]string, bool, error) {
 		inventory := state.EventScores.Inventory
 		inventory.GlobalEffectPurchases = cloneGlobalEffectPurchaseMap(inventory.GlobalEffectPurchases)
@@ -200,7 +200,8 @@ func TestGlobalEffectPurchasePersistsButResourceFreshnessDoesNot(t *testing.T) {
 
 func TestComponentSnapshotWriterReusesLastDurableManifest(t *testing.T) {
 	directory := t.TempDir()
-	store := NewStore(NewGameState())
+	accessorState1 := NewGameState()
+	store := NewStore(&accessorState1)
 	writer := NewComponentSnapshotWriter(directory)
 	first, err := store.ApplyComponents(Components(ComponentPlayer), func(state *GameState) ([]string, bool, error) {
 		state.Player.Level = 10
@@ -251,7 +252,7 @@ func TestComponentSnapshotPersistsOnlyDirtyCastleAndInventoryPartitions(t *testi
 	storageObservedAt := time.Date(2026, 9, 18, 10, 0, 0, 0, time.UTC)
 	initial.Inventory.Items["storage:1"] = map[int64]int64{600: 1}
 	initial.Inventory.ItemsObservedAt["storage:1"] = storageObservedAt
-	store := NewStore(initial)
+	store := NewStore(&initial)
 
 	bootstrap, err := store.ApplyComponents(Components(ComponentPlayer), func(state *GameState) ([]string, bool, error) {
 		state.Player.Level++
@@ -361,7 +362,7 @@ func TestComponentSnapshotPersistsOnlyDirtyMapShard(t *testing.T) {
 		firstKey:  {KingdomID: 0, X: 10, Y: 10, TypeID: MapTypeKingdomTower, Level: 1, ObservedAt: observedAt},
 		secondKey: {KingdomID: 0, X: secondX, Y: 10, TypeID: MapTypeKingdomTower, Level: 2, ObservedAt: observedAt},
 	}
-	store := NewStore(initial)
+	store := NewStore(&initial)
 	bootstrap, err := store.ApplyComponents(Components(ComponentPlayer), func(state *GameState) ([]string, bool, error) {
 		state.Player.Level++
 		return []string{"player"}, true, nil
@@ -436,7 +437,7 @@ func TestPersistenceBatchKeepsMapShardKeysAcrossLaterRevisions(t *testing.T) {
 		firstKey:  first,
 		secondKey: second,
 	}
-	store := NewStore(initial)
+	store := NewStore(&initial)
 
 	bootstrap, err := store.ApplyComponents(Components(ComponentPlayer), func(state *GameState) ([]string, bool, error) {
 		state.Player.Level++
@@ -496,7 +497,8 @@ func TestPersistenceBatchKeepsMapShardKeysAcrossLaterRevisions(t *testing.T) {
 }
 
 func TestPersistenceBatchSkipsConnectionOnlyMovementSnapshot(t *testing.T) {
-	store := NewStore(NewGameState())
+	accessorState2 := NewGameState()
+	store := NewStore(&accessorState2)
 	event, err := store.ApplyComponents(Components(ComponentMovementSnapshot), func(state *GameState) ([]string, bool, error) {
 		state.MovementSnapshot = MovementSnapshot{
 			Version: 1, ConnectionGeneration: 4, ObservedAt: time.Now().UTC(),
@@ -524,7 +526,7 @@ func TestComponentSnapshotPersistsCompactStormSuppressionSeparately(t *testing.T
 	}
 	initial.Map[stormKingdomID] = map[string]MapObservation{"612:667": target}
 	initial.Storm.Map.Targets["612:667"] = target
-	store := NewStore(initial)
+	store := NewStore(&initial)
 
 	bootstrap, err := store.ApplyComponents(Components(ComponentPlayer), func(state *GameState) ([]string, bool, error) {
 		state.Player.Level++
@@ -570,7 +572,7 @@ func TestComponentSnapshotPersistsCompactStormSuppressionSeparately(t *testing.T
 	if err != nil {
 		t.Fatal(err)
 	}
-	loadedView := NewStore(loaded).ReadOnlyView()
+	loadedView := NewStore(&loaded).ReadOnlyView()
 	if tracked, found := loadedView.LookupStormTarget("612:667"); !found || tracked != target {
 		t.Fatalf("migrated Storm target = %#v, found %t", tracked, found)
 	}
@@ -598,7 +600,7 @@ func TestComponentSnapshotPersistsCompactStormSuppressionSeparately(t *testing.T
 	if err != nil {
 		t.Fatal(err)
 	}
-	loadedView = NewStore(loaded).ReadOnlyView()
+	loadedView = NewStore(&loaded).ReadOnlyView()
 	if _, found := loadedView.LookupStormTarget("612:667"); found {
 		t.Fatal("account-private Storm suppression was not restored")
 	}
@@ -680,7 +682,8 @@ func TestComponentSnapshotPersistsFeastCostReduction(t *testing.T) {
 	observedAt := time.Date(2026, time.September, 8, 16, 0, 0, 0, time.UTC)
 	pendingSince := observedAt.Add(time.Minute)
 	expectedExpiry := pendingSince.Add(6 * time.Hour)
-	store := NewStore(NewGameState())
+	accessorState3 := NewGameState()
+	store := NewStore(&accessorState3)
 	bootstrap, err := store.ApplyComponents(Components(ComponentPlayer), func(state *GameState) ([]string, bool, error) {
 		state.Player.Level = 1
 		return []string{"player"}, true, nil
@@ -913,7 +916,7 @@ func TestComponentSnapshotFilesComponentsMissingFromOlderManifest(t *testing.T) 
 	directory := t.TempDir()
 	initial := NewGameState()
 	initial.Player.ID = 99
-	store := NewStore(initial)
+	store := NewStore(&initial)
 	bootstrap, err := store.ApplyComponents(Components(ComponentPlayer), func(state *GameState) ([]string, bool, error) {
 		state.Player.Level = 10
 		return []string{"player"}, true, nil
@@ -980,7 +983,7 @@ func TestComponentSnapshotSupersedesManifestOutrankingARestartedStore(t *testing
 	veteran := NewGameState()
 	veteran.Player.ID = 99
 	veteran.Revision = 999
-	veteranStore := NewStore(veteran)
+	veteranStore := NewStore(&veteran)
 	veteranEvent, err := veteranStore.ApplyComponents(Components(ComponentPlayer), func(state *GameState) ([]string, bool, error) {
 		state.Player.Level = 70
 		return []string{"player"}, true, nil
@@ -996,7 +999,8 @@ func TestComponentSnapshotSupersedesManifestOutrankingARestartedStore(t *testing
 	}
 
 	// A new process that could not recover starts from a fresh state: revision 1.
-	fresh := NewStore(NewGameState())
+	accessorState4 := NewGameState()
+	fresh := NewStore(&accessorState4)
 	freshEvent, err := fresh.ApplyComponents(Components(ComponentPlayer), func(state *GameState) ([]string, bool, error) {
 		state.Player.ID = 99
 		state.Player.Level = 71
@@ -1059,7 +1063,8 @@ func TestWriterStatsCountFilesAndSyncs(t *testing.T) {
 	if got := writer.Stats(); got != (PersistenceStats{}) {
 		t.Fatalf("new writer stats: %+v", got)
 	}
-	store := NewStore(NewGameState())
+	accessorState5 := NewGameState()
+	store := NewStore(&accessorState5)
 	apply := func(level int) Event {
 		t.Helper()
 		event, err := store.ApplyComponents(Components(ComponentPlayer), func(state *GameState) ([]string, bool, error) {
@@ -1143,7 +1148,8 @@ func saveAutomationPersistenceTestEvent(t *testing.T, store *Store, writer *Comp
 
 func TestWriterSkipsAutomationsWhenOnlyVolatileFieldsChanged(t *testing.T) {
 	directory := t.TempDir()
-	store := NewStore(NewGameState())
+	accessorState6 := NewGameState()
+	store := NewStore(&accessorState6)
 	writer := NewComponentSnapshotWriter(directory)
 	t1 := time.Date(2026, 9, 30, 12, 0, 0, 0, time.UTC)
 	t2 := t1.Add(time.Minute)
@@ -1188,7 +1194,8 @@ func TestWriterSkipsAutomationsWhenOnlyVolatileFieldsChanged(t *testing.T) {
 
 func TestNewWriterAndPackageSaveNeverSkip(t *testing.T) {
 	directory := t.TempDir()
-	store := NewStore(NewGameState())
+	accessorState7 := NewGameState()
+	store := NewStore(&accessorState7)
 	writer := NewComponentSnapshotWriter(directory)
 	now := time.Now().UTC()
 	first := saveAutomationPersistenceTestEvent(t, store, writer, func(automations map[string]AutomationState) {

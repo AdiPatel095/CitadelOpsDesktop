@@ -33,7 +33,7 @@ func MarketBarrowMovementActiveAt(movement MovementState, now time.Time) bool {
 	return releasesAt != nil && !releasesAt.IsZero() && releasesAt.After(now)
 }
 
-func MarketBarrowLeaseAt(gameState GameState, castleID CastleID, now time.Time) MarketBarrowLease {
+func MarketBarrowLeaseAt(gameState *GameState, castleID CastleID, now time.Time) MarketBarrowLease {
 	if now.IsZero() {
 		now = time.Now().UTC()
 	}
@@ -59,7 +59,7 @@ func MarketBarrowLeaseAt(gameState GameState, castleID CastleID, now time.Time) 
 	return lease
 }
 
-func NextMarketBarrowLeaseRelease(gameState GameState, now time.Time) time.Time {
+func NextMarketBarrowLeaseRelease(gameState *GameState, now time.Time) time.Time {
 	if now.IsZero() {
 		now = time.Now().UTC()
 	}
@@ -78,7 +78,7 @@ func NextMarketBarrowLeaseRelease(gameState GameState, now time.Time) time.Time 
 	return next
 }
 
-func AvailableMarketBarrowsAt(gameState GameState, market MarketCastleState, now time.Time) int {
+func AvailableMarketBarrowsAt(gameState *GameState, market MarketCastleState, now time.Time) int {
 	available := max(0, market.AvailableBarrows)
 	lease := MarketBarrowLeaseAt(gameState, market.CastleID, now)
 	if market.TotalBarrows > 0 {

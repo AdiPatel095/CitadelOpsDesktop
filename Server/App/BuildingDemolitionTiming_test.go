@@ -79,7 +79,7 @@ func TestDemolitionCompletionResolversRejectCompletedOrUnknownTiming(t *testing.
 			if !errors.Is(err, Intent.ErrPlanStale) {
 				t.Fatalf("queued completion passed final validator: %v", err)
 			}
-			application := &Application{State: State.NewStore(input.State), GameData: appTestGameDataManagerFromCatalog(t, demolitionIntentCatalog)}
+			application := &Application{State: State.NewStore(&input.State), GameData: appTestGameDataManagerFromCatalog(t, demolitionIntentCatalog)}
 			if tc.free {
 				err = application.guardBuildingFinishFree(context.Background(), args)
 			} else {

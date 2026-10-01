@@ -14,7 +14,7 @@ const CommanderMovementReturnGrace = 5 * time.Second
 // CommanderHasActiveMovementAt independently verifies commander occupancy from
 // the canonical movement snapshot. This protects launch paths when a leader
 // roster refresh briefly disagrees with the movement list.
-func CommanderHasActiveMovementAt(gameState GameState, commanderID CommanderID, now time.Time) bool {
+func CommanderHasActiveMovementAt(gameState *GameState, commanderID CommanderID, now time.Time) bool {
 	if now.IsZero() {
 		now = time.Now().UTC()
 	}
@@ -30,7 +30,7 @@ func CommanderHasActiveMovementAt(gameState GameState, commanderID CommanderID, 
 	return active
 }
 
-func MovementOwnedByCurrentPlayer(gameState GameState, movement MovementState) bool {
+func MovementOwnedByCurrentPlayer(gameState *GameState, movement MovementState) bool {
 	if movement.OwnerPlayerID > 0 {
 		return gameState.Player.ID > 0 && movement.OwnerPlayerID == gameState.Player.ID
 	}

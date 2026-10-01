@@ -50,7 +50,7 @@ func (*AutoStormShopPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Deci
 	if err := autoStormApplyActiveBlueprint(snapshot, &settings); err != nil {
 		return autoStormWaiting(snapshot.Now, err.Error(), Localization.FromError(err)), nil
 	}
-	castle, found := autoStormCastle(snapshot.State, settings.Target)
+	castle, found := autoStormCastle(&snapshot.State, settings.Target)
 	if !found {
 		return autoStormWaiting(snapshot.Now, "Waiting for the combat lane to unlock or reconcile the Storm castle", Localization.New("server.automation.waiting_for_the_combat.7933a7b9", "Waiting for the combat lane to unlock or reconcile the Storm castle", nil)), nil
 	}

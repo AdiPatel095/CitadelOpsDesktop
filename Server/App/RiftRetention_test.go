@@ -12,7 +12,7 @@ func TestRiftTombstonesExpireAfterADay(t *testing.T) {
 	s := State.NewGameState()
 	s.Rift.Launches["launch"] = State.RiftLaunch{ID: "launch", Body: json.RawMessage(`{"A":[{}]}`)}
 	s.Rift.DeletedLaunchIDs = map[string]int64{"old": now.Add(-25 * time.Hour).UnixMilli(), "recent": now.Add(-23 * time.Hour).UnixMilli(), "future": now.Add(time.Hour).UnixMilli()}
-	app := &Application{DataDir: t.TempDir(), State: State.NewStore(s)}
+	app := &Application{DataDir: t.TempDir(), State: State.NewStore(&s)}
 	if err := app.deleteRiftTemplate(t.Context(), json.RawMessage(`{"launchId":"launch"}`)); err != nil {
 		t.Fatal(err)
 	}
