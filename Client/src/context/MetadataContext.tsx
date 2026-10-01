@@ -282,7 +282,7 @@ export function MetadataProvider({ children }: { children: React.ReactNode }) {
 						? recipe.output.name.trim() : `Recipe ${id}`;
 					next[id] = {
 						...recipe, id,
-						name: recipe.level > 0 ? `${outputName} · L${recipe.level}` : outputName,
+						name: recipe.level != null && recipe.level > 0 ? `${outputName} · L${recipe.level}` : outputName,
 						image: recipe.output?.iconUrl,
 						outputAmount: recipe.output?.amount,
 					};
@@ -656,7 +656,7 @@ function effectDefinitionMetadata(
 
 function metadataIntegerList(value: unknown): number[] {
 	const values = Array.isArray(value) ? value : typeof value === 'string' ? value.split(',') : [value];
-	return Array.from(new Set(values.map(metadataInteger).filter((entry) => entry > 0)));
+	return Array.from(new Set(values.map(metadataInteger).filter((entry): entry is number => entry != null && entry > 0)));
 }
 
 function humanizeEffectTemplate(value: string): string {

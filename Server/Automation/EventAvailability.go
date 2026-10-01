@@ -28,7 +28,7 @@ var limitedEventLocation = func() *time.Location {
 }()
 
 func limitedEventGate(
-	state State.GameState,
+	state *State.GameState,
 	now time.Time,
 	eventIDs []int64,
 	label string,
@@ -50,7 +50,7 @@ func limitedEventGate(
 		return Decision{
 			Status: "opening-check",
 			Detail: fmt.Sprintf(
-				"Waiting for the authoritative %s inventory to settle after the 10:00 Europe/Berlin opening check",
+				"Waiting for the game to confirm %s after today's 10:00 (Berlin time) event update",
 				label,
 			), DetailDescriptor: limitedEventDescriptor(eventIDs, "opening"),
 			NextCheckAt: graceEndsAt,
@@ -58,13 +58,13 @@ func limitedEventGate(
 	}
 
 	detail := fmt.Sprintf(
-		"%s is not active in the latest confirmed event list; this lane will resume after the event opens or the list updates",
+		"%s isn't running right now. This resumes when the event opens.",
 		label,
 	)
 	var detailLocalizationMessage *Localization.Message = limitedEventDescriptor(eventIDs, "inactive")
 	if observedAt.Before(opening) {
 		detail = fmt.Sprintf(
-			"No authoritative %s inventory arrived after the latest opening; this lane remains softly locked until an event update",
+			"The game hasn't confirmed %s since the last 10:00 (Berlin time) event update. This waits until it does.",
 			label,
 		)
 		detailLocalizationMessage = limitedEventDescriptor(eventIDs, "unobserved")
@@ -122,29 +122,29 @@ func limitedEventDescriptor(ids []int64, phase string) *Localization.Message {
 	}
 	switch family + "." + phase {
 	case "nomad_samurai.opening":
-		return Localization.New("server.automation.event_gate.nomad_samurai.opening", "Waiting for the authoritative Nomad or Samurai event inventory to settle after the 10:00 Europe/Berlin opening check", nil)
+		return Localization.New("server.automation.event_gate.nomad_samurai.opening", "Waiting for the game to confirm Nomad or Samurai event after today's 10:00 (Berlin time) event update", nil)
 	case "nomad_samurai.inactive":
-		return Localization.New("server.automation.event_gate.nomad_samurai.inactive", "Nomad or Samurai event is not active in the latest confirmed event list; this lane will resume after the event opens or the list updates", nil)
+		return Localization.New("server.automation.event_gate.nomad_samurai.inactive", "Nomad or Samurai event isn't running right now. This resumes when the event opens.", nil)
 	case "nomad_samurai.unobserved":
-		return Localization.New("server.automation.event_gate.nomad_samurai.unobserved", "No authoritative Nomad or Samurai event inventory arrived after the latest opening; this lane remains softly locked until an event update", nil)
+		return Localization.New("server.automation.event_gate.nomad_samurai.unobserved", "The game hasn't confirmed Nomad or Samurai event since the last 10:00 (Berlin time) event update. This waits until it does.", nil)
 	case "invasion.opening":
-		return Localization.New("server.automation.event_gate.invasion.opening", "Waiting for the authoritative Foreign Lords or Bloodcrow event inventory to settle after the 10:00 Europe/Berlin opening check", nil)
+		return Localization.New("server.automation.event_gate.invasion.opening", "Waiting for the game to confirm Foreign Lords or Bloodcrow event after today's 10:00 (Berlin time) event update", nil)
 	case "invasion.inactive":
-		return Localization.New("server.automation.event_gate.invasion.inactive", "Foreign Lords or Bloodcrow event is not active in the latest confirmed event list; this lane will resume after the event opens or the list updates", nil)
+		return Localization.New("server.automation.event_gate.invasion.inactive", "Foreign Lords or Bloodcrow event isn't running right now. This resumes when the event opens.", nil)
 	case "invasion.unobserved":
-		return Localization.New("server.automation.event_gate.invasion.unobserved", "No authoritative Foreign Lords or Bloodcrow event inventory arrived after the latest opening; this lane remains softly locked until an event update", nil)
+		return Localization.New("server.automation.event_gate.invasion.unobserved", "The game hasn't confirmed Foreign Lords or Bloodcrow event since the last 10:00 (Berlin time) event update. This waits until it does.", nil)
 	case "khan.opening":
-		return Localization.New("server.automation.event_gate.khan.opening", "Waiting for the authoritative Nomad Khan event inventory to settle after the 10:00 Europe/Berlin opening check", nil)
+		return Localization.New("server.automation.event_gate.khan.opening", "Waiting for the game to confirm Nomad Khan event after today's 10:00 (Berlin time) event update", nil)
 	case "khan.inactive":
-		return Localization.New("server.automation.event_gate.khan.inactive", "Nomad Khan event is not active in the latest confirmed event list; this lane will resume after the event opens or the list updates", nil)
+		return Localization.New("server.automation.event_gate.khan.inactive", "Nomad Khan event isn't running right now. This resumes when the event opens.", nil)
 	case "khan.unobserved":
-		return Localization.New("server.automation.event_gate.khan.unobserved", "No authoritative Nomad Khan event inventory arrived after the latest opening; this lane remains softly locked until an event update", nil)
+		return Localization.New("server.automation.event_gate.khan.unobserved", "The game hasn't confirmed Nomad Khan event since the last 10:00 (Berlin time) event update. This waits until it does.", nil)
 	case "berimond.opening":
-		return Localization.New("server.automation.event_gate.berimond.opening", "Waiting for the authoritative Battle for Berimond inventory to settle after the 10:00 Europe/Berlin opening check", nil)
+		return Localization.New("server.automation.event_gate.berimond.opening", "Waiting for the game to confirm Battle for Berimond after today's 10:00 (Berlin time) event update", nil)
 	case "berimond.inactive":
-		return Localization.New("server.automation.event_gate.berimond.inactive", "Battle for Berimond is not active in the latest confirmed event list; this lane will resume after the event opens or the list updates", nil)
+		return Localization.New("server.automation.event_gate.berimond.inactive", "Battle for Berimond isn't running right now. This resumes when the event opens.", nil)
 	case "berimond.unobserved":
-		return Localization.New("server.automation.event_gate.berimond.unobserved", "No authoritative Battle for Berimond inventory arrived after the latest opening; this lane remains softly locked until an event update", nil)
+		return Localization.New("server.automation.event_gate.berimond.unobserved", "The game hasn't confirmed Battle for Berimond since the last 10:00 (Berlin time) event update. This waits until it does.", nil)
 	}
 	return nil
 }

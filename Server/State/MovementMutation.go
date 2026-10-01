@@ -43,7 +43,7 @@ func (state *GameState) initializeMovements() {
 	state.Movements = nil
 }
 
-func (state *GameState) prepareMovementMutation(source GameState) {
+func (state *GameState) prepareMovementMutation(source *GameState) {
 	base := source.movementRecords
 	if base == nil {
 		base = movementGenerationFromMap(source.Movements)
@@ -76,7 +76,7 @@ func (state *GameState) mutableMovementShard(id MovementID) map[MovementID]Movem
 	return state.movementRecords.shards[shard]
 }
 
-func (state GameState) LookupMovement(id MovementID) (MovementState, bool) {
+func (state *GameState) LookupMovement(id MovementID) (MovementState, bool) {
 	if id <= 0 {
 		return MovementState{}, false
 	}
@@ -88,7 +88,7 @@ func (state GameState) LookupMovement(id MovementID) (MovementState, bool) {
 	return movement, found
 }
 
-func (state GameState) RangeMovements(visit func(MovementID, MovementState) bool) {
+func (state *GameState) RangeMovements(visit func(MovementID, MovementState) bool) {
 	if visit == nil {
 		return
 	}
@@ -109,7 +109,7 @@ func (state GameState) RangeMovements(visit func(MovementID, MovementState) bool
 	}
 }
 
-func (state GameState) MovementCount() int {
+func (state *GameState) MovementCount() int {
 	count := 0
 	state.RangeMovements(func(_ MovementID, _ MovementState) bool {
 		count++
@@ -215,7 +215,7 @@ func cloneMovementState(movement MovementState) MovementState {
 	return movement
 }
 
-func (state GameState) materializedMovements() map[MovementID]MovementState {
+func (state *GameState) materializedMovements() map[MovementID]MovementState {
 	result := make(map[MovementID]MovementState, state.MovementCount())
 	state.RangeMovements(func(id MovementID, movement MovementState) bool {
 		result[id] = cloneMovementState(movement)
@@ -224,7 +224,7 @@ func (state GameState) materializedMovements() map[MovementID]MovementState {
 	return result
 }
 
-func (state GameState) movementViewMap() map[MovementID]MovementState {
+func (state *GameState) movementViewMap() map[MovementID]MovementState {
 	result := make(map[MovementID]MovementState, state.MovementCount())
 	state.RangeMovements(func(id MovementID, movement MovementState) bool {
 		result[id] = movement
@@ -236,11 +236,11 @@ func (state GameState) movementViewMap() map[MovementID]MovementState {
 // MovementViewMap is a transient immutable-value index for algorithms whose
 // official-game reconciliation genuinely needs set algebra over all movements.
 // It copies only the small map index, never movement payloads.
-func (state GameState) MovementViewMap() map[MovementID]MovementState {
+func (state *GameState) MovementViewMap() map[MovementID]MovementState {
 	return state.movementViewMap()
 }
 
-func (state GameState) movementChangeIDs() []MovementID {
+func (state *GameState) movementChangeIDs() []MovementID {
 	ids := make([]MovementID, 0, len(state.pendingMovementChanges))
 	for id := range state.pendingMovementChanges {
 		ids = append(ids, id)
@@ -249,7 +249,7 @@ func (state GameState) movementChangeIDs() []MovementID {
 	return ids
 }
 
-func (operation StationingOperation) ActiveInState(state GameState, now time.Time) bool {
+func (operation StationingOperation) ActiveInState(state *GameState, now time.Time) bool {
 	if operation.MovementID > 0 && len(operation.MovementIDs) == 0 {
 		movement, found := state.LookupMovement(operation.MovementID)
 		return found && operation.MatchesMovement(movement) && StationMovementActiveAt(movement, now)

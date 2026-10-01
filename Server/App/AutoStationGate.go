@@ -87,7 +87,7 @@ func validateAutoStationGate(s State.GameState, r defenseOpenGateRequest, fallba
 	}
 	var first time.Time
 	s.RangeMovements(func(_ State.MovementID, m State.MovementState) bool {
-		if m.TargetCastleID == castle.ID && State.IsIncomingPlayerAttack(s, m, now) {
+		if m.TargetCastleID == castle.ID && State.IsIncomingPlayerAttack(&s, m, now) {
 			if first.IsZero() || m.ArrivesAt.Before(first) {
 				first = *m.ArrivesAt
 			}
@@ -104,7 +104,7 @@ func validateAutoStationGate(s State.GameState, r defenseOpenGateRequest, fallba
 
 func validateTrackedGateRemainder(s State.GameState, r defenseOpenGateRequest, reserves map[State.UnitID]int64, data *GameData.Store, now time.Time) error {
 	for _, op := range s.Stationing {
-		if op.SourceCastleID == r.CastleID && op.ActiveInState(s, now) {
+		if op.SourceCastleID == r.CastleID && op.ActiveInState(&s, now) {
 			castle := s.Castles[r.CastleID]
 			if castle.UnitsObservedAt.Before(r.PlannedAt) || castle.UnitsObservedAt.Before(op.UpdatedAt) || castle.UnitsObservedAt.After(now) {
 				return fmt.Errorf("%w: post-dispatch castle inventory is unavailable", Intent.ErrPlanStale)

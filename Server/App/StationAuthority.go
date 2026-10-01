@@ -130,7 +130,7 @@ func freshStationThreat(s State.GameState, id State.CastleID, after time.Time, l
 	}
 	found := false
 	s.RangeMovements(func(_ State.MovementID, m State.MovementState) bool {
-		if m.TargetCastleID == id && State.IsIncomingPlayerAttack(s, m, now) && m.ArrivesAt.Sub(now) <= time.Duration(min(max(lead, 60), 3600))*time.Second {
+		if m.TargetCastleID == id && State.IsIncomingPlayerAttack(&s, m, now) && m.ArrivesAt.Sub(now) <= time.Duration(min(max(lead, 60), 3600))*time.Second {
 			found = true
 		}
 		return true

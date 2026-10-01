@@ -274,7 +274,8 @@ func TestCoordinatorSuppliesAttackLaunchTelemetryToPolicySnapshot(t *testing.T) 
 	policy := &coordinatorTestPolicy{
 		id: "telemetry-snapshot", decision: Decision{EventDriven: true}, snapshots: make(chan Snapshot, 1),
 	}
-	state := State.NewStore(coordinatorReadyState())
+	accessorState1 := coordinatorReadyState()
+	state := State.NewStore(&accessorState1)
 	configuration := openCoordinatorTestConfiguration(t, policy.ID())
 	coordinator := NewCoordinator(state, configuration, nil, &coordinatorTestSubmitter{}, policy)
 	coordinator.SetTelemetry(provider)
@@ -319,7 +320,8 @@ func TestCoordinatorUnchangedEarlyStateWakeDoesNotSlideDeadlineOrReviseState(t *
 			{Status: "idle", Detail: "One task is ready", NextCheckAt: base.Add(2 * time.Hour), Metrics: map[string]float64{"ready": 1}},
 		},
 	}
-	state := State.NewStore(coordinatorReadyState())
+	accessorState2 := coordinatorReadyState()
+	state := State.NewStore(&accessorState2)
 	configuration := openCoordinatorTestConfiguration(t, policy.ID())
 	coordinator := NewCoordinator(state, configuration, nil, &coordinatorTestSubmitter{}, policy)
 	runtime := map[string]*policyRuntime{policy.ID(): {}}
@@ -491,7 +493,8 @@ func TestHostedRelatedEnabledControlExpirationWakesWaitingPolicy(t *testing.T) {
 		id: "autoBird", controls: []string{"auto_fortress"}, snapshots: make(chan Snapshot, 1),
 		decision: Decision{Status: "waiting", Detail: "No troops", NextCheckAt: now.Add(30 * time.Minute)},
 	}
-	state := State.NewStore(State.NewGameState())
+	accessorState3 := State.NewGameState()
+	state := State.NewStore(&accessorState3)
 	coordinator := NewCoordinator(state, configuration, nil, nil, policy)
 	coordinator.SetExternalConfigurationAuthority(true)
 	snapshot := configuration.Snapshot()
@@ -562,7 +565,8 @@ func TestRelatedEnabledControlExpirySurvivesWakeBeforeTimer(t *testing.T) {
 		id: "autoBird", controls: []string{"auto_fortress"}, snapshots: make(chan Snapshot, 1),
 		decision: Decision{Status: "waiting", Detail: "No troops", NextCheckAt: now.Add(30 * time.Minute)},
 	}
-	state := State.NewStore(coordinatorReadyState())
+	accessorState4 := coordinatorReadyState()
+	state := State.NewStore(&accessorState4)
 	coordinator := NewCoordinator(state, configuration, nil, nil, policy)
 	snapshot := configuration.Snapshot()
 	runtime := map[string]*policyRuntime{"autoBird": {
@@ -615,7 +619,8 @@ func TestCoordinatorPolicyLaneUsesItsSharedScheduleKey(t *testing.T) {
 }
 
 func TestCoordinatorMarksPolicyConfigurationChangesAfterInitialEvaluation(t *testing.T) {
-	state := State.NewStore(coordinatorReadyState())
+	accessorState5 := coordinatorReadyState()
+	state := State.NewStore(&accessorState5)
 	configuration := openCoordinatorTestConfiguration(t, "configured")
 	if _, err := configuration.Update("automation.configured", json.RawMessage(`{"value":1}`)); err != nil {
 		t.Fatal(err)
@@ -646,7 +651,7 @@ func TestCoordinatorRebuildsConfigurationDerivedStateBeforeReevaluation(t *testi
 	gameState.TowerQueue.LastScannedAt[1] = now
 	gameState.TowerQueue.LastAttemptedAt[1] = now
 	gameState.TowerQueue.CapacityByCastle[1] = State.TowerCapacityObservation{AdditionalUnits: 7, ObservedAt: now}
-	state := State.NewStore(gameState)
+	state := State.NewStore(&gameState)
 	configuration := openCoordinatorTestConfiguration(t, "derived")
 	before, err := configuration.Update("automation.derived", json.RawMessage(`{"radius":10}`))
 	if err != nil {
@@ -747,7 +752,8 @@ func TestCoordinatorGlobalConfigurationSectionsWakeOnlyAffectedPolicies(t *testi
 }
 
 func TestCoordinatorDisablingPolicyCancelsRunningIntent(t *testing.T) {
-	state := State.NewStore(coordinatorReadyState())
+	accessorState6 := coordinatorReadyState()
+	state := State.NewStore(&accessorState6)
 	configuration := openCoordinatorTestConfiguration(t, "cancel")
 	policy := &coordinatorTestPolicy{id: "cancel", decision: Decision{
 		Status:      "ready",
@@ -804,7 +810,8 @@ func TestCoordinatorDisablingPolicyCancelsRunningIntent(t *testing.T) {
 }
 
 func TestCoordinatorPolicySettingsChangeCancelsRunningIntent(t *testing.T) {
-	state := State.NewStore(coordinatorReadyState())
+	accessorState7 := coordinatorReadyState()
+	state := State.NewStore(&accessorState7)
 	configuration := openCoordinatorTestConfiguration(t, "configured")
 	if _, err := configuration.Update("automation.configured", json.RawMessage(`{"unitId":1}`)); err != nil {
 		t.Fatal(err)
@@ -933,7 +940,8 @@ func TestCoordinatorIntentionalConfigurationFollowUpIsNotCancelled(t *testing.T)
 }
 
 func TestCoordinatorRecordsOperationalCursorOnlyAfterSuccessfulAction(t *testing.T) {
-	state := State.NewStore(coordinatorReadyState())
+	accessorState8 := coordinatorReadyState()
+	state := State.NewStore(&accessorState8)
 	coordinator := NewCoordinator(state, nil, nil, nil)
 	update := &OperationalCursorUpdate{Key: "castle/77", Value: 2}
 	coordinator.recordReceipt(operationResult{
@@ -956,7 +964,8 @@ func TestCoordinatorRecordsOperationalCursorOnlyAfterSuccessfulAction(t *testing
 }
 
 func TestCoordinatorSessionLossCancelsRunningIntent(t *testing.T) {
-	state := State.NewStore(coordinatorReadyState())
+	accessorState9 := coordinatorReadyState()
+	state := State.NewStore(&accessorState9)
 	configuration := openCoordinatorTestConfiguration(t, "session")
 	policy := &coordinatorTestPolicy{id: "session", decision: Decision{
 		Status:      "ready",
@@ -1024,7 +1033,7 @@ func TestCoordinatorSessionGenerationChangeCancelsRunningIntent(t *testing.T) {
 	state := coordinatorReadyState()
 	state.Session.Generation = 5
 	state.Session.BaselineGeneration = 5
-	NewCoordinator(nil, nil, nil, nil).cancelRunsForUnavailableSession(runtime, state)
+	NewCoordinator(nil, nil, nil, nil).cancelRunsForUnavailableSession(runtime, &state)
 	if !cancelled || !runtime["policy"].runtimeWakePending {
 		t.Fatalf("session generation change did not cancel stale work: %+v", runtime["policy"])
 	}
@@ -1039,7 +1048,8 @@ func TestCoordinatorDisallowedScheduleCancelsRunningIntent(t *testing.T) {
 		Request:     &Intent.Request{Name: "test.block"},
 		ScheduleKey: "scheduled:1",
 	}}
-	state := State.NewStore(coordinatorReadyState())
+	accessorState10 := coordinatorReadyState()
+	state := State.NewStore(&accessorState10)
 	submitter := &coordinatorTestBlockingSubmitter{
 		started: make(chan struct{}), canceled: make(chan struct{}),
 	}
@@ -1105,7 +1115,8 @@ func TestCoordinatorSchedulerChangeBypassesStaleDeadline(t *testing.T) {
 	policy := &coordinatorTestPolicy{id: "scheduled", decision: Decision{
 		Status: "idle", Detail: "Reevaluated latest scheduler", NextCheckAt: next,
 	}}
-	state := State.NewStore(coordinatorReadyState())
+	accessorState11 := coordinatorReadyState()
+	state := State.NewStore(&accessorState11)
 	coordinator := NewCoordinator(state, configuration, nil, &coordinatorTestSubmitter{}, policy)
 	runtime := map[string]*policyRuntime{
 		"scheduled": {
@@ -1124,7 +1135,7 @@ func TestCoordinatorSchedulerChangeBypassesStaleDeadline(t *testing.T) {
 
 func TestCoordinatorSessionReadinessBypassesRetryDeadline(t *testing.T) {
 	gameState := State.NewGameState()
-	state := State.NewStore(gameState)
+	state := State.NewStore(&gameState)
 	configuration := openCoordinatorTestConfiguration(t, "session-ready")
 	next := time.Now().UTC().Add(2 * time.Hour)
 	policy := &coordinatorTestPolicy{id: "session-ready", decision: Decision{
@@ -1163,7 +1174,7 @@ func TestCoordinatorSessionReadinessBypassesRetryDeadline(t *testing.T) {
 func TestCoordinatorWaitsForCurrentSessionBaseline(t *testing.T) {
 	gameState := coordinatorReadyState()
 	gameState.Session.BaselineGeneration = 0
-	state := State.NewStore(gameState)
+	state := State.NewStore(&gameState)
 	configuration := openCoordinatorTestConfiguration(t, "baseline")
 	next := time.Now().UTC().Add(time.Hour)
 	policy := &coordinatorTestPolicy{id: "baseline", decision: Decision{
@@ -1338,7 +1349,8 @@ func TestCoordinatorSuccessfulFailureFallbackReevaluatesImmediately(t *testing.T
 }
 
 func TestCoordinatorRunsFailureFallbackWithThePolicyActor(t *testing.T) {
-	state := State.NewStore(coordinatorReadyState())
+	accessorState12 := coordinatorReadyState()
+	state := State.NewStore(&accessorState12)
 	configuration := openCoordinatorTestConfiguration(t, "fallback")
 	submitter := &coordinatorTestFailureFallbackSubmitter{calls: make(chan Intent.Request, 2)}
 	policy := &coordinatorTestPolicy{id: "fallback", decision: Decision{
@@ -1621,7 +1633,7 @@ func TestCoordinatorTroopShortageIsAvailabilityGateWithoutSafetyPause(t *testing
 			215: 0,
 		}},
 	}
-	state := State.NewStore(gameState)
+	state := State.NewStore(&gameState)
 	NewCoordinator(state, nil, nil, nil).recordReceipt(result)
 	automation := state.Snapshot().Automations["autoStorm"]
 	if automation.Status != "gated" ||
@@ -1631,7 +1643,7 @@ func TestCoordinatorTroopShortageIsAvailabilityGateWithoutSafetyPause(t *testing
 	}
 
 	runtime := map[string]*policyRuntime{"autoStorm": current}
-	clearTroopAvailabilityGates(runtime, State.Event{Revision: 11, Domains: []string{"units"}}, gameState)
+	clearTroopAvailabilityGates(runtime, State.Event{Revision: 11, Domains: []string{"units"}}, &gameState)
 	if current.troopAvailabilityGate == nil {
 		t.Fatal("unchanged authoritative troop inventory released the gate")
 	}
@@ -1641,7 +1653,7 @@ func TestCoordinatorTroopShortageIsAvailabilityGateWithoutSafetyPause(t *testing
 			215: 416,
 		}},
 	}
-	clearTroopAvailabilityGates(runtime, State.Event{Revision: 12, Domains: []string{"units"}}, gameState)
+	clearTroopAvailabilityGates(runtime, State.Event{Revision: 12, Domains: []string{"units"}}, &gameState)
 	if current.troopAvailabilityGate != nil {
 		t.Fatalf("changed authoritative troop inventory retained the gate: %+v", current.troopAvailabilityGate)
 	}
@@ -1665,13 +1677,13 @@ func TestCoordinatorCoinShortageWaitsWithBoundedRetryAndWakesOnFreshBalance(t *t
 	gameState.Player.Resources[1] = 90
 	gameState.Player.ResourceObservations[1] = State.PlayerResourceObservation{ObservedAt: now, ConnectionGeneration: 1}
 	runtime := map[string]*policyRuntime{"autoRecruit": current}
-	clearCoinAvailabilityGates(runtime, State.Event{Revision: 11, Domains: []string{"resources"}}, gameState)
+	clearCoinAvailabilityGates(runtime, State.Event{Revision: 11, Domains: []string{"resources"}}, &gameState)
 	if current.coinAvailabilityGate == nil {
 		t.Fatal("unchanged coin observation released the gate")
 	}
 	gameState.Player.Resources[1] = 120
 	gameState.Player.ResourceObservations[1] = State.PlayerResourceObservation{ObservedAt: now.Add(time.Second), ConnectionGeneration: 1}
-	clearCoinAvailabilityGates(runtime, State.Event{Revision: 12, Domains: []string{"resources"}}, gameState)
+	clearCoinAvailabilityGates(runtime, State.Event{Revision: 12, Domains: []string{"resources"}}, &gameState)
 	if current.coinAvailabilityGate != nil || !current.evaluationPending || !current.nextCheck.IsZero() {
 		t.Fatalf("fresh recovered balance did not wake lane: %+v", current)
 	}
@@ -1709,7 +1721,7 @@ func TestCoordinatorTroopGateParsesRawErrorAfterUserFacingLabeling(t *testing.T)
 
 func TestCoordinatorExpectedFailureUsesLaneStatusWithoutRawError(t *testing.T) {
 	gameState := coordinatorReadyState()
-	state := State.NewStore(gameState)
+	state := State.NewStore(&gameState)
 	result := operationResult{
 		policyID: "autoStorm",
 		receipt: Intent.Receipt{
@@ -1741,7 +1753,8 @@ func TestCoordinatorExpectedFailureUsesLaneStatusWithoutRawError(t *testing.T) {
 }
 
 func TestCoordinatorNonToastErrorUsesStructuredLaneDetail(t *testing.T) {
-	state := State.NewStore(coordinatorReadyState())
+	accessorState13 := coordinatorReadyState()
+	state := State.NewStore(&accessorState13)
 	result := operationResult{
 		policyID: "autoBuyer",
 		receipt: Intent.Receipt{
@@ -1773,7 +1786,7 @@ func TestCoordinatorTroopAvailabilityGateSkipsTimedRetry(t *testing.T) {
 			215: 310,
 		}},
 	}
-	state := State.NewStore(gameState)
+	state := State.NewStore(&gameState)
 	configuration := openCoordinatorTestConfiguration(t, "autoStorm")
 	policy := &coordinatorTestPolicy{
 		id:      "autoStorm",
@@ -1813,7 +1826,8 @@ func TestCoordinatorTroopAvailabilityGateSkipsTimedRetry(t *testing.T) {
 }
 
 func TestCoordinatorRepeatedDecisionFingerprintPausesSubmission(t *testing.T) {
-	state := State.NewStore(coordinatorReadyState())
+	accessorState14 := coordinatorReadyState()
+	state := State.NewStore(&accessorState14)
 	configuration := openCoordinatorTestConfiguration(t, "repeat")
 	decision := Decision{
 		Status:              "ready",
@@ -1860,7 +1874,8 @@ func TestCoordinatorRepeatedDecisionFingerprintPausesSubmission(t *testing.T) {
 }
 
 func TestCoordinatorChangedDecisionBypassesFingerprintPause(t *testing.T) {
-	state := State.NewStore(coordinatorReadyState())
+	accessorState15 := coordinatorReadyState()
+	state := State.NewStore(&accessorState15)
 	configuration := openCoordinatorTestConfiguration(t, "changed")
 	decision := Decision{
 		Status:      "ready",
@@ -1895,7 +1910,8 @@ func TestCoordinatorChangedDecisionBypassesFingerprintPause(t *testing.T) {
 }
 
 func TestCoordinatorRunCompletesResponseGatedChainBeforeTicker(t *testing.T) {
-	state := State.NewStore(coordinatorReadyState())
+	accessorState16 := coordinatorReadyState()
+	state := State.NewStore(&accessorState16)
 	configuration := openCoordinatorTestConfiguration(t, "chain")
 	policy := &coordinatorTestChainPolicy{quiesced: make(chan struct{})}
 	submitter := &coordinatorTestChainSubmitter{state: state, calls: make(chan struct{}, 4)}
@@ -2045,7 +2061,7 @@ func TestCoordinatorRunsCoreAllianceHelpWithEveryFeatureDisabled(t *testing.T) {
 	gameState.AllianceHelpRequests.OthersObservedGeneration = 7
 	gameState.AllianceHelpRequests.OthersObservedAt = time.Now().UTC()
 	gameState.AllianceHelpRequests.PendingOtherListIDs = []int64{101}
-	state := State.NewStore(gameState)
+	state := State.NewStore(&gameState)
 	configuration, err := Configuration.Open(t.TempDir(), map[string]json.RawMessage{
 		"automation.enabled": json.RawMessage(`{"auto_alliance_help":false}`),
 		"scheduler": json.RawMessage(`{
@@ -2114,7 +2130,8 @@ func TestPolicyEvaluationDueRequiresTargetedWakeOrDeadline(t *testing.T) {
 }
 
 func TestCoordinatorEventDrivenDecisionSleepsUntilTargetedWake(t *testing.T) {
-	state := State.NewStore(coordinatorReadyState())
+	accessorState17 := coordinatorReadyState()
+	state := State.NewStore(&accessorState17)
 	configuration := openCoordinatorTestConfiguration(t, "event-only")
 	policy := &coordinatorTestDecisionSequencePolicy{
 		id: "event-only", domains: []string{"events"},

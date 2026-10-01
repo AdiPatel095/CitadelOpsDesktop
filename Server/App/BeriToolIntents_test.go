@@ -87,7 +87,7 @@ func TestBeriToolPurchasePassesProductionResourceAdmission(t *testing.T) {
 		t.Fatal(err)
 	}
 	engine := Intent.NewEngine(
-		registry, State.NewStore(gameState), beriIntentGameDataProvider{store: gameData}, nil, nil,
+		registry, State.NewStore(&gameState), beriIntentGameDataProvider{store: gameData}, nil, nil,
 	)
 	receipt := engine.Submit(t.Context(), Intent.Request{
 		Name: "beri.tools.purchase", DryRun: true,

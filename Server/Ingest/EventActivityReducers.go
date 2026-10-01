@@ -264,7 +264,7 @@ func ReconcileRetainedBattleCapturesForRecoveredLaunch(
 // a launch by itself. Every plausible report is held because the movement's
 // eventual impact time is not known until exact recovery.
 func InvasionReservationReportCandidate(
-	gameState State.GameState,
+	gameState *State.GameState,
 	reservation State.InvasionTargetReservation,
 	capture State.BattleReportCapture,
 ) bool {
@@ -283,7 +283,7 @@ func InvasionReservationReportCandidate(
 		!eventBattleTargetMatches(summary, reservation.KingdomID, reservation.TargetTypeID, reservation.X, reservation.Y) {
 		return false
 	}
-	occurredAt := battleCaptureOccurredAt(&gameState, capture)
+	occurredAt := battleCaptureOccurredAt(gameState, capture)
 	return !occurredAt.Before(reservation.ReservedAt.Add(-2*time.Second)) &&
 		!occurredAt.After(reservation.OccurrenceEndsAt.Add(eventReportLaunchMatchWindow))
 }

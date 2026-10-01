@@ -622,7 +622,7 @@ func TestInvasionCandidatePoolDoesNotAssumeExactlyTenTargets(t *testing.T) {
 			Level: 70, InvasionAvailabilityKnown: true, ObservedAt: now,
 		}
 	}
-	if candidates := invasionCandidatePool(state, source, foreignLordsMapTypeID, fixedInvasionRadius, now); len(candidates) != 12 {
+	if candidates := invasionCandidatePool(&state, source, foreignLordsMapTypeID, fixedInvasionRadius, now); len(candidates) != 12 {
 		t.Fatalf("candidate pool len=%d, want all 12 protocol-returned targets", len(candidates))
 	}
 }
@@ -887,7 +887,7 @@ func TestActiveInvasionAttackCountCountsEveryCommanderAtSameTarget(t *testing.T)
 			ArrivesAt: &arrivesAt, TravelSeconds: 60,
 		}
 	}
-	if count := activeInvasionAttackCount(state, 1, foreignLordsMapTypeID, now); count != 2 {
+	if count := activeInvasionAttackCount(&state, 1, foreignLordsMapTypeID, now); count != 2 {
 		t.Fatalf("active attack count=%d, want both commanders at the duplicated target", count)
 	}
 }

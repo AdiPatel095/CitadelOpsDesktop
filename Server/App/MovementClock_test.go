@@ -19,7 +19,7 @@ func TestMovementClockReleasesReturnedCommander(t *testing.T) {
 		ID: 50, Direction: 1, OwnerPlayerID: 1, TargetCastleID: 100,
 		CommanderID: &commanderID, ReturnsAt: &returnsAt,
 	}
-	application := &Application{State: State.NewStore(gameState)}
+	application := &Application{State: State.NewStore(&gameState)}
 	ctx, cancel := context.WithCancel(t.Context())
 	defer cancel()
 	go application.runMovementClock(ctx)
@@ -56,7 +56,7 @@ func TestMovementClockReturnsObservedSurvivorsToCastle(t *testing.T) {
 		ID: 50, Direction: 1, OwnerPlayerID: 1, TargetCastleID: 100,
 		CommanderID: &commanderID, ReturnsAt: &returnsAt, Units: map[State.UnitID]int64{10: 48},
 	}
-	application := &Application{State: State.NewStore(gameState)}
+	application := &Application{State: State.NewStore(&gameState)}
 	ctx, cancel := context.WithCancel(t.Context())
 	defer cancel()
 	go application.runMovementClock(ctx)

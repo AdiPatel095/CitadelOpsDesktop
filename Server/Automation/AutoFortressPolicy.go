@@ -112,7 +112,7 @@ func (policy *AutoFortressPolicy) Evaluate(_ context.Context, snapshot Snapshot)
 		definitionByKingdom[State.KingdomID(definition.KingdomID)] = definition
 	}
 
-	sources := autoFortressSources(snapshot.State, settings, definitionByKingdom)
+	sources := autoFortressSources(&snapshot.State, settings, definitionByKingdom)
 	metrics := map[string]float64{
 		"enabledKingdoms": float64(len(sources)), "direwolfPurchaseLimit": float64(settings.DirewolfPurchaseLimit),
 	}
@@ -123,7 +123,7 @@ func (policy *AutoFortressPolicy) Evaluate(_ context.Context, snapshot Snapshot)
 			result.DetailsDescriptors = detailDescriptors
 		}
 	}()
-	main, mainFound := autoBuyerSourceCastle(snapshot.State, 0)
+	main, mainFound := autoBuyerSourceCastle(&snapshot.State, 0)
 	if decision := policy.autoFortressSupplyDecision(snapshot, settings, sources, main, mainFound, metrics, details, detailDescriptors); decision != nil {
 		decision.Details = details
 		return *decision, nil
@@ -212,7 +212,7 @@ func (policy *AutoFortressPolicy) Evaluate(_ context.Context, snapshot Snapshot)
 		return Decision{Status: "idle", Detail: detail, DetailDescriptor: Localization.Clone(detailLocalizationMessage), NextCheckAt: next, Metrics: metrics, Details: details}, nil
 	}
 
-	commanderIDs, restricted := commanderFeatureCandidates(snapshot.State, snapshot.Configuration, "autoFortress")
+	commanderIDs, restricted := commanderFeatureCandidates(&snapshot.State, snapshot.Configuration, "autoFortress")
 	if !restricted {
 		commanderIDs = make([]State.CommanderID, 0, len(snapshot.State.Commanders))
 		for id := range snapshot.State.Commanders {
@@ -307,7 +307,7 @@ func validateAutoFortressSettings(settings autoFortressSettings) string {
 	return ""
 }
 
-func autoFortressSources(gameState State.GameState, settings autoFortressSettings, definitions map[State.KingdomID]GameData.KingdomFortressDefinition) []State.CastleState {
+func autoFortressSources(gameState *State.GameState, settings autoFortressSettings, definitions map[State.KingdomID]GameData.KingdomFortressDefinition) []State.CastleState {
 	sources := make([]State.CastleState, 0, 3)
 	for key, kingdom := range settings.Kingdoms {
 		if !kingdom.Enabled {
@@ -378,7 +378,7 @@ func autoFortressTargets(snapshot Snapshot, sources []State.CastleState) ([]auto
 				statsByKingdom[source.KingdomID] = stats
 				return true
 			}
-			remaining := autoFortressCooldownRemaining(snapshot.State, target, snapshot.Now)
+			remaining := autoFortressCooldownRemaining(&snapshot.State, target, snapshot.Now)
 			if remaining > 0 {
 				readyAt := snapshot.Now.Add(time.Duration(remaining) * time.Second)
 				if nextCooldown.IsZero() || readyAt.Before(nextCooldown) {
@@ -390,13 +390,13 @@ func autoFortressTargets(snapshot Snapshot, sources []State.CastleState) ([]auto
 				statsByKingdom[source.KingdomID] = stats
 				return true
 			}
-			if autoFortressTargetInFlight(snapshot.State, target, snapshot.Now) {
+			if autoFortressTargetInFlight(&snapshot.State, target, snapshot.Now) {
 				statsByKingdom[source.KingdomID] = stats
 				return true
 			}
 			// A fresh map zero never overrides an active COOLING_DOWN rejection.
 			if rejection, rejected := State.AttackTargetRejectedAt(
-				snapshot.State, target.KingdomID, target.TypeID, target.X, target.Y, snapshot.Now,
+				&snapshot.State, target.KingdomID, target.TypeID, target.X, target.Y, snapshot.Now,
 			); rejected {
 				stats.Deferred = append(stats.Deferred, rejection)
 				if nextCooldown.IsZero() || rejection.Until.Before(nextCooldown) {
@@ -420,8 +420,8 @@ func autoFortressTargets(snapshot Snapshot, sources []State.CastleState) ([]auto
 	sort.Slice(candidates, func(left, right int) bool {
 		// A fortress this player last defeated may still be inside the personal
 		// 120 h window that the map row does not show (CIT-13 ABI 95): try it last.
-		leftSuspect := autoFortressPersonalLockoutSuspected(snapshot.State, candidates[left].Target)
-		rightSuspect := autoFortressPersonalLockoutSuspected(snapshot.State, candidates[right].Target)
+		leftSuspect := autoFortressPersonalLockoutSuspected(&snapshot.State, candidates[left].Target)
+		rightSuspect := autoFortressPersonalLockoutSuspected(&snapshot.State, candidates[right].Target)
 		if leftSuspect != rightSuspect {
 			return rightSuspect
 		}
@@ -444,7 +444,7 @@ func autoFortressTargets(snapshot Snapshot, sources []State.CastleState) ([]auto
 // autoFortressPersonalLockoutSuspected reports a fortress whose last defeater
 // is this player while the app has no own-victory cooldown for it (the BLS
 // report was never observed). GAA index 5 is not proof of availability then.
-func autoFortressPersonalLockoutSuspected(gameState State.GameState, target State.MapObservation) bool {
+func autoFortressPersonalLockoutSuspected(gameState *State.GameState, target State.MapObservation) bool {
 	if gameState.Player.ID <= 0 || target.FortressDefeaterPlayerID != gameState.Player.ID {
 		return false
 	}
@@ -457,7 +457,7 @@ func fortressDistanceSquared(candidate autoFortressTarget) int {
 	return x*x + y*y
 }
 
-func autoFortressTargetInFlight(gameState State.GameState, target State.MapObservation, now time.Time) bool {
+func autoFortressTargetInFlight(gameState *State.GameState, target State.MapObservation, now time.Time) bool {
 	if State.AttackFeatureTargetPendingAt(gameState, State.AttackFeatureAutoFortress, target.KingdomID, target.TypeID, target.X, target.Y, now) {
 		return true
 	}
@@ -473,7 +473,7 @@ func autoFortressTargetInFlight(gameState State.GameState, target State.MapObser
 	return blocked
 }
 
-func autoFortressCooldownRemaining(gameState State.GameState, target State.MapObservation, now time.Time) int {
+func autoFortressCooldownRemaining(gameState *State.GameState, target State.MapObservation, now time.Time) int {
 	remaining := towerCooldownRemaining(target, now)
 	key := towerTargetKey(target.KingdomID, target.X, target.Y)
 	if cooldown, found := gameState.LookupTowerCooldown(key); found && cooldown.TargetTypeID == State.MapTypeKingdomFortress {
@@ -559,8 +559,8 @@ func fastestFortressCommander(
 	found := false
 	for _, commanderID := range configured {
 		commander, exists := snapshot.State.Commanders[commanderID]
-		if !exists || !commander.Available || State.CommanderHasActiveMovementAt(snapshot.State, commanderID, snapshot.Now) ||
-			State.InvasionCommanderReserved(snapshot.State, commanderID) {
+		if !exists || !commander.Available || State.CommanderHasActiveMovementAt(&snapshot.State, commanderID, snapshot.Now) ||
+			State.InvasionCommanderReserved(&snapshot.State, commanderID) {
 			continue
 		}
 		result, err := (AttackCapacity.Resolver{}).ResolveTravelSpeed(snapshot.State, snapshot.GameData, AttackCapacity.Request{
@@ -681,7 +681,7 @@ func (policy *AutoFortressPolicy) autoFortressSupplyDecision(
 			continue
 		}
 		stationed := max(int64(0), target.Units.Stationed[State.UnitID(GameData.DirewolfUnitID)])
-		inbound, _ := autoFortressInboundDirewolves(snapshot.State, kingdomID)
+		inbound, _ := autoFortressInboundDirewolves(&snapshot.State, kingdomID)
 		metrics[fmt.Sprintf("stationedDirewolvesKingdom%d", kingdomID)] = float64(stationed)
 		metrics[fmt.Sprintf("inboundDirewolvesKingdom%d", kingdomID)] = float64(inbound)
 		metrics[fmt.Sprintf("allocatedDirewolvesKingdom%d", kingdomID)] = float64(stationed + inbound)
@@ -730,7 +730,7 @@ func (policy *AutoFortressPolicy) autoFortressSupplyDecision(
 			continue
 		}
 		stationed := max(int64(0), source.Units.Stationed[State.UnitID(GameData.DirewolfUnitID)])
-		inbound, pending := autoFortressInboundDirewolves(snapshot.State, source.KingdomID)
+		inbound, pending := autoFortressInboundDirewolves(&snapshot.State, source.KingdomID)
 		destinations = append(destinations, autoFortressSupplyDestination{
 			castle: source, stationed: stationed, inbound: inbound, committed: stationed + inbound, pending: pending,
 		})
@@ -795,7 +795,7 @@ func (policy *AutoFortressPolicy) autoFortressSupplyDecision(
 	return maintenance
 }
 
-func autoFortressInboundDirewolves(gameState State.GameState, kingdomID State.KingdomID) (int64, bool) {
+func autoFortressInboundDirewolves(gameState *State.GameState, kingdomID State.KingdomID) (int64, bool) {
 	total := int64(0)
 	pending := false
 	for _, transport := range gameState.KingdomTransport.PendingUnits {
@@ -974,7 +974,7 @@ func (policy *AutoFortressPolicy) autoFortressWorkflowDecision(snapshot Snapshot
 		decision := autoFortressRequest(snapshot, metrics, "Refresh owned Direwolf transfer before a time skip", "troops.kingdom.refresh", map[string]any{}, Localization.New("server.automation.refresh_owned_direwolf_transfer.e05ddbb2", "Refresh owned Direwolf transfer before a time skip", nil))
 		return &decision
 	}
-	remaining, found := autoFortressAgedOwnedPendingRemaining(snapshot.State, workflow, snapshot.Now)
+	remaining, found := autoFortressAgedOwnedPendingRemaining(&snapshot.State, workflow, snapshot.Now)
 	if !found || remaining <= 0 {
 		return nil
 	}
@@ -1004,7 +1004,7 @@ func (policy *AutoFortressPolicy) autoFortressWorkflowDecision(snapshot Snapshot
 	return &decision
 }
 
-func autoFortressOwnedPendingRemaining(gameState State.GameState, workflow State.KingdomTroopTransportWorkflow) (int, bool) {
+func autoFortressOwnedPendingRemaining(gameState *State.GameState, workflow State.KingdomTroopTransportWorkflow) (int, bool) {
 	for _, pending := range gameState.KingdomTransport.PendingUnits {
 		if pending.KingdomID != workflow.KingdomID {
 			continue
@@ -1030,7 +1030,7 @@ func autoFortressOwnedPendingRemaining(gameState State.GameState, workflow State
 	return 0, false
 }
 
-func autoFortressAgedOwnedPendingRemaining(gameState State.GameState, workflow State.KingdomTroopTransportWorkflow, now time.Time) (int, bool) {
+func autoFortressAgedOwnedPendingRemaining(gameState *State.GameState, workflow State.KingdomTroopTransportWorkflow, now time.Time) (int, bool) {
 	remaining, found := autoFortressOwnedPendingRemaining(gameState, workflow)
 	if !found || workflow.TransportObservedAt.IsZero() || !now.After(workflow.TransportObservedAt) {
 		return remaining, found
@@ -1138,7 +1138,7 @@ func evaluateAutoFortressPurchase(snapshot Snapshot, settings autoFortressSettin
 	// Counters read before the latest dispatched purchase cannot prove its
 	// outcome (timeout or no reply): refresh before ever buying again.
 	if !found || observedAt.IsZero() || snapshot.Now.Sub(observedAt) >= autoFortressPurchaseHistoryAge ||
-		!State.PackageCountersAfterLastPurchase(snapshot.State, observedAt) {
+		!State.PackageCountersAfterLastPurchase(&snapshot.State, observedAt) {
 		decision := autoFortressRequest(snapshot, metrics, "Refresh Nomad Direwolf stock counters", "autoBuyer.package.history", map[string]any{"sourceCastleId": main.ID}, Localization.New("server.automation.refresh_nomad_direwolf_stock.3e1531f4", "Refresh Nomad Direwolf stock counters", nil))
 		return &decision, ""
 	}
@@ -1160,7 +1160,7 @@ func evaluateAutoFortressPurchase(snapshot Snapshot, settings autoFortressSettin
 		if product.MaxBuyPerClick > 0 {
 			amount = min(amount, product.MaxBuyPerClick)
 		}
-		balance, available := autoBuyerPriceBalance(snapshot.State, main, product.Price)
+		balance, available := autoBuyerPriceBalance(&snapshot.State, main, product.Price)
 		if !available {
 			return nil, product.Price.Name + " balance is unavailable"
 		}

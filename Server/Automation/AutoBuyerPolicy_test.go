@@ -544,7 +544,7 @@ func TestAutoBuyerUnreconciledFeastRetriesFullReadOnlyReconciliationAfterRestart
 		Outcome: "uncertain", FeastID: 0, ChargedCastleID: 10, ChargedKingdomID: 0,
 		AttemptedAt: acknowledgedAt.Add(-time.Second),
 	}
-	store := State.NewStore(gameState)
+	store := State.NewStore(&gameState)
 	registry := Ingest.NewRegistry()
 	if err := Ingest.RegisterCoreReducers(registry); err != nil {
 		t.Fatal(err)

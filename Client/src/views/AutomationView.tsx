@@ -280,12 +280,10 @@ function dailyAttackSessionCount(
 }
 
 function dailyAttackCountLabel(count:number|null|undefined,t:DisplayTranslator):string {
-  return t('automation.daily',{state:count===undefined?'loading':count===null?'unavailable':'known',count:count??0});
+  return t('copy.today',{state:count===undefined?'loading':count===null?'unavailable':'known',count:count??0});
 }
-function dailyAttackCountTitle(featureName:string,count:number|null|undefined,sessionStartedAt:string|undefined,locale:string,t:DisplayTranslator):string {
-  const timestamp=sessionStartedAt?Date.parse(sessionStartedAt):NaN;
-  const date=Number.isFinite(timestamp)?new Intl.DateTimeFormat(locale,{dateStyle:'medium',timeStyle:'short'}).format(timestamp):'';
-  return t('automation.dailyTitle',{state:count===undefined?'loading':count===null?'unavailable':date?'dated':'known',feature:featureName,count:count??0,date});
+function dailyAttackCountTitle(featureName:string,count:number|null|undefined,_sessionStartedAt:string|undefined,_locale:string,t:DisplayTranslator):string {
+  return t('copy.todayTitle',{state:count===undefined?'loading':count===null?'unavailable':'known',feature:featureName,count:count??0});
 }
 
 export const AutomationView: React.FC<AutomationViewProps> = ({

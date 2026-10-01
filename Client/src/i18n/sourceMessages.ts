@@ -763,7 +763,7 @@ export const sourceMessages = {
   "ui.components.defensePresetEditor.title.clear.tool.38a2dbae": "Clear tool",
   "ui.components.defensePresetEditor.title.remove.slot.8c09755d": "Remove slot",
   "ui.components.header.aria-label.open.workspace.navigation.9df22e36": "Open workspace navigation",
-  "ui.components.header.alt.citadel.ops.logo.ab367a3c": "Citadel Ops Logo",
+  "ui.components.header.alt.citadel.ops.logo.ab367a3c": "CitadelOps Logo",
   "ui.components.header.aria-label.daily.attacks.and.automation.status.1f099931": "Daily attacks and automation status",
   "ui.components.header.title.clear.auto.bird.cycle.tracking.from.citadelops.cddc50b5": "Clear Auto Bird cycle tracking from CitadelOps memory",
   "ui.components.header.aria-label.clear.auto.bird.cycle.tracking.4813b36e": "Clear Auto Bird cycle tracking",

@@ -28,7 +28,7 @@ func TestActiveSafetyLockDiscardsFreshDecisionDescriptors(t *testing.T) {
 	initial := coordinatorReadyState()
 	lock := State.AutomationSafetyLock{Lane: "lane", Opcode: "cra", Code: 256, OperationID: "incident", ObservedAt: time.Now().UTC()}
 	initial.Automations["lane"] = State.AutomationState{ID: "lane", SafetyLock: lock}
-	store := State.NewStore(initial)
+	store := State.NewStore(&initial)
 	coordinator := NewCoordinator(store, openCoordinatorTestConfiguration(t, "lane"), nil, nil)
 	coordinator.recordDecision("lane", false, Decision{Status: "disabled", Detail: "Disabled", DetailDescriptor: Localization.New("disabled", "Disabled", nil)})
 	current := store.ReadOnlyView().Automations["lane"]

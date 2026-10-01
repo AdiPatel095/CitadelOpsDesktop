@@ -95,7 +95,8 @@ func commitDomain(t *testing.T, state *State.Store, domain string) {
 
 // CIT-43 behaviour 1: a disabled policy is never evaluated because of a state event.
 func TestDisabledPolicyIsNeverEvaluatedBecauseOfAStateEvent(t *testing.T) {
-	state := State.NewStore(coordinatorReadyState())
+	accessorState1 := coordinatorReadyState()
+	state := State.NewStore(&accessorState1)
 	configuration := openWakeConfiguration(t, "wake-on")
 	on := &wakeProbePolicy{id: "wake-on", domains: []string{"units"}}
 	off := &wakeProbePolicy{id: "wake-off", domains: []string{"units"}}
@@ -127,7 +128,8 @@ func TestDisabledPolicyIsNeverEvaluatedBecauseOfAStateEvent(t *testing.T) {
 
 // The disabled policy's pending flag is what a wake would set; a state event must leave it alone.
 func TestStateEventDoesNotMarkADisabledPolicyPending(t *testing.T) {
-	state := State.NewStore(coordinatorReadyState())
+	accessorState2 := coordinatorReadyState()
+	state := State.NewStore(&accessorState2)
 	configuration := openWakeConfiguration(t, "wake-on")
 	on := &wakeProbePolicy{id: "wake-on", domains: []string{"units"}}
 	off := &wakeProbePolicy{id: "wake-off", domains: []string{"units"}}
@@ -153,7 +155,8 @@ func TestStateEventDoesNotMarkADisabledPolicyPending(t *testing.T) {
 // CIT-43 behaviour 2: a policy's own deadline fires on time and unrelated
 // domain events neither evaluate it nor move it.
 func TestPolicyDeadlineFiresOnTimeAfterUnrelatedDomainEvents(t *testing.T) {
-	state := State.NewStore(coordinatorReadyState())
+	accessorState3 := coordinatorReadyState()
+	state := State.NewStore(&accessorState3)
 	configuration := openWakeConfiguration(t, "deadline")
 	policy := &wakeProbePolicy{id: "deadline", domains: []string{"beri"}, nextCheck: 600 * time.Millisecond}
 	runCoordinator(t, state, configuration, policy)
@@ -178,7 +181,8 @@ func TestPolicyDeadlineFiresOnTimeAfterUnrelatedDomainEvents(t *testing.T) {
 // CIT-43 behaviour 3 (unit level): urgency counts only while the policy is enabled.
 func TestUrgentDomainsAreUrgentOnlyWhileThePolicyIsEnabled(t *testing.T) {
 	policy := &wakeProbePolicy{id: "beri", domains: []string{"movements"}, urgent: []string{"movements"}}
-	coordinator := NewCoordinator(State.NewStore(coordinatorReadyState()), openWakeConfiguration(t, "beri"), nil, &coordinatorTestSubmitter{}, policy)
+	accessorState4 := coordinatorReadyState()
+	coordinator := NewCoordinator(State.NewStore(&accessorState4), openWakeConfiguration(t, "beri"), nil, &coordinatorTestSubmitter{}, policy)
 	event := State.Event{Revision: 5, Domains: []string{"movements"}}
 	runtime := func(known bool, enabled bool) map[string]*policyRuntime {
 		return map[string]*policyRuntime{"beri": {enabledKnown: known, enabled: enabled}}
@@ -208,7 +212,8 @@ func TestBeriStyleUrgentWakeSkipsTheDebounceOnlyWhileEnabled(t *testing.T) {
 		{name: "urgent policy disabled", enabled: []string{"watcher"}, atLeast: stateChangeDebounce - 30*time.Millisecond},
 	} {
 		t.Run(testCase.name, func(t *testing.T) {
-			state := State.NewStore(coordinatorReadyState())
+			accessorState5 := coordinatorReadyState()
+			state := State.NewStore(&accessorState5)
 			configuration := openWakeConfiguration(t, testCase.enabled...)
 			beri := &wakeProbePolicy{id: "beri", domains: []string{"movements"}, urgent: []string{"movements"}}
 			watcher := &wakeProbePolicy{id: "watcher", domains: []string{"movements"}}
@@ -265,7 +270,8 @@ func resetConfigurationMemos(t *testing.T) {
 // revision, not per evaluation, and evaluation no longer copies the configuration.
 func TestConfigurationIsParsedOncePerRevisionAndNotCopiedPerEvaluation(t *testing.T) {
 	resetConfigurationMemos(t)
-	state := State.NewStore(coordinatorReadyState())
+	accessorState6 := coordinatorReadyState()
+	state := State.NewStore(&accessorState6)
 	configuration, err := Configuration.Open(t.TempDir(), map[string]json.RawMessage{
 		"automation.enabled": json.RawMessage(`{"a":true,"b":false}`),
 		"scheduler":          json.RawMessage(`{"featureSchedules":{"a":{"enabled":true,"timeZone":"UTC","slots":[{"day":0,"startMinute":0,"endMinute":1440},{"day":1,"startMinute":0,"endMinute":1440},{"day":2,"startMinute":0,"endMinute":1440},{"day":3,"startMinute":0,"endMinute":1440},{"day":4,"startMinute":0,"endMinute":1440},{"day":5,"startMinute":0,"endMinute":1440},{"day":6,"startMinute":0,"endMinute":1440}]}}}`),
@@ -328,7 +334,8 @@ func TestConfigurationIsParsedOncePerRevisionAndNotCopiedPerEvaluation(t *testin
 }
 
 func TestPolicyFingerprintsAreCachedPerSnapshotAndRefreshedOnChange(t *testing.T) {
-	state := State.NewStore(coordinatorReadyState())
+	accessorState7 := coordinatorReadyState()
+	state := State.NewStore(&accessorState7)
 	configuration := openWakeConfiguration(t, "a")
 	policy := &wakeProbePolicy{id: "a", domains: []string{"units"}}
 	coordinator := NewCoordinator(state, configuration, nil, &coordinatorTestSubmitter{}, policy)

@@ -347,7 +347,7 @@ func planEquipmentReconfigure(_ context.Context, input Intent.PlanningContext, a
 	if leader.kind == "commander" {
 		commanderID := State.CommanderID(leader.id)
 		now := time.Now().UTC()
-		if State.CommanderHasActiveMovementAt(input.State, commanderID, now) ||
+		if State.CommanderHasActiveMovementAt(&input.State, commanderID, now) ||
 			input.CommanderHolds != nil && input.CommanderHolds.CommanderHeldAt(commanderID, now) {
 			return Intent.Plan{}, Localization.WithError(fmt.Errorf("commander %d is travelling or reserved for a launch", leader.id), Localization.New("server.app.commander_p_is_travelling.ccd4f924", "commander {p0} is travelling or reserved for a launch", Localization.Params{"p0": fmt.Sprintf("%d", leader.id)}))
 		}
@@ -1159,7 +1159,7 @@ func equipmentUpgradeClaims(
 		if !found {
 			return nil, Localization.WithError(fmt.Errorf("%s %d is worn by commander %d, which is missing from current state", itemKind, itemID, wearerID), Localization.New("server.app.p_p_is_worn.92345228", "{p0} {p1} is worn by commander {p2}, which is missing from current state", Localization.Params{"p0": fmt.Sprintf("%s", itemKind), "p1": fmt.Sprintf("%d", itemID), "p2": fmt.Sprintf("%d", wearerID)}))
 		}
-		if !commander.Available || State.CommanderHasActiveMovementAt(gameState, commander.ID, time.Now().UTC()) {
+		if !commander.Available || State.CommanderHasActiveMovementAt(&gameState, commander.ID, time.Now().UTC()) {
 			return nil, Localization.WithError(fmt.Errorf("%s %d cannot be upgraded while commander %d is travelling", itemKind, itemID, wearerID), Localization.New("server.app.p_p_cannot_be.b88d1a3d", "{p0} {p1} cannot be upgraded while commander {p2} is travelling", Localization.Params{"p0": fmt.Sprintf("%s", itemKind), "p1": fmt.Sprintf("%d", itemID), "p2": fmt.Sprintf("%d", wearerID)}))
 		}
 	case "castellan":

@@ -75,7 +75,7 @@ func TestAutoStormMapScanBoundsStartAtSixFiftyCenter(t *testing.T) {
 	storm.X, storm.Y = 679, 596
 	state.Castles[storm.ID] = storm
 
-	bounds := autoStormMapScanBounds(state, storm)
+	bounds := autoStormMapScanBounds(&state, storm)
 	if bounds != (State.StormMapBounds{X1: 600, Y1: 600, X2: 700, Y2: 700}) {
 		t.Fatalf("initial bounds = %#v", bounds)
 	}
@@ -84,7 +84,7 @@ func TestAutoStormMapScanBoundsStartAtSixFiftyCenter(t *testing.T) {
 		NextBounds:     State.StormMapBounds{X1: 0, Y1: 0, X2: 908, Y2: 807},
 		Targets:        map[string]State.MapObservation{},
 	}
-	if next := autoStormMapScanBounds(state, storm); next != bounds {
+	if next := autoStormMapScanBounds(&state, storm); next != bounds {
 		t.Fatalf("next scan bounds = %#v, want center %#v", next, bounds)
 	}
 }
@@ -118,7 +118,7 @@ func TestAutoStormTroopCapPreviewUsesSettingsWithoutRuntimeTarget(t *testing.T) 
 	}`)
 
 	preview, err := PreviewAutoStormTroopCap(
-		state,
+		&state,
 		Configuration.Snapshot{Sections: map[string]json.RawMessage{
 			AttackPresets.ConfigurationSection: presets,
 		}},
@@ -199,7 +199,7 @@ func TestAutoStormTroopCapUsesConfirmedResetAttackCountDividedByTwentyFour(t *te
 		"troopImport":{"minimumTroops":0}
 	}`)
 	preview, err := PreviewAutoStormTroopCap(
-		state,
+		&state,
 		Configuration.Snapshot{Sections: map[string]json.RawMessage{AttackPresets.ConfigurationSection: presets}},
 		autoStormTestGameData(t),
 		autoStormTestAttackLaunchCounts{
@@ -486,11 +486,11 @@ func TestAutoStormTimeSkipUsesLargestAvailableNonCrossingOption(t *testing.T) {
 		state.Player.Currencies[currencyID] = 1
 	}
 
-	minutes, reserve, found := autoStormBuildingTimeSkip(state, nil, int64(23*time.Hour/time.Second))
+	minutes, reserve, found := autoStormBuildingTimeSkip(&state, nil, int64(23*time.Hour/time.Second))
 	if !found || minutes != 300 || reserve != 0 {
 		t.Fatalf("23-hour building skip = minutes %d reserve %d found %t", minutes, reserve, found)
 	}
-	key, currencyID, reserve, found := autoStormTransportTimeSkip(state, nil, 65*60)
+	key, currencyID, reserve, found := autoStormTransportTimeSkip(&state, nil, 65*60)
 	if !found || key != "MS5" || currencyID != 1005 || reserve != 0 {
 		t.Fatalf(
 			"65-minute transport skip = key %q currency %d reserve %d found %t",
@@ -504,7 +504,7 @@ func TestAutoStormTimeSkipCrossesOnlyAfterNoAvailableOptionFits(t *testing.T) {
 	state.Player.Currencies[1002] = 1
 	state.Player.Currencies[1003] = 1
 
-	minutes, reserve, found := autoStormBuildingTimeSkip(state, nil, 30)
+	minutes, reserve, found := autoStormBuildingTimeSkip(&state, nil, 30)
 	if !found || minutes != 5 || reserve != 0 {
 		t.Fatalf("30-second crossing skip = minutes %d reserve %d found %t", minutes, reserve, found)
 	}

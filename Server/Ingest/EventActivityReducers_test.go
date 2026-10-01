@@ -105,7 +105,7 @@ func TestInvasionReportHoldRequiresRecoverableLaunchBoundary(t *testing.T) {
 		CommanderID: 7, CommanderKnown: true,
 		OperationID: "indeterminate-cra", ReservedAt: now,
 	}
-	if !InvasionReservationReportCandidate(gameState, reservation, capture) {
+	if !InvasionReservationReportCandidate(&gameState, reservation, capture) {
 		t.Fatal("complete recovery-capable reservation did not hold a plausible report")
 	}
 	for _, malformed := range []json.RawMessage{
@@ -116,7 +116,7 @@ func TestInvasionReportHoldRequiresRecoverableLaunchBoundary(t *testing.T) {
 	} {
 		candidate := capture
 		candidate.Summary = malformed
-		if InvasionReservationReportCandidate(gameState, reservation, candidate) {
+		if InvasionReservationReportCandidate(&gameState, reservation, candidate) {
 			t.Fatalf("malformed report identity was held for invasion recovery: %s", malformed)
 		}
 	}
@@ -128,7 +128,7 @@ func TestInvasionReportHoldRequiresRecoverableLaunchBoundary(t *testing.T) {
 	} {
 		candidate := reservation
 		mutate(&candidate)
-		if InvasionReservationReportCandidate(gameState, candidate, capture) {
+		if InvasionReservationReportCandidate(&gameState, candidate, capture) {
 			t.Fatalf("unrecoverable reservation held report forever: %#v", candidate)
 		}
 	}

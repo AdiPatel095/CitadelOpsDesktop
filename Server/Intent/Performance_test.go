@@ -40,7 +40,7 @@ func BenchmarkEngineIntentToTransportCurrentData(benchmark *testing.B) {
 	state.Session.ConnectionGeneration = 1
 	state.Session.LoggedIn = true
 	state.Session.SocketReady = true
-	store := State.NewStore(state)
+	store := State.NewStore(&state)
 	registry := NewRegistry()
 	if err := registry.Register(Definition{
 		Name: "benchmark.send",
@@ -72,7 +72,7 @@ func BenchmarkEngineIntentThroughRouterCurrentData(benchmark *testing.B) {
 	state.Session.ConnectionGeneration = 1
 	state.Session.LoggedIn = true
 	state.Session.SocketReady = true
-	store := State.NewStore(state)
+	store := State.NewStore(&state)
 	registry := NewRegistry()
 	if err := registry.Register(Definition{
 		Name: "benchmark.routed-send",
@@ -114,7 +114,8 @@ func BenchmarkEngineIntentToTransportWithDurableStore(benchmark *testing.B) {
 		benchmark.Fatal(err)
 	}
 	defer operationStore.Close()
-	engine := NewEngine(registry, State.NewStore(State.NewGameState()), nil, &performanceSender{}, nil)
+	accessorState1 := State.NewGameState()
+	engine := NewEngine(registry, State.NewStore(&accessorState1), nil, &performanceSender{}, nil)
 	if err := engine.SetOperationStore(benchmark.Context(), operationStore); err != nil {
 		benchmark.Fatal(err)
 	}

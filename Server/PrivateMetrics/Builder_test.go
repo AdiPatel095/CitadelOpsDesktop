@@ -175,7 +175,8 @@ func TestBuildSampleDoesNotReplaceCompleteStatsWhenFeatureReadFails(t *testing.T
 
 func readyPrivateMetricsState(t testing.TB, now time.Time) *State.Store {
 	t.Helper()
-	store := State.NewStore(State.NewGameState())
+	accessorState1 := State.NewGameState()
+	store := State.NewStore(&accessorState1)
 	_, err := store.ApplyComponents(State.Components(
 		State.ComponentSession, State.ComponentAccount, State.ComponentPlayer,
 		State.ComponentCastles, State.ComponentAlliance, State.ComponentEventScores,

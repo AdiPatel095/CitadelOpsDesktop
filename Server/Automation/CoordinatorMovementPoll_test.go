@@ -54,7 +54,7 @@ func TestUnchangedMovementPollsWakeNoPolicyButRealChangesStillDo(t *testing.T) {
 	initial.Player.ID = 1
 	initial.Session.ConnectionGeneration = 1
 	initial.Commanders[7] = State.CommanderState{ID: 7, Available: true}
-	store := State.NewStore(initial)
+	store := State.NewStore(&initial)
 	registry := Ingest.NewRegistry()
 	if err := Ingest.RegisterCoreReducers(registry); err != nil {
 		t.Fatal(err)

@@ -229,7 +229,7 @@ func TestRecruitmentBUPAllianceHelpMarkersRequireExactFocus(t *testing.T) {
 		},
 	}
 	state.Castles[77] = State.CastleState{ID: 77, KingdomID: 1, Focused: true}
-	store := State.NewStore(state)
+	store := State.NewStore(&state)
 	application := &Application{State: store}
 	arguments := json.RawMessage(`{"castleId":77}`)
 	if err := application.markRecruitmentBUPAllianceHelpDue(t.Context(), arguments); err != nil {
@@ -255,7 +255,7 @@ func TestRecruitmentBUPCoveredMarkerRequiresCommittedLifecycleEvidence(t *testin
 	state.Session.Generation = 7
 	state.Session.ConnectionGeneration = 3
 	state.Castles[77] = State.CastleState{ID: 77, KingdomID: 1, Focused: true}
-	store := State.NewStore(state)
+	store := State.NewStore(&state)
 	application := &Application{State: store}
 	arguments := json.RawMessage(`{"castleId":77}`)
 	if err := application.markRecruitmentBUPAllianceHelpDue(t.Context(), arguments); err != nil {
@@ -286,7 +286,7 @@ func TestRecruitmentBUPMarkerStopsWhenReusedCoverageExpired(t *testing.T) {
 		},
 	}
 	state.Castles[77] = State.CastleState{ID: 77, KingdomID: 1, Focused: true}
-	store := State.NewStore(state)
+	store := State.NewStore(&state)
 	protocol := store.ProtocolContext()
 	if !store.ObserveRecruitmentBUP(77, 7, 3, protocol.FocusEpoch) {
 		t.Fatal("initial recruitment BUP was not recorded")
@@ -618,7 +618,7 @@ func TestMarkAllianceHelpRequestedDoesNotInferRecruitmentSuccess(t *testing.T) {
 			},
 		},
 	}
-	application := &Application{State: State.NewStore(state)}
+	application := &Application{State: State.NewStore(&state)}
 	if err := application.markAllianceHelpRequested(context.Background(), json.RawMessage(`{"productionId":101,"castleId":77,"lineId":0}`)); err != nil {
 		t.Fatal(err)
 	}
@@ -646,7 +646,7 @@ func TestMarkHospitalAllianceHelpOnlyMarksMatchingJob(t *testing.T) {
 			2: {LineID: 2, Queued: []State.QueueItem{{ProductionID: 201}, {ProductionID: 202}}},
 		},
 	}
-	application := &Application{State: State.NewStore(state)}
+	application := &Application{State: State.NewStore(&state)}
 	if err := application.markAllianceHelpRequested(context.Background(), json.RawMessage(`{"productionId":201,"castleId":77,"lineId":2}`)); err != nil {
 		t.Fatal(err)
 	}
@@ -725,7 +725,7 @@ func TestAllianceHelpAnswerAllAllowsOneUnobservedSessionBootstrap(t *testing.T) 
 		t.Fatalf("resolve bootstrap help-all: %v", err)
 	}
 
-	application := &Application{State: State.NewStore(state)}
+	application := &Application{State: State.NewStore(&state)}
 	if err := application.markAllianceHelpAnswered(t.Context(), plan.Steps[1].ActionArguments); err != nil {
 		t.Fatal(err)
 	}
@@ -751,7 +751,7 @@ func TestMarkAllianceHelpAnsweredPreservesNewRequests(t *testing.T) {
 	state.AllianceHelpRequests = State.AllianceHelpRequestState{
 		PendingOtherListIDs: []int64{101, 102, 103}, OthersObservedAt: time.Now().UTC(), OthersObservedGeneration: 7,
 	}
-	application := &Application{State: State.NewStore(state)}
+	application := &Application{State: State.NewStore(&state)}
 	if err := application.markAllianceHelpAnswered(
 		t.Context(), json.RawMessage(`{"listIds":[101,102],"sessionGeneration":7}`),
 	); err != nil {

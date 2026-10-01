@@ -81,7 +81,7 @@ type CorePolicy interface {
 // automation.enabled switch. It is intended for explicit, bounded user runs
 // that must survive restarts and wait for authoritative game state changes.
 type OnDemandPolicy interface {
-	Active(State.GameState) bool
+	Active(*State.GameState) bool
 }
 
 // ActorIDPolicy lets an independent policy lane attribute its operations to a

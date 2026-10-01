@@ -30,7 +30,7 @@ func TestCastleFocusKnownUnavailableRequiresCurrentExplicitAbsence(t *testing.T)
 			if test.unlock != nil {
 				state.KingdomTransport.Unlocks[test.castle.KingdomID] = *test.unlock
 			}
-			if got := CastleFocusKnownUnavailable(state, test.castle); got != test.want {
+			if got := CastleFocusKnownUnavailable(&state, test.castle); got != test.want {
 				t.Fatalf("CastleFocusKnownUnavailable() = %t, want %t", got, test.want)
 			}
 		})

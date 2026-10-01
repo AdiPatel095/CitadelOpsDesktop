@@ -961,7 +961,7 @@ const InventorySlotCard: React.FC<InventorySlotCardProps> = ({
         <span className="max-w-[3.25rem] truncate font-mono">{hasItem ? `#${slot.itemId}` : 'Empty'}</span>
       </div>
 
-      {hasItem ? (
+      {slot.itemId != null ? (
         <>
           <QuantityAssetTile
             size={76}

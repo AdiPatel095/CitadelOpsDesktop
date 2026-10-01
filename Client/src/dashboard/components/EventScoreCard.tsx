@@ -189,8 +189,8 @@ function difficultyLabel(event: { difficultyId?: number; difficultyTypeName?: st
     .replace(/^./, (value) => value.toUpperCase());
 }
 
-function formatRank(rank: number): string {
-  return rank > 0 ? `#${rank.toLocaleString()}` : '—';
+function formatRank(rank: number | undefined): string {
+  return rank != null && rank > 0 ? `#${rank.toLocaleString()}` : '—';
 }
 
 function formatRewardPages(reached = 0, total = 0): string {

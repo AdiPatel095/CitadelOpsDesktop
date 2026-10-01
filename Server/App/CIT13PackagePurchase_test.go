@@ -130,7 +130,7 @@ func TestPackagePurchase175IsNeverCountedAsPurchase(t *testing.T) {
 	now := time.Now().UTC()
 	gameState := cit13DirewolfState(now)
 	gameState.Inventory.ConstructionOffers[3857] = 7
-	stateStore := State.NewStore(gameState)
+	stateStore := State.NewStore(&gameState)
 	registry := Ingest.NewRegistry()
 	if err := Ingest.RegisterCoreReducers(registry); err != nil {
 		t.Fatal(err)
@@ -162,7 +162,7 @@ func TestPackagePurchase175IsNeverCountedAsPurchase(t *testing.T) {
 		t.Fatalf("SBP 175 changed counters or balance: offers=%d balance=%v", view.Inventory.ConstructionOffers[3857], view.Player.Currencies[37])
 	}
 	if dispatch := view.Inventory.LastPackagePurchaseDispatch; dispatch.PackageID != 3857 || dispatch.Amount != 50 ||
-		State.PackageCountersAfterLastPurchase(view, now) {
+		State.PackageCountersAfterLastPurchase(&view, now) {
 		t.Fatalf("dispatched purchase was not recorded against older counters: %#v", dispatch)
 	}
 	meaning := GameData.ResolveResponseCode(nil, "sbp", 175)
@@ -179,7 +179,7 @@ func TestSBPGuardSettlesUnansweredMapReadOnLaterContextReply(t *testing.T) {
 	now := time.Now().UTC()
 	gameState := cit13DirewolfState(now)
 	gameState.Player.ID = 42
-	stateStore := State.NewStore(gameState)
+	stateStore := State.NewStore(&gameState)
 	registry := Ingest.NewRegistry()
 	if err := Ingest.RegisterCoreReducers(registry); err != nil {
 		t.Fatal(err)

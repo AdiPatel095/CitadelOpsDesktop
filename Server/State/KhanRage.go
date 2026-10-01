@@ -4,7 +4,7 @@ package State
 // retaliation movements observed for one event occurrence. Unlike the local
 // taunt dispatch cursor, this count advances only after the game accepts a
 // taunt and publishes its incoming movement.
-func (state GameState) KhanDefenseLaunchesForOccurrence(eventID int64, occurrence EventOccurrence) int64 {
+func (state *GameState) KhanDefenseLaunchesForOccurrence(eventID int64, occurrence EventOccurrence) int64 {
 	activity, found := state.LookupEventActivity(eventID)
 	if !found || occurrence.EndsAt.IsZero() ||
 		!SameEventOccurrence(activity.OccurrenceEndsAt, occurrence.EndsAt) {

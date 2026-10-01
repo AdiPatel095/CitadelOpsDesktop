@@ -130,5 +130,5 @@ func representativeEquipmentOptimizeFixture(t testing.TB, kind string, equipment
 	if err != nil {
 		t.Fatal(err)
 	}
-	return NewServer(Config{State: State.NewStore(gameState), GameData: gameData}).Handler(), body
+	return NewServer(Config{State: State.NewStore(&gameState), GameData: gameData}).Handler(), body
 }

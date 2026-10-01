@@ -137,7 +137,7 @@ func BuildCheckpoint(
 		observedAt = observedAt.UTC()
 	}
 	view := store.ReadOnlyView()
-	stateDocument, err := json.Marshal(State.NewClientStateSnapshot(view))
+	stateDocument, err := json.Marshal(State.NewClientStateSnapshot(&view))
 	if err != nil {
 		return Checkpoint{}, fmt.Errorf("encode dashboard state: %w", err)
 	}

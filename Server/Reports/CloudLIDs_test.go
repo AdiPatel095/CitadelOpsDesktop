@@ -156,7 +156,7 @@ func newCloudFixture(t *testing.T, reports int, cloud *fakeCloud, key string) *c
 		UploadURL: server.URL + "/reports/battle", FetchURL: server.URL + "/reports/battle", UploadKey: key,
 		Client: &http.Client{Timeout: 5 * time.Second},
 	})
-	fixture.uploader = NewCloudUploader(State.NewStore(snapshot), history, store, fixture.client)
+	fixture.uploader = NewCloudUploader(State.NewStore(&snapshot), history, store, fixture.client)
 	return fixture
 }
 

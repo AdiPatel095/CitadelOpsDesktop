@@ -14,7 +14,8 @@ import (
 // forever, and every retry re-runs the plan's command dependencies against the
 // game. The engine bounds the loop and surfaces the stale cause instead.
 func TestEngineBoundsStaleReplansThePlannerCannotResolve(t *testing.T) {
-	store := State.NewStore(State.NewGameState())
+	accessorState1 := State.NewGameState()
+	store := State.NewStore(&accessorState1)
 	registry := NewRegistry()
 	plans := 0
 	if err := registry.Register(Definition{
@@ -57,7 +58,8 @@ func TestEngineBoundsStaleReplansThePlannerCannotResolve(t *testing.T) {
 
 // A stale plan that clears on a retry must still complete normally.
 func TestEngineStillRetriesStalenessThatClears(t *testing.T) {
-	store := State.NewStore(State.NewGameState())
+	accessorState2 := State.NewGameState()
+	store := State.NewStore(&accessorState2)
 	registry := NewRegistry()
 	if err := registry.Register(Definition{
 		Name: "test.transient",

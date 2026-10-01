@@ -26,7 +26,8 @@ func labelsSeenByReducer(t *testing.T, ctx context.Context, opcode string) map[s
 	}); err != nil {
 		t.Fatal(err)
 	}
-	pipeline := NewPipeline(State.NewStore(State.NewGameState()), nil, registry)
+	accessorState1 := State.NewGameState()
+	pipeline := NewPipeline(State.NewStore(&accessorState1), nil, registry)
 	code := 0
 	if _, err := pipeline.HandleFrame(ctx, Protocol.Frame{
 		Direction: Protocol.DirectionInbound, Opcode: opcode, ResponseCode: &code, ReceivedAt: time.Now().UTC(),
@@ -64,7 +65,8 @@ func BenchmarkCommitFrameProfilingOff(b *testing.B) {
 	_ = registry.Register("gaa", func(context.Context, Protocol.Frame, *State.GameState, *GameData.Store) ([]string, bool, error) {
 		return nil, false, nil
 	})
-	pipeline := NewPipeline(State.NewStore(State.NewGameState()), nil, registry)
+	accessorState2 := State.NewGameState()
+	pipeline := NewPipeline(State.NewStore(&accessorState2), nil, registry)
 	code := 0
 	frame := Protocol.Frame{Direction: Protocol.DirectionInbound, Opcode: "gaa", ResponseCode: &code, ReceivedAt: time.Now().UTC()}
 	b.ReportAllocs()

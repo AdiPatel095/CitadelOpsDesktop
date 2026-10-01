@@ -115,7 +115,7 @@ function pointerDeltaMinutes(originY: number, clientY: number): number {
   return Math.round(rawDelta / SCHEDULE_STEP_MINUTES) * SCHEDULE_STEP_MINUTES;
 }
 
-function pointerModeForSlot(event: React.PointerEvent, slot: WeeklyScheduleSlot): DragMode {
+function pointerModeForSlot(event: React.PointerEvent): DragMode {
   const rect = event.currentTarget.getBoundingClientRect();
   const y = event.clientY - rect.top;
   const edgeSize = Math.min(SLOT_EDGE_RESIZE_PX, Math.max(6, rect.height / 3));
@@ -352,19 +352,20 @@ export const WeeklyScheduler: React.FC<WeeklySchedulerProps> = ({
 
   const buildSideCopySlots = useCallback(
     (drag: DragState, clientX: number) => {
-      if (drag.originalStart == null || drag.originalEnd == null) return [];
+      const { originalStart, originalEnd } = drag;
+      if (originalStart == null || originalEnd == null) return [];
 
       return copyTargetDaysForDrag(drag, clientX)
         .filter((day) => !schedule.slots.some((slot) =>
           slot.day === day &&
-          slot.startMinute === drag.originalStart &&
-          slot.endMinute === drag.originalEnd
+          slot.startMinute === originalStart &&
+          slot.endMinute === originalEnd
         ))
         .map((day) => ({
-          id: `copy-preview-${drag.slotId ?? 'slot'}-${day}-${drag.originalStart}-${drag.originalEnd}`,
+          id: `copy-preview-${drag.slotId ?? 'slot'}-${day}-${originalStart}-${originalEnd}`,
           day,
-          startMinute: drag.originalStart,
-          endMinute: drag.originalEnd,
+          startMinute: originalStart,
+          endMinute: originalEnd,
           ...(slotOptionsEnabled && drag.originalOptions ? { options: { ...drag.originalOptions } } : {}),
         }));
     },
@@ -536,7 +537,7 @@ export const WeeklyScheduler: React.FC<WeeklySchedulerProps> = ({
   };
 
   const beginSlotDrag = (event: React.PointerEvent<HTMLDivElement>, slot: WeeklyScheduleSlot) => {
-    beginDrag(event, slot, pointerModeForSlot(event, slot));
+    beginDrag(event, slot, pointerModeForSlot(event));
   };
 
   const beginCreateDrag = (event: React.PointerEvent<HTMLDivElement>, day: number) => {

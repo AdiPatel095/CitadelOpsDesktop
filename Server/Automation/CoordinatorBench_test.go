@@ -39,7 +39,8 @@ func BenchmarkEvaluateAllPolicies(b *testing.B) {
 	if err != nil {
 		b.Fatal(err)
 	}
-	state := State.NewStore(coordinatorReadyState())
+	accessorState1 := coordinatorReadyState()
+	state := State.NewStore(&accessorState1)
 	policies := allBenchmarkPolicies()
 	coordinator := NewCoordinator(state, configuration, nil, &coordinatorTestSubmitter{calls: make(chan Intent.Request, 1)}, policies...)
 	runtime := make(map[string]*policyRuntime, len(policies))

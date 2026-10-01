@@ -155,6 +155,7 @@ const Header: React.FC<HeaderProps> = ({
     detail: gameConnectionDetail ? { text: gameConnectionDetail } : undefined,
   });
 
+
   const gameConnectionActive = hasGameConnectionStatus && (
     gameConnectionState === 'connecting' ||
     gameConnectionState === 'authenticating' ||
@@ -201,7 +202,7 @@ const Header: React.FC<HeaderProps> = ({
             />
           </div>
           <div className="liquid-brand-copy">
-            <div className="text-lg font-bold leading-tight text-text-main">Citadel Ops</div>
+            <div className="text-lg font-bold leading-tight text-text-main">CitadelOps</div>
             <div className="text-[11px] font-medium leading-tight text-text-muted"><LocalizedText messageKey="navigation.commandCenter" /></div>
           </div>
           <span className="liquid-header-connection"><ConnectionStatus value={connectionValue} /></span>

@@ -106,10 +106,10 @@ func (*AutoNomadPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision
 		return nomadWaiting(snapshot.Now, "Time-skip reserves cannot be negative", Localization.New("server.automation.time_skip_reserves_cannot.50272547", "Time-skip reserves cannot be negative", nil)), nil
 	}
 
-	score, found := activeNomadEventScore(snapshot.State, snapshot.Now)
+	score, found := activeNomadEventScore(&snapshot.State, snapshot.Now)
 	if !found {
 		if decision, locked := limitedEventGate(
-			snapshot.State, snapshot.Now, []int64{nomadEventID, samuraiEventID}, "Nomad or Samurai event",
+			&snapshot.State, snapshot.Now, []int64{nomadEventID, samuraiEventID}, "Nomad or Samurai event",
 		); locked {
 			return decision, nil
 		}
@@ -201,7 +201,7 @@ func (*AutoNomadPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision
 		}
 		if observation, found := snapshot.State.LookupMapObservation(locked.KingdomID, fmt.Sprintf("%d:%d", locked.X, locked.Y)); found &&
 			observation.TypeID == locked.TypeID && observation.EventCampID == locked.EventCampID {
-			remaining := nomadCampCooldownRemaining(snapshot.State, observation, snapshot.Now)
+			remaining := nomadCampCooldownRemaining(&snapshot.State, observation, snapshot.Now)
 			if remaining > 0 {
 				metrics["cooldownRemaining"] = float64(remaining)
 				if !settings.SkipCooldowns {
@@ -234,7 +234,7 @@ func (*AutoNomadPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision
 		}, nil
 	}
 
-	camps := nomadCampCandidates(snapshot.State, snapshot.GameData, source, score.EventID, score.DifficultyID, targetTypeID, lastScan)
+	camps := nomadCampCandidates(&snapshot.State, snapshot.GameData, source, score.EventID, score.DifficultyID, targetTypeID, lastScan)
 	metrics["knownCamps"] = float64(len(camps))
 	if len(camps) < nomadCampCount {
 		return Decision{
@@ -243,7 +243,7 @@ func (*AutoNomadPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision
 		}, nil
 	}
 	camps = camps[:nomadCampCount]
-	if pending, found := pendingNomadCampRefresh(snapshot.State, camps); found {
+	if pending, found := pendingNomadCampRefresh(&snapshot.State, camps); found {
 		arguments, _ := json.Marshal(map[string]any{
 			"kingdomId": pending.KingdomID, "x1": pending.X, "y1": pending.Y, "x2": pending.X, "y2": pending.Y,
 		})
@@ -261,9 +261,9 @@ func (*AutoNomadPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision
 		}
 	}
 	metrics["maxedCamps"] = float64(maxedCount)
-	metrics["activeAttacks"] = float64(activeNomadCampAttackCount(snapshot.State, source.ID, camps, snapshot.Now))
-	commanderIDs, commandersRestricted := commanderFeatureCandidates(snapshot.State, snapshot.Configuration, "autoNomad")
-	availableCommanders := availableNomadCommanders(snapshot.State, commanderIDs, commandersRestricted)
+	metrics["activeAttacks"] = float64(activeNomadCampAttackCount(&snapshot.State, source.ID, camps, snapshot.Now))
+	commanderIDs, commandersRestricted := commanderFeatureCandidates(&snapshot.State, snapshot.Configuration, "autoNomad")
+	availableCommanders := availableNomadCommanders(&snapshot.State, commanderIDs, commandersRestricted)
 	metrics["availableCommanders"] = float64(len(availableCommanders))
 
 	if maxedCount < nomadCampCount {
@@ -271,9 +271,9 @@ func (*AutoNomadPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision
 			return nomadCommanderWaiting(snapshot.Now, commandersRestricted, metrics), nil
 		}
 		target := lowestNomadCamp(camps, maximumVictoryCount)
-		if remaining := nomadCampCooldownRemaining(snapshot.State, target.Observation, snapshot.Now); remaining > 0 {
+		if remaining := nomadCampCooldownRemaining(&snapshot.State, target.Observation, snapshot.Now); remaining > 0 {
 			if settings.SkipCooldowns {
-				if responseGatedDungeonCooldownCount(snapshot.State, settings.TimeSkipReserve, int64(remaining)) < 1 {
+				if responseGatedDungeonCooldownCount(&snapshot.State, settings.TimeSkipReserve, int64(remaining)) < 1 {
 					return Decision{
 						Status: "waiting", Detail: fmt.Sprintf("Available time skips cannot clear camp %d:%d while preserving reserves", target.Observation.X, target.Observation.Y), DetailDescriptor: Localization.New("server.automation.available_time_skips_cannot.54f66fa7", "Available time skips cannot clear camp {p0}:{p1} while preserving reserves", Localization.Params{"p0": target.Observation.X, "p1": target.Observation.Y}),
 						NextCheckAt: snapshot.Now.Add(policyInterval(settings.CheckIntervalSec, 30)), Metrics: metrics,
@@ -339,7 +339,7 @@ func (*AutoNomadPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision
 	}
 	metrics["lockedTargetX"] = float64(target.Observation.X)
 	metrics["lockedTargetY"] = float64(target.Observation.Y)
-	remainingCooldown := nomadCampCooldownRemaining(snapshot.State, target.Observation, snapshot.Now)
+	remainingCooldown := nomadCampCooldownRemaining(&snapshot.State, target.Observation, snapshot.Now)
 	metrics["cooldownRemaining"] = float64(remainingCooldown)
 	if remainingCooldown > 0 {
 		if !settings.SkipCooldowns {
@@ -366,7 +366,7 @@ func (*AutoNomadPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision
 	if !settings.SkipCooldowns {
 		maximumLaunches = 1
 	} else {
-		availableSkips := responseGatedDungeonCooldownCount(snapshot.State, settings.TimeSkipReserve, target.Definition.CooldownSec)
+		availableSkips := responseGatedDungeonCooldownCount(&snapshot.State, settings.TimeSkipReserve, target.Definition.CooldownSec)
 		committedSkips := int64(metrics["activeAttacks"])
 		usableSkips := max(0, availableSkips-committedSkips)
 		metrics["availableCooldownSkips"] = float64(availableSkips)
@@ -412,7 +412,7 @@ func nomadSequentialArrivalDecision(
 	retryInterval time.Duration,
 ) (Decision, bool) {
 	block, blocked := State.NomadSequentialArrivalBlockAt(
-		snapshot.State, eventID, target.KingdomID, target.TypeID, target.X, target.Y, snapshot.Now,
+		&snapshot.State, eventID, target.KingdomID, target.TypeID, target.X, target.Y, snapshot.Now,
 	)
 	if !blocked {
 		return Decision{}, false
@@ -495,7 +495,7 @@ func validateAutoNomadToolCompatibility(
 	})
 }
 
-func activeNomadEventScore(gameState State.GameState, now time.Time) (State.ScalableEventScore, bool) {
+func activeNomadEventScore(gameState *State.GameState, now time.Time) (State.ScalableEventScore, bool) {
 	if score, found := gameState.ActiveScalableEventScore(); found {
 		if _, supported := nomadTargetType(score.EventID); supported && nomadScoreStillActive(score, now) {
 			return score, true
@@ -568,7 +568,7 @@ func nomadMapRefreshInterval(value int) time.Duration {
 }
 
 func nomadCampCandidates(
-	gameState State.GameState,
+	gameState *State.GameState,
 	gameData *GameData.Store,
 	source State.CastleState,
 	eventID, difficultyID int64,
@@ -603,7 +603,7 @@ func nomadCampCandidates(
 	return result
 }
 
-func pendingNomadCampRefresh(gameState State.GameState, camps []nomadCampCandidate) (State.NomadCampCooldownState, bool) {
+func pendingNomadCampRefresh(gameState *State.GameState, camps []nomadCampCandidate) (State.NomadCampCooldownState, bool) {
 	var selected State.NomadCampCooldownState
 	found := false
 	for _, camp := range camps {
@@ -705,7 +705,7 @@ func nomadEventEndsAt(score State.ScalableEventScore) time.Time {
 	return score.ObservedAt.Add(time.Duration(score.RemainingSec) * time.Second)
 }
 
-func nomadCampCooldownRemaining(gameState State.GameState, observation State.MapObservation, now time.Time) int {
+func nomadCampCooldownRemaining(gameState *State.GameState, observation State.MapObservation, now time.Time) int {
 	remaining, observedAt := observation.EventCampCooldownRemaining, observation.ObservedAt
 	key := fmt.Sprintf("%d:%d:%d", observation.KingdomID, observation.X, observation.Y)
 	if cooldown, found := gameState.NomadCamps.Cooldowns[key]; found && cooldown.CooldownObservedAt.After(observedAt) {
@@ -720,7 +720,7 @@ func nomadCampCooldownRemaining(gameState State.GameState, observation State.Map
 	return max(0, remaining)
 }
 
-func activeNomadCampAttackCount(gameState State.GameState, sourceCastleID State.CastleID, camps []nomadCampCandidate, now time.Time) int {
+func activeNomadCampAttackCount(gameState *State.GameState, sourceCastleID State.CastleID, camps []nomadCampCandidate, now time.Time) int {
 	targets := map[string]struct{}{}
 	for _, camp := range camps {
 		targets[fmt.Sprintf("%d:%d:%d", camp.Observation.KingdomID, camp.Observation.X, camp.Observation.Y)] = struct{}{}
@@ -738,7 +738,7 @@ func activeNomadCampAttackCount(gameState State.GameState, sourceCastleID State.
 	return count
 }
 
-func availableNomadCommanders(gameState State.GameState, candidates []State.CommanderID, restricted bool) []State.CommanderID {
+func availableNomadCommanders(gameState *State.GameState, candidates []State.CommanderID, restricted bool) []State.CommanderID {
 	if !restricted {
 		candidates = make([]State.CommanderID, 0, len(gameState.Commanders))
 		for id := range gameState.Commanders {
@@ -1029,9 +1029,9 @@ func evaluateAutoNomadRBCTest(snapshot Snapshot, settings autoNomadSettings) (De
 		}
 		outstandingCooldownSkips = max(0, int64(test.AttacksLaunched-test.CooldownsSkipped))
 	}
-	commanderIDs, restricted := commanderFeatureCandidates(snapshot.State, snapshot.Configuration, "autoNomad")
-	available := availableNomadCommanders(snapshot.State, commanderIDs, restricted)
-	availableSkips := responseGatedDungeonCooldownCount(snapshot.State, settings.TimeSkipReserve, 3*60*60)
+	commanderIDs, restricted := commanderFeatureCandidates(&snapshot.State, snapshot.Configuration, "autoNomad")
+	available := availableNomadCommanders(&snapshot.State, commanderIDs, restricted)
+	availableSkips := responseGatedDungeonCooldownCount(&snapshot.State, settings.TimeSkipReserve, 3*60*60)
 	usableSkips := max(0, availableSkips-outstandingCooldownSkips)
 	presetCopies, err := availablePresetCopies(preset, source, snapshot.GameData, len(available))
 	if err != nil {
@@ -1096,7 +1096,7 @@ func nomadMinuteSkipArguments(observation State.MapObservation, reserves map[str
 	return arguments
 }
 
-func oneCommandDungeonSkipCount(gameState State.GameState, reserves map[string]int64, cooldownSec int64) int64 {
+func oneCommandDungeonSkipCount(gameState *State.GameState, reserves map[string]int64, cooldownSec int64) int64 {
 	options := []struct {
 		wireKey  string
 		currency State.CurrencyID
@@ -1118,7 +1118,7 @@ func oneCommandDungeonSkipCount(gameState State.GameState, reserves map[string]i
 	return count
 }
 
-func responseGatedDungeonCooldownCount(gameState State.GameState, reserves map[string]int64, cooldownSec int64) int64 {
+func responseGatedDungeonCooldownCount(gameState *State.GameState, reserves map[string]int64, cooldownSec int64) int64 {
 	if cooldownSec <= 0 {
 		return 0
 	}

@@ -23,7 +23,7 @@ func benchmarkSnapshot(benchmark *testing.B) GameState {
 
 func BenchmarkStoreSnapshotCurrentData(benchmark *testing.B) {
 	state := benchmarkSnapshot(benchmark)
-	store := NewStore(state)
+	store := NewStore(&state)
 	benchmark.ReportAllocs()
 	benchmark.ResetTimer()
 	for benchmark.Loop() {
@@ -33,7 +33,7 @@ func BenchmarkStoreSnapshotCurrentData(benchmark *testing.B) {
 
 func BenchmarkStorePlanningViewCurrentData(benchmark *testing.B) {
 	state := benchmarkSnapshot(benchmark)
-	store := NewStore(state)
+	store := NewStore(&state)
 	benchmark.ReportAllocs()
 	benchmark.ResetTimer()
 	for benchmark.Loop() {
@@ -43,7 +43,7 @@ func BenchmarkStorePlanningViewCurrentData(benchmark *testing.B) {
 
 func BenchmarkStoreIngestObservationViewCurrentData(benchmark *testing.B) {
 	state := benchmarkSnapshot(benchmark)
-	store := NewStore(state)
+	store := NewStore(&state)
 	benchmark.ReportAllocs()
 	benchmark.ResetTimer()
 	for benchmark.Loop() {
@@ -64,7 +64,7 @@ func BenchmarkMarshalCurrentStateSnapshot(benchmark *testing.B) {
 
 func BenchmarkMarshalClientStateSnapshotCurrentData(benchmark *testing.B) {
 	state := benchmarkSnapshot(benchmark)
-	snapshot := NewClientStateSnapshot(state)
+	snapshot := NewClientStateSnapshot(&state)
 	benchmark.ReportAllocs()
 	benchmark.ResetTimer()
 	for benchmark.Loop() {
@@ -76,7 +76,7 @@ func BenchmarkMarshalClientStateSnapshotCurrentData(benchmark *testing.B) {
 
 func BenchmarkStoreApplyCurrentData(benchmark *testing.B) {
 	state := benchmarkSnapshot(benchmark)
-	store := NewStore(state)
+	store := NewStore(&state)
 	benchmark.ReportAllocs()
 	benchmark.ResetTimer()
 	for benchmark.Loop() {
@@ -91,7 +91,7 @@ func BenchmarkStoreApplyCurrentData(benchmark *testing.B) {
 
 func BenchmarkStoreApplyWithoutMapMutationCurrentData(benchmark *testing.B) {
 	state := benchmarkSnapshot(benchmark)
-	store := NewStore(state)
+	store := NewStore(&state)
 	benchmark.ReportAllocs()
 	benchmark.ResetTimer()
 	for benchmark.Loop() {
@@ -106,7 +106,7 @@ func BenchmarkStoreApplyWithoutMapMutationCurrentData(benchmark *testing.B) {
 
 func BenchmarkStoreApplyPlayerComponentCurrentData(benchmark *testing.B) {
 	state := benchmarkSnapshot(benchmark)
-	store := NewStore(state)
+	store := NewStore(&state)
 	writes := Components(ComponentPlayer)
 	benchmark.ReportAllocs()
 	benchmark.ResetTimer()
@@ -122,7 +122,7 @@ func BenchmarkStoreApplyPlayerComponentCurrentData(benchmark *testing.B) {
 
 func BenchmarkStoreApplyObservationComponentCurrentData(benchmark *testing.B) {
 	state := benchmarkSnapshot(benchmark)
-	store := NewStore(state)
+	store := NewStore(&state)
 	writes := Components(ComponentSession, ComponentObservations)
 	benchmark.ReportAllocs()
 	benchmark.ResetTimer()
@@ -140,7 +140,7 @@ func BenchmarkStoreApplyObservationComponentCurrentData(benchmark *testing.B) {
 
 func BenchmarkStoreApplySessionComponentCurrentData(benchmark *testing.B) {
 	state := benchmarkSnapshot(benchmark)
-	store := NewStore(state)
+	store := NewStore(&state)
 	writes := Components(ComponentSession)
 	benchmark.ReportAllocs()
 	benchmark.ResetTimer()
@@ -178,7 +178,7 @@ func BenchmarkStoreApplyCastleComponentCurrentData(benchmark *testing.B) {
 		castle.Resources[resourceID] = ResourceBalance{Amount: 1}
 		state.Castles[castleID] = castle
 	}
-	store := NewStore(state)
+	store := NewStore(&state)
 	writes := Components(ComponentCastles)
 	benchmark.ReportAllocs()
 	benchmark.ResetTimer()
@@ -209,7 +209,7 @@ func BenchmarkMarshalCastleDeltaCurrentData(benchmark *testing.B) {
 	if castleID == 0 {
 		benchmark.Skip("fixture has no castle")
 	}
-	store := NewStore(state)
+	store := NewStore(&state)
 	event, err := store.ApplyComponents(Components(ComponentCastles), func(state *GameState) ([]string, bool, error) {
 		castle, found := state.MutableCastleParts(castleID, CastlePartResources)
 		if !found {
@@ -253,7 +253,7 @@ func benchmarkClientCastleDelta(benchmark *testing.B, cached bool) {
 	if castleID == 0 {
 		benchmark.Skip("fixture has no castle")
 	}
-	store := NewStore(state)
+	store := NewStore(&state)
 	event, err := store.ApplyComponents(Components(ComponentCastles), func(state *GameState) ([]string, bool, error) {
 		castle, found := state.MutableCastleParts(castleID, CastlePartResources)
 		if !found {
@@ -291,7 +291,7 @@ func BenchmarkStoreApplyMovementComponentCurrentData(benchmark *testing.B) {
 		movementID = 1
 		state.Movements[movementID] = MovementState{ID: movementID, Units: map[UnitID]int64{1: 1}}
 	}
-	store := NewStore(state)
+	store := NewStore(&state)
 	writes := Components(ComponentMovements)
 	benchmark.ReportAllocs()
 	benchmark.ResetTimer()
@@ -309,7 +309,7 @@ func BenchmarkStoreApplyMovementComponentCurrentData(benchmark *testing.B) {
 
 func BenchmarkStoreApplyInventoryComponentCurrentData(benchmark *testing.B) {
 	state := benchmarkSnapshot(benchmark)
-	store := NewStore(state)
+	store := NewStore(&state)
 	writes := Components(ComponentInventory)
 	benchmark.ReportAllocs()
 	benchmark.ResetTimer()
@@ -325,7 +325,7 @@ func BenchmarkStoreApplyInventoryComponentCurrentData(benchmark *testing.B) {
 
 func BenchmarkMarshalInventoryDeltaCurrentData(benchmark *testing.B) {
 	state := benchmarkSnapshot(benchmark)
-	store := NewStore(state)
+	store := NewStore(&state)
 	event, err := store.ApplyComponents(Components(ComponentInventory), func(state *GameState) ([]string, bool, error) {
 		state.MutableInventoryConstructionItems()[1]++
 		return []string{"inventory"}, true, nil
@@ -344,9 +344,10 @@ func BenchmarkMarshalInventoryDeltaCurrentData(benchmark *testing.B) {
 
 func BenchmarkStoreApplyStormMetadataCurrentData(benchmark *testing.B) {
 	state := benchmarkSnapshot(benchmark)
-	store := NewStore(state)
+	store := NewStore(&state)
 	writes := Components(ComponentStorm)
-	benchmark.ReportMetric(float64(store.ReadOnlyView().StormTargetCount()), "targets")
+	accessorState1 := store.ReadOnlyView()
+	benchmark.ReportMetric(float64(accessorState1.StormTargetCount()), "targets")
 	benchmark.ReportAllocs()
 	benchmark.ResetTimer()
 	for benchmark.Loop() {
@@ -415,7 +416,8 @@ func BenchmarkComponentManifestCleanupLegacy2883(benchmark *testing.B) {
 // cost: every unrelated Storm scalar update deep-copied the full authoritative
 // target observation map before the reducer ran.
 func BenchmarkCloneStormComponentLegacyCurrentData(benchmark *testing.B) {
-	state := NewStore(benchmarkSnapshot(benchmark)).ReadOnlyView()
+	accessorState2 := benchmarkSnapshot(benchmark)
+	state := NewStore(&accessorState2).ReadOnlyView()
 	benchmark.ReportAllocs()
 	benchmark.ResetTimer()
 	benchmark.ReportMetric(float64(state.StormTargetCount()), "targets")
@@ -425,7 +427,8 @@ func BenchmarkCloneStormComponentLegacyCurrentData(benchmark *testing.B) {
 }
 
 func BenchmarkCloneEachComponentCurrentData(benchmark *testing.B) {
-	state := NewStore(benchmarkSnapshot(benchmark)).ReadOnlyView()
+	accessorState3 := benchmarkSnapshot(benchmark)
+	state := NewStore(&accessorState3).ReadOnlyView()
 	for component := Component(0); component < componentCount; component++ {
 		component := component
 		benchmark.Run(component.String(), func(benchmark *testing.B) {
@@ -457,7 +460,8 @@ func benchmarkLargeMapState() GameState {
 }
 
 func BenchmarkStoreApplyMapCoordinate47000(benchmark *testing.B) {
-	store := NewStore(benchmarkLargeMapState())
+	accessorState4 := benchmarkLargeMapState()
+	store := NewStore(&accessorState4)
 	writes := Components(ComponentWorldMap)
 	benchmark.ReportMetric(float64(47_000), "nodes")
 	benchmark.ReportAllocs()
@@ -474,7 +478,8 @@ func BenchmarkStoreApplyMapCoordinate47000(benchmark *testing.B) {
 }
 
 func BenchmarkStoreApplyLegacyMapClone47000(benchmark *testing.B) {
-	store := NewStore(benchmarkLargeMapState())
+	accessorState5 := benchmarkLargeMapState()
+	store := NewStore(&accessorState5)
 	benchmark.ReportMetric(float64(47_000), "nodes")
 	benchmark.ReportAllocs()
 	benchmark.ResetTimer()
@@ -563,7 +568,7 @@ func benchmarkMixedPrivateMap() GameState {
 		}
 	}
 	state.Map[0] = region
-	return NewStore(state).ReadOnlyView()
+	return NewStore(&state).ReadOnlyView()
 }
 
 func BenchmarkRangeRiftTargetsIndexed47000(benchmark *testing.B) {

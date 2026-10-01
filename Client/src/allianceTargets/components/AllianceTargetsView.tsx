@@ -250,7 +250,7 @@ const AllianceTargetsContent = memo(({
   }, [loadTargets]);
 
   const changeSort = useCallback((key: SortKey) => {
-    const direction = queryRef.current.sort === key
+    const direction: SortDirection = queryRef.current.sort === key
       ? (queryRef.current.direction === 'asc' ? 'desc' : 'asc')
       : (key === 'might' || key === 'rpt' ? 'desc' : 'asc');
     const query = { ...queryRef.current, sort: key, direction, page: 1 };

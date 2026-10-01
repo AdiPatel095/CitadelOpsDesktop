@@ -7,7 +7,7 @@ const stormCastleKingdomID KingdomID = 4
 // remain valid for that kingdom, so callers must use this only for work that
 // requires JAA/JCA castle focus. Missing or pre-session transport data remains
 // unknown and is not treated as unavailable.
-func CastleFocusKnownUnavailable(gameState GameState, castle CastleState) bool {
+func CastleFocusKnownUnavailable(gameState *GameState, castle CastleState) bool {
 	if castle.ID <= 0 || castle.KingdomID == 0 {
 		return false
 	}

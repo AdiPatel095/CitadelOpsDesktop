@@ -44,7 +44,7 @@ func reduceEventRanking(
 	}
 	leagueID := int64(*payload.LeagueID)
 	listType := int64(payload.ListType)
-	eventID := rankingEventID(*gameState, leagueID, listType)
+	eventID := rankingEventID(gameState, leagueID, listType)
 	if eventID <= 0 {
 		return nil, false, nil
 	}
@@ -85,7 +85,7 @@ func reduceEventRanking(
 	return []string{"events", "event-scores"}, true, nil
 }
 
-func rankingEventID(gameState State.GameState, leagueID int64, listType int64) int64 {
+func rankingEventID(gameState *State.GameState, leagueID int64, listType int64) int64 {
 	var selected int64
 	gameState.RangeEventRankings(func(eventID int64, ranking State.EventRankingState) bool {
 		if ranking.Pending && ranking.LeagueID == leagueID && ranking.ListType == listType {

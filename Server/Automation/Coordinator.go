@@ -291,10 +291,10 @@ func (coordinator *Coordinator) Run(ctx context.Context) {
 		// other domains route directly through the policy wake index.
 		if stateEventHasDomain(event, "session") || stateEventHasDomain(event, "units") || stateEventHasDomain(event, "resources") {
 			state := coordinator.state.ReadOnlyView()
-			clearTroopAvailabilityGates(runtime, event, state)
-			clearCoinAvailabilityGates(runtime, event, state)
+			clearTroopAvailabilityGates(runtime, event, &state)
+			clearCoinAvailabilityGates(runtime, event, &state)
 			if stateEventHasDomain(event, "session") {
-				coordinator.cancelRunsForUnavailableSession(runtime, state)
+				coordinator.cancelRunsForUnavailableSession(runtime, &state)
 			}
 		}
 		return wakePoliciesForStateEvent(
@@ -435,7 +435,7 @@ func (coordinator *Coordinator) evaluate(
 	configuration := coordinator.configuration.SharedSnapshot()
 	state := coordinator.state.ReadOnlyView()
 	coordinator.cancelRunsDisallowedByConfiguration(runtime, configuration, now)
-	coordinator.cancelRunsForUnavailableSession(runtime, state)
+	coordinator.cancelRunsForUnavailableSession(runtime, &state)
 	var gameDataStore = coordinator.currentGameData()
 	var language *GameData.LanguageStore
 	if provider, ok := coordinator.gameData.(interface {
@@ -456,7 +456,7 @@ func (coordinator *Coordinator) evaluate(
 			current.evaluatedSessionKnown = true
 			current.eventOnly = lock.ExpiresAt().IsZero()
 			current.nextCheck = lock.ExpiresAt()
-			coordinator.recordDecision(policy.ID(), policyEnabled(policy, enabled, state), Decision{Status: "gated", Detail: lock.Detail(), DetailDescriptor: lock.DetailDescriptor(), NextCheckAt: lock.ExpiresAt()}, "safety_lock")
+			coordinator.recordDecision(policy.ID(), policyEnabled(policy, enabled, &state), Decision{Status: "gated", Detail: lock.Detail(), DetailDescriptor: lock.DetailDescriptor(), NextCheckAt: lock.ExpiresAt()}, "safety_lock")
 			continue
 		}
 		if !policyEvaluationDue(current, configuration.Revision, sessionReady, state.Session.Generation, now) {
@@ -466,7 +466,7 @@ func (coordinator *Coordinator) evaluate(
 		current.stateWakeNextCheck = time.Time{}
 		current.evaluationPending = false
 		current.eventOnly = false
-		isEnabled := policyEnabled(policy, enabled, state)
+		isEnabled := policyEnabled(policy, enabled, &state)
 		current.enabled, current.enabledKnown = isEnabled, policyGatedByEnablement(policy)
 		configurationFingerprint := coordinator.policyFingerprint(policy, configuration)
 		derivedConfigurationFingerprint := coordinator.policyDerivedFingerprint(policy, configuration)
@@ -532,10 +532,10 @@ func (coordinator *Coordinator) evaluate(
 			current.troopAvailabilityGate = nil
 			current.coinAvailabilityGate = nil
 		}
-		if troopAvailabilityGateInventoryChanged(current.troopAvailabilityGate, state) {
+		if troopAvailabilityGateInventoryChanged(current.troopAvailabilityGate, &state) {
 			current.troopAvailabilityGate = nil
 		}
-		if coinAvailabilityGateChanged(current.coinAvailabilityGate, state) {
+		if coinAvailabilityGateChanged(current.coinAvailabilityGate, &state) {
 			current.coinAvailabilityGate = nil
 		}
 		current.evaluatedStateRevision = state.Revision
@@ -903,7 +903,7 @@ func (coordinator *Coordinator) cancelRunsDisallowedByConfiguration(
 			scheduleKey != "" && scheduleKey != policyScheduleKey(policy) {
 			allowedBySchedule, _ = scheduleAllows(configuration, scheduleKey, now)
 		}
-		if !policyEnabled(policy, enabled, state) || !allowedBySchedule {
+		if !policyEnabled(policy, enabled, &state) || !allowedBySchedule {
 			current.configurationWakePending = true
 			current.cancelRun()
 		}
@@ -921,7 +921,7 @@ func policyGatedByEnablement(policy Policy) bool {
 	return !onDemand
 }
 
-func policyEnabled(policy Policy, configured map[string]bool, state State.GameState) bool {
+func policyEnabled(policy Policy, configured map[string]bool, state *State.GameState) bool {
 	if _, ok := policy.(CorePolicy); ok {
 		return true
 	}
@@ -933,7 +933,7 @@ func policyEnabled(policy Policy, configured map[string]bool, state State.GameSt
 
 func (coordinator *Coordinator) cancelRunsForUnavailableSession(
 	runtime map[string]*policyRuntime,
-	state State.GameState,
+	state *State.GameState,
 ) {
 	for _, current := range runtime {
 		if current == nil || !current.running || current.cancelRun == nil {
@@ -1275,7 +1275,7 @@ func operationResultCoinAvailabilityGate(result operationResult) (coinAvailabili
 	return gate, true
 }
 
-func troopAvailabilityGateInventoryChanged(gate *troopAvailabilityGate, state State.GameState) bool {
+func troopAvailabilityGateInventoryChanged(gate *troopAvailabilityGate, state *State.GameState) bool {
 	if gate == nil || gate.castleID <= 0 || gate.unitID <= 0 {
 		return false
 	}
@@ -1283,7 +1283,7 @@ func troopAvailabilityGateInventoryChanged(gate *troopAvailabilityGate, state St
 	return !found || castle.Units.Stationed[gate.unitID] != gate.available
 }
 
-func coinAvailabilityGateChanged(gate *coinAvailabilityGate, state State.GameState) bool {
+func coinAvailabilityGateChanged(gate *coinAvailabilityGate, state *State.GameState) bool {
 	if gate == nil {
 		return false
 	}
@@ -1292,7 +1292,7 @@ func coinAvailabilityGateChanged(gate *coinAvailabilityGate, state State.GameSta
 		(!gate.observedAt.IsZero() && observation.ObservedAt.After(gate.observedAt))
 }
 
-func clearCoinAvailabilityGates(runtime map[string]*policyRuntime, event State.Event, state State.GameState) {
+func clearCoinAvailabilityGates(runtime map[string]*policyRuntime, event State.Event, state *State.GameState) {
 	sessionChanged := stateEventHasDomain(event, "session")
 	resourcesChanged := stateEventHasDomain(event, "resources")
 	if !sessionChanged && !resourcesChanged {
@@ -1316,7 +1316,7 @@ func clearCoinAvailabilityGates(runtime map[string]*policyRuntime, event State.E
 func clearTroopAvailabilityGates(
 	runtime map[string]*policyRuntime,
 	event State.Event,
-	state State.GameState,
+	state *State.GameState,
 ) {
 	sessionChanged := stateEventHasDomain(event, "session")
 	unitsChanged := stateEventHasDomain(event, "units")

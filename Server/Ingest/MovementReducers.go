@@ -72,7 +72,7 @@ func newMovementReducer(authoritative bool) Reducer {
 						marketActive := movement.MarketBarrows > 0 && State.MarketBarrowMovementActiveAt(movement, frame.ReceivedAt)
 						stationActive := movement.Direction == 0 && movement.WaitSeconds > 0 &&
 							State.StationMovementActiveAt(movement, frame.ReceivedAt) ||
-							State.TrackedStationMovementActiveAt(*gameState, movement, frame.ReceivedAt)
+							State.TrackedStationMovementActiveAt(gameState, movement, frame.ReceivedAt)
 						if owned && (commanderActive || marketActive || stationActive) {
 							next[id] = movement
 						}
@@ -233,7 +233,7 @@ func ReconcileExpiredMovements(gameState *State.GameState, now time.Time) bool {
 		if movementActiveAt(movement, now) || owned && (movement.CommanderID != nil &&
 			State.CommanderMovementActiveAt(movement, now) || movement.MarketBarrows > 0 &&
 			State.MarketBarrowMovementActiveAt(movement, now) ||
-			State.TrackedStationMovementActiveAt(*gameState, movement, now)) {
+			State.TrackedStationMovementActiveAt(gameState, movement, now)) {
 			return true
 		}
 		reconcileReturnedMovementUnits(gameState, movement)
@@ -325,7 +325,7 @@ func movementActiveAt(movement State.MovementState, now time.Time) bool {
 // for target intelligence and defensive automation without allowing a foreign
 // leader id to mark one of the current player's commanders unavailable.
 func movementBelongsToCurrentPlayer(gameState *State.GameState, movement State.MovementState) bool {
-	return gameState != nil && State.MovementOwnedByCurrentPlayer(*gameState, movement)
+	return gameState != nil && State.MovementOwnedByCurrentPlayer(gameState, movement)
 }
 
 func movementItems(frame Protocol.Frame) ([]json.RawMessage, bool, error) {

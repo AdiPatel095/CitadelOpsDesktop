@@ -17,19 +17,19 @@ func TestCommanderFeatureCandidatesDefaultToAllUntilExplicitlyConfigured(t *test
 	configuration := Configuration.Snapshot{Sections: map[string]json.RawMessage{
 		commanderFeatureSection: json.RawMessage(`{"version":1,"assignments":{}}`),
 	}}
-	candidates, restricted := commanderFeatureCandidates(gameState, configuration, "autoStorm")
+	candidates, restricted := commanderFeatureCandidates(&gameState, configuration, "autoStorm")
 	if restricted || len(candidates) != 0 {
 		t.Fatalf("default feature candidates = %#v, restricted = %t", candidates, restricted)
 	}
 
 	configuration.Sections[commanderFeatureSection] = json.RawMessage(`{"version":1,"assignments":{"autoStorm":[]}}`)
-	candidates, restricted = commanderFeatureCandidates(gameState, configuration, "autoStorm")
+	candidates, restricted = commanderFeatureCandidates(&gameState, configuration, "autoStorm")
 	if !restricted || len(candidates) != 0 {
 		t.Fatalf("disabled feature candidates = %#v, restricted = %t", candidates, restricted)
 	}
 
 	configuration.Sections[commanderFeatureSection] = json.RawMessage(`{"version":1,"assignments":{"autoStorm":[16,0,16,99]}}`)
-	candidates, restricted = commanderFeatureCandidates(gameState, configuration, "autoStorm")
+	candidates, restricted = commanderFeatureCandidates(&gameState, configuration, "autoStorm")
 	if !restricted || !reflect.DeepEqual(candidates, []State.CommanderID{0, 16}) {
 		t.Fatalf("assigned feature candidates = %#v, restricted = %t", candidates, restricted)
 	}

@@ -358,7 +358,7 @@ func (store *WorldMapStore) UnregisterStormScanner(accountKey string) {
 	store.mu.Unlock()
 }
 
-func (state GameState) SharedStormScanCoverage(kingdomID KingdomID, now time.Time) StormScanCoverage {
+func (state *GameState) SharedStormScanCoverage(kingdomID KingdomID, now time.Time) StormScanCoverage {
 	if state.sharedMap == nil || !accountCanAccessSharedKingdom(state, kingdomID) {
 		return StormScanCoverage{}
 	}

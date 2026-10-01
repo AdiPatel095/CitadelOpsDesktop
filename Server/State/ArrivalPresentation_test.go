@@ -12,7 +12,7 @@ func TestArrivalAndProtectionDescriptorsAreSnapshotIsolated(t *testing.T) {
 	state.Khan.SafetyErrorDescriptor = ArrivalOrderDescriptor(2, arrival, 1, arrival.Add(time.Second))
 	state.Khan.Protection.ReasonDescriptor = Localization.New("reason", "Threshold {threshold}", Localization.Params{"threshold": 1000})
 	state.NomadCamps.RBCTest = &NomadRBCTestState{SafetyErrorDescriptor: ArrivalOrderDescriptor(4, arrival, 3, arrival.Add(time.Second))}
-	store := NewStore(state)
+	store := NewStore(&state)
 	snapshot := store.Snapshot()
 	snapshot.Khan.SafetyErrorDescriptor.Params["commander"] = "changed"
 	snapshot.Khan.Protection.ReasonDescriptor.Params["threshold"] = 0

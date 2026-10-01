@@ -236,11 +236,11 @@ func TestDungeonMinuteSkipDispatchFreshnessAcrossAttackTargets(t *testing.T) {
 				step.FinalDispatchAction != dungeonMinuteSkipDispatchGuard {
 				t.Fatalf("MSD is missing final freshness guards: %#v", step)
 			}
-			application := &Application{State: State.NewStore(gameState), GameData: manager}
+			application := &Application{State: State.NewStore(&gameState), GameData: manager}
 
 			spent := gameState
 			spent.Player.Currencies[1005] = 1
-			application.State = State.NewStore(spent)
+			application.State = State.NewStore(&spent)
 			if err := application.guardDungeonMinuteSkipDispatch(t.Context(), step.PreDispatchArguments); !errors.Is(err, Intent.ErrPlanStale) {
 				t.Fatalf("spent exact denomination reached MSD dispatch: %v", err)
 			}
@@ -248,7 +248,7 @@ func TestDungeonMinuteSkipDispatchFreshnessAcrossAttackTargets(t *testing.T) {
 
 			pending := gameState
 			setPendingDungeonCooldown(&pending, observation, now.Add(3*time.Second))
-			application.State = State.NewStore(pending)
+			application.State = State.NewStore(&pending)
 			if err := application.guardDungeonMinuteSkipDispatch(t.Context(), step.FinalDispatchArguments); !errors.Is(err, Intent.ErrPlanStale) {
 				t.Fatalf("new victory pending refresh reached MSD dispatch: %v", err)
 			}
@@ -259,7 +259,7 @@ func TestDungeonMinuteSkipDispatchFreshnessAcrossAttackTargets(t *testing.T) {
 			setDungeonObservationRemaining(&clearObservation, -1_150)
 			cleared.Map[0]["206:946"] = clearObservation
 			setFreshDungeonCooldown(&cleared, clearObservation, -1_150)
-			application.State = State.NewStore(cleared)
+			application.State = State.NewStore(&cleared)
 			if err := application.guardDungeonMinuteSkipDispatch(t.Context(), step.FinalDispatchArguments); !errors.Is(err, Intent.ErrPlanStale) {
 				t.Fatalf("clear observation reached duplicate MSD dispatch: %v", err)
 			}
@@ -341,7 +341,7 @@ func TestKhanCooldownReportsAttachEveryMSDUntilCooldownClears(t *testing.T) {
 		ReportID: 101, KingdomID: 0, X: 939, Y: 1123,
 		LandedAt: now.Add(-time.Second), CooldownRemaining: 700, CooldownObservedAt: now,
 	}
-	application := &Application{State: State.NewStore(gameState)}
+	application := &Application{State: State.NewStore(&gameState)}
 	first := dungeonMinuteSkipVerification{
 		dungeonMinuteSkipRequest: dungeonMinuteSkipRequest{
 			KingdomID: 0, TargetTypeID: khanCampTypeID, TargetX: 939, TargetY: 1123,

@@ -47,7 +47,7 @@ func quietPollFixture(t *testing.T) (*Pipeline, *State.Store) {
 	for _, id := range []State.CommanderID{7, 8, 9, 10} {
 		initial.Commanders[id] = State.CommanderState{ID: id, Available: true}
 	}
-	store := State.NewStore(initial)
+	store := State.NewStore(&initial)
 	registry := NewRegistry()
 	if err := RegisterCoreReducers(registry); err != nil {
 		t.Fatal(err)
@@ -341,7 +341,8 @@ func TestLingeringMovementKeepsTheCommanderBusyUntilTheGameDropsIt(t *testing.T)
 	pipeline, store := quietPollFixture(t)
 	start := movementTestStart()
 	sendPoll(t, pipeline, pollPayload(0), start)
-	first, _ := store.ReadOnlyView().LookupMovement(50)
+	accessorState1 := store.ReadOnlyView()
+	first, _ := accessorState1.LookupMovement(50)
 	nominal := *State.CommanderMovementReleaseAt(first) // release = nominal end + grace
 	nominalEnd := nominal.Add(-State.CommanderMovementReturnGrace)
 

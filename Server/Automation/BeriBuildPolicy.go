@@ -57,7 +57,7 @@ func (*BeriBuildPolicy) Evaluate(_ context.Context, snapshot Snapshot) (result D
 		return *decision, nil
 	}
 	if decision, locked := limitedEventGate(
-		snapshot.State, snapshot.Now, []int64{GameData.BerimondEventID}, "Battle for Berimond",
+		&snapshot.State, snapshot.Now, []int64{GameData.BerimondEventID}, "Battle for Berimond",
 	); locked {
 		return decision, nil
 	}
@@ -91,7 +91,7 @@ func (*BeriBuildPolicy) Evaluate(_ context.Context, snapshot Snapshot) (result D
 		}
 	} else {
 		var found bool
-		castle, found = beriCastle(snapshot.State)
+		castle, found = beriCastle(&snapshot.State)
 		if !found {
 			return beriBuildWaiting(snapshot.Now, "Waiting for an owned Berimond camp", nil, Localization.New("server.automation.waiting_for_an_owned.deab064e", "Waiting for an owned Berimond camp", nil)), nil
 		}

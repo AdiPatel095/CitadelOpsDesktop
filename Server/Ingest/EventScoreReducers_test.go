@@ -148,7 +148,7 @@ func TestAICCampUpgradeInvalidatesOldCapUntilCoherentRageUpdate(t *testing.T) {
 	gameState.Khan.PlayerRageCap = 1620
 	gameState.Khan.PlayerTotalRage = 43539
 	gameState.Khan.RageObservedAt = now.Add(-time.Second)
-	store := State.NewStore(gameState)
+	store := State.NewStore(&gameState)
 	registry := NewRegistry()
 	if err := RegisterCoreReducers(registry); err != nil || !registry.HasInbound("aic") {
 		t.Fatalf("AIC reducer registration: %v", err)
@@ -166,7 +166,8 @@ func TestAICCampUpgradeInvalidatesOldCapUntilCoherentRageUpdate(t *testing.T) {
 		khan.PlayerTotalRage != 43539 || khan.RageCampRevision != 2 || khan.RageBalanceCampRevision != 0 {
 		t.Fatalf("camp update = %+v", khan)
 	}
-	occurrence, _ := store.ReadOnlyView().LookupEventOccurrence(72)
+	accessorState1 := store.ReadOnlyView()
+	occurrence, _ := accessorState1.LookupEventOccurrence(72)
 	if khan.FullRageTauntDue(occurrence) {
 		t.Fatal("old full-bar observation survived the camp upgrade")
 	}
@@ -540,7 +541,7 @@ func TestGBDTriggerSnapshotAuthorityDistinguishesInvalidAbsentAndNoOffer(t *test
 			gameState.EventScores.Inventory.GlobalEffectBaselineGeneration = 11
 			gameState.EventScores.Inventory.GlobalEffects[2] = State.GlobalEffectAvailability{GlobalEffectID: 2, Strength: 9, EndsAt: observedAt.Add(time.Hour)}
 			gameState.EventScores.Inventory.GlobalEffectBoosterOffers[2] = State.GlobalEffectBoosterOffer{GlobalEffectID: 2, RubyCost: 2500, BonusValue: 49}
-			store := State.NewStore(gameState)
+			store := State.NewStore(&gameState)
 			registry := NewRegistry()
 			if err := RegisterCoreReducers(registry); err != nil {
 				t.Fatal(err)
@@ -828,7 +829,7 @@ func TestGBDCapturedGlobalEffectBaselineAndMalformedBIEIsolation(t *testing.T) {
 					DebitUnverified: true,
 				}
 			}
-			store := State.NewStore(gameState)
+			store := State.NewStore(&gameState)
 			pipeline := NewPipeline(store, staticGameDataProvider{store: gameData}, registry)
 			code := 0
 			payload := fmt.Sprintf(`{
@@ -895,7 +896,7 @@ func TestGBDNestedBIEConfirmationCrossesDurabilityFence(t *testing.T) {
 		OperationID: "missing-agb-ack", Outcome: State.GlobalEffectPurchaseUnresolved,
 		DebitUnverified: true,
 	}
-	store := State.NewStore(gameState)
+	store := State.NewStore(&gameState)
 	pipeline := NewPipeline(store, staticGameDataProvider{store: gameData}, registry)
 	fenceCalls := 0
 	pipeline.SetDurabilityFence(func(_ context.Context, event State.Event) error {

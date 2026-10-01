@@ -1,0 +1,75 @@
+{
+  "schema": 1,
+  "batch": 1,
+  "cuts": {
+    "desktop": {
+      "since": "d04335c536de6cdb5be58b0a2a57afe4ab5e6703",
+      "until": "90a15fa3f7fcdb2a1864dd74a0debf1bffa5e959"
+    },
+    "portal": {
+      "since": "1596bbaa0726a8220db8ff3d6d54bd07775342bc",
+      "until": "a80e5a8bb612f446956f82d1668ecc62d9a82a9e"
+    }
+  },
+  "command": [
+    "node",
+    "scripts/localization/translation-batch.mjs",
+    "--batch",
+    "1",
+    "--since",
+    "d04335c536de6cdb5be58b0a2a57afe4ab5e6703",
+    "--until",
+    "90a15fa3",
+    "--peer-repo",
+    "../../cit-84-translation-batch-1-portal",
+    "--peer-since",
+    "1596bbaa0726a8220db8ff3d6d54bd07775342bc",
+    "--peer-until",
+    "a80e5a8b",
+    "--families",
+    "shared"
+  ],
+  "families": {
+    "shared": {
+      "repository": "desktop",
+      "sources": [
+        "Client/src/i18n/messages.ts",
+        "Client/src/i18n/sourceMessages.ts"
+      ],
+      "catalogDirectory": "Client/src/i18n/catalogs",
+      "keys": [
+        "commanderAssignment.offForThisAutomation",
+        "draftRecovery.compareIntroReappliedCopy",
+        "playerStatus.accountWait",
+        "playerStatus.blocked",
+        "playerStatus.checkpoint",
+        "playerStatus.checkpointSuffix",
+        "playerStatus.checkpointSuffixUndated",
+        "playerStatus.checkpointUndated",
+        "playerStatus.connected",
+        "playerStatus.connecting",
+        "playerStatus.desktopLocked",
+        "playerStatus.done",
+        "playerStatus.gameConnected",
+        "playerStatus.licenseExpired",
+        "playerStatus.loginCooldown",
+        "playerStatus.loginFailed",
+        "playerStatus.needs-attention",
+        "playerStatus.noConnection",
+        "playerStatus.notStarted",
+        "playerStatus.off",
+        "playerStatus.paused",
+        "playerStatus.restarting",
+        "playerStatus.running",
+        "playerStatus.starting",
+        "playerStatus.stopping",
+        "playerStatus.suspended",
+        "playerStatus.suspendedUndated",
+        "playerStatus.unknown",
+        "playerStatus.waitCountdown",
+        "playerStatus.waiting"
+      ],
+      "allowEnglish": {}
+    }
+  }
+}

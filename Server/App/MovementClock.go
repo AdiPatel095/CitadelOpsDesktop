@@ -78,11 +78,11 @@ func nextMovementCompletion(gameState State.GameState) time.Time {
 	var next time.Time
 	gameState.RangeMovements(func(_ State.MovementID, movement State.MovementState) bool {
 		var completion *time.Time
-		owned := State.MovementOwnedByCurrentPlayer(gameState, movement)
+		owned := State.MovementOwnedByCurrentPlayer(&gameState, movement)
 		if movement.Direction == 0 && movement.WaitSeconds > 0 {
 			completion = State.StationMovementReleaseAt(movement)
 		} else if owned {
-			completion = State.TrackedStationMovementReleaseAt(gameState, movement)
+			completion = State.TrackedStationMovementReleaseAt(&gameState, movement)
 		}
 		if completion == nil {
 			if movement.MarketBarrows > 0 && owned {

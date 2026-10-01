@@ -10,7 +10,7 @@ const (
 	attackAnalyticsRejectedTargets
 )
 
-func (state *GameState) prepareAttackAnalyticsMutation(source GameState) {
+func (state *GameState) prepareAttackAnalyticsMutation(source *GameState) {
 	state.AttackAnalytics = source.AttackAnalytics
 	state.attackAnalyticsMutationCOW = true
 	state.mutableAttackAnalyticsParts = 0

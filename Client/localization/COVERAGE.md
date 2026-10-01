@@ -1,12 +1,12 @@
 # Desktop localization coverage ledger
 
-Status: partial implementation, not a translated release. Baseline: `e77ed022c2f926ae3509527fdabf54dca9e22586`. Current source has **2,624 typed keys: 2,546 custom and 78 official routes**. German and Arabic UI packs each contain **1,036 authored entries**, leaving **1,510 custom keys missing** in each. The other 23 non-English packs each contain **306 authored entries**, leaving **2,240 custom keys missing** per locale. Complete authored groups are equipment (63), activity (32), and battle presentation (66), and event/history presentation (41), and automation lane presentation (11 compound templates); those group counts do not certify their entire screens. Native-speaker review remains pending. English fallbacks are not credited as translations; legitimate language-neutral numeric/ID templates preserve their semantics.
+Status: partial implementation, not a translated release. Baseline: `e77ed022c2f926ae3509527fdabf54dca9e22586`. Current source has **2,652 typed keys: 2,574 custom and 78 official routes**. German and Arabic UI packs each contain **1,064 authored entries**, leaving **1,510 custom keys missing** in each. The other 23 non-English packs each contain **336 authored entries**, leaving **2,238 custom keys missing** per locale. Complete authored groups are equipment (63), activity (32), and battle presentation (66), and event/history presentation (41), and automation lane presentation (11 compound templates); those group counts do not certify their entire screens. Native-speaker review remains pending. English fallbacks are not credited as translations; legitimate language-neutral numeric/ID templates preserve their semantics.
 
 Backend catalogs contain 25 complete 329-key packs from approved Backend98 `3f55544cadc758f69154e3e0b9d815b3e983a275` through Frontend63 `93607ec68898e0d4b649a5dee70e8941ed9ed3d4`. Server catalogs contain 228 of 3,181 entries per locale, synchronized from approved runtime PR84 `e0f6bf1e9acdbf676bc26815d240e03ce6157dac`. Its full source lineage, including PR78 ruby notification behavior, is integrated. The strict gate compares the copied English catalog against the actual Server catalog in this checkout, so internally consistent stale copies cannot pass.
 
 ## Source inventory
 
-The latest inventory has **6,751 unreviewed conservative candidates**. Source-bound reviewed records and structural exclusions are reported in `source-inventory.json`. Candidate count is not a count of visible messages: property selectors, raw identity values and other dataflow candidates still need review. Run `npm run check:localization` from Client to regenerate the inventory and exact coverage counts.
+The latest inventory has **6,757 unreviewed conservative candidates**. Source-bound reviewed records and structural exclusions are reported in `source-inventory.json`. Candidate count is not a count of visible messages: property selectors, raw identity values and other dataflow candidates still need review. Run `npm run check:localization` from Client to regenerate the inventory and exact coverage counts.
 
 Source assignments are retained in `static-migrations.json` (729 standalone sinks), `attribute-migrations.json` (505 static attributes), `icon-label-migrations.json` (79 whole icon-adjacent labels) and `patch-note-migrations.json` (263 release subtitles/items). `common-key-map.json` records reviewed semantic consolidation. Source keys live in `messages.ts`, `sourceMessages.ts` and `richMessages.ts`; `ui.en.json` is generated for tooling.
 
@@ -77,3 +77,41 @@ uses the standard German word “Radius”. Arabic translates that label.
 “Off” uses “Aus” / “إيقاف” throughout the status, runtime and commander
 assignment strings. The aggregate missing-castle message names the lowest
 enabled missing castle ID and separately counts the remaining castles.
+
+## CIT-84 translation batch 1
+
+Batch 1: **model-authored, pending native review**. The shared fixture at
+`tests/fixtures/translation-batches/batch-1.json` records 30 keys: CIT-66 PR-B's
+28 status/reason keys and the CIT-77/CIT-80 follow-ups. Every key has an entry
+in all 25 non-English locales. Existing German and Arabic follow-up entries
+from CIT-78 are reused verbatim. There are 746 new entries; the shared catalogs
+and fixture are byte-identical in the desktop and portal repositories.
+
+The desktop cut is `90a15fa3f7fcdb2a1864dd74a0debf1bffa5e959` and the portal
+cut is `a80e5a8bb612f446956f82d1668ecc62d9a82a9e`, immediately after PR-B.
+Implementation bases include merged CIT-78 (#150/#105). CIT-82 added no keys.
+Batch 1 explicitly selects `--families shared`; two unrelated runtime keys in
+the same range are outside this story's requested key list. Portal-only and
+runtime catalogs are untouched. No English source or visual baseline changes.
+
+### Batch N procedure
+
+Record each repository's previous and current develop cuts in its story. From
+desktop `Client/`, run `node scripts/localization/translation-batch.mjs --batch N
+--since <desktop previous cut> --until <desktop current cut> --peer-repo <portal
+checkout> --peer-since <portal previous cut> --peer-until <portal current cut>`.
+The command examines committed English sources and translation packs at the
+cuts, including added/changed shared, portal-only and runtime keys that are
+missing in any locale. Use `--families shared,portal,runtime` to select only the
+families assigned by the story (all three are the default).
+
+Copy the generated fixture to the portal's `tests/fixtures/translation-batches/`.
+Author the missing entries, reuse existing translations, and mirror shared
+catalogs byte-for-byte. Runtime batches also run the existing server-to-client
+sync. `tests/translation-batches.test.mjs` automatically checks every fixture
+against all non-English locales, ICU arguments/selectors, rich tags, CLDR
+plural categories, English-equality reasons and successful formatting. An
+English-equality exception is `allowEnglish[key][locale] = "reason"` in its
+family. Record each batch as model-authored, pending native review, then run the
+plan's project checks and hand the pair to Sophie. Claire confirms the batch
+has merged before any release that ships its strings.

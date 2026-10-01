@@ -4,7 +4,7 @@ import "time"
 
 // IsIncomingPlayerAttack accepts only a fully identified, active attack from
 // another player onto one of the current player's castles.
-func IsIncomingPlayerAttack(gameState GameState, movement MovementState, now time.Time) bool {
+func IsIncomingPlayerAttack(gameState *GameState, movement MovementState, now time.Time) bool {
 	if now.IsZero() || gameState.Player.ID <= 0 ||
 		movement.Direction != 0 || movement.TypeID != 0 ||
 		movement.OwnerPlayerID <= 0 || movement.OwnerPlayerID == gameState.Player.ID ||
@@ -18,7 +18,7 @@ func IsIncomingPlayerAttack(gameState GameState, movement MovementState, now tim
 	return owned && target.ID == movement.TargetCastleID && target.SlotType == movement.TargetTypeID
 }
 
-func HasIncomingPlayerAttack(gameState GameState, now time.Time) bool {
+func HasIncomingPlayerAttack(gameState *GameState, now time.Time) bool {
 	active := false
 	gameState.RangeMovements(func(_ MovementID, movement MovementState) bool {
 		if IsIncomingPlayerAttack(gameState, movement, now) {
@@ -33,7 +33,7 @@ func HasIncomingPlayerAttack(gameState GameState, now time.Time) bool {
 // IsOutgoingPlayerAttack accepts only a fully identified, active PvP attack
 // launched from one of the current player's castles. It intentionally excludes
 // stationing, espionage, market, support, NPC, and returning movements.
-func IsOutgoingPlayerAttack(gameState GameState, movement MovementState, now time.Time) bool {
+func IsOutgoingPlayerAttack(gameState *GameState, movement MovementState, now time.Time) bool {
 	if now.IsZero() || gameState.Player.ID <= 0 || movement.Direction != 0 || movement.TypeID != 0 ||
 		movement.OwnerPlayerID != gameState.Player.ID || movement.TargetPlayerID <= 0 ||
 		movement.TargetPlayerID == gameState.Player.ID || !playerCastleMovementType(movement.SourceTypeID) ||

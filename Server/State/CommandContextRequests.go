@@ -145,7 +145,7 @@ func (state *GameState) DropPendingCommandRequestsBefore(opcode string, cutoff t
 
 // PendingCommandRequests returns the current session's unresolved requests of
 // one opcode in send order.
-func PendingCommandRequests(state GameState, opcode string) []PendingCommandRequest {
+func PendingCommandRequests(state *GameState, opcode string) []PendingCommandRequest {
 	opcode = strings.ToLower(strings.TrimSpace(opcode))
 	result := []PendingCommandRequest{}
 	for _, request := range state.CommandContext.PendingRequests {
@@ -193,7 +193,7 @@ func (state *GameState) MarkInventoryPackagePurchaseDispatched(dispatch PackageP
 
 // PackageCountersAfterLastPurchase reports whether counters observed at
 // observedAt were committed after the latest dispatched package purchase.
-func PackageCountersAfterLastPurchase(gameState GameState, observedAt time.Time) bool {
+func PackageCountersAfterLastPurchase(gameState *GameState, observedAt time.Time) bool {
 	return observedAt.After(gameState.Inventory.LastPackagePurchaseDispatch.SentAt)
 }
 
@@ -212,7 +212,7 @@ const RecruitmentAllianceHelpMinimumUnits = 5
 // observed RAH, before its known completion, and outside a live AHR 269 record.
 // Selecting the first qualifying job therefore requests help exactly when at
 // least one non-RAH slot holds five or more units.
-func RecruitmentAllianceHelpItemEligible(state GameState, castleID CastleID, item QueueItem, now time.Time) bool {
+func RecruitmentAllianceHelpItemEligible(state *GameState, castleID CastleID, item QueueItem, now time.Time) bool {
 	if item.ProductionID <= 0 || item.AllianceHelpRequested ||
 		item.Amount < RecruitmentAllianceHelpMinimumUnits {
 		return false
@@ -225,7 +225,7 @@ func RecruitmentAllianceHelpItemEligible(state GameState, castleID CastleID, ite
 
 // RecruitmentAllianceHelpRejected reports whether a live AHR 269 record for
 // the castle covers the production job.
-func RecruitmentAllianceHelpRejected(state GameState, castleID CastleID, productionID int64, now time.Time) bool {
+func RecruitmentAllianceHelpRejected(state *GameState, castleID CastleID, productionID int64, now time.Time) bool {
 	record, found := state.AllianceHelpRequests.IneligibleRecruitment[castleID]
 	if !found || productionID <= 0 || (!now.IsZero() && !now.Before(record.Until)) {
 		return false
@@ -277,7 +277,7 @@ func RecordRecruitmentHelpIneligibility(
 		return false
 	}
 	sort.Slice(ids, func(left, right int) bool { return ids[left] < ids[right] })
-	next := pruneRecruitmentHelpIneligibility(state.AllianceHelpRequests.IneligibleRecruitment, *state, observedAt)
+	next := pruneRecruitmentHelpIneligibility(state.AllianceHelpRequests.IneligibleRecruitment, state, observedAt)
 	if next == nil {
 		next = map[CastleID]RecruitmentHelpIneligibility{}
 	}
@@ -294,7 +294,7 @@ func PruneRecruitmentHelpIneligibility(state *GameState, now time.Time) bool {
 	if state == nil || len(state.AllianceHelpRequests.IneligibleRecruitment) == 0 {
 		return false
 	}
-	next := pruneRecruitmentHelpIneligibility(state.AllianceHelpRequests.IneligibleRecruitment, *state, now)
+	next := pruneRecruitmentHelpIneligibility(state.AllianceHelpRequests.IneligibleRecruitment, state, now)
 	if len(next) == len(state.AllianceHelpRequests.IneligibleRecruitment) {
 		return false
 	}
@@ -304,7 +304,7 @@ func PruneRecruitmentHelpIneligibility(state *GameState, now time.Time) bool {
 
 func pruneRecruitmentHelpIneligibility(
 	records map[CastleID]RecruitmentHelpIneligibility,
-	state GameState,
+	state *GameState,
 	now time.Time,
 ) map[CastleID]RecruitmentHelpIneligibility {
 	var next map[CastleID]RecruitmentHelpIneligibility
@@ -324,7 +324,7 @@ func pruneRecruitmentHelpIneligibility(
 	return next
 }
 
-func recruitmentQueueContainsAny(state GameState, castleID CastleID, productionIDs []int64) bool {
+func recruitmentQueueContainsAny(state *GameState, castleID CastleID, productionIDs []int64) bool {
 	castle, found := state.Castles[castleID]
 	if !found {
 		return false

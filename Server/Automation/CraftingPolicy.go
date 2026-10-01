@@ -131,7 +131,7 @@ func (*CraftingPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision,
 			cursor := plan.Cursor % len(cycle)
 			if snapshot.ConfigurationExternallyOwned {
 				if runtimeCursor, found := operationalCursor(
-					snapshot.State, "autoSceatRes", craftingOperationalCursorKey(castleKey, queueKey),
+					&snapshot.State, "autoSceatRes", craftingOperationalCursorKey(castleKey, queueKey),
 				); found {
 					cursor = runtimeCursor % len(cycle)
 				}
