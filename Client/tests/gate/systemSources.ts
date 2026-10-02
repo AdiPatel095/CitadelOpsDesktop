@@ -21,9 +21,9 @@ export async function annotateSystemSources(page: Page, findings: Violation[]): 
       return rect.width > 0 && rect.height > 0 && style.visibility !== 'hidden' && style.display !== 'none' && !element.closest('[inert]');
     };
     return findings.map(finding => {
-      if (!['R2', 'smallTargets', 'clippedControls', 'axe:color-contrast'].includes(finding.rule)) return {};
+      if (!['R2', 'smallTargets', 'clippedControls', 'focusVisible', 'axe:color-contrast'].includes(finding.rule)) return {};
       const pseudo = finding.element.endsWith('::before') ? '::before' : finding.element.endsWith('::after') ? '::after' : '';
-      let element = byPath.get(pseudo ? finding.element.slice(0, -pseudo.length) : finding.element);
+      let element = finding.controlId !== undefined ? elements.find(node => node.getAttribute('data-gate-keyboard') === finding.controlId) : byPath.get(pseudo ? finding.element.slice(0, -pseudo.length) : finding.element);
       if (!element && ['smallTargets', 'clippedControls'].includes(finding.rule)) {
         element = elements.find(node => {
           if (!visible(node) || label(node) !== finding.element) return false;
@@ -41,12 +41,16 @@ export async function annotateSystemSources(page: Page, findings: Violation[]): 
       if (finding.rule === 'axe:color-contrast') {
         const chip = element.closest('.m3-chip-success, .m3-chip-warning');
         if (chip && /foreground color: #(47752f|8a5a0c)\b/i.test(finding.detail)) sharedOwner = 'CIT-74 chip contrast PRs D#197/F#152';
-      } else if (element.closest('#workspace-navigation, .liquid-header, [data-settings-run-strip], [data-stop-control], section[aria-labelledby^="readiness-"], [data-setup-checklist]') || (!element.closest('[role="dialog"]') && element.closest('[data-view="automation"]'))) {
+      } else if (element.closest('#workspace-navigation, .liquid-header, .m3-expressive-backdrop, [data-settings-run-strip], [data-stop-control], section[aria-labelledby^="readiness-"], [data-setup-checklist]') || (!element.closest('[role="dialog"]') && element.closest('[data-view="automation"]'))) {
         sharedOwner = 'CIT-74 area (b): shared navigation/automation';
       } else if (element.closest('[role="dialog"]')?.querySelector('[data-start-confirm]')) {
         sharedOwner = 'CIT-74 area (b): shared start confirmation';
+      } else if (element.matches('button.absolute.h-5.w-5.bg-error') && element.parentElement?.matches('.group.relative.flex.flex-col.items-center')) {
+        sharedOwner = 'CIT-74 shared UI follow-up (coordinator): QuantityAssetTile removal control';
+      } else if (finding.rule === 'clippedControls' && element.matches('button.ui-switch')) {
+        sharedOwner = 'CIT-74 shared UI follow-up (coordinator): Switch internal overflow';
       } else {
-        const frame = element.closest('.m3-page-header, .ui-card__header, .scheduler-modal-title, .liquid-modal-title, .ui-segments');
+        const frame = element.closest('.m3-page-header, .ui-card__header, .scheduler-modal-title, .liquid-modal-title, .liquid-modal-header, .ui-segments');
         if (frame && (finding.rule === 'R2' || frame.matches('.ui-segments'))) {
           let explicitAccent = false;
           for (let node: Element | null = element; node; node = node.parentElement) {

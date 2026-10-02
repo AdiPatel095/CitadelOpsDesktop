@@ -101,7 +101,7 @@ const IntentConsole = () => {
             onChange={(event) => setArgumentsText(event.target.value)}
             rows={7}
             spellCheck={false}
-            className="w-full rounded-global border border-border-base bg-bg-input/70 px-4 py-3 font-mono text-body font-normal text-text-main shadow-inner outline-none transition focus:border-primary focus:ring-1 focus:ring-primary focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+            className="w-full rounded-global border border-border-base bg-bg-input/70 px-4 py-3 font-mono text-body font-normal text-text-main shadow-inner transition focus:border-primary focus:ring-1 focus:ring-primary focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
           />
         </label>
         <div className="flex flex-wrap gap-3">

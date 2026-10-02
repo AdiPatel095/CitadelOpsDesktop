@@ -1,3 +1,4 @@
+import { annotateSystemSources } from './systemSources';
 import { readFileSync } from 'node:fs';
 import { test, expect, type Page } from '@playwright/test';
 import type { Violation } from './checks';
@@ -91,7 +92,7 @@ async function keyboardWalk(page: Page): Promise<Violation[]> {
       return old?.visible && (style.shadow !== old.shadow || style.background !== old.background || style.border !== old.border);
     });
     if (!active.focusVisible || !indicator) {
-      violations.push({ rule: 'focusVisible', element: before.label, detail: 'Tab focus has no detected visible outline, shadow, background or border indicator' });
+      violations.push({ rule: 'focusVisible', element: before.label, controlId: before.id, detail: 'Tab focus has no detected visible outline, shadow, background or border indicator' });
     }
   }
   // Composite widgets use arrow keys after their one Tab stop.
@@ -183,7 +184,7 @@ for (const entry of gateCases) {
       if (entry.settings || entry.dialog) violations.push(...await currentDialogFocus(page, entry));
     }
     verifyNetwork();
-    await writeReport(testInfo, 'keyboard', entry, violations, { theme: 'dark', locale });
+    await writeReport(testInfo, 'keyboard', entry, await annotateSystemSources(page, violations), { theme: 'dark', locale });
   });
 }
 

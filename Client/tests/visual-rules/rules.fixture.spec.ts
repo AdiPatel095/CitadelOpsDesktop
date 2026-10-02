@@ -246,3 +246,13 @@ test('system source evidence separates shared frames from caller accent styling'
   const [changed] = await annotateSystemSources(page, findings);
   expect(changed.sourceFingerprint).not.toBe(shared.sourceFingerprint);
 });
+
+
+test('keyboard source evidence distinguishes same-named shared and owned actions', async ({ page }) => {
+  await page.setContent('<div id="root"><div class="group relative flex flex-col items-center"><button class="absolute h-5 w-5 bg-error" aria-label="Remove unit" data-gate-keyboard="0">X</button></div><button class="cit-button" aria-label="Remove unit" data-gate-keyboard="1">X</button></div>');
+  const findings = ['0', '1'].map(controlId => ({ rule: 'focusVisible', element: 'button Remove unit', controlId, detail: 'Missing indicator' }));
+  const [shared, owned] = await annotateSystemSources(page, findings);
+  expect(shared.sharedOwner).toContain('QuantityAssetTile');
+  expect(owned.sharedOwner).toBeUndefined();
+  expect(owned.baselineElement).not.toBe(shared.baselineElement);
+});

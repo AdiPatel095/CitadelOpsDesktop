@@ -1,6 +1,6 @@
 import type { Page } from '@playwright/test';
 
-export type Violation = { rule: string; element: string; detail: string; baselineElement?: string; sharedOwner?: string; sourceFingerprint?: string; sourceClasses?: string[]; shiftSources?: { value: number; nodes: string[] }[] };
+export type Violation = { rule: string; element: string; detail: string; baselineElement?: string; sharedOwner?: string; sourceFingerprint?: string; controlId?: string; sourceClasses?: string[]; shiftSources?: { value: number; nodes: string[] }[]; fontsStatusAtReady?: string; fontsLoadingAtReady?: string[] };
 
 // Missing browser APIs and detached pages are report findings, never thrown checks.
 async function scan(page: Page, rule: string, kind: 'overflow' | 'targets' | 'clipping'): Promise<Violation[]> {
@@ -62,6 +62,8 @@ export async function layoutShiftAfterReady(page: Page): Promise<Violation[]> {
       if (!PerformanceObserver.supportedEntryTypes.includes('layout-shift')) {
         return [{ rule, element: 'page', detail: 'layout-shift API unavailable' }];
       }
+      const fontsStatusAtReady = document.fonts.status;
+      const fontsLoadingAtReady = [...document.fonts].filter(font => font.status === 'loading').map(font => font.family);
       let score = 0;
       const shiftSources: { value: number; nodes: string[] }[] = [];
       const collect = (entries: PerformanceEntry[]) => {
@@ -80,7 +82,7 @@ export async function layoutShiftAfterReady(page: Page): Promise<Violation[]> {
       await new Promise(resolve => setTimeout(resolve, 2000));
       collect(observer.takeRecords());
       observer.disconnect();
-      return score > 0.01 ? [{ rule, element: 'page', shiftSources, detail: `Post-ready layout shift ${score.toFixed(5)} > 0.01` }] : [];
+      return score > 0.01 ? [{ rule, element: 'page', shiftSources, fontsStatusAtReady, fontsLoadingAtReady, detail: `Post-ready layout shift ${score.toFixed(5)} > 0.01` }] : [];
     });
   } catch (error) {
     return [{ rule: 'layoutShiftAfterReady', element: 'page', detail: `Check unavailable: ${String(error)}` }];
