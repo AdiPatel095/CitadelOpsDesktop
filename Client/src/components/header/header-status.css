@@ -6,7 +6,7 @@
 .liquid-header .liquid-brand-copy > :last-child { display: none; }
 .liquid-castle-focus-slot { flex: 0 1 auto; min-width: min-content; max-width: 280px; }
 .liquid-header-controls { display: flex; align-items: center; flex: none; gap: var(--space-8); }
-.header-status-cluster { display: flex; align-items: center; flex: 1 1 auto; min-width: 0; gap: var(--space-12); height: var(--space-40); padding-inline: var(--space-12); border: 1px solid var(--border-default); border-radius: var(--radius-full); background: var(--surface-inset); color: var(--text-primary); font-size: var(--font-size-13); line-height: var(--line-height-13); text-align: start; cursor: pointer; }
+.header-status-cluster { display: flex; align-items: center; flex: 1 1 auto; min-width: 0; gap: var(--space-12); height: calc(var(--space-40) + var(--space-4)); padding-inline: var(--space-12); border: 1px solid var(--border-default); border-radius: var(--radius-full); background: var(--surface-inset); color: var(--text-primary); font-size: var(--font-size-13); line-height: var(--line-height-13); text-align: start; cursor: pointer; }
 .header-status-cluster:hover { background: var(--state-hover); }
 .header-status-cluster:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
 .header-status-cluster svg { width: var(--font-size-16); height: var(--font-size-16); flex: none; }
