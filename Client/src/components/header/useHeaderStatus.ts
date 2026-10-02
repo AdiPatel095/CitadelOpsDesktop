@@ -18,10 +18,17 @@ export function useHeaderStatus(surface: 'desktop' | 'hosted', accountStatus?: P
   const presence = useHostedRuntimePresence();
   const descriptions = useAutomationDescriptions();
   const [now, setNow] = useState(() => Date.now());
+  const hasCountdown = (auth.autoBirdEnabled && auth.autoBirdNextWakeUp > now)
+    || (auth.autoStationEnabled && auth.autoStationNextImpact > now)
+    || Object.values(auth.automationTimedUntilByKey).some(until => until > now)
+    || auth.autoBirdCastleCycles.some(cycle => cycle.nextCycleAtMs > now || (cycle.pausedUntilMs ?? 0) > now)
+    || Date.parse(state?.session.cooldownUntil ?? '') > now
+    || Date.parse(state?.session.retryAt ?? '') > now;
   useEffect(() => {
+    if (!hasCountdown) return;
     const timer = window.setInterval(() => setNow(Date.now()), 30_000);
     return () => window.clearInterval(timer);
-  }, []);
+  }, [hasCountdown]);
   const features = useMemo(() => {
     const raw = configuration?.sections?.scheduler as { featureSchedules?: unknown } | undefined;
     const schedules = normalizeFeatureSchedules(raw?.featureSchedules);
