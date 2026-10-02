@@ -223,7 +223,7 @@ export const AutoAdvisorSettingsModal: React.FC<AutoAdvisorSettingsModalProps> =
         />
         <div className="space-y-3">
           <SettingsSection disclosure={disclosure} section="access" className="space-y-3">
-          <Card variant="solid" className="p-4">
+          <Card variant="solid" className="">
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div>
                 <div className="flex flex-wrap items-center gap-2 text-sm font-black text-text-main">
@@ -263,7 +263,7 @@ export const AutoAdvisorSettingsModal: React.FC<AutoAdvisorSettingsModalProps> =
           </Card>
 
           {run || summaryObserved ? (
-            <Card variant="solid" className="p-4">
+            <Card variant="solid" className="">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <div className="text-sm font-black text-text-main"><LocalizedText messageKey="ui.settings.components.autoAdvisorSettingsModal.live.advisor.run.94f3f4a1" /></div>
                 <Badge variant={run?.status === 'running' ? 'primary' : run?.status === 'completed' ? 'success' : run?.status === 'cancelled' ? 'warning' : 'secondary'}>
@@ -284,7 +284,7 @@ export const AutoAdvisorSettingsModal: React.FC<AutoAdvisorSettingsModalProps> =
 
           </SettingsSection>
           <SettingsSection disclosure={disclosure} section="setup" className="space-y-3">
-          <Card variant="solid" className="p-4">
+          <Card variant="solid" className="">
             <div className="grid gap-4 md:grid-cols-2">
               <label className="block">
                 <span className="mb-1.5 flex items-center gap-2 text-[10px] font-black uppercase tracking-wider text-text-muted"><Castle className="h-3.5 w-3.5" /> <LocalizedText messageKey="ui.settings.components.autoAdvisorSettingsModal.source.castle.86d5a48e" /></span>
@@ -323,7 +323,7 @@ export const AutoAdvisorSettingsModal: React.FC<AutoAdvisorSettingsModalProps> =
             ) : null}
           </Card>
 
-          <Card variant="solid" className="p-4">
+          <Card variant="solid" className="">
             <div className="mb-3 flex items-start justify-between gap-3">
               <div>
                 <div className="text-sm font-black text-text-main"><LocalizedText messageKey="ui.settings.components.autoAdvisorSettingsModal.automated.event.difficulty.51db43ea" /></div>
@@ -353,7 +353,7 @@ export const AutoAdvisorSettingsModal: React.FC<AutoAdvisorSettingsModalProps> =
 
           </SettingsSection>
           <SettingsSection disclosure={disclosure} section="gates">
-          <Card variant="solid" className="p-4">
+          <Card variant="solid" className="">
             <div className="mb-3 flex items-center gap-2 text-sm font-black text-text-main"><Coins className="h-4 w-4 text-primary" /> <LocalizedText messageKey="ui.settings.components.autoAdvisorSettingsModal.resource.gates.05c86e14" /></div>
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
               <NumberField label={localizeStatic("ui.settings.components.autoAdvisorSettingsModal.label.all.in.coins.attack.5e43c9f3")} value={draft.coinCostPerAttack} min={1} suffix="coins" onChange={(value) => setInteger('coinCostPerAttack', value, 1, Number.MAX_SAFE_INTEGER, 500)} />

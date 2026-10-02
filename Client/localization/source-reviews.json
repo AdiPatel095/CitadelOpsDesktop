@@ -11347,7 +11347,7 @@
   "21a4aa8a0342e8b3381ee84cbd117acada7e9284c3a33ef55ffa616d1897436a": {
     "classification": "user-content",
     "reason": "Combines two already localized messages with punctuation only.",
-    "evidence": "CIT-66 PR-C components/ui/StatusBadge.tsx: `${label.text} · ${detail.text}`; StatusBadge and RoleTag render catalog labels and formatted reason descriptors; adapter identifiers are inputs to the tested pure player-status model."
+    "evidence": "CIT-66 PR-C components/ui/StatusBadge.tsx: `${label.text} \u00b7 ${detail.text}`; StatusBadge and RoleTag render catalog labels and formatted reason descriptors; adapter identifiers are inputs to the tested pure player-status model."
   },
   "fd6914fa591e9e73ccd158f57c9993d225382d3205193a184aa134312237a0a0": {
     "classification": "technical",
@@ -12548,5 +12548,40 @@
     "classification": "technical",
     "reason": "Button variant/size enum or non-visible ARIA state/heading reference, consumed only as styling or accessibility structure.",
     "evidence": "components/ThemeToggle.tsx:16; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
+  },
+  "cd4ea34091a2eeb077d35d32ea4ca983a3c2bfdae0a866ee8fb812bb867e9dee": {
+    "classification": "technical",
+    "reason": "Button variant/size enum or non-visible ARIA state/heading reference, consumed only as styling or accessibility structure.",
+    "evidence": "components/ui/SectionCard.tsx:51; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
+  },
+  "b6c859baf90648faede60008c93e3ffa4505a53017735b5afcc3b5113f6cedd2": {
+    "classification": "technical",
+    "reason": "Button variant/size enum or non-visible ARIA state/heading reference, consumed only as styling or accessibility structure.",
+    "evidence": "components/ui/SectionHeader.tsx:16; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
+  },
+  "9722419704b51d00c8ac3c6f2309dd0e59172441cf70d0d7b9677827d4c57d78": {
+    "classification": "technical",
+    "reason": "Button variant/size enum or native SVG aria-hidden state, consumed as styling or accessibility structure rather than display copy.",
+    "evidence": "components/AttackSetupModal.tsx:304; CIT-65 Button API/size migration or decorative leftIcon SVG sink."
+  },
+  "8d9f7826365314039f0a7e33ef00e1e496cd440d47d0693c245aec5020990b73": {
+    "classification": "technical",
+    "reason": "Button variant/size enum or native SVG aria-hidden state, consumed as styling or accessibility structure rather than display copy.",
+    "evidence": "components/DetailBackButton.tsx:14; CIT-65 Button API/size migration or decorative leftIcon SVG sink."
+  },
+  "4b7cd23c4bed2c4fa97c70acd12426e54f3e7c7248a77c4de8bd2689d7dd223e": {
+    "classification": "technical",
+    "reason": "Button variant/size enum or native SVG aria-hidden state, consumed as styling or accessibility structure rather than display copy.",
+    "evidence": "equipment/components/EquipmentOptimizer.tsx:664; CIT-65 Button API/size migration or decorative leftIcon SVG sink."
+  },
+  "1850b467c0fd675eb02abedc9608b54c03ad3290b2c5fbff37f505b45c09fcba": {
+    "classification": "technical",
+    "reason": "Button variant/size enum or native SVG aria-hidden state, consumed as styling or accessibility structure rather than display copy.",
+    "evidence": "settings/components/AutoFortressSettingsModal.tsx:207; CIT-65 Button API/size migration or decorative leftIcon SVG sink."
+  },
+  "6745b00ea1156428b4b9dd442cf654d01d3889247e2ff321e8fe0f70f4da6a17": {
+    "classification": "technical",
+    "reason": "Button variant/size enum or native SVG aria-hidden state, consumed as styling or accessibility structure rather than display copy.",
+    "evidence": "worldIntelligence/components/WorldEventHistory.tsx:501; CIT-65 Button API/size migration or decorative leftIcon SVG sink."
   }
 }

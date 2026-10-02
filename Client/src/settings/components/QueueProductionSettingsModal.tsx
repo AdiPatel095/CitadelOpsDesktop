@@ -682,7 +682,7 @@ export const QueueProductionSettingsModal: React.FC<QueueProductionSettingsModal
           : `Shared ${definition.itemLabel} can be overridden by the ${definition.featureLabel} calendar.`}
         titleClassName="text-base"
         className={`flex flex-col ${className}`}
-        contentClassName="flex flex-1 flex-col gap-4 p-5"
+        contentClassName="flex flex-1 flex-col gap-4 "
         actions={(
           <div className="flex shrink-0 items-center gap-2">
             {globalScheduleEnabled && (
@@ -742,7 +742,7 @@ export const QueueProductionSettingsModal: React.FC<QueueProductionSettingsModal
       icon={<CalendarDays className="h-4 w-4" />}
       titleClassName="text-base"
       className={`flex flex-col ${className}`}
-      contentClassName="flex-1 p-5"
+      contentClassName="flex-1 "
       actions={(
         <div className="flex shrink-0 items-center gap-2">
           <Badge variant="primary">
@@ -786,7 +786,7 @@ export const QueueProductionSettingsModal: React.FC<QueueProductionSettingsModal
       actions={<Badge variant="secondary" className="shrink-0"><LocalizedText messageKey="ui.settings.components.queueProductionSettingsModal.no.data.3b41ba9c" /></Badge>}
       titleClassName="text-base"
       className={`flex flex-col ${className}`}
-      contentClassName="flex flex-1 p-4"
+      contentClassName="flex flex-1 "
     >
         <div className="flex min-h-[6.75rem] w-full items-center gap-4 rounded-global border border-dashed border-border-base bg-bg-card/35 p-4">
           <div className="hidden h-10 w-10 shrink-0 place-items-center rounded-global border border-primary/20 bg-primary/10 text-primary sm:grid">
@@ -809,7 +809,7 @@ export const QueueProductionSettingsModal: React.FC<QueueProductionSettingsModal
       icon={<Castle className="h-4 w-4" />}
       titleClassName="text-base"
       className={`flex flex-col ${className}`}
-      contentClassName="flex flex-1 flex-col gap-2 p-4"
+      contentClassName="flex flex-1 flex-col gap-2 "
       actions={(
         <Badge variant="primary" className="shrink-0">
           {enabledCastleCount}/{eligibleCastles.length}
@@ -913,7 +913,7 @@ export const QueueProductionSettingsModal: React.FC<QueueProductionSettingsModal
               title={localizeStatic("ui.settings.components.queueProductionSettingsModal.title.enabled.92c1cdfd")}
               description={`Castles selected for ${definition.featureLabel}.`}
               titleClassName="text-base"
-              contentClassName="flex flex-wrap items-center justify-between gap-4 p-5"
+              contentClassName="flex flex-wrap items-center justify-between gap-4 "
             >
                 <div className="text-4xl font-black tabular-nums text-primary">{enabledCastleCount}</div>
                 <Badge variant={isGlobalMode ? 'primary' : 'secondary'}>
@@ -927,7 +927,7 @@ export const QueueProductionSettingsModal: React.FC<QueueProductionSettingsModal
               title={localizeStatic("ui.settings.components.queueProductionSettingsModal.title.glory.title.fallback.1349f3ee")}
               description={localizeStatic("ui.settings.components.queueProductionSettingsModal.description.controls.level.11.protector.of.the.north.b2c8cf98")}
               titleClassName="text-base"
-              contentClassName="flex flex-wrap items-center justify-between gap-4 p-5"
+              contentClassName="flex flex-wrap items-center justify-between gap-4 "
             >
               <div className="min-w-0 flex-1">
                 <div className="text-sm font-bold text-text-main"><LocalizedText messageKey="ui.settings.components.queueProductionSettingsModal.recruit.level.10.if.glory.title.is.d718bd94" /></div>
@@ -985,11 +985,11 @@ export const QueueProductionSettingsModal: React.FC<QueueProductionSettingsModal
                     <Card
                       key={castle.id}
                       variant="solid"
-                      className={`liquid-prominent-header-card flex min-h-0 flex-col ${
-                        castleSettings.enabled ? 'border-primary/35 shadow-[0_0_24px_-12px_var(--primary-glow)]' : ''
+                      className={` flex min-h-0 flex-col ${
+                        castleSettings.enabled ? ' shadow-[0_0_24px_-12px_var(--primary-glow)]' : ''
                       }`}
                     >
-                      <CardHeader className="liquid-card-header-prominent flex flex-row items-center justify-between gap-4">
+                      <CardHeader className="flex flex-row items-center justify-between gap-4">
                         <div className="min-w-0">
                           <div className="flex flex-wrap items-center gap-2">
                             <CardTitle className="min-w-0 truncate text-lg text-text-main">{castle.name}</CardTitle>
@@ -1030,7 +1030,7 @@ export const QueueProductionSettingsModal: React.FC<QueueProductionSettingsModal
                         </div>
                       </CardHeader>
 
-                      <CardContent className="liquid-prominent-header-content flex flex-1 flex-col gap-4 p-5">
+                      <CardContent className="flex flex-1 flex-col gap-4">
                         <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-text-muted">
                           <span>
                             {isGlobalMode

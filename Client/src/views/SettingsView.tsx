@@ -808,7 +808,7 @@ const SettingsView: React.FC = () => {
 			title={t('settings.transfer')}
 			description={localizeStatic("ui.views.settingsView.description.move.your.citadelops.setup.between.installations.with.75d6d027")}
 			icon={<span className="flex h-8 w-8 items-center justify-center rounded-lg bg-violet-500/10"><FileJson className="h-4 w-4 text-violet-400" /></span>}
-			contentClassName="p-6 space-y-5"
+			contentClassName=" space-y-5"
 		>
 			<div className="grid gap-4 sm:grid-cols-2">
 				<div className="rounded-global border border-border-base bg-bg-app/35 p-4">
@@ -867,7 +867,7 @@ const SettingsView: React.FC = () => {
 						{playerHistoryRetention.hosted ? 'Hosted runtime' : 'Local disk'}
 					</Badge>
 				)}
-				contentClassName="p-6 space-y-4"
+				contentClassName=" space-y-4"
 			>
 					<div className="grid gap-4 lg:grid-cols-3">
 						<div>
@@ -997,7 +997,7 @@ const SettingsView: React.FC = () => {
 				{playerHistoryRetentionStatus && <p role="status" className="text-xs font-medium text-success">{playerHistoryRetentionStatus}</p>}
 			</SectionCard>
 
-		<SectionCard variant="solid" title={localizeStatic("ui.views.settingsView.title.game.connection.064c1922")} icon={<span className="flex h-8 w-8 items-center justify-center rounded-lg bg-sky-500/10"><Icons.Monitor className="h-4 w-4 text-sky-400" /></span>} contentClassName="p-6 space-y-6">
+		<SectionCard variant="solid" title={localizeStatic("ui.views.settingsView.title.game.connection.064c1922")} icon={<span className="flex h-8 w-8 items-center justify-center rounded-lg bg-sky-500/10"><Icons.Monitor className="h-4 w-4 text-sky-400" /></span>} contentClassName=" space-y-6">
 			<div>
 				<h3 className="text-sm font-semibold text-text-main"><LocalizedText messageKey="ui.views.settingsView.how.citadelops.connects.99c1207b" /></h3>
 				<p className="mt-1 max-w-3xl text-xs leading-relaxed text-text-muted">
@@ -1257,7 +1257,7 @@ const SettingsView: React.FC = () => {
 				</div>
 		</SectionCard>
 
-        <SectionCard variant="solid" title={localizeStatic("ui.views.settingsView.title.attack.scheduler.b3c5e8d8")} icon={<span className="flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-500/10"><Icons.Activity className="h-4 w-4 text-indigo-400" /></span>} contentClassName="p-6 space-y-8">
+        <SectionCard variant="solid" title={localizeStatic("ui.views.settingsView.title.attack.scheduler.b3c5e8d8")} icon={<span className="flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-500/10"><Icons.Activity className="h-4 w-4 text-indigo-400" /></span>} contentClassName=" space-y-8">
 			{settingsSaveError && <p className="text-xs text-error">{settingsSaveError}</p>}
             <div className="space-y-4">
               <div>
@@ -1381,7 +1381,7 @@ const SettingsView: React.FC = () => {
 
         </SectionCard>
 
-        <SectionCard variant="solid" title={localizeStatic("ui.views.settingsView.title.equipment.upgrades.c92efd82")} icon={<span className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-500/10"><Icons.Shield className="h-4 w-4 text-emerald-400" /></span>} contentClassName="p-6 space-y-4">
+        <SectionCard variant="solid" title={localizeStatic("ui.views.settingsView.title.equipment.upgrades.c92efd82")} icon={<span className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-500/10"><Icons.Shield className="h-4 w-4 text-emerald-400" /></span>} contentClassName=" space-y-4">
             <div>
               <h3 className="text-sm font-semibold text-text-main mb-1"><LocalizedText messageKey="ui.views.settingsView.upgrade.step.delay.8a021bb3" /></h3>
               <p className="text-xs text-text-muted mb-4">

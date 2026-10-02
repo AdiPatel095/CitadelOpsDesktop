@@ -417,7 +417,7 @@ export const AutoBirdSettingsModal: React.FC<AutoBirdSettingsModalProps> = ({ is
           onOpenDuration={onOpenAutomationDuration ? () => onOpenAutomationDuration(AUTOMATION_ENABLED_KEYS.autoBird, 'Auto Bird') : undefined}
         />
         <SettingsSection disclosure={disclosure} section="targets">
-          <Card variant="solid" className="bg-bg-app border-border-base p-4">
+          <Card variant="solid" className="">
             <label id="auto-bird-min-rpt" className="flex max-w-sm flex-col gap-1">
               <span className="text-xs font-bold uppercase tracking-wider text-primary"><LocalizedText messageKey="ui.settings.components.autoBirdSettingsModal.minimum.rpt.4e22018c" /></span>
               <Input
@@ -529,7 +529,7 @@ export const AutoBirdSettingsModal: React.FC<AutoBirdSettingsModalProps> = ({ is
               const visibleItems = visibleAutoBirdReserveItems(items, fortressProtected);
               const stock = birdReadiness.stockByCastle[cid];
               return (
-                <Card key={castle.id} variant="solid" className="flex flex-col bg-bg-card-hover/40 p-4 shadow-inner">
+                <Card key={castle.id} variant="solid" className="flex flex-col">
                   <div className="mb-3 flex flex-wrap items-center gap-2 border-b border-border-base pb-2">
                     <h3 className="text-sm font-bold text-primary">{castle.name}</h3>
                   </div>

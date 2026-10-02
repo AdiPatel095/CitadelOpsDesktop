@@ -21,5 +21,6 @@ export * from './ScheduleSummaryRow';
 export * from './CatalogPickerModal';
 export * from './ChoiceChipGroup';
 export * from './SettingsModal';
-
+export * from './Panel';
+export * from './SectionHeader';
 export * from './OverflowMenu';

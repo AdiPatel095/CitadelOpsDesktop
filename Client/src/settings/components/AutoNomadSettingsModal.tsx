@@ -263,7 +263,7 @@ export const AutoNomadSettingsModal: React.FC<AutoNomadSettingsModalProps> = ({ 
       />
       <div className="space-y-3">
         <SettingsSection disclosure={disclosure} section="setup">
-        <Card variant="solid" className="p-4">
+        <Card variant="solid" className="">
           <div className="grid gap-4 md:grid-cols-2">
             <div className="md:col-span-2">
               <CastleRequirementField
@@ -333,7 +333,7 @@ export const AutoNomadSettingsModal: React.FC<AutoNomadSettingsModalProps> = ({ 
         </SettingsSection>
 
         <SettingsSection disclosure={disclosure} section="event" className="space-y-3">
-        <Card id="auto-nomad-difficulty" variant="solid" className="p-4">
+        <Card id="auto-nomad-difficulty" variant="solid" className="">
           <div className="mb-3 flex items-start justify-between gap-3">
             <div>
               <div className="flex items-center gap-2 text-sm font-black text-text-main"><ShieldCheck className="h-4 w-4 text-primary" /> <LocalizedText messageKey="ui.settings.components.autoNomadSettingsModal.event.start.difficulty.d32020cb" /></div>
@@ -373,7 +373,7 @@ export const AutoNomadSettingsModal: React.FC<AutoNomadSettingsModalProps> = ({ 
           {difficultyCatalog.error ? <p className="mt-3 text-xs text-danger">{difficultyCatalog.error}</p> : null}
         </Card>
 
-        <Card variant="solid" className="p-4">
+        <Card variant="solid" className="">
           <div className="grid items-start gap-4 md:grid-cols-2">
             <label id="auto-nomad-score" className="flex min-w-0 flex-col">
               <span className="mb-1.5 flex min-h-6 items-center gap-2 text-[10px] font-black uppercase tracking-wider text-text-muted"><Target className="h-3.5 w-3.5" /> <LocalizedText messageKey="ui.settings.components.autoNomadSettingsModal.stop.at.event.score.f1752bfd" /></span>
@@ -523,7 +523,7 @@ export const AutoNomadSettingsModal: React.FC<AutoNomadSettingsModalProps> = ({ 
           ) : null}
         </SettingsSection>
 
-        <Card variant="solid" className="p-4">
+        <Card variant="solid" className="">
           <div className="flex items-center gap-2 text-sm font-black text-text-main"><Lock className="h-4 w-4 text-primary" /> <LocalizedText messageKey="ui.settings.components.autoNomadSettingsModal.fixed.four.camp.flow.380f9acb" /></div>
           <div className="mt-3 grid gap-2 sm:grid-cols-3">
             <div className="rounded-xl border border-border-base bg-bg-app/45 p-3 text-xs text-text-muted"><Badge variant="outline" className="mb-2">1</Badge><div><LocalizedText messageKey="ui.settings.components.autoNomadSettingsModal.advance.each.of.the.four.nearest.regular.45952900" /></div></div>

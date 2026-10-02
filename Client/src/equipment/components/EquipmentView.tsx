@@ -256,8 +256,8 @@ export default function EquipmentView() {
 			<StaleSessionBanner />
       {effectsStatus !== 'ready' && <p role="status" className="text-sm text-warning"><LocalizedText messageKey={effectsStatus === 'loading' ? 'equipment.canonicalLoading' : 'equipment.canonicalUnavailable'} /></p>}
       {hasMissingOfficialDescription && <p role="status" className="text-sm text-text-muted"><LocalizedText messageKey="equipment.missingOfficialDescription" /></p>}
-			<Card className="liquid-prominent-header-card equipment-workspace-card h-full min-h-0 flex flex-col">
-				<CardHeader role="toolbar" data-region="toolbar" aria-labelledby="equipment-workspace-heading" className="liquid-card-header-prominent flex flex-wrap items-center gap-4">
+			<Card className="equipment-workspace-card h-full min-h-0 flex flex-col">
+				<CardHeader role="toolbar" data-region="toolbar" aria-labelledby="equipment-workspace-heading" className="flex flex-wrap items-center gap-4">
           <span id="equipment-workspace-heading" className="sr-only">{mode}</span>
 					<PillSelector ariaLabel={localizeStatic("ui.equipment.components.equipmentView.ariaLabel.equipment.owner.type.8d4616c8")} value={mode} options={['Commander', 'Castellan']} onChange={(value) => setMode(value as EquipmentMode)} size="header" />
 					<div className="equipment-actions ml-auto">
@@ -269,7 +269,7 @@ export default function EquipmentView() {
 					</div>
 				</CardHeader>
 
-				<CardContent className="liquid-prominent-header-content liquid-prominent-header-content-flush equipment-selection-body p-0">
+				<CardContent flush className="equipment-selection-body">
 					<div className="equipment-loadout-list custom-scrollbar">
 						<div className="equipment-loadout-list-items">
 							{leaders.map((leader) => (

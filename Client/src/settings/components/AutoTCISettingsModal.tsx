@@ -455,8 +455,8 @@ export const AutoTCISettingsModal: React.FC<AutoTCISettingsModalProps> = ({ isOp
           const hasItems = castleItems.length > 0;
 
           return (
-            <Card key={castle.id} variant="solid" className="flex min-h-0 shrink-0 flex-col border-border-base bg-bg-app">
-              <CardHeader className="flex flex-row items-center justify-between rounded-t-[calc(var(--radius-global)-1px)] border-b border-border-base bg-bg-card-hover px-5 py-3.5">
+            <Card key={castle.id} variant="solid" className="flex min-h-0 shrink-0 flex-col">
+              <CardHeader className="flex flex-row items-center justify-between rounded-t-[calc(var(--radius-global)-1px)]">
                 <div className="flex items-center gap-3">
                   <CardTitle className="text-lg text-text-main">{castle.name}</CardTitle>
                   {hasItems && (
@@ -467,7 +467,7 @@ export const AutoTCISettingsModal: React.FC<AutoTCISettingsModalProps> = ({ isOp
                 </div>
               </CardHeader>
 
-              <CardContent className="bg-bg-app/30 p-5">
+              <CardContent className="">
                 {hasItems ? (
                   <div className="w-full">
                     <div className="flex flex-col gap-3">

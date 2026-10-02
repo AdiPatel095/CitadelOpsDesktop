@@ -23,6 +23,7 @@ import {
   Button,
   Card,
   CardContent,
+  CardHeader,
   CollectionToolbar,
   EmptyState,
   MetricTile,
@@ -416,8 +417,8 @@ const PresetCard: React.FC<{
   const { t: localizeStatic } = useStaticLocale();
   const summary = summarizeDefensePreset(preset);
   return (
-    <Card variant="solid" className="liquid-prominent-header-card overflow-hidden">
-      <div className="flex flex-wrap items-start justify-between gap-3 border-b border-border-base bg-bg-card/45 px-5 py-4">
+    <Card variant="solid" className="overflow-hidden">
+      <CardHeader className="flex-wrap items-start gap-3">
         <div className="min-w-0">
           <div className="flex items-center gap-2">
             <Shield className="h-4 w-4 shrink-0 text-primary" />
@@ -435,7 +436,7 @@ const PresetCard: React.FC<{
           <Button aria-label={localizeStatic("ui.views.defensePresetsView.title.duplicate.preset.a5c8c827")} iconOnly variant="ghost" size="md" disabled={busy} onClick={onDuplicate} title={localizeStatic("ui.views.defensePresetsView.title.duplicate.preset.a5c8c827")}><Copy className="h-4 w-4" /></Button>
           <Button aria-label={localizeStatic("ui.views.defensePresetsView.title.delete.preset.f307af85")} iconOnly variant="ghost" size="md" disabled={busy} onClick={onDelete} title={localizeStatic("ui.views.defensePresetsView.title.delete.preset.f307af85")} ><Trash2 className="h-4 w-4" /></Button>
         </div>
-      </div>
+      </CardHeader>
       <CardContent className="space-y-4">
         <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
           <MetricTile label={localizeStatic("ui.views.defensePresetsView.label.left.58eb9032")} value={`${preset.wall.left.unitPercent}%`} />

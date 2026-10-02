@@ -35,7 +35,7 @@ const UpdateModal = () => {
 					<p className="mb-8 text-lg leading-relaxed text-text-muted">
 						Version <span className="font-semibold text-primary">{latestVersion}</span> is installed.
 					</p>
-					<Card variant="solid" className="mb-8 border-primary/30 p-6 shadow-lg">
+					<Card variant="solid" className="mb-8">
 						<div className="flex items-center justify-center gap-3 text-xl font-bold text-primary">
 							<RefreshCw className="h-6 w-6" /> <LocalizedText messageKey="ui.components.updateModal.restart.citadelops.8b96fc52" />
 						</div>
