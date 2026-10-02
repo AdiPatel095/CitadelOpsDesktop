@@ -379,5 +379,6 @@
   "equipment.canonicalUnavailable": "De effectgegevens van het spel zijn momenteel niet beschikbaar. Je laatste resultaten blijven bewaard en opnieuw configureren is gepauzeerd terwijl CitadelOps het opnieuw probeert.",
   "equipment.effectsGroupedDescription": "Effecten gegroepeerd volgens de eigen effectcategorieën van het spel.",
   "setupReadiness.castlesNotInWorld": "{count, plural, =1 {Het opgeslagen kasteel {castle} bevindt zich niet op dit account of in deze wereld. Selecteer het opnieuw of schakel het uit.} one {Het opgeslagen kasteel {castle} en {others, plural, one {# ander ingeschakeld kasteel} other {# andere ingeschakelde kastelen}} bevinden zich niet op dit account of in deze wereld. Selecteer ze opnieuw of schakel ze uit.} other {Het opgeslagen kasteel {castle} en {others, plural, one {# ander ingeschakeld kasteel} other {# andere ingeschakelde kastelen}} bevinden zich niet op dit account of in deze wereld. Selecteer ze opnieuw of schakel ze uit.}}",
-  "ui.components.header.alt.citadel.ops.logo.ab367a3c": "CitadelOps-logo"
+  "ui.components.header.alt.citadel.ops.logo.ab367a3c": "CitadelOps-logo",
+  "ui.rich.views.automationView.right.click.a.toggle.for.temporary.activation.c34579ee": "<strong0>Klik met de rechtermuisknop</strong0> op een schakelaar om deze tijdelijk te activeren"
 }

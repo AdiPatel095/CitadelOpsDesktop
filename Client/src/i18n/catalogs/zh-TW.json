@@ -379,5 +379,6 @@
   "equipment.canonicalUnavailable": "目前無法取得遊戲的效果資料。上次的結果會保留，並且在CitadelOps重試期間暫停重新設定。",
   "equipment.effectsGroupedDescription": "依照遊戲本身的效果類別分組顯示效果。",
   "setupReadiness.castlesNotInWorld": "{count, plural, =1 {已儲存的城堡{castle}不在目前帳號或世界中。請重新選擇或停用它。} one {已儲存的城堡{castle}及{others, plural, one {#座其他已啟用的城堡} other {#座其他已啟用的城堡}}不在目前帳號或世界中。請重新選擇或停用它們。} other {已儲存的城堡{castle}及{others, plural, one {#座其他已啟用的城堡} other {#座其他已啟用的城堡}}不在目前帳號或世界中。請重新選擇或停用它們。}}",
-  "ui.components.header.alt.citadel.ops.logo.ab367a3c": "CitadelOps標誌"
+  "ui.components.header.alt.citadel.ops.logo.ab367a3c": "CitadelOps標誌",
+  "ui.rich.views.automationView.right.click.a.toggle.for.temporary.activation.c34579ee": "<strong0>按右鍵</strong0>點選開關以暫時啟用"
 }

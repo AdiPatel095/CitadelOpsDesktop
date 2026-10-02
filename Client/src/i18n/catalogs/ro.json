@@ -379,5 +379,6 @@
   "equipment.canonicalUnavailable": "Datele despre efecte din joc nu sunt disponibile momentan. Ultimele rezultate sunt păstrate, iar Reconfigurarea este pusă pe pauză cât timp CitadelOps încearcă din nou.",
   "equipment.effectsGroupedDescription": "Efecte grupate după categoriile de efecte proprii jocului.",
   "setupReadiness.castlesNotInWorld": "{count, plural, =1 {Castelul salvat {castle} nu se află în acest cont sau în această lume. Selectează-l din nou sau dezactivează-l.} one {Castelul salvat {castle} și {others, plural, one {# alt castel activat} few {# alte castele activate} other {# de alte castele activate}} nu se află în acest cont sau în această lume. Selectează-le din nou sau dezactivează-le.} few {Castelul salvat {castle} și {others, plural, one {# alt castel activat} few {# alte castele activate} other {# de alte castele activate}} nu se află în acest cont sau în această lume. Selectează-le din nou sau dezactivează-le.} other {Castelul salvat {castle} și {others, plural, one {# alt castel activat} few {# alte castele activate} other {# de alte castele activate}} nu se află în acest cont sau în această lume. Selectează-le din nou sau dezactivează-le.}}",
-  "ui.components.header.alt.citadel.ops.logo.ab367a3c": "Sigla CitadelOps"
+  "ui.components.header.alt.citadel.ops.logo.ab367a3c": "Sigla CitadelOps",
+  "ui.rich.views.automationView.right.click.a.toggle.for.temporary.activation.c34579ee": "<strong0>Faceți clic dreapta</strong0> pe un comutator pentru a-l activa temporar"
 }

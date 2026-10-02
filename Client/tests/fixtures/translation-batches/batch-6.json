@@ -1,0 +1,66 @@
+{
+  "schema": 1,
+  "batch": 6,
+  "cuts": {
+    "desktop": {
+      "since": "4191936342597745ee62c3861ebf09c7e7d68057",
+      "until": "3aaa1c40d4ddca5b9192914ed4ac464c1ec6505b"
+    },
+    "portal": {
+      "since": "027e7588613394b0bc3401e852822c8ece2e814f",
+      "until": "af1948271b4356f24d16f929ca485fe8c40d1a5d"
+    }
+  },
+  "command": [
+    "node",
+    "scripts/localization/translation-batch.mjs",
+    "--batch",
+    "6",
+    "--since",
+    "4191936342597745ee62c3861ebf09c7e7d68057",
+    "--until",
+    "3aaa1c40d4ddca5b9192914ed4ac464c1ec6505b",
+    "--peer-repo",
+    "../../cit-113-automation-hint-portal",
+    "--peer-since",
+    "027e7588613394b0bc3401e852822c8ece2e814f",
+    "--peer-until",
+    "af1948271b4356f24d16f929ca485fe8c40d1a5d",
+    "--families",
+    "shared",
+    "--output",
+    "/Users/nebulabot/Desktop/CIT/task-evidence/cit-113/generated-batch-6.json"
+  ],
+  "families": {
+    "shared": {
+      "repository": "desktop",
+      "sources": [
+        "Client/src/i18n/messages.ts",
+        "Client/src/i18n/sourceMessages.ts",
+        "Client/src/i18n/richMessages.ts"
+      ],
+      "catalogDirectory": "Client/src/i18n/catalogs",
+      "keys": [
+        "ui.rich.views.automationView.right.click.a.toggle.for.temporary.activation.c34579ee"
+      ],
+      "allowEnglish": {}
+    }
+  },
+  "authorship": {
+    "status": "model-authored, pending native review",
+    "batch": 6,
+    "story": "CIT-113"
+  },
+  "scopeNotes": {
+    "policy": "CEO-authorized CIT-113 scope: only the restored temporary-activation hint, in all 25 non-English locales. The generator returns no shared keys because it reads literal messages.ts and sourceMessages.ts assignments and skips the richMessages spread; this explicit key from richMessages.ts is added after generation. Runtime, backend, portal-owned and other shared keys are outside this story.",
+    "englishSource": {
+      "ui.rich.views.automationView.right.click.a.toggle.for.temporary.activation.c34579ee": "<strong0>Right-click</strong0> a toggle for temporary activation"
+    },
+    "richTextContract": {
+      "arguments": [],
+      "tags": [
+        "strong0"
+      ]
+    }
+  }
+}

@@ -379,5 +379,6 @@
   "equipment.canonicalUnavailable": "Data o efektech ze hry nyní nejsou k dispozici. Vaše poslední výsledky zůstávají zachovány a změna konfigurace je pozastavena, zatímco CitadelOps zkouší načtení znovu.",
   "equipment.effectsGroupedDescription": "Efekty seskupené podle vlastních kategorií efektů ve hře.",
   "setupReadiness.castlesNotInWorld": "{count, plural, one {Uložený hrad {castle} není v tomto účtu ani světě. Vyberte jej znovu nebo jej vypněte.} few {Uložený hrad {castle} a {others, plural, one {# další zapnutý hrad} few {# další zapnuté hrady} many {# dalšího zapnutého hradu} other {# dalších zapnutých hradů}} nejsou v tomto účtu ani světě. Vyberte je znovu nebo je vypněte.} many {Uložený hrad {castle} a {others, plural, one {# další zapnutý hrad} few {# další zapnuté hrady} many {# dalšího zapnutého hradu} other {# dalších zapnutých hradů}} nejsou v tomto účtu ani světě. Vyberte je znovu nebo je vypněte.} other {Uložený hrad {castle} a {others, plural, one {# další zapnutý hrad} few {# další zapnuté hrady} many {# dalšího zapnutého hradu} other {# dalších zapnutých hradů}} nejsou v tomto účtu ani světě. Vyberte je znovu nebo je vypněte.}}",
-  "ui.components.header.alt.citadel.ops.logo.ab367a3c": "Logo CitadelOps"
+  "ui.components.header.alt.citadel.ops.logo.ab367a3c": "Logo CitadelOps",
+  "ui.rich.views.automationView.right.click.a.toggle.for.temporary.activation.c34579ee": "<strong0>Klikněte pravým tlačítkem myši</strong0> na přepínač pro dočasnou aktivaci"
 }

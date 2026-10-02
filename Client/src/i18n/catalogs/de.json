@@ -1106,5 +1106,6 @@
   "copy.updated": "Aktualisiert {time}",
   "equipment.canonicalUnavailable": "Effektdaten des Spiels sind gerade nicht verfügbar. Deine letzten Ergebnisse bleiben erhalten, und Neukonfigurieren pausiert, während CitadelOps es erneut versucht.",
   "equipment.effectsGroupedDescription": "Effekte, gruppiert nach den spielinternen Effektkategorien.",
-  "ui.components.header.alt.citadel.ops.logo.ab367a3c": "CitadelOps-Logo"
+  "ui.components.header.alt.citadel.ops.logo.ab367a3c": "CitadelOps-Logo",
+  "ui.rich.views.automationView.right.click.a.toggle.for.temporary.activation.c34579ee": "<strong0>Klicke mit der rechten Maustaste</strong0> auf einen Schalter, um ihn vorübergehend zu aktivieren"
 }

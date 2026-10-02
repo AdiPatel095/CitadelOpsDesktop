@@ -379,5 +379,6 @@
   "equipment.canonicalUnavailable": "Los datos de efectos del juego no están disponibles ahora. Se conservan tus últimos resultados y Reconfigurar está en pausa mientras CitadelOps vuelve a intentarlo.",
   "equipment.effectsGroupedDescription": "Efectos agrupados según las categorías de efectos del propio juego.",
   "setupReadiness.castlesNotInWorld": "{count, plural, one {El castillo guardado {castle} no está en esta cuenta o mundo. Vuelve a seleccionarlo o desactívalo.} many {El castillo guardado {castle} y {others, plural, one {# castillo activado más} many {# castillos activados más} other {# castillos activados más}} no están en esta cuenta o mundo. Vuelve a seleccionarlos o desactívalos.} other {El castillo guardado {castle} y {others, plural, one {# castillo activado más} many {# castillos activados más} other {# castillos activados más}} no están en esta cuenta o mundo. Vuelve a seleccionarlos o desactívalos.}}",
-  "ui.components.header.alt.citadel.ops.logo.ab367a3c": "Logotipo de CitadelOps"
+  "ui.components.header.alt.citadel.ops.logo.ab367a3c": "Logotipo de CitadelOps",
+  "ui.rich.views.automationView.right.click.a.toggle.for.temporary.activation.c34579ee": "<strong0>Haz clic con el botón derecho</strong0> en un interruptor para activarlo temporalmente"
 }

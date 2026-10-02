@@ -1106,5 +1106,6 @@
   "copy.updated": "آخر تحديث {time}",
   "equipment.canonicalUnavailable": "بيانات التأثيرات من اللعبة غير متاحة الآن. تُحفظ نتائجك الأخيرة، وتتوقف إعادة الضبط مؤقتًا بينما يعيد CitadelOps المحاولة.",
   "equipment.effectsGroupedDescription": "التأثيرات مجمّعة حسب فئات التأثيرات الخاصة باللعبة.",
-  "ui.components.header.alt.citadel.ops.logo.ab367a3c": "شعار CitadelOps"
+  "ui.components.header.alt.citadel.ops.logo.ab367a3c": "شعار CitadelOps",
+  "ui.rich.views.automationView.right.click.a.toggle.for.temporary.activation.c34579ee": "<strong0>انقر بزر الفأرة الأيمن</strong0> على مفتاح تبديل لتفعيله مؤقتًا"
 }

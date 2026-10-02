@@ -379,5 +379,6 @@
   "equipment.canonicalUnavailable": "Effektdata fra spillet er ikke tilgjengelige akkurat nå. De siste resultatene dine beholdes, og omkonfigurering er satt på pause mens CitadelOps prøver igjen.",
   "equipment.effectsGroupedDescription": "Effekter gruppert etter spillets egne effektkategorier.",
   "setupReadiness.castlesNotInWorld": "{count, plural, =1 {Det lagrede slottet {castle} finnes ikke på denne kontoen eller i denne verdenen. Velg det på nytt eller deaktiver det.} one {Det lagrede slottet {castle} og {others, plural, one {# annet aktivert slott} other {# andre aktiverte slott}} finnes ikke på denne kontoen eller i denne verdenen. Velg dem på nytt eller deaktiver dem.} other {Det lagrede slottet {castle} og {others, plural, one {# annet aktivert slott} other {# andre aktiverte slott}} finnes ikke på denne kontoen eller i denne verdenen. Velg dem på nytt eller deaktiver dem.}}",
-  "ui.components.header.alt.citadel.ops.logo.ab367a3c": "CitadelOps-logo"
+  "ui.components.header.alt.citadel.ops.logo.ab367a3c": "CitadelOps-logo",
+  "ui.rich.views.automationView.right.click.a.toggle.for.temporary.activation.c34579ee": "<strong0>Høyreklikk</strong0> på en bryter for å aktivere den midlertidig"
 }

@@ -379,5 +379,6 @@
   "equipment.canonicalUnavailable": "Данните за ефектите от играта не са налични в момента. Последните ви резултати се запазват, а преконфигурирането е спряно временно, докато CitadelOps опитва отново.",
   "equipment.effectsGroupedDescription": "Ефекти, групирани според собствените категории за ефекти на играта.",
   "setupReadiness.castlesNotInWorld": "{count, plural, one {Запазеният замък {castle} не е в този акаунт или свят. Изберете го отново или го изключете.} other {Запазеният замък {castle} и {others, plural, one {# друг включен замък} other {# други включени замъка}} не са в този акаунт или свят. Изберете ги отново или ги изключете.}}",
-  "ui.components.header.alt.citadel.ops.logo.ab367a3c": "Лого на CitadelOps"
+  "ui.components.header.alt.citadel.ops.logo.ab367a3c": "Лого на CitadelOps",
+  "ui.rich.views.automationView.right.click.a.toggle.for.temporary.activation.c34579ee": "<strong0>Щракнете с десния бутон на мишката</strong0> върху превключвател за временно активиране"
 }
