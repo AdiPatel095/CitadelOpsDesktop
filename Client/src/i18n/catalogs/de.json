@@ -1157,5 +1157,13 @@
   "ui.state.loading": "Wird geladen…",
   "ui.state.retry": "Erneut versuchen",
   "ui.tabs.next": "Weitere Tabs anzeigen",
-  "ui.tabs.previous": "Vorherige Tabs anzeigen"
+  "ui.tabs.previous": "Vorherige Tabs anzeigen",
+  "header.panel.attacksToday": "Angriffe heute",
+  "header.panel.attention": "Handlungsbedarf",
+  "header.panel.connection": "Verbindung",
+  "header.panel.openFeature": "{feature} öffnen",
+  "header.signal.attention": "{count, plural, one {# Automatisierung benötigt Aufmerksamkeit} other {# Automatisierungen benötigen Aufmerksamkeit}}",
+  "header.signal.incoming": "{count, number} eingehend · {state, select, known {erste Ankunft in {duration}} other {wird geprüft}}",
+  "header.signal.nextBird": "Nächster Truppenschutz: {castle} · {state, select, due {jetzt fällig} other {in {duration}}}",
+  "header.status.title": "Status"
 }

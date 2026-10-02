@@ -7,6 +7,7 @@ const ContractVersion = 2
 type Envelope struct {
 	Version      int             `json:"v"`
 	ID           string          `json:"id,omitempty"`
+	Instance     string          `json:"instance,omitempty"`
 	Type         string          `json:"type"`
 	Revision     uint64          `json:"revision,omitempty"`
 	Sequence     uint64          `json:"sequence,omitempty"`

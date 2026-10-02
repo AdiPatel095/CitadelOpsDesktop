@@ -327,5 +327,8 @@
   "backend.spy_report.capture_fields": "mid, allianceID, castleID, sourcePlayerID ve scannedAtUnixMillis için pozitif değerler sağlayın.",
   "backend.spy_report.payload_json": "payload geçerli JSON içermelidir.",
   "backend.spy_report.payload_object": "payload bir JSON nesnesi içermelidir.",
-  "backend.spy_report.session_fields": "clientID ile pozitif playerID ve allianceID değerlerini sağlayın."
+  "backend.spy_report.session_fields": "clientID ile pozitif playerID ve allianceID değerlerini sağlayın.",
+  "backend.hosted.cells_unavailable": "Hücre rolleri kullanılamıyor",
+  "backend.status.placement_slot": "Sunucularımızda boş bir yer bekleniyor",
+  "backend.status.starting_server": "Bu hesap için bir sunucu başlatılıyor"
 }

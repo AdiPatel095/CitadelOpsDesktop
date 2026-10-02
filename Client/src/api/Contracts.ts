@@ -26,6 +26,8 @@ export interface APIEnvelope<T = unknown> {
   v: 2;
   id?: string;
   type: string;
+  /** Store identity on state snapshots and resume greetings; absent on older workers. */
+  instance?: string;
   revision?: number;
   sequence?: number;
   gap?: boolean;
