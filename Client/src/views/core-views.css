@@ -1,4 +1,4 @@
-.castle-queue-content:focus-visible {
+.castle-unit-content:focus-visible {
     outline: var(--space-2) solid var(--focus-ring);
     outline-offset: calc(-1 * var(--space-2));
 }

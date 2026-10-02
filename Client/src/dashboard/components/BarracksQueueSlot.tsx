@@ -36,7 +36,7 @@ const BarracksQueueSlot: React.FC<BarracksQueueSlotProps> = ({ row, imageSize = 
     <div
       className={`relative flex shrink-0 items-center justify-center rounded-global border bg-bg-card ${
         row.active
-          ? 'border-primary ring-2 ring-primary/35 shadow-sm'
+          ? 'border-border-base ring-2 ring-border-base shadow-sm'
           : 'border-border-light border-solid'
       }`}
       style={{ width: imageSize + 18, height: imageSize + 18 }}

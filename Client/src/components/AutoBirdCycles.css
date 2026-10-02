@@ -1,3 +1,4 @@
-@media (max-width: 767px), (pointer: coarse) {
-    .header-bird-cycles [data-button-pattern] { min-block-size: var(--control-height-touch); }
+@media (max-width: 768px), (pointer: coarse) {
+    .header-bird-cycles [data-button-pattern],
+    .header-status-panel [data-button-pattern] { min-block-size: var(--control-height-touch); }
 }
