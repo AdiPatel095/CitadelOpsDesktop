@@ -20,6 +20,7 @@ export const Badge = React.forwardRef<HTMLSpanElement, BadgeProps>(
     return (
       <span
         ref={ref}
+        data-status-role={variant === 'success' || variant === 'warning' ? variant : undefined}
         className={`${baseStyles} ${variants[variant]} ${className}`}
         {...props}
       >

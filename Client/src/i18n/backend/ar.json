@@ -327,5 +327,8 @@
   "backend.spy_report.capture_fields": "قدّم قيمًا موجبة لكل من mid وallianceID وcastleID وsourcePlayerID وscannedAtUnixMillis.",
   "backend.spy_report.payload_json": "يجب أن يحتوي payload على JSON صالح.",
   "backend.spy_report.payload_object": "يجب أن يحتوي payload على كائن JSON.",
-  "backend.spy_report.session_fields": "قدّم clientID وقيمًا موجبة لكل من playerID وallianceID."
+  "backend.spy_report.session_fields": "قدّم clientID وقيمًا موجبة لكل من playerID وallianceID.",
+  "backend.hosted.cells_unavailable": "أدوار الخلايا غير متاحة",
+  "backend.status.placement_slot": "في انتظار مكان شاغر على خوادمنا",
+  "backend.status.starting_server": "جارٍ بدء تشغيل خادم لهذا الحساب"
 }

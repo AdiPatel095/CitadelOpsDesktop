@@ -1124,7 +1124,7 @@ func (application *Application) burstStormMapScan(ctx context.Context, arguments
 	if request.Cooperative {
 		windows := stormCooperativeScanWindows(request.Windows)
 		if err := runStormMapGAABurst(
-			ctx, application.Session, application.Ingest, language, source.KingdomID, windows, stormMapBurstResponseTimeout,
+			ctx, application.countMapSender("storm"), application.Ingest, language, source.KingdomID, windows, stormMapBurstResponseTimeout,
 		); err != nil {
 			if application.WorldMaps != nil {
 				application.WorldMaps.ReleaseStormScan(application.AccountKey, request.LeaseID)
@@ -1142,7 +1142,7 @@ func (application *Application) burstStormMapScan(ctx context.Context, arguments
 			), Localization.New("server.app.storm_map_targets_still.56ef946f", "Storm map targets still touch the {p0}-coordinate safety margin at the maximum concentric scan bounds", Localization.Params{"p0": stormMapEdgeBuffer}))
 		}
 		if err := runStormMapGAABurst(
-			ctx, application.Session, application.Ingest, language, source.KingdomID, windows, stormMapBurstResponseTimeout,
+			ctx, application.countMapSender("storm"), application.Ingest, language, source.KingdomID, windows, stormMapBurstResponseTimeout,
 		); err != nil {
 			return Localization.WithError(fmt.Errorf("scan Storm map ring %d: %w", ring, err), Localization.ErrorContext(Localization.New("server.app.scan_storm_map_ring.28204107", "scan Storm map ring {p0}", Localization.Params{"p0": ring}), err))
 		}
@@ -1321,10 +1321,7 @@ func (application *Application) captureStormScanRequest(request stormMapScanRequ
 		startedAt := stormScanStartedAt(request)
 		completedAt := time.Now().UTC()
 		state := application.State.ReadOnlyView()
-		worldID := strings.TrimSpace(state.Account.WorldID)
-		if worldID == "" {
-			worldID = strings.TrimSpace(state.Session.ServerURL)
-		}
+		worldID := State.SharedWorldID(&state)
 		worldEvent, err := application.WorldMaps.CompleteStormScan(
 			application.AccountKey, worldID, stormIntentKingdomID, request.LeaseID,
 			request.Windows, startedAt, completedAt,

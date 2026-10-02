@@ -89,6 +89,8 @@ type Store struct {
 	subscribers map[uint64]chan Event
 	nextID      atomic.Uint64
 	worldMaps   *WorldMapStore
+	instance    string
+	resume      resumeRing
 }
 
 func NewStore(initial *GameState) *Store {
@@ -111,7 +113,8 @@ func newStore(initial GameState, worldMaps *WorldMapStore) *Store {
 	owned.initializeReports()
 	owned.initializeEventScores()
 	owned.initializeMovements()
-	store := &Store{subscribers: map[uint64]chan Event{}, worldMaps: worldMaps}
+	store := &Store{subscribers: map[uint64]chan Event{}, worldMaps: worldMaps, instance: newStoreInstance()}
+	store.resume.floor = owned.Revision
 	if worldMaps != nil {
 		pruneIrrelevantMapObservations(&owned)
 		worldID := gameStateWorldID(&owned)
@@ -951,6 +954,8 @@ func (store *Store) publish(event Event) {
 	if !event.Gap && event.BaseRevision == 0 && event.Revision > 1 {
 		event.BaseRevision = event.Revision - 1
 	}
+	// All publishers hold writeMu, so the ring and head form one atomic history.
+	store.resume.append(event, time.Now())
 	store.subMu.RLock()
 	defer store.subMu.RUnlock()
 	for _, channel := range store.subscribers {
@@ -1723,4 +1728,13 @@ func cloneFloatPointer(source *float64) *float64 {
 	}
 	value := *source
 	return &value
+}
+
+// SharedWorldID reads only account/session identity, without copying map facts.
+func (store *Store) SharedWorldID() string {
+	generation := store.generation.Load()
+	if generation == nil {
+		return ""
+	}
+	return gameStateWorldID(generation.state)
 }

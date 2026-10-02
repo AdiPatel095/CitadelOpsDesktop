@@ -327,5 +327,8 @@
   "backend.spy_report.capture_fields": "Zadajte kladné hodnoty mid, allianceID, castleID, sourcePlayerID a scannedAtUnixMillis.",
   "backend.spy_report.payload_json": "payload musí obsahovať platný JSON.",
   "backend.spy_report.payload_object": "payload musí obsahovať objekt JSON.",
-  "backend.spy_report.session_fields": "Zadajte clientID a kladné hodnoty playerID a allianceID."
+  "backend.spy_report.session_fields": "Zadajte clientID a kladné hodnoty playerID a allianceID.",
+  "backend.hosted.cells_unavailable": "Roly buniek nie sú dostupné",
+  "backend.status.placement_slot": "Čakanie na voľné miesto na našich serveroch",
+  "backend.status.starting_server": "Spúšťanie servera pre tento účet"
 }

@@ -430,5 +430,13 @@
   "ui.state.loading": "Yükleniyor…",
   "ui.state.retry": "Yeniden dene",
   "ui.tabs.next": "Daha fazla sekme göster",
-  "ui.tabs.previous": "Önceki sekmeleri göster"
+  "ui.tabs.previous": "Önceki sekmeleri göster",
+  "header.panel.attacksToday": "Bugünkü saldırılar",
+  "header.panel.attention": "İlgilenilmesi gerekiyor",
+  "header.panel.connection": "Bağlantı",
+  "header.panel.openFeature": "{feature} aç",
+  "header.signal.attention": "{count, plural, one {# otomasyonla ilgilenilmesi gerekiyor} other {# otomasyonla ilgilenilmesi gerekiyor}}",
+  "header.signal.incoming": "{count, number} gelen · {state, select, known {ilki {duration} sonra} other {kontrol ediliyor}}",
+  "header.signal.nextBird": "Sonraki birlik koruması: {castle} · {state, select, due {şimdi yapılmalı} other {{duration} sonra}}",
+  "header.status.title": "Durum"
 }

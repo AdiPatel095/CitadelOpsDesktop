@@ -430,5 +430,13 @@
   "ui.state.loading": "読み込み中…",
   "ui.state.retry": "再試行",
   "ui.tabs.next": "さらにタブを表示",
-  "ui.tabs.previous": "前のタブを表示"
+  "ui.tabs.previous": "前のタブを表示",
+  "header.panel.attacksToday": "今日の攻撃",
+  "header.panel.attention": "要確認",
+  "header.panel.connection": "接続",
+  "header.panel.openFeature": "{feature}を開く",
+  "header.signal.attention": "{count, plural, other {#件の自動化に確認が必要}}",
+  "header.signal.incoming": "{count, number} 件の接近 · {state, select, known {最初の到着まで{duration}} other {確認中}}",
+  "header.signal.nextBird": "次の部隊退避: {castle} · {state, select, due {今すぐ実行} other {あと{duration}}}",
+  "header.status.title": "状態"
 }
