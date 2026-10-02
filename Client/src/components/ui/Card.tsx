@@ -34,7 +34,7 @@ export const CardHeader: React.FC<HTMLAttributes<HTMLDivElement>> = ({ className
 );
 
 export const CardTitle: React.FC<HTMLAttributes<HTMLHeadingElement>> = ({ className = '', children, ...props }) => (
-  <h3 className={`m3-card-title text-lg font-bold text-text-main ${className}`} {...props}>
+  <h3 className={`m3-card-title text-title font-bold text-text-main ${className}`} {...props}>
     {children}
   </h3>
 );

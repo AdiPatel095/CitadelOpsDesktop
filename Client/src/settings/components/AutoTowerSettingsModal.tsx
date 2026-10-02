@@ -213,7 +213,7 @@ export const AutoTowerSettingsModal: React.FC<AutoTowerSettingsModalProps> = ({ 
         onOpenDuration={onOpenAutomationDuration ? () => onOpenAutomationDuration(AUTOMATION_ENABLED_KEYS.autoTowers, 'Auto Towers') : undefined}
       />
       {saveError && (
-        <div className="mb-4 rounded-global border border-error/30 bg-error/10 px-4 py-3 text-sm font-semibold text-error" role="alert">
+        <div className="mb-4 rounded-global border border-error/30 bg-error/10 px-4 py-3 text-body font-semibold text-error" role="alert">
           {saveError}
         </div>
       )}
@@ -228,8 +228,8 @@ export const AutoTowerSettingsModal: React.FC<AutoTowerSettingsModalProps> = ({ 
               <Card key={castle.id} variant="solid" className="flex flex-col gap-4 bg-bg-card-hover/40 p-4 shadow-inner">
                 <div className="flex items-start justify-between gap-3 border-b border-border-base pb-3">
                   <div className="min-w-0">
-                    <h3 className="truncate text-sm font-bold text-primary">{castle.name}</h3>
-                    <p className="mt-0.5 text-xs text-text-muted">{castle.kingdomId}:{castle.x}:{castle.y}</p>
+                    <h3 className="truncate text-title-sm font-bold text-primary">{castle.name}</h3>
+                    <p className="mt-0.5 text-caption text-text-muted">{castle.kingdomId}:{castle.x}:{castle.y}</p>
                   </div>
                   <Switch
                     checked={plan.enabled}
@@ -238,7 +238,7 @@ export const AutoTowerSettingsModal: React.FC<AutoTowerSettingsModalProps> = ({ 
                   />
                 </div>
 
-                <p className="rounded-xl border border-border-base bg-bg-app/50 px-3 py-2.5 text-[11px] text-text-muted">
+                <p className="rounded-xl border border-border-base bg-bg-app/50 px-3 py-2.5 text-caption text-text-muted">
                   <LocalizedText messageKey="ui.settings.components.autoTowerSettingsModal.no.batch.cap.launch.every.eligible.target.373ba7c9" /></p>
 
                 <button
@@ -248,15 +248,15 @@ export const AutoTowerSettingsModal: React.FC<AutoTowerSettingsModalProps> = ({ 
                 >
                   {plan.unitId > 0 ? <UnitImage unitId={plan.unitId} size={48} showLevel /> : <Crosshair className="h-7 w-7 text-text-muted" />}
                   <span className="min-w-0">
-                    <span className="block text-xs font-bold text-text-main">{plan.unitId > 0 ? `Unit ${plan.unitId}` : 'Choose troop'}</span>
-                    <span className="mt-0.5 block text-[11px] text-text-muted">
+                    <span className="block text-caption font-semibold text-text-main">{plan.unitId > 0 ? `Unit ${plan.unitId}` : 'Choose troop'}</span>
+                    <span className="mt-0.5 block text-caption text-text-muted">
                       {plan.unitId > 0 ? `${stock.toLocaleString()} stationed` : 'Two full flanks use this unit'}
                     </span>
                   </span>
                 </button>
 
                 <label className="flex flex-col gap-1">
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-text-muted"><LocalizedText messageKey="ui.settings.components.autoTowerSettingsModal.radius.6fe0661c" /></span>
+                  <span className="text-caption font-semibold text-text-muted"><LocalizedText messageKey="ui.settings.components.autoTowerSettingsModal.radius.6fe0661c" /></span>
                   <Input
                     type="number"
                     min={1}
@@ -264,7 +264,7 @@ export const AutoTowerSettingsModal: React.FC<AutoTowerSettingsModalProps> = ({ 
                     value={plan.radius}
                     onChange={(event) => updateCastle(castle.id, { radius: clampRadius(event.target.value) })}
                     className="text-center font-mono"
-                    rightIcon={<span className="text-[10px] text-text-muted"><LocalizedText messageKey="ui.settings.components.autoTowerSettingsModal.tiles.ad9243fa" /></span>}
+                    rightIcon={<span className="text-caption text-text-muted"><LocalizedText messageKey="ui.settings.components.autoTowerSettingsModal.tiles.ad9243fa" /></span>}
                   />
                 </label>
 
@@ -275,7 +275,7 @@ export const AutoTowerSettingsModal: React.FC<AutoTowerSettingsModalProps> = ({ 
                   </div>
                 ) : null}
 
-                <p className="text-[11px] text-text-muted">
+                <p className="text-caption text-text-muted">
                   <LocalizedText messageKey="settingsSummary.towerCastleScope" params={{ radius: plan.radius, maiden: plan.maidenOnly ? 'on' : 'off' }} />
                 </p>
                 <CastleCopyButton
@@ -315,8 +315,8 @@ export const AutoTowerSettingsModal: React.FC<AutoTowerSettingsModalProps> = ({ 
               <Bot className="h-5 w-5" />
             </div>
             <div>
-              <h3 className="text-sm font-black text-text-main"><LocalizedText messageKey="ui.settings.components.autoTowerSettingsModal.robber.baron.advisor.04006eb4" /></h3>
-              <p className="mt-0.5 text-[11px] leading-relaxed text-text-muted">
+              <h3 className="text-title-sm font-bold text-text-main"><LocalizedText messageKey="ui.settings.components.autoTowerSettingsModal.robber.baron.advisor.04006eb4" /></h3>
+              <p className="mt-0.5 text-caption text-text-muted">
                 <LocalizedText messageKey="ui.settings.components.autoTowerSettingsModal.advisor.mode.runs.native.same.tower.chains.046a6fbd" /></p>
             </div>
           </div>
@@ -345,8 +345,8 @@ export const AutoTowerSettingsModal: React.FC<AutoTowerSettingsModalProps> = ({ 
               <div className="flex min-w-0 items-start gap-2.5">
                 <FastForward className="mt-0.5 h-4 w-4 shrink-0 text-primary" aria-hidden="true" />
                 <div>
-                  <label htmlFor="auto-tower-daily-time-skips" className="text-xs font-bold text-text-main"><LocalizedText messageKey="ui.settings.components.autoTowerSettingsModal.maximum.daily.time.skips.a3f214d9" /></label>
-                  <p className="mt-0.5 text-[11px] leading-relaxed text-text-muted">
+                  <label htmlFor="auto-tower-daily-time-skips" className="text-caption font-semibold text-text-main"><LocalizedText messageKey="ui.settings.components.autoTowerSettingsModal.maximum.daily.time.skips.a3f214d9" /></label>
+                  <p className="mt-0.5 text-caption text-text-muted">
                     <LocalizedText messageKey="ui.settings.components.autoTowerSettingsModal.confirmed.advisor.chains.count.against.this.cap.0f5b3790" /></p>
                 </div>
               </div>
@@ -361,7 +361,7 @@ export const AutoTowerSettingsModal: React.FC<AutoTowerSettingsModalProps> = ({ 
                   onChange={(event) => setMaximumDailyTimeSkips(clampMaximumDailyTimeSkips(event.target.value))}
                   className="w-28 text-center font-mono"
                 />
-                <span className="text-[11px] font-semibold text-text-muted"><LocalizedText messageKey="ui.settings.components.autoTowerSettingsModal.skips.7932e297" /></span>
+                <span className="text-caption font-semibold text-text-muted"><LocalizedText messageKey="ui.settings.components.autoTowerSettingsModal.skips.7932e297" /></span>
               </div>
             </div>
           </div>
@@ -376,11 +376,11 @@ export const AutoTowerSettingsModal: React.FC<AutoTowerSettingsModalProps> = ({ 
         >
           <div className="mb-4 flex flex-wrap items-center justify-between gap-4 rounded-global border border-primary/20 bg-primary/5 p-4">
             <div className="min-w-0">
-              <div className="text-sm font-bold text-text-main"><LocalizedText messageKey="ui.settings.components.autoTowerSettingsModal.authoritative.map.scan.dc172025" /></div>
-              <p className="mt-1 text-xs text-text-muted"><LocalizedText messageKey="ui.settings.components.autoTowerSettingsModal.fast.focus.switch.through.every.enabled.castle.86ab11a7" /></p>
+              <div className="text-body font-semibold text-text-main"><LocalizedText messageKey="ui.settings.components.autoTowerSettingsModal.authoritative.map.scan.dc172025" /></div>
+              <p className="mt-1 text-caption text-text-muted"><LocalizedText messageKey="ui.settings.components.autoTowerSettingsModal.fast.focus.switch.through.every.enabled.castle.86ab11a7" /></p>
             </div>
             <label className="flex items-center gap-2">
-              <span className="text-xs font-semibold text-text-muted"><LocalizedText messageKey="ui.settings.components.autoTowerSettingsModal.every.9b8617fd" /></span>
+              <span className="text-caption font-semibold text-text-muted"><LocalizedText messageKey="ui.settings.components.autoTowerSettingsModal.every.9b8617fd" /></span>
               <div className="w-24">
                 <Input
                   type="number"
@@ -391,7 +391,7 @@ export const AutoTowerSettingsModal: React.FC<AutoTowerSettingsModalProps> = ({ 
                   className="text-center font-mono"
                 />
               </div>
-              <span className="text-xs font-semibold text-text-muted"><LocalizedText messageKey="ui.settings.components.autoTowerSettingsModal.sec.add93534" /></span>
+              <span className="text-caption font-semibold text-text-muted"><LocalizedText messageKey="ui.settings.components.autoTowerSettingsModal.sec.add93534" /></span>
             </label>
           </div>
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
@@ -400,13 +400,13 @@ export const AutoTowerSettingsModal: React.FC<AutoTowerSettingsModalProps> = ({ 
               return (
                 <div key={castle.id} className="grid gap-3 rounded-xl border border-border-base bg-bg-app/50 p-3">
                   <div className="flex items-center justify-between gap-2">
-                    <span className="truncate text-xs font-bold text-primary">{castle.name}</span>
-                    {plan.enabled ? null : <span className="text-[10px] font-semibold uppercase text-text-muted"><LocalizedText messageKey="ui.settings.components.autoTowerSettingsModal.castle.off.539be403" /></span>}
+                    <span className="truncate text-caption font-semibold text-primary">{castle.name}</span>
+                    {plan.enabled ? null : <span className="text-caption font-semibold text-text-muted"><LocalizedText messageKey="ui.settings.components.autoTowerSettingsModal.castle.off.539be403" /></span>}
                   </div>
                   <div className="flex items-center justify-between gap-3">
                     <div className="min-w-0">
-                      <div className="text-xs font-bold text-text-main"><LocalizedText messageKey="ui.settings.components.autoTowerSettingsModal.maiden.supported.only.1374eb47" /></div>
-                      <p className="mt-0.5 text-[11px] text-text-muted"><LocalizedText messageKey="ui.settings.components.autoTowerSettingsModal.only.use.an.available.commander.with.the.d7a1c498" /></p>
+                      <div className="text-caption font-semibold text-text-main"><LocalizedText messageKey="ui.settings.components.autoTowerSettingsModal.maiden.supported.only.1374eb47" /></div>
+                      <p className="mt-0.5 text-caption text-text-muted"><LocalizedText messageKey="ui.settings.components.autoTowerSettingsModal.only.use.an.available.commander.with.the.d7a1c498" /></p>
                     </div>
                     <Switch
                       checked={plan.maidenOnly}

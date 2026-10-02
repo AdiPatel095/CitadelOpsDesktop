@@ -168,7 +168,7 @@ const DecorationPresetsPanel: React.FC = () => {
     <div className="flex h-full min-h-0 flex-col gap-5">
       <div className="grid grid-cols-1 gap-x-5 gap-y-3 xl:grid-cols-[minmax(0,1fr)_auto]">
         <div className="min-w-0">
-          <div className="flex items-center gap-2 text-[10px] font-bold uppercase text-text-muted">
+          <div className="flex items-center gap-2 text-caption font-semibold text-text-muted">
             <Castle className="h-3.5 w-3.5" strokeWidth={2.25} />
             <LocalizedText messageKey="ui.components.decorationPresetsPanel.focused.castle.808b7d57" />
           </div>
@@ -188,25 +188,25 @@ const DecorationPresetsPanel: React.FC = () => {
 
         <div className="grid grid-cols-2 gap-x-5 gap-y-3 sm:grid-cols-[minmax(8rem,10rem)_minmax(10rem,14rem)] xl:min-w-[22rem]">
           <div className="min-w-0">
-            <div className="flex items-center gap-2 text-[10px] font-bold uppercase text-text-muted">
+            <div className="flex items-center gap-2 text-caption font-semibold text-text-muted">
               <Layers className="h-3.5 w-3.5" strokeWidth={2.25} />
               <LocalizedText messageKey="ui.components.decorationPresetsPanel.saved.b5c120b3" />
             </div>
-            <div className="mt-1.5 truncate text-sm font-semibold text-text-main">{presetCountLabel}</div>
+            <div className="mt-1.5 truncate text-body font-semibold text-text-main">{presetCountLabel}</div>
           </div>
           <div className="min-w-0">
-            <div className="flex items-center gap-2 text-[10px] font-bold uppercase text-text-muted">
+            <div className="flex items-center gap-2 text-caption font-semibold text-text-muted">
               <Sparkles className="h-3.5 w-3.5" strokeWidth={2.25} />
               <LocalizedText messageKey="ui.components.decorationPresetsPanel.selected.57fd7a0c" />
             </div>
-            <div className="mt-1.5 truncate text-sm font-semibold text-text-main">{selectedPlacementLabel}</div>
+            <div className="mt-1.5 truncate text-body font-semibold text-text-main">{selectedPlacementLabel}</div>
           </div>
         </div>
       </div>
 
       <div className="grid min-h-0 flex-1 grid-cols-1 gap-x-5 gap-y-5 2xl:grid-cols-[minmax(16rem,0.92fr)_minmax(0,1.08fr)]">
         <div className="min-w-0">
-          <div className="mb-2 flex items-center gap-2 text-[10px] font-bold uppercase text-text-muted">
+          <div className="mb-2 flex items-center gap-2 text-caption font-semibold text-text-muted">
             <Save className="h-3.5 w-3.5" strokeWidth={2.25} />
             <LocalizedText messageKey="ui.components.decorationPresetsPanel.capture.current.layout.3c4df644" />
           </div>
@@ -229,13 +229,13 @@ const DecorationPresetsPanel: React.FC = () => {
               <LocalizedText messageKey="common.savePreset" /></Button>
           </div>
           {!canUseCastle && (
-            <div className="mt-3 text-xs font-medium text-warning">
+            <div className="mt-3 text-caption font-medium text-warning">
               <LocalizedText messageKey="ui.components.decorationPresetsPanel.castle.focus.required.32b02b71" /></div>
           )}
         </div>
 
         <div className="min-w-0">
-          <div className="mb-2 flex items-center gap-2 text-[10px] font-bold uppercase text-text-muted">
+          <div className="mb-2 flex items-center gap-2 text-caption font-semibold text-text-muted">
             <Layers className="h-3.5 w-3.5" strokeWidth={2.25} />
             <LocalizedText messageKey="ui.components.decorationPresetsPanel.saved.layout.a9d44916" />
           </div>
@@ -276,13 +276,13 @@ const DecorationPresetsPanel: React.FC = () => {
             </div>
           </div>
           {canUseCastle && !hasPresets && (
-            <div className="mt-3 text-xs font-medium text-text-muted">
+            <div className="mt-3 text-caption font-medium text-text-muted">
               <LocalizedText messageKey="ui.components.decorationPresetsPanel.no.saved.presets.for.this.castle.d6a709b5" /></div>
           )}
         </div>
       </div>
-      {applyStatus && <p className="text-xs text-warning">{applyStatus}</p>}
-      {operationError && <p className="text-xs text-error">{operationError}</p>}
+      {applyStatus && <p className="text-caption text-warning">{applyStatus}</p>}
+      {operationError && <p className="text-caption text-error">{operationError}</p>}
     </div>
   );
 };

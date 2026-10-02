@@ -1279,6 +1279,10 @@
     {
       "portal": "tests/visual/rules.ts",
       "desktop": "Client/tests/visual/rules.ts"
+    },
+    {
+      "portal": "src/commandCenter/styles/typography.css",
+      "desktop": "Client/src/styles/typography.css"
     }
   ],
   "unmirrored": []

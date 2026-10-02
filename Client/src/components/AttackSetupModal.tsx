@@ -261,7 +261,7 @@ const AttackSetupModal: React.FC<AttackSetupModalProps> = ({
           description={(
             <span className="flex flex-wrap items-center gap-2">
               <span>{inventoryLabel}</span>
-              <Badge variant={isMetadataLoading ? 'secondary' : inventoryPolicy === 'advisory' ? 'outline' : hasInventory ? 'success' : 'warning'} className="normal-case tracking-normal">
+              <Badge variant={isMetadataLoading ? 'secondary' : inventoryPolicy === 'advisory' ? 'outline' : hasInventory ? 'success' : 'warning'} className="normal-case">
                 {isMetadataLoading
                   ? 'Loading inventory'
                   : inventoryPolicy === 'advisory'
@@ -269,7 +269,7 @@ const AttackSetupModal: React.FC<AttackSetupModalProps> = ({
                     : hasInventory ? 'All-castles inventory' : 'Inventory unavailable'}
               </Badge>
               {targetType ? (
-                <Badge variant={targetType === 'pvp' ? 'primary' : 'success'} className="normal-case tracking-normal">
+                <Badge variant={targetType === 'pvp' ? 'primary' : 'success'} className="normal-case">
                   {targetType === 'pvp' ? 'PvP preset' : 'PvE preset'}
                 </Badge>
               ) : null}
@@ -280,7 +280,7 @@ const AttackSetupModal: React.FC<AttackSetupModalProps> = ({
       }
       footer={
         <div className="flex w-full flex-wrap items-center justify-between gap-3">
-          <div className="text-xs text-text-muted">
+          <div className="text-caption text-text-muted">
             {unitsError ? (
               <span className="font-semibold text-error"><LocalizedText messageKey="ui.components.attackSetupModal.troop.and.tool.metadata.is.unavailable.save.cea697a4" /></span>
             ) : isMetadataLoading ? (
@@ -311,23 +311,23 @@ const AttackSetupModal: React.FC<AttackSetupModalProps> = ({
     >
       <div className="mx-auto flex w-full max-w-[1760px] flex-col gap-4">
         {unitsError ? (
-          <div className="rounded-global border border-error/30 bg-error/10 px-4 py-3 text-sm font-semibold text-error">
+          <div className="rounded-global border border-error/30 bg-error/10 px-4 py-3 text-body font-semibold text-error">
             {unitsError}
           </div>
         ) : null}
         {toolLimits ? (
           <section className="flex flex-wrap items-center justify-between gap-3 rounded-global border border-primary/25 bg-primary/8 px-4 py-3">
             <div>
-              <div className="text-sm font-black text-text-main">
+              <div className="text-body font-semibold text-text-main">
                 {targetType === 'pvp' ? 'PvP tool limits' : 'PvE tool limits'}
               </div>
-              <p className="mt-0.5 text-xs text-text-muted">
+              <p className="mt-0.5 text-caption text-text-muted">
                 <LocalizedText messageKey="ui.components.attackSetupModal.each.wave.is.checked.independently.the.server.1e4831ee" /></p>
             </div>
             <div className="flex flex-wrap items-center gap-2">
-              <Badge variant="outline" className="normal-case tracking-normal">Left {toolLimits.L}</Badge>
-              <Badge variant="outline" className="normal-case tracking-normal">Center {toolLimits.M}</Badge>
-              <Badge variant="outline" className="normal-case tracking-normal">Right {toolLimits.R}</Badge>
+              <Badge variant="outline" className="normal-case">Left {toolLimits.L}</Badge>
+              <Badge variant="outline" className="normal-case">Center {toolLimits.M}</Badge>
+              <Badge variant="outline" className="normal-case">Right {toolLimits.R}</Badge>
             </div>
           </section>
         ) : null}
@@ -335,8 +335,8 @@ const AttackSetupModal: React.FC<AttackSetupModalProps> = ({
         {allowTroopFamilyMode ? (
           <section className="flex flex-wrap items-center justify-between gap-4 rounded-global border border-primary/25 bg-primary/8 px-4 py-3">
             <div className="min-w-0 flex-1">
-              <div className="text-sm font-black text-text-main"><LocalizedText messageKey="ui.components.attackSetupModal.use.whole.troop.families.b9bd7e5a" /></div>
-              <p className="mt-0.5 text-xs leading-relaxed text-text-muted">
+              <div className="text-body font-semibold text-text-main"><LocalizedText messageKey="ui.components.attackSetupModal.use.whole.troop.families.b9bd7e5a" /></div>
+              <p className="mt-0.5 text-caption text-text-muted">
                 <LocalizedText messageKey="ui.components.attackSetupModal.treat.each.selected.troop.as.a.family.60aa474a" /></p>
             </div>
             <Switch
@@ -350,7 +350,7 @@ const AttackSetupModal: React.FC<AttackSetupModalProps> = ({
         <section className="grid gap-3 rounded-global border border-border-base bg-bg-card/65 p-3 shadow-[var(--shadow-raised)] lg:grid-cols-[minmax(15rem,1.4fr)_auto_auto] lg:items-end">
           {nameField === 'hidden' ? null : (
             <label className="block min-w-0">
-              <span className="mb-1.5 block text-[11px] font-black uppercase tracking-wider text-text-muted"><LocalizedText messageKey="common.presetName" /></span>
+              <span className="mb-1.5 block text-caption font-semibold text-text-muted"><LocalizedText messageKey="common.presetName" /></span>
               <Input
                 value={draft.name}
                 onChange={(event) => setDraft((current) => ({ ...current, name: event.target.value }))}
@@ -362,7 +362,7 @@ const AttackSetupModal: React.FC<AttackSetupModalProps> = ({
           )}
 
           <div>
-            <span className="mb-1.5 block text-[11px] font-black uppercase tracking-wider text-text-muted"><LocalizedText messageKey="ui.components.attackSetupModal.waves.ad5b8321" /></span>
+            <span className="mb-1.5 block text-caption font-semibold text-text-muted"><LocalizedText messageKey="ui.components.attackSetupModal.waves.ad5b8321" /></span>
             <div className="flex items-center gap-2">
               <Button
                 variant="secondary"
@@ -530,18 +530,18 @@ const AttackSetupModal: React.FC<AttackSetupModalProps> = ({
         />
 
         {inventoryIssues.length > 0 ? (
-          <section className={`rounded-global border p-3 text-sm ${inventoryPolicy === 'advisory' ? 'border-warning/30 bg-warning/8 text-warning' : 'border-error/30 bg-error/8 text-error'}`}>
-            <div className="mb-2 font-black">
+          <section className={`rounded-global border p-3 text-body ${inventoryPolicy === 'advisory' ? 'border-warning/30 bg-warning/8 text-warning' : 'border-error/30 bg-error/8 text-error'}`}>
+            <div className="mb-2 font-bold">
               {inventoryPolicy === 'advisory' ? 'Current account inventory is lower than this preset' : 'Preset exceeds available inventory'}
             </div>
             {inventoryPolicy === 'advisory' ? (
-              <p className="mb-2 text-xs font-medium text-text-muted"><LocalizedText messageKey="ui.components.attackSetupModal.the.preset.can.still.be.saved.live.441f66d8" /></p>
+              <p className="mb-2 text-caption font-medium text-text-muted"><LocalizedText messageKey="ui.components.attackSetupModal.the.preset.can.still.be.saved.live.441f66d8" /></p>
             ) : null}
             <div className="flex flex-wrap gap-2">
               {inventoryIssues.map((issue) => {
                 const meta = issue.kind === 'troop' ? troops[issue.itemId] : tools[issue.itemId];
                 return (
-                  <span key={`${issue.kind}-${issue.itemId}`} className="rounded-full border border-current/25 bg-bg-card/45 px-3 py-1.5 text-xs font-semibold">
+                  <span key={`${issue.kind}-${issue.itemId}`} className="rounded-full border border-current/25 bg-bg-card/45 px-3 py-1.5 text-caption font-semibold">
                     {meta?.name || `#${issue.itemId}`}: {issue.requested.toLocaleString()} / {issue.stock.toLocaleString()}
                   </span>
                 );
@@ -551,21 +551,21 @@ const AttackSetupModal: React.FC<AttackSetupModalProps> = ({
         ) : null}
 
         {toolLimitIssues.length > 0 ? (
-          <section className="rounded-global border border-error/30 bg-error/8 p-3 text-sm text-error">
-            <div className="mb-2 font-black"><LocalizedText messageKey="ui.components.attackSetupModal.preset.exceeds.the.selected.target.type.s.0743a51a" /></div>
-            <p className="mb-2 text-xs font-medium text-text-muted">
+          <section className="rounded-global border border-error/30 bg-error/8 p-3 text-body text-error">
+            <div className="mb-2 font-bold"><LocalizedText messageKey="ui.components.attackSetupModal.preset.exceeds.the.selected.target.type.s.0743a51a" /></div>
+            <p className="mb-2 text-caption font-medium text-text-muted">
               <LocalizedText messageKey="ui.components.attackSetupModal.reduce.tools.in.each.listed.section.before.956aaf74" /></p>
             <div className="flex flex-wrap gap-2">
               {toolLimitIssues.slice(0, 12).map((issue) => (
                 <span
                   key={`${issue.waveIndex}-${issue.laneKey}`}
-                  className="rounded-full border border-current/25 bg-bg-card/45 px-3 py-1.5 text-xs font-semibold"
+                  className="rounded-full border border-current/25 bg-bg-card/45 px-3 py-1.5 text-caption font-semibold"
                 >
                   Wave {issue.waveIndex + 1} · {laneLabel(issue.laneKey)}: {issue.requested} / {issue.limit}
                 </span>
               ))}
               {toolLimitIssues.length > 12 ? (
-                <span className="rounded-full border border-current/25 bg-bg-card/45 px-3 py-1.5 text-xs font-semibold">
+                <span className="rounded-full border border-current/25 bg-bg-card/45 px-3 py-1.5 text-caption font-semibold">
                   +{toolLimitIssues.length - 12} more sections
                 </span>
               ) : null}
@@ -635,16 +635,16 @@ const WaveEditorCard: React.FC<WaveEditorCardProps> = ({
               <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-primary/40 bg-primary/12 text-primary shadow-glow">
                 <Swords className="h-4 w-4" />
               </span>
-              <h3 className="m-0 whitespace-nowrap text-sm font-black text-text-main">Wave {waveIndex + 1}</h3>
-              <Badge variant="primary" className="shrink-0 normal-case tracking-normal">{waveIndex + 1} of {waveCount}</Badge>
+              <h3 className="m-0 whitespace-nowrap text-title-sm font-bold text-text-main">Wave {waveIndex + 1}</h3>
+              <Badge variant="primary" className="shrink-0 normal-case">{waveIndex + 1} of {waveCount}</Badge>
             </div>
 
             <div className="flex shrink-0 items-center justify-end gap-1.5">
-              <span className="rounded-full border border-border-base bg-bg-input/45 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-text-muted">
-                Troops <strong className="ml-1 font-mono text-xs text-text-main">{waveTotals.troops.toLocaleString()}</strong>
+              <span className="rounded-full border border-border-base bg-bg-input/45 px-2.5 py-1 text-caption font-semibold text-text-muted">
+                Troops <strong className="ml-1 font-mono text-caption text-text-main">{waveTotals.troops.toLocaleString()}</strong>
               </span>
-              <span className="rounded-full border border-border-base bg-bg-input/45 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-text-muted">
-                Tools <strong className="ml-1 font-mono text-xs text-text-main">{waveTotals.tools.toLocaleString()}</strong>
+              <span className="rounded-full border border-border-base bg-bg-input/45 px-2.5 py-1 text-caption font-semibold text-text-muted">
+                Tools <strong className="ml-1 font-mono text-caption text-text-main">{waveTotals.tools.toLocaleString()}</strong>
               </span>
               {isOpen ? (
                 <ChevronDown className="h-4 w-4 shrink-0 text-text-muted" aria-hidden="true" />
@@ -757,10 +757,10 @@ const CourtyardSupportCard: React.FC<CourtyardSupportCardProps> = ({
           </span>
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-2">
-              <h3 className="m-0 text-base font-black text-text-main"><LocalizedText messageKey="ui.components.attackSetupModal.courtyard.support.wave.e3bdc7ec" /></h3>
-              <Badge variant="warning" className="normal-case tracking-normal"><LocalizedText messageKey="ui.components.attackSetupModal.optional.59be7133" /></Badge>
+              <h3 className="m-0 text-title-sm font-bold text-text-main"><LocalizedText messageKey="ui.components.attackSetupModal.courtyard.support.wave.e3bdc7ec" /></h3>
+              <Badge variant="warning" className="normal-case"><LocalizedText messageKey="ui.components.attackSetupModal.optional.59be7133" /></Badge>
             </div>
-            <p className="mt-1 text-xs text-text-muted">
+            <p className="mt-1 text-caption text-text-muted">
               Add up to {COURTYARD_TROOP_SLOTS} extra troops and {COURTYARD_TOOL_SLOTS} one-use Sceat support tools.
             </p>
           </div>
@@ -812,7 +812,7 @@ const CourtyardSupportCard: React.FC<CourtyardSupportCardProps> = ({
           </div>
         </section>
         {!kindIsTroop && toolItems.length === 0 ? (
-          <p className="mt-3 text-xs font-medium text-text-muted">
+          <p className="mt-3 text-caption font-medium text-text-muted">
             <LocalizedText messageKey="ui.components.attackSetupModal.no.sceat.attack.support.tools.are.available.eae37425" /></p>
         ) : null}
       </CardContent>
@@ -869,10 +869,10 @@ const FormationRow: React.FC<FormationRowProps> = ({
             return (
               <div key={laneKey} className="min-w-0 px-2 py-1">
                 <div className="mb-1 flex items-center justify-between gap-2">
-                  <span className={`text-[10px] font-black uppercase tracking-wider ${laneKey === 'M' ? 'text-primary' : 'text-text-muted'}`}>
+                  <span className={`text-caption font-semibold ${laneKey === 'M' ? 'text-primary' : 'text-text-muted'}`}>
                     {laneLabel(laneKey)}
                   </span>
-                  <span className={`font-mono text-[9px] font-bold ${laneOverLimit ? 'text-error' : 'text-text-muted'}`}>
+                  <span className={`font-mono text-caption font-semibold ${laneOverLimit ? 'text-error' : 'text-text-muted'}`}>
                     {filledSlots}/{slots.length} filled
                     {laneLimit == null ? '' : ` · ${laneTotal}/${laneLimit}`}
                   </span>
@@ -956,7 +956,7 @@ const InventorySlotCard: React.FC<InventorySlotCardProps> = ({
 
   return (
     <div className="flex w-[5.25rem] shrink-0 flex-col items-center">
-      <div className="mb-1 flex w-full items-center justify-between gap-1 px-0.5 text-[9px] font-black uppercase text-text-muted">
+      <div className="mb-1 flex w-full items-center justify-between gap-1 px-0.5 text-caption font-semibold text-text-muted">
         <span className={hasItem ? 'text-primary' : ''}>{slotCode}</span>
         <span className="max-w-[3.25rem] truncate font-mono">{hasItem ? `#${slot.itemId}` : 'Empty'}</span>
       </div>
@@ -992,13 +992,13 @@ const InventorySlotCard: React.FC<InventorySlotCardProps> = ({
                 })}
                 onClick={(event) => event.stopPropagation()}
                 placeholder="0"
-                className="w-12 bg-transparent p-0 text-center font-mono text-[10px] font-black tabular-nums text-slate-900 outline-none"
+                className="w-12 bg-transparent p-0 text-center font-mono text-caption font-semibold tabular-nums text-slate-900 outline-none"
                 aria-label={`${slotLabel} amount`}
                 title={`${slotLabel} amount`}
               />
             ) : (
               <span
-                className="font-mono text-[10px] font-black tabular-nums text-slate-900"
+                className="font-mono text-caption font-semibold tabular-nums text-slate-900"
                 aria-label={`${slotLabel} amount ${fixedQuantity}`}
                 title={`${slotLabel} uses one tool`}
               >
@@ -1012,12 +1012,12 @@ const InventorySlotCard: React.FC<InventorySlotCardProps> = ({
             type="button"
             onClick={onPick}
             disabled={pickerDisabled}
-            className="mt-1.5 line-clamp-2 h-7 w-full text-center text-[10px] font-bold leading-[1.05] text-text-main transition hover:text-primary disabled:cursor-not-allowed"
+            className="mt-1.5 line-clamp-2 h-7 w-full text-center text-caption font-semibold text-text-main transition hover:text-primary disabled:cursor-not-allowed"
             title={itemName}
           >
             {itemName}
           </button>
-          <div className={`mt-1 truncate text-center font-mono text-[9px] leading-none ${overAllocated ? 'text-error' : 'text-text-muted'}`}>
+          <div className={`mt-1 truncate text-center font-mono text-caption ${overAllocated ? 'text-error' : 'text-text-muted'}`}>
             {overAllocated
               ? `${allocated.toLocaleString()}/${available.toLocaleString()} used`
               : `${Math.max(0, remainingAfterPreset).toLocaleString()} left`}
@@ -1030,16 +1030,16 @@ const InventorySlotCard: React.FC<InventorySlotCardProps> = ({
             layout="stacked"
             onClick={onPick}
             disabled={pickerDisabled}
-            className="h-[76px] w-[76px] shrink-0 px-1 text-[9px] disabled:cursor-not-allowed disabled:opacity-40"
+            className="h-[76px] w-[76px] shrink-0 px-1 text-caption disabled:cursor-not-allowed disabled:opacity-40"
             title={sectionLimitReached
               ? 'This section has reached its tool limit'
               : pickerDisabled ? `No available ${itemKindLabel}s in this inventory` : `Choose ${itemKindLabel}`}
             aria-label={`Choose ${slotLabel}`}
           />
-          <span className="mt-1.5 flex h-7 items-center text-center text-[10px] font-bold leading-[1.05] text-text-muted">
+          <span className="mt-1.5 flex h-7 items-center text-center text-caption font-semibold text-text-muted">
             Empty {itemKindLabel} slot
           </span>
-          <span className="mt-1 font-mono text-[9px] leading-none text-text-muted"><LocalizedText messageKey="ui.components.attackSetupModal.available.e6744473" /></span>
+          <span className="mt-1 font-mono text-caption text-text-muted"><LocalizedText messageKey="ui.components.attackSetupModal.available.e6744473" /></span>
         </>
       )}
     </div>

@@ -13,6 +13,6 @@ export function LanguageSelector() {
         ...locales.map(item => ({value:item.code,searchText:item.nativeName,label:<span lang={item.code} dir={item.direction}>{item.nativeName}</span>})),
       ]}
       onChange={value => { const next = value === 'auto' ? 'auto' : normalizeLocale(value); if (next) setLocale(next); }} />
-    <p lang={messageLocale} className="text-xs text-text-muted">{t('locale.coverage')}</p>
+    <p lang={messageLocale} className="text-caption text-text-muted">{t('locale.coverage')}</p>
   </SectionCard>;
 }

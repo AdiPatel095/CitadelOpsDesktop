@@ -187,12 +187,12 @@ const WorldPlayerDetailView = ({ profile, onOpenAlliance }: WorldPlayerDetailVie
 				<CardHeader className="liquid-card-header-prominent flex-wrap gap-4">
 					<div className="flex w-full flex-wrap items-center justify-between gap-4">
 						<div>
-							<CardTitle className="flex items-center gap-2 text-lg">
+							<CardTitle className="flex items-center gap-2 text-body-lg">
 								<PlayerMetricIcon definition={selectedDefinition} className="h-5 w-5" />
 								{selectedDefinition.label} trend
 							</CardTitle>
 							<div className="mt-2 flex flex-wrap items-baseline gap-3">
-								<span className="font-mono text-3xl font-bold text-text-main">{formatNumber(currentSelectedValue)}</span>
+								<span className="font-mono text-display-sm font-bold text-text-main">{formatNumber(currentSelectedValue)}</span>
 								<MetricDelta current={currentSelectedValue} first={firstSelectedValue} />
 							</div>
 						</div>
@@ -235,14 +235,14 @@ const WorldPlayerDetailView = ({ profile, onOpenAlliance }: WorldPlayerDetailVie
 										<span className="flex min-w-0 items-center gap-2">
 											<PlayerMetricIcon definition={metric} className="h-4 w-4" />
 											<span className="min-w-0 flex-1 truncate">{metric.label}</span>
-											<span className="shrink-0 text-[10px] font-semibold uppercase tracking-wide text-text-muted"><LocalizedText messageKey="ui.worldIntelligence.components.worldPlayerDetailView.storm.5870f9bf" /></span>
+											<span className="shrink-0 text-caption font-semibold text-text-muted"><LocalizedText messageKey="ui.worldIntelligence.components.worldPlayerDetailView.storm.5870f9bf" /></span>
 										</span>
 									),
 								}))}
 							/>
 						)}
 					</div>
-					<div className="mb-3 flex flex-wrap items-center justify-between gap-2 text-xs text-text-muted">
+					<div className="mb-3 flex flex-wrap items-center justify-between gap-2 text-caption text-text-muted">
 						<span><LocalizedText messageKey="ui.worldIntelligence.components.worldPlayerDetailView.hover.to.inspect.a.public.observation.drag.da1f1924" /></span>
 						{selectedWindow && (
 							<div className="flex flex-wrap items-center gap-2">
@@ -260,7 +260,7 @@ const WorldPlayerDetailView = ({ profile, onOpenAlliance }: WorldPlayerDetailVie
 						onWindowSelect={setSelectedWindow}
 						emptyMessage={localizeStatic("ui.worldIntelligence.components.worldPlayerDetailView.emptyMessage.a.trend.appears.after.two.public.observations.18139be9")}
 					/>
-					<div className="mt-3 flex justify-between gap-3 text-xs text-text-muted">
+					<div className="mt-3 flex justify-between gap-3 text-caption text-text-muted">
 						<span>{displayedPoints[0] ? formatChartTime(displayedPoints[0].timestampUnix) : 'Waiting for history'}</span>
 						<span>{displayedPoints.length} sample{displayedPoints.length === 1 ? '' : 's'}</span>
 						<span>{displayedPoints.length > 0 ? formatChartTime(displayedPoints[displayedPoints.length - 1].timestampUnix) : 'Now'}</span>
@@ -289,23 +289,23 @@ const WorldPlayerDetailView = ({ profile, onOpenAlliance }: WorldPlayerDetailVie
 				<CardHeader className="liquid-card-header-prominent flex-wrap gap-3">
 					<div>
 						<CardTitle className="flex items-center gap-2"><Sparkles className="h-5 w-5 text-primary" />Public scores & event activity</CardTitle>
-						<p className="mt-1 text-xs text-text-muted"><LocalizedText messageKey="ui.worldIntelligence.components.worldPlayerDetailView.gallantry.gacha.spins.timestamps.and.other.one.79de0002" /></p>
+						<p className="mt-1 text-caption text-text-muted"><LocalizedText messageKey="ui.worldIntelligence.components.worldPlayerDetailView.gallantry.gacha.spins.timestamps.and.other.one.79de0002" /></p>
 					</div>
 					<Badge variant="outline">{publicMetrics.length} observed</Badge>
 				</CardHeader>
 				<CardContent className="liquid-prominent-header-content p-5 sm:p-6">
 					{publicMetrics.length === 0 ? (
-						<p className="text-sm text-text-muted"><LocalizedText messageKey="ui.worldIntelligence.components.worldPlayerDetailView.no.additional.public.event.score.has.been.af69a3f4" /></p>
+						<p className="text-body text-text-muted"><LocalizedText messageKey="ui.worldIntelligence.components.worldPlayerDetailView.no.additional.public.event.score.has.been.af69a3f4" /></p>
 					) : (
 						<div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
 							{publicMetrics.map((metric) => (
 								<div key={metric.key} className="rounded-global border border-border-base bg-bg-input/35 px-3.5 py-3" title={publicMetricProvenance(metric)}>
 									<div className="flex items-start justify-between gap-2">
-										<div className="text-[10px] font-bold uppercase tracking-wider text-text-muted">{metric.label}</div>
+										<div className="text-caption font-semibold text-text-muted">{metric.label}</div>
 										{metric.rank != null && metric.rank > 0 && <Badge variant="outline">#{formatNumber(metric.rank)}</Badge>}
 									</div>
-									<div className="mt-1 font-mono text-2xl font-bold text-text-main">{formatNumber(metric.value)}</div>
-									<div className="mt-1 flex flex-wrap items-center justify-between gap-2 text-[11px] text-text-muted">
+									<div className="mt-1 font-mono text-headline font-bold text-text-main">{formatNumber(metric.value)}</div>
+									<div className="mt-1 flex flex-wrap items-center justify-between gap-2 text-caption text-text-muted">
 										<span>{metric.unit || 'points'} · {publicMetricSourceLabel(metric.source)}</span>
 										<span title={formatDateTime(metric.observedAt)}>{relativeTime(metric.observedAt)}</span>
 									</div>
@@ -320,13 +320,13 @@ const WorldPlayerDetailView = ({ profile, onOpenAlliance }: WorldPlayerDetailVie
 				<CardHeader><CardTitle className="flex items-center gap-2"><History className="h-5 w-5 text-primary" /><LocalizedText messageKey="ui.worldIntelligence.components.worldPlayerDetailView.identity.history.8bca6522" /></CardTitle></CardHeader>
 				<CardContent className="pt-0">
 					{changes.length === 0 ? (
-						<p className="text-sm text-text-muted"><LocalizedText messageKey="ui.worldIntelligence.components.worldPlayerDetailView.no.player.name.or.alliance.changes.have.9048b9e4" /></p>
+						<p className="text-body text-text-muted"><LocalizedText messageKey="ui.worldIntelligence.components.worldPlayerDetailView.no.player.name.or.alliance.changes.have.9048b9e4" /></p>
 					) : (
 						<div className="max-h-64 space-y-3 overflow-auto custom-scrollbar">
 							{changes.slice().reverse().map((change, index) => (
 								<div key={`${change.at}:${index}`} className="border-l-2 border-primary/30 pl-3">
-									<div className="text-sm font-semibold text-text-main">{change.label}</div>
-									<div className="text-[11px] text-text-muted">{formatDateTime(change.at)}</div>
+									<div className="text-body font-semibold text-text-main">{change.label}</div>
+									<div className="text-caption text-text-muted">{formatDateTime(change.at)}</div>
 								</div>
 							))}
 						</div>
@@ -345,14 +345,14 @@ const PlayerMetricIcon = ({ definition, className }: { definition: PlayerMetricD
 
 const MetricDelta = ({ current, first, compact = false }: { current?: number; first?: number; compact?: boolean }) => {
 	if (current == null || first == null || !Number.isFinite(current) || !Number.isFinite(first)) {
-		return <span className="text-xs text-text-muted"><LocalizedText messageKey="ui.worldIntelligence.components.worldPlayerDetailView.no.comparison.yet.e087ee1e" /></span>;
+		return <span className="text-caption text-text-muted"><LocalizedText messageKey="ui.worldIntelligence.components.worldPlayerDetailView.no.comparison.yet.e087ee1e" /></span>;
 	}
 	const delta = current - first;
-	if (delta === 0) return <span className="text-xs text-text-muted"><LocalizedText messageKey="ui.worldIntelligence.components.worldPlayerDetailView.no.change.41f9d57c" /></span>;
+	if (delta === 0) return <span className="text-caption text-text-muted"><LocalizedText messageKey="ui.worldIntelligence.components.worldPlayerDetailView.no.change.41f9d57c" /></span>;
 	const positive = delta > 0;
 	const percent = first !== 0 ? Math.abs((delta / first) * 100) : null;
 	return (
-		<span className={`inline-flex items-center gap-1 text-xs font-bold ${positive ? 'text-success' : 'text-error'}`}>
+		<span className={`inline-flex items-center gap-1 text-caption font-semibold ${positive ? 'text-success' : 'text-error'}`}>
 			{positive ? '+' : '−'}{formatNumber(Math.abs(delta))}
 			{!compact && percent != null && <span className="font-medium opacity-80">({percent.toFixed(percent >= 10 ? 0 : 1)}%)</span>}
 		</span>

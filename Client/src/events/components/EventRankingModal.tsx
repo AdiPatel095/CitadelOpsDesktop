@@ -38,7 +38,7 @@ const EventRankingModal: React.FC<EventRankingModalProps> = ({
 			title={`${eventName} alliance ranking`}
 			footer={(
 				<div className="flex w-full items-center justify-between gap-3">
-					<p className="text-xs text-text-muted"><LocalizedText messageKey="ui.events.components.eventRankingModal.live.data.returned.directly.by.the.gge.3b72fd0a" /></p>
+					<p className="text-caption text-text-muted"><LocalizedText messageKey="ui.events.components.eventRankingModal.live.data.returned.directly.by.the.gge.3b72fd0a" /></p>
 					<div className="flex gap-2">
 						<Button type="button" variant="ghost" onClick={onClose}><LocalizedText messageKey="common.close" /></Button>
 						<Button type="button" variant="primary" leftIcon={<RefreshCw className="h-4 w-4" />} isLoading={loading} onClick={onRefresh}><LocalizedText messageKey="common.refresh" /></Button>
@@ -59,7 +59,7 @@ const EventRankingModal: React.FC<EventRankingModalProps> = ({
 				</div>
 
 				{error && (
-					<div className="rounded-global border border-error/30 bg-error/10 px-4 py-3 text-sm text-error">{error}</div>
+					<div className="rounded-global border border-error/30 bg-error/10 px-4 py-3 text-body text-error">{error}</div>
 				)}
 
 				{entries.length === 0 ? (
@@ -71,8 +71,8 @@ const EventRankingModal: React.FC<EventRankingModalProps> = ({
 					/>
 				) : (
 					<div className="overflow-x-auto rounded-global border border-border-light bg-bg-card/30 custom-scrollbar">
-						<table className="w-full min-w-[780px] text-left text-sm">
-							<thead className="border-b border-border-base bg-bg-card/80 text-[10px] font-bold uppercase tracking-wider text-text-muted">
+						<table className="w-full min-w-[780px] text-left text-body">
+							<thead className="border-b border-border-base bg-bg-card/80 text-caption font-semibold text-text-muted">
 								<tr>
 									<th className="px-4 py-3 text-right"><LocalizedText messageKey="ui.events.components.eventRankingModal.rank.a4130d7d" /></th>
 									<th className="px-4 py-3"><LocalizedText messageKey="ui.events.components.eventRankingModal.alliance.afe3c194" /></th>
@@ -90,7 +90,7 @@ const EventRankingModal: React.FC<EventRankingModalProps> = ({
 									);
 									return (
 										<tr key={entry.allianceId || `${entry.rank}-${entry.alliance}`} className={ownRow ? 'bg-primary/10' : 'hover:bg-bg-card-hover/45'}>
-											<td className="px-4 py-3 text-right font-mono font-black tabular-nums text-primary">#{entry.rank.toLocaleString()}</td>
+											<td className="px-4 py-3 text-right font-mono font-bold tabular-nums text-primary">#{entry.rank.toLocaleString()}</td>
 											<td className="px-4 py-3 font-semibold text-text-main">
 												<div className="flex items-center gap-2">{entry.alliance || 'Unknown'}{ownRow && <Badge variant="primary"><LocalizedText messageKey="ui.events.components.eventRankingModal.your.alliance.02932b31" /></Badge>}</div>
 											</td>
@@ -106,7 +106,7 @@ const EventRankingModal: React.FC<EventRankingModalProps> = ({
 					</div>
 				)}
 
-				<p className="text-xs text-text-muted">
+				<p className="text-caption text-text-muted">
 					<LocalizedText messageKey="ui.events.components.eventRankingModal.gge.returns.a.window.around.the.current.30d1fc49" /></p>
 			</div>
 		</Modal>

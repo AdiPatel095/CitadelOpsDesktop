@@ -18,22 +18,22 @@ export const DailyAttackLimitField: React.FC<DailyAttackLimitFieldProps> = ({ va
     <Card variant="solid" className="p-4">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0">
-          <div className="flex items-center gap-2 text-sm font-black text-text-main">
+          <div className="flex items-center gap-2 text-body font-semibold text-text-main">
             <Gauge className="h-4 w-4 text-primary" /> <LocalizedText messageKey="ui.settings.components.dailyAttackLimitField.daily.normal.attack.limit.503daf3e" />
           </div>
-          <p className="mt-1 text-xs text-text-muted">
+          <p className="mt-1 text-caption text-text-muted">
             {description ?? (
               <><LocalizedText messageKey="ui.settings.components.dailyAttackLimitField.stop.this.automation.when.the.server.s.e625b85e" /></>
             )}
           </p>
-          <p className="mt-2 text-[11px] text-text-muted">
+          <p className="mt-2 text-caption text-text-muted">
             {synced
               ? `Server count ${serverState?.count.toLocaleString()} · game threshold ${serverState?.serverThreshold.toLocaleString()}`
               : 'Waiting for the server daily attack counter.'}
           </p>
         </div>
         <label className="block w-full shrink-0 sm:w-48">
-          <span className="mb-1.5 block text-[10px] font-black uppercase tracking-wider text-text-muted">{zeroLabel}</span>
+          <span className="mb-1.5 block text-caption font-semibold text-text-muted">{zeroLabel}</span>
           <Input
             type="text"
             inputMode="numeric"

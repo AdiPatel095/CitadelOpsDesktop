@@ -502,7 +502,7 @@ export const QueueProductionSettingsModal: React.FC<QueueProductionSettingsModal
     if (items.length === 0) {
       return (
         <div className="flex min-h-[6.75rem] flex-col items-center justify-center rounded-global border border-dashed border-border-base bg-bg-card/45 p-5 text-center">
-          <div className="mb-3 text-xs font-bold uppercase tracking-wider text-text-muted/70">
+          <div className="mb-3 text-caption font-semibold text-text-muted/70">
             {definition.emptyItemsLabel}
           </div>
           <Button
@@ -537,16 +537,16 @@ export const QueueProductionSettingsModal: React.FC<QueueProductionSettingsModal
             onClick={() => openEditModal(scope, item)}
           >
             {showsRecruitRotation && (
-              <span className="absolute left-1.5 top-1.5 z-10 rounded-full border border-primary/35 bg-bg-card/95 px-1.5 py-0.5 text-[10px] font-black text-primary shadow-sm">
+              <span className="absolute left-1.5 top-1.5 z-10 rounded-full border border-primary/35 bg-bg-card/95 px-1.5 py-0.5 text-caption font-semibold text-primary shadow-sm">
                 {index === nextRotationIndex ? `Next · ${index + 1}` : index + 1}
               </span>
             )}
             {itemImage(item.id, 66, 'rounded-xl')}
-            <span className="line-clamp-2 min-h-[2rem] text-xs font-bold leading-tight text-text-main">
+            <span className="line-clamp-2 min-h-[2rem] text-caption font-semibold text-text-main">
               {itemName(item.id)}
             </span>
             {kind === 'recruit' && (
-              <span className="text-[10px] font-bold uppercase tracking-wide text-primary">
+              <span className="text-caption font-semibold text-primary">
                 {unitRangeLabel(item)}
               </span>
             )}
@@ -558,7 +558,7 @@ export const QueueProductionSettingsModal: React.FC<QueueProductionSettingsModal
         <button
           type="button"
           onClick={() => handleAddItem(scope, addTitle)}
-          className="flex min-h-[9.35rem] w-[5.75rem] flex-col items-center justify-center gap-2 rounded-global border-2 border-dashed border-border-base bg-bg-card/45 text-xs font-bold uppercase tracking-wide text-text-muted transition-colors hover:border-primary hover:bg-primary/5 hover:text-primary"
+          className="flex min-h-[9.35rem] w-[5.75rem] flex-col items-center justify-center gap-2 rounded-global border-2 border-dashed border-border-base bg-bg-card/45 text-caption font-semibold text-text-muted transition-colors hover:border-primary hover:bg-primary/5 hover:text-primary"
           title={addLabel}
         >
           <Plus className="h-5 w-5" />
@@ -566,7 +566,7 @@ export const QueueProductionSettingsModal: React.FC<QueueProductionSettingsModal
         </button>
         </div>
         {showsRecruitRotation && (
-          <p className="text-[11px] font-semibold leading-relaxed text-text-muted">
+          <p className="text-caption font-semibold text-text-muted">
             <LocalizedText messageKey="ui.settings.components.queueProductionSettingsModal.queues.one.stack.at.a.time.in.bc10852a" /></p>
         )}
       </div>
@@ -603,10 +603,10 @@ export const QueueProductionSettingsModal: React.FC<QueueProductionSettingsModal
       <div className="rounded-global border border-primary/20 bg-primary/5 p-3">
         <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
           <div className="min-w-0">
-            <div className="text-xs font-bold uppercase tracking-wide text-primary">
+            <div className="text-caption font-semibold text-primary">
               {options.title ?? `Scheduled ${definition.itemFallbackLabel}s`}
             </div>
-            <p className="mt-1 text-[11px] font-semibold text-text-muted">
+            <p className="mt-1 text-caption font-semibold text-text-muted">
               {options.description}
             </p>
           </div>
@@ -623,7 +623,7 @@ export const QueueProductionSettingsModal: React.FC<QueueProductionSettingsModal
         </div>
 
         {visibleSlots.length === 0 ? (
-          <div className="rounded-global border border-dashed border-border-base bg-bg-card/45 px-4 py-3 text-xs font-semibold text-text-muted">
+          <div className="rounded-global border border-dashed border-border-base bg-bg-card/45 px-4 py-3 text-caption font-semibold text-text-muted">
             {options.emptySlotsLabel ?? `No scheduled ${definition.itemLabel} slots`}
           </div>
         ) : (
@@ -646,13 +646,13 @@ export const QueueProductionSettingsModal: React.FC<QueueProductionSettingsModal
                   {itemID ? (
                     itemImage(itemID, 34, 'shrink-0 rounded-lg')
                   ) : (
-                    <span className="flex h-[34px] w-[34px] shrink-0 items-center justify-center rounded-lg border border-border-base bg-bg-card text-xs font-black text-text-muted">
+                    <span className="flex h-[34px] w-[34px] shrink-0 items-center justify-center rounded-lg border border-border-base bg-bg-card text-caption font-semibold text-text-muted">
                       -
                     </span>
                   )}
                   <div className="min-w-0 flex-1">
-                    <div className="truncate text-xs font-bold text-text-main">{label}</div>
-                    <div className="mt-0.5 text-[11px] font-semibold text-text-muted">
+                    <div className="truncate text-caption font-semibold text-text-main">{label}</div>
+                    <div className="mt-0.5 text-caption font-semibold text-text-muted">
                       {day} {formatMinuteOfDay(slot.startMinute)}-{formatMinuteOfDay(slot.endMinute)}
                       {scheduledRange ? ` · ${scheduledRange}` : ''}
                     </div>
@@ -661,7 +661,7 @@ export const QueueProductionSettingsModal: React.FC<QueueProductionSettingsModal
               );
             })}
             {hiddenCount > 0 && (
-              <div className="rounded-global border border-border-base bg-bg-card/45 px-3 py-2 text-center text-[11px] font-bold uppercase tracking-wide text-text-muted">
+              <div className="rounded-global border border-border-base bg-bg-card/45 px-3 py-2 text-center text-caption font-semibold text-text-muted">
                 +{hiddenCount} more slot{hiddenCount === 1 ? '' : 's'}
               </div>
             )}
@@ -680,7 +680,7 @@ export const QueueProductionSettingsModal: React.FC<QueueProductionSettingsModal
         description={globalScheduleEnabled
           ? `Calendar windows control when this shared ${definition.itemLabel} is queued.`
           : `Shared ${definition.itemLabel} can be overridden by the ${definition.featureLabel} calendar.`}
-        titleClassName="text-base"
+        titleClassName="text-title-sm"
         className={`flex flex-col ${className}`}
         contentClassName="flex flex-1 flex-col gap-4 p-5"
         actions={(
@@ -740,7 +740,7 @@ export const QueueProductionSettingsModal: React.FC<QueueProductionSettingsModal
       title={localizeStatic("ui.settings.components.queueProductionSettingsModal.title.shared.schedule.27b35dc8")}
       description={`Scheduled ${definition.itemLabelPlural} replace the shared ${definition.itemLabel} picker.`}
       icon={<CalendarDays className="h-4 w-4" />}
-      titleClassName="text-base"
+      titleClassName="text-title-sm"
       className={`flex flex-col ${className}`}
       contentClassName="flex-1 p-5"
       actions={(
@@ -784,7 +784,7 @@ export const QueueProductionSettingsModal: React.FC<QueueProductionSettingsModal
       description={localizeStatic("ui.settings.components.queueProductionSettingsModal.description.enabled.castles.will.appear.here.after.game.d402602c")}
       icon={<Castle className="h-4 w-4" />}
       actions={<Badge variant="secondary" className="shrink-0"><LocalizedText messageKey="ui.settings.components.queueProductionSettingsModal.no.data.3b41ba9c" /></Badge>}
-      titleClassName="text-base"
+      titleClassName="text-title-sm"
       className={`flex flex-col ${className}`}
       contentClassName="flex flex-1 p-4"
     >
@@ -793,8 +793,8 @@ export const QueueProductionSettingsModal: React.FC<QueueProductionSettingsModal
             <Castle className="h-5 w-5" />
           </div>
           <div className="min-w-0">
-            <div className="text-xs font-bold uppercase tracking-wider text-text-muted"><LocalizedText messageKey="ui.settings.components.queueProductionSettingsModal.no.castles.available.7a5d589a" /></div>
-            <p className="mt-2 max-w-sm text-sm leading-relaxed text-text-muted">
+            <div className="text-caption font-semibold text-text-muted"><LocalizedText messageKey="ui.settings.components.queueProductionSettingsModal.no.castles.available.7a5d589a" /></div>
+            <p className="mt-2 max-w-sm text-body text-text-muted">
               {definition.noCastlesHelp}
             </p>
           </div>
@@ -807,7 +807,7 @@ export const QueueProductionSettingsModal: React.FC<QueueProductionSettingsModal
       title={localizeStatic("ui.settings.components.queueProductionSettingsModal.title.castle.toggles.d3d8f9c5")}
       description={`Enable ${definition.featureLabel} coverage for each castle.`}
       icon={<Castle className="h-4 w-4" />}
-      titleClassName="text-base"
+      titleClassName="text-title-sm"
       className={`flex flex-col ${className}`}
       contentClassName="flex flex-1 flex-col gap-2 p-4"
       actions={(
@@ -830,8 +830,8 @@ export const QueueProductionSettingsModal: React.FC<QueueProductionSettingsModal
               }`}
             >
               <div className="min-w-0">
-                <div className="truncate text-sm font-bold text-text-main">{castle.name}</div>
-                <div className="mt-1 truncate text-[11px] font-semibold uppercase tracking-wide text-text-muted">
+                <div className="truncate text-body font-semibold text-text-main">{castle.name}</div>
+                <div className="mt-1 truncate text-caption font-semibold text-text-muted">
                   {castle.type} · #{castle.id}
                 </div>
               </div>
@@ -875,7 +875,7 @@ export const QueueProductionSettingsModal: React.FC<QueueProductionSettingsModal
         />
         <div className={`recruit-modal-shell mx-auto flex w-full flex-col gap-5 overflow-visible pb-2 ${isGlobalMode ? 'max-w-6xl' : 'max-w-[min(1840px,98vw)]'}`}>
           {saveError && (
-            <div className="rounded-global border border-error/30 bg-error/10 px-4 py-3 text-sm font-semibold text-error" role="alert">
+            <div className="rounded-global border border-error/30 bg-error/10 px-4 py-3 text-body font-semibold text-error" role="alert">
               {saveError}
             </div>
           )}
@@ -884,7 +884,7 @@ export const QueueProductionSettingsModal: React.FC<QueueProductionSettingsModal
             <SectionCard
               title={definition.modeTitle}
               description={definition.modeDescription}
-              titleClassName="text-base"
+              titleClassName="text-title-sm"
             >
                 <PillSelector
                   ariaLabel={`${definition.featureLabel} configuration scope`}
@@ -912,10 +912,10 @@ export const QueueProductionSettingsModal: React.FC<QueueProductionSettingsModal
             <SectionCard
               title={localizeStatic("ui.settings.components.queueProductionSettingsModal.title.enabled.92c1cdfd")}
               description={`Castles selected for ${definition.featureLabel}.`}
-              titleClassName="text-base"
+              titleClassName="text-title-sm"
               contentClassName="flex flex-wrap items-center justify-between gap-4 p-5"
             >
-                <div className="text-4xl font-black tabular-nums text-primary">{enabledCastleCount}</div>
+                <div className="text-display-sm font-bold tabular-nums text-primary">{enabledCastleCount}</div>
                 <Badge variant={isGlobalMode ? 'primary' : 'secondary'}>
                   {isGlobalMode ? 'shared' : 'per castle'}
                 </Badge>
@@ -926,12 +926,12 @@ export const QueueProductionSettingsModal: React.FC<QueueProductionSettingsModal
             <SectionCard
               title={localizeStatic("ui.settings.components.queueProductionSettingsModal.title.glory.title.fallback.1349f3ee")}
               description={localizeStatic("ui.settings.components.queueProductionSettingsModal.description.controls.level.11.protector.of.the.north.b2c8cf98")}
-              titleClassName="text-base"
+              titleClassName="text-title-sm"
               contentClassName="flex flex-wrap items-center justify-between gap-4 p-5"
             >
               <div className="min-w-0 flex-1">
-                <div className="text-sm font-bold text-text-main"><LocalizedText messageKey="ui.settings.components.queueProductionSettingsModal.recruit.level.10.if.glory.title.is.d718bd94" /></div>
-                <p className="mt-1 text-xs font-semibold leading-relaxed text-text-muted">
+                <div className="text-body font-semibold text-text-main"><LocalizedText messageKey="ui.settings.components.queueProductionSettingsModal.recruit.level.10.if.glory.title.is.d718bd94" /></div>
+                <p className="mt-1 text-caption font-semibold text-text-muted">
                   <LocalizedText messageKey="ui.settings.components.queueProductionSettingsModal.off.by.default.when.off.affected.recruit.acc10691" /></p>
               </div>
               <div className="flex shrink-0 items-center gap-3">
@@ -992,12 +992,12 @@ export const QueueProductionSettingsModal: React.FC<QueueProductionSettingsModal
                       <CardHeader className="liquid-card-header-prominent flex flex-row items-center justify-between gap-4">
                         <div className="min-w-0">
                           <div className="flex flex-wrap items-center gap-2">
-                            <CardTitle className="min-w-0 truncate text-lg text-text-main">{castle.name}</CardTitle>
+                            <CardTitle className="min-w-0 truncate text-body-lg text-text-main">{castle.name}</CardTitle>
                             <Badge variant={castleSettings.enabled ? 'success' : 'outline'}>
                               {castleSettings.enabled ? 'Enabled' : 'Disabled'}
                             </Badge>
                           </div>
-                          <p className="mt-1 truncate text-xs font-semibold uppercase tracking-wide text-text-muted">
+                          <p className="mt-1 truncate text-caption font-semibold text-text-muted">
                             {castle.type} · #{castle.id}
                           </p>
                         </div>
@@ -1031,7 +1031,7 @@ export const QueueProductionSettingsModal: React.FC<QueueProductionSettingsModal
                       </CardHeader>
 
                       <CardContent className="liquid-prominent-header-content flex flex-1 flex-col gap-4 p-5">
-                        <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-text-muted">
+                        <div className="flex flex-wrap items-center justify-between gap-2 text-caption text-text-muted">
                           <span>
                             {isGlobalMode
                               ? `Uses shared ${definition.itemLabel}`
@@ -1050,7 +1050,7 @@ export const QueueProductionSettingsModal: React.FC<QueueProductionSettingsModal
                           )}
                         </div>
                         {isGlobalMode ? (
-                          <div className="rounded-global border border-border-base bg-bg-card/55 px-4 py-3 text-xs font-semibold text-text-main">
+                          <div className="rounded-global border border-border-base bg-bg-card/55 px-4 py-3 text-caption font-semibold text-text-main">
                             Shared {definition.itemLabel}
                           </div>
                         ) : scheduledItemSchedule ? (
@@ -1083,16 +1083,16 @@ export const QueueProductionSettingsModal: React.FC<QueueProductionSettingsModal
               title={localizeStatic("ui.settings.components.queueProductionSettingsModal.title.queue.check.39bf2207")}
               description={localizeStatic("ui.settings.components.queueProductionSettingsModal.description.minutes.between.castle.cycles.18f97935")}
               icon={<Clock3 className="h-4 w-4" />}
-              titleClassName="text-base"
+              titleClassName="text-title-sm"
             >
                 <Input
                   type="text"
                   value={definition.checkIntervalSecToMinutes(settings.checkIntervalSec).toLocaleString()}
                   onChange={(e) => updateCheckIntervalMinutes(e.target.value)}
-                  className="font-mono text-lg font-black tabular-nums"
-                  rightIcon={<span className="text-xs font-bold uppercase text-text-muted"><LocalizedText messageKey="ui.settings.components.queueProductionSettingsModal.min.1f6fa6f6" /></span>}
+                  className="font-mono text-body-lg font-semibold tabular-nums"
+                  rightIcon={<span className="text-caption font-semibold text-text-muted"><LocalizedText messageKey="ui.settings.components.queueProductionSettingsModal.min.1f6fa6f6" /></span>}
                 />
-                <p className="mt-2 text-[11px] font-medium text-text-muted">
+                <p className="mt-2 text-caption font-medium text-text-muted">
                   Minimum {definition.minCheckIntervalMin.toLocaleString()} minute. Default is {definition.defaultCheckIntervalMin.toLocaleString()} minutes.
                 </p>
             </SectionCard>
@@ -1121,10 +1121,10 @@ export const QueueProductionSettingsModal: React.FC<QueueProductionSettingsModal
 
           {editingItem && kind === 'recruit' && (
             <div className="rounded-global border border-primary/20 bg-primary/5 px-4 py-3 text-center">
-              <div className="text-xs font-black uppercase tracking-wide text-primary">
+              <div className="text-caption font-semibold text-primary">
                 {unitRangeLabel(editingItem.item)}
               </div>
-              <p className="mt-1 text-xs font-semibold text-text-muted">
+              <p className="mt-1 text-caption font-semibold text-text-muted">
                 <LocalizedText messageKey="ui.settings.components.queueProductionSettingsModal.auto.recruit.queues.the.highest.currently.available.1599b926" /></p>
             </div>
           )}

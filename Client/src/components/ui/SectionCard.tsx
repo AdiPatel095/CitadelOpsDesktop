@@ -35,7 +35,7 @@ export const SectionCard: React.FC<SectionCardProps> = ({
           {icon && <span className="text-primary" aria-hidden="true">{icon}</span>}
           {title}
         </CardTitle>
-        {description && <p className={`mt-1 text-xs text-text-muted ${descriptionClassName}`}>{description}</p>}
+        {description && <p className={`mt-1 text-caption text-text-muted ${descriptionClassName}`}>{description}</p>}
       </div>
       {actions && <div className="ui-section-card-actions">{actions}</div>}
     </CardHeader>

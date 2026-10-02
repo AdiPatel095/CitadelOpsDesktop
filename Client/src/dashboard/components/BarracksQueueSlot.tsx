@@ -48,7 +48,7 @@ const BarracksQueueSlot: React.FC<BarracksQueueSlotProps> = ({ row, imageSize = 
         <UnitImage unitId={row.definitionId} size={imageSize} showLevel={true} className="!block" />
       )}
       <span
-        className="absolute -right-1 -top-1 z-20 flex min-h-[1.125rem] min-w-[1.125rem] max-w-[3.25rem] items-center justify-center rounded-full bg-red-600 px-1 text-[10px] font-bold leading-none text-white shadow-md ring-2 ring-bg-card"
+        className="absolute -right-1 -top-1 z-20 flex min-h-[1.125rem] min-w-[1.125rem] max-w-[3.25rem] items-center justify-center rounded-full bg-red-600 px-1 text-caption font-semibold text-white shadow-md ring-2 ring-bg-card"
         aria-label={`${formatQueueCount(row.amount)} in slot`}
       >
         {formatQueueCount(row.amount)}

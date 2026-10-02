@@ -53,10 +53,10 @@ const AlertItem = ({ alert }: { alert: VisibleNotification }) => {
       }}
     >
       <div className="mt-0.5 shrink-0">{style.icon}</div>
-      <div className={`flex min-w-0 flex-1 flex-col gap-2 text-sm ${style.text} ${hasLines ? 'max-h-[min(70vh,28rem)] overflow-y-auto pr-1' : ''}`}>
+      <div className={`flex min-w-0 flex-1 flex-col gap-2 text-body ${style.text} ${hasLines ? 'max-h-[min(70vh,28rem)] overflow-y-auto pr-1' : ''}`}>
         <div className="leading-snug" {...messageLanguageAttributes(localized[0])}>{localized[0].text}</div>
         {hasLines && (
-          <ul className={`mt-0.5 list-inside list-disc space-y-1.5 pl-0.5 text-[13px] font-normal ${style.list}`}>
+          <ul className={`mt-0.5 list-inside list-disc space-y-1.5 pl-0.5 text-body-sm font-normal ${style.list}`}>
             {alert.lines?.map((line, index) => <li key={`${line}-${index}`} {...messageLanguageAttributes(localized[index+1])}>{localized[index+1].text}</li>)}
           </ul>
         )}
@@ -64,7 +64,7 @@ const AlertItem = ({ alert }: { alert: VisibleNotification }) => {
           <button
             type="button"
             onClick={alert.action.onClick}
-            className={`self-start rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors ${style.border} hover:bg-white/10`}
+            className={`self-start rounded-lg border px-3 py-1.5 text-caption font-medium transition-colors ${style.border} hover:bg-white/10`}
           >
             <span {...messageLanguageAttributes(localized[localized.length-1])}>{localized[localized.length-1].text}</span>
           </button>

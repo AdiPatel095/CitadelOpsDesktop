@@ -306,11 +306,11 @@ const AttackPresetsView: React.FC = () => {
             {document.presets.length} preset{document.presets.length === 1 ? '' : 's'}
           </Badge>
           {appCreatedCount > 0 ? (
-            <Badge variant="secondary" className="normal-case tracking-normal">
+            <Badge variant="secondary" className="normal-case">
               <LocalizedText messageKey="attackPresets.appCreatedCount" params={{ count: appCreatedCount }} />
             </Badge>
           ) : null}
-          <Badge variant="outline" className="normal-case tracking-normal"><LocalizedText messageKey="ui.views.attackPresetsView.stored.by.citadelops.9f046c26" /></Badge>
+          <Badge variant="outline" className="normal-case"><LocalizedText messageKey="ui.views.attackPresetsView.stored.by.citadelops.9f046c26" /></Badge>
           </>
         )}
         actions={(
@@ -388,7 +388,7 @@ const AttackPresetsView: React.FC = () => {
         )}
       >
         <div className="space-y-4">
-          <p className="text-sm leading-relaxed text-text-muted">
+          <p className="text-body text-text-muted">
             <LocalizedText messageKey="ui.views.attackPresetsView.select.the.targets.this.preset.is.designed.386a2831" /></p>
           <div className="grid gap-3 md:grid-cols-2">
             <PresetTargetTypeChoice
@@ -414,7 +414,7 @@ const AttackPresetsView: React.FC = () => {
               onSelect={() => choosePresetTargetType('pvp')}
             />
           </div>
-          <div className="rounded-global border border-border-base bg-bg-app/35 px-4 py-3 text-xs leading-relaxed text-text-muted">
+          <div className="rounded-global border border-border-base bg-bg-app/35 px-4 py-3 text-caption text-text-muted">
             <LocalizedText messageKey="ui.views.attackPresetsView.pve.uses.30.40.30.legendary.pvp.79b5a683" /></div>
         </div>
       </Modal>
@@ -443,8 +443,8 @@ const AttackPresetsView: React.FC = () => {
         )}
       >
         <div className="space-y-4">
-          <p className="text-sm leading-relaxed text-text-muted"><LocalizedRichText messageKey="ui.rich.views.attackPresetsView.the.cra.codetext0.formation.codetext1.courtyard.troops.96c662c9" params={{"protocolCode":"CRA","codeText0":"A","codeText1":"RW","codeText2":"AST"}} tags={{span0: children => <span className="font-mono text-text-main">{children}</span>, span1: children => <span className="font-mono text-text-main">{children}</span>, span2: children => <span className="font-mono text-text-main">{children}</span>}} /></p>
-          <label className="grid gap-2 text-xs font-bold text-text-muted">
+          <p className="text-body text-text-muted"><LocalizedRichText messageKey="ui.rich.views.attackPresetsView.the.cra.codetext0.formation.codetext1.courtyard.troops.96c662c9" params={{"protocolCode":"CRA","codeText0":"A","codeText1":"RW","codeText2":"AST"}} tags={{span0: children => <span className="font-mono text-text-main">{children}</span>, span1: children => <span className="font-mono text-text-main">{children}</span>, span2: children => <span className="font-mono text-text-main">{children}</span>}} /></p>
+          <label className="grid gap-2 text-caption font-semibold text-text-muted">
             CRA command or JSON payload
             <textarea
               value={importValue}
@@ -455,11 +455,11 @@ const AttackPresetsView: React.FC = () => {
               rows={9}
               spellCheck={false}
               placeholder={'%xt%EmpireEx_21%cra%1%{"A":[...]}%'}
-              className="w-full resize-y rounded-global border border-border-base bg-bg-input/70 px-4 py-3 font-mono text-xs font-normal text-text-main shadow-inner outline-none transition focus:border-primary focus:ring-1 focus:ring-primary"
+              className="w-full resize-y rounded-global border border-border-base bg-bg-input/70 px-4 py-3 font-mono text-caption font-normal text-text-main shadow-inner outline-none transition focus:border-primary focus:ring-1 focus:ring-primary"
             />
           </label>
           {importError ? (
-            <div className="rounded-global border border-error/30 bg-error/10 px-4 py-3 text-sm font-semibold text-error">
+            <div className="rounded-global border border-error/30 bg-error/10 px-4 py-3 text-body font-semibold text-error">
               {importError}
             </div>
           ) : null}
@@ -489,25 +489,25 @@ const PresetCard: React.FC<{
         <div className="min-w-0">
           <div className="flex items-center gap-2">
             <Swords className="h-4 w-4 shrink-0 text-primary" />
-            <h2 className="truncate text-base font-black text-text-main">{preset.name}</h2>
+            <h2 className="truncate text-title-sm font-bold text-text-main">{preset.name}</h2>
           </div>
           <div className="mt-1 flex flex-wrap items-center gap-2">
             <Badge
               variant={preset.targetType === 'pvp' ? 'primary' : 'success'}
-              className="normal-case tracking-normal"
+              className="normal-case"
             >
               {preset.targetType === 'pvp' ? 'PvP' : 'PvE'}
             </Badge>
             {preset.useTroopFamilies ? (
-              <Badge variant="primary" className="normal-case tracking-normal"><LocalizedText messageKey="ui.views.attackPresetsView.family.fill.30bc122b" /></Badge>
+              <Badge variant="primary" className="normal-case"><LocalizedText messageKey="ui.views.attackPresetsView.family.fill.30bc122b" /></Badge>
             ) : null}
             {preset.app ? appCreatedPresetBadge() : null}
-            <span className="text-xs text-text-muted">
+            <span className="text-caption text-text-muted">
               Tool max · L {toolLimits.L} · C {toolLimits.M} · R {toolLimits.R}
             </span>
-            <span className="text-xs text-text-muted">Updated {formatUpdatedAt(preset.updatedAt)}</span>
+            <span className="text-caption text-text-muted">Updated {formatUpdatedAt(preset.updatedAt)}</span>
           </div>
-          {ownershipLine ? <p className="mt-1 text-xs text-text-muted">{ownershipLine}</p> : null}
+          {ownershipLine ? <p className="mt-1 text-caption text-text-muted">{ownershipLine}</p> : null}
         </div>
         <div className="flex items-center gap-1">
           <Button variant="ghost" size="icon" disabled={busy} onClick={onEdit} title={localizeStatic("ui.views.attackPresetsView.title.edit.preset.d36585b9")}><Edit3 className="h-4 w-4" /></Button>
@@ -523,7 +523,7 @@ const PresetCard: React.FC<{
           <MetricTile label={localizeStatic("game.tools")} value={summary.tools.toLocaleString()} />
         </div>
         {summary.courtyardTroops > 0 || summary.courtyardTools > 0 ? (
-          <Badge variant="warning" className="w-fit normal-case tracking-normal">
+          <Badge variant="warning" className="w-fit normal-case">
             Courtyard support · {summary.courtyardTroops.toLocaleString()} troops · {summary.courtyardTools.toLocaleString()} Sceat tools
           </Badge>
         ) : null}
@@ -557,23 +557,23 @@ const PresetTargetTypeChoice: React.FC<{
           {type === 'pvp' ? <Swords className="h-5 w-5" /> : <Shield className="h-5 w-5" />}
         </span>
         <div>
-          <div className="text-base font-black text-text-main group-hover:text-primary">{title}</div>
+          <div className="text-body-lg font-semibold text-text-main group-hover:text-primary">{title}</div>
           <Badge
             variant={type === 'pvp' ? 'primary' : 'success'}
-            className="mt-1 normal-case tracking-normal"
+            className="mt-1 normal-case"
           >
             {bonusLabel}
           </Badge>
         </div>
       </div>
     </div>
-    <p className="mt-4 min-h-10 text-sm leading-relaxed text-text-muted">{description}</p>
+    <p className="mt-4 min-h-10 text-body text-text-muted">{description}</p>
     <div className="mt-4 grid grid-cols-3 gap-2">
       <MetricTile size="sm" label="Left" value={limits.L.toLocaleString()} />
       <MetricTile size="sm" label="Center" value={limits.M.toLocaleString()} />
       <MetricTile size="sm" label="Right" value={limits.R.toLocaleString()} />
     </div>
-    <div className="mt-4 text-xs font-black uppercase tracking-wide text-primary">Select {type.toUpperCase()}</div>
+    <div className="mt-4 text-caption font-semibold text-primary">Select {type.toUpperCase()}</div>
   </button>
 );
 
@@ -584,10 +584,10 @@ const FormationPreview: React.FC<{
   render: (id: number) => React.ReactNode;
 }> = ({ label, ids, emptyIcon, render }) => (
   <div className="min-w-0 rounded-global border border-border-base bg-bg-app/35 p-3">
-    <div className="mb-2 text-[9px] font-black uppercase tracking-wider text-text-muted">{label}</div>
+    <div className="mb-2 text-caption font-semibold text-text-muted">{label}</div>
     <div className="flex min-h-[2.125rem] items-center gap-1.5 overflow-hidden">
       {ids.length > 0 ? ids.slice(0, 7).map((id) => <React.Fragment key={id}>{render(id)}</React.Fragment>) : (
-        <span className="flex items-center gap-2 text-xs text-text-muted">{emptyIcon} None</span>
+        <span className="flex items-center gap-2 text-caption text-text-muted">{emptyIcon} None</span>
       )}
       {ids.length > 7 ? <Badge variant="secondary">+{ids.length - 7}</Badge> : null}
     </div>

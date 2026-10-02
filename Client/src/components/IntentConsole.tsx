@@ -88,19 +88,19 @@ const IntentConsole = () => {
           menuGrowToViewport
         />
         {definition && (
-          <div className="flex flex-wrap items-center gap-2 text-xs text-text-muted">
+          <div className="flex flex-wrap items-center gap-2 text-caption text-text-muted">
             <Badge variant={definition.effect === 'read' ? 'secondary' : definition.effect === 'launch' ? 'danger' : 'warning'}>{['read','write','launch','external'].includes(definition.effect) ? t(`intent.effect.${definition.effect}`) : definition.effect}</Badge>
             <span lang={description.resolvedLocale === 'mixed' ? undefined : description.resolvedLocale}>{description.text}</span>
           </div>
         )}
-        <label className="grid gap-2 text-xs font-bold text-text-muted">
+        <label className="grid gap-2 text-caption font-semibold text-text-muted">
           {t('intent.arguments')}
           <textarea dir="ltr" lang="en"
             value={argumentsText}
             onChange={(event) => setArgumentsText(event.target.value)}
             rows={7}
             spellCheck={false}
-            className="w-full rounded-global border border-border-base bg-bg-input/70 px-4 py-3 font-mono text-sm font-normal text-text-main shadow-inner outline-none transition focus:border-primary focus:ring-1 focus:ring-primary"
+            className="w-full rounded-global border border-border-base bg-bg-input/70 px-4 py-3 font-mono text-body font-normal text-text-main shadow-inner outline-none transition focus:border-primary focus:ring-1 focus:ring-primary"
           />
         </label>
         <div className="flex flex-wrap gap-3">
@@ -111,9 +111,9 @@ const IntentConsole = () => {
             {t('intent.submit')}
           </Button>
         </div>
-        {error && <div lang={errorMessage.resolvedLocale === 'mixed' ? undefined : errorMessage.resolvedLocale} className="rounded-global border border-error/30 bg-error/10 px-4 py-3 text-sm font-semibold text-error">{error}</div>}
+        {error && <div lang={errorMessage.resolvedLocale === 'mixed' ? undefined : errorMessage.resolvedLocale} className="rounded-global border border-error/30 bg-error/10 px-4 py-3 text-body font-semibold text-error">{error}</div>}
         {receipt && (
-          <pre dir="ltr" lang="en" className="max-h-80 overflow-auto rounded-global border border-border-base bg-bg-app/60 p-4 text-xs text-text-main custom-scrollbar">
+          <pre dir="ltr" lang="en" className="max-h-80 overflow-auto rounded-global border border-border-base bg-bg-app/60 p-4 text-caption text-text-main custom-scrollbar">
             {JSON.stringify(receipt, null, 2)}
           </pre>
         )}

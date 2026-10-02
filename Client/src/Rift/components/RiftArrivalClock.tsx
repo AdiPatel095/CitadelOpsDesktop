@@ -44,7 +44,7 @@ const RiftArrivalClock: React.FC<RiftArrivalClockProps> = ({ entry, offsetMinute
 
   if (minUnix == null || arriveAtUnix == null) {
     return (
-      <span className="text-xs text-text-muted whitespace-nowrap" title={localizeStatic("ui.rift.components.riftArrivalClock.title.complete.a.successful.feather.launch.to.unlock.e783a7a8")}>
+      <span className="text-caption text-text-muted whitespace-nowrap" title={localizeStatic("ui.rift.components.riftArrivalClock.title.complete.a.successful.feather.launch.to.unlock.e783a7a8")}>
         <LocalizedText messageKey="ui.rift.components.riftArrivalClock.no.tt.yet.52ed44fe" /></span>
     );
   }
@@ -70,7 +70,7 @@ const RiftArrivalClock: React.FC<RiftArrivalClockProps> = ({ entry, offsetMinute
           disabled={atEarliest}
           onClick={() => onOffsetChange(0)}
           aria-label={atEarliest ? 'Earliest Rift arrival selected' : 'Reset to earliest Rift arrival'}
-          className="flex min-w-[5.5rem] items-center justify-center gap-1 rounded-md border border-border-base bg-bg-card/60 px-2 py-1 text-sm text-text-main transition-colors enabled:hover:border-primary/50 enabled:hover:bg-primary/10 disabled:cursor-default"
+          className="flex min-w-[5.5rem] items-center justify-center gap-1 rounded-md border border-border-base bg-bg-card/60 px-2 py-1 text-body text-text-main transition-colors enabled:hover:border-primary/50 enabled:hover:bg-primary/10 disabled:cursor-default"
           title={
             atEarliest
               ? `Earliest feather arrival (${formatLocalArrivalFromUnix(minUnix)}) · TT ${formatTravelDuration(entry.oneWayTTSeconds)}`
@@ -93,7 +93,7 @@ const RiftArrivalClock: React.FC<RiftArrivalClockProps> = ({ entry, offsetMinute
           <Plus className="h-3.5 w-3.5" />
         </Button>
       </div>
-      <span className="text-[10px] text-text-muted">
+      <span className="text-caption text-text-muted">
         {atEarliest ? 'earliest feather arrival' : `+${offsetMinutes}m · click time to reset`}
       </span>
     </div>
