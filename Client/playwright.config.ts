@@ -2,7 +2,7 @@ import { defineConfig } from '@playwright/test';
 
 export default defineConfig({
   testDir: './tests/visual',
-  testMatch: ['snapshots.spec.ts', 'copy.spec.ts'],
+  testMatch: ['snapshots.spec.ts', 'copy.spec.ts', 'views.spec.ts'],
   timeout: 60_000,
   retries: 0,
   workers: 1,
@@ -28,7 +28,7 @@ export default defineConfig({
   projects: [
     { name: '1440', use: { viewport: { width: 1440, height: 900 } } },
     { name: '1024', use: { viewport: { width: 1024, height: 768 } } },
-    { name: '390', testMatch: 'copy.spec.ts', use: { viewport: { width: 390, height: 844 } } },
+    { name: '390', testMatch: ['copy.spec.ts', 'views.spec.ts'], use: { viewport: { width: 390, height: 844 } } },
   ],
   webServer: [{
     command: 'node scripts/visual/serve.mjs',
