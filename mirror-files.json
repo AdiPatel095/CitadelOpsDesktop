@@ -273,6 +273,10 @@
       "desktop": "Client/src/components/ui/Delta.tsx"
     },
     {
+      "portal": "src/commandCenter/components/ui/DeltaValue.tsx",
+      "desktop": "Client/src/components/ui/DeltaValue.tsx"
+    },
+    {
       "portal": "src/commandCenter/components/ui/EmptyState.tsx",
       "desktop": "Client/src/components/ui/EmptyState.tsx"
     },
