@@ -125,7 +125,7 @@ const CommanderRequirementModal: React.FC<CommanderRequirementModalProps> = ({
           >
             <LocalizedText messageKey="ui.movement.components.commanderRequirementModal.clear.requirement.b811adea" /></Button>
           <div className="ml-auto flex gap-2">
-            <Button variant="secondary" onClick={onClose}><LocalizedText messageKey="game.cancel" /></Button>
+            <Button variant="ghost" onClick={onClose}><LocalizedText messageKey="game.cancel" /></Button>
             <Button
               variant="primary"
               disabled={validationError != null}
@@ -139,11 +139,11 @@ const CommanderRequirementModal: React.FC<CommanderRequirementModalProps> = ({
     >
       <div className="flex flex-col gap-4">
         <div className="rounded-global border border-border-light bg-bg-card/45 px-4 py-3">
-          <div className="flex items-center gap-2 text-body font-semibold text-text-main">
+          <div className="flex items-center gap-2 text-sm font-semibold text-text-main">
             <Filter className="h-4 w-4 text-primary" />
             <LocalizedText messageKey="ui.movement.components.commanderRequirementModal.require.an.equipped.bonus.troop.stat.5289cf33" />
           </div>
-          <p className="mt-1 text-caption text-text-muted">
+          <p className="mt-1 text-xs leading-relaxed text-text-muted">
             <LocalizedText messageKey="ui.movement.components.commanderRequirementModal.only.commanders.whose.currently.equipped.gear.meets.d44315cf" /></p>
         </div>
 
@@ -157,14 +157,14 @@ const CommanderRequirementModal: React.FC<CommanderRequirementModalProps> = ({
 
         <div className="max-h-80 overflow-y-auto rounded-global border border-border-base bg-bg-app/55 p-2 custom-scrollbar">
           {filteredStats.length === 0 ? (
-            <p className="px-3 py-8 text-center text-body text-text-muted">
+            <p className="px-3 py-8 text-center text-sm text-text-muted">
               <LocalizedText messageKey="ui.movement.components.commanderRequirementModal.no.matching.bonus.troop.stats.were.found.f382bf1c" /></p>
           ) : (
             <div className="grid gap-2 sm:grid-cols-2">
               {filteredStats.map((stat) => {
                 const selectedStat = stat.key === selectedKey;
                 return (
-                  <button data-button-pattern="tile"
+                  <button
                     key={stat.key}
                     type="button"
                     aria-pressed={selectedStat}
@@ -184,25 +184,25 @@ const CommanderRequirementModal: React.FC<CommanderRequirementModalProps> = ({
                       </span>
                     )}
                     <span className="min-w-0 flex-1">
-                      <span className="block truncate text-body font-semibold text-text-main">{stat.unitName}</span>
-                      <span className="block truncate text-caption text-text-muted">{stat.effectName}</span>
-                      <span className="block truncate font-mono text-caption text-text-muted/80">
+                      <span className="block truncate text-sm font-semibold text-text-main">{stat.unitName}</span>
+                      <span className="block truncate text-[11px] text-text-muted">{stat.effectName}</span>
+                      <span className="block truncate font-mono text-[10px] text-text-muted/80">
                         {stat.unitId != null ? `Unit ${stat.unitId} · ` : ''}Effect {stat.effectDefinitionId}
                       </span>
                       <span className="mt-1 flex flex-wrap gap-1">
-                        <Badge variant="secondary" className="normal-case">
+                        <Badge variant="secondary" className="normal-case tracking-normal">
                           {stat.commanderCount} commander{stat.commanderCount === 1 ? '' : 's'}
                         </Badge>
                         {stat.minimumObserved != null && stat.maximumObserved != null ? (
-                          <Badge variant="outline" className="normal-case">
+                          <Badge variant="outline" className="normal-case tracking-normal">
                             {formatNumber(stat.minimumObserved)}–{formatNumber(stat.maximumObserved)} observed
                           </Badge>
                         ) : null}
                         {stat.scope && stat.scope !== 'generic' ? (
-                          <Badge variant="warning" className="normal-case">{stat.scope.toUpperCase()}</Badge>
+                          <Badge variant="warning" className="normal-case tracking-normal">{stat.scope.toUpperCase()}</Badge>
                         ) : null}
                         {stat.areaTypeIDs.map((areaTypeID) => (
-                          <Badge key={areaTypeID} variant="primary" className="normal-case">
+                          <Badge key={areaTypeID} variant="primary" className="normal-case tracking-normal">
                             Area {areaTypeID}
                           </Badge>
                         ))}
@@ -217,7 +217,7 @@ const CommanderRequirementModal: React.FC<CommanderRequirementModalProps> = ({
 
         <div className="grid gap-3 sm:grid-cols-2">
           <label className="flex flex-col gap-1.5">
-            <span className="text-caption font-semibold text-text-muted"><LocalizedText messageKey="ui.movement.components.commanderRequirementModal.minimum.bonus.troops.642d8e1d" /></span>
+            <span className="text-xs font-semibold uppercase tracking-wider text-text-muted"><LocalizedText messageKey="ui.movement.components.commanderRequirementModal.minimum.bonus.troops.642d8e1d" /></span>
             <Input
               type="number"
               min={0}
@@ -228,7 +228,7 @@ const CommanderRequirementModal: React.FC<CommanderRequirementModalProps> = ({
             />
           </label>
           <label className="flex flex-col gap-1.5">
-            <span className="text-caption font-semibold text-text-muted"><LocalizedText messageKey="ui.movement.components.commanderRequirementModal.maximum.bonus.troops.optional.e891c2de" /></span>
+            <span className="text-xs font-semibold uppercase tracking-wider text-text-muted"><LocalizedText messageKey="ui.movement.components.commanderRequirementModal.maximum.bonus.troops.optional.e891c2de" /></span>
             <Input
               type="number"
               min={0}
@@ -240,7 +240,7 @@ const CommanderRequirementModal: React.FC<CommanderRequirementModalProps> = ({
             />
           </label>
         </div>
-        {validationError ? <p className="text-caption font-medium text-error">{validationError}</p> : null}
+        {validationError ? <p className="text-xs font-medium text-error">{validationError}</p> : null}
       </div>
     </Modal>
   );

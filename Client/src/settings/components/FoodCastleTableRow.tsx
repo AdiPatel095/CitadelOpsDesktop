@@ -22,7 +22,7 @@ export const FoodCastleTableRow: React.FC<{ row: FoodCastleRow }> = ({ row }) =>
           <>
             <LocalizedText messageKey="observedAt.lastKnownFood" />
             {row.observedAt ? <> · <LocalizedText messageKey="observedAt.castleFoodShort" params={{ observedAt: Date.parse(row.observedAt) }} /></> : null}
-            {row.unavailableReason ? <span className="block text-caption"><LocalizedText messageKey={row.unavailableReason} /></span> : null}
+            {row.unavailableReason ? <span className="block text-[10px]"><LocalizedText messageKey={row.unavailableReason} /></span> : null}
           </>
         )}
     </td>

@@ -169,7 +169,7 @@ export const AutoStationSettingsModal: React.FC<AutoStationSettingsModalProps> =
       title={localizeStatic("ui.settings.components.autoStationSettingsModal.title.auto.station.settings.eb56c8a6")}
       icon={<Shield className="h-5 w-5" />}
       description={localizeStatic("ui.settings.components.autoStationSettingsModal.description.choose.the.exact.troops.that.stay.behind.a5d0c68a")}
-      titleTrailing={<Button variant="secondary" size="md" onClick={() => setIsGuideOpen(true)} leftIcon={<BookOpen className="h-4 w-4" />}><span lang={guideLocale}>{guidePack.ui.guideButton}</span></Button>}
+      titleTrailing={<Button variant="outline" size="sm" onClick={() => setIsGuideOpen(true)} leftIcon={<BookOpen className="h-4 w-4" />}><span lang={guideLocale}>{guidePack.ui.guideButton}</span></Button>}
       onSave={save}
       saveLabel="Save changes"
       isSaving={isSaving}
@@ -178,7 +178,7 @@ export const AutoStationSettingsModal: React.FC<AutoStationSettingsModalProps> =
       contentNotice={<>{copyRun.status}{recovery.banner}{draftSession.conflictNotice}{copyRun.dialog}</>}
     >
       {saveError && (
-        <div className="mb-4 rounded-global border border-error/30 bg-error/10 px-4 py-3 text-body font-semibold text-error" role="alert">
+        <div className="mb-4 rounded-global border border-error/30 bg-error/10 px-4 py-3 text-sm font-semibold text-error" role="alert">
           {saveError}
         </div>
       )}
@@ -188,10 +188,10 @@ export const AutoStationSettingsModal: React.FC<AutoStationSettingsModalProps> =
       />
       <div className="flex w-full flex-col gap-6">
         <SettingsSection disclosure={disclosure} section="evacuation">
-          <Card variant="solid" className="">
+          <Card variant="solid" className="bg-bg-app p-4">
             <div className="grid gap-4 md:grid-cols-2">
               <label id="auto-station-lead-time" className="flex flex-col gap-1.5">
-                <span className="text-caption font-semibold text-text-main"><LocalizedText messageKey="ui.settings.components.autoStationSettingsModal.evacuate.at.621aebd7" /></span>
+                <span className="text-xs font-bold uppercase tracking-wider text-primary"><LocalizedText messageKey="ui.settings.components.autoStationSettingsModal.evacuate.at.621aebd7" /></span>
                 <Input
                   type="number"
                   min={1}
@@ -202,9 +202,9 @@ export const AutoStationSettingsModal: React.FC<AutoStationSettingsModalProps> =
                     leadTimeSec: clampMinutes(Number(event.target.value)) * 60,
                   }))}
                   className="font-mono"
-                  rightIcon={<span className="text-caption font-medium text-text-muted"><LocalizedText messageKey="ui.settings.components.autoStationSettingsModal.minutes.left.4703188b" /></span>}
+                  rightIcon={<span className="text-xs font-medium uppercase text-text-muted"><LocalizedText messageKey="ui.settings.components.autoStationSettingsModal.minutes.left.4703188b" /></span>}
                 />
-                <span className="text-caption text-text-muted"><LocalizedText messageKey="ui.settings.components.autoStationSettingsModal.troops.leave.this.many.minutes.before.the.3ef5b581" /></span>
+                <span className="text-[11px] leading-relaxed text-text-muted"><LocalizedText messageKey="ui.settings.components.autoStationSettingsModal.troops.leave.this.many.minutes.before.the.3ef5b581" /></span>
               </label>
               <SettingsToggleRow
                 title={localizeStatic("ui.settings.components.autoStationSettingsModal.title.recall.when.clear.553ed7f0")}
@@ -220,7 +220,7 @@ export const AutoStationSettingsModal: React.FC<AutoStationSettingsModalProps> =
                 onChange={(checked) => setState((previous) => ({ ...previous, openGateFallback: checked }))}
               />
             </div>
-            <p className="mt-4 text-caption text-text-muted">
+            <p className="mt-4 text-xs leading-relaxed text-text-muted">
               <span lang={guideLocale} dir={guideLocale === 'ar' ? 'rtl' : 'ltr'}>{guidePack.autoStation.feature.helper}</span>
             </p>
           </Card>
@@ -234,7 +234,7 @@ export const AutoStationSettingsModal: React.FC<AutoStationSettingsModalProps> =
         >
           <div className="grid gap-4 md:grid-cols-2">
             <label className="flex flex-col gap-1.5">
-              <span className="text-caption font-semibold text-text-main"><LocalizedText messageKey="ui.settings.components.autoStationSettingsModal.minimum.bird.days.on.target.71cbcd1f" /></span>
+              <span className="text-xs font-bold uppercase tracking-wider text-primary"><LocalizedText messageKey="ui.settings.components.autoStationSettingsModal.minimum.bird.days.on.target.71cbcd1f" /></span>
               <Input
                 type="number"
                 min={0}
@@ -245,9 +245,9 @@ export const AutoStationSettingsModal: React.FC<AutoStationSettingsModalProps> =
                   minRPTDays: clampDays(Number(event.target.value)),
                 }))}
                 className="font-mono"
-                rightIcon={<span className="text-caption font-medium text-text-muted"><LocalizedText messageKey="ui.settings.components.autoStationSettingsModal.days.e08c0aa8" /></span>}
+                rightIcon={<span className="text-xs font-medium uppercase text-text-muted"><LocalizedText messageKey="ui.settings.components.autoStationSettingsModal.days.e08c0aa8" /></span>}
               />
-              <span className="text-caption text-text-muted"><LocalizedText messageKey="ui.settings.components.autoStationSettingsModal.troops.are.sent.only.to.alliance.members.faff0c89" /></span>
+              <span className="text-[11px] leading-relaxed text-text-muted"><LocalizedText messageKey="ui.settings.components.autoStationSettingsModal.troops.are.sent.only.to.alliance.members.faff0c89" /></span>
             </label>
           </div>
         </SettingsSection>
@@ -257,7 +257,7 @@ export const AutoStationSettingsModal: React.FC<AutoStationSettingsModalProps> =
         <SettingsSection disclosure={disclosure} section="reserves">
         <div id="auto-station-castles" tabIndex={-1} className="custom-scrollbar min-h-0 flex-1 overflow-y-auto pr-1 outline-none">
           {castles.length === 0 && (
-            <p className="py-8 text-center text-body text-text-muted"><LocalizedText messageKey="ui.settings.components.autoStationSettingsModal.loading.castles.37f1e3a3" /></p>
+            <p className="py-8 text-center text-sm text-text-muted"><LocalizedText messageKey="ui.settings.components.autoStationSettingsModal.loading.castles.37f1e3a3" /></p>
           )}
           <div className="grid grid-cols-1 gap-4 pb-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {castles.map((castle) => {
@@ -265,15 +265,15 @@ export const AutoStationSettingsModal: React.FC<AutoStationSettingsModalProps> =
               const reserves = state.settings[castleID] ?? [];
               const stock = readiness.stockByCastle[castleID];
               return (
-                <Card key={castle.id} variant="solid" className="flex flex-col">
+                <Card key={castle.id} variant="solid" className="flex flex-col bg-bg-card-hover/40 p-4 shadow-inner">
                   <div className="mb-3 border-b border-border-base pb-2">
-                    <h3 className="text-title-sm font-bold text-text-main">{castle.name || `${castle.type} castle`}</h3>
-                    <p className="mt-1 text-caption text-text-muted"><LocalizedText messageKey="ui.settings.components.autoStationSettingsModal.these.amounts.remain.in.the.castle.e33daec5" /></p>
+                    <h3 className="text-sm font-bold text-primary">{castle.name || `${castle.type} castle`}</h3>
+                    <p className="mt-1 text-[11px] text-text-muted"><LocalizedText messageKey="ui.settings.components.autoStationSettingsModal.these.amounts.remain.in.the.castle.e33daec5" /></p>
                   </div>
                   {reserves.length === 0 ? (
                     <div className="flex flex-1 flex-col items-center justify-center gap-3 py-6">
-                      <p className="text-center text-caption font-mediumr text-text-muted"><LocalizedText messageKey="ui.settings.components.autoStationSettingsModal.no.defense.reserve.b4ce10ce" /></p>
-                      <Button variant="secondary" size="md" onClick={() => selectReserve(castle)} leftIcon={<Plus className="h-4 w-4" />}>
+                      <p className="text-center text-xs font-medium uppercase tracking-wider text-text-muted"><LocalizedText messageKey="ui.settings.components.autoStationSettingsModal.no.defense.reserve.b4ce10ce" /></p>
+                      <Button variant="outline" size="sm" onClick={() => selectReserve(castle)} leftIcon={<Plus className="h-4 w-4" />}>
                         <LocalizedText messageKey="ui.settings.components.autoStationSettingsModal.add.troops.5264f439" /></Button>
                     </div>
                   ) : (

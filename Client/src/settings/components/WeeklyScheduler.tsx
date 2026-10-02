@@ -911,6 +911,7 @@ export const WeeklyScheduler: React.FC<WeeklySchedulerProps> = ({
             <div className="schedule-control-chip">
               <span><LocalizedText messageKey="ui.settings.components.weeklyScheduler.use.schedule.0a350b34" /></span>
               <Switch
+                size="sm"
                 checked={schedule.enabled}
                 onChange={(enabled) => commitSchedule({ ...schedule, enabled })}
                 ariaLabel={localizeStatic("ui.settings.components.weeklyScheduler.ariaLabel.use.weekly.schedule.c2262573")}
@@ -920,6 +921,7 @@ export const WeeklyScheduler: React.FC<WeeklySchedulerProps> = ({
               <div className="schedule-control-chip">
                 <span>{slotOptionsConfig.enabledLabel}</span>
                 <Switch
+                  size="sm"
                   checked={slotOptionsEnabled}
                   onChange={setSlotOptionsEnabled}
                   ariaLabel={slotOptionsConfig.enabledLabel}
@@ -929,7 +931,7 @@ export const WeeklyScheduler: React.FC<WeeklySchedulerProps> = ({
           </div>
 
           <div className="schedule-command-actions">
-            <Button variant="secondary" size="sm" onClick={openAddSlot} leftIcon={<Plus className="h-4 w-4" />}>
+            <Button variant="outline" size="sm" onClick={openAddSlot} leftIcon={<Plus className="h-4 w-4" />}>
               <LocalizedText messageKey="ui.settings.components.weeklyScheduler.add.slot.05187491" /></Button>
             <Button variant="ghost" size="sm" onClick={setAllWeek} leftIcon={<Wand2 className="h-4 w-4" />}>
               <LocalizedText messageKey="ui.settings.components.weeklyScheduler.all.week.3328d635" /></Button>
@@ -1067,19 +1069,19 @@ export const WeeklyScheduler: React.FC<WeeklySchedulerProps> = ({
                       }}
                       title={`${WEEK_DAYS[slot.day].label} ${formatMinuteOfDay(slot.startMinute)}-${formatMinuteOfDay(slot.endMinute)} (${formatDuration(slot.endMinute - slot.startMinute)})`}
                     >
-                      <Button variant="ghost"
+                      <button
                         type="button"
                         aria-label={localizeStatic("ui.settings.components.weeklyScheduler.aria-label.copy.this.slot.to.previous.day.55af7ea5")}
                         className="schedule-slot-copy-handle schedule-slot-copy-handle-left"
                         onPointerDown={(event) => beginDrag(event, slot, 'copy-prev-day')}
                       />
-                      <Button variant="ghost"
+                      <button
                         type="button"
                         aria-label={localizeStatic("ui.settings.components.weeklyScheduler.aria-label.copy.this.slot.to.next.day.449690bb")}
                         className="schedule-slot-copy-handle schedule-slot-copy-handle-right"
                         onPointerDown={(event) => beginDrag(event, slot, 'copy-next-day')}
                       />
-                      <Button variant="ghost"
+                      <button
                         type="button"
                         aria-label={localizeStatic("ui.settings.components.weeklyScheduler.aria-label.resize.start.time.9d21e341")}
                         className="schedule-slot-resize-handle schedule-slot-resize-start"
@@ -1095,7 +1097,7 @@ export const WeeklyScheduler: React.FC<WeeklySchedulerProps> = ({
                         )}
                         {renderSlotOptionBadge(slot, visualHeight)}
                       </div>
-                      <Button variant="ghost"
+                      <button
                         type="button"
                         aria-label={localizeStatic("ui.settings.components.weeklyScheduler.aria-label.resize.end.time.3454bedf")}
                         className="schedule-slot-resize-handle schedule-slot-resize-end"
@@ -1206,7 +1208,7 @@ export const WeeklyScheduler: React.FC<WeeklySchedulerProps> = ({
                             </div>
                           </div>
                           <Button
-                            variant="secondary"
+                            variant="outline"
                             size="sm"
                             className="schedule-troop-picker-button"
                             onClick={() => selectTroopForSlotOption(field)}
@@ -1239,7 +1241,7 @@ export const WeeklyScheduler: React.FC<WeeklySchedulerProps> = ({
                             </div>
                           </div>
                           <Button
-                            variant="secondary"
+                            variant="outline"
                             size="sm"
                             className="schedule-troop-picker-button"
                             onClick={() => selectToolForSlotOption(field)}

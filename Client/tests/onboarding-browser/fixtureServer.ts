@@ -1,5 +1,4 @@
-import { parseVisualStates } from './visualStates';
-import type { AllianceTargetViewV2, ConfigurationSnapshot, GameStateV2, IntentReceipt, PlayerHistoryRetentionV1 } from './product';
+import type { ConfigurationSnapshot, GameStateV2, IntentReceipt } from './product';
 import { catalogFor, catalogManifest, LOCALIZED } from './catalogs';
 import { applyRuntimeStep, applySessionMode, buildScenario, mergePatch, type BuiltScenario, type ScenarioFile, type SessionMode } from './scenario';
 
@@ -121,19 +120,10 @@ export class FixtureServer {
   }
 
   /** Answer for one request. `path` is the URL pathname (after the runtime prefix, if any). */
-  async handle(path: string, method: string, body: unknown, visualStatesRaw?: string | null): Promise<Response> {
+  async handle(path: string, method: string, body: unknown): Promise<Response> {
     const verb = method.toUpperCase();
     const at = path.indexOf('/api/v2/');
     const route = at >= 0 ? path.slice(at + '/api/v2'.length) : path;
-    const visualState = parseVisualStates(visualStatesRaw)['feature-history'];
-    const feature = /\/world-intelligence\/players\/(\d+)\/event-scores$/.exec(route.split('?')[0]);
-    if (feature && visualState) {
-      if (visualState === 'loading') return new Promise<Response>(() => {});
-      if (visualState === 'error') return new Response('{}', { status: 503, headers: { 'Content-Type': 'application/json' } });
-      const worldId = new URLSearchParams(route.split('?')[1] ?? '').get('worldId') ?? this.state().account.worldId;
-      return json({ schemaVersion: 1, worldId, playerId: Number(feature[1]), history: [] });
-    }
-
     if (route === '/health') return json({ api: 2, status: 'ok', fixture: true });
     if (route === '/state' && verb === 'GET') return json(this.state());
     if (route === '/operations' && verb === 'GET') return json(this.operations());
@@ -176,7 +166,7 @@ export class FixtureServer {
     if (path === '/locales') return json({ locales: [{ code: 'en' }] });
     if (path === '/update') return json({ currentVersion: '0.0.0-preview', latestVersion: '0.0.0-preview', available: false, installSupported: false, status: 'current', progress: 0, restartRequired: false, checkedAt: new Date(this.now()).toISOString() });
     if (path === '/diagnostics') return json({ applicationMemoryMb: 0, browserMemoryMb: 0, observedAt: new Date(this.now()).toISOString() });
-    if (path === '/telemetry/attack-rates') return json({ observedAt: new Date(this.now()).toISOString(), windowMinutes: 60, windowStartedAt: new Date(this.now() - 3600000).toISOString(), launchesByFeature: {}, dailySession: { startedAt: new Date(this.now()).toISOString(), window: 'since', launchesByFeature: {} } });
+    if (path === '/telemetry/attack-rates') return json({ observedAt: new Date(this.now()).toISOString(), windowMinutes: 60, launchesByFeature: {} });
     if (path === '/browsers') return json({ selected: null, current: null, available: [], restartRequired: false, selectionIntent: 'session.select_browser' });
     if (path === '/session/game-servers') return json({ version: 'fixture', source: 'fixture', updatedAt: new Date(this.now()).toISOString(), servers: [
       { code: 'DEMO1', label: 'Demo World', zone: 'demo-world', host: 'fixture.invalid', url: 'wss://fixture.invalid:443', international: false, instance: 1 },
@@ -184,39 +174,8 @@ export class FixtureServer {
     ] });
     if (path === '/session/background-login') return json({ configured: false, server: 'DEMO1', language: 'en' });
     if (path.startsWith('/projections/')) return json({ items: [] });
-    if (path.startsWith('/alliance-targets')) {
-      const targets: AllianceTargetViewV2 = {
-        server: 'DEMO1', alliances: [], targets: [], totalTargets: 0,
-        page: 1, pageSize: 25, pageCount: 0, canInspect: false,
-        spies: { canLaunch: false, available: 0 },
-      };
-      return json(targets);
-    }
-    if (path === '/history/player-tracker/retention') {
-      const retention: PlayerHistoryRetentionV1 = {
-        revision: 1, configured: '24h', configuredDays: 1, effective: '24h', effectiveDays: 1,
-        hosted: false, maximum: 'unlimited', recordingIntervalSeconds: 3600,
-        recordingIntervalOptions: [60, 300, 600, 900, 1800, 3600].map(seconds => ({
-          seconds, label: seconds === 3600 ? '1 hour' : `${seconds / 60} minute${seconds === 60 ? '' : 's'}`,
-          description: 'Simulated My Stats recording cadence.', recordingsPerDay: 86_400 / seconds,
-        })),
-        options: [
-          { value: 'none', label: 'No history', description: 'Do not save historical My Stats points.' },
-          ...[
-            { value: '24h', label: '24 hours', days: 1 },
-            { value: '7d', label: '7 days', days: 7 },
-            { value: '30d', label: '30 days', days: 30 },
-            { value: '90d', label: '90 days', days: 90 },
-            { value: '100d', label: '100 days', days: 100 },
-            { value: '1y', label: '365 days', days: 365 },
-          ].map(option => ({ ...option, description: 'Simulated My Stats retention.', recordings: option.days * 24 })),
-          { value: 'unlimited', label: 'Unlimited', description: 'Keep My Stats recordings without a day limit.' },
-        ],
-      };
-      return json(retention);
-    }
+    if (path.startsWith('/alliance-targets')) return json({ observedAt: new Date(this.now()).toISOString(), targets: [], total: 0, page: 1, pageSize: 25 });
     if (path.startsWith('/history/')) return json({ reports: [], samples: [], rangeSeconds: 86_400 });
-    if (path === '/analytics/resource-aggregates') return json({ aggregates: [] });
     if (path.startsWith('/world-intelligence/')) return json({ entries: [], runs: [], rows: [], datasets: [] });
     if (path.startsWith('/buildings/')) return error(501, 'preview_unavailable', 'Simulated preview: building capture and blueprint previews are not available.');
     this.record('blocked', `GET ${route}: no fixture route`);

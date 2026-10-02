@@ -141,5 +141,3 @@ commit or share those local files.
 For the application boundaries and package ownership model, see
 [`Architecture.md`](Architecture.md). Feature-specific notes are under
 [`Docs/`](Docs/).
-
-See [Buttons](Docs/Buttons.md) for variants, region ownership, overflow menus, and the raw-button checker.

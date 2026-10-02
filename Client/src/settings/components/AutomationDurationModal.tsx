@@ -1,6 +1,3 @@
-import { StopControl } from '../../components/StopControl';
-import { featureIdForEnabledKey } from '../disclosure/placement';
-import { formatDurationEnd } from "../../i18n/automationDuration";
 import { useLocale } from "../../i18n/LocaleContext";
 import { LocalizedText } from "../../i18n/LocalizedText";
 import React, { useEffect, useMemo, useState } from 'react';
@@ -42,7 +39,7 @@ export const AutomationDurationModal: React.FC<AutomationDurationModalProps> = (
   onPauseFor,
   pausedUntil,
 }) => {
-  const { t, locale } = useLocale();
+  const { t } = useLocale();
   const { enableAutomationFor, automationTimedUntilByKey } = useAuth();
   const [amount, setAmount] = useState('1');
   const [unit, setUnit] = useState<DurationUnit>('hours');
@@ -102,19 +99,19 @@ export const AutomationDurationModal: React.FC<AutomationDurationModalProps> = (
       title={<ModalTitle icon={<TimerReset className="h-5 w-5" />}>{t(onPauseFor ? 'automationDurationDialog.pauseTitle' : 'automationDurationDialog.runTitle', { feature: featureLabel })}</ModalTitle>}
       footer={(
         <div className="flex w-full justify-end gap-2">
-          <Button variant="secondary" onClick={onClose} disabled={saving}><LocalizedText messageKey="game.cancel" /></Button>
-          <Button variant="secondary" onClick={() => void save()} disabled={!valid} isLoading={saving}>{t(onPauseFor ? 'automationDurationDialog.pauseButton' : 'automationDurationDialog.runButton')}</Button>
+          <Button variant="ghost" onClick={onClose} disabled={saving}><LocalizedText messageKey="game.cancel" /></Button>
+          <Button onClick={() => void save()} disabled={!valid} isLoading={saving}>{t(onPauseFor ? 'automationDurationDialog.pauseButton' : 'automationDurationDialog.runButton')}</Button>
         </div>
       )}
     >
       <div className="flex flex-col gap-4">
         <div className="rounded-global border border-primary/20 bg-primary/5 p-4">
-          <div className="text-body font-semibold text-text-main">{t('automationDurationDialog.quickDurations')}</div>
+          <div className="text-sm font-bold text-text-main">{t('automationDurationDialog.quickDurations')}</div>
           <div className="mt-3 grid grid-cols-3 gap-2">
             {durationPresets.map((preset) => (
               <Button
                 key={preset.minutes}
-                variant={durationMinutes === preset.minutes ? 'primary' : 'secondary'}
+                variant={durationMinutes === preset.minutes ? 'primary' : 'outline'}
                 size="sm"
                 onClick={() => selectPreset(preset.minutes)}
               >
@@ -125,7 +122,7 @@ export const AutomationDurationModal: React.FC<AutomationDurationModalProps> = (
         </div>
 
         <div className="rounded-global border border-border-base bg-bg-card/45 p-4">
-          <div className="text-body font-semibold text-text-main">{t('automationDurationDialog.customDuration')}</div>
+          <div className="text-sm font-bold text-text-main">{t('automationDurationDialog.customDuration')}</div>
           <div className="mt-3 grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)] gap-3">
             <Input
               type="number"
@@ -147,25 +144,23 @@ export const AutomationDurationModal: React.FC<AutomationDurationModalProps> = (
               ariaLabel={t('automationDurationDialog.unitLabel')}
             />
           </div>
-          {!valid ? <p className="mt-2 text-caption text-error">{t('automationDurationDialog.invalidDuration')}</p> : null}
+          {!valid ? <p className="mt-2 text-xs text-error">{t('automationDurationDialog.invalidDuration')}</p> : null}
         </div>
 
-        <div className="rounded-global border border-border-base bg-bg-app/40 px-4 py-3 text-caption text-text-muted">
+        <div className="rounded-global border border-border-base bg-bg-app/40 px-4 py-3 text-xs leading-relaxed text-text-muted">
           {turnsOffAt ? (
             <p>
-              {t(onPauseFor ? 'automationDurationDialog.pauseStarts' : 'automationDurationDialog.runStarts', { feature: featureLabel, endsAt: formatDurationEnd(turnsOffAt, locale) })}
+              {t(onPauseFor ? 'automationDurationDialog.pauseStarts' : 'automationDurationDialog.runStarts', { feature: featureLabel })}{' '}
+              <span className="font-semibold text-text-main">{turnsOffAt.toLocaleString()}</span>.
             </p>
           ) : null}
           <p className="mt-1">{t('automationDurationDialog.scheduleNotice')}</p>
           {currentUntil ? (
-            <p className="mt-2 text-primary">{t(onPauseFor ? 'automationDurationDialog.currentPauseEnds' : 'automationDurationDialog.currentRunEnds', { date: formatDurationEnd(currentUntil, locale) })}</p>
-          ) : null}
-          {!onPauseFor && currentUntil ? (
-            <StopControl enabledKey={featureKey} featureId={featureIdForEnabledKey(featureKey)!} onStopped={onClose} />
+            <p className="mt-2 text-primary">{t(onPauseFor ? 'automationDurationDialog.currentPauseEnds' : 'automationDurationDialog.currentRunEnds', { date: new Date(currentUntil).toLocaleString() })}</p>
           ) : null}
         </div>
 
-        {error ? <p className="text-caption text-error">{error}</p> : null}
+        {error ? <p className="text-xs text-error">{error}</p> : null}
       </div>
     </Modal>
   );

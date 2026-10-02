@@ -80,7 +80,3 @@ Server/refactor_state/
 /CitadelOps-Patch-Notes-v*.html
 /CitadelOpsUiRedesignResearch.md
 /IntentEngineCommandGuards.md
-
-# Generated gate reports
-/gate-report.json
-/gate-report.md

@@ -13,7 +13,7 @@ interface ListedPreset {
 /** "Created by app" marker shown wherever an app-created preset is listed. */
 export function appCreatedPresetBadge(className = ''): React.ReactElement {
   return (
-    <Badge variant="secondary" className={`shrink-0 normal-case ${className}`}>
+    <Badge variant="secondary" className={`shrink-0 normal-case tracking-normal ${className}`}>
       <LocalizedText messageKey="attackPresets.createdByApp" />
     </Badge>
   );

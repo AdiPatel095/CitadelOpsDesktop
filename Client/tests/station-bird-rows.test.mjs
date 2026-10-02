@@ -15,8 +15,8 @@ after(async () => {
 
 const source = (path) => readFile(new URL(`../src/${path}`, import.meta.url), 'utf8');
 const ROWS = [
-  ['autoStation', 'auto_station', 'toggleAutoStation', 'autoStationEnabled', 'onOpenAutoStationSettings', 'StatusPanel'],
-  ['autoBird', 'auto_bird', 'toggleAutoBird', 'autoBirdEnabled', 'onOpenAutoBirdSettings', 'AutoBirdCycles'],
+  ['autoStation', 'auto_station', 'toggleAutoStation', 'autoStationEnabled', 'onOpenAutoStationSettings', 'AutoStationHoverPopover'],
+  ['autoBird', 'auto_bird', 'toggleAutoBird', 'autoBirdEnabled', 'onOpenAutoBirdSettings', 'AutoBirdHoverPopover'],
 ];
 
 /** The feature object literal with the given id in the Automation page's `features` array. */
@@ -54,7 +54,7 @@ test('Station and Bird have Automation rows in Recovery & Support on the same sa
 });
 
 test('one write per click: the row switch, the header chip and the popover feedback all go through the same setter', async () => {
-  const [view, header, auth] = await Promise.all([source('views/AutomationView.tsx'), source('components/header/StatusPanel.tsx'), source('context/AuthContext.tsx')]);
+  const [view, header, auth] = await Promise.all([source('views/AutomationView.tsx'), source('components/Header.tsx'), source('context/AuthContext.tsx')]);
   for (const [, key, toggle, enabled] of ROWS) {
     // The Auth context maps each toggle to the one write path.
     assert.match(auth, new RegExp(`${toggle}: \\(\\) => toggle\\('${key}', ${enabled}\\)`));
@@ -65,19 +65,20 @@ test('one write per click: the row switch, the header chip and the popover feedb
   assert.equal(writes.length, 2, 'setAutomationEnabled and enableAutomationFor only');
   // The row switch has exactly one change handler, and the popovers add no write of their own.
   assert.equal([...view.matchAll(/onChange=\{feature\.onToggle\}/g)].length, 1);
-  assert.match(header, /onChange=\{toggleAutoStation\}/);
-  assert.match(header, /onChange=\{toggleAutoBird\}/);
-  for (const file of ['components/AutoBirdCycles.tsx']) {
+  assert.match(header, /onClick=\{toggleAutoStation\}/);
+  assert.match(header, /onClick=\{\(\) => toggleAutoBird\(\)\}/);
+  for (const file of ['components/AutoStationHoverPopover.tsx', 'components/AutoBirdHoverPopover.tsx']) {
     const popover = await source(file);
     assert.doesNotMatch(popover, /automation\.enabled|setAutomationEnabled|toggleAuto/, `${file} never writes the enabled switch`);
   }
 });
 
 test('row and popover show the same feedback: one shared component, compact only drops "Before you start"', async () => {
-  const [header, feedback] = await Promise.all([source('components/header/StatusPanel.tsx'), source('components/AutomationFeatureFeedback.tsx')]);
-  for (const [id, , , enabled, opener] of ROWS) {
+  const [header, feedback] = await Promise.all([source('components/Header.tsx'), source('components/AutomationFeatureFeedback.tsx')]);
+  for (const [id, , , enabled, opener, popover] of ROWS) {
     const capitalised = id === 'autoStation' ? 'Station' : 'Bird';
-    assert.match(header, new RegExp(`<AutomationFeatureFeedback featureId="${id}" enabled=\\{${enabled}\\} onOpenSettings=\\{\\(\\) => dialog\\(onOpenAuto${capitalised}Settings\\)\\} compact hideStatus />`));
+    assert.match(header, new RegExp(`<AutomationFeatureFeedback featureId="${id}" enabled=\\{${enabled}\\} onOpenSettings=\\{onOpenAuto${capitalised}Settings\\} compact />`));
+    assert.match(header, new RegExp(`<${popover}[^>]*feedback=`, 's'));
     assert.ok(opener);
   }
   // Phase, next step, failed Start/Stop and first result are rendered for compact and full alike.

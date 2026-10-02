@@ -40,12 +40,12 @@ export const UnitStockList: React.FC<UnitStockListProps> = ({ lines, mode = 'req
             const Icon = meta.icon;
             const item = line.kind === 'troop' ? getTroop(line.itemId) : getTool(line.itemId);
             return (
-              <li key={`${line.kind}:${line.itemId}`} className="flex items-center gap-2 text-caption text-text-main">
+              <li key={`${line.kind}:${line.itemId}`} className="flex items-center gap-2 text-xs text-text-main">
                 {line.kind === 'troop'
                   ? <UnitImage unitId={line.itemId} size={24} />
                   : <ToolImage toolId={line.itemId} size={24} showLevel={false} />}
                 <span className="min-w-0 flex-1 truncate">{item?.name ?? `#${line.itemId}`}</span>
-                <span className="shrink-0 font-mono text-caption tabular-nums text-text-muted">
+                <span className="shrink-0 font-mono text-[11px] tabular-nums text-text-muted">
                   <LocalizedText
                     messageKey={mode === 'reserve' ? 'unitStock.reserveStationed' : 'unitStock.requiredStationed'}
                     params={{ required: line.required, stationed: line.stationed }}
@@ -57,9 +57,9 @@ export const UnitStockList: React.FC<UnitStockListProps> = ({ lines, mode = 'req
           })}
         </ul>
       ) : null}
-      {note ? <p className="text-caption text-text-muted">{note}</p> : null}
+      {note ? <p className="text-[11px] text-text-muted">{note}</p> : null}
       {freshness?.state === 'observed' && freshness.scope === 'castle' && freshness.observedAt ? (
-        <p className="text-caption text-text-muted"><LocalizedText messageKey="observedAt.castleUnits" params={{ observedAt: Date.parse(freshness.observedAt) }} /></p>
+        <p className="text-[11px] text-text-muted"><LocalizedText messageKey="observedAt.castleUnits" params={{ observedAt: Date.parse(freshness.observedAt) }} /></p>
       ) : null}
     </div>
   );

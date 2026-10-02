@@ -73,22 +73,22 @@ export const ConnectionRepairDialog: React.FC<{ onClose: () => void; onOpenSetti
       title={<LocalizedText messageKey="connectionRepair.title" />}
       footer={<Button variant="primary" onClick={onClose}><LocalizedText messageKey="connectionRepair.action.done" /></Button>}
     >
-      <div className="space-y-4 text-body text-text-main" data-connection-repair="desktop">
-        <p className="text-caption text-text-muted"><LocalizedText messageKey="connectionRepair.intro" /></p>
+      <div className="space-y-4 text-sm text-text-main" data-connection-repair="desktop">
+        <p className="text-xs text-text-muted"><LocalizedText messageKey="connectionRepair.intro" /></p>
 
         <section aria-labelledby="repair-status" className="space-y-1.5">
-          <h3 id="repair-status" className="text-caption font-semibold text-text-muted"><LocalizedText messageKey="connectionRepair.statusHeading" /></h3>
+          <h3 id="repair-status" className="text-[10px] font-black uppercase tracking-wider text-text-muted"><LocalizedText messageKey="connectionRepair.statusHeading" /></h3>
           <p className="font-semibold" data-repair-state={auth.gameConnectionState}>
             <LocalizedText messageKey="connectionRepair.state" params={{ state: auth.gameConnectionState }} />
             {' · '}
             <LocalizedText messageKey="connectionRepair.mode" params={{ mode }} />
           </p>
           {session?.browserName && mode === 'full' ? (
-            <p className="text-caption text-text-muted"><LocalizedText messageKey="connectionRepair.browser" params={{ name: session.browserName }} /></p>
+            <p className="text-xs text-text-muted"><LocalizedText messageKey="connectionRepair.browser" params={{ name: session.browserName }} /></p>
           ) : null}
           <p data-repair-explanation={explanation.typedClass ?? 'untyped'}><LocalizedText messageKey={explanation.messageKey} params={explanation.params} /></p>
           {explanation.showDetail && session?.detail ? (
-            <p className="text-caption text-text-muted">
+            <p className="text-xs text-text-muted">
               <LocalizedText messageKey="connectionRepair.reported" />{' '}
               <span className="text-text-main" data-repair-detail {...messageLanguageAttributes(detail)}>{session.detail}</span>
             </p>
@@ -96,7 +96,7 @@ export const ConnectionRepairDialog: React.FC<{ onClose: () => void; onOpenSetti
         </section>
 
         <section aria-labelledby="repair-world" className="space-y-1.5">
-          <h3 id="repair-world" className="text-caption font-semibold text-text-muted"><LocalizedText messageKey="connectionRepair.worldHeading" /></h3>
+          <h3 id="repair-world" className="text-[10px] font-black uppercase tracking-wider text-text-muted"><LocalizedText messageKey="connectionRepair.worldHeading" /></h3>
           {mode === 'full' ? (
             <p><LocalizedText messageKey="connectionRepair.world.full" /></p>
           ) : world.kind === 'none' ? (
@@ -107,12 +107,12 @@ export const ConnectionRepairDialog: React.FC<{ onClose: () => void; onOpenSetti
             <p data-repair-world="listed"><LocalizedText messageKey="connectionRepair.world.saved" params={{ world: world.long ?? '' }} /></p>
           )}
           {state?.account?.worldId ? (
-            <p className="text-caption text-text-muted"><LocalizedText messageKey="connectionRepair.world.observed" params={{ world: state.account.worldId }} /></p>
+            <p className="text-xs text-text-muted"><LocalizedText messageKey="connectionRepair.world.observed" params={{ world: state.account.worldId }} /></p>
           ) : null}
         </section>
 
         <section aria-labelledby="repair-actions" className="space-y-2">
-          <h3 id="repair-actions" className="text-caption font-semibold text-text-muted"><LocalizedText messageKey="connectionRepair.actionsHeading" /></h3>
+          <h3 id="repair-actions" className="text-[10px] font-black uppercase tracking-wider text-text-muted"><LocalizedText messageKey="connectionRepair.actionsHeading" /></h3>
           <div className="flex flex-wrap gap-2">
             {controls.canStart ? (
               <Button variant="primary" size="sm" disabled={busy || auth.dashboardConnectionStatus !== 'Connected' || auth.gameConnectionState === 'starting'} onClick={() => run(() => auth.startGame())}>
@@ -120,20 +120,20 @@ export const ConnectionRepairDialog: React.FC<{ onClose: () => void; onOpenSetti
               </Button>
             ) : null}
             {controls.canReconnect || wants.has('reconnect') ? (
-              <Button variant="secondary" size="sm" disabled={busy || auth.dashboardConnectionStatus !== 'Connected'} onClick={() => run(() => auth.reconnectGame())}>
+              <Button variant="outline" size="sm" disabled={busy || auth.dashboardConnectionStatus !== 'Connected'} onClick={() => run(() => auth.reconnectGame())}>
                 <LocalizedText messageKey="connectionRepair.action.reconnect" />
               </Button>
             ) : null}
             {canReenable ? (
-              <Button variant="secondary" size="sm" disabled={busy} onClick={() => run(() => reauthorizeSavedLogin(submitIntent))}>
+              <Button variant="outline" size="sm" disabled={busy} onClick={() => run(() => reauthorizeSavedLogin(submitIntent))}>
                 <LocalizedText messageKey="connectionRepair.action.reenable" />
               </Button>
             ) : null}
-            <Button variant="secondary" size="sm" onClick={onOpenSettings}>
+            <Button variant="outline" size="sm" onClick={onOpenSettings}>
               <LocalizedText messageKey="connectionRepair.action.openSettings" />
             </Button>
           </div>
-          {actionError ? <p role="alert" className="text-caption font-medium text-error"><LocalizedText messageKey="connectionRepair.actionFailed" params={{ reason: actionError }} /></p> : null}
+          {actionError ? <p role="alert" className="text-xs font-medium text-error"><LocalizedText messageKey="connectionRepair.actionFailed" params={{ reason: actionError }} /></p> : null}
         </section>
       </div>
     </Modal>

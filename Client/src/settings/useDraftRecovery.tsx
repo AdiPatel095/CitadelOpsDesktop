@@ -207,7 +207,7 @@ export function useDraftRecovery({ section, isOpen, draftSession, draft, loaded,
   const banner = entry ? (
     <div className="mb-4 rounded-global border border-primary/30 bg-primary/10 px-4 py-3" role="status" data-draft-recovery={savedSince ? 'saved-since' : 'baseline-unchanged'}>
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <p className="min-w-0 flex-1 text-caption text-text-main">
+        <p className="min-w-0 flex-1 text-xs leading-relaxed text-text-main">
           <LocalizedText
             messageKey={savedSince ? 'draftRecovery.bannerSavedSince' : 'draftRecovery.banner'}
             params={{ savedAt: Date.parse(entry.savedAt) }}
@@ -215,11 +215,11 @@ export function useDraftRecovery({ section, isOpen, draftSession, draft, loaded,
         </p>
         <div className="flex flex-wrap gap-2">
           {savedSince ? (
-            <Button variant="secondary" size="sm" onClick={() => setComparingFor(entry.savedAt)} leftIcon={<RotateCcw className="h-4 w-4" />}>
+            <Button variant="outline" size="sm" onClick={() => setComparingFor(entry.savedAt)} leftIcon={<RotateCcw className="h-4 w-4" />}>
               <LocalizedText messageKey="draftRecovery.compare" />
             </Button>
           ) : (
-            <Button variant="secondary" size="sm" onClick={restore} leftIcon={<RotateCcw className="h-4 w-4" />}>
+            <Button variant="outline" size="sm" onClick={restore} leftIcon={<RotateCcw className="h-4 w-4" />}>
               <LocalizedText messageKey="draftRecovery.restore" />
             </Button>
           )}
@@ -237,19 +237,19 @@ export function useDraftRecovery({ section, isOpen, draftSession, draft, loaded,
           footer={(
             <>
               <Button variant="primary" onClick={restore}><LocalizedText messageKey="draftRecovery.restore" /></Button>
-              <Button variant="secondary" onClick={discard}><LocalizedText messageKey="draftRecovery.discard" /></Button>
+              <Button variant="outline" onClick={discard}><LocalizedText messageKey="draftRecovery.discard" /></Button>
               <Button variant="ghost" onClick={() => setComparingFor(null)}><LocalizedText messageKey="draftRecovery.close" /></Button>
             </>
           )}
         >
-          <div className="space-y-3 text-caption" data-draft-compare>
+          <div className="space-y-3 text-xs" data-draft-compare>
             <p className="text-text-main"><LocalizedText messageKey="draftRecovery.compareIntro" /></p>
             {copyReapplied ? <p className="text-text-main"><LocalizedText messageKey="draftRecovery.compareIntroReappliedCopy" /></p> : null}
             {differences.length === 0 ? (
               <p className="text-text-muted"><LocalizedText messageKey="draftRecovery.noDifferences" /></p>
             ) : (
               <table className="w-full text-left">
-                <thead className="text-caption text-text-muted">
+                <thead className="text-[10px] uppercase tracking-wider text-text-muted">
                   <tr>
                     <th scope="col" className="py-1 pr-2 font-bold"><LocalizedText messageKey="draftRecovery.columnSetting" /></th>
                     <th scope="col" className="py-1 pr-2 font-bold"><LocalizedText messageKey="draftRecovery.columnSaved" /></th>

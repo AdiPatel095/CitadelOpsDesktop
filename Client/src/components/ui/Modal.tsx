@@ -132,7 +132,7 @@ export const Modal: React.FC<ModalProps> = ({
             {!hideCloseButton && (
               <Button
                 variant="ghost"
-                iconOnly
+                size="icon"
                 onClick={onClose}
                 className="liquid-modal-close"
                 aria-label={closeLabel ?? localizeStatic("ui.components.ui.modal.aria-label.close.modal.207bd886")}

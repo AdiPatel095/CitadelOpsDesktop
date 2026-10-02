@@ -9,9 +9,9 @@ const cellStyle: CSSProperties = { border: '1px solid #d8def0', borderRadius: 9,
 export function GuideIllustration({ pack, kind, locale, large = false, alt, showAdvisor = true }: { pack: GuidePack; kind: GuidePanelKind; locale: string; large?: boolean; alt: string; showAdvisor?: boolean }) {
   const panel = pack.panels[kind];
   return <div role="group" aria-label={alt} lang={locale} dir={locale === 'ar' ? 'rtl' : 'ltr'} style={{ ...panelStyle, maxWidth: large ? 840 : 680 }}>
-    <div style={{ color: '#5546ae', fontSize: "var(--font-size-12)", fontWeight: "var(--font-weight-700)", marginBottom: 7 }}>{pack.ui.illustrativeExample}</div>
-    <h5 style={{ color: '#344a98', fontSize: "var(--font-size-16)", fontWeight: "var(--font-weight-700)", margin: '0 0 13px' }}>{panel.title}</h5>
-    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 180px), 1fr))', gap: 10, fontSize: "var(--font-size-14)", lineHeight: 1.45 }}>
+    <div style={{ color: '#5546ae', fontSize: 11, fontWeight: 800, letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: 7 }}>{pack.ui.illustrativeExample}</div>
+    <h5 style={{ color: '#344a98', fontSize: 16, fontWeight: 700, margin: '0 0 13px' }}>{panel.title}</h5>
+    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 180px), 1fr))', gap: 10, fontSize: 14, lineHeight: 1.45 }}>
       {Object.entries(panel).filter(([key]) => key !== 'title' && (showAdvisor || key !== 'advisor')).map(([key, value]) => <div key={key} style={cellStyle}>{value}</div>)}
     </div>
   </div>;

@@ -18,7 +18,7 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
           )}
           <input
             ref={ref}
-            className={`m3-input w-full border px-4 py-2.5 text-text-main placeholder-text-muted focus:outline-none transition-colors duration-200 text-body
+            className={`m3-input w-full border px-4 py-2.5 text-text-main placeholder-text-muted focus:outline-none transition-colors duration-200 text-sm
               ${error ? 'border-error focus:border-error focus:ring-error' : 'border-border-base focus:border-primary focus:ring-primary'}
               ${leftIcon ? 'pl-10' : ''}
               ${rightIcon ? 'pr-10' : ''}
@@ -32,7 +32,7 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
             </div>
           )}
         </div>
-        {error && <span className="text-caption text-error font-medium">{error}</span>}
+        {error && <span className="text-xs text-error font-medium">{error}</span>}
       </div>
     );
   }

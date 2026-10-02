@@ -2,10 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useCastleFocus } from '../context/CastleFocusContext';
 import { Select, type SelectOption } from './ui';
-import { useLocale } from '../i18n/LocaleContext';
 
 const CastleFocusSwitcher: React.FC = () => {
-  const { t } = useLocale();
   const { gameLoggedIn } = useAuth();
   const { castle, castles, selectCastle } = useCastleFocus();
   const [pendingCastleId, setPendingCastleId] = useState<number | null>(null);
@@ -37,7 +35,6 @@ const CastleFocusSwitcher: React.FC = () => {
   return (
     <div className="castle-focus-shell flex items-center min-w-[14rem] sm:min-w-[18rem]">
       <Select
-        ariaLabel={t('header.castleSwitcher.label')}
         value={currentCastleId > 0 ? String(currentCastleId) : ''}
         options={dropdownOptions}
         menuGrowToViewport

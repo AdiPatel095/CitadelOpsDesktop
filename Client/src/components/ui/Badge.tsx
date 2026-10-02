@@ -6,8 +6,8 @@ export interface BadgeProps extends HTMLAttributes<HTMLSpanElement> {
 
 export const Badge = React.forwardRef<HTMLSpanElement, BadgeProps>(
   ({ className = '', variant = 'primary', children, ...props }, ref) => {
-    const baseStyles = 'm3-chip inline-flex items-center px-2.5 py-0.5 text-caption font-semibold transition-colors';
-
+    const baseStyles = 'm3-chip inline-flex items-center px-2.5 py-0.5 text-xs font-semibold transition-colors';
+    
     const variants = {
       primary: 'm3-chip-primary',
       secondary: 'm3-chip-secondary',
@@ -20,7 +20,6 @@ export const Badge = React.forwardRef<HTMLSpanElement, BadgeProps>(
     return (
       <span
         ref={ref}
-        data-status-role={variant === 'success' || variant === 'warning' ? variant : undefined}
         className={`${baseStyles} ${variants[variant]} ${className}`}
         {...props}
       >

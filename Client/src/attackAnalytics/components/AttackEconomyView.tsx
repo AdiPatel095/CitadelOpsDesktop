@@ -10,7 +10,7 @@ import {
   Trophy,
 } from 'lucide-react';
 import StaleSessionBanner from '../../components/StaleSessionBanner';
-import { EmptyState, ViewState, viewStatus, Badge, Button, Card, CardContent, CardHeader, CardTitle, PageHeader, PillSelector } from '../../components/ui';
+import { Badge, Button, Card, CardContent, CardHeader, CardTitle, PageHeader, PillSelector } from '../../components/ui';
 import { Notifications } from '../../components/Notifications';
 import { useMetadata, type MetadataItem } from '../../context/MetadataContext';
 import { runtimeFetch } from '../../api/RuntimeURL';
@@ -220,7 +220,7 @@ const AttackEconomyView = ({
             {(selectedFeature === 'autoTowers' || selectedFeature === 'autoStorm') && (
               <Badge variant="secondary"><LocalizedText messageKey="ui.attackAnalytics.components.attackEconomyView.events.excluded.ad67c518" /></Badge>
             )}
-            {loadError && aggregates.length > 0 && <Badge variant="danger"><LocalizedText messageKey="ui.attackAnalytics.components.attackEconomyView.history.unavailable.cf319f4d" /></Badge>}
+            {loadError && <Badge variant="danger"><LocalizedText messageKey="ui.attackAnalytics.components.attackEconomyView.history.unavailable.cf319f4d" /></Badge>}
           </div>
         )}
       />}
@@ -268,28 +268,24 @@ const AttackEconomyView = ({
         />
       )}
 
-      <ViewState status={viewStatus({ hasData: rangedAggregates.length > 0, loading, error: Boolean(loadError) })}
-        error={{ title: localizeStatic('ui.attackAnalytics.components.attackEconomyView.history.unavailable.cf319f4d'), description: loading ? localizeStatic('ui.state.loading') : undefined, onRetry: () => void loadAggregates(), retryLabel: localizeStatic('ui.state.retry') }}
-        loading={{ label: localizeStatic('ui.state.loading'), variant: 'table' }}
-        empty={{ title: localizeStatic('analytics.noAttributed', { metric: selectedMetric.label.toLocaleLowerCase() }), description: localizeStatic('analytics.noAttributedHelp'), icon: <Trophy /> }}>
-      <Card className="">
-        <CardHeader className=" flex-wrap gap-4">
+      <Card className="liquid-prominent-header-card">
+        <CardHeader className="liquid-card-header-prominent flex-wrap gap-4">
           <div>
             <CardTitle className="flex items-center gap-2">
               <Activity className="h-5 w-5 text-primary" />
               {selectedFeatureLabel} · {selectedMetric.label}
             </CardTitle>
             <div className="mt-2 flex flex-wrap items-baseline gap-3">
-              <span className="font-mono text-display-sm font-bold text-text-main">+{formatNumber(metricTotal)}</span>
-              <span className="inline-flex items-center gap-1 text-caption font-semibold text-success">
+              <span className="font-mono text-3xl font-bold text-text-main">+{formatNumber(metricTotal)}</span>
+              <span className="inline-flex items-center gap-1 text-xs font-semibold text-success">
                 <TrendingUp className="h-3.5 w-3.5" />
                 Delta +{formatNumber(metricTotal)} · {formatRate(rate, selectedRange, customWindow)}
               </span>
             </div>
           </div>
         </CardHeader>
-        <CardContent className="">
-          <div className="mb-3 flex flex-wrap items-center justify-between gap-2 text-caption text-text-muted">
+        <CardContent className="p-5 sm:p-6">
+          <div className="mb-3 flex flex-wrap items-center justify-between gap-2 text-xs text-text-muted">
             <span><LocalizedText messageKey="ui.attackAnalytics.components.attackEconomyView.drag.horizontally.to.inspect.a.custom.time.4a5e7152" /></span>
             {customWindow && (
               <div className="flex flex-wrap items-center gap-2">
@@ -314,7 +310,7 @@ const AttackEconomyView = ({
 
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-body-lg">
+          <CardTitle className="flex items-center gap-2 text-base">
             <PackageOpen className="h-4.5 w-4.5 text-success" />
             {selectedFeature === 'autoInvasion'
               ? 'Resources looted'
@@ -324,7 +320,7 @@ const AttackEconomyView = ({
           </CardTitle>
           <Badge variant="outline">{resourceRows.length} types</Badge>
         </CardHeader>
-        <CardContent className="space-y-2">
+        <CardContent className="space-y-2 p-4">
           {resourceRows.length === 0 ? (
             <EmptyAnalyticsState compact />
           ) : resourceRows.map(([key, amount]) => (
@@ -332,7 +328,6 @@ const AttackEconomyView = ({
           ))}
         </CardContent>
       </Card>
-      </ViewState>
     </div>
   );
 };
@@ -344,21 +339,24 @@ function ResourceRow({ resourceKey, amount, definition }: { resourceKey: string;
       {presentation.image ? (
         <img src={presentation.image} alt="" className="h-8 w-8 shrink-0 object-contain" loading="lazy" />
       ) : (
-        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-caption font-semibold text-primary">
+        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-bold text-primary">
           {presentation.label.slice(0, 1)}
         </span>
       )}
-      <div className="min-w-0 flex-1 truncate text-body font-semibold text-text-main">{presentation.label}</div>
-      <div className="font-mono text-body font-semibold text-success">+{formatNumber(amount)}</div>
+      <div className="min-w-0 flex-1 truncate text-sm font-semibold text-text-main">{presentation.label}</div>
+      <div className="font-mono text-sm font-bold text-success">+{formatNumber(amount)}</div>
     </div>
   );
 }
 
 function EmptyAnalyticsState({ compact = false, metricLabel = 'loot' }: { compact?: boolean; metricLabel?: string }) {
-  const { t: localizeStatic } = useStaticLocale();
-  return <EmptyState size={compact ? 'sm' : 'md'} surface="plain" icon={<Trophy />}
-    title={localizeStatic('analytics.noAttributed', { metric: metricLabel.toLocaleLowerCase() })}
-    description={localizeStatic('analytics.noAttributedHelp')} />;
+  return (
+    <div className={`flex flex-col items-center justify-center text-center text-text-muted ${compact ? 'min-h-32 py-4' : 'min-h-40 py-6'}`}>
+      <Trophy className="mb-3 h-8 w-8 opacity-50" />
+      <div className="text-sm font-semibold text-text-main">No attributed {metricLabel.toLocaleLowerCase()} yet</div>
+      <p className="mt-1 max-w-sm text-xs"><LocalizedText messageKey="ui.attackAnalytics.components.attackEconomyView.new.confirmed.reports.for.this.automation.will.34f774ba" /></p>
+    </div>
+  );
 }
 
 function EconomyChart({
@@ -483,7 +481,7 @@ function EconomyChart({
           return (
             <g key={ratio}>
               <line x1={paddingLeft} y1={lineY} x2={width - paddingRight} y2={lineY} stroke="currentColor" className="text-border-base" strokeOpacity="0.65" />
-              <text x={paddingLeft - 10} y={lineY + 4} textAnchor="end" className="fill-text-muted text-caption">{formatCompact(maximumValue * ratio)}</text>
+              <text x={paddingLeft - 10} y={lineY + 4} textAnchor="end" className="fill-text-muted text-[11px]">{formatCompact(maximumValue * ratio)}</text>
             </g>
           );
         })}
@@ -495,8 +493,8 @@ function EconomyChart({
           <line x1={brushStart} x2={brushStart} y1={paddingTop} y2={paddingTop + plotHeight} stroke={color} strokeWidth="2" vectorEffect="non-scaling-stroke" />
           <line x1={brushEnd} x2={brushEnd} y1={paddingTop} y2={paddingTop + plotHeight} stroke={color} strokeWidth="2" vectorEffect="non-scaling-stroke" />
         </g>}
-        <text x={paddingLeft} y={height - 10} textAnchor="start" className="fill-text-muted text-caption">{formatDate(minimumTime)}</text>
-        <text x={width - paddingRight} y={height - 10} textAnchor="end" className="fill-text-muted text-caption">{formatDate(maximumTime)}</text>
+        <text x={paddingLeft} y={height - 10} textAnchor="start" className="fill-text-muted text-[11px]">{formatDate(minimumTime)}</text>
+        <text x={width - paddingRight} y={height - 10} textAnchor="end" className="fill-text-muted text-[11px]">{formatDate(maximumTime)}</text>
       </svg>
       </div>
     </div>

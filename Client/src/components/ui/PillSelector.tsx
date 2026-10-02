@@ -22,7 +22,7 @@ export const PillSelector: React.FC<PillSelectorProps> = ({ options, className =
     <ToggleGroup
       {...props}
       options={normalizedOptions}
-      className={`ui-pill-selector ${className}`}
+      className={`liquid-pill-selector ${className}`}
     />
   );
 };

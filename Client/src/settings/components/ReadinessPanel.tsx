@@ -37,18 +37,18 @@ export const ReadinessCheckLine: React.FC<{
   /** Extra context under the message, e.g. the current value of a collapsed Advanced setting. */
   note?: ReactNode;
 }> = ({ check, slotLabelKey, onFix, note }) => (
-  <li className="flex items-start gap-2 text-caption text-text-main">
+  <li className="flex items-start gap-2 text-xs leading-relaxed text-text-main">
     <StateIcon state={check.state} />
     <span className="sr-only"><LocalizedText messageKey="readiness.state" params={{ state: check.state }} /></span>
     <span className="min-w-0 flex-1">
       {slotLabelKey ? <span className="font-bold text-text-muted"><LocalizedText messageKey={slotLabelKey} />{': '}</span> : null}
       <LocalizedText messageKey={check.messageKey} params={check.params} />
       {check.fix === 'assignment' && !onFix ? (
-        <span className="block text-caption text-text-muted"><LocalizedText messageKey="ui.settings.components.readinessPanel.assign.commanders.under.commanders.features.repairing.assignments.a9c68853" /></span>
+        <span className="block text-[11px] text-text-muted"><LocalizedText messageKey="ui.settings.components.readinessPanel.assign.commanders.under.commanders.features.repairing.assignments.a9c68853" /></span>
       ) : null}
       {note}
       {check.fix === 'connection' ? (
-        <span className="block text-caption text-text-muted"><LocalizedText messageKey="ui.settings.components.readinessPanel.this.updates.by.itself.once.the.game.7b60fd8c" /></span>
+        <span className="block text-[11px] text-text-muted"><LocalizedText messageKey="ui.settings.components.readinessPanel.this.updates.by.itself.once.the.game.7b60fd8c" /></span>
       ) : null}
     </span>
     {check.fix === 'connection' && check.state !== 'valid' ? (
@@ -80,19 +80,19 @@ export interface ReadinessPanelProps {
 export const ReadinessPanel: React.FC<ReadinessPanelProps> = ({ report, slotLabelKeys, onFix, noteFor }) => (
   <section className="rounded-xl border border-border-base bg-bg-elevated/40 p-4" aria-labelledby={`readiness-${report.featureId}`}>
     <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-      <h3 id={`readiness-${report.featureId}`} className="flex items-center gap-2 text-title-sm font-bold text-text-main">
+      <h3 id={`readiness-${report.featureId}`} className="flex items-center gap-2 text-sm font-black text-text-main">
         <ClipboardCheck className="h-4 w-4 text-primary" aria-hidden="true" /> <LocalizedText messageKey="ui.settings.components.readinessPanel.before.you.start.74e492d5" />
       </h3>
-      <Badge variant={STATE_BADGE[report.overall]} className="normal-case">
+      <Badge variant={STATE_BADGE[report.overall]} className="normal-case tracking-normal">
         <LocalizedText messageKey="readiness.overall" params={{ state: report.overall }} />
       </Badge>
     </div>
     {report.plan && report.plan.length > 0 ? (
       <div className="mb-3 border-b border-border-base pb-3">
-        <h4 className="mb-2 text-caption font-semibold text-text-muted"><LocalizedText messageKey="ui.settings.components.readinessPanel.plan.fa8ed0bd" /></h4>
+        <h4 className="mb-2 text-[10px] font-black uppercase tracking-wider text-text-muted"><LocalizedText messageKey="ui.settings.components.readinessPanel.plan.fa8ed0bd" /></h4>
         <ul className="space-y-1.5">
           {report.plan.map((line, index) => (
-            <li key={`${line.id}:${index}`} className="flex items-start gap-2 text-caption text-text-main">
+            <li key={`${line.id}:${index}`} className="flex items-start gap-2 text-xs leading-relaxed text-text-main">
               <Info className="mt-0.5 h-4 w-4 shrink-0 text-primary" aria-hidden="true" />
               <span className="min-w-0 flex-1"><LocalizedText messageKey={line.messageKey} params={line.params} /></span>
             </li>
@@ -111,7 +111,7 @@ export const ReadinessPanel: React.FC<ReadinessPanelProps> = ({ report, slotLabe
         />
       ))}
     </ul>
-    <p className="mt-3 border-t border-border-base pt-3 text-caption text-text-muted">
+    <p className="mt-3 border-t border-border-base pt-3 text-[11px] text-text-muted">
       <LocalizedText messageKey="ui.settings.components.readinessPanel.checks.run.against.these.settings.and.current.b517e885" />
     </p>
   </section>

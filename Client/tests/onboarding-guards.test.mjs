@@ -142,7 +142,7 @@ test('focus survives the goal opener leaving the page: choosing a goal focuses t
   const view = await source('views/AutomationView.tsx');
   assert.match(view, /onChoose=\{\(goalId\) => \{ goalApi\.choose\(goalId\); setGoalPickerOpen\(false\); focusReadinessTargetWhenReady\('setup-checklist'\); \}\}/);
   assert.match(view, /onDone=\{\(\) => \{ goalApi\.clear\(\); focusReadinessTargetWhenReady\('goal-entry'\); \}\}/);
-  assert.match(view, /<Button variant="secondary" size="md" id="goal-entry" onClick=\{\(\) => setGoalPickerOpen\(true\)\} data-goal-entry>/);
+  assert.match(view, /<Button variant="outline" size="sm" id="goal-entry" onClick=\{\(\) => setGoalPickerOpen\(true\)\} data-goal-entry>/);
   const panel = await source('components/SetupChecklist.tsx');
   assert.match(panel, /<section\s+id="setup-checklist"\s+tabIndex=\{-1\}/, 'the panel can take focus');
 });
