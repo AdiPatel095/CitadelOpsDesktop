@@ -1,3 +1,4 @@
+import '../../views/core-views.css';
 import { DeltaValue } from '../../components/ui';
 import { useLocale } from '../../i18n/LocaleContext';
 import { equipmentEventOptions } from '../EquipmentEventLoadouts';
@@ -383,7 +384,7 @@ function EffectiveBattleReport({
 			<div className="equipment-report-header">
 				<div className="min-w-0">
 					<h3 className="flex items-center gap-2 text-title-sm font-semibold text-text-main">
-						<Activity className="h-4 w-4 shrink-0 text-primary" />
+						<Activity className="h-4 w-4 shrink-0 text-text-muted" />
 						<LocalizedText messageKey="ui.equipment.components.equipmentView.effective.battle.report.6af6f9d6" />
 					</h3>
 					<p className="mt-0.5 truncate text-caption text-text-muted">{leader?.name ?? 'Select a loadout'}</p>
@@ -488,7 +489,7 @@ function EquipmentStatsPane({
 						<div className="mb-2 flex items-start justify-between gap-3">
 							<div>
 								<h3 className="text-title-sm font-bold text-text-muted">{section.title}</h3>
-								<p className="mt-1 text-caption text-text-muted/80"><LocalizedText messageKey={section.description} /></p>
+								<p className="mt-1 text-caption text-text-muted"><LocalizedText messageKey={section.description} /></p>
 							</div>
 							<Badge variant="outline" className="shrink-0 text-caption">{section.effectCount}</Badge>
 						</div>
@@ -560,7 +561,7 @@ function EquipmentEffectDetailRow({
 						<Badge variant={effectScopeBadge(effect.scope)} className="px-1.5 py-0 text-caption">{effect.scope}</Badge>
 						{effect.capped && <Badge variant="warning" className="px-1.5 py-0 text-caption"><LocalizedText messageKey="ui.equipment.components.equipmentView.capped.526b49dc" /></Badge>}
 					</div>
-					<div className="mt-1 text-caption text-text-muted/80">
+					<div className="mt-1 text-caption text-text-muted">
 						{effect.sources.join(' · ')}{includeCap && effect.cap ? ` · max ${formatEquipmentEffectValue(effect, effect.cap, locale)}` : ''}
 					</div>
 				</div>

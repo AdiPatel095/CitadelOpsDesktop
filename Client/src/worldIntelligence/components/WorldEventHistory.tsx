@@ -496,7 +496,7 @@ export const WorldEventHistory = ({
 		<div>
 			<div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
 				<div>
-					<div className="flex items-center gap-2 text-body-lg font-semibold text-text-main"><Trophy className="h-5 w-5 text-primary" /> <LocalizedText messageKey="ui.worldIntelligence.components.worldEventHistory.player.rankings.7a29848b" /></div>
+					<div className="flex items-center gap-2 text-body-lg font-semibold text-text-main"><Trophy className="h-5 w-5 text-text-muted" /> <LocalizedText messageKey="ui.worldIntelligence.components.worldEventHistory.player.rankings.7a29848b" /></div>
 						<p className="mt-1 text-caption text-text-muted"><LocalizedText messageKey="ui.worldIntelligence.components.worldEventHistory.name.might.honor.and.alliance.stay.visible.9556c88a" /></p>
 				</div>
 				<Button iconOnly variant="ghost" size="md" aria-label={localizeStatic("ui.worldIntelligence.components.worldEventHistory.aria-label.refresh.event.history.6f3331e2")} onClick={() => void refreshBoards()} isLoading={loading}><RefreshCw className="h-4 w-4" /></Button>
@@ -661,7 +661,7 @@ const WorldPlayerEventHistoryContent = ({ history, error = '', onOpenAlliance }:
 			<CardContent>
 				<div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
 					<div>
-						<div className="flex items-center gap-2 font-bold text-text-main"><History className="h-5 w-5 text-primary" /> <LocalizedText messageKey="ui.worldIntelligence.components.worldEventHistory.previous.scores.0b9095fa" /></div>
+						<div className="flex items-center gap-2 font-bold text-text-main"><History className="h-5 w-5 text-text-muted" /> <LocalizedText messageKey="ui.worldIntelligence.components.worldEventHistory.previous.scores.0b9095fa" /></div>
 						<p className="mt-1 text-caption text-text-muted"><LocalizedText messageKey="ui.worldIntelligence.components.worldEventHistory.final.known.public.score.from.each.completed.f94de1c4" /></p>
 					</div>
 					<div className="w-full sm:w-72">
@@ -706,7 +706,7 @@ const EventScoreTable = ({ entries, loading, regularPlayers, eventTitle, searchQ
 							<SortableEventHeader rowSpan={2} label={localizeStatic("ui.worldIntelligence.components.worldEventHistory.label.might.f68b032e")} column="might" sort={sort} onSort={onSort} className="min-w-32 text-right" align="right" />
 							<SortableEventHeader rowSpan={2} label={localizeStatic("ui.worldIntelligence.components.worldEventHistory.label.honor.22ea092e")} column="honor" sort={sort} onSort={onSort} className="min-w-32 text-right" align="right" />
 							<SortableEventHeader rowSpan={2} label={localizeStatic("ui.worldIntelligence.components.worldEventHistory.label.alliance.afe3c194")} column="alliance" sort={sort} onSort={onSort} className="min-w-52 text-left" />
-							<th colSpan={2} className="border-l border-border-base px-3 py-2 text-center text-primary">{eventTitle}</th>
+							<th colSpan={2} className="border-l border-border-base px-3 py-2 text-center text-text-main">{eventTitle}</th>
 						</tr>
 						<tr className="border-t border-border-base"><SortableEventHeader label={localizeStatic("ui.worldIntelligence.components.worldEventHistory.label.rank.a4130d7d")} column="rank" sort={sort} onSort={onSort} className="border-l border-border-base text-right" align="right" /><SortableEventHeader label={localizeStatic("ui.worldIntelligence.components.worldEventHistory.label.score.38e5a46c")} column="score" sort={sort} onSort={onSort} className="text-right" align="right" /></tr>
 					</thead>

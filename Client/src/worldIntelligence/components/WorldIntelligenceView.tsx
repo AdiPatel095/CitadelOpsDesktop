@@ -1,3 +1,4 @@
+import '../../views/core-views.css';
 import { useServerLabel } from '../useServerLabel';
 import { useLocale as useStaticLocale } from "../../i18n/LocaleContext";
 import { LocalizedText } from "../../i18n/LocalizedText";

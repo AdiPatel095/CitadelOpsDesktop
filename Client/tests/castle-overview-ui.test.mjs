@@ -48,10 +48,10 @@ test('overview renders positive-capacity storage, uncapped production, and both 
   assert.match(html, /Near cap/);
   assert.doesNotMatch(html, /aria-label="Coins"/);
   assert.doesNotMatch(html, /2,884,310 \/ 0/);
-  assert.match(html, /Coins<\/span><span[^>]*data-consuming="false">0</);
+  assert.match(html, /Coins<\/bdi><\/span><span[^>]*data-consuming="false">0</);
   assert.match(html, /data-consuming="false">\+12</);
   assert.match(html, /data-consuming="false">0</);
-  assert.match(html, /Food<\/span><span[^>]*data-consuming="true">−5</);
+  assert.match(html, /Food<\/bdi><\/span><span[^>]*data-consuming="true">−5</);
   assert.match(html, /In hospital<\/div><div[^>]*><span[^>]*>5</);
   assert.match(html, /No automation&#x27;s saved settings name this castle\./);
   assert.doesNotMatch(html, /Saved data/);

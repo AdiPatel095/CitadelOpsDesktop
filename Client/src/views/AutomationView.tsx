@@ -1,3 +1,4 @@
+import './core-views.css';
 import { AUTOMATION_FEATURE_NAMES } from '../settings/automationFeatureNames';
 import './automation-card.css';
 import { TimedRunButton } from '../components/automation/TimedRunButton';
@@ -820,7 +821,7 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
     focusReadinessTargetWhenReady(id);
   };
   const goalButton = (
-    <Button variant="secondary" size="sm" id="goal-entry" onClick={() => setGoalPickerOpen(true)} data-goal-entry>
+    <Button variant="secondary" size="md" id="goal-entry" onClick={() => setGoalPickerOpen(true)} data-goal-entry>
       <LocalizedText messageKey="goalEntry.button" />
     </Button>
   );
@@ -867,7 +868,7 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
         {groupedFeatures.map((group) => {
           return (
             <section key={group.id} className="automation-function-group">
-              <SectionHeader title={group.name} />
+              <SectionHeader title={<bdi>{group.name}</bdi>} />
               <div className="automation-function-grid">
                 {group.features.map((feature) => {
                   const FeatureIcon = feature.icon;
@@ -898,7 +899,7 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
                         </span>
                         <div className="automation-card-title">
                           <FeatureIcon className="h-3.5 w-3.5 shrink-0" />
-                          <h3>{feature.name}</h3>
+                          <h3><bdi>{feature.name}</bdi></h3>
                         </div>
                         <div className="automation-card-actions">
                           <TimedRunButton featureName={feature.name} expiresAt={timedUntil} now={now}
@@ -944,7 +945,7 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
                           </Badge>
                         </Panel>
                       ) : null}
-                      <p className="automation-card-description">{feature.description}</p>
+                      <p className="automation-card-description"><bdi>{feature.description}</bdi></p>
                       <AutomationFeatureFeedback
                         featureId={feature.id as SettingsFeatureId}
                         enabled={feature.enabled}

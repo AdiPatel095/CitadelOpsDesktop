@@ -1,0 +1,9 @@
+@layer components {
+    @media (max-width: 767px), (pointer: coarse) {
+        :is([data-view="castle"], [data-view="automation"], [data-view="equipment"], [data-view="world-intelligence"]) button,
+        [data-view="automation"] summary {
+            min-block-size: var(--control-height-touch);
+            min-inline-size: var(--control-height-touch);
+        }
+    }
+}

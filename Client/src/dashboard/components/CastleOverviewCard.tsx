@@ -27,7 +27,7 @@ function CastleAutomationRow({ featureId }: { featureId: SettingsFeatureId }) {
     buildLaneActive: featureId === 'autoBeriWorld' ? parseAutoBeriWorldSettings(configuration?.sections?.['automation.autoBeriWorld']).build.enabled : undefined,
   });
   return <li className="castle-overview-automation">
-    <span>{featureNames[featureId]}</span>
+    <span><bdi>{featureNames[featureId]}</bdi></span>
     <StatusBadge {...player.overall} />
   </li>;
 }
@@ -52,7 +52,7 @@ export default function CastleOverviewCard({ castle }: { castle: CastleStateV2 }
         {rows.filter(row => row.capacity != null && row.capacity > 0).map(row => <div key={row.id}>
           <div className="castle-overview-resource-label">
             {row.icon && <img src={row.icon} alt="" />}
-            <span>{row.name}</span><span>{formatNumber(row.amount)} / {formatNumber(row.capacity!)}</span>
+            <span><bdi>{row.name}</bdi></span><span>{formatNumber(row.amount)} / {formatNumber(row.capacity!)}</span>
           </div>
           <div className="castle-overview-storage" role="meter" aria-label={row.name}
             aria-valuemin={0} aria-valuemax={Math.max(0, row.capacity!)} aria-valuenow={Math.max(0, Math.min(row.amount, row.capacity!))}
@@ -67,7 +67,7 @@ export default function CastleOverviewCard({ castle }: { castle: CastleStateV2 }
       <h3>{t('castleOverview.production')}</h3>
       <div className="castle-overview-resources">
         {rows.map(row => <div className="castle-overview-resource-label" key={row.id}>
-          {row.icon && <img src={row.icon} alt="" />}<span>{row.name}</span>
+          {row.icon && <img src={row.icon} alt="" />}<span><bdi>{row.name}</bdi></span>
           <span className="castle-overview-production" data-consuming={row.perHour < 0}>
             {row.perHour > 0 ? '+' : row.perHour < 0 ? '−' : ''}{formatNumber(Math.abs(row.perHour))}
           </span>
@@ -86,7 +86,7 @@ export default function CastleOverviewCard({ castle }: { castle: CastleStateV2 }
       <h3>{t('castleOverview.automations')}</h3>
       {features.length ? <ul className="castle-overview-automations">{features.map(featureId => <CastleAutomationRow key={featureId} featureId={featureId} />)}</ul>
         : <p className="castle-overview-muted">{t('castleOverview.noAutomations')}</p>}
-      <Button variant="ghost" size="sm" onClick={() => requestView('automation')}>{t('castleOverview.seeAll')}</Button>
+      <Button variant="ghost" size="md" onClick={() => requestView('automation')}>{t('castleOverview.seeAll')}</Button>
     </section>
   </SectionCard>;
 }
