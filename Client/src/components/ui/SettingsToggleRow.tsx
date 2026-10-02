@@ -35,7 +35,7 @@ export const SettingsToggleRow: React.FC<SettingsToggleRowProps> = ({
     warning: 'border-warning/25 bg-warning/5',
     danger: 'border-error/25 bg-error/5',
   }[tone];
-  const iconClass = tone === 'warning' ? 'text-warning' : tone === 'danger' ? 'text-error' : 'text-primary';
+  const iconClass = tone === 'warning' ? 'text-warning' : tone === 'danger' ? 'text-error' : 'text-text-muted';
   const accessibleName = ariaLabel ?? (typeof title === 'string' ? title : t('settings.toggle'));
 
   return (

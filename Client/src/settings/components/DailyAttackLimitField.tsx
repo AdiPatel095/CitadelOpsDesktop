@@ -19,7 +19,7 @@ export const DailyAttackLimitField: React.FC<DailyAttackLimitFieldProps> = ({ va
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0">
           <div className="flex items-center gap-2 text-body font-semibold text-text-main">
-            <Gauge className="h-4 w-4 text-primary" /> <LocalizedText messageKey="ui.settings.components.dailyAttackLimitField.daily.normal.attack.limit.503daf3e" />
+            <Gauge className="h-4 w-4 text-text-muted" /> <LocalizedText messageKey="ui.settings.components.dailyAttackLimitField.daily.normal.attack.limit.503daf3e" />
           </div>
           <p className="mt-1 text-caption text-text-muted">
             {description ?? (

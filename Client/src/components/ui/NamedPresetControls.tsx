@@ -36,7 +36,7 @@ export const NamedPresetControls: React.FC<NamedPresetControlsProps> = ({
   disabled = false,
 }) => (
   <Card variant="solid" className={`shrink-0 border-border-base bg-bg-app p-4 ${className}`}>
-    <div className="mb-3 text-caption font-semibold text-primary"><LocalizedText messageKey="ui.components.ui.namedPresetControls.presets.954f93fe" /></div>
+    <div className="mb-3 text-caption font-semibold text-text-main"><LocalizedText messageKey="ui.components.ui.namedPresetControls.presets.954f93fe" /></div>
     <div className="flex flex-col gap-4 lg:flex-row lg:flex-wrap lg:items-end">
       <label className="flex min-w-0 flex-1 flex-col gap-1.5 md:min-w-[220px]">
         <span className="text-caption font-semibold text-text-muted"><LocalizedText messageKey="common.presetName" /></span>

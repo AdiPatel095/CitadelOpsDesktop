@@ -560,7 +560,7 @@ export const AutoBirdSettingsModal: React.FC<AutoBirdSettingsModalProps> = ({ is
                         <div className="relative flex w-[84px] shrink-0 flex-col items-center" aria-label={localizeStatic("ui.settings.components.autoBirdSettingsModal.aria-label.all.direwolves.reserved.by.auto.fortress.c1d2bfc5")}>
                           <div className="relative h-[76px] w-[76px]">
                             <UnitImage unitId={AUTO_FORTRESS_DIREWOLF_ID} size={76} showLevel className="rounded-xl opacity-80" />
-                            <span className="absolute left-1 top-1 z-10 flex h-6 w-6 items-center justify-center rounded-full bg-primary text-white shadow-md" title={localizeStatic("ui.settings.components.autoBirdSettingsModal.title.reserved.by.auto.fortress.fad9df89")}>
+                            <span className="absolute left-1 top-1 z-10 flex h-6 w-6 items-center justify-center rounded-full border border-border-base bg-bg-input text-text-main shadow-md" title={localizeStatic("ui.settings.components.autoBirdSettingsModal.title.reserved.by.auto.fortress.fad9df89")}>
                               <LockKeyhole className="h-3.5 w-3.5" />
                             </span>
                             <span className="absolute bottom-0 right-0 z-10 translate-x-1/4 translate-y-1/4 rounded-full bg-white px-2.5 py-0.5 text-center text-caption font-semibold text-slate-900 shadow-md ring-1 ring-black/10">
