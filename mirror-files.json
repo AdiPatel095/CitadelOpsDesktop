@@ -221,6 +221,14 @@
       "desktop": "Client/src/components/automation/attackCounts.ts"
     },
     {
+      "portal": "src/commandCenter/components/automation/timedRun.ts",
+      "desktop": "Client/src/components/automation/timedRun.ts"
+    },
+    {
+      "portal": "src/commandCenter/components/automation/timerTipStorage.ts",
+      "desktop": "Client/src/components/automation/timerTipStorage.ts"
+    },
+    {
       "portal": "src/commandCenter/components/header/headerStatus.ts",
       "desktop": "Client/src/components/header/headerStatus.ts"
     },
@@ -307,6 +315,10 @@
     {
       "portal": "src/commandCenter/components/ui/ToggleGroup.tsx",
       "desktop": "Client/src/components/ui/ToggleGroup.tsx"
+    },
+    {
+      "portal": "src/commandCenter/components/ui/delta.ts",
+      "desktop": "Client/src/components/ui/delta.ts"
     },
     {
       "portal": "src/commandCenter/components/ui/index.ts",
@@ -1225,6 +1237,10 @@
       "desktop": "Client/tests/check-retired-classes.test.mjs"
     },
     {
+      "portal": "tests/delta.test.mjs",
+      "desktop": "Client/tests/delta.test.mjs"
+    },
+    {
       "portal": "tests/gate-report.test.mjs",
       "desktop": "Client/tests/gate-report.test.mjs"
     },
@@ -1253,8 +1269,16 @@
       "desktop": "Client/tests/status-badges.test.mjs"
     },
     {
+      "portal": "tests/timed-run.test.mjs",
+      "desktop": "Client/tests/timed-run.test.mjs"
+    },
+    {
       "portal": "tests/view-states-logic.test.mjs",
       "desktop": "Client/tests/view-states-logic.test.mjs"
+    },
+    {
+      "portal": "tests/visual/rules.ts",
+      "desktop": "Client/tests/visual/rules.ts"
     }
   ],
   "unmirrored": []
