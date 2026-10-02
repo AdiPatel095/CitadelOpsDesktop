@@ -15,6 +15,7 @@
     "typecheck:app": "tsc -p tsconfig.app.json --noEmit",
     "typecheck:node": "tsc -p tsconfig.node.json --noEmit",
     "test:visual": "node scripts/visual/run.mjs compare",
+    "test:rules": "playwright test -c playwright.rules.config.ts --trace off",
     "test:visual:update": "node scripts/visual/run.mjs update",
     "lint:css": "stylelint \"src/**/*.css\" && npm run check:typography",
     "css:metrics": "node scripts/css-metrics.mjs",
