@@ -1,5 +1,5 @@
 import { join } from 'node:path';
-import { pathToFileURL } from 'node:url';
+import { isDirectEntry } from './entrypoint.mjs';
 import { Events } from 'discord.js';
 import { basePath, readConfig, readToken } from './config.mjs';
 import { privateDirectory } from './private.mjs';
@@ -92,6 +92,6 @@ export async function main() {
     await client.login(readToken(config));
   } catch(error) { log('fatal',discordError(error)); await stop(1); }
 }
-if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+if (isDirectEntry(import.meta.url)) {
   main().catch(() => { process.stderr.write('SERVICE_START_FAILED\n'); process.exitCode=1; });
 }
