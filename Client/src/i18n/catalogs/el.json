@@ -430,5 +430,13 @@
   "ui.state.loading": "Φόρτωση…",
   "ui.state.retry": "Δοκιμή ξανά",
   "ui.tabs.next": "Εμφάνιση περισσότερων καρτελών",
-  "ui.tabs.previous": "Εμφάνιση προηγούμενων καρτελών"
+  "ui.tabs.previous": "Εμφάνιση προηγούμενων καρτελών",
+  "header.panel.attacksToday": "Επιθέσεις σήμερα",
+  "header.panel.attention": "Χρειάζεται προσοχή",
+  "header.panel.connection": "Σύνδεση",
+  "header.panel.openFeature": "Άνοιγμα {feature}",
+  "header.signal.attention": "{count, plural, one {# αυτοματισμός χρειάζεται προσοχή} other {# αυτοματισμοί χρειάζονται προσοχή}}",
+  "header.signal.incoming": "{count, number} εισερχόμενα · {state, select, known {πρώτο σε {duration}} other {έλεγχος}}",
+  "header.signal.nextBird": "Επόμενη προστασία στρατευμάτων: {castle} · {state, select, due {ώρα εκτέλεσης τώρα} other {σε {duration}}}",
+  "header.status.title": "Κατάσταση"
 }

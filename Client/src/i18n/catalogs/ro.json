@@ -430,5 +430,13 @@
   "ui.state.loading": "Se încarcă…",
   "ui.state.retry": "Încearcă din nou",
   "ui.tabs.next": "Arată mai multe file",
-  "ui.tabs.previous": "Arată filele anterioare"
+  "ui.tabs.previous": "Arată filele anterioare",
+  "header.panel.attacksToday": "Atacuri azi",
+  "header.panel.attention": "Necesită atenție",
+  "header.panel.connection": "Conexiune",
+  "header.panel.openFeature": "Deschide {feature}",
+  "header.signal.attention": "{count, plural, one {# automatizare necesită atenție} few {# automatizări necesită atenție} other {# de automatizări necesită atenție}}",
+  "header.signal.incoming": "{count, number} în apropiere · {state, select, known {primul peste {duration}} other {se verifică}}",
+  "header.signal.nextBird": "Următoarea adăpostire a trupelor: {castle} · {state, select, due {trebuie executată acum} other {peste {duration}}}",
+  "header.status.title": "Stare"
 }

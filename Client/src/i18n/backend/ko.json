@@ -327,5 +327,8 @@
   "backend.spy_report.capture_fields": "mid, allianceID, castleID, sourcePlayerID, scannedAtUnixMillis에 양수 값을 제공하세요.",
   "backend.spy_report.payload_json": "payload에는 유효한 JSON이 포함되어야 합니다.",
   "backend.spy_report.payload_object": "payload에는 JSON 객체가 포함되어야 합니다.",
-  "backend.spy_report.session_fields": "clientID와 양수인 playerID 및 allianceID를 제공하세요."
+  "backend.spy_report.session_fields": "clientID와 양수인 playerID 및 allianceID를 제공하세요.",
+  "backend.hosted.cells_unavailable": "셀 역할을 사용할 수 없습니다",
+  "backend.status.placement_slot": "서버의 빈자리를 기다리는 중",
+  "backend.status.starting_server": "이 계정을 위한 서버를 시작하는 중"
 }

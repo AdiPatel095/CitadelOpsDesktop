@@ -344,7 +344,7 @@ func (supervisor *Supervisor) runWorldMapPropagation(ready chan<- struct{}) {
 			supervisor.mu.RLock()
 			stores := make(map[AccountID]*State.Store, len(supervisor.accounts))
 			for id, runtime := range supervisor.accounts {
-				if runtime.application != nil && runtime.application.State != nil && runtime.application.State != event.Source {
+				if runtime.application != nil && runtime.application.State != nil && runtime.application.State != event.Source && runtime.application.State.SharedWorldID() == event.WorldID {
 					stores[id] = runtime.application.State
 				}
 			}

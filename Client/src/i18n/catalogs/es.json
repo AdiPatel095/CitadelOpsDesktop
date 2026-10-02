@@ -430,5 +430,13 @@
   "ui.state.loading": "Cargando…",
   "ui.state.retry": "Reintentar",
   "ui.tabs.next": "Mostrar más pestañas",
-  "ui.tabs.previous": "Mostrar las pestañas anteriores"
+  "ui.tabs.previous": "Mostrar las pestañas anteriores",
+  "header.panel.attacksToday": "Ataques de hoy",
+  "header.panel.attention": "Requiere atención",
+  "header.panel.connection": "Conexión",
+  "header.panel.openFeature": "Abrir {feature}",
+  "header.signal.attention": "{count, plural, one {# automatización requiere atención} many {# automatizaciones requieren atención} other {# automatizaciones requieren atención}}",
+  "header.signal.incoming": "{count, number} entrantes · {state, select, known {primero en {duration}} other {comprobando}}",
+  "header.signal.nextBird": "Próximo refugio de tropas: {castle} · {state, select, due {ejecutar ahora} other {en {duration}}}",
+  "header.status.title": "Estado"
 }

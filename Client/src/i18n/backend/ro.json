@@ -327,5 +327,8 @@
   "backend.spy_report.capture_fields": "Furnizează valori pozitive pentru mid, allianceID, castleID, sourcePlayerID și scannedAtUnixMillis.",
   "backend.spy_report.payload_json": "payload trebuie să conțină JSON valid.",
   "backend.spy_report.payload_object": "payload trebuie să conțină un obiect JSON.",
-  "backend.spy_report.session_fields": "Furnizează clientID și valori pozitive pentru playerID și allianceID."
+  "backend.spy_report.session_fields": "Furnizează clientID și valori pozitive pentru playerID și allianceID.",
+  "backend.hosted.cells_unavailable": "Rolurile celulelor nu sunt disponibile",
+  "backend.status.placement_slot": "Se așteaptă un loc liber pe serverele noastre",
+  "backend.status.starting_server": "Se pornește un server pentru acest cont"
 }
