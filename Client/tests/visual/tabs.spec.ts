@@ -48,7 +48,11 @@ for (const theme of ['dark', 'light'] as const) for (const locale of ['en', 'de'
         await checkEdges();
       }
       const initialScroll = await list.evaluate(element => element.scrollLeft);
+      const initialWidth = await list.evaluate(element => element.clientWidth);
       await page.locator(`.ui-tabs__arrow--${locale === 'ar' ? 'left' : 'right'}`).click();
+      // Let scroll events, arrow rendering and ResizeObserver callbacks settle.
+      await page.evaluate(() => new Promise<void>(resolve => requestAnimationFrame(() => requestAnimationFrame(() => resolve()))));
+      await expect.poll(() => list.evaluate(element => element.clientWidth)).toBe(initialWidth);
       await expect.poll(() => list.evaluate((element, initial) => Math.abs(element.scrollLeft - initial), initialScroll)).toBeGreaterThan(10);
       await checkEdges();
       const tab = list.getByRole('tab', { selected: true });

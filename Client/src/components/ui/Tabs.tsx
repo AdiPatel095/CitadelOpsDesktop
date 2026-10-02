@@ -18,7 +18,7 @@ export interface TabsProps {
 
 export function Tabs({ items, value, onChange, ariaLabel, previousLabel, nextLabel, idBase, className = '' }: TabsProps) {
   const [medium, setMedium] = useState(() => window.matchMedia('(min-width: 768px)').matches);
-  const [edges, setEdges] = useState({ left: false, right: false, rtl: false });
+  const [edges, setEdges] = useState({ left: false, right: false, rtl: false, overflow: false });
   const scroller = useRef<HTMLDivElement>(null);
   const buttons = useRef(new Map<string, HTMLButtonElement>());
   const previousRect = useRef<{ left: number; width: number } | null>(null);
@@ -30,10 +30,14 @@ export function Tabs({ items, value, onChange, ariaLabel, previousLabel, nextLab
     if (!element) return;
     const rect = element.getBoundingClientRect();
     const children = [...element.querySelectorAll<HTMLElement>('[role="tab"]')];
-    const left = children.some(child => child.getBoundingClientRect().left < rect.left - 1);
-    const right = children.some(child => child.getBoundingClientRect().right > rect.right + 1);
+    const tabRects = children.map(child => child.getBoundingClientRect());
+    const left = tabRects.some(child => child.left < rect.left - 1);
+    const right = tabRects.some(child => child.right > rect.right + 1);
+    // Measure against the full container, independently of reserved arrow gutters.
+    const contentWidth = tabRects.length ? Math.max(...tabRects.map(child => child.right)) - Math.min(...tabRects.map(child => child.left)) : 0;
+    const overflow = contentWidth > (element.parentElement?.clientWidth ?? element.clientWidth) + 1;
     const rtl = getComputedStyle(element).direction === 'rtl';
-    setEdges(current => current.left === left && current.right === right && current.rtl === rtl ? current : { left, right, rtl });
+    setEdges(current => current.left === left && current.right === right && current.rtl === rtl && current.overflow === overflow ? current : { left, right, rtl, overflow });
   }, []);
   useLayoutEffect(() => {
     const query = window.matchMedia('(min-width: 768px)');
@@ -93,7 +97,7 @@ export function Tabs({ items, value, onChange, ariaLabel, previousLabel, nextLab
   </div>;
   const activeIndex = items.findIndex(item => item.value === value && !item.disabled);
   const firstEnabled = items.findIndex(item => !item.disabled);
-  return <div className={`ui-tabs ${className}`}>
+  return <div className={`ui-tabs ${className}`} data-overflow={edges.overflow}>
     {medium && edges.left && <Button type="button" variant="ghost" iconOnly className="ui-tabs__arrow ui-tabs__arrow--left" aria-label={edges.rtl ? nextLabel : previousLabel} onClick={() => scroll('left')}><ChevronLeft /></Button>}
     <div ref={scroller} role="tablist" aria-label={ariaLabel} className="ui-tabs__scroller" data-fade-left={edges.left} data-fade-right={edges.right}>
       {items.map((item, index) => <Button variant="ghost" type="button" key={item.value}

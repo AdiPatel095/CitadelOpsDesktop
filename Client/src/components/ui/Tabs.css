@@ -14,8 +14,9 @@
 .ui-tabs .ui-tabs__arrow { position: absolute; z-index: 1; top: 0; background: var(--surface-card); }
 .ui-tabs__arrow--left { left: 0; }
 .ui-tabs__arrow--right { right: 0; }
-.ui-tabs:has(.ui-tabs__arrow--left) { padding-left: 40px; }
-.ui-tabs:has(.ui-tabs__arrow--right) { padding-right: 40px; }
+/* Both gutters stay reserved while overflowing, so arrow changes never resize
+   the scroller and trigger selected-tab recentering during manual scrolling. */
+@media (min-width: 768px) { .ui-tabs[data-overflow="true"] { padding-inline: var(--space-40); } }
 .ui-tab-panel { display: flex; min-width: 0; flex-direction: column; gap: var(--space-24); }
 .ui-segments { display: inline-flex; max-width: 100%; padding: 2px; gap: 2px; border-radius: var(--radius-full); background: var(--segment-track); white-space: nowrap; }
 .ui-segments--full { display: flex; width: 100%; }
