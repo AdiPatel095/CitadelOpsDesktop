@@ -226,5 +226,7 @@
   "server.telemetry.channel.rift.description": "Rozpoczęte ataki w Rajdzie na Szczelinę i inne zakończone działania w Rajdzie na Szczelinę.",
   "server.telemetry.channel.rift.label": "Rajd na Szczelinę",
   "server.telemetry.channel.websocket_game.description": "Każda ramka WebSocket gry, w tym działania wykonane bezpośrednio w grze.",
-  "server.telemetry.channel.websocket_game.label": "Cały ruch gry"
+  "server.telemetry.channel.websocket_game.label": "Cały ruch gry",
+  "server.automation.protection_mode_unsupported_gates": "Tryb ochrony uniemożliwia stacjonowanie wojsk, a królestwo zamku {castle} nie obsługuje otwartych bram",
+  "server.automation.stationing_unsafe_unsupported_gates": "Wojska w zamku {castle} nie mogą bezpiecznie stacjonować, a jego królestwo nie obsługuje otwartych bram"
 }

@@ -226,5 +226,7 @@
   "server.telemetry.channel.rift.description": "Igangsatte Rift Raid-angrep og andre fullførte Rift Raid-handlinger.",
   "server.telemetry.channel.rift.label": "Rift Raid",
   "server.telemetry.channel.websocket_game.description": "Hver WebSocket-ramme fra spillet, inkludert handlinger utført direkte i spillet.",
-  "server.telemetry.channel.websocket_game.label": "All spilltrafikk"
+  "server.telemetry.channel.websocket_game.label": "All spilltrafikk",
+  "server.automation.protection_mode_unsupported_gates": "Beskyttelsesmodus hindrer stasjonering av tropper, og kongeriket til {castle} støtter ikke åpne porter",
+  "server.automation.stationing_unsafe_unsupported_gates": "Tropper i {castle} kan ikke stasjoneres trygt, og kongeriket støtter ikke åpne porter"
 }

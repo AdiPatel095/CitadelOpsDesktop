@@ -226,5 +226,7 @@
   "server.telemetry.channel.rift.description": "Zahájené útoky Nájezdu na Říši trhlin a další dokončené akce Nájezdu na Říši trhlin.",
   "server.telemetry.channel.rift.label": "Nájezd na Říši trhlin",
   "server.telemetry.channel.websocket_game.description": "Každý rámec WebSocket hry, včetně akcí provedených přímo ve hře.",
-  "server.telemetry.channel.websocket_game.label": "Veškerý herní provoz"
+  "server.telemetry.channel.websocket_game.label": "Veškerý herní provoz",
+  "server.automation.protection_mode_unsupported_gates": "Režim ochrany brání umístění jednotek a království hradu {castle} nepodporuje otevřené brány",
+  "server.automation.stationing_unsafe_unsupported_gates": "Jednotky na hradě {castle} nelze bezpečně umístit a jeho království nepodporuje otevřené brány"
 }

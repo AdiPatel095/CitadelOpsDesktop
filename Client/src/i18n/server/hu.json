@@ -226,5 +226,7 @@
   "server.telemetry.channel.rift.description": "Elindított Hasadék Rajtaütés támadások és más befejezett Hasadék Rajtaütés műveletek.",
   "server.telemetry.channel.rift.label": "Hasadék Rajtaütés",
   "server.telemetry.channel.websocket_game.description": "A játék minden WebSocket-kerete, beleértve a közvetlenül a játékban végrehajtott műveleteket is.",
-  "server.telemetry.channel.websocket_game.label": "Teljes játékforgalom"
+  "server.telemetry.channel.websocket_game.label": "Teljes játékforgalom",
+  "server.automation.protection_mode_unsupported_gates": "A védelmi mód megakadályozza a csapatok állomásoztatását, és a(z) {castle} vár királysága nem támogatja a nyitott kapukat",
+  "server.automation.stationing_unsafe_unsupported_gates": "A(z) {castle} vár csapatai nem állomásoztathatók biztonságosan, és a királysága nem támogatja a nyitott kapukat"
 }

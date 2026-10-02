@@ -226,5 +226,7 @@
   "server.telemetry.channel.rift.description": "Käynnistetyt Repeämähyökkäyksen hyökkäykset ja muut valmiit Repeämähyökkäyksen toiminnot.",
   "server.telemetry.channel.rift.label": "Repeämähyökkäys",
   "server.telemetry.channel.websocket_game.description": "Jokainen pelin WebSocket-kehys, mukaan lukien suoraan pelissä suoritetut toiminnot.",
-  "server.telemetry.channel.websocket_game.label": "Kaikki peliliikenne"
+  "server.telemetry.channel.websocket_game.label": "Kaikki peliliikenne",
+  "server.automation.protection_mode_unsupported_gates": "Suojaustila estää joukkojen sijoittamisen, eikä linnan {castle} valtakunta tue avoimia portteja",
+  "server.automation.stationing_unsafe_unsupported_gates": "Linnan {castle} joukkoja ei voida sijoittaa turvallisesti, eikä sen valtakunta tue avoimia portteja"
 }

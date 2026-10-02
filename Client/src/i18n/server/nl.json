@@ -226,5 +226,7 @@
   "server.telemetry.channel.rift.description": "Gestarte Rift-aanvallen en andere voltooide Rift-acties.",
   "server.telemetry.channel.rift.label": "Rift-aanval",
   "server.telemetry.channel.websocket_game.description": "Elk WebSocket-frame van het spel, inclusief acties die rechtstreeks in het spel zijn uitgevoerd.",
-  "server.telemetry.channel.websocket_game.label": "Al het spelverkeer"
+  "server.telemetry.channel.websocket_game.label": "Al het spelverkeer",
+  "server.automation.protection_mode_unsupported_gates": "De beschermingsmodus verhindert het stationeren van troepen en het koninkrijk van {castle} ondersteunt geen open poorten",
+  "server.automation.stationing_unsafe_unsupported_gates": "Troepen in {castle} kunnen niet veilig worden gestationeerd en het koninkrijk ondersteunt geen open poorten"
 }

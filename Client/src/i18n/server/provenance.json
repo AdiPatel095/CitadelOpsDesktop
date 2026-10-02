@@ -1214,6 +1214,18 @@
         "method": "agent-authored",
         "sourceSha256": "f8e175a3bb237ec9a716472849c263d212571a79684d4946bde86278d2d713e5",
         "translationSha256": "ddb08cd63a70f45a8255d07015e2cea740af84e963317478153cdaa4017e887b"
+      },
+      "server.automation.protection_mode_unsupported_gates": {
+        "method": "agent-authored",
+        "semanticReview": "CIT-105 batch 3: model-authored, pending native review; preserve castle placeholder and both safety conditions.",
+        "sourceSha256": "61c0fd2c7d731498fba8424a4b7a4d14bb784a681e23efa148ea8f33de033cc8",
+        "translationSha256": "da57ee509189724f168deb70ea87339a8767136f843d25a1f0e93e1d7ce04735"
+      },
+      "server.automation.stationing_unsafe_unsupported_gates": {
+        "method": "agent-authored",
+        "semanticReview": "CIT-105 batch 3: model-authored, pending native review; preserve castle placeholder and both safety conditions.",
+        "sourceSha256": "877945d0b401b4a3c5a66e6b8065ade0099cda0b8556b2586373234a872cb89b",
+        "translationSha256": "ca811abf129f09523362a5f369dd1c2a20bacc1eb5c63536677f2cca414da397"
       }
     },
     "bg": {
@@ -2429,6 +2441,18 @@
         "method": "agent-authored",
         "sourceSha256": "f8e175a3bb237ec9a716472849c263d212571a79684d4946bde86278d2d713e5",
         "translationSha256": "5984ce05f45f345f34eb048f830a3bc02a70ba635201cd36bd9447bb07e11764"
+      },
+      "server.automation.protection_mode_unsupported_gates": {
+        "method": "agent-authored",
+        "semanticReview": "CIT-105 batch 3: model-authored, pending native review; preserve castle placeholder and both safety conditions.",
+        "sourceSha256": "61c0fd2c7d731498fba8424a4b7a4d14bb784a681e23efa148ea8f33de033cc8",
+        "translationSha256": "057d0f6e835476c2b0672e0008e6d0a8eca4775fb288d01f1f15e25452947b9c"
+      },
+      "server.automation.stationing_unsafe_unsupported_gates": {
+        "method": "agent-authored",
+        "semanticReview": "CIT-105 batch 3: model-authored, pending native review; preserve castle placeholder and both safety conditions.",
+        "sourceSha256": "877945d0b401b4a3c5a66e6b8065ade0099cda0b8556b2586373234a872cb89b",
+        "translationSha256": "cc63fafe30cd7dfc47a770bbe62ac19fd94eff5855574092817bdac1f663c6b3"
       }
     },
     "cs": {
@@ -3644,6 +3668,18 @@
         "method": "agent-authored",
         "sourceSha256": "f8e175a3bb237ec9a716472849c263d212571a79684d4946bde86278d2d713e5",
         "translationSha256": "345ad3077dfa0b6f09f4b149b6f27a63e4475257643e00572bd15de1757075f0"
+      },
+      "server.automation.protection_mode_unsupported_gates": {
+        "method": "agent-authored",
+        "semanticReview": "CIT-105 batch 3: model-authored, pending native review; preserve castle placeholder and both safety conditions.",
+        "sourceSha256": "61c0fd2c7d731498fba8424a4b7a4d14bb784a681e23efa148ea8f33de033cc8",
+        "translationSha256": "335d3e56a9d8037f6894af1425a8a7c138386b18d36c4163d1459adfd102b870"
+      },
+      "server.automation.stationing_unsafe_unsupported_gates": {
+        "method": "agent-authored",
+        "semanticReview": "CIT-105 batch 3: model-authored, pending native review; preserve castle placeholder and both safety conditions.",
+        "sourceSha256": "877945d0b401b4a3c5a66e6b8065ade0099cda0b8556b2586373234a872cb89b",
+        "translationSha256": "93d9a0a5a9df23f3cc2c650b9622b6f943f25fe1c07b564cab88e4746a60c83c"
       }
     },
     "da": {
@@ -4895,6 +4931,18 @@
         "method": "agent-authored",
         "sourceSha256": "f8e175a3bb237ec9a716472849c263d212571a79684d4946bde86278d2d713e5",
         "translationSha256": "967362e6d6a3522c15347314513e7be8933b4cec2ec4bd99d0ae9a0c8a9ba665"
+      },
+      "server.automation.protection_mode_unsupported_gates": {
+        "method": "agent-authored",
+        "semanticReview": "CIT-105 batch 3: model-authored, pending native review; preserve castle placeholder and both safety conditions.",
+        "sourceSha256": "61c0fd2c7d731498fba8424a4b7a4d14bb784a681e23efa148ea8f33de033cc8",
+        "translationSha256": "4b049ac059fda2a76fb74efaa29c6b01aa3770241b51b0fde22c6e04a9d4a2ef"
+      },
+      "server.automation.stationing_unsafe_unsupported_gates": {
+        "method": "agent-authored",
+        "semanticReview": "CIT-105 batch 3: model-authored, pending native review; preserve castle placeholder and both safety conditions.",
+        "sourceSha256": "877945d0b401b4a3c5a66e6b8065ade0099cda0b8556b2586373234a872cb89b",
+        "translationSha256": "908e498bb9afb9b96c4eb8efc5ccb35b656ed9a0d67f5cb080bd4c02a9f47099"
       }
     },
     "de": {
@@ -6210,6 +6258,18 @@
         "method": "agent-authored",
         "sourceSha256": "f8e175a3bb237ec9a716472849c263d212571a79684d4946bde86278d2d713e5",
         "translationSha256": "e77719b15d97f1098b1d107627e4128ee632188afe91dd14ce23f99a1a67f106"
+      },
+      "server.automation.protection_mode_unsupported_gates": {
+        "method": "agent-authored",
+        "semanticReview": "CIT-105 batch 3: model-authored, pending native review; preserve castle placeholder and both safety conditions.",
+        "sourceSha256": "61c0fd2c7d731498fba8424a4b7a4d14bb784a681e23efa148ea8f33de033cc8",
+        "translationSha256": "60d998fbcc16b4e1307e2860170b94b44539351026f019dd8cbb1adb12411f26"
+      },
+      "server.automation.stationing_unsafe_unsupported_gates": {
+        "method": "agent-authored",
+        "semanticReview": "CIT-105 batch 3: model-authored, pending native review; preserve castle placeholder and both safety conditions.",
+        "sourceSha256": "877945d0b401b4a3c5a66e6b8065ade0099cda0b8556b2586373234a872cb89b",
+        "translationSha256": "0336ecf7d0c83ab070cd6a6468f76d2ebd18e7aeeaf01e8d0907dfd4068ed19b"
       }
     },
     "el": {
@@ -7425,6 +7485,18 @@
         "method": "agent-authored",
         "sourceSha256": "f8e175a3bb237ec9a716472849c263d212571a79684d4946bde86278d2d713e5",
         "translationSha256": "6ff9a406e50b976fe6ebdf865c0250a946e70e541100109c62f61e8183c88d08"
+      },
+      "server.automation.protection_mode_unsupported_gates": {
+        "method": "agent-authored",
+        "semanticReview": "CIT-105 batch 3: model-authored, pending native review; preserve castle placeholder and both safety conditions.",
+        "sourceSha256": "61c0fd2c7d731498fba8424a4b7a4d14bb784a681e23efa148ea8f33de033cc8",
+        "translationSha256": "13c3eda77f7dde88adbe376b476ed826af4fb00d1b578659e244722c6be612ab"
+      },
+      "server.automation.stationing_unsafe_unsupported_gates": {
+        "method": "agent-authored",
+        "semanticReview": "CIT-105 batch 3: model-authored, pending native review; preserve castle placeholder and both safety conditions.",
+        "sourceSha256": "877945d0b401b4a3c5a66e6b8065ade0099cda0b8556b2586373234a872cb89b",
+        "translationSha256": "33a0c881c2c5ff13936ac970d8a649cd716a6a733c7cd3211409406b3d93a753"
       }
     },
     "es": {
@@ -8676,6 +8748,18 @@
         "method": "agent-authored",
         "sourceSha256": "f8e175a3bb237ec9a716472849c263d212571a79684d4946bde86278d2d713e5",
         "translationSha256": "f5fb6d49382074d803ac8ee4bb8c9b5d17bf76e7baee727a97047c867e71b0b7"
+      },
+      "server.automation.protection_mode_unsupported_gates": {
+        "method": "agent-authored",
+        "semanticReview": "CIT-105 batch 3: model-authored, pending native review; preserve castle placeholder and both safety conditions.",
+        "sourceSha256": "61c0fd2c7d731498fba8424a4b7a4d14bb784a681e23efa148ea8f33de033cc8",
+        "translationSha256": "8bd06e144cbaf5fca9b50f3c4b5c6cbf3da979940aab9eff38a149d4c97ef3dc"
+      },
+      "server.automation.stationing_unsafe_unsupported_gates": {
+        "method": "agent-authored",
+        "semanticReview": "CIT-105 batch 3: model-authored, pending native review; preserve castle placeholder and both safety conditions.",
+        "sourceSha256": "877945d0b401b4a3c5a66e6b8065ade0099cda0b8556b2586373234a872cb89b",
+        "translationSha256": "0bf0a8df3368282f7f79cb97da5e5cc1d2f4edf2eda4add12fdd093bec8b71da"
       }
     },
     "fi": {
@@ -9891,6 +9975,18 @@
         "method": "agent-authored",
         "sourceSha256": "f8e175a3bb237ec9a716472849c263d212571a79684d4946bde86278d2d713e5",
         "translationSha256": "a4c2dfc6065565d7441eede043f378f6129dc8c735d11564f759933b88cd7a93"
+      },
+      "server.automation.protection_mode_unsupported_gates": {
+        "method": "agent-authored",
+        "semanticReview": "CIT-105 batch 3: model-authored, pending native review; preserve castle placeholder and both safety conditions.",
+        "sourceSha256": "61c0fd2c7d731498fba8424a4b7a4d14bb784a681e23efa148ea8f33de033cc8",
+        "translationSha256": "2454bfa14ec9b733625ca5fc2cdb81680440132957415f55aabb2bd976752596"
+      },
+      "server.automation.stationing_unsafe_unsupported_gates": {
+        "method": "agent-authored",
+        "semanticReview": "CIT-105 batch 3: model-authored, pending native review; preserve castle placeholder and both safety conditions.",
+        "sourceSha256": "877945d0b401b4a3c5a66e6b8065ade0099cda0b8556b2586373234a872cb89b",
+        "translationSha256": "0d67d29a12019904034aee48f49e97b117e8a952f7c08897c0fa1fe14ed94b4b"
       }
     },
     "fr": {
@@ -11142,6 +11238,18 @@
         "method": "agent-authored",
         "sourceSha256": "f8e175a3bb237ec9a716472849c263d212571a79684d4946bde86278d2d713e5",
         "translationSha256": "3b375d9a58bc207e881f0a679e220ae78ca99f4da431f404dccc5b2fe24331cd"
+      },
+      "server.automation.protection_mode_unsupported_gates": {
+        "method": "agent-authored",
+        "semanticReview": "CIT-105 batch 3: model-authored, pending native review; preserve castle placeholder and both safety conditions.",
+        "sourceSha256": "61c0fd2c7d731498fba8424a4b7a4d14bb784a681e23efa148ea8f33de033cc8",
+        "translationSha256": "eeccd4b5451cc98047bb99d6b34aad31e268548fd03d5ceae984871b503cd5ae"
+      },
+      "server.automation.stationing_unsafe_unsupported_gates": {
+        "method": "agent-authored",
+        "semanticReview": "CIT-105 batch 3: model-authored, pending native review; preserve castle placeholder and both safety conditions.",
+        "sourceSha256": "877945d0b401b4a3c5a66e6b8065ade0099cda0b8556b2586373234a872cb89b",
+        "translationSha256": "527d13266dd8ffa4112d3ea9de5a5ecbe987d3882dc7455d894a95336e419c9d"
       }
     },
     "hu": {
@@ -12357,6 +12465,18 @@
         "method": "agent-authored",
         "sourceSha256": "f8e175a3bb237ec9a716472849c263d212571a79684d4946bde86278d2d713e5",
         "translationSha256": "c27972c00be589aea5d8ef608fa858f07001e1bec96c5730774cd02153f8c9c0"
+      },
+      "server.automation.protection_mode_unsupported_gates": {
+        "method": "agent-authored",
+        "semanticReview": "CIT-105 batch 3: model-authored, pending native review; preserve castle placeholder and both safety conditions.",
+        "sourceSha256": "61c0fd2c7d731498fba8424a4b7a4d14bb784a681e23efa148ea8f33de033cc8",
+        "translationSha256": "889e5c4adc497ca7228ba5f6c647062ca4ca07707b52bb3a989d46a22ab4e4ed"
+      },
+      "server.automation.stationing_unsafe_unsupported_gates": {
+        "method": "agent-authored",
+        "semanticReview": "CIT-105 batch 3: model-authored, pending native review; preserve castle placeholder and both safety conditions.",
+        "sourceSha256": "877945d0b401b4a3c5a66e6b8065ade0099cda0b8556b2586373234a872cb89b",
+        "translationSha256": "0a8ace2920fe247b20ec30af6498d7db6a029e07cf146b81529eeb11960506f7"
       }
     },
     "it": {
@@ -13608,6 +13728,18 @@
         "method": "agent-authored",
         "sourceSha256": "f8e175a3bb237ec9a716472849c263d212571a79684d4946bde86278d2d713e5",
         "translationSha256": "98d758f59dd8918a5b069d290dcd3439b8a37407dfc40517f81047f6433e43d2"
+      },
+      "server.automation.protection_mode_unsupported_gates": {
+        "method": "agent-authored",
+        "semanticReview": "CIT-105 batch 3: model-authored, pending native review; preserve castle placeholder and both safety conditions.",
+        "sourceSha256": "61c0fd2c7d731498fba8424a4b7a4d14bb784a681e23efa148ea8f33de033cc8",
+        "translationSha256": "715aaec0b760fb0367ce7a5ea2c9ca738d322369d8a97d7ef8ac15374c64b950"
+      },
+      "server.automation.stationing_unsafe_unsupported_gates": {
+        "method": "agent-authored",
+        "semanticReview": "CIT-105 batch 3: model-authored, pending native review; preserve castle placeholder and both safety conditions.",
+        "sourceSha256": "877945d0b401b4a3c5a66e6b8065ade0099cda0b8556b2586373234a872cb89b",
+        "translationSha256": "cb02ea66552a802047ad4f52597772018f038d47b3f2db264882f4f9b122da80"
       }
     },
     "ja": {
@@ -14823,6 +14955,18 @@
         "method": "agent-authored",
         "sourceSha256": "f8e175a3bb237ec9a716472849c263d212571a79684d4946bde86278d2d713e5",
         "translationSha256": "b99488fd2023b8ce740156cc34491d257c09c9275ca58e08d867c38334ca0159"
+      },
+      "server.automation.protection_mode_unsupported_gates": {
+        "method": "agent-authored",
+        "semanticReview": "CIT-105 batch 3: model-authored, pending native review; preserve castle placeholder and both safety conditions.",
+        "sourceSha256": "61c0fd2c7d731498fba8424a4b7a4d14bb784a681e23efa148ea8f33de033cc8",
+        "translationSha256": "cd93b13cf923a4a36ea58a66ef42cc8917591c6fbd0d503e96b3485725b813a6"
+      },
+      "server.automation.stationing_unsafe_unsupported_gates": {
+        "method": "agent-authored",
+        "semanticReview": "CIT-105 batch 3: model-authored, pending native review; preserve castle placeholder and both safety conditions.",
+        "sourceSha256": "877945d0b401b4a3c5a66e6b8065ade0099cda0b8556b2586373234a872cb89b",
+        "translationSha256": "c8cfd88b81b35ab7aa350967f7a847ecdccd813939498b3acb767c2bc454be78"
       }
     },
     "ko": {
@@ -16038,6 +16182,18 @@
         "method": "agent-authored",
         "sourceSha256": "f8e175a3bb237ec9a716472849c263d212571a79684d4946bde86278d2d713e5",
         "translationSha256": "d56533c3de80f40062e4ca399a5f35dca82209f8d711a86cd98449662f9a71f6"
+      },
+      "server.automation.protection_mode_unsupported_gates": {
+        "method": "agent-authored",
+        "semanticReview": "CIT-105 batch 3: model-authored, pending native review; preserve castle placeholder and both safety conditions.",
+        "sourceSha256": "61c0fd2c7d731498fba8424a4b7a4d14bb784a681e23efa148ea8f33de033cc8",
+        "translationSha256": "b403a318e5b01558ccc3885b6a2f698014eef448522e5c0b7a641c2f57dffcee"
+      },
+      "server.automation.stationing_unsafe_unsupported_gates": {
+        "method": "agent-authored",
+        "semanticReview": "CIT-105 batch 3: model-authored, pending native review; preserve castle placeholder and both safety conditions.",
+        "sourceSha256": "877945d0b401b4a3c5a66e6b8065ade0099cda0b8556b2586373234a872cb89b",
+        "translationSha256": "ce640207beab4828aee5fb1d8bfdb7a4c39ec07ae1e51835581c7c486a552aae"
       }
     },
     "lt": {
@@ -17253,6 +17409,18 @@
         "method": "agent-authored",
         "sourceSha256": "f8e175a3bb237ec9a716472849c263d212571a79684d4946bde86278d2d713e5",
         "translationSha256": "9686583ec9592b722317e909433e077e95886235dcf4dc12556156970ddc2f8e"
+      },
+      "server.automation.protection_mode_unsupported_gates": {
+        "method": "agent-authored",
+        "semanticReview": "CIT-105 batch 3: model-authored, pending native review; preserve castle placeholder and both safety conditions.",
+        "sourceSha256": "61c0fd2c7d731498fba8424a4b7a4d14bb784a681e23efa148ea8f33de033cc8",
+        "translationSha256": "7804ddc62f87b294d73083fd1f1232d2ccd0f4104df6ab88a0f3e6213bf33b35"
+      },
+      "server.automation.stationing_unsafe_unsupported_gates": {
+        "method": "agent-authored",
+        "semanticReview": "CIT-105 batch 3: model-authored, pending native review; preserve castle placeholder and both safety conditions.",
+        "sourceSha256": "877945d0b401b4a3c5a66e6b8065ade0099cda0b8556b2586373234a872cb89b",
+        "translationSha256": "652841133011c519af371fedfb363b93f9c5b6b4687bfcb52c371386c15bc6c3"
       }
     },
     "nl": {
@@ -18504,6 +18672,18 @@
         "method": "agent-authored",
         "sourceSha256": "f8e175a3bb237ec9a716472849c263d212571a79684d4946bde86278d2d713e5",
         "translationSha256": "abe732ef0ff42515268c344d565528fc1b760393951e4187422f0af84ed5f95e"
+      },
+      "server.automation.protection_mode_unsupported_gates": {
+        "method": "agent-authored",
+        "semanticReview": "CIT-105 batch 3: model-authored, pending native review; preserve castle placeholder and both safety conditions.",
+        "sourceSha256": "61c0fd2c7d731498fba8424a4b7a4d14bb784a681e23efa148ea8f33de033cc8",
+        "translationSha256": "f4d900776193ae9f54a52730ac69f84e72a20b7e7fb7013f25473cfc0553bb94"
+      },
+      "server.automation.stationing_unsafe_unsupported_gates": {
+        "method": "agent-authored",
+        "semanticReview": "CIT-105 batch 3: model-authored, pending native review; preserve castle placeholder and both safety conditions.",
+        "sourceSha256": "877945d0b401b4a3c5a66e6b8065ade0099cda0b8556b2586373234a872cb89b",
+        "translationSha256": "351bc32cb69ebf125fd1bdb535b29e8e60af2868f2a218fdf92eee1c917b21e9"
       }
     },
     "no": {
@@ -19755,6 +19935,18 @@
         "method": "agent-authored",
         "sourceSha256": "f8e175a3bb237ec9a716472849c263d212571a79684d4946bde86278d2d713e5",
         "translationSha256": "54c0295d6286a19c8d7eda3c18a91278b73d3cb010ff56c066f58ee40ddbfca3"
+      },
+      "server.automation.protection_mode_unsupported_gates": {
+        "method": "agent-authored",
+        "semanticReview": "CIT-105 batch 3: model-authored, pending native review; preserve castle placeholder and both safety conditions.",
+        "sourceSha256": "61c0fd2c7d731498fba8424a4b7a4d14bb784a681e23efa148ea8f33de033cc8",
+        "translationSha256": "5dee36e3104ec6338eb96f248781033abbe803112c2e4e71044ec67edf3bd8f2"
+      },
+      "server.automation.stationing_unsafe_unsupported_gates": {
+        "method": "agent-authored",
+        "semanticReview": "CIT-105 batch 3: model-authored, pending native review; preserve castle placeholder and both safety conditions.",
+        "sourceSha256": "877945d0b401b4a3c5a66e6b8065ade0099cda0b8556b2586373234a872cb89b",
+        "translationSha256": "6c75b006eef0b552c7c65ee6b11e716b665f015fb7a5106401e97cdcf799cff3"
       }
     },
     "pl": {
@@ -21006,6 +21198,18 @@
         "method": "agent-authored",
         "sourceSha256": "f8e175a3bb237ec9a716472849c263d212571a79684d4946bde86278d2d713e5",
         "translationSha256": "e113118b251a7942bff8abaa8e914e8cc33eb2aae562139e4ded794acdf38db4"
+      },
+      "server.automation.protection_mode_unsupported_gates": {
+        "method": "agent-authored",
+        "semanticReview": "CIT-105 batch 3: model-authored, pending native review; preserve castle placeholder and both safety conditions.",
+        "sourceSha256": "61c0fd2c7d731498fba8424a4b7a4d14bb784a681e23efa148ea8f33de033cc8",
+        "translationSha256": "40588584ed0261a71fc7404564cf50dbe8afc417543aad74a97cc43102258b8d"
+      },
+      "server.automation.stationing_unsafe_unsupported_gates": {
+        "method": "agent-authored",
+        "semanticReview": "CIT-105 batch 3: model-authored, pending native review; preserve castle placeholder and both safety conditions.",
+        "sourceSha256": "877945d0b401b4a3c5a66e6b8065ade0099cda0b8556b2586373234a872cb89b",
+        "translationSha256": "b40bac8e8994164da34d150dab64d0cbcd4c62c8edca86cfcb9da09ca1e1bec0"
       }
     },
     "pt": {
@@ -22257,6 +22461,18 @@
         "method": "agent-authored",
         "sourceSha256": "f8e175a3bb237ec9a716472849c263d212571a79684d4946bde86278d2d713e5",
         "translationSha256": "3f4d3050dc0e22450e7d9bded092a3e8935fddb470f007b74fdf29a0015e5136"
+      },
+      "server.automation.protection_mode_unsupported_gates": {
+        "method": "agent-authored",
+        "semanticReview": "CIT-105 batch 3: model-authored, pending native review; preserve castle placeholder and both safety conditions.",
+        "sourceSha256": "61c0fd2c7d731498fba8424a4b7a4d14bb784a681e23efa148ea8f33de033cc8",
+        "translationSha256": "f6575d1c0492722c4083045700f117ecfd5876f00a3b9e7c292810e31176998e"
+      },
+      "server.automation.stationing_unsafe_unsupported_gates": {
+        "method": "agent-authored",
+        "semanticReview": "CIT-105 batch 3: model-authored, pending native review; preserve castle placeholder and both safety conditions.",
+        "sourceSha256": "877945d0b401b4a3c5a66e6b8065ade0099cda0b8556b2586373234a872cb89b",
+        "translationSha256": "72ee857bf58191211c8612e980a849bc74033d0b24a26695298739a01bab24d9"
       }
     },
     "ro": {
@@ -23472,6 +23688,18 @@
         "method": "agent-authored",
         "sourceSha256": "f8e175a3bb237ec9a716472849c263d212571a79684d4946bde86278d2d713e5",
         "translationSha256": "421c5226952429da355e2ee3bd18229782c8d277f50eb4ace52850f2dc799ec8"
+      },
+      "server.automation.protection_mode_unsupported_gates": {
+        "method": "agent-authored",
+        "semanticReview": "CIT-105 batch 3: model-authored, pending native review; preserve castle placeholder and both safety conditions.",
+        "sourceSha256": "61c0fd2c7d731498fba8424a4b7a4d14bb784a681e23efa148ea8f33de033cc8",
+        "translationSha256": "51963bc42944f41910a7b0fccb3023d98ab133abdd79996c41ac00b04201f505"
+      },
+      "server.automation.stationing_unsafe_unsupported_gates": {
+        "method": "agent-authored",
+        "semanticReview": "CIT-105 batch 3: model-authored, pending native review; preserve castle placeholder and both safety conditions.",
+        "sourceSha256": "877945d0b401b4a3c5a66e6b8065ade0099cda0b8556b2586373234a872cb89b",
+        "translationSha256": "90975133171416bf4357e67da2b4eca63e8add033cf98cf91aa308035430033c"
       }
     },
     "ru": {
@@ -24687,6 +24915,18 @@
         "method": "agent-authored",
         "sourceSha256": "f8e175a3bb237ec9a716472849c263d212571a79684d4946bde86278d2d713e5",
         "translationSha256": "626acfa87bdd9d00693ba99165e48d44d23ea4430c2dc1e9a91cc6991d8cdf69"
+      },
+      "server.automation.protection_mode_unsupported_gates": {
+        "method": "agent-authored",
+        "semanticReview": "CIT-105 batch 3: model-authored, pending native review; preserve castle placeholder and both safety conditions.",
+        "sourceSha256": "61c0fd2c7d731498fba8424a4b7a4d14bb784a681e23efa148ea8f33de033cc8",
+        "translationSha256": "83a043d1be6134108ab7e246a865c7084f5832be482f049ef338b794793d6423"
+      },
+      "server.automation.stationing_unsafe_unsupported_gates": {
+        "method": "agent-authored",
+        "semanticReview": "CIT-105 batch 3: model-authored, pending native review; preserve castle placeholder and both safety conditions.",
+        "sourceSha256": "877945d0b401b4a3c5a66e6b8065ade0099cda0b8556b2586373234a872cb89b",
+        "translationSha256": "2844be3e317b76dd81290a0fa69995a61e91131a032cf1061b06f113f1c31ef4"
       }
     },
     "sk": {
@@ -25902,6 +26142,18 @@
         "method": "agent-authored",
         "sourceSha256": "f8e175a3bb237ec9a716472849c263d212571a79684d4946bde86278d2d713e5",
         "translationSha256": "960aea98655f1ffc2a45974f93267319dc07daa11783c14e0d6ee43a7785a805"
+      },
+      "server.automation.protection_mode_unsupported_gates": {
+        "method": "agent-authored",
+        "semanticReview": "CIT-105 batch 3: model-authored, pending native review; preserve castle placeholder and both safety conditions.",
+        "sourceSha256": "61c0fd2c7d731498fba8424a4b7a4d14bb784a681e23efa148ea8f33de033cc8",
+        "translationSha256": "b9994ed2959ef93133bda94bb46a43dbfc460609eab22dc665486ccd0146a563"
+      },
+      "server.automation.stationing_unsafe_unsupported_gates": {
+        "method": "agent-authored",
+        "semanticReview": "CIT-105 batch 3: model-authored, pending native review; preserve castle placeholder and both safety conditions.",
+        "sourceSha256": "877945d0b401b4a3c5a66e6b8065ade0099cda0b8556b2586373234a872cb89b",
+        "translationSha256": "e2bc9f4dd11e7101166362cf05380e49e3d4133933eba6f5cbda4e22555701f3"
       }
     },
     "sv": {
@@ -27153,6 +27405,18 @@
         "method": "agent-authored",
         "sourceSha256": "f8e175a3bb237ec9a716472849c263d212571a79684d4946bde86278d2d713e5",
         "translationSha256": "6934dd4103979721f00222f839cabeb9478588795bd53577c92ad0c27b8e8238"
+      },
+      "server.automation.protection_mode_unsupported_gates": {
+        "method": "agent-authored",
+        "semanticReview": "CIT-105 batch 3: model-authored, pending native review; preserve castle placeholder and both safety conditions.",
+        "sourceSha256": "61c0fd2c7d731498fba8424a4b7a4d14bb784a681e23efa148ea8f33de033cc8",
+        "translationSha256": "9f570bb73088f3a8a0ff31e3b35d5d45d03df154d4e24e6dad581ac8c6c4bacc"
+      },
+      "server.automation.stationing_unsafe_unsupported_gates": {
+        "method": "agent-authored",
+        "semanticReview": "CIT-105 batch 3: model-authored, pending native review; preserve castle placeholder and both safety conditions.",
+        "sourceSha256": "877945d0b401b4a3c5a66e6b8065ade0099cda0b8556b2586373234a872cb89b",
+        "translationSha256": "55a162bc49f679f23e1b22d15837598dc6a191df33b65605cc7de3764592b425"
       }
     },
     "tr": {
@@ -28368,6 +28632,18 @@
         "method": "agent-authored",
         "sourceSha256": "f8e175a3bb237ec9a716472849c263d212571a79684d4946bde86278d2d713e5",
         "translationSha256": "6028ce597d5e827f00ee13b82235394494196584c49584feec97272cfb8982c9"
+      },
+      "server.automation.protection_mode_unsupported_gates": {
+        "method": "agent-authored",
+        "semanticReview": "CIT-105 batch 3: model-authored, pending native review; preserve castle placeholder and both safety conditions.",
+        "sourceSha256": "61c0fd2c7d731498fba8424a4b7a4d14bb784a681e23efa148ea8f33de033cc8",
+        "translationSha256": "6f0803b478abe4843c121b42fcfd11a3950f170dbc9c45d0348da8364a07d573"
+      },
+      "server.automation.stationing_unsafe_unsupported_gates": {
+        "method": "agent-authored",
+        "semanticReview": "CIT-105 batch 3: model-authored, pending native review; preserve castle placeholder and both safety conditions.",
+        "sourceSha256": "877945d0b401b4a3c5a66e6b8065ade0099cda0b8556b2586373234a872cb89b",
+        "translationSha256": "0aac7ca6ea8755e50716ac4ca28995aceee869f91c6f83d6246925577b2ac255"
       }
     },
     "zh-CN": {
@@ -29583,6 +29859,18 @@
         "method": "agent-authored",
         "sourceSha256": "f8e175a3bb237ec9a716472849c263d212571a79684d4946bde86278d2d713e5",
         "translationSha256": "22848b621a3cd72bc28214265bcc745e98a106635a7f5ad9e2d915d374e2e28a"
+      },
+      "server.automation.protection_mode_unsupported_gates": {
+        "method": "agent-authored",
+        "semanticReview": "CIT-105 batch 3: model-authored, pending native review; preserve castle placeholder and both safety conditions.",
+        "sourceSha256": "61c0fd2c7d731498fba8424a4b7a4d14bb784a681e23efa148ea8f33de033cc8",
+        "translationSha256": "a01f234eadae2a431e126338be13f202981dfac6d22df2db1467d0d9e7197843"
+      },
+      "server.automation.stationing_unsafe_unsupported_gates": {
+        "method": "agent-authored",
+        "semanticReview": "CIT-105 batch 3: model-authored, pending native review; preserve castle placeholder and both safety conditions.",
+        "sourceSha256": "877945d0b401b4a3c5a66e6b8065ade0099cda0b8556b2586373234a872cb89b",
+        "translationSha256": "c7c29b3f77c3e37a4991abeed0f5f90510d671349dd8eaf879b4319b37b6701f"
       }
     },
     "zh-TW": {
@@ -30798,6 +31086,18 @@
         "method": "agent-authored",
         "sourceSha256": "f8e175a3bb237ec9a716472849c263d212571a79684d4946bde86278d2d713e5",
         "translationSha256": "b548650b3640ef06729d925728c1e4267c38bf1fda4644d52e7ab5a5a6e84054"
+      },
+      "server.automation.protection_mode_unsupported_gates": {
+        "method": "agent-authored",
+        "semanticReview": "CIT-105 batch 3: model-authored, pending native review; preserve castle placeholder and both safety conditions.",
+        "sourceSha256": "61c0fd2c7d731498fba8424a4b7a4d14bb784a681e23efa148ea8f33de033cc8",
+        "translationSha256": "17b95315dc23cfe86f8c1c440f98cbf6ee319bde47fbf4fbefac4d26c0c68344"
+      },
+      "server.automation.stationing_unsafe_unsupported_gates": {
+        "method": "agent-authored",
+        "semanticReview": "CIT-105 batch 3: model-authored, pending native review; preserve castle placeholder and both safety conditions.",
+        "sourceSha256": "877945d0b401b4a3c5a66e6b8065ade0099cda0b8556b2586373234a872cb89b",
+        "translationSha256": "5349b0325c2192b1168f5a2a5eda29dc005ce728dc3a2ae53149bcf96c8e241b"
       }
     }
   },

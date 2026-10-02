@@ -1,161 +1,161 @@
 {
   "schemaVersion": 1,
-  "validated": 5700,
+  "validated": 5750,
   "coverage": {
     "de": {
-      "translated": 228,
+      "translated": 230,
       "source": 3186,
-      "missing": 2958
+      "missing": 2956
     },
     "fr": {
-      "translated": 228,
+      "translated": 230,
       "source": 3186,
-      "missing": 2958
+      "missing": 2956
     },
     "pl": {
-      "translated": 228,
+      "translated": 230,
       "source": 3186,
-      "missing": 2958
+      "missing": 2956
     },
     "ru": {
-      "translated": 228,
+      "translated": 230,
       "source": 3186,
-      "missing": 2958
+      "missing": 2956
     },
     "it": {
-      "translated": 228,
+      "translated": 230,
       "source": 3186,
-      "missing": 2958
+      "missing": 2956
     },
     "nl": {
-      "translated": 228,
+      "translated": 230,
       "source": 3186,
-      "missing": 2958
+      "missing": 2956
     },
     "pt": {
-      "translated": 228,
+      "translated": 230,
       "source": 3186,
-      "missing": 2958
+      "missing": 2956
     },
     "es": {
-      "translated": 228,
+      "translated": 230,
       "source": 3186,
-      "missing": 2958
+      "missing": 2956
     },
     "ar": {
-      "translated": 228,
+      "translated": 230,
       "source": 3186,
-      "missing": 2958
+      "missing": 2956
     },
     "da": {
-      "translated": 228,
+      "translated": 230,
       "source": 3186,
-      "missing": 2958
+      "missing": 2956
     },
     "no": {
-      "translated": 228,
+      "translated": 230,
       "source": 3186,
-      "missing": 2958
+      "missing": 2956
     },
     "fi": {
-      "translated": 228,
+      "translated": 230,
       "source": 3186,
-      "missing": 2958
+      "missing": 2956
     },
     "sv": {
-      "translated": 228,
+      "translated": 230,
       "source": 3186,
-      "missing": 2958
+      "missing": 2956
     },
     "ja": {
-      "translated": 228,
+      "translated": 230,
       "source": 3186,
-      "missing": 2958
+      "missing": 2956
     },
     "ko": {
-      "translated": 228,
+      "translated": 230,
       "source": 3186,
-      "missing": 2958
+      "missing": 2956
     },
     "el": {
-      "translated": 228,
+      "translated": 230,
       "source": 3186,
-      "missing": 2958
+      "missing": 2956
     },
     "tr": {
-      "translated": 228,
+      "translated": 230,
       "source": 3186,
-      "missing": 2958
+      "missing": 2956
     },
     "zh-CN": {
-      "translated": 228,
+      "translated": 230,
       "source": 3186,
-      "missing": 2958
+      "missing": 2956
     },
     "zh-TW": {
-      "translated": 228,
+      "translated": 230,
       "source": 3186,
-      "missing": 2958
+      "missing": 2956
     },
     "cs": {
-      "translated": 228,
+      "translated": 230,
       "source": 3186,
-      "missing": 2958
+      "missing": 2956
     },
     "ro": {
-      "translated": 228,
+      "translated": 230,
       "source": 3186,
-      "missing": 2958
+      "missing": 2956
     },
     "sk": {
-      "translated": 228,
+      "translated": 230,
       "source": 3186,
-      "missing": 2958
+      "missing": 2956
     },
     "hu": {
-      "translated": 228,
+      "translated": 230,
       "source": 3186,
-      "missing": 2958
+      "missing": 2956
     },
     "bg": {
-      "translated": 228,
+      "translated": 230,
       "source": 3186,
-      "missing": 2958
+      "missing": 2956
     },
     "lt": {
-      "translated": 228,
+      "translated": 230,
       "source": 3186,
-      "missing": 2958
+      "missing": 2956
     }
   },
   "sourceHashes": {
     "en.json": "4e00f36f5e7a2c91bbe54f61f52c2d2e5bb3fb46fb2cfd71eee3418833ceaf60",
     "feature-names.json": "3e5e8c970e3cfbb704719636d99733d3ef830e036fca4866bcc2bdeb04b003e2",
-    "ar.json": "fcd267d000952ce24f88a775ae594a0e0288c438417bd7ba569eab2b1ed0f323",
-    "bg.json": "382bc86ea65a203d40ba04d563712e1600ef82080fc8de788f02a8b1932a351f",
-    "cs.json": "97d7f1d7897ceb86e8aed138f23b3d4abef0dc027cfadb9e1e936f3dcd316739",
-    "da.json": "cf681d775f2fe4b11e7666d91778e5eae69d2232492ce1df26bc8b5fbcf11ab7",
-    "de.json": "2bd1cc4d16c6f2587c060c7b3bbdbf247ff97ef6d52605aaeb3c3302493c4350",
-    "el.json": "06d43cb645efc24fdace3fce0ecaf131c6e3777a9b4e3a9de802444cd96d4105",
-    "es.json": "06bbea7b816d433b9e7fa9915dc8c2bbf7c16da58b3f156b607f25a0e5f2a35d",
-    "fi.json": "f417dccc3b396c5b0e3428ed455686b587d908d6c2657c5eb3884b6af5100c5a",
-    "fr.json": "286841346fe8dfc45b393857e06b70e82e7a3d2915fc32338d9e87941c4e9194",
-    "hu.json": "337998b0f6919f227490096ab44d73df2fcc95c9e493e20177fbcc83a0a4b472",
-    "it.json": "bfe1f0c34782e31c39e908bf4588a1b1b64051de3308c5a0618b520a8aa8a11c",
-    "ja.json": "9fbc9194c079dfc90e15dacb67bbac0c72ca623d1ad40562de1996711af5d159",
-    "ko.json": "4005743c1977a07d31d6cb0bf9c00a93cc250cfe1acca8bcdedd180930a52f76",
-    "lt.json": "996d7bd0225fcc9ffc34b8feee90f176f0c6685323b79f2253029dcb734a5bd2",
-    "nl.json": "ee131803f2f70687503926131784e1e776bed0114eb8122fe4eb3881ac7f4834",
-    "no.json": "3debe03ad8788ca332d09c102eb516c768877c7f5fb78695e9ce3898c58e969f",
-    "pl.json": "e26f3478f85478e75a2c5cb7360fb8f9cf7b010844f8e1ca1abb7bd9f4b9c094",
-    "provenance.json": "9d70400573f912ea36bc0addd70682c9fd7097c06f629a13b71e7db24c18d484",
-    "pt.json": "722f6847ca623ab07329a8ebf2104705bbe4b171d7acfae02371fad51eff9456",
-    "ro.json": "be43d853e025d16a894a495cf67cc33d661c15665b2436a9972ee77f4a797d5e",
-    "ru.json": "6bcc576cf453b2a6232463f949144b0b87ef96fe1d5fb449bf4f7bd9a983f16b",
-    "sk.json": "779a86d7dc3bd909f5bb2e43b3a93c3e09552fadd7aa83d55e81e6a8826accec",
-    "sv.json": "def187be659dea044097f1f82219d576eec88e5e509e1b61319b4ff29b0edf56",
-    "tr.json": "237e55dba8a4b40d7450e0e94af18c139b14ee6147bd6a546a5e64178ea62b3d",
-    "zh-CN.json": "38830271f8f06172ff8ce1d0239b85631ada69f5d2ce5816b361e457e882313e",
-    "zh-TW.json": "3beccabc99f9614a0fd0c326b9f42b785e54025a9ce2ea53264ad4a6a44e40e0"
+    "ar.json": "445439b6ec4120508cd0aec5bca9e3a16dcecbb5fb8d7dcc8a2ba51b11c5b074",
+    "bg.json": "4f6fa279158ec529b3cb7406047fc7e0b72c94d8d9ee57409101f73e5fc897d0",
+    "cs.json": "8362abfe7a8f727288dd687750ebb492f95f05bbb4f5e71bf1896312c89486ee",
+    "da.json": "9a042662da30249d24c9ee0d5289557db4b2fe2eb2dc17f509ec099f9a1f3c28",
+    "de.json": "00a97df8401cf49ef918a8cb3d2c2a46443ad9a79d822d98882362acd2c509a6",
+    "el.json": "b2ad189c4e418edd09eecc67ea160a5dc92c0813ec95bce1561c29b821784ba8",
+    "es.json": "9f34d9e67f88ddce1ab1ee5eaab3089949f6bbfdc736ce066ea4e5508fea85b5",
+    "fi.json": "f42b19908057a75b5acb990b2bdf0a6b3e56c8b873fea99f2fa067cf4dfe858e",
+    "fr.json": "0cbe59e9b03c58ee0b7edf1d36a69ffb7423f8127f30e68ab584e2917ce26200",
+    "hu.json": "49eb8facf81849ae345c971545342d893cd1c1814055374c278bc23f1ac6472e",
+    "it.json": "b45f7914915aa92c51a3b61b7881e68bc28b462e77c9bf50c961416af4563611",
+    "ja.json": "eccce58871173f473997fdc7bdece758ff1598cdc43cad49105bcdf40aad8dc8",
+    "ko.json": "23ecab801580485df683229575a2b4a735d564badd30a7b3299b74b3c5bbf3d5",
+    "lt.json": "ad31ddbb8fcd69d0418897e04fa2151a56ea7317ed818a0fa6e8f4231523d3c9",
+    "nl.json": "5ddea675197a43b4d512860d97915ae6a269bf6fc91aa14a4a0f63e811a4955e",
+    "no.json": "1c81d7d2981082feb91183ae1bfc453786ad417340013028f26ea8407591c2db",
+    "pl.json": "65ec7b0a7d226e4df787c13814dbc5239f05b416f27dd2224cd7dd2f2ed41b7c",
+    "provenance.json": "ec4f7c8e80fceb9a9a75b8fe0437a7d1f9e4a13e6c5c61e73d37f3550c1eb027",
+    "pt.json": "4b8ffd623198858ae2f45ca1d1d837d5d2df1e31471eba9f3b634e84a80dd56a",
+    "ro.json": "cc4fc2fb780b8f4f6a1c24a605784e0f02814c841aca030462a35d0111dbe9c5",
+    "ru.json": "36acbec4cca61672575179949254924d63a5a4fe175072373f08e716b22f53f7",
+    "sk.json": "4a4985ea0d708daaa6bc00c31c88a9e57bb30b026d191147323aeabe0c06de41",
+    "sv.json": "d7fdb1c5c9162f9daed673b6bd2ca19e8a5fa1985c4d4e6fb4c75729b95d457e",
+    "tr.json": "04834c3e09c1931d0e1b6918cf9a27f32ce276cfefad9a43264e52dda45cd4e6",
+    "zh-CN.json": "40b99bde35ba425c8ed451ed289980bfc33e064c208f5abf087a03a3940d2aa0",
+    "zh-TW.json": "8c26526b80aa8bf55751d564e18aed5cb4dfce7234e5f73e42e7a3d92b4879db"
   }
 }

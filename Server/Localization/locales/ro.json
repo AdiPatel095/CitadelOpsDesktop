@@ -226,5 +226,7 @@
   "server.telemetry.channel.rift.description": "Atacuri Raid Rift lansate și alte acțiuni Raid Rift finalizate.",
   "server.telemetry.channel.rift.label": "Raid Rift",
   "server.telemetry.channel.websocket_game.description": "Fiecare cadru WebSocket al jocului, inclusiv acțiunile efectuate direct în joc.",
-  "server.telemetry.channel.websocket_game.label": "Tot traficul jocului"
+  "server.telemetry.channel.websocket_game.label": "Tot traficul jocului",
+  "server.automation.protection_mode_unsupported_gates": "Modul de protecție împiedică staționarea trupelor, iar regatul castelului {castle} nu acceptă porți deschise",
+  "server.automation.stationing_unsafe_unsupported_gates": "Trupele de la {castle} nu pot fi staționate în siguranță, iar regatul său nu acceptă porți deschise"
 }
