@@ -620,9 +620,9 @@ const WaveEditorCard: React.FC<WaveEditorCardProps> = ({
   return (
     <Card
       variant="solid"
-      className="liquid-prominent-header-card"
+      className=""
     >
-      <CardHeader className="liquid-card-header-prominent !m-0 !min-h-0 !rounded-full !p-0">
+      <CardHeader className="!m-0 !min-h-0">
         <div className="flex h-11 w-full items-center gap-1 overflow-hidden rounded-full px-1.5">
           <button
             type="button"
@@ -679,7 +679,7 @@ const WaveEditorCard: React.FC<WaveEditorCardProps> = ({
       </CardHeader>
 
       {isOpen ? (
-        <CardContent id={contentId} className="liquid-prominent-header-content !px-1 !pb-2 !pt-3">
+        <CardContent id={contentId} className="">
           <div className="grid gap-1">
             <FormationRow
               kind="tool"
@@ -749,8 +749,8 @@ const CourtyardSupportCard: React.FC<CourtyardSupportCardProps> = ({
   const toolTotal = support.tools.filter((slot) => slot.itemId != null).length;
 
   return (
-    <Card variant="solid" className="liquid-prominent-header-card ring-1 ring-warning/25">
-      <CardHeader className="liquid-card-header-prominent flex-wrap gap-3">
+    <Card variant="solid" className="">
+      <CardHeader className="flex-wrap gap-3">
         <div className="flex min-w-0 items-center gap-3">
           <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-global border border-warning/40 bg-warning/12 text-warning">
             <Shield className="h-5 w-5" />
@@ -782,7 +782,7 @@ const CourtyardSupportCard: React.FC<CourtyardSupportCardProps> = ({
         </div>
       </CardHeader>
 
-      <CardContent className="liquid-prominent-header-content p-3">
+      <CardContent className="">
         <section className="overflow-hidden rounded-global border border-border-base bg-bg-app/42" aria-label={localizeStatic("ui.components.attackSetupModal.aria-label.courtyard.support.formation.4cfd524c")}>
           <div className="overflow-x-auto p-3 custom-scrollbar">
             <div className={`mx-auto flex w-max items-start justify-center gap-2 ${kindIsTroop ? 'min-w-[46rem]' : 'min-w-[18rem]'}`}>

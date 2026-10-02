@@ -431,13 +431,13 @@ const PlayerTrackerView = () => {
 
       {!current ? (
         <Card>
-          <CardContent className="flex min-h-56 items-center justify-center p-8 text-center text-text-muted">
+          <CardContent className="flex min-h-56 items-center justify-center  text-center text-text-muted">
             <LocalizedText messageKey="ui.playerTracker.components.playerTrackerView.connect.the.game.once.to.begin.collecting.eae341bc" /></CardContent>
         </Card>
       ) : (
         <>
-          <Card className="liquid-prominent-header-card">
-            <CardHeader className="liquid-card-header-prominent flex-wrap gap-4">
+          <Card className="">
+            <CardHeader className="flex-wrap gap-4">
               <div className="flex w-full flex-wrap items-center justify-between gap-4">
                 <div>
                   <CardTitle className="flex items-center gap-2 text-body-lg">
@@ -468,7 +468,7 @@ const PlayerTrackerView = () => {
                 />
               </div>
             </CardHeader>
-            <CardContent className="liquid-prominent-header-content p-5 sm:p-6">
+            <CardContent className="">
               <div className="mb-4 flex flex-wrap gap-2">
                 <PillSelector
                   ariaLabel={localizeStatic("ui.playerTracker.components.playerTrackerView.ariaLabel.highlighted.player.metric.f04dac98")}
@@ -532,8 +532,8 @@ const PlayerTrackerView = () => {
             </CardContent>
           </Card>
 
-          <Card className="liquid-prominent-header-card">
-            <CardHeader className="liquid-card-header-prominent flex-wrap gap-4">
+          <Card className="">
+            <CardHeader className="flex-wrap gap-4">
               <div className="flex w-full flex-wrap items-center justify-between gap-4">
                 <div>
                   <CardTitle className="flex items-center gap-2 text-body-lg">
@@ -571,7 +571,7 @@ const PlayerTrackerView = () => {
                 />
               </div>
             </CardHeader>
-            <CardContent className="liquid-prominent-header-content p-5 sm:p-6">
+            <CardContent className="">
               <div className="mb-5 rounded-2xl border border-border-base bg-bg-input/45 p-4">
                 <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
                   <div>

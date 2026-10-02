@@ -45,8 +45,8 @@ function ReleaseCard({ release, isLatest }: { release: PatchNotesRelease; isLate
       titleClassName="text-title"
       className={
         isLatest
-          ? 'liquid-prominent-header-card border-primary/25 shadow-[0_0_24px_-8px_var(--primary-glow)]'
-          : 'liquid-prominent-header-card border-border-base opacity-95'
+          ? ''
+          : 'opacity-95'
       }
     >
       {groups.length > 0 && (

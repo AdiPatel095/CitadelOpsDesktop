@@ -296,7 +296,7 @@ export const AutoSceatResSettingsModal: React.FC<AutoSceatResSettingsModalProps>
             </div>
           )}
           <SettingsSection disclosure={disclosure} section="reserves">
-            <Card variant="solid" className="p-5">
+            <Card variant="solid" className="">
               <div className="grid gap-4 xl:grid-cols-[1fr_1.4fr]">
                 <div className="grid content-start gap-3 sm:grid-cols-2">
                   <label className="grid gap-1.5 text-caption font-semibold text-text-muted">Minimum coin reserve
@@ -332,7 +332,7 @@ export const AutoSceatResSettingsModal: React.FC<AutoSceatResSettingsModalProps>
                     </div>
                     <Badge variant="success"><LocalizedText messageKey="ui.settings.components.autoSceatResSettingsModal.crafting.000b8216" /></Badge>
                   </CardHeader>
-                  <CardContent className="grid gap-4 p-5 xl:grid-cols-2">
+                  <CardContent className="grid gap-4  xl:grid-cols-2">
                     {node.buildings.map((building) => {
                       const plan = buildingPlan(node.castleID, building.queueTypeID);
                       const weeklyRental = rentalTotal(plan);
@@ -456,7 +456,7 @@ export const AutoSceatResSettingsModal: React.FC<AutoSceatResSettingsModalProps>
                 </Card>
               ))}
               {craftingNodes.length === 0 && (
-                <Card variant="solid"><CardContent className="p-10 text-center text-body font-semibold text-text-muted"><LocalizedText messageKey="ui.settings.components.autoSceatResSettingsModal.no.crafting.buildings.are.loaded.connect.the.d367e3ff" /></CardContent></Card>
+                <Card variant="solid"><CardContent className="text-center text-body font-semibold text-text-muted"><LocalizedText messageKey="ui.settings.components.autoSceatResSettingsModal.no.crafting.buildings.are.loaded.connect.the.d367e3ff" /></CardContent></Card>
               )}
             </div>
 
@@ -550,7 +550,7 @@ export const AutoSceatResSettingsModal: React.FC<AutoSceatResSettingsModalProps>
                   <p className="mt-1 text-caption text-text-muted"><LocalizedText messageKey="ui.settings.components.autoSceatResSettingsModal.the.four.crafting.castles.are.donors.and.35534627" /></p>
                 </div>
               </CardHeader>
-              <CardContent className="grid gap-3 p-4">
+              <CardContent className="grid gap-3">
                 {storageNodes.map(renderStorageNode)}
                 {storageNodes.length === 0 && <div className="rounded-global border border-dashed border-border-base px-4 py-6 text-center text-caption font-semibold text-text-muted"><LocalizedText messageKey="ui.settings.components.autoSceatResSettingsModal.no.additional.storage.nodes.discovered.71f389fd" /></div>}
                 <div className="rounded-global border border-primary/20 bg-primary/[0.04] px-4 py-3 text-caption font-medium text-text-muted">

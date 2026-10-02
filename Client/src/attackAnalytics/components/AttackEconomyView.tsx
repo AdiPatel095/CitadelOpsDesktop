@@ -268,8 +268,8 @@ const AttackEconomyView = ({
         />
       )}
 
-      <Card className="liquid-prominent-header-card">
-        <CardHeader className="liquid-card-header-prominent flex-wrap gap-4">
+      <Card className="">
+        <CardHeader className="flex-wrap gap-4">
           <div>
             <CardTitle className="flex items-center gap-2">
               <Activity className="h-5 w-5 text-primary" />
@@ -284,7 +284,7 @@ const AttackEconomyView = ({
             </div>
           </div>
         </CardHeader>
-        <CardContent className="p-5 sm:p-6">
+        <CardContent className="">
           <div className="mb-3 flex flex-wrap items-center justify-between gap-2 text-caption text-text-muted">
             <span><LocalizedText messageKey="ui.attackAnalytics.components.attackEconomyView.drag.horizontally.to.inspect.a.custom.time.4a5e7152" /></span>
             {customWindow && (
@@ -320,7 +320,7 @@ const AttackEconomyView = ({
           </CardTitle>
           <Badge variant="outline">{resourceRows.length} types</Badge>
         </CardHeader>
-        <CardContent className="space-y-2 p-4">
+        <CardContent className="space-y-2">
           {resourceRows.length === 0 ? (
             <EmptyAnalyticsState compact />
           ) : resourceRows.map(([key, amount]) => (

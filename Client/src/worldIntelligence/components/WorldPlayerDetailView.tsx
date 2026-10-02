@@ -183,8 +183,8 @@ const WorldPlayerDetailView = ({ profile, onOpenAlliance }: WorldPlayerDetailVie
 				)}
 			/>
 
-			<Card className="liquid-prominent-header-card">
-				<CardHeader className="liquid-card-header-prominent flex-wrap gap-4">
+			<Card className="">
+				<CardHeader className="flex-wrap gap-4">
 					<div className="flex w-full flex-wrap items-center justify-between gap-4">
 						<div>
 							<CardTitle className="flex items-center gap-2 text-body-lg">
@@ -205,7 +205,7 @@ const WorldPlayerDetailView = ({ profile, onOpenAlliance }: WorldPlayerDetailVie
 						/>
 					</div>
 				</CardHeader>
-				<CardContent className="liquid-prominent-header-content p-5 sm:p-6">
+				<CardContent className="">
 					<div className="mb-4 flex flex-wrap gap-2">
 						<PillSelector
 							ariaLabel={localizeStatic("ui.worldIntelligence.components.worldPlayerDetailView.ariaLabel.public.player.metric.eec2b7e0")}
@@ -285,15 +285,15 @@ const WorldPlayerDetailView = ({ profile, onOpenAlliance }: WorldPlayerDetailVie
 				})}
 			</div>
 
-			<Card className="liquid-prominent-header-card">
-				<CardHeader className="liquid-card-header-prominent flex-wrap gap-3">
+			<Card className="">
+				<CardHeader className="flex-wrap gap-3">
 					<div>
 						<CardTitle className="flex items-center gap-2"><Sparkles className="h-5 w-5 text-primary" />Public scores & event activity</CardTitle>
 						<p className="mt-1 text-caption text-text-muted"><LocalizedText messageKey="ui.worldIntelligence.components.worldPlayerDetailView.gallantry.gacha.spins.timestamps.and.other.one.79de0002" /></p>
 					</div>
 					<Badge variant="outline">{publicMetrics.length} observed</Badge>
 				</CardHeader>
-				<CardContent className="liquid-prominent-header-content p-5 sm:p-6">
+				<CardContent className="">
 					{publicMetrics.length === 0 ? (
 						<p className="text-body text-text-muted"><LocalizedText messageKey="ui.worldIntelligence.components.worldPlayerDetailView.no.additional.public.event.score.has.been.af69a3f4" /></p>
 					) : (
@@ -318,7 +318,7 @@ const WorldPlayerDetailView = ({ profile, onOpenAlliance }: WorldPlayerDetailVie
 
 			<Card>
 				<CardHeader><CardTitle className="flex items-center gap-2"><History className="h-5 w-5 text-primary" /><LocalizedText messageKey="ui.worldIntelligence.components.worldPlayerDetailView.identity.history.8bca6522" /></CardTitle></CardHeader>
-				<CardContent className="pt-0">
+				<CardContent className="">
 					{changes.length === 0 ? (
 						<p className="text-body text-text-muted"><LocalizedText messageKey="ui.worldIntelligence.components.worldPlayerDetailView.no.player.name.or.alliance.changes.have.9048b9e4" /></p>
 					) : (

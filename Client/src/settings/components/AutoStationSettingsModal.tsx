@@ -188,7 +188,7 @@ export const AutoStationSettingsModal: React.FC<AutoStationSettingsModalProps> =
       />
       <div className="flex w-full flex-col gap-6">
         <SettingsSection disclosure={disclosure} section="evacuation">
-          <Card variant="solid" className="bg-bg-app p-4">
+          <Card variant="solid" className="">
             <div className="grid gap-4 md:grid-cols-2">
               <label id="auto-station-lead-time" className="flex flex-col gap-1.5">
                 <span className="text-caption font-semibold text-primary"><LocalizedText messageKey="ui.settings.components.autoStationSettingsModal.evacuate.at.621aebd7" /></span>
@@ -265,7 +265,7 @@ export const AutoStationSettingsModal: React.FC<AutoStationSettingsModalProps> =
               const reserves = state.settings[castleID] ?? [];
               const stock = readiness.stockByCastle[castleID];
               return (
-                <Card key={castle.id} variant="solid" className="flex flex-col bg-bg-card-hover/40 p-4 shadow-inner">
+                <Card key={castle.id} variant="solid" className="flex flex-col">
                   <div className="mb-3 border-b border-border-base pb-2">
                     <h3 className="text-title-sm font-bold text-primary">{castle.name || `${castle.type} castle`}</h3>
                     <p className="mt-1 text-caption text-text-muted"><LocalizedText messageKey="ui.settings.components.autoStationSettingsModal.these.amounts.remain.in.the.castle.e33daec5" /></p>

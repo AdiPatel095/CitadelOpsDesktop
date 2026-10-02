@@ -1,3 +1,4 @@
+import { Card, SectionHeader } from '../components/ui';
 import { StatusBadge } from '../components/ui/StatusBadge';
 import { useAutomationPlayerStatus } from '../settings/readiness/useAutomationPlayerStatus';
 import { automationPlayerStatus } from '../settings/readiness/playerStatus';
@@ -864,19 +865,12 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
       {goalEntry}
       <div className="automation-function-groups">
         {groupedFeatures.map((group) => {
-          const GroupIcon = group.icon;
           return (
             <section key={group.id} className="automation-function-group">
-              <div className="automation-function-group-heading">
-                <span className="automation-function-group-icon" aria-hidden="true">
-                  <GroupIcon className="h-4 w-4" />
-                </span>
-                <h2>{group.name}</h2>
-                <span className="automation-function-group-rule" aria-hidden="true" />
-                <div className="automation-right-click-banner automation-right-click-inline" role="note">
+              <SectionHeader title={group.name} />
+              <div className="automation-right-click-banner automation-right-click-inline" role="note">
                   <MousePointerClick aria-hidden="true" />
                   <span><LocalizedRichText messageKey="ui.rich.views.automationView.right.click.a.toggle.for.temporary.activation.c34579ee" params={{}} tags={{strong0: children => <strong className="text-text-main">{children}</strong>}} /></span>
-                </div>
               </div>
               <div className="automation-function-grid">
                 {group.features.map((feature) => {
@@ -885,7 +879,7 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
                   const attackLaunchCount = rateView(attackRates, feature.id, offline);
                   const dailyAttackLaunchCount = dailyView(attackRates, feature.id, offline);
                   return (
-                    <div
+                    <Card
                       key={feature.id}
                       className={`automation-function-row ${feature.enabled ? 'automation-function-row-active' : ''}`}
                     >
@@ -960,7 +954,7 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
                       >
                         <Settings className="h-3.5 w-3.5" />
                       </Button>
-                    </div>
+                    </Card>
                   );
                 })}
               </div>

@@ -36,8 +36,8 @@ const SupportPage: React.FC = () => {
 			<IntentConsole />
 
             <div className="mt-8">
-                <Card variant="interactive" className="hover:border-primary/30 transition-all duration-300">
-                    <CardContent className="p-8 flex flex-col items-center text-center">
+                <Card variant="interactive" className="">
+                    <CardContent className="flex flex-col items-center text-center">
                         <div className="w-20 h-20 bg-[#5865F2]/10 rounded-full flex items-center justify-center mb-6 ring-1 ring-[#5865F2]/20">
                             <Icons.Help className="w-10 h-10 text-[#5865F2]" />
                         </div>

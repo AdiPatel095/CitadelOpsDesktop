@@ -15,7 +15,7 @@ interface DailyAttackLimitFieldProps {
 export const DailyAttackLimitField: React.FC<DailyAttackLimitFieldProps> = ({ value, onChange, serverState, description, zeroLabel = 'Attack count · 0 disables' }) => {
   const synced = Boolean(serverState?.observedAt && !serverState.observedAt.startsWith('0001-01-01'));
   return (
-    <Card variant="solid" className="p-4">
+    <Card variant="solid" className="">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0">
           <div className="flex items-center gap-2 text-body font-semibold text-text-main">

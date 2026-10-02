@@ -1,5 +1,6 @@
-import {useLocale} from '../../i18n/LocaleContext';
-import React, { type HTMLAttributes, type ReactNode } from 'react';
+import { useLocale } from '../../i18n/LocaleContext';
+import { type HTMLAttributes, type ReactNode } from 'react';
+import './Card.css';
 
 export interface MetricTileProps extends Omit<HTMLAttributes<HTMLDivElement>, 'title'> {
   label: ReactNode;
@@ -9,47 +10,16 @@ export interface MetricTileProps extends Omit<HTMLAttributes<HTMLDivElement>, 't
   monospace?: boolean;
   caption?: ReactNode;
 }
-
-export const MetricTile: React.FC<MetricTileProps> = ({
-  label,
-  value,
-  tone = 'default',
-  size = 'md',
-  monospace = true,
-  caption,
-  className = '',
-  ...props
-}) => {
-  const {number,locale} = useLocale();
-  const toneClass = {
-    default: 'text-text-main',
-    brand: 'text-primary',
-    success: 'text-success',
-    warning: 'text-warning',
-    danger: 'text-error',
-    info: 'text-info',
-  }[tone];
-  const borderClass = {
-    default: 'border-border-base',
-    brand: 'border-primary/25',
-    success: 'border-success/20',
-    warning: 'border-warning/20',
-    danger: 'border-error/20',
-    info: 'border-info/20',
-  }[tone];
-  const sizeClass = {
-    sm: 'px-3 py-2 [&_.ui-metric-value]:text-title',
-    md: 'px-3 py-2.5 [&_.ui-metric-value]:text-title',
-    lg: 'p-4 [&_.ui-metric-value]:text-display-sm',
-  }[size];
-
+export const MetricTile = ({ label, value, tone = 'default', size = 'md', monospace = true,
+  caption, className = '', ...props }: MetricTileProps) => {
+  const { number, locale } = useLocale();
   return (
-    <div className={`m3-metric-tile rounded-global border [&_.ui-metric-value]:font-bold ${borderClass} ${sizeClass} ${className}`} {...props}>
-      <div className="text-caption font-semibold text-text-muted">{label}</div>
-      <div className={`ui-metric-value mt-1 font-bold tabular-nums ${monospace ? 'font-mono' : ''} ${toneClass}`}>
-        {typeof value === 'number' ? <span lang={locale}>{number(value,{maximumSignificantDigits:21})}</span> : value}
+    <div className={`ui-metric-tile ${className}`} data-tone={tone} data-size={size} {...props}>
+      <div className="ui-metric-tile__label">{label}</div>
+      <div className={`ui-metric-value ${monospace ? 'ui-metric-value--mono' : ''}`}>
+        {typeof value === 'number' ? <span lang={locale}>{number(value, { maximumSignificantDigits: 21 })}</span> : value}
       </div>
-      {caption && <div className="mt-1 text-caption text-text-muted">{caption}</div>}
+      {caption && <div className="ui-metric-tile__caption">{caption}</div>}
     </div>
   );
 };

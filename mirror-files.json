@@ -1283,6 +1283,30 @@
     {
       "portal": "src/commandCenter/styles/typography.css",
       "desktop": "Client/src/styles/typography.css"
+    },
+    {
+      "portal": "src/commandCenter/components/ui/Card.tsx",
+      "desktop": "Client/src/components/ui/Card.tsx"
+    },
+    {
+      "portal": "src/commandCenter/components/ui/Card.css",
+      "desktop": "Client/src/components/ui/Card.css"
+    },
+    {
+      "portal": "src/commandCenter/components/ui/Panel.tsx",
+      "desktop": "Client/src/components/ui/Panel.tsx"
+    },
+    {
+      "portal": "src/commandCenter/components/ui/SectionHeader.tsx",
+      "desktop": "Client/src/components/ui/SectionHeader.tsx"
+    },
+    {
+      "portal": "tests/card-anatomy.test.mjs",
+      "desktop": "Client/tests/card-anatomy.test.mjs"
+    },
+    {
+      "portal": "tests/visual/cardAnatomy.ts",
+      "desktop": "Client/tests/visual/cardAnatomy.ts"
     }
   ],
   "unmirrored": []

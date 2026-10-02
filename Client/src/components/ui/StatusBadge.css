@@ -18,11 +18,14 @@
 .player-status-inline .player-status-badge { display: grid; grid-template-columns: var(--font-size-14) max-content minmax(0, 1fr); flex: 0 1 auto; min-width: min-content; max-width: 320px; }
 .player-status-inline-reason { font-weight: var(--font-weight-400); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
 .player-status-tooltip { display: none; position: absolute; inset-block-start: 100%; inset-inline-start: 0; z-index: var(--layer-tooltip); width: max-content; max-width: 280px; padding: var(--space-8); background: var(--surface-inverse); color: var(--text-inverse); border-radius: var(--radius-sm); box-shadow: var(--elevation-3); font-size: var(--font-size-12); line-height: var(--line-height-12); white-space: normal; }
-.player-status-inline:hover .player-status-tooltip, .player-status-inline:focus-within .player-status-tooltip { display: block; }
+.player-status-inline:hover .player-status-tooltip,
+.player-status-inline:focus-within .player-status-tooltip { display: block; }
 .player-status-indicator { border: none; border-radius: initial; background: transparent; padding: 0; }
 .player-role-tag { display: inline-flex; align-items: center; height: var(--space-24); padding-inline: var(--space-8); border-radius: var(--radius-sm); border: 1px solid var(--border-default); background: transparent; color: var(--text-secondary); font-size: var(--font-size-12); line-height: var(--line-height-12); font-weight: var(--font-weight-500); white-space: nowrap; }
-@media (max-width: 767px) { .player-status-inline, .player-status-inline .player-status-badge { max-width: 240px; } }
-@media (forced-colors: active) { .player-status-badge, .player-role-tag { border-color: CanvasText; } .player-status-inline:focus-visible { outline: 2px solid Highlight; } }
+@media (max-width: 767px) { .player-status-inline,
+.player-status-inline .player-status-badge { max-width: 240px; } }
+@media (forced-colors: active) { .player-status-badge,
+.player-role-tag { border-color: CanvasText; } .player-status-inline:focus-visible { outline: 2px solid Highlight; } }
 
 .player-connection-panel { position: relative; min-width: 0; }
 .player-connection-panel > summary { cursor: pointer; list-style: none; }

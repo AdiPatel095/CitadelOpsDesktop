@@ -139,16 +139,16 @@ const EventScoreCard: React.FC<EventScoreCardProps> = ({ live, event, onOpenRank
         ) : (
           <div className="flex flex-col gap-4">
             <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-5">
-              <MetricTile label={localizeStatic("ui.dashboard.components.eventScoreCard.label.your.score.5f49fcc8")} value={event.playerScore} tone="brand" className="border-border-light bg-bg-card/40 px-4 py-3 [&_.ui-metric-value]:truncate [&_.ui-metric-value]:text-title" />
-              <MetricTile label={localizeStatic("ui.dashboard.components.eventScoreCard.label.your.rank.dd60f006")} value={formatRank(event.playerRank)} className="border-border-light bg-bg-card/40 px-4 py-3 [&_.ui-metric-value]:truncate [&_.ui-metric-value]:text-title" />
-              <MetricTile label={localizeStatic("ui.dashboard.components.eventScoreCard.label.alliance.score.ce090cd8")} value={event.allianceScore} className="border-border-light bg-bg-card/40 px-4 py-3 [&_.ui-metric-value]:truncate [&_.ui-metric-value]:text-title" />
-              <MetricTile label={localizeStatic("ui.dashboard.components.eventScoreCard.label.alliance.rank.d0816adc")} value={formatRank(event.allianceRank)} className="border-border-light bg-bg-card/40 px-4 py-3 [&_.ui-metric-value]:truncate [&_.ui-metric-value]:text-title" />
+              <MetricTile label={localizeStatic("ui.dashboard.components.eventScoreCard.label.your.score.5f49fcc8")} value={event.playerScore} tone="brand" className="[&_.ui-metric-value]:truncate" />
+              <MetricTile label={localizeStatic("ui.dashboard.components.eventScoreCard.label.your.rank.dd60f006")} value={formatRank(event.playerRank)} className="[&_.ui-metric-value]:truncate" />
+              <MetricTile label={localizeStatic("ui.dashboard.components.eventScoreCard.label.alliance.score.ce090cd8")} value={event.allianceScore} className="[&_.ui-metric-value]:truncate" />
+              <MetricTile label={localizeStatic("ui.dashboard.components.eventScoreCard.label.alliance.rank.d0816adc")} value={formatRank(event.allianceRank)} className="[&_.ui-metric-value]:truncate" />
               <MetricTile
                 label={localizeStatic("ui.dashboard.components.eventScoreCard.label.reward.pages.54812284")}
                 value={formatRewardPages(event.rewardPagesReached, event.rewardPagesTotal)}
                 tone="success"
                 caption={rewardPagesCaption(event)}
-                className="col-span-2 border-border-light bg-bg-card/40 px-4 py-3 [&_.ui-metric-value]:truncate [&_.ui-metric-value]:text-title md:col-span-1"
+                className="col-span-2 [&_.ui-metric-value]:truncate md:col-span-1"
               />
             </div>
             <div className="flex flex-wrap items-center gap-x-5 gap-y-2 border-t border-border-base/60 pt-3 text-caption text-text-muted">

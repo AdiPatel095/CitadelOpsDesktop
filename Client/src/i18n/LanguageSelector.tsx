@@ -6,7 +6,7 @@ import { locales, normalizeLocale } from './locales';
 export function LanguageSelector() {
   const {preference,setLocale,t,messageLocale} = useLocale();
   return <SectionCard title={<span lang={messageLocale}>{t('locale.select')}</span>}
-    description={<span lang={messageLocale}>{t('locale.help')}</span>} contentClassName="p-6 space-y-3">
+    description={<span lang={messageLocale}>{t('locale.help')}</span>} contentClassName=" space-y-3">
     <Select searchable searchPlaceholder={t('locale.select')} closeOnScroll={false} ariaLabel={t('locale.select')} value={preference}
       options={[
         {value:'auto',searchText:t('locale.automatic'),label:<span lang={messageLocale}>{t('locale.automatic')}</span>},

@@ -252,8 +252,8 @@ const MovementView: React.FC = () => {
     <div className="data-view-render-stable flex flex-col gap-6">
       <StaleSessionBanner />
 
-      <Card className="liquid-prominent-header-card">
-        <CardHeader className="liquid-card-header-prominent flex-wrap gap-3">
+      <Card className="">
+        <CardHeader className="flex-wrap gap-3">
           <PillSelector
             ariaLabel={localizeStatic("ui.movement.components.movementView.ariaLabel.commander.workspace.mode.d48ff88d")}
             value={mode}
@@ -296,7 +296,7 @@ const MovementView: React.FC = () => {
             <LocalizedText messageKey="common.refresh" />
           </Button>
         </CardHeader>
-        <CardContent className="liquid-prominent-header-content">
+        <CardContent className="">
           {mode === 'Functions' ? (
             <div className="flex flex-col gap-4">
               <div className="rounded-global border border-border-light bg-bg-card/45 px-4 py-3 shadow-[var(--shadow-raised)]">

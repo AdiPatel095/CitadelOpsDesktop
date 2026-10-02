@@ -160,7 +160,7 @@ export const AutoBoosterSettingsModal: React.FC<AutoBoosterSettingsModalProps> =
         </div>
       </div>
 
-        <Card id="auto-booster-ruby-reserve" variant="solid" className="p-4">
+        <Card id="auto-booster-ruby-reserve" variant="solid" className="">
           <div className="flex items-start gap-3">
             <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary">
               <Coins className="h-5 w-5" />
@@ -198,7 +198,7 @@ export const AutoBoosterSettingsModal: React.FC<AutoBoosterSettingsModalProps> =
       >
         <div className="space-y-4">
       {live.purchase && (
-        <Card variant="solid" className="p-4" data-testid="auto-booster-purchase-record">
+        <Card variant="solid" className="" data-testid="auto-booster-purchase-record">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
               <h3 className="text-title-sm font-bold text-text-main">{live.purchaseHeading}</h3>
@@ -228,7 +228,7 @@ export const AutoBoosterSettingsModal: React.FC<AutoBoosterSettingsModalProps> =
         </Card>
       )}
 
-        <Card variant="solid" className="p-4">
+        <Card variant="solid" className="">
           <div className="flex items-start gap-3">
             <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-secondary/10 text-secondary">
               <ShieldCheck className="h-5 w-5" />

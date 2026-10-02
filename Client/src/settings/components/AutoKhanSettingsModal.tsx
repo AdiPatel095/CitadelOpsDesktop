@@ -288,7 +288,7 @@ export const AutoKhanSettingsModal: React.FC<AutoKhanSettingsModalProps> = ({ is
         ) : null}
 
         <SettingsSection disclosure={disclosure} section="setup" className="space-y-3">
-        <Card variant="solid" className="p-4">
+        <Card variant="solid" className="">
           <div className="grid gap-4 md:grid-cols-2">
             <CastleRequirementField
               id="auto-khan-source"
@@ -319,7 +319,7 @@ export const AutoKhanSettingsModal: React.FC<AutoKhanSettingsModalProps> = ({ is
             <LocalizedText messageKey="ui.settings.components.autoKhanSettingsModal.auto.station.has.precedence.any.incoming.player.19ee005a" /></p>
         </Card>
 
-        <Card variant="solid" className="p-4">
+        <Card variant="solid" className="">
           <div className="grid gap-4 md:grid-cols-2">
             <EventAttackSetupField
               id="auto-khan-attack"
@@ -365,7 +365,7 @@ export const AutoKhanSettingsModal: React.FC<AutoKhanSettingsModalProps> = ({ is
         </SettingsSection>
 
         <SettingsSection disclosure={disclosure} section="policy" className="space-y-3">
-        <Card variant="solid" className="p-4">
+        <Card variant="solid" className="">
           <div className="grid gap-4 md:grid-cols-2">
             <div className="flex items-start justify-between gap-4">
               <div className="min-w-0">
@@ -393,7 +393,7 @@ export const AutoKhanSettingsModal: React.FC<AutoKhanSettingsModalProps> = ({ is
           </div>
         </Card>
 
-        <Card id="auto-khan-purchase-policy" variant="solid" className="p-4">
+        <Card id="auto-khan-purchase-policy" variant="solid" className="">
             <div>
               <div className="flex items-start justify-between gap-4">
                 <div className="min-w-0">
@@ -413,7 +413,7 @@ export const AutoKhanSettingsModal: React.FC<AutoKhanSettingsModalProps> = ({ is
             </div>
         </Card>
 
-        <Card variant="solid" className="p-4">
+        <Card variant="solid" className="">
           <div className="flex items-start justify-between gap-4">
             <div className="min-w-0">
               <div className="flex items-center gap-2 text-body font-semibold text-text-main"><ShieldAlert className="h-4 w-4 text-primary" /> <LocalizedText messageKey="ui.settings.components.autoKhanSettingsModal.protect.offense.on.the.main.castle.wall.e3913e51" /></div>
@@ -455,7 +455,7 @@ export const AutoKhanSettingsModal: React.FC<AutoKhanSettingsModalProps> = ({ is
           ) : null}
         </Card>
 
-        <Card id="auto-khan-nomad-points" variant="solid" className="p-4">
+        <Card id="auto-khan-nomad-points" variant="solid" className="">
           <div>
             <div className="flex items-center gap-2 text-body font-semibold text-text-main"><LockKeyhole className="h-4 w-4 text-primary" /> <LocalizedText messageKey="ui.settings.components.autoKhanSettingsModal.nomad.points.stop.727b7bc2" /></div>
             <p className="mt-1 text-caption text-text-muted"><LocalizedText messageKey="ui.settings.components.autoKhanSettingsModal.at.the.limit.auto.khan.stops.launching.8f630fc2" /></p>
@@ -484,7 +484,7 @@ export const AutoKhanSettingsModal: React.FC<AutoKhanSettingsModalProps> = ({ is
 
         <SettingsSection disclosure={disclosure} section="skips">
         <div id="auto-khan-skips" tabIndex={-1} className="outline-none">
-        <Card variant="solid" className="p-4">
+        <Card variant="solid" className="">
           <div className="flex items-start justify-between gap-4">
             <div className="min-w-0">
               <div className="flex items-center gap-2 text-body font-semibold text-text-main"><RotateCcw className="h-4 w-4 text-primary" /> <LocalizedText messageKey="ui.settings.components.autoKhanSettingsModal.skip.every.khan.camp.cooldown.c1c19442" /></div>

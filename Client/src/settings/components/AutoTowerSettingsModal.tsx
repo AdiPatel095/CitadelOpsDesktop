@@ -225,7 +225,7 @@ export const AutoTowerSettingsModal: React.FC<AutoTowerSettingsModalProps> = ({ 
             const stock = state?.castles[String(castle.id)]?.units.stationed[String(plan.unitId)] ?? 0;
             const stockResult = plan.enabled ? readiness.stockByCastle[String(castle.id)] : undefined;
             return (
-              <Card key={castle.id} variant="solid" className="flex flex-col gap-4 bg-bg-card-hover/40 p-4 shadow-inner">
+              <Card key={castle.id} variant="solid" className="flex flex-col gap-4">
                 <div className="flex items-start justify-between gap-3 border-b border-border-base pb-3">
                   <div className="min-w-0">
                     <h3 className="truncate text-title-sm font-bold text-primary">{castle.name}</h3>
