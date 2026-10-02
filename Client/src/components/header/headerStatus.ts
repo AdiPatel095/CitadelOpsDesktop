@@ -61,3 +61,30 @@ export function prioritySignal(input: SignalInput): PrioritySignal | null {
   }
   return null;
 }
+
+export function featureOrder(a: string, b: string): number {
+  const rank = (id: string) => FEATURE_RANK.get(id) ?? AUTOMATION_FEATURE_ORDER.length;
+  return rank(a) - rank(b) || (a < b ? -1 : a > b ? 1 : 0);
+}
+export function compactCount(signal: PrioritySignal | null): { count: number; tone: 'warning' | 'danger'; glyph: 'shield-alert' | 'triangle-alert' | 'circle-minus' | 'circle-pause' } | null {
+  if (!signal || signal.kind === 'nextBird') return null;
+  if (signal.kind === 'incoming') return { count: signal.count, tone: 'warning', glyph: 'shield-alert' };
+  return { count: signal.count, tone: signal.worst === 'needs-attention' ? 'danger' : 'warning', glyph: signal.worst === 'needs-attention' ? 'triangle-alert' : signal.worst === 'blocked' ? 'circle-minus' : 'circle-pause' };
+}
+export function clusterName(texts: string[], locale: string): string {
+  return new Intl.ListFormat(locale, { type: 'unit', style: 'narrow' }).format(texts.filter(Boolean));
+}
+
+import type { HeaderStatus } from './StatusCluster';
+import type { useLocale } from '../../i18n/LocaleContext';
+export function attacksText(data: HeaderStatus, locale: ReturnType<typeof useLocale>) {
+  const { dailyAttacks, presence } = data;
+  const observed = dailyAttacks?.observedAt ? Date.parse(dailyAttacks.observedAt) : NaN;
+  const saved = presence.checkpointObservedAt ? Date.parse(presence.checkpointObservedAt) : NaN;
+  const offline = presence.mode === 'checkpoint';
+  const known = Number.isFinite(observed) && !dailyAttacks?.observedAt?.startsWith('0001-01-01') && typeof dailyAttacks?.count === 'number' && Number.isFinite(dailyAttacks.count) && (!offline || Number.isFinite(saved));
+  const count = known ? Math.max(0, Math.trunc(dailyAttacks!.count)) : 0;
+  const time = Number.isFinite(saved) ? new Intl.DateTimeFormat(locale.locale, { dateStyle: 'short', timeStyle: 'short' }).format(saved) : '';
+  return { text: known ? offline ? locale.t('copy.attacksSaved', { count, time }) : locale.t('copy.attacksToday', { count: locale.number(count) }) : '—',
+    title: known ? offline ? locale.t('copy.offlineSavedTitle', { time }) : locale.t('dailyAttacks.observed', { count, observedAt: observed }) : locale.t('copy.countUnknownTitle') };
+}

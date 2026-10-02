@@ -9,6 +9,7 @@ for (const entry of cases) {
     test(`${entry.name}-${theme}`, async ({ page }, testInfo) => {
       const verifyNetwork = await prepare(page, theme, entry.states, entry.scenario);
       await openView(page, entry.label, entry.view);
+      if (entry.name === 'header-panel') await page.locator('.header-status-cluster').click();
       if (entry.settings) await openSettings(page);
       await settle(page);
       await reportAccentUsage(page, entry.name);
@@ -27,31 +28,28 @@ for (const entry of cases) {
 test('CIT-66 connection status disclosure supports pointer and keyboard', async ({ page }) => {
   const verifyNetwork = await prepare(page, 'dark');
   await settle(page);
-  const panel = page.locator('.player-connection-panel:visible').first();
-  const summary = panel.locator('summary');
-  const full = await summary.locator('[role="status"]').getAttribute('aria-label');
-  await summary.click();
-  await expect(panel.locator('.player-connection-details')).toBeVisible();
-  await expect(panel.locator('.player-connection-details [role="status"]')).toHaveAttribute('aria-label', full!);
-  await summary.focus();
-  await summary.press('Enter');
-  await expect(panel.locator('.player-connection-details')).toBeHidden();
-  await summary.press('Enter');
-  await expect(panel.locator('.player-connection-details')).toBeVisible();
+  await page.locator('.header-status-cluster').click();
+  const panel = page.locator('.cit-popover-layer:visible').first();
+  await expect(panel.getByRole('dialog')).toBeVisible();
+  await page.keyboard.press('Escape');
+  await expect(panel).toBeHidden();
+  await expect(page.locator('.header-status-cluster')).toBeFocused();
+  await page.keyboard.press('Enter');
+  await expect(panel.getByRole('dialog')).toBeVisible();
   verifyNetwork();
 });
 
 test('CIT-66 wrapped reasons omit the separator and start flush in LTR and RTL', async ({ page }) => {
   const verifyNetwork = await prepare(page, 'dark');
   await settle(page);
-  const panel = page.locator('.player-connection-panel:visible').first();
-  await panel.locator('summary').click();
-  const row = panel.locator('.player-connection-details .player-status-row').first();
+  await page.locator('.header-status-cluster').click();
+  const panel = page.locator('.cit-popover-layer:visible').first();
+  const row = panel.locator('.header-status-panel section:first-of-type .player-status-row').first();
   const reason = row.locator('.player-status-card-reason');
   const full = await row.getAttribute('aria-label');
   for (const direction of ['ltr', 'rtl']) {
     await row.evaluate((element, direction) => {
-      const panel = element.closest('.player-connection-details') as HTMLElement;
+      const panel = element.closest('.cit-popover') as HTMLElement;
       panel.style.width = '1000px'; panel.style.maxWidth = 'none';
       element.style.width = '1000px'; element.style.maxWidth = 'none';
       element.dir = direction;
