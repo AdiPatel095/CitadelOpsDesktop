@@ -5,6 +5,20 @@ import { officialMessageKeys, officialMessageNouns } from './officialKeys';
 import { formatMessage, validateMessageCatalog } from './formatMessage';
 /** Add explicit descriptors here; never translate user names, IDs, or free-form input. */
 export const messages = {
+  "castleOverview.title": "Castle overview",
+  "castleOverview.resources": "Resources",
+  "castleOverview.nearCap": "Near cap",
+  "castleOverview.production": "Production per hour",
+  "castleOverview.troops": "Troops",
+  "castleOverview.stationed": "Stationed",
+  "castleOverview.traveling": "Traveling",
+  "castleOverview.hospital": "In hospital",
+  "castleOverview.automations": "Automations acting on this castle",
+  "castleOverview.noAutomations": "No automation''s saved settings name this castle.",
+  "castleOverview.seeAll": "See all on Automation",
+  "castleOverview.savedDataFrom": "Saved data from {time}",
+  "castleOverview.savedDataUnknown": "Saved data. It may be out of date.",
+
   "copy.countUnknownTitle": "The attack count isn't available right now",
   "copy.attacksSaved": "{count, number} attacks, saved {time}",
   "copy.since": "{count, number} since {time}",

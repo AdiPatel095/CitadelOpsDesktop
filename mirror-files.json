@@ -245,6 +245,14 @@
       "desktop": "Client/src/components/ui/AddSlot.tsx"
     },
     {
+      "portal": "src/commandCenter/components/ui/Card.css",
+      "desktop": "Client/src/components/ui/Card.css"
+    },
+    {
+      "portal": "src/commandCenter/components/ui/Card.tsx",
+      "desktop": "Client/src/components/ui/Card.tsx"
+    },
+    {
       "portal": "src/commandCenter/components/ui/CatalogPickerModal.tsx",
       "desktop": "Client/src/components/ui/CatalogPickerModal.tsx"
     },
@@ -277,6 +285,10 @@
       "desktop": "Client/src/components/ui/PageHeader.tsx"
     },
     {
+      "portal": "src/commandCenter/components/ui/Panel.tsx",
+      "desktop": "Client/src/components/ui/Panel.tsx"
+    },
+    {
       "portal": "src/commandCenter/components/ui/PillSelector.tsx",
       "desktop": "Client/src/components/ui/PillSelector.tsx"
     },
@@ -295,6 +307,10 @@
     {
       "portal": "src/commandCenter/components/ui/SectionCard.tsx",
       "desktop": "Client/src/components/ui/SectionCard.tsx"
+    },
+    {
+      "portal": "src/commandCenter/components/ui/SectionHeader.tsx",
+      "desktop": "Client/src/components/ui/SectionHeader.tsx"
     },
     {
       "portal": "src/commandCenter/components/ui/SettingsModal.tsx",
@@ -341,6 +357,10 @@
       "desktop": "Client/src/config/Navigation.tsx"
     },
     {
+      "portal": "src/commandCenter/config/viewNavigation.ts",
+      "desktop": "Client/src/config/viewNavigation.ts"
+    },
+    {
       "portal": "src/commandCenter/configuration/PresetDocumentUpdate.ts",
       "desktop": "Client/src/configuration/PresetDocumentUpdate.ts"
     },
@@ -361,8 +381,20 @@
       "desktop": "Client/src/dashboard/components/BarracksQueueSlot.tsx"
     },
     {
+      "portal": "src/commandCenter/dashboard/components/CastleOverviewCard.css",
+      "desktop": "Client/src/dashboard/components/CastleOverviewCard.css"
+    },
+    {
+      "portal": "src/commandCenter/dashboard/components/CastleOverviewCard.tsx",
+      "desktop": "Client/src/dashboard/components/CastleOverviewCard.tsx"
+    },
+    {
       "portal": "src/commandCenter/dashboard/components/CastleUnitCard.tsx",
       "desktop": "Client/src/dashboard/components/CastleUnitCard.tsx"
+    },
+    {
+      "portal": "src/commandCenter/dashboard/components/CastleView.tsx",
+      "desktop": "Client/src/dashboard/components/CastleView.tsx"
     },
     {
       "portal": "src/commandCenter/dashboard/components/CraftingQueueSlot.tsx",
@@ -1233,6 +1265,10 @@
       "desktop": "Client/src/worldIntelligence/useServerLabel.ts"
     },
     {
+      "portal": "tests/card-anatomy.test.mjs",
+      "desktop": "Client/tests/card-anatomy.test.mjs"
+    },
+    {
       "portal": "tests/check-retired-classes.test.mjs",
       "desktop": "Client/tests/check-retired-classes.test.mjs"
     },
@@ -1277,32 +1313,12 @@
       "desktop": "Client/tests/view-states-logic.test.mjs"
     },
     {
-      "portal": "tests/visual/rules.ts",
-      "desktop": "Client/tests/visual/rules.ts"
-    },
-    {
-      "portal": "src/commandCenter/components/ui/Card.tsx",
-      "desktop": "Client/src/components/ui/Card.tsx"
-    },
-    {
-      "portal": "src/commandCenter/components/ui/Card.css",
-      "desktop": "Client/src/components/ui/Card.css"
-    },
-    {
-      "portal": "src/commandCenter/components/ui/Panel.tsx",
-      "desktop": "Client/src/components/ui/Panel.tsx"
-    },
-    {
-      "portal": "src/commandCenter/components/ui/SectionHeader.tsx",
-      "desktop": "Client/src/components/ui/SectionHeader.tsx"
-    },
-    {
-      "portal": "tests/card-anatomy.test.mjs",
-      "desktop": "Client/tests/card-anatomy.test.mjs"
-    },
-    {
       "portal": "tests/visual/cardAnatomy.ts",
       "desktop": "Client/tests/visual/cardAnatomy.ts"
+    },
+    {
+      "portal": "tests/visual/rules.ts",
+      "desktop": "Client/tests/visual/rules.ts"
     }
   ],
   "unmirrored": []
