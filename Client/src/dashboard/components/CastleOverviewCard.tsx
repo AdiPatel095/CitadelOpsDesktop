@@ -49,7 +49,7 @@ export default function CastleOverviewCard({ castle }: { castle: CastleStateV2 }
     <section>
       <h3>{t('castleOverview.resources')}</h3>
       <div className="castle-overview-resources">
-        {rows.filter(row => row.capacity != null).map(row => <div key={row.id}>
+        {rows.filter(row => row.capacity != null && row.capacity > 0).map(row => <div key={row.id}>
           <div className="castle-overview-resource-label">
             {row.icon && <img src={row.icon} alt="" />}
             <span>{row.name}</span><span>{formatNumber(row.amount)} / {formatNumber(row.capacity!)}</span>

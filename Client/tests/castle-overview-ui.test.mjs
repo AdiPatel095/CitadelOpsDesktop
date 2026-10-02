@@ -19,7 +19,7 @@ const vite = await createServer({ root, configFile: false, appType: 'custom', lo
     },
     load(id) {
       if (id === 'virtual:castle-ApiContext') return 'export const useCitadelAPI = () => globalThis.__castleOverviewApi;';
-      if (id === 'virtual:castle-MetadataContext') return 'export const useMetadata = () => ({resources: {1: {name: "Wood"}, 2: {name: "Stone"}, 3: {name: "Food"}}});';
+      if (id === 'virtual:castle-MetadataContext') return 'export const useMetadata = () => ({resources: {1: {name: "Wood"}, 2: {name: "Stone"}, 3: {name: "Food"}, 4: {name: "Coins"}}});';
       if (id === 'virtual:castle-Deployment') return 'export const useHostedRuntimePresence = () => globalThis.__castleOverviewPresence;';
       if (id === 'virtual:castle-useAutomationPlayerStatus') return 'export const useAutomationPlayerStatus = () => ({overall: {status: "off", reason: "Off"}});';
     },
@@ -35,16 +35,20 @@ const castle = { id: 1, resources: {
   1: { amount: 90, capacity: 100, productionPerHour: 12 },
   2: { amount: 80, capacity: 100, productionPerHour: 0 },
   3: { amount: 100, productionPerHour: -5 },
+  4: { amount: 2884310, capacity: 0, productionPerHour: 0 },
 }, units: { stationed: { 1: 10 }, traveling: { 1: 4 }, hospital: { 1: 2 }, specialHospital: { 1: 3 }, total: {} } };
 function render({ connected = true, presence = { mode: 'live' } } = {}) {
   globalThis.__castleOverviewApi = { connectionStatus: connected ? 'Connected' : 'Disconnected', configuration: { sections: {} } };
   globalThis.__castleOverviewPresence = presence;
   return renderToStaticMarkup(React.createElement(Overview, { castle }));
 }
-test('overview renders storage warnings, signed production including food without capacity, and both hospitals', () => {
+test('overview renders positive-capacity storage, uncapped production, and both hospitals', () => {
   const html = render();
   assert.equal((html.match(/role="meter"/g) ?? []).length, 2);
   assert.match(html, /Near cap/);
+  assert.doesNotMatch(html, /aria-label="Coins"/);
+  assert.doesNotMatch(html, /2,884,310 \/ 0/);
+  assert.match(html, /Coins<\/span><span[^>]*data-consuming="false">0</);
   assert.match(html, /data-consuming="false">\+12</);
   assert.match(html, /data-consuming="false">0</);
   assert.match(html, /Food<\/span><span[^>]*data-consuming="true">−5</);
