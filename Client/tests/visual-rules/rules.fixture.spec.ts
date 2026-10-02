@@ -118,9 +118,9 @@ let renderDelta: (value: number, text: string) => string;
 test.beforeAll(async () => {
   vite = await createServer({ root, configFile: false, appType: 'custom', logLevel: 'silent', server: { middlewareMode: true, hmr: false } });
   const { Switch } = await vite.ssrLoadModule(`/${source}/components/ui/Switch.tsx`);
-  const { Delta } = await vite.ssrLoadModule(`/${source}/components/ui/Delta.tsx`);
+  const { DeltaValue } = await vite.ssrLoadModule(`/${source}/components/ui/DeltaValue.tsx`);
   renderSwitch = (checked, disabled = false) => renderToStaticMarkup(createElement(Switch, { checked, disabled, onChange() {}, ariaLabel: `${disabled ? 'Disabled' : 'Enabled'} ${checked ? 'on' : 'off'}` }));
-  renderDelta = (value, text) => renderToStaticMarkup(createElement(Delta, { value }, text));
+  renderDelta = (value, text) => renderToStaticMarkup(createElement(DeltaValue, { value }, text));
 });
 test.afterAll(async () => vite?.close());
 
