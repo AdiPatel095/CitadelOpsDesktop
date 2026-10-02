@@ -9,8 +9,16 @@
       "desktop": "Docs/OnboardingEvaluation.md"
     },
     {
+      "portal": "playwright.gate.config.ts",
+      "desktop": "Client/playwright.gate.config.ts"
+    },
+    {
       "portal": "scripts/check-retired-classes.mjs",
       "desktop": "Client/scripts/check-retired-classes.mjs"
+    },
+    {
+      "portal": "scripts/visual/gate-report.mjs",
+      "desktop": "Client/scripts/visual/gate-report.mjs"
     },
     {
       "portal": "src/commandCenter/Movement/context/MovementContext.tsx",
@@ -1231,6 +1239,30 @@
     {
       "portal": "tests/delta.test.mjs",
       "desktop": "Client/tests/delta.test.mjs"
+    },
+    {
+      "portal": "tests/gate-report.test.mjs",
+      "desktop": "Client/tests/gate-report.test.mjs"
+    },
+    {
+      "portal": "tests/gate/checks.ts",
+      "desktop": "Client/tests/gate/checks.ts"
+    },
+    {
+      "portal": "tests/gate/harness.ts",
+      "desktop": "Client/tests/gate/harness.ts"
+    },
+    {
+      "portal": "tests/gate/keyboard.spec.ts",
+      "desktop": "Client/tests/gate/keyboard.spec.ts"
+    },
+    {
+      "portal": "tests/gate/layout.spec.ts",
+      "desktop": "Client/tests/gate/layout.spec.ts"
+    },
+    {
+      "portal": "tests/gate/views.ts",
+      "desktop": "Client/tests/gate/views.ts"
     },
     {
       "portal": "tests/status-badges.test.mjs",
