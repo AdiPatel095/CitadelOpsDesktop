@@ -486,6 +486,7 @@ const PlayerTrackerView = () => {
                 />
 				{extraMetricDefinitions.length > 0 && (
 					<Select
+						ariaLabel={localizeStatic("ui.playerTracker.components.playerTrackerView.placeholder.more.metrics.95d53305")}
 						value={selectedExtraMetric?.key ?? ''}
 						onChange={setSelectedMetric}
 						placeholder={localizeStatic("ui.playerTracker.components.playerTrackerView.placeholder.more.metrics.95d53305")}
@@ -745,8 +746,8 @@ const PlayerTrackerView = () => {
                     value={troopComposition.melee}
                     total={troopComposition.typeClassified}
                     icon={Swords}
-                    accentClass="text-primary"
-                    barClass="bg-primary"
+                    accentClass="text-text-main"
+                    barClass="bg-text-muted"
                   />
                   <CombatCompositionCard
                     label={localizeStatic("ui.playerTracker.components.playerTrackerView.label.ranged.3f0b51a2")}

@@ -262,7 +262,7 @@ const MovementView: React.FC = () => {
             size="header"
           />
           <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2 max-[720px]:w-full max-[720px]:flex-none">
-            <CardTitle className="text-body-lg text-primary">
+            <CardTitle className="text-body-lg text-text-main">
               {mode === 'Live Movements' ? 'Commanders' : 'Function assignments'}
               <span className="ml-2 text-body font-normal text-text-muted">({rows.length})</span>
             </CardTitle>
@@ -276,7 +276,7 @@ const MovementView: React.FC = () => {
           {mode === 'Functions' ? (
             <Button
               variant="primary"
-              size="sm"
+              size="md"
               disabled={!assignmentsDirty}
               isLoading={savingAssignments}
               onClick={() => void saveCommanderFeatures()}
@@ -286,7 +286,7 @@ const MovementView: React.FC = () => {
           ) : null}
           <Button
             variant="secondary"
-            size="sm"
+            size="md"
             className="shrink-0"
             disabled={!gameLoggedIn}
             onClick={() => refreshMovement(true)}
@@ -337,10 +337,10 @@ const MovementView: React.FC = () => {
                                   state,
                                 ).length;
                                 return (
-                                  <button data-button-pattern="tile"
+                                  <Button variant="secondary"
                                     key={feature.id}
                                     type="button"
-                                    className="rounded-full transition-transform hover:-translate-y-0.5 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 disabled:pointer-events-none disabled:opacity-40"
+                                    className="transition-transform"
                                     aria-pressed={allAssigned}
                                     aria-label={`${allAssigned ? 'Disable' : 'Enable'} ${feature.label} for all commanders`}
                                     aria-description={localizeStatic("ui.movement.components.movementView.aria-description.right.click.to.configure.an.equipped.bonus.845b6341")}
@@ -355,7 +355,7 @@ const MovementView: React.FC = () => {
                                       : 'Right-click to require an equipped bonus-troop stat'}
                                   >
                                     <Badge
-                                      variant={allAssigned ? 'success' : noneAssigned ? 'danger' : 'warning'}
+                                      variant={savingAssignments || noneAssigned ? 'outline' : allAssigned ? 'success' : 'warning'}
                                       className="gap-1.5 cursor-pointer normal-case shadow-sm"
                                     >
                                       {allAssigned
@@ -371,7 +371,7 @@ const MovementView: React.FC = () => {
                                         </>
                                       ) : null}
                                     </Badge>
-                                  </button>
+                                  </Button>
                                 );
                               })}
                             </div>
@@ -395,7 +395,7 @@ const MovementView: React.FC = () => {
                           >
                             <td className="px-4 py-4 align-top">
                               <div className="flex items-center gap-3">
-                                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-primary/25 bg-primary/10 text-caption font-semibold text-primary shadow-[0_0_14px_color-mix(in_srgb,var(--color-primary)_12%,transparent)]">
+                                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-border-base bg-bg-app text-caption font-semibold text-text-main">
                                   {visiblePosition ?? '—'}
                                 </span>
                                 <div className="min-w-0">
@@ -413,27 +413,23 @@ const MovementView: React.FC = () => {
                                 <div className="flex shrink-0 flex-wrap gap-2">
                                   <Button variant="ghost"
                                     type="button"
-                                    className="transition-transform focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+                                    className="transition-transform"
                                     disabled={savingAssignments || selectedFeatureCount === COMMANDER_FEATURES.length}
                                     onClick={() => setAllCommanderFeatures(row.commanderId, true)}
                                     aria-label={`Select all features for ${row.name || `commander ${row.commanderId}`}`}
                                   >
-                                    <Badge variant="primary" className="gap-1.5 cursor-pointer normal-case shadow-sm">
-                                      <CheckCircle2 className="h-3 w-3" />
-                                      <LocalizedText messageKey="ui.movement.components.movementView.select.all.1fc9a387" />
-                                    </Badge>
+                                    <CheckCircle2 className="h-3 w-3" />
+                                    <LocalizedText messageKey="ui.movement.components.movementView.select.all.1fc9a387" />
                                   </Button>
                                   <Button variant="ghost"
                                     type="button"
-                                    className="transition-transform focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+                                    className="transition-transform"
                                     disabled={savingAssignments || selectedFeatureCount === 0}
                                     onClick={() => setAllCommanderFeatures(row.commanderId, false)}
                                     aria-label={`Unselect all features for ${row.name || `commander ${row.commanderId}`}`}
                                   >
-                                    <Badge variant="danger" className="gap-1.5 cursor-pointer normal-case shadow-sm">
-                                      <XCircle className="h-3 w-3" />
-                                      <LocalizedText messageKey="ui.movement.components.movementView.unselect.all.d60bf0bb" />
-                                    </Badge>
+                                    <XCircle className="h-3 w-3" />
+                                    <LocalizedText messageKey="ui.movement.components.movementView.unselect.all.d60bf0bb" />
                                   </Button>
                                 </div>
                                 <div className="flex min-w-48 flex-1 flex-wrap gap-2 border-l border-border-base pl-3">
@@ -450,10 +446,10 @@ const MovementView: React.FC = () => {
                                       state,
                                     );
                                     return (
-                                      <button data-button-pattern="tile"
+                                      <Button variant="secondary"
                                         key={feature.id}
                                         type="button"
-                                        className="rounded-full transition-transform hover:-translate-y-0.5 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 disabled:pointer-events-none disabled:opacity-40"
+                                        className="transition-transform"
                                         aria-pressed={assigned}
                                         disabled={savingAssignments}
                                         onClick={() => toggleCommanderFeature(
@@ -467,7 +463,7 @@ const MovementView: React.FC = () => {
                                           : undefined}
                                       >
                                         <Badge
-                                          variant={assigned ? meetsRequirement ? 'success' : 'warning' : 'danger'}
+                                          variant={savingAssignments || !assigned ? 'outline' : meetsRequirement ? 'success' : 'warning'}
                                           className="gap-1.5 cursor-pointer normal-case shadow-sm"
                                         >
                                           {assigned && meetsRequirement
@@ -477,7 +473,7 @@ const MovementView: React.FC = () => {
                                               : <XCircle className="h-3 w-3" />}
                                           {feature.label}
                                         </Badge>
-                                      </button>
+                                      </Button>
                                     );
                                   })}
                                 </div>

@@ -1,3 +1,4 @@
+import './RiftMaidenCommsPanel.css';
 import { useLocale as useStaticLocale } from "../../i18n/LocaleContext";
 import { LocalizedText } from "../../i18n/LocalizedText";
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
@@ -5,7 +6,7 @@ import { Shield, Users } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { showTroopPicker } from '../../components/TroopPickerModal';
 import UnitImage from '../../components/UnitImage';
-import { Button, SectionCard } from '../../components/ui';
+import { Button, Input, SectionCard } from '../../components/ui';
 import {
   mainCastleAvailableUnitIds,
   mainCastleStockQuantities,
@@ -250,7 +251,7 @@ const RiftMaidenCommsPanel: React.FC<RiftMaidenCommsPanelProps> = ({ headerActio
           </div>
           <Button
             variant="secondary"
-            size="sm"
+            size="md"
             disabled={!settingsLoaded || savingUnit || probeReadyUnitIds.length === 0}
             isLoading={savingUnit}
             onClick={handlePickUnit}
@@ -284,9 +285,10 @@ const RiftMaidenCommsPanel: React.FC<RiftMaidenCommsPanelProps> = ({ headerActio
             </div>
           </div>
 
-					<label className="flex items-center gap-2 rounded-lg border border-border-base bg-bg-card/50 px-2.5 py-1.5">
-						<span className="text-caption font-semibold text-text-muted"><LocalizedText messageKey="ui.rift.components.riftMaidenCommsPanel.probe.goal.a822a868" /></span>
-						<input
+					<div className="flex items-center gap-2 rounded-lg border border-border-base bg-bg-card/50 px-2.5 py-1.5">
+						<label htmlFor="rift-maiden-probe-goal" className="text-caption font-semibold text-text-muted"><LocalizedText messageKey="ui.rift.components.riftMaidenCommsPanel.probe.goal.a822a868" /></label>
+						<div className="w-20">
+							<Input id="rift-maiden-probe-goal"
 							type="number"
 							min={1}
 							max={9999}
@@ -297,15 +299,16 @@ const RiftMaidenCommsPanel: React.FC<RiftMaidenCommsPanelProps> = ({ headerActio
 								const value = Math.trunc(Number(event.target.value));
 								setProbeGoal(Number.isFinite(value) ? Math.min(9999, Math.max(1, value)) : 1);
 							}}
-							className="w-20 bg-transparent text-right text-body font-mono text-text-main outline-none disabled:opacity-60"
+							className="text-right text-body font-mono text-text-main rift-maiden-probe-goal"
 							aria-label={localizeStatic("ui.rift.components.riftMaidenCommsPanel.aria-label.total.rift.maiden.probes.to.launch.3c331a79")}
-						/>
-					</label>
+							/>
+						</div>
+					</div>
 
 					{runActive ? (
 						<Button
 							variant="secondary"
-							size="sm"
+							size="md"
 							disabled={cancelling}
 							isLoading={cancelling}
 							onClick={handleCancel}
@@ -317,7 +320,7 @@ const RiftMaidenCommsPanel: React.FC<RiftMaidenCommsPanelProps> = ({ headerActio
 
           <Button
             variant="primary"
-            size="sm"
+            size="md"
             disabled={sending || sendBlockedReason != null}
             isLoading={sending}
             onClick={handleSend}

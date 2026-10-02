@@ -5,6 +5,10 @@ import { officialMessageKeys, officialMessageNouns } from './officialKeys';
 import { formatMessage, validateMessageCatalog } from './formatMessage';
 /** Add explicit descriptors here; never translate user names, IDs, or free-form input. */
 export const messages = {
+  // CIT-74 analytics: accessible names; English source, translation batch pending.
+  "analytics.battle.startDate": "Start date",
+  "analytics.battle.endDate": "End date",
+  "analytics.commanders.filter": "Filter commanders",
   // CIT-69: Daniel's header status plan section 3; English source, translation batch pending.
   "header.status.title": "Status",
   "header.signal.incoming": "{count, number} incoming \u00b7 {state, select, known {first in {duration}} other {checking}}",
