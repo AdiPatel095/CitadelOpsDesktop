@@ -6,7 +6,7 @@ import { join } from 'node:path';
 import { spawn,spawnSync } from 'node:child_process';
 import { once } from 'node:events';
 import { fileURLToPath } from 'node:url';
-import { PermissionFlagsBits as P } from 'discord.js';
+import { Collection,GuildChannel,PermissionsBitField,PermissionFlagsBits as P } from 'discord.js';
 import { validateConfig,EXPECTED,readToken } from '../src/config.mjs';
 import { privateDirectory,privateRead } from '../src/private.mjs';
 import { logger,Readiness,freshReceipt } from '../src/observability.mjs';
@@ -36,6 +36,50 @@ test('permission hierarchy isolates other customers/Moderator/Developer; request
     for (const flag of [P.SendMessages,P.SendMessagesInThreads,P.CreatePublicThreads,P.CreatePrivateThreads,P.AttachFiles,P.AddReactions]) assert.equal(p&flag,0n);
   }
   assert.equal(calculate(overwrites(config,'panel'),'200000000000000099',[])&P.SendMessages,0n);
+});
+// Use discord.js's actual overwrite calculation, as in Sophie's reproduction.
+// ManageRoles is inherited from a guild role; it governs channel access editing.
+function inheritedPermissions(kind,{closed=false,id=requester,support=false,administrator=false} = {}) {
+  const inheritedRole='100000000000000021';
+  const roles=new Collection([
+    [config.guildId,{permissions:new PermissionsBitField(P.ViewChannel|P.ReadMessageHistory|P.SendMessages|P.AttachFiles)}],
+    [inheritedRole,{permissions:new PermissionsBitField(P.ManageRoles|(administrator ? P.Administrator : 0n))}],
+  ]);
+  if (support) roles.set(config.supportRoleId,{permissions:new PermissionsBitField(0n)});
+  const channel={guild:{id:config.guildId,ownerId:'200000000000000099'},
+    permissionOverwrites:{cache:new Collection(overwrites(config,kind,kind === 'ticket' ? requester : undefined,closed).map(o => [o.id,o]))},
+    overwritesFor:GuildChannel.prototype.overwritesFor};
+  return GuildChannel.prototype.memberPermissions.call(channel,{id,roles:{cache:roles}},true);
+}
+for (const [kind,closed] of [['ticket',false],['ticket',true],['panel',false],['category',false]]) {
+  test(`inherited ManageRoles cannot edit ${kind} permissions (closed=${closed}); intended access is retained`,() => {
+    // Test both requester-specific denies and ordinary-member category/default paths.
+    for (const id of [requester,'200000000000000011']) {
+      const actor=inheritedPermissions(kind,{id,closed});
+      assert.equal(actor.has(P.ManageRoles,false),false);
+      if (kind === 'ticket' && id === requester) {
+        assert.ok(actor.has([P.ViewChannel,P.ReadMessageHistory],false));
+        assert.equal(actor.has(P.SendMessages,false),!closed);
+      }
+      if (kind === 'panel') { assert.ok(actor.has(P.ViewChannel,false)); assert.equal(actor.has(P.SendMessages,false),false); }
+    }
+    // Support actions use bot controls; support chat stays available on private resources.
+    const support=inheritedPermissions(kind,{id:staff,closed,support:true});
+    assert.ok(support.has([P.ViewChannel,P.ReadMessageHistory],false));
+    assert.equal(support.has([P.SendMessages,P.AttachFiles],false),kind !== 'panel');
+    // A requester who also has Support must still obey their member-specific restriction.
+    assert.equal(inheritedPermissions(kind,{closed,support:true}).has(P.ManageRoles,false),false);
+    // Discord's inherent Administrator bypass remains, including the required admin bot.
+    for (const id of [config.botId,staff]) assert.ok(inheritedPermissions(kind,{id,closed,administrator:true}).has(P.ManageRoles,false));
+  });
+}
+test('privacy validation rejects previous overwrites without permission-management denies',() => {
+  for (const [kind,closed] of [['ticket',false],['ticket',true],['panel',false],['category',false]]) {
+    const expected=overwrites(config,kind,kind === 'ticket' ? requester : undefined,closed);
+    const previous=expected.map(o => ({...o,allow:{bitfield:o.allow},deny:{bitfield:o.deny&~P.ManageRoles}}));
+    const channel={permissionOverwrites:{cache:new Collection(previous.map(o => [o.id,o]))}};
+    assert.throws(() => exactOverwrites(channel,expected),{code:'PRIVACY_OVERWRITE_MISMATCH'});
+  }
 });
 test('privacy validator rejects extra member/role grants and stale staff roles are not sufficient',() => {
   const expected=overwrites(config,'ticket',requester);
