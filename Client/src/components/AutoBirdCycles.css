@@ -1,5 +1,3 @@
-@layer components {
-    @media (max-width: 767px), (pointer: coarse) {
-        .header-bird-cycles [data-button-pattern] { min-block-size: var(--control-height-touch); }
-    }
+@media (max-width: 767px), (pointer: coarse) {
+    .header-bird-cycles [data-button-pattern] { min-block-size: var(--control-height-touch); }
 }
