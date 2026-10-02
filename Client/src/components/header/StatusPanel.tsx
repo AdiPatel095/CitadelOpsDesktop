@@ -19,7 +19,7 @@ import { TimedRunButton } from '../automation/TimedRunButton';
 import { AutomationFeatureFeedback } from '../AutomationFeatureFeedback';
 import AutoBirdCycles from '../AutoBirdCycles';
 import { Notifications } from '../Notifications';
-import { attacksText, featureOrder } from './headerStatus';
+import { attacksText, featureOrder, panelAttentionEntries } from './headerStatus';
 import type { HeaderStatus } from './StatusCluster';
 export interface StatusPanelActions {
   onOpenAutoBirdSettings(): void; onOpenAutoStationSettings(): void;
@@ -51,6 +51,7 @@ export function StatusPanel({ surface, data, open, titleId, onBeforeDialog, onOp
     finally { setClearingAutoBirdTracking(false); }
   };
   const attacks = attacksText(data, locale);
+  const attention = panelAttentionEntries(data.attention);
   const featureCounts = data.presence.mode === 'checkpoint' ? [] : Object.entries(rates?.dailySession?.launchesByFeature ?? {}).filter(([, count]) => Number.isFinite(count) && count > 0)
     .map(([key, count]) => ({ id: featureIdForEnabledKey(key) ?? key, count })).sort((a, b) => featureOrder(a.id, b.id));
   return <div className="header-status-panel" id={titleId + '-panel'}>
@@ -78,7 +79,7 @@ export function StatusPanel({ surface, data, open, titleId, onBeforeDialog, onOp
       <Button variant="danger" size="sm" disabled={clearingAutoBirdTracking} leftIcon={<Trash2 aria-hidden="true" />} onClick={() => void clearAutoBirdTracking()}><LocalizedText messageKey="ui.components.header.aria-label.clear.auto.bird.cycle.tracking.4813b36e" /></Button>
       <AutomationFeatureFeedback featureId="autoBird" enabled={autoBirdEnabled} onOpenSettings={() => dialog(onOpenAutoBirdSettings)} compact hideStatus />
     </section>
-    {data.attention.length > 0 && <section><h3><LocalizedText messageKey="header.panel.attention" /></h3>{data.attention.map(entry => <AttentionEntry key={entry.featureId} entry={entry} onOpen={() => { onBeforeDialog(); requestView('automation'); focusReadinessTargetWhenReady('automation-switch-' + entry.featureId); }} />)}</section>}
+    {attention.length > 0 && <section><h3><LocalizedText messageKey="header.panel.attention" /></h3>{attention.map(entry => <AttentionEntry key={entry.featureId} entry={entry} onOpen={() => { onBeforeDialog(); requestView('automation'); focusReadinessTargetWhenReady('automation-switch-' + entry.featureId); }} />)}</section>}
     <section><h3><LocalizedText messageKey="header.panel.attacksToday" /></h3><p title={attacks.title}><bdi>{attacks.text}</bdi></p>
       {featureCounts.map(entry => <p key={entry.id}><span><bdi>{AUTOMATION_FEATURE_NAMES[entry.id as keyof typeof AUTOMATION_ENABLED_KEYS] ?? entry.id}</bdi></span> · {number(entry.count)}</p>)}
     </section>
