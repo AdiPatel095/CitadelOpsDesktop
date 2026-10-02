@@ -247,7 +247,7 @@ export const AutoNomadSettingsModal: React.FC<AutoNomadSettingsModalProps> = ({ 
       isOpen={isOpen}
       onClose={() => { if (!saving) onClose(); }}
       maxWidth="3xl"
-      titleTrailing={<Button variant="outline" size="sm" className="shrink-0" onClick={() => setIsGuideOpen(true)} leftIcon={<BookOpen className="h-4 w-4" />}><span lang={nomadGuideLocale}>{nomadGuidePack.ui.guideButton}</span></Button>}
+      titleTrailing={<Button variant="secondary" size="sm" className="shrink-0" onClick={() => setIsGuideOpen(true)} leftIcon={<BookOpen className="h-4 w-4" />}><span lang={nomadGuideLocale}>{nomadGuidePack.ui.guideButton}</span></Button>}
       title={localizeStatic("ui.settings.components.autoNomadSettingsModal.title.auto.nomad.samurai.13e95d24")}
       icon={<Crosshair className="h-5 w-5" />}
       description={localizeStatic("ui.settings.components.autoNomadSettingsModal.description.four.camp.leveling.and.locked.target.attack.2e4977f9")}

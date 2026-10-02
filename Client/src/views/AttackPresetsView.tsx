@@ -317,7 +317,7 @@ const AttackPresetsView: React.FC = () => {
           <>
             <Button variant="secondary" leftIcon={<ClipboardPaste className="h-4 w-4" />} onClick={openImport}>
               <LocalizedText messageKey="ui.views.attackPresetsView.import.cra.1371371b" /></Button>
-            <Button leftIcon={<Plus className="h-4 w-4" />} onClick={() => openPresetCreation()}>
+            <Button variant="secondary" leftIcon={<Plus className="h-4 w-4" />} onClick={() => openPresetCreation()}>
               <LocalizedText messageKey="ui.views.attackPresetsView.new.preset.75be83ad" /></Button>
           </>
         )}
@@ -353,7 +353,7 @@ const AttackPresetsView: React.FC = () => {
             ? 'Try a different preset name.'
             : 'Presets are independent from the game’s saved slots and can contain up to 30 complete attack waves.'}
           action={!query.trim() ? (
-            <Button leftIcon={<Plus className="h-4 w-4" />} onClick={() => openPresetCreation()}>
+            <Button variant="secondary" leftIcon={<Plus className="h-4 w-4" />} onClick={() => openPresetCreation()}>
               <LocalizedText messageKey="ui.views.attackPresetsView.create.preset.6d72507d" /></Button>
           ) : undefined}
         />
@@ -433,7 +433,7 @@ const AttackPresetsView: React.FC = () => {
         footer={(
           <div className="flex w-full items-center justify-end gap-2">
             <Button variant="ghost" onClick={() => setImportOpen(false)}><LocalizedText messageKey="game.cancel" /></Button>
-            <Button
+            <Button variant="secondary"
               onClick={handleImport}
               disabled={!importValue.trim()}
               leftIcon={<ClipboardPaste className="h-4 w-4" />}
@@ -510,10 +510,10 @@ const PresetCard: React.FC<{
           {ownershipLine ? <p className="mt-1 text-xs text-text-muted">{ownershipLine}</p> : null}
         </div>
         <div className="flex items-center gap-1">
-          <Button variant="ghost" size="icon" disabled={busy} onClick={onEdit} title={localizeStatic("ui.views.attackPresetsView.title.edit.preset.d36585b9")}><Edit3 className="h-4 w-4" /></Button>
-          <Button variant="ghost" size="icon" disabled={busy} onClick={onCopyShare} title={localizeStatic("ui.views.attackPresetsView.title.copy.cra.share.string.57e61e52")}><ClipboardCopy className="h-4 w-4" /></Button>
-          <Button variant="ghost" size="icon" disabled={busy} onClick={onDuplicate} title={localizeStatic("ui.views.attackPresetsView.title.duplicate.preset.a5c8c827")}><Files className="h-4 w-4" /></Button>
-          <Button variant="ghost" size="icon" disabled={busy} onClick={onDelete} title={localizeStatic("ui.views.attackPresetsView.title.delete.preset.f307af85")} className="hover:!text-error"><Trash2 className="h-4 w-4" /></Button>
+          <Button aria-label={localizeStatic("ui.views.attackPresetsView.title.edit.preset.d36585b9")} iconOnly variant="ghost" size="md" disabled={busy} onClick={onEdit} title={localizeStatic("ui.views.attackPresetsView.title.edit.preset.d36585b9")}><Edit3 className="h-4 w-4" /></Button>
+          <Button aria-label={localizeStatic("ui.views.attackPresetsView.title.copy.cra.share.string.57e61e52")} iconOnly variant="ghost" size="md" disabled={busy} onClick={onCopyShare} title={localizeStatic("ui.views.attackPresetsView.title.copy.cra.share.string.57e61e52")}><ClipboardCopy className="h-4 w-4" /></Button>
+          <Button aria-label={localizeStatic("ui.views.attackPresetsView.title.duplicate.preset.a5c8c827")} iconOnly variant="ghost" size="md" disabled={busy} onClick={onDuplicate} title={localizeStatic("ui.views.attackPresetsView.title.duplicate.preset.a5c8c827")}><Files className="h-4 w-4" /></Button>
+          <Button aria-label={localizeStatic("ui.views.attackPresetsView.title.delete.preset.f307af85")} iconOnly variant="ghost" size="md" disabled={busy} onClick={onDelete} title={localizeStatic("ui.views.attackPresetsView.title.delete.preset.f307af85")} ><Trash2 className="h-4 w-4" /></Button>
         </div>
       </div>
       <CardContent className="space-y-4">
@@ -546,7 +546,7 @@ const PresetTargetTypeChoice: React.FC<{
   bonusLabel: string;
   onSelect: () => void;
 }> = ({ type, title, description, limits, bonusLabel, onSelect }) => (
-  <button
+  <button data-button-pattern="card"
     type="button"
     onClick={onSelect}
     className="group rounded-global border border-border-base bg-bg-card/65 p-5 text-left shadow-[var(--shadow-raised)] transition hover:-translate-y-0.5 hover:border-primary/55 hover:bg-primary/8 focus:outline-none focus:ring-2 focus:ring-primary/45"

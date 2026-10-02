@@ -261,7 +261,7 @@ export const AutoKhanSettingsModal: React.FC<AutoKhanSettingsModalProps> = ({ is
       isOpen={isOpen}
       onClose={() => { if (!saving) onClose(); }}
       maxWidth="3xl"
-      titleTrailing={<Button variant="outline" size="sm" className="shrink-0" onClick={() => setIsGuideOpen(true)} leftIcon={<BookOpen className="h-4 w-4" />}><span lang={khanGuideLocale}>{khanGuidePack.ui.guideButton}</span></Button>}
+      titleTrailing={<Button variant="secondary" size="sm" className="shrink-0" onClick={() => setIsGuideOpen(true)} leftIcon={<BookOpen className="h-4 w-4" />}><span lang={khanGuideLocale}>{khanGuidePack.ui.guideButton}</span></Button>}
       title={localizeStatic("ui.settings.components.autoKhanSettingsModal.title.auto.khan.24bcea17")}
       icon={<Crosshair className="h-5 w-5" />}
       description={localizeStatic("ui.settings.components.autoKhanSettingsModal.description.chained.camp.attacks.khan.taunts.and.main.339ad3f1")}

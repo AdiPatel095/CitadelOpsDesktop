@@ -396,7 +396,7 @@ export const AutoSceatResSettingsModal: React.FC<AutoSceatResSettingsModalProps>
                               <div className="text-xs font-black uppercase tracking-wide text-text-muted"><LocalizedText messageKey="ui.settings.components.autoSceatResSettingsModal.repeating.recipe.cycle.ca9d6751" /></div>
                               <div className="mt-0.5 text-[10px] font-medium text-text-muted"><LocalizedText messageKey="ui.settings.components.autoSceatResSettingsModal.one.item.fills.every.slot.add.more.9a74f34c" /></div>
                             </div>
-                            <Button variant="outline" size="sm" onClick={() => setPickerTarget({ castleID: node.castleID, building })} leftIcon={<Plus className="h-4 w-4" />}><LocalizedText messageKey="ui.settings.components.autoSceatResSettingsModal.recipe.aec69352" /></Button>
+                            <Button variant="secondary" size="sm" onClick={() => setPickerTarget({ castleID: node.castleID, building })} leftIcon={<Plus className="h-4 w-4" />}><LocalizedText messageKey="ui.settings.components.autoSceatResSettingsModal.recipe.aec69352" /></Button>
                           </div>
 
                           <div className="mt-3 grid gap-2">
@@ -429,24 +429,24 @@ export const AutoSceatResSettingsModal: React.FC<AutoSceatResSettingsModalProps>
                                     />
                                   </label>
                                   <div className="flex shrink-0 items-center">
-                                    <Button variant="ghost" size="icon" disabled={index === 0} onClick={() => updateBuildingPlan(node.castleID, building.queueTypeID, (current) => {
+                                    <Button aria-label={localizeStatic("ui.settings.components.autoSceatResSettingsModal.title.move.up.c66feb5e")} iconOnly variant="ghost" size="md" disabled={index === 0} onClick={() => updateBuildingPlan(node.castleID, building.queueTypeID, (current) => {
                                       const steps = [...current.steps];
                                       [steps[index - 1], steps[index]] = [steps[index], steps[index - 1]];
                                       return { ...current, steps };
                                     })} title={localizeStatic("ui.settings.components.autoSceatResSettingsModal.title.move.up.c66feb5e")}><ArrowUp className="h-3.5 w-3.5" /></Button>
-                                    <Button variant="ghost" size="icon" disabled={index === plan.steps.length - 1} onClick={() => updateBuildingPlan(node.castleID, building.queueTypeID, (current) => {
+                                    <Button aria-label={localizeStatic("ui.settings.components.autoSceatResSettingsModal.title.move.down.40bb50da")} iconOnly variant="ghost" size="md" disabled={index === plan.steps.length - 1} onClick={() => updateBuildingPlan(node.castleID, building.queueTypeID, (current) => {
                                       const steps = [...current.steps];
                                       [steps[index], steps[index + 1]] = [steps[index + 1], steps[index]];
                                       return { ...current, steps };
                                     })} title={localizeStatic("ui.settings.components.autoSceatResSettingsModal.title.move.down.40bb50da")}><ArrowDown className="h-3.5 w-3.5" /></Button>
-                                    <Button variant="ghost" size="icon" className="text-error" onClick={() => updateBuildingPlan(node.castleID, building.queueTypeID, (current) => ({ ...current, steps: current.steps.filter((_, itemIndex) => itemIndex !== index), cursor: 0 }))} title={localizeStatic("ui.settings.components.autoSceatResSettingsModal.title.remove.c3812fc4")}><Trash2 className="h-3.5 w-3.5" /></Button>
+                                    <Button aria-label={localizeStatic("ui.settings.components.autoSceatResSettingsModal.title.remove.c3812fc4")} iconOnly variant="ghost" size="md"  onClick={() => updateBuildingPlan(node.castleID, building.queueTypeID, (current) => ({ ...current, steps: current.steps.filter((_, itemIndex) => itemIndex !== index), cursor: 0 }))} title={localizeStatic("ui.settings.components.autoSceatResSettingsModal.title.remove.c3812fc4")}><Trash2 className="h-3.5 w-3.5" /></Button>
                                   </div>
                                 </div>
                               );
                             })}
                             {plan.steps.length === 0 && (
-                              <button type="button" onClick={() => setPickerTarget({ castleID: node.castleID, building })} className="rounded-global border border-dashed border-border-base bg-bg-card/35 px-4 py-5 text-center text-xs font-semibold text-text-muted transition hover:border-primary/40 hover:text-primary">
-                                <LocalizedText messageKey="ui.settings.components.autoSceatResSettingsModal.add.the.first.recipe.for.this.building.9195186d" /></button>
+                              <Button variant="secondary" type="button" onClick={() => setPickerTarget({ castleID: node.castleID, building })} className="text-center transition">
+                                <LocalizedText messageKey="ui.settings.components.autoSceatResSettingsModal.add.the.first.recipe.for.this.building.9195186d" /></Button>
                             )}
                           </div>
                         </div>

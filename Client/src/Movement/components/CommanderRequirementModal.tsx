@@ -125,7 +125,7 @@ const CommanderRequirementModal: React.FC<CommanderRequirementModalProps> = ({
           >
             <LocalizedText messageKey="ui.movement.components.commanderRequirementModal.clear.requirement.b811adea" /></Button>
           <div className="ml-auto flex gap-2">
-            <Button variant="ghost" onClick={onClose}><LocalizedText messageKey="game.cancel" /></Button>
+            <Button variant="secondary" onClick={onClose}><LocalizedText messageKey="game.cancel" /></Button>
             <Button
               variant="primary"
               disabled={validationError != null}
@@ -164,7 +164,7 @@ const CommanderRequirementModal: React.FC<CommanderRequirementModalProps> = ({
               {filteredStats.map((stat) => {
                 const selectedStat = stat.key === selectedKey;
                 return (
-                  <button
+                  <button data-button-pattern="tile"
                     key={stat.key}
                     type="button"
                     aria-pressed={selectedStat}

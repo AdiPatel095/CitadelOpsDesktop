@@ -820,7 +820,7 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
     focusReadinessTargetWhenReady(id);
   };
   const goalButton = (
-    <Button variant="outline" size="sm" id="goal-entry" onClick={() => setGoalPickerOpen(true)} data-goal-entry>
+    <Button variant="secondary" size="sm" id="goal-entry" onClick={() => setGoalPickerOpen(true)} data-goal-entry>
       <LocalizedText messageKey="goalEntry.button" />
     </Button>
   );
@@ -950,9 +950,9 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
                           buildLaneActive={feature.id === 'autoBeriWorld' ? autoBeriBuildEnabled : undefined}
                         />
                       </div>
-                      <Button
+                      <Button iconOnly
                         variant="ghost"
-                        size="icon"
+                        size="md"
                         className="automation-function-settings"
                         onClick={feature.onOpenSettings}
                         aria-label={`Open ${feature.name} settings`}

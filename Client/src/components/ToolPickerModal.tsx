@@ -110,7 +110,7 @@ const VirtualizedToolGrid: React.FC<VirtualizedToolGridProps> = ({
               {rows[virtualRow.index].map((tool) => {
                 const isSelected = selectedIds.has(tool.id);
                 return (
-                  <button
+                  <button data-button-pattern="card"
                     key={tool.id}
                     type="button"
                     onClick={() => onToolClick(tool.id)}

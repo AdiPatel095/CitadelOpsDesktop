@@ -215,11 +215,11 @@ export function useDraftRecovery({ section, isOpen, draftSession, draft, loaded,
         </p>
         <div className="flex flex-wrap gap-2">
           {savedSince ? (
-            <Button variant="outline" size="sm" onClick={() => setComparingFor(entry.savedAt)} leftIcon={<RotateCcw className="h-4 w-4" />}>
+            <Button variant="secondary" size="sm" onClick={() => setComparingFor(entry.savedAt)} leftIcon={<RotateCcw className="h-4 w-4" />}>
               <LocalizedText messageKey="draftRecovery.compare" />
             </Button>
           ) : (
-            <Button variant="outline" size="sm" onClick={restore} leftIcon={<RotateCcw className="h-4 w-4" />}>
+            <Button variant="secondary" size="sm" onClick={restore} leftIcon={<RotateCcw className="h-4 w-4" />}>
               <LocalizedText messageKey="draftRecovery.restore" />
             </Button>
           )}
@@ -237,7 +237,7 @@ export function useDraftRecovery({ section, isOpen, draftSession, draft, loaded,
           footer={(
             <>
               <Button variant="primary" onClick={restore}><LocalizedText messageKey="draftRecovery.restore" /></Button>
-              <Button variant="outline" onClick={discard}><LocalizedText messageKey="draftRecovery.discard" /></Button>
+              <Button variant="secondary" onClick={discard}><LocalizedText messageKey="draftRecovery.discard" /></Button>
               <Button variant="ghost" onClick={() => setComparingFor(null)}><LocalizedText messageKey="draftRecovery.close" /></Button>
             </>
           )}

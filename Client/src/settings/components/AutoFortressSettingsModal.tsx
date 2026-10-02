@@ -204,7 +204,7 @@ export const AutoFortressSettingsModal: React.FC<AutoFortressSettingsModalProps>
       title={localizeStatic("ui.settings.components.autoFortressSettingsModal.title.auto.fortress.8b0edaf5")}
       icon={<Castle className="h-5 w-5" />}
       description={localizeStatic("ui.settings.components.autoFortressSettingsModal.description.a.speed.first.fortress.pipeline.discover.a.20cf0ae7")}
-      titleTrailing={<Button variant="outline" size="sm" className="shrink-0" onClick={() => setIsGuideOpen(true)} leftIcon={<BookOpen className="h-4 w-4" />}>
+      titleTrailing={<Button variant="secondary" size="sm" className="shrink-0" onClick={() => setIsGuideOpen(true)} leftIcon={<BookOpen className="h-4 w-4" />}>
         <span lang={fortressGuideLocale}>{fortressGuidePack.ui.guideButton}</span>
       </Button>}
       onSave={save}

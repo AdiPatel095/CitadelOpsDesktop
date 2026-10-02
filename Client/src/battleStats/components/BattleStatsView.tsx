@@ -322,9 +322,9 @@ const BattleStatsView: React.FC = () => {
             title={localizeStatic("ui.battleStats.components.battleStatsView.title.battle.stats.5b31568e")}
             description={<><LocalizedText messageKey={sourceKey}/>{sourceError && <span lang="en" dir="auto" data-translation-status="untranslated">: {sourceError}</span>}</>}
             descriptionClassName="mt-1.5 font-semibold"
-            actions={<Button
+            actions={<Button aria-label={localizeStatic("ui.battleStats.components.battleStatsView.title.refresh.battle.reports.aac017c6")} iconOnly
               variant="ghost"
-              size="icon"
+              size="md"
               onClick={() => void loadReports()}
               isLoading={isLoading}
               title={localizeStatic("ui.battleStats.components.battleStatsView.title.refresh.battle.reports.aac017c6")}
@@ -390,7 +390,7 @@ const BattleStatsView: React.FC = () => {
               />
             </FilterField>
 
-            <Button variant="outline" className="w-full" onClick={resetFilters}>
+            <Button variant="secondary" className="w-full" onClick={resetFilters}>
               <LocalizedText messageKey="ui.battleStats.components.battleStatsView.reset.filters.10afa984" /></Button>
 
           </SectionCard>
@@ -462,10 +462,10 @@ const BattleStatsView: React.FC = () => {
                         {formatNumber(metricValue(report.metrics, 'defenderLost', 'defenseLost'))}
                       </td>
                       <td className="px-3 py-3 text-right">
-                        <Button
-                          variant="secondary"
-                          size="icon"
-                          className="battle-stats-flat-control h-9 w-9 border-primary/40 text-primary hover:border-primary hover:bg-primary/10"
+                        <Button iconOnly
+                          variant="ghost"
+                          size="md"
+                          className="battle-stats-flat-control"
                           onClick={() => setSelectedReportID(reportID(report))}
                           title={localizeStatic("ui.battleStats.components.battleStatsView.title.go.to.report.details.81fac819")}
                           aria-label={localizeStatic('battle.openDetails',{attacker:combatantName(report.attacker,localizeStatic('battle.unknownPlayer')),defender:combatantName(report.defender,localizeStatic('battle.unknownPlayer'))})}
@@ -995,7 +995,7 @@ const CollapsibleDetailCard: React.FC<{
   return (
     <Card variant="solid" className="liquid-prominent-header-card">
       <CardHeader className="liquid-card-header-prominent !p-0">
-        <button
+        <button data-button-pattern="disclosure"
           type="button"
           className="flex min-h-[4.75rem] w-full items-center justify-between gap-3 rounded-global px-6 py-5 text-left transition-colors hover:text-primary"
           aria-expanded={isOpen}
@@ -1282,7 +1282,7 @@ const WaveRow: React.FC<{ wave: BattleWave; index: number }> = ({ wave, index })
   return (
     <div className="border border-border-base rounded-global bg-bg-app p-3">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-        <button
+        <button data-button-pattern="disclosure"
           type="button"
           className="flex min-w-0 items-center gap-2 text-left font-semibold text-text-main transition-colors hover:text-primary"
           aria-expanded={isExpanded}

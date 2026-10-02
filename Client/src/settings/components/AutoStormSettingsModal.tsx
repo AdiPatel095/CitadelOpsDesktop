@@ -692,7 +692,7 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
       contentNotice={<>{recovery.banner}{draftSession.conflictNotice}</>}
     >
       <div className="space-y-4">
-        <div className="flex justify-end"><Button variant="outline" size="sm" onClick={() => setIsGuideOpen(true)} leftIcon={<BookOpen className="h-4 w-4" />}><span lang={stormPack === englishGuidePack ? "en" : stormGuideLocale}>{stormPack.ui.guideButton}</span></Button></div>
+        <div className="flex justify-end"><Button variant="secondary" size="sm" onClick={() => setIsGuideOpen(true)} leftIcon={<BookOpen className="h-4 w-4" />}><span lang={stormPack === englishGuidePack ? "en" : stormGuideLocale}>{stormPack.ui.guideButton}</span></Button></div>
         <AutomationRunStrip
           featureId="autoStorm"
           onOpenDuration={onOpenAutomationDuration ? () => onOpenAutomationDuration(AUTOMATION_ENABLED_KEYS.autoStorm, 'Auto Storm') : undefined}
@@ -901,7 +901,7 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
                         <div className="flex items-center gap-2 text-xs font-bold text-text-main"><Shield className="h-3.5 w-3.5 text-primary" /> <LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.island.defense.units.426d8af1" /></div>
                         <p className="mt-1 text-[11px] text-text-muted"><LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.choose.dedicated.occupation.defenders.if.empty.one.289de337" /></p>
                       </div>
-                      <Button size="sm" variant="outline" onClick={() => void chooseDefenseUnits()} leftIcon={<Shield className="h-3.5 w-3.5" />}>
+                      <Button size="sm" variant="secondary" onClick={() => void chooseDefenseUnits()} leftIcon={<Shield className="h-3.5 w-3.5" />}>
                         <LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.choose.units.b979a369" /></Button>
                     </div>
                     {draft.islands.defenseUnits.length > 0 ? (
@@ -1290,7 +1290,7 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
               />
             </label>
             <Button
-              variant="outline"
+              variant="secondary"
               disabled={!stormCastle || capturing != null}
               isLoading={capturing === 'functional'}
               onClick={() => void capture('functional')}
@@ -1298,7 +1298,7 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
             >
               <LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.functional.b6656595" /></Button>
             <Button
-              variant="outline"
+              variant="secondary"
               disabled={!stormCastle || capturing != null}
               isLoading={capturing === 'layout'}
               onClick={() => void capture('layout')}
@@ -1306,7 +1306,7 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
             >
               <LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.layout.a5119091" /></Button>
             <Button
-              variant="outline"
+              variant="secondary"
               disabled={!stormCastle || capturing != null}
               isLoading={capturing === 'exact'}
               onClick={() => void capture('exact')}
@@ -1592,24 +1592,24 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
                           <span className="mt-0.5 block text-[11px] leading-4 text-text-muted">{option.detail}</span>
                         </span>
                         <span className="flex shrink-0 items-center gap-1">
-                          <button
+                          <Button iconOnly variant="ghost"
                             type="button"
                             disabled={index === 0}
                             onClick={() => moveTargetPriorityBy(priority, -1)}
-                            className="rounded-md p-1.5 text-text-muted transition-colors hover:bg-primary/10 hover:text-primary disabled:pointer-events-none disabled:opacity-25"
+                            className="transition-colors"
                             aria-label={`Move ${option.label} up`}
                           >
                             <ArrowUp className="h-3.5 w-3.5" />
-                          </button>
-                          <button
+                          </Button>
+                          <Button iconOnly variant="ghost"
                             type="button"
                             disabled={index === activeTargetPriorities.length - 1}
                             onClick={() => moveTargetPriorityBy(priority, 1)}
-                            className="rounded-md p-1.5 text-text-muted transition-colors hover:bg-primary/10 hover:text-primary disabled:pointer-events-none disabled:opacity-25"
+                            className="transition-colors"
                             aria-label={`Move ${option.label} down`}
                           >
                             <ArrowDown className="h-3.5 w-3.5" />
-                          </button>
+                          </Button>
                         </span>
                       </div>
                     );

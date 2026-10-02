@@ -19,7 +19,7 @@ export const GoalPicker: React.FC<{
   const more = goals.filter((goal) => !goal.curated);
   const item = (goal: AutomationGoal) => (
     <li key={goal.id}>
-      <button
+      <button data-button-pattern="card"
         type="button"
         className="flex w-full min-w-0 flex-col gap-0.5 rounded-lg border border-border-base bg-bg-card/60 px-3 py-2 text-left hover:border-primary/50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary"
         onClick={() => onChoose(goal.id)}
@@ -49,12 +49,12 @@ export const GoalPicker: React.FC<{
           </>
         ) : null}
         <div className="flex flex-wrap items-center gap-3 border-t border-border-base pt-3">
-          <Button variant="outline" size="sm" onClick={() => setShowAll((current) => !current)} aria-expanded={showAll}>
+          <Button variant="secondary" size="sm" onClick={() => setShowAll((current) => !current)} aria-expanded={showAll}>
             <LocalizedText messageKey={showAll ? 'goalPicker.showFewer' : 'goalPicker.showAll'} />
           </Button>
-          <button type="button" className="text-xs font-semibold text-primary underline underline-offset-2" onClick={onClose} data-goal-none>
+          <Button variant="secondary" type="button" className="underline underline-offset-2" onClick={onClose} data-goal-none>
             <LocalizedText messageKey="goalPicker.somethingElse" />
-          </button>
+          </Button>
         </div>
       </div>
     </Modal>

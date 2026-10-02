@@ -16,6 +16,7 @@ export const Card = React.forwardRef<HTMLDivElement, CardProps>(
     return (
       <div
         ref={ref}
+        data-region="card"
         className={`${baseStyles} ${variants[variant]} ${className}`}
         {...props}
       >

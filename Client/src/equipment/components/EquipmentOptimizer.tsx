@@ -1,3 +1,4 @@
+import { Trash2 } from 'lucide-react';
 import { LocalizedRichText } from "../../i18n/LocalizedRichText";
 import { useLocale as useStaticLocale } from "../../i18n/LocaleContext";
 import { LocalizedText } from "../../i18n/LocalizedText";
@@ -173,7 +174,7 @@ function TargetProfileCard({
 	const { profile, availableGroups } = choice;
 	const tone = profile.combatMode === 'PvP' ? 'primary' : profile.kind === 'event' ? 'warning' : 'success';
 	return (
-		<button
+		<button data-button-pattern="card"
 			type="button"
 			onClick={onSelect}
 			disabled={disabled}
@@ -555,7 +556,7 @@ function EquipmentOptimizerEditor({
 				footer={(
 					<>
 						<Button variant="ghost" onClick={closeEditor}><LocalizedText messageKey="game.cancel" /></Button>
-						<Button
+						<Button variant="secondary"
 							onClick={optimize}
 							disabled={disabled || !leader || priorities.length === 0}
 							isLoading={optimizing}
@@ -577,7 +578,7 @@ function EquipmentOptimizerEditor({
 					)}
 					<div className="grid gap-3 rounded-global border border-border-base bg-bg-app/45 p-3 sm:grid-cols-[minmax(0,1fr)_auto]">
 						<div className="flex min-w-0 items-start gap-2">
-							<Button size="icon" variant="ghost" onClick={changeTarget} aria-label={localizeStatic("ui.equipment.components.equipmentOptimizer.aria-label.change.reconfiguration.target.1172fad5")} title={localizeStatic("ui.equipment.components.equipmentOptimizer.title.change.target.36d36e6b")}>
+							<Button iconOnly size="md" variant="ghost" onClick={changeTarget} aria-label={localizeStatic("ui.equipment.components.equipmentOptimizer.aria-label.change.reconfiguration.target.1172fad5")} title={localizeStatic("ui.equipment.components.equipmentOptimizer.title.change.target.36d36e6b")}>
 								<ArrowLeft className="h-4 w-4" />
 							</Button>
 							<div className="min-w-0 flex-1">
@@ -589,10 +590,10 @@ function EquipmentOptimizerEditor({
 							</div>
 						</div>
 						<div className="flex items-center justify-end gap-2 sm:shrink-0">
-							<Button size="icon" variant="ghost" onClick={() => setShowInfo(true)} aria-label={localizeStatic("ui.equipment.components.equipmentOptimizer.aria-label.explain.battle.stat.priority.20ba9a01")}><Info className="h-4 w-4" /></Button>
+							<Button iconOnly size="md" variant="ghost" onClick={() => setShowInfo(true)} aria-label={localizeStatic("ui.equipment.components.equipmentOptimizer.aria-label.explain.battle.stat.priority.20ba9a01")}><Info className="h-4 w-4" /></Button>
 							<Button
 								size="sm"
-								variant="outline"
+								variant="secondary"
 								onClick={() => { setSearch(''); setShowPicker(true); }}
 								disabled={availableGroups.length === 0}
 								leftIcon={<Plus className="h-4 w-4" />}
@@ -660,8 +661,8 @@ function EquipmentOptimizerEditor({
 												<span className="block text-sm font-medium text-text-main">{group.label}</span>
 												<span className="mt-0.5 block text-[10px] text-text-muted">{group.effectIDs.length} target-compatible official effect definition{group.effectIDs.length === 1 ? '' : 's'}</span>
 											</span>
-											<Button size="sm" variant="danger" onClick={() => addGroup(group, 1)}><LocalizedText messageKey="ui.equipment.components.equipmentOptimizer.max.stat.f25df34f" /></Button>
-											<Button size="sm" variant="outline" onClick={() => addGroup(group, 2)}><LocalizedText messageKey="ui.equipment.components.equipmentOptimizer.random.slots.c4c4ae0d" /></Button>
+											<Button leftIcon={<Trash2 aria-hidden="true" />} size="sm" variant="danger" onClick={() => addGroup(group, 1)}><LocalizedText messageKey="ui.equipment.components.equipmentOptimizer.max.stat.f25df34f" /></Button>
+											<Button size="sm" variant="secondary" onClick={() => addGroup(group, 2)}><LocalizedText messageKey="ui.equipment.components.equipmentOptimizer.random.slots.c4c4ae0d" /></Button>
 										</div>
 									))}
 								</div>
@@ -777,10 +778,10 @@ function PriorityTier({
 								<span className="block truncate text-xs font-semibold text-text-main" title={group.label}>{group.label}</span>
 								<span className="block truncate text-[10px] text-text-muted">{group.categoryLabel} · {group.effectIDs.length} official effects</span>
 							</span>
-							<button type="button" disabled={index === 0} onClick={() => onReorder(tier, index, -1)} className="rounded p-1 text-text-muted hover:bg-primary/10 hover:text-primary disabled:opacity-25" aria-label={`Move ${group.label} up`}><ArrowUp className="h-3.5 w-3.5" /></button>
-							<button type="button" disabled={index === keys.length - 1} onClick={() => onReorder(tier, index, 1)} className="rounded p-1 text-text-muted hover:bg-primary/10 hover:text-primary disabled:opacity-25" aria-label={`Move ${group.label} down`}><ArrowDown className="h-3.5 w-3.5" /></button>
-							<button type="button" onClick={() => onMoveTier(key, tier)} className="rounded px-1.5 py-1 text-[9px] font-bold uppercase text-text-muted hover:bg-primary/10 hover:text-primary" aria-label={`Move ${group.label} to tier ${tier === 1 ? 2 : 1}`}>T{tier === 1 ? 2 : 1}</button>
-							<button type="button" onClick={() => onRemove(key)} className="rounded p-1 text-text-muted hover:bg-error/10 hover:text-error" aria-label={`Remove ${group.label}`}><X className="h-3.5 w-3.5" /></button>
+							<Button iconOnly variant="ghost" type="button" disabled={index === 0} onClick={() => onReorder(tier, index, -1)}  aria-label={`Move ${group.label} up`}><ArrowUp className="h-3.5 w-3.5" /></Button>
+							<Button iconOnly variant="ghost" type="button" disabled={index === keys.length - 1} onClick={() => onReorder(tier, index, 1)}  aria-label={`Move ${group.label} down`}><ArrowDown className="h-3.5 w-3.5" /></Button>
+							<Button variant="secondary" type="button" onClick={() => onMoveTier(key, tier)} className="text-[9px] uppercase" aria-label={`Move ${group.label} to tier ${tier === 1 ? 2 : 1}`}>T{tier === 1 ? 2 : 1}</Button>
+							<Button leftIcon={<Trash2 aria-hidden="true" />} variant="danger" type="button" onClick={() => onRemove(key)}  aria-label={`Remove ${group.label}`}><X className="h-3.5 w-3.5" /></Button>
 						</div>
 					);
 				})}
@@ -877,8 +878,8 @@ function OptimizerPreview({
 			maxWidth="5xl"
 			footer={(
 				<>
-					<Button variant="ghost" onClick={onClose} disabled={applying}><LocalizedText messageKey="game.cancel" /></Button>
-					<Button
+					<Button variant="secondary" onClick={onClose} disabled={applying}><LocalizedText messageKey="game.cancel" /></Button>
+					<Button variant="secondary"
 						onClick={onApply}
 						isLoading={applying}
 						disabled={applyDisabled || pointlessApply}
@@ -898,7 +899,7 @@ function OptimizerPreview({
 					{stale && (
 						<div role="alert" className="flex flex-wrap items-center justify-between gap-3 rounded-global border border-warning/40 bg-warning/10 px-3 py-2 text-sm text-warning">
 							<span><LocalizedText messageKey="ui.equipment.components.equipmentOptimizer.equipment.or.official.metadata.changed.after.this.78ae51fb" /></span>
-							<Button size="sm" variant="outline" onClick={onRegenerate} disabled={applying || optimizing} isLoading={optimizing}><LocalizedText messageKey="ui.equipment.components.equipmentOptimizer.regenerate.1651031b" /></Button>
+							<Button size="sm" variant="secondary" onClick={onRegenerate} disabled={applying || optimizing} isLoading={optimizing}><LocalizedText messageKey="ui.equipment.components.equipmentOptimizer.regenerate.1651031b" /></Button>
 						</div>
 					)}
 					{optimizeError && <p role="alert" className="rounded-global border border-error/30 bg-error/10 px-3 py-2 text-sm text-error">{optimizeError}</p>}
@@ -918,7 +919,7 @@ function OptimizerPreview({
 						</div>
 						<div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-5">
 							{preview.alternatives.map((alternative, index) => (
-								<button
+								<button data-button-pattern="tile"
 									key={assignmentKey(alternative)}
 									type="button"
 									onClick={() => onSelectAlternative(index)}

@@ -1,3 +1,4 @@
+import { Button } from './ui/Button';
 import { useLocale as useStaticLocale } from "../i18n/LocaleContext";
 import { LocalizedText } from "../i18n/LocalizedText";
 import React, { useCallback, useId, useLayoutEffect, useMemo, useRef, useState } from 'react';
@@ -193,7 +194,7 @@ const AutoBirdHoverPopover: React.FC<AutoBirdHoverPopoverProps> = ({
 									key={cycle.castleId}
 									className="flex items-center justify-between gap-3 rounded-global border border-transparent px-2 py-2 hover:border-border-base hover:bg-bg-tertiary/60"
 								>
-									<button type="button"
+									<button data-button-pattern="tile" type="button"
  disabled={!canControl || pending !== null}
  aria-pressed={!!paused}
  aria-label={`${cycle.castleName}: ${paused ? 'resume' : 'pause'} Auto Bird`}
@@ -229,8 +230,8 @@ const AutoBirdHoverPopover: React.FC<AutoBirdHoverPopoverProps> = ({
 										)}
 									</div>
          <div className="flex flex-col gap-1">
-          <button type="button" disabled={!canControl || pending !== null} title={`Pause ${cycle.castleName} for a duration`} aria-label={`Timed pause for ${cycle.castleName}`} className="rounded p-1 text-text-muted hover:text-primary disabled:opacity-40" onClick={() => setDurationCastle(cycle)}><Timer size={13} /></button>
-          <button type="button" disabled={!canControl || pending !== null || !!paused || !enabled} title={`Resend from ${cycle.castleName}: clear this cycle and scan fresh troops and a target`} aria-label={`Resend bird from ${cycle.castleName}`} className="rounded p-1 text-text-muted hover:text-primary disabled:opacity-40" onClick={() => { void controlCastle(cycle.castleId, 'resend').catch(() => {}); }}><RotateCw size={13} className={pending === cycle.castleId ? 'animate-spin' : ''} /></button>
+          <Button iconOnly variant="ghost" type="button" disabled={!canControl || pending !== null} title={`Pause ${cycle.castleName} for a duration`} aria-label={`Timed pause for ${cycle.castleName}`}  onClick={() => setDurationCastle(cycle)}><Timer size={13} /></Button>
+          <Button iconOnly variant="ghost" type="button" disabled={!canControl || pending !== null || !!paused || !enabled} title={`Resend from ${cycle.castleName}: clear this cycle and scan fresh troops and a target`} aria-label={`Resend bird from ${cycle.castleName}`}  onClick={() => { void controlCastle(cycle.castleId, 'resend').catch(() => {}); }}><RotateCw size={13} className={pending === cycle.castleId ? 'animate-spin' : ''} /></Button>
          </div>
         </li>
 							);

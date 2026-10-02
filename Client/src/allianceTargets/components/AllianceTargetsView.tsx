@@ -418,9 +418,9 @@ const AllianceTargetsContent = memo(({
               Showing {firstResult}–{lastResult} of {totalTargets}
             </span>
             <div className="flex items-center gap-2">
-              <Button
+              <Button iconOnly
                 size="sm"
-                variant="secondary"
+                variant="ghost"
                 disabled={loading || safePage <= 1}
                 onClick={() => changePage(Math.max(1, safePage - 1))}
                 aria-label={localizeStatic("ui.allianceTargets.components.allianceTargetsView.aria-label.previous.page.1208ec01")}
@@ -430,9 +430,9 @@ const AllianceTargetsContent = memo(({
               <span className="min-w-20 text-center text-xs font-medium text-text-main">
                 Page {safePage} of {pageCount}
               </span>
-              <Button
+              <Button iconOnly
                 size="sm"
-                variant="secondary"
+                variant="ghost"
                 disabled={loading || safePage >= pageCount}
                 onClick={() => changePage(Math.min(pageCount, safePage + 1))}
                 aria-label={localizeStatic("ui.allianceTargets.components.allianceTargetsView.aria-label.next.page.c08ac736")}
@@ -488,7 +488,7 @@ const TargetRow = memo(({ target, canSpy, sending, sendingBlocked, loadingIntel,
     </td>
 	<td className="px-4 py-3">
 	  {target.spyReport ? (
-		<button
+		<button data-button-pattern="card"
 		  type="button"
 		  className="group w-full rounded-global border border-border-base bg-bg-card/45 px-2.5 py-2 text-left transition hover:border-primary/45 hover:bg-primary/6 disabled:cursor-wait disabled:opacity-60"
 		  disabled={intelBlocked}
@@ -525,7 +525,7 @@ const TargetRow = memo(({ target, canSpy, sending, sendingBlocked, loadingIntel,
       <div className="inline-flex items-center gap-1.5">
         <Button
           size="sm"
-          variant="outline"
+          variant="secondary"
           disabled={!canSpy || target.underBird || sendingBlocked}
           isLoading={sending}
           onClick={() => onSpy(target)}
@@ -759,7 +759,7 @@ const AllianceTargetAttackModal = ({ target, onClose }: AllianceTargetAttackModa
 						{blockReason || 'CRA-capped formation and live source inventory are ready.'}
 					</p>
 					<div className="flex items-center gap-2">
-						<Button variant="ghost" disabled={launching} onClick={onClose}><LocalizedText messageKey="game.cancel" /></Button>
+						<Button variant="secondary" disabled={launching} onClick={onClose}><LocalizedText messageKey="game.cancel" /></Button>
 						<Button
 							variant="primary"
 							disabled={Boolean(blockReason) || launching}
@@ -924,14 +924,14 @@ const SortableHeader = ({ label, column, activeColumn, direction, onSort, width,
   const Icon = active ? (direction === 'asc' ? ArrowUp : ArrowDown) : ArrowUpDown;
   return (
     <th className={`${width} px-4 py-3 font-semibold ${align === 'right' ? 'text-right' : ''}`}>
-      <button
+      <Button variant="secondary"
         type="button"
         onClick={() => onSort(column)}
-        className={`inline-flex items-center gap-1.5 hover:text-primary ${active ? 'text-primary' : ''} ${align === 'right' ? 'ml-auto' : ''}`}
+        className={align === 'right' ? 'ml-auto' : ''}
       >
         {label}
         <Icon className="h-3.5 w-3.5" />
-      </button>
+      </Button>
     </th>
   );
 };

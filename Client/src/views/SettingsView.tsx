@@ -840,7 +840,7 @@ const SettingsView: React.FC = () => {
 					/>
 					<Button
 						type="button"
-						variant="outline"
+						variant="secondary"
 						className="mt-4 w-full"
 						leftIcon={<Upload className="h-4 w-4" />}
 						isLoading={settingsTransferPending === 'import'}
@@ -1003,7 +1003,7 @@ const SettingsView: React.FC = () => {
 				<p className="mt-1 max-w-3xl text-xs leading-relaxed text-text-muted">
 					<LocalizedText messageKey="ui.views.settingsView.choose.whether.citadelops.opens.the.complete.game.3f2218c1" /></p>
 				<div role="radiogroup" aria-label={localizeStatic("ui.views.settingsView.aria-label.game.connection.mode.ab5b4380")} className="mt-4 grid gap-3 lg:grid-cols-2">
-					<button
+					<button data-button-pattern="card"
 						type="button"
 						role="radio"
 						aria-checked={configuredConnectionMode === 'full'}
@@ -1034,7 +1034,7 @@ const SettingsView: React.FC = () => {
 						</div>
 					</button>
 
-					<button
+					<button data-button-pattern="card"
 						type="button"
 						role="radio"
 						aria-checked={configuredConnectionMode === 'background'}
@@ -1355,24 +1355,24 @@ const SettingsView: React.FC = () => {
 								<span className="mt-0.5 block text-[11px] leading-4 text-text-muted">{feature.detail}</span>
 							</span>
 							<span className="flex shrink-0 items-center gap-1">
-								<button
+								<Button iconOnly variant="ghost"
 									type="button"
 									disabled={index === 0}
 									onClick={() => moveAttackPriorityBy(feature.id, -1)}
-									className="rounded-md p-1.5 text-text-muted transition-colors hover:bg-primary/10 hover:text-primary disabled:pointer-events-none disabled:opacity-25"
+									className="transition-colors"
 									aria-label={`Move ${feature.label} up`}
 								>
 									<ArrowUp className="h-3.5 w-3.5" />
-								</button>
-								<button
+								</Button>
+								<Button iconOnly variant="ghost"
 									type="button"
 									disabled={index === orderedAttackPriorityFeatures.length - 1}
 									onClick={() => moveAttackPriorityBy(feature.id, 1)}
-									className="rounded-md p-1.5 text-text-muted transition-colors hover:bg-primary/10 hover:text-primary disabled:pointer-events-none disabled:opacity-25"
+									className="transition-colors"
 									aria-label={`Move ${feature.label} down`}
 								>
 									<ArrowDown className="h-3.5 w-3.5" />
-								</button>
+								</Button>
 							</span>
 						</div>
 					))}

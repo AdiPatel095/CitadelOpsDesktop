@@ -63,7 +63,7 @@ export function AutomationSafetyPanel({ states, now }: {
                 value={reviews[key] ?? ''} disabled={pending !== undefined}
                 onChange={(event) => setReviews((current) => ({ ...current, [key]: event.target.value }))} />
             </label>
-            <Button disabled={pending !== undefined || !reviews[key]?.trim()} onClick={() => void clear(lane, lock.operationId)}>
+            <Button variant="secondary" disabled={pending !== undefined || !reviews[key]?.trim()} onClick={() => void clear(lane, lock.operationId)}>
               {pending === key ? 'Clearing…' : 'Clear reviewed lock and allow lane to resume'}
             </Button>
             </>}

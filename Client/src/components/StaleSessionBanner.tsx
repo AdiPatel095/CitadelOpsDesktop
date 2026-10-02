@@ -1,3 +1,4 @@
+import { Button } from './ui/Button';
 import { LocalizedText } from "../i18n/LocalizedText";
 import React from 'react';
 import { useCitadelAPI } from '../api/ApiContext';
@@ -23,12 +24,12 @@ const StaleSessionBanner: React.FC = () => {
       <p className="font-medium text-warning"><LocalizedText messageKey="ui.components.staleSessionBanner.disconnected.last.known.data.166a8c99" /></p>
       <p className="mt-1 text-xs text-text-muted">
         Figures below may be out of date.{' '}
-        <button
+        <Button variant="secondary"
           type="button"
           onClick={() => startGame()}
-          className="font-semibold text-primary underline underline-offset-2 hover:text-primary/90"
+          className="underline underline-offset-2"
         >
-          <LocalizedText messageKey="bot.start" /></button>{' '}
+          <LocalizedText messageKey="bot.start" /></Button>{' '}
 		{backgroundConnection
 			? 'to reconnect directly and refresh live data.'
 			: 'to reload the game tab and refresh live data.'}

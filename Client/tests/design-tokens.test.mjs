@@ -10,7 +10,7 @@ import { cssMetrics } from '../scripts/css-metrics.mjs';
 
 const root = fileURLToPath(new URL('../', import.meta.url));
 const desktop = existsSync(join(root, 'src/styles/tokens.css'));
-const source = readFileSync(join(root, desktop ? 'src/styles/tokens.css' : 'src/commandCenter/styles/tokens.css'), 'utf8');
+const source = readFileSync(join(root, desktop ? 'src/styles/tokens.css' : 'src/commandCenter/styles/tokens.css'), 'utf8') + '\n' + readFileSync(join(root, desktop ? 'src/styles/tokens-app.css' : 'src/commandCenter/styles/tokens-app.css'), 'utf8');
 const colors = `surface-canvas surface-card surface-inset surface-control surface-control-strong surface-overlay surface-field surface-inverse text-primary text-secondary text-muted text-disabled text-inverse text-on-accent border-subtle border-default border-strong accent accent-hover accent-pressed accent-container text-on-accent-container state-hover state-pressed state-selected focus-ring fill-disabled scrim selection control-on control-on-thumb segment-track segment-thumb data-1 data-2 data-3 data-4`.split(' ');
 const expected = [...colors,
   ...['success', 'warning', 'danger', 'info', 'neutral'].flatMap((t) => [`status-${t}`, `status-${t}-bg`, `status-${t}-border`]),

@@ -100,8 +100,8 @@ export const AutomationDurationModal: React.FC<AutomationDurationModalProps> = (
       title={<ModalTitle icon={<TimerReset className="h-5 w-5" />}>{t(onPauseFor ? 'automationDurationDialog.pauseTitle' : 'automationDurationDialog.runTitle', { feature: featureLabel })}</ModalTitle>}
       footer={(
         <div className="flex w-full justify-end gap-2">
-          <Button variant="ghost" onClick={onClose} disabled={saving}><LocalizedText messageKey="game.cancel" /></Button>
-          <Button onClick={() => void save()} disabled={!valid} isLoading={saving}>{t(onPauseFor ? 'automationDurationDialog.pauseButton' : 'automationDurationDialog.runButton')}</Button>
+          <Button variant="secondary" onClick={onClose} disabled={saving}><LocalizedText messageKey="game.cancel" /></Button>
+          <Button variant="secondary" onClick={() => void save()} disabled={!valid} isLoading={saving}>{t(onPauseFor ? 'automationDurationDialog.pauseButton' : 'automationDurationDialog.runButton')}</Button>
         </div>
       )}
     >
@@ -112,7 +112,7 @@ export const AutomationDurationModal: React.FC<AutomationDurationModalProps> = (
             {durationPresets.map((preset) => (
               <Button
                 key={preset.minutes}
-                variant={durationMinutes === preset.minutes ? 'primary' : 'outline'}
+                variant={durationMinutes === preset.minutes ? 'primary' : 'secondary'}
                 size="sm"
                 onClick={() => selectPreset(preset.minutes)}
               >

@@ -267,7 +267,7 @@ export const DefenseSetupField: React.FC<DefenseSetupFieldProps> = ({
           ) : null}
           {selectedPreset ? (
             <Button
-              variant="outline"
+              variant="secondary"
               size="sm"
               disabled={disabled}
               leftIcon={<Copy className="h-4 w-4" />}
@@ -298,11 +298,11 @@ export const DefenseSetupField: React.FC<DefenseSetupFieldProps> = ({
             <p className="text-xs text-text-muted"><LocalizedText messageKey="ui.settings.components.defenseSetupField.no.defense.is.configured.here.yet.edit.6eac4105" /></p>
           )}
           <div className="flex flex-wrap gap-2">
-            <Button variant="outline" size="sm" disabled={disabled} leftIcon={<Edit3 className="h-4 w-4" />} onClick={() => setEditing(true)}>
+            <Button variant="secondary" size="sm" disabled={disabled} leftIcon={<Edit3 className="h-4 w-4" />} onClick={() => setEditing(true)}>
               <LocalizedText messageKey="ui.settings.components.defenseSetupField.edit.defense.18cde234" />
             </Button>
             <Button
-              variant="outline"
+              variant="secondary"
               size="sm"
               disabled={disabled || starter.setup == null}
               ref={starterTrigger}
@@ -360,7 +360,7 @@ export const DefenseSetupField: React.FC<DefenseSetupFieldProps> = ({
         footer={(
           <div className="flex w-full flex-wrap items-center justify-end gap-2">
             <Button variant="ghost" onClick={closePreview}><LocalizedText messageKey="game.cancel" /></Button>
-            <Button
+            <Button variant="secondary"
               disabled={starter.setup == null}
               onClick={() => {
                 if (starter.setup) applyInline(starter.setup);
@@ -425,7 +425,7 @@ export const DefenseSetupField: React.FC<DefenseSetupFieldProps> = ({
         footer={(
           <div className="flex w-full items-center justify-end gap-2">
             <Button variant="ghost" disabled={saveAsBusy} onClick={closeSaveAs}><LocalizedText messageKey="game.cancel" /></Button>
-            <Button isLoading={saveAsBusy} disabled={saveAsBusy} leftIcon={<Save className="h-4 w-4" />} onClick={() => void submitSaveAs()}>
+            <Button variant="secondary" isLoading={saveAsBusy} disabled={saveAsBusy} leftIcon={<Save className="h-4 w-4" />} onClick={() => void submitSaveAs()}>
               {saveAsFailed && !saveAsBusy ? <LocalizedText messageKey="ui.settings.components.eventAttackSetupField.try.again.d8b8392e" /> : <LocalizedText messageKey="ui.settings.components.eventAttackSetupField.save.preset.362a1376" />}
             </Button>
           </div>

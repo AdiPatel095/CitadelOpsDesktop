@@ -33,7 +33,7 @@ export const StartConfirmDialog: React.FC<{ pending: PendingStart | null }> = ({
           <Button variant="primary" onClick={() => pending.decide(false)}>
             <LocalizedText messageKey="startConfirm.fixFirst" />
           </Button>
-          <Button variant="outline" onClick={() => pending.decide(true)}>
+          <Button variant="secondary" onClick={() => pending.decide(true)}>
             <LocalizedText messageKey="startConfirm.startAnyway" />
           </Button>
         </>

@@ -69,7 +69,7 @@ const StepRow: React.FC<{
       </div>
       {next && next.kind !== 'wait' && step.state !== 'done' ? (
         <Button
-          variant={current ? 'primary' : 'outline'}
+          variant={current ? 'primary' : 'secondary'}
           size="sm"
           className="shrink-0"
           onClick={() => {
@@ -142,8 +142,8 @@ export const SetupChecklist: React.FC<SetupChecklistProps> = ({ goal, collapsed,
         ) : null}
         <p className="text-[11px] text-text-muted"><LocalizedText messageKey="checklist.notComplete" /></p>
         <div className="flex flex-wrap gap-2 border-t border-border-base pt-3">
-          <Button variant="outline" size="sm" onClick={() => onOpenEditor()}><LocalizedText messageKey="checklist.action.openEditor" /></Button>
-          <Button variant="outline" size="sm" onClick={onChooseAnother}><LocalizedText messageKey="checklist.chooseAnother" /></Button>
+          <Button variant="secondary" size="sm" onClick={() => onOpenEditor()}><LocalizedText messageKey="checklist.action.openEditor" /></Button>
+          <Button variant="secondary" size="sm" onClick={onChooseAnother}><LocalizedText messageKey="checklist.chooseAnother" /></Button>
           <Button variant="ghost" size="sm" onClick={onDone}><LocalizedText messageKey="checklist.doneWithGoal" /></Button>
         </div>
       </div>

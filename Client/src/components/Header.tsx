@@ -229,7 +229,7 @@ const Header: React.FC<HeaderProps> = ({
               >
                 <Button
                   variant="ghost"
-                  size="icon"
+                  iconOnly
                   onClick={() => toggleAutoBird()}
                   onContextMenu={(event) => {
                     event.preventDefault();
@@ -249,7 +249,7 @@ const Header: React.FC<HeaderProps> = ({
               <span className="liquid-status-dock-utilities">
                 <Button
                   variant="ghost"
-                  size="icon"
+                  iconOnly
                   disabled={clearingAutoBirdTracking}
                   onClick={() => void clearAutoBirdTracking()}
                   className="liquid-status-dock-utility text-text-muted hover:text-error"
@@ -260,7 +260,7 @@ const Header: React.FC<HeaderProps> = ({
                 </Button>
                 <Button
                   variant="ghost"
-                  size="icon"
+                  iconOnly
                   onClick={onOpenAutoBirdSettings}
                   className="liquid-status-dock-utility"
                   title={localizeStatic("ui.components.header.title.auto.bird.settings.158a0a4f")}
@@ -283,7 +283,7 @@ const Header: React.FC<HeaderProps> = ({
               <AutoStationHoverPopover feedback={<AutomationFeatureFeedback featureId="autoStation" enabled={autoStationEnabled} onOpenSettings={onOpenAutoStationSettings} compact />}>
               <Button
                 variant="ghost"
-                size="icon"
+                iconOnly
                 onClick={toggleAutoStation}
                 onContextMenu={(event) => {
                   event.preventDefault();
@@ -314,7 +314,7 @@ const Header: React.FC<HeaderProps> = ({
               <span className="liquid-status-dock-utilities">
                 <Button
                   variant="ghost"
-                  size="icon"
+                  iconOnly
                   onClick={onOpenAutoStationSettings}
                   className="liquid-status-dock-utility"
                   title={localizeStatic("ui.components.header.title.auto.station.settings.eb56c8a6")}
@@ -331,7 +331,7 @@ const Header: React.FC<HeaderProps> = ({
         {/* Right: bot controls */}
         <div className="liquid-header-controls">
 			<Button
-				variant={botLocked ? 'danger' : 'outline'}
+				variant={botLocked ? 'danger' : 'secondary'}
 				size="sm"
 				onClick={toggleBotLock}
 				disabled={dashboardConnectionStatus !== 'Connected'}
@@ -346,7 +346,7 @@ const Header: React.FC<HeaderProps> = ({
 			</Button>
           {gameReconnectAvailable && (
             <Button
-              variant="outline"
+              variant="secondary"
               size="sm"
               onClick={() => reconnectGame()}
               disabled={dashboardConnectionStatus !== 'Connected'}

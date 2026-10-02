@@ -55,7 +55,7 @@ export const StopControl: React.FC<StopControlProps> = ({ enabledKey, featureId,
   return (
     <div className={`space-y-1.5 ${className}`} data-stop-control={featureId}>
       {variant === 'button' && on ? (
-        <Button variant="outline" size="sm" onClick={() => { void write(false); }} isLoading={busy} leftIcon={<CircleStop className="h-4 w-4" />}>
+        <Button variant="secondary" size="sm" onClick={() => { void write(false); }} isLoading={busy} leftIcon={<CircleStop className="h-4 w-4" />}>
           <LocalizedText messageKey="stopSemantics.stop" />
         </Button>
       ) : null}
@@ -65,7 +65,7 @@ export const StopControl: React.FC<StopControlProps> = ({ enabledKey, featureId,
             <LocalizedText messageKey={failure.intent === 'stop' ? 'stopSemantics.failed' : 'stopSemantics.failedStart'} />
             {failure.message ? ` ${failure.message}` : ''}
           </span>
-          <Button variant="outline" size="sm" onClick={() => { void write(failure.intent === 'start'); }} isLoading={busy}>
+          <Button variant="secondary" size="sm" onClick={() => { void write(failure.intent === 'start'); }} isLoading={busy}>
             <LocalizedText messageKey={failure.intent === 'stop' ? 'stopSemantics.retry' : 'startConfirm.startAnyway'} />
           </Button>
         </div>

@@ -198,7 +198,7 @@ export const AutoTowerSettingsModal: React.FC<AutoTowerSettingsModalProps> = ({ 
       title={localizeStatic("ui.settings.components.autoTowerSettingsModal.title.auto.towers.247e8c64")}
       icon={<Crosshair className="h-5 w-5" />}
       description={localizeStatic("ui.settings.components.autoTowerSettingsModal.description.each.scan.saves.every.tower.observed.in.00c98e17")}
-      titleTrailing={<Button variant="outline" size="sm" onClick={() => setIsGuideOpen(true)} leftIcon={<BookOpen className="h-4 w-4" />}><span lang={guideLocale}>{guidePack.ui.guideButton}</span></Button>}
+      titleTrailing={<Button variant="secondary" size="sm" onClick={() => setIsGuideOpen(true)} leftIcon={<BookOpen className="h-4 w-4" />}><span lang={guideLocale}>{guidePack.ui.guideButton}</span></Button>}
       onSave={save}
       saveLabel="Save changes"
       isSaving={isSaving}
@@ -241,7 +241,7 @@ export const AutoTowerSettingsModal: React.FC<AutoTowerSettingsModalProps> = ({ 
                 <p className="rounded-xl border border-border-base bg-bg-app/50 px-3 py-2.5 text-[11px] text-text-muted">
                   <LocalizedText messageKey="ui.settings.components.autoTowerSettingsModal.no.batch.cap.launch.every.eligible.target.373ba7c9" /></p>
 
-                <button
+                <button data-button-pattern="card"
                   type="button"
                   onClick={() => chooseTroop(castle.id)}
                   className="flex min-h-16 items-center gap-3 rounded-xl border border-dashed border-border-base bg-bg-app/60 p-3 text-left transition-colors hover:border-primary/50 hover:bg-primary/5"
