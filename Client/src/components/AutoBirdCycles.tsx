@@ -1,6 +1,7 @@
 import { Button } from './ui/Button';
 import './AutoBirdCycles.css';
 import { useLocale } from "../i18n/LocaleContext";
+import { formatDurationEnd } from '../i18n/automationDuration';
 import { LocalizedText } from "../i18n/LocalizedText";
 import React, { useMemo, useState } from 'react';
 import { RotateCw, Timer } from 'lucide-react';
@@ -52,7 +53,7 @@ const AutoBirdCycles: React.FC<AutoBirdCyclesProps> = ({
 	now,
 	onBeforeDialog,
 }) => {
-  const { t, date } = useLocale();
+  const { t, locale } = useLocale();
  const { submitIntent } = useCitadelAPI();
  const [pending, setPending] = useState<number | null>(null);
  const [error, setError] = useState('');
@@ -123,7 +124,7 @@ const AutoBirdCycles: React.FC<AutoBirdCyclesProps> = ({
 										</div>
 										{active && (
 											<div className="mt-0.5 text-caption text-text-muted">
-												<LocalizedText messageKey="autoBird.cycles.returnTime" params={{ time: date(cycle.nextCycleAtMs, { timeStyle: 'short' }) }} />
+												<LocalizedText messageKey="autoBird.cycles.returnTime" params={{ time: formatDurationEnd(cycle.nextCycleAtMs, locale) }} />
 											</div>
 										)}
 										{cycle.travelSeconds != null && cycle.travelSeconds > 0 && (

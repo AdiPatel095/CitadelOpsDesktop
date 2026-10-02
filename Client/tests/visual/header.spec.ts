@@ -3,6 +3,7 @@ import { prepare, settle } from './harness';
 import { assertDisabledNeutral, reportAccentUsage } from './rules';
 import { openCase } from '../gate/harness';
 import { gateCases } from '../gate/views';
+import { formatDurationEnd } from '../../src/i18n/automationDuration';
 for (const theme of ['dark','light'] as const) test(`CIT-69 header layout and disclosure ${theme}`, async ({ page }) => {
   const verifyNetwork = await prepare(page, theme);
 
@@ -53,7 +54,8 @@ test('CIT-74 Bird return time uses the viewer locale', async ({ page }) => {
   const entry = gateCases.find(entry => entry.name === 'header-panel')!;
   const { verifyNetwork } = await openCase(page, entry, { locale: 'ar', theme: 'dark' });
   const returns = page.locator('.header-bird-cycles .text-caption').filter({ hasText: /^Return / });
-  await expect(returns.first()).toContainText(/[٠-٩]/);
+  const expected = formatDurationEnd(new Date('2026-09-29T12:09:00Z'), 'ar', 'UTC');
+  await expect(returns.first()).toHaveText(`Return ${expected}`);
   await expect(page.locator('.header-bird-detail')).toHaveCount(0);
   verifyNetwork();
 });
