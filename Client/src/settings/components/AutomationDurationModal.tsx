@@ -1,3 +1,4 @@
+import { formatDurationEnd } from "../../i18n/automationDuration";
 import { useLocale } from "../../i18n/LocaleContext";
 import { LocalizedText } from "../../i18n/LocalizedText";
 import React, { useEffect, useMemo, useState } from 'react';
@@ -39,7 +40,7 @@ export const AutomationDurationModal: React.FC<AutomationDurationModalProps> = (
   onPauseFor,
   pausedUntil,
 }) => {
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
   const { enableAutomationFor, automationTimedUntilByKey } = useAuth();
   const [amount, setAmount] = useState('1');
   const [unit, setUnit] = useState<DurationUnit>('hours');
@@ -150,12 +151,12 @@ export const AutomationDurationModal: React.FC<AutomationDurationModalProps> = (
         <div className="rounded-global border border-border-base bg-bg-app/40 px-4 py-3 text-xs leading-relaxed text-text-muted">
           {turnsOffAt ? (
             <p>
-              {t(onPauseFor ? 'automationDurationDialog.pauseStarts' : 'automationDurationDialog.runStarts', { feature: featureLabel, endsAt: turnsOffAt.toLocaleString() })}
+              {t(onPauseFor ? 'automationDurationDialog.pauseStarts' : 'automationDurationDialog.runStarts', { feature: featureLabel, endsAt: formatDurationEnd(turnsOffAt, locale) })}
             </p>
           ) : null}
           <p className="mt-1">{t('automationDurationDialog.scheduleNotice')}</p>
           {currentUntil ? (
-            <p className="mt-2 text-primary">{t(onPauseFor ? 'automationDurationDialog.currentPauseEnds' : 'automationDurationDialog.currentRunEnds', { date: new Date(currentUntil).toLocaleString() })}</p>
+            <p className="mt-2 text-primary">{t(onPauseFor ? 'automationDurationDialog.currentPauseEnds' : 'automationDurationDialog.currentRunEnds', { date: formatDurationEnd(currentUntil, locale) })}</p>
           ) : null}
         </div>
 
