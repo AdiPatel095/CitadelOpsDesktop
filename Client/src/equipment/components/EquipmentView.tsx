@@ -1,4 +1,4 @@
-import { DeltaValue } from.tsx';
+import { DeltaValue } from '../../components/ui';
 import { equipmentEventOptions } from '../EquipmentEventLoadouts';
 import { describeMessage } from '../../i18n/messages';
 import {formatMessage,type LocalizedMessage} from '../../i18n/formatMessage';
@@ -574,5 +574,5 @@ function effectScopeBadge(scope: EquipmentEffectScope): 'secondary' | 'danger' |
 function renderEquipmentDelta(effect: Parameters<typeof formatEquipmentEffectValue>[0], value: number, locale: string) {
   return effect.displayValue
     ? effect.displayValue
-    : <Delta value={value}>{formatAbsoluteEquipmentEffectValue(effect, value, locale)}</Delta>;
+    : <DeltaValue value={value}>{formatAbsoluteEquipmentEffectValue(effect, value, locale)}</DeltaValue>;
 }

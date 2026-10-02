@@ -21,5 +21,5 @@ export * from './ScheduleSummaryRow';
 export * from './CatalogPickerModal';
 export * from './ChoiceChipGroup';
 export * from './SettingsModal';
-export { DeltaValue } from "./DeltaValue.tsx";.tsx';
+export { DeltaValue } from "./DeltaValue";
 export * from './Banner';
