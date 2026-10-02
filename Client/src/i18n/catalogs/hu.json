@@ -379,5 +379,6 @@
   "equipment.canonicalUnavailable": "A játék hatásadatai jelenleg nem érhetők el. Az utolsó eredményeid megmaradnak, az újrakonfigurálás pedig szünetel, amíg a CitadelOps újra próbálkozik.",
   "equipment.effectsGroupedDescription": "A játék saját hatáskategóriái szerint csoportosított hatások.",
   "setupReadiness.castlesNotInWorld": "{count, plural, one {A mentett {castle} kastély nem ehhez a fiókhoz vagy világhoz tartozik. Válaszd ki újra, vagy kapcsold ki.} other {A mentett {castle} kastély és {others, plural, one {# másik bekapcsolt kastély} other {# másik bekapcsolt kastély}} nem ehhez a fiókhoz vagy világhoz tartozik. Válaszd ki őket újra, vagy kapcsold ki őket.}}",
-  "ui.components.header.alt.citadel.ops.logo.ab367a3c": "CitadelOps-logó"
+  "ui.components.header.alt.citadel.ops.logo.ab367a3c": "CitadelOps-logó",
+  "ui.rich.views.automationView.right.click.a.toggle.for.temporary.activation.c34579ee": "<strong0>Kattints a jobb egérgombbal</strong0> egy kapcsolóra az ideiglenes aktiváláshoz"
 }

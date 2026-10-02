@@ -379,5 +379,6 @@
   "equipment.canonicalUnavailable": "現在、ゲームの効果データを利用できません。前回の結果を保持し、CitadelOpsが再試行している間は再構成を一時停止します。",
   "equipment.effectsGroupedDescription": "ゲーム独自の効果カテゴリごとにまとめた効果。",
   "setupReadiness.castlesNotInWorld": "{count, plural, one {保存済みの城{castle}は、このアカウントまたはワールドにありません。再選択するか無効にしてください。} other {保存済みの城{castle}と、{others, plural, one {他の有効な城#個} other {他の有効な城#個}}は、このアカウントまたはワールドにありません。再選択するか無効にしてください。}}",
-  "ui.components.header.alt.citadel.ops.logo.ab367a3c": "CitadelOpsのロゴ"
+  "ui.components.header.alt.citadel.ops.logo.ab367a3c": "CitadelOpsのロゴ",
+  "ui.rich.views.automationView.right.click.a.toggle.for.temporary.activation.c34579ee": "一時的に有効にするには、切り替えスイッチを<strong0>右クリック</strong0>してください"
 }

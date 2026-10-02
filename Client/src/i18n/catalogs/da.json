@@ -379,5 +379,6 @@
   "equipment.canonicalUnavailable": "Spillets effektdata er ikke tilgængelige lige nu. Dine seneste resultater bevares, og omkonfigurering er sat på pause, mens CitadelOps prøver igen.",
   "equipment.effectsGroupedDescription": "Effekter grupperet efter spillets egne effektkategorier.",
   "setupReadiness.castlesNotInWorld": "{count, plural, one {Den gemte borg {castle} tilhører ikke denne konto eller verden. Vælg den igen, eller slå den fra.} other {Den gemte borg {castle} og {others, plural, one {# anden aktiveret borg} other {# andre aktiverede borge}} tilhører ikke denne konto eller verden. Vælg dem igen, eller slå dem fra.}}",
-  "ui.components.header.alt.citadel.ops.logo.ab367a3c": "CitadelOps-logo"
+  "ui.components.header.alt.citadel.ops.logo.ab367a3c": "CitadelOps-logo",
+  "ui.rich.views.automationView.right.click.a.toggle.for.temporary.activation.c34579ee": "<strong0>Højreklik</strong0> på en kontakt for at aktivere den midlertidigt"
 }

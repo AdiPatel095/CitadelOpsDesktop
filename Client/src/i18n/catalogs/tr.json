@@ -379,5 +379,6 @@
   "equipment.canonicalUnavailable": "Oyunun etki verileri şu anda kullanılamıyor. Son sonuçlarınız korunur ve CitadelOps yeniden denerken yeniden yapılandırma duraklatılır.",
   "equipment.effectsGroupedDescription": "Oyunun kendi etki kategorilerine göre gruplandırılmış etkiler.",
   "setupReadiness.castlesNotInWorld": "{count, plural, =1 {Kaydedilmiş {castle} kalesi bu hesapta veya dünyada bulunmuyor. Yeniden seçin veya devre dışı bırakın.} one {Kaydedilmiş {castle} kalesi ve {others, plural, one {# diğer etkin kale} other {# diğer etkin kale}} bu hesapta veya dünyada bulunmuyor. Bunları yeniden seçin veya devre dışı bırakın.} other {Kaydedilmiş {castle} kalesi ve {others, plural, one {# diğer etkin kale} other {# diğer etkin kale}} bu hesapta veya dünyada bulunmuyor. Bunları yeniden seçin veya devre dışı bırakın.}}",
-  "ui.components.header.alt.citadel.ops.logo.ab367a3c": "CitadelOps logosu"
+  "ui.components.header.alt.citadel.ops.logo.ab367a3c": "CitadelOps logosu",
+  "ui.rich.views.automationView.right.click.a.toggle.for.temporary.activation.c34579ee": "Geçici olarak etkinleştirmek için bir anahtara <strong0>sağ tıklayın</strong0>"
 }

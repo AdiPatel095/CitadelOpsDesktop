@@ -379,5 +379,6 @@
   "equipment.canonicalUnavailable": "지금은 게임의 효과 데이터를 이용할 수 없습니다. 마지막 결과는 유지되며 CitadelOps가 다시 시도하는 동안 재구성이 일시 정지됩니다.",
   "equipment.effectsGroupedDescription": "게임 자체 효과 범주에 따라 그룹화한 효과입니다.",
   "setupReadiness.castlesNotInWorld": "{count, plural, one {저장된 성 {castle}이 이 계정이나 월드에 없습니다. 다시 선택하거나 비활성화하세요.} other {저장된 성 {castle}과 {others, plural, one {활성화된 다른 성 #개} other {활성화된 다른 성 #개}}가 이 계정이나 월드에 없습니다. 다시 선택하거나 비활성화하세요.}}",
-  "ui.components.header.alt.citadel.ops.logo.ab367a3c": "CitadelOps 로고"
+  "ui.components.header.alt.citadel.ops.logo.ab367a3c": "CitadelOps 로고",
+  "ui.rich.views.automationView.right.click.a.toggle.for.temporary.activation.c34579ee": "일시적으로 활성화하려면 토글을 <strong0>마우스 오른쪽 버튼으로 클릭</strong0>하세요"
 }

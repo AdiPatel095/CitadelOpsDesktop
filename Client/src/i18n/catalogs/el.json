@@ -379,5 +379,6 @@
   "equipment.canonicalUnavailable": "Τα δεδομένα επιδράσεων του παιχνιδιού δεν είναι διαθέσιμα τώρα. Τα τελευταία αποτελέσματά σας διατηρούνται και η αναδιαμόρφωση είναι σε παύση όσο το CitadelOps δοκιμάζει ξανά.",
   "equipment.effectsGroupedDescription": "Επιδράσεις ομαδοποιημένες με βάση τις κατηγορίες επιδράσεων του παιχνιδιού.",
   "setupReadiness.castlesNotInWorld": "{count, plural, one {Το αποθηκευμένο κάστρο {castle} δεν ανήκει σε αυτόν τον λογαριασμό ή κόσμο. Επιλέξτε το ξανά ή απενεργοποιήστε το.} other {Το αποθηκευμένο κάστρο {castle} και {others, plural, one {# άλλο ενεργοποιημένο κάστρο} other {# άλλα ενεργοποιημένα κάστρα}} δεν ανήκουν σε αυτόν τον λογαριασμό ή κόσμο. Επιλέξτε τα ξανά ή απενεργοποιήστε τα.}}",
-  "ui.components.header.alt.citadel.ops.logo.ab367a3c": "Λογότυπο CitadelOps"
+  "ui.components.header.alt.citadel.ops.logo.ab367a3c": "Λογότυπο CitadelOps",
+  "ui.rich.views.automationView.right.click.a.toggle.for.temporary.activation.c34579ee": "<strong0>Κάντε δεξί κλικ</strong0> σε έναν διακόπτη για προσωρινή ενεργοποίηση"
 }
