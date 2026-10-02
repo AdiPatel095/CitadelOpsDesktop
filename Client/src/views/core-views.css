@@ -1,4 +1,9 @@
 @layer components {
+    .castle-queue-content:focus-visible {
+        outline: var(--space-2) solid var(--focus-ring);
+        outline-offset: calc(-1 * var(--space-2));
+    }
+
     @media (max-width: 767px), (pointer: coarse) {
         :is([data-view="castle"], [data-view="automation"], [data-view="equipment"], [data-view="world-intelligence"]) button,
         [data-view="automation"] summary {

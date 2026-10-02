@@ -1,6 +1,7 @@
 import { useLocale as useStaticLocale } from "../../i18n/LocaleContext";
 import { LocalizedText } from "../../i18n/LocalizedText";
 import React, { useMemo } from 'react';
+import '../../views/core-views.css';
 import { SectionCard } from '../../components/ui';
 import { useCastleFocus } from '../../context/CastleFocusContext';
 import { useMetadata } from '../../context/MetadataContext';
@@ -56,18 +57,18 @@ const CastleQueuesCard: React.FC<CastleQueuesCardProps> = ({ title = 'Queues' })
       variant="solid"
       title={title}
       description={localizeStatic("copy.queues")}
-      titleClassName="text-primary"
+      titleClassName="text-text-main"
       descriptionClassName="font-bold"
       className="flex min-h-0 flex-col"
       contentClassName="custom-scrollbar flex-1 overflow-y-auto"
     >
         {!castle || queues.length === 0 ? (
-          <div className="rounded-global border border-dashed border-border-light bg-bg-card/35 px-4 py-8 text-center">
+          <div className="castle-queue-content rounded-global border border-dashed border-border-light bg-bg-card/35 px-4 py-8 text-center" tabIndex={0} role="region" aria-label={title}>
             <p className="text-body font-medium text-text-main"><LocalizedText messageKey="ui.dashboard.components.castleQueuesCard.no.production.queues.observed.for.this.castle.0155ec18" /></p>
             <p className="mx-auto mt-2 max-w-sm text-caption text-text-muted"><LocalizedText messageKey="ui.dashboard.components.castleQueuesCard.open.the.castle.in.game.to.refresh.76f08363" /></p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 gap-6 pb-2 xl:grid-cols-2">
+          <div className="castle-queue-content grid grid-cols-1 gap-6 pb-2 xl:grid-cols-2" tabIndex={0} role="region" aria-label={title}>
             {queues.map((queue) => {
               const crafting = craftingBuildingForStrip(castle, queue.id, buildings);
               const craftingRows: CraftingQueueRow[] = crafting ? [
