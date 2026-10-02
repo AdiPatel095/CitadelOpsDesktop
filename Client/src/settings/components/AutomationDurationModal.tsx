@@ -1,3 +1,5 @@
+import { StopControl } from '../../components/StopControl';
+import { featureIdForEnabledKey } from '../disclosure/placement';
 import { formatDurationEnd } from "../../i18n/automationDuration";
 import { useLocale } from "../../i18n/LocaleContext";
 import { LocalizedText } from "../../i18n/LocalizedText";
@@ -157,6 +159,9 @@ export const AutomationDurationModal: React.FC<AutomationDurationModalProps> = (
           <p className="mt-1">{t('automationDurationDialog.scheduleNotice')}</p>
           {currentUntil ? (
             <p className="mt-2 text-primary">{t(onPauseFor ? 'automationDurationDialog.currentPauseEnds' : 'automationDurationDialog.currentRunEnds', { date: formatDurationEnd(currentUntil, locale) })}</p>
+          ) : null}
+          {!onPauseFor && currentUntil ? (
+            <StopControl enabledKey={featureKey} featureId={featureIdForEnabledKey(featureKey)!} onStopped={onClose} />
           ) : null}
         </div>
 

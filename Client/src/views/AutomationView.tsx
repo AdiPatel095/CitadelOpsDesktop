@@ -1,18 +1,19 @@
-import { Banner } from '../components/ui/Banner';
-import { Card, SectionHeader } from '../components/ui';
+import './automation-card.css';
+import { TimedRunButton } from '../components/automation/TimedRunButton';
+import { TimerTip } from '../components/automation/TimerTip';
+import { Card, Panel, SectionHeader } from '../components/ui';
 import { StatusBadge } from '../components/ui/StatusBadge';
 import { useAutomationPlayerStatus } from '../settings/readiness/useAutomationPlayerStatus';
 import { automationPlayerStatus } from '../settings/readiness/playerStatus';
 import type { SettingsFeatureId as StatusFeatureId } from '../settings/disclosure/placement';
 import { rateView, dailyView, type CountView } from '../components/automation/attackCounts';
 import { useHostedRuntimePresence } from '../config/Deployment';
-import {nextWakeParameters,timedRemainingParameters} from '../i18n/automationDuration';
+import {nextWakeParameters} from '../i18n/automationDuration';
 import {automationDetailMessage, automationLaneMessage} from '../i18n/automationMessages';
 import {useLocalizedMessage} from '../i18n/useLocalizedMessage';
 import {messageLanguageAttributes} from '../i18n/messageLanguage';
 import {describeMessage, type MessageKey, type MessageParameters} from '../i18n/messages';
 import type {LocalizedMessage} from '../i18n/formatMessage';
-import { LocalizedRichText } from "../i18n/LocalizedRichText";
 import { useLocale as useStaticLocale } from "../i18n/LocaleContext";
 import { LocalizedText } from "../i18n/LocalizedText";
 import React, { useEffect, useMemo, useState } from 'react';
@@ -143,9 +144,6 @@ const automationGroups: Array<{
 type DisplayTranslator = (key:MessageKey,params?:MessageParameters)=>string;
 function formatNextWake(timestamp:number,now:number,locale:string,t:DisplayTranslator):string {
   return t('automation.nextCheck',nextWakeParameters(timestamp,now,locale));
-}
-function formatTimedRemaining(expiresAt:number,now:number,locale:string,t:DisplayTranslator):string {
-  return t('automation.timeLeft',timedRemainingParameters(expiresAt,now,locale));
 }
 
 function combinedAutomationStatus(
@@ -862,15 +860,13 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
   return (
     <div className="mx-auto flex w-full max-w-[1800px] flex-col gap-4 pb-10">
       <AutomationSafetyPanel states={automationStates} now={now} />
+      <TimerTip />
       {goalEntry}
       <div className="automation-function-groups">
         {groupedFeatures.map((group) => {
           return (
             <section key={group.id} className="automation-function-group">
               <SectionHeader title={group.name} />
-              <Banner tone="info">
-                  <span><LocalizedRichText messageKey="ui.rich.views.automationView.right.click.a.toggle.for.temporary.activation.c34579ee" params={{}} tags={{strong0: children => <strong className="text-text-main">{children}</strong>}} /></span>
-              </Banner>
               <div className="automation-function-grid">
                 {group.features.map((feature) => {
                   const FeatureIcon = feature.icon;
@@ -882,76 +878,79 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
                       key={feature.id}
                       className={`automation-function-row ${feature.enabled ? 'automation-function-row-active' : ''}`}
                     >
-                      <span
-                        id={`automation-switch-${feature.id}`}
-                        className="shrink-0"
-                        onContextMenu={(event) => {
-                          event.preventDefault();
-                          onOpenAutomationDuration(feature.enabledKey, feature.name);
-                        }}
-                        title={`Right-click to run ${feature.name} for a duration`}
-                      >
-                        <Switch
-                          checked={feature.enabled}
-                          onChange={feature.onToggle}
-                          ariaLabel={`Toggle ${feature.name}`}
-                          disabled={feature.disabled}
-                        />
-                      </span>
-                      <div className="automation-function-copy">
-                        <div className="flex min-w-0 items-center gap-2">
-                          <FeatureIcon className="h-3.5 w-3.5 shrink-0 text-text-muted" />
+                      <div className="automation-card-header">
+                        <span
+                          id={`automation-switch-${feature.id}`}
+                          className="shrink-0"
+                          onContextMenu={(event) => {
+                            event.preventDefault();
+                            onOpenAutomationDuration(feature.enabledKey, feature.name);
+                          }}
+                          title={`Right-click to run ${feature.name} for a duration`}
+                        >
+                          <Switch
+                            checked={feature.enabled}
+                            onChange={feature.onToggle}
+                            ariaLabel={`Toggle ${feature.name}`}
+                            disabled={feature.disabled}
+                          />
+                        </span>
+                        <div className="automation-card-title">
+                          <FeatureIcon className="h-3.5 w-3.5 shrink-0" />
                           <h3>{feature.name}</h3>
-                          {feature.group === 'offense' ? (
-                            <>
-                              <Badge
-                                variant="outline"
-                                className="shrink-0 whitespace-nowrap"
-                                title={attackRateTitle(feature.name, attackLaunchCount,locale,localizeStatic)}
-                                aria-label={attackRateTitle(feature.name, attackLaunchCount,locale,localizeStatic)}
-                              >
-                                {attackRateLabel(attackLaunchCount,localizeStatic)}
-                              </Badge>
-                              <Badge
-                                variant="outline"
-                                className="shrink-0 whitespace-nowrap"
-                                title={dailyAttackCountTitle(feature.name, dailyAttackLaunchCount,locale,localizeStatic)}
-                                aria-label={dailyAttackCountTitle(feature.name, dailyAttackLaunchCount,locale,localizeStatic)}
-                              >
-                                {dailyAttackCountLabel(dailyAttackLaunchCount,locale,localizeStatic)}
-                              </Badge>
-                            </>
-                          ) : null}
-                          {timedUntil ? <Badge variant="outline">{formatTimedRemaining(timedUntil, now,locale,localizeStatic)}</Badge> : null}
                         </div>
-                        <p>{feature.description}</p>
-                        <AutomationStatusLines
-                          featureId={feature.id as StatusFeatureId}
-                          buildLaneActive={feature.id === 'autoBeriWorld' ? autoBeriBuildEnabled : undefined}
-                          featureName={feature.name}
-                          status={feature.status}
-                          detail={feature.detail}
-                          detailDescriptor={feature.detailDescriptor ?? automationDetailMessage(feature.detail,automationStates[feature.id]?.detailDescriptor)}
-                          lanes={feature.statusLanes}
-                        />
-                        <AutomationFeatureFeedback
-                          featureId={feature.id as SettingsFeatureId}
-                          enabled={feature.enabled}
-                          onOpenSettings={feature.onOpenSettings}
-                          launchesByFeature={attackLaunchesByFeature}
-                          buildLaneActive={feature.id === 'autoBeriWorld' ? autoBeriBuildEnabled : undefined}
-                        />
+                        <div className="automation-card-actions">
+                          <TimedRunButton featureName={feature.name} expiresAt={timedUntil} now={now}
+                            disabled={feature.disabled} onOpen={() => onOpenAutomationDuration(feature.enabledKey, feature.name)} />
+                          <Button iconOnly
+                            variant="ghost"
+                            size="md"
+                            className="automation-function-settings"
+                            onClick={feature.onOpenSettings}
+                            aria-label={`Open ${feature.name} settings`}
+                            title={`Open ${feature.name} settings`}
+                          >
+                            <Settings className="h-3.5 w-3.5" />
+                          </Button>
+                        </div>
                       </div>
-                      <Button iconOnly
-                        variant="ghost"
-                        size="md"
-                        className="automation-function-settings"
-                        onClick={feature.onOpenSettings}
-                        aria-label={`Open ${feature.name} settings`}
-                        title={`Open ${feature.name} settings`}
-                      >
-                        <Settings className="h-3.5 w-3.5" />
-                      </Button>
+                      <AutomationStatusLines
+                        featureId={feature.id as StatusFeatureId}
+                        buildLaneActive={feature.id === 'autoBeriWorld' ? autoBeriBuildEnabled : undefined}
+                        featureName={feature.name}
+                        status={feature.status}
+                        detail={feature.detail}
+                        detailDescriptor={feature.detailDescriptor ?? automationDetailMessage(feature.detail,automationStates[feature.id]?.detailDescriptor)}
+                        lanes={feature.statusLanes}
+                      />
+                      {feature.group === 'offense' ? (
+                        <Panel className="automation-card-metrics">
+                          <Badge
+                            variant="outline"
+                            className="shrink-0 whitespace-nowrap"
+                            title={attackRateTitle(feature.name, attackLaunchCount,locale,localizeStatic)}
+                            aria-label={attackRateTitle(feature.name, attackLaunchCount,locale,localizeStatic)}
+                          >
+                            {attackRateLabel(attackLaunchCount,localizeStatic)}
+                          </Badge>
+                          <Badge
+                            variant="outline"
+                            className="shrink-0 whitespace-nowrap"
+                            title={dailyAttackCountTitle(feature.name, dailyAttackLaunchCount,locale,localizeStatic)}
+                            aria-label={dailyAttackCountTitle(feature.name, dailyAttackLaunchCount,locale,localizeStatic)}
+                          >
+                            {dailyAttackCountLabel(dailyAttackLaunchCount,locale,localizeStatic)}
+                          </Badge>
+                        </Panel>
+                      ) : null}
+                      <p className="automation-card-description">{feature.description}</p>
+                      <AutomationFeatureFeedback
+                        featureId={feature.id as SettingsFeatureId}
+                        enabled={feature.enabled}
+                        onOpenSettings={feature.onOpenSettings}
+                        launchesByFeature={attackLaunchesByFeature}
+                        buildLaneActive={feature.id === 'autoBeriWorld' ? autoBeriBuildEnabled : undefined}
+                      />
                     </Card>
                   );
                 })}
