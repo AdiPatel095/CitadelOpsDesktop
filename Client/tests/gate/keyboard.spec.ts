@@ -9,7 +9,15 @@ import { gateCases, type GateCase } from './views';
 function focusSnapshot(mode: 'baseline' | 'active') {
   let active = document.activeElement as HTMLElement;
   while (active.shadowRoot?.activeElement) active = active.shadowRoot.activeElement as HTMLElement;
-  const roots = mode === 'active' ? [active] : [...document.querySelectorAll<HTMLElement>('[data-gate-keyboard]')];
+  const candidates: HTMLElement[] = [];
+  function collectCandidates(scope: Document | ShadowRoot) {
+    for (const element of scope.querySelectorAll<HTMLElement>('*')) {
+      if (element.hasAttribute('data-gate-keyboard')) candidates.push(element);
+      if (element.shadowRoot) collectCandidates(element.shadowRoot);
+    }
+  }
+  if (mode === 'baseline') collectCandidates(document);
+  const roots = mode === 'active' ? [active] : candidates;
   return roots.map(root => {
     const nodes: HTMLElement[] = [root];
     function collect(element: HTMLElement) {
@@ -207,6 +215,27 @@ test('focus-rule fixture: control with no indicator fails', async ({ page }) => 
     <button aria-label="No focus indicator"><span>Static decoration</span></button>`);
   expect(await keyboardWalk(page)).toEqual([{
     rule: 'focusVisible', element: 'button No focus indicator',
+    detail: 'Tab focus has no detected visible outline, shadow, background or border indicator',
+  }]);
+});
+
+
+test('focus-rule fixture: shadow controls retain unfocused snapshots', async ({ page }) => {
+  await page.setContent('<focus-rule-fixture></focus-rule-fixture>');
+  await page.evaluate(() => {
+    customElements.define('focus-rule-fixture', class extends HTMLElement {
+      constructor() {
+        super();
+        this.attachShadow({ mode: 'open' }).innerHTML = `
+          <style>button { outline: none; box-shadow: none; border: 0; background: white; }
+          #ring:focus-visible { outline: 2px solid blue; }</style>
+          <button id="ring" aria-label="Shadow ring">Ring</button>
+          <button aria-label="Shadow no ring">No ring</button>`;
+      }
+    });
+  });
+  expect(await keyboardWalk(page)).toEqual([{
+    rule: 'focusVisible', element: 'button Shadow no ring',
     detail: 'Tab focus has no detected visible outline, shadow, background or border indicator',
   }]);
 });
