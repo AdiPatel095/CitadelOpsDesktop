@@ -39,14 +39,14 @@ function blocks(css, pattern, topLevelOnly = false) {
   return result;
 }
 const themes = { light: {}, dark: {} };
-// Theme-independent illustration tokens are inherited by both themes.
+// Shared theme-independent tokens are inherited by both themes.
 for (const block of blocks(source, /(?:^|\n)\s*:root,\s*\[data-theme="light"\],\s*\[data-theme="dark"\]\s*\{/g, true)) {
   for (const declaration of block.body.matchAll(/(--[\w-]+)\s*:\s*([^;]+);/g)) {
     themes.light[declaration[1]] = declaration[2].trim();
     themes.dark[declaration[1]] = declaration[2].trim();
   }
 }
-for (const block of blocks(source, /(?:^|\n)(?:\s*:root,\s*\[data-theme="light"\]|\s*\[data-theme="dark"\])\s*\{/g)) {
+for (const block of blocks(source, /(?:^|\n)(?:\s*:root,\s*\[data-theme="light"\]|\s*\[data-theme="dark"\])\s*\{/g, true)) {
   const theme = block.header.includes(':root') ? 'light' : 'dark';
   for (const d of block.body.matchAll(/(--[\w-]+)\s*:\s*([^;]+);/g)) themes[theme][d[1]] = d[2].trim();
 }
@@ -72,6 +72,8 @@ test('Manrope remains active while radius roles match spec', () => {
   for (const theme of ['light', 'dark']) {
     assert.match(resolve(theme, '--font-sans'), /^"Manrope", "Manrope Fallback",/);
     for (const [name, value] of Object.entries({ xs: 4, sm: 8, md: 12, lg: 16, xl: 24, '2xl': 32, '3xl': 48, full: 9999 })) assert.equal(resolve(theme, `--radius-${name}`), `${value}px`);
+    assert.equal(resolve(theme, '--shape-card'), '32px 12px 32px 32px');
+    assert.equal(resolve(theme, '--shape-hero'), '48px 16px 48px 48px');
     assert.equal(resolve(theme, '--md-expressive-shape-card'), resolve(theme, '--shape-card'));
     assert.doesNotMatch(source, /--md-expressive-shape-card-alt/);
     assert.equal(resolve(theme, '--shadow-modal'), resolve(theme, '--elevation-4'));
