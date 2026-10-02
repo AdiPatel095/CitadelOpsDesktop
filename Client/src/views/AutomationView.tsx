@@ -984,6 +984,7 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
           <ScheduleSummaryRow
             summary={equipmentCleanupScheduleLabel}
             actionLabel="Edit schedule"
+            actionSize="md"
             className="bg-bg-card/45 p-4"
             onEdit={() => {
                 setIsEquipmentCleanupSettingsOpen(false);

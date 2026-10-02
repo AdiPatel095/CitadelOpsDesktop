@@ -351,7 +351,7 @@ export const AutoBeriWorldSettingsModal: React.FC<AutoBeriWorldSettingsModalProp
 			title={localizeStatic("ui.settings.components.autoBeriWorldSettingsModal.title.auto.beri.world.a579a63b")}
 			icon={<Swords className="h-5 w-5" />}
 			description={localizeStatic("ui.settings.components.autoBeriWorldSettingsModal.description.attack.berimond.towers.bring.the.loot.home.ff1b05e8")}
-			titleTrailing={<Button variant="secondary" size="sm" className="shrink-0" onClick={() => setIsGuideOpen(true)} leftIcon={<BookOpen className="h-4 w-4" />}><span lang={beriGuideLocale}>{beriGuidePack.ui.guideButton}</span></Button>}
+			titleTrailing={<Button variant="secondary" size="md" className="shrink-0" onClick={() => setIsGuideOpen(true)} leftIcon={<BookOpen className="h-4 w-4" />}><span lang={beriGuideLocale}>{beriGuidePack.ui.guideButton}</span></Button>}
 			maxWidth="4xl"
 			onSave={() => void save()}
 			saveLabel="Save"
@@ -369,6 +369,7 @@ export const AutoBeriWorldSettingsModal: React.FC<AutoBeriWorldSettingsModalProp
 			<div className="space-y-5">
 				<SettingsSection disclosure={disclosure} section="attack" className="space-y-5">
 				<CastleRequirementField
+					ariaLabel={localizeStatic("ui.settings.components.autoBeriWorldSettingsModal.source.castle.86d5a48e")}
 					id="auto-beri-source"
 					label={<LocalizedText messageKey="ui.settings.components.autoBeriWorldSettingsModal.source.castle.86d5a48e" />}
 					value={effectiveSourceID}
@@ -404,7 +405,7 @@ export const AutoBeriWorldSettingsModal: React.FC<AutoBeriWorldSettingsModalProp
 				<div className="space-y-4 rounded-xl border border-border-base bg-bg-elevated/40 p-4">
 					<div>
 						<div className="flex items-center gap-2 text-body font-semibold text-text-main">
-							<Crosshair className="h-4 w-4 text-primary" /> <LocalizedText messageKey="ui.settings.components.autoBeriWorldSettingsModal.tower.attack.62826c7e" />
+							<Crosshair className="h-4 w-4 text-text-muted" /> <LocalizedText messageKey="ui.settings.components.autoBeriWorldSettingsModal.tower.attack.62826c7e" />
 						</div>
 						<p className="mt-1 text-caption text-text-muted">
 							<LocalizedText messageKey="ui.settings.components.autoBeriWorldSettingsModal.uses.berimond.s.find.next.tower.command.f09dfe35" /></p>
@@ -453,7 +454,7 @@ export const AutoBeriWorldSettingsModal: React.FC<AutoBeriWorldSettingsModalProp
 				<div className="space-y-4 rounded-xl border border-border-base bg-bg-elevated/40 p-4">
 					<div>
 						<div className="flex items-center gap-2 text-body font-semibold text-text-main">
-							<Castle className="h-4 w-4 text-primary" /> <LocalizedText messageKey="ui.settings.components.autoBeriWorldSettingsModal.loot.funded.camp.construction.4371947e" />
+							<Castle className="h-4 w-4 text-text-muted" /> <LocalizedText messageKey="ui.settings.components.autoBeriWorldSettingsModal.loot.funded.camp.construction.4371947e" />
 						</div>
 						<p className="mt-1 text-caption text-text-muted">
 							<LocalizedText messageKey="ui.settings.components.autoBeriWorldSettingsModal.uses.the.built.in.exact.camp.layout.6c194563" /></p>
@@ -556,7 +557,7 @@ export const AutoBeriWorldSettingsModal: React.FC<AutoBeriWorldSettingsModalProp
 							{savedBlueprints.map((blueprint) => (
 								<Button
 									key={blueprint.id}
-									size="sm"
+									size="md"
 									variant={blueprint.id === blueprintDocument.activeId ? 'primary' : 'ghost'}
 									disabled={capturing != null || blueprintBusy}
 									onClick={() => void activateBlueprint(blueprint.id)}
@@ -582,7 +583,7 @@ export const AutoBeriWorldSettingsModal: React.FC<AutoBeriWorldSettingsModalProp
 									</p>
 								</div>
 								<Button
-									size="sm"
+									size="md"
 									variant="ghost"
 									disabled={capturing != null || blueprintBusy}
 									onClick={() => void deactivateBlueprint()}
@@ -730,7 +731,7 @@ export const AutoBeriWorldSettingsModal: React.FC<AutoBeriWorldSettingsModalProp
 				<div className="space-y-4 rounded-xl border border-border-base bg-bg-elevated/40 p-4">
 					<div>
 						<div className="flex items-center gap-2 text-body font-semibold text-text-main">
-							<Hammer className="h-4 w-4 text-primary" /> <LocalizedText messageKey="ui.settings.components.autoBeriWorldSettingsModal.armorer.tool.minimums.d4868418" />
+							<Hammer className="h-4 w-4 text-text-muted" /> <LocalizedText messageKey="ui.settings.components.autoBeriWorldSettingsModal.armorer.tool.minimums.d4868418" />
 						</div>
 						<p className="mt-1 text-caption text-text-muted">
 							<LocalizedText messageKey="ui.settings.components.autoBeriWorldSettingsModal.an.independent.auto.beri.lane.buys.the.72da5b70" /></p>

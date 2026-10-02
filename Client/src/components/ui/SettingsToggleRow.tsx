@@ -35,11 +35,11 @@ export const SettingsToggleRow: React.FC<SettingsToggleRowProps> = ({
     warning: 'border-warning/25 bg-warning/5',
     danger: 'border-error/25 bg-error/5',
   }[tone];
-  const iconClass = tone === 'warning' ? 'text-warning' : tone === 'danger' ? 'text-error' : 'text-primary';
+  const iconClass = tone === 'warning' ? 'text-warning' : tone === 'danger' ? 'text-error' : 'text-text-muted';
   const accessibleName = ariaLabel ?? (typeof title === 'string' ? title : t('settings.toggle'));
 
   return (
-    <div className={`flex items-start justify-between gap-4 rounded-global border px-4 py-3 ${toneClass} ${disabled ? 'opacity-55' : ''} ${className}`} {...props}>
+    <div className={`flex items-start justify-between gap-4 rounded-global border px-4 py-3 ${toneClass} ${className}`} {...props}>
       <div className="min-w-0">
         <div className="flex items-center gap-2 text-body font-semibold text-text-main">
           {icon && <span className={iconClass} aria-hidden="true">{icon}</span>}

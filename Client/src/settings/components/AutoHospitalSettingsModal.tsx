@@ -115,7 +115,7 @@ export const AutoHospitalSettingsModal: React.FC<AutoHospitalSettingsModalProps>
                 className="flex min-w-0 items-center gap-3 rounded-global border border-border-base bg-bg-card/65 px-3 py-2"
                 title={`${day} ${formatMinuteOfDay(slot.startMinute)}-${formatMinuteOfDay(slot.endMinute)}`}
               >
-                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-primary/20 bg-primary/10 text-caption font-semibold text-primary">
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-primary/20 bg-primary/10 text-caption font-semibold text-text-main">
                   {day}
                 </span>
                 <div className="min-w-0 flex-1">
@@ -173,12 +173,12 @@ export const AutoHospitalSettingsModal: React.FC<AutoHospitalSettingsModalProps>
             titleClassName="text-title-sm"
             actions={(
               <div className="flex shrink-0 items-center gap-2">
-                <Badge variant={autoHospitalScheduleEnabled ? 'primary' : 'secondary'}>
+                <Badge variant="secondary">
                   {autoHospitalScheduleEnabled ? 'On' : 'Off'}
                 </Badge>
                 <Button
                   variant="secondary"
-                  size="sm"
+                  size="md"
                   onClick={() => onOpenFeatureSchedule('autoHospital', 'Auto Hospital')}
                   leftIcon={<CalendarDays className="h-4 w-4" />}
                 >
@@ -202,7 +202,7 @@ export const AutoHospitalSettingsModal: React.FC<AutoHospitalSettingsModalProps>
           customCount={countCustomValues(settings, defaultAutoHospitalSettings(), ['checkIntervalSec'])}
         >
           <div className="flex flex-wrap items-center gap-3">
-            <Clock3 className="h-4 w-4 text-primary" aria-hidden="true" />
+            <Clock3 className="h-4 w-4 text-text-muted" aria-hidden="true" />
             <span className="text-body font-semibold text-text-main"><LocalizedText messageKey="ui.settings.components.autoHospitalSettingsModal.title.queue.check.39bf2207" /></span>
             <span className="text-caption text-text-muted"><LocalizedText messageKey="ui.settings.components.autoHospitalSettingsModal.description.minutes.between.hospital.scans.3dde05fe" /></span>
           </div>

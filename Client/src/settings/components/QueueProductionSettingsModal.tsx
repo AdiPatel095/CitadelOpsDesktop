@@ -502,12 +502,12 @@ export const QueueProductionSettingsModal: React.FC<QueueProductionSettingsModal
     if (items.length === 0) {
       return (
         <div className="flex min-h-[6.75rem] flex-col items-center justify-center rounded-global border border-dashed border-border-base bg-bg-card/45 p-5 text-center">
-          <div className="mb-3 text-caption font-semibold text-text-muted/70">
+          <div className="mb-3 text-caption font-semibold text-text-muted">
             {definition.emptyItemsLabel}
           </div>
           <Button
             variant="secondary"
-            size="sm"
+            size="md"
             onClick={() => handleAddItem(scope, addTitle)}
             leftIcon={<Plus className="h-4 w-4" />}
           >
@@ -537,7 +537,7 @@ export const QueueProductionSettingsModal: React.FC<QueueProductionSettingsModal
             onClick={() => openEditModal(scope, item)}
           >
             {showsRecruitRotation && (
-              <span className="absolute left-1.5 top-1.5 z-10 rounded-full border border-primary/35 bg-bg-card/95 px-1.5 py-0.5 text-caption font-semibold text-primary shadow-sm">
+              <span className="absolute left-1.5 top-1.5 z-10 rounded-full border border-primary/35 bg-bg-card/95 px-1.5 py-0.5 text-caption font-semibold text-text-main shadow-sm">
                 {index === nextRotationIndex ? `Next · ${index + 1}` : index + 1}
               </span>
             )}
@@ -546,7 +546,7 @@ export const QueueProductionSettingsModal: React.FC<QueueProductionSettingsModal
               {itemName(item.id)}
             </span>
             {kind === 'recruit' && (
-              <span className="text-caption font-semibold text-primary">
+              <span className="text-caption font-semibold text-text-main">
                 {unitRangeLabel(item)}
               </span>
             )}
@@ -603,7 +603,7 @@ export const QueueProductionSettingsModal: React.FC<QueueProductionSettingsModal
       <div className="rounded-global border border-primary/20 bg-primary/5 p-3">
         <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
           <div className="min-w-0">
-            <div className="text-caption font-semibold text-primary">
+            <div className="text-caption font-semibold text-text-main">
               {options.title ?? `Scheduled ${definition.itemFallbackLabel}s`}
             </div>
             <p className="mt-1 text-caption font-semibold text-text-muted">
@@ -613,7 +613,7 @@ export const QueueProductionSettingsModal: React.FC<QueueProductionSettingsModal
           {!options.hideEditButton && (
             <Button
               variant="secondary"
-              size="sm"
+              size="md"
               onClick={options.onEdit}
               title={options.editTitle}
               leftIcon={<CalendarDays className="h-4 w-4" />}
@@ -686,13 +686,13 @@ export const QueueProductionSettingsModal: React.FC<QueueProductionSettingsModal
         actions={(
           <div className="flex shrink-0 items-center gap-2">
             {globalScheduleEnabled && (
-              <Badge variant="primary">
+              <Badge variant="secondary">
                 {globalSchedule?.slots.length ?? 0} slot{globalSchedule?.slots.length === 1 ? '' : 's'}
               </Badge>
             )}
             <Button
               variant="secondary"
-              size="sm"
+              size="md"
               onClick={() => onOpenFeatureSchedule(definition.featureID, definition.featureLabel)}
               leftIcon={<CalendarDays className="h-4 w-4" />}
             >
@@ -745,12 +745,12 @@ export const QueueProductionSettingsModal: React.FC<QueueProductionSettingsModal
       contentClassName="flex-1 "
       actions={(
         <div className="flex shrink-0 items-center gap-2">
-          <Badge variant="primary">
+          <Badge variant="secondary">
             {schedule.slots.length} slot{schedule.slots.length === 1 ? '' : 's'}
           </Badge>
           <Button
             variant="secondary"
-            size="sm"
+            size="md"
             onClick={() => onOpenFeatureSchedule(definition.featureID, definition.featureLabel)}
             leftIcon={<CalendarDays className="h-4 w-4" />}
           >
@@ -789,7 +789,7 @@ export const QueueProductionSettingsModal: React.FC<QueueProductionSettingsModal
       contentClassName="flex flex-1 "
     >
         <div className="flex min-h-[6.75rem] w-full items-center gap-4 rounded-global border border-dashed border-border-base bg-bg-card/35 p-4">
-          <div className="hidden h-10 w-10 shrink-0 place-items-center rounded-global border border-primary/20 bg-primary/10 text-primary sm:grid">
+          <div className="hidden h-10 w-10 shrink-0 place-items-center rounded-global border border-primary/20 bg-primary/10 text-text-main sm:grid">
             <Castle className="h-5 w-5" />
           </div>
           <div className="min-w-0">
@@ -811,7 +811,7 @@ export const QueueProductionSettingsModal: React.FC<QueueProductionSettingsModal
       className={`flex flex-col ${className}`}
       contentClassName="flex flex-1 flex-col gap-2 "
       actions={(
-        <Badge variant="primary" className="shrink-0">
+        <Badge variant="secondary" className="shrink-0">
           {enabledCastleCount}/{eligibleCastles.length}
         </Badge>
       )}
@@ -915,8 +915,8 @@ export const QueueProductionSettingsModal: React.FC<QueueProductionSettingsModal
               titleClassName="text-title-sm"
               contentClassName="flex flex-wrap items-center justify-between gap-4 "
             >
-                <div className="text-display-sm font-bold tabular-nums text-primary">{enabledCastleCount}</div>
-                <Badge variant={isGlobalMode ? 'primary' : 'secondary'}>
+                <div className="text-display-sm font-bold tabular-nums text-text-main">{enabledCastleCount}</div>
+                <Badge variant="secondary">
                   {isGlobalMode ? 'shared' : 'per castle'}
                 </Badge>
             </SectionCard>
@@ -1040,11 +1040,11 @@ export const QueueProductionSettingsModal: React.FC<QueueProductionSettingsModal
                                 : `Uses ${definition.castleSpecificLabel}`}
                           </span>
                           {scheduledItemSchedule ? (
-                            <Badge variant="primary">
+                            <Badge variant="secondary">
                               {scheduledItemSchedule.slots.length} slot{scheduledItemSchedule.slots.length !== 1 ? 's' : ''}
                             </Badge>
                           ) : hasItems && (
-                            <Badge variant="primary">
+                            <Badge variant="secondary">
                               {displayedItems.length} {definition.itemLabel}{displayedItems.length !== 1 ? 's' : ''}
                             </Badge>
                           )}
@@ -1121,7 +1121,7 @@ export const QueueProductionSettingsModal: React.FC<QueueProductionSettingsModal
 
           {editingItem && kind === 'recruit' && (
             <div className="rounded-global border border-primary/20 bg-primary/5 px-4 py-3 text-center">
-              <div className="text-caption font-semibold text-primary">
+              <div className="text-caption font-semibold text-text-main">
                 {unitRangeLabel(editingItem.item)}
               </div>
               <p className="mt-1 text-caption font-semibold text-text-muted">

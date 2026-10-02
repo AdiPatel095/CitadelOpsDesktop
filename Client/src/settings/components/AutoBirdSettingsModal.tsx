@@ -395,7 +395,7 @@ export const AutoBirdSettingsModal: React.FC<AutoBirdSettingsModalProps> = ({ is
               <span className="font-bold text-text-main"><LocalizedText messageKey="ui.settings.components.autoBirdSettingsModal.not.254bb97b" /></span> be sent.
             </>
       )}
-      titleTrailing={<Button variant="secondary" size="sm" onClick={() => setIsGuideOpen(true)} leftIcon={<BookOpen className="h-4 w-4" />}><span lang={guideLocale}>{guidePack.ui.guideButton}</span></Button>}
+      titleTrailing={<Button variant="secondary" size="md" onClick={() => setIsGuideOpen(true)} leftIcon={<BookOpen className="h-4 w-4" />}><span lang={guideLocale}>{guidePack.ui.guideButton}</span></Button>}
       onSave={handleSave}
       saveLabel="Save changes"
       isSaving={isSaving}
@@ -419,7 +419,7 @@ export const AutoBirdSettingsModal: React.FC<AutoBirdSettingsModalProps> = ({ is
         <SettingsSection disclosure={disclosure} section="targets">
           <Card variant="solid" className="">
             <label id="auto-bird-min-rpt" className="flex max-w-sm flex-col gap-1">
-              <span className="text-caption font-semibold text-primary"><LocalizedText messageKey="ui.settings.components.autoBirdSettingsModal.minimum.rpt.4e22018c" /></span>
+              <span className="text-caption font-semibold text-text-main"><LocalizedText messageKey="ui.settings.components.autoBirdSettingsModal.minimum.rpt.4e22018c" /></span>
               <Input
                 type="number"
                 min={0}
@@ -442,7 +442,7 @@ export const AutoBirdSettingsModal: React.FC<AutoBirdSettingsModalProps> = ({ is
         >
           <div className="flex flex-col gap-4 lg:flex-row lg:flex-wrap lg:items-end">
             <div className="flex flex-1 flex-wrap items-end gap-3">
-              <span className="mb-1.5 w-full text-caption font-semibold text-primary lg:mb-0 lg:mr-2 lg:w-auto">
+              <span className="mb-1.5 w-full text-caption font-semibold text-text-main lg:mb-0 lg:mr-2 lg:w-auto">
                 <LocalizedText messageKey="ui.settings.components.autoBirdSettingsModal.random.delay.range.hours.91f88ef4" /></span>
               <div className="flex w-24 flex-col gap-1">
                 <span className="text-caption font-semibold text-text-muted"><LocalizedText messageKey="ui.settings.components.autoBirdSettingsModal.min.dea79332" /></span>
@@ -468,7 +468,7 @@ export const AutoBirdSettingsModal: React.FC<AutoBirdSettingsModalProps> = ({ is
               </div>
             </div>
             <div className="flex min-w-0 flex-1 basis-full flex-col gap-1 md:basis-52 lg:min-w-[200px]">
-              <span className="text-caption font-semibold text-primary"><LocalizedText messageKey="ui.settings.components.autoBirdSettingsModal.minimum.to.send.634ab4a5" /></span>
+              <span className="text-caption font-semibold text-text-main"><LocalizedText messageKey="ui.settings.components.autoBirdSettingsModal.minimum.to.send.634ab4a5" /></span>
               <div className="flex items-center gap-2">
                 <Input
                   type="number"
@@ -531,14 +531,14 @@ export const AutoBirdSettingsModal: React.FC<AutoBirdSettingsModalProps> = ({ is
               return (
                 <Card key={castle.id} variant="solid" className="flex flex-col">
                   <div className="mb-3 flex flex-wrap items-center gap-2 border-b border-border-base pb-2">
-                    <h3 className="text-title-sm font-bold text-primary">{castle.name}</h3>
+                    <h3 className="text-title-sm font-bold text-text-main">{castle.name}</h3>
                   </div>
                   {visibleItems.length === 0 && !fortressProtected ? (
                     <div className="flex flex-1 flex-col items-center justify-center gap-3 py-6">
                       <p className="text-center text-caption font-medium text-text-muted"><LocalizedText messageKey="ui.settings.components.autoBirdSettingsModal.no.ignored.units.ab6d717f" /></p>
                       <Button
                         variant="secondary"
-                        size="sm"
+                        size="md"
                         onClick={() => handleAddItem(cid)}
 
                         leftIcon={<Plus className="w-4 h-4" />}
@@ -560,7 +560,7 @@ export const AutoBirdSettingsModal: React.FC<AutoBirdSettingsModalProps> = ({ is
                         <div className="relative flex w-[84px] shrink-0 flex-col items-center" aria-label={localizeStatic("ui.settings.components.autoBirdSettingsModal.aria-label.all.direwolves.reserved.by.auto.fortress.c1d2bfc5")}>
                           <div className="relative h-[76px] w-[76px]">
                             <UnitImage unitId={AUTO_FORTRESS_DIREWOLF_ID} size={76} showLevel className="rounded-xl opacity-80" />
-                            <span className="absolute left-1 top-1 z-10 flex h-6 w-6 items-center justify-center rounded-full bg-primary text-white shadow-md" title={localizeStatic("ui.settings.components.autoBirdSettingsModal.title.reserved.by.auto.fortress.fad9df89")}>
+                            <span className="absolute left-1 top-1 z-10 flex h-6 w-6 items-center justify-center rounded-full border border-border-base bg-bg-input text-text-main shadow-md" title={localizeStatic("ui.settings.components.autoBirdSettingsModal.title.reserved.by.auto.fortress.fad9df89")}>
                               <LockKeyhole className="h-3.5 w-3.5" />
                             </span>
                             <span className="absolute bottom-0 right-0 z-10 translate-x-1/4 translate-y-1/4 rounded-full bg-white px-2.5 py-0.5 text-center text-caption font-semibold text-slate-900 shadow-md ring-1 ring-black/10">

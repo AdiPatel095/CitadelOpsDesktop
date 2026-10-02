@@ -162,7 +162,7 @@ export const AutoBoosterSettingsModal: React.FC<AutoBoosterSettingsModalProps> =
 
         <Card id="auto-booster-ruby-reserve" variant="solid" className="">
           <div className="flex items-start gap-3">
-            <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary">
+            <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-primary/10 text-text-main">
               <Coins className="h-5 w-5" />
             </div>
             <div>
@@ -240,7 +240,7 @@ export const AutoBoosterSettingsModal: React.FC<AutoBoosterSettingsModalProps> =
           </div>
           <div className="mt-4 space-y-2 text-caption text-text-muted">
             <div className="flex items-start gap-2 rounded-xl border border-border-base bg-bg-app/55 px-3 py-2.5">
-              <Clock3 className="mt-0.5 h-3.5 w-3.5 shrink-0 text-primary" />
+              <Clock3 className="mt-0.5 h-3.5 w-3.5 shrink-0 text-text-muted" />
               <LocalizedText messageKey="ui.settings.components.autoBoosterSettingsModal.the.daily.effect.window.and.its.exact.b5390f69" />
             </div>
             <div className="flex items-start gap-2 rounded-xl border border-border-base bg-bg-app/55 px-3 py-2.5">
@@ -257,7 +257,7 @@ export const AutoBoosterSettingsModal: React.FC<AutoBoosterSettingsModalProps> =
       </SettingsSection>
 
       <div className="mt-4 flex items-start gap-3 rounded-global border border-primary/25 bg-primary/5 p-4 text-caption text-text-muted">
-        <Zap className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+        <Zap className="mt-0.5 h-4 w-4 shrink-0 text-text-muted" />
         <p><LocalizedRichText messageKey="ui.rich.settings.components.autoBoosterSettingsModal.independent.by.design.auto.booster.only.buys.5ea3f461" params={{}} tags={{strong0: children => <strong className="text-text-main">{children}</strong>}} /></p>
       </div>
     </SettingsModal>

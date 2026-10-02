@@ -1,3 +1,4 @@
+import { annotateSystemSources } from './systemSources';
 import { readFileSync } from 'node:fs';
 import { test, expect, type Page } from '@playwright/test';
 import type { Violation } from './checks';
@@ -63,7 +64,8 @@ async function keyboardWalk(page: Page): Promise<Violation[]> {
     }).map((element, index) => {
       const id = String(index);
       element.setAttribute('data-gate-keyboard', id);
-      return { id, label: `${element.tagName.toLowerCase()} ${element.getAttribute('aria-label') ?? element.textContent?.trim().replace(/\s+/g, ' ').slice(0, 100) ?? ''}` };
+      const scope = element.closest('#workspace-navigation') ? ' (workspace navigation)' : '';
+      return { id, label: `${element.tagName.toLowerCase()} ${element.getAttribute('aria-label') ?? element.textContent?.trim().replace(/\s+/g, ' ').slice(0, 100) ?? ''}${scope}` };
     });
   });
   const violations: Violation[] = [];
@@ -90,7 +92,7 @@ async function keyboardWalk(page: Page): Promise<Violation[]> {
       return old?.visible && (style.shadow !== old.shadow || style.background !== old.background || style.border !== old.border);
     });
     if (!active.focusVisible || !indicator) {
-      violations.push({ rule: 'focusVisible', element: before.label, detail: 'Tab focus has no detected visible outline, shadow, background or border indicator' });
+      violations.push({ rule: 'focusVisible', element: before.label, controlId: before.id, detail: 'Tab focus has no detected visible outline, shadow, background or border indicator' });
     }
   }
   // Composite widgets use arrow keys after their one Tab stop.
@@ -178,7 +180,7 @@ for (const entry of gateCases) {
     if (!unavailable.length) {
       await page.waitForLoadState('networkidle');
       await page.evaluate(() => document.fonts.ready);
-      violations.push(...await keyboardWalk(page));
+      violations.push(...await annotateSystemSources(page, await keyboardWalk(page)));
       if (entry.settings || entry.dialog) violations.push(...await currentDialogFocus(page, entry));
     }
     verifyNetwork();

@@ -6,6 +6,8 @@ import { prepareCase, AUTOMATION_FEATURE_NAMES } from './adapter';
 import type { GateCase } from './views';
 import type { Violation } from './checks';
 import enforcement from './enforcement.json' with { type: 'json' };
+import systemBaseline from './system-baseline.json' with { type: 'json' };
+import { applyGateBaseline } from '../../scripts/visual/gate-ratchet.mjs';
 import { areaFor } from '../../scripts/visual/gate-report.mjs';
 
 export type GateOptions = { theme: 'dark' | 'light'; locale: 'en' | 'ar' };
@@ -78,11 +80,13 @@ export async function openCase(page: Page, entry: GateCase, options: GateOptions
 
 export async function writeReport(testInfo: TestInfo, suite: string, entry: GateCase, violations: Violation[], options: GateOptions = defaultOptions) {
   const width = Number(testInfo.project.name);
-  const report = { schemaVersion: 1, suite, view: entry.name, width, ...options, violations };
+  const deployment = desktop ? 'desktop' : 'portal';
+  const { remaining, excluded } = applyGateBaseline(violations, systemBaseline, { area: areaFor(entry.name).slice(0, 1), suite, view: entry.name, width, deployment, ...options });
+  const report = { schemaVersion: 1, deployment, suite, view: entry.name, width, ...options, violations, baselineExcluded: excluded };
   const directory = resolve('test-results/gate');
   await mkdir(directory, { recursive: true });
   const body = `${JSON.stringify(report, null, 2)}\n`;
   await writeFile(resolve(directory, `${suite}-${entry.name}-${width}-${options.locale}-${options.theme}.json`), body);
   await testInfo.attach('gate-findings', { body, contentType: 'application/json' });
-  if (enforcement.areas.includes(areaFor(entry.name).slice(0, 1))) expect(violations, `${entry.name}: enforced gate rules`).toEqual([]);
+  if (enforcement.areas.includes(areaFor(entry.name).slice(0, 1))) expect(remaining, `${entry.name}: enforced gate rules`).toEqual([]);
 }

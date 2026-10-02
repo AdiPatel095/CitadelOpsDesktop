@@ -1,3 +1,5 @@
+import { annotateSystemSources } from './systemSources';
+import { areaFor } from '../../scripts/visual/gate-report.mjs';
 import { designRules } from './designScan';
 import { test } from '@playwright/test';
 import { clippedControls, layoutShiftAfterReady, pageOverflow, smallTargets } from './checks';
@@ -18,7 +20,7 @@ for (const entry of gateCases) {
       if (Number(testInfo.project.name) <= 768) violations.push(...await smallTargets(page));
     }
     verifyNetwork();
-    await writeReport(testInfo, 'layout', entry, violations, { theme: 'dark', locale });
+    await writeReport(testInfo, 'layout', entry, areaFor(entry.name).startsWith('d') ? await annotateSystemSources(page, violations) : violations, { theme: 'dark', locale });
   });
 }
 

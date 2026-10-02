@@ -390,8 +390,8 @@ export const AutoTCISettingsModal: React.FC<AutoTCISettingsModalProps> = ({ isOp
       isOpen={isOpen}
       onClose={handleClose}
       maxWidth="full"
-      title={<span className="text-amber-500"><LocalizedText messageKey="ui.settings.components.autoTCISettingsModal.auto.tci.settings.f9b867dd" /></span>}
-      icon={<Hammer className="h-5 w-5 text-amber-500" />}
+      title={<span className="text-text-main"><LocalizedText messageKey="ui.settings.components.autoTCISettingsModal.auto.tci.settings.f9b867dd" /></span>}
+      icon={<Hammer className="h-5 w-5 text-text-muted" />}
       description={(
             <>
               Per castle, pick construction item variants and set a <span className="font-medium text-text-main"><LocalizedText messageKey="ui.settings.components.autoTCISettingsModal.level.floor.and.ceiling.484f7a16" /></span>{' '}
@@ -460,7 +460,7 @@ export const AutoTCISettingsModal: React.FC<AutoTCISettingsModalProps> = ({ isOp
                 <div className="flex items-center gap-3">
                   <CardTitle className="text-body-lg text-text-main">{castle.name}</CardTitle>
                   {hasItems && (
-                    <Badge variant="primary">
+                    <Badge variant="secondary">
                       {castleItems.length} item{castleItems.length !== 1 ? 's' : ''}
                     </Badge>
                   )}
@@ -502,6 +502,7 @@ export const AutoTCISettingsModal: React.FC<AutoTCISettingsModalProps> = ({ isOp
                                 {meta?.category ? <span>· {meta.category}</span> : null}
                               </div>
                               <div
+                                dir="ltr"
                                 className="mt-1 font-mono text-caption text-text-muted/90"
                                 title={meta ? formatGroupTiersLine(meta) : undefined}
                               >
@@ -553,9 +554,9 @@ export const AutoTCISettingsModal: React.FC<AutoTCISettingsModalProps> = ({ isOp
                   </div>
                 ) : (
                   <div className="flex min-h-[10rem] flex-col items-center justify-center py-8">
-                    <div className="mb-3 text-center text-caption font-semibold text-text-muted/60">
+                    <div className="mb-3 text-center text-caption font-semibold text-text-muted">
                       <LocalizedText messageKey="ui.settings.components.autoTCISettingsModal.no.construction.items.selected.0fef5a0b" /></div>
-                    <Button variant="secondary" size="sm" onClick={() => handleAddItem(castleId)} leftIcon={<Plus className="h-4 w-4" />}>
+                    <Button variant="secondary" size="md" onClick={() => handleAddItem(castleId)} leftIcon={<Plus className="h-4 w-4" />}>
                       <LocalizedText messageKey="ui.settings.components.autoTCISettingsModal.add.construction.item.095fa798" /></Button>
                   </div>
                 )}

@@ -10,6 +10,7 @@ import { ReadinessCheckLine } from './ReadinessPanel';
 export interface CastleRequirementFieldProps {
   id: string;
   label: React.ReactNode;
+  ariaLabel: string;
   value: number;
   onChange: (castleId: number) => void;
   state: GameStateV2 | null;
@@ -30,6 +31,7 @@ export interface CastleRequirementFieldProps {
 export const CastleRequirementField: React.FC<CastleRequirementFieldProps> = ({
   id,
   label,
+  ariaLabel,
   value,
   onChange,
   state,
@@ -60,6 +62,7 @@ export const CastleRequirementField: React.FC<CastleRequirementFieldProps> = ({
         <Castle className="h-3.5 w-3.5" aria-hidden="true" /> {label}
       </span>
       <Select
+        ariaLabel={ariaLabel}
         value={value > 0 ? String(value) : ''}
         onChange={(next) => onChange(Number(next) || 0)}
         options={selectOptions}

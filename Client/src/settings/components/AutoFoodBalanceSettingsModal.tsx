@@ -281,7 +281,7 @@ function NumberField({
   return (
     <div id={id} className="space-y-1.5">
       <label className="text-caption font-semibold text-text-muted">{label}</label>
-      <Input type="number" min={min} max={max} value={value} onChange={(event) => onChange(event.target.value)} rightIcon={suffix ? <span className="text-caption">{suffix}</span> : undefined} />
+      <Input aria-label={label} type="number" min={min} max={max} value={value} onChange={(event) => onChange(event.target.value)} rightIcon={suffix ? <span className="text-caption">{suffix}</span> : undefined} />
       {hint ? <p className="text-caption text-text-muted">{hint}</p> : null}
     </div>
   );

@@ -1,12 +1,13 @@
 import React, { type HTMLAttributes, type ReactNode } from 'react';
 import { CalendarDays } from 'lucide-react';
-import { Button } from './Button';
+import { Button, type ButtonSize } from './Button';
 
 export interface ScheduleSummaryRowProps extends Omit<HTMLAttributes<HTMLDivElement>, 'title'> {
   summary: ReactNode;
   onEdit: () => void;
   title?: ReactNode;
   actionLabel?: string;
+  actionSize?: ButtonSize;
   status?: ReactNode;
 }
 
@@ -15,6 +16,7 @@ export const ScheduleSummaryRow: React.FC<ScheduleSummaryRowProps> = ({
   onEdit,
   title = 'Weekly schedule',
   actionLabel = 'Schedule',
+  actionSize = 'sm',
   status,
   className = '',
   ...props
@@ -26,7 +28,7 @@ export const ScheduleSummaryRow: React.FC<ScheduleSummaryRowProps> = ({
     </div>
     <div className="flex shrink-0 items-center gap-2">
       {status}
-      <Button variant="secondary" size="sm" onClick={onEdit} leftIcon={<CalendarDays className="h-4 w-4" />}>
+      <Button variant="secondary" size={actionSize} onClick={onEdit} leftIcon={<CalendarDays className="h-4 w-4" />}>
         {actionLabel}
       </Button>
     </div>

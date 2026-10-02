@@ -14,7 +14,7 @@ import {
 import type { BadgeProps } from '../components/ui/Badge';
 
 const PATCH_NOTE_BADGE_VARIANT: Record<PatchNoteKind, NonNullable<BadgeProps['variant']>> = {
-  added: 'primary',
+  added: 'secondary',
   fixed: 'success',
   security: 'outline',
   changed: 'warning',
@@ -36,8 +36,8 @@ function ReleaseCard({ release, isLatest }: { release: PatchNotesRelease; isLate
       variant="solid"
       title={(
         <>
-          <span className="font-mono text-primary">v{release.version}</span>
-          {isLatest && <Badge variant="primary"><LocalizedText messageKey="ui.views.patchNotesView.current.e0d1b682" /></Badge>}
+          <bdi className="font-mono text-text-main">v{release.version}</bdi>
+          {isLatest && <Badge variant="secondary"><LocalizedText messageKey="ui.views.patchNotesView.current.e0d1b682" /></Badge>}
         </>
       )}
       description={release.subtitleKey ? <LocalizedText messageKey={release.subtitleKey}/> : release.subtitle}
@@ -84,7 +84,7 @@ function ReleaseCard({ release, isLatest }: { release: PatchNotesRelease; isLate
 const PatchNotesView: React.FC = () => {
   const { t: localizeStatic } = useStaticLocale();
   return (
-    <div className="max-w-3xl mx-auto py-6 pb-16">
+    <div tabIndex={0} className="max-w-3xl mx-auto py-6 pb-16 focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary">
       <PageHeader
         className="mb-8"
         title={localizeStatic("ui.views.patchNotesView.title.patch.notes.e851faa6")}

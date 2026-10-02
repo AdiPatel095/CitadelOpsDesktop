@@ -169,7 +169,7 @@ export const AutoStationSettingsModal: React.FC<AutoStationSettingsModalProps> =
       title={localizeStatic("ui.settings.components.autoStationSettingsModal.title.auto.station.settings.eb56c8a6")}
       icon={<Shield className="h-5 w-5" />}
       description={localizeStatic("ui.settings.components.autoStationSettingsModal.description.choose.the.exact.troops.that.stay.behind.a5d0c68a")}
-      titleTrailing={<Button variant="secondary" size="sm" onClick={() => setIsGuideOpen(true)} leftIcon={<BookOpen className="h-4 w-4" />}><span lang={guideLocale}>{guidePack.ui.guideButton}</span></Button>}
+      titleTrailing={<Button variant="secondary" size="md" onClick={() => setIsGuideOpen(true)} leftIcon={<BookOpen className="h-4 w-4" />}><span lang={guideLocale}>{guidePack.ui.guideButton}</span></Button>}
       onSave={save}
       saveLabel="Save changes"
       isSaving={isSaving}
@@ -191,7 +191,7 @@ export const AutoStationSettingsModal: React.FC<AutoStationSettingsModalProps> =
           <Card variant="solid" className="">
             <div className="grid gap-4 md:grid-cols-2">
               <label id="auto-station-lead-time" className="flex flex-col gap-1.5">
-                <span className="text-caption font-semibold text-primary"><LocalizedText messageKey="ui.settings.components.autoStationSettingsModal.evacuate.at.621aebd7" /></span>
+                <span className="text-caption font-semibold text-text-main"><LocalizedText messageKey="ui.settings.components.autoStationSettingsModal.evacuate.at.621aebd7" /></span>
                 <Input
                   type="number"
                   min={1}
@@ -234,7 +234,7 @@ export const AutoStationSettingsModal: React.FC<AutoStationSettingsModalProps> =
         >
           <div className="grid gap-4 md:grid-cols-2">
             <label className="flex flex-col gap-1.5">
-              <span className="text-caption font-semibold text-primary"><LocalizedText messageKey="ui.settings.components.autoStationSettingsModal.minimum.bird.days.on.target.71cbcd1f" /></span>
+              <span className="text-caption font-semibold text-text-main"><LocalizedText messageKey="ui.settings.components.autoStationSettingsModal.minimum.bird.days.on.target.71cbcd1f" /></span>
               <Input
                 type="number"
                 min={0}
@@ -267,13 +267,13 @@ export const AutoStationSettingsModal: React.FC<AutoStationSettingsModalProps> =
               return (
                 <Card key={castle.id} variant="solid" className="flex flex-col">
                   <div className="mb-3 border-b border-border-base pb-2">
-                    <h3 className="text-title-sm font-bold text-primary">{castle.name || `${castle.type} castle`}</h3>
+                    <h3 className="text-title-sm font-bold text-text-main">{castle.name || `${castle.type} castle`}</h3>
                     <p className="mt-1 text-caption text-text-muted"><LocalizedText messageKey="ui.settings.components.autoStationSettingsModal.these.amounts.remain.in.the.castle.e33daec5" /></p>
                   </div>
                   {reserves.length === 0 ? (
                     <div className="flex flex-1 flex-col items-center justify-center gap-3 py-6">
                       <p className="text-center text-caption font-mediumr text-text-muted"><LocalizedText messageKey="ui.settings.components.autoStationSettingsModal.no.defense.reserve.b4ce10ce" /></p>
-                      <Button variant="secondary" size="sm" onClick={() => selectReserve(castle)} leftIcon={<Plus className="h-4 w-4" />}>
+                      <Button variant="secondary" size="md" onClick={() => selectReserve(castle)} leftIcon={<Plus className="h-4 w-4" />}>
                         <LocalizedText messageKey="ui.settings.components.autoStationSettingsModal.add.troops.5264f439" /></Button>
                     </div>
                   ) : (

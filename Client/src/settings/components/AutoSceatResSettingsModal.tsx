@@ -84,7 +84,7 @@ function rentalTotal(plan: AutoSceatBuildingPlan): number {
 
 function buildingIcon(queueTypeID: number): React.ReactNode {
   if (queueTypeID >= 3) return <ShieldCheck className="h-4 w-4 text-warning" />;
-  return <Factory className="h-4 w-4 text-primary" />;
+  return <Factory className="h-4 w-4 text-text-muted" />;
 }
 
 export const AutoSceatResSettingsModal: React.FC<AutoSceatResSettingsModalProps> = ({
@@ -395,7 +395,7 @@ export const AutoSceatResSettingsModal: React.FC<AutoSceatResSettingsModalProps>
                               <div className="text-caption font-semibold text-text-muted"><LocalizedText messageKey="ui.settings.components.autoSceatResSettingsModal.repeating.recipe.cycle.ca9d6751" /></div>
                               <div className="mt-0.5 text-caption font-medium text-text-muted"><LocalizedText messageKey="ui.settings.components.autoSceatResSettingsModal.one.item.fills.every.slot.add.more.9a74f34c" /></div>
                             </div>
-                            <Button variant="secondary" size="sm" onClick={() => setPickerTarget({ castleID: node.castleID, building })} leftIcon={<Plus className="h-4 w-4" />}><LocalizedText messageKey="ui.settings.components.autoSceatResSettingsModal.recipe.aec69352" /></Button>
+                            <Button variant="secondary" size="md" onClick={() => setPickerTarget({ castleID: node.castleID, building })} leftIcon={<Plus className="h-4 w-4" />}><LocalizedText messageKey="ui.settings.components.autoSceatResSettingsModal.recipe.aec69352" /></Button>
                           </div>
 
                           <div className="mt-3 grid gap-2">
@@ -404,7 +404,7 @@ export const AutoSceatResSettingsModal: React.FC<AutoSceatResSettingsModalProps>
                               return (
                                 <div key={`${step.recipeID}-${index}`} className="flex min-w-0 items-center gap-3 rounded-global border border-border-base bg-bg-card/65 px-3 py-2.5">
                                   <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-border-base bg-bg-input/60">
-                                    {recipe?.output.iconUrl ? <img src={recipe.output.iconUrl} alt="" className="h-8 w-8 object-contain" /> : <span className="text-caption font-semibold text-primary">#{step.recipeID}</span>}
+                                    {recipe?.output.iconUrl ? <img src={recipe.output.iconUrl} alt="" className="h-8 w-8 object-contain" /> : <span className="text-caption font-semibold text-text-main">#{step.recipeID}</span>}
                                   </span>
                                   <div className="min-w-0 flex-1">
                                     <div className="truncate text-caption font-semibold text-text-main">{recipe?.output.name ?? `Recipe #${step.recipeID}`}</div>
@@ -545,7 +545,7 @@ export const AutoSceatResSettingsModal: React.FC<AutoSceatResSettingsModalProps>
             <Card variant="solid">
               <CardHeader>
                 <div>
-                  <CardTitle className="flex items-center gap-2 text-body-lg"><Warehouse className="h-4 w-4 text-primary" /><LocalizedText messageKey="ui.settings.components.autoSceatResSettingsModal.additional.storage.nodes.017a7158" /></CardTitle>
+                  <CardTitle className="flex items-center gap-2 text-body-lg"><Warehouse className="h-4 w-4 text-text-muted" /><LocalizedText messageKey="ui.settings.components.autoSceatResSettingsModal.additional.storage.nodes.017a7158" /></CardTitle>
                   <p className="mt-1 text-caption text-text-muted"><LocalizedText messageKey="ui.settings.components.autoSceatResSettingsModal.the.four.crafting.castles.are.donors.and.35534627" /></p>
                 </div>
               </CardHeader>

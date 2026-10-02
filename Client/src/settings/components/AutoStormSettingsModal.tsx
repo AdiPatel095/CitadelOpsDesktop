@@ -692,7 +692,7 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
       contentNotice={<>{recovery.banner}{draftSession.conflictNotice}</>}
     >
       <div className="space-y-4">
-        <div className="flex justify-end"><Button variant="secondary" size="sm" onClick={() => setIsGuideOpen(true)} leftIcon={<BookOpen className="h-4 w-4" />}><span lang={stormPack === englishGuidePack ? "en" : stormGuideLocale}>{stormPack.ui.guideButton}</span></Button></div>
+        <div className="flex justify-end"><Button variant="secondary" size="md" onClick={() => setIsGuideOpen(true)} leftIcon={<BookOpen className="h-4 w-4" />}><span lang={stormPack === englishGuidePack ? "en" : stormGuideLocale}>{stormPack.ui.guideButton}</span></Button></div>
         <AutomationRunStrip
           featureId="autoStorm"
           onOpenDuration={onOpenAutomationDuration ? () => onOpenAutomationDuration(AUTOMATION_ENABLED_KEYS.autoStorm, 'Auto Storm') : undefined}
@@ -898,10 +898,10 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
                   <div className="border-t border-border-base pt-3">
                     <div className="flex flex-wrap items-center justify-between gap-3">
                       <div>
-                        <div className="flex items-center gap-2 text-caption font-semibold text-text-main"><Shield className="h-3.5 w-3.5 text-primary" /> <LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.island.defense.units.426d8af1" /></div>
+                        <div className="flex items-center gap-2 text-caption font-semibold text-text-main"><Shield className="h-3.5 w-3.5 text-text-muted" /> <LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.island.defense.units.426d8af1" /></div>
                         <p className="mt-1 text-caption text-text-muted"><LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.choose.dedicated.occupation.defenders.if.empty.one.289de337" /></p>
                       </div>
-                      <Button size="sm" variant="secondary" onClick={() => void chooseDefenseUnits()} leftIcon={<Shield className="h-3.5 w-3.5" />}>
+                      <Button size="md" variant="secondary" onClick={() => void chooseDefenseUnits()} leftIcon={<Shield className="h-3.5 w-3.5" />}>
                         <LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.choose.units.b979a369" /></Button>
                     </div>
                     {draft.islands.defenseUnits.length > 0 ? (
@@ -939,7 +939,7 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
             <div>
               <div className="flex items-start justify-between gap-4">
                 <div>
-                  <div className="flex items-center gap-2 text-body font-semibold text-text-main"><Truck className="h-4 w-4 text-primary" /> <LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.import.missing.troops.8667e705" /></div>
+                  <div className="flex items-center gap-2 text-body font-semibold text-text-main"><Truck className="h-4 w-4 text-text-muted" /> <LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.import.missing.troops.8667e705" /></div>
                   <p className="mt-1 text-caption text-text-muted"><LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.import.missing.attack.or.configured.defense.troops.1f4fca2e" /></p>
                 </div>
                 <Switch
@@ -1319,7 +1319,7 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
               {savedBlueprints.map((blueprint) => (
                 <Button
                   key={blueprint.id}
-                  size="sm"
+                  size="md"
                   variant={blueprint.id === blueprintDocument.activeId ? 'primary' : 'ghost'}
                   disabled={capturing != null || saving}
                   onClick={() => void activateBlueprint(blueprint.id)}
@@ -1343,7 +1343,7 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
                   <p className="mt-1 text-caption text-text-muted">Captured {formatDate(target.capturedAt)} from revision {target.revision.toLocaleString()}.</p>
                 </div>
                 <Button
-                  size="sm"
+                  size="md"
                   variant="ghost"
                   onClick={() => void deactivateBlueprint()}
                   leftIcon={<Trash2 className="h-3.5 w-3.5" />}
@@ -1500,7 +1500,7 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
           <div className="mt-4 border-t border-border-base pt-4">
             <div className="flex items-start justify-between gap-4">
               <div>
-                <div className="flex items-center gap-2 text-body font-semibold text-text-main"><Anchor className="h-4 w-4 text-primary" /> <LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.upgrade.harbor.da1bc184" /></div>
+                <div className="flex items-center gap-2 text-body font-semibold text-text-main"><Anchor className="h-4 w-4 text-text-muted" /> <LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.upgrade.harbor.da1bc184" /></div>
                 <p className="mt-1 text-caption text-text-muted"><LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.override.the.captured.harbor.path.and.maintain.1d06a158" /></p>
               </div>
               <Switch
@@ -1536,7 +1536,7 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
             <div>
               <div>
                 <div className="flex items-center gap-2 text-body font-semibold text-text-main">
-                  <Crosshair className="h-4 w-4 text-primary" /> <LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.attack.target.priority.f25858a6" />
+                  <Crosshair className="h-4 w-4 text-text-muted" /> <LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.attack.target.priority.f25858a6" />
                 </div>
                 <p className="mt-1 text-caption text-text-muted">
                   <LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.drag.enabled.targets.into.attack.order.highest.6f2dfc44" /></p>
@@ -1582,7 +1582,7 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
                         }`}
                       >
                         <GripVertical className="h-5 w-5 shrink-0 text-text-muted" aria-hidden="true" />
-                        <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-bg-app text-caption font-semibold tabular-nums text-primary ring-1 ring-border-base">
+                        <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-bg-app text-caption font-semibold tabular-nums text-text-main ring-1 ring-border-base">
                           {index + 1}
                         </span>
                         <span className="min-w-0 flex-1">
@@ -1721,7 +1721,7 @@ function SectionHeading({
 }) {
   return (
     <div>
-      <div className="flex items-center gap-2 text-body font-semibold text-text-main"><Icon className="h-4 w-4 text-primary" /> {title}</div>
+      <div className="flex items-center gap-2 text-body font-semibold text-text-main"><Icon className="h-4 w-4 text-text-muted" /> {title}</div>
       <p className="mt-1 text-caption text-text-muted">{description}</p>
     </div>
   );

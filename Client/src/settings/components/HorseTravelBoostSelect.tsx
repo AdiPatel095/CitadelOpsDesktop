@@ -1,3 +1,4 @@
+import { useLocale } from '../../i18n/LocaleContext';
 import {LocalizedText} from "../../i18n/LocalizedText";
 import React from 'react';
 import { Gauge } from 'lucide-react';
@@ -22,12 +23,15 @@ const HorseTravelBoostSelect: React.FC<HorseTravelBoostSelectProps> = ({
   className,
   negativeOneLabel,
   description,
-}) => (
+}) => {
+  const { t } = useLocale();
+  return (
   <label className={className ?? 'block'}>
     <span className="mb-1.5 flex items-center gap-2 text-caption font-semibold text-text-muted">
       <Gauge className="h-3.5 w-3.5" /> <LocalizedText messageKey="ui.settings.components.horseTravelBoostSelect.horse.travel.boost.983830d4" />
     </span>
     <Select
+      ariaLabel={t('ui.settings.components.horseTravelBoostSelect.horse.travel.boost.983830d4')}
       value={String(value)}
       onChange={(next) => onChange(parseHorseTravelBoostID(next))}
       options={negativeOneLabel
@@ -41,6 +45,7 @@ const HorseTravelBoostSelect: React.FC<HorseTravelBoostSelectProps> = ({
       {description ?? 'The exact HBW ID and speed are resolved from the source castle’s current Stable, Faction Stable, or Harbor level. Ruby tiers are used only when explicitly selected.'}
     </span>
   </label>
-);
+  );
+};
 
 export default HorseTravelBoostSelect;
