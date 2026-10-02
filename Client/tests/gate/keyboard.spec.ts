@@ -180,11 +180,11 @@ for (const entry of gateCases) {
     if (!unavailable.length) {
       await page.waitForLoadState('networkidle');
       await page.evaluate(() => document.fonts.ready);
-      violations.push(...await keyboardWalk(page));
+      violations.push(...await annotateSystemSources(page, await keyboardWalk(page)));
       if (entry.settings || entry.dialog) violations.push(...await currentDialogFocus(page, entry));
     }
     verifyNetwork();
-    await writeReport(testInfo, 'keyboard', entry, await annotateSystemSources(page, violations), { theme: 'dark', locale });
+    await writeReport(testInfo, 'keyboard', entry, violations, { theme: 'dark', locale });
   });
 }
 
