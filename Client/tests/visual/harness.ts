@@ -1,7 +1,8 @@
+import type { VisualCase } from './cases';
 import { readFile } from 'node:fs/promises';
 import { expect, type Page, type Request } from '@playwright/test';
 
-export async function prepare(page: Page, theme: 'dark' | 'light', scenario = 'rich-account') {
+export async function prepare(page: Page, theme: 'dark' | 'light', states?: VisualCase['states'], scenario = 'rich-account') {
   const intercepted = new WeakSet<Request>();
   const escapes: string[] = [];
   const unhandled: string[] = [];
@@ -29,16 +30,19 @@ export async function prepare(page: Page, theme: 'dark' | 'light', scenario = 'r
     if (new URL(socket.url()).hostname === '127.0.0.1') socket.connectToServer();
     else socket.close();
   });
-  await page.addInitScript((theme) => {
+  await page.addInitScript(({ theme, states }) => {
     localStorage.setItem('theme', theme);
+    if (states) localStorage.setItem('citadelops.visualStates', JSON.stringify(states)); else localStorage.removeItem('citadelops.visualStates');
     let seed = 61;
     Math.random = () => {
       seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0;
       return seed / 4294967296;
     };
-  }, theme);
+  }, { theme, states });
   await page.clock.setFixedTime(new Date('2026-09-29T12:00:00Z'));
   await page.goto(`/?scenario=${encodeURIComponent(scenario)}&locale=en&reset=1`);
+  // The preview's reset clears its namespace; restore only this test's state key before opening the view.
+  if (states) await page.evaluate(states => localStorage.setItem('citadelops.visualStates', JSON.stringify(states)), states);
   await page.addStyleTag({ content: `
     #fixture-banner, #fixture-dock { display: none !important; }
     #root { margin-top: 0 !important; height: 100dvh !important; transform: none !important; }

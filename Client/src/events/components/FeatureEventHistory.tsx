@@ -2,11 +2,11 @@ import {useEventDisplayNames} from '../../i18n/useEventDisplayNames';
 import {messageLanguageAttributes} from '../../i18n/messageLanguage';
 import { useLocale as useStaticLocale } from "../../i18n/LocaleContext";
 import { LocalizedText } from "../../i18n/LocalizedText";
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { History } from 'lucide-react';
 import { CitadelAPI } from '../../api/CitadelClient';
 import type { WorldIntelligenceEventScoreObservationV1 } from '../../api/Contracts';
-import { Button, Card, CardContent, EmptyState, Select } from '../../components/ui';
+import { ViewState, viewStatus, Button, Card, CardContent, Select } from '../../components/ui';
 import { formatEventEndLocal } from '../../worldIntelligence/components/WorldEventFinals';
 import { featureEventFinals } from './FeatureEventScores';
 import { canonicalEventWorldID, featureHistoryMatchesScope } from './FeatureEventWorld';
@@ -21,6 +21,8 @@ export function useFeatureEventHistory(worldId: string, playerId: number) {
   const [result, setResult] = useState<{
     scope: string; entries: WorldIntelligenceEventScoreObservationV1[]; loading: boolean; error: string;
   }>({ scope: '', entries: [], loading: false, error: '' });
+  const refreshRef = useRef<() => void>(() => {});
+  const retry = useCallback(() => refreshRef.current(), []);
   useEffect(() => {
     if (!worldId || playerId <= 0) return;
     let cancelled = false;
@@ -29,6 +31,7 @@ export function useFeatureEventHistory(worldId: string, playerId: number) {
     const refresh = async () => {
       if (inFlight) return;
       inFlight = true;
+      if (!cancelled) setResult(previous => ({ ...previous, loading: true }));
       try {
         const history = await CitadelAPI.getWorldIntelligencePlayerEventScores({ worldId, playerId, limit: 5_000 });
         if (!featureHistoryMatchesScope(history, worldId, playerId)) throw new Error('Event history identity mismatch');
@@ -42,21 +45,23 @@ export function useFeatureEventHistory(worldId: string, playerId: number) {
         inFlight = false;
       }
     };
+    refreshRef.current = () => { void refresh(); };
     void refresh();
     const timer = window.setInterval(() => void refresh(), 60_000);
     return () => { cancelled = true; window.clearInterval(timer); };
   }, [playerId, scope, worldId]);
   // Never show the previous account's rows while the new effect is starting.
-  return result.scope === scope ? {...result,error:result.error ? t('events.historyUnavailable') : ''} : { entries: emptyHistory, loading: Boolean(worldId && playerId > 0), error: '' };
+  return result.scope === scope ? {...result,retry,error:result.error ? t('events.historyUnavailable') : ''} : { retry, entries: emptyHistory, loading: Boolean(worldId && playerId > 0), error: '' };
 }
 
-export function FeatureEventHistory({ entries, worldId, playerId, now, loading, error, eventIds }: {
+export function FeatureEventHistory({ entries, worldId, playerId, now, loading, error, retry, eventIds }: {
   entries: WorldIntelligenceEventScoreObservationV1[];
   worldId: string;
   playerId: number;
   now: number;
   loading: boolean;
   error: string;
+  retry?: () => void;
   eventIds?: readonly number[];
 }) {
   const { t: localizeStatic,locale,number:formatNumber } = useStaticLocale();
@@ -78,10 +83,10 @@ export function FeatureEventHistory({ entries, worldId, playerId, now, loading, 
       <p className="mt-1 text-caption text-text-muted"><LocalizedText messageKey="ui.events.components.featureEventHistory.final.known.account.score.for.each.collected.57490c30" /></p>
     </div>
     {eventOptions.length > 1 && <div className="mb-4 w-full sm:w-72"><Select ariaLabel={localizeStatic("ui.events.components.featureEventHistory.ariaLabel.filter.previous.scores.by.event.c0cc7d68")} value={selectedEvent} onChange={(value) => { setEventFilter(value); setPage(0); }} options={[{ value: 'all', label: localizeStatic('events.allPrevious') }, ...eventOptions]} menuGrowToViewport /></div>}
-    {error && <p role="status" className="mb-4 text-body text-warning">{error}</p>}
-    {loading ? <p role="status" className="text-body text-text-muted"><LocalizedText messageKey="ui.events.components.featureEventHistory.loading.previous.scores.9c87ef9b" /></p> : finals.length === 0 ? (
-      <EmptyState size="sm" surface="plain" title={localizeStatic("ui.events.components.featureEventHistory.title.no.previous.scores.recorded.96363ebe")} description={localizeStatic("ui.events.components.featureEventHistory.description.completed.events.appear.here.when.a.known.2ec6ea2e")} />
-    ) : <>
+    <ViewState status={viewStatus({ hasData: finals.length > 0, loading, error: Boolean(error) })} size="sm"
+      error={{ title: error, onRetry: retry, retryLabel: localizeStatic('ui.state.retry') }}
+      loading={{ label: localizeStatic('ui.events.components.featureEventHistory.loading.previous.scores.9c87ef9b'), variant: 'table' }}
+      empty={{ title: localizeStatic('ui.events.components.featureEventHistory.title.no.previous.scores.recorded.96363ebe'), description: localizeStatic('ui.events.components.featureEventHistory.description.completed.events.appear.here.when.a.known.2ec6ea2e'), surface: 'plain' }}>
       <div className="overflow-x-auto">
         <table className="w-full text-body">
           <thead><tr className="border-b border-border-base text-left text-caption text-text-muted">
@@ -103,6 +108,6 @@ export function FeatureEventHistory({ entries, worldId, playerId, now, loading, 
           <Button variant="secondary" size="sm" disabled={safePage + 1 >= pages} onClick={() => setPage(safePage + 1)}><LocalizedText messageKey="ui.events.components.featureEventHistory.next.1ff57a29" /></Button>
         </div>
       </div>
-    </>}
+    </ViewState>
   </CardContent></Card>;
 }

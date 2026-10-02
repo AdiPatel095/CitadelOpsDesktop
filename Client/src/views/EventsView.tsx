@@ -7,7 +7,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import StaleSessionBanner from '../components/StaleSessionBanner';
 import EventScoreCard from '../dashboard/components/EventScoreCard';
 import { useAuth } from '../context/AuthContext';
-import { PillSelector } from '../components/ui';
+import { Tabs, TabPanel } from '../components/ui';
 import { useCitadelAPI } from '../api/ApiContext';
 import EventActivityCard from '../events/components/EventActivityCard';
 import EventRankingModal from '../events/components/EventRankingModal';
@@ -94,14 +94,15 @@ const EventsView: React.FC = () => {
 
   return (
     <div className="flex flex-col gap-6">
-      <PillSelector
-        ariaLabel={localizeStatic("ui.views.eventsView.ariaLabel.feature.stats.view.aa56511d")}
+      <Tabs
+        ariaLabel={localizeStatic('featureStats.tabs.label')}
+        previousLabel={localizeStatic('ui.tabs.previous')} nextLabel={localizeStatic('ui.tabs.next')} idBase="feature-stats"
         value={selectedAnalyticsView}
         onChange={(value) => setAnalyticsView(value as EventsAnalyticsView)}
-        options={analyticsOptions}
-        size="header"
+        items={analyticsOptions}
         className="w-full"
       />
+      <TabPanel idBase="feature-stats" value={selectedAnalyticsView}>
       <StaleSessionBanner />
       {liveEvents.map((liveEvent) => <React.Fragment key={liveEvent.eventId}>
         <EventScoreCard live={gameLoggedIn} event={liveEvent} onOpenRanking={liveEvent.eventId === event?.eventId ? openRanking : undefined} rankingLoading={rankingLoading} />
@@ -130,6 +131,7 @@ const EventsView: React.FC = () => {
           embedded
         />
       )}
+      </TabPanel>
       <EventRankingModal
         isOpen={rankingOpen && Boolean(event)}
         eventName={eventNames(event?.eventId,event?.name).text}

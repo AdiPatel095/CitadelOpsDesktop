@@ -357,8 +357,24 @@
       "desktop": "Client/src/components/ui/Switch.tsx"
     },
     {
+      "portal": "src/commandCenter/components/ui/Tabs.css",
+      "desktop": "Client/src/components/ui/Tabs.css"
+    },
+    {
+      "portal": "src/commandCenter/components/ui/Tabs.tsx",
+      "desktop": "Client/src/components/ui/Tabs.tsx"
+    },
+    {
       "portal": "src/commandCenter/components/ui/ToggleGroup.tsx",
       "desktop": "Client/src/components/ui/ToggleGroup.tsx"
+    },
+    {
+      "portal": "src/commandCenter/components/ui/ViewState.css",
+      "desktop": "Client/src/components/ui/ViewState.css"
+    },
+    {
+      "portal": "src/commandCenter/components/ui/ViewState.tsx",
+      "desktop": "Client/src/components/ui/ViewState.tsx"
     },
     {
       "portal": "src/commandCenter/components/ui/banner.css",
@@ -857,6 +873,10 @@
       "desktop": "Client/tests/onboarding-browser/visualStates.ts"
     },
     {
+      "portal": "src/commandCenter/mock/visualStates.ts",
+      "desktop": "Client/tests/onboarding-browser/visualStates.ts"
+    },
+    {
       "portal": "src/commandCenter/playerTracker/components/PlayerTrackerWallet.ts",
       "desktop": "Client/src/playerTracker/components/PlayerTrackerWallet.ts"
     },
@@ -1325,6 +1345,10 @@
       "desktop": "Client/src/worldIntelligence/useServerLabel.ts"
     },
     {
+      "portal": "src/context/visualStates.ts",
+      "desktop": "Client/tests/onboarding-browser/visualStates.ts"
+    },
+    {
       "portal": "tests/card-anatomy.test.mjs",
       "desktop": "Client/tests/card-anatomy.test.mjs"
     },
@@ -1375,6 +1399,10 @@
     {
       "portal": "tests/timed-run.test.mjs",
       "desktop": "Client/tests/timed-run.test.mjs"
+    },
+    {
+      "portal": "tests/view-state-components.test.mjs",
+      "desktop": "Client/tests/view-state-components.test.mjs"
     },
     {
       "portal": "tests/view-states-logic.test.mjs",

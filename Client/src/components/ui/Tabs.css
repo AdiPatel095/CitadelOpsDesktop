@@ -1,0 +1,30 @@
+.ui-tabs { position: relative; min-width: 0; max-width: 100%; }
+.ui-tabs__scroller { display: flex; position: relative; overflow: auto hidden; scrollbar-width: none; border-bottom: 1px solid var(--border-subtle); }
+.ui-tabs__scroller::-webkit-scrollbar { display: none; }
+.ui-tabs__scroller[data-fade-left="true"] { mask-image: linear-gradient(to right, transparent, black 24px); }
+.ui-tabs__scroller[data-fade-right="true"] { mask-image: linear-gradient(to left, transparent, black 24px); }
+.ui-tabs__scroller[data-fade-left="true"][data-fade-right="true"] { mask-image: linear-gradient(to right, transparent, black 24px, black calc(100% - 24px), transparent); }
+.cit-button.ui-tabs__tab { --button-height: var(--space-40); border: 0; display: grid; position: relative; flex: none; height: 40px; padding-inline: var(--space-12); align-items: center; border-radius: var(--radius-md) var(--radius-md) 0 0; color: var(--text-secondary); font-size: var(--font-size-14); line-height: var(--line-height-14); font-weight: var(--font-weight-500); white-space: nowrap; }
+.ui-tabs__tab > span:first-child, .ui-tabs__tab::after { grid-area: 1 / 1; }
+.ui-tabs__tab::after { content: attr(data-text); font-weight: var(--font-weight-600); visibility: hidden; }
+.ui-tabs__tab[aria-selected="true"] { color: var(--text-primary); font-weight: var(--font-weight-600); }
+.ui-tabs__tab:hover { color: var(--text-primary); background: var(--state-hover); }
+.ui-tabs__tab:disabled { color: var(--text-disabled); cursor: not-allowed; }
+.ui-tabs__indicator { position: absolute; inset-inline: 0; bottom: 0; height: 3px; border-radius: var(--radius-full); background: var(--accent); transform-origin: left; }
+.ui-tabs .ui-tabs__arrow { position: absolute; z-index: 1; top: 0; background: var(--surface-card); }
+.ui-tabs__arrow--left { left: 0; }
+.ui-tabs__arrow--right { right: 0; }
+/* Both gutters stay reserved while overflowing, so arrow changes never resize
+   the scroller and trigger selected-tab recentering during manual scrolling. */
+@media (min-width: 768px) { .ui-tabs[data-overflow="true"] { padding-inline: var(--space-40); } }
+.ui-tab-panel { display: flex; min-width: 0; flex-direction: column; gap: var(--space-24); }
+.ui-segments { display: inline-flex; max-width: 100%; padding: 2px; gap: 2px; border-radius: var(--radius-full); background: var(--segment-track); white-space: nowrap; }
+.ui-segments--full { display: flex; width: 100%; }
+.cit-button.ui-segments__option { --button-height: 28px; border: 0; display: inline-flex; flex: 1 1 auto; min-width: 0; height: 28px; padding-inline: var(--space-12); gap: var(--space-8); align-items: center; justify-content: center; border-radius: var(--radius-full); font-size: var(--font-size-14); line-height: var(--line-height-14); font-weight: var(--font-weight-500); color: var(--text-secondary); }
+.ui-segments--header .cit-button.ui-segments__option { --button-height: 28px; border: 0; height: 36px; }
+.ui-segments__option[aria-checked="true"] { --button-fill: var(--segment-thumb); background: var(--segment-thumb); box-shadow: var(--elevation-1); color: var(--text-primary); font-weight: var(--font-weight-600); }
+.ui-segments__option:hover { color: var(--text-primary); }
+.ui-segments__option:active { background: var(--surface-control-strong); }
+.ui-segments__option:disabled { color: var(--text-disabled); cursor: not-allowed; }
+@media (pointer: coarse) { .cit-button.ui-tabs__tab { --button-height: calc(var(--space-40) + var(--space-4)); height: 44px; } }
+.ui-tabs__label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }

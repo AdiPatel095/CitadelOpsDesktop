@@ -346,7 +346,7 @@ const AttackPresetsView: React.FC = () => {
           ))}
         </div>
       ) : (
-        <EmptyState
+        <EmptyState surface="plain"
           size="lg"
           icon={<Swords className="h-6 w-6" />}
           title={query.trim() ? 'No matching presets' : 'Create your first attack preset'}
