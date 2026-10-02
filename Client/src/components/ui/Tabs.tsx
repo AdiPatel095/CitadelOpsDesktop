@@ -45,7 +45,7 @@ export function Tabs({ items, value, onChange, ariaLabel, previousLabel, nextLab
     const element = scroller.current;
     if (!element) return;
     updateEdges();
-    const observer = new ResizeObserver(() => {
+    const syncGeometry = () => {
       const selected = element.querySelector<HTMLElement>('[aria-selected="true"]');
       if (selected) {
         const viewport = element.getBoundingClientRect(); const target = selected.getBoundingClientRect();
@@ -53,11 +53,14 @@ export function Tabs({ items, value, onChange, ariaLabel, previousLabel, nextLab
         if (delta) element.scrollBy({ left: delta, behavior: 'instant' });
       }
       updateEdges();
-    });
+    };
+    const observer = new ResizeObserver(syncGeometry);
+    const directionObserver = new MutationObserver(syncGeometry);
+    directionObserver.observe(document.documentElement, { attributes: true, subtree: true, attributeFilter: ['dir'] });
     observer.observe(element);
     buttons.current.forEach(button => observer.observe(button));
     element.addEventListener('scroll', updateEdges, { passive: true });
-    return () => { observer.disconnect(); element.removeEventListener('scroll', updateEdges); };
+    return () => { observer.disconnect(); directionObserver.disconnect(); element.removeEventListener('scroll', updateEdges); };
   }, [mode, signature, updateEdges]);
   useLayoutEffect(() => {
     const element = scroller.current;

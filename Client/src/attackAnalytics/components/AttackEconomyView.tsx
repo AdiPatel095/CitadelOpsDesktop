@@ -10,7 +10,7 @@ import {
   Trophy,
 } from 'lucide-react';
 import StaleSessionBanner from '../../components/StaleSessionBanner';
-import { ViewState, viewStatus, Badge, Button, Card, CardContent, CardHeader, CardTitle, PageHeader, PillSelector } from '../../components/ui';
+import { EmptyState, ViewState, viewStatus, Badge, Button, Card, CardContent, CardHeader, CardTitle, PageHeader, PillSelector } from '../../components/ui';
 import { Notifications } from '../../components/Notifications';
 import { useMetadata, type MetadataItem } from '../../context/MetadataContext';
 import { runtimeFetch } from '../../api/RuntimeURL';
@@ -355,13 +355,10 @@ function ResourceRow({ resourceKey, amount, definition }: { resourceKey: string;
 }
 
 function EmptyAnalyticsState({ compact = false, metricLabel = 'loot' }: { compact?: boolean; metricLabel?: string }) {
-  return (
-    <div className={`flex flex-col items-center justify-center text-center text-text-muted ${compact ? 'min-h-32 py-4' : 'min-h-40 py-6'}`}>
-      <Trophy className="mb-3 h-8 w-8 opacity-50" />
-      <div className="text-sm font-semibold text-text-main">No attributed {metricLabel.toLocaleLowerCase()} yet</div>
-      <p className="mt-1 max-w-sm text-xs"><LocalizedText messageKey="ui.attackAnalytics.components.attackEconomyView.new.confirmed.reports.for.this.automation.will.34f774ba" /></p>
-    </div>
-  );
+  const { t: localizeStatic } = useStaticLocale();
+  return <EmptyState size={compact ? 'sm' : 'md'} surface="plain" icon={<Trophy />}
+    title={localizeStatic('analytics.noAttributed', { metric: metricLabel.toLocaleLowerCase() })}
+    description={localizeStatic('analytics.noAttributedHelp')} />;
 }
 
 function EconomyChart({

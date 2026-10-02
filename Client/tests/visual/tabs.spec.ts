@@ -18,7 +18,11 @@ for (const theme of ['dark', 'light'] as const) for (const locale of ['en', 'de'
       await expect(list).toBeVisible();
       const checkEdges = async () => {
         for (const side of ['left', 'right']) {
-          const overflowing = await list.getAttribute(`data-fade-${side}`) === 'true';
+          const overflowing = await list.evaluate((element, side) => {
+            const rect = element.getBoundingClientRect();
+            return [...element.querySelectorAll('[role="tab"]')].some(tab => side === 'left' ? tab.getBoundingClientRect().left < rect.left - 1 : tab.getBoundingClientRect().right > rect.right + 1);
+          }, side);
+          await expect(list).toHaveAttribute(`data-fade-${side}`, String(overflowing));
           await expect(page.locator(`.ui-tabs__arrow--${side}`)).toHaveCount(overflowing ? 1 : 0);
         }
         expect(await list.evaluate(element => getComputedStyle(element).maskImage)).not.toBe('none');
