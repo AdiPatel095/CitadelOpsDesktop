@@ -69,6 +69,8 @@ type Server struct {
 	config                         Config
 	externalConfigurationAuthority atomic.Bool
 	playerHistoryRetentionMu       sync.Mutex
+	eventsGreetings                atomic.Uint64
+	eventsResumes                  atomic.Uint64
 	upgrader                       websocket.Upgrader
 }
 
@@ -602,6 +604,9 @@ func (server *Server) handleEvents(writer http.ResponseWriter, request *http.Req
 	defer cancelState()
 	operationEvents, cancelOperations := server.config.Intents.Subscribe(64)
 	defer cancelOperations()
+	// Subscribe, capture the label, then build history: never label an older
+	// operation snapshot with a newer stream sequence (CIT-37).
+	operationSequence := server.config.Intents.EventSequence()
 	var configurationEvents <-chan Configuration.Event
 	cancelConfiguration := func() {}
 	if server.config.Configuration != nil {
@@ -613,24 +618,51 @@ func (server *Server) handleEvents(writer http.ResponseWriter, request *http.Req
 	responses := make(chan Envelope, 8)
 	go readEnvelopes(ctx, socket, incoming, readErrors)
 
-	initialState := server.config.State.ReadOnlyView()
+	cursor := parseResumeCursor(request.URL.Query())
+	initialState, resumeEvent, resumed := server.config.State.Resume(cursor.instance, cursor.since)
+	resumed = resumed && cursor.valid
 	initialRevision := initialState.Revision
-	if err := connection.WriteJSON(streamEnvelope(
-		"", "state.snapshot", initialRevision, initialRevision, false, State.NewClientStateSnapshot(&initialState),
-	)); err != nil {
-		return
+	server.eventsGreetings.Add(1)
+	if resumed {
+		greeting := streamEnvelope("", "state.resumed", initialRevision, initialRevision, false, map[string]any{
+			"instance": server.config.State.Instance(), "from": cursor.since, "revision": initialRevision, "ops": operationSequence,
+		})
+		greeting.Instance = server.config.State.Instance()
+		if err := connection.WriteJSON(greeting); err != nil {
+			return
+		}
+		server.eventsResumes.Add(1)
+		if resumeEvent != nil {
+			payload, err := State.ClientEventPayload(*resumeEvent)
+			if err != nil {
+				return
+			}
+			if err := connection.WriteJSON(streamEnvelopeRaw("", "state.changed", resumeEvent.Revision, resumeEvent.Sequence, true, cursor.since, payload)); err != nil {
+				return
+			}
+		}
+	} else {
+		greeting := streamEnvelope("", "state.snapshot", initialRevision, initialRevision, false, State.NewClientStateSnapshot(&initialState))
+		greeting.Instance = server.config.State.Instance()
+		if err := connection.WriteJSON(greeting); err != nil {
+			return
+		}
 	}
 	var lastSignal ConfigurationRevisionSignal
 	if server.config.Configuration != nil {
 		if server.externalConfiguration() {
 			lastSignal = server.configurationSignal()
-			if err := connection.WriteJSON(streamEnvelope("", "config.changed", server.config.State.Revision(), lastSignal.Revision, false, lastSignal)); err != nil {
-				return
+			if !resumed || cursor.config != lastSignal.Revision {
+				if err := connection.WriteJSON(streamEnvelope("", "config.changed", server.config.State.Revision(), lastSignal.Revision, false, lastSignal)); err != nil {
+					return
+				}
 			}
 		} else {
 			snapshot := server.config.Configuration.Snapshot()
-			if err := connection.WriteJSON(streamEnvelope("", "config.changed", server.config.State.Revision(), snapshot.Revision, false, snapshot)); err != nil {
-				return
+			if !resumed || cursor.config != snapshot.Revision {
+				if err := connection.WriteJSON(streamEnvelope("", "config.changed", server.config.State.Revision(), snapshot.Revision, false, snapshot)); err != nil {
+					return
+				}
 			}
 		}
 	}
@@ -645,12 +677,14 @@ func (server *Server) handleEvents(writer http.ResponseWriter, request *http.Req
 		}
 	}
 	defer cancelUpdates()
-	if receipts, err := server.config.Intents.RecentOperations(ctx, 100); err == nil {
-		if err := connection.WriteJSON(newEnvelope("", "operations.snapshot", server.config.State.Revision(), receipts)); err != nil {
-			return
+	if !resumed || cursor.ops != operationSequence {
+		if receipts, err := server.config.Intents.RecentOperations(ctx, 100); err == nil {
+			if err := connection.WriteJSON(streamEnvelope("", "operations.snapshot", server.config.State.Revision(), operationSequence, false, receipts)); err != nil {
+				return
+			}
 		}
 	}
-	if store, ready := server.config.GameData.Current(); ready {
+	if store, ready := server.config.GameData.Current(); ready && (!resumed || cursor.catalog != store.Metadata().DigestSHA256) {
 		if err := connection.WriteJSON(newEnvelope("", "catalog.changed", server.config.State.Revision(), map[string]any{
 			"metadata": store.Metadata(), "catalogs": store.Summaries(),
 		})); err != nil {
@@ -719,9 +753,9 @@ func (server *Server) handleEvents(writer http.ResponseWriter, request *http.Req
 			case "query.state":
 				state := server.config.State.ReadOnlyView()
 				revision := state.Revision
-				if err := connection.WriteJSON(newEnvelope(
-					message.ID, "state.snapshot", revision, State.NewClientStateSnapshot(&state),
-				)); err != nil {
+				greeting := newEnvelope(message.ID, "state.snapshot", revision, State.NewClientStateSnapshot(&state))
+				greeting.Instance = server.config.State.Instance()
+				if err := connection.WriteJSON(greeting); err != nil {
 					return
 				}
 			case "query.catalogs":
@@ -857,4 +891,28 @@ func parsePositiveInt(raw string, fallback int) int {
 		return fallback
 	}
 	return value
+}
+
+// Malformed or incomplete cursors retain the full legacy greeting. All values
+// are non-secret; authentication still travels only in the socket subprotocol.
+type resumeCursor struct {
+	instance, catalog  string
+	since, ops, config uint64
+	valid              bool
+}
+
+func parseResumeCursor(query url.Values) resumeCursor {
+	cursor := resumeCursor{instance: query.Get("instance"), catalog: query.Get("catalog")}
+	if query.Get("resume") != "1" || cursor.instance == "" || !query.Has("catalog") {
+		return cursor
+	}
+	for key, destination := range map[string]*uint64{"since": &cursor.since, "ops": &cursor.ops, "config": &cursor.config} {
+		value, err := strconv.ParseUint(query.Get(key), 10, 64)
+		if err != nil {
+			return cursor
+		}
+		*destination = value
+	}
+	cursor.valid = true
+	return cursor
 }

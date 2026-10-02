@@ -1265,6 +1265,15 @@ func (engine *Engine) reserveDurableOperation(
 	return reserved, created, nil
 }
 
+// EventSequence returns the current operation stream head. Read it after
+// subscribing and before constructing a snapshot, so that snapshot cannot be
+// older than the sequence used to label it.
+func (engine *Engine) EventSequence() uint64 {
+	engine.mu.RLock()
+	defer engine.mu.RUnlock()
+	return engine.eventSequence
+}
+
 func (engine *Engine) Subscribe(buffer int) (<-chan Receipt, func()) {
 	if buffer < 1 {
 		buffer = 1
