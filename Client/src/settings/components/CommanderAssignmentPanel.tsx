@@ -135,13 +135,13 @@ export const CommanderAssignmentPanel: React.FC<CommanderAssignmentPanelProps> =
     <section id={id} className="rounded-xl border border-border-base bg-bg-elevated/40 p-4" aria-labelledby={headingId}>
       <button data-button-pattern="disclosure"
         type="button"
-        className="flex w-full items-center justify-between gap-3 text-left"
+        className="pointer-coarse:min-h-11 flex w-full items-center justify-between gap-3 text-left"
         aria-expanded={expanded}
         aria-controls={`${id}-body`}
         onClick={() => onExpandedChange(!expanded)}
       >
         <h3 id={headingId} tabIndex={-1} className="flex items-center gap-2 text-title-sm font-bold text-text-main outline-none">
-          <Users className="h-4 w-4 text-primary" aria-hidden="true" /> <LocalizedText messageKey="ui.settings.components.commanderAssignmentPanel.commanders.for.this.automation.3d1d017d" />
+          <Users className="h-4 w-4 text-text-muted" aria-hidden="true" /> <LocalizedText messageKey="ui.settings.components.commanderAssignmentPanel.commanders.for.this.automation.3d1d017d" />
         </h3>
         {expanded ? <ChevronDown className="h-4 w-4 text-text-muted" aria-hidden="true" /> : <ChevronRight className="h-4 w-4 text-text-muted" aria-hidden="true" />}
       </button>
@@ -160,10 +160,10 @@ export const CommanderAssignmentPanel: React.FC<CommanderAssignmentPanelProps> =
                 : <LocalizedText messageKey="ui.settings.components.commanderAssignmentPanel.only.the.commanders.switched.on.below.may.9606a88a" />}
             </span>
             <div className="flex gap-2">
-              <Button variant="secondary" size="sm" disabled={disabled || saving} onClick={() => setPending(setFeatureCommandersAll(effective, featureId, true))}>
+              <Button variant="secondary" size="md" disabled={disabled || saving} onClick={() => setPending(setFeatureCommandersAll(effective, featureId, true))}>
                 <LocalizedText messageKey="ui.settings.components.commanderAssignmentPanel.allow.all.56ac845a" />
               </Button>
-              <Button variant="secondary" size="sm" disabled={disabled || saving} onClick={() => setPending(setFeatureCommandersAll(effective, featureId, false))}>
+              <Button variant="secondary" size="md" disabled={disabled || saving} onClick={() => setPending(setFeatureCommandersAll(effective, featureId, false))}>
                 <LocalizedText messageKey="ui.settings.components.commanderAssignmentPanel.allow.none.6e08056b" />
               </Button>
             </div>
@@ -216,10 +216,10 @@ export const CommanderAssignmentPanel: React.FC<CommanderAssignmentPanelProps> =
           </p>
           {saveError && !confirming ? <p role="alert" className="text-caption font-semibold text-error">{saveError}</p> : null}
           <div className="flex flex-wrap justify-end gap-2">
-            <Button variant="ghost" size="sm" disabled={!pending || saving} onClick={() => { setPending(null); setSaveError(''); }}>
+            <Button variant="ghost" size="md" disabled={!pending || saving} onClick={() => { setPending(null); setSaveError(''); }}>
               <LocalizedText messageKey="ui.settings.components.commanderAssignmentPanel.discard.assignment.changes.c07d4258" />
             </Button>
-            <Button variant="secondary" size="sm" ref={reviewTrigger} disabled={disabled || !dirty || saving} leftIcon={<Save className="h-4 w-4" />} onClick={(event) => openConfirm(event.currentTarget)}>
+            <Button variant="secondary" size="md" ref={reviewTrigger} disabled={disabled || !dirty || saving} leftIcon={<Save className="h-4 w-4" />} onClick={(event) => openConfirm(event.currentTarget)}>
               <LocalizedText messageKey="ui.settings.components.commanderAssignmentPanel.review.and.save.assignments.18f33af7" />
             </Button>
           </div>

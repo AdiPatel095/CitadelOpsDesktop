@@ -43,7 +43,7 @@ const AlertItem = ({ alert }: { alert: VisibleNotification }) => {
 
   return (
     <div
-      className={`pointer-events-auto relative flex items-start gap-3 overflow-hidden rounded-xl border p-4 ${style.bg} ${style.border} ${style.shadow} transition-all duration-300 ease-out ${exiting ? 'animate-fade-out-right' : 'animate-fade-in-right opacity-0'}`}
+      className={`motion-reduce:opacity-100 pointer-events-auto relative flex items-start gap-3 overflow-hidden rounded-xl border p-4 ${style.bg} ${style.border} ${style.shadow} transition-all duration-300 ease-out ${exiting ? 'animate-fade-out-right' : 'animate-fade-in-right opacity-0'}`}
       role="alert"
       onMouseEnter={() => Notifications.pause(id, 'hover')}
       onMouseLeave={() => Notifications.resume(id, 'hover')}

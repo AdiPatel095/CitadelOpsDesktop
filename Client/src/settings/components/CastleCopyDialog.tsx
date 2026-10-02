@@ -184,7 +184,7 @@ export function CastleCopyBody<Draft, T>({ descriptor, context, featureLabel, pr
             <div className="space-y-2">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <h3 className="text-title-sm font-bold text-text-muted"><LocalizedText messageKey="castleCopy.destinations" /></h3>
-                <Button variant="ghost" size="sm" onClick={() => setInput((current) => withAllCompatible(current, preview))}>
+                <Button variant="ghost" size="md" onClick={() => setInput((current) => withAllCompatible(current, preview))}>
                   <LocalizedText messageKey="castleCopy.selectAllCompatible" />
                 </Button>
               </div>
@@ -327,7 +327,7 @@ export function CastleCopyButton<Draft, T>({ disabled, className, ...dialog }: C
       <Button
         ref={trigger}
         variant="ghost"
-        size="sm"
+        size="md"
         className={className}
         disabled={disabled}
         leftIcon={<Copy className="h-3.5 w-3.5" />}

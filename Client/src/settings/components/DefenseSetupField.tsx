@@ -268,7 +268,7 @@ export const DefenseSetupField: React.FC<DefenseSetupFieldProps> = ({
           {selectedPreset ? (
             <Button
               variant="secondary"
-              size="sm"
+              size="md"
               disabled={disabled}
               leftIcon={<Copy className="h-4 w-4" />}
               onClick={() => applyInline(inlineDefenseFromPreset(selectedPreset))}
@@ -298,12 +298,12 @@ export const DefenseSetupField: React.FC<DefenseSetupFieldProps> = ({
             <p className="text-caption text-text-muted"><LocalizedText messageKey="ui.settings.components.defenseSetupField.no.defense.is.configured.here.yet.edit.6eac4105" /></p>
           )}
           <div className="flex flex-wrap gap-2">
-            <Button variant="secondary" size="sm" disabled={disabled} leftIcon={<Edit3 className="h-4 w-4" />} onClick={() => setEditing(true)}>
+            <Button variant="secondary" size="md" disabled={disabled} leftIcon={<Edit3 className="h-4 w-4" />} onClick={() => setEditing(true)}>
               <LocalizedText messageKey="ui.settings.components.defenseSetupField.edit.defense.18cde234" />
             </Button>
             <Button
               variant="secondary"
-              size="sm"
+              size="md"
               disabled={disabled || starter.setup == null}
               ref={starterTrigger}
               leftIcon={<Camera className="h-4 w-4" />}
@@ -312,7 +312,7 @@ export const DefenseSetupField: React.FC<DefenseSetupFieldProps> = ({
               <LocalizedText messageKey="ui.settings.components.defenseSetupField.use.current.main.castle.defense.9ef0789a" />
             </Button>
             {inlineSetup ? (
-              <Button variant="ghost" size="sm" disabled={disabled} ref={saveAsTrigger} leftIcon={<Save className="h-4 w-4" />} onClick={() => {
+              <Button variant="ghost" size="md" disabled={disabled} ref={saveAsTrigger} leftIcon={<Save className="h-4 w-4" />} onClick={() => {
                 setSaveAsName('');
                 setSaveAsError('');
                 setSaveAsFailed(false);

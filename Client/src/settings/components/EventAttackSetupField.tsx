@@ -345,7 +345,7 @@ export const EventAttackSetupField: React.FC<EventAttackSetupFieldProps> = ({
           {selectedPreset ? (
             <Button
               variant="secondary"
-              size="sm"
+              size="md"
               disabled={disabled}
               leftIcon={<Copy className="h-4 w-4" />}
               onClick={() => applyInline(inlineSetupFromPreset(selectedPreset))}
@@ -376,12 +376,12 @@ export const EventAttackSetupField: React.FC<EventAttackSetupFieldProps> = ({
             <p role="alert" className="text-caption text-error"><LocalizedText messageKey="ui.settings.components.eventAttackSetupField.add.at.least.one.troop.before.saving.798500e7" /></p>
           ) : null}
           <div className="flex flex-wrap gap-2">
-            <Button variant="secondary" size="sm" disabled={disabled} leftIcon={<Edit3 className="h-4 w-4" />} onClick={() => setEditing(true)}>
+            <Button variant="secondary" size="md" disabled={disabled} leftIcon={<Edit3 className="h-4 w-4" />} onClick={() => setEditing(true)}>
               <LocalizedText messageKey="ui.settings.components.eventAttackSetupField.edit.composition.cf7f4829" />
             </Button>
             <Button
               variant="secondary"
-              size="sm"
+              size="md"
               disabled={disabled || recommendedSetup == null}
               ref={recommendTrigger}
               leftIcon={<Sparkles className="h-4 w-4" />}
@@ -390,7 +390,7 @@ export const EventAttackSetupField: React.FC<EventAttackSetupFieldProps> = ({
               <LocalizedText messageKey="ui.settings.components.eventAttackSetupField.use.recommended.starting.setup.51456aa3" />
             </Button>
             {inlineSetup && inlineTroops > 0 ? (
-              <Button variant="ghost" size="sm" disabled={disabled} ref={saveAsTrigger} leftIcon={<Save className="h-4 w-4" />} onClick={openSaveAs}>
+              <Button variant="ghost" size="md" disabled={disabled} ref={saveAsTrigger} leftIcon={<Save className="h-4 w-4" />} onClick={openSaveAs}>
                 <LocalizedText messageKey="ui.settings.components.eventAttackSetupField.save.as.preset.da93e96d" />
               </Button>
             ) : null}

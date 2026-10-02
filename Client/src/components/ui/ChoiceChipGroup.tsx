@@ -43,7 +43,7 @@ export function ChoiceChipGroup<T extends ChoiceChipValue>({
             disabled={disabled || option.disabled}
             title={option.title}
             onClick={() => onToggle(option.value)}
-            className={`rounded-full border font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 disabled:cursor-not-allowed disabled:opacity-45 ${sizeClass} ${
+            className={`pointer-coarse:min-h-11 pointer-coarse:min-w-11 rounded-full border font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 disabled:cursor-not-allowed disabled:opacity-45 ${sizeClass} ${
               active
                 ? 'border-primary/45 bg-primary/12 text-primary'
                 : 'border-border-base bg-bg-card/35 text-text-muted hover:text-text-main'

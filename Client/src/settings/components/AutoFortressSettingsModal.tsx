@@ -204,7 +204,7 @@ export const AutoFortressSettingsModal: React.FC<AutoFortressSettingsModalProps>
       title={localizeStatic("ui.settings.components.autoFortressSettingsModal.title.auto.fortress.8b0edaf5")}
       icon={<Castle className="h-5 w-5" />}
       description={localizeStatic("ui.settings.components.autoFortressSettingsModal.description.a.speed.first.fortress.pipeline.discover.a.20cf0ae7")}
-      titleTrailing={<Button variant="secondary" size="sm" className="shrink-0" onClick={() => setIsGuideOpen(true)} leftIcon={<BookOpen className="h-4 w-4" />}>
+      titleTrailing={<Button variant="secondary" size="md" className="shrink-0" onClick={() => setIsGuideOpen(true)} leftIcon={<BookOpen className="h-4 w-4" />}>
         <span lang={fortressGuideLocale}>{fortressGuidePack.ui.guideButton}</span>
       </Button>}
       onSave={save}
@@ -267,7 +267,7 @@ export const AutoFortressSettingsModal: React.FC<AutoFortressSettingsModalProps>
           </div>
           <div className="flex flex-wrap items-center justify-end gap-2 text-caption font-semibold text-text-muted">
             <span className="flex items-center gap-1.5 rounded-full border border-border-base bg-bg-app/65 px-2.5 py-1.5">
-              <Radar className="h-3.5 w-3.5 text-primary" /> <LocalizedText messageKey="ui.settings.components.autoFortressSettingsModal.full.map.discovery.19d8f15c" />
+              <Radar className="h-3.5 w-3.5 text-text-muted" /> <LocalizedText messageKey="ui.settings.components.autoFortressSettingsModal.full.map.discovery.19d8f15c" />
             </span>
             <span className="flex items-center gap-1.5 rounded-full border border-border-base bg-bg-app/65 px-2.5 py-1.5">
               <Clock3 className="h-3.5 w-3.5 text-secondary" /> <LocalizedText messageKey="ui.settings.components.autoFortressSettingsModal.due.time.1.1.checks.928cc461" />
@@ -329,7 +329,7 @@ export const AutoFortressSettingsModal: React.FC<AutoFortressSettingsModalProps>
                   ) : null}
                   {castle && (
                     <div className="mt-2 flex items-center gap-1.5 border-t border-border-base/70 pt-2 text-caption font-semibold text-text-muted">
-                      <Radar className="h-3.5 w-3.5 shrink-0 text-primary" />
+                      <Radar className="h-3.5 w-3.5 shrink-0 text-text-muted" />
                       <span>
                         {knownFortresses === 0
                           ? 'Full-map discovery pending'
@@ -351,7 +351,7 @@ export const AutoFortressSettingsModal: React.FC<AutoFortressSettingsModalProps>
       <SettingsSection disclosure={disclosure} section="supply" className="mb-4">
         <Card id="auto-fortress-supply" variant="solid" className="">
           <div className="flex items-start gap-3">
-            <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary"><ShoppingBag className="h-5 w-5" /></div>
+            <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-primary/10 text-text-main"><ShoppingBag className="h-5 w-5" /></div>
             <div className="min-w-0 flex-1">
               <h3 className="text-title-sm font-bold text-text-main"><LocalizedText messageKey="ui.settings.components.autoFortressSettingsModal.nomad.direwolf.supply.651320e5" /></h3>
               <p className="mt-0.5 text-caption text-text-muted"><LocalizedText messageKey="ui.settings.components.autoFortressSettingsModal.one.exact.per.shop.session.ceiling.purchased.73abffd3" /></p>
@@ -387,7 +387,7 @@ export const AutoFortressSettingsModal: React.FC<AutoFortressSettingsModalProps>
               <div key={tier.range} className="rounded-xl border border-border-base bg-bg-app/55 px-3 py-2.5">
                 <div className="text-caption font-semibold text-text-main">{tier.range}</div>
                 <div className="mt-0.5 text-caption text-text-muted">{tier.rate} tablets / 100</div>
-                <div className="mt-1 text-caption font-semibold text-primary">{tier.label}</div>
+                <div className="mt-1 text-caption font-semibold text-text-main">{tier.label}</div>
               </div>
             ))}
           </div>
@@ -402,7 +402,7 @@ export const AutoFortressSettingsModal: React.FC<AutoFortressSettingsModalProps>
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
           <DailyAttackLimitField value={settings.dailyAttackLimit} onChange={(dailyAttackLimit) => update({ dailyAttackLimit })} serverState={state?.dailyAttacks} />
           <div className="flex items-center gap-3 rounded-global border border-border-base bg-bg-card/50 p-4">
-            <Gauge className="h-5 w-5 shrink-0 text-primary" />
+            <Gauge className="h-5 w-5 shrink-0 text-text-muted" />
             <div>
               <div className="text-caption font-semibold text-text-main"><LocalizedText messageKey="ui.settings.components.autoFortressSettingsModal.full.map.cache.exact.ready.time.checks.b3e0112d" /></div>
               <p className="mt-0.5 text-caption text-text-muted">

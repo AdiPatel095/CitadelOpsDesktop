@@ -247,7 +247,7 @@ export const AutoNomadSettingsModal: React.FC<AutoNomadSettingsModalProps> = ({ 
       isOpen={isOpen}
       onClose={() => { if (!saving) onClose(); }}
       maxWidth="3xl"
-      titleTrailing={<Button variant="secondary" size="sm" className="shrink-0" onClick={() => setIsGuideOpen(true)} leftIcon={<BookOpen className="h-4 w-4" />}><span lang={nomadGuideLocale}>{nomadGuidePack.ui.guideButton}</span></Button>}
+      titleTrailing={<Button variant="secondary" size="md" className="shrink-0" onClick={() => setIsGuideOpen(true)} leftIcon={<BookOpen className="h-4 w-4" />}><span lang={nomadGuideLocale}>{nomadGuidePack.ui.guideButton}</span></Button>}
       title={localizeStatic("ui.settings.components.autoNomadSettingsModal.title.auto.nomad.samurai.13e95d24")}
       icon={<Crosshair className="h-5 w-5" />}
       description={localizeStatic("ui.settings.components.autoNomadSettingsModal.description.four.camp.leveling.and.locked.target.attack.2e4977f9")}
@@ -267,6 +267,7 @@ export const AutoNomadSettingsModal: React.FC<AutoNomadSettingsModalProps> = ({ 
           <div className="grid gap-4 md:grid-cols-2">
             <div className="md:col-span-2">
               <CastleRequirementField
+                ariaLabel={localizeStatic("ui.settings.components.autoNomadSettingsModal.source.castle.86d5a48e")}
                 id="auto-nomad-source"
                 label={<LocalizedText messageKey="ui.settings.components.autoNomadSettingsModal.source.castle.86d5a48e" />}
                 value={draft.sourceCastleId}
@@ -336,7 +337,7 @@ export const AutoNomadSettingsModal: React.FC<AutoNomadSettingsModalProps> = ({ 
         <Card id="auto-nomad-difficulty" variant="solid" className="">
           <div className="mb-3 flex items-start justify-between gap-3">
             <div>
-              <div className="flex items-center gap-2 text-body font-semibold text-text-main"><ShieldCheck className="h-4 w-4 text-primary" /> <LocalizedText messageKey="ui.settings.components.autoNomadSettingsModal.event.start.difficulty.d32020cb" /></div>
+              <div className="flex items-center gap-2 text-body font-semibold text-text-main"><ShieldCheck className="h-4 w-4 text-text-muted" /> <LocalizedText messageKey="ui.settings.components.autoNomadSettingsModal.event.start.difficulty.d32020cb" /></div>
               <p className="mt-1 text-caption text-text-muted"><LocalizedText messageKey="ui.settings.components.autoNomadSettingsModal.the.module.starts.the.active.event.with.b13c4375" /></p>
             </div>
             <Badge variant="outline">{achievementsObserved ? 'Achievements synced' : 'Syncing achievements'}</Badge>
@@ -345,7 +346,7 @@ export const AutoNomadSettingsModal: React.FC<AutoNomadSettingsModalProps> = ({ 
             <label className="block">
               <span className="mb-1.5 flex items-center justify-between gap-2 text-caption font-semibold text-text-muted">
                 Nomad
-                <span className="normal-case text-primary">Through {eventDifficultyName(nomadDifficulties, Number(nomadDifficulties.at(-1)?.value))}</span>
+                <span className="normal-case text-text-main">Through {eventDifficultyName(nomadDifficulties, Number(nomadDifficulties.at(-1)?.value))}</span>
               </span>
               <Select
                 value={nomadSelectionAvailable ? String(draft.nomadDifficultyId) : ''}
@@ -358,7 +359,7 @@ export const AutoNomadSettingsModal: React.FC<AutoNomadSettingsModalProps> = ({ 
             <label className="block">
               <span className="mb-1.5 flex items-center justify-between gap-2 text-caption font-semibold text-text-muted">
                 Samurai
-                <span className="normal-case text-primary">Through {eventDifficultyName(samuraiDifficulties, Number(samuraiDifficulties.at(-1)?.value))}</span>
+                <span className="normal-case text-text-main">Through {eventDifficultyName(samuraiDifficulties, Number(samuraiDifficulties.at(-1)?.value))}</span>
               </span>
               <Select
                 value={samuraiSelectionAvailable ? String(draft.samuraiDifficultyId) : ''}
@@ -418,7 +419,7 @@ export const AutoNomadSettingsModal: React.FC<AutoNomadSettingsModalProps> = ({ 
         >
           <div className="flex items-start justify-between gap-4">
             <div className="min-w-0">
-              <div className="flex items-center gap-2 text-body font-semibold text-text-main"><RotateCcw className="h-4 w-4 text-primary" /> <LocalizedText messageKey="ui.settings.components.autoNomadSettingsModal.clear.each.landed.hit.cooldown.e51dba73" /></div>
+              <div className="flex items-center gap-2 text-body font-semibold text-text-main"><RotateCcw className="h-4 w-4 text-text-muted" /> <LocalizedText messageKey="ui.settings.components.autoNomadSettingsModal.clear.each.landed.hit.cooldown.e51dba73" /></div>
               <p className="mt-1 text-caption text-text-muted"><LocalizedText messageKey="ui.settings.components.autoNomadSettingsModal.after.every.confirmed.victory.refresh.the.target.755f02c1" /></p>
             </div>
             <Switch
@@ -477,7 +478,7 @@ export const AutoNomadSettingsModal: React.FC<AutoNomadSettingsModalProps> = ({ 
         >
           <div className="flex items-start justify-between gap-4">
             <div className="min-w-0">
-              <div className="flex items-center gap-2 text-body font-semibold text-text-main"><TestTube2 className="h-4 w-4 text-primary" /> <LocalizedText messageKey="ui.settings.components.autoNomadSettingsModal.temporary.rbc.end.to.end.trial.9da6b870" /></div>
+              <div className="flex items-center gap-2 text-body font-semibold text-text-main"><TestTube2 className="h-4 w-4 text-text-muted" /> <LocalizedText messageKey="ui.settings.components.autoNomadSettingsModal.temporary.rbc.end.to.end.trial.9da6b870" /></div>
               <p className="mt-1 text-caption text-text-muted"><LocalizedText messageKey="ui.settings.components.autoNomadSettingsModal.use.the.nomad.preset.against.one.robber.89f8e101" /></p>
             </div>
             <Switch
@@ -524,7 +525,7 @@ export const AutoNomadSettingsModal: React.FC<AutoNomadSettingsModalProps> = ({ 
         </SettingsSection>
 
         <Card variant="solid" className="">
-          <div className="flex items-center gap-2 text-body font-semibold text-text-main"><Lock className="h-4 w-4 text-primary" /> <LocalizedText messageKey="ui.settings.components.autoNomadSettingsModal.fixed.four.camp.flow.380f9acb" /></div>
+          <div className="flex items-center gap-2 text-body font-semibold text-text-main"><Lock className="h-4 w-4 text-text-muted" /> <LocalizedText messageKey="ui.settings.components.autoNomadSettingsModal.fixed.four.camp.flow.380f9acb" /></div>
           <div className="mt-3 grid gap-2 sm:grid-cols-3">
             <div className="rounded-xl border border-border-base bg-bg-app/45 p-3 text-caption text-text-muted"><Badge variant="outline" className="mb-2">1</Badge><div><LocalizedText messageKey="ui.settings.components.autoNomadSettingsModal.advance.each.of.the.four.nearest.regular.45952900" /></div></div>
             <div className="rounded-xl border border-border-base bg-bg-app/45 p-3 text-caption text-text-muted"><Badge variant="outline" className="mb-2">2</Badge><div><LocalizedText messageKey="ui.settings.components.autoNomadSettingsModal.rank.maxed.camps.by.defense.capacity.plus.f2d38ec8" /></div></div>

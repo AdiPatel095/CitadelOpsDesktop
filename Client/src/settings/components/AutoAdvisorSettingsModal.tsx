@@ -207,7 +207,7 @@ export const AutoAdvisorSettingsModal: React.FC<AutoAdvisorSettingsModalProps> =
         isOpen={isOpen}
         onClose={() => { if (!saving && !activating) onClose(); }}
         maxWidth="3xl"
-        titleTrailing={<Button variant="secondary" size="sm" className="shrink-0" onClick={() => setIsGuideOpen(true)} leftIcon={<BookOpen className="h-4 w-4" />}><span lang={advisorGuideLocale}>{advisorGuidePack.ui.guideButton}</span></Button>}
+        titleTrailing={<Button variant="secondary" size="md" className="shrink-0" onClick={() => setIsGuideOpen(true)} leftIcon={<BookOpen className="h-4 w-4" />}><span lang={advisorGuideLocale}>{advisorGuidePack.ui.guideButton}</span></Button>}
         title={localizeStatic("ui.settings.components.autoAdvisorSettingsModal.title.auto.advisor.3c6f5be4")}
         icon={<Bot className="h-5 w-5" />}
         description={localizeStatic("ui.settings.components.autoAdvisorSettingsModal.description.one.guarded.nomad.or.samurai.advisor.run.350d2486")}
@@ -227,7 +227,7 @@ export const AutoAdvisorSettingsModal: React.FC<AutoAdvisorSettingsModalProps> =
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div>
                 <div className="flex flex-wrap items-center gap-2 text-body font-semibold text-text-main">
-                  <ShieldCheck className="h-4 w-4 text-primary" /> Advisor access
+                  <ShieldCheck className="h-4 w-4 text-text-muted" /> Advisor access
                   <Badge variant={advisorActive ? 'success' : activeEvent ? 'warning' : 'secondary'}>
                     {advisorActive ? `${eventLabel} unlocked` : activeEvent ? `${eventLabel} locked` : 'No supported event'}
                   </Badge>
@@ -239,14 +239,14 @@ export const AutoAdvisorSettingsModal: React.FC<AutoAdvisorSettingsModalProps> =
                 {advisorActive ? (
                   <Button
                     variant="secondary"
-                    size="sm"
+                    size="md"
                     isLoading={refreshing}
                     onClick={() => void refreshOverview()}
                     leftIcon={<RefreshCw className="h-3.5 w-3.5" />}
                   >
                     <LocalizedText messageKey="ui.settings.components.autoAdvisorSettingsModal.refresh.overview.10ffdcf1" /></Button>
                 ) : (
-                  <Button leftIcon={<Trash2 aria-hidden="true" />} variant="danger" size="sm" disabled={!canActivate} onClick={openActivation}>
+                  <Button leftIcon={<Trash2 aria-hidden="true" />} variant="danger" size="md" disabled={!canActivate} onClick={openActivation}>
                     <LocalizedText messageKey="ui.settings.components.autoAdvisorSettingsModal.activate.advisor.4259f0af" /></Button>
                 )}
               </div>
@@ -354,7 +354,7 @@ export const AutoAdvisorSettingsModal: React.FC<AutoAdvisorSettingsModalProps> =
           </SettingsSection>
           <SettingsSection disclosure={disclosure} section="gates">
           <Card variant="solid" className="">
-            <div className="mb-3 flex items-center gap-2 text-body font-semibold text-text-main"><Coins className="h-4 w-4 text-primary" /> <LocalizedText messageKey="ui.settings.components.autoAdvisorSettingsModal.resource.gates.05c86e14" /></div>
+            <div className="mb-3 flex items-center gap-2 text-body font-semibold text-text-main"><Coins className="h-4 w-4 text-text-muted" /> <LocalizedText messageKey="ui.settings.components.autoAdvisorSettingsModal.resource.gates.05c86e14" /></div>
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
               <NumberField label={localizeStatic("ui.settings.components.autoAdvisorSettingsModal.label.all.in.coins.attack.5e43c9f3")} value={draft.coinCostPerAttack} min={1} suffix="coins" onChange={(value) => setInteger('coinCostPerAttack', value, 1, Number.MAX_SAFE_INTEGER, 500)} />
               <NumberField label={localizeStatic("ui.settings.components.autoAdvisorSettingsModal.label.keep.coins.0f999c56")} value={draft.minimumCoinReserve} min={0} suffix="reserve" onChange={(value) => setInteger('minimumCoinReserve', value, 0, Number.MAX_SAFE_INTEGER, 0)} />
@@ -386,7 +386,7 @@ export const AutoAdvisorSettingsModal: React.FC<AutoAdvisorSettingsModalProps> =
           </SettingsSection>
           <SettingsSection disclosure={disclosure} section="run-sizing">
           <div>
-            <div className="mb-3 flex items-center gap-2 text-body font-semibold text-text-main"><Clock3 className="h-4 w-4 text-primary" /> <LocalizedText messageKey="ui.settings.components.autoAdvisorSettingsModal.run.sizing.878bd208" /></div>
+            <div className="mb-3 flex items-center gap-2 text-body font-semibold text-text-main"><Clock3 className="h-4 w-4 text-text-muted" /> <LocalizedText messageKey="ui.settings.components.autoAdvisorSettingsModal.run.sizing.878bd208" /></div>
             <div className="grid gap-4 sm:grid-cols-2">
               <NumberField
                 label={localizeStatic("ui.settings.components.autoAdvisorSettingsModal.label.maximum.attacks.950045b9")}
@@ -491,7 +491,7 @@ const DifficultySelect: React.FC<DifficultySelectProps> = ({ label, value, optio
   <label className="block">
     <span className="mb-1.5 flex items-center justify-between gap-2 text-caption font-semibold text-text-muted">
       {label}
-      <span className="normal-case text-primary">Through {through}</span>
+      <span className="normal-case text-text-main">Through {through}</span>
     </span>
     <Select
       value={value > 0 ? String(value) : ''}

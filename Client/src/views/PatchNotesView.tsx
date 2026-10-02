@@ -14,7 +14,7 @@ import {
 import type { BadgeProps } from '../components/ui/Badge';
 
 const PATCH_NOTE_BADGE_VARIANT: Record<PatchNoteKind, NonNullable<BadgeProps['variant']>> = {
-  added: 'primary',
+  added: 'secondary',
   fixed: 'success',
   security: 'outline',
   changed: 'warning',
@@ -36,8 +36,8 @@ function ReleaseCard({ release, isLatest }: { release: PatchNotesRelease; isLate
       variant="solid"
       title={(
         <>
-          <span className="font-mono text-primary">v{release.version}</span>
-          {isLatest && <Badge variant="primary"><LocalizedText messageKey="ui.views.patchNotesView.current.e0d1b682" /></Badge>}
+          <bdi className="font-mono text-text-main">v{release.version}</bdi>
+          {isLatest && <Badge variant="secondary"><LocalizedText messageKey="ui.views.patchNotesView.current.e0d1b682" /></Badge>}
         </>
       )}
       description={release.subtitleKey ? <LocalizedText messageKey={release.subtitleKey}/> : release.subtitle}

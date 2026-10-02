@@ -460,7 +460,7 @@ export const AutoTCISettingsModal: React.FC<AutoTCISettingsModalProps> = ({ isOp
                 <div className="flex items-center gap-3">
                   <CardTitle className="text-body-lg text-text-main">{castle.name}</CardTitle>
                   {hasItems && (
-                    <Badge variant="primary">
+                    <Badge variant="secondary">
                       {castleItems.length} item{castleItems.length !== 1 ? 's' : ''}
                     </Badge>
                   )}
@@ -555,7 +555,7 @@ export const AutoTCISettingsModal: React.FC<AutoTCISettingsModalProps> = ({ isOp
                   <div className="flex min-h-[10rem] flex-col items-center justify-center py-8">
                     <div className="mb-3 text-center text-caption font-semibold text-text-muted">
                       <LocalizedText messageKey="ui.settings.components.autoTCISettingsModal.no.construction.items.selected.0fef5a0b" /></div>
-                    <Button variant="secondary" size="sm" onClick={() => handleAddItem(castleId)} leftIcon={<Plus className="h-4 w-4" />}>
+                    <Button variant="secondary" size="md" onClick={() => handleAddItem(castleId)} leftIcon={<Plus className="h-4 w-4" />}>
                       <LocalizedText messageKey="ui.settings.components.autoTCISettingsModal.add.construction.item.095fa798" /></Button>
                   </div>
                 )}

@@ -261,7 +261,7 @@ export const AutoKhanSettingsModal: React.FC<AutoKhanSettingsModalProps> = ({ is
       isOpen={isOpen}
       onClose={() => { if (!saving) onClose(); }}
       maxWidth="3xl"
-      titleTrailing={<Button variant="secondary" size="sm" className="shrink-0" onClick={() => setIsGuideOpen(true)} leftIcon={<BookOpen className="h-4 w-4" />}><span lang={khanGuideLocale}>{khanGuidePack.ui.guideButton}</span></Button>}
+      titleTrailing={<Button variant="secondary" size="md" className="shrink-0" onClick={() => setIsGuideOpen(true)} leftIcon={<BookOpen className="h-4 w-4" />}><span lang={khanGuideLocale}>{khanGuidePack.ui.guideButton}</span></Button>}
       title={localizeStatic("ui.settings.components.autoKhanSettingsModal.title.auto.khan.24bcea17")}
       icon={<Crosshair className="h-5 w-5" />}
       description={localizeStatic("ui.settings.components.autoKhanSettingsModal.description.chained.camp.attacks.khan.taunts.and.main.339ad3f1")}
@@ -291,6 +291,7 @@ export const AutoKhanSettingsModal: React.FC<AutoKhanSettingsModalProps> = ({ is
         <Card variant="solid" className="">
           <div className="grid gap-4 md:grid-cols-2">
             <CastleRequirementField
+              ariaLabel={localizeStatic("ui.settings.components.autoKhanSettingsModal.attack.from.2ef61f36")}
               id="auto-khan-source"
               label={<LocalizedText messageKey="ui.settings.components.autoKhanSettingsModal.attack.from.2ef61f36" />}
               value={draft.sourceCastleId}
@@ -369,7 +370,7 @@ export const AutoKhanSettingsModal: React.FC<AutoKhanSettingsModalProps> = ({ is
           <div className="grid gap-4 md:grid-cols-2">
             <div className="flex items-start justify-between gap-4">
               <div className="min-w-0">
-                <div className="flex items-center gap-2 text-body font-semibold text-text-main"><LockKeyhole className="h-4 w-4 text-primary" /> <LocalizedText messageKey="ui.settings.components.autoKhanSettingsModal.lock.automatic.khan.attacks.2b670e17" /></div>
+                <div className="flex items-center gap-2 text-body font-semibold text-text-main"><LockKeyhole className="h-4 w-4 text-text-muted" /> <LocalizedText messageKey="ui.settings.components.autoKhanSettingsModal.lock.automatic.khan.attacks.2b670e17" /></div>
                 <p className="mt-1 text-caption text-text-muted"><LocalizedText messageKey="ui.settings.components.autoKhanSettingsModal.stops.only.auto.khan.s.own.attack.284cf413" /></p>
               </div>
               <Switch
@@ -381,7 +382,7 @@ export const AutoKhanSettingsModal: React.FC<AutoKhanSettingsModalProps> = ({ is
 
             <div className="flex items-start justify-between gap-4 border-t border-border-base pt-4 md:border-l md:border-t-0 md:pl-4 md:pt-0">
               <div className="min-w-0">
-                <div className="flex items-center gap-2 text-body font-semibold text-text-main"><Flame className="h-4 w-4 text-primary" /> <LocalizedText messageKey="ui.settings.components.autoKhanSettingsModal.trigger.khan.at.full.rage.6e8b370e" /></div>
+                <div className="flex items-center gap-2 text-body font-semibold text-text-main"><Flame className="h-4 w-4 text-text-muted" /> <LocalizedText messageKey="ui.settings.components.autoKhanSettingsModal.trigger.khan.at.full.rage.6e8b370e" /></div>
                 <p className="mt-1 text-caption text-text-muted"><LocalizedText messageKey="ui.settings.components.autoKhanSettingsModal.turn.this.off.to.keep.attacking.and.e1a20f3a" /></p>
               </div>
               <Switch
@@ -397,7 +398,7 @@ export const AutoKhanSettingsModal: React.FC<AutoKhanSettingsModalProps> = ({ is
             <div>
               <div className="flex items-start justify-between gap-4">
                 <div className="min-w-0">
-                  <div className="flex items-center gap-2 text-body font-semibold text-text-main"><ShoppingCart className="h-4 w-4 text-primary" /> <LocalizedText messageKey="ui.settings.components.autoKhanSettingsModal.replenish.defense.tools.04cc1c22" /></div>
+                  <div className="flex items-center gap-2 text-body font-semibold text-text-main"><ShoppingCart className="h-4 w-4 text-text-muted" /> <LocalizedText messageKey="ui.settings.components.autoKhanSettingsModal.replenish.defense.tools.04cc1c22" /></div>
                   <p className="mt-1 text-caption text-text-muted"><LocalizedText messageKey="ui.settings.components.autoKhanSettingsModal.every.30.seconds.replace.preset.shortages.from.b001d2e4" /></p>
                 </div>
                 <Switch
@@ -416,7 +417,7 @@ export const AutoKhanSettingsModal: React.FC<AutoKhanSettingsModalProps> = ({ is
         <Card variant="solid" className="">
           <div className="flex items-start justify-between gap-4">
             <div className="min-w-0">
-              <div className="flex items-center gap-2 text-body font-semibold text-text-main"><ShieldAlert className="h-4 w-4 text-primary" /> <LocalizedText messageKey="ui.settings.components.autoKhanSettingsModal.protect.offense.on.the.main.castle.wall.e3913e51" /></div>
+              <div className="flex items-center gap-2 text-body font-semibold text-text-main"><ShieldAlert className="h-4 w-4 text-text-muted" /> <LocalizedText messageKey="ui.settings.components.autoKhanSettingsModal.protect.offense.on.the.main.castle.wall.e3913e51" /></div>
               <p className="mt-1 text-caption text-text-muted">
                 {sourceIsMain
                   ? 'Use this when the main castle holds both the attacking army and the defense.'
@@ -457,7 +458,7 @@ export const AutoKhanSettingsModal: React.FC<AutoKhanSettingsModalProps> = ({ is
 
         <Card id="auto-khan-nomad-points" variant="solid" className="">
           <div>
-            <div className="flex items-center gap-2 text-body font-semibold text-text-main"><LockKeyhole className="h-4 w-4 text-primary" /> <LocalizedText messageKey="ui.settings.components.autoKhanSettingsModal.nomad.points.stop.727b7bc2" /></div>
+            <div className="flex items-center gap-2 text-body font-semibold text-text-main"><LockKeyhole className="h-4 w-4 text-text-muted" /> <LocalizedText messageKey="ui.settings.components.autoKhanSettingsModal.nomad.points.stop.727b7bc2" /></div>
             <p className="mt-1 text-caption text-text-muted"><LocalizedText messageKey="ui.settings.components.autoKhanSettingsModal.at.the.limit.auto.khan.stops.launching.8f630fc2" /></p>
             <label className="mt-3 block max-w-xs">
               <span className="mb-1.5 block text-caption font-semibold text-text-muted"><LocalizedText messageKey="ui.settings.components.autoKhanSettingsModal.stop.at.nomad.points.0.disables.81362bed" /></span>
@@ -487,7 +488,7 @@ export const AutoKhanSettingsModal: React.FC<AutoKhanSettingsModalProps> = ({ is
         <Card variant="solid" className="">
           <div className="flex items-start justify-between gap-4">
             <div className="min-w-0">
-              <div className="flex items-center gap-2 text-body font-semibold text-text-main"><RotateCcw className="h-4 w-4 text-primary" /> <LocalizedText messageKey="ui.settings.components.autoKhanSettingsModal.skip.every.khan.camp.cooldown.c1c19442" /></div>
+              <div className="flex items-center gap-2 text-body font-semibold text-text-main"><RotateCcw className="h-4 w-4 text-text-muted" /> <LocalizedText messageKey="ui.settings.components.autoKhanSettingsModal.skip.every.khan.camp.cooldown.c1c19442" /></div>
               <p className="mt-1 text-caption text-text-muted"><LocalizedText messageKey="ui.settings.components.autoKhanSettingsModal.each.launched.hit.reserves.enough.combined.skip.10c1e007" /></p>
             </div>
             <Switch
@@ -559,7 +560,7 @@ export const AutoKhanSettingsModal: React.FC<AutoKhanSettingsModalProps> = ({ is
         <div className="space-y-4">
           <div className="grid gap-4 md:grid-cols-2">
             <div>
-              <div className="flex items-center gap-2 text-body font-semibold text-text-main"><Flame className="h-4 w-4 text-primary" /> <LocalizedText messageKey="ui.settings.components.autoKhanSettingsModal.rage.chain.limit.907ed6bc" /></div>
+              <div className="flex items-center gap-2 text-body font-semibold text-text-main"><Flame className="h-4 w-4 text-text-muted" /> <LocalizedText messageKey="ui.settings.components.autoKhanSettingsModal.rage.chain.limit.907ed6bc" /></div>
               <p className="mt-1 text-caption text-text-muted"><LocalizedText messageKey="ui.settings.components.autoKhanSettingsModal.once.this.many.accepted.khan.retaliations.are.fa686d33" /></p>
               <label className="mt-3 block max-w-xs">
                 <span className="mb-1.5 block text-caption font-semibold text-text-muted"><LocalizedText messageKey="ui.settings.components.autoKhanSettingsModal.max.rage.chain.0.disables.limit.a652d0a7" /></span>
@@ -581,7 +582,7 @@ export const AutoKhanSettingsModal: React.FC<AutoKhanSettingsModalProps> = ({ is
             <div id="auto-khan-rage" tabIndex={-1} className="border-t border-border-base pt-4 outline-none md:border-l md:border-t-0 md:pl-4 md:pt-0">
               <div className="flex items-start justify-between gap-4">
                 <div className="min-w-0">
-                  <div className="flex items-center gap-2 text-body font-semibold text-text-main"><Zap className="h-4 w-4 text-primary" /> <LocalizedText messageKey="ui.settings.components.autoKhanSettingsModal.require.rage.points.booster.ad17ec97" /></div>
+                  <div className="flex items-center gap-2 text-body font-semibold text-text-main"><Zap className="h-4 w-4 text-text-muted" /> <LocalizedText messageKey="ui.settings.components.autoKhanSettingsModal.require.rage.points.booster.ad17ec97" /></div>
                   <p className="mt-1 text-caption text-text-muted"><LocalizedText messageKey="ui.settings.components.autoKhanSettingsModal.gate.new.automatic.camp.attacks.unless.the.a6408062" /></p>
                   <p className={`mt-1 text-caption font-semibold ${rageBoosterActive ? 'text-success' : 'text-text-muted'}`}>{rageBoosterStatus}</p>
                 </div>

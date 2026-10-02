@@ -362,7 +362,7 @@ export const AutoBuyerSettingsModal: React.FC<AutoBuyerSettingsModalProps> = ({ 
         <SettingsSection disclosure={disclosure} section="limits">
         <Card variant="solid" className="">
           <div className="mb-4 flex items-start gap-3">
-            <span className="rounded-xl bg-primary/10 p-2 text-primary"><ShieldCheck className="h-5 w-5" /></span>
+            <span className="rounded-xl bg-primary/10 p-2 text-text-main"><ShieldCheck className="h-5 w-5" /></span>
             <div>
               <h3 className="text-title-sm font-bold text-text-main"><LocalizedText messageKey="ui.settings.components.autoBuyerSettingsModal.account.wide.safety.limits.f0306444" /></h3>
               <p className="mt-1 text-caption text-text-muted"><LocalizedText messageKey="ui.settings.components.autoBuyerSettingsModal.auto.buyer.sends.one.bounded.operation.at.161e8417" /></p>
@@ -874,7 +874,7 @@ function SectionButton({
   children: React.ReactNode;
 }) {
   return (
-    <Button variant={active ? 'primary' : 'secondary'} onClick={onClick} leftIcon={icon}>
+    <Button variant="secondary" aria-pressed={active} data-current-selection={active || undefined} className={active ? 'ring-1 ring-primary' : ''} onClick={onClick} leftIcon={icon}>
       <span className="flex items-center gap-2">{children}</span>
     </Button>
   );
