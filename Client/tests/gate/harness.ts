@@ -47,7 +47,7 @@ export async function openCase(page: Page, entry: GateCase, options: GateOptions
     const card = page.locator('.hosted-account-card').first();
     await card.waitFor();
     const selectors = {
-      add: '.account-center-actions md-filled-button',
+      add: '.account-center-actions [data-variant="primary"]',
       login: '.hosted-account-card__login button',
       access: '.hosted-account-card__access button',
       delete: '.hosted-account-card button:has(svg.lucide-trash-2)',
