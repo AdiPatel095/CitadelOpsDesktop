@@ -380,5 +380,19 @@
   "equipment.effectsGroupedDescription": "Effekter gruppert etter spillets egne effektkategorier.",
   "setupReadiness.castlesNotInWorld": "{count, plural, =1 {Det lagrede slottet {castle} finnes ikke på denne kontoen eller i denne verdenen. Velg det på nytt eller deaktiver det.} one {Det lagrede slottet {castle} og {others, plural, one {# annet aktivert slott} other {# andre aktiverte slott}} finnes ikke på denne kontoen eller i denne verdenen. Velg dem på nytt eller deaktiver dem.} other {Det lagrede slottet {castle} og {others, plural, one {# annet aktivert slott} other {# andre aktiverte slott}} finnes ikke på denne kontoen eller i denne verdenen. Velg dem på nytt eller deaktiver dem.}}",
   "ui.components.header.alt.citadel.ops.logo.ab367a3c": "CitadelOps-logo",
-  "ui.rich.views.automationView.right.click.a.toggle.for.temporary.activation.c34579ee": "<strong0>Høyreklikk</strong0> på en bryter for å aktivere den midlertidig"
+  "ui.rich.views.automationView.right.click.a.toggle.for.temporary.activation.c34579ee": "<strong0>Høyreklikk</strong0> på en bryter for å aktivere den midlertidig",
+  "patchNotes.release.2.4.2.subtitle.b610e6ea056f": "Veiledet oppsett, tydeligere statuser og raskere dashbord",
+  "patchNotes.release.2.4.2.text.967317bd8af5": "“Set up with a goal” leder deg gjennom en sjekkliste med fem trinn, fra tilkobling til spillet til det første resultatet spillet bekrefter, for mål som å spille Khan-arrangementet eller holde alle borger forsynt med mat.",
+  "patchNotes.release.2.4.2.text.913f68e622ad": "Hver automatisering har en kontroll “Before you start” som viser hva som er klart og hva som må endres, og Start spør først dersom noe ville hindre automatiseringen i å handle.",
+  "patchNotes.release.2.4.2.text.26a86db1c10b": "Nomader, Samurai, Invasjon, Khan, Storm og Beri World kan sette opp angrepene direkte i innstillingene uten å lage en forhåndsinnstilling først, og viser troppene og kommandantene hvert oppsett trenger.",
+  "patchNotes.release.2.4.2.text.6cf29358ebf3": "“Copy to other castles” kopierer oppsettet fra én borg til borgene du velger, markerer det som ikke kan kopieres, og lagrer ingenting før du trykker på “Lagre”.",
+  "patchNotes.release.2.4.2.text.6cea9639c58b": "Språkvelgeren i Innstillinger viser hvert språk med sitt eget navn og legger til “Automatisk (enhetens språk)”, som følger enhetens språk uten å endre språket i spillet.",
+  "patchNotes.release.2.4.2.text.c6dbecdc2dfd": "Angrepstellere starter på null, viser om de dekker i dag eller tiden siden et bestemt tidspunkt, merker lagrede tall og sier fra når et tall ikke er tilgjengelig.",
+  "patchNotes.release.2.4.2.text.b39c4f9899d3": "Auto Station viser en ravgul advarsel i stedet for å virke klart når det ikke kan beskytte en borg, og forklarer når årsaken er Beskyttelsesmodus eller mangelen på Åpne porter i Berimond.",
+  "patchNotes.release.2.4.2.text.e400072927c7": "Auto Fortress og Auto Storm setter til side et mål som spillet melder fortsatt er under nedkjøling, og går videre til andre. Auto Storm leser nå nedkjølingstidene til fort og skjulte fort riktig.",
+  "patchNotes.release.2.4.2.text.2b9c8c5fa1bb": "Dialogen for tidsbestemt kjøring og pause viser når kjøringen eller pausen slutter, i dato- og tidsformatet til språket ditt, med riktige flertallsformer.",
+  "patchNotes.release.2.4.2.text.a9bf747fee6a": "Varsler blir på skjermen i minst 10 sekunder og venter mens du holder pekeren over dem eller gir dem fokus.",
+  "patchNotes.release.2.4.2.text.1e14fe9e997a": "Teksten er enklere overalt: automatiseringer viser “Av” i stedet for Deaktivert, venting på arrangementer sier når de gjenopptas, og kommandanter som er slått av for en automatisering viser “Av for denne automatiseringen”.",
+  "patchNotes.release.2.4.2.text.51cfb02c317b": "Dashbord lastes raskere, bruker mindre data og fortsetter der de slapp etter et kort avbrudd i stedet for å laste alt på nytt.",
+  "patchNotes.release.2.4.2.text.5859b00e3cb1": "De nye oppsettskjermene er oversatt til tysk og arabisk, og alle støttede språk får mer oversatt tekst; det som ennå ikke er oversatt vises på engelsk."
 }
