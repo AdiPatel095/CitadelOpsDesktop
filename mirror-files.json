@@ -1307,6 +1307,22 @@
     {
       "portal": "tests/visual/cardAnatomy.ts",
       "desktop": "Client/tests/visual/cardAnatomy.ts"
+    },
+    {
+      "portal": "src/commandCenter/config/viewNavigation.ts",
+      "desktop": "Client/src/config/viewNavigation.ts"
+    },
+    {
+      "portal": "src/commandCenter/dashboard/components/CastleOverviewCard.css",
+      "desktop": "Client/src/dashboard/components/CastleOverviewCard.css"
+    },
+    {
+      "portal": "src/commandCenter/dashboard/components/CastleOverviewCard.tsx",
+      "desktop": "Client/src/dashboard/components/CastleOverviewCard.tsx"
+    },
+    {
+      "portal": "src/commandCenter/dashboard/components/CastleView.tsx",
+      "desktop": "Client/src/dashboard/components/CastleView.tsx"
     }
   ],
   "unmirrored": []
