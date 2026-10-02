@@ -173,7 +173,7 @@ export const AutoHospitalSettingsModal: React.FC<AutoHospitalSettingsModalProps>
             titleClassName="text-title-sm"
             actions={(
               <div className="flex shrink-0 items-center gap-2">
-                <Badge variant={autoHospitalScheduleEnabled ? 'primary' : 'secondary'}>
+                <Badge variant="secondary">
                   {autoHospitalScheduleEnabled ? 'On' : 'Off'}
                 </Badge>
                 <Button

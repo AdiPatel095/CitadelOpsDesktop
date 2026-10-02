@@ -916,7 +916,7 @@ export const QueueProductionSettingsModal: React.FC<QueueProductionSettingsModal
               contentClassName="flex flex-wrap items-center justify-between gap-4 "
             >
                 <div className="text-display-sm font-bold tabular-nums text-text-main">{enabledCastleCount}</div>
-                <Badge variant={isGlobalMode ? 'primary' : 'secondary'}>
+                <Badge variant="secondary">
                   {isGlobalMode ? 'shared' : 'per castle'}
                 </Badge>
             </SectionCard>

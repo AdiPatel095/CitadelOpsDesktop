@@ -266,7 +266,7 @@ export const AutoAdvisorSettingsModal: React.FC<AutoAdvisorSettingsModalProps> =
             <Card variant="solid" className="">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <div className="text-body font-semibold text-text-main"><LocalizedText messageKey="ui.settings.components.autoAdvisorSettingsModal.live.advisor.run.94f3f4a1" /></div>
-                <Badge variant={run?.status === 'running' ? 'primary' : run?.status === 'completed' ? 'success' : run?.status === 'cancelled' ? 'warning' : 'secondary'}>
+                <Badge variant={run?.status === 'completed' ? 'success' : run?.status === 'cancelled' ? 'warning' : 'secondary'}>
                   {run?.status ?? 'Overview only'}
                 </Badge>
               </div>
