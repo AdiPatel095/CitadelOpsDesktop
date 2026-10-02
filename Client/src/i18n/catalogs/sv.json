@@ -430,5 +430,13 @@
   "ui.state.loading": "Läser in…",
   "ui.state.retry": "Försök igen",
   "ui.tabs.next": "Visa fler flikar",
-  "ui.tabs.previous": "Visa föregående flikar"
+  "ui.tabs.previous": "Visa föregående flikar",
+  "header.panel.attacksToday": "Attacker i dag",
+  "header.panel.attention": "Kräver uppmärksamhet",
+  "header.panel.connection": "Anslutning",
+  "header.panel.openFeature": "Öppna {feature}",
+  "header.signal.attention": "{count, plural, one {# automatisering kräver uppmärksamhet} other {# automatiseringar kräver uppmärksamhet}}",
+  "header.signal.incoming": "{count, number} inkommande · {state, select, known {första om {duration}} other {kontrollerar}}",
+  "header.signal.nextBird": "Nästa skydd av trupper: {castle} · {state, select, due {ska utföras nu} other {om {duration}}}",
+  "header.status.title": "Status"
 }

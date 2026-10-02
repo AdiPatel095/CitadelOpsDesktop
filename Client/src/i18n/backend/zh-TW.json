@@ -327,5 +327,8 @@
   "backend.spy_report.capture_fields": "請為 mid、allianceID、castleID、sourcePlayerID 和 scannedAtUnixMillis 提供正數值。",
   "backend.spy_report.payload_json": "payload 必須包含有效的 JSON。",
   "backend.spy_report.payload_object": "payload 必須包含 JSON 物件。",
-  "backend.spy_report.session_fields": "請提供 clientID，並為 playerID 和 allianceID 提供正數值。"
+  "backend.spy_report.session_fields": "請提供 clientID，並為 playerID 和 allianceID 提供正數值。",
+  "backend.hosted.cells_unavailable": "單元角色無法使用",
+  "backend.status.placement_slot": "正在等待伺服器上的空閒位置",
+  "backend.status.starting_server": "正在為此帳號啟動伺服器"
 }

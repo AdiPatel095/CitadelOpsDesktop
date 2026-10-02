@@ -327,5 +327,8 @@
   "backend.spy_report.capture_fields": "Adjon meg pozitív értékeket a mid, allianceID, castleID, sourcePlayerID és scannedAtUnixMillis mezőkhöz.",
   "backend.spy_report.payload_json": "A payload mezőnek érvényes JSON-t kell tartalmaznia.",
   "backend.spy_report.payload_object": "A payload mezőnek JSON-objektumot kell tartalmaznia.",
-  "backend.spy_report.session_fields": "Adja meg a clientID mezőt, valamint pozitív playerID és allianceID értékeket."
+  "backend.spy_report.session_fields": "Adja meg a clientID mezőt, valamint pozitív playerID és allianceID értékeket.",
+  "backend.hosted.cells_unavailable": "A cellaszerepek nem érhetők el",
+  "backend.status.placement_slot": "Várakozás szabad helyre a szervereinken",
+  "backend.status.starting_server": "Szerver indítása ehhez a fiókhoz"
 }
