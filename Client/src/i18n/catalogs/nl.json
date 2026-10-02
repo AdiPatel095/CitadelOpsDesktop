@@ -430,5 +430,13 @@
   "ui.state.loading": "Laden…",
   "ui.state.retry": "Opnieuw proberen",
   "ui.tabs.next": "Meer tabbladen tonen",
-  "ui.tabs.previous": "Vorige tabbladen tonen"
+  "ui.tabs.previous": "Vorige tabbladen tonen",
+  "header.panel.attacksToday": "Aanvallen vandaag",
+  "header.panel.attention": "Aandacht nodig",
+  "header.panel.connection": "Verbinding",
+  "header.panel.openFeature": "{feature} openen",
+  "header.signal.attention": "{count, plural, one {# automatisering vereist aandacht} other {# automatiseringen vereisen aandacht}}",
+  "header.signal.incoming": "{count, number} inkomend · {state, select, known {eerste over {duration}} other {controleren}}",
+  "header.signal.nextBird": "Volgende troepenbescherming: {castle} · {state, select, due {nu aan de beurt} other {over {duration}}}",
+  "header.status.title": "Status"
 }

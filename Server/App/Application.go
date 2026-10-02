@@ -454,6 +454,7 @@ func New(ctx context.Context, config Config) (*Application, error) {
 	application.Automation = Automation.NewCoordinator(
 		state, configuration, gameData, intents,
 		Automation.NewSharedStormScanPolicy(application.AccountKey, config.WorldMaps),
+		Automation.NewSharedFortressScanPolicy(application.AccountKey, config.WorldMaps),
 		Automation.NewRecruitPolicy(),
 		Automation.NewToolPolicy(),
 		Automation.NewHospitalPolicy(),
@@ -472,7 +473,7 @@ func New(ctx context.Context, config Config) (*Application, error) {
 		Automation.NewFoodBalancePolicy(),
 		Automation.NewAutoTowerPolicy(),
 		Automation.NewInvasionRecoveryPolicy(),
-		Automation.NewAutoFortressPolicy(),
+		Automation.NewSharedAutoFortressPolicy(application.AccountKey, config.WorldMaps),
 		Automation.NewAutoInvasionPolicy(),
 		Automation.NewAutoNomadPolicy(),
 		Automation.NewAutoAdvisorPolicy(),

@@ -14,12 +14,15 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"CitadelDesktop/Server/Runtime"
 	"CitadelDesktop/Server/State"
 )
 
 const sourceFenceFile = "source-handover-fences.json"
+
+const finishOpenDrainTimeout = 3 * time.Minute
 
 type SourceProfileFence struct {
 	Identity         Runtime.ProfileTransferIdentity `json:"identity"`
@@ -187,6 +190,10 @@ func (orchestrator *Orchestrator) PrepareSourceHandover(ctx context.Context, ide
 }
 
 func (orchestrator *Orchestrator) prepareSourceHandover(ctx context.Context, identity Runtime.ProfileTransferIdentity, archive bool) (SourceProfileFence, error) {
+	return orchestrator.prepareSourceHandoverDrain(ctx, identity, archive, false)
+}
+
+func (orchestrator *Orchestrator) prepareSourceHandoverDrain(ctx context.Context, identity Runtime.ProfileTransferIdentity, archive, finishOpen bool) (SourceProfileFence, error) {
 	if err := ctx.Err(); err != nil {
 		return SourceProfileFence{}, err
 	}
@@ -257,6 +264,21 @@ func (orchestrator *Orchestrator) prepareSourceHandover(ctx context.Context, ide
 			if err := Runtime.InspectProfileArchive(ctx, application.DataDir); err != nil {
 				return SourceProfileFence{}, err
 			}
+		}
+		if finishOpen {
+			drainContext, cancel := context.WithTimeout(ctx, finishOpenDrainTimeout)
+			err := application.Intents.FinishOpen(drainContext)
+			cancel()
+			if err != nil {
+				return SourceProfileFence{}, err
+			}
+			// Until a durable fence is published, errors must leave the source
+			// able to carry on. After fencing, ordinary stop/recovery applies.
+			defer func() {
+				if _, fenced := supervisor.sourceFence(id); !fenced {
+					application.Intents.ResumeAdmission()
+				}
+			}()
 		}
 	}
 	// Retry journal persistence even for an existing in-memory fence. A previous

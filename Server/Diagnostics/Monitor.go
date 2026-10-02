@@ -13,13 +13,15 @@ import (
 const sampleInterval = 5 * time.Second
 
 type Snapshot struct {
-	ApplicationMemoryMB int       `json:"applicationMemoryMb"`
-	BrowserMemoryMB     int       `json:"browserMemoryMb"`
-	ObservedAt          time.Time `json:"observedAt"`
+	MapRequests         map[string]uint64 `json:"mapRequests,omitempty"`
+	ApplicationMemoryMB int               `json:"applicationMemoryMb"`
+	BrowserMemoryMB     int               `json:"browserMemoryMb"`
+	ObservedAt          time.Time         `json:"observedAt"`
 }
 
 type Monitor struct {
 	profileRoot string
+	mapRequests map[string]uint64
 
 	mu        sync.RWMutex
 	snapshot  Snapshot
@@ -37,7 +39,7 @@ func (monitor *Monitor) Snapshot() Snapshot {
 		return Snapshot{}
 	}
 	monitor.mu.RLock()
-	current := monitor.snapshot
+	current := monitor.snapshotWithRequestsLocked()
 	monitor.mu.RUnlock()
 	if time.Since(current.ObservedAt) < sampleInterval {
 		return current
@@ -45,14 +47,14 @@ func (monitor *Monitor) Snapshot() Snapshot {
 	monitor.collectMu.Lock()
 	defer monitor.collectMu.Unlock()
 	monitor.mu.RLock()
-	current = monitor.snapshot
+	current = monitor.snapshotWithRequestsLocked()
 	monitor.mu.RUnlock()
 	if time.Since(current.ObservedAt) >= sampleInterval {
 		monitor.collect(true)
 	}
 	monitor.mu.RLock()
 	defer monitor.mu.RUnlock()
-	return monitor.snapshot
+	return monitor.snapshotWithRequestsLocked()
 }
 
 func (monitor *Monitor) collect(includeBrowser bool) {
@@ -91,4 +93,26 @@ func browserMemoryMB(profileRoot string) int {
 
 func normalizePath(value string) string {
 	return strings.ToLower(filepath.ToSlash(filepath.Clean(value)))
+}
+
+func (m *Monitor) RecordMapRequest(kind string) {
+	if m == nil || kind != "storm" && kind != "fortress" {
+		return
+	}
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	if m.mapRequests == nil {
+		m.mapRequests = map[string]uint64{}
+	}
+	m.mapRequests[kind]++
+}
+func (m *Monitor) snapshotWithRequestsLocked() Snapshot {
+	s := m.snapshot
+	if len(m.mapRequests) > 0 {
+		s.MapRequests = map[string]uint64{}
+		for k, v := range m.mapRequests {
+			s.MapRequests[k] = v
+		}
+	}
+	return s
 }

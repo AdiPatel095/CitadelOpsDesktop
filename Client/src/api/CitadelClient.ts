@@ -95,7 +95,27 @@ export interface ConfigurationUpdateCondition {
 	expectedValue?: unknown;
 }
 
-class CitadelClient {
+export interface EventsResumeCursor {
+  instance: string;
+  since: number;
+  ops: number;
+  config: number;
+  catalog: string;
+}
+
+export class CitadelClient {
+  private resumeCursorProvider: ((scope: string) => EventsResumeCursor | null) | null = null;
+
+  /** Installed by the mounted provider; cleanup cannot remove a newer provider. */
+  setResumeCursorProvider(provider: (scope: string) => EventsResumeCursor | null): () => void {
+    this.resumeCursorProvider = provider;
+    return () => { if (this.resumeCursorProvider === provider) this.resumeCursorProvider = null; };
+  }
+
+  getCatalogDigest(): string {
+    return this.catalogDigest;
+  }
+
   private socket: WebSocket | null = null;
   private status: APIConnectionStatus = 'Disconnected';
   private listeners = new Set<EnvelopeListener>();
@@ -770,6 +790,11 @@ class CitadelClient {
 
   private eventsURL(): string {
 	const url = new URL(runtimeURL('/api/v2/events'), window.location.origin);
+    const cursor = this.resumeCursorProvider?.(this.runtimeScope());
+    if (cursor) {
+      url.searchParams.set('resume', '1');
+      for (const [key, value] of Object.entries(cursor)) url.searchParams.set(key, String(value));
+    }
     url.protocol = url.protocol === 'https:' ? 'wss:' : 'ws:';
     return url.toString();
   }
