@@ -8329,21 +8329,6 @@
     "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
     "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
   },
-  "875b7f1359c977ddea0f4ca9a27f838755dfd2460d544ddb41fd86e6a00c9a58": {
-    "classification": "technical",
-    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
-    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
-  },
-  "947a404939b81fc8fd55b4d6a530d773cfd66b75bdbc28c9c7525b57de1081a9": {
-    "classification": "technical",
-    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
-    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
-  },
-  "c410c318a09a0c15e9a10e9ac64ef8fd2c49c3dc64f3dccfafe4d7f632bad47c": {
-    "classification": "technical",
-    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
-    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
-  },
   "33d0c6b3c371658fdf0fcb331890647791d7dfe0540c0fea63b73478c8efd8a5": {
     "classification": "technical",
     "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
@@ -8434,11 +8419,6 @@
     "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
     "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
   },
-  "bdaa779505153d0d9e64e04148eaf672e8121b28945b90ea634081c86284adb8": {
-    "classification": "technical",
-    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
-    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
-  },
   "0d6c357b67f1fbb4cdeab301c16cf6050dc4676a6f6ceb3e4c7644ba7a96bcc0": {
     "classification": "technical",
     "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
@@ -8455,11 +8435,6 @@
     "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
   },
   "fa8ba0ab89ce1e61425828f9de4252390ca6b390971c1f643c4c0af6aa7bd28f": {
-    "classification": "technical",
-    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
-    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
-  },
-  "12b68b12b5e51a235a01767ab34f377e78038ed1ccb73ea783ac2888b57c9204": {
     "classification": "technical",
     "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
     "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
@@ -11304,11 +11279,6 @@
     "reason": "CIT-66 saved-status enum, fallback locale or descriptor identity; not display text.",
     "evidence": "playerStatus.ts uses localized message descriptors and listParams for saved-data reasons. These literals select the neutral enum, English fallback formatting or the identity of an unkeyed game-detail leaf."
   },
-  "01ec9284620c809bcab8b13631a15169f62caa968777862170ae259cf607b73c": {
-    "classification": "technical",
-    "reason": "Status/role identifiers, typed catalog keys, locale/ARIA metadata; never displayed as raw labels.",
-    "evidence": "CIT-66 PR-C components/Header.tsx: desktop; StatusBadge and RoleTag render catalog labels and formatted reason descriptors; adapter identifiers are inputs to the tested pure player-status model."
-  },
   "0afe50e6e3e444ca5d6d209c00e5ececa94b8c32557937e5b708b92b1086c0ed": {
     "classification": "technical",
     "reason": "Status/role identifiers, typed catalog keys, locale/ARIA metadata; never displayed as raw labels.",
@@ -11469,16 +11439,6 @@
     "reason": "Button variant/size enum or non-visible ARIA state/heading reference, consumed only as styling or accessibility structure.",
     "evidence": "components/AttackSetupModal.tsx:969; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
   },
-  "9e0b7d6395bf8c0cbaa6028eef9aa6fe8f6d83895b3655f7fab8fb799c72bd9c": {
-    "classification": "technical",
-    "reason": "Button variant/size enum or non-visible ARIA state/heading reference, consumed only as styling or accessibility structure.",
-    "evidence": "components/AutoBirdHoverPopover.tsx:233; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
-  },
-  "62d3eadae9cb0d62e11697249f8e2b96e42d154232dd3b559d6892bfdb0e26b9": {
-    "classification": "technical",
-    "reason": "Button variant/size enum or non-visible ARIA state/heading reference, consumed only as styling or accessibility structure.",
-    "evidence": "components/AutoBirdHoverPopover.tsx:234; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
-  },
   "b1823a27a41f06bc64d4724a5177d0e27ae4f06dddaa2869d3f8ee2fe2d12ac8": {
     "classification": "technical",
     "reason": "Button variant/size enum or non-visible ARIA state/heading reference, consumed only as styling or accessibility structure.",
@@ -11553,16 +11513,6 @@
     "classification": "technical",
     "reason": "Button variant/size enum or non-visible ARIA state/heading reference, consumed only as styling or accessibility structure.",
     "evidence": "components/GoalPicker.tsx:55; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
-  },
-  "ce23004e3073e919ef7f2701552aa2eaee8f709b52e86de9121ecbdd6b5d05ed": {
-    "classification": "technical",
-    "reason": "Button variant/size enum or non-visible ARIA state/heading reference, consumed only as styling or accessibility structure.",
-    "evidence": "components/Header.tsx:334; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
-  },
-  "48c4539a45d43e5e176bf20cad610f1c4cb0a2c3043de05484d84f2d9483046f": {
-    "classification": "technical",
-    "reason": "Button variant/size enum or non-visible ARIA state/heading reference, consumed only as styling or accessibility structure.",
-    "evidence": "components/Header.tsx:334; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
   },
   "cdcda64c7cb95c3ca3c7bf75074e562cf95b11552f4cca39505954cc1ff6ad14": {
     "classification": "technical",

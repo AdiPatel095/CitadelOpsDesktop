@@ -5,6 +5,16 @@ import { officialMessageKeys, officialMessageNouns } from './officialKeys';
 import { formatMessage, validateMessageCatalog } from './formatMessage';
 /** Add explicit descriptors here; never translate user names, IDs, or free-form input. */
 export const messages = {
+  // CIT-69: Daniel's header status plan section 3; English source, translation batch pending.
+  "header.status.title": "Status",
+  "header.signal.incoming": "{count, number} incoming \u00b7 {state, select, known {first in {duration}} other {checking}}",
+  "header.signal.attention": "{count, plural, one {# automation needs attention} other {# automations need attention}}",
+  "header.signal.nextBird": "Next Bird: {castle} \u00b7 {state, select, due {due now} other {in {duration}}}",
+  "header.panel.connection": "Connection",
+  "header.panel.attention": "Needs attention",
+  "header.panel.attacksToday": "Attacks today",
+  "header.panel.openFeature": "Open {feature}",
+
   "analytics.noAttributed": "No attributed {metric} yet",
   "equipment.actions.reconfigure": "Reconfigure",
   "equipment.actions.upgradeEquipment": "Upgrade equipment",

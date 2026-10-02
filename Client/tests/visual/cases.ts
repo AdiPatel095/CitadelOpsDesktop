@@ -1,5 +1,6 @@
 export type VisualCase = { name: string; label: string; view: string; settings?: boolean; scenario?: string; states?: Partial<Record<'feature-history', 'empty' | 'loading' | 'error'>> };
 const baseCases: readonly VisualCase[] = [
+  { name: 'header-panel', label: 'Castle', view: 'castle' },
   { name: 'castle', label: 'Castle', view: 'castle' },
   { name: 'stale-session', label: 'Castle', view: 'castle', scenario: 'stale-data-disconnected' },
   { name: 'automation', label: 'Automation', view: 'automation' },

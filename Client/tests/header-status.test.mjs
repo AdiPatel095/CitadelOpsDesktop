@@ -1,13 +1,16 @@
 import assert from 'node:assert/strict';
-import { existsSync } from 'node:fs';
+import { existsSync, mkdtempSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { after, test } from 'node:test';
 import { fileURLToPath } from 'node:url';
 import { createServer } from 'vite';
 
 const root = fileURLToPath(new URL('..', import.meta.url));
 const source = existsSync(`${root}/src/commandCenter`) ? '/src/commandCenter' : '/src';
-const vite = await createServer({ root, configFile: false, appType: 'custom', logLevel: 'silent', server: { middlewareMode: true, hmr: false } });
-after(() => vite.close());
+const cacheDir = mkdtempSync(join(tmpdir(), 'cit-header-status-'));
+const vite = await createServer({ root, cacheDir, configFile: false, appType: 'custom', logLevel: 'silent', server: { middlewareMode: true, hmr: false } });
+after(async () => { await vite.close(); rmSync(cacheDir, { recursive: true, force: true }); });
 const { attentionEntries, prioritySignal } = await vite.ssrLoadModule(`${source}/components/header/headerStatus.ts`);
 const { AUTOMATION_FEATURE_ORDER } = await vite.ssrLoadModule(`${source}/settings/automationFeatureNames.ts`);
 const { automationPlayerStatus } = await vite.ssrLoadModule(`${source}/settings/readiness/playerStatus.ts`);
@@ -130,3 +133,53 @@ test('PR-B classifies with desktop Lock ignored; Protection Mode and other atten
     assert.deepEqual(prioritySignal(input({ features: [classify(raw)] })), { kind: 'attention', count: 1, worst });
   }
 });
+
+{
+const prefix = source;
+const { prioritySignal, attentionEntries, compactCount, clusterName } = await vite.ssrLoadModule(prefix + '/components/header/headerStatus.ts');
+const { AUTOMATION_FEATURE_ORDER } = await vite.ssrLoadModule(prefix + '/settings/automationFeatureNames.ts');
+const { automationPlayerStatus } = await vite.ssrLoadModule(prefix + '/settings/readiness/playerStatus.ts');
+const { formatMessage } = await vite.ssrLoadModule(prefix + '/i18n/formatMessage.ts');
+const { describeMessage } = await vite.ssrLoadModule(prefix + '/i18n/messages.ts');
+const reason = describeMessage('playerStatus.desktopLocked');
+const feature = (featureId, status) => ({ featureId, status, reason });
+const base = { now: 1000, station: { enabled: true, threatCount: 0, nextImpactAt: 0, status: 'waiting' }, bird: { enabled: true, nextWakeAt: 2000, nextCastleName: 'Keep' }, features: [] };
+test('incoming beats attention, attention beats next Bird, otherwise null', () => {
+ const input = { ...base, features: [feature('autoBird', 'paused')] };
+ assert.equal(prioritySignal({ ...input, station: { ...base.station, threatCount: 2 } }).kind, 'incoming');
+ assert.equal(prioritySignal(input).kind, 'attention');
+ assert.equal(prioritySignal(base).kind, 'nextBird');
+ assert.equal(prioritySignal({ ...base, bird: { ...base.bird, enabled: false } }), null);
+});
+test('blocked Station with threats shows attention; protection paused still handles threats', () => {
+ const blocked = { ...base, station: { ...base.station, status: 'blocked', threatCount: 2 }, features: [feature('autoStation', 'blocked')] };
+ assert.equal(prioritySignal(blocked).kind, 'attention');
+ assert.equal(prioritySignal({ ...blocked, station: { ...blocked.station, status: 'paused' } }).kind, 'incoming');
+});
+test('worst status then pinned registry order, plus compact tone and glyph', () => {
+ const entries = attentionEntries([feature('autoBird', 'paused'), feature('autoHospital', 'blocked'), feature('autoStation', 'needs-attention'), feature('autoTowers', 'blocked'), feature('autoTool', 'off')]);
+ assert.deepEqual(entries.map(x => x.featureId), ['autoStation','autoTowers','autoHospital','autoBird']);
+ for (const [worst, tone, glyph] of [['needs-attention','danger','triangle-alert'],['blocked','warning','circle-minus'],['paused','warning','circle-pause']]) assert.deepEqual(compactCount({ kind: 'attention', count: 3, worst }), { count: 3, tone, glyph });
+ assert.deepEqual(compactCount({ kind: 'incoming', count: 2, firstImpactInMs: null }), { count: 2, tone: 'warning', glyph: 'shield-alert' });
+ assert.equal(compactCount(prioritySignal(base)), null); assert.equal(compactCount(null), null);
+ assert.deepEqual(AUTOMATION_FEATURE_ORDER, ['autoTowers','autoFortress','autoInvasion','autoNomad','autoAdvisor','autoKhan','autoBeriWorld','autoStorm','autoRecruit','autoTool','autoSceatRes','autoTCI','autoFoodBalance','autoBooster','autoBuyer','autoEquipmentCleanup','autoHospital','autoStation','autoBird']);
+});
+test('Lock is ignored while protection-mode paused remains attention', () => {
+ const now = Date.parse('2026-10-02T00:00:00Z');
+ const input = { featureId: 'autoBird', runtime: { status: 'running', updatedAt: new Date(now).toISOString() }, enabled: { configured: true, enabled: true }, context: { connected: true, now }, desktopLocked: false };
+ const unlocked = automationPlayerStatus(input); assert.equal(unlocked.status, 'running');
+ assert.deepEqual(attentionEntries([feature('autoBird', unlocked.status)]), []);
+ const protection = automationPlayerStatus({ ...input, runtime: { ...input.runtime, status: 'protected' } });
+ assert.equal(protection.status, 'paused'); assert.equal(attentionEntries([feature('autoBird', protection.status)]).length, 1);
+});
+test('unknown impact says checking and elapsed Bird says due now', () => {
+ const incoming = prioritySignal({ ...base, station: { ...base.station, threatCount: 1 } }); assert.equal(incoming.firstImpactInMs, null);
+ assert.match(formatMessage(describeMessage('header.signal.incoming', { count: 1, state: 'other', duration: '' }), 'en', {}).text, /checking/);
+ const bird = prioritySignal({ ...base, now: 3000 }); assert.equal(bird.dueInMs, 0);
+ assert.match(formatMessage(describeMessage('header.signal.nextBird', { castle: 'Keep', state: 'due', duration: '' }), 'en', {}).text, /due now/);
+});
+test('cluster accessible name follows the viewer list format in en and de', () => {
+ for (const locale of ['en','de']) assert.equal(clusterName(['Running · Connected','2 incoming','6 attacks today'], locale), new Intl.ListFormat(locale,{type:'unit',style:'narrow'}).format(['Running · Connected','2 incoming','6 attacks today']));
+});
+
+}

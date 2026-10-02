@@ -7,7 +7,6 @@ export const BUTTON_PATTERNS = Object.freeze(['row', 'card', 'tab', 'disclosure'
 export const EXEMPTIONS = Object.freeze([
   'components/ui/ (shared primitives)',
   'test files and mock/',
-  'components/Header.tsx raw-button markers (CIT-69; preserved main-checkout edits)',
 ]);
 
 function exempt(file) {
