@@ -51,10 +51,7 @@ func (policy *SharedStormScanPolicy) Evaluate(_ context.Context, snapshot Snapsh
 			NextCheckAt: snapshot.Now.Add(time.Minute),
 		}, nil
 	}
-	worldID := strings.TrimSpace(snapshot.State.Account.WorldID)
-	if worldID == "" {
-		worldID = strings.TrimSpace(snapshot.State.Session.ServerURL)
-	}
+	worldID := State.SharedWorldID(&snapshot.State)
 	if worldID == "" {
 		return Decision{
 			Status: "waiting", Detail: "Shared Storm scanning is waiting for a bound game world", DetailDescriptor: Localization.New("server.automation.shared_storm_scanning_is.f871165f", "Shared Storm scanning is waiting for a bound game world", nil),

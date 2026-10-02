@@ -1724,3 +1724,12 @@ func cloneFloatPointer(source *float64) *float64 {
 	value := *source
 	return &value
 }
+
+// SharedWorldID reads only account/session identity, without copying map facts.
+func (store *Store) SharedWorldID() string {
+	generation := store.generation.Load()
+	if generation == nil {
+		return ""
+	}
+	return gameStateWorldID(generation.state)
+}

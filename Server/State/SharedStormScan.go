@@ -355,6 +355,17 @@ func (store *WorldMapStore) UnregisterStormScanner(accountKey string) {
 			delete(store.stormLeases, leaseID)
 		}
 	}
+	for scope, group := range store.mapScanGroups {
+		delete(group.participants, accountKey)
+		for id, lease := range group.leases {
+			if lease.account == accountKey {
+				delete(group.leases, id)
+			}
+		}
+		if len(group.participants) == 0 {
+			delete(store.mapScanGroups, scope)
+		}
+	}
 	store.mu.Unlock()
 }
 

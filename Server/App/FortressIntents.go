@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"math"
+	"math/rand/v2"
 	"sort"
 	"strconv"
 	"strings"
@@ -32,11 +33,14 @@ const (
 )
 
 type fortressMapRequest struct {
-	SourceCastleID State.CastleID  `json:"sourceCastleId"`
-	KingdomID      State.KingdomID `json:"kingdomId"`
-	TargetX        int             `json:"targetX,omitempty"`
-	TargetY        int             `json:"targetY,omitempty"`
-	ScanStartedAt  time.Time       `json:"scanStartedAt,omitempty"`
+	Cooperative    bool                   `json:"cooperative,omitempty"`
+	LeaseID        string                 `json:"leaseId,omitempty"`
+	Windows        []State.StormMapBounds `json:"windows,omitempty"`
+	SourceCastleID State.CastleID         `json:"sourceCastleId"`
+	KingdomID      State.KingdomID        `json:"kingdomId"`
+	TargetX        int                    `json:"targetX,omitempty"`
+	TargetY        int                    `json:"targetY,omitempty"`
+	ScanStartedAt  time.Time              `json:"scanStartedAt,omitempty"`
 }
 
 type fortressMapChunk struct {
@@ -82,7 +86,11 @@ func planFortressMapScan(_ context.Context, input Intent.PlanningContext, argume
 	if err != nil {
 		return Intent.Plan{}, err
 	}
-	request.ScanStartedAt = time.Now().UTC()
+	if !request.Cooperative {
+		request.ScanStartedAt = time.Now().UTC()
+	} else if request.LeaseID == "" || len(request.Windows) == 0 || len(request.Windows) > 8 || request.ScanStartedAt.IsZero() {
+		return Intent.Plan{}, fmt.Errorf("invalid shared Fortress scan request")
+	}
 	normalizedArguments, _ := json.Marshal(request)
 	steps := make([]Intent.Step, 0, 2)
 	if !source.Focused {
@@ -165,7 +173,7 @@ func (application *Application) scanFullFortressMap(ctx context.Context, argumen
 	tokenRoot := fmt.Sprintf("%s/fortress-gaa/%d", operationID, time.Now().UTC().UnixNano())
 	requestNumber := 0
 	lastRequestAt := time.Time{}
-	result, scanErr := discoverFullFortressMap(scanContext, source, func(windowContext context.Context, window towerMapWindow) (bool, error) {
+	scan := func(windowContext context.Context, window towerMapWindow) (bool, error) {
 		if !lastRequestAt.IsZero() {
 			wait := fortressMapChunkDelay - time.Since(lastRequestAt)
 			if wait > 0 {
@@ -181,10 +189,14 @@ func (application *Application) scanFullFortressMap(ctx context.Context, argumen
 		requestNumber++
 		lastRequestAt = time.Now()
 		return runFortressMapGAAWindow(
-			windowContext, application.Session, application.Ingest, language,
+			windowContext, application.countMapSender("fortress"), application.Ingest, language,
 			request.KingdomID, window, fmt.Sprintf("%s/%d", tokenRoot, requestNumber),
 		)
-	})
+	}
+	if request.Cooperative {
+		return application.scanSharedFortressMap(scanContext, request, scan)
+	}
+	result, scanErr := discoverFullFortressMap(scanContext, source, scan)
 	if scanErr != nil {
 		return scanErr
 	}
@@ -767,4 +779,43 @@ func fortressAttackClaims(source State.CastleState, target State.MapObservation,
 func mustMarshalFortressAttackRequest(request fortressAttackRequest) json.RawMessage {
 	payload, _ := json.Marshal(request)
 	return payload
+}
+
+func (application *Application) scanSharedFortressMap(ctx context.Context, request fortressMapRequest, scan fortressMapWindowScanner) error {
+	if application.WorldMaps == nil || application.AccountKey == "" {
+		return fmt.Errorf("shared Fortress scan is unavailable")
+	}
+	state := application.State.ReadOnlyView()
+	world := state.Account.WorldID
+	if world == "" {
+		world = state.Session.ServerURL
+	}
+	scope := State.MapScanScope{Kind: "fortress", WorldID: world, Zone: state.Session.Namespace, KingdomID: request.KingdomID}
+	if !application.WorldMaps.ValidateFortressLease(application.AccountKey, scope, request.LeaseID, request.Windows, time.Now().UTC()) {
+		return fmt.Errorf("shared Fortress scan lease is unavailable")
+	}
+	defer application.WorldMaps.ReleaseFortressScan(application.AccountKey, scope, request.LeaseID)
+	timer := time.NewTimer(time.Duration(rand.IntN(251)) * time.Millisecond)
+	defer timer.Stop()
+	select {
+	case <-timer.C:
+	case <-ctx.Done():
+		return ctx.Err()
+	}
+	windows := append([]State.StormMapBounds(nil), request.Windows...)
+	rand.Shuffle(len(windows), func(i, j int) { windows[i], windows[j] = windows[j], windows[i] })
+	for _, w := range windows {
+		window := towerMapWindow{X1: w.X1, Y1: w.Y1, X2: w.X2, Y2: w.Y2}
+		content, err := scan(ctx, window)
+		if err != nil {
+			return err
+		}
+		if err := application.captureFullFortressMap(request, []towerMapWindow{window}); err != nil {
+			return err
+		}
+		if err := application.WorldMaps.CompleteFortressWindow(application.AccountKey, scope, request.LeaseID, w, content, time.Now().UTC()); err != nil {
+			return err
+		}
+	}
+	return nil
 }
