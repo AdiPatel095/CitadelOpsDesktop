@@ -1,0 +1,194 @@
+/* Shared card anatomy. Surfaces, shape and spacing belong to this family. */
+.ui-card {
+    --ui-card-padding: var(--space-16);
+    position: relative;
+    min-width: 0;
+    overflow: hidden;
+    padding: var(--ui-card-padding);
+    border: calc(var(--space-2) / 2) solid var(--border-default);
+    border-start-start-radius: var(--radius-xl);
+    border-start-end-radius: var(--radius-md);
+    border-end-start-radius: var(--radius-xl);
+    border-end-end-radius: var(--radius-xl);
+    background: var(--surface-card);
+    box-shadow: var(--elevation-1);
+    color: var(--text-primary);
+    transition: border-color var(--duration-fast) var(--ease-standard), box-shadow var(--duration-fast) var(--ease-standard), transform var(--duration-fast) var(--ease-standard);
+}
+@media (min-width: 768px) {
+    .ui-card {
+        --ui-card-padding: var(--space-20);
+        border-start-start-radius: var(--radius-2xl);
+        border-end-start-radius: var(--radius-2xl);
+        border-end-end-radius: var(--radius-2xl);
+    }
+}
+@media (min-width: 1280px) {
+    .ui-card { --ui-card-padding: var(--space-24); }
+}
+.ui-card[data-current-selection="true"] {
+    padding: calc(var(--ui-card-padding) - var(--space-2) / 2);
+    border-width: var(--space-2);
+    border-color: var(--accent);
+}
+.ui-card--interactive { cursor: pointer; }
+.ui-card--interactive:hover {
+    border-color: var(--border-strong);
+    box-shadow: var(--elevation-2);
+    transform: translateY(calc(-1 * var(--space-2)));
+}
+.ui-card--interactive:active {
+    background-image: linear-gradient(var(--state-pressed), var(--state-pressed));
+}
+.ui-card[data-current-selection="true"]:hover { border-color: var(--accent); }
+.ui-card--interactive:focus-visible,
+.ui-card__disclosure:focus-visible {
+    outline: var(--space-2) solid var(--focus-ring);
+    outline-offset: var(--space-2);
+}
+.ui-card__header {
+    display: flex;
+    min-width: 0;
+    min-height: calc(var(--space-32) + var(--space-24));
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-12);
+    background: transparent;
+    box-shadow: none;
+}
+.ui-card__header--divided {
+    border-block-end: calc(var(--space-2) / 2) solid var(--border-subtle);
+    padding-block-end: var(--space-16);
+}
+.ui-card__heading { min-width: 0; }
+.ui-card__title {
+    display: flex;
+    align-items: center;
+    gap: var(--space-8);
+    margin: 0;
+    color: var(--text-primary);
+    font-size: var(--font-size-16);
+    font-weight: var(--font-weight-600);
+    line-height: var(--line-height-16);
+}
+.ui-card__description {
+    margin: var(--space-4) 0 0;
+    color: var(--text-secondary);
+    font-size: var(--font-size-14);
+    font-weight: var(--font-weight-400);
+    line-height: var(--line-height-14);
+}
+.ui-card__icon {
+    display: inline-flex;
+    flex-shrink: 0;
+    color: var(--text-secondary);
+}
+.ui-card__icon svg { width: var(--space-20); height: var(--space-20); }
+.ui-card__actions {
+    display: flex;
+    min-width: 0;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-8);
+    margin-inline-start: auto;
+}
+.ui-card__content { min-width: 0; padding-block-start: var(--space-16); }
+.ui-card__content--flush { padding: 0; }
+.ui-card__content[hidden] { display: none; }
+.ui-card__footer {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-12);
+    padding-block-start: var(--space-16);
+}
+.ui-card__disclosure {
+    display: flex;
+    min-width: 0;
+    flex: 1;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-12);
+    padding: 0;
+    border: 0;
+    border-radius: var(--radius-md);
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    text-align: start;
+    cursor: pointer;
+}
+.ui-card__chevron {
+    width: var(--space-20);
+    height: var(--space-20);
+    flex-shrink: 0;
+    transition: transform var(--duration-fast) var(--ease-standard);
+}
+.ui-card__disclosure[aria-expanded="true"] .ui-card__chevron { transform: rotate(180deg); }
+.ui-panel,
+.ui-metric-tile {
+    min-width: 0;
+    padding: var(--space-12);
+    border: 0;
+    border-radius: var(--radius-lg);
+    background: var(--surface-inset);
+    box-shadow: none;
+}
+@media (min-width: 768px) {
+    .ui-panel,
+    .ui-metric-tile { padding: var(--space-16); }
+}
+.ui-metric-tile[data-size="sm"] { padding: var(--space-12); }
+.ui-metric-tile__label,
+.ui-metric-tile__caption,
+.ui-section-header__count {
+    color: var(--text-secondary);
+    font-size: var(--font-size-12);
+    font-weight: var(--font-weight-500);
+    line-height: var(--line-height-12);
+}
+.ui-metric-value {
+    margin-block-start: var(--space-4);
+    color: var(--text-primary);
+    font-size: var(--font-size-20);
+    font-weight: var(--font-weight-700);
+    line-height: var(--line-height-20);
+    font-variant-numeric: tabular-nums;
+}
+.ui-metric-value--mono { font-family: var(--font-mono); }
+.ui-metric-tile__caption { margin-block-start: var(--space-4); }
+.ui-section-header {
+    display: flex;
+    min-width: 0;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-12);
+    margin-block-end: var(--space-16);
+}
+.ui-section-header__title {
+    margin: 0;
+    color: var(--text-primary);
+    font-size: var(--font-size-20);
+    font-weight: var(--font-weight-600);
+    line-height: var(--line-height-20);
+}
+.ui-section-header__rule {
+    min-width: var(--space-16);
+    height: calc(var(--space-2) / 2);
+    flex: 1;
+    background: var(--border-subtle);
+}
+.ui-section-header__actions { display: flex; flex-wrap: wrap; gap: var(--space-8); }
+@media (prefers-reduced-motion: reduce) {
+    .ui-card,
+    .ui-card__chevron { transition: none; }
+    .ui-card--interactive:hover { transform: none; }
+}
+@media (forced-colors: active) {
+    .ui-card { border-color: CanvasText; }
+    .ui-card[data-current-selection="true"] { border-color: Highlight; }
+    .ui-card--interactive:focus-visible,
+    .ui-card__disclosure:focus-visible { outline-color: Highlight; }
+    .ui-section-header__rule { background: CanvasText; }
+}

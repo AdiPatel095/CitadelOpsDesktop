@@ -121,8 +121,8 @@ const WorldAllianceDetailView = ({ profile, onOpenPlayer }: WorldAllianceDetailV
 				)}
 			/>
 
-			<Card className="liquid-prominent-header-card">
-				<CardHeader className="liquid-card-header-prominent flex-wrap gap-4">
+			<Card className="">
+				<CardHeader className="flex-wrap gap-4">
 					<div className="flex w-full flex-wrap items-center justify-between gap-4">
 						<div>
 							<CardTitle className="flex items-center gap-2 text-lg">
@@ -143,7 +143,7 @@ const WorldAllianceDetailView = ({ profile, onOpenPlayer }: WorldAllianceDetailV
 						/>
 					</div>
 				</CardHeader>
-				<CardContent className="liquid-prominent-header-content p-5 sm:p-6">
+				<CardContent className="">
 					<div className="mb-4">
 						<PillSelector
 							ariaLabel={localizeStatic("ui.worldIntelligence.components.worldAllianceDetailView.ariaLabel.public.alliance.metric.f39a585a")}
@@ -180,12 +180,12 @@ const WorldAllianceDetailView = ({ profile, onOpenPlayer }: WorldAllianceDetailV
 				<MetricTile label={localizeStatic("ui.worldIntelligence.components.worldAllianceDetailView.label.public.event.scores.7de12880")} value={formatCount(publicMetrics.length)} size="lg" />
 			</div>
 
-			<Card className="liquid-prominent-header-card">
-				<CardHeader className="liquid-card-header-prominent flex-wrap gap-3">
+			<Card className="">
+				<CardHeader className="flex-wrap gap-3">
 					<div><CardTitle className="flex items-center gap-2"><Sparkles className="h-5 w-5 text-primary" />Public scores & event activity</CardTitle><p className="mt-1 text-xs text-text-muted"><LocalizedText messageKey="ui.worldIntelligence.components.worldAllianceDetailView.collected.alliance.event.rankings.appear.here.when.ae0da209" /></p></div>
 					<Badge variant="outline">{publicMetrics.length} observed</Badge>
 				</CardHeader>
-				<CardContent className="liquid-prominent-header-content p-5 sm:p-6">
+				<CardContent className="">
 					{publicMetrics.length === 0 ? <p className="text-sm text-text-muted"><LocalizedText messageKey="ui.worldIntelligence.components.worldAllianceDetailView.no.additional.public.event.score.has.been.cf534934" /></p> : (
 						<div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
 							{publicMetrics.map((metric) => <div key={metric.key} className="rounded-global border border-border-base bg-bg-input/35 px-3.5 py-3" title={publicMetricProvenance(metric)}><div className="flex items-start justify-between gap-2"><div className="text-[10px] font-bold uppercase tracking-wider text-text-muted">{metric.label}</div>{metric.rank != null && metric.rank > 0 && <Badge variant="outline">#{formatCount(metric.rank)}</Badge>}</div><div className="mt-1 font-mono text-2xl font-bold text-text-main">{formatNumber(metric.value)}</div><div className="mt-1 flex flex-wrap items-center justify-between gap-2 text-[11px] text-text-muted"><span>{metric.unit || 'points'} · {publicMetricSourceLabel(metric.source)}</span><span title={formatDateTime(metric.observedAt)}>{relativeTime(metric.observedAt)}</span></div></div>)}
@@ -196,7 +196,7 @@ const WorldAllianceDetailView = ({ profile, onOpenPlayer }: WorldAllianceDetailV
 
 			<Card>
 				<CardHeader className="flex-wrap gap-3"><CardTitle className="flex items-center gap-2"><Users className="h-5 w-5 text-primary" /><LocalizedText messageKey="ui.worldIntelligence.components.worldAllianceDetailView.observed.roster.81d02c36" /></CardTitle><Badge variant="outline">{formatCount(profile.members.length)} players</Badge></CardHeader>
-				<CardContent className="pt-0">
+				<CardContent className="">
 					<div className="max-h-[34rem] overflow-auto rounded-global border border-border-base custom-scrollbar">
 						<table className="w-full min-w-[40rem] text-sm">
 							<thead className="sticky top-0 z-10 bg-bg-card text-[10px] uppercase tracking-wide text-text-muted"><tr><th className="px-3 py-2 text-left"><LocalizedText messageKey="ui.worldIntelligence.components.worldAllianceDetailView.player.64aee8c6" /></th><th className="px-3 py-2 text-right"><LocalizedText messageKey="game.level" /></th><th className="px-3 py-2 text-right"><LocalizedText messageKey="ui.worldIntelligence.components.worldAllianceDetailView.might.f68b032e" /></th></tr></thead>

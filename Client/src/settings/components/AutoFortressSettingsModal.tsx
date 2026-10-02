@@ -289,7 +289,7 @@ export const AutoFortressSettingsModal: React.FC<AutoFortressSettingsModalProps>
             const supplyDetail = localizedSupplyDetails[kingdomIndex];
             const kingdomReadiness = readiness.kingdoms.find((entry) => entry.kingdomId === kingdom.id);
             return (
-              <Card key={kingdom.id} variant="solid" className={`relative overflow-hidden bg-gradient-to-br ${kingdom.wash} p-4`}>
+              <Card key={kingdom.id} variant="solid" className={`relative overflow-hidden  ${kingdom.wash} `}>
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex min-w-0 items-center gap-3">
                     <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-border-base bg-bg-app/70">
@@ -349,7 +349,7 @@ export const AutoFortressSettingsModal: React.FC<AutoFortressSettingsModalProps>
       </SettingsSection>
 
       <SettingsSection disclosure={disclosure} section="supply" className="mb-4">
-        <Card id="auto-fortress-supply" variant="solid" className="p-4">
+        <Card id="auto-fortress-supply" variant="solid" className="">
           <div className="flex items-start gap-3">
             <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary"><ShoppingBag className="h-5 w-5" /></div>
             <div className="min-w-0 flex-1">
