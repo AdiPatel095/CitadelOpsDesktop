@@ -1,13 +1,16 @@
 import assert from 'node:assert/strict';
-import { existsSync } from 'node:fs';
+import { existsSync, mkdtempSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { after, test } from 'node:test';
 import { fileURLToPath } from 'node:url';
 import { createServer } from 'vite';
 
 const root = fileURLToPath(new URL('..', import.meta.url));
 const source = existsSync(`${root}/src/commandCenter`) ? '/src/commandCenter' : '/src';
-const vite = await createServer({ root, configFile: false, appType: 'custom', logLevel: 'silent', server: { middlewareMode: true, hmr: false } });
-after(() => vite.close());
+const cacheDir = mkdtempSync(join(tmpdir(), 'cit-header-status-'));
+const vite = await createServer({ root, cacheDir, configFile: false, appType: 'custom', logLevel: 'silent', server: { middlewareMode: true, hmr: false } });
+after(async () => { await vite.close(); rmSync(cacheDir, { recursive: true, force: true }); });
 const { attentionEntries, prioritySignal } = await vite.ssrLoadModule(`${source}/components/header/headerStatus.ts`);
 const { AUTOMATION_FEATURE_ORDER } = await vite.ssrLoadModule(`${source}/settings/automationFeatureNames.ts`);
 const { automationPlayerStatus } = await vite.ssrLoadModule(`${source}/settings/readiness/playerStatus.ts`);
