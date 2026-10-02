@@ -226,5 +226,7 @@
   "server.telemetry.channel.rift.description": "已发起的裂隙突袭攻击及其他已完成的裂隙突袭操作。",
   "server.telemetry.channel.rift.label": "裂隙突袭",
   "server.telemetry.channel.websocket_game.description": "游戏的每个 WebSocket 帧，包括直接在游戏中执行的操作。",
-  "server.telemetry.channel.websocket_game.label": "所有游戏通信"
+  "server.telemetry.channel.websocket_game.label": "所有游戏通信",
+  "server.automation.protection_mode_unsupported_gates": "保护模式阻止部队驻扎，且 {castle} 所在的王国不支持开放城门",
+  "server.automation.stationing_unsafe_unsupported_gates": "无法在 {castle} 安全驻扎部队，且其所在的王国不支持开放城门"
 }

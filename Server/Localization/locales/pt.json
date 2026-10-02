@@ -226,5 +226,7 @@
   "server.telemetry.channel.rift.description": "Ataques da Incursão na Fenda iniciados e outras ações da Incursão na Fenda concluídas.",
   "server.telemetry.channel.rift.label": "Incursão na Fenda",
   "server.telemetry.channel.websocket_game.description": "Cada quadro WebSocket do jogo, incluindo ações realizadas diretamente no jogo.",
-  "server.telemetry.channel.websocket_game.label": "Todo o tráfego do jogo"
+  "server.telemetry.channel.websocket_game.label": "Todo o tráfego do jogo",
+  "server.automation.protection_mode_unsupported_gates": "O modo de proteção impede o estacionamento de tropas, e o reino de {castle} não oferece suporte a portões abertos",
+  "server.automation.stationing_unsafe_unsupported_gates": "As tropas em {castle} não podem ser estacionadas com segurança, e seu reino não oferece suporte a portões abertos"
 }

@@ -226,5 +226,7 @@
   "server.telemetry.channel.rift.description": "الهجمات التي أُطلقت في غارة الشق وإجراءات غارة الشق الأخرى المكتملة.",
   "server.telemetry.channel.rift.label": "غارة الشق",
   "server.telemetry.channel.websocket_game.description": "كل إطار WebSocket للعبة، بما في ذلك الإجراءات المنفذة مباشرة داخل اللعبة.",
-  "server.telemetry.channel.websocket_game.label": "كل اتصالات اللعبة"
+  "server.telemetry.channel.websocket_game.label": "كل اتصالات اللعبة",
+  "server.automation.protection_mode_unsupported_gates": "يمنع وضع الحماية تمركز القوات، ولا تدعم مملكة {castle} البوابات المفتوحة",
+  "server.automation.stationing_unsafe_unsupported_gates": "لا يمكن تمركز القوات في {castle} بأمان، ولا تدعم مملكتها البوابات المفتوحة"
 }

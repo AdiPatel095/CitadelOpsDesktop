@@ -226,5 +226,7 @@
   "server.telemetry.channel.rift.description": "開始したリフトレイドの攻撃と、その他の完了したリフトレイドの操作。",
   "server.telemetry.channel.rift.label": "リフトレイド",
   "server.telemetry.channel.websocket_game.description": "ゲーム内で直接行った操作も含む、ゲームのすべてのWebSocketフレーム。",
-  "server.telemetry.channel.websocket_game.label": "すべてのゲーム通信"
+  "server.telemetry.channel.websocket_game.label": "すべてのゲーム通信",
+  "server.automation.protection_mode_unsupported_gates": "保護モードでは部隊を駐留させられません。また、{castle} の王国は開門に対応していません",
+  "server.automation.stationing_unsafe_unsupported_gates": "{castle} の部隊を安全に駐留させることができません。また、この城の王国は開門に対応していません"
 }

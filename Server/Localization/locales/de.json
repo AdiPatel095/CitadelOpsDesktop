@@ -226,5 +226,7 @@
   "server.telemetry.channel.rift.description": "Gestartete Angriffe beim Riss-Überfall und andere abgeschlossene Aktionen beim Riss-Überfall.",
   "server.telemetry.channel.rift.label": "Riss-Überfall",
   "server.telemetry.channel.websocket_game.description": "Jeder WebSocket-Frame des Spiels, einschließlich direkt im Spiel ausgeführter Aktionen.",
-  "server.telemetry.channel.websocket_game.label": "Gesamter Spielverkehr"
+  "server.telemetry.channel.websocket_game.label": "Gesamter Spielverkehr",
+  "server.automation.protection_mode_unsupported_gates": "Der Schutzmodus verhindert das Stationieren von Truppen, und das Königreich von {castle} unterstützt keine offenen Tore",
+  "server.automation.stationing_unsafe_unsupported_gates": "Truppen in {castle} können nicht sicher stationiert werden, und das Königreich unterstützt keine offenen Tore"
 }

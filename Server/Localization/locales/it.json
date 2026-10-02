@@ -226,5 +226,7 @@
   "server.telemetry.channel.rift.description": "Attacchi del Raid della Faglia avviati e altre azioni del Raid della Faglia completate.",
   "server.telemetry.channel.rift.label": "Raid della Faglia",
   "server.telemetry.channel.websocket_game.description": "Ogni frame WebSocket del gioco, incluse le azioni eseguite direttamente nel gioco.",
-  "server.telemetry.channel.websocket_game.label": "Tutto il traffico del gioco"
+  "server.telemetry.channel.websocket_game.label": "Tutto il traffico del gioco",
+  "server.automation.protection_mode_unsupported_gates": "La modalità Protezione impedisce lo stazionamento delle truppe e il regno di {castle} non supporta i cancelli aperti",
+  "server.automation.stationing_unsafe_unsupported_gates": "Le truppe a {castle} non possono essere stazionate in sicurezza e il suo regno non supporta i cancelli aperti"
 }

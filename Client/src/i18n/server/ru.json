@@ -226,5 +226,7 @@
   "server.telemetry.channel.rift.description": "Начатые атаки в Рейде на Разлом и другие завершённые действия в Рейде на Разлом.",
   "server.telemetry.channel.rift.label": "Рейд на Разлом",
   "server.telemetry.channel.websocket_game.description": "Каждый кадр WebSocket игры, включая действия, выполненные непосредственно в игре.",
-  "server.telemetry.channel.websocket_game.label": "Весь игровой трафик"
+  "server.telemetry.channel.websocket_game.label": "Весь игровой трафик",
+  "server.automation.protection_mode_unsupported_gates": "Режим защиты не позволяет размещать войска, а королевство замка {castle} не поддерживает открытые ворота",
+  "server.automation.stationing_unsafe_unsupported_gates": "Войска в замке {castle} нельзя разместить безопасно, а его королевство не поддерживает открытые ворота"
 }

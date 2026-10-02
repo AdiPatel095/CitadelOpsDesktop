@@ -226,5 +226,7 @@
   "server.telemetry.channel.rift.description": "Започнати атаки в Нашествие в Разлома и други завършени действия в Нашествие в Разлома.",
   "server.telemetry.channel.rift.label": "Нашествие в Разлома",
   "server.telemetry.channel.websocket_game.description": "Всеки WebSocket кадър на играта, включително действия, извършени директно в играта.",
-  "server.telemetry.channel.websocket_game.label": "Целият трафик на играта"
+  "server.telemetry.channel.websocket_game.label": "Целият трафик на играта",
+  "server.automation.protection_mode_unsupported_gates": "Режимът на защита спира разполагането на войски, а кралството на {castle} не поддържа отворени порти",
+  "server.automation.stationing_unsafe_unsupported_gates": "Войските в {castle} не могат да бъдат разположени безопасно, а кралството му не поддържа отворени порти"
 }

@@ -226,5 +226,7 @@
   "server.telemetry.channel.rift.description": "Inledda Rift Raid-attacker och andra slutförda Rift Raid-åtgärder.",
   "server.telemetry.channel.rift.label": "Rift Raid",
   "server.telemetry.channel.websocket_game.description": "Varje WebSocket-ram från spelet, inklusive åtgärder som utförts direkt i spelet.",
-  "server.telemetry.channel.websocket_game.label": "All speltrafik"
+  "server.telemetry.channel.websocket_game.label": "All speltrafik",
+  "server.automation.protection_mode_unsupported_gates": "Skyddsläget förhindrar stationering av trupper, och kungariket för {castle} stöder inte öppna portar",
+  "server.automation.stationing_unsafe_unsupported_gates": "Trupper i {castle} kan inte stationeras säkert, och slottets kungarike stöder inte öppna portar"
 }

@@ -226,5 +226,7 @@
   "server.telemetry.channel.rift.description": "Ataques de la Incursión en la Fisura iniciados y otras acciones de la Incursión en la Fisura completadas.",
   "server.telemetry.channel.rift.label": "Incursión en la Fisura",
   "server.telemetry.channel.websocket_game.description": "Cada trama WebSocket del juego, incluidas las acciones realizadas directamente en el juego.",
-  "server.telemetry.channel.websocket_game.label": "Todo el tráfico del juego"
+  "server.telemetry.channel.websocket_game.label": "Todo el tráfico del juego",
+  "server.automation.protection_mode_unsupported_gates": "El modo de protección impide estacionar tropas y el reino de {castle} no admite puertas abiertas",
+  "server.automation.stationing_unsafe_unsupported_gates": "Las tropas de {castle} no se pueden estacionar con seguridad y su reino no admite puertas abiertas"
 }

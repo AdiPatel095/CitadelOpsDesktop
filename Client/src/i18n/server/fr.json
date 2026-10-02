@@ -226,5 +226,7 @@
   "server.telemetry.channel.rift.description": "Attaques lancées du Raid de Faille et autres actions terminées du Raid de Faille.",
   "server.telemetry.channel.rift.label": "Raid de Faille",
   "server.telemetry.channel.websocket_game.description": "Chaque trame WebSocket du jeu, y compris les actions effectuées directement dans le jeu.",
-  "server.telemetry.channel.websocket_game.label": "Tout le trafic du jeu"
+  "server.telemetry.channel.websocket_game.label": "Tout le trafic du jeu",
+  "server.automation.protection_mode_unsupported_gates": "Le mode Protection empêche le stationnement des troupes, et le royaume de {castle} ne prend pas en charge les portes ouvertes",
+  "server.automation.stationing_unsafe_unsupported_gates": "Les troupes de {castle} ne peuvent pas être stationnées en sécurité, et son royaume ne prend pas en charge les portes ouvertes"
 }

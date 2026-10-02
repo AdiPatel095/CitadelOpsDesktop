@@ -226,5 +226,7 @@
   "server.telemetry.channel.rift.description": "Pradėtos Plyšio reido atakos ir kiti užbaigti Plyšio reido veiksmai.",
   "server.telemetry.channel.rift.label": "Plyšio reidas",
   "server.telemetry.channel.websocket_game.description": "Kiekvienas žaidimo WebSocket kadras, įskaitant tiesiogiai žaidime atliktus veiksmus.",
-  "server.telemetry.channel.websocket_game.label": "Visas žaidimo duomenų srautas"
+  "server.telemetry.channel.websocket_game.label": "Visas žaidimo duomenų srautas",
+  "server.automation.protection_mode_unsupported_gates": "Apsaugos režimas neleidžia dislokuoti karių, o pilies {castle} karalystė nepalaiko atvirų vartų",
+  "server.automation.stationing_unsafe_unsupported_gates": "Pilies {castle} kariai negali būti saugiai dislokuoti, o jos karalystė nepalaiko atvirų vartų"
 }

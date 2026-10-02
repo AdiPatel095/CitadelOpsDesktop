@@ -140,3 +140,25 @@ The batch-2 cut was refreshed after CIT-88 merged. All 25 locales use the
 current `copy.today` and `copy.todayTitle` messages without the obsolete
 `state` selector, and include `copy.since`, `copy.sinceTitle`,
 `copy.attacksSaved` and `copy.countUnknownTitle`.
+
+## CIT-105 translation batch 3
+
+Batch 3: **model-authored, pending native review**. The shared fixture
+`tests/fixtures/translation-batches/batch-3.json` records 51 shared keys,
+2 runtime keys and 2 portal-only keys added or changed after the batch-2 cuts.
+Desktop consumes the 53 shared/runtime keys, with entries in all 25
+non-English locales (1,325 locale/key pairs); English sources provide the
+26th locale. Existing translations are reused. Shared catalogs, runtime packs
+and the fixture are byte-identical between desktop and portal. ICU
+placeholders, select options, rich tags, CLDR plural categories and formatting
+are checked by the existing batch tests.
+
+The desktop cut is `96ad6c968e94d674eaf2fbc82356bdde2ff7a614`; the portal cut
+is `b8fd1f7245217250ec377800c3b1eaaefbb4a67a`. The previous cuts are
+`3b3066d87fb98cb89b01908a508cde13745fc2fe` and
+`89e8011a9aeeac2a822a32bf87c124d7eebab468`, respectively. The assigned families
+are `shared`, `runtime` and `portal`; desktop skips the portal-only family.
+The legacy translation backlog, unused Fortress entries and CIT-69/CIT-74
+translations are outside this batch. Native-speaker review remains pending;
+this batch does not establish whole-application translated coverage. Claire
+confirms both PRs have merged before a release that ships these strings.

@@ -226,5 +226,7 @@
   "server.telemetry.channel.rift.description": "Επιθέσεις της Επιδρομής Ρήγματος που ξεκίνησαν και άλλες ολοκληρωμένες ενέργειες της Επιδρομής Ρήγματος.",
   "server.telemetry.channel.rift.label": "Επιδρομή Ρήγματος",
   "server.telemetry.channel.websocket_game.description": "Κάθε πλαίσιο WebSocket του παιχνιδιού, συμπεριλαμβανομένων ενεργειών που έγιναν απευθείας μέσα στο παιχνίδι.",
-  "server.telemetry.channel.websocket_game.label": "Όλη η κίνηση του παιχνιδιού"
+  "server.telemetry.channel.websocket_game.label": "Όλη η κίνηση του παιχνιδιού",
+  "server.automation.protection_mode_unsupported_gates": "Η λειτουργία προστασίας εμποδίζει τη στάθμευση στρατευμάτων και το βασίλειο του {castle} δεν υποστηρίζει ανοιχτές πύλες",
+  "server.automation.stationing_unsafe_unsupported_gates": "Τα στρατεύματα στο {castle} δεν μπορούν να σταθμεύσουν με ασφάλεια και το βασίλειό του δεν υποστηρίζει ανοιχτές πύλες"
 }

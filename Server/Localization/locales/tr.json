@@ -226,5 +226,7 @@
   "server.telemetry.channel.rift.description": "Başlatılan Yarık Baskını saldırıları ve tamamlanan diğer Yarık Baskını işlemleri.",
   "server.telemetry.channel.rift.label": "Yarık Baskını",
   "server.telemetry.channel.websocket_game.description": "Doğrudan oyunda gerçekleştirilen işlemler dâhil her oyun WebSocket çerçevesi.",
-  "server.telemetry.channel.websocket_game.label": "Tüm oyun trafiği"
+  "server.telemetry.channel.websocket_game.label": "Tüm oyun trafiği",
+  "server.automation.protection_mode_unsupported_gates": "Koruma Modu birliklerin konuşlanmasını engelliyor ve {castle} kalesinin krallığı Açık Kapılar özelliğini desteklemiyor",
+  "server.automation.stationing_unsafe_unsupported_gates": "{castle} kalesindeki birlikler güvenle konuşlandırılamıyor ve kalenin krallığı Açık Kapılar özelliğini desteklemiyor"
 }
