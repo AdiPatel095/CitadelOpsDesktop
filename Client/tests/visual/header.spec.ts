@@ -26,7 +26,7 @@ for (const theme of ['dark','light'] as const) test(`CIT-69 header layout and di
   await assertDisabledNeutral(page); await reportAccentUsage(page, 'header-panel');
   for (const button of await page.locator('.liquid-header button:visible, .cit-popover-layer:visible button:visible').all()) {
     const name = await button.getAttribute('aria-label') || await button.innerText(); expect(name.trim()).not.toBe('');
-    if (width < 768) { const box = await button.boundingBox(); expect(box!.width).toBeGreaterThanOrEqual(44); expect(box!.height).toBeGreaterThanOrEqual(44); }
+    if (width < 768) { const box = await button.boundingBox(); expect(box!.width, `${name} width`).toBeGreaterThanOrEqual(44); expect(box!.height, `${name} height`).toBeGreaterThanOrEqual(44); }
   }
   await page.keyboard.press('Escape'); await expect(panel).toBeHidden(); await expect(cluster).toBeFocused();
   await cluster.click();
