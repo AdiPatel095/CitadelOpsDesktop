@@ -1,6 +1,6 @@
 import { expect, type Page } from '@playwright/test';
 
-export async function scanTypography(page: Page) {
+export async function typographyFindings(page: Page) {
   const failures = await page.evaluate(() => {
     const failures: string[] = [];
     const sizes = [12,13,14,16,20,24,32,48,64];
@@ -27,6 +27,11 @@ export async function scanTypography(page: Page) {
     scan(document);
     return failures;
   });
+  return failures;
+}
+
+export async function scanTypography(page: Page) {
+  const failures = await typographyFindings(page);
   expect(failures, 'CIT-63 R4/R5/R13 rendered typography').toEqual([]);
   for (const metric of await page.locator('.ui-metric-value:visible').all()) {
     expect(await metric.evaluate(element=>getComputedStyle(element).fontWeight), 'metric values retain the 700 role override').toBe('700');

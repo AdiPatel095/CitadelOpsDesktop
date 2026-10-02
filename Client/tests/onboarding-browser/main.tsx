@@ -53,6 +53,10 @@ for (const seed of server.built.storage) {
 }
 
 installFixtureTransport(server);
+if (params.get('mockToast') === 'success') {
+  const { Notifications } = await import('../../src/components/Notifications');
+  Notifications.success('CIT-74 synthetic success notification');
+}
 
 const { setViewerLocale } = await import('../../src/i18n/viewerLocaleStore');
 const locale = params.get('locale') ?? file.locale ?? 'en';

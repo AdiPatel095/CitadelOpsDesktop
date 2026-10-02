@@ -4,7 +4,7 @@ const port = 41736 + Number(process.env.CIT_VISUAL_PORT_OFFSET ?? 0);
 
 export default defineConfig({
   testDir: './tests/visual',
-  testMatch: ['header.spec.ts', 'automation-cards.spec.ts', 'snapshots.spec.ts', 'copy.spec.ts', 'views.spec.ts', 'fonts.spec.ts', 'anatomy.spec.ts', 'tabs.spec.ts', 'states.spec.ts', 'castle-order.spec.ts', 'typography.spec.ts'],
+  testMatch: ['coverage.spec.ts', 'header.spec.ts', 'automation-cards.spec.ts', 'snapshots.spec.ts', 'copy.spec.ts', 'views.spec.ts', 'fonts.spec.ts', 'anatomy.spec.ts', 'tabs.spec.ts', 'states.spec.ts', 'castle-order.spec.ts', 'typography.spec.ts'],
   timeout: 60_000,
   retries: 0,
   workers: 1,
@@ -28,9 +28,10 @@ export default defineConfig({
     trace: 'retain-on-failure',
   },
   projects: [
+    { name: '768', testMatch: ['coverage.spec.ts'], use: { viewport: { width: 768, height: 1024 }, hasTouch: true, isMobile: true } },
     { name: '1440', use: { viewport: { width: 1440, height: 900 } } },
     { name: '1024', use: { viewport: { width: 1024, height: 768 } } },
-    { name: '390', testMatch: ['header.spec.ts', 'copy.spec.ts', 'views.spec.ts', 'anatomy.spec.ts', 'tabs.spec.ts', 'states.spec.ts', 'castle-order.spec.ts', 'typography.spec.ts'], use: { viewport: { width: 390, height: 844 } } },
+    { name: '390', testMatch: ['coverage.spec.ts', 'header.spec.ts', 'copy.spec.ts', 'views.spec.ts', 'anatomy.spec.ts', 'tabs.spec.ts', 'states.spec.ts', 'castle-order.spec.ts', 'typography.spec.ts'], use: { viewport: { width: 390, height: 844 } } },
   ],
   webServer: [{
     command: `node scripts/visual/serve.mjs ${port}`,

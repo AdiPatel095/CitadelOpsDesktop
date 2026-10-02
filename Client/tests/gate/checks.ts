@@ -13,8 +13,8 @@ async function scan(page: Page, rule: string, kind: 'overflow' | 'targets' | 'cl
         return violations;
       }
       const selector = kind === 'targets'
-        ? 'button, a[href], input:not([type="hidden"]), select, textarea, summary, [role="button"], [role="tab"], [role="switch"], [role="checkbox"], [role="combobox"]'
-        : 'button, [role="button"], [role="tab"], nav a, nav button, #workspace-navigation button, .player-status-word, [data-player-status]';
+        ? 'md-filled-button, md-outlined-button, md-text-button, md-icon-button, md-checkbox, md-switch, md-outlined-text-field, md-filled-text-field, button, a[href], input:not([type="hidden"]), select, textarea, summary, [role="button"], [role="tab"], [role="switch"], [role="checkbox"], [role="combobox"]'
+        : 'md-filled-button, md-outlined-button, md-text-button, md-icon-button, button, [role="button"], [role="tab"], nav a, nav button, #workspace-navigation button, .player-status-word, [data-player-status]';
       const visible = (element: HTMLElement) => {
         const rect = element.getBoundingClientRect();
         const style = getComputedStyle(element);

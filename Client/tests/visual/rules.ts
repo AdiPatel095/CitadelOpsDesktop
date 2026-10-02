@@ -6,7 +6,7 @@ const accentTokens = ['--accent', '--accent-hover', '--accent-pressed', '--accen
 const disabledSelector = ':disabled, [aria-disabled="true"], [role="switch"][aria-checked="false"]';
 const accentHooks = '[data-variant="primary"], [aria-current="page"], [role="tab"][aria-selected="true"], [data-current-selection="true"], [data-brand-mark]';
 
-async function scanColours(page: Page, disabled: boolean) {
+export async function scanColours(page: Page, disabled: boolean) {
   return page.evaluate(({ accentTokens, disabledSelector, accentHooks, disabled }) => {
     const probe = document.createElement('span');
     probe.style.setProperty('display', 'none', 'important');
