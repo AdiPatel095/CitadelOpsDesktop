@@ -3,7 +3,10 @@ import { resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 
 export function areaFor(view) {
-  if (/^(landing|account|auth)/.test(view)) return 'a public/account';
+  if (/^(landing|account|auth|guide)/.test(view)) return 'a public/account';
+  if (/^(header-panel|stale-session)/.test(view)) return 'b core';
+  if (view === 'avatar-menu') return 'd system';
+  if (/^(feature-stats|world-intel)-(empty|loading|error)$/.test(view)) return 'b core';
   if (['castle', 'automation', 'feature-stats', 'events', 'equipment', 'world-intel', 'world-intelligence'].includes(view)) return 'b core';
   if (['attack-presets', 'defense-presets', 'movement', 'commanders', 'battle-stats', 'player-tracker', 'my-stats', 'alliance-targets', 'rift', 'rift-raid'].includes(view)) return 'c analytics';
   if (/^(settings|patch-notes|support|toast)/.test(view)) return 'd system';
@@ -15,11 +18,11 @@ export function buildReport(reports) {
   let total = 0;
   const cases = [];
   for (const report of reports) {
-    if (!report || typeof report.view !== 'string' || !Number.isInteger(report.width) || !['layout', 'keyboard'].includes(report.suite) || !Array.isArray(report.violations)) {
+    if (!report || typeof report.view !== 'string' || !Number.isInteger(report.width) || !['layout', 'keyboard', 'a11y'].includes(report.suite) || !Array.isArray(report.violations)) {
       throw new Error('Invalid gate report: expected suite, view, integer width and violations array');
     }
     const area = areaFor(report.view);
-    cases.push({ suite: report.suite, view: report.view, width: report.width, violations: report.violations.length });
+    cases.push({ suite: report.suite, view: report.view, width: report.width, locale: report.locale ?? 'en', theme: report.theme ?? 'dark', violations: report.violations.length });
     for (const finding of report.violations) {
       if (!finding || !['rule', 'element', 'detail'].every(key => typeof finding[key] === 'string')) throw new Error(`Invalid violation in ${report.view}`);
       const key = JSON.stringify([area, finding.rule, report.view]);
@@ -27,7 +30,7 @@ export function buildReport(reports) {
       group.count++;
       total++;
       if (!group.widths.includes(report.width)) group.widths.push(report.width);
-      group.findings.push({ suite: report.suite, width: report.width, element: finding.element, detail: finding.detail });
+      group.findings.push({ suite: report.suite, width: report.width, locale: report.locale ?? 'en', theme: report.theme ?? 'dark', element: finding.element, detail: finding.detail });
       groups.set(key, group);
     }
   }

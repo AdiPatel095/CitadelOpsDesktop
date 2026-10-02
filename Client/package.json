@@ -26,7 +26,8 @@
     "check:mirror": "npm --prefix .. run check:mirror --",
     "check:retired-classes": "node scripts/check-retired-classes.mjs --enforce cit-67,cit-73",
     "check:buttons": "node scripts/check-raw-buttons.mjs src",
-    "check:typography": "node scripts/typography/check.mjs"
+    "check:typography": "node scripts/typography/check.mjs",
+    "test:gate": "node scripts/visual/run-gate.mjs"
   },
   "dependencies": {
     "@formatjs/icu-messageformat-parser": "^3.5.20",
@@ -38,6 +39,7 @@
     "tailwindcss": "^4.1.17"
   },
   "devDependencies": {
+    "@axe-core/playwright": "4.13.0",
     "@eslint/js": "^9.39.1",
     "@playwright/test": "1.63.0",
     "@tailwindcss/vite": "^4.1.17",

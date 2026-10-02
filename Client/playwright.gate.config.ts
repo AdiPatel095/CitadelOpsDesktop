@@ -5,7 +5,7 @@ import visual from './playwright.config';
 export default defineConfig({
   ...visual,
   testDir: './tests/gate',
-  testMatch: ['layout.spec.ts', 'keyboard.spec.ts'],
+  testMatch: ['layout.spec.ts', 'keyboard.spec.ts', 'a11y.spec.ts'],
   outputDir: 'test-results/gate-artifacts',
   updateSnapshots: 'none',
   use: { ...visual.use, screenshot: 'off' },

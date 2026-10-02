@@ -1455,6 +1455,26 @@
     {
       "portal": "tests/header-status.test.mjs",
       "desktop": "Client/tests/header-status.test.mjs"
+    },
+    {
+      "portal": "tests/gate/a11y.spec.ts",
+      "desktop": "Client/tests/gate/a11y.spec.ts"
+    },
+    {
+      "portal": "tests/gate/designScan.ts",
+      "desktop": "Client/tests/gate/designScan.ts"
+    },
+    {
+      "portal": "tests/gate/enforcement.json",
+      "desktop": "Client/tests/gate/enforcement.json"
+    },
+    {
+      "portal": "tests/visual/coverage.spec.ts",
+      "desktop": "Client/tests/visual/coverage.spec.ts"
+    },
+    {
+      "portal": "scripts/visual/run-gate.mjs",
+      "desktop": "Client/scripts/visual/run-gate.mjs"
     }
   ],
   "unmirrored": [
@@ -1462,6 +1482,11 @@
       "portal": "src/commandCenter/components/AutoBirdCycles.tsx",
       "desktop": "Client/src/components/AutoBirdCycles.tsx",
       "reason": "CIT-69 preserves desktop localization and the portal birdCastleControls release gate."
+    },
+    {
+      "portal": "tests/gate/adapter.ts",
+      "desktop": "Client/tests/gate/adapter.ts",
+      "reason": "CIT-74 adapters bridge the sealed desktop fixture and portal preview servers while gate specs remain identical."
     }
   ]
 }

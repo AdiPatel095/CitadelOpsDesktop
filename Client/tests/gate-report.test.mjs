@@ -48,3 +48,19 @@ test('reads fixture JSON, writes both artifacts, and rejects missing or malforme
     await assert.rejects(generateReport(input, root), /Cannot read gate input broken.json/);
   } finally { await rm(root, { recursive: true, force: true }); }
 });
+
+
+test('axe findings and language/theme axes remain distinct and header cases have owners', () => {
+  const result = buildReport([
+    { ...fixture('header-panel', 390, [finding], 'a11y'), locale: 'ar', theme: 'light' },
+    { ...fixture('header-panel', 390, [finding], 'a11y'), locale: 'en', theme: 'dark' },
+  ]);
+  assert.equal(result.violationCount, 2);
+  assert.deepEqual(new Set(result.groups[0].findings.map(item => `${item.locale}/${item.theme}`)), new Set(['ar/light', 'en/dark']));
+  assert.equal(areaFor('header-panel'), 'b core');
+  assert.equal(areaFor('stale-session'), 'b core');
+  assert.equal(areaFor('avatar-menu'), 'd system');
+  assert.equal(areaFor('feature-stats-loading'), 'b core');
+  assert.equal(areaFor('world-intel-error'), 'b core');
+  assert.equal(areaFor('auth'), 'a public/account');
+});
