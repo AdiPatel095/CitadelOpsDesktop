@@ -80,7 +80,7 @@ export async function openCase(page: Page, entry: GateCase, options: GateOptions
 
 export async function writeReport(testInfo: TestInfo, suite: string, entry: GateCase, violations: Violation[], options: GateOptions = defaultOptions) {
   const width = Number(testInfo.project.name);
-  const { remaining, excluded } = applyGateBaseline(violations, systemBaseline, { area: areaFor(entry.name).slice(0, 1), suite });
+  const { remaining, excluded } = applyGateBaseline(violations, systemBaseline, { area: areaFor(entry.name).slice(0, 1), suite, view: entry.name, width, ...options });
   const report = { schemaVersion: 1, suite, view: entry.name, width, ...options, violations, baselineExcluded: excluded };
   const directory = resolve('test-results/gate');
   await mkdir(directory, { recursive: true });

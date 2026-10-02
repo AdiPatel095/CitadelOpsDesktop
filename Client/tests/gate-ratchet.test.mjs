@@ -19,3 +19,14 @@ test('other areas, suites, controls and rules remain enforced', () => {
   }
   assert.deepEqual(applyGateBaseline([], baseline, context), { remaining: [], excluded: [] });
 });
+
+test('recorded shared findings require the exact case and failure fingerprint', () => {
+  const recorded = { ...baseline[0], view: 'support', width: 390, locale: 'en', theme: 'light', detail: finding.detail };
+  const scope = { ...context, view: 'support', width: 390, locale: 'en', theme: 'light' };
+  assert.equal(applyGateBaseline([finding], [recorded], scope).excluded.length, 1);
+  for (const altered of [{ view: 'settings' }, { width: 1440 }, { locale: 'ar' }, { theme: 'dark' }]) {
+    assert.deepEqual(applyGateBaseline([finding], [recorded], { ...scope, ...altered }).remaining, [finding]);
+  }
+  const different = { ...finding, detail: 'another failure' };
+  assert.deepEqual(applyGateBaseline([different], [recorded], scope).remaining, [different]);
+});
