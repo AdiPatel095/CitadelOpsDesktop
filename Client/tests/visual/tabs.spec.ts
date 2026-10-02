@@ -27,9 +27,11 @@ for (const theme of ['dark', 'light'] as const) for (const locale of ['en', 'de'
           await expect(page.locator(`.ui-tabs__arrow--${side}`)).toHaveCount(overflowing ? 1 : 0);
           if (overflowing) {
             const arrow = page.locator(`.ui-tabs__arrow--${side}`);
-            expect(await arrow.evaluate((button, side) => {
+            await expect.poll(() => arrow.evaluate((button, side) => {
               const rect = button.getBoundingClientRect();
-              const parent = button.parentElement!.getBoundingClientRect();
+              const parentElement = button.parentElement;
+              if (!parentElement) return false; // Reacquire after a resize/edge re-render.
+              const parent = parentElement.getBoundingClientRect();
               return Math.abs(rect.top - parent.top) <= 1 && (side === 'left' ? Math.abs(rect.left - parent.left) <= 1 : Math.abs(rect.right - parent.right) <= 1);
             }, side)).toBe(true);
           }
