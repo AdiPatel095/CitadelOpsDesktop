@@ -430,5 +430,13 @@
   "ui.state.loading": "加载中…",
   "ui.state.retry": "重试",
   "ui.tabs.next": "显示更多标签页",
-  "ui.tabs.previous": "显示之前的标签页"
+  "ui.tabs.previous": "显示之前的标签页",
+  "header.panel.attacksToday": "今日攻击",
+  "header.panel.attention": "需要关注",
+  "header.panel.connection": "连接",
+  "header.panel.openFeature": "打开{feature}",
+  "header.signal.attention": "{count, plural, other {#项自动化需要关注}}",
+  "header.signal.incoming": "{count, number} 个来袭 · {state, select, known {首次抵达还剩{duration}} other {正在检查}}",
+  "header.signal.nextBird": "下次部队庇护: {castle} · {state, select, due {现在执行} other {{duration}后}}",
+  "header.status.title": "状态"
 }

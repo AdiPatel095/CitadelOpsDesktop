@@ -327,5 +327,8 @@
   "backend.spy_report.capture_fields": "Fornisci valori positivi per mid, allianceID, castleID, sourcePlayerID e scannedAtUnixMillis.",
   "backend.spy_report.payload_json": "payload deve contenere JSON valido.",
   "backend.spy_report.payload_object": "payload deve contenere un oggetto JSON.",
-  "backend.spy_report.session_fields": "Fornisci clientID e valori positivi per playerID e allianceID."
+  "backend.spy_report.session_fields": "Fornisci clientID e valori positivi per playerID e allianceID.",
+  "backend.hosted.cells_unavailable": "I ruoli delle celle non sono disponibili",
+  "backend.status.placement_slot": "In attesa di un posto libero sui nostri server",
+  "backend.status.starting_server": "Avvio di un server per questo account"
 }

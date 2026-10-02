@@ -327,5 +327,8 @@
   "backend.spy_report.capture_fields": "Anna positiiviset arvot kentille mid, allianceID, castleID, sourcePlayerID ja scannedAtUnixMillis.",
   "backend.spy_report.payload_json": "payload-kentän on sisällettävä kelvollista JSON-dataa.",
   "backend.spy_report.payload_object": "payload-kentän on sisällettävä JSON-objekti.",
-  "backend.spy_report.session_fields": "Anna clientID sekä positiiviset arvot kentille playerID ja allianceID."
+  "backend.spy_report.session_fields": "Anna clientID sekä positiiviset arvot kentille playerID ja allianceID.",
+  "backend.hosted.cells_unavailable": "Solujen roolit eivät ole käytettävissä",
+  "backend.status.placement_slot": "Odotetaan vapaata paikkaa palvelimillamme",
+  "backend.status.starting_server": "Käynnistetään palvelinta tälle tilille"
 }

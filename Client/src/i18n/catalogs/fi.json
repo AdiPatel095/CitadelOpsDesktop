@@ -430,5 +430,13 @@
   "ui.state.loading": "Ladataan…",
   "ui.state.retry": "Yritä uudelleen",
   "ui.tabs.next": "Näytä lisää välilehtiä",
-  "ui.tabs.previous": "Näytä edelliset välilehdet"
+  "ui.tabs.previous": "Näytä edelliset välilehdet",
+  "header.panel.attacksToday": "Hyökkäykset tänään",
+  "header.panel.attention": "Vaatii huomiota",
+  "header.panel.connection": "Yhteys",
+  "header.panel.openFeature": "Avaa {feature}",
+  "header.signal.attention": "{count, plural, one {# automaatio vaatii huomiota} other {# automaatiota vaatii huomiota}}",
+  "header.signal.incoming": "{count, number} saapuvaa · {state, select, known {ensimmäinen {duration} kuluttua} other {tarkistetaan}}",
+  "header.signal.nextBird": "Seuraava joukkojen suojaaminen: {castle} · {state, select, due {suoritettava nyt} other {{duration} kuluttua}}",
+  "header.status.title": "Tila"
 }

@@ -327,5 +327,8 @@
   "backend.spy_report.capture_fields": "Geef positieve waarden op voor mid, allianceID, castleID, sourcePlayerID en scannedAtUnixMillis.",
   "backend.spy_report.payload_json": "payload moet geldige JSON bevatten.",
   "backend.spy_report.payload_object": "payload moet een JSON-object bevatten.",
-  "backend.spy_report.session_fields": "Geef clientID en positieve waarden voor playerID en allianceID op."
+  "backend.spy_report.session_fields": "Geef clientID en positieve waarden voor playerID en allianceID op.",
+  "backend.hosted.cells_unavailable": "Celrollen zijn niet beschikbaar",
+  "backend.status.placement_slot": "Wachten op een vrije plek op onze servers",
+  "backend.status.starting_server": "Een server voor dit account wordt gestart"
 }

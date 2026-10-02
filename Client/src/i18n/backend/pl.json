@@ -327,5 +327,8 @@
   "backend.spy_report.capture_fields": "Podaj dodatnie wartości mid, allianceID, castleID, sourcePlayerID i scannedAtUnixMillis.",
   "backend.spy_report.payload_json": "payload musi zawierać poprawny JSON.",
   "backend.spy_report.payload_object": "payload musi zawierać obiekt JSON.",
-  "backend.spy_report.session_fields": "Podaj clientID oraz dodatnie wartości playerID i allianceID."
+  "backend.spy_report.session_fields": "Podaj clientID oraz dodatnie wartości playerID i allianceID.",
+  "backend.hosted.cells_unavailable": "Role komórek są niedostępne",
+  "backend.status.placement_slot": "Oczekiwanie na wolne miejsce na naszych serwerach",
+  "backend.status.starting_server": "Uruchamianie serwera dla tego konta"
 }

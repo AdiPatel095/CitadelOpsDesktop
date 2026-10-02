@@ -327,5 +327,8 @@
   "backend.spy_report.capture_fields": "Укажите положительные значения mid, allianceID, castleID, sourcePlayerID и scannedAtUnixMillis.",
   "backend.spy_report.payload_json": "payload должен содержать корректный JSON.",
   "backend.spy_report.payload_object": "payload должен содержать объект JSON.",
-  "backend.spy_report.session_fields": "Укажите clientID и положительные значения playerID и allianceID."
+  "backend.spy_report.session_fields": "Укажите clientID и положительные значения playerID и allianceID.",
+  "backend.hosted.cells_unavailable": "Роли ячеек недоступны",
+  "backend.status.placement_slot": "Ожидание свободного места на наших серверах",
+  "backend.status.starting_server": "Запуск сервера для этой учётной записи"
 }

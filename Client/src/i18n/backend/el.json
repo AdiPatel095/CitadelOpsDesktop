@@ -327,5 +327,8 @@
   "backend.spy_report.capture_fields": "Δώστε θετικές τιμές για mid, allianceID, castleID, sourcePlayerID και scannedAtUnixMillis.",
   "backend.spy_report.payload_json": "Το payload πρέπει να περιέχει έγκυρο JSON.",
   "backend.spy_report.payload_object": "Το payload πρέπει να περιέχει αντικείμενο JSON.",
-  "backend.spy_report.session_fields": "Δώστε clientID και θετικές τιμές για playerID και allianceID."
+  "backend.spy_report.session_fields": "Δώστε clientID και θετικές τιμές για playerID και allianceID.",
+  "backend.hosted.cells_unavailable": "Οι ρόλοι των κελιών δεν είναι διαθέσιμοι",
+  "backend.status.placement_slot": "Αναμονή για ελεύθερη θέση στους διακομιστές μας",
+  "backend.status.starting_server": "Εκκίνηση διακομιστή για αυτόν τον λογαριασμό"
 }

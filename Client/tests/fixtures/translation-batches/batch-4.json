@@ -1,0 +1,98 @@
+{
+  "schema": 1,
+  "batch": 4,
+  "cuts": {
+    "desktop": {
+      "since": "96ad6c968e94d674eaf2fbc82356bdde2ff7a614",
+      "until": "5bd6354e5596abeb321015fc1a4ad7727e640f2a"
+    },
+    "portal": {
+      "since": "b8fd1f7245217250ec377800c3b1eaaefbb4a67a",
+      "until": "647ec8db09fcdd4457406a1e2dee1f00801c2be3"
+    }
+  },
+  "command": [
+    "node",
+    "scripts/localization/translation-batch.mjs",
+    "--batch",
+    "4",
+    "--since",
+    "96ad6c9",
+    "--until",
+    "5bd6354e5596abeb321015fc1a4ad7727e640f2a",
+    "--peer-repo",
+    "../../cit-107-translations-batch-4",
+    "--peer-since",
+    "b8fd1f7",
+    "--peer-until",
+    "647ec8db09fcdd4457406a1e2dee1f00801c2be3"
+  ],
+  "families": {
+    "shared": {
+      "repository": "desktop",
+      "sources": [
+        "Client/src/i18n/messages.ts",
+        "Client/src/i18n/sourceMessages.ts"
+      ],
+      "catalogDirectory": "Client/src/i18n/catalogs",
+      "keys": [
+        "header.panel.attacksToday",
+        "header.panel.attention",
+        "header.panel.connection",
+        "header.panel.openFeature",
+        "header.signal.attention",
+        "header.signal.incoming",
+        "header.signal.nextBird",
+        "header.status.title"
+      ],
+      "allowEnglish": {
+        "header.status.title": {
+          "de": "Status is the standard localized status label with unchanged spelling.",
+          "nl": "Status is the standard localized status label with unchanged spelling.",
+          "da": "Status is the standard localized status label with unchanged spelling.",
+          "no": "Status is the standard localized status label with unchanged spelling.",
+          "sv": "Status is the standard localized status label with unchanged spelling."
+        }
+      }
+    },
+    "runtime": {
+      "repository": "desktop",
+      "sources": [
+        "Server/Localization/en.json"
+      ],
+      "catalogDirectory": "Server/Localization/locales",
+      "keys": [],
+      "allowEnglish": {}
+    },
+    "portal": {
+      "repository": "portal",
+      "sources": [
+        "src/i18n/portal/en.json"
+      ],
+      "catalogDirectory": "src/i18n/portal",
+      "keys": [],
+      "allowEnglish": {}
+    }
+  },
+  "authorship": {
+    "status": "model-authored, pending native review",
+    "batch": 4,
+    "story": "CIT-107"
+  },
+  "backend": {
+    "repository": "CitadelOpsBackend",
+    "since": "95d1f3f34b9805489cdb0e4dc290b12edd5137cf",
+    "until": "cc6016572c49e24c044d0059d517db6e119c727e",
+    "previousCutBasis": "Backend develop ancestor immediately before desktop batch-3 cut timestamp 2026-10-02T04:21:48-04:00; batch 3 had no backend cut.",
+    "source": "localization/catalog.en.json",
+    "catalogDirectory": "src/i18n/backend",
+    "keys": [
+      "backend.hosted.cells_unavailable",
+      "backend.status.placement_slot",
+      "backend.status.starting_server"
+    ]
+  },
+  "scopeNotes": {
+    "policy": "8 shared client keys and 3 backend keys added since the batch-3 cut. Older client and backend marketing backlogs excluded."
+  }
+}
