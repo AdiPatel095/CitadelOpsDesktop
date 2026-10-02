@@ -23,9 +23,11 @@ export interface StopControlProps {
   /** `button`: Stop button, failure and semantics. `notice`: only the failure/Retry and the semantics (the row switch is the Stop). */
   variant?: 'button' | 'notice';
   className?: string;
+  /** Called after a successful stop write, never after failure or start. */
+  onStopped?: () => void;
 }
 
-export const StopControl: React.FC<StopControlProps> = ({ enabledKey, featureId, variant = 'button', className = '' }) => {
+export const StopControl: React.FC<StopControlProps> = ({ enabledKey, featureId, variant = 'button', className = '', onStopped }) => {
   const { automationEnabledByKey, automationTimedUntilByKey, automationWriteFailures, setAutomationEnabled, gameLoggedIn } = useAuth();
   const { operations } = useCitadelAPI();
   const [busy, setBusy] = useState(false);
@@ -44,6 +46,7 @@ export const StopControl: React.FC<StopControlProps> = ({ enabledKey, featureId,
     setBusy(true);
     try {
       await setAutomationEnabled(enabledKey, enabled);
+      if (!enabled) onStopped?.();
     } catch {
       // Kept in `automationWriteFailures` and shown below; the switch state does not change.
     } finally {

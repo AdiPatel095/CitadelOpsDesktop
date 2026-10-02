@@ -4,7 +4,7 @@ const port = 41736 + Number(process.env.CIT_VISUAL_PORT_OFFSET ?? 0);
 
 export default defineConfig({
   testDir: './tests/visual',
-  testMatch: ['snapshots.spec.ts', 'copy.spec.ts', 'views.spec.ts', 'fonts.spec.ts', 'anatomy.spec.ts', 'tabs.spec.ts', 'states.spec.ts', 'castle-order.spec.ts', 'typography.spec.ts'],
+  testMatch: ['automation-cards.spec.ts', 'snapshots.spec.ts', 'copy.spec.ts', 'views.spec.ts', 'fonts.spec.ts', 'anatomy.spec.ts', 'tabs.spec.ts', 'states.spec.ts', 'castle-order.spec.ts', 'typography.spec.ts'],
   timeout: 60_000,
   retries: 0,
   workers: 1,
