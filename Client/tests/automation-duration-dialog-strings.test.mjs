@@ -25,6 +25,7 @@ function load(file) {
 }
 const { messages } = load(new URL('i18n/messages.ts', sourceRoot));
 const { formatMessage, validateMessageCatalog } = load(new URL('i18n/formatMessage.ts', sourceRoot));
+const { formatDurationEnd } = load(new URL('i18n/automationDuration.ts', sourceRoot));
 const dialogFile = new URL('settings/components/AutomationDurationModal.tsx', sourceRoot);
 const dialogSource = fs.readFileSync(dialogFile, 'utf8');
 const prefix = 'automationDurationDialog.';
@@ -95,14 +96,14 @@ function renderDialog({ pause = false, amount = '1', locale = 'en', catalog = {}
   class FixedDate extends NativeDate {
     constructor(...args) { super(...(args.length ? args : ['2026-10-01T00:00:00Z'])); }
     static now() { return 1790812800000; }
-    toLocaleString(locales, options) { return super.toLocaleString(locales ?? 'en-US', { ...options, timeZone: 'UTC' }); }
   }
   const t = (key, params) => translate(key, params, locale, catalog);
   const auth = { automationTimedUntilByKey: { autoBird: 1790816400000 },
     enableAutomationFor: async () => { if (saveError !== undefined) throw saveError; } };
   const imports = {
     react, 'lucide-react': { TimerReset: () => null }, '../../context/AuthContext': { useAuth: () => auth },
-    '../../components/ui': ui, '../../i18n/LocaleContext': { useLocale: () => ({ t }) },
+    '../../i18n/automationDuration': { formatDurationEnd: (value, locale) => formatDurationEnd(value, locale, 'UTC') },
+    '../../components/ui': ui, '../../i18n/LocaleContext': { useLocale: () => ({ t, locale }) },
     '../../i18n/LocalizedText': { LocalizedText: ({ messageKey }) => h('span', null, messageKey === 'game.cancel' ? 'Cancel' : t(messageKey)) },
   };
   const module = { exports: {} };
@@ -116,12 +117,12 @@ function renderDialog({ pause = false, amount = '1', locale = 'en', catalog = {}
   return { html: renderToStaticMarkup(element), element, setters };
 }
 function text(html) { return html.replace(/<[^>]*>/g, '').replaceAll('&#x27;', "'").replaceAll('&amp;', '&'); }
-test('rendered run/pause English, whitespace, punctuation and aria labels match the old dialog', () => {
+test('rendered run/pause English preserves prose and uses medium-date short-time end timestamps', () => {
   for (const pause of [false, true]) {
     const { html } = renderDialog({ pause });
     const expected = `${pause ? 'Pause' : 'Run'} Auto Bird for a durationQuick durations30 min1 hr2 hr4 hr8 hr24 hrCustom durationMinutesHoursDays` +
-      `Auto Bird ${pause ? 'pauses immediately and resumes at' : 'turns on immediately and the server turns it off at'} 10/1/2026, 1:00:00 AM.` +
-      `Weekly schedules and the global automation lock still apply during this window.Current ${pause ? 'pause' : 'timed run'} ends 10/1/2026, 1:00:00 AM.Cancel` +
+      `Auto Bird ${pause ? 'pauses immediately and resumes at' : 'turns on immediately and the server turns it off at'} Oct 1, 2026, 1:00 AM.` +
+      `Weekly schedules and the global automation lock still apply during this window.Current ${pause ? 'pause' : 'timed run'} ends Oct 1, 2026, 1:00 AM.Cancel` +
       `${pause ? 'Pause' : 'Turn on'} for this duration`;
     assert.equal(text(html), expected);
     assert.ok(html.includes('aria-label="Automation duration amount"'));
@@ -142,7 +143,8 @@ test('non-Error save failures use the exact old fallback message', async () => {
 });
 test('German missing keys fall back to exact English without raw keys', () => {
   for (const [suffix, params, expected] of inventory) assert.equal(translate(prefix + suffix, params, 'de'), expected);
-  for (const pause of [false, true]) assert.equal(text(renderDialog({ pause, locale: 'de' }).html), text(renderDialog({ pause }).html));
+  for (const pause of [false, true]) assert.equal(text(renderDialog({ pause, locale: 'de' }).html),
+    text(renderDialog({ pause }).html).replaceAll('Oct 1, 2026, 1:00 AM', '01.10.2026, 01:00'));
 });
 
 
@@ -169,8 +171,8 @@ test('endsAt-first pseudo catalog reorders the full rendered run and pause messa
   assert.equal(JSON.stringify(validateMessageCatalog(english, catalog)), '[]');
   for (const pause of [false, true]) {
     const { html } = renderDialog({ pause, locale: 'de', catalog });
-    const expected = `10/1/2026, 1:00:00 AM: Auto Bird ${pause ? 'pauses' : 'turns on'} immediately.`;
+    const expected = `01.10.2026, 01:00: Auto Bird ${pause ? 'pauses' : 'turns on'} immediately.`;
     assert.equal((html.match(/<p>(.*?)<\/p>/)?.[1] ?? ''), expected);
-    assert.equal(text(html).split('10/1/2026, 1:00:00 AM').length - 1, 2, 'end date appears once in the message and once in the existing current-run notice');
+    assert.equal(text(html).split('01.10.2026, 01:00').length - 1, 2, 'end date appears once in the message and once in the existing current-run notice');
   }
 });
