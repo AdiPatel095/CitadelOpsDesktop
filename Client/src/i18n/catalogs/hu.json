@@ -430,5 +430,13 @@
   "ui.state.loading": "Betöltés…",
   "ui.state.retry": "Újrapróbálás",
   "ui.tabs.next": "További lapok megjelenítése",
-  "ui.tabs.previous": "Előző lapok megjelenítése"
+  "ui.tabs.previous": "Előző lapok megjelenítése",
+  "header.panel.attacksToday": "Mai támadások",
+  "header.panel.attention": "Figyelmet igényel",
+  "header.panel.connection": "Kapcsolat",
+  "header.panel.openFeature": "{feature} megnyitása",
+  "header.signal.attention": "{count, plural, one {# automatizálás igényel figyelmet} other {# automatizálás igényel figyelmet}}",
+  "header.signal.incoming": "{count, number} bejövő · {state, select, known {első {duration} múlva} other {ellenőrzés}}",
+  "header.signal.nextBird": "Következő csapatvédelem: {castle} · {state, select, due {most esedékes} other {{duration} múlva}}",
+  "header.status.title": "Állapot"
 }

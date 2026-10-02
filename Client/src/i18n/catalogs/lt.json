@@ -430,5 +430,13 @@
   "ui.state.loading": "Įkeliama…",
   "ui.state.retry": "Bandyti dar kartą",
   "ui.tabs.next": "Rodyti daugiau kortelių",
-  "ui.tabs.previous": "Rodyti ankstesnes korteles"
+  "ui.tabs.previous": "Rodyti ankstesnes korteles",
+  "header.panel.attacksToday": "Šiandienos atakos",
+  "header.panel.attention": "Reikia dėmesio",
+  "header.panel.connection": "Ryšys",
+  "header.panel.openFeature": "Atverti {feature}",
+  "header.signal.attention": "{count, plural, one {# automatizacijai reikia dėmesio} few {# automatizacijoms reikia dėmesio} many {# automatizacijos reikalauja dėmesio} other {# automatizacijų reikia dėmesio}}",
+  "header.signal.incoming": "{count, number} artėjančių · {state, select, known {pirmoji po {duration}} other {tikrinama}}",
+  "header.signal.nextBird": "Kitas karių slėpimas: {castle} · {state, select, due {laikas vykdyti dabar} other {po {duration}}}",
+  "header.status.title": "Būsena"
 }

@@ -430,5 +430,13 @@
   "ui.state.loading": "Wczytywanie…",
   "ui.state.retry": "Spróbuj ponownie",
   "ui.tabs.next": "Pokaż więcej kart",
-  "ui.tabs.previous": "Pokaż poprzednie karty"
+  "ui.tabs.previous": "Pokaż poprzednie karty",
+  "header.panel.attacksToday": "Ataki dzisiaj",
+  "header.panel.attention": "Wymaga uwagi",
+  "header.panel.connection": "Połączenie",
+  "header.panel.openFeature": "Otwórz {feature}",
+  "header.signal.attention": "{count, plural, one {# automatyzacja wymaga uwagi} few {# automatyzacje wymagają uwagi} many {# automatyzacji wymaga uwagi} other {# automatyzacji wymaga uwagi}}",
+  "header.signal.incoming": "{count, number} nadchodzących · {state, select, known {pierwszy za {duration}} other {sprawdzanie}}",
+  "header.signal.nextBird": "Następne schronienie wojsk: {castle} · {state, select, due {czas wykonać teraz} other {za {duration}}}",
+  "header.status.title": "Stan"
 }

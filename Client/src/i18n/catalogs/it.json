@@ -430,5 +430,13 @@
   "ui.state.loading": "Caricamento…",
   "ui.state.retry": "Riprova",
   "ui.tabs.next": "Mostra altre schede",
-  "ui.tabs.previous": "Mostra le schede precedenti"
+  "ui.tabs.previous": "Mostra le schede precedenti",
+  "header.panel.attacksToday": "Attacchi oggi",
+  "header.panel.attention": "Richiede attenzione",
+  "header.panel.connection": "Connessione",
+  "header.panel.openFeature": "Apri {feature}",
+  "header.signal.attention": "{count, plural, one {# automazione richiede attenzione} many {# automazioni richiedono attenzione} other {# automazioni richiedono attenzione}}",
+  "header.signal.incoming": "{count, number} in arrivo · {state, select, known {primo tra {duration}} other {verifica}}",
+  "header.signal.nextBird": "Prossimo riparo delle truppe: {castle} · {state, select, due {da eseguire ora} other {tra {duration}}}",
+  "header.status.title": "Stato"
 }

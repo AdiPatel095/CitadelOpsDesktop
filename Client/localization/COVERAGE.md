@@ -162,3 +162,28 @@ The legacy translation backlog, unused Fortress entries and CIT-69/CIT-74
 translations are outside this batch. Native-speaker review remains pending;
 this batch does not establish whole-application translated coverage. Claire
 confirms both PRs have merged before a release that ships these strings.
+
+## CIT-107 translation batch 4
+
+Batch 4: **model-authored, pending native review**. The shared fixture
+`tests/fixtures/translation-batches/batch-4.json` records 8 shared client keys
+and 3 backend keys added since the batch-3 cut. All 11 keys have entries in
+all 25 non-English locales (275 locale/key pairs); English provides the 26th
+locale. Existing translations are reused. Shared catalogs, backend packs and
+the fixture are byte-identical between desktop and portal; the portal's
+authoritative `src/i18n/backend/` and command-center copy match file for file.
+ICU placeholders, select options and required CLDR plural categories are
+preserved. The unchanged spelling of “Status” in five locales is documented
+in the fixture.
+
+The desktop cut is `5bd6354e5596abeb321015fc1a4ad7727e640f2a`; the portal cut
+is `647ec8db09fcdd4457406a1e2dee1f00801c2be3`. Previous cuts are
+`96ad6c968e94d674eaf2fbc82356bdde2ff7a614` and
+`b8fd1f7245217250ec377800c3b1eaaefbb4a67a`. Backend provenance is pinned to
+`cc6016572c49e24c044d0059d517db6e119c727e`; its previous cut is the develop
+ancestor `95d1f3f34b9805489cdb0e4dc290b12edd5137cf` immediately before the
+desktop batch-3 cut timestamp. Backend additions are the server-startup,
+placement-slot and unavailable-cell-role messages. Older client and backend
+marketing translation backlogs remain outside this batch. Native-speaker
+review remains pending; this batch does not establish whole-application
+translated coverage. Claire confirms both PRs have merged before release.
