@@ -391,7 +391,7 @@ export const AutoTCISettingsModal: React.FC<AutoTCISettingsModalProps> = ({ isOp
       onClose={handleClose}
       maxWidth="full"
       title={<span className="text-text-main"><LocalizedText messageKey="ui.settings.components.autoTCISettingsModal.auto.tci.settings.f9b867dd" /></span>}
-      icon={<Hammer className="h-5 w-5 text-primary" />}
+      icon={<Hammer className="h-5 w-5 text-text-muted" />}
       description={(
             <>
               Per castle, pick construction item variants and set a <span className="font-medium text-text-main"><LocalizedText messageKey="ui.settings.components.autoTCISettingsModal.level.floor.and.ceiling.484f7a16" /></span>{' '}
