@@ -17,6 +17,7 @@ import type {
 } from '../../api/Contracts';
 import {
 	Badge,
+	ErrorState,
 	ViewState,
 	viewStatus,
 	SectionCard,
@@ -183,6 +184,10 @@ const WorldIntelligenceView = () => {
           error={{ title: localizeStatic('ui.worldIntelligence.components.worldIntelligenceView.title.profile.unavailable.158e5a22'), description: profileLoading ? localizeStatic('copy.loadingHistory', { server: displayWorld(selected.worldId) }) : undefined, onRetry: () => void openEntity(selected), retryLabel: localizeStatic('ui.state.retry') }}
           loading={{ label: localizeStatic('copy.loadingHistory', { server: displayWorld(selected.worldId) }), variant: 'cards' }}
           empty={{ title: localizeStatic('ui.worldIntelligence.components.worldIntelligenceView.title.profile.unavailable.158e5a22'), description: localizeStatic('copy.noProfile', { server: displayWorld(selected.worldId) }) }}>
+        {error && (playerProfile || allianceProfile) && <ErrorState size="lg"
+          title={localizeStatic('ui.worldIntelligence.components.worldIntelligenceView.title.profile.unavailable.158e5a22')}
+          description={profileLoading ? localizeStatic('copy.loadingHistory', { server: displayWorld(selected.worldId) }) : undefined}
+          onRetry={() => void openEntity(selected)} retryLabel={localizeStatic('ui.state.retry')} />}
         {playerProfile ? (
 						<>
 							<WorldPlayerDetailView

@@ -4,6 +4,7 @@ import { after, test } from 'node:test';
 import { fileURLToPath } from 'node:url';
 import { createServer } from 'vite';
 import React from 'react';
+import ts from 'typescript';
 import { renderToStaticMarkup } from 'react-dom/server';
 const root = fileURLToPath(new URL('..', import.meta.url));
 const portal = existsSync(`${root}/src/commandCenter`);
@@ -11,7 +12,7 @@ const source = portal ? '/src/commandCenter' : '/src';
 const fixtures = portal ? '/src/commandCenter/mock/onboarding' : '/tests/onboarding-browser';
 const vite = await createServer({ root, configFile: false, appType: 'custom', logLevel: 'silent', server: { middlewareMode: true, hmr: false } });
 after(() => vite.close());
-const { ViewState, viewStatus } = await vite.ssrLoadModule(`${source}/components/ui/ViewState.tsx`);
+const { ErrorState, ViewState, viewStatus } = await vite.ssrLoadModule(`${source}/components/ui/ViewState.tsx`);
 const { PillSelector } = await vite.ssrLoadModule(`${source}/components/ui/PillSelector.tsx`);
 const { FixtureServer } = await vite.ssrLoadModule(`${fixtures}/fixtureServer.ts`);
 const scenario = JSON.parse(readFileSync(`${root}${fixtures}/scenarios/rich-account.json`, 'utf8'));
@@ -48,4 +49,42 @@ test('preview history states preserve world and player identity and never read p
   assert.equal(await Promise.race([pending.then(() => 'settled'), new Promise(resolve => setTimeout(() => resolve('pending'), 5))]), 'pending');
   assert.equal((await server.handle('/api/v2/state', 'GET', null, state('error'))).status, 200);
   assert.equal((await server.handle(route, 'GET', null, '{invalid')).status, 200);
+});
+
+// Render the actual selected-profile branch; API, routing and detail views are boundaries.
+test('failed profile refresh shows one banner above the stale player or alliance profile', () => {
+  const sourceText = readFileSync(`${root}${source}/worldIntelligence/components/WorldIntelligenceView.tsx`, 'utf8');
+  const branch = sourceText.slice(sourceText.indexOf('\tif (selected) {'), sourceText.indexOf('\n\treturn (', sourceText.indexOf('\tif (selected) {')));
+  assert.ok(branch.includes('<ViewState'), 'selected-profile render branch must be found');
+  const js = ts.transpileModule(branch, { compilerOptions: { jsx: ts.JsxEmit.React, target: ts.ScriptTarget.ES2022 } }).outputText;
+  for (const type of ['player', 'alliance', 'none']) for (const profileLoading of [false, true]) {
+    const deps = {
+      React, ErrorState, ViewState, viewStatus, profileLoading, error: 'Profile refresh failed',
+      selected: { type: 'player', id: 1, worldId: 'demo-world' },
+      playerProfile: type === 'player' ? { current: { worldId: 'demo-world', name: 'Stale player' } } : null,
+      allianceProfile: type === 'alliance' ? { name: 'Stale alliance' } : null,
+      playerEventHistory: null, playerEventError: '', closeProfile() {}, openEntity() {},
+      localizeStatic: key => key.endsWith('158e5a22') ? 'Profile unavailable' : key === 'ui.state.retry' ? 'Retry' : 'Loading profile',
+      displayWorld: value => value,
+      DetailBackButton: () => null,
+      WorldPlayerDetailView: ({ profile }) => React.createElement('article', {}, profile.current.name),
+      WorldAllianceDetailView: ({ profile }) => React.createElement('article', {}, profile.name),
+      WorldPlayerEventHistory: () => null,
+    };
+    const View = Function(...Object.keys(deps), js)(...Object.values(deps));
+    const html = renderToStaticMarkup(View);
+    assert.equal((html.match(/ui-error-state/g) ?? []).length, 1);
+    assert.match(html, /Profile unavailable/);
+    assert.match(html, /role="status"/);
+    assert.match(html, />Retry</);
+    if (type !== 'none') {
+      assert.match(html, /data-state="content"/);
+      assert.ok(html.includes(`Stale ${type}`));
+      assert.ok(html.indexOf('Profile unavailable') < html.indexOf(`Stale ${type}`));
+      assert.doesNotMatch(html, /aria-busy="true"/);
+    } else {
+      assert.match(html, /data-state="error"/);
+      assert.doesNotMatch(html, /Stale player|Stale alliance/);
+    }
+  }
 });
