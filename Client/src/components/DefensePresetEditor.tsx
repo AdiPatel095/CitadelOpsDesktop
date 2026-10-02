@@ -288,7 +288,6 @@ const DefensePresetEditor: React.FC<DefensePresetEditorProps> = ({
                     }
                     : undefined,
                 }))}
-                size="sm"
                 className="mt-0.5 shrink-0"
                 ariaLabel={localizeStatic("ui.components.defensePresetEditor.ariaLabel.include.courtyard.setup.in.this.defense.preset.f1d428bf")}
               />

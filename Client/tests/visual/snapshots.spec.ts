@@ -6,9 +6,9 @@ import { assertDisabledNeutral, reportAccentUsage } from './rules';
 for (const entry of cases) {
   for (const theme of themes) {
     test(`${entry.name}-${theme}`, async ({ page }, testInfo) => {
-      const verifyNetwork = await prepare(page, theme);
+      const verifyNetwork = await prepare(page, theme, entry.scenario);
       await openView(page, entry.label, entry.view);
-      if ('settings' in entry) await openSettings(page);
+      if (entry.settings) await openSettings(page);
       await settle(page);
       await reportAccentUsage(page, entry.name);
       await assertDisabledNeutral(page);

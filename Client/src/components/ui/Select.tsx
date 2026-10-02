@@ -218,6 +218,7 @@ export const Select: React.FC<SelectProps> = ({
                     type="button"
                     role="option"
                     aria-selected={value === opt.value}
+                    data-current-selection={value === opt.value ? "true" : undefined}
                     aria-disabled={opt.disabled || undefined}
                     disabled={opt.disabled}
                     key={opt.value}

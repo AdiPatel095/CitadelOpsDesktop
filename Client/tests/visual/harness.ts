@@ -1,7 +1,7 @@
 import { readFile } from 'node:fs/promises';
 import { expect, type Page, type Request } from '@playwright/test';
 
-export async function prepare(page: Page, theme: 'dark' | 'light') {
+export async function prepare(page: Page, theme: 'dark' | 'light', scenario = 'rich-account') {
   const intercepted = new WeakSet<Request>();
   const escapes: string[] = [];
   const unhandled: string[] = [];
@@ -38,7 +38,7 @@ export async function prepare(page: Page, theme: 'dark' | 'light') {
     };
   }, theme);
   await page.clock.setFixedTime(new Date('2026-09-29T12:00:00Z'));
-  await page.goto('/?scenario=rich-account&locale=en&reset=1');
+  await page.goto(`/?scenario=${encodeURIComponent(scenario)}&locale=en&reset=1`);
   await page.addStyleTag({ content: `
     #fixture-banner, #fixture-dock { display: none !important; }
     #root { margin-top: 0 !important; height: 100dvh !important; transform: none !important; }

@@ -1,6 +1,6 @@
 /**
  * Unit Picker Storage
- * 
+ *
  * Manages local storage for favorites and frequently used units.
  */
 

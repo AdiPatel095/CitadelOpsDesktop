@@ -110,6 +110,7 @@ for (const theme of ['light', 'dark']) test(`${theme}: R9/R10 enforced (spec col
   check('text-on-accent-container', ['accent-container'], 4.5);
   check('border-strong', ['surface-canvas', 'surface-card', 'surface-inset', 'surface-control'], 3);
   check('focus-ring', surfaces, 3);
+  check('control-on', ['surface-card'], 3);
   for (const tone of ['success', 'warning', 'danger', 'info', 'neutral']) check(`status-${tone}`, ['surface-canvas', 'surface-card', 'surface-inset', `status-${tone}-bg`], 4.5);
   for (const pair of gaps) assert.ok(pair.delta >= 4, `R9 ${theme} ${pair.pair}: ${pair.delta} < 4`);
   for (const pair of checks) assert.ok(pair.ratio >= pair.min, `R10 ${theme} ${pair.pair}: ${pair.ratio} < ${pair.min}`);

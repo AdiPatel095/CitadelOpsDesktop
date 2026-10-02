@@ -1,3 +1,4 @@
+import { Banner } from '../components/ui/Banner';
 import { StatusBadge } from '../components/ui/StatusBadge';
 import { useAutomationPlayerStatus } from '../settings/readiness/useAutomationPlayerStatus';
 import { automationPlayerStatus } from '../settings/readiness/playerStatus';
@@ -22,7 +23,6 @@ import {
   Crosshair,
   Hammer,
   HeartPulse,
-  MousePointerClick,
   Settings,
   Shield,
   ShoppingCart,
@@ -251,7 +251,7 @@ function AutomationStatusLine({line, value}:{line:AutomationStatusLane; value:Re
   return <div className="automation-function-status-line">
     {line.label ? <span className="automation-function-status-lane" {...messageLanguageAttributes(label)}>{label.text}</span> : null}
     <StatusBadge {...value} />
-    {line.toggle ? <Switch checked={line.toggle.checked} onChange={line.toggle.onChange} size="sm" ariaLabel={line.toggle.ariaLabel} disabled={line.toggle.disabled} className="automation-function-status-toggle" /> : null}
+    {line.toggle ? <Switch checked={line.toggle.checked} onChange={line.toggle.onChange} ariaLabel={line.toggle.ariaLabel} disabled={line.toggle.disabled} className="automation-function-status-toggle" /> : null}
   </div>;
 }
 
@@ -873,10 +873,9 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
                 </span>
                 <h2>{group.name}</h2>
                 <span className="automation-function-group-rule" aria-hidden="true" />
-                <div className="automation-right-click-banner automation-right-click-inline" role="note">
-                  <MousePointerClick aria-hidden="true" />
+                <Banner tone="info">
                   <span><LocalizedRichText messageKey="ui.rich.views.automationView.right.click.a.toggle.for.temporary.activation.c34579ee" params={{}} tags={{strong0: children => <strong className="text-text-main">{children}</strong>}} /></span>
-                </div>
+                </Banner>
               </div>
               <div className="automation-function-grid">
                 {group.features.map((feature) => {
@@ -901,7 +900,6 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
                         <Switch
                           checked={feature.enabled}
                           onChange={feature.onToggle}
-                          size="sm"
                           ariaLabel={`Toggle ${feature.name}`}
                           disabled={feature.disabled}
                         />

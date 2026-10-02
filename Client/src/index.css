@@ -3403,36 +3403,6 @@
         gap: 1.8rem;
     }
 
-    .automation-right-click-banner {
-        display: flex;
-        min-height: 3rem;
-        align-items: center;
-        gap: 0.8rem;
-        border: 1px solid color-mix(in srgb, var(--primary) 54%, var(--border-light));
-        border-radius: var(--radius-global);
-        background: color-mix(in srgb, var(--primary) 12%, var(--surface-raised));
-        box-shadow: var(--elevation-1);
-        padding: 0.7rem 1rem;
-        color: var(--text-secondary);
-        font-size: 1rem;
-        font-weight: 750;
-        line-height: 1.25;
-    }
-
-    .automation-right-click-banner svg {
-        width: 2rem;
-        height: 2rem;
-        flex: 0 0 auto;
-        color: var(--primary);
-        stroke-width: 2.25;
-    }
-
-    .automation-right-click-banner strong {
-        margin-right: 0.22rem;
-        font-size: 1.1rem;
-        font-weight: 900;
-    }
-
     .automation-function-group { min-width: 0; }
 
     .automation-function-group-heading {
@@ -3496,8 +3466,6 @@
         border-color: color-mix(in srgb, var(--primary) 20%, transparent);
         background: color-mix(in srgb, var(--primary) 6%, transparent);
     }
-
-    .automation-function-row .liquid-switch { margin-top: 0.12rem; }
 
     .automation-function-copy { min-width: 0; }
 
@@ -3621,104 +3589,6 @@
             grid-template-columns: minmax(0, 1fr);
             row-gap: 0.3rem;
         }
-    }
-
-    .liquid-switch {
-        --liquid-switch-width: 4.1rem;
-        --liquid-switch-height: 2.25rem;
-        --liquid-switch-thumb: 2.25rem;
-        --liquid-switch-rail-height: 1.4rem;
-        --liquid-switch-travel: calc(var(--liquid-switch-width) - var(--liquid-switch-thumb));
-        position: relative;
-        display: inline-flex;
-        width: var(--liquid-switch-width);
-        height: var(--liquid-switch-height);
-        flex: 0 0 auto;
-        align-items: center;
-        justify-content: center;
-        overflow: visible;
-        border: 0;
-        border-radius: var(--radius-pill);
-        background: transparent;
-        box-shadow: var(--elevation-0);
-        cursor: pointer;
-        isolation: isolate;
-        padding: 0;
-        transition: border-color var(--duration-fast) var(--ease-standard), background-color var(--duration-fast) var(--ease-standard), transform var(--duration-fast) var(--ease-standard);
-        touch-action: manipulation;
-    }
-
-    .liquid-switch:hover:not(:disabled) { transform: none; }
-
-    .liquid-switch:active:not(:disabled) { transform: scale(0.96); }
-
-    .liquid-switch:focus-visible {
-        outline: none;
-        filter: drop-shadow(0 0 0.35rem color-mix(in srgb, var(--primary) 58%, transparent));
-    }
-
-    .liquid-switch:disabled {
-        cursor: not-allowed;
-        opacity: 0.48;
-    }
-
-    .liquid-switch-sm {
-        --liquid-switch-width: 3.3rem;
-        --liquid-switch-height: 1.75rem;
-        --liquid-switch-thumb: 1.75rem;
-        --liquid-switch-rail-height: 1.1rem;
-    }
-
-    .liquid-switch-lg {
-        --liquid-switch-width: 5.2rem;
-        --liquid-switch-height: 2.8rem;
-        --liquid-switch-thumb: 2.8rem;
-        --liquid-switch-rail-height: 1.75rem;
-    }
-
-    .liquid-switch-rail {
-        position: absolute;
-        z-index: 1;
-        top: 50%;
-        right: calc(var(--liquid-switch-thumb) * 0.25);
-        left: calc(var(--liquid-switch-thumb) * 0.25);
-        height: var(--liquid-switch-rail-height);
-        border: 1px solid color-mix(in srgb, var(--primary) 16%, var(--border-base));
-        border-radius: var(--radius-pill);
-        background: var(--control-background);
-        box-shadow: var(--control-shadow);
-        transform: translateY(-50%);
-        transition: border-color var(--duration-fast) var(--ease-standard), background var(--duration-fast) var(--ease-standard);
-    }
-
-    .liquid-switch-on .liquid-switch-rail {
-        border-color: color-mix(in srgb, var(--primary) 30%, var(--border-light));
-        box-shadow: var(--elevation-0);
-    }
-
-    .liquid-switch-thumb {
-        position: absolute;
-        z-index: 2;
-        top: 50%;
-        left: 0;
-        display: inline-flex;
-        width: var(--liquid-switch-thumb);
-        height: var(--liquid-switch-thumb);
-        align-items: center;
-        justify-content: center;
-        border: 1px solid color-mix(in srgb, var(--primary) 58%, var(--border-light));
-        border-radius: var(--radius-full);
-        background: var(--control-active-background);
-        box-shadow: var(--elevation-1);
-        transform: translateY(-50%) translateX(0);
-        transition: transform var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard), background var(--duration-fast) var(--ease-standard);
-    }
-
-    .liquid-switch-on .liquid-switch-thumb {
-        border-color: color-mix(in srgb, var(--primary) 44%, var(--border-light));
-        background: var(--control-active-background);
-        box-shadow: var(--elevation-1);
-        transform: translateY(-50%) translateX(var(--liquid-switch-travel));
     }
 
     .liquid-toggle-group {
@@ -4155,3 +4025,6 @@ html[dir="rtl"] input[type="number"], html[dir="rtl"] code { direction: ltr; uni
   text-overflow: clip;
   white-space: normal;
 }
+
+a { color: var(--text-primary); text-decoration: underline; text-decoration-thickness: 1px; }
+a:hover { text-decoration-thickness: 2px; }

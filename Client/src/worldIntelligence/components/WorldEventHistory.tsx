@@ -726,7 +726,7 @@ const EventScoreTable = ({ entries, loading, regularPlayers, eventTitle, searchQ
 								<RegularMetricValue value={regular?.might} />
 								<RegularMetricValue value={regular?.honor} />
 								<td className="px-3 py-2.5">{allianceId ? <button type="button" className="max-w-56 truncate font-semibold text-text-main hover:text-primary" onClick={() => onOpenAlliance(allianceId, entry.worldId)}>{allianceName || localizeStatic('events.allianceId',{id:String(allianceId)})}</button> : <span className="text-text-muted"><LocalizedText messageKey="ui.worldIntelligence.components.worldEventHistory.no.alliance.623666da" /></span>}</td>
-								<td className="border-l border-border-base px-3 py-2.5 text-right font-mono font-black text-primary">#{formatCount(entry.rank)}</td>
+								<td className="border-l border-border-base px-3 py-2.5 text-right font-mono font-black text-text-main">#{formatCount(entry.rank)}</td>
 								<td className="px-3 py-2.5 text-right"><EventScoreValue entry={entry} /></td>
 							</tr>;
 						})}

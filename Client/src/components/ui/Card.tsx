@@ -7,7 +7,7 @@ export interface CardProps extends HTMLAttributes<HTMLDivElement> {
 export const Card = React.forwardRef<HTMLDivElement, CardProps>(
   ({ className = '', variant = 'solid', children, ...props }, ref) => {
     const baseStyles = 'm3-card rounded-global border transition-all duration-300';
-    
+
     const variants = {
       solid: 'm3-card-solid',
       interactive: 'm3-card-interactive cursor-pointer',

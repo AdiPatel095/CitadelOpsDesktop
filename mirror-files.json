@@ -245,6 +245,10 @@
       "desktop": "Client/src/components/ui/AddSlot.tsx"
     },
     {
+      "portal": "src/commandCenter/components/ui/Banner.tsx",
+      "desktop": "Client/src/components/ui/Banner.tsx"
+    },
+    {
       "portal": "src/commandCenter/components/ui/CatalogPickerModal.tsx",
       "desktop": "Client/src/components/ui/CatalogPickerModal.tsx"
     },
@@ -255,6 +259,10 @@
     {
       "portal": "src/commandCenter/components/ui/CollectionToolbar.tsx",
       "desktop": "Client/src/components/ui/CollectionToolbar.tsx"
+    },
+    {
+      "portal": "src/commandCenter/components/ui/Delta.tsx",
+      "desktop": "Client/src/components/ui/Delta.tsx"
     },
     {
       "portal": "src/commandCenter/components/ui/EmptyState.tsx",
@@ -313,8 +321,20 @@
       "desktop": "Client/src/components/ui/StatusIndicator.tsx"
     },
     {
+      "portal": "src/commandCenter/components/ui/Switch.tsx",
+      "desktop": "Client/src/components/ui/Switch.tsx"
+    },
+    {
       "portal": "src/commandCenter/components/ui/ToggleGroup.tsx",
       "desktop": "Client/src/components/ui/ToggleGroup.tsx"
+    },
+    {
+      "portal": "src/commandCenter/components/ui/banner.css",
+      "desktop": "Client/src/components/ui/banner.css"
+    },
+    {
+      "portal": "src/commandCenter/components/ui/delta.css",
+      "desktop": "Client/src/components/ui/delta.css"
     },
     {
       "portal": "src/commandCenter/components/ui/delta.ts",
@@ -323,6 +343,10 @@
     {
       "portal": "src/commandCenter/components/ui/index.ts",
       "desktop": "Client/src/components/ui/index.ts"
+    },
+    {
+      "portal": "src/commandCenter/components/ui/switch.css",
+      "desktop": "Client/src/components/ui/switch.css"
     },
     {
       "portal": "src/commandCenter/components/ui/tabsLogic.ts",
@@ -1265,6 +1289,10 @@
       "desktop": "Client/tests/gate/views.ts"
     },
     {
+      "portal": "tests/stale-session-banner.test.mjs",
+      "desktop": "Client/tests/stale-session-banner.test.mjs"
+    },
+    {
       "portal": "tests/status-badges.test.mjs",
       "desktop": "Client/tests/status-badges.test.mjs"
     },
@@ -1275,6 +1303,10 @@
     {
       "portal": "tests/view-states-logic.test.mjs",
       "desktop": "Client/tests/view-states-logic.test.mjs"
+    },
+    {
+      "portal": "tests/visual-rules/rules.fixture.spec.ts",
+      "desktop": "Client/tests/visual-rules/rules.fixture.spec.ts"
     },
     {
       "portal": "tests/visual/rules.ts",

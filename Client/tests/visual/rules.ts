@@ -46,7 +46,8 @@ async function scanColours(page: Page, disabled: boolean) {
           if (pseudo && (style.content === 'none' || style.content === 'normal')) continue;
           const names = [...accentTokens];
           if (disabled) {
-            names.push('--control-on', ...Array.from(style).filter((name) => name.startsWith('--status-')));
+            names.push('--control-on', ...['success', 'warning', 'danger', 'info'].flatMap((tone) =>
+              [`--status-${tone}`, `--status-${tone}-bg`, `--status-${tone}-border`]));
           }
           const tokenColours = new Map<string, string[]>();
           for (const name of names) {

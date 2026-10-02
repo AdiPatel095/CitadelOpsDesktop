@@ -911,7 +911,6 @@ export const WeeklyScheduler: React.FC<WeeklySchedulerProps> = ({
             <div className="schedule-control-chip">
               <span><LocalizedText messageKey="ui.settings.components.weeklyScheduler.use.schedule.0a350b34" /></span>
               <Switch
-                size="sm"
                 checked={schedule.enabled}
                 onChange={(enabled) => commitSchedule({ ...schedule, enabled })}
                 ariaLabel={localizeStatic("ui.settings.components.weeklyScheduler.ariaLabel.use.weekly.schedule.c2262573")}
@@ -921,7 +920,6 @@ export const WeeklyScheduler: React.FC<WeeklySchedulerProps> = ({
               <div className="schedule-control-chip">
                 <span>{slotOptionsConfig.enabledLabel}</span>
                 <Switch
-                  size="sm"
                   checked={slotOptionsEnabled}
                   onChange={setSlotOptionsEnabled}
                   ariaLabel={slotOptionsConfig.enabledLabel}

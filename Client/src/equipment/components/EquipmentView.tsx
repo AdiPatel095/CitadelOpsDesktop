@@ -1,3 +1,4 @@
+import { Delta } from '../../components/ui/Delta.tsx';
 import { equipmentEventOptions } from '../EquipmentEventLoadouts';
 import { describeMessage } from '../../i18n/messages';
 import {formatMessage,type LocalizedMessage} from '../../i18n/formatMessage';
@@ -27,6 +28,7 @@ import {
 	formatEquipmentCommonCap,
 	formatEquipmentEffectLabel,
 	formatEquipmentEffectValue,
+	formatAbsoluteEquipmentEffectValue,
 	type EquipmentEffectGroup,
 	type EquipmentEffectProfile,
 	type EquipmentEffectScope,
@@ -272,7 +274,8 @@ export default function EquipmentView() {
 									type="button"
 									key={leader.id}
 									onClick={() => setSelectedID(leader.id)}
-									className={`equipment-loadout-item w-full rounded-global border px-3 py-2.5 text-left transition-all duration-200 ${selectedID === leader.id ? 'border-primary/30 bg-primary/10 text-primary shadow-[0_0_10px_var(--primary-glow)]' : 'border-transparent text-text-muted hover:bg-bg-card-hover hover:text-text-main'}`}
+									data-current-selection={selectedID === leader.id ? "true" : undefined}
+                                    className={`equipment-loadout-item w-full rounded-global border px-3 py-2.5 text-left transition-all duration-200 ${selectedID === leader.id ? 'border-primary/30 bg-primary/10 text-primary shadow-[0_0_10px_var(--primary-glow)]' : 'border-transparent text-text-muted hover:bg-bg-card-hover hover:text-text-main'}`}
 								>
 									<span className="flex items-center gap-2">
 										<span className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-bold ${selectedID === leader.id ? 'bg-primary text-bg-app' : 'border border-border-base bg-bg-app text-text-muted'}`}>{leader.position}</span>
@@ -406,7 +409,7 @@ function EffectiveBattleReport({
 							{effectProfile.showcase.map((effect) => (
 								<li key={effect.key} className="flex items-center justify-between gap-3 border-b border-border-base/60 px-3 py-2.5 last:border-b-0">
 									<span className="min-w-0 flex-1 truncate text-xs text-text-muted" title={effect.label}>{effect.label}</span>
-									<span className="shrink-0 font-mono text-sm font-semibold text-primary">{formatEquipmentEffectValue(effect, effect.value, locale)}</span>
+									<span className="shrink-0 font-mono text-sm font-semibold text-text-main">{renderEquipmentDelta(effect, effect.value, locale)}</span>
 								</li>
 							))}
 						</ul>
@@ -509,8 +512,8 @@ function EquipmentEffectGroupRows({ group }: { group: EquipmentEffectGroup }) {
 						</div>
 					</div>
 					<div className="shrink-0 text-right">
-						<div className="font-mono text-sm font-semibold text-primary">{formatEquipmentEffectValue(group, group.value, locale)}</div>
-						{group.capped && <div className="font-mono text-[11px] text-text-muted">raw {formatEquipmentEffectValue(group, group.rawValue, locale)}</div>}
+						<div className="font-mono text-sm font-semibold text-text-main">{renderEquipmentDelta(group, group.value, locale)}</div>
+						{group.capped && <div className="font-mono text-[11px] text-text-muted">raw {renderEquipmentDelta(group, group.rawValue, locale)}</div>}
 					</div>
 				</div>
 			</div>
@@ -554,8 +557,8 @@ function EquipmentEffectDetailRow({
 					</div>
 				</div>
 				<div className="shrink-0 text-right">
-					<div className="font-mono text-sm font-semibold text-primary">{formatEquipmentEffectValue(effect, effect.value, locale)}</div>
-					{effect.capped && <div className="font-mono text-[11px] text-text-muted">raw {formatEquipmentEffectValue(effect, effect.rawValue, locale)}</div>}
+					<div className="font-mono text-sm font-semibold text-text-main">{renderEquipmentDelta(effect, effect.value, locale)}</div>
+					{effect.capped && <div className="font-mono text-[11px] text-text-muted">raw {renderEquipmentDelta(effect, effect.rawValue, locale)}</div>}
 				</div>
 			</div>
 		</div>
@@ -566,4 +569,10 @@ function effectScopeBadge(scope: EquipmentEffectScope): 'secondary' | 'danger' |
 	if (scope === 'PvP') return 'danger';
 	if (scope === 'PvE') return 'success';
 	return 'secondary';
+}
+
+function renderEquipmentDelta(effect: Parameters<typeof formatEquipmentEffectValue>[0], value: number, locale: string) {
+  return effect.displayValue
+    ? effect.displayValue
+    : <Delta value={value}>{formatAbsoluteEquipmentEffectValue(effect, value, locale)}</Delta>;
 }

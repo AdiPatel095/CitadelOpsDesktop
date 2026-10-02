@@ -24,7 +24,7 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     ref
   ) => {
     const baseStyles = 'm3-button inline-flex items-center justify-center font-semibold focus:outline-none disabled:cursor-not-allowed whitespace-nowrap';
-    
+
     // Legacy solid callers have no variant class; preserve that rendering.
     const variants: Partial<Record<NonNullable<ButtonProps['variant']>, string>> = {
       primary: 'm3-button-filled',

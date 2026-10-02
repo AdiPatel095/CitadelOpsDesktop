@@ -10944,11 +10944,6 @@
     "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
     "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
   },
-  "2b154d9cb28785d0a9f2e96c4a49ac97295465f344aa69edf7575d59b05e9261": {
-    "classification": "technical",
-    "reason": "Component variant, size, CSS class or DOM option value, not human display text.",
-    "evidence": "Button/Badge/Modal variants and sizes, scrollIntoView options, ARIA/DOM attribute values and tone classes in the new CIT-20 components."
-  },
   "d394fff81a46e444993e636615bc90482ed554bdd102b4a7193192f1a8c76d81": {
     "classification": "technical",
     "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
@@ -11503,5 +11498,65 @@
     "classification": "technical",
     "reason": "Status/role identifiers, typed catalog keys, locale/ARIA metadata; never displayed as raw labels.",
     "evidence": "CIT-66 PR-C settings/readiness/automationPlayerStatusDisplay.ts: builder-missing-decorations; StatusBadge and RoleTag render catalog labels and formatted reason descriptors; adapter identifiers are inputs to the tested pure player-status model."
+  },
+  "95b0488069d0a570c0d45f231921a002ba11ad008a9b644e2693a9c8ee9137b6": {
+    "classification": "technical",
+    "reason": "Component tone, variant, size, ARIA value, locale identifier or typed message key; not displayed prose.",
+    "evidence": "CIT-64 components/StaleSessionBanner.tsx: warning is passed to a typed component prop, formatter locale, or LocalizedText messageKey; the displayed body is defined in sourceMessages.ts."
+  },
+  "65d3ed0848806b3e42b0a7bdcbf2d2afc35b8d3797e8e08b0683414fb58affcd": {
+    "classification": "technical",
+    "reason": "Component tone, variant, size, ARIA value, locale identifier or typed message key; not displayed prose.",
+    "evidence": "CIT-64 components/StaleSessionBanner.tsx: ghost is passed to a typed component prop, formatter locale, or LocalizedText messageKey; the displayed body is defined in sourceMessages.ts."
+  },
+  "1af11d17e00e37e5b2e998ea94740d655f204fbb58d45a7693cdcc2a47227979": {
+    "classification": "technical",
+    "reason": "Component tone, variant, size, ARIA value, locale identifier or typed message key; not displayed prose.",
+    "evidence": "CIT-64 components/StaleSessionBanner.tsx: sm is passed to a typed component prop, formatter locale, or LocalizedText messageKey; the displayed body is defined in sourceMessages.ts."
+  },
+  "1e1e01ba78d5789c2e27a97c16d78d30047dcd5b265695e79d4d5a51e35d4e34": {
+    "classification": "technical",
+    "reason": "Component tone, variant, size, ARIA value, locale identifier or typed message key; not displayed prose.",
+    "evidence": "CIT-64 components/StaleSessionBanner.tsx: ui.components.staleSessionBanner.body.reconnect is passed to a typed component prop, formatter locale, or LocalizedText messageKey; the displayed body is defined in sourceMessages.ts."
+  },
+  "b386fd41ef914053ea63ffdbf9adab5759c5867bfa03d143362a2648873a7d44": {
+    "classification": "technical",
+    "reason": "Component tone, variant, size, ARIA value, locale identifier or typed message key; not displayed prose.",
+    "evidence": "CIT-64 components/StaleSessionBanner.tsx: ui.components.staleSessionBanner.body.reloadTab is passed to a typed component prop, formatter locale, or LocalizedText messageKey; the displayed body is defined in sourceMessages.ts."
+  },
+  "5dbd3205cc29affef0a449ab20b18ecf52f239d3381fefaf465bab583e6ddde7": {
+    "classification": "technical",
+    "reason": "Component tone, variant, size, ARIA value, locale identifier or typed message key; not displayed prose.",
+    "evidence": "CIT-64 components/ui/Banner.tsx: true is passed to a typed component prop, formatter locale, or LocalizedText messageKey; the displayed body is defined in sourceMessages.ts."
+  },
+  "e645ce5c5459c611b0a2ecec965900bf54f047e7d6eb7c005b0ea48c7929c026": {
+    "classification": "technical",
+    "reason": "Component tone, variant, size, ARIA value, locale identifier or typed message key; not displayed prose.",
+    "evidence": "CIT-64 components/ui/Banner.tsx: ghost is passed to a typed component prop, formatter locale, or LocalizedText messageKey; the displayed body is defined in sourceMessages.ts."
+  },
+  "d8b2bdc627cd2739c926fbbd90046e4319eee7be4964f31d1f0e17479d77898d": {
+    "classification": "technical",
+    "reason": "Component tone, variant, size, ARIA value, locale identifier or typed message key; not displayed prose.",
+    "evidence": "CIT-64 components/ui/Banner.tsx: icon is passed to a typed component prop, formatter locale, or LocalizedText messageKey; the displayed body is defined in sourceMessages.ts."
+  },
+  "09c1a93cdf48b6acdcb90da3a875578ee2f26fec498a4dba55bb571671832313": {
+    "classification": "technical",
+    "reason": "Component tone, variant, size, ARIA value, locale identifier or typed message key; not displayed prose.",
+    "evidence": "CIT-64 components/ui/Banner.tsx: true is passed to a typed component prop, formatter locale, or LocalizedText messageKey; the displayed body is defined in sourceMessages.ts."
+  },
+  "ee483d396324459968039e2c88614b45bb25856e6f6d4d5fbbd6381828fa4b9e": {
+    "classification": "technical",
+    "reason": "Component tone, variant, size, ARIA value, locale identifier or typed message key; not displayed prose.",
+    "evidence": "CIT-64 components/ui/Switch.tsx: true is passed to a typed component prop, formatter locale, or LocalizedText messageKey; the displayed body is defined in sourceMessages.ts."
+  },
+  "215a67bec14452789eaec5af404a9120cd00124c1df73b49fd45aee208dd8b82": {
+    "classification": "technical",
+    "reason": "Component tone, variant, size, ARIA value, locale identifier or typed message key; not displayed prose.",
+    "evidence": "CIT-64 equipment/components/EquipmentEffects.ts: en is passed to a typed component prop, formatter locale, or LocalizedText messageKey; the displayed body is defined in sourceMessages.ts."
+  },
+  "1a22d8189a674c1a801488afc85d36600aea9625a3e8b3c71ad71018533c1b67": {
+    "classification": "technical",
+    "reason": "Component tone, variant, size, ARIA value, locale identifier or typed message key; not displayed prose.",
+    "evidence": "CIT-64 views/AutomationView.tsx: info is passed to a typed component prop, formatter locale, or LocalizedText messageKey; the displayed body is defined in sourceMessages.ts."
   }
 }

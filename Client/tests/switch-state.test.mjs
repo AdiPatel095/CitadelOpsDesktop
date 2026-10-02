@@ -26,10 +26,10 @@ test('all switches expose one shared off and on state contract', () => {
   const off = Switch({ checked: false, onChange: (checked) => changed.push(checked), ariaLabel: 'Disable test feature' });
   const on = Switch({ checked: true, onChange: (checked) => changed.push(checked), ariaLabel: 'Enable test feature' });
 
-  assert.match(off.props.className, /\bliquid-switch-off\b/);
+  assert.equal(off.props['data-state'], 'off');
   assert.equal(off.props['aria-checked'], false);
   assert.equal(off.props['aria-label'], 'Disable test feature');
-  assert.match(on.props.className, /\bliquid-switch-on\b/);
+  assert.equal(on.props['data-state'], 'on');
   assert.equal(on.props['aria-checked'], true);
   assert.equal(on.props['aria-label'], 'Enable test feature');
   assert.doesNotMatch(`${off.props.className} ${on.props.className}`, /liquid-switch-tone-/);
@@ -43,7 +43,7 @@ test('switches expose native disabled behavior through the shared component', ()
   const disabled = Switch({ checked: false, onChange: () => {}, disabled: true, ariaLabel: 'Disabled setting' });
   assert.equal(disabled.props.disabled, true);
   assert.equal(disabled.props.role, 'switch');
-  assert.match(disabled.props.className, /\bliquid-switch-sm\b/);
+  assert.match(disabled.props.className, /\bui-switch\b/);
 });
 
 test('settings rows delegate their binary state to the shared switch', () => {
@@ -67,13 +67,18 @@ test('defense courtyard inclusion uses the shared binary switch', async () => {
   assert.ok(Object.entries(sourceMessages).some(([key,text]) => text === 'Include courtyard setup in this defense preset' && editor.includes(`ariaLabel={localizeStatic("${key}")}`)));
 });
 
-test('the consolidated stylesheet preserves the existing switch colour contract', async () => {
+test('switches own neutral off/disabled tokens and the on check glyph', async () => {
+  const css = await readFile(new URL('../src/components/ui/switch.css', import.meta.url), 'utf8');
   const palette = await readFile(new URL('../src/MaterialExpressive.css', import.meta.url), 'utf8');
-  const automationView = await readFile(new URL('../src/views/AutomationView.tsx', import.meta.url), 'utf8');
-
-  assert.match(palette, /\.liquid-switch-off \.liquid-switch-rail[\s\S]*var\(--status-danger\)/);
-  assert.match(palette, /\.liquid-switch-on \.liquid-switch-rail[\s\S]*var\(--status-success\)/);
-  assert.doesNotMatch(palette, /liquid-switch-tone-/);
-  assert.doesNotMatch(automationView, /tone="feature"/);
-  assert.match(palette, /@media \(forced-colors: active\)[\s\S]*\.liquid-switch-off:focus-visible,[\s\S]*\.liquid-switch-on:focus-visible[\s\S]*outline: 2px solid Highlight[\s\S]*filter: none/);
+  assert.match(css, /background: var\(--surface-control\)/);
+  assert.match(css, /border: 2px solid var\(--border-strong\)/);
+  assert.match(css, /\.ui-switch\[data-state="on"\] \.ui-switch__track \{ border: 0; background: var\(--control-on\)/);
+  assert.match(css, /\.ui-switch:disabled \.ui-switch__track \{ border: 1px solid var\(--border-subtle\); background: var\(--fill-disabled\)/);
+  assert.doesNotMatch(css, /--accent|--status-danger|--status-success/);
+  assert.doesNotMatch(palette, /liquid-switch/);
+  const on = renderToStaticMarkup(createElement(Switch, { checked: true, onChange: () => {}, ariaLabel: 'Enabled' }));
+  const off = renderToStaticMarkup(createElement(Switch, { checked: false, onChange: () => {}, ariaLabel: 'Disabled' }));
+  assert.match(on, /lucide-check/);
+  assert.doesNotMatch(off, /<svg/);
+  assert.match(on, /width="12"/);
 });

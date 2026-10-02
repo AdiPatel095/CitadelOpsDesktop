@@ -123,6 +123,7 @@ export const ToggleGroup: React.FC<ToggleGroupProps> = ({
             type="button"
             role="radio"
             aria-checked={isActive}
+            data-current-selection={isActive ? "true" : undefined}
             tabIndex={isActive || (activeIndex === -1 && index === 0) ? 0 : -1}
             title={tip}
             onClick={() => onChange(option.value)}
