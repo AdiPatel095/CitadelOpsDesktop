@@ -783,13 +783,6 @@ select {
     background: var(--md-sys-color-primary-container);
 }
 
-.m3-status-banner {
-    border: 0;
-    border-radius: var(--shape-card);
-    box-shadow: var(--elevation-0);
-}
-
-.m3-status-banner-warning { background: color-mix(in srgb, var(--warning) 13%, var(--md-sys-color-surface-container)); }
 
 .m3-chip {
     min-height: 1.75rem;
@@ -888,20 +881,6 @@ select {
     background: transparent;
 }
 
-.liquid-switch-rail { box-shadow: var(--elevation-0); }
-
-.liquid-switch-thumb {
-    border: 0;
-    box-shadow: var(--elevation-0);
-}
-
-.liquid-switch-on .liquid-switch-rail { box-shadow: var(--elevation-0); }
-
-.liquid-switch-on .liquid-switch-thumb {
-    border: 0;
-    box-shadow: var(--elevation-0);
-}
-
 .liquid-toggle-group {
     border-color: var(--md-sys-color-outline-variant);
     background: var(--md-sys-color-surface-container-high);
@@ -990,40 +969,6 @@ select {
 }
 
 .liquid-content tbody tr:hover { background: color-mix(in srgb, var(--md-sys-color-primary) 6%, transparent); }
-
-.automation-right-click-banner {
-    border-color: color-mix(in srgb, var(--md-sys-color-on-primary-container) 22%, transparent);
-    border-radius: var(--md-sys-shape-corner-full);
-    background: color-mix(in srgb, var(--md-sys-color-surface-container-lowest) 62%, transparent);
-    color: var(--md-sys-color-on-primary-container);
-    box-shadow: var(--elevation-0);
-}
-
-.automation-right-click-banner.automation-right-click-inline {
-    min-height: 2rem;
-    flex: 0 0 auto;
-    gap: 0.45rem;
-    padding: 0.35rem 0.7rem;
-    border-color: color-mix(in srgb, var(--md-sys-color-primary) 48%, var(--md-sys-color-outline-variant));
-    background: var(--md-sys-color-primary-container);
-    color: var(--md-sys-color-on-primary-container);
-    font-size: var(--font-size-12);
-    line-height: var(--line-height-12);
-    font-weight: var(--font-weight-600);
-}
-
-.automation-right-click-banner.automation-right-click-inline svg {
-    width: 1rem;
-    height: 1rem;
-    color: var(--md-sys-color-on-primary-container);
-}
-
-.automation-right-click-banner.automation-right-click-inline strong {
-    margin-right: 0.12rem;
-    font-size: var(--font-size-12);
-    line-height: var(--line-height-12);
-    font-weight: var(--font-weight-600);
-}
 
 .automation-function-groups { gap: 2rem; }
 
@@ -1856,46 +1801,5 @@ select {
     .liquid-log-search-control,
     .liquid-log-toolbar-buttons {
         grid-column: 1;
-    }
-}
-
-/* Existing switch overrides, relocated from KingdomPalette.css. */
-
-.liquid-switch-rail {
-    border-color: var(--md-sys-color-tertiary);
-    background: var(--md-sys-color-tertiary-container);
-}
-
-.liquid-switch-thumb { background: var(--md-sys-color-tertiary); }
-
-/* Every binary switch uses the same persisted-state language in every surface. */
-.liquid-switch-off .liquid-switch-rail {
-    border-color: color-mix(in srgb, var(--status-danger) 72%, var(--md-sys-color-outline));
-    background: color-mix(in srgb, var(--status-danger) 22%, var(--md-sys-color-surface-container-highest));
-}
-
-.liquid-switch-off .liquid-switch-thumb { background: var(--status-danger); }
-
-.liquid-switch-on .liquid-switch-rail {
-    border-color: color-mix(in srgb, var(--status-success) 72%, var(--md-sys-color-outline));
-    background: color-mix(in srgb, var(--status-success) 30%, var(--md-sys-color-surface-container-highest));
-}
-
-.liquid-switch-on .liquid-switch-thumb { background: var(--status-success); }
-
-.liquid-switch-off:focus-visible {
-    filter: drop-shadow(0 0 0.35rem color-mix(in srgb, var(--status-danger) 58%, transparent));
-}
-
-.liquid-switch-on:focus-visible {
-    filter: drop-shadow(0 0 0.35rem color-mix(in srgb, var(--status-success) 58%, transparent));
-}
-
-@media (forced-colors: active) {
-    .liquid-switch-off:focus-visible,
-    .liquid-switch-on:focus-visible {
-        outline: 2px solid Highlight;
-        outline-offset: 2px;
-        filter: none;
     }
 }

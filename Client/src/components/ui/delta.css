@@ -1,0 +1,3 @@
+.ui-delta { color: var(--text-primary); }
+.ui-delta--gain { color: var(--status-success); }
+.ui-delta--loss { color: var(--status-danger); }

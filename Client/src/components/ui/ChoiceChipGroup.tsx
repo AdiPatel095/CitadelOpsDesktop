@@ -39,6 +39,7 @@ export function ChoiceChipGroup<T extends ChoiceChipValue>({
             key={String(option.value)}
             type="button"
             aria-pressed={active}
+            data-current-selection={active ? "true" : undefined}
             disabled={disabled || option.disabled}
             title={option.title}
             onClick={() => onToggle(option.value)}

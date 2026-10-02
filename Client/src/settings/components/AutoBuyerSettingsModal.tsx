@@ -354,7 +354,6 @@ export const AutoBuyerSettingsModal: React.FC<AutoBuyerSettingsModalProps> = ({ 
               checked={autoBuyerEnabled}
               onChange={(enabled) => { void updateMasterSwitch(enabled); }}
               disabled={updatingMasterSwitch}
-              size="md"
               ariaLabel={localizeStatic("ui.settings.components.autoBuyerSettingsModal.ariaLabel.run.auto.buyer.d3b546dd")}
             />
           </div>

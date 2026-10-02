@@ -21,6 +21,8 @@ export * from './ScheduleSummaryRow';
 export * from './CatalogPickerModal';
 export * from './ChoiceChipGroup';
 export * from './SettingsModal';
+export { DeltaValue } from "./DeltaValue";
+export * from './Banner';
 export * from './Panel';
 export * from './SectionHeader';
 export * from './OverflowMenu';

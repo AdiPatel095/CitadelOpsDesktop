@@ -14,7 +14,6 @@ export interface SettingsToggleRowProps extends Omit<HTMLAttributes<HTMLDivEleme
   tone?: 'default' | 'warning' | 'danger';
   /** Legacy caller prop, forwarded unchanged; only tone controls styling. */
   warning?: boolean;
-  switchSize?: 'sm' | 'md' | 'lg';
 }
 
 export const SettingsToggleRow: React.FC<SettingsToggleRowProps> = ({
@@ -27,7 +26,6 @@ export const SettingsToggleRow: React.FC<SettingsToggleRowProps> = ({
   disabledReason,
   ariaLabel,
   tone = 'default',
-  switchSize = 'sm',
   className = '',
   ...props
 }) => {
@@ -50,7 +48,7 @@ export const SettingsToggleRow: React.FC<SettingsToggleRowProps> = ({
         {description && <div className="mt-0.5 text-caption font-medium text-text-muted">{description}</div>}
         {disabled && disabledReason && <div className="mt-1 text-caption font-semibold text-warning">{disabledReason}</div>}
       </div>
-      <Switch checked={checked} onChange={onChange} disabled={disabled} size={switchSize} ariaLabel={accessibleName} />
+      <Switch checked={checked} onChange={onChange} disabled={disabled} ariaLabel={accessibleName} />
     </div>
   );
 };

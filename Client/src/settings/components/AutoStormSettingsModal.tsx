@@ -1142,7 +1142,6 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
                         <tr key={item.id} className={`transition-colors ${enabled ? 'bg-primary/5' : 'hover:bg-bg-card-hover/40'}`}>
                           <td className="px-3 py-3 text-center align-middle">
                             <Switch
-                              size="sm"
                               checked={enabled}
                               onChange={(checked) => toggleShopPurchase(setDraft, item.id, checked)}
                               ariaLabel={`${enabled ? 'Disable' : 'Enable'} ${displayName}`}
@@ -1191,7 +1190,6 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
                           <td className="px-3 py-3 align-middle">
                             <div className="flex items-center gap-2">
                               <Switch
-                                size="sm"
                                 checked={purchase?.unlimited === true}
                                 disabled={!enabled}
                                 onChange={(unlimited) => updateShopPurchase(setDraft, item.id, { unlimited })}
