@@ -1,7 +1,38 @@
-import { test, type Page } from '@playwright/test';
+import { readFileSync } from 'node:fs';
+import { test, expect, type Page } from '@playwright/test';
 import type { Violation } from './checks';
 import { openCase, writeReport } from './harness';
 import { gateCases, type GateCase } from './views';
+
+// Serialized into the browser for both unfocused and focused snapshots. Compare
+// descendants too: Switch intentionally puts its outline on its track.
+function focusSnapshot(mode: 'baseline' | 'active') {
+  let active = document.activeElement as HTMLElement;
+  while (active.shadowRoot?.activeElement) active = active.shadowRoot.activeElement as HTMLElement;
+  const roots = mode === 'active' ? [active] : [...document.querySelectorAll<HTMLElement>('[data-gate-keyboard]')];
+  return roots.map(root => {
+    const nodes: HTMLElement[] = [root];
+    function collect(element: HTMLElement) {
+      for (const child of element.children) {
+        if (child instanceof HTMLElement) { nodes.push(child); collect(child); }
+      }
+      if (element.shadowRoot) for (const child of element.shadowRoot.children) {
+        if (child instanceof HTMLElement) { nodes.push(child); collect(child); }
+      }
+    }
+    collect(root);
+    return { id: root.getAttribute('data-gate-keyboard'), focusVisible: nodes.some(node => node.matches(':focus-visible')),
+      styles: nodes.map(node => {
+        const style = getComputedStyle(node); const rect = node.getBoundingClientRect();
+        const visible = rect.width > 0 && rect.height > 0 && style.visibility !== 'hidden'
+          && style.display !== 'none' && node.checkVisibility({ checkOpacity: true, checkVisibilityCSS: true });
+        const outline = [style.outlineStyle, style.outlineWidth, style.outlineColor, style.outlineOffset].join(' ');
+        return { visible, outline, hasOutline: style.outlineStyle !== 'none' && parseFloat(style.outlineWidth) > 0
+          && !['transparent', 'rgba(0, 0, 0, 0)'].includes(style.outlineColor),
+          shadow: style.boxShadow, background: style.backgroundColor, border: style.borderColor };
+      }) };
+  });
+}
 
 async function keyboardWalk(page: Page): Promise<Violation[]> {
   const candidates = await page.evaluate(() => {
@@ -24,33 +55,32 @@ async function keyboardWalk(page: Page): Promise<Violation[]> {
     }).map((element, index) => {
       const id = String(index);
       element.setAttribute('data-gate-keyboard', id);
-      const style = getComputedStyle(element);
-      return { id, label: `${element.tagName.toLowerCase()} ${element.getAttribute('aria-label') ?? element.textContent?.trim().replace(/\s+/g, ' ').slice(0, 100) ?? ''}`,
-        shadow: style.boxShadow, background: style.backgroundColor, border: style.borderColor };
+      return { id, label: `${element.tagName.toLowerCase()} ${element.getAttribute('aria-label') ?? element.textContent?.trim().replace(/\s+/g, ' ').slice(0, 100) ?? ''}` };
     });
   });
   const violations: Violation[] = [];
   const reached = new Set<string>();
   // Leave the pointer-selected navigation control before starting the Tab walk.
   await page.evaluate(() => (document.activeElement as HTMLElement | null)?.blur());
+  const baseline = await page.evaluate(focusSnapshot, 'baseline');
   const limit = candidates.length * 2 + 10;
   let first: string | undefined;
   for (let step = 0; step < limit; step++) {
     await page.keyboard.press('Tab');
-    const active = await page.evaluate(() => {
-      let element = document.activeElement as HTMLElement;
-      while (element.shadowRoot?.activeElement) element = element.shadowRoot.activeElement as HTMLElement;
-      const style = getComputedStyle(element);
-      return { id: element.getAttribute('data-gate-keyboard'), focusVisible: element.matches(':focus-visible'),
-        outline: style.outlineStyle !== 'none' && parseFloat(style.outlineWidth) > 0 && style.outlineColor !== 'transparent',
-        shadow: style.boxShadow, background: style.backgroundColor, border: style.borderColor };
-    });
+    const [active] = await page.evaluate(focusSnapshot, 'active');
     if (active.id === null) continue;
     if (first === active.id) break;
     first ??= active.id;
     reached.add(active.id);
     const before = candidates.find(candidate => candidate.id === active.id)!;
-    const indicator = active.outline || active.shadow !== before.shadow || active.background !== before.background || active.border !== before.border;
+    const previous = baseline.find(snapshot => snapshot.id === active.id)!;
+    const indicator = active.styles.some((style, index) => {
+      if (!style.visible) return false;
+      const old = previous.styles[index];
+      // Static decorative descendant outlines must not make a ringless control pass.
+      if (style.hasOutline && (index === 0 || !old?.visible || style.outline !== old.outline)) return true;
+      return old?.visible && (style.shadow !== old.shadow || style.background !== old.background || style.border !== old.border);
+    });
     if (!active.focusVisible || !indicator) {
       violations.push({ rule: 'focusVisible', element: before.label, detail: 'Tab focus has no detected visible outline, shadow, background or border indicator' });
     }
@@ -158,4 +188,24 @@ test('settings modal keyboard focus dark', async ({ page }, testInfo) => {
   if (!unavailable.length) violations.push(...await settingsFocus(page));
   verifyNetwork();
   await writeReport(testInfo, 'keyboard', entry, violations);
+});
+
+
+test('focus-rule fixture: Switch child focus indicator passes', async ({ page }) => {
+  const switchCss = readFileSync(new URL('../../' + (process.cwd().endsWith('/Client') ? 'src' : 'src/commandCenter') + '/components/ui/switch.css', import.meta.url), 'utf8');
+  await page.setContent(`<style>:root { --focus-ring: #2463eb; --border-strong: #555; --surface-control: #eee; } ${switchCss}</style>
+    <button type="button" role="switch" aria-checked="false" aria-label="Fixture Switch" class="ui-switch">
+      <span aria-hidden="true" class="ui-switch__track"></span><span aria-hidden="true" class="ui-switch__thumb"></span>
+    </button>`);
+  expect(await keyboardWalk(page)).toEqual([]);
+});
+
+test('focus-rule fixture: control with no indicator fails', async ({ page }) => {
+  await page.setContent(`<style>button, button:focus-visible { outline: none; box-shadow: none; background: white; border: 0; }
+    span { display: inline-block; outline: 2px solid blue; }</style>
+    <button aria-label="No focus indicator"><span>Static decoration</span></button>`);
+  expect(await keyboardWalk(page)).toEqual([{
+    rule: 'focusVisible', element: 'button No focus indicator',
+    detail: 'Tab focus has no detected visible outline, shadow, background or border indicator',
+  }]);
 });
