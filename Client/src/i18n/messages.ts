@@ -5,6 +5,7 @@ import { officialMessageKeys, officialMessageNouns } from './officialKeys';
 import { formatMessage, validateMessageCatalog } from './formatMessage';
 /** Add explicit descriptors here; never translate user names, IDs, or free-form input. */
 export const messages = {
+  "analytics.noAttributed": "No attributed {metric} yet",
   "equipment.actions.reconfigure": "Reconfigure",
   "equipment.actions.upgradeEquipment": "Upgrade equipment",
   "equipment.actions.upgradeGems": "Upgrade gems",

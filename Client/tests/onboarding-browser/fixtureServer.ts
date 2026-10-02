@@ -1,3 +1,4 @@
+import { parseVisualStates } from './visualStates';
 import type { AllianceTargetViewV2, ConfigurationSnapshot, GameStateV2, IntentReceipt, PlayerHistoryRetentionV1 } from './product';
 import { catalogFor, catalogManifest, LOCALIZED } from './catalogs';
 import { applyRuntimeStep, applySessionMode, buildScenario, mergePatch, type BuiltScenario, type ScenarioFile, type SessionMode } from './scenario';
@@ -120,10 +121,19 @@ export class FixtureServer {
   }
 
   /** Answer for one request. `path` is the URL pathname (after the runtime prefix, if any). */
-  async handle(path: string, method: string, body: unknown): Promise<Response> {
+  async handle(path: string, method: string, body: unknown, visualStatesRaw?: string | null): Promise<Response> {
     const verb = method.toUpperCase();
     const at = path.indexOf('/api/v2/');
     const route = at >= 0 ? path.slice(at + '/api/v2'.length) : path;
+    const visualState = parseVisualStates(visualStatesRaw)['feature-history'];
+    const feature = /\/world-intelligence\/players\/(\d+)\/event-scores$/.exec(route.split('?')[0]);
+    if (feature && visualState) {
+      if (visualState === 'loading') return new Promise<Response>(() => {});
+      if (visualState === 'error') return new Response('{}', { status: 503, headers: { 'Content-Type': 'application/json' } });
+      const worldId = new URLSearchParams(route.split('?')[1] ?? '').get('worldId') ?? this.state().account.worldId;
+      return json({ schemaVersion: 1, worldId, playerId: Number(feature[1]), history: [] });
+    }
+
     if (route === '/health') return json({ api: 2, status: 'ok', fixture: true });
     if (route === '/state' && verb === 'GET') return json(this.state());
     if (route === '/operations' && verb === 'GET') return json(this.operations());
@@ -206,6 +216,7 @@ export class FixtureServer {
       return json(retention);
     }
     if (path.startsWith('/history/')) return json({ reports: [], samples: [], rangeSeconds: 86_400 });
+    if (path === '/analytics/resource-aggregates') return json({ aggregates: [] });
     if (path.startsWith('/world-intelligence/')) return json({ entries: [], runs: [], rows: [], datasets: [] });
     if (path.startsWith('/buildings/')) return error(501, 'preview_unavailable', 'Simulated preview: building capture and blueprint previews are not available.');
     this.record('blocked', `GET ${route}: no fixture route`);

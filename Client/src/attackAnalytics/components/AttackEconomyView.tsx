@@ -10,7 +10,7 @@ import {
   Trophy,
 } from 'lucide-react';
 import StaleSessionBanner from '../../components/StaleSessionBanner';
-import { Badge, Button, Card, CardContent, CardHeader, CardTitle, PageHeader, PillSelector } from '../../components/ui';
+import { EmptyState, ViewState, viewStatus, Badge, Button, Card, CardContent, CardHeader, CardTitle, PageHeader, PillSelector } from '../../components/ui';
 import { Notifications } from '../../components/Notifications';
 import { useMetadata, type MetadataItem } from '../../context/MetadataContext';
 import { runtimeFetch } from '../../api/RuntimeURL';
@@ -220,7 +220,7 @@ const AttackEconomyView = ({
             {(selectedFeature === 'autoTowers' || selectedFeature === 'autoStorm') && (
               <Badge variant="secondary"><LocalizedText messageKey="ui.attackAnalytics.components.attackEconomyView.events.excluded.ad67c518" /></Badge>
             )}
-            {loadError && <Badge variant="danger"><LocalizedText messageKey="ui.attackAnalytics.components.attackEconomyView.history.unavailable.cf319f4d" /></Badge>}
+            {loadError && aggregates.length > 0 && <Badge variant="danger"><LocalizedText messageKey="ui.attackAnalytics.components.attackEconomyView.history.unavailable.cf319f4d" /></Badge>}
           </div>
         )}
       />}
@@ -268,8 +268,12 @@ const AttackEconomyView = ({
         />
       )}
 
+      <ViewState status={viewStatus({ hasData: rangedAggregates.length > 0, loading, error: Boolean(loadError) })}
+        error={{ title: localizeStatic('ui.attackAnalytics.components.attackEconomyView.history.unavailable.cf319f4d'), description: loading ? localizeStatic('ui.state.loading') : undefined, onRetry: () => void loadAggregates(), retryLabel: localizeStatic('ui.state.retry') }}
+        loading={{ label: localizeStatic('ui.state.loading'), variant: 'table' }}
+        empty={{ title: localizeStatic('analytics.noAttributed', { metric: selectedMetric.label.toLocaleLowerCase() }), description: localizeStatic('analytics.noAttributedHelp'), icon: <Trophy /> }}>
       <Card className="">
-        <CardHeader className="flex-wrap gap-4">
+        <CardHeader className=" flex-wrap gap-4">
           <div>
             <CardTitle className="flex items-center gap-2">
               <Activity className="h-5 w-5 text-primary" />
@@ -328,6 +332,7 @@ const AttackEconomyView = ({
           ))}
         </CardContent>
       </Card>
+      </ViewState>
     </div>
   );
 };
@@ -350,13 +355,10 @@ function ResourceRow({ resourceKey, amount, definition }: { resourceKey: string;
 }
 
 function EmptyAnalyticsState({ compact = false, metricLabel = 'loot' }: { compact?: boolean; metricLabel?: string }) {
-  return (
-    <div className={`flex flex-col items-center justify-center text-center text-text-muted ${compact ? 'min-h-32 py-4' : 'min-h-40 py-6'}`}>
-      <Trophy className="mb-3 h-8 w-8 opacity-50" />
-      <div className="text-body font-semibold text-text-main">No attributed {metricLabel.toLocaleLowerCase()} yet</div>
-      <p className="mt-1 max-w-sm text-caption"><LocalizedText messageKey="ui.attackAnalytics.components.attackEconomyView.new.confirmed.reports.for.this.automation.will.34f774ba" /></p>
-    </div>
-  );
+  const { t: localizeStatic } = useStaticLocale();
+  return <EmptyState size={compact ? 'sm' : 'md'} surface="plain" icon={<Trophy />}
+    title={localizeStatic('analytics.noAttributed', { metric: metricLabel.toLocaleLowerCase() })}
+    description={localizeStatic('analytics.noAttributedHelp')} />;
 }
 
 function EconomyChart({

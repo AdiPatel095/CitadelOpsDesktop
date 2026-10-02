@@ -25,4 +25,7 @@ export { DeltaValue } from "./DeltaValue";
 export * from './Banner';
 export * from './Panel';
 export * from './SectionHeader';
+export * from './Tabs';
+export * from './ViewState';
 export * from './OverflowMenu';
+export * from './viewStatus';
