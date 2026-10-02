@@ -430,5 +430,13 @@
   "ui.state.loading": "Зареждане…",
   "ui.state.retry": "Повторен опит",
   "ui.tabs.next": "Показване на още раздели",
-  "ui.tabs.previous": "Показване на предишните раздели"
+  "ui.tabs.previous": "Показване на предишните раздели",
+  "header.panel.attacksToday": "Атаки днес",
+  "header.panel.attention": "Изисква внимание",
+  "header.panel.connection": "Връзка",
+  "header.panel.openFeature": "Отвори {feature}",
+  "header.signal.attention": "{count, plural, one {# автоматизация изисква внимание} other {# автоматизации изискват внимание}}",
+  "header.signal.incoming": "{count, number} входящи · {state, select, known {първата след {duration}} other {проверка}}",
+  "header.signal.nextBird": "Следващо укриване на войски: {castle} · {state, select, due {време е за изпълнение} other {след {duration}}}",
+  "header.status.title": "Състояние"
 }

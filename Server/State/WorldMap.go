@@ -126,28 +126,26 @@ type WorldMapStore struct {
 	dbCloseOnce      sync.Once
 	dbCloseErr       error
 
-	stormParticipants map[string]map[string]time.Time
-	stormRosters      map[string]stormScanRoster
-	stormLeases       map[string]stormScanLease
-	nextStormLease    uint64
+	sharedMapScans
 }
 
 func NewWorldMapStore() *WorldMapStore {
 	return &WorldMapStore{
-		worlds:            map[string]*worldMapGeneration{},
-		subscribers:       map[uint64]chan WorldMapEvent{},
-		dirtyFacts:        map[string]persistedWorldMapChange{},
-		dirtyStormScans:   map[string]persistedStormScanWindow{},
-		persistWake:       make(chan struct{}, 1),
-		persistStop:       make(chan struct{}),
-		persistDone:       make(chan struct{}),
-		stormParticipants: map[string]map[string]time.Time{},
-		stormRosters:      map[string]stormScanRoster{},
-		stormLeases:       map[string]stormScanLease{},
+		worlds:          map[string]*worldMapGeneration{},
+		subscribers:     map[uint64]chan WorldMapEvent{},
+		dirtyFacts:      map[string]persistedWorldMapChange{},
+		dirtyStormScans: map[string]persistedStormScanWindow{},
+		persistWake:     make(chan struct{}, 1),
+		persistStop:     make(chan struct{}),
+		persistDone:     make(chan struct{}),
+		sharedMapScans:  newSharedMapScans(),
 	}
 }
 
 func CanonicalWorldID(raw string) string {
+	if host, zone, ok := strings.Cut(raw, "\x1f"); ok {
+		return CanonicalWorldID(host) + "\x1f" + strings.TrimSpace(zone)
+	}
 	raw = strings.TrimSpace(raw)
 	if raw == "" {
 		return ""
@@ -173,13 +171,17 @@ func CanonicalWorldID(raw string) string {
 	return strings.ToLower(raw)
 }
 
-func gameStateWorldID(state *GameState) string {
+func SharedWorldID(state *GameState) string {
 	worldID := CanonicalWorldID(state.Account.WorldID)
 	if worldID == "" {
 		worldID = CanonicalWorldID(state.Session.ServerURL)
 	}
+	if strings.Contains(worldID, "-mz-") && strings.TrimSpace(state.Session.Namespace) != "" {
+		worldID += "\x1f" + strings.TrimSpace(state.Session.Namespace)
+	}
 	return worldID
 }
+func gameStateWorldID(state *GameState) string { return SharedWorldID(state) }
 
 func (store *WorldMapStore) Snapshot(worldID string) *worldMapGeneration {
 	if store == nil || CanonicalWorldID(worldID) == "" {

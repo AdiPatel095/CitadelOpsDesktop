@@ -446,3 +446,18 @@ test('a delivery failure requests REST and a fresh connection starts on the sock
 	const afterReconnect = machine.receiveEvent(plain(2), 5_000);
 	assert.equal(afterReconnect.resync?.transport, 'socket', 'a new connection has not failed to answer anything');
 });
+
+test('forgetState clears old-instance buffers and requests before accepting a lower snapshot', () => {
+	const machine = started(newMachine(), 10);
+	machine.receiveEvent(plain(12), 100);
+	machine.tick(1_000);
+	assert.equal(machine.resyncInFlight, true);
+	assert.equal(machine.bufferedEvents, 1);
+	machine.forgetState();
+	assert.equal(machine.current(), null);
+	assert.equal(machine.resyncInFlight, false);
+	assert.equal(machine.bufferedEvents, 0);
+	assert.equal(machine.tick(1_001).resync, null);
+	assert.equal(machine.acceptSnapshot(snapshotAt(2), 1_002).changed, true);
+	assertState(machine, 2);
+});

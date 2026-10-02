@@ -327,5 +327,8 @@
   "backend.spy_report.capture_fields": "Посочете положителни стойности за mid, allianceID, castleID, sourcePlayerID и scannedAtUnixMillis.",
   "backend.spy_report.payload_json": "payload трябва да съдържа валиден JSON.",
   "backend.spy_report.payload_object": "payload трябва да съдържа JSON обект.",
-  "backend.spy_report.session_fields": "Посочете clientID и положителни стойности за playerID и allianceID."
+  "backend.spy_report.session_fields": "Посочете clientID и положителни стойности за playerID и allianceID.",
+  "backend.hosted.cells_unavailable": "Ролите на клетките са недостъпни",
+  "backend.status.placement_slot": "Изчакване на свободно място на нашите сървъри",
+  "backend.status.starting_server": "Стартиране на сървър за този акаунт"
 }

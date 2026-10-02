@@ -327,5 +327,8 @@
   "backend.spy_report.capture_fields": "Ange positiva värden för mid, allianceID, castleID, sourcePlayerID och scannedAtUnixMillis.",
   "backend.spy_report.payload_json": "payload måste innehålla giltig JSON.",
   "backend.spy_report.payload_object": "payload måste innehålla ett JSON-objekt.",
-  "backend.spy_report.session_fields": "Ange clientID samt positiva värden för playerID och allianceID."
+  "backend.spy_report.session_fields": "Ange clientID samt positiva värden för playerID och allianceID.",
+  "backend.hosted.cells_unavailable": "Cellroller är inte tillgängliga",
+  "backend.status.placement_slot": "Väntar på en ledig plats på våra servrar",
+  "backend.status.starting_server": "Startar en server för det här kontot"
 }
