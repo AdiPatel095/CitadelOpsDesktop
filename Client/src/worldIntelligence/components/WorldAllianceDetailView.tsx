@@ -125,12 +125,12 @@ const WorldAllianceDetailView = ({ profile, onOpenPlayer }: WorldAllianceDetailV
 				<CardHeader className="flex-wrap gap-4">
 					<div className="flex w-full flex-wrap items-center justify-between gap-4">
 						<div>
-							<CardTitle className="flex items-center gap-2 text-lg">
+							<CardTitle className="flex items-center gap-2 text-body-lg">
 								<selectedDefinition.icon className="h-5 w-5" style={{ color: selectedDefinition.color }} />
 								{selectedDefinition.label} trend
 							</CardTitle>
 							<div className="mt-2 flex flex-wrap items-baseline gap-3">
-								<span className="font-mono text-3xl font-bold text-text-main">{formatNumber(currentSelectedValue)}</span>
+								<span className="font-mono text-display-sm font-bold text-text-main">{formatNumber(currentSelectedValue)}</span>
 								<MetricDelta current={currentSelectedValue} first={firstSelectedValue} />
 							</div>
 						</div>
@@ -153,7 +153,7 @@ const WorldAllianceDetailView = ({ profile, onOpenPlayer }: WorldAllianceDetailV
 							size="body"
 						/>
 					</div>
-					<div className="mb-3 flex flex-wrap items-center justify-between gap-2 text-xs text-text-muted">
+					<div className="mb-3 flex flex-wrap items-center justify-between gap-2 text-caption text-text-muted">
 						<span><LocalizedText messageKey="ui.worldIntelligence.components.worldAllianceDetailView.hover.to.inspect.a.public.observation.drag.da1f1924" /></span>
 						{selectedWindow && <div className="flex flex-wrap items-center gap-2"><Badge variant="outline">{formatChartTime(selectedWindow.startUnix)} – {formatChartTime(selectedWindow.endUnix)}</Badge><Button variant="ghost" size="sm" onClick={() => setSelectedWindow(null)}><LocalizedText messageKey="common.clearSelection" /></Button></div>}
 					</div>
@@ -166,7 +166,7 @@ const WorldAllianceDetailView = ({ profile, onOpenPlayer }: WorldAllianceDetailV
 						onWindowSelect={setSelectedWindow}
 						emptyMessage={localizeStatic("ui.worldIntelligence.components.worldAllianceDetailView.emptyMessage.a.trend.appears.after.two.public.alliance.fdf0ca1b")}
 					/>
-					<div className="mt-3 flex justify-between gap-3 text-xs text-text-muted">
+					<div className="mt-3 flex justify-between gap-3 text-caption text-text-muted">
 						<span>{displayedPoints[0] ? formatChartTime(displayedPoints[0].timestampUnix) : 'Waiting for history'}</span>
 						<span>{displayedPoints.length} sample{displayedPoints.length === 1 ? '' : 's'}</span>
 						<span>{displayedPoints.length > 0 ? formatChartTime(displayedPoints[displayedPoints.length - 1].timestampUnix) : 'Now'}</span>
@@ -182,13 +182,13 @@ const WorldAllianceDetailView = ({ profile, onOpenPlayer }: WorldAllianceDetailV
 
 			<Card className="">
 				<CardHeader className="flex-wrap gap-3">
-					<div><CardTitle className="flex items-center gap-2"><Sparkles className="h-5 w-5 text-primary" />Public scores & event activity</CardTitle><p className="mt-1 text-xs text-text-muted"><LocalizedText messageKey="ui.worldIntelligence.components.worldAllianceDetailView.collected.alliance.event.rankings.appear.here.when.ae0da209" /></p></div>
+					<div><CardTitle className="flex items-center gap-2"><Sparkles className="h-5 w-5 text-primary" />Public scores & event activity</CardTitle><p className="mt-1 text-caption text-text-muted"><LocalizedText messageKey="ui.worldIntelligence.components.worldAllianceDetailView.collected.alliance.event.rankings.appear.here.when.ae0da209" /></p></div>
 					<Badge variant="outline">{publicMetrics.length} observed</Badge>
 				</CardHeader>
 				<CardContent className="">
-					{publicMetrics.length === 0 ? <p className="text-sm text-text-muted"><LocalizedText messageKey="ui.worldIntelligence.components.worldAllianceDetailView.no.additional.public.event.score.has.been.cf534934" /></p> : (
+					{publicMetrics.length === 0 ? <p className="text-body text-text-muted"><LocalizedText messageKey="ui.worldIntelligence.components.worldAllianceDetailView.no.additional.public.event.score.has.been.cf534934" /></p> : (
 						<div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
-							{publicMetrics.map((metric) => <div key={metric.key} className="rounded-global border border-border-base bg-bg-input/35 px-3.5 py-3" title={publicMetricProvenance(metric)}><div className="flex items-start justify-between gap-2"><div className="text-[10px] font-bold uppercase tracking-wider text-text-muted">{metric.label}</div>{metric.rank != null && metric.rank > 0 && <Badge variant="outline">#{formatCount(metric.rank)}</Badge>}</div><div className="mt-1 font-mono text-2xl font-bold text-text-main">{formatNumber(metric.value)}</div><div className="mt-1 flex flex-wrap items-center justify-between gap-2 text-[11px] text-text-muted"><span>{metric.unit || 'points'} · {publicMetricSourceLabel(metric.source)}</span><span title={formatDateTime(metric.observedAt)}>{relativeTime(metric.observedAt)}</span></div></div>)}
+							{publicMetrics.map((metric) => <div key={metric.key} className="rounded-global border border-border-base bg-bg-input/35 px-3.5 py-3" title={publicMetricProvenance(metric)}><div className="flex items-start justify-between gap-2"><div className="text-caption font-semibold text-text-muted">{metric.label}</div>{metric.rank != null && metric.rank > 0 && <Badge variant="outline">#{formatCount(metric.rank)}</Badge>}</div><div className="mt-1 font-mono text-headline font-bold text-text-main">{formatNumber(metric.value)}</div><div className="mt-1 flex flex-wrap items-center justify-between gap-2 text-caption text-text-muted"><span>{metric.unit || 'points'} · {publicMetricSourceLabel(metric.source)}</span><span title={formatDateTime(metric.observedAt)}>{relativeTime(metric.observedAt)}</span></div></div>)}
 						</div>
 					)}
 				</CardContent>
@@ -198,9 +198,9 @@ const WorldAllianceDetailView = ({ profile, onOpenPlayer }: WorldAllianceDetailV
 				<CardHeader className="flex-wrap gap-3"><CardTitle className="flex items-center gap-2"><Users className="h-5 w-5 text-primary" /><LocalizedText messageKey="ui.worldIntelligence.components.worldAllianceDetailView.observed.roster.81d02c36" /></CardTitle><Badge variant="outline">{formatCount(profile.members.length)} players</Badge></CardHeader>
 				<CardContent className="">
 					<div className="max-h-[34rem] overflow-auto rounded-global border border-border-base custom-scrollbar">
-						<table className="w-full min-w-[40rem] text-sm">
-							<thead className="sticky top-0 z-10 bg-bg-card text-[10px] uppercase tracking-wide text-text-muted"><tr><th className="px-3 py-2 text-left"><LocalizedText messageKey="ui.worldIntelligence.components.worldAllianceDetailView.player.64aee8c6" /></th><th className="px-3 py-2 text-right"><LocalizedText messageKey="game.level" /></th><th className="px-3 py-2 text-right"><LocalizedText messageKey="ui.worldIntelligence.components.worldAllianceDetailView.might.f68b032e" /></th></tr></thead>
-							<tbody>{profile.members.map((member) => <tr key={member.playerId} className="border-t border-border-base hover:bg-bg-card-hover"><td className="px-3 py-2.5"><button type="button" className="font-bold text-text-main hover:text-primary" onClick={() => onOpenPlayer(member)}>{member.name}</button></td><td className="px-3 py-2.5 text-right text-text-muted">{member.legendLevel ? `Legend ${member.legendLevel}` : member.level ? `Level ${member.level}` : '—'}</td><td className="px-3 py-2.5 text-right font-mono font-bold text-text-main">{formatNumber(member.might)}</td></tr>)}</tbody>
+						<table className="w-full min-w-[40rem] text-body">
+							<thead className="sticky top-0 z-10 bg-bg-card text-caption text-text-muted"><tr><th className="px-3 py-2 text-left"><LocalizedText messageKey="ui.worldIntelligence.components.worldAllianceDetailView.player.64aee8c6" /></th><th className="px-3 py-2 text-right"><LocalizedText messageKey="game.level" /></th><th className="px-3 py-2 text-right"><LocalizedText messageKey="ui.worldIntelligence.components.worldAllianceDetailView.might.f68b032e" /></th></tr></thead>
+							<tbody>{profile.members.map((member) => <tr key={member.playerId} className="border-t border-border-base hover:bg-bg-card-hover"><td className="px-3 py-2.5"><Button variant="secondary" type="button"  onClick={() => onOpenPlayer(member)}>{member.name}</Button></td><td className="px-3 py-2.5 text-right text-text-muted">{member.legendLevel ? `Legend ${member.legendLevel}` : member.level ? `Level ${member.level}` : '—'}</td><td className="px-3 py-2.5 text-right font-mono font-bold text-text-main">{formatNumber(member.might)}</td></tr>)}</tbody>
 						</table>
 					</div>
 				</CardContent>
@@ -210,11 +210,11 @@ const WorldAllianceDetailView = ({ profile, onOpenPlayer }: WorldAllianceDetailV
 };
 
 const MetricDelta = ({ current, first, compact = false }: { current?: number; first?: number; compact?: boolean }) => {
-	if (current == null || first == null || !Number.isFinite(current) || !Number.isFinite(first)) return <span className="text-xs text-text-muted"><LocalizedText messageKey="ui.worldIntelligence.components.worldAllianceDetailView.no.comparison.yet.e087ee1e" /></span>;
+	if (current == null || first == null || !Number.isFinite(current) || !Number.isFinite(first)) return <span className="text-caption text-text-muted"><LocalizedText messageKey="ui.worldIntelligence.components.worldAllianceDetailView.no.comparison.yet.e087ee1e" /></span>;
 	const delta = current - first;
-	if (delta === 0) return <span className="text-xs text-text-muted"><LocalizedText messageKey="ui.worldIntelligence.components.worldAllianceDetailView.no.change.41f9d57c" /></span>;
+	if (delta === 0) return <span className="text-caption text-text-muted"><LocalizedText messageKey="ui.worldIntelligence.components.worldAllianceDetailView.no.change.41f9d57c" /></span>;
 	const percent = first !== 0 ? Math.abs((delta / first) * 100) : null;
-	return <span className={`inline-flex items-center gap-1 text-xs font-bold ${delta > 0 ? 'text-success' : 'text-error'}`}>{delta > 0 ? '+' : '−'}{formatNumber(Math.abs(delta))}{!compact && percent != null && <span className="font-medium opacity-80">({percent.toFixed(percent >= 10 ? 0 : 1)}%)</span>}</span>;
+	return <span className={`inline-flex items-center gap-1 text-caption font-semibold ${delta > 0 ? 'text-success' : 'text-error'}`}>{delta > 0 ? '+' : '−'}{formatNumber(Math.abs(delta))}{!compact && percent != null && <span className="font-medium opacity-80">({percent.toFixed(percent >= 10 ? 0 : 1)}%)</span>}</span>;
 };
 
 type AlliancePublicMetric = WorldIntelligencePublicMetricV1 & { key: string };

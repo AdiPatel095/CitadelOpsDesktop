@@ -55,23 +55,23 @@ export const StopControl: React.FC<StopControlProps> = ({ enabledKey, featureId,
   return (
     <div className={`space-y-1.5 ${className}`} data-stop-control={featureId}>
       {variant === 'button' && on ? (
-        <Button variant="outline" size="sm" onClick={() => { void write(false); }} isLoading={busy} leftIcon={<CircleStop className="h-4 w-4" />}>
+        <Button variant="secondary" size="sm" onClick={() => { void write(false); }} isLoading={busy} leftIcon={<CircleStop className="h-4 w-4" />}>
           <LocalizedText messageKey="stopSemantics.stop" />
         </Button>
       ) : null}
       {failure ? (
-        <div role="alert" className="flex flex-wrap items-center gap-2 text-[11px] font-semibold text-error">
+        <div role="alert" className="flex flex-wrap items-center gap-2 text-caption font-semibold text-error">
           <span>
             <LocalizedText messageKey={failure.intent === 'stop' ? 'stopSemantics.failed' : 'stopSemantics.failedStart'} />
             {failure.message ? ` ${failure.message}` : ''}
           </span>
-          <Button variant="outline" size="sm" onClick={() => { void write(failure.intent === 'start'); }} isLoading={busy}>
+          <Button variant="secondary" size="sm" onClick={() => { void write(failure.intent === 'start'); }} isLoading={busy}>
             <LocalizedText messageKey={failure.intent === 'stop' ? 'stopSemantics.retry' : 'startConfirm.startAnyway'} />
           </Button>
         </div>
       ) : null}
       {showSemantics ? (
-        <details className="text-[11px] leading-relaxed text-text-muted">
+        <details className="text-caption text-text-muted">
           <summary className="flex cursor-pointer items-center gap-1 font-semibold text-text-main">
             <Info className="h-3 w-3" aria-hidden="true" /> <LocalizedText messageKey="stopSemantics.title" />
           </summary>
@@ -81,7 +81,7 @@ export const StopControl: React.FC<StopControlProps> = ({ enabledKey, featureId,
             ))}
           </ul>
           {semantics.inFlight.length > 0 ? (
-            <ul className="mt-1 list-none space-y-0.5 pl-4 font-mono text-[10px]">
+            <ul className="mt-1 list-none space-y-0.5 pl-4 font-mono text-caption">
               {semantics.inFlight.map((operation) => <li key={operation.id}>{operation.summary ?? operation.intent}</li>)}
             </ul>
           ) : null}

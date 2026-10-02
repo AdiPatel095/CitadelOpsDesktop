@@ -236,7 +236,7 @@ export function useConfigurationDraftSession({
   const conflictNotice = useMemo(() => {
     if (loading && snapshot == null) {
       return (
-        <div className="mb-4 flex items-center gap-2 rounded-global border border-border-base bg-bg-card/70 px-4 py-3 text-sm font-semibold text-text-muted" role="status">
+        <div className="mb-4 flex items-center gap-2 rounded-global border border-border-base bg-bg-card/70 px-4 py-3 text-body font-semibold text-text-muted" role="status">
           <LoaderCircle className="h-4 w-4 animate-spin" /> <LocalizedText messageKey="ui.settings.configurationDraftSession.loading.latest.saved.settings.884d319c" />
         </div>
       );
@@ -246,10 +246,10 @@ export function useConfigurationDraftSession({
         <div className="mb-4 rounded-global border border-error/30 bg-error/10 px-4 py-3" role="alert">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
-              <div className="text-sm font-black text-error"><LocalizedText messageKey="ui.settings.configurationDraftSession.could.not.load.latest.settings.31ab2414" /></div>
-              <p className="mt-1 text-xs text-text-main">{loadError}</p>
+              <div className="text-body font-semibold text-error"><LocalizedText messageKey="ui.settings.configurationDraftSession.could.not.load.latest.settings.31ab2414" /></div>
+              <p className="mt-1 text-caption text-text-main">{loadError}</p>
             </div>
-            <Button variant="outline" size="sm" onClick={() => void reloadLatest()} leftIcon={<RotateCcw className="h-4 w-4" />}>
+            <Button variant="secondary" size="sm" onClick={() => void reloadLatest()} leftIcon={<RotateCcw className="h-4 w-4" />}>
               <LocalizedText messageKey="ui.settings.configurationDraftSession.retry.942087cc" />
             </Button>
           </div>
@@ -262,10 +262,10 @@ export function useConfigurationDraftSession({
       <div className="mb-4 rounded-global border border-warning/40 bg-warning/10 px-4 py-3" role="alert">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div className="min-w-0">
-            <div className="flex items-center gap-2 text-sm font-black text-warning">
+            <div className="flex items-center gap-2 text-body font-semibold text-warning">
               <AlertTriangle className="h-4 w-4 shrink-0" /> <LocalizedText messageKey="ui.settings.configurationDraftSession.settings.changed.elsewhere.0e978d4f" />
             </div>
-            <p className="mt-1 text-xs leading-relaxed text-text-main">
+            <p className="mt-1 text-caption text-text-main">
               {copied
                 ? <LocalizedText messageKey="castleCopy.conflictNotice" />
                 : <LocalizedText messageKey="ui.settings.configurationDraftSession.your.unsaved.draft.is.still.here.review.0e9b1deb" />}
@@ -284,7 +284,7 @@ export function useConfigurationDraftSession({
               </Button>
             ) : null}
             <Button
-              variant="outline"
+              variant="secondary"
               size="sm"
               disabled={loading}
               onClick={() => void (copied ? reloadAndDropCopy() : reloadLatest())}

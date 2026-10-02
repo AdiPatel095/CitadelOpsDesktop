@@ -1,5 +1,6 @@
 import { useRef, type ReactNode, type KeyboardEvent } from 'react';
 import { useLocale } from '../../i18n/LocaleContext';
+import { Button } from './Button';
 import { Select } from './Select';
 import { nextTabIndex, segmentedMode } from './tabsLogic';
 import './Tabs.css';
@@ -23,10 +24,10 @@ export function ToggleGroup({ value, options, onChange, ariaLabel, className = '
   };
   if (segmentedMode(options.length) === 'select') return <Select value={value} options={options.map(option => ({ ...option }))} onChange={onChange} ariaLabel={ariaLabel} className={className} />;
   return <div role="radiogroup" aria-label={ariaLabel} dir={direction} className={`ui-segments ui-segments--${size} ${fullWidth ? 'ui-segments--full' : ''} ${className}`}>
-    {options.map((option, index) => <button type="button" key={option.value} ref={node => { buttons.current[index] = node; }} role="radio" aria-checked={value === option.value}
+    {options.map((option, index) => <Button variant="ghost" type="button" key={option.value} ref={node => { buttons.current[index] = node; }} role="radio" aria-checked={value === option.value} data-current-selection={value === option.value ? "true" : undefined}
       disabled={option.disabled} tabIndex={index === (active < 0 ? first : active) ? 0 : -1} title={option.title}
       className="ui-segments__option" onClick={() => onChange(option.value)} onKeyDown={event => keyboard(event, index)}>
       {option.icon}{option.label}
-    </button>)}
+    </Button>)}
   </div>;
 }

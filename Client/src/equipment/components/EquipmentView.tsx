@@ -1,15 +1,17 @@
+import { DeltaValue } from '../../components/ui';
+import { useLocale } from '../../i18n/LocaleContext';
 import { equipmentEventOptions } from '../EquipmentEventLoadouts';
 import { describeMessage } from '../../i18n/messages';
 import {formatMessage,type LocalizedMessage} from '../../i18n/formatMessage';
 import { useLocale as useStaticLocale } from "../../i18n/LocaleContext";
 import { LocalizedText } from "../../i18n/LocalizedText";
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Activity, RefreshCw, SlidersHorizontal, Sparkles } from 'lucide-react';
+import { Activity, Coins, PackageMinus, RefreshCw, SlidersHorizontal, Sparkles } from 'lucide-react';
 import { useCitadelAPI } from '../../api/ApiContext';
 import type { GemInstanceV2 } from '../../api/Contracts';
 import StaleSessionBanner from '../../components/StaleSessionBanner';
 import { Notifications } from '../../components/Notifications';
-import { Badge, Button, Card, CardContent, CardHeader, CardTitle, PillSelector, Select } from '../../components/ui';
+import { Badge, Button, OverflowMenu, Card, CardContent, CardHeader, CardTitle, PillSelector, Select } from '../../components/ui';
 import { useMetadata } from '../../context/MetadataContext';
 import { coinsUnderUpgradeReserve } from '../../utils/UpgradeCoinReserve';
 import {
@@ -27,6 +29,7 @@ import {
 	formatEquipmentCommonCap,
 	formatEquipmentEffectLabel,
 	formatEquipmentEffectValue,
+	formatAbsoluteEquipmentEffectValue,
 	type EquipmentEffectGroup,
 	type EquipmentEffectProfile,
 	type EquipmentEffectScope,
@@ -51,6 +54,7 @@ import {
 } from './EquipmentTypes';
 
 export default function EquipmentView() {
+  const { message } = useLocale();
   const { t: localizeStatic } = useStaticLocale();
 	const { state, configuration, submitIntent } = useCitadelAPI();
 	const { effects, equipments, gems, troops, effectsStatus } = useMetadata();
@@ -252,15 +256,18 @@ export default function EquipmentView() {
 	return (
 		<div className="equipment-view-shell">
 			<StaleSessionBanner />
-      {effectsStatus !== 'ready' && <p role="status" className="text-sm text-warning"><LocalizedText messageKey={effectsStatus === 'loading' ? 'equipment.canonicalLoading' : 'equipment.canonicalUnavailable'} /></p>}
-      {hasMissingOfficialDescription && <p role="status" className="text-sm text-text-muted"><LocalizedText messageKey="equipment.missingOfficialDescription" /></p>}
+      {effectsStatus !== 'ready' && <p role="status" className="text-body text-warning"><LocalizedText messageKey={effectsStatus === 'loading' ? 'equipment.canonicalLoading' : 'equipment.canonicalUnavailable'} /></p>}
+      {hasMissingOfficialDescription && <p role="status" className="text-body text-text-muted"><LocalizedText messageKey="equipment.missingOfficialDescription" /></p>}
 			<Card className="equipment-workspace-card h-full min-h-0 flex flex-col">
-				<CardHeader className="flex flex-wrap items-center gap-4">
+				<CardHeader role="toolbar" data-region="toolbar" aria-labelledby="equipment-workspace-heading" className="flex flex-wrap items-center gap-4">
+          <span id="equipment-workspace-heading" className="sr-only">{mode}</span>
 					<PillSelector ariaLabel={localizeStatic("ui.equipment.components.equipmentView.ariaLabel.equipment.owner.type.8d4616c8")} value={mode} options={['Commander', 'Castellan']} onChange={(value) => setMode(value as EquipmentMode)} size="header" />
 					<div className="equipment-actions ml-auto">
-						<Button size="sm" variant="outline" disabled={controlsDisabled || leaders.length < 2} onClick={() => setShowSwap(true)}><RefreshCw className="mr-1.5 h-4 w-4" /><LocalizedText messageKey="ui.equipment.components.equipmentView.swap.gear.690c2557" /></Button>
-						<Button size="sm" disabled={!state?.session.loggedIn || busy} onClick={() => { setSellType('Gems'); setShowSell(true); }} className="border border-warning/30 bg-warning/10 text-warning hover:border-warning/50 hover:bg-warning/20"><LocalizedText messageKey="ui.equipment.components.equipmentView.sell.gems.8a1147dc" /></Button>
-						<Button size="sm" disabled={!state?.session.loggedIn || busy} onClick={() => { setSellType('Equipment'); setShowSell(true); }} className="border border-warning/30 bg-warning/10 text-warning hover:border-warning/50 hover:bg-warning/20"><LocalizedText messageKey="ui.equipment.components.equipmentView.sell.equipment.aadcdf54" /></Button>
+						<Button size="sm" variant="secondary" disabled={controlsDisabled || leaders.length < 2} onClick={() => setShowSwap(true)}><RefreshCw /><LocalizedText messageKey="equipment.actions.swap" /></Button>
+						<OverflowMenu label={message('equipment.actions.sell').text} triggerIcon={<Coins />} items={[
+              { id: 'gems', label: <LocalizedText messageKey="equipment.actions.sellGems" />, icon: <Coins />, destructive: true, disabled: !state?.session.loggedIn || busy, onSelect: () => { setSellType('Gems'); setShowSell(true); } },
+              { id: 'equipment', label: <LocalizedText messageKey="equipment.actions.sellEquipment" />, icon: <Coins />, destructive: true, disabled: !state?.session.loggedIn || busy, onSelect: () => { setSellType('Equipment'); setShowSell(true); } },
+            ]} />
 					</div>
 				</CardHeader>
 
@@ -268,19 +275,20 @@ export default function EquipmentView() {
 					<div className="equipment-loadout-list custom-scrollbar">
 						<div className="equipment-loadout-list-items">
 							{leaders.map((leader) => (
-								<button
+								<button data-button-pattern="row"
 									type="button"
 									key={leader.id}
 									onClick={() => setSelectedID(leader.id)}
-									className={`equipment-loadout-item w-full rounded-global border px-3 py-2.5 text-left transition-all duration-200 ${selectedID === leader.id ? 'border-primary/30 bg-primary/10 text-primary shadow-[0_0_10px_var(--primary-glow)]' : 'border-transparent text-text-muted hover:bg-bg-card-hover hover:text-text-main'}`}
+									data-current-selection={selectedID === leader.id ? "true" : undefined}
+                                    className={`equipment-loadout-item w-full rounded-global border px-3 py-2.5 text-left transition-all duration-200 ${selectedID === leader.id ? 'border-primary/30 bg-primary/10 text-primary shadow-[0_0_10px_var(--primary-glow)]' : 'border-transparent text-text-muted hover:bg-bg-card-hover hover:text-text-main'}`}
 								>
 									<span className="flex items-center gap-2">
-										<span className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-bold ${selectedID === leader.id ? 'bg-primary text-bg-app' : 'border border-border-base bg-bg-app text-text-muted'}`}>{leader.position}</span>
-										<span className="min-w-0 flex-1 truncate text-sm font-medium">{leader.name}</span>
+										<span className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-caption font-semibold ${selectedID === leader.id ? 'bg-primary text-bg-app' : 'border border-border-base bg-bg-app text-text-muted'}`}>{leader.position}</span>
+										<span className="min-w-0 flex-1 truncate text-body font-medium">{leader.name}</span>
 									</span>
 								</button>
 							))}
-							{leaders.length === 0 && <p className="px-3 py-5 text-center text-sm text-text-muted">No {mode.toLowerCase()} loadouts observed.</p>}
+							{leaders.length === 0 && <p className="px-3 py-5 text-center text-body text-text-muted">No {mode.toLowerCase()} loadouts observed.</p>}
 						</div>
 					</div>
 
@@ -374,11 +382,11 @@ function EffectiveBattleReport({
 		<section className="flex h-full min-h-0 flex-col">
 			<div className="equipment-report-header">
 				<div className="min-w-0">
-					<h3 className="flex items-center gap-2 text-base font-semibold text-text-main">
+					<h3 className="flex items-center gap-2 text-title-sm font-semibold text-text-main">
 						<Activity className="h-4 w-4 shrink-0 text-primary" />
 						<LocalizedText messageKey="ui.equipment.components.equipmentView.effective.battle.report.6af6f9d6" />
 					</h3>
-					<p className="mt-0.5 truncate text-xs text-text-muted">{leader?.name ?? 'Select a loadout'}</p>
+					<p className="mt-0.5 truncate text-caption text-text-muted">{leader?.name ?? 'Select a loadout'}</p>
 				</div>
 			</div>
 
@@ -405,13 +413,13 @@ function EffectiveBattleReport({
 						<ul className="overflow-hidden rounded-global border border-border-base bg-bg-app/40">
 							{effectProfile.showcase.map((effect) => (
 								<li key={effect.key} className="flex items-center justify-between gap-3 border-b border-border-base/60 px-3 py-2.5 last:border-b-0">
-									<span className="min-w-0 flex-1 truncate text-xs text-text-muted" title={effect.label}>{effect.label}</span>
-									<span className="shrink-0 font-mono text-sm font-semibold text-primary">{formatEquipmentEffectValue(effect, effect.value, locale)}</span>
+									<span className="min-w-0 flex-1 truncate text-caption text-text-muted" title={effect.label}>{effect.label}</span>
+									<span className="shrink-0 font-mono text-body font-semibold text-text-main">{renderEquipmentDelta(effect, effect.value, locale)}</span>
 								</li>
 							))}
 						</ul>
 					) : (
-						<p className="py-8 text-center text-sm text-text-muted">
+						<p className="py-8 text-center text-body text-text-muted">
 							{leader ? 'No mapped effects apply to this castle type.' : 'Select a loadout to view its effective battle report.'}
 						</p>
 					)}
@@ -444,7 +452,8 @@ function EquipmentStatsPane({
 	onReconfigure: () => void;
 	onEventLoadout: () => void;
 }) {
-	if (!leader) return <p className="py-12 text-center text-sm text-text-muted"><LocalizedText messageKey="ui.equipment.components.equipmentView.select.a.loadout.a4c3f8e7" /></p>;
+  const { message } = useLocale();
+	if (!leader) return <p className="py-12 text-center text-body text-text-muted"><LocalizedText messageKey="ui.equipment.components.equipmentView.select.a.loadout.a4c3f8e7" /></p>;
 	const equipmentCount = rows.filter((row) => row.item).length;
 	const gemCount = rows.filter((row) => row.gem).length;
 	const upgradeableGemCount = rows.filter((row) => (row.gem?.id ?? 0) > 0).length;
@@ -452,21 +461,23 @@ function EquipmentStatsPane({
 		<div className="p-4">
 			<div className="mb-4">
 				<div className="mb-2 flex items-center justify-between">
-					<CardTitle className="truncate text-lg">{leader.name}</CardTitle>
+					<CardTitle id="equipment-loadout-heading" className="truncate text-body-lg">{leader.name}</CardTitle>
 				</div>
 				<div className="flex flex-wrap items-center gap-2">
 					<Badge variant={combatMode === 'PvP' ? 'danger' : combatMode === 'PvE' ? 'success' : 'outline'}>
 						{combatMode ? `${combatMode} Stats` : 'Target Stats'}
 					</Badge>
 					<div className="ml-auto flex flex-wrap justify-end gap-2">
-						<Button size="sm" variant="outline" disabled={disabled || equipmentCount === 0} onClick={() => onUpgrade('equipment')}><LocalizedText messageKey="ui.equipment.components.equipmentView.upgrade.equipment.2cc9e2a4" /></Button>
-						<Button size="sm" disabled={disabled || upgradeableGemCount === 0} onClick={() => onUpgrade('gem')}><LocalizedText messageKey="ui.equipment.components.equipmentView.upgrade.gem.8be1f026" /></Button>
+						<Button size="sm" variant="secondary" disabled={disabled || equipmentCount === 0} onClick={() => onUpgrade('equipment')}><LocalizedText messageKey="ui.equipment.components.equipmentView.upgrade.equipment.2cc9e2a4" /><LocalizedText messageKey="equipment.actions.upgradeEquipment" /></Button>
+						<Button variant="secondary" size="sm" disabled={disabled || upgradeableGemCount === 0} onClick={() => onUpgrade('gem')}><LocalizedText messageKey="ui.equipment.components.equipmentView.upgrade.gem.8be1f026" /><LocalizedText messageKey="equipment.actions.upgradeGems" /></Button>
 						{leader.kind === 'commander' && (
-							<Button size="sm" variant="outline" disabled={disabled} onClick={onEventLoadout} leftIcon={<Sparkles className="h-4 w-4" />}><LocalizedText messageKey="ui.equipment.components.equipmentView.event.set.9308e6ac" /></Button>
+							<Button size="sm" variant="secondary" disabled={disabled} onClick={onEventLoadout} leftIcon={<Sparkles className="h-4 w-4" />}><LocalizedText messageKey="ui.equipment.components.equipmentView.event.set.9308e6ac" /><LocalizedText messageKey="equipment.actions.eventSet" /></Button>
 						)}
-						<Button size="sm" disabled={reconfigureDisabled} onClick={onReconfigure} leftIcon={<SlidersHorizontal className="h-4 w-4" />}><LocalizedText messageKey="ui.equipment.components.equipmentView.reconfigure.7458d4f3" /></Button>
-						<Button size="sm" variant="outline" disabled={disabled || equipmentCount === 0} onClick={() => onUnequip('equipment')}><LocalizedText messageKey="ui.equipment.components.equipmentView.unequip.equipment.a2039e49" /></Button>
-						<Button size="sm" disabled={disabled || gemCount === 0} onClick={() => onUnequip('gems')}><LocalizedText messageKey="ui.equipment.components.equipmentView.unequip.gem.d9a5f88e" /></Button>
+						<OverflowMenu label={message('equipment.actions.unequip').text} triggerIcon={<PackageMinus />} items={[
+              { id: 'equipment', label: <LocalizedText messageKey="equipment.actions.unequipEquipment" />, icon: <PackageMinus />, destructive: true, disabled: disabled || equipmentCount === 0, onSelect: () => onUnequip('equipment') },
+              { id: 'gems', label: <LocalizedText messageKey="equipment.actions.unequipGems" />, icon: <PackageMinus />, destructive: true, disabled: disabled || gemCount === 0, onSelect: () => onUnequip('gems') },
+            ]} />
+						<Button variant="primary" size="sm" disabled={reconfigureDisabled} onClick={onReconfigure} leftIcon={<SlidersHorizontal className="h-4 w-4" />}><LocalizedText messageKey="ui.equipment.components.equipmentView.reconfigure.7458d4f3" /><LocalizedText messageKey="equipment.actions.reconfigure" /></Button>
 					</div>
 				</div>
 			</div>
@@ -476,17 +487,17 @@ function EquipmentStatsPane({
 					<div key={section.key} className="rounded-global border border-border-base bg-bg-app p-3">
 						<div className="mb-2 flex items-start justify-between gap-3">
 							<div>
-								<h3 className="text-xs font-bold uppercase tracking-wider text-text-muted">{section.title}</h3>
-								<p className="mt-1 text-[11px] text-text-muted/80"><LocalizedText messageKey={section.description} /></p>
+								<h3 className="text-title-sm font-bold text-text-muted">{section.title}</h3>
+								<p className="mt-1 text-caption text-text-muted/80"><LocalizedText messageKey={section.description} /></p>
 							</div>
-							<Badge variant="outline" className="shrink-0 text-[10px]">{section.effectCount}</Badge>
+							<Badge variant="outline" className="shrink-0 text-caption">{section.effectCount}</Badge>
 						</div>
 						<div className="space-y-0.5">
 							{section.groups.map((group) => <EquipmentEffectGroupRows key={group.key} group={group} />)}
 						</div>
 					</div>
 				))}
-				{effectProfile.sections.length === 0 && <p className="py-8 text-center text-sm text-text-muted"><LocalizedText messageKey="ui.equipment.components.equipmentView.no.mapped.equipment.effects.are.available.for.8e82a295" /></p>}
+				{effectProfile.sections.length === 0 && <p className="py-8 text-center text-body text-text-muted"><LocalizedText messageKey="ui.equipment.components.equipmentView.no.mapped.equipment.effects.are.available.for.8e82a295" /></p>}
 			</div>
 		</div>
 	);
@@ -503,20 +514,20 @@ function EquipmentEffectGroupRows({ group }: { group: EquipmentEffectGroup }) {
 				<div className="flex items-start justify-between gap-3">
 					<div className="min-w-0">
 						<div className="flex flex-wrap items-center gap-2">
-							<span className="text-sm font-medium text-text-muted">{group.label}</span>
-							<Badge variant="outline" className="px-1.5 py-0 text-[9px]">{group.rows.length} effects</Badge>
-							{group.capped && <Badge variant="warning" className="px-1.5 py-0 text-[9px]"><LocalizedText messageKey="ui.equipment.components.equipmentView.capped.526b49dc" /></Badge>}
+							<span className="text-body font-medium text-text-muted">{group.label}</span>
+							<Badge variant="outline" className="px-1.5 py-0 text-caption">{group.rows.length} effects</Badge>
+							{group.capped && <Badge variant="warning" className="px-1.5 py-0 text-caption"><LocalizedText messageKey="ui.equipment.components.equipmentView.capped.526b49dc" /></Badge>}
 						</div>
 					</div>
 					<div className="shrink-0 text-right">
-						<div className="font-mono text-sm font-semibold text-primary">{formatEquipmentEffectValue(group, group.value, locale)}</div>
-						{group.capped && <div className="font-mono text-[11px] text-text-muted">raw {formatEquipmentEffectValue(group, group.rawValue, locale)}</div>}
+						<div className="font-mono text-body font-semibold text-text-main">{renderEquipmentDelta(group, group.value, locale)}</div>
+						{group.capped && <div className="font-mono text-caption text-text-muted">raw {renderEquipmentDelta(group, group.rawValue, locale)}</div>}
 					</div>
 				</div>
 			</div>
 			<div className="ml-3 border-l border-border-base pl-2">
 				{group.commonCaps.map((cap) => (
-					<div key={cap.capId} className="px-2 py-1.5 text-[11px] font-semibold text-text-muted">
+					<div key={cap.capId} className="px-2 py-1.5 text-caption font-semibold text-text-muted">
 						{formatEquipmentCommonCap(group, cap.max, locale)}
 					</div>
 				))}
@@ -545,17 +556,17 @@ function EquipmentEffectDetailRow({
 			<div className="flex items-start justify-between gap-3">
 				<div className="min-w-0">
 					<div className="flex flex-wrap items-center gap-2">
-						<span className="text-sm text-text-muted">{formatEquipmentEffectLabel(effect, locale)}</span>
-						<Badge variant={effectScopeBadge(effect.scope)} className="px-1.5 py-0 text-[9px]">{effect.scope}</Badge>
-						{effect.capped && <Badge variant="warning" className="px-1.5 py-0 text-[9px]"><LocalizedText messageKey="ui.equipment.components.equipmentView.capped.526b49dc" /></Badge>}
+						<span className="text-body text-text-muted">{formatEquipmentEffectLabel(effect, locale)}</span>
+						<Badge variant={effectScopeBadge(effect.scope)} className="px-1.5 py-0 text-caption">{effect.scope}</Badge>
+						{effect.capped && <Badge variant="warning" className="px-1.5 py-0 text-caption"><LocalizedText messageKey="ui.equipment.components.equipmentView.capped.526b49dc" /></Badge>}
 					</div>
-					<div className="mt-1 text-[11px] text-text-muted/80">
+					<div className="mt-1 text-caption text-text-muted/80">
 						{effect.sources.join(' · ')}{includeCap && effect.cap ? ` · max ${formatEquipmentEffectValue(effect, effect.cap, locale)}` : ''}
 					</div>
 				</div>
 				<div className="shrink-0 text-right">
-					<div className="font-mono text-sm font-semibold text-primary">{formatEquipmentEffectValue(effect, effect.value, locale)}</div>
-					{effect.capped && <div className="font-mono text-[11px] text-text-muted">raw {formatEquipmentEffectValue(effect, effect.rawValue, locale)}</div>}
+					<div className="font-mono text-body font-semibold text-text-main">{renderEquipmentDelta(effect, effect.value, locale)}</div>
+					{effect.capped && <div className="font-mono text-caption text-text-muted">raw {renderEquipmentDelta(effect, effect.rawValue, locale)}</div>}
 				</div>
 			</div>
 		</div>
@@ -566,4 +577,10 @@ function effectScopeBadge(scope: EquipmentEffectScope): 'secondary' | 'danger' |
 	if (scope === 'PvP') return 'danger';
 	if (scope === 'PvE') return 'success';
 	return 'secondary';
+}
+
+function renderEquipmentDelta(effect: Parameters<typeof formatEquipmentEffectValue>[0], value: number, locale: string) {
+  return effect.displayValue
+    ? effect.displayValue
+    : <DeltaValue value={value}>{formatAbsoluteEquipmentEffectValue(effect, value, locale)}</DeltaValue>;
 }

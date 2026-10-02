@@ -81,7 +81,7 @@ const EventScoreCard: React.FC<EventScoreCardProps> = ({ live, event, onOpenRank
       title={eventName}
       description={localizeStatic("ui.dashboard.components.eventScoreCard.description.live.event.score.and.reward.progress.4a67ced7")}
       titleClassName="truncate text-primary"
-      descriptionClassName="font-bold uppercase tracking-wider"
+      descriptionClassName="font-bold"
       headerClassName="feature-event-score-header flex-wrap gap-3"
       className="feature-event-score-card flex min-h-0 flex-col"
       actions={(
@@ -114,7 +114,7 @@ const EventScoreCard: React.FC<EventScoreCardProps> = ({ live, event, onOpenRank
             {event && onOpenRanking && canOpenRanking && (
               <Button
                 type="button"
-                variant="solid"
+                variant="primary"
                 size="sm"
                 leftIcon={<Trophy className="h-3.5 w-3.5" />}
                 isLoading={rankingLoading}
@@ -124,7 +124,7 @@ const EventScoreCard: React.FC<EventScoreCardProps> = ({ live, event, onOpenRank
               >
                 <LocalizedText messageKey="ui.dashboard.components.eventScoreCard.alliance.ranking.c47701bb" /></Button>
             )}
-            <span className={`rounded-full border px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider ${live ? 'border-success/30 bg-success/10 text-success' : 'border-border-light bg-bg-card/50 text-text-muted'}`}>
+            <span className={`rounded-full border px-2.5 py-1 text-caption font-semibold ${live ? 'border-success/30 bg-success/10 text-success' : 'border-border-light bg-bg-card/50 text-text-muted'}`}>
               {live ? 'Live' : 'Last known'}
             </span>
           </div>
@@ -133,8 +133,8 @@ const EventScoreCard: React.FC<EventScoreCardProps> = ({ live, event, onOpenRank
     >
         {!event ? (
           <div className="rounded-global border border-dashed border-border-light bg-bg-card/35 px-4 py-7 text-center">
-            <p className="text-sm font-medium text-text-main"><LocalizedText messageKey="ui.dashboard.components.eventScoreCard.no.supported.event.is.active.a62481df" /></p>
-            <p className="mx-auto mt-2 max-w-xl text-xs text-text-muted"><LocalizedText messageKey="ui.dashboard.components.eventScoreCard.the.page.will.switch.automatically.when.a.29d21b18" /></p>
+            <p className="text-body font-medium text-text-main"><LocalizedText messageKey="ui.dashboard.components.eventScoreCard.no.supported.event.is.active.a62481df" /></p>
+            <p className="mx-auto mt-2 max-w-xl text-caption text-text-muted"><LocalizedText messageKey="ui.dashboard.components.eventScoreCard.the.page.will.switch.automatically.when.a.29d21b18" /></p>
           </div>
         ) : (
           <div className="flex flex-col gap-4">
@@ -151,7 +151,7 @@ const EventScoreCard: React.FC<EventScoreCardProps> = ({ live, event, onOpenRank
                 className="col-span-2 [&_.ui-metric-value]:truncate md:col-span-1"
               />
             </div>
-            <div className="flex flex-wrap items-center gap-x-5 gap-y-2 border-t border-border-base/60 pt-3 text-xs text-text-muted">
+            <div className="flex flex-wrap items-center gap-x-5 gap-y-2 border-t border-border-base/60 pt-3 text-caption text-text-muted">
               <span>Difficulty: <strong className="font-semibold text-text-main">{difficulty}</strong></span>
               {remainingSec > 0 && <span>Ends in: <strong className="font-mono font-semibold tabular-nums text-text-main">{formatRemaining(remainingSec)}</strong></span>}
               {(event.leagueId ?? 0) > 0 && <span>League: <strong className="font-semibold text-text-main">{event.leagueId}</strong></span>}

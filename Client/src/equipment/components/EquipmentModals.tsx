@@ -79,8 +79,8 @@ export function EquipmentSellModal({
 			title={<PillSelector ariaLabel={localizeStatic("ui.equipment.components.equipmentModals.ariaLabel.equipment.category.d378a1be")} value={relicTab} onChange={(value) => setRelicTab(value as RelicTab)} options={[{value:'Non Relic',label:localizeStatic('equipment.relicCategory',{category:'non'})},{value:'Relic 1.0',label:localizeStatic('equipment.relicCategory',{category:'relic1'})},{value:'Relic 2.0',label:localizeStatic('equipment.relicCategory',{category:'relic2'})}]} size="header" fullWidth />}
 			footer={(
 				<>
-					<Button variant="ghost" onClick={onClose}><LocalizedText messageKey="game.cancel" /></Button>
-					<Button variant="danger" onClick={confirm} isLoading={busy}><LocalizedText messageKey="ui.equipment.components.equipmentModals.confirm.sell.827ff403" /></Button>
+					<Button variant="secondary" onClick={onClose}><LocalizedText messageKey="game.cancel" /></Button>
+					<Button leftIcon={<Trash2 aria-hidden="true" />} variant="danger" onClick={confirm} isLoading={busy}><LocalizedText messageKey="ui.equipment.components.equipmentModals.confirm.sell.827ff403" /></Button>
 				</>
 			)}
 		>
@@ -89,24 +89,24 @@ export function EquipmentSellModal({
 					<Trash2 className="h-7 w-7" />
 				</div>
 				<div className="rounded-global border border-error/30 bg-error/10 p-4 text-center">
-					<p className="text-sm font-semibold text-text-main">
+					<p className="text-body font-semibold text-text-main">
 						{localizeStatic(relicTab === 'Non Relic' ? (itemType === 'Equipment' ? 'equipment.sell.nonRelicEquipment' : 'equipment.sell.nonRelicGems') : relicTab === 'Relic 1.0' ? (itemType === 'Equipment' ? 'equipment.sell.relic1Equipment' : 'equipment.sell.relic1Gems') : (itemType === 'Equipment' ? 'equipment.sell.relic2Equipment' : 'equipment.sell.relic2Gems'),{count:keepStars})}
 					</p>
-					<p className="mt-2 text-xs text-error"><LocalizedText messageKey="ui.equipment.components.equipmentModals.this.game.action.cannot.be.reversed.43e31498" /></p>
+					<p className="mt-2 text-caption text-error"><LocalizedText messageKey="ui.equipment.components.equipmentModals.this.game.action.cannot.be.reversed.43e31498" /></p>
 				</div>
 
 				{relicTab === 'Non Relic' && (
 					<div className="space-y-3">
 						<label className="flex cursor-pointer items-center justify-between rounded-global border border-border-base bg-bg-app/50 p-3">
 							<span>
-								<span className="block text-sm font-medium text-text-main"><LocalizedText messageKey="ui.equipment.components.equipmentModals.sell.post.2026.definitions.81a124f5" /></span>
-								<span className="block text-[11px] text-text-muted"><LocalizedText messageKey="ui.equipment.components.equipmentModals.includes.newly.introduced.catalog.ranges.835d450c" /></span>
+								<span className="block text-body font-medium text-text-main"><LocalizedText messageKey="ui.equipment.components.equipmentModals.sell.post.2026.definitions.81a124f5" /></span>
+								<span className="block text-caption text-text-muted"><LocalizedText messageKey="ui.equipment.components.equipmentModals.includes.newly.introduced.catalog.ranges.835d450c" /></span>
 							</span>
 							<Switch checked={sellPost2026} onChange={setSellPost2026} ariaLabel={localizeStatic("ui.equipment.components.equipmentModals.ariaLabel.sell.post.2026.definitions.81a124f5")} />
 						</label>
 						{itemType === 'Equipment' && (
 							<label className="flex cursor-pointer items-center justify-between rounded-global border border-border-base bg-bg-app/50 p-3">
-								<span className="text-sm font-medium text-text-main"><LocalizedText messageKey="ui.equipment.components.equipmentModals.sell.look.items.3837c1a3" /></span>
+								<span className="text-body font-medium text-text-main"><LocalizedText messageKey="ui.equipment.components.equipmentModals.sell.look.items.3837c1a3" /></span>
 								<Switch checked={sellLookItems} onChange={setSellLookItems} ariaLabel={localizeStatic("ui.equipment.components.equipmentModals.ariaLabel.sell.look.items.3837c1a3")} />
 							</label>
 						)}
@@ -116,7 +116,7 @@ export function EquipmentSellModal({
 				{relicTab === 'Relic 2.0' && (
 					<div className="rounded-global border border-border-base bg-bg-app/50 p-4">
 						<div className="mb-3 flex items-center justify-between">
-							<span className="text-sm font-medium text-text-main"><LocalizedText messageKey="ui.equipment.components.equipmentModals.keep.total.stars.and.above.21f1668e" /></span>
+							<span className="text-body font-medium text-text-main"><LocalizedText messageKey="ui.equipment.components.equipmentModals.keep.total.stars.and.above.21f1668e" /></span>
 							<Badge variant="warning">{localizeStatic('equipment.stars',{count:keepStars})}</Badge>
 						</div>
 						<input
@@ -127,11 +127,11 @@ export function EquipmentSellModal({
 							onChange={(event) => setKeepStars(Number(event.target.value))}
 							className="w-full accent-primary"
 						/>
-						<div className="mt-1 flex justify-between text-[10px] text-text-muted"><span>{number(4)}</span><span>{number(42)}</span></div>
+						<div className="mt-1 flex justify-between text-caption text-text-muted"><span>{number(4)}</span><span>{number(42)}</span></div>
 					</div>
 				)}
 
-				<div className="flex items-start gap-2 text-xs text-text-muted">
+				<div className="flex items-start gap-2 text-caption text-text-muted">
 					<TriangleAlert className="mt-0.5 h-4 w-4 shrink-0 text-warning" />
 					<LocalizedText messageKey="equipment.sell.verification" />
 				</div>
@@ -169,28 +169,28 @@ export function EquipmentSwapModal({
 			maxWidth="2xl"
 			footer={(
 				<>
-					<Button variant="ghost" onClick={onClose}><LocalizedText messageKey="game.cancel" /></Button>
-					<Button disabled={otherID == null} onClick={() => otherID != null && onConfirm(otherID)} isLoading={busy}><LocalizedText messageKey="ui.equipment.components.equipmentModals.swap.pieces.86121fb1" /></Button>
+					<Button variant="secondary" onClick={onClose}><LocalizedText messageKey="game.cancel" /></Button>
+					<Button variant="primary" disabled={otherID == null} onClick={() => otherID != null && onConfirm(otherID)} isLoading={busy}><LocalizedText messageKey="ui.equipment.components.equipmentModals.swap.pieces.86121fb1" /></Button>
 				</>
 			)}
 		>
 			<div className="space-y-4">
 				<div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-primary/10 text-primary"><RefreshCw className="h-7 w-7" /></div>
-				<p className="text-center text-sm text-text-muted">
+				<p className="text-center text-body text-text-muted">
 					<LocalizedRichText messageKey="equipment.swap.description" params={{kind:leader?.kind ?? 'other',name:leader?.name ?? ''}} tags={{leader:children=><span className="font-semibold text-text-main">{children}</span>}} />
 				</p>
 				<div className="max-h-[50vh] space-y-2 overflow-y-auto custom-scrollbar">
 					{available.map((candidate) => {
 						const equipped = Object.values(candidate.equipment).filter(Boolean).length;
 						return (
-							<button
+							<button data-button-pattern="card"
 								type="button"
 								key={candidate.id}
 								onClick={() => setOtherID(candidate.id)}
 								className={`flex w-full items-center gap-3 rounded-global border p-3 text-left ${otherID === candidate.id ? 'border-primary/50 bg-primary/10' : 'border-border-base bg-bg-app/50 hover:bg-bg-card-hover'}`}
 							>
-								<span className="flex h-7 w-7 items-center justify-center rounded-full bg-bg-card text-xs font-bold text-text-muted">{number(candidate.position)}</span>
-								<span className="min-w-0 flex-1 truncate text-sm font-medium text-text-main">{candidate.name}</span>
+								<span className="flex h-7 w-7 items-center justify-center rounded-full bg-bg-card text-caption font-semibold text-text-muted">{number(candidate.position)}</span>
+								<span className="min-w-0 flex-1 truncate text-body font-medium text-text-main">{candidate.name}</span>
 								<Badge variant={candidate.available ? 'success' : 'warning'}>{candidate.available ? <bdi dir="ltr">{localizeStatic('equipment.equippedFraction',{count:equipped,maximum:5})}</bdi> : localizeStatic('equipment.busy')}</Badge>
 							</button>
 						);
@@ -243,8 +243,8 @@ export function EquipmentEventModal({
 			maxWidth="2xl"
 			footer={(
 				<>
-					<Button variant="ghost" onClick={onClose}><LocalizedText messageKey="game.cancel" /></Button>
-					<Button
+					<Button variant="secondary" onClick={onClose}><LocalizedText messageKey="game.cancel" /></Button>
+					<Button variant="primary"
 						disabled={!canApply}
 						onClick={() => selectedEvent && onConfirm(selectedEvent, selectedTier ?? undefined)}
 						isLoading={busy}
@@ -259,14 +259,14 @@ export function EquipmentEventModal({
 					<Sparkles className="h-7 w-7" />
 				</div>
 				<div className="text-center">
-					<p className="text-sm text-text-muted">
+					<p className="text-body text-text-muted">
 						<LocalizedRichText messageKey="equipment.event.chooseForLeader" params={{name:leader?.name ?? ''}} tags={{leader:children=><span className="font-semibold text-text-main">{children}</span>}} />
 					</p>
-					<p className="mt-1 text-xs text-text-muted">
+					<p className="mt-1 text-caption text-text-muted">
 						<LocalizedText messageKey="ui.equipment.components.equipmentModals.only.storage.and.pieces.already.on.this.9ae35d7d" /></p>
 				</div>
 
-				<div className="flex items-start gap-2 rounded-global border border-warning/30 bg-warning/10 p-3 text-xs text-text-muted">
+				<div className="flex items-start gap-2 rounded-global border border-warning/30 bg-warning/10 p-3 text-caption text-text-muted">
 					<TriangleAlert className="mt-0.5 h-4 w-4 shrink-0 text-warning" />
 					<span>
 						<LocalizedText messageKey="ui.equipment.components.equipmentModals.applying.removes.all.five.base.equipment.slots.d95f2a94" /></span>
@@ -282,16 +282,16 @@ export function EquipmentEventModal({
 								key={entry.option.value}
 								className={`overflow-hidden rounded-global border transition-colors ${isSelected ? 'border-primary/50 bg-primary/10' : 'border-border-base bg-bg-app/50 hover:bg-bg-card-hover'}`}
 							>
-								<button type="button" onClick={() => selectEvent(entry)} className="w-full p-3 text-left">
+								<button data-button-pattern="row" type="button" onClick={() => selectEvent(entry)} className="w-full p-3 text-left">
 									<span className="flex items-start gap-3">
 										<span className={`mt-0.5 h-4 w-4 shrink-0 rounded-full border-2 ${isSelected ? 'border-primary bg-primary shadow-[inset_0_0_0_3px_var(--bg-app)]' : 'border-border-base'}`} />
 										<span className="min-w-0 flex-1">
 											<span className="flex flex-wrap items-center gap-2">
-												<span className="text-sm font-semibold text-text-main">{localizeStatic(entry.option.labelKey)}</span>
+												<span className="text-body font-semibold text-text-main">{localizeStatic(entry.option.labelKey)}</span>
 												{hasTierChoice && <Badge variant="secondary">{isSelected && selectedTier ? localizeStatic('equipment.event.tier',{tier:selectedTier}) : localizeStatic('equipment.event.tiers',{count:entry.sets.length})}</Badge>}
 												{displayedSet.complete && <Badge variant="success"><LocalizedText messageKey="ui.equipment.components.equipmentModals.complete.143b270a" /></Badge>}
 											</span>
-											<span className="mt-1 block text-xs text-text-muted">{localizeStatic(entry.option.descriptionKey)}</span>
+											<span className="mt-1 block text-caption text-text-muted">{localizeStatic(entry.option.descriptionKey)}</span>
 											<span className="mt-2 flex flex-wrap gap-2">
 												<Badge variant={displayedSet.equipmentCount === 5 ? 'success' : displayedSet.equipmentCount > 0 ? 'warning' : 'outline'}>
 													{localizeStatic('equipment.event.equipmentCount',{count:displayedSet.equipmentCount,maximum:5})}
@@ -306,8 +306,8 @@ export function EquipmentEventModal({
 								{isSelected && hasTierChoice && (
 									<div className="border-t border-primary/20 px-3 pb-3 pt-2.5">
 										<div className="mb-2 flex items-center justify-between gap-3">
-											<span className="text-[11px] font-bold uppercase tracking-wider text-text-muted"><LocalizedText messageKey="ui.equipment.components.equipmentModals.set.tier.9c00987e" /></span>
-											<span className="text-[11px] text-text-muted"><LocalizedText messageKey="ui.equipment.components.equipmentModals.equip.only.this.tier.593e5e5f" /></span>
+											<span className="text-caption font-semibold text-text-muted"><LocalizedText messageKey="ui.equipment.components.equipmentModals.set.tier.9c00987e" /></span>
+											<span className="text-caption text-text-muted"><LocalizedText messageKey="ui.equipment.components.equipmentModals.equip.only.this.tier.593e5e5f" /></span>
 										</div>
 										<PillSelector
 											ariaLabel={localizeStatic('equipment.event.tierLabel',{event:localizeStatic(entry.option.labelKey)})}
@@ -325,10 +325,10 @@ export function EquipmentEventModal({
 				</div>
 
 				{selected && selectedSet && selectedSet.equipmentCount === 0 && (
-					<p className="text-center text-xs text-warning">{localizeStatic('equipment.event.unavailable',{event:localizeStatic(selected.option.labelKey),tier:selectedTier ?? 'none'})}</p>
+					<p className="text-center text-caption text-warning">{localizeStatic('equipment.event.unavailable',{event:localizeStatic(selected.option.labelKey),tier:selectedTier ?? 'none'})}</p>
 				)}
 				{leader && !leader.available && (
-					<p className="text-center text-xs text-warning"><LocalizedText messageKey="ui.equipment.components.equipmentModals.this.commander.is.busy.and.cannot.be.41116e12" /></p>
+					<p className="text-center text-caption text-warning"><LocalizedText messageKey="ui.equipment.components.equipmentModals.this.commander.is.busy.and.cannot.be.41116e12" /></p>
 				)}
 			</div>
 		</Modal>
@@ -371,8 +371,8 @@ export function UnequipModal({
 			title={localizeStatic('equipment.unequip.title',{kind})}
 			footer={(
 				<>
-					<Button variant="ghost" onClick={onClose}><LocalizedText messageKey="game.cancel" /></Button>
-					<Button disabled={selected.size === 0} onClick={() => onConfirm(Array.from(selected))} isLoading={busy}>{localizeStatic('equipment.unequip.action',{count:selected.size})}</Button>
+					<Button variant="secondary" onClick={onClose}><LocalizedText messageKey="game.cancel" /></Button>
+					<Button leftIcon={<Trash2 aria-hidden="true" />} variant="danger" disabled={selected.size === 0} onClick={() => onConfirm(Array.from(selected))} isLoading={busy}>{localizeStatic('equipment.unequip.action',{count:selected.size})}</Button>
 				</>
 			)}
 		>
@@ -380,24 +380,24 @@ export function UnequipModal({
 				<div className={`mx-auto flex h-14 w-14 items-center justify-center rounded-full ${kind === 'equipment' ? 'bg-primary/10 text-primary' : 'bg-purple-500/10 text-purple-300'}`}>
 					{kind === 'equipment' ? <Shield className="h-7 w-7" /> : <Gem className="h-7 w-7" />}
 				</div>
-				<p className="text-center text-sm text-text-muted"><LocalizedRichText messageKey="equipment.unequip.description" params={{kind:kind,name:leader?.name ?? ''}} tags={{leader:children=><span className="font-semibold text-text-main">{children}</span>}} /></p>
+				<p className="text-center text-body text-text-muted"><LocalizedRichText messageKey="equipment.unequip.description" params={{kind:kind,name:leader?.name ?? ''}} tags={{leader:children=><span className="font-semibold text-text-main">{children}</span>}} /></p>
 				<div className="space-y-2">
 					{available.map((row) => {
 						const id = kind === 'equipment' ? row.item?.id : row.gem?.id;
 						return (
-							<button
+							<button data-button-pattern="row"
 								type="button"
 								key={row.slot}
 								onClick={() => toggle(row.slot)}
 								className={`flex w-full items-center gap-3 rounded-global border p-3 text-left ${selected.has(row.slot) ? 'border-primary/50 bg-primary/10' : 'border-border-base bg-bg-app/50 hover:bg-bg-card-hover'}`}
 							>
 								<span className={`h-5 w-5 rounded border-2 ${selected.has(row.slot) ? 'border-primary bg-primary' : 'border-border-base'}`} />
-								<span className="flex-1 text-sm font-medium text-text-main">{row.label}</span>
-								<span className="font-mono text-xs text-text-muted">{localizeStatic('equipment.instanceId',{id:String(id ?? '')})}</span>
+								<span className="flex-1 text-body font-medium text-text-main">{row.label}</span>
+								<span className="font-mono text-caption text-text-muted">{localizeStatic('equipment.instanceId',{id:String(id ?? '')})}</span>
 							</button>
 						);
 					})}
-					{available.length === 0 && <p className="py-5 text-center text-sm text-text-muted">{localizeStatic('equipment.unequip.empty',{kind})}</p>}
+					{available.length === 0 && <p className="py-5 text-center text-body text-text-muted">{localizeStatic('equipment.unequip.empty',{kind})}</p>}
 				</div>
 			</div>
 		</Modal>
@@ -460,8 +460,8 @@ export function UpgradeModal({
 			title={localizeStatic('equipment.upgrade.title',{kind})}
 			footer={(
 				<>
-					<Button variant="ghost" onClick={onClose}><LocalizedText messageKey="game.cancel" /></Button>
-					<Button
+					<Button variant="secondary" onClick={onClose}><LocalizedText messageKey="game.cancel" /></Button>
+					<Button variant="primary"
 						disabled={selectedID == null || selectedLevelCap == null || currentLevel >= selectedLevelCap || targetLevel <= currentLevel || targetLevel > selectedLevelCap || coinBlocked}
 						onClick={() => selectedID != null && onConfirm(selectedID, targetLevel)}
 						isLoading={busy}
@@ -475,31 +475,31 @@ export function UpgradeModal({
 				<div className={`mx-auto flex h-14 w-14 items-center justify-center rounded-full ${kind === 'equipment' ? 'bg-primary/10 text-primary' : 'bg-purple-500/10 text-purple-300'}`}>
 					<ArrowUpCircle className="h-7 w-7" />
 				</div>
-				<p className="text-center text-sm text-text-muted"><LocalizedRichText messageKey="equipment.upgrade.description" params={{kind:kind,name:leader?.name ?? ''}} tags={{leader:children=><span className="font-semibold text-text-main">{children}</span>}} /></p>
+				<p className="text-center text-body text-text-muted"><LocalizedRichText messageKey="equipment.upgrade.description" params={{kind:kind,name:leader?.name ?? ''}} tags={{leader:children=><span className="font-semibold text-text-main">{children}</span>}} /></p>
 				<div className="max-h-[42vh] space-y-2 overflow-y-auto custom-scrollbar">
 					{candidates.map(({ row, item, levelCap }) => {
 						const level = item.level ?? 0;
 						const capped = levelCap != null && level >= levelCap;
 						return (
-							<button
+							<button data-button-pattern="row"
 								type="button"
 								key={`${row.slot}-${item.id}`}
 								disabled={levelCap == null || capped || item.id <= 0}
 								onClick={() => setSelectedID(item.id)}
 								className={`flex w-full items-center gap-3 rounded-global border p-3 text-left disabled:opacity-50 ${selectedID === item.id ? 'border-primary/50 bg-primary/10' : 'border-border-base bg-bg-app/50 hover:bg-bg-card-hover'}`}
 							>
-								<span className="flex-1 text-sm font-medium text-text-main">{row.label}</span>
+								<span className="flex-1 text-body font-medium text-text-main">{row.label}</span>
 								<Badge variant={levelCap == null ? 'warning' : capped ? 'success' : 'secondary'}>
 									{levelCap == null ? localizeStatic('equipment.upgrade.unknownRarity') : localizeStatic('equipment.upgrade.currentLevel',{level,maximum:levelCap})}
 								</Badge>
-								<span className="font-mono text-[10px] text-text-muted">{item.id}</span>
+								<span className="font-mono text-caption text-text-muted">{item.id}</span>
 							</button>
 						);
 					})}
 				</div>
 				{selected && selectedLevelCap != null && currentLevel < selectedLevelCap && (
 					<div className="rounded-global border border-border-base bg-bg-app/50 p-4">
-						<label className="mb-2 block text-sm font-medium text-text-main">{localizeStatic('equipment.upgrade.targetLevel',{minimum:currentLevel+1,maximum:selectedLevelCap})}</label>
+						<label className="mb-2 block text-body font-medium text-text-main">{localizeStatic('equipment.upgrade.targetLevel',{minimum:currentLevel+1,maximum:selectedLevelCap})}</label>
 						<Input
 							type="number"
 							min={currentLevel + 1}
@@ -509,7 +509,7 @@ export function UpgradeModal({
 						/>
 					</div>
 				)}
-				{coinBlocked && <p className="text-center text-xs text-warning"><LocalizedText messageKey="ui.equipment.components.equipmentModals.the.configured.coin.reserve.currently.blocks.upgrades.587e3e2f" /></p>}
+				{coinBlocked && <p className="text-center text-caption text-warning"><LocalizedText messageKey="ui.equipment.components.equipmentModals.the.configured.coin.reserve.currently.blocks.upgrades.587e3e2f" /></p>}
 			</div>
 		</Modal>
 	);

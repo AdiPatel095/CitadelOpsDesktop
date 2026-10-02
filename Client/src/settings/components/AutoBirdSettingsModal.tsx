@@ -395,19 +395,19 @@ export const AutoBirdSettingsModal: React.FC<AutoBirdSettingsModalProps> = ({ is
               <span className="font-bold text-text-main"><LocalizedText messageKey="ui.settings.components.autoBirdSettingsModal.not.254bb97b" /></span> be sent.
             </>
       )}
-      titleTrailing={<Button variant="outline" size="sm" onClick={() => setIsGuideOpen(true)} leftIcon={<BookOpen className="h-4 w-4" />}><span lang={guideLocale}>{guidePack.ui.guideButton}</span></Button>}
+      titleTrailing={<Button variant="secondary" size="sm" onClick={() => setIsGuideOpen(true)} leftIcon={<BookOpen className="h-4 w-4" />}><span lang={guideLocale}>{guidePack.ui.guideButton}</span></Button>}
       onSave={handleSave}
       saveLabel="Save changes"
       isSaving={isSaving}
     >
       <div className="auto-bird-settings-workspace flex w-full flex-col gap-6 mx-auto">
         {saveError && (
-          <div className="rounded-global border border-error/30 bg-error/10 px-4 py-3 text-sm font-semibold text-error" role="alert">
+          <div className="rounded-global border border-error/30 bg-error/10 px-4 py-3 text-body font-semibold text-error" role="alert">
             {saveError}
           </div>
         )}
         {activePresetMissing && (
-          <div className="rounded-global border border-warning/30 bg-warning/10 px-4 py-3 text-sm font-semibold text-warning" role="alert">
+          <div className="rounded-global border border-warning/30 bg-warning/10 px-4 py-3 text-body font-semibold text-warning" role="alert">
             <LocalizedText messageKey="ui.settings.components.autoBirdSettingsModal.the.selected.preset.no.longer.exists.saving.1fd22d5b" /></div>
         )}
         <AutomationRunStrip
@@ -419,7 +419,7 @@ export const AutoBirdSettingsModal: React.FC<AutoBirdSettingsModalProps> = ({ is
         <SettingsSection disclosure={disclosure} section="targets">
           <Card variant="solid" className="">
             <label id="auto-bird-min-rpt" className="flex max-w-sm flex-col gap-1">
-              <span className="text-xs font-bold uppercase tracking-wider text-primary"><LocalizedText messageKey="ui.settings.components.autoBirdSettingsModal.minimum.rpt.4e22018c" /></span>
+              <span className="text-caption font-semibold text-primary"><LocalizedText messageKey="ui.settings.components.autoBirdSettingsModal.minimum.rpt.4e22018c" /></span>
               <Input
                 type="number"
                 min={0}
@@ -427,9 +427,9 @@ export const AutoBirdSettingsModal: React.FC<AutoBirdSettingsModalProps> = ({ is
                 value={minRPTDays}
                 onChange={(e) => setMinRPTDays(clampMinRPTDays(parseInt(e.target.value, 10)))}
                 className="font-mono"
-                rightIcon={<span className="text-xs font-medium uppercase text-text-muted"><LocalizedText messageKey="ui.settings.components.autoBirdSettingsModal.days.e08c0aa8" /></span>}
+                rightIcon={<span className="text-caption font-medium text-text-muted"><LocalizedText messageKey="ui.settings.components.autoBirdSettingsModal.days.e08c0aa8" /></span>}
               />
-              <span className="text-[11px] leading-relaxed text-text-muted"><LocalizedText messageKey="ui.settings.components.autoBirdSettingsModal.troops.are.sent.only.to.alliance.members.faff0c89" /></span>
+              <span className="text-caption text-text-muted"><LocalizedText messageKey="ui.settings.components.autoBirdSettingsModal.troops.are.sent.only.to.alliance.members.faff0c89" /></span>
             </label>
           </Card>
         </SettingsSection>
@@ -442,10 +442,10 @@ export const AutoBirdSettingsModal: React.FC<AutoBirdSettingsModalProps> = ({ is
         >
           <div className="flex flex-col gap-4 lg:flex-row lg:flex-wrap lg:items-end">
             <div className="flex flex-1 flex-wrap items-end gap-3">
-              <span className="mb-1.5 w-full text-xs font-bold uppercase tracking-wider text-primary lg:mb-0 lg:mr-2 lg:w-auto">
+              <span className="mb-1.5 w-full text-caption font-semibold text-primary lg:mb-0 lg:mr-2 lg:w-auto">
                 <LocalizedText messageKey="ui.settings.components.autoBirdSettingsModal.random.delay.range.hours.91f88ef4" /></span>
               <div className="flex w-24 flex-col gap-1">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-text-muted"><LocalizedText messageKey="ui.settings.components.autoBirdSettingsModal.min.dea79332" /></span>
+                <span className="text-caption font-semibold text-text-muted"><LocalizedText messageKey="ui.settings.components.autoBirdSettingsModal.min.dea79332" /></span>
                 <Input
                   type="number"
                   min={1}
@@ -456,7 +456,7 @@ export const AutoBirdSettingsModal: React.FC<AutoBirdSettingsModalProps> = ({ is
                 />
               </div>
               <div className="flex w-24 flex-col gap-1">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-text-muted"><LocalizedText messageKey="ui.settings.components.autoBirdSettingsModal.max.a1a5936d" /></span>
+                <span className="text-caption font-semibold text-text-muted"><LocalizedText messageKey="ui.settings.components.autoBirdSettingsModal.max.a1a5936d" /></span>
                 <Input
                   type="number"
                   min={1}
@@ -468,7 +468,7 @@ export const AutoBirdSettingsModal: React.FC<AutoBirdSettingsModalProps> = ({ is
               </div>
             </div>
             <div className="flex min-w-0 flex-1 basis-full flex-col gap-1 md:basis-52 lg:min-w-[200px]">
-              <span className="text-xs font-bold uppercase tracking-wider text-primary"><LocalizedText messageKey="ui.settings.components.autoBirdSettingsModal.minimum.to.send.634ab4a5" /></span>
+              <span className="text-caption font-semibold text-primary"><LocalizedText messageKey="ui.settings.components.autoBirdSettingsModal.minimum.to.send.634ab4a5" /></span>
               <div className="flex items-center gap-2">
                 <Input
                   type="number"
@@ -476,12 +476,12 @@ export const AutoBirdSettingsModal: React.FC<AutoBirdSettingsModalProps> = ({ is
                   value={minSend}
                   onChange={(e) => setMinSend(parseInt(e.target.value, 10) || 0)}
                   className="font-mono"
-                  rightIcon={<span className="text-xs font-medium uppercase text-text-muted"><LocalizedText messageKey="ui.settings.components.autoBirdSettingsModal.troops.5d47e163" /></span>}
+                  rightIcon={<span className="text-caption font-medium text-text-muted"><LocalizedText messageKey="ui.settings.components.autoBirdSettingsModal.troops.5d47e163" /></span>}
                 />
               </div>
             </div>
           </div>
-          <p className="mt-3 text-xs text-text-muted">
+          <p className="mt-3 text-caption text-text-muted">
             <LocalizedText messageKey="ui.settings.components.autoBirdSettingsModal.birds.are.sent.with.a.random.delay.64f21ceb" /></p>
         </SettingsSection>
 
@@ -515,7 +515,7 @@ export const AutoBirdSettingsModal: React.FC<AutoBirdSettingsModalProps> = ({ is
         {/* Castle grid */}
         <div id="auto-bird-castles" tabIndex={-1} className="custom-scrollbar min-h-0 flex-1 overflow-y-auto pr-1 outline-none">
           {castles.length === 0 && (
-            <p className="py-8 text-center text-sm text-text-muted"><LocalizedText messageKey="ui.settings.components.autoBirdSettingsModal.loading.castles.reopen.if.this.stays.empty.fea1a1d6" /></p>
+            <p className="py-8 text-center text-body text-text-muted"><LocalizedText messageKey="ui.settings.components.autoBirdSettingsModal.loading.castles.reopen.if.this.stays.empty.fea1a1d6" /></p>
           )}
           <div className="grid grid-cols-1 gap-4 pb-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {castles.map((castle) => {
@@ -531,16 +531,16 @@ export const AutoBirdSettingsModal: React.FC<AutoBirdSettingsModalProps> = ({ is
               return (
                 <Card key={castle.id} variant="solid" className="flex flex-col">
                   <div className="mb-3 flex flex-wrap items-center gap-2 border-b border-border-base pb-2">
-                    <h3 className="text-sm font-bold text-primary">{castle.name}</h3>
+                    <h3 className="text-title-sm font-bold text-primary">{castle.name}</h3>
                   </div>
                   {visibleItems.length === 0 && !fortressProtected ? (
                     <div className="flex flex-1 flex-col items-center justify-center gap-3 py-6">
-                      <p className="text-center text-xs font-medium uppercase tracking-wider text-text-muted"><LocalizedText messageKey="ui.settings.components.autoBirdSettingsModal.no.ignored.units.ab6d717f" /></p>
+                      <p className="text-center text-caption font-medium text-text-muted"><LocalizedText messageKey="ui.settings.components.autoBirdSettingsModal.no.ignored.units.ab6d717f" /></p>
                       <Button
-                        variant="outline"
+                        variant="secondary"
                         size="sm"
                         onClick={() => handleAddItem(cid)}
-                        className="border-dashed"
+
                         leftIcon={<Plus className="w-4 h-4" />}
                       >
                         <LocalizedText messageKey="ui.settings.components.autoBirdSettingsModal.add.unit.bc9e56f0" /></Button>
@@ -563,10 +563,10 @@ export const AutoBirdSettingsModal: React.FC<AutoBirdSettingsModalProps> = ({ is
                             <span className="absolute left-1 top-1 z-10 flex h-6 w-6 items-center justify-center rounded-full bg-primary text-white shadow-md" title={localizeStatic("ui.settings.components.autoBirdSettingsModal.title.reserved.by.auto.fortress.fad9df89")}>
                               <LockKeyhole className="h-3.5 w-3.5" />
                             </span>
-                            <span className="absolute bottom-0 right-0 z-10 translate-x-1/4 translate-y-1/4 rounded-full bg-white px-2.5 py-0.5 text-center text-[10px] font-bold text-slate-900 shadow-md ring-1 ring-black/10">
+                            <span className="absolute bottom-0 right-0 z-10 translate-x-1/4 translate-y-1/4 rounded-full bg-white px-2.5 py-0.5 text-center text-caption font-semibold text-slate-900 shadow-md ring-1 ring-black/10">
                               <LocalizedText messageKey="ui.settings.components.autoBirdSettingsModal.all.a52ace42" /></span>
                           </div>
-                          <span className="mt-2 text-center text-[10px] font-semibold leading-tight text-text-muted">
+                          <span className="mt-2 text-center text-caption font-semibold text-text-muted">
                             <LocalizedText messageKey="ui.settings.components.autoBirdSettingsModal.reserved.by.auto.fortress.fad9df89" /></span>
                         </div>
                       )}

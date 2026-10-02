@@ -46,31 +46,31 @@ export const AutomationRunStrip: React.FC<AutomationRunStripProps> = ({ featureI
         <div className="flex min-w-0 flex-wrap items-center gap-2">
           <StatusBadge {...player} />
           {timedUntil ? (
-            <span className="text-[11px] font-medium text-text-muted">
+            <span className="text-caption font-medium text-text-muted">
               <LocalizedText messageKey="settingsRun.until" params={{ time: date(timedUntil, { hour: 'numeric', minute: '2-digit' }) }} />
             </span>
           ) : null}
           {scheduleId ? (
-            <span className="text-[11px] font-medium text-text-muted">
+            <span className="text-caption font-medium text-text-muted">
               {schedule?.enabled ? scheduleSummary(schedule) : <LocalizedText messageKey="ui.settings.components.automationRunStrip.runs.at.any.time.no.weekly.schedule.38fca396" />}
             </span>
           ) : null}
         </div>
         <div className="flex min-w-0 flex-wrap items-center gap-2">
           {scheduleId && onOpenSchedule ? (
-            <Button variant="outline" size="sm" onClick={onOpenSchedule} leftIcon={<CalendarDays className="h-4 w-4" />}>
+            <Button variant="secondary" size="sm" onClick={onOpenSchedule} leftIcon={<CalendarDays className="h-4 w-4" />}>
               <LocalizedText messageKey="common.calendar" />
             </Button>
           ) : null}
           {onOpenDuration ? (
-            <Button variant="outline" size="sm" onClick={onOpenDuration} leftIcon={<Timer className="h-4 w-4" />}>
+            <Button variant="secondary" size="sm" onClick={onOpenDuration} leftIcon={<Timer className="h-4 w-4" />}>
               <LocalizedText messageKey="ui.settings.components.automationRunStrip.run.for.a.time.b8753047" />
             </Button>
           ) : null}
           {running ? <StopControl enabledKey={enabledKey} featureId={featureId} /> : null}
         </div>
       </div>
-      <p className="mt-1.5 text-[11px] leading-relaxed text-text-muted">
+      <p className="mt-1.5 text-caption text-text-muted">
         <LocalizedText messageKey={running ? (saveMode === 'immediate' ? 'settingsRun.savingNoteImmediate' : 'settingsRun.savingNote') : saveMode === 'immediate' ? 'settingsRun.immediateNote' : 'settingsRun.stoppedNote'} />
       </p>
       {!running ? <StopControl enabledKey={enabledKey} featureId={featureId} variant="notice" className="mt-1.5" /> : null}

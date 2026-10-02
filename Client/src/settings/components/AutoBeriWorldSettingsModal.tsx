@@ -351,7 +351,7 @@ export const AutoBeriWorldSettingsModal: React.FC<AutoBeriWorldSettingsModalProp
 			title={localizeStatic("ui.settings.components.autoBeriWorldSettingsModal.title.auto.beri.world.a579a63b")}
 			icon={<Swords className="h-5 w-5" />}
 			description={localizeStatic("ui.settings.components.autoBeriWorldSettingsModal.description.attack.berimond.towers.bring.the.loot.home.ff1b05e8")}
-			titleTrailing={<Button variant="outline" size="sm" className="shrink-0" onClick={() => setIsGuideOpen(true)} leftIcon={<BookOpen className="h-4 w-4" />}><span lang={beriGuideLocale}>{beriGuidePack.ui.guideButton}</span></Button>}
+			titleTrailing={<Button variant="secondary" size="sm" className="shrink-0" onClick={() => setIsGuideOpen(true)} leftIcon={<BookOpen className="h-4 w-4" />}><span lang={beriGuideLocale}>{beriGuidePack.ui.guideButton}</span></Button>}
 			maxWidth="4xl"
 			onSave={() => void save()}
 			saveLabel="Save"
@@ -403,10 +403,10 @@ export const AutoBeriWorldSettingsModal: React.FC<AutoBeriWorldSettingsModalProp
 
 				<div className="space-y-4 rounded-xl border border-border-base bg-bg-elevated/40 p-4">
 					<div>
-						<div className="flex items-center gap-2 text-sm font-black text-text-main">
+						<div className="flex items-center gap-2 text-body font-semibold text-text-main">
 							<Crosshair className="h-4 w-4 text-primary" /> <LocalizedText messageKey="ui.settings.components.autoBeriWorldSettingsModal.tower.attack.62826c7e" />
 						</div>
-						<p className="mt-1 text-xs text-text-muted">
+						<p className="mt-1 text-caption text-text-muted">
 							<LocalizedText messageKey="ui.settings.components.autoBeriWorldSettingsModal.uses.berimond.s.find.next.tower.command.f09dfe35" /></p>
 					</div>
 					<div className="grid gap-4 md:grid-cols-2">
@@ -433,7 +433,7 @@ export const AutoBeriWorldSettingsModal: React.FC<AutoBeriWorldSettingsModalProp
 							/>
 						</div>
 					</div>
-					<p className="text-xs text-text-muted">{beriGuidePack.autoBeri.steps.transfers.items.preset_troop_mix.description} {beriGuidePack.autoBeri.steps.transfers.items.food_only.description}</p>
+					<p className="text-caption text-text-muted">{beriGuidePack.autoBeri.steps.transfers.items.preset_troop_mix.description} {beriGuidePack.autoBeri.steps.transfers.items.food_only.description}</p>
 				</div>
 
 				</SettingsSection>
@@ -452,10 +452,10 @@ export const AutoBeriWorldSettingsModal: React.FC<AutoBeriWorldSettingsModalProp
 				<SettingsSection disclosure={disclosure} section="building">
 				<div className="space-y-4 rounded-xl border border-border-base bg-bg-elevated/40 p-4">
 					<div>
-						<div className="flex items-center gap-2 text-sm font-black text-text-main">
+						<div className="flex items-center gap-2 text-body font-semibold text-text-main">
 							<Castle className="h-4 w-4 text-primary" /> <LocalizedText messageKey="ui.settings.components.autoBeriWorldSettingsModal.loot.funded.camp.construction.4371947e" />
 						</div>
-						<p className="mt-1 text-xs text-text-muted">
+						<p className="mt-1 text-caption text-text-muted">
 							<LocalizedText messageKey="ui.settings.components.autoBeriWorldSettingsModal.uses.the.built.in.exact.camp.layout.6c194563" /></p>
 					</div>
 
@@ -475,13 +475,13 @@ export const AutoBeriWorldSettingsModal: React.FC<AutoBeriWorldSettingsModalProp
 							<div className="min-w-0 flex-1">
 								<div className="flex flex-wrap items-center gap-2">
 									<Badge variant={target ? 'outline' : 'success'}>{target ? 'Built-in available' : 'Active default'}</Badge>
-									<span className="text-sm font-bold text-text-main"><LocalizedText messageKey="ui.settings.components.autoBeriWorldSettingsModal.built.in.exact.camp.target.696aa37c" /></span>
+									<span className="text-body font-semibold text-text-main"><LocalizedText messageKey="ui.settings.components.autoBeriWorldSettingsModal.built.in.exact.camp.target.696aa37c" /></span>
 								</div>
-								<p className="mt-1 text-xs text-text-muted">
+								<p className="mt-1 text-caption text-text-muted">
 									<LocalizedText messageKey="ui.settings.components.autoBeriWorldSettingsModal.17.ground.tiles.92.functional.buildings.64.9a88ca2d" /></p>
 							</div>
 							<label className="block w-40 shrink-0">
-								<span className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-text-muted"><LocalizedText messageKey="ui.settings.components.autoBeriWorldSettingsModal.stable.target.6115bc56" /></span>
+								<span className="mb-1.5 block text-caption font-semibold text-text-muted"><LocalizedText messageKey="ui.settings.components.autoBeriWorldSettingsModal.stable.target.6115bc56" /></span>
 								<Select
 									value={String(settings.build.stableLevel || AUTO_BERI_DEFAULT_STABLE_LEVEL)}
 									onChange={(value) => setSettings((current) => ({
@@ -505,13 +505,13 @@ export const AutoBeriWorldSettingsModal: React.FC<AutoBeriWorldSettingsModalProp
 								/>
 							</label>
 						</div>
-						<p className="mt-2 text-[11px] text-text-muted">
+						<p className="mt-2 text-caption text-text-muted">
 							<LocalizedText messageKey="ui.settings.components.autoBeriWorldSettingsModal.the.stable.level.is.resolved.to.its.7d6ad5dd" /></p>
 					</div>
 
 					<div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_repeat(3,auto)] lg:items-end">
 						<label className="block">
-							<span className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-text-muted"><LocalizedText messageKey="ui.settings.components.autoBeriWorldSettingsModal.optional.custom.camp.target.08f12769" /></span>
+							<span className="mb-1.5 block text-caption font-semibold text-text-muted"><LocalizedText messageKey="ui.settings.components.autoBeriWorldSettingsModal.optional.custom.camp.target.08f12769" /></span>
 							<Select
 								value={captureCastle ? String(captureCastle.id) : ''}
 								onChange={(value) => setCaptureCastleId(Number(value) || 0)}
@@ -525,7 +525,7 @@ export const AutoBeriWorldSettingsModal: React.FC<AutoBeriWorldSettingsModalProp
 							/>
 						</label>
 						<Button
-							variant="outline"
+							variant="secondary"
 							disabled={!captureCastle || capturing != null || blueprintBusy}
 							isLoading={capturing === 'functional'}
 							onClick={() => void captureBlueprint('functional')}
@@ -533,7 +533,7 @@ export const AutoBeriWorldSettingsModal: React.FC<AutoBeriWorldSettingsModalProp
 						>
 							<LocalizedText messageKey="ui.settings.components.autoBeriWorldSettingsModal.functional.b6656595" /></Button>
 						<Button
-							variant="outline"
+							variant="secondary"
 							disabled={!captureCastle || capturing != null || blueprintBusy}
 							isLoading={capturing === 'layout'}
 							onClick={() => void captureBlueprint('layout')}
@@ -541,7 +541,7 @@ export const AutoBeriWorldSettingsModal: React.FC<AutoBeriWorldSettingsModalProp
 						>
 							<LocalizedText messageKey="ui.settings.components.autoBeriWorldSettingsModal.layout.a5119091" /></Button>
 						<Button
-							variant="outline"
+							variant="secondary"
 							disabled={!captureCastle || capturing != null || blueprintBusy}
 							isLoading={capturing === 'exact'}
 							onClick={() => void captureBlueprint('exact')}
@@ -552,7 +552,7 @@ export const AutoBeriWorldSettingsModal: React.FC<AutoBeriWorldSettingsModalProp
 
 					{savedBlueprints.length > 0 ? (
 						<div className="flex flex-wrap items-center gap-2">
-							<span className="text-[11px] font-semibold text-text-muted"><LocalizedText messageKey="ui.settings.components.autoBeriWorldSettingsModal.saved.targets.1b41cb7c" /></span>
+							<span className="text-caption font-semibold text-text-muted"><LocalizedText messageKey="ui.settings.components.autoBeriWorldSettingsModal.saved.targets.1b41cb7c" /></span>
 							{savedBlueprints.map((blueprint) => (
 								<Button
 									key={blueprint.id}
@@ -573,11 +573,11 @@ export const AutoBeriWorldSettingsModal: React.FC<AutoBeriWorldSettingsModalProp
 								<div>
 									<div className="flex flex-wrap items-center gap-2">
 										<Badge variant="success">{captureModeLabel(target.mode)}</Badge>
-										<span className="text-sm font-bold text-text-main">
+										<span className="text-body font-semibold text-text-main">
 											{targetCastle?.name?.trim() || `Camp ${target.castleId}`}
 										</span>
 									</div>
-									<p className="mt-1 text-xs text-text-muted">
+									<p className="mt-1 text-caption text-text-muted">
 										Captured {formatDate(target.capturedAt)} from revision {target.revision.toLocaleString()}.
 									</p>
 								</div>
@@ -603,13 +603,13 @@ export const AutoBeriWorldSettingsModal: React.FC<AutoBeriWorldSettingsModalProp
 							</div>
 						</div>
 					) : (
-						<p className="rounded-xl border border-border-base bg-bg-app/35 px-3 py-2 text-xs text-text-muted">
+						<p className="rounded-xl border border-border-base bg-bg-app/35 px-3 py-2 text-caption text-text-muted">
 							<LocalizedText messageKey="ui.settings.components.autoBeriWorldSettingsModal.the.built.in.exact.target.is.active.07b82a6b" /></p>
 					)}
 
 					<div className="border-t border-border-base pt-4">
 						<div>
-							<div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-text-muted">
+							<div className="flex items-center gap-2 text-caption font-semibold text-text-muted">
 								<Shield className="h-3.5 w-3.5" /> <LocalizedText messageKey="ui.settings.components.autoBeriWorldSettingsModal.camp.resources.kept.in.reserve.f6713557" />
 							</div>
 							<div className="mt-2 grid grid-cols-2 gap-3">
@@ -618,7 +618,7 @@ export const AutoBeriWorldSettingsModal: React.FC<AutoBeriWorldSettingsModalProp
 									{ key: '4', label: 'Stone' },
 								].map((resource) => (
 									<label key={resource.key} className="block">
-										<span className="mb-1 block text-[10px] font-semibold text-text-muted">{resource.label}</span>
+										<span className="mb-1 block text-caption font-semibold text-text-muted">{resource.label}</span>
 										<Input
 											type="number"
 											min={0}
@@ -628,7 +628,7 @@ export const AutoBeriWorldSettingsModal: React.FC<AutoBeriWorldSettingsModalProp
 									</label>
 								))}
 							</div>
-							<p className="mt-2 text-[11px] text-text-muted"><LocalizedText messageKey="ui.settings.components.autoBeriWorldSettingsModal.the.builder.spends.only.the.amount.above.d96d3273" /></p>
+							<p className="mt-2 text-caption text-text-muted"><LocalizedText messageKey="ui.settings.components.autoBeriWorldSettingsModal.the.builder.spends.only.the.amount.above.d96d3273" /></p>
 						</div>
 
 					</div>
@@ -683,11 +683,11 @@ export const AutoBeriWorldSettingsModal: React.FC<AutoBeriWorldSettingsModalProp
 					<div className="border-t border-border-base pt-4">
 						{settings.build.allowTimeSkips ? (
 							<div>
-								<div className="text-xs font-bold uppercase tracking-wider text-text-muted"><LocalizedText messageKey="ui.settings.components.autoBeriWorldSettingsModal.construction.skips.kept.in.reserve.c78ae698" /></div>
+								<div className="text-caption font-semibold text-text-muted"><LocalizedText messageKey="ui.settings.components.autoBeriWorldSettingsModal.construction.skips.kept.in.reserve.c78ae698" /></div>
 								<div className="mt-2 grid grid-cols-4 gap-2 sm:grid-cols-7">
 									{AUTO_BERI_TROOP_TRANSPORT_TIME_SKIPS.map((skip) => (
 										<label key={skip.id} className="block">
-											<span className="mb-1 block text-center text-[10px] font-semibold text-text-muted">{skip.label}</span>
+											<span className="mb-1 block text-center text-caption font-semibold text-text-muted">{skip.label}</span>
 											<Input
 												type="number"
 												min={0}
@@ -700,7 +700,7 @@ export const AutoBeriWorldSettingsModal: React.FC<AutoBeriWorldSettingsModalProp
 								</div>
 							</div>
 						) : (
-							<p className="self-center rounded-xl border border-border-base bg-bg-app/35 px-3 py-2 text-xs text-text-muted">
+							<p className="self-center rounded-xl border border-border-base bg-bg-app/35 px-3 py-2 text-caption text-text-muted">
 								<LocalizedText messageKey="ui.settings.components.autoBeriWorldSettingsModal.construction.time.skips.are.off.active.build.c8682826" /></p>
 						)}
 
@@ -716,29 +716,29 @@ export const AutoBeriWorldSettingsModal: React.FC<AutoBeriWorldSettingsModalProp
 				>
 					<div className="grid gap-4 sm:grid-cols-2">
 						<label className="block">
-							<span className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-text-muted"><LocalizedText messageKey="ui.settings.components.autoBeriWorldSettingsModal.attack.check.interval.bc3e388d" /></span>
+							<span className="mb-1.5 block text-caption font-semibold text-text-muted"><LocalizedText messageKey="ui.settings.components.autoBeriWorldSettingsModal.attack.check.interval.bc3e388d" /></span>
 							<Input
 								type="number"
 								min={30}
 								max={3600}
 								value={settings.attackCheckIntervalSec}
 								onChange={(event) => updateNumber('attackCheckIntervalSec', event.target.value)}
-								rightIcon={<span className="text-xs">s</span>}
+								rightIcon={<span className="text-caption">s</span>}
 							/>
 						</label>
 					</div>
 				<div className="space-y-4 rounded-xl border border-border-base bg-bg-elevated/40 p-4">
 					<div>
-						<div className="flex items-center gap-2 text-sm font-black text-text-main">
+						<div className="flex items-center gap-2 text-body font-semibold text-text-main">
 							<Hammer className="h-4 w-4 text-primary" /> <LocalizedText messageKey="ui.settings.components.autoBeriWorldSettingsModal.armorer.tool.minimums.d4868418" />
 						</div>
-						<p className="mt-1 text-xs text-text-muted">
+						<p className="mt-1 text-caption text-text-muted">
 							<LocalizedText messageKey="ui.settings.components.autoBeriWorldSettingsModal.an.independent.auto.beri.lane.buys.the.72da5b70" /></p>
 					</div>
 					<div className="grid gap-4 sm:grid-cols-3">
 						{AUTO_BERI_COIN_ATTACK_TOOLS.map((tool) => (
 							<label key={tool.id} className="block">
-								<span className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-text-muted">
+								<span className="mb-1.5 block text-caption font-semibold text-text-muted">
 									{tool.name}
 								</span>
 								<Input
@@ -746,12 +746,12 @@ export const AutoBeriWorldSettingsModal: React.FC<AutoBeriWorldSettingsModalProp
 									min={0}
 									value={settings.toolMinimums[String(tool.id)] ?? 0}
 									onChange={(event) => updateToolMinimum(tool.id, event.target.value)}
-									rightIcon={<span className="text-[10px] font-mono">#{tool.id}</span>}
+									rightIcon={<span className="text-caption font-mono">#{tool.id}</span>}
 								/>
 							</label>
 						))}
 					</div>
-					<p className="text-xs text-text-muted">
+					<p className="text-caption text-text-muted">
 						<LocalizedText messageKey="ui.settings.components.autoBeriWorldSettingsModal.only.scaling.ladders.battering.rams.and.mantlets.72f4a748" /></p>
 				</div>
 
@@ -764,7 +764,7 @@ export const AutoBeriWorldSettingsModal: React.FC<AutoBeriWorldSettingsModalProp
 						onChange={(checked) => setSettings((current) => ({ ...current, useTroopTransportTimeSkips: checked }))}
 					/>
 					<label className="block">
-						<span className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-text-muted">
+						<span className="mb-1.5 block text-caption font-semibold text-text-muted">
 							<LocalizedText messageKey="ui.settings.components.autoBeriWorldSettingsModal.troop.transport.skip.5fc75be9" /></span>
 						<Select
 							value={settings.troopTransportTimeSkipId}
@@ -779,24 +779,24 @@ export const AutoBeriWorldSettingsModal: React.FC<AutoBeriWorldSettingsModalProp
 							menuGrowToViewport
 						/>
 					</label>
-					<p className="text-xs text-text-muted">{beriGuidePack.autoBeri.steps.transfers.items.pending_transfer.description} {beriGuidePack.autoBeri.steps.transfers.items.partial_donor.description}</p>
+					<p className="text-caption text-text-muted">{beriGuidePack.autoBeri.steps.transfers.items.pending_transfer.description} {beriGuidePack.autoBeri.steps.transfers.items.partial_donor.description}</p>
 				</div>
 
 
 				<div className="grid gap-4 sm:grid-cols-2">
 					<div className="space-y-1.5">
-						<label className="text-xs font-bold uppercase tracking-wider text-text-muted"><LocalizedText messageKey="ui.settings.components.autoBeriWorldSettingsModal.check.interval.9a5266be" /></label>
+						<label className="text-caption font-semibold text-text-muted"><LocalizedText messageKey="ui.settings.components.autoBeriWorldSettingsModal.check.interval.9a5266be" /></label>
 						<Input
 							type="number"
 							min={5}
 							max={3600}
 							value={settings.troopSpaceCheckIntervalSec}
 							onChange={(event) => updateNumber('troopSpaceCheckIntervalSec', event.target.value)}
-							rightIcon={<span className="text-xs">s</span>}
+							rightIcon={<span className="text-caption">s</span>}
 						/>
 					</div>
 					<div className="space-y-1.5">
-						<label className="text-xs font-bold uppercase tracking-wider text-text-muted" lang={beriGuideLocale}>{beriGuidePack.autoBeri.steps.transfers.items.minimum_free_capacity.label}</label>
+						<label className="text-caption font-semibold text-text-muted" lang={beriGuideLocale}>{beriGuidePack.autoBeri.steps.transfers.items.minimum_free_capacity.label}</label>
 						<Input
 							type="number"
 							min={1}
@@ -837,7 +837,7 @@ export const AutoBeriWorldSettingsModal: React.FC<AutoBeriWorldSettingsModalProp
 				  disabled={saving}
 				/>
 
-				{saveError && <p role="alert" className="text-xs text-error">{saveError}</p>}
+				{saveError && <p role="alert" className="text-caption text-error">{saveError}</p>}
 			</div>
 		</SettingsModal>
     <FeatureGuideModal feature="autoBeri" isOpen={isOpen && isGuideOpen} onClose={() => setIsGuideOpen(false)} />

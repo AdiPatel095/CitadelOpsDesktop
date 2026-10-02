@@ -3,14 +3,14 @@ import stylelint from 'stylelint';
 import { test } from 'node:test';
 import { execFileSync } from 'node:child_process';
 import { readFileSync, existsSync, readdirSync } from 'node:fs';
-import { join } from 'node:path';
+import { basename, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { arbitraryValueCount, ratchetFailures } from '../scripts/check-arbitrary-values.mjs';
 import { cssMetrics } from '../scripts/css-metrics.mjs';
 
 const root = fileURLToPath(new URL('../', import.meta.url));
 const desktop = existsSync(join(root, 'src/styles/tokens.css'));
-const source = readFileSync(join(root, desktop ? 'src/styles/tokens.css' : 'src/commandCenter/styles/tokens.css'), 'utf8');
+const source = readFileSync(join(root, desktop ? 'src/styles/tokens.css' : 'src/commandCenter/styles/tokens.css'), 'utf8') + '\n' + readFileSync(join(root, desktop ? 'src/styles/tokens-app.css' : 'src/commandCenter/styles/tokens-app.css'), 'utf8');
 const colors = `surface-canvas surface-card surface-inset surface-control surface-control-strong surface-overlay surface-field surface-inverse text-primary text-secondary text-muted text-disabled text-inverse text-on-accent border-subtle border-default border-strong accent accent-hover accent-pressed accent-container text-on-accent-container state-hover state-pressed state-selected focus-ring fill-disabled scrim selection control-on control-on-thumb segment-track segment-thumb data-1 data-2 data-3 data-4`.split(' ');
 const expected = [...colors,
   ...['success', 'warning', 'danger', 'info', 'neutral'].flatMap((t) => [`status-${t}`, `status-${t}-bg`, `status-${t}-border`]),
@@ -110,6 +110,7 @@ for (const theme of ['light', 'dark']) test(`${theme}: R9/R10 enforced (spec col
   check('text-on-accent-container', ['accent-container'], 4.5);
   check('border-strong', ['surface-canvas', 'surface-card', 'surface-inset', 'surface-control'], 3);
   check('focus-ring', surfaces, 3);
+  check('control-on', ['surface-card'], 3);
   for (const tone of ['success', 'warning', 'danger', 'info', 'neutral']) check(`status-${tone}`, ['surface-canvas', 'surface-card', 'surface-inset', `status-${tone}-bg`], 4.5);
   for (const pair of gaps) assert.ok(pair.delta >= 4, `R9 ${theme} ${pair.pair}: ${pair.delta} < 4`);
   for (const pair of checks) assert.ok(pair.ratio >= pair.min, `R10 ${theme} ${pair.pair}: ${pair.ratio} < ${pair.min}`);
@@ -141,24 +142,29 @@ test('ratchet includes raw inline fallback colors and border shorthands', () => 
 });
 
 
-test('legacy muted references migrate before the new muted role is used', () => {
+test('legacy stylesheets retain the migrated secondary text role', () => {
+  // PR-2 migrated legacy sheets to text-secondary; new component styles may use text-muted.
+  const legacyStylesheets = new Set([
+    'index.css', 'MaterialExpressive.css', 'portal.css', 'LandingPage.css',
+    'LegalPage.css', 'ProductGuidePage.css', 'AnalyticsConsentBanner.css',
+  ]);
   const files = (dir) => readdirSync(dir, { withFileTypes: true }).flatMap((entry) => entry.isDirectory() ? files(join(dir, entry.name)) : [join(dir, entry.name)]);
-  for (const path of files(join(root, 'src')).filter((path) => path.endsWith('.css') && !path.endsWith('tokens.css'))) {
+  for (const path of files(join(root, 'src')).filter((path) => path.endsWith('.css') && legacyStylesheets.has(basename(path)))) {
     assert.doesNotMatch(readFileSync(path, 'utf8'), /var\(--text-muted\s*[,)]/, path);
   }
   const theme = readFileSync(join(root, desktop ? 'src/index.css' : 'src/tailwind-theme.css'), 'utf8');
   assert.match(theme, /--color-text-muted:\s*var\(--text-secondary\)/);
 });
 
-test('raw shape and motion fail lint while typography stays in warning mode', async () => {
+test('raw shape, motion and typography fail lint', async () => {
   const configFile = join(root, '.stylelintrc.json');
   const codeFilename = join(root, 'src/lint-contract.css');
   const invalid = await stylelint.lint({ configFile, codeFilename, code: 'div { border-radius: 7px; box-shadow: 0 1px 2px black; transition: opacity 150ms; opacity: 1 !important; font-size: 15px; font-weight: 600; }' });
   const warnings = invalid.results[0].warnings;
   assert.ok(invalid.errored);
-  assert.equal(warnings.filter((warning) => warning.severity === 'error').length, 4);
-  assert.equal(warnings.filter((warning) => warning.severity === 'warning').length, 2);
-  const valid = await stylelint.lint({ configFile, codeFilename, code: 'div { border-radius: var(--radius-md); box-shadow: var(--elevation-1); transition: opacity var(--duration-fast) var(--ease-standard); font-size: 15px; font-weight: 600; }' });
+  assert.equal(warnings.filter((warning) => warning.severity === 'error').length, 6);
+  assert.equal(warnings.filter((warning) => warning.severity === 'warning').length, 0);
+  const valid = await stylelint.lint({ configFile, codeFilename, code: 'div { border-radius: var(--radius-md); box-shadow: var(--elevation-1); transition: opacity var(--duration-fast) var(--ease-standard); font-size: var(--font-size-14); font-weight: var(--font-weight-600); }' });
   assert.equal(valid.errored, false);
-  assert.equal(valid.results[0].warnings.length, 2);
+  assert.equal(valid.results[0].warnings.length, 0);
 });

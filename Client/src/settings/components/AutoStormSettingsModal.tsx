@@ -692,7 +692,7 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
       contentNotice={<>{recovery.banner}{draftSession.conflictNotice}</>}
     >
       <div className="space-y-4">
-        <div className="flex justify-end"><Button variant="outline" size="sm" onClick={() => setIsGuideOpen(true)} leftIcon={<BookOpen className="h-4 w-4" />}><span lang={stormPack === englishGuidePack ? "en" : stormGuideLocale}>{stormPack.ui.guideButton}</span></Button></div>
+        <div className="flex justify-end"><Button variant="secondary" size="sm" onClick={() => setIsGuideOpen(true)} leftIcon={<BookOpen className="h-4 w-4" />}><span lang={stormPack === englishGuidePack ? "en" : stormGuideLocale}>{stormPack.ui.guideButton}</span></Button></div>
         <AutomationRunStrip
           featureId="autoStorm"
           onOpenDuration={onOpenAutomationDuration ? () => onOpenAutomationDuration(AUTOMATION_ENABLED_KEYS.autoStorm, 'Auto Storm') : undefined}
@@ -706,8 +706,8 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
           />
           <div className="mt-4 flex items-start justify-between gap-4 rounded-global border border-border-base bg-bg-app/30 p-3">
             <div>
-              <div className="text-sm font-bold text-text-main"><LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.automatically.open.the.storm.castle.b46ca0ca" /></div>
-              <p className="mt-1 text-xs text-text-muted"><LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.runs.only.when.the.game.reports.storm.0fa4cb3f" /></p>
+              <div className="text-body font-semibold text-text-main"><LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.automatically.open.the.storm.castle.b46ca0ca" /></div>
+              <p className="mt-1 text-caption text-text-muted"><LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.runs.only.when.the.game.reports.storm.0fa4cb3f" /></p>
             </div>
             <Switch
               checked={draft.unlock.enabled}
@@ -744,7 +744,7 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
             />
           </label>
 
-          <p className="mt-3 rounded-global border border-border-base bg-bg-app/35 px-3 py-2 text-xs text-text-muted">
+          <p className="mt-3 rounded-global border border-border-base bg-bg-app/35 px-3 py-2 text-caption text-text-muted">
             {stormCastle
               ? `Current Storm castle: ${stormCastle.name?.trim() || `Castle ${stormCastle.id}`} at ${stormCastle.x}:${stormCastle.y}. Auto Storm will use it; this choice applies to the next locked season.`
               : stormUnlockState?.unlocked || stormUnlockState?.created
@@ -752,12 +752,12 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
                 : 'The game currently reports Storm locked. Auto Storm will wait unless automatic opening is enabled with a valid choice.'}
           </p>
           {selectedUnlockOption?.costPremium ? (
-            <p className="mt-2 text-xs text-warning">
+            <p className="mt-2 text-caption text-warning">
               This choice authorizes {selectedUnlockOption.costPremium.toLocaleString()} premium currency for the seasonal Storm castle unlock.
             </p>
           ) : null}
-          {stormCastleOptionsError ? <p className="mt-2 text-xs text-error">{stormCastleOptionsError}</p> : null}
-          {!unlockValid ? <p className="mt-2 text-xs text-error"><LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.choose.a.currently.available.official.storm.castle.25a907f3" /></p> : null}
+          {stormCastleOptionsError ? <p className="mt-2 text-caption text-error">{stormCastleOptionsError}</p> : null}
+          {!unlockValid ? <p className="mt-2 text-caption text-error"><LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.choose.a.currently.available.official.storm.castle.25a907f3" /></p> : null}
         </Card>
         </SettingsSection>
 
@@ -772,8 +772,8 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
             <div className="mt-4 rounded-global border border-border-base bg-bg-app/30 p-3">
               <div className="flex items-start justify-between gap-4">
                 <div>
-                  <div className="text-sm font-bold text-text-main"><LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.storm.forts.8539a976" /></div>
-                  <p className="mt-1 text-xs text-text-muted"><LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.attack.only.the.selected.official.fort.levels.2e0cd99a" /></p>
+                  <div className="text-body font-semibold text-text-main"><LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.storm.forts.8539a976" /></div>
+                  <p className="mt-1 text-caption text-text-muted"><LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.attack.only.the.selected.official.fort.levels.2e0cd99a" /></p>
                 </div>
                 <Switch
                   checked={draft.forts.enabled}
@@ -807,7 +807,7 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
                       }))}
                       className="font-mono"
                     />
-                    <p className="mt-1 text-[11px] text-text-muted"><LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.only.launch.against.forts.with.at.least.43220000" /></p>
+                    <p className="mt-1 text-caption text-text-muted"><LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.only.launch.against.forts.with.at.least.43220000" /></p>
                   </label>
                   <EventAttackSetupField
                     id="auto-storm-forts"
@@ -830,7 +830,7 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
                     inventoryLabel={stockLabel}
                     disabled={saving}
                   />
-                  {draft.forts.levels.length === 0 ? <p className="text-xs text-error"><LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.select.at.least.one.fort.level.32a7a693" /></p> : null}
+                  {draft.forts.levels.length === 0 ? <p className="text-caption text-error"><LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.select.at.least.one.fort.level.32a7a693" /></p> : null}
                 </div>
               ) : null}
             </div>
@@ -838,8 +838,8 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
             <div className="mt-3 rounded-global border border-border-base bg-bg-app/30 p-3">
               <div className="flex items-start justify-between gap-4">
                 <div>
-                  <div className="text-sm font-bold text-text-main"><LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.resource.islands.761741cc" /></div>
-                  <p className="mt-1 text-xs text-text-muted"><LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.capture.matching.resources.and.sizes.then.return.8af3283c" /></p>
+                  <div className="text-body font-semibold text-text-main"><LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.resource.islands.761741cc" /></div>
+                  <p className="mt-1 text-caption text-text-muted"><LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.capture.matching.resources.and.sizes.then.return.8af3283c" /></p>
                 </div>
                 <Switch
                   checked={draft.islands.enabled}
@@ -898,10 +898,10 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
                   <div className="border-t border-border-base pt-3">
                     <div className="flex flex-wrap items-center justify-between gap-3">
                       <div>
-                        <div className="flex items-center gap-2 text-xs font-bold text-text-main"><Shield className="h-3.5 w-3.5 text-primary" /> <LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.island.defense.units.426d8af1" /></div>
-                        <p className="mt-1 text-[11px] text-text-muted"><LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.choose.dedicated.occupation.defenders.if.empty.one.289de337" /></p>
+                        <div className="flex items-center gap-2 text-caption font-semibold text-text-main"><Shield className="h-3.5 w-3.5 text-primary" /> <LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.island.defense.units.426d8af1" /></div>
+                        <p className="mt-1 text-caption text-text-muted"><LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.choose.dedicated.occupation.defenders.if.empty.one.289de337" /></p>
                       </div>
-                      <Button size="sm" variant="outline" onClick={() => void chooseDefenseUnits()} leftIcon={<Shield className="h-3.5 w-3.5" />}>
+                      <Button size="sm" variant="secondary" onClick={() => void chooseDefenseUnits()} leftIcon={<Shield className="h-3.5 w-3.5" />}>
                         <LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.choose.units.b979a369" /></Button>
                     </div>
                     {draft.islands.defenseUnits.length > 0 ? (
@@ -910,13 +910,13 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
                           <div key={unit.unitId} className="flex items-center gap-2 rounded-global border border-border-base bg-bg-card/45 p-2">
                             <UnitImage unitId={unit.unitId} size={32} />
                             <div>
-                              <div className="max-w-32 truncate text-xs font-bold text-text-main">{getTroop(unit.unitId)?.name ?? `Unit ${unit.unitId}`}</div>
-                              <div className="text-[10px] text-text-muted">{unit.amount.toLocaleString()}</div>
+                              <div className="max-w-32 truncate text-caption font-semibold text-text-main">{getTroop(unit.unitId)?.name ?? `Unit ${unit.unitId}`}</div>
+                              <div className="text-caption text-text-muted">{unit.amount.toLocaleString()}</div>
                             </div>
                           </div>
                         ))}
                       </div>
-                    ) : <p className="mt-2 text-[11px] text-text-muted"><LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.automatic.minimum.occupation.after.victory.is.reported.4a4d8d99" /></p>}
+                    ) : <p className="mt-2 text-caption text-text-muted"><LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.automatic.minimum.occupation.after.victory.is.reported.4a4d8d99" /></p>}
                     {islandDefenseStock ? (
                       <div className="mt-3 space-y-2">
                         <UnitStockList lines={islandDefenseStock.lines} freshness={islandDefenseStock.freshness} />
@@ -926,7 +926,7 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
                   </div>
 
                   {draft.islands.resources.length === 0 || draft.islands.sizes.length === 0 ? (
-                    <p className="text-xs text-error"><LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.select.at.least.one.resource.and.one.27bf23fb" /></p>
+                    <p className="text-caption text-error"><LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.select.at.least.one.resource.and.one.27bf23fb" /></p>
                   ) : null}
                 </div>
               ) : null}
@@ -939,8 +939,8 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
             <div>
               <div className="flex items-start justify-between gap-4">
                 <div>
-                  <div className="flex items-center gap-2 text-sm font-bold text-text-main"><Truck className="h-4 w-4 text-primary" /> <LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.import.missing.troops.8667e705" /></div>
-                  <p className="mt-1 text-xs text-text-muted"><LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.import.missing.attack.or.configured.defense.troops.1f4fca2e" /></p>
+                  <div className="flex items-center gap-2 text-body font-semibold text-text-main"><Truck className="h-4 w-4 text-primary" /> <LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.import.missing.troops.8667e705" /></div>
+                  <p className="mt-1 text-caption text-text-muted"><LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.import.missing.attack.or.configured.defense.troops.1f4fca2e" /></p>
                 </div>
                 <Switch
                   checked={draft.troopImport.enabled}
@@ -970,12 +970,12 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
                         },
                       }))}
                     />
-                  ) : <p className="text-xs text-text-muted"><LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.no.non.storm.donor.castles.are.currently.3215ee89" /></p>}
+                  ) : <p className="text-caption text-text-muted"><LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.no.non.storm.donor.castles.are.currently.3215ee89" /></p>}
                   {readiness.checks.filter((check) => check.id === 'donors').map((check) => (
                     <ul key={check.id} id="auto-storm-donors" tabIndex={-1} className="mt-2 outline-none"><ReadinessCheckLine check={check} /></ul>
                   ))}
-                  <p className="mt-2 text-[11px] text-text-muted"><LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.donors.are.checked.in.the.displayed.order.06f5ffd4" /></p>
-                  {!troopImportValid ? <p className="mt-2 text-xs text-error"><LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.select.at.least.one.currently.observed.donor.8e329343" /></p> : null}
+                  <p className="mt-2 text-caption text-text-muted"><LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.donors.are.checked.in.the.displayed.order.06f5ffd4" /></p>
+                  {!troopImportValid ? <p className="mt-2 text-caption text-error"><LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.select.at.least.one.currently.observed.donor.8e329343" /></p> : null}
                 </div>
               ) : null}
             </div>
@@ -998,7 +998,7 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
                           },
                         }))}
                       />
-                      <p className="mt-1 text-[11px] text-text-muted"><LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.imports.the.current.preset.mix.so.this.40349458" /></p>
+                      <p className="mt-1 text-caption text-text-muted"><LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.imports.the.current.preset.mix.so.this.40349458" /></p>
                     </label>
                     <label>
                       <FieldLabel><LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.average.attacks.since.reset.eede0aa7" /></FieldLabel>
@@ -1011,7 +1011,7 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
                             : 'Unavailable'}
                         className="font-mono"
                       />
-                      <p className="mt-1 text-[11px] text-text-muted">
+                      <p className="mt-1 text-caption text-text-muted">
                         {troopCap.resetSessionAvailable && troopCap.attacksSinceReset != null
                           ? `${troopCap.attacksSinceReset.toLocaleString()} confirmed Auto Storm attacks since reset ÷ 24.${troopCap.resetSessionStartedAt ? ` Reset began ${new Date(troopCap.resetSessionStartedAt).toLocaleString()}.` : ''}`
                           : 'Waiting for a trustworthy server reset boundary and confirmed Auto Storm launch count.'}
@@ -1028,7 +1028,7 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
                             : 'Unavailable'}
                         className="font-mono"
                       />
-                      <p className="mt-1 text-[11px] text-text-muted">
+                      <p className="mt-1 text-caption text-text-muted">
                         {troopCap.enabledPresetCount != null && troopCap.enabledPresetCount > 0
                           ? `Average of ${troopCap.enabledPresetCount.toLocaleString()} enabled Storm ${troopCap.enabledPresetCount === 1 ? 'preset' : 'presets'}; tools are excluded and island defenders are included.`
                           : 'Enable a target type and choose a valid attack preset to calculate its troop demand.'}
@@ -1045,7 +1045,7 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
                             : 'Unavailable'}
                         className="font-mono"
                       />
-                      <p className="mt-1 text-[11px] text-text-muted">
+                      <p className="mt-1 text-caption text-text-muted">
                         {loadingTroopCapPreview
                           ? 'Calculating directly from the settings shown here.'
                           : troopCapPreviewError
@@ -1062,11 +1062,11 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
                       </p>
                     </label>
                   </div>
-                  <p className="mt-3 text-[11px] text-text-muted">
+                  <p className="mt-3 text-caption text-text-muted">
                     <LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.the.cap.is.the.largest.of.the.4802a71d" /></p>
 
             </div>
-          ) : <p className="text-xs text-text-muted"><LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.troop.import.is.off.so.no.troops.1db2da31" /></p>}
+          ) : <p className="text-caption text-text-muted"><LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.troop.import.is.off.so.no.troops.1db2da31" /></p>}
           </div>
         </SettingsSection>
 
@@ -1093,7 +1093,7 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
                 }))}
                 className="font-mono"
               />
-              <p className="mt-1 text-[11px] text-text-muted">Current: {Math.trunc(aquamarineBalance).toLocaleString()}</p>
+              <p className="mt-1 text-caption text-text-muted">Current: {Math.trunc(aquamarineBalance).toLocaleString()}</p>
             </label>
             <label>
               <FieldLabel><LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.find.a.luna.reward.45864656" /></FieldLabel>
@@ -1103,31 +1103,31 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
                 placeholder={localizeStatic("ui.settings.components.autoStormSettingsModal.placeholder.reward.category.or.package.id.86dc65d9")}
                 leftIcon={<Search className="h-4 w-4" />}
               />
-              <p className="mt-1 text-[11px] text-text-muted">
+              <p className="mt-1 text-caption text-text-muted">
                 {loadingPackages ? 'Loading official catalog…' : `${lunaPackages.length} Luna rewards available`}
               </p>
             </label>
           </div>
 
-          <p className="mt-3 rounded-global border border-warning/20 bg-warning/5 px-3 py-2 text-xs text-text-muted">
+          <p className="mt-3 rounded-global border border-warning/20 bg-warning/5 px-3 py-2 text-caption text-text-muted">
             <LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.these.17.rewards.were.captured.from.the.dad7a0a6" /></p>
 
           {loadingPackages ? (
-            <div className="mt-3 rounded-global border border-border-base bg-bg-app/30 px-4 py-8 text-center text-sm text-text-muted">
+            <div className="mt-3 rounded-global border border-border-base bg-bg-app/30 px-4 py-8 text-center text-body text-text-muted">
               <LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.loading.luna.s.official.rewards.3e9da22d" /></div>
           ) : lunaPackages.length > 0 ? (
             <div className="mt-3 overflow-hidden rounded-global border border-border-base bg-bg-app/30">
               <div className="max-h-[min(34rem,52dvh)] overflow-auto custom-scrollbar">
-                <table className="w-full min-w-[72rem] table-fixed text-left text-xs">
-                  <thead className="sticky top-0 z-10 border-b border-border-base bg-bg-card/95 text-[10px] uppercase tracking-wider text-text-muted">
+                <table className="w-full min-w-[72rem] table-fixed text-left text-caption">
+                  <thead className="sticky top-0 z-10 border-b border-border-base bg-bg-card/95 text-caption text-text-muted">
                     <tr>
-                      <th className="w-[5rem] px-3 py-2.5 text-center font-black"><LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.use.c36d819e" /></th>
-                      <th className="w-[28%] px-3 py-2.5 font-black"><LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.reward.55ac8cba" /></th>
-                      <th className="w-[9rem] px-3 py-2.5 text-right font-black"><LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.cost.204a5eb2" /></th>
-                      <th className="w-[8rem] px-3 py-2.5 text-center font-black"><LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.purchased.cap.8ad88ee6" /></th>
-                      <th className="w-[10rem] px-3 py-2.5 font-black"><LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.target.total.414a9b7c" /></th>
-                      <th className="w-[10rem] px-3 py-2.5 font-black"><LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.unlimited.11dde17d" /></th>
-                      <th className="w-[7rem] px-3 py-2.5 font-black"><LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.priority.d60dbba0" /></th>
+                      <th className="w-[5rem] px-3 py-2.5 text-center font-bold"><LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.use.c36d819e" /></th>
+                      <th className="w-[28%] px-3 py-2.5 font-bold"><LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.reward.55ac8cba" /></th>
+                      <th className="w-[9rem] px-3 py-2.5 text-right font-bold"><LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.cost.204a5eb2" /></th>
+                      <th className="w-[8rem] px-3 py-2.5 text-center font-bold"><LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.purchased.cap.8ad88ee6" /></th>
+                      <th className="w-[10rem] px-3 py-2.5 font-bold"><LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.target.total.414a9b7c" /></th>
+                      <th className="w-[10rem] px-3 py-2.5 font-bold"><LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.unlimited.11dde17d" /></th>
+                      <th className="w-[7rem] px-3 py-2.5 font-bold"><LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.priority.d60dbba0" /></th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-border-base/70">
@@ -1142,7 +1142,6 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
                         <tr key={item.id} className={`transition-colors ${enabled ? 'bg-primary/5' : 'hover:bg-bg-card-hover/40'}`}>
                           <td className="px-3 py-3 text-center align-middle">
                             <Switch
-                              size="sm"
                               checked={enabled}
                               onChange={(checked) => toggleShopPurchase(setDraft, item.id, checked)}
                               ariaLabel={`${enabled ? 'Disable' : 'Enable'} ${displayName}`}
@@ -1153,7 +1152,7 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
                               <Badge variant="outline">{lunaPackageTypeLabel(item.type)}</Badge>
                               <div className="min-w-0">
                                 <div className="truncate font-bold text-text-main" title={displayName}>{displayName}</div>
-                                <div className="mt-0.5 truncate text-[10px] text-text-muted">
+                                <div className="mt-0.5 truncate text-caption text-text-muted">
                                   PID {item.id}{item.rewardDetail ? ` · ${item.rewardDetail}` : ''}
                                 </div>
                               </div>
@@ -1166,7 +1165,7 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
                             <div className="font-mono font-bold text-text-main">
                               {purchased == null ? '—' : purchased.toLocaleString()}{item.stock > 0 ? ` / ${item.stock.toLocaleString()}` : ''}
                             </div>
-                            <div className="mt-0.5 text-[10px] text-text-muted">
+                            <div className="mt-0.5 text-caption text-text-muted">
                               {item.stock > 0 ? 'shop cap' : 'no shop cap'}
                             </div>
                           </td>
@@ -1191,13 +1190,12 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
                           <td className="px-3 py-3 align-middle">
                             <div className="flex items-center gap-2">
                               <Switch
-                                size="sm"
                                 checked={purchase?.unlimited === true}
                                 disabled={!enabled}
                                 onChange={(unlimited) => updateShopPurchase(setDraft, item.id, { unlimited })}
                                 ariaLabel={`Unlimited purchases for ${displayName}`}
                               />
-                              <span className="text-[10px] leading-tight text-text-muted">
+                              <span className="text-caption text-text-muted">
                                 {item.stock > 0 ? `Until cap ${item.stock}` : 'Keep buying'}
                               </span>
                             </div>
@@ -1219,7 +1217,7 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
                     })}
                     {visibleLunaPackages.length === 0 ? (
                       <tr>
-                        <td colSpan={7} className="px-4 py-10 text-center text-sm text-text-muted">
+                        <td colSpan={7} className="px-4 py-10 text-center text-body text-text-muted">
                           No Luna rewards match “{lunaSearch.trim()}”.
                         </td>
                       </tr>
@@ -1229,12 +1227,12 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
               </div>
             </div>
           ) : (
-            <div className="mt-3 rounded-global border border-error/20 bg-error/5 px-4 py-6 text-center text-sm text-text-muted">
+            <div className="mt-3 rounded-global border border-error/20 bg-error/5 px-4 py-6 text-center text-body text-text-muted">
               <LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.no.luna.rewards.were.found.in.the.c14fb5ec" /></div>
           )}
-          {!shopValid ? <p className="mt-2 text-xs text-error"><LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.use.one.unique.luna.product.per.goal.c8f48292" /></p> : null}
+          {!shopValid ? <p className="mt-2 text-caption text-error"><LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.use.one.unique.luna.product.per.goal.c8f48292" /></p> : null}
           {draft.aquamarine.purchases.length > 0 ? (
-            <p className="mt-1 text-[11px] text-text-muted">
+            <p className="mt-1 text-caption text-text-muted">
               <LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.lower.priority.numbers.run.first.an.uncapped.1a572fa0" /></p>
           ) : null}
         </Card>
@@ -1290,7 +1288,7 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
               />
             </label>
             <Button
-              variant="outline"
+              variant="secondary"
               disabled={!stormCastle || capturing != null}
               isLoading={capturing === 'functional'}
               onClick={() => void capture('functional')}
@@ -1298,7 +1296,7 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
             >
               <LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.functional.b6656595" /></Button>
             <Button
-              variant="outline"
+              variant="secondary"
               disabled={!stormCastle || capturing != null}
               isLoading={capturing === 'layout'}
               onClick={() => void capture('layout')}
@@ -1306,7 +1304,7 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
             >
               <LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.layout.a5119091" /></Button>
             <Button
-              variant="outline"
+              variant="secondary"
               disabled={!stormCastle || capturing != null}
               isLoading={capturing === 'exact'}
               onClick={() => void capture('exact')}
@@ -1317,7 +1315,7 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
 
           {savedBlueprints.length > 0 ? (
             <div className="mt-3 flex flex-wrap items-center gap-2">
-              <span className="text-[11px] font-semibold text-text-muted"><LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.saved.b6199040" /></span>
+              <span className="text-caption font-semibold text-text-muted"><LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.saved.b6199040" /></span>
               {savedBlueprints.map((blueprint) => (
                 <Button
                   key={blueprint.id}
@@ -1338,11 +1336,11 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
                 <div>
                   <div className="flex flex-wrap items-center gap-2">
                     <Badge variant="success">{captureModeLabel(target.mode)}</Badge>
-                    <span className="text-sm font-bold text-text-main">
+                    <span className="text-body font-semibold text-text-main">
                       {targetCastle?.name?.trim() || `Castle ${target.castleId}`}
                     </span>
                   </div>
-                  <p className="mt-1 text-xs text-text-muted">Captured {formatDate(target.capturedAt)} from revision {target.revision.toLocaleString()}.</p>
+                  <p className="mt-1 text-caption text-text-muted">Captured {formatDate(target.capturedAt)} from revision {target.revision.toLocaleString()}.</p>
                 </div>
                 <Button
                   size="sm"
@@ -1365,7 +1363,7 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
               </div>
             </div>
           ) : (
-            <p className="mt-3 rounded-global border border-border-base bg-bg-app/35 px-3 py-2 text-xs text-text-muted">
+            <p className="mt-3 rounded-global border border-border-base bg-bg-app/35 px-3 py-2 text-caption text-text-muted">
               <LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.no.castle.target.is.required.for.combat.f9ca213e" /></p>
           )}
 
@@ -1388,8 +1386,8 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
                 searchable
                 menuGrowToViewport
               />
-              <p className="mt-2 text-xs text-text-muted"><LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.the.preset.may.come.from.any.castle.42cc0294" /></p>
-              <p className="mt-1 text-xs text-text-muted"><LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.optional.it.only.decorates.the.storm.castle.bda00004" /></p>
+              <p className="mt-2 text-caption text-text-muted"><LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.the.preset.may.come.from.any.castle.42cc0294" /></p>
+              <p className="mt-1 text-caption text-text-muted"><LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.optional.it.only.decorates.the.storm.castle.bda00004" /></p>
             </label>
           ) : null}
         </Card>
@@ -1429,7 +1427,7 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
             <div className="grid grid-cols-3 gap-2">
               {RESOURCE_RESERVES.map((resource) => (
                 <label key={resource.key} className="block">
-                  <span className="mb-1 block text-[10px] font-semibold text-text-muted">{resource.label}</span>
+                  <span className="mb-1 block text-caption font-semibold text-text-muted">{resource.label}</span>
                   <Input
                     type="number"
                     min={0}
@@ -1453,7 +1451,7 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
               <div className="grid grid-cols-3 gap-2">
                 {RESOURCE_RESERVES.map((resource) => (
                   <label key={resource.key} className="block">
-                    <span className="mb-1 block text-[10px] font-semibold text-text-muted">{resource.label}</span>
+                    <span className="mb-1 block text-caption font-semibold text-text-muted">{resource.label}</span>
                     <Input
                       type="number"
                       min={0}
@@ -1469,7 +1467,7 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
                   </label>
                 ))}
               </div>
-              <p className="mt-2 text-[11px] text-text-muted">
+              <p className="mt-2 text-caption text-text-muted">
                 <LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.multi.resource.shipments.may.use.every.amount.cfd5df72" /></p>
             </div>
           ) : null}
@@ -1480,7 +1478,7 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
               <div className="grid grid-cols-4 gap-2 sm:grid-cols-7">
                 {TIME_SKIP_RESERVES.map((skip) => (
                   <label key={skip.key} className="block">
-                    <span className="mb-1 block text-center text-[10px] font-semibold text-text-muted">{skip.label}</span>
+                    <span className="mb-1 block text-center text-caption font-semibold text-text-muted">{skip.label}</span>
                     <Input
                       type="number"
                       min={0}
@@ -1502,8 +1500,8 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
           <div className="mt-4 border-t border-border-base pt-4">
             <div className="flex items-start justify-between gap-4">
               <div>
-                <div className="flex items-center gap-2 text-sm font-bold text-text-main"><Anchor className="h-4 w-4 text-primary" /> <LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.upgrade.harbor.da1bc184" /></div>
-                <p className="mt-1 text-xs text-text-muted"><LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.override.the.captured.harbor.path.and.maintain.1d06a158" /></p>
+                <div className="flex items-center gap-2 text-body font-semibold text-text-main"><Anchor className="h-4 w-4 text-primary" /> <LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.upgrade.harbor.da1bc184" /></div>
+                <p className="mt-1 text-caption text-text-muted"><LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.override.the.captured.harbor.path.and.maintain.1d06a158" /></p>
               </div>
               <Switch
                 checked={draft.harbor.enabled}
@@ -1522,7 +1520,7 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
                   options={[1, 2, 3].map((level) => ({ value: String(level), label: `Harbor level ${level}` }))}
                 />
                 {draft.harbor.targetLevel > 1 && !draft.build.allowPremium ? (
-                  <p className="mt-2 text-xs text-warning"><LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.harbor.levels.2.3.are.premium.paths.398f3dd1" /></p>
+                  <p className="mt-2 text-caption text-warning"><LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.harbor.levels.2.3.are.premium.paths.398f3dd1" /></p>
                 ) : null}
               </div>
             ) : null}
@@ -1537,10 +1535,10 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
         >
             <div>
               <div>
-                <div className="flex items-center gap-2 text-sm font-bold text-text-main">
+                <div className="flex items-center gap-2 text-body font-semibold text-text-main">
                   <Crosshair className="h-4 w-4 text-primary" /> <LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.attack.target.priority.f25858a6" />
                 </div>
-                <p className="mt-1 text-xs text-text-muted">
+                <p className="mt-1 text-caption text-text-muted">
                   <LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.drag.enabled.targets.into.attack.order.highest.6f2dfc44" /></p>
               </div>
 
@@ -1584,39 +1582,39 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
                         }`}
                       >
                         <GripVertical className="h-5 w-5 shrink-0 text-text-muted" aria-hidden="true" />
-                        <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-bg-app text-xs font-bold tabular-nums text-primary ring-1 ring-border-base">
+                        <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-bg-app text-caption font-semibold tabular-nums text-primary ring-1 ring-border-base">
                           {index + 1}
                         </span>
                         <span className="min-w-0 flex-1">
-                          <span className="block text-xs font-bold text-text-main">{option.label}</span>
-                          <span className="mt-0.5 block text-[11px] leading-4 text-text-muted">{option.detail}</span>
+                          <span className="block text-caption font-semibold text-text-main">{option.label}</span>
+                          <span className="mt-0.5 block text-caption text-text-muted">{option.detail}</span>
                         </span>
                         <span className="flex shrink-0 items-center gap-1">
-                          <button
+                          <Button iconOnly variant="ghost"
                             type="button"
                             disabled={index === 0}
                             onClick={() => moveTargetPriorityBy(priority, -1)}
-                            className="rounded-md p-1.5 text-text-muted transition-colors hover:bg-primary/10 hover:text-primary disabled:pointer-events-none disabled:opacity-25"
+                            className="transition-colors"
                             aria-label={`Move ${option.label} up`}
                           >
                             <ArrowUp className="h-3.5 w-3.5" />
-                          </button>
-                          <button
+                          </Button>
+                          <Button iconOnly variant="ghost"
                             type="button"
                             disabled={index === activeTargetPriorities.length - 1}
                             onClick={() => moveTargetPriorityBy(priority, 1)}
-                            className="rounded-md p-1.5 text-text-muted transition-colors hover:bg-primary/10 hover:text-primary disabled:pointer-events-none disabled:opacity-25"
+                            className="transition-colors"
                             aria-label={`Move ${option.label} down`}
                           >
                             <ArrowDown className="h-3.5 w-3.5" />
-                          </button>
+                          </Button>
                         </span>
                       </div>
                     );
                   })}
                 </div>
               ) : (
-                <p className="mt-3 border-t border-border-base pt-3 text-xs text-text-muted">
+                <p className="mt-3 border-t border-border-base pt-3 text-caption text-text-muted">
                   <LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.enable.forts.or.resource.islands.and.select.db2a7a68" /></p>
               )}
             </div>
@@ -1655,7 +1653,7 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
                   ...current,
                   checkIntervalSec: clampAutoStormInteger(event.target.value, 30, 3600, current.checkIntervalSec),
                 }))}
-                rightIcon={<span className="text-xs text-text-muted"><LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.sec.add93534" /></span>}
+                rightIcon={<span className="text-caption text-text-muted"><LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.sec.add93534" /></span>}
                 className="font-mono"
               />
             </label>
@@ -1664,10 +1662,10 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
               <Input
                 readOnly
                 value={draft.mapRefreshIntervalSec / 3600}
-                rightIcon={<span className="text-xs text-text-muted"><LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.hours.404314b1" /></span>}
+                rightIcon={<span className="text-caption text-text-muted"><LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.hours.404314b1" /></span>}
                 className="font-mono"
               />
-              <p className="mt-1 text-[11px] text-text-muted"><LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.failed.or.interrupted.full.sweeps.are.also.25e99746" /></p>
+              <p className="mt-1 text-caption text-text-muted"><LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.failed.or.interrupted.full.sweeps.are.also.25e99746" /></p>
             </label>
           </div>
         </Card>
@@ -1675,11 +1673,11 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
               <div>
                 <FieldLabel><LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.map.coverage.88c46857" /></FieldLabel>
                 <Input readOnly value={stormMapCoverage} />
-                <p className="mt-1 text-[11px] text-text-muted">
+                <p className="mt-1 text-caption text-text-muted">
                   {stormMapState?.windowCount && stormMapState.lastCompletedAt ? `Last completed ${formatDate(stormMapState.lastCompletedAt)}. ` : ''}
                   Coverage is scoped to the current server and account, then expanded when a completed sweep reaches an observed map edge.
                 </p>
-                <p className="mt-1 text-[11px] text-text-muted">
+                <p className="mt-1 text-caption text-text-muted">
                   {stormOpportunities.ready} learned targets are ready now.
                   {Number.isFinite(stormOpportunities.nextReadyAt) ? ` Next readyAt label: ${formatDate(new Date(stormOpportunities.nextReadyAt).toISOString())}.` : ''}
                   {' '}Auto Storm wakes on these labels between full sweeps.
@@ -1723,15 +1721,15 @@ function SectionHeading({
 }) {
   return (
     <div>
-      <div className="flex items-center gap-2 text-sm font-black text-text-main"><Icon className="h-4 w-4 text-primary" /> {title}</div>
-      <p className="mt-1 text-xs leading-relaxed text-text-muted">{description}</p>
+      <div className="flex items-center gap-2 text-body font-semibold text-text-main"><Icon className="h-4 w-4 text-primary" /> {title}</div>
+      <p className="mt-1 text-caption text-text-muted">{description}</p>
     </div>
   );
 }
 
 function FieldLabel({ children, icon: Icon }: { children: React.ReactNode; icon?: React.ComponentType<{ className?: string }> }) {
   return (
-    <span className="mb-1.5 flex items-center gap-1.5 text-[10px] font-black uppercase tracking-wider text-text-muted">
+    <span className="mb-1.5 flex items-center gap-1.5 text-caption font-semibold text-text-muted">
       {Icon ? <Icon className="h-3.5 w-3.5" /> : null}{children}
     </span>
   );

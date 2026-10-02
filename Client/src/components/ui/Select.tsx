@@ -147,7 +147,7 @@ export const Select: React.FC<SelectProps> = ({
           }
         }}
         disabled={disabled}
-        className={`m3-select-trigger w-full border px-4 py-2.5 text-sm font-medium text-text-main transition-colors duration-200 flex items-center justify-between group focus:outline-none ${
+        className={`m3-select-trigger w-full border px-4 py-2.5 text-body font-medium text-text-main transition-colors duration-200 flex items-center justify-between group focus:outline-none ${
           disabled
             ? 'opacity-50 cursor-not-allowed border-border-base'
             : 'border-border-base hover:border-primary focus:border-primary cursor-pointer'
@@ -202,14 +202,14 @@ export const Select: React.FC<SelectProps> = ({
                     }}
                     placeholder={searchPlaceholder}
                     aria-label={searchPlaceholder}
-                    className="m3-input w-full border py-2 pl-9 pr-3 text-sm text-text-main outline-none placeholder:text-text-muted"
+                    className="m3-input w-full border py-2 pl-9 pr-3 text-body text-text-main outline-none placeholder:text-text-muted"
                   />
                 </div>
               </div>
             )}
             <div className="py-1">
               {filteredOptions.length === 0 ? (
-                <div className="px-4 py-3 text-sm text-text-muted italic text-center">
+                <div className="px-4 py-3 text-body text-text-muted italic text-center">
                   {searchQuery.trim() ? 'No matching options' : 'No options available'}
                 </div>
               ) : (
@@ -218,6 +218,7 @@ export const Select: React.FC<SelectProps> = ({
                     type="button"
                     role="option"
                     aria-selected={value === opt.value}
+                    data-current-selection={value === opt.value ? "true" : undefined}
                     aria-disabled={opt.disabled || undefined}
                     disabled={opt.disabled}
                     key={opt.value}
@@ -229,7 +230,7 @@ export const Select: React.FC<SelectProps> = ({
                       setIsOpen(false);
                       setSearchQuery('');
                     }}
-                    className={`m3-select-option w-full text-left px-4 py-2.5 text-sm transition-colors flex items-center justify-between group ${
+                    className={`m3-select-option w-full text-left px-4 py-2.5 text-body transition-colors flex items-center justify-between group ${
                       opt.disabled
                         ? 'cursor-not-allowed text-text-muted opacity-60'
                         : value === opt.value

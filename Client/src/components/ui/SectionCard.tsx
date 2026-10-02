@@ -38,7 +38,7 @@ export const SectionCard: React.FC<SectionCardProps> = ({
     </div>
   );
   return (
-    <Card variant={variant} className={className} {...props}>
+    <Card data-region="card" variant={variant} className={className} {...props}>
       <CardHeader className={headerClassName}>
         {collapsible ? (
           <button type="button" className="ui-card__disclosure" aria-expanded={isExpanded}

@@ -69,7 +69,7 @@ export const AutomationFeatureFeedback: React.FC<{
   return (
     <div className={compact ? 'space-y-1.5' : 'mt-1 space-y-1.5'} data-automation-feedback={featureId} data-feedback-compact={compact ? 'true' : undefined}>
       {showPhase ? (
-        <div className="flex flex-wrap items-start gap-1.5 text-xs leading-relaxed text-text-muted" data-automation-phase={description.phase}>
+        <div className="flex flex-wrap items-start gap-1.5 text-caption text-text-muted" data-automation-phase={description.phase}>
           {compact ? <StatusBadge {...player} /> : null}
           <span className="min-w-0 flex-1">
             {description.nextStep === 'clear-lock' ? (

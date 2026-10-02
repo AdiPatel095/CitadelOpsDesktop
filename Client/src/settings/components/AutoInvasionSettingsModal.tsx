@@ -245,7 +245,7 @@ export const AutoInvasionSettingsModal: React.FC<AutoInvasionSettingsModalProps>
       title={localizeStatic("ui.settings.components.autoInvasionSettingsModal.title.auto.invasion.d43e5a94")}
       icon={<Crosshair className="h-5 w-5" />}
       description={localizeStatic("ui.settings.components.autoInvasionSettingsModal.description.foreign.lords.and.bloodcrow.attack.plan.0ee8d04e")}
-      titleTrailing={<Button variant="outline" size="sm" className="shrink-0" onClick={() => setIsGuideOpen(true)} leftIcon={<BookOpen className="h-4 w-4" />}><span lang={invasionGuideLocale}>{invasionGuidePack.ui.guideButton}</span></Button>}
+      titleTrailing={<Button variant="secondary" size="sm" className="shrink-0" onClick={() => setIsGuideOpen(true)} leftIcon={<BookOpen className="h-4 w-4" />}><span lang={invasionGuideLocale}>{invasionGuidePack.ui.guideButton}</span></Button>}
       onSave={() => void save()}
       isSaving={saving}
       saveDisabled={!canSave || !draftSession.ready}
@@ -303,16 +303,16 @@ export const AutoInvasionSettingsModal: React.FC<AutoInvasionSettingsModalProps>
         <Card id="auto-invasion-difficulty" variant="solid" className="">
           <div className="mb-3 flex items-start justify-between gap-3">
             <div>
-              <div className="flex items-center gap-2 text-sm font-black text-text-main"><ShieldCheck className="h-4 w-4 text-primary" /> <LocalizedText messageKey="ui.settings.components.autoInvasionSettingsModal.event.difficulty.88766fcf" /></div>
-              <p className="mt-1 text-xs text-text-muted"><LocalizedText messageKey="ui.settings.components.autoInvasionSettingsModal.only.levels.unlocked.by.this.player.s.15a0e9b5" /></p>
+              <div className="flex items-center gap-2 text-body font-semibold text-text-main"><ShieldCheck className="h-4 w-4 text-primary" /> <LocalizedText messageKey="ui.settings.components.autoInvasionSettingsModal.event.difficulty.88766fcf" /></div>
+              <p className="mt-1 text-caption text-text-muted"><LocalizedText messageKey="ui.settings.components.autoInvasionSettingsModal.only.levels.unlocked.by.this.player.s.15a0e9b5" /></p>
             </div>
             <Badge variant="outline">{achievementsObserved ? 'Achievements synced' : 'Syncing achievements'}</Badge>
           </div>
           <div className="grid gap-4 md:grid-cols-2">
             <label className="block">
-              <span className="mb-1.5 flex items-center justify-between gap-2 text-[10px] font-black uppercase tracking-wider text-text-muted">
+              <span className="mb-1.5 flex items-center justify-between gap-2 text-caption font-semibold text-text-muted">
                 Foreign Lords
-                <span className="normal-case tracking-normal text-primary">Through {eventDifficultyName(foreignLordsDifficulties, Number(foreignLordsDifficulties.at(-1)?.value))}</span>
+                <span className="normal-case text-primary">Through {eventDifficultyName(foreignLordsDifficulties, Number(foreignLordsDifficulties.at(-1)?.value))}</span>
               </span>
               <Select
                 value={foreignLordsSelectionAvailable ? String(draft.foreignLordsDifficultyId) : ''}
@@ -323,9 +323,9 @@ export const AutoInvasionSettingsModal: React.FC<AutoInvasionSettingsModalProps>
               />
             </label>
             <label className="block">
-              <span className="mb-1.5 flex items-center justify-between gap-2 text-[10px] font-black uppercase tracking-wider text-text-muted">
+              <span className="mb-1.5 flex items-center justify-between gap-2 text-caption font-semibold text-text-muted">
                 Bloodcrow
-                <span className="normal-case tracking-normal text-primary">Through {eventDifficultyName(bloodcrowDifficulties, Number(bloodcrowDifficulties.at(-1)?.value))}</span>
+                <span className="normal-case text-primary">Through {eventDifficultyName(bloodcrowDifficulties, Number(bloodcrowDifficulties.at(-1)?.value))}</span>
               </span>
               <Select
                 value={bloodcrowSelectionAvailable ? String(draft.bloodcrowDifficultyId) : ''}
@@ -336,15 +336,15 @@ export const AutoInvasionSettingsModal: React.FC<AutoInvasionSettingsModalProps>
               />
             </label>
           </div>
-          {difficultyCatalog.loading ? <p className="mt-3 text-xs text-text-muted"><LocalizedText messageKey="ui.settings.components.autoInvasionSettingsModal.loading.official.event.difficulties.8ddbd72d" /></p> : null}
-          {difficultyCatalog.error ? <p className="mt-3 text-xs text-danger">{difficultyCatalog.error}</p> : null}
-          {!achievementsObserved ? <p className="mt-3 text-xs text-warning"><LocalizedText messageKey="ui.settings.components.autoInvasionSettingsModal.achievement.data.is.still.syncing.base.difficulties.bd6eea97" /></p> : null}
+          {difficultyCatalog.loading ? <p className="mt-3 text-caption text-text-muted"><LocalizedText messageKey="ui.settings.components.autoInvasionSettingsModal.loading.official.event.difficulties.8ddbd72d" /></p> : null}
+          {difficultyCatalog.error ? <p className="mt-3 text-caption text-danger">{difficultyCatalog.error}</p> : null}
+          {!achievementsObserved ? <p className="mt-3 text-caption text-warning"><LocalizedText messageKey="ui.settings.components.autoInvasionSettingsModal.achievement.data.is.still.syncing.base.difficulties.bd6eea97" /></p> : null}
         </Card>
 
         <Card variant="solid" className="">
           <div className="grid items-start gap-4 md:grid-cols-2">
             <label id="auto-invasion-score" className="flex min-w-0 flex-col">
-              <span className="mb-1.5 flex min-h-6 items-center gap-2 text-[10px] font-black uppercase tracking-wider text-text-muted"><Target className="h-3.5 w-3.5" /> <LocalizedText messageKey="ui.settings.components.autoInvasionSettingsModal.stop.at.event.score.f1752bfd" /></span>
+              <span className="mb-1.5 flex min-h-6 items-center gap-2 text-caption font-semibold text-text-muted"><Target className="h-3.5 w-3.5" /> <LocalizedText messageKey="ui.settings.components.autoInvasionSettingsModal.stop.at.event.score.f1752bfd" /></span>
               <Input
                 type="text"
                 inputMode="numeric"
@@ -360,7 +360,7 @@ export const AutoInvasionSettingsModal: React.FC<AutoInvasionSettingsModalProps>
               />
             </label>
             <label className="flex min-w-0 flex-col">
-              <span className="mb-1.5 flex min-h-6 items-center justify-between gap-2 text-[10px] font-black uppercase tracking-wider text-text-muted">
+              <span className="mb-1.5 flex min-h-6 items-center justify-between gap-2 text-caption font-semibold text-text-muted">
                 <span className="flex min-w-0 items-center gap-2"><Clock3 className="h-3.5 w-3.5 shrink-0" /> <LocalizedText messageKey="ui.settings.components.autoInvasionSettingsModal.stop.before.event.ends.96ca2172" /></span>
                 <Badge variant="outline" className="shrink-0"><LocalizedText messageKey="ui.settings.components.autoInvasionSettingsModal.30.min.recommended.61238251" /></Badge>
               </span>
@@ -370,7 +370,7 @@ export const AutoInvasionSettingsModal: React.FC<AutoInvasionSettingsModalProps>
                 max={1440}
                 value={Math.round(draft.minimumRemainingSec / 60)}
                 onChange={(event) => setDraft((current) => ({ ...current, minimumRemainingSec: clampAutoInvasionInteger(event.target.value, 0, 1440, 30) * 60 }))}
-                rightIcon={<span className="text-[10px] text-text-muted"><LocalizedText messageKey="ui.settings.components.autoInvasionSettingsModal.min.1f6fa6f6" /></span>}
+                rightIcon={<span className="text-caption text-text-muted"><LocalizedText messageKey="ui.settings.components.autoInvasionSettingsModal.min.1f6fa6f6" /></span>}
                 className="font-mono"
               />
             </label>
@@ -382,8 +382,8 @@ export const AutoInvasionSettingsModal: React.FC<AutoInvasionSettingsModalProps>
 		<Card id="auto-invasion-fortify" variant="solid" className="">
 			<div className="flex items-start justify-between gap-4">
 				<div className="min-w-0">
-					<div className="flex items-center gap-2 text-sm font-black text-text-main"><ShieldPlus className="h-4 w-4 text-primary" /> <LocalizedText messageKey="ui.settings.components.autoInvasionSettingsModal.fortify.each.target.418c29a2" /></div>
-					<p className="mt-1 text-xs text-text-muted"><LocalizedText messageKey="ui.settings.components.autoInvasionSettingsModal.optionally.strengthen.the.generated.castle.before.launching.ad463b71" /></p>
+					<div className="flex items-center gap-2 text-body font-semibold text-text-main"><ShieldPlus className="h-4 w-4 text-primary" /> <LocalizedText messageKey="ui.settings.components.autoInvasionSettingsModal.fortify.each.target.418c29a2" /></div>
+					<p className="mt-1 text-caption text-text-muted"><LocalizedText messageKey="ui.settings.components.autoInvasionSettingsModal.optionally.strengthen.the.generated.castle.before.launching.ad463b71" /></p>
 				</div>
 				<Switch
 					checked={draft.fortifyCurrency !== ''}
@@ -396,14 +396,14 @@ export const AutoInvasionSettingsModal: React.FC<AutoInvasionSettingsModalProps>
 			</div>
 			{draft.fortifyCurrency !== '' ? (
 				<label className="mt-3 block border-t border-border-base pt-3">
-					<span className="mb-1.5 block text-[10px] font-black uppercase tracking-wider text-text-muted"><LocalizedText messageKey="ui.settings.components.autoInvasionSettingsModal.fortification.currency.36f10a4f" /></span>
+					<span className="mb-1.5 block text-caption font-semibold text-text-muted"><LocalizedText messageKey="ui.settings.components.autoInvasionSettingsModal.fortification.currency.36f10a4f" /></span>
 					<Select
 						value={draft.fortifyCurrency}
 						onChange={(value) => setDraft((current) => ({ ...current, fortifyCurrency: value as AutoInvasionClientStateV1['fortifyCurrency'] }))}
 						options={fortifyOptions}
 						menuGrowToViewport
 					/>
-					<p className="mt-2 text-[11px] text-text-muted">Available choices come from the active event’s server response. The event-currency choice follows the server-supplied code automatically{eventFortifyCurrency ? ` (currently ${eventFortifyCurrency})` : ''}. The game determines each cumulative <span className="font-mono"><LocalizedText messageKey="ui.settings.components.autoInvasionSettingsModal.rae.f585b8d9" /></span> price. Rubies are never selected by default.</p>
+					<p className="mt-2 text-caption text-text-muted">Available choices come from the active event’s server response. The event-currency choice follows the server-supplied code automatically{eventFortifyCurrency ? ` (currently ${eventFortifyCurrency})` : ''}. The game determines each cumulative <span className="font-mono"><LocalizedText messageKey="ui.settings.components.autoInvasionSettingsModal.rae.f585b8d9" /></span> price. Rubies are never selected by default.</p>
 				</label>
 			) : null}
 		</Card>
@@ -432,7 +432,7 @@ export const AutoInvasionSettingsModal: React.FC<AutoInvasionSettingsModalProps>
           />
         </SettingsSection>
 
-        <p className="rounded-global border border-border-base bg-bg-app/40 px-4 py-3 text-xs text-text-muted">
+        <p className="rounded-global border border-border-base bg-bg-app/40 px-4 py-3 text-caption text-text-muted">
 			<LocalizedText messageKey="ui.settings.components.autoInvasionSettingsModal.troop.quantities.adapt.to.the.freshly.resolved.67bcfcf5" /></p>
 
         <ReadinessPanel report={readiness} slotLabelKeys={{ attack: 'attackPresets.slot.attack' }} onFix={fixReadiness} noteFor={collapsedSettingNote(disclosure)} />

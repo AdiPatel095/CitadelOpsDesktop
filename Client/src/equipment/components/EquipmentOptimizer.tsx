@@ -1,3 +1,4 @@
+import { Trash2 } from 'lucide-react';
 import { LocalizedRichText } from "../../i18n/LocalizedRichText";
 import { useLocale as useStaticLocale } from "../../i18n/LocaleContext";
 import { LocalizedText } from "../../i18n/LocalizedText";
@@ -124,10 +125,10 @@ export default function EquipmentOptimizer({
 				)}
 			>
 				<div className="space-y-4">
-					<p className="text-sm leading-relaxed text-text-muted">
+					<p className="text-body text-text-muted">
 						<LocalizedText messageKey="ui.equipment.components.equipmentOptimizer.pvp.and.pve.cover.their.broadly.applicable.eb6b01ee" /></p>
 					{isLoading ? (
-						<div className="rounded-global border border-border-base bg-bg-app/35 px-4 py-8 text-center text-sm text-text-muted">
+						<div className="rounded-global border border-border-base bg-bg-app/35 px-4 py-8 text-center text-body text-text-muted">
 							<LocalizedText messageKey="ui.equipment.components.equipmentOptimizer.loading.official.equipment.targets.4e64c51a" /></div>
 					) : (
 						<div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
@@ -173,7 +174,7 @@ function TargetProfileCard({
 	const { profile, availableGroups } = choice;
 	const tone = profile.combatMode === 'PvP' ? 'primary' : profile.kind === 'event' ? 'warning' : 'success';
 	return (
-		<button
+		<button data-button-pattern="card"
 			type="button"
 			onClick={onSelect}
 			disabled={disabled}
@@ -185,7 +186,7 @@ function TargetProfileCard({
 						{targetIcon(profile)}
 					</span>
 					<div className="min-w-0">
-						<div className="truncate text-base font-black text-text-main transition-colors group-hover:text-primary">{profile.label}</div>
+						<div className="truncate text-body-lg font-semibold text-text-main transition-colors group-hover:text-primary">{profile.label}</div>
 						<div className="mt-1 flex flex-wrap gap-1.5">
 							<Badge variant={tone}>{profile.combatMode}</Badge>
 							{profile.kind === 'event' && <Badge variant="secondary">{profile.discovered ? 'Official discovery' : 'Event profile'}</Badge>}
@@ -193,7 +194,7 @@ function TargetProfileCard({
 					</div>
 				</div>
 			</div>
-			<p className="mt-4 flex-1 text-sm leading-relaxed text-text-muted">{profile.description}</p>
+			<p className="mt-4 flex-1 text-body text-text-muted">{profile.description}</p>
 			<div className="mt-4 grid grid-cols-2 gap-2">
 				<MetricTile
 					size="sm"
@@ -202,7 +203,7 @@ function TargetProfileCard({
 				/>
 				<MetricTile size="sm" label={localizeStatic("ui.equipment.components.equipmentOptimizer.label.usable.battle.stats.bd169e1e")} value={availableGroups.toLocaleString()} />
 			</div>
-			<div className="mt-4 text-xs font-black uppercase tracking-wide text-primary">
+			<div className="mt-4 text-caption font-semibold text-primary">
 				{availableGroups > 0 ? `Configure ${profile.label}` : 'No matching effects available'}
 			</div>
 		</button>
@@ -555,7 +556,7 @@ function EquipmentOptimizerEditor({
 				footer={(
 					<>
 						<Button variant="ghost" onClick={closeEditor}><LocalizedText messageKey="game.cancel" /></Button>
-						<Button
+						<Button variant="secondary"
 							onClick={optimize}
 							disabled={disabled || !leader || priorities.length === 0}
 							isLoading={optimizing}
@@ -567,32 +568,32 @@ function EquipmentOptimizerEditor({
 			>
 				<div className="space-y-4">
 					{priorities.length === 0 && (
-						<p className="rounded-global border border-warning/30 bg-warning/10 px-3 py-2 text-sm text-warning">
+						<p className="rounded-global border border-warning/30 bg-warning/10 px-3 py-2 text-body text-warning">
 							<LocalizedText messageKey="ui.equipment.components.equipmentOptimizer.add.at.least.one.battle.stat.to.7e402aa8" /></p>
 					)}
 					{optimizeError && (
-						<p role="alert" className="rounded-global border border-error/30 bg-error/10 px-3 py-2 text-sm text-error">
+						<p role="alert" className="rounded-global border border-error/30 bg-error/10 px-3 py-2 text-body text-error">
 							{optimizeError}
 						</p>
 					)}
 					<div className="grid gap-3 rounded-global border border-border-base bg-bg-app/45 p-3 sm:grid-cols-[minmax(0,1fr)_auto]">
 						<div className="flex min-w-0 items-start gap-2">
-							<Button size="icon" variant="ghost" onClick={changeTarget} aria-label={localizeStatic("ui.equipment.components.equipmentOptimizer.aria-label.change.reconfiguration.target.1172fad5")} title={localizeStatic("ui.equipment.components.equipmentOptimizer.title.change.target.36d36e6b")}>
+							<Button iconOnly size="md" variant="ghost" onClick={changeTarget} aria-label={localizeStatic("ui.equipment.components.equipmentOptimizer.aria-label.change.reconfiguration.target.1172fad5")} title={localizeStatic("ui.equipment.components.equipmentOptimizer.title.change.target.36d36e6b")}>
 								<ArrowLeft className="h-4 w-4" />
 							</Button>
 							<div className="min-w-0 flex-1">
 								<div className="flex flex-wrap items-center gap-2">
-									<span className="truncate text-sm font-semibold text-text-main">{leader?.name ?? 'No loadout selected'}</span>
+									<span className="truncate text-body font-semibold text-text-main">{leader?.name ?? 'No loadout selected'}</span>
 									<Badge variant={target.combatMode === 'PvP' ? 'danger' : 'success'}>{target.label}</Badge>
 								</div>
-									<p className="mt-1 text-xs leading-relaxed text-text-muted">{target.description} Drag rows within or between tiers; priorities are saved per leader and target profile.</p>
+									<p className="mt-1 text-caption text-text-muted">{target.description} Drag rows within or between tiers; priorities are saved per leader and target profile.</p>
 							</div>
 						</div>
 						<div className="flex items-center justify-end gap-2 sm:shrink-0">
-							<Button size="icon" variant="ghost" onClick={() => setShowInfo(true)} aria-label={localizeStatic("ui.equipment.components.equipmentOptimizer.aria-label.explain.battle.stat.priority.20ba9a01")}><Info className="h-4 w-4" /></Button>
+							<Button iconOnly size="md" variant="ghost" onClick={() => setShowInfo(true)} aria-label={localizeStatic("ui.equipment.components.equipmentOptimizer.aria-label.explain.battle.stat.priority.20ba9a01")}><Info className="h-4 w-4" /></Button>
 							<Button
 								size="sm"
-								variant="outline"
+								variant="secondary"
 								onClick={() => { setSearch(''); setShowPicker(true); }}
 								disabled={availableGroups.length === 0}
 								leftIcon={<Plus className="h-4 w-4" />}
@@ -650,30 +651,30 @@ function EquipmentOptimizerEditor({
 					<div className="max-h-[65vh] space-y-4 overflow-y-auto custom-scrollbar">
 						{pickerSections.map((section) => (
 							<section key={`${section.category}:${section.label}`}>
-								<div className="sticky top-0 z-10 mb-2 border-b border-border-base bg-bg-card/95 px-1 py-2 text-[10px] font-black uppercase tracking-wider text-text-muted backdrop-blur-sm">
+								<div className="sticky top-0 z-10 mb-2 border-b border-border-base bg-bg-card/95 px-1 py-2 text-caption font-semibold text-text-muted backdrop-blur-sm">
 									{section.label}
 								</div>
 								<div className="space-y-2">
 									{section.groups.map((group) => (
 										<div key={group.key} className="flex flex-wrap items-center gap-2 rounded-global border border-border-base bg-bg-app/50 p-3">
 											<span className="min-w-48 flex-1">
-												<span className="block text-sm font-medium text-text-main">{group.label}</span>
-												<span className="mt-0.5 block text-[10px] text-text-muted">{group.effectIDs.length} target-compatible official effect definition{group.effectIDs.length === 1 ? '' : 's'}</span>
+												<span className="block text-body font-medium text-text-main">{group.label}</span>
+												<span className="mt-0.5 block text-caption text-text-muted">{group.effectIDs.length} target-compatible official effect definition{group.effectIDs.length === 1 ? '' : 's'}</span>
 											</span>
-											<Button size="sm" variant="danger" onClick={() => addGroup(group, 1)}><LocalizedText messageKey="ui.equipment.components.equipmentOptimizer.max.stat.f25df34f" /></Button>
-											<Button size="sm" variant="outline" onClick={() => addGroup(group, 2)}><LocalizedText messageKey="ui.equipment.components.equipmentOptimizer.random.slots.c4c4ae0d" /></Button>
+											<Button leftIcon={<Trash2 aria-hidden="true" />} size="sm" variant="danger" onClick={() => addGroup(group, 1)}><LocalizedText messageKey="ui.equipment.components.equipmentOptimizer.max.stat.f25df34f" /></Button>
+											<Button size="sm" variant="secondary" onClick={() => addGroup(group, 2)}><LocalizedText messageKey="ui.equipment.components.equipmentOptimizer.random.slots.c4c4ae0d" /></Button>
 										</div>
 									))}
 								</div>
 							</section>
 						))}
-						{availableGroups.length === 0 && <p className="py-6 text-center text-sm text-text-muted"><LocalizedText messageKey="ui.equipment.components.equipmentOptimizer.no.matching.unused.battle.stats.613bcf21" /></p>}
+						{availableGroups.length === 0 && <p className="py-6 text-center text-body text-text-muted"><LocalizedText messageKey="ui.equipment.components.equipmentOptimizer.no.matching.unused.battle.stats.613bcf21" /></p>}
 					</div>
 				</div>
 			</Modal>
 
 			<Modal isOpen={showInfo} onClose={() => setShowInfo(false)} title={localizeStatic("ui.equipment.components.equipmentOptimizer.title.how.battle.stat.priority.works.5c727707")} maxWidth="2xl">
-				<div className="space-y-3 text-sm text-text-muted">
+				<div className="space-y-3 text-body text-text-muted">
 						<p><LocalizedText messageKey="ui.equipment.components.equipmentOptimizer.each.draggable.row.is.the.same.official.8bf29a83" /></p>
 						<p><LocalizedText messageKey="ui.equipment.components.equipmentOptimizer.when.previewing.citadelops.expands.that.group.into.bc9f6b4c" /></p>
 					<p><LocalizedRichText messageKey="ui.rich.equipment.components.equipmentOptimizer.max.stat.groups.receive.the.strongest.position.583645f6" params={{}} tags={{span0: children => <span className="font-semibold text-error">{children}</span>, span1: children => <span className="font-semibold text-primary">{children}</span>}} /></p>
@@ -742,7 +743,7 @@ function PriorityTier({
 			onDrop={(event) => onDrop(event, null)}
 		>
 			<div className="flex items-center justify-between border-b border-border-base/50 px-3 py-2">
-				<span className={`text-xs font-bold uppercase tracking-wider ${tier === 1 ? 'text-error' : 'text-primary'}`}>{tier}. {title}</span>
+				<span className={`text-caption font-semibold ${tier === 1 ? 'text-error' : 'text-primary'}`}>{tier}. {title}</span>
 				<Badge variant={tier === 1 ? 'danger' : 'primary'}>{keys.length}</Badge>
 			</div>
 			<div className={`min-h-24 space-y-1.5 p-2 ${dropTarget?.tier === tier && dropTarget.key == null ? 'bg-primary/5' : ''}`}>
@@ -772,19 +773,19 @@ function PriorityTier({
 							}`}
 						>
 							<GripVertical className="h-4 w-4 shrink-0 text-text-muted" aria-hidden="true" />
-							<span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-bg-app text-[10px] font-bold text-text-muted">{index + 1}</span>
+							<span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-bg-app text-caption font-semibold text-text-muted">{index + 1}</span>
 							<span className="min-w-0 flex-1">
-								<span className="block truncate text-xs font-semibold text-text-main" title={group.label}>{group.label}</span>
-								<span className="block truncate text-[10px] text-text-muted">{group.categoryLabel} · {group.effectIDs.length} official effects</span>
+								<span className="block truncate text-caption font-semibold text-text-main" title={group.label}>{group.label}</span>
+								<span className="block truncate text-caption text-text-muted">{group.categoryLabel} · {group.effectIDs.length} official effects</span>
 							</span>
-							<button type="button" disabled={index === 0} onClick={() => onReorder(tier, index, -1)} className="rounded p-1 text-text-muted hover:bg-primary/10 hover:text-primary disabled:opacity-25" aria-label={`Move ${group.label} up`}><ArrowUp className="h-3.5 w-3.5" /></button>
-							<button type="button" disabled={index === keys.length - 1} onClick={() => onReorder(tier, index, 1)} className="rounded p-1 text-text-muted hover:bg-primary/10 hover:text-primary disabled:opacity-25" aria-label={`Move ${group.label} down`}><ArrowDown className="h-3.5 w-3.5" /></button>
-							<button type="button" onClick={() => onMoveTier(key, tier)} className="rounded px-1.5 py-1 text-[9px] font-bold uppercase text-text-muted hover:bg-primary/10 hover:text-primary" aria-label={`Move ${group.label} to tier ${tier === 1 ? 2 : 1}`}>T{tier === 1 ? 2 : 1}</button>
-							<button type="button" onClick={() => onRemove(key)} className="rounded p-1 text-text-muted hover:bg-error/10 hover:text-error" aria-label={`Remove ${group.label}`}><X className="h-3.5 w-3.5" /></button>
+							<Button iconOnly variant="ghost" type="button" disabled={index === 0} onClick={() => onReorder(tier, index, -1)}  aria-label={`Move ${group.label} up`}><ArrowUp className="h-3.5 w-3.5" /></Button>
+							<Button iconOnly variant="ghost" type="button" disabled={index === keys.length - 1} onClick={() => onReorder(tier, index, 1)}  aria-label={`Move ${group.label} down`}><ArrowDown className="h-3.5 w-3.5" /></Button>
+							<Button variant="secondary" type="button" onClick={() => onMoveTier(key, tier)} className="text-caption" aria-label={`Move ${group.label} to tier ${tier === 1 ? 2 : 1}`}>T{tier === 1 ? 2 : 1}</Button>
+							<Button leftIcon={<Trash2 aria-hidden="true" />} variant="danger" type="button" onClick={() => onRemove(key)}  aria-label={`Remove ${group.label}`}><X className="h-3.5 w-3.5" /></Button>
 						</div>
 					);
 				})}
-				{keys.length === 0 && <p className="py-5 text-center text-xs text-text-muted"><LocalizedText messageKey="ui.equipment.components.equipmentOptimizer.drag.battle.stats.here.6d8b8785" /></p>}
+				{keys.length === 0 && <p className="py-5 text-center text-caption text-text-muted"><LocalizedText messageKey="ui.equipment.components.equipmentOptimizer.drag.battle.stats.here.6d8b8785" /></p>}
 			</div>
 		</div>
 	);
@@ -877,8 +878,8 @@ function OptimizerPreview({
 			maxWidth="5xl"
 			footer={(
 				<>
-					<Button variant="ghost" onClick={onClose} disabled={applying}><LocalizedText messageKey="game.cancel" /></Button>
-					<Button
+					<Button variant="secondary" onClick={onClose} disabled={applying}><LocalizedText messageKey="game.cancel" /></Button>
+					<Button variant="secondary"
 						onClick={onApply}
 						isLoading={applying}
 						disabled={applyDisabled || pointlessApply}
@@ -891,52 +892,52 @@ function OptimizerPreview({
 		>
 			{preview && selected && (
 				<div className="space-y-5">
-					<div className="rounded-global border border-warning/40 bg-warning/10 px-3 py-2 text-sm text-warning">
+					<div className="rounded-global border border-warning/40 bg-warning/10 px-3 py-2 text-body text-warning">
 						<p className="font-semibold"><LocalizedText messageKey="ui.equipment.components.equipmentOptimizer.review.extraction.costs.before.applying.4034bdf3" /></p>
-						{extractionNotices.map((notice) => <p key={notice} className="mt-1 text-xs">{notice}</p>)}
+						{extractionNotices.map((notice) => <p key={notice} className="mt-1 text-caption">{notice}</p>)}
 					</div>
 					{stale && (
-						<div role="alert" className="flex flex-wrap items-center justify-between gap-3 rounded-global border border-warning/40 bg-warning/10 px-3 py-2 text-sm text-warning">
+						<div role="alert" className="flex flex-wrap items-center justify-between gap-3 rounded-global border border-warning/40 bg-warning/10 px-3 py-2 text-body text-warning">
 							<span><LocalizedText messageKey="ui.equipment.components.equipmentOptimizer.equipment.or.official.metadata.changed.after.this.78ae51fb" /></span>
-							<Button size="sm" variant="outline" onClick={onRegenerate} disabled={applying || optimizing} isLoading={optimizing}><LocalizedText messageKey="ui.equipment.components.equipmentOptimizer.regenerate.1651031b" /></Button>
+							<Button size="sm" variant="secondary" onClick={onRegenerate} disabled={applying || optimizing} isLoading={optimizing}><LocalizedText messageKey="ui.equipment.components.equipmentOptimizer.regenerate.1651031b" /></Button>
 						</div>
 					)}
-					{optimizeError && <p role="alert" className="rounded-global border border-error/30 bg-error/10 px-3 py-2 text-sm text-error">{optimizeError}</p>}
-					{applyError && <p role="alert" className="rounded-global border border-error/30 bg-error/10 px-3 py-2 text-sm text-error">{applyError}</p>}
+					{optimizeError && <p role="alert" className="rounded-global border border-error/30 bg-error/10 px-3 py-2 text-body text-error">{optimizeError}</p>}
+					{applyError && <p role="alert" className="rounded-global border border-error/30 bg-error/10 px-3 py-2 text-body text-error">{applyError}</p>}
 					{unavailableGroups.length > 0 && (
-						<p className="rounded-global border border-warning/30 bg-warning/10 px-3 py-2 text-xs text-warning">
+						<p className="rounded-global border border-warning/30 bg-warning/10 px-3 py-2 text-caption text-warning">
 							No eligible value was found for {unavailableGroups.map((group) => group.label).join(' · ')}. This is still the best available loadout.
 						</p>
 					)}
 					{pointlessApply && (
-						<p className="rounded-global border border-border-base bg-bg-app/40 px-3 py-2 text-sm text-text-muted">{pointlessApplyMessage}</p>
+						<p className="rounded-global border border-border-base bg-bg-app/40 px-3 py-2 text-body text-text-muted">{pointlessApplyMessage}</p>
 					)}
 					<div>
 						<div className="mb-2 flex items-center justify-between gap-3">
-							<h4 className="text-xs font-bold uppercase tracking-wider text-text-muted"><LocalizedText messageKey="ui.equipment.components.equipmentOptimizer.ranked.alternatives.3ebb915e" /></h4>
-							<span className="text-xs text-text-muted">{preview.alternatives.filter((alternative) => alternative.useful !== false).length} useful {preview.alternatives.filter((alternative) => alternative.useful !== false).length === 1 ? 'choice' : 'choices'} · {preview.alternatives.length} shown · switching is instant</span>
+							<h4 className="text-title-sm font-bold text-text-muted"><LocalizedText messageKey="ui.equipment.components.equipmentOptimizer.ranked.alternatives.3ebb915e" /></h4>
+							<span className="text-caption text-text-muted">{preview.alternatives.filter((alternative) => alternative.useful !== false).length} useful {preview.alternatives.filter((alternative) => alternative.useful !== false).length === 1 ? 'choice' : 'choices'} · {preview.alternatives.length} shown · switching is instant</span>
 						</div>
 						<div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-5">
 							{preview.alternatives.map((alternative, index) => (
-								<button
+								<button data-button-pattern="tile"
 									key={assignmentKey(alternative)}
 									type="button"
 									onClick={() => onSelectAlternative(index)}
 									aria-pressed={selectedAlternative === index}
 									className={`rounded-global border px-3 py-2 text-left transition ${selectedAlternative === index ? 'border-primary bg-primary/10' : 'border-border-base bg-bg-app/40 hover:border-primary/40'}`}
 								>
-									<span className="block text-xs font-bold text-text-main">#{index + 1}</span>
-									<span className="mt-0.5 block text-[11px] leading-snug text-text-muted">{alternativeReason(alternative, preview.alternatives[0], preview.current, getEffectName, getArgumentName)}</span>
+									<span className="block text-caption font-semibold text-text-main">#{index + 1}</span>
+									<span className="mt-0.5 block text-caption text-text-muted">{alternativeReason(alternative, preview.alternatives[0], preview.current, getEffectName, getArgumentName)}</span>
 								</button>
 							))}
 						</div>
 					</div>
 					<div className="overflow-hidden rounded-global border border-border-base">
-						<div className="grid grid-cols-[minmax(0,1fr)_6rem_6rem_6rem] bg-bg-card-hover px-3 py-2 text-[10px] font-bold uppercase tracking-wider text-text-muted"><span><LocalizedText messageKey="ui.equipment.components.equipmentOptimizer.stat.194535a5" /></span><span className="text-right"><LocalizedText messageKey="ui.equipment.components.equipmentOptimizer.current.total.c291c1ae" /></span><span className="text-right"><LocalizedText messageKey="ui.equipment.components.equipmentOptimizer.new.total.02a63a5e" /></span><span className="text-right"><LocalizedText messageKey="ui.equipment.components.equipmentOptimizer.difference.4d280a45" /></span></div>
+						<div className="grid grid-cols-[minmax(0,1fr)_6rem_6rem_6rem] bg-bg-card-hover px-3 py-2 text-caption font-semibold text-text-muted"><span><LocalizedText messageKey="ui.equipment.components.equipmentOptimizer.stat.194535a5" /></span><span className="text-right"><LocalizedText messageKey="ui.equipment.components.equipmentOptimizer.current.total.c291c1ae" /></span><span className="text-right"><LocalizedText messageKey="ui.equipment.components.equipmentOptimizer.new.total.02a63a5e" /></span><span className="text-right"><LocalizedText messageKey="ui.equipment.components.equipmentOptimizer.difference.4d280a45" /></span></div>
 						<div className="max-h-80 overflow-y-auto custom-scrollbar">
 							{effectRows.map((row) => (
-								<div key={row.key} className="grid grid-cols-[minmax(0,1fr)_6rem_6rem_6rem] border-t border-border-base/50 px-3 py-2 text-xs">
-									<span className="min-w-0 text-text-main"><span className="block truncate">{row.label}</span><span className="block truncate text-[10px] text-text-muted">{row.priorityIndex >= 0 ? `Priority ${row.priorityIndex + 1}` : 'Other applicable stat'}{row.cap ? ` · Official cap ${formatStatValue(row.cap, row.unit, row.precision)}` : ''}</span></span>
+								<div key={row.key} className="grid grid-cols-[minmax(0,1fr)_6rem_6rem_6rem] border-t border-border-base/50 px-3 py-2 text-caption">
+									<span className="min-w-0 text-text-main"><span className="block truncate">{row.label}</span><span className="block truncate text-caption text-text-muted">{row.priorityIndex >= 0 ? `Priority ${row.priorityIndex + 1}` : 'Other applicable stat'}{row.cap ? ` · Official cap ${formatStatValue(row.cap, row.unit, row.precision)}` : ''}</span></span>
 									<span className="text-right font-mono text-text-muted">{formatStatValue(row.current, row.unit, row.precision, row.categorical, row.argumentId, getArgumentName)}</span>
 									<span className="text-right font-mono font-semibold text-text-main">{formatStatValue(row.proposed, row.unit, row.precision, row.categorical, row.argumentId, getArgumentName)}</span>
 									<span className={`text-right font-mono font-semibold ${row.proposed >= row.current ? 'text-success' : 'text-warning'}`}>{formatStatDifference(row.proposed - row.current, row.unit, row.precision, row.categorical)}</span>
@@ -944,8 +945,8 @@ function OptimizerPreview({
 							))}
 						</div>
 					</div>
-					<p className="text-xs text-text-muted">Weighted priority score (secondary): {formatNumber(preview.current.score)} → {formatNumber(selected.score)} ({formatSignedNumber(selected.score - preview.current.score)}).</p>
-					<p className="text-xs text-text-muted">Candidates: {Object.entries(preview.candidates.equipmentBySlot).map(([slot, count]) => `slot ${slot}: ${count}`).join(' · ')} · gems: {preview.candidates.gems}</p>
+					<p className="text-caption text-text-muted">Weighted priority score (secondary): {formatNumber(preview.current.score)} → {formatNumber(selected.score)} ({formatSignedNumber(selected.score - preview.current.score)}).</p>
+					<p className="text-caption text-text-muted">Candidates: {Object.entries(preview.candidates.equipmentBySlot).map(([slot, count]) => `slot ${slot}: ${count}`).join(' · ')} · gems: {preview.candidates.gems}</p>
 				</div>
 			)}
 		</Modal>

@@ -2,7 +2,7 @@ import type { VisualCase } from './cases';
 import { readFile } from 'node:fs/promises';
 import { expect, type Page, type Request } from '@playwright/test';
 
-export async function prepare(page: Page, theme: 'dark' | 'light', states?: VisualCase['states']) {
+export async function prepare(page: Page, theme: 'dark' | 'light', states?: VisualCase['states'], scenario = 'rich-account') {
   const intercepted = new WeakSet<Request>();
   const escapes: string[] = [];
   const unhandled: string[] = [];
@@ -40,7 +40,7 @@ export async function prepare(page: Page, theme: 'dark' | 'light', states?: Visu
     };
   }, { theme, states });
   await page.clock.setFixedTime(new Date('2026-09-29T12:00:00Z'));
-  await page.goto('/?scenario=rich-account&locale=en&reset=1');
+  await page.goto(`/?scenario=${encodeURIComponent(scenario)}&locale=en&reset=1`);
   // The preview's reset clears its namespace; restore only this test's state key before opening the view.
   if (states) await page.evaluate(states => localStorage.setItem('citadelops.visualStates', JSON.stringify(states)), states);
   await page.addStyleTag({ content: `

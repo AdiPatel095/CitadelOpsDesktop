@@ -4,7 +4,6 @@ import { Button } from './Button';
 import { EmptyState, type EmptyStateProps } from './EmptyState';
 import type { ViewStatus } from './viewStatus';
 import './ViewState.css';
-export { viewStatus, type ViewStatus } from './viewStatus';
 export interface ErrorStateProps { title: ReactNode; description?: ReactNode; onRetry?: () => void; retryLabel?: string; }
 export interface LoadingStateProps { label: string; variant?: 'list' | 'table' | 'cards'; rows?: number; }
 export function ErrorState({ title, description, onRetry, retryLabel, size = 'md' }: ErrorStateProps & { size?: EmptyStateProps['size'] }) {

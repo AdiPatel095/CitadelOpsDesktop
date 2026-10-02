@@ -1,3 +1,8 @@
+import { existsSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
+import { createElement } from 'react';
+import { renderToStaticMarkup } from 'react-dom/server';
+import { createServer } from 'vite';
 import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { expect, test } from '@playwright/test';
@@ -32,8 +37,8 @@ test('coral off switches and disabled status buttons list offenders', async ({ p
   await expect(assertDisabledNeutral(page)).rejects.toThrow(/button#disabled: color.*--status-success/);
 });
 
-test('every accent, control-on and status token is forbidden on disabled descendants', async ({ page }, testInfo) => {
-  const tokens = [...accents, '--control-on', ...statuses, '--status-custom-bg'];
+test('every accent, control-on and chromatic status token is forbidden on disabled descendants', async ({ page }, testInfo) => {
+  const tokens = [...accents, '--control-on', ...statuses.filter((token) => !token.startsWith('--status-neutral'))];
   await content(page, testInfo.project.name, `<section aria-disabled="true">${tokens.map((token, index) => `<span id="token-${index}" style="background-color: var(${token})">Child</span>`).join('')}</section>`, ':root { --status-custom-bg: rgb(230, 40, 70); }');
   let message = '';
   try { await assertDisabledNeutral(page); } catch (error) { message = String(error); }
@@ -98,4 +103,79 @@ test('locally overridden tokens resolve through the colour probe', async ({ page
 test('accent reporting never fails when the page is unavailable', async ({ page }) => {
   await page.close();
   await reportAccentUsage(page, 'closed-page');
+});
+
+test('neutral status colours are allowed on disabled and off controls', async ({ page }, testInfo) => {
+  await content(page, testInfo.project.name, '<button disabled style="color: var(--status-neutral); background: var(--status-neutral-bg); border: 1px solid var(--status-neutral-border)">Disabled</button><button role="switch" aria-checked="false" style="background: var(--status-neutral-bg)">Off</button>');
+  await assertDisabledNeutral(page);
+});
+
+const root = fileURLToPath(new URL('../../', import.meta.url));
+const source = existsSync(join(root, 'src/commandCenter')) ? 'src/commandCenter' : 'src';
+let vite: Awaited<ReturnType<typeof createServer>>;
+let renderSwitch: (checked: boolean, disabled?: boolean) => string;
+let renderDelta: (value: number, text: string) => string;
+test.beforeAll(async () => {
+  vite = await createServer({ root, configFile: false, appType: 'custom', logLevel: 'silent', server: { middlewareMode: true, hmr: false } });
+  const { Switch } = await vite.ssrLoadModule(`/${source}/components/ui/Switch.tsx`);
+  const { DeltaValue } = await vite.ssrLoadModule(`/${source}/components/ui/DeltaValue.tsx`);
+  renderSwitch = (checked, disabled = false) => renderToStaticMarkup(createElement(Switch, { checked, disabled, onChange() {}, ariaLabel: `${disabled ? 'Disabled' : 'Enabled'} ${checked ? 'on' : 'off'}` }));
+  renderDelta = (value, text) => renderToStaticMarkup(createElement(DeltaValue, { value }, text));
+});
+test.afterAll(async () => vite?.close());
+
+test('real Switch tokens, compact target, RTL and keyboard focus preserve the contract', async ({ page }, testInfo) => {
+  const tokens = await readFile(join(root, source, 'styles/tokens.css'), 'utf8');
+  const css = await readFile(join(root, source, 'components/ui/switch.css'), 'utf8');
+  await page.setContent(`<style>${tokens} ${css}</style>${renderSwitch(false)}${renderSwitch(true)}${renderSwitch(false, true)}${renderSwitch(true, true)}`);
+  await page.locator('html').evaluate((element, theme) => element.setAttribute('data-theme', theme), testInfo.project.name);
+  await assertDisabledNeutral(page);
+  const off = page.getByRole('switch', { name: 'Enabled off' });
+  const on = page.getByRole('switch', { name: 'Enabled on' });
+  await expect(on.locator('svg')).toHaveAttribute('width', '12');
+  await expect(off.locator('svg')).toHaveCount(0);
+  await page.keyboard.press('Tab');
+  await expect(off).toBeFocused();
+  expect(await off.locator('.ui-switch__track').evaluate(element => getComputedStyle(element).outlineWidth)).toBe('2px');
+  for (const dir of ['ltr', 'rtl']) {
+    await page.locator('html').evaluate((element, direction) => element.dir = direction, dir);
+    const positions = await page.locator('.ui-switch').evaluateAll(elements => elements.slice(0, 2).map(element => {
+      const thumb = element.querySelector('.ui-switch__thumb')!.getBoundingClientRect();
+      return thumb.x - element.getBoundingClientRect().x;
+    }));
+    expect(dir === 'ltr' ? positions[1] > positions[0] : positions[1] < positions[0]).toBe(true);
+  }
+  await page.setViewportSize({ width: 390, height: 844 });
+  expect(await off.evaluate(element => ({ width: element.getBoundingClientRect().width, height: element.getBoundingClientRect().height }))).toEqual({ width: 44, height: 44 });
+  await assertDisabledNeutral(page);
+});
+
+test('Delta isolates Arabic gain and loss signs with semantic colours', async ({ page }, testInfo) => {
+  const tokens = await readFile(join(root, source, 'styles/tokens.css'), 'utf8');
+  const css = await readFile(join(root, source, 'components/ui/delta.css'), 'utf8');
+  const arabic = new Intl.NumberFormat('ar').format(1620);
+  await page.setContent(`<style>${tokens} ${css}</style><div dir="rtl">${renderDelta(1620, arabic)}${renderDelta(-1620, arabic)}${renderDelta(0, '0')}</div>`);
+  await page.locator('html').evaluate((element, theme) => element.setAttribute('data-theme', theme), testInfo.project.name);
+  await expect(page.locator('[data-delta="gain"]')).toHaveText(`+${arabic}`);
+  await expect(page.locator('[data-delta="loss"]')).toHaveText(`−${arabic}`);
+  await expect(page.locator('[data-delta="zero"]')).toHaveText('0');
+  expect(await page.locator('bdi').evaluateAll(elements => elements.every(element => getComputedStyle(element).unicodeBidi === 'isolate'))).toBe(true);
+  for (const [tone, token] of [['gain', '--status-success'], ['loss', '--status-danger'], ['zero', '--text-primary']]) {
+    expect(await page.locator(`[data-delta="${tone}"]`).evaluate((element, token) => {
+      const probe = document.createElement('span'); probe.style.color = `var(${token})`; element.after(probe);
+      const matches = getComputedStyle(element).color === getComputedStyle(probe).color; probe.remove(); return matches;
+    }, token)).toBe(true);
+  }
+});
+test('R11 rejects duplicate primaries, including disabled actions, in every region type', async ({ page }) => {
+  const { assertOnePrimaryPerRegion } = await import('../visual/rules');
+  for (const region of ['data-region="card"', 'data-region="toolbar"', 'data-region="page-header"', 'role="dialog"']) {
+    await page.setContent(`<section ${region}><button data-variant="primary">A</button><button data-variant="primary" disabled>B</button></section>`);
+    await expect(assertOnePrimaryPerRegion(page)).rejects.toThrow(/R11/);
+  }
+});
+test('R11 assigns nested actions to the nearest region and ignores hidden controls', async ({ page }) => {
+  const { assertOnePrimaryPerRegion } = await import('../visual/rules');
+  await page.setContent('<section data-region="card"><button data-variant="primary">A</button><div data-region="toolbar"><button data-variant="primary">B</button></div><button hidden data-variant="primary">Hidden</button></section>');
+  await assertOnePrimaryPerRegion(page);
 });

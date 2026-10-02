@@ -443,12 +443,12 @@ const PlayerTrackerView = () => {
             <CardHeader className="flex-wrap gap-4">
               <div className="flex w-full flex-wrap items-center justify-between gap-4">
                 <div>
-                  <CardTitle className="flex items-center gap-2 text-lg">
+                  <CardTitle className="flex items-center gap-2 text-body-lg">
                     <MetricIcon definition={selectedDefinition} className="h-5 w-5" />
                     {selectedDefinition.label} trend
                   </CardTitle>
                   <div className="mt-2 flex items-baseline gap-3">
-                    <span className="font-mono text-3xl font-bold text-text-main">
+                    <span className="font-mono text-display-sm font-bold text-text-main">
                       {currentMetricPoint ? formatNumber(currentForMetric) : '—'}
                     </span>
                     {currentMetricPoint && (
@@ -500,14 +500,14 @@ const PlayerTrackerView = () => {
 								<span className="flex min-w-0 items-center gap-2">
 									<MetricIcon definition={definition} className="h-4 w-4" />
 									<span className="min-w-0 flex-1 truncate">{definition.label}</span>
-									<span className="shrink-0 text-[10px] font-semibold uppercase tracking-wide text-text-muted">{definition.category}</span>
+									<span className="shrink-0 text-caption font-semibold text-text-muted">{definition.category}</span>
 								</span>
 							),
 						}))}
 					/>
 				)}
               </div>
-              <div className="mb-3 flex flex-wrap items-center justify-between gap-2 text-xs text-text-muted">
+              <div className="mb-3 flex flex-wrap items-center justify-between gap-2 text-caption text-text-muted">
                 <span>{hoverPointHint(scopedTracker)} Drag horizontally to inspect a custom time period.</span>
                 {customWindow && (
                   <div className="flex flex-wrap items-center gap-2">
@@ -527,7 +527,7 @@ const PlayerTrackerView = () => {
                 selectedWindow={customWindow}
                 onWindowSelect={setCustomWindow}
               />
-              <div className="mt-3 flex justify-between text-xs text-text-muted">
+              <div className="mt-3 flex justify-between text-caption text-text-muted">
                 <span>{displayedPoints.length > 0 ? formatDate(displayedPoints[0].timestampUnix) : 'Waiting for history'}</span>
                 <span>{displayedPoints.length} sample{displayedPoints.length === 1 ? '' : 's'}</span>
                 <span>{displayedPoints.length > 0 ? formatDate(displayedPoints[displayedPoints.length - 1].timestampUnix) : 'Now'}</span>
@@ -539,15 +539,15 @@ const PlayerTrackerView = () => {
             <CardHeader className="flex-wrap gap-4">
               <div className="flex w-full flex-wrap items-center justify-between gap-4">
                 <div>
-                  <CardTitle className="flex items-center gap-2 text-lg">
+                  <CardTitle className="flex items-center gap-2 text-body-lg">
                     <Swords className="h-5 w-5" style={{ color: troopMetricDefinition.color }} />
                     <LocalizedText messageKey="ui.playerTracker.components.playerTrackerView.troop.strength.1a602396" />
                   </CardTitle>
-                  <p className="mt-1 text-xs font-medium text-text-muted">
+                  <p className="mt-1 text-caption font-medium text-text-muted">
                     {troopFilterLabel(troopTypeFilter, troopRoleFilter, troopFoodFilter, selectedTroopUnitID, troopMetadata)}
                   </p>
                   <div className="mt-2 flex items-baseline gap-3">
-                    <span className="font-mono text-3xl font-bold text-text-main">
+                    <span className="font-mono text-display-sm font-bold text-text-main">
                       {hasCurrentTroopValue ? formatNumber(currentTroopTotal) : '—'}
                     </span>
                     {hasCurrentTroopValue && (
@@ -578,8 +578,8 @@ const PlayerTrackerView = () => {
               <div className="mb-5 rounded-2xl border border-border-base bg-bg-input/45 p-4">
                 <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
                   <div>
-                    <p className="text-xs font-bold uppercase tracking-[0.18em] text-text-muted"><LocalizedText messageKey="ui.playerTracker.components.playerTrackerView.chart.filters.e485e1ea" /></p>
-                    <p className="mt-1 text-xs text-text-muted"><LocalizedText messageKey="ui.playerTracker.components.playerTrackerView.choose.one.unit.or.combine.type.role.8c33d737" /></p>
+                    <p className="text-caption font-semibold text-text-muted"><LocalizedText messageKey="ui.playerTracker.components.playerTrackerView.chart.filters.e485e1ea" /></p>
+                    <p className="mt-1 text-caption text-text-muted"><LocalizedText messageKey="ui.playerTracker.components.playerTrackerView.choose.one.unit.or.combine.type.role.8c33d737" /></p>
                   </div>
                   {troopFiltersActive && (
                     <Button
@@ -625,7 +625,7 @@ const PlayerTrackerView = () => {
                             <span className="flex min-w-0 items-center gap-2">
                               <UnitImage unitId={unitID} size={32} showLevel className="!bg-transparent" />
                               <span className="min-w-0 flex-1 truncate">{name}</span>
-                              <span className="shrink-0 text-[10px] font-semibold uppercase tracking-wide text-text-muted">
+                              <span className="shrink-0 text-caption font-semibold text-text-muted">
                                 #{unitID}
                               </span>
                             </span>
@@ -679,7 +679,7 @@ const PlayerTrackerView = () => {
                   />
                 </div>
               </div>
-              <div className="mb-3 flex flex-wrap items-center justify-between gap-2 text-xs text-text-muted">
+              <div className="mb-3 flex flex-wrap items-center justify-between gap-2 text-caption text-text-muted">
                 <span>{hoverPointHint(scopedTracker)} Drag horizontally to inspect a custom time period.</span>
                 {troopWindow && (
                   <div className="flex flex-wrap items-center gap-2">
@@ -696,7 +696,7 @@ const PlayerTrackerView = () => {
                   const legendPoints = line.displayPoints ?? line.points;
                   const latest = legendPoints[legendPoints.length - 1];
                   return (
-                    <div key={line.key} className="flex items-center gap-2 rounded-full border border-border-base bg-bg-input/50 px-2.5 py-1.5 text-xs">
+                    <div key={line.key} className="flex items-center gap-2 rounded-full border border-border-base bg-bg-input/50 px-2.5 py-1.5 text-caption">
                       {line.unitID ? (
                         <UnitImage unitId={line.unitID} size={28} showLevel className="!bg-transparent" />
                       ) : (
@@ -721,14 +721,14 @@ const PlayerTrackerView = () => {
                   : undefined}
               />
               {troopTrendLines.length > 1 && (
-                <p className="mt-3 text-xs text-text-muted">
+                <p className="mt-3 text-caption text-text-muted">
                   <LocalizedText messageKey="ui.playerTracker.components.playerTrackerView.six.stacked.lines.the.five.highest.count.834a1c2b" /></p>
               )}
               {troopFiltersActive && troopChartPoints.length < 2 && (
-                <p className="mt-3 text-xs leading-5 text-text-muted">
+                <p className="mt-3 text-caption text-text-muted">
                   <LocalizedText messageKey="ui.playerTracker.components.playerTrackerView.earlier.total.only.samples.cannot.be.separated.659a6289" /></p>
               )}
-              <div className="mt-3 flex justify-between text-xs text-text-muted">
+              <div className="mt-3 flex justify-between text-caption text-text-muted">
                 <span>{displayedTroopPoints.length > 0 ? formatDate(displayedTroopPoints[0].timestampUnix) : 'Waiting for history'}</span>
                 <span>{displayedTroopPoints.length} sample{displayedTroopPoints.length === 1 ? '' : 's'}</span>
                 <span>{displayedTroopPoints.length > 0 ? formatDate(displayedTroopPoints[displayedTroopPoints.length - 1].timestampUnix) : 'Now'}</span>
@@ -736,8 +736,8 @@ const PlayerTrackerView = () => {
 
               <div className="mt-7 border-t border-border-base pt-6">
                 <div className="mb-4">
-                  <h3 className="text-base font-semibold text-text-main"><LocalizedText messageKey="ui.playerTracker.components.playerTrackerView.combat.composition.1e8f82ba" /></h3>
-                  <p className="mt-1 text-sm text-text-muted"><LocalizedText messageKey="ui.playerTracker.components.playerTrackerView.current.troops.grouped.by.weapon.type.and.5d9aa861" /></p>
+                  <h3 className="text-title-sm font-semibold text-text-main"><LocalizedText messageKey="ui.playerTracker.components.playerTrackerView.combat.composition.1e8f82ba" /></h3>
+                  <p className="mt-1 text-body text-text-muted"><LocalizedText messageKey="ui.playerTracker.components.playerTrackerView.current.troops.grouped.by.weapon.type.and.5d9aa861" /></p>
                 </div>
                 <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
                   <CombatCompositionCard
@@ -774,7 +774,7 @@ const PlayerTrackerView = () => {
                   />
                 </div>
                 {(troopComposition.typeClassified < troopComposition.total || troopComposition.roleClassified < troopComposition.total) && (
-                  <p className="mt-3 text-xs text-text-muted">
+                  <p className="mt-3 text-caption text-text-muted">
                     <LocalizedText messageKey="ui.playerTracker.components.playerTrackerView.composition.includes.troops.recognized.by.the.current.1a5c8e10" /></p>
                 )}
               </div>
@@ -821,7 +821,7 @@ function Delta({
     ? effectiveRateValue / (elapsedSeconds / effectiveRateUnitSeconds)
     : null;
   return (
-    <span className={`inline-flex items-center gap-1 text-xs font-semibold ${positive ? 'text-success' : negative ? 'text-error' : 'text-text-muted'}`}>
+    <span className={`inline-flex items-center gap-1 text-caption font-semibold ${positive ? 'text-success' : negative ? 'text-error' : 'text-text-muted'}`}>
       {positive ? <TrendingUp className="h-3.5 w-3.5" /> : negative ? <TrendingDown className="h-3.5 w-3.5" /> : null}
       {value === 0 ? 'No change' : `${value > 0 ? '+' : ''}${formatNumber(value)}${percentage == null ? '' : ` (${percentage > 0 ? '+' : ''}${percentage.toFixed(1)}%)`}`}
       {rate != null && (
@@ -910,7 +910,7 @@ export function TrendChart({
 
   if (!hasRenderablePoints) {
     return (
-      <div className="flex h-[500px] items-center justify-center rounded-2xl border border-dashed border-border-base bg-bg-input/40 text-sm text-text-muted">
+      <div className="flex h-[500px] items-center justify-center rounded-2xl border border-dashed border-border-base bg-bg-input/40 text-body text-text-muted">
         {emptyMessage ?? 'The trend line will appear after the next sample is collected.'}
       </div>
     );
@@ -1059,7 +1059,7 @@ export function TrendChart({
         {yTicks.map((tick) => (
           <g key={tick.y}>
             <line x1={plotLeft} x2={plotRight} y1={tick.y} y2={tick.y} stroke="currentColor" className="text-border-base" strokeDasharray="6 8" />
-            <text x={plotLeft - 12} y={tick.y + 4} textAnchor="end" fill="currentColor" className="font-mono text-[12px] font-medium text-text-muted">
+            <text x={plotLeft - 12} y={tick.y + 4} textAnchor="end" fill="currentColor" className="font-mono text-caption font-medium text-text-muted">
               {formatAxisValue(tick.value, rawSpread)}
             </text>
           </g>
@@ -1072,7 +1072,7 @@ export function TrendChart({
               y={height - 18}
               textAnchor={index === 0 ? 'start' : index === xTicks.length - 1 ? 'end' : 'middle'}
               fill="currentColor"
-              className="text-[12px] font-medium tracking-wide text-text-muted"
+              className="text-caption font-medium text-text-muted"
             >
               {formatAxisTime(tick.timestampUnix, domainSpan)}
             </text>
@@ -1159,7 +1159,7 @@ export function TrendChart({
         </svg>
         {hoveredPoint && !drag && (
           <div
-            className="pointer-events-none absolute z-10 min-w-52 rounded-xl border border-border-base bg-bg-card/95 px-3 py-2 text-xs shadow-xl"
+            className="pointer-events-none absolute z-10 min-w-52 rounded-xl border border-border-base bg-bg-card/95 px-3 py-2 text-caption shadow-xl"
             style={{
               left: `${(hoveredPoint.coord.x / width) * 100}%`,
               top: `${(hoveredPoint.coord.y / height) * 100}%`,
@@ -1203,15 +1203,15 @@ function CombatCompositionCard({
   const share = total > 0 ? (value / total) * 100 : 0;
   return (
     <div className="rounded-2xl border border-border-base bg-bg-input/50 p-4">
-      <div className="flex items-center gap-2 text-sm font-semibold text-text-muted">
+      <div className="flex items-center gap-2 text-body font-semibold text-text-muted">
         <Icon className={`h-4 w-4 ${accentClass}`} />
         {label}
       </div>
-      <p className="mt-3 font-mono text-xl font-bold text-text-main">{formatNumber(value)}</p>
+      <p className="mt-3 font-mono text-body-lg font-semibold text-text-main">{formatNumber(value)}</p>
       <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-border-base/60">
         <div className={`h-full rounded-full ${barClass}`} style={{ width: `${Math.min(100, share)}%` }} />
       </div>
-      <p className="mt-2 text-xs text-text-muted">{share.toFixed(1)}% of classified troops</p>
+      <p className="mt-2 text-caption text-text-muted">{share.toFixed(1)}% of classified troops</p>
     </div>
   );
 }

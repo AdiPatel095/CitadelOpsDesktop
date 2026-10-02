@@ -20,9 +20,9 @@ const GameButton: React.FC<GameButtonProps> = ({ children, className, disabled, 
   );
 
   return (
-    <Button
+    <Button variant="secondary"
       disabled={isDisabled}
-      className={`${className || ''} ${!gameLoggedIn ? 'cursor-not-allowed opacity-50 grayscale' : ''}`.trim()}
+      className={className}
       {...props}
     >
       {buttonContent}

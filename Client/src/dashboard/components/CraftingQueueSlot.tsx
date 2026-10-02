@@ -39,7 +39,7 @@ const CraftingQueueSlot: React.FC<CraftingQueueSlotProps> = ({ row, boxSize = 58
 
   return (
     <div
-      className={`relative flex shrink-0 flex-col items-center justify-center gap-0.5 rounded-global border px-1 py-0.5 text-center leading-tight ${
+      className={`relative flex shrink-0 flex-col items-center justify-center gap-0.5 rounded-global border px-1 py-0.5 text-center ${
         row.active
           ? 'border-primary ring-2 ring-primary/35 shadow-sm bg-bg-card'
           : 'border-border-light border-solid bg-bg-card'
@@ -60,11 +60,11 @@ const CraftingQueueSlot: React.FC<CraftingQueueSlotProps> = ({ row, boxSize = 58
           onError={() => setImageFailed(true)}
         />
       ) : (
-        <span className="text-[9px] font-medium text-text-muted line-clamp-3">{shortLabel}</span>
+        <span className="text-caption font-medium text-text-muted line-clamp-3">{shortLabel}</span>
       )}
       {row.amount > 0 ? (
         <span
-          className="absolute -right-1 -top-1 z-20 flex min-h-[1.125rem] min-w-[1.125rem] max-w-[3.25rem] items-center justify-center rounded-full bg-amber-600 px-1 text-[10px] font-bold leading-none text-white shadow-md ring-2 ring-bg-card"
+          className="absolute -right-1 -top-1 z-20 flex min-h-[1.125rem] min-w-[1.125rem] max-w-[3.25rem] items-center justify-center rounded-full bg-amber-600 px-1 text-caption font-semibold text-white shadow-md ring-2 ring-bg-card"
           aria-label={`${formatQueueCount(row.amount)} in slot`}
         >
           {formatQueueCount(row.amount)}

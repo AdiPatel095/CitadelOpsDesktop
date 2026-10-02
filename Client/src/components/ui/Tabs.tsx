@@ -94,11 +94,11 @@ export function Tabs({ items, value, onChange, ariaLabel, previousLabel, nextLab
   const activeIndex = items.findIndex(item => item.value === value && !item.disabled);
   const firstEnabled = items.findIndex(item => !item.disabled);
   return <div className={`ui-tabs ${className}`}>
-    {medium && edges.left && <Button type="button" variant="ghost" size="icon" className="ui-tabs__arrow ui-tabs__arrow--left" aria-label={edges.rtl ? nextLabel : previousLabel} onClick={() => scroll('left')}><ChevronLeft /></Button>}
+    {medium && edges.left && <Button type="button" variant="ghost" iconOnly className="ui-tabs__arrow ui-tabs__arrow--left" aria-label={edges.rtl ? nextLabel : previousLabel} onClick={() => scroll('left')}><ChevronLeft /></Button>}
     <div ref={scroller} role="tablist" aria-label={ariaLabel} className="ui-tabs__scroller" data-fade-left={edges.left} data-fade-right={edges.right}>
-      {items.map((item, index) => <button type="button" key={item.value}
+      {items.map((item, index) => <Button variant="ghost" type="button" key={item.value}
         ref={node => { if (node) buttons.current.set(item.value, node); else buttons.current.delete(item.value); }}
-        id={`${idBase}-tab-${item.value}`} role="tab" aria-selected={item.value === value}
+        id={`${idBase}-tab-${item.value}`} role="tab" aria-selected={item.value === value} data-current-selection={item.value === value ? "true" : undefined}
         aria-controls={`${idBase}-panel-${item.value}`} disabled={item.disabled}
         tabIndex={index === (activeIndex < 0 ? firstEnabled : activeIndex) ? 0 : -1}
         className="ui-tabs__tab" data-text={item.label} onClick={() => onChange(item.value)}
@@ -110,9 +110,9 @@ export function Tabs({ items, value, onChange, ariaLabel, previousLabel, nextLab
           onChange(items[next].value); buttons.current.get(items[next].value)?.focus({ preventScroll: true });
         }}>
         <span>{item.label}</span>{item.value === value && <span className="ui-tabs__indicator" aria-hidden="true" />}
-      </button>)}
+      </Button>)}
     </div>
-    {medium && edges.right && <Button type="button" variant="ghost" size="icon" className="ui-tabs__arrow ui-tabs__arrow--right" aria-label={edges.rtl ? previousLabel : nextLabel} onClick={() => scroll('right')}><ChevronRight /></Button>}
+    {medium && edges.right && <Button type="button" variant="ghost" iconOnly className="ui-tabs__arrow ui-tabs__arrow--right" aria-label={edges.rtl ? previousLabel : nextLabel} onClick={() => scroll('right')}><ChevronRight /></Button>}
   </div>;
 }
 

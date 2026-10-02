@@ -47,7 +47,7 @@ export const SettingsSection: React.FC<SettingsSectionProps> = ({ disclosure, se
       aria-labelledby={headingId}
       className={`rounded-global border border-dashed border-border-base bg-bg-card/30 ${className}`}
     >
-      <button
+      <button data-button-pattern="disclosure"
         type="button"
         className="flex w-full items-start justify-between gap-3 px-4 py-3 text-left"
         aria-expanded={expanded}
@@ -57,14 +57,14 @@ export const SettingsSection: React.FC<SettingsSectionProps> = ({ disclosure, se
         <span className="min-w-0">
           <span className="flex flex-wrap items-center gap-2">
             <SlidersHorizontal className="h-4 w-4 shrink-0 text-text-muted" aria-hidden="true" />
-            <span id={headingId} className="text-sm font-bold text-text-main"><LocalizedText messageKey={placement.titleKey} /></span>
-            <Badge variant="outline" className="normal-case tracking-normal"><LocalizedText messageKey="ui.settings.components.settingsSection.advanced.9f088dbe" /></Badge>
+            <span id={headingId} className="text-body font-semibold text-text-main"><LocalizedText messageKey={placement.titleKey} /></span>
+            <Badge variant="outline" className="normal-case"><LocalizedText messageKey="ui.settings.components.settingsSection.advanced.9f088dbe" /></Badge>
             {customCount > 0 ? (
-              <Badge variant="warning" className="normal-case tracking-normal"><LocalizedText messageKey="settingsSummary.customValues" params={{ count: customCount }} /></Badge>
+              <Badge variant="warning" className="normal-case"><LocalizedText messageKey="settingsSummary.customValues" params={{ count: customCount }} /></Badge>
             ) : null}
           </span>
           {!expanded && summary && summary.length > 0 ? (
-            <span className="mt-1 block text-[11px] leading-relaxed text-text-muted">
+            <span className="mt-1 block text-caption text-text-muted">
               {summary.map((line, index) => (
                 <React.Fragment key={`${line.messageKey}:${index}`}>
                   {index > 0 ? ' · ' : null}
@@ -74,7 +74,7 @@ export const SettingsSection: React.FC<SettingsSectionProps> = ({ disclosure, se
             </span>
           ) : null}
         </span>
-        <span className="flex shrink-0 items-center gap-1 text-[11px] font-semibold text-text-muted">
+        <span className="flex shrink-0 items-center gap-1 text-caption font-semibold text-text-muted">
           {expanded
             ? <LocalizedText messageKey="ui.settings.components.settingsSection.hide.ac20a57b" />
             : <LocalizedText messageKey="ui.settings.components.settingsSection.show.and.edit.f60aed35" />}
@@ -107,7 +107,7 @@ export function collapsedSettingNote(
 const CollapsedSettingNote: React.FC<{ collapsed: CollapsedFixTarget; value: ReactNode }> = ({ collapsed, value }) => {
   const { t } = useLocale();
   return (
-    <span className="block text-[11px] text-text-muted">
+    <span className="block text-caption text-text-muted">
       {collapsed.target.labelKey && value != null ? (
         <span className="font-semibold text-text-main"><LocalizedText messageKey={collapsed.target.labelKey} />{': '}{value}{' · '}</span>
       ) : null}

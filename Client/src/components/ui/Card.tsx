@@ -7,7 +7,7 @@ export interface CardProps extends HTMLAttributes<HTMLDivElement> {
 
 export const Card = React.forwardRef<HTMLDivElement, CardProps>(
   ({ className = '', variant = 'solid', children, ...props }, ref) => (
-    <div ref={ref} className={`ui-card ui-card--${variant} ${className}`} {...props}>{children}</div>
+    <div ref={ref} data-region="card" className={`ui-card ui-card--${variant} ${className}`} {...props}>{children}</div>
   )
 );
 Card.displayName = 'Card';

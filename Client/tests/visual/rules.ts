@@ -46,7 +46,8 @@ async function scanColours(page: Page, disabled: boolean) {
           if (pseudo && (style.content === 'none' || style.content === 'normal')) continue;
           const names = [...accentTokens];
           if (disabled) {
-            names.push('--control-on', ...Array.from(style).filter((name) => name.startsWith('--status-')));
+            names.push('--control-on', ...['success', 'warning', 'danger', 'info'].flatMap((tone) =>
+              [`--status-${tone}`, `--status-${tone}-bg`, `--status-${tone}-border`]));
           }
           const tokenColours = new Map<string, string[]>();
           for (const name of names) {
@@ -98,4 +99,17 @@ export async function reportAccentUsage(page: Page, caseName: string): Promise<v
   } catch {
     // Reporting must never turn an otherwise passing snapshot into a failure.
   }
+}
+
+// R11 counts actions owned by the nearest region; nested cards/toolbars own their actions.
+export async function assertOnePrimaryPerRegion(page: Page): Promise<void> {
+  const offenders = await page.evaluate(() => {
+    const selector = '[data-region], [role="dialog"]';
+    return Array.from(document.querySelectorAll<HTMLElement>(selector)).flatMap(region => {
+      const primaries = Array.from(region.querySelectorAll<HTMLElement>('[data-variant="primary"]'))
+        .filter(button => button.closest(selector) === region && button.getClientRects().length > 0 && getComputedStyle(button).visibility !== 'hidden');
+      return primaries.length > 1 ? [{ region: region.getAttribute('data-region') ?? 'dialog', id: region.id, actions: primaries.map(button => button.getAttribute('aria-label') ?? button.textContent?.trim()) }] : [];
+    });
+  });
+  if (offenders.length) throw new Error(`R11: multiple primary actions per region: ${JSON.stringify(offenders)}`);
 }

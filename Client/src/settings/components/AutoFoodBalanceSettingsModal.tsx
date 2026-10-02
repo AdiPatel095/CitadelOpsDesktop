@@ -110,7 +110,7 @@ export const AutoFoodBalanceSettingsModal: React.FC<AutoFoodBalanceSettingsModal
       />
       <div className="space-y-5">
         <SettingsSection disclosure={disclosure} section="reserves" className="space-y-5">
-          <p className="text-sm text-text-muted">
+          <p className="text-body text-text-muted">
             <LocalizedText messageKey="ui.settings.components.autoFoodBalanceSettingsModal.before.sending.resources.citadelops.refreshes.each.castle.1110c8f5" /></p>
 
           <div className="grid gap-4 sm:grid-cols-2">
@@ -118,7 +118,7 @@ export const AutoFoodBalanceSettingsModal: React.FC<AutoFoodBalanceSettingsModal
             <NumberField id="auto-food-coin-reserve" label={localizeStatic("ui.settings.components.autoFoodBalanceSettingsModal.label.coin.reserve.06dee9e3")} hint={localizeStatic("ui.settings.components.autoFoodBalanceSettingsModal.coins.that.stay.untouched.market.barrows.and.8742f16e")} value={settings.minimumCoinReserve} min={0} max={Number.MAX_SAFE_INTEGER} onChange={(value) => setNumber('minimumCoinReserve', value)} />
           </div>
 
-          <p className="text-xs text-text-muted">
+          <p className="text-caption text-text-muted">
             <LocalizedText messageKey="ui.settings.components.autoFoodBalanceSettingsModal.storm.food.and.mead.wait.until.the.1090dfc3" /></p>
 
           <SettingsToggleRow
@@ -131,15 +131,15 @@ export const AutoFoodBalanceSettingsModal: React.FC<AutoFoodBalanceSettingsModal
           />
 
           <div id="auto-food-castles" tabIndex={-1} className="space-y-2 rounded-global border border-border-base bg-bg-card/40 p-4 outline-none">
-            <div className="text-xs font-bold uppercase tracking-wider text-text-muted"><LocalizedText messageKey="ui.settings.components.autoFoodBalanceSettingsModal.castles.and.food.stock.a2f41062" /></div>
+            <div className="text-caption font-semibold text-text-muted"><LocalizedText messageKey="ui.settings.components.autoFoodBalanceSettingsModal.castles.and.food.stock.a2f41062" /></div>
             {readiness.rows.length > 0 && !readiness.rows[0].current ? (
-              <p className="text-[11px] font-semibold text-warning"><LocalizedText messageKey="ui.settings.components.autoFoodBalanceSettingsModal.last.known.food.stock.it.updates.once.49b8947f" /></p>
+              <p className="text-caption font-semibold text-warning"><LocalizedText messageKey="ui.settings.components.autoFoodBalanceSettingsModal.last.known.food.stock.it.updates.once.49b8947f" /></p>
             ) : null}
             {readiness.rows.length === 0 ? (
-              <p className="text-xs text-text-muted"><LocalizedText messageKey="ui.settings.components.autoFoodBalanceSettingsModal.no.castles.are.observed.yet.ba035a87" /></p>
+              <p className="text-caption text-text-muted"><LocalizedText messageKey="ui.settings.components.autoFoodBalanceSettingsModal.no.castles.are.observed.yet.ba035a87" /></p>
             ) : (
-              <table className="w-full text-left text-xs">
-                <thead className="text-[10px] uppercase tracking-wider text-text-muted">
+              <table className="w-full text-left text-caption">
+                <thead className="text-caption text-text-muted">
                   <tr>
                     <th scope="col" className="py-1 pr-2 font-bold"><LocalizedText messageKey="ui.settings.components.autoFoodBalanceSettingsModal.castle.419fb3b8" /></th>
                     <th scope="col" className="py-1 pr-2 text-right font-bold"><LocalizedText messageKey="ui.settings.components.autoFoodBalanceSettingsModal.food.e4eb1806" /></th>
@@ -154,7 +154,7 @@ export const AutoFoodBalanceSettingsModal: React.FC<AutoFoodBalanceSettingsModal
                 </tbody>
               </table>
             )}
-            <p className="text-[11px] text-text-muted"><LocalizedText messageKey="ui.settings.components.autoFoodBalanceSettingsModal.donors.hold.food.above.the.donor.reserve.e605cba8" /></p>
+            <p className="text-caption text-text-muted"><LocalizedText messageKey="ui.settings.components.autoFoodBalanceSettingsModal.donors.hold.food.above.the.donor.reserve.e605cba8" /></p>
           </div>
         </SettingsSection>
 
@@ -190,7 +190,7 @@ export const AutoFoodBalanceSettingsModal: React.FC<AutoFoodBalanceSettingsModal
           {skipsActive && (
             <div className="space-y-3 rounded-global border border-border-base bg-bg-input/35 p-4">
               <div>
-                <div className="text-xs font-bold uppercase tracking-wider text-text-muted"><LocalizedText messageKey="ui.settings.components.autoFoodBalanceSettingsModal.allowed.transport.skips.73eba8a9" /></div>
+                <div className="text-caption font-semibold text-text-muted"><LocalizedText messageKey="ui.settings.components.autoFoodBalanceSettingsModal.allowed.transport.skips.73eba8a9" /></div>
                 <ChoiceChipGroup
                   className="mt-2"
                   size="sm"
@@ -211,7 +211,7 @@ export const AutoFoodBalanceSettingsModal: React.FC<AutoFoodBalanceSettingsModal
                   {AUTO_FOOD_BALANCE_TIME_SKIPS
                     .filter((skip) => settings.allowedTimeSkips.includes(skip.id))
                     .map((skip) => (
-                      <label key={skip.id} className="grid gap-1 text-[10px] font-bold text-text-muted">
+                      <label key={skip.id} className="grid gap-1 text-caption font-semibold text-text-muted">
                         Keep {skip.label}
                         <Input
                           type="number"
@@ -231,7 +231,7 @@ export const AutoFoodBalanceSettingsModal: React.FC<AutoFoodBalanceSettingsModal
                 </div>
               )}
 
-              <p className="text-[11px] leading-relaxed text-text-muted">
+              <p className="text-caption text-text-muted">
                 <LocalizedText messageKey="ui.settings.components.autoFoodBalanceSettingsModal.citadelops.prefers.the.smallest.selected.skip.that.a106f6cf" /></p>
             </div>
           )}
@@ -253,7 +253,7 @@ export const AutoFoodBalanceSettingsModal: React.FC<AutoFoodBalanceSettingsModal
 
         <ReadinessPanel report={readiness.report} onFix={fixReadiness} noteFor={collapsedSettingNote(disclosure)} />
 
-        {saveError && <p role="alert" className="text-xs text-error">{saveError}</p>}
+        {saveError && <p role="alert" className="text-caption text-error">{saveError}</p>}
       </div>
     </SettingsModal>
   );
@@ -280,9 +280,9 @@ function NumberField({
 }) {
   return (
     <div id={id} className="space-y-1.5">
-      <label className="text-xs font-bold uppercase tracking-wider text-text-muted">{label}</label>
-      <Input type="number" min={min} max={max} value={value} onChange={(event) => onChange(event.target.value)} rightIcon={suffix ? <span className="text-xs">{suffix}</span> : undefined} />
-      {hint ? <p className="text-[11px] leading-relaxed text-text-muted">{hint}</p> : null}
+      <label className="text-caption font-semibold text-text-muted">{label}</label>
+      <Input type="number" min={min} max={max} value={value} onChange={(event) => onChange(event.target.value)} rightIcon={suffix ? <span className="text-caption">{suffix}</span> : undefined} />
+      {hint ? <p className="text-caption text-text-muted">{hint}</p> : null}
     </div>
   );
 }

@@ -325,7 +325,7 @@ const AllianceTargetsContent = memo(({
 
   return (
     <div className="data-view-render-stable space-y-4">
-      {viewError && <p className="rounded-global border border-error/30 bg-error/10 px-4 py-3 text-sm text-error">{viewError}</p>}
+      {viewError && <p className="rounded-global border border-error/30 bg-error/10 px-4 py-3 text-body text-error">{viewError}</p>}
       <SectionCard
         title={data?.selectedAlliance?.name || 'Player targets'}
         description={loading ? 'Loading targets…' : `${totalTargets} matching castles`}
@@ -373,8 +373,8 @@ const AllianceTargetsContent = memo(({
         flush
       >
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[1240px] table-fixed text-left text-sm">
-            <thead className="border-b border-border-base bg-bg-card/80 text-xs uppercase text-text-muted">
+          <table className="w-full min-w-[1240px] table-fixed text-left text-body">
+            <thead className="border-b border-border-base bg-bg-card/80 text-caption text-text-muted">
               <tr>
                 <SortableHeader label={localizeStatic("ui.allianceTargets.components.allianceTargetsView.label.player.64aee8c6")} column="player" width="w-[12%]" activeColumn={sortKey} direction={sortDirection} onSort={changeSort} />
                 <SortableHeader label={localizeStatic("ui.allianceTargets.components.allianceTargetsView.label.might.f68b032e")} column="might" width="w-[8%]" activeColumn={sortKey} direction={sortDirection} onSort={changeSort} align="right" />
@@ -409,30 +409,30 @@ const AllianceTargetsContent = memo(({
         </div>
 
         {!loading && totalTargets === 0 && (
-          <div className="px-5 py-12 text-center text-sm text-text-muted"><LocalizedText messageKey="ui.allianceTargets.components.allianceTargetsView.no.castles.match.the.current.filters.f50796e4" /></div>
+          <div className="px-5 py-12 text-center text-body text-text-muted"><LocalizedText messageKey="ui.allianceTargets.components.allianceTargetsView.no.castles.match.the.current.filters.f50796e4" /></div>
         )}
 
         {totalTargets > 0 && (
           <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border-base bg-bg-card/35 px-4 py-3">
-            <span className="text-xs text-text-muted">
+            <span className="text-caption text-text-muted">
               Showing {firstResult}–{lastResult} of {totalTargets}
             </span>
             <div className="flex items-center gap-2">
-              <Button
+              <Button iconOnly
                 size="sm"
-                variant="secondary"
+                variant="ghost"
                 disabled={loading || safePage <= 1}
                 onClick={() => changePage(Math.max(1, safePage - 1))}
                 aria-label={localizeStatic("ui.allianceTargets.components.allianceTargetsView.aria-label.previous.page.1208ec01")}
               >
                 <ChevronLeft className="h-4 w-4" />
               </Button>
-              <span className="min-w-20 text-center text-xs font-medium text-text-main">
+              <span className="min-w-20 text-center text-caption font-medium text-text-main">
                 Page {safePage} of {pageCount}
               </span>
-              <Button
+              <Button iconOnly
                 size="sm"
-                variant="secondary"
+                variant="ghost"
                 disabled={loading || safePage >= pageCount}
                 onClick={() => changePage(Math.min(pageCount, safePage + 1))}
                 aria-label={localizeStatic("ui.allianceTargets.components.allianceTargetsView.aria-label.next.page.c08ac736")}
@@ -469,7 +469,7 @@ const TargetRow = memo(({ target, canSpy, sending, sendingBlocked, loadingIntel,
       {target.underBird ? (
         <div className="space-y-1">
           <Badge variant="warning"><LocalizedText messageKey="ui.allianceTargets.components.allianceTargetsView.under.bird.e79c522f" /></Badge>
-          <div className="text-xs tabular-nums text-text-muted">{formatDuration(target.rptSeconds)}</div>
+          <div className="text-caption tabular-nums text-text-muted">{formatDuration(target.rptSeconds)}</div>
         </div>
       ) : (
         <Badge variant="success"><LocalizedText messageKey="ui.allianceTargets.components.allianceTargetsView.attackable.89016283" /></Badge>
@@ -482,13 +482,13 @@ const TargetRow = memo(({ target, canSpy, sending, sendingBlocked, loadingIntel,
           {target.targetCastle.name || target.targetCastle.typeName || 'Player castle'}
         </span>
       </div>
-      <div className="mt-1 text-xs text-text-muted">
+      <div className="mt-1 text-caption text-text-muted">
         {target.targetCastle.typeName || 'Player castle'} · {target.targetCastle.x}:{target.targetCastle.y}
       </div>
     </td>
 	<td className="px-4 py-3">
 	  {target.spyReport ? (
-		<button
+		<button data-button-pattern="card"
 		  type="button"
 		  className="group w-full rounded-global border border-border-base bg-bg-card/45 px-2.5 py-2 text-left transition hover:border-primary/45 hover:bg-primary/6 disabled:cursor-wait disabled:opacity-60"
 		  disabled={intelBlocked}
@@ -496,21 +496,21 @@ const TargetRow = memo(({ target, canSpy, sending, sendingBlocked, loadingIntel,
 		  title="Open latest spy intelligence"
 		>
 		  <span className="flex items-center justify-between gap-2">
-			<span className="inline-flex items-center gap-1.5 text-xs font-bold text-text-main group-hover:text-primary">
+			<span className="inline-flex items-center gap-1.5 text-caption font-semibold text-text-main group-hover:text-primary">
 			  <FileSearch className="h-3.5 w-3.5" />
 			  {loadingIntel ? 'Loading…' : `${target.spyReport.totalTroops.toLocaleString()} troops`}
 			</span>
-			<Badge variant={target.spyReport.status === 'success' ? 'success' : 'warning'} className="px-1.5 py-0.5 normal-case tracking-normal">
+			<Badge variant={target.spyReport.status === 'success' ? 'success' : 'warning'} className="px-1.5 py-0.5 normal-case">
 			  {target.spyReport.status || 'captured'}
 			</Badge>
 		  </span>
-		  <span className="mt-1 flex items-center gap-1 text-[11px] tabular-nums text-text-muted">
+		  <span className="mt-1 flex items-center gap-1 text-caption tabular-nums text-text-muted">
 			<Clock3 className="h-3 w-3" />
 			{formatReportAge(target.spyReport.capturedAtUnixMillis)}
 		  </span>
 		</button>
 	  ) : (
-		<div className="flex items-center gap-1.5 text-xs text-text-muted">
+		<div className="flex items-center gap-1.5 text-caption text-text-muted">
 		  <FileSearch className="h-3.5 w-3.5 opacity-60" />
 		  <LocalizedText messageKey="ui.allianceTargets.components.allianceTargetsView.no.report.3d341ee6" />
 		</div>
@@ -518,14 +518,14 @@ const TargetRow = memo(({ target, canSpy, sending, sendingBlocked, loadingIntel,
 	</td>
     <td className="px-4 py-3">
       <div className="truncate font-medium" title={target.closestOwnCastle.name}>{target.closestOwnCastle.name || 'Own castle'}</div>
-      <div className="text-xs text-text-muted">{target.closestOwnCastle.x}:{target.closestOwnCastle.y}</div>
+      <div className="text-caption text-text-muted">{target.closestOwnCastle.x}:{target.closestOwnCastle.y}</div>
     </td>
     <td className="px-4 py-3 text-right font-semibold tabular-nums">{target.distance.toFixed(1)}</td>
     <td className="px-4 py-3 text-right">
       <div className="inline-flex items-center gap-1.5">
         <Button
           size="sm"
-          variant="outline"
+          variant="secondary"
           disabled={!canSpy || target.underBird || sendingBlocked}
           isLoading={sending}
           onClick={() => onSpy(target)}
@@ -755,11 +755,11 @@ const AllianceTargetAttackModal = ({ target, onClose }: AllianceTargetAttackModa
 			)}
 			footer={(
 				<div className="flex w-full flex-wrap items-center justify-between gap-3">
-					<p className={`min-w-0 text-xs font-semibold ${blockReason ? 'text-text-muted' : 'text-success'}`}>
+					<p className={`min-w-0 text-caption font-semibold ${blockReason ? 'text-text-muted' : 'text-success'}`}>
 						{blockReason || 'CRA-capped formation and live source inventory are ready.'}
 					</p>
 					<div className="flex items-center gap-2">
-						<Button variant="ghost" disabled={launching} onClick={onClose}><LocalizedText messageKey="game.cancel" /></Button>
+						<Button variant="secondary" disabled={launching} onClick={onClose}><LocalizedText messageKey="game.cancel" /></Button>
 						<Button
 							variant="primary"
 							disabled={Boolean(blockReason) || launching}
@@ -774,7 +774,7 @@ const AllianceTargetAttackModal = ({ target, onClose }: AllianceTargetAttackModa
 		>
 			<div className="space-y-4">
 				{launchError ? (
-					<div className="rounded-global border border-error/30 bg-error/10 px-4 py-3 text-sm font-medium text-error">
+					<div className="rounded-global border border-error/30 bg-error/10 px-4 py-3 text-body font-medium text-error">
 						{launchError}
 					</div>
 				) : null}
@@ -802,7 +802,7 @@ const AllianceTargetAttackModal = ({ target, onClose }: AllianceTargetAttackModa
 
 				<div className="grid gap-4 rounded-global border border-border-base bg-bg-card/45 p-4 md:grid-cols-2">
 					<label className="block min-w-0">
-						<span className="mb-1.5 block text-[11px] font-black uppercase tracking-wider text-text-muted"><LocalizedText messageKey="ui.allianceTargets.components.allianceTargetsView.source.castle.86d5a48e" /></span>
+						<span className="mb-1.5 block text-caption font-semibold text-text-muted"><LocalizedText messageKey="ui.allianceTargets.components.allianceTargetsView.source.castle.86d5a48e" /></span>
 						<Select
 							value={sourceCastleID}
 							options={sourceOptions}
@@ -815,7 +815,7 @@ const AllianceTargetAttackModal = ({ target, onClose }: AllianceTargetAttackModa
 						/>
 					</label>
 					<label className="block min-w-0">
-						<span className="mb-1.5 block text-[11px] font-black uppercase tracking-wider text-text-muted"><LocalizedText messageKey="ui.allianceTargets.components.allianceTargetsView.attack.preset.407b93e9" /></span>
+						<span className="mb-1.5 block text-caption font-semibold text-text-muted"><LocalizedText messageKey="ui.allianceTargets.components.allianceTargetsView.attack.preset.407b93e9" /></span>
 						<Select
 							value={presetID}
 							options={presetOptions}
@@ -828,7 +828,7 @@ const AllianceTargetAttackModal = ({ target, onClose }: AllianceTargetAttackModa
 						/>
 						{preset?.app ? (
 							// No stored reference here: the composition is sent with the attack, so nothing is promoted.
-							<p className="mt-1.5 text-[11px] text-text-muted">
+							<p className="mt-1.5 text-caption text-text-muted">
 								<LocalizedText
 									messageKey="allianceTargets.appCreatedPresetNote"
 									params={{ module: presetOwnerLabel(preset.app, localizeStatic) }}
@@ -847,7 +847,7 @@ const AllianceTargetAttackModal = ({ target, onClose }: AllianceTargetAttackModa
 				}`}>
 					<div className="flex flex-wrap items-start justify-between gap-3">
 						<div>
-							<div className="flex items-center gap-2 font-black text-text-main">
+							<div className="flex items-center gap-2 font-bold text-text-main">
 								{previewLoading ? (
 									<RefreshCw className="h-4 w-4 animate-spin text-primary" />
 								) : previewError || shortages.length > 0 ? (
@@ -857,7 +857,7 @@ const AllianceTargetAttackModal = ({ target, onClose }: AllianceTargetAttackModa
 								)}
 								CRA-capped formation availability
 							</div>
-							<p className="mt-1 text-xs text-text-muted">
+							<p className="mt-1 text-caption text-text-muted">
 								{preview
 									? `${preview.totalTroops.toLocaleString()} troops and ${preview.totalTools.toLocaleString()} tools after CRA caps across ${preview.appliedWaves} of ${preview.presetWaves} preset wave${preview.presetWaves === 1 ? '' : 's'}.`
 									: previewLoading
@@ -869,13 +869,13 @@ const AllianceTargetAttackModal = ({ target, onClose }: AllianceTargetAttackModa
 									: 'Choose a preset to compare it with the selected castle.'}
 							</p>
 							{preview ? (
-								<p className="mt-1.5 font-mono text-[11px] text-text-muted">
+								<p className="mt-1.5 font-mono text-caption text-text-muted">
 									Per wave: L {preview.capacity.left.toLocaleString()} · C {preview.capacity.front.toLocaleString()} · R {preview.capacity.right.toLocaleString()} · support {preview.supportCapacity.toLocaleString()} · max {preview.maximumWaves} waves
 								</p>
 							) : null}
 						</div>
 						{preset && sourceCastle ? (
-							<Badge variant={previewError ? 'danger' : previewLoading ? 'warning' : shortages.length > 0 ? 'danger' : preview ? 'success' : 'outline'} className="normal-case tracking-normal">
+							<Badge variant={previewError ? 'danger' : previewLoading ? 'warning' : shortages.length > 0 ? 'danger' : preview ? 'success' : 'outline'} className="normal-case">
 								{previewError
 									? 'Preview unavailable'
 									: previewLoading
@@ -889,7 +889,7 @@ const AllianceTargetAttackModal = ({ target, onClose }: AllianceTargetAttackModa
 					{shortages.length > 0 ? (
 						<div className="mt-3 flex flex-wrap gap-2">
 							{shortages.map((shortage) => (
-								<span key={`${shortage.kind}-${shortage.itemId}`} className="rounded-full border border-error/25 bg-bg-card/55 px-3 py-1.5 text-xs font-semibold text-error">
+								<span key={`${shortage.kind}-${shortage.itemId}`} className="rounded-full border border-error/25 bg-bg-card/55 px-3 py-1.5 text-caption font-semibold text-error">
 									{shortage.name}: {shortage.available.toLocaleString()} / {shortage.requested.toLocaleString()}
 								</span>
 							))}
@@ -903,9 +903,9 @@ const AllianceTargetAttackModal = ({ target, onClose }: AllianceTargetAttackModa
 
 const AttackMetric = ({ icon, label, value, detail }: { icon: ReactNode; label: string; value: string; detail: string }) => (
 	<div className="rounded-global border border-border-base bg-bg-card/45 p-3">
-		<div className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-wider text-text-muted">{icon}{label}</div>
-		<div className="mt-1 text-xl font-black tabular-nums text-text-main">{value}</div>
-		<div className="mt-0.5 truncate text-xs text-text-muted" title={detail}>{detail}</div>
+		<div className="flex items-center gap-1.5 text-caption font-semibold text-text-muted">{icon}{label}</div>
+		<div className="mt-1 text-title font-bold tabular-nums text-text-main">{value}</div>
+		<div className="mt-0.5 truncate text-caption text-text-muted" title={detail}>{detail}</div>
 	</div>
 );
 
@@ -924,14 +924,14 @@ const SortableHeader = ({ label, column, activeColumn, direction, onSort, width,
   const Icon = active ? (direction === 'asc' ? ArrowUp : ArrowDown) : ArrowUpDown;
   return (
     <th className={`${width} px-4 py-3 font-semibold ${align === 'right' ? 'text-right' : ''}`}>
-      <button
+      <Button variant="secondary"
         type="button"
         onClick={() => onSort(column)}
-        className={`inline-flex items-center gap-1.5 hover:text-primary ${active ? 'text-primary' : ''} ${align === 'right' ? 'ml-auto' : ''}`}
+        className={align === 'right' ? 'ml-auto' : ''}
       >
         {label}
         <Icon className="h-3.5 w-3.5" />
-      </button>
+      </Button>
     </th>
   );
 };
