@@ -1,3 +1,4 @@
+import { Button } from './ui/Button';
 import { useLocale } from '../i18n/LocaleContext';
 import React from 'react';
 import { ChevronDown, X } from 'lucide-react';
@@ -28,7 +29,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   };
 
   const renderItem = (item: (typeof NAVIGATION_ITEMS)[number]) => (
-    <button
+    <button data-button-pattern="nav"
       type="button"
       key={item.id}
       lang={message(item.labelKey).resolvedLocale}
@@ -47,7 +48,7 @@ const Sidebar: React.FC<SidebarProps> = ({
 
   return (
     <>
-    <button
+    <button data-button-pattern="nav"
       type="button"
       className={`liquid-sidebar-scrim ${open ? 'liquid-sidebar-scrim-visible' : ''}`}
       onClick={onClose}
@@ -67,14 +68,14 @@ const Sidebar: React.FC<SidebarProps> = ({
             <span>{t('navigation.commandCenter')}</span>
             <strong>{t('navigation.workspace')}</strong>
           </div>
-          <button
+          <Button iconOnly variant="ghost"
             type="button"
             className="liquid-sidebar-mobile-close"
             onClick={onClose}
             aria-label={t('navigation.close')}
           >
             <X className="h-5 w-5" />
-          </button>
+          </Button>
         </div>
         <nav className="liquid-sidebar-scroll custom-scrollbar" aria-label={t('navigation.primary')}>
           <div className="liquid-section-label">

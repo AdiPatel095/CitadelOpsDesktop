@@ -1,4 +1,5 @@
 import { Banner } from '../components/ui/Banner';
+import { Card, SectionHeader } from '../components/ui';
 import { StatusBadge } from '../components/ui/StatusBadge';
 import { useAutomationPlayerStatus } from '../settings/readiness/useAutomationPlayerStatus';
 import { automationPlayerStatus } from '../settings/readiness/playerStatus';
@@ -820,7 +821,7 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
     focusReadinessTargetWhenReady(id);
   };
   const goalButton = (
-    <Button variant="outline" size="sm" id="goal-entry" onClick={() => setGoalPickerOpen(true)} data-goal-entry>
+    <Button variant="secondary" size="sm" id="goal-entry" onClick={() => setGoalPickerOpen(true)} data-goal-entry>
       <LocalizedText messageKey="goalEntry.button" />
     </Button>
   );
@@ -840,7 +841,7 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
       ) : (
         <div className="flex flex-wrap items-center justify-between gap-2" data-goal-entry-row>
           {!anyAutomationOn ? (
-            <div className="min-w-0 text-xs" data-goal-empty>
+            <div className="min-w-0 text-caption" data-goal-empty>
               <div className="font-bold text-text-main"><LocalizedText messageKey="goalEntry.emptyTitle" /></div>
               <div className="text-text-muted"><LocalizedText messageKey="goalEntry.emptyBody" /></div>
             </div>
@@ -864,19 +865,12 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
       {goalEntry}
       <div className="automation-function-groups">
         {groupedFeatures.map((group) => {
-          const GroupIcon = group.icon;
           return (
             <section key={group.id} className="automation-function-group">
-              <div className="automation-function-group-heading">
-                <span className="automation-function-group-icon" aria-hidden="true">
-                  <GroupIcon className="h-4 w-4" />
-                </span>
-                <h2>{group.name}</h2>
-                <span className="automation-function-group-rule" aria-hidden="true" />
-                <Banner tone="info">
+              <SectionHeader title={group.name} />
+              <Banner tone="info">
                   <span><LocalizedRichText messageKey="ui.rich.views.automationView.right.click.a.toggle.for.temporary.activation.c34579ee" params={{}} tags={{strong0: children => <strong className="text-text-main">{children}</strong>}} /></span>
-                </Banner>
-              </div>
+              </Banner>
               <div className="automation-function-grid">
                 {group.features.map((feature) => {
                   const FeatureIcon = feature.icon;
@@ -884,7 +878,7 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
                   const attackLaunchCount = rateView(attackRates, feature.id, offline);
                   const dailyAttackLaunchCount = dailyView(attackRates, feature.id, offline);
                   return (
-                    <div
+                    <Card
                       key={feature.id}
                       className={`automation-function-row ${feature.enabled ? 'automation-function-row-active' : ''}`}
                     >
@@ -948,9 +942,9 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
                           buildLaneActive={feature.id === 'autoBeriWorld' ? autoBeriBuildEnabled : undefined}
                         />
                       </div>
-                      <Button
+                      <Button iconOnly
                         variant="ghost"
-                        size="icon"
+                        size="md"
                         className="automation-function-settings"
                         onClick={feature.onOpenSettings}
                         aria-label={`Open ${feature.name} settings`}
@@ -958,7 +952,7 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
                       >
                         <Settings className="h-3.5 w-3.5" />
                       </Button>
-                    </div>
+                    </Card>
                   );
                 })}
               </div>
@@ -996,7 +990,7 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
             }}
           />
 
-          <p className="text-xs leading-relaxed text-text-muted">
+          <p className="text-caption text-text-muted">
             <LocalizedText messageKey="ui.views.automationView.the.schedule.decides.when.cleanup.may.run.ec3b83b8" /></p>
           </SettingsSection>
           <SettingsSection
@@ -1007,8 +1001,8 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
           >
           <div className="flex flex-wrap items-center justify-between gap-4 rounded-global border border-primary/20 bg-primary/5 p-4">
             <div className="min-w-0">
-              <div className="text-sm font-bold text-text-main"><LocalizedText messageKey="ui.views.automationView.poll.interval.47ea8f5d" /></div>
-              <p className="mt-1 text-xs text-text-muted"><LocalizedText messageKey="ui.views.automationView.checks.equipment.storage.at.this.interval.while.1ed68fd4" /></p>
+              <div className="text-body font-semibold text-text-main"><LocalizedText messageKey="ui.views.automationView.poll.interval.47ea8f5d" /></div>
+              <p className="mt-1 text-caption text-text-muted"><LocalizedText messageKey="ui.views.automationView.checks.equipment.storage.at.this.interval.while.1ed68fd4" /></p>
             </div>
             <div className="flex items-center gap-2">
               <div className="w-20">
@@ -1022,7 +1016,7 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
                   aria-label={localizeStatic("ui.views.automationView.aria-label.equipment.cleanup.poll.interval.in.minutes.a1c6845c")}
                 />
               </div>
-              <span className="text-xs font-semibold text-text-muted"><LocalizedText messageKey="ui.views.automationView.min.1f6fa6f6" /></span>
+              <span className="text-caption font-semibold text-text-muted"><LocalizedText messageKey="ui.views.automationView.min.1f6fa6f6" /></span>
             </div>
           </div>
 

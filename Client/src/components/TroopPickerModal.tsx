@@ -1,3 +1,5 @@
+import { Button } from './ui/Button';
+import { useLocale } from '../i18n/LocaleContext';
 import { useLocale as useStaticLocale } from "../i18n/LocaleContext";
 import { LocalizedText } from "../i18n/LocalizedText";
 import React, { useState, useMemo, useCallback, useEffect, useRef } from 'react';
@@ -180,6 +182,7 @@ const VirtualizedUnitGrid: React.FC<VirtualizedUnitGridProps> = ({
   onQuantityChange,
 }) => {
   const { t: localizeStatic } = useStaticLocale();
+  const { t } = useLocale();
   const parentRef = useRef<HTMLDivElement>(null);
   const [columns, setColumns] = useState(8);
   const [gridRowEstimate, setGridRowEstimate] = useState(() => estimateGridMetrics().rowSize);
@@ -327,12 +330,12 @@ const VirtualizedUnitGrid: React.FC<VirtualizedUnitGridProps> = ({
                         </div>
                       )}
 
-                      <button
+                      <Button iconOnly aria-label={isFav ? t('ui.favorite.remove') : t('ui.favorite.add')} variant="ghost"
                         onClick={(e) => onFavoriteClick(e, unitId)}
-                        className={`picker-favorite-button ${isFav ? 'picker-favorite-button-active' : ''}`}
+                        aria-pressed={isFav}
                       >
                         <Heart className={`w-4 h-4 ${isFav ? 'fill-current' : ''}`} />
-                      </button>
+                      </Button>
 
                       {isSelected && (
                         <div className="picker-selection-indicator">
@@ -368,12 +371,12 @@ const VirtualizedUnitGrid: React.FC<VirtualizedUnitGridProps> = ({
                         </div>
 
                         <div className="picker-grid-actions">
-                          <button
+                          <Button iconOnly aria-label={isFav ? t('ui.favorite.remove') : t('ui.favorite.add')} variant="ghost"
                             onClick={(e) => onFavoriteClick(e, unitId)}
-                            className={`picker-favorite-button ${isFav ? 'picker-favorite-button-active' : ''}`}
+                            aria-pressed={isFav}
                           >
                             <Heart className={`w-4 h-4 ${isFav ? 'fill-current' : ''}`} />
-                          </button>
+                          </Button>
 
                           {isSelected && (
                             <div className="picker-selection-indicator">
@@ -670,7 +673,7 @@ const TroopPickerModal: React.FC<TroopPickerModalProps> = ({ isOpen, options, on
       filterDock={(
         <div className="picker-filter-dock">
           {stockNote ? (
-            <p className="mb-1 text-[11px] font-semibold text-warning" data-stock-observation={stockNote.reasonKey ? 'last-known' : 'observed'}>
+            <p className="mb-1 text-caption font-semibold text-warning" data-stock-observation={stockNote.reasonKey ? 'last-known' : 'observed'}>
               <LocalizedText messageKey={stockNote.messageKey} params={stockNote.params} />
               {stockNote.reasonKey ? <> · <LocalizedText messageKey={stockNote.reasonKey} /></> : null}
             </p>

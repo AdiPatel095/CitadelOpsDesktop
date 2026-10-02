@@ -100,3 +100,16 @@ export async function reportAccentUsage(page: Page, caseName: string): Promise<v
     // Reporting must never turn an otherwise passing snapshot into a failure.
   }
 }
+
+// R11 counts actions owned by the nearest region; nested cards/toolbars own their actions.
+export async function assertOnePrimaryPerRegion(page: Page): Promise<void> {
+  const offenders = await page.evaluate(() => {
+    const selector = '[data-region], [role="dialog"]';
+    return Array.from(document.querySelectorAll<HTMLElement>(selector)).flatMap(region => {
+      const primaries = Array.from(region.querySelectorAll<HTMLElement>('[data-variant="primary"]'))
+        .filter(button => button.closest(selector) === region && button.getClientRects().length > 0 && getComputedStyle(button).visibility !== 'hidden');
+      return primaries.length > 1 ? [{ region: region.getAttribute('data-region') ?? 'dialog', id: region.id, actions: primaries.map(button => button.getAttribute('aria-label') ?? button.textContent?.trim()) }] : [];
+    });
+  });
+  if (offenders.length) throw new Error(`R11: multiple primary actions per region: ${JSON.stringify(offenders)}`);
+}

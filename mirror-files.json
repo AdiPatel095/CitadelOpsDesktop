@@ -13,6 +13,10 @@
       "desktop": "Client/playwright.gate.config.ts"
     },
     {
+      "portal": "scripts/check-raw-buttons.mjs",
+      "desktop": "Client/scripts/check-raw-buttons.mjs"
+    },
+    {
       "portal": "scripts/check-retired-classes.mjs",
       "desktop": "Client/scripts/check-retired-classes.mjs"
     },
@@ -253,6 +257,14 @@
       "desktop": "Client/src/components/ui/Banner.tsx"
     },
     {
+      "portal": "src/commandCenter/components/ui/Button.tsx",
+      "desktop": "Client/src/components/ui/Button.tsx"
+    },
+    {
+      "portal": "src/commandCenter/components/ui/Card.css",
+      "desktop": "Client/src/components/ui/Card.css"
+    },
+    {
       "portal": "src/commandCenter/components/ui/Card.tsx",
       "desktop": "Client/src/components/ui/Card.tsx"
     },
@@ -289,8 +301,16 @@
       "desktop": "Client/src/components/ui/ModalTitle.tsx"
     },
     {
+      "portal": "src/commandCenter/components/ui/OverflowMenu.tsx",
+      "desktop": "Client/src/components/ui/OverflowMenu.tsx"
+    },
+    {
       "portal": "src/commandCenter/components/ui/PageHeader.tsx",
       "desktop": "Client/src/components/ui/PageHeader.tsx"
+    },
+    {
+      "portal": "src/commandCenter/components/ui/Panel.tsx",
+      "desktop": "Client/src/components/ui/Panel.tsx"
     },
     {
       "portal": "src/commandCenter/components/ui/PillSelector.tsx",
@@ -311,6 +331,10 @@
     {
       "portal": "src/commandCenter/components/ui/SectionCard.tsx",
       "desktop": "Client/src/components/ui/SectionCard.tsx"
+    },
+    {
+      "portal": "src/commandCenter/components/ui/SectionHeader.tsx",
+      "desktop": "Client/src/components/ui/SectionHeader.tsx"
     },
     {
       "portal": "src/commandCenter/components/ui/SettingsModal.tsx",
@@ -341,6 +365,10 @@
       "desktop": "Client/src/components/ui/banner.css"
     },
     {
+      "portal": "src/commandCenter/components/ui/button.css",
+      "desktop": "Client/src/components/ui/button.css"
+    },
+    {
       "portal": "src/commandCenter/components/ui/delta.css",
       "desktop": "Client/src/components/ui/delta.css"
     },
@@ -351,6 +379,10 @@
     {
       "portal": "src/commandCenter/components/ui/index.ts",
       "desktop": "Client/src/components/ui/index.ts"
+    },
+    {
+      "portal": "src/commandCenter/components/ui/overflow-menu.css",
+      "desktop": "Client/src/components/ui/overflow-menu.css"
     },
     {
       "portal": "src/commandCenter/components/ui/switch.css",
@@ -377,6 +409,10 @@
       "desktop": "Client/src/config/UnitPickerStorage.ts"
     },
     {
+      "portal": "src/commandCenter/config/viewNavigation.ts",
+      "desktop": "Client/src/config/viewNavigation.ts"
+    },
+    {
       "portal": "src/commandCenter/configuration/PresetDocumentUpdate.ts",
       "desktop": "Client/src/configuration/PresetDocumentUpdate.ts"
     },
@@ -397,8 +433,20 @@
       "desktop": "Client/src/dashboard/components/BarracksQueueSlot.tsx"
     },
     {
+      "portal": "src/commandCenter/dashboard/components/CastleOverviewCard.css",
+      "desktop": "Client/src/dashboard/components/CastleOverviewCard.css"
+    },
+    {
+      "portal": "src/commandCenter/dashboard/components/CastleOverviewCard.tsx",
+      "desktop": "Client/src/dashboard/components/CastleOverviewCard.tsx"
+    },
+    {
       "portal": "src/commandCenter/dashboard/components/CastleUnitCard.tsx",
       "desktop": "Client/src/dashboard/components/CastleUnitCard.tsx"
+    },
+    {
+      "portal": "src/commandCenter/dashboard/components/CastleView.tsx",
+      "desktop": "Client/src/dashboard/components/CastleView.tsx"
     },
     {
       "portal": "src/commandCenter/dashboard/components/CraftingQueueSlot.tsx",
@@ -1237,8 +1285,16 @@
       "desktop": "Client/src/styles/fonts.css"
     },
     {
+      "portal": "src/commandCenter/styles/tokens-app.css",
+      "desktop": "Client/src/styles/tokens-app.css"
+    },
+    {
       "portal": "src/commandCenter/styles/tokens.css",
       "desktop": "Client/src/styles/tokens.css"
+    },
+    {
+      "portal": "src/commandCenter/styles/typography.css",
+      "desktop": "Client/src/styles/typography.css"
     },
     {
       "portal": "src/commandCenter/utils/UpgradeCoinReserve.ts",
@@ -1267,6 +1323,14 @@
     {
       "portal": "src/commandCenter/worldIntelligence/useServerLabel.ts",
       "desktop": "Client/src/worldIntelligence/useServerLabel.ts"
+    },
+    {
+      "portal": "tests/card-anatomy.test.mjs",
+      "desktop": "Client/tests/card-anatomy.test.mjs"
+    },
+    {
+      "portal": "tests/check-raw-buttons.test.mjs",
+      "desktop": "Client/tests/check-raw-buttons.test.mjs"
     },
     {
       "portal": "tests/check-retired-classes.test.mjs",
@@ -1319,6 +1383,10 @@
     {
       "portal": "tests/visual-rules/rules.fixture.spec.ts",
       "desktop": "Client/tests/visual-rules/rules.fixture.spec.ts"
+    },
+    {
+      "portal": "tests/visual/cardAnatomy.ts",
+      "desktop": "Client/tests/visual/cardAnatomy.ts"
     },
     {
       "portal": "tests/visual/rules.ts",

@@ -300,7 +300,7 @@ const RiftAttackTemplate: React.FC = () => {
       <SectionCard
         variant="solid"
         title={localizeStatic("ui.rift.components.riftAttackTemplate.title.captured.rift.attacks.8988972c")}
-        titleClassName="text-lg text-primary"
+        titleClassName="text-title-sm text-primary"
         description={(
           <>
             Name templates for quick recognition. Feather travel time from the last successful launch sets the earliest
@@ -322,7 +322,7 @@ const RiftAttackTemplate: React.FC = () => {
         actions={<div className="flex flex-col items-stretch gap-2 sm:flex-row sm:items-end lg:shrink-0">
           {launches.length > 0 ? (
             <div className="min-w-0 md:min-w-[13rem]">
-              <p className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-text-muted">
+              <p className="mb-1 text-caption font-semibold text-text-muted">
                 <LocalizedText messageKey="ui.rift.components.riftAttackTemplate.replay.commander.bab0c811" /></p>
               <Select
                 value={commanderMode}
@@ -331,7 +331,7 @@ const RiftAttackTemplate: React.FC = () => {
                 disabled={activeActionId != null}
                 icon={<Users className="h-3.5 w-3.5" />}
               />
-              <p className="mt-1 text-[10px] text-text-muted">
+              <p className="mt-1 text-caption text-text-muted">
                 {commanderMode === 'any'
                   ? `${freeCommanderCount} free now · checked again at launch`
                   : 'Reuses the commander stored in each template'}
@@ -366,9 +366,9 @@ const RiftAttackTemplate: React.FC = () => {
           />
         ) : (
           <div className="overflow-x-auto rounded-lg border border-border-base">
-            <table className="w-full min-w-[56rem] text-sm">
+            <table className="w-full min-w-[56rem] text-body">
               <thead>
-                <tr className="border-b border-border-base bg-bg-card/50 text-left text-[10px] uppercase tracking-wider text-text-muted">
+                <tr className="border-b border-border-base bg-bg-card/50 text-left text-caption text-text-muted">
                   <th className="px-3 py-2 font-semibold"><LocalizedText messageKey="ui.rift.components.riftAttackTemplate.name.dcd1d522" /></th>
                   <th className="px-3 py-2 font-semibold"><LocalizedText messageKey="game.commander" /></th>
                   <th className="px-3 py-2 font-semibold"><LocalizedText messageKey="ui.rift.components.riftAttackTemplate.layout.a5119091" /></th>
@@ -430,7 +430,7 @@ const RiftAttackTemplate: React.FC = () => {
                               }
                             }}
                             placeholder={riftLaunchLabel(entry)}
-                            className="h-8 text-sm"
+                            className="h-8 text-body"
                             autoFocus
                             maxLength={80}
                             disabled={activeActionId != null}
@@ -443,26 +443,26 @@ const RiftAttackTemplate: React.FC = () => {
                             >
                               {label}
                             </span>
-                            <button
+                            <Button iconOnly variant="ghost"
                               type="button"
                               onClick={() => startRename(entry)}
                               disabled={activeActionId != null}
-                              className="shrink-0 p-1 rounded-md text-text-muted hover:text-primary hover:bg-bg-card-hover disabled:cursor-not-allowed disabled:opacity-40"
+                              className="shrink-0"
                               title={localizeStatic("ui.rift.components.riftAttackTemplate.title.rename.template.91f36a22")}
                               aria-label={`Rename ${label}`}
                             >
                               <Pencil className="w-3.5 h-3.5" />
-                            </button>
-                            <button
+                            </Button>
+                            <Button leftIcon={<Trash2 className="w-3.5 h-3.5" />} variant="danger"
                               type="button"
                               onClick={() => handleDelete(entry)}
                               disabled={activeActionId != null}
-                              className="shrink-0 p-1 rounded-md text-text-muted hover:text-error hover:bg-error/10 disabled:cursor-not-allowed disabled:opacity-40"
+                              className="shrink-0"
                               title={localizeStatic("ui.rift.components.riftAttackTemplate.title.delete.template.da9a9b35")}
                               aria-label={`Delete ${label}`}
                             >
-                              <Trash2 className="w-3.5 h-3.5" />
-                            </button>
+
+                            </Button>
                           </div>
                         )}
                       </td>
@@ -470,12 +470,12 @@ const RiftAttackTemplate: React.FC = () => {
                         <div className="font-mono">LID {entry.commanderID ?? '—'}</div>
                         <Badge
                           variant={commanderStatusMeta.variant}
-                          className="mt-1 normal-case tracking-normal"
+                          className="mt-1 normal-case"
                         >
                           {commanderStatusMeta.label}
                         </Badge>
                         {commanderMode === 'any' ? (
-                          <p className="mt-1 text-[10px] text-text-muted"><LocalizedText messageKey="ui.rift.components.riftAttackTemplate.any.available.overrides.this.lid.384fdbeb" /></p>
+                          <p className="mt-1 text-caption text-text-muted"><LocalizedText messageKey="ui.rift.components.riftAttackTemplate.any.available.overrides.this.lid.384fdbeb" /></p>
                         ) : null}
                       </td>
                       <td className="px-3 py-3 text-text-main">
@@ -483,7 +483,7 @@ const RiftAttackTemplate: React.FC = () => {
                         {entry.useTravelFeather ? (
                           <span className="text-text-muted"> <LocalizedText messageKey="ui.rift.components.riftAttackTemplate.feather.186c0d4d" /></span>
                         ) : null}
-                        <p className="text-xs font-mono text-text-muted mt-0.5">
+                        <p className="text-caption font-mono text-text-muted mt-0.5">
                           {formatCoords(entry.sourceX, entry.sourceY)} → {formatCoords(entry.targetX, entry.targetY)}
                         </p>
                       </td>
@@ -491,7 +491,7 @@ const RiftAttackTemplate: React.FC = () => {
                         {entry.oneWayTTSeconds != null && entry.oneWayTTSeconds > 0 ? (
                           <span className="font-mono">{formatTravelDuration(entry.oneWayTTSeconds)}</span>
                         ) : (
-                          <span className="text-xs"><LocalizedText messageKey="ui.rift.components.riftAttackTemplate.pending.success.4212c79b" /></span>
+                          <span className="text-caption"><LocalizedText messageKey="ui.rift.components.riftAttackTemplate.pending.success.4212c79b" /></span>
                         )}
                       </td>
                       <td className="px-3 py-3 text-text-muted whitespace-nowrap">

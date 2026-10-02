@@ -1,3 +1,4 @@
+import { Button } from './ui/Button';
 import { useLocale as useStaticLocale } from "../i18n/LocaleContext";
 import { LocalizedText } from "../i18n/LocalizedText";
 import React, { useCallback, useId, useLayoutEffect, useMemo, useRef, useState } from 'react';
@@ -164,14 +165,14 @@ const AutoBirdHoverPopover: React.FC<AutoBirdHoverPopoverProps> = ({
 				maxHeight: position.maxHeight,
 				zIndex: 460,
 			}}
-			className="flex flex-col overflow-hidden rounded-global border border-border-base bg-bg-card text-left text-xs text-text-main shadow-2xl shadow-black/30"
+			className="flex flex-col overflow-hidden rounded-global border border-border-base bg-bg-card text-left text-caption text-text-main shadow-2xl shadow-black/30"
 		>
 			<div className="flex shrink-0 items-start justify-between gap-3 border-b border-border-base px-3.5 py-3">
 				<div>
 					<div className="font-bold text-text-main"><LocalizedText messageKey="ui.components.autoBirdHoverPopover.auto.bird.cycles.6ee33c86" /></div>
-					<div className="mt-0.5 text-[11px] text-text-muted"><LocalizedText messageKey="ui.components.autoBirdHoverPopover.every.owned.castle.s.next.troop.return.10ce7290" /></div>
+					<div className="mt-0.5 text-caption text-text-muted"><LocalizedText messageKey="ui.components.autoBirdHoverPopover.every.owned.castle.s.next.troop.return.10ce7290" /></div>
 				</div>
-				<span className={`shrink-0 rounded-full border px-2 py-0.5 text-[10px] font-semibold ${
+				<span className={`shrink-0 rounded-full border px-2 py-0.5 text-caption font-semibold ${
 					enabled
 						? 'border-success/35 bg-success/10 text-success'
 						: 'border-error/35 bg-error/10 text-error'
@@ -193,7 +194,7 @@ const AutoBirdHoverPopover: React.FC<AutoBirdHoverPopoverProps> = ({
 									key={cycle.castleId}
 									className="flex items-center justify-between gap-3 rounded-global border border-transparent px-2 py-2 hover:border-border-base hover:bg-bg-tertiary/60"
 								>
-									<button type="button"
+									<button data-button-pattern="tile" type="button"
  disabled={!canControl || pending !== null}
  aria-pressed={!!paused}
  aria-label={`${cycle.castleName}: ${paused ? 'resume' : 'pause'} Auto Bird`}
@@ -205,9 +206,9 @@ const AutoBirdHoverPopover: React.FC<AutoBirdHoverPopoverProps> = ({
 										<span className={`h-2 w-2 shrink-0 rounded-full ${paused ? 'bg-warning' : active ? 'bg-success shadow-[0_0_8px_var(--color-success)]' : 'bg-text-muted/35'}`} />
 										<div className="min-w-0">
 											<div className="truncate font-semibold text-text-main">{cycle.castleName}</div>
-											<div className="truncate text-[10px] text-text-muted">{kingdomName(cycle.kingdomId)}</div>
+											<div className="truncate text-caption text-text-muted">{kingdomName(cycle.kingdomId)}</div>
 											{cycle.statusDetail && (
-												<div className="mt-0.5 max-w-[205px] truncate text-[10px] text-text-muted" title={cycle.statusDetail}>
+												<div className="mt-0.5 max-w-[205px] truncate text-caption text-text-muted" title={cycle.statusDetail}>
 													{cycle.statusDetail}
 												</div>
 											)}
@@ -218,19 +219,19 @@ const AutoBirdHoverPopover: React.FC<AutoBirdHoverPopoverProps> = ({
 											{paused ? (cycle.pausedUntilMs ? `Paused ${formatBirdCycle(cycle.pausedUntilMs - now)}` : 'Paused') : cycle.rescanRequested ? 'Rescan queued' : active ? formatBirdCycle(cycle.nextCycleAtMs - now) : cyclePhaseLabel(cycle)}
 										</div>
 										{active && (
-											<div className="mt-0.5 text-[10px] text-text-muted">
+											<div className="mt-0.5 text-caption text-text-muted">
 												Return {new Date(cycle.nextCycleAtMs).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}
 											</div>
 										)}
 										{cycle.travelSeconds != null && cycle.travelSeconds > 0 && (
-											<div className="mt-0.5 text-[10px] text-text-muted">
+											<div className="mt-0.5 text-caption text-text-muted">
 												{formatBirdCycle(cycle.travelSeconds * 1000)} travel
 											</div>
 										)}
 									</div>
          <div className="flex flex-col gap-1">
-          <button type="button" disabled={!canControl || pending !== null} title={`Pause ${cycle.castleName} for a duration`} aria-label={`Timed pause for ${cycle.castleName}`} className="rounded p-1 text-text-muted hover:text-primary disabled:opacity-40" onClick={() => setDurationCastle(cycle)}><Timer size={13} /></button>
-          <button type="button" disabled={!canControl || pending !== null || !!paused || !enabled} title={`Resend from ${cycle.castleName}: clear this cycle and scan fresh troops and a target`} aria-label={`Resend bird from ${cycle.castleName}`} className="rounded p-1 text-text-muted hover:text-primary disabled:opacity-40" onClick={() => { void controlCastle(cycle.castleId, 'resend').catch(() => {}); }}><RotateCw size={13} className={pending === cycle.castleId ? 'animate-spin' : ''} /></button>
+          <Button iconOnly variant="ghost" type="button" disabled={!canControl || pending !== null} title={`Pause ${cycle.castleName} for a duration`} aria-label={`Timed pause for ${cycle.castleName}`}  onClick={() => setDurationCastle(cycle)}><Timer size={13} /></Button>
+          <Button iconOnly variant="ghost" type="button" disabled={!canControl || pending !== null || !!paused || !enabled} title={`Resend from ${cycle.castleName}: clear this cycle and scan fresh troops and a target`} aria-label={`Resend bird from ${cycle.castleName}`}  onClick={() => { void controlCastle(cycle.castleId, 'resend').catch(() => {}); }}><RotateCw size={13} className={pending === cycle.castleId ? 'animate-spin' : ''} /></Button>
          </div>
         </li>
 							);
@@ -240,7 +241,7 @@ const AutoBirdHoverPopover: React.FC<AutoBirdHoverPopoverProps> = ({
 			</div>
 
 			{feedback ? <div className="custom-scrollbar max-h-40 shrink-0 overflow-y-auto border-t border-border-base px-3.5 py-2" data-popover-feedback="autoBird">{feedback}</div> : null}
-			<div className="shrink-0 border-t border-border-base px-3.5 py-2 text-[10px] text-text-muted">
+			<div className="shrink-0 border-t border-border-base px-3.5 py-2 text-caption text-text-muted">
 				Click a castle to pause or resume. Right-click or use the timer for a timed pause. Resend scans fresh troops and a target. Birds already away continue their journey.
     {error && <div role="alert" className="mt-1 text-error">{error}</div>}
     <div className="mt-1">{hint}</div>

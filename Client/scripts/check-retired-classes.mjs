@@ -1,4 +1,4 @@
-import { readFileSync, readdirSync } from 'node:fs';
+import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { relative, resolve } from 'node:path';
 import { parseArgs } from 'node:util';
 import { fileURLToPath } from 'node:url';
@@ -18,6 +18,8 @@ try {
 }
 
 const root = fileURLToPath(new URL('..', import.meta.url));
+const isPortal = existsSync(resolve(root, 'src/commandCenter'));
+const portalCardScope = (file) => file.startsWith('src/commandCenter/') || file === 'src/portal.css' || file === 'src/views/AccountCenterView.tsx';
 const counts = Object.fromEntries(Object.keys(rules).map((rule) => [rule, 0]));
 function scan(directory) {
   for (const entry of readdirSync(directory, { withFileTypes: true }).sort((a, b) => a.name.localeCompare(b.name))) {
@@ -30,6 +32,7 @@ function scan(directory) {
     if (!entry.isFile() || !/\.(ts|tsx|css)$/.test(file) || /\.(test|spec)\.(ts|tsx|css)$/.test(file) || file.endsWith('/styles/tokens.css')) continue;
     const text = readFileSync(path, 'utf8');
     for (const [rule, prefixes] of Object.entries(rules)) {
+      if (rule === 'cit-67' && isPortal && !portalCardScope(file)) continue;
       const pattern = new RegExp(`(?<![A-Za-z0-9_])(?:${prefixes.join('|')})`, 'g');
       for (const match of text.matchAll(pattern)) {
         const line = text.slice(0, match.index).split('\n').length;

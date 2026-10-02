@@ -1,3 +1,4 @@
+import { Button } from '../../components/ui/Button';
 import { useServerLabel } from '../useServerLabel';
 import { useLocale as useStaticLocale } from "../../i18n/LocaleContext";
 import { LocalizedText } from "../../i18n/LocalizedText";
@@ -179,9 +180,9 @@ const WorldIntelligenceView = () => {
 					<DetailBackButton label={localizeStatic("ui.worldIntelligence.components.worldIntelligenceView.label.back.to.world.intelligence.3f33ab67")} onClick={closeProfile} className="shadow-lg backdrop-blur" />
 				</nav>
 				{error && (
-					<div className="flex items-start justify-between gap-3 rounded-global border border-error/30 bg-error/10 px-4 py-3 text-sm text-error" role="alert">
+					<div className="flex items-start justify-between gap-3 rounded-global border border-error/30 bg-error/10 px-4 py-3 text-body text-error" role="alert">
 						<span>{error}</span>
-						<button type="button" aria-label={localizeStatic("ui.worldIntelligence.components.worldIntelligenceView.aria-label.dismiss.error.2db04667")} onClick={() => setError('')}><X className="h-4 w-4" /></button>
+						<Button iconOnly variant="ghost" type="button" aria-label={localizeStatic("ui.worldIntelligence.components.worldIntelligenceView.aria-label.dismiss.error.2db04667")} onClick={() => setError('')}><X className="h-4 w-4" /></Button>
 					</div>
 				)}
 				{profileLoading ? (
@@ -192,7 +193,7 @@ const WorldIntelligenceView = () => {
 							description={localizeStatic('copy.loadingHistory', { server: displayWorld(selected.worldId) })}
 							icon={selected.type === 'player' ? <UserRound className="h-6 w-6" /> : <Users className="h-6 w-6" />}
 						/>
-						<Card><CardContent className="flex min-h-72 items-center justify-center text-sm text-text-muted"><LocalizedText messageKey="ui.worldIntelligence.components.worldIntelligenceView.loading.public.history.a3292dbc" /></CardContent></Card>
+						<Card><CardContent className="flex min-h-72 items-center justify-center text-body text-text-muted"><LocalizedText messageKey="ui.worldIntelligence.components.worldIntelligenceView.loading.public.history.a3292dbc" /></CardContent></Card>
 					</>
 					) : playerProfile ? (
 						<>
@@ -226,9 +227,9 @@ const WorldIntelligenceView = () => {
 	return (
 		<div className="flex flex-col gap-6 pb-8">
 			{error && (
-				<div className="flex items-start justify-between gap-3 rounded-global border border-error/30 bg-error/10 px-4 py-3 text-sm text-error" role="alert">
+				<div className="flex items-start justify-between gap-3 rounded-global border border-error/30 bg-error/10 px-4 py-3 text-body text-error" role="alert">
 					<span>{error}</span>
-					<button type="button" aria-label={localizeStatic("ui.worldIntelligence.components.worldIntelligenceView.aria-label.dismiss.error.2db04667")} onClick={() => setError('')}><X className="h-4 w-4" /></button>
+					<Button iconOnly variant="ghost" type="button" aria-label={localizeStatic("ui.worldIntelligence.components.worldIntelligenceView.aria-label.dismiss.error.2db04667")} onClick={() => setError('')}><X className="h-4 w-4" /></Button>
 				</div>
 			)}
 

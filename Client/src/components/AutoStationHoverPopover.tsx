@@ -77,11 +77,11 @@ const AutoStationHoverPopover: React.FC<{ feedback: React.ReactNode; children: R
       onMouseEnter={clearHideTimer}
       onMouseLeave={scheduleHide}
       style={{ position: 'fixed', top: position.top, left: position.left, width: position.width, maxHeight: position.maxHeight, zIndex: 460 }}
-      className="flex flex-col overflow-hidden rounded-global border border-border-base bg-bg-card text-left text-xs text-text-main shadow-2xl shadow-black/30"
+      className="flex flex-col overflow-hidden rounded-global border border-border-base bg-bg-card text-left text-caption text-text-main shadow-2xl shadow-black/30"
     >
       <div className="shrink-0 border-b border-border-base px-3.5 py-3">
         <div className="font-bold text-text-main"><LocalizedText messageKey="automationPopover.station.title" /></div>
-        <div className="mt-0.5 text-[11px] text-text-muted"><LocalizedText messageKey="automationPopover.station.detail" /></div>
+        <div className="mt-0.5 text-caption text-text-muted"><LocalizedText messageKey="automationPopover.station.detail" /></div>
       </div>
       <div className="custom-scrollbar min-h-0 flex-1 overflow-y-auto px-3.5 py-2" data-popover-feedback="autoStation">{feedback}</div>
     </div>,

@@ -28,7 +28,7 @@ export function ChoiceChipGroup<T extends ChoiceChipValue>({
   size = 'md',
   className = '',
 }: ChoiceChipGroupProps<T>) {
-  const sizeClass = size === 'sm' ? 'px-2.5 py-1 text-[11px]' : 'px-3 py-1.5 text-xs';
+  const sizeClass = size === 'sm' ? 'px-2.5 py-1 text-caption' : 'px-3 py-1.5 text-caption';
 
   return (
     <div className={`flex flex-wrap gap-2 ${className}`} role="group" aria-label={ariaLabel}>

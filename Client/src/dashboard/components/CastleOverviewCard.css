@@ -1,0 +1,20 @@
+@layer components {
+    .castle-overview-content { display: grid; gap: var(--space-24); font-variant-numeric: tabular-nums; }
+    .castle-overview-content h3 { font-size: var(--font-size-14); line-height: var(--line-height-14); margin-block-end: var(--space-12); }
+    .castle-overview-resources { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 14rem), 1fr)); gap: var(--space-16); }
+    .castle-overview-resource-label { display: flex; align-items: center; gap: var(--space-8); font-size: var(--font-size-14); line-height: var(--line-height-14); }
+    .castle-overview-resource-label img { width: var(--space-24); height: var(--space-24); object-fit: contain; }
+    .castle-overview-resource-label > span:last-child { margin-inline-start: auto; }
+    .castle-overview-storage { margin-block-start: var(--space-8); height: var(--space-8); border-radius: var(--radius-full); background: var(--surface-control); overflow: hidden; }
+    .castle-overview-storage > span { display: block; height: 100%; background: var(--text-secondary); }
+    .castle-overview-storage[data-near-cap="true"] > span { background: var(--status-warning); }
+    .castle-overview-warning { display: inline-flex; align-items: center; gap: var(--space-4); color: var(--status-warning); font-size: var(--font-size-12); line-height: var(--line-height-12); }
+    .castle-overview-warning svg { width: var(--space-16); height: var(--space-16); }
+    .castle-overview-production { color: var(--text-primary); }
+    .castle-overview-production[data-consuming="true"] { color: var(--status-danger); }
+    .castle-overview-troops { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 8rem), 1fr)); gap: var(--space-12); }
+    .castle-overview-saved { padding: var(--space-12); border: 1px solid var(--status-neutral-border); border-radius: var(--radius-lg); background: var(--status-neutral-bg); font-size: var(--font-size-14); line-height: var(--line-height-14); }
+    .castle-overview-muted { color: var(--text-muted); font-size: var(--font-size-14); line-height: var(--line-height-14); }
+    .castle-overview-automations { display: grid; gap: var(--space-12); list-style: none; padding: 0; }
+    .castle-overview-automation { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--space-8) var(--space-16); font-size: var(--font-size-14); line-height: var(--line-height-14); }
+}

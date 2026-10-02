@@ -1,3 +1,4 @@
+import { Button } from './ui/Button';
 import { parseMessageDescriptor } from '../i18n/messageDescriptor';
 import { useLocalizedMessages } from '../i18n/useLocalizedMessages';
 import { messageLanguageAttributes } from '../i18n/messageLanguage';
@@ -53,31 +54,31 @@ const AlertItem = ({ alert }: { alert: VisibleNotification }) => {
       }}
     >
       <div className="mt-0.5 shrink-0">{style.icon}</div>
-      <div className={`flex min-w-0 flex-1 flex-col gap-2 text-sm ${style.text} ${hasLines ? 'max-h-[min(70vh,28rem)] overflow-y-auto pr-1' : ''}`}>
+      <div className={`flex min-w-0 flex-1 flex-col gap-2 text-body ${style.text} ${hasLines ? 'max-h-[min(70vh,28rem)] overflow-y-auto pr-1' : ''}`}>
         <div className="leading-snug" {...messageLanguageAttributes(localized[0])}>{localized[0].text}</div>
         {hasLines && (
-          <ul className={`mt-0.5 list-inside list-disc space-y-1.5 pl-0.5 text-[13px] font-normal ${style.list}`}>
+          <ul className={`mt-0.5 list-inside list-disc space-y-1.5 pl-0.5 text-body-sm font-normal ${style.list}`}>
             {alert.lines?.map((line, index) => <li key={`${line}-${index}`} {...messageLanguageAttributes(localized[index+1])}>{localized[index+1].text}</li>)}
           </ul>
         )}
         {alert.action && (
-          <button
+          <Button variant="secondary"
             type="button"
             onClick={alert.action.onClick}
-            className={`self-start rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors ${style.border} hover:bg-white/10`}
+            className="self-start"
           >
             <span {...messageLanguageAttributes(localized[localized.length-1])}>{localized[localized.length-1].text}</span>
-          </button>
+          </Button>
         )}
       </div>
-      <button
+      <Button iconOnly variant="ghost"
         type="button"
         onClick={handleDismiss}
-        className={`shrink-0 rounded-lg p-1 opacity-70 transition-colors hover:bg-white/10 hover:opacity-100 ${style.text}`}
+        className="shrink-0"
         aria-label={localizeStatic("ui.components.alerts.aria-label.dismiss.48845bff")}
       >
         <Icons.X className="h-4 w-4" />
-      </button>
+      </Button>
     </div>
   );
 };

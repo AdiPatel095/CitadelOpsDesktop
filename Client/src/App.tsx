@@ -1,3 +1,5 @@
+import { OPEN_VIEW_EVENT } from './config/viewNavigation';
+import { NAVIGATION_ITEMS } from './config/Navigation';
 import { useLocale } from './i18n/LocaleContext';
 import { ConnectionRepairHost } from './components/ConnectionRepairHost';
 import React, { lazy, Suspense, useEffect, useRef, useState, type ComponentType } from 'react';
@@ -112,6 +114,15 @@ const WorkspaceFallback = () => {
 
 const AppContent: React.FC = () => {
   const [activeView, setActiveView] = useState<ViewId>('castle');
+  useEffect(() => {
+    const openView = (event: Event) => {
+      const view: unknown = (event as CustomEvent<unknown>).detail;
+      if (NAVIGATION_ITEMS.some(item => item.id === view)) setActiveView(view as ViewId);
+    };
+    window.addEventListener(OPEN_VIEW_EVENT, openView);
+    return () => window.removeEventListener(OPEN_VIEW_EVENT, openView);
+  }, []);
+
   const [navigationOpen, setNavigationOpen] = useState(false);
   const [activeSettingsModal, setActiveSettingsModal] = useState<SettingsModalId | null>(null);
   const [scheduleTarget, setScheduleTarget] = useState<{ id: string; label: string } | null>(null);

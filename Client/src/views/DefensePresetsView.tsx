@@ -23,6 +23,7 @@ import {
   Button,
   Card,
   CardContent,
+  CardHeader,
   CollectionToolbar,
   EmptyState,
   MetricTile,
@@ -287,11 +288,11 @@ const DefensePresetsView: React.FC = () => {
               {document.presets.length} preset{document.presets.length === 1 ? '' : 's'}
             </Badge>
             {appCreatedCount > 0 ? (
-              <Badge variant="secondary" className="normal-case tracking-normal">
+              <Badge variant="secondary" className="normal-case">
                 <LocalizedText messageKey="attackPresets.appCreatedCount" params={{ count: appCreatedCount }} />
               </Badge>
             ) : null}
-            <Badge variant="outline" className="normal-case tracking-normal"><LocalizedText messageKey="ui.views.defensePresetsView.stored.by.citadelops.9f046c26" /></Badge>
+            <Badge variant="outline" className="normal-case"><LocalizedText messageKey="ui.views.defensePresetsView.stored.by.citadelops.9f046c26" /></Badge>
           </>
         )}
         actions={(
@@ -312,7 +313,7 @@ const DefensePresetsView: React.FC = () => {
               className="w-44 2xl:w-52"
             />
             <Button
-              variant="outline"
+              variant="secondary"
               isLoading={refreshing}
               disabled={!selectedCastle || applyingID != null}
               leftIcon={<RefreshCw className="h-4 w-4" />}
@@ -332,7 +333,7 @@ const DefensePresetsView: React.FC = () => {
             >
               <span className="hidden 2xl:inline"><LocalizedText messageKey="ui.views.defensePresetsView.capture.current.135de533" /></span>
             </Button>
-            <Button
+            <Button variant="ghost"
               leftIcon={<Plus className="h-4 w-4" />}
               title={localizeStatic("ui.views.defensePresetsView.title.create.a.defense.preset.974c17bd")}
               aria-label={localizeStatic("ui.views.defensePresetsView.aria-label.new.defense.preset.9f767a74")}
@@ -376,7 +377,7 @@ const DefensePresetsView: React.FC = () => {
             ? 'Try a different preset or source-castle name.'
             : 'Build one manually without live defense state, or refresh a castle and capture its current setup as a starting point.'}
           action={!query.trim() ? (
-            <Button leftIcon={<Plus className="h-4 w-4" />} onClick={() => setEditor({ presetID: null, draft: emptyDefensePresetDraft() })}>
+            <Button variant="secondary" leftIcon={<Plus className="h-4 w-4" />} onClick={() => setEditor({ presetID: null, draft: emptyDefensePresetDraft() })}>
               <LocalizedText messageKey="ui.views.defensePresetsView.create.preset.6d72507d" /></Button>
           ) : undefined}
         />
@@ -416,26 +417,26 @@ const PresetCard: React.FC<{
   const { t: localizeStatic } = useStaticLocale();
   const summary = summarizeDefensePreset(preset);
   return (
-    <Card variant="solid" className="liquid-prominent-header-card overflow-hidden">
-      <div className="flex flex-wrap items-start justify-between gap-3 border-b border-border-base bg-bg-card/45 px-5 py-4">
+    <Card variant="solid" className="overflow-hidden">
+      <CardHeader className="flex-wrap items-start gap-3">
         <div className="min-w-0">
           <div className="flex items-center gap-2">
             <Shield className="h-4 w-4 shrink-0 text-primary" />
-            <h2 className="truncate text-base font-black text-text-main">{preset.name}</h2>
+            <h2 className="truncate text-title-sm font-bold text-text-main">{preset.name}</h2>
             {preset.app ? appCreatedPresetBadge() : null}
           </div>
-          <p className="mt-1 text-xs text-text-muted">
+          <p className="mt-1 text-caption text-text-muted">
             Updated {formatUpdatedAt(preset.updatedAt)}
             {preset.sourceCastleName ? ` · captured from ${preset.sourceCastleName}` : ''}
           </p>
-          {ownershipLine ? <p className="mt-1 text-xs text-text-muted">{ownershipLine}</p> : null}
+          {ownershipLine ? <p className="mt-1 text-caption text-text-muted">{ownershipLine}</p> : null}
         </div>
         <div className="flex items-center gap-1">
-          <Button variant="ghost" size="icon" disabled={busy} onClick={onEdit} title={localizeStatic("ui.views.defensePresetsView.title.edit.preset.d36585b9")}><Edit3 className="h-4 w-4" /></Button>
-          <Button variant="ghost" size="icon" disabled={busy} onClick={onDuplicate} title={localizeStatic("ui.views.defensePresetsView.title.duplicate.preset.a5c8c827")}><Copy className="h-4 w-4" /></Button>
-          <Button variant="ghost" size="icon" disabled={busy} onClick={onDelete} title={localizeStatic("ui.views.defensePresetsView.title.delete.preset.f307af85")} className="hover:!text-error"><Trash2 className="h-4 w-4" /></Button>
+          <Button aria-label={localizeStatic("ui.views.defensePresetsView.title.edit.preset.d36585b9")} iconOnly variant="ghost" size="md" disabled={busy} onClick={onEdit} title={localizeStatic("ui.views.defensePresetsView.title.edit.preset.d36585b9")}><Edit3 className="h-4 w-4" /></Button>
+          <Button aria-label={localizeStatic("ui.views.defensePresetsView.title.duplicate.preset.a5c8c827")} iconOnly variant="ghost" size="md" disabled={busy} onClick={onDuplicate} title={localizeStatic("ui.views.defensePresetsView.title.duplicate.preset.a5c8c827")}><Copy className="h-4 w-4" /></Button>
+          <Button aria-label={localizeStatic("ui.views.defensePresetsView.title.delete.preset.f307af85")} iconOnly variant="ghost" size="md" disabled={busy} onClick={onDelete} title={localizeStatic("ui.views.defensePresetsView.title.delete.preset.f307af85")} ><Trash2 className="h-4 w-4" /></Button>
         </div>
-      </div>
+      </CardHeader>
       <CardContent className="space-y-4">
         <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
           <MetricTile label={localizeStatic("ui.views.defensePresetsView.label.left.58eb9032")} value={`${preset.wall.left.unitPercent}%`} />
@@ -445,11 +446,11 @@ const PresetCard: React.FC<{
         </div>
         <div className="grid gap-3 sm:grid-cols-[1fr_auto]">
           <div className="rounded-global border border-border-base bg-bg-app/35 p-3">
-            <div className="mb-2 text-[9px] font-black uppercase tracking-wider text-text-muted"><LocalizedText messageKey="ui.views.defensePresetsView.tool.types.dd756e8c" /></div>
+            <div className="mb-2 text-caption font-semibold text-text-muted"><LocalizedText messageKey="ui.views.defensePresetsView.tool.types.dd756e8c" /></div>
             <div className="flex min-h-[2.125rem] items-center gap-1.5 overflow-hidden">
               {summary.toolTypes.length > 0 ? summary.toolTypes.slice(0, 8).map((id) => (
                 <ToolImage key={id} toolId={id} size={34} showLevel={false} />
-              )) : <span className="text-xs text-text-muted"><LocalizedText messageKey="ui.views.defensePresetsView.no.tools.assigned.e628edf3" /></span>}
+              )) : <span className="text-caption text-text-muted"><LocalizedText messageKey="ui.views.defensePresetsView.no.tools.assigned.e628edf3" /></span>}
               {summary.toolTypes.length > 8 ? <Badge variant="secondary">+{summary.toolTypes.length - 8}</Badge> : null}
             </div>
           </div>
@@ -469,10 +470,10 @@ const PresetCard: React.FC<{
           </div>
         </div>
         <div className={`rounded-global border px-3 py-2.5 ${compatibilityClasses(compatibility.variant)}`}>
-          <div className="text-xs font-black">{compatibility.label}</div>
-          <div className="mt-1 text-xs opacity-80">{compatibility.detail}</div>
+          <div className="text-caption font-semibold">{compatibility.label}</div>
+          <div className="mt-1 text-caption opacity-80">{compatibility.detail}</div>
         </div>
-        <Button
+        <Button variant="secondary"
           className="w-full"
           disabled={!target || busy}
           isLoading={applying}

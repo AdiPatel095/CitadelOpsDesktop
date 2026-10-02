@@ -1,0 +1,30 @@
+.cit-button {
+  --button-height: var(--space-40); --button-padding: var(--space-16); --button-icon: var(--space-16);
+  --button-fill: var(--surface-control); --button-ink: var(--text-primary); --button-border: var(--border-default);
+  --button-hover: color-mix(in srgb, var(--state-hover), var(--button-fill)); --button-pressed: color-mix(in srgb, var(--state-pressed), var(--button-fill));
+  display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; gap: var(--space-8);
+  min-block-size: var(--button-height); padding-block: 0; padding-inline: var(--button-padding);
+  border: 1px solid var(--button-border); border-radius: var(--radius-full); background: var(--button-fill); color: var(--button-ink);
+  font-family: inherit; font-size: var(--font-size-14); font-weight: var(--font-weight-600); line-height: var(--line-height-14);
+  text-decoration: none; white-space: nowrap; cursor: pointer;
+  transition: border-radius var(--duration-fast) var(--ease-standard), background-color var(--duration-fast) var(--ease-standard);
+}
+.cit-button[data-size="sm"] { --button-height: var(--space-32); --button-padding: var(--space-12); }
+.cit-button[data-size="lg"] { --button-height: var(--space-48); --button-padding: var(--space-24); --button-icon: var(--space-20); font-size: var(--font-size-16); line-height: var(--line-height-16); }
+.cit-button svg, .cit-button-loading-slot { inline-size: var(--button-icon); block-size: var(--button-icon); flex-shrink: 0; margin: 0; }
+.cit-button-loading-slot { visibility: hidden; }
+.cit-button-icon { inline-size: var(--button-height); block-size: var(--button-height); padding: 0; }
+.cit-button[data-variant="primary"] { --button-fill: var(--accent); --button-ink: var(--text-on-accent); --button-border: var(--accent); --button-hover: var(--accent-hover); --button-pressed: var(--accent-pressed); }
+.cit-button[data-variant="ghost"] { --button-fill: transparent; --button-border: transparent; --button-hover: var(--state-hover); --button-pressed: var(--state-pressed); }
+.cit-button[data-variant="ghost"] svg { color: var(--text-secondary); }
+.cit-button[data-variant="danger"] { --button-fill: var(--status-danger-bg); --button-ink: var(--status-danger); --button-border: var(--status-danger-border); --button-hover: color-mix(in srgb, var(--status-danger) 8%, var(--status-danger-bg)); --button-pressed: color-mix(in srgb, var(--status-danger) 12%, var(--status-danger-bg)); }
+.cit-button:hover:not(:disabled):not([aria-disabled="true"]) { background: var(--button-hover); }
+.cit-button:active:not(:disabled):not([aria-disabled="true"]) { border-radius: var(--radius-md); background: var(--button-pressed); }
+.cit-button:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
+.cit-button:disabled, .cit-button[aria-disabled="true"] { background: var(--fill-disabled); color: var(--text-disabled); border-color: var(--border-subtle); cursor: not-allowed; opacity: 1; }
+.cit-button:disabled svg, .cit-button[aria-disabled="true"] svg { color: var(--text-disabled); }
+.cit-button-spinner { animation: cit-button-spin var(--compat-spinner-duration-2) linear infinite; }
+@keyframes cit-button-spin { to { transform: rotate(1turn); } }
+@media (pointer: coarse) { .cit-button[data-size="md"] { --button-height: calc(var(--space-40) + var(--space-4)); } }
+@media (prefers-reduced-motion: reduce) { .cit-button { transition: none; } .cit-button:active:not(:disabled) { border-radius: var(--radius-full); } .cit-button-spinner { animation: none; } }
+@media (forced-colors: active) { .cit-button { border-color: ButtonText; } .cit-button:focus-visible { outline-color: Highlight; } }

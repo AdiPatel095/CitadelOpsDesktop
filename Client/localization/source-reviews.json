@@ -444,17 +444,7 @@
     "reason": "Save warning and name-validation reason codes.",
     "evidence": "cleanup-pending, empty and duplicate are machine codes mapped to typed messages (attackPresets.cleanupPending, eventAttackSetup.duplicateName, field messages) by the caller."
   },
-  "4603baefcdf198abe79988a08e23d75bdfc8e9d27c7e8dbbbdeb5e449d90c2ec": {
-    "classification": "technical",
-    "reason": "Button variant/size tokens and a React session key.",
-    "evidence": "Structural props of Button and the openKey identity; visible text uses LocalizedText keys."
-  },
   "1fc4362c5f8e9b6979cbf47f90139c2c4797852022c591db43409a5c43bb90ad": {
-    "classification": "technical",
-    "reason": "Button variant/size tokens and a React session key.",
-    "evidence": "Structural props of Button and the openKey identity; visible text uses LocalizedText keys."
-  },
-  "edfe2e13a586b42dfd4ebc597cc3a3ff05e94c8c4bc6538c274aed62865d6435": {
     "classification": "technical",
     "reason": "Button variant/size tokens and a React session key.",
     "evidence": "Structural props of Button and the openKey identity; visible text uses LocalizedText keys."
@@ -754,17 +744,7 @@
     "reason": "Mode ids, ref discriminators, component variant/size tokens, lane keys, DOM ids and numeric/id fallbacks.",
     "evidence": "saved/inline chip values, AttackSetupRef sources, Button/Badge/Modal props and #<id> fallbacks for unnamed castles or units; labels render typed messages and user/official names."
   },
-  "d14089f7ecf001b1b5bcf0b31083fffc5d1f93d620af43562e814c46e3b39698": {
-    "classification": "technical",
-    "reason": "Mode ids, ref discriminators, component variant/size tokens, lane keys, DOM ids and numeric/id fallbacks.",
-    "evidence": "saved/inline chip values, AttackSetupRef sources, Button/Badge/Modal props and #<id> fallbacks for unnamed castles or units; labels render typed messages and user/official names."
-  },
   "97af6db07914186d0670713db0a84665494c7eeee156d91c2b7690d6b11a0388": {
-    "classification": "technical",
-    "reason": "Mode ids, ref discriminators, component variant/size tokens, lane keys, DOM ids and numeric/id fallbacks.",
-    "evidence": "saved/inline chip values, AttackSetupRef sources, Button/Badge/Modal props and #<id> fallbacks for unnamed castles or units; labels render typed messages and user/official names."
-  },
-  "59e354fa10f28cde149bde31713ffc1fe6d5e6b729f48a5e8d739fe22a1257dc": {
     "classification": "technical",
     "reason": "Mode ids, ref discriminators, component variant/size tokens, lane keys, DOM ids and numeric/id fallbacks.",
     "evidence": "saved/inline chip values, AttackSetupRef sources, Button/Badge/Modal props and #<id> fallbacks for unnamed castles or units; labels render typed messages and user/official names."
@@ -800,11 +780,6 @@
     "evidence": "saved/inline chip values, AttackSetupRef sources, Button/Badge/Modal props and #<id> fallbacks for unnamed castles or units; labels render typed messages and user/official names."
   },
   "410e3d63d1764319fde77902110d493e11e2727bf2910a497ac5b2288ede79e6": {
-    "classification": "technical",
-    "reason": "Mode ids, ref discriminators, component variant/size tokens, lane keys, DOM ids and numeric/id fallbacks.",
-    "evidence": "saved/inline chip values, AttackSetupRef sources, Button/Badge/Modal props and #<id> fallbacks for unnamed castles or units; labels render typed messages and user/official names."
-  },
-  "6e3258a5e67565a90279ab3a92e24d8719aa23c1e087c27c960bf7e282ce793e": {
     "classification": "technical",
     "reason": "Mode ids, ref discriminators, component variant/size tokens, lane keys, DOM ids and numeric/id fallbacks.",
     "evidence": "saved/inline chip values, AttackSetupRef sources, Button/Badge/Modal props and #<id> fallbacks for unnamed castles or units; labels render typed messages and user/official names."
@@ -1874,17 +1849,7 @@
     "reason": "Badge/button variant and size tokens, DOM ids and #id fallbacks for unnamed commanders.",
     "evidence": "Structural component props; names are game data; text renders through LocalizedText keys."
   },
-  "b9fd9856b7df5e6512df300ea0d1c3d9723908c64cbe94df41fad3fad88dd525": {
-    "classification": "technical",
-    "reason": "Badge/button variant and size tokens, DOM ids and #id fallbacks for unnamed commanders.",
-    "evidence": "Structural component props; names are game data; text renders through LocalizedText keys."
-  },
   "cbe0ef0cc9bd6a176fd71c7a9fc01d066b9b922093a415937a3da09286969527": {
-    "classification": "technical",
-    "reason": "Badge/button variant and size tokens, DOM ids and #id fallbacks for unnamed commanders.",
-    "evidence": "Structural component props; names are game data; text renders through LocalizedText keys."
-  },
-  "793ed3bb6a1d694e5db3979dfcce90c3efcd7991cb48805066a0ce3c6c4650b1": {
     "classification": "technical",
     "reason": "Badge/button variant and size tokens, DOM ids and #id fallbacks for unnamed commanders.",
     "evidence": "Structural component props; names are game data; text renders through LocalizedText keys."
@@ -3539,17 +3504,7 @@
     "reason": "Mode ids, ref discriminators, component variant/size tokens, wall side keys, DOM ids, document keys and composition of typed labels.",
     "evidence": "saved/inline chip values, DefenseSetupRef sources, Button/Badge/Modal props, left/middle/right keys, defense.presets document key and #<id> fallbacks; labels render typed messages."
   },
-  "0aa8a9fcbc8dea823dd4d5b2afb453b013ff18fe40e971b8b3ad1890b7d924cb": {
-    "classification": "technical",
-    "reason": "Mode ids, ref discriminators, component variant/size tokens, wall side keys, DOM ids, document keys and composition of typed labels.",
-    "evidence": "saved/inline chip values, DefenseSetupRef sources, Button/Badge/Modal props, left/middle/right keys, defense.presets document key and #<id> fallbacks; labels render typed messages."
-  },
   "a1482908c08018926e18fa37d40ec82a83a506e8750a8c2b3d810d49d901e7ed": {
-    "classification": "technical",
-    "reason": "Mode ids, ref discriminators, component variant/size tokens, wall side keys, DOM ids, document keys and composition of typed labels.",
-    "evidence": "saved/inline chip values, DefenseSetupRef sources, Button/Badge/Modal props, left/middle/right keys, defense.presets document key and #<id> fallbacks; labels render typed messages."
-  },
-  "d4b36c414675e6feb12a8fc263a1df889023065ef08b21a2b93e78a02f9de172": {
     "classification": "technical",
     "reason": "Mode ids, ref discriminators, component variant/size tokens, wall side keys, DOM ids, document keys and composition of typed labels.",
     "evidence": "saved/inline chip values, DefenseSetupRef sources, Button/Badge/Modal props, left/middle/right keys, defense.presets document key and #<id> fallbacks; labels render typed messages."
@@ -3580,11 +3535,6 @@
     "evidence": "saved/inline chip values, DefenseSetupRef sources, Button/Badge/Modal props, left/middle/right keys, defense.presets document key and #<id> fallbacks; labels render typed messages."
   },
   "8bce4775f63460aea8f2954b6494785a2901c18cd5e19d7ca56b4c1243d19974": {
-    "classification": "technical",
-    "reason": "Mode ids, ref discriminators, component variant/size tokens, wall side keys, DOM ids, document keys and composition of typed labels.",
-    "evidence": "saved/inline chip values, DefenseSetupRef sources, Button/Badge/Modal props, left/middle/right keys, defense.presets document key and #<id> fallbacks; labels render typed messages."
-  },
-  "b7ff6dc97242ce3a6a07e312efd8b31ace2f2ed16867dc0a61eda20faf1656d5": {
     "classification": "technical",
     "reason": "Mode ids, ref discriminators, component variant/size tokens, wall side keys, DOM ids, document keys and composition of typed labels.",
     "evidence": "saved/inline chip values, DefenseSetupRef sources, Button/Badge/Modal props, left/middle/right keys, defense.presets document key and #<id> fallbacks; labels render typed messages."
@@ -5229,17 +5179,7 @@
     "reason": "Settings disclosure identifier or typed message argument, not human display prose.",
     "evidence": "Badge/Button variants, sizes, Intl date options and settingsRun.status select values are identifiers; visible text renders through typed messageKeys."
   },
-  "6e97bb7863d320119a47694268cddb869659c8b6728e19692d9f2c5fa7aa428f": {
-    "classification": "technical",
-    "reason": "Settings disclosure identifier or typed message argument, not human display prose.",
-    "evidence": "Badge/Button variants, sizes, Intl date options and settingsRun.status select values are identifiers; visible text renders through typed messageKeys."
-  },
   "df402dc9738a4c472051dbd26905edb952bdccdfd349acc2c3eb2ccb0a43822c": {
-    "classification": "technical",
-    "reason": "Settings disclosure identifier or typed message argument, not human display prose.",
-    "evidence": "Badge/Button variants, sizes, Intl date options and settingsRun.status select values are identifiers; visible text renders through typed messageKeys."
-  },
-  "2dbb0964a64ea642740a912483ee3fcf673cd658425137ab48df3866cb587cf4": {
     "classification": "technical",
     "reason": "Settings disclosure identifier or typed message argument, not human display prose.",
     "evidence": "Badge/Button variants, sizes, Intl date options and settingsRun.status select values are identifiers; visible text renders through typed messageKeys."
@@ -7199,22 +7139,7 @@
     "reason": "Component variant, size, CSS class or DOM option value, not human display text.",
     "evidence": "Button/Badge/Modal variants and sizes, scrollIntoView options, ARIA/DOM attribute values and tone classes in the new CIT-20 components."
   },
-  "845a81d75067e81b875d35e9254334aad3ed8a0f3b204b87db237c594ebcc03a": {
-    "classification": "technical",
-    "reason": "Component variant, size, CSS class or DOM option value, not human display text.",
-    "evidence": "Button/Badge/Modal variants and sizes, scrollIntoView options, ARIA/DOM attribute values and tone classes in the new CIT-20 components."
-  },
   "f28dab0c9108d8012225963d64df8c93b5a2c02ac6afd77c2e74c636df82f8da": {
-    "classification": "technical",
-    "reason": "Component variant, size, CSS class or DOM option value, not human display text.",
-    "evidence": "Button/Badge/Modal variants and sizes, scrollIntoView options, ARIA/DOM attribute values and tone classes in the new CIT-20 components."
-  },
-  "033d4756b749d0d4768509261b96f1fb7fbe75862d54d779acf7c527fba9f297": {
-    "classification": "technical",
-    "reason": "Component variant, size, CSS class or DOM option value, not human display text.",
-    "evidence": "Button/Badge/Modal variants and sizes, scrollIntoView options, ARIA/DOM attribute values and tone classes in the new CIT-20 components."
-  },
-  "fec20c54f1d9fa36743faba575e91ddbb5149914d68cc5e37805ff5335a5dfa7": {
     "classification": "technical",
     "reason": "Component variant, size, CSS class or DOM option value, not human display text.",
     "evidence": "Button/Badge/Modal variants and sizes, scrollIntoView options, ARIA/DOM attribute values and tone classes in the new CIT-20 components."
@@ -9204,32 +9129,12 @@
     "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
     "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
   },
-  "acc6a0fbb5e531c2e881111b784dc5db1dc51aee24d45fbb6ded02a09cc791ec": {
-    "classification": "technical",
-    "reason": "Component variant, size, CSS class or DOM option value, not human display text.",
-    "evidence": "Button/Badge/Modal variants and sizes, scrollIntoView options, ARIA/DOM attribute values and tone classes in the new CIT-20 components."
-  },
-  "b016601d5f05e2ca258770c9be08f888b13f88d33812e046606d4e36692d4e0c": {
-    "classification": "technical",
-    "reason": "Component variant, size, CSS class or DOM option value, not human display text.",
-    "evidence": "Button/Badge/Modal variants and sizes, scrollIntoView options, ARIA/DOM attribute values and tone classes in the new CIT-20 components."
-  },
-  "73282ea3422ab5098f9edbb86ba9a30e99ca837576852191c43fb189147d91cb": {
-    "classification": "technical",
-    "reason": "Component variant, size, CSS class or DOM option value, not human display text.",
-    "evidence": "Button/Badge/Modal variants and sizes, scrollIntoView options, ARIA/DOM attribute values and tone classes in the new CIT-20 components."
-  },
   "30719939d3696b8877e80a0d5cfd8bd854c23b6bc17262751c0b08fb08448fea": {
     "classification": "technical",
     "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
     "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
   },
   "b162ca2abca5c22e954a273724ceed47cb870d8f36adf817bd4a0b06ae5fe054": {
-    "classification": "technical",
-    "reason": "Component variant, size, CSS class or DOM option value, not human display text.",
-    "evidence": "Button/Badge/Modal variants and sizes, scrollIntoView options, ARIA/DOM attribute values and tone classes in the new CIT-20 components."
-  },
-  "5b37ca4ec7c8f81ebb6c57a6d3e28c68519fc053f6bc050b2643ab555854171a": {
     "classification": "technical",
     "reason": "Component variant, size, CSS class or DOM option value, not human display text.",
     "evidence": "Button/Badge/Modal variants and sizes, scrollIntoView options, ARIA/DOM attribute values and tone classes in the new CIT-20 components."
@@ -9353,26 +9258,6 @@
     "classification": "technical",
     "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
     "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
-  },
-  "017161d9c2269ee8bff68f780a7b10bdecb9ee94e1d8c411eb28daf19814d70a": {
-    "classification": "technical",
-    "reason": "Component variant, size, CSS class or DOM option value, not human display text.",
-    "evidence": "Button/Badge/Modal variants and sizes, scrollIntoView options, ARIA/DOM attribute values and tone classes in the new CIT-20 components."
-  },
-  "249f49b8c91a7b416a318684e70fd91156e40fb416546f871ca50913250a0772": {
-    "classification": "technical",
-    "reason": "Component variant, size, CSS class or DOM option value, not human display text.",
-    "evidence": "Button/Badge/Modal variants and sizes, scrollIntoView options, ARIA/DOM attribute values and tone classes in the new CIT-20 components."
-  },
-  "355d1d3d0365c22e4fb924e283a3d5bcf1af32475fc8936eeee0ab3195ed598d": {
-    "classification": "technical",
-    "reason": "Component variant, size, CSS class or DOM option value, not human display text.",
-    "evidence": "Button/Badge/Modal variants and sizes, scrollIntoView options, ARIA/DOM attribute values and tone classes in the new CIT-20 components."
-  },
-  "03813eb634e195576edb34413da251f2f4fa69228d21c6987ab7a6a45717a5a0": {
-    "classification": "technical",
-    "reason": "Component variant, size, CSS class or DOM option value, not human display text.",
-    "evidence": "Button/Badge/Modal variants and sizes, scrollIntoView options, ARIA/DOM attribute values and tone classes in the new CIT-20 components."
   },
   "7a6b72a1c0663603b025df9eff348d61f3e3f2425f6eb3a2b1662bad2727fc0f": {
     "classification": "technical",
@@ -10859,21 +10744,6 @@
     "reason": "Typed MessageKey literal, checked against the message catalog by the compiler; the catalog entry carries the display text.",
     "evidence": "Readiness, runtime-state, first-result, Stop and Start-confirmation modules return typed message keys with ICU arguments; the keys are identifiers, not display prose."
   },
-  "3968c069154e9df0133e003e7e1150d9f4740ccf3cda1c1da00949e5b37a149d": {
-    "classification": "technical",
-    "reason": "Component variant, size, CSS class or DOM option value, not human display text.",
-    "evidence": "Button/Badge/Modal variants and sizes, scrollIntoView options, ARIA/DOM attribute values and tone classes in the new CIT-20 components."
-  },
-  "7617e48c466a4cf11620e6b2c2937514afb32d9374c0b44293562818563bc1b8": {
-    "classification": "technical",
-    "reason": "Component variant, size, CSS class or DOM option value, not human display text.",
-    "evidence": "Button/Badge/Modal variants and sizes, scrollIntoView options, ARIA/DOM attribute values and tone classes in the new CIT-20 components."
-  },
-  "6906d098f5d490ff67d300a26c00b91198ec58f89b10a620752b10d49768fb62": {
-    "classification": "technical",
-    "reason": "Component variant, size, CSS class or DOM option value, not human display text.",
-    "evidence": "Button/Badge/Modal variants and sizes, scrollIntoView options, ARIA/DOM attribute values and tone classes in the new CIT-20 components."
-  },
   "b48df24ba7f14e1f067a0968fb502bcaac204442a26a17cbb3595dc71f9350de": {
     "classification": "technical",
     "reason": "Component variant, size, CSS class or DOM option value, not human display text.",
@@ -11499,6 +11369,1211 @@
     "reason": "Status/role identifiers, typed catalog keys, locale/ARIA metadata; never displayed as raw labels.",
     "evidence": "CIT-66 PR-C settings/readiness/automationPlayerStatusDisplay.ts: builder-missing-decorations; StatusBadge and RoleTag render catalog labels and formatted reason descriptors; adapter identifiers are inputs to the tested pure player-status model."
   },
+  "063a03259d7da4bf729e8e44e9a43f32e8d655394b542244b82ecc00905115e2": {
+    "classification": "technical",
+    "reason": "Button variant/size enum or non-visible ARIA state/heading reference, consumed only as styling or accessibility structure.",
+    "evidence": "Movement/components/CommanderRequirementModal.tsx:128; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
+  },
+  "38337d5a5580ac343f6ad74a6d384e70083aba70b1a76ac9d98413759629381a": {
+    "classification": "technical",
+    "reason": "Button variant/size enum or non-visible ARIA state/heading reference, consumed only as styling or accessibility structure.",
+    "evidence": "Movement/components/MovementView.tsx:414; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
+  },
+  "3f912b57e288c1ab01c1439246f1684e0153b4261e2ffc3c48b26463d9114538": {
+    "classification": "technical",
+    "reason": "Button variant/size enum or non-visible ARIA state/heading reference, consumed only as styling or accessibility structure.",
+    "evidence": "Movement/components/MovementView.tsx:426; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
+  },
+  "936668e88fd60fd60c8c27ce5df7bf32e136b9c76a8acc7b5d9e03961489c954": {
+    "classification": "technical",
+    "reason": "Button variant/size enum or non-visible ARIA state/heading reference, consumed only as styling or accessibility structure.",
+    "evidence": "Rift/components/RiftArrivalClock.tsx:58; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
+  },
+  "0343329f129920967a3ce71d6e69fd3f7a805cb60409595a82ad0937c30511d0": {
+    "classification": "technical",
+    "reason": "Button variant/size enum or non-visible ARIA state/heading reference, consumed only as styling or accessibility structure.",
+    "evidence": "Rift/components/RiftAttackTemplate.tsx:446; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
+  },
+  "b97a209009d6f04d1be797336b39542baf71eec388a3efcd2390ea364303cffb": {
+    "classification": "technical",
+    "reason": "Button variant/size enum or non-visible ARIA state/heading reference, consumed only as styling or accessibility structure.",
+    "evidence": "Rift/components/RiftAttackTemplate.tsx:456; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
+  },
+  "52446e2d903f9f04cd0715f09512eec0a22099a94e47ff55798e941e5e4d6e50": {
+    "classification": "technical",
+    "reason": "Button variant/size enum or non-visible ARIA state/heading reference, consumed only as styling or accessibility structure.",
+    "evidence": "Rift/components/RiftCoordDisplay.tsx:46; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
+  },
+  "54b321d31e86813456b3c1da8333094c685a9f89454714a59c36f8844c24ddbb": {
+    "classification": "technical",
+    "reason": "Button variant/size enum or non-visible ARIA state/heading reference, consumed only as styling or accessibility structure.",
+    "evidence": "allianceTargets/components/AllianceTargetsView.tsx:762; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
+  },
+  "adcfb85c31e7c93a0a023b7a288808902a9b9a4e917643874dae6d6e7b9d8e0f": {
+    "classification": "technical",
+    "reason": "Button variant/size enum or non-visible ARIA state/heading reference, consumed only as styling or accessibility structure.",
+    "evidence": "allianceTargets/components/AllianceTargetsView.tsx:927; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
+  },
+  "3c3c0be3b0112def08ac16ae6e66af296f427ddbbc81e13b3f9b5d13e0143f3d": {
+    "classification": "technical",
+    "reason": "Button variant/size enum or non-visible ARIA state/heading reference, consumed only as styling or accessibility structure.",
+    "evidence": "battleStats/components/BattleStatsView.tsx:327; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
+  },
+  "fadf998e4db4f49c815083ea0abefa3609d6d9aa79d5a3d4d2548f98b47bc586": {
+    "classification": "technical",
+    "reason": "Button variant/size enum or non-visible ARIA state/heading reference, consumed only as styling or accessibility structure.",
+    "evidence": "battleStats/components/BattleStatsView.tsx:466; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
+  },
+  "fdf0152411ab3b0a28f6991214bf443c119431fa7047f06063c11f4a06a5640a": {
+    "classification": "technical",
+    "reason": "Button variant/size enum or non-visible ARIA state/heading reference, consumed only as styling or accessibility structure.",
+    "evidence": "battleStats/components/BattleStatsView.tsx:467; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
+  },
+  "47ef070a508df48a7213984fdeb46a64d46723acfc1ac9ec925c211f24261f25": {
+    "classification": "technical",
+    "reason": "Button variant/size enum or non-visible ARIA state/heading reference, consumed only as styling or accessibility structure.",
+    "evidence": "battleStats/components/BattleStatsView.tsx:483; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
+  },
+  "1db934552337bb58df159a97b0a642ac6f24d6672ca41efe5a2da9e61bde5efa": {
+    "classification": "technical",
+    "reason": "Button variant/size enum or non-visible ARIA state/heading reference, consumed only as styling or accessibility structure.",
+    "evidence": "components/Alerts.tsx:65; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
+  },
+  "54b4f0a658b5f9d4102b9ecf818df7a505c2bca13371ea683b6798b57d670138": {
+    "classification": "technical",
+    "reason": "Button variant/size enum or non-visible ARIA state/heading reference, consumed only as styling or accessibility structure.",
+    "evidence": "components/Alerts.tsx:74; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
+  },
+  "6f8b0259c2215589e5f853a4b2aec97dc28b4c29be555342ef2e86a3cb1d649d": {
+    "classification": "technical",
+    "reason": "Button variant/size enum or non-visible ARIA state/heading reference, consumed only as styling or accessibility structure.",
+    "evidence": "components/AttackSetupModal.tsx:369; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
+  },
+  "f2eb84b5c67a53eaaaadca402850853ff7bec1d20cf8337694dec0ad85361c14": {
+    "classification": "technical",
+    "reason": "Button variant/size enum or non-visible ARIA state/heading reference, consumed only as styling or accessibility structure.",
+    "evidence": "components/AttackSetupModal.tsx:386; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
+  },
+  "64cf7c46145a43d06b293e2314cb2ffc2da4667026863497921e30a3fb8769bb": {
+    "classification": "technical",
+    "reason": "Button variant/size enum or non-visible ARIA state/heading reference, consumed only as styling or accessibility structure.",
+    "evidence": "components/AttackSetupModal.tsx:387; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
+  },
+  "270de88c9623acc2c67652cd6a9bd1efc159ab5c9a636833cc6ca245eb0b6f9d": {
+    "classification": "technical",
+    "reason": "Button variant/size enum or non-visible ARIA state/heading reference, consumed only as styling or accessibility structure.",
+    "evidence": "components/AttackSetupModal.tsx:659; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
+  },
+  "48950763b5d1c98d059a136791f6a7d3e9bc446db46c82631654b87ab93aade3": {
+    "classification": "technical",
+    "reason": "Button variant/size enum or non-visible ARIA state/heading reference, consumed only as styling or accessibility structure.",
+    "evidence": "components/AttackSetupModal.tsx:670; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
+  },
+  "e3872a6ffffdcf6d0f47d204ff40b94634048dbd461c20d68ec150f504039827": {
+    "classification": "technical",
+    "reason": "Button variant/size enum or non-visible ARIA state/heading reference, consumed only as styling or accessibility structure.",
+    "evidence": "components/AttackSetupModal.tsx:969; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
+  },
+  "9e0b7d6395bf8c0cbaa6028eef9aa6fe8f6d83895b3655f7fab8fb799c72bd9c": {
+    "classification": "technical",
+    "reason": "Button variant/size enum or non-visible ARIA state/heading reference, consumed only as styling or accessibility structure.",
+    "evidence": "components/AutoBirdHoverPopover.tsx:233; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
+  },
+  "62d3eadae9cb0d62e11697249f8e2b96e42d154232dd3b559d6892bfdb0e26b9": {
+    "classification": "technical",
+    "reason": "Button variant/size enum or non-visible ARIA state/heading reference, consumed only as styling or accessibility structure.",
+    "evidence": "components/AutoBirdHoverPopover.tsx:234; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
+  },
+  "b1823a27a41f06bc64d4724a5177d0e27ae4f06dddaa2869d3f8ee2fe2d12ac8": {
+    "classification": "technical",
+    "reason": "Button variant/size enum or non-visible ARIA state/heading reference, consumed only as styling or accessibility structure.",
+    "evidence": "components/AutomationSafetyPanel.tsx:66; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
+  },
+  "8ea67d1c25bdb1bc6e597c424996739810310fbd36c33fbe360913c29ff7d66c": {
+    "classification": "technical",
+    "reason": "Button variant/size enum or non-visible ARIA state/heading reference, consumed only as styling or accessibility structure.",
+    "evidence": "components/ConnectionRepairDialog.tsx:123; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
+  },
+  "ea6fdc52b30baac01074fb42313a6ab06378f75d0202d1fa7a0c5a89eff7704e": {
+    "classification": "technical",
+    "reason": "Button variant/size enum or non-visible ARIA state/heading reference, consumed only as styling or accessibility structure.",
+    "evidence": "components/ConnectionRepairDialog.tsx:128; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
+  },
+  "4ae8ddab9cc4de0df9b545a3fee48baa48c2ddeb82d5a56511630adb74a0e375": {
+    "classification": "technical",
+    "reason": "Button variant/size enum or non-visible ARIA state/heading reference, consumed only as styling or accessibility structure.",
+    "evidence": "components/ConnectionRepairDialog.tsx:132; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
+  },
+  "5b872c318229cf4c45a4761b33f4d9c07b0e481810fe2adb08ee693eed14b6e4": {
+    "classification": "technical",
+    "reason": "Button variant/size enum or non-visible ARIA state/heading reference, consumed only as styling or accessibility structure.",
+    "evidence": "components/DecorationPresetsPanel.tsx:223; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
+  },
+  "5ef2a07eb23bd749f290a1cd8b2fc6ece05592fd27a34a9ae82c1d0d08c131eb": {
+    "classification": "technical",
+    "reason": "Button variant/size enum or non-visible ARIA state/heading reference, consumed only as styling or accessibility structure.",
+    "evidence": "components/DefensePresetEditor.tsx:135; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
+  },
+  "a099f48253697d526cbb3e32dd1153adfa448f56ab4cf54bca02d435fd28df80": {
+    "classification": "technical",
+    "reason": "Button variant/size enum or non-visible ARIA state/heading reference, consumed only as styling or accessibility structure.",
+    "evidence": "components/DefensePresetEditor.tsx:136; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
+  },
+  "41de924aac9a2d9affceb2957ea07e89c236af92fab071af2242e571a8e33888": {
+    "classification": "technical",
+    "reason": "Button variant/size enum or non-visible ARIA state/heading reference, consumed only as styling or accessibility structure.",
+    "evidence": "components/DefensePresetEditor.tsx:338; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
+  },
+  "be9e3c15594186637bcb26b1824c359c41f903b19159e71917a2245efa51bb35": {
+    "classification": "technical",
+    "reason": "Button variant/size enum or non-visible ARIA state/heading reference, consumed only as styling or accessibility structure.",
+    "evidence": "components/DefensePresetEditor.tsx:634; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
+  },
+  "bcc30b0f6d3d83a72cbadccc2e40890d75b8d714f72a6210efb08b31945e89a5": {
+    "classification": "technical",
+    "reason": "Button variant/size enum or non-visible ARIA state/heading reference, consumed only as styling or accessibility structure.",
+    "evidence": "components/DefensePresetEditor.tsx:675; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
+  },
+  "9d542d63b49c498034ca26a41a9539ec49d07777570fb9f8dcaad2b3e02c0b0a": {
+    "classification": "technical",
+    "reason": "Button variant/size enum or non-visible ARIA state/heading reference, consumed only as styling or accessibility structure.",
+    "evidence": "components/DefensePresetEditor.tsx:685; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
+  },
+  "715da6104b267d39bf308fb2c49d66e6fec65c337023919f4b860740081f1ca3": {
+    "classification": "technical",
+    "reason": "Button variant/size enum or non-visible ARIA state/heading reference, consumed only as styling or accessibility structure.",
+    "evidence": "components/DefensePresetEditor.tsx:777; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
+  },
+  "0cd7d28d73a340e8f4a0049db8a35eb617521bb89053d614449e4b2285a2b1dd": {
+    "classification": "technical",
+    "reason": "Button variant/size enum or non-visible ARIA state/heading reference, consumed only as styling or accessibility structure.",
+    "evidence": "components/GameButton.tsx:23; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
+  },
+  "42bf206cf9f5eab6ef0445f5c5ef0a31b9c690aa101a223afb6e7f8684cbaa01": {
+    "classification": "technical",
+    "reason": "Button variant/size enum or non-visible ARIA state/heading reference, consumed only as styling or accessibility structure.",
+    "evidence": "components/GoalPicker.tsx:52; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
+  },
+  "7411cdd2cc66059c33f8a33daf2bd6117ee826231edc0c30df6b61c23e848890": {
+    "classification": "technical",
+    "reason": "Button variant/size enum or non-visible ARIA state/heading reference, consumed only as styling or accessibility structure.",
+    "evidence": "components/GoalPicker.tsx:55; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
+  },
+  "ce23004e3073e919ef7f2701552aa2eaee8f709b52e86de9121ecbdd6b5d05ed": {
+    "classification": "technical",
+    "reason": "Button variant/size enum or non-visible ARIA state/heading reference, consumed only as styling or accessibility structure.",
+    "evidence": "components/Header.tsx:334; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
+  },
+  "48c4539a45d43e5e176bf20cad610f1c4cb0a2c3043de05484d84f2d9483046f": {
+    "classification": "technical",
+    "reason": "Button variant/size enum or non-visible ARIA state/heading reference, consumed only as styling or accessibility structure.",
+    "evidence": "components/Header.tsx:334; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
+  },
+  "cdcda64c7cb95c3ca3c7bf75074e562cf95b11552f4cca39505954cc1ff6ad14": {
+    "classification": "technical",
+    "reason": "Button variant/size enum or non-visible ARIA state/heading reference, consumed only as styling or accessibility structure.",
+    "evidence": "components/Header.tsx:349; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
+  },
+  "5dddfc907aee0265ab96fd10b5f890ccfedf1c64a099daf4df3675efb3105060": {
+    "classification": "technical",
+    "reason": "Button variant/size enum or non-visible ARIA state/heading reference, consumed only as styling or accessibility structure.",
+    "evidence": "components/IntentConsole.tsx:107; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
+  },
+  "0da5ca3b7716acf6b3ef632ee697c04b296d06f33ee8f21b515d378c646e4571": {
+    "classification": "technical",
+    "reason": "Button variant/size enum or non-visible ARIA state/heading reference, consumed only as styling or accessibility structure.",
+    "evidence": "components/LoggerDock.tsx:493; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
+  },
+  "18ede4f411b7ab71f7d48bbf3d8ad0fdbd3b344767dd92a1d97e3fcf34073534": {
+    "classification": "technical",
+    "reason": "Button variant/size enum or non-visible ARIA state/heading reference, consumed only as styling or accessibility structure.",
+    "evidence": "components/LoggerDock.tsx:558; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
+  },
+  "77a11c68ed78a28ec616850371d210492876a76efb66459699bb71e990e45cd8": {
+    "classification": "technical",
+    "reason": "Button variant/size enum or non-visible ARIA state/heading reference, consumed only as styling or accessibility structure.",
+    "evidence": "components/LoggerDock.tsx:571; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
+  },
+  "ca18ce5b015f5f23c78f13292aa31e2aa18b539db9d2a1752d09bc6c85669405": {
+    "classification": "technical",
+    "reason": "Button variant/size enum or non-visible ARIA state/heading reference, consumed only as styling or accessibility structure.",
+    "evidence": "components/LoggerDock.tsx:572; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
+  },
+  "5caeaede10849d8fad9d16aa435aeab74c0c19594d1419b9da02b3be0000bef2": {
+    "classification": "technical",
+    "reason": "Button variant/size enum or non-visible ARIA state/heading reference, consumed only as styling or accessibility structure.",
+    "evidence": "components/LoggerDock.tsx:586; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
+  },
+  "35c5e889232bdd282b61f41ff9caba6ef2512c5488669b0798e773bcaf0f335c": {
+    "classification": "technical",
+    "reason": "Button variant/size enum or non-visible ARIA state/heading reference, consumed only as styling or accessibility structure.",
+    "evidence": "components/LoggerDock.tsx:587; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
+  },
+  "d76acf914c9c6662ed542a4e47452f64c0ef22932d57308320732b2cd1ecdb3e": {
+    "classification": "technical",
+    "reason": "Button variant/size enum or non-visible ARIA state/heading reference, consumed only as styling or accessibility structure.",
+    "evidence": "components/LoggerDock.tsx:669; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
+  },
+  "b05cd2c0925aebc6ff26953c26734b7c2f8d6d4a8655c6652bb288e242601214": {
+    "classification": "technical",
+    "reason": "Component variant, size, CSS class or DOM option value, not human display text.",
+    "evidence": "Button/Badge/Modal variants and sizes, scrollIntoView options, ARIA/DOM attribute values and tone classes in the new CIT-20 components. CIT-65 mechanically rebinds the unchanged literal after Button migration."
+  },
+  "9eca29bd9e2982d6f992a049071820380e0893a36914dbca5e51183e169347b6": {
+    "classification": "technical",
+    "reason": "Button variant/size enum or non-visible ARIA state/heading reference, consumed only as styling or accessibility structure.",
+    "evidence": "components/SetupChecklist.tsx:72; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
+  },
+  "0702974fc4ba7e9070f429b588af5b11b64ec964d778f523fa948048e09973f3": {
+    "classification": "technical",
+    "reason": "Button variant/size enum or non-visible ARIA state/heading reference, consumed only as styling or accessibility structure.",
+    "evidence": "components/SetupChecklist.tsx:145; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
+  },
+  "5b75c299b8d2116500eecf67611fd5ff524fe2b9cc960bd2dbe961d477d413e4": {
+    "classification": "technical",
+    "reason": "Button variant/size enum or non-visible ARIA state/heading reference, consumed only as styling or accessibility structure.",
+    "evidence": "components/SetupChecklist.tsx:146; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
+  },
+  "e3a5acc48c6381f672007405f028bb6ab943738cde78e7107a3faef23dd67522": {
+    "classification": "technical",
+    "reason": "Button variant/size enum or non-visible ARIA state/heading reference, consumed only as styling or accessibility structure.",
+    "evidence": "components/StartConfirmDialog.tsx:36; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
+  },
+  "e5391e99e22f394554f6b0c787964c43d47e1d45235e45e28bc00311a7717ef2": {
+    "classification": "technical",
+    "reason": "Button variant/size enum or non-visible ARIA state/heading reference, consumed only as styling or accessibility structure.",
+    "evidence": "components/StopControl.tsx:58; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
+  },
+  "df626981de3b5a75c3a47d62edcc88ac04dc374c38aac5b364eac6ceaa3400ee": {
+    "classification": "technical",
+    "reason": "Button variant/size enum or non-visible ARIA state/heading reference, consumed only as styling or accessibility structure.",
+    "evidence": "components/StopControl.tsx:68; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
+  },
+  "711d08f67ec672a91216259cd327a6e9fb42270f697de86cec8f7c471f53f19b": {
+    "classification": "technical",
+    "reason": "Button variant/size enum or non-visible ARIA state/heading reference, consumed only as styling or accessibility structure.",
+    "evidence": "components/TCIPickerModal.tsx:679; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
+  },
+  "d4de5a5525ab951889b3c3a344d0fa8dbb5084781e96701febdbed90bc99dccf": {
+    "classification": "technical",
+    "reason": "Button variant/size enum or non-visible ARIA state/heading reference, consumed only as styling or accessibility structure.",
+    "evidence": "components/TCIPickerModal.tsx:689; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
+  },
+  "d8fbef9c1d62d1171514956ff242d814bee791b5848e2b82c2c36813de5a5d8d": {
+    "classification": "technical",
+    "reason": "Button variant/size enum or non-visible ARIA state/heading reference, consumed only as styling or accessibility structure.",
+    "evidence": "components/UpdateModal.tsx:98; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
+  },
+  "6af3cecc150b8f3631e8d639390406f8600ebd501513b2839ec2b1bf0bd287fd": {
+    "classification": "technical",
+    "reason": "Button styling metadata: native data attributes, CSS class assembly, and typed variant/size defaults; these are not visible copy.",
+    "evidence": "components/ui/Button.tsx:7; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
+  },
+  "c8719141f5b42713a764be07562a399d4e9402607380d9c654a62dcaf13fe9ed": {
+    "classification": "technical",
+    "reason": "Button styling metadata: native data attributes, CSS class assembly, and typed variant/size defaults; these are not visible copy.",
+    "evidence": "components/ui/Button.tsx:7; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
+  },
+  "9fd4010268da7292ff76a38561df92c9f39086f134c20819dd35f2a0400c241e": {
+    "classification": "technical",
+    "reason": "Button styling metadata: native data attributes, CSS class assembly, and typed variant/size defaults; these are not visible copy.",
+    "evidence": "components/ui/Button.tsx:7; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
+  },
+  "d161864651da34c6149b55c4807750dcb882ade5de19cadfa0a3c9d7240e22a8": {
+    "classification": "technical",
+    "reason": "Button styling metadata: native data attributes, CSS class assembly, and typed variant/size defaults; these are not visible copy.",
+    "evidence": "components/ui/Button.tsx:7; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
+  },
+  "26242ea555e254008c6f67dd1e97ea7dc2b6271905881f7770f5b36d3c31e579": {
+    "classification": "technical",
+    "reason": "Button styling metadata: native data attributes, CSS class assembly, and typed variant/size defaults; these are not visible copy.",
+    "evidence": "components/ui/Button.tsx:8; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
+  },
+  "b106f7f876c5d92afbd71611bc47162f087b80f0113afb0bb7b2dd5508473c6c": {
+    "classification": "technical",
+    "reason": "Button styling metadata: native data attributes, CSS class assembly, and typed variant/size defaults; these are not visible copy.",
+    "evidence": "components/ui/Button.tsx:8; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
+  },
+  "cffb3944e19e831098eb16b57b838a2a25fe3986d3d3572adef968f7d7c791ff": {
+    "classification": "technical",
+    "reason": "Button styling metadata: native data attributes, CSS class assembly, and typed variant/size defaults; these are not visible copy.",
+    "evidence": "components/ui/Button.tsx:8; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
+  },
+  "168048b1028b7d82b813d88db5a33896fba62dc0f417f962109047da4d1f595b": {
+    "classification": "technical",
+    "reason": "Button styling metadata: native data attributes, CSS class assembly, and typed variant/size defaults; these are not visible copy.",
+    "evidence": "components/ui/Button.tsx:8; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
+  },
+  "79ea1aac78a912411a4cfb06dc5bb507d93075312c605d179237e881b2c1822c": {
+    "classification": "technical",
+    "reason": "Button styling metadata: native data attributes, CSS class assembly, and typed variant/size defaults; these are not visible copy.",
+    "evidence": "components/ui/Button.tsx:14; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
+  },
+  "623dff34238c9ed2b659b8d101f4891bd35c721f0801f02f22aa7baa02696773": {
+    "classification": "technical",
+    "reason": "Button variant/size enum or non-visible ARIA state/heading reference, consumed only as styling or accessibility structure.",
+    "evidence": "components/ui/Button.tsx:19; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
+  },
+  "53364fdc37d444200c36b7ce05599780c4278a746a378c4dfd00b14011000e42": {
+    "classification": "technical",
+    "reason": "Button variant/size enum or non-visible ARIA state/heading reference, consumed only as styling or accessibility structure.",
+    "evidence": "components/ui/Button.tsx:19; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
+  },
+  "0ceb9066eaf12add5284cbedfb6b6aeff86e38051dc40714e0d277608e93a4d7": {
+    "classification": "technical",
+    "reason": "Button variant/size enum or non-visible ARIA state/heading reference, consumed only as styling or accessibility structure.",
+    "evidence": "components/ui/NamedPresetControls.tsx:63; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
+  },
+  "1ca8eaaf6b124f1fa21183e3c1be452fb12489fc764bbe90070c37b28616e28e": {
+    "classification": "technical",
+    "reason": "Overflow menu keyboard event names, native ARIA role values, CSS anchoring coordinates, and internal open/closing state; item labels come from props.",
+    "evidence": "components/ui/OverflowMenu.tsx:12; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
+  },
+  "f47c6bfeff726e0e14b7dfe52624a9535aeb42d0e53c707887276b2b07d4b4b1": {
+    "classification": "technical",
+    "reason": "Overflow menu keyboard event names, native ARIA role values, CSS anchoring coordinates, and internal open/closing state; item labels come from props.",
+    "evidence": "components/ui/OverflowMenu.tsx:32; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
+  },
+  "5a1141e18f123b80de875768f89006fdbe5e6b0a33fbd26aa6d1d8315e024388": {
+    "classification": "technical",
+    "reason": "Overflow menu keyboard event names, native ARIA role values, CSS anchoring coordinates, and internal open/closing state; item labels come from props.",
+    "evidence": "components/ui/OverflowMenu.tsx:32; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
+  },
+  "1772ea5f058c5bddf3d9f5b807f9d08ce89c45bd625803f108bedd3a358e8d2b": {
+    "classification": "technical",
+    "reason": "Overflow menu keyboard event names, native ARIA role values, CSS anchoring coordinates, and internal open/closing state; item labels come from props.",
+    "evidence": "components/ui/OverflowMenu.tsx:33; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
+  },
+  "670047d4406cecebc0686b2c757fb23451b85c15a1b0ad83cf9ca2ff9a6f0b64": {
+    "classification": "technical",
+    "reason": "Overflow menu keyboard event names, native ARIA role values, CSS anchoring coordinates, and internal open/closing state; item labels come from props.",
+    "evidence": "components/ui/OverflowMenu.tsx:33; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
+  },
+  "f2ad2cb821da6682401f539bc64a2935981d9242e18ba14b21b87460b61f5c61": {
+    "classification": "technical",
+    "reason": "Button variant/size enum or non-visible ARIA state/heading reference, consumed only as styling or accessibility structure.",
+    "evidence": "components/ui/OverflowMenu.tsx:46; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
+  },
+  "6bd67dfd631e06a4854dcd6e046a7e26289af1969e9ad6ac34ff9abf1e76dc18": {
+    "classification": "technical",
+    "reason": "Button variant/size enum or non-visible ARIA state/heading reference, consumed only as styling or accessibility structure.",
+    "evidence": "components/ui/OverflowMenu.tsx:46; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
+  },
+  "c2aaa517fcc265c61e9ed72169e7db5c41e15cf20d4ffda0d11b1c835b6b772b": {
+    "classification": "technical",
+    "reason": "Overflow menu keyboard event names, native ARIA role values, CSS anchoring coordinates, and internal open/closing state; item labels come from props.",
+    "evidence": "components/ui/OverflowMenu.tsx:48; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
+  },
+  "421cbaa2cf98d4657990667ba6f45f716faa30437d98802a0683c9d5fe486b1e": {
+    "classification": "technical",
+    "reason": "Overflow menu keyboard event names, native ARIA role values, CSS anchoring coordinates, and internal open/closing state; item labels come from props.",
+    "evidence": "components/ui/OverflowMenu.tsx:50; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
+  },
+  "13add12191cff351366f5374df8a467fa1e0886396e215539421d6af5ec4fa18": {
+    "classification": "technical",
+    "reason": "Overflow menu keyboard event names, native ARIA role values, CSS anchoring coordinates, and internal open/closing state; item labels come from props.",
+    "evidence": "components/ui/OverflowMenu.tsx:50; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
+  },
+  "da089eba3b9f397d82dea8c1f6dec2636a0d7a6c52846cfb194eccc5b17e9738": {
+    "classification": "technical",
+    "reason": "Button variant/size enum or non-visible ARIA state/heading reference, consumed only as styling or accessibility structure.",
+    "evidence": "components/ui/OverflowMenu.tsx:53; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
+  },
+  "0876b09a006f315cd2ae5aecccb70aed0d75e4d8633b7dd7eba2235b6859a734": {
+    "classification": "technical",
+    "reason": "Overflow menu keyboard event names, native ARIA role values, CSS anchoring coordinates, and internal open/closing state; item labels come from props.",
+    "evidence": "components/ui/OverflowMenu.tsx:59; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
+  },
+  "878fe9673f295e5b73be1ca162685973521d7fc13ff4bbf31071ed4316a6deed": {
+    "classification": "technical",
+    "reason": "Overflow menu keyboard event names, native ARIA role values, CSS anchoring coordinates, and internal open/closing state; item labels come from props.",
+    "evidence": "components/ui/OverflowMenu.tsx:59; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
+  },
+  "94f3740e48d11d86810089915b3d01f83c9da48c0d59bca981a44c5fc0d42e5a": {
+    "classification": "technical",
+    "reason": "Overflow menu keyboard event names, native ARIA role values, CSS anchoring coordinates, and internal open/closing state; item labels come from props.",
+    "evidence": "components/ui/OverflowMenu.tsx:59; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
+  },
+  "375cdf7b7139d6f7ea2e2b03cc6b34c2fc256820eec144df3db8d1454cbbfdc6": {
+    "classification": "technical",
+    "reason": "Overflow menu keyboard event names, native ARIA role values, CSS anchoring coordinates, and internal open/closing state; item labels come from props.",
+    "evidence": "components/ui/OverflowMenu.tsx:59; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
+  },
+  "95592ae38225973e4a7a338065c492d71ff56acdb0b21257bdd0d74a02a555a2": {
+    "classification": "technical",
+    "reason": "Button variant/size enum or non-visible ARIA state/heading reference, consumed only as styling or accessibility structure.",
+    "evidence": "components/ui/ScheduleSummaryRow.tsx:29; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
+  },
+  "ac1cf9d7e463b8b714d210e17f363e816af7f8436e1b1a5635d96b27d7a3ee49": {
+    "classification": "technical",
+    "reason": "Button variant/size enum or non-visible ARIA state/heading reference, consumed only as styling or accessibility structure.",
+    "evidence": "dashboard/components/EventScoreCard.tsx:117; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
+  },
+  "8b717bec1ce4667a0c045b20cfb90425e11c7e4937aab6d8b5db774fce5ad4f3": {
+    "classification": "technical",
+    "reason": "Button variant/size enum or non-visible ARIA state/heading reference, consumed only as styling or accessibility structure.",
+    "evidence": "equipment/components/EquipmentModals.tsx:82; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
+  },
+  "104ac5a2fd60f0e7464ee3f0d15bd460fa03edc54318e23f21d6072155a6f441": {
+    "classification": "technical",
+    "reason": "Button variant/size enum or non-visible ARIA state/heading reference, consumed only as styling or accessibility structure.",
+    "evidence": "equipment/components/EquipmentModals.tsx:83; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
+  },
+  "268a9df56cdf56bbc1b485821ae520c28af188759bb03b50883561b8a7171ee4": {
+    "classification": "technical",
+    "reason": "Button variant/size enum or non-visible ARIA state/heading reference, consumed only as styling or accessibility structure.",
+    "evidence": "equipment/components/EquipmentModals.tsx:172; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
+  },
+  "e73cccfdc84b3074c147889e081e5fd134b3e3a3ec09be63aa2aed4ee5f67468": {
+    "classification": "technical",
+    "reason": "Button variant/size enum or non-visible ARIA state/heading reference, consumed only as styling or accessibility structure.",
+    "evidence": "equipment/components/EquipmentModals.tsx:173; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
+  },
+  "e1c39c0c7142252dc350d3f0e7bc5d7e97fec4d4a98b6cc4fc7cc0fe776e0f9c": {
+    "classification": "technical",
+    "reason": "Button variant/size enum or non-visible ARIA state/heading reference, consumed only as styling or accessibility structure.",
+    "evidence": "equipment/components/EquipmentModals.tsx:246; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
+  },
+  "cd17a4b6968be0ce5ca958f58adbca5414091b28e98ba4f9159d07b0801ac91d": {
+    "classification": "technical",
+    "reason": "Button variant/size enum or non-visible ARIA state/heading reference, consumed only as styling or accessibility structure.",
+    "evidence": "equipment/components/EquipmentModals.tsx:247; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
+  },
+  "bdf1d79dc0005796d6e98d313e9f279ee7e117c2d0ad570f9aef3f7953bcd8c5": {
+    "classification": "technical",
+    "reason": "Button variant/size enum or non-visible ARIA state/heading reference, consumed only as styling or accessibility structure.",
+    "evidence": "equipment/components/EquipmentModals.tsx:374; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
+  },
+  "43210763d26464668297d3fd40d740e090ac4041259ec920cbf62f767251add8": {
+    "classification": "technical",
+    "reason": "Button variant/size enum or non-visible ARIA state/heading reference, consumed only as styling or accessibility structure.",
+    "evidence": "equipment/components/EquipmentModals.tsx:375; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
+  },
+  "1a9e83c5bf267f809137609c126e7b778384ea48bbf6fac4797b60bcb79f414c": {
+    "classification": "technical",
+    "reason": "Button variant/size enum or non-visible ARIA state/heading reference, consumed only as styling or accessibility structure.",
+    "evidence": "equipment/components/EquipmentModals.tsx:375; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
+  },
+  "75056c35126068ac12c9810d13c43deb11587374f24f34cb1901cd80e528f54b": {
+    "classification": "technical",
+    "reason": "Button variant/size enum or non-visible ARIA state/heading reference, consumed only as styling or accessibility structure.",
+    "evidence": "equipment/components/EquipmentModals.tsx:463; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
+  },
+  "19c2c54920c1b3c612f672cd373bf52f25b728c19420ba6c8ee6ccdccb1508fb": {
+    "classification": "technical",
+    "reason": "Button variant/size enum or non-visible ARIA state/heading reference, consumed only as styling or accessibility structure.",
+    "evidence": "equipment/components/EquipmentModals.tsx:464; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
+  },
+  "20bec5288ca9d84f81480a5f0f64aa337c41e5be55652ac609574ba73bc22c01": {
+    "classification": "technical",
+    "reason": "Button variant/size enum or non-visible ARIA state/heading reference, consumed only as styling or accessibility structure.",
+    "evidence": "equipment/components/EquipmentOptimizer.tsx:559; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
+  },
+  "ce178bcac370b2e351cb8687401d9b9067be222a12b782a313a05b5b675d213b": {
+    "classification": "technical",
+    "reason": "Button variant/size enum or non-visible ARIA state/heading reference, consumed only as styling or accessibility structure.",
+    "evidence": "equipment/components/EquipmentOptimizer.tsx:581; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
+  },
+  "e36fb94c612962037ae95731c223d86dbff8a1fb8861551509390ddcf4d2a6a6": {
+    "classification": "technical",
+    "reason": "Button variant/size enum or non-visible ARIA state/heading reference, consumed only as styling or accessibility structure.",
+    "evidence": "equipment/components/EquipmentOptimizer.tsx:593; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
+  },
+  "56ff221c83fb1e20908922517b4bccf2027fcc52ecf5de2f346715207ee0ca81": {
+    "classification": "technical",
+    "reason": "Button variant/size enum or non-visible ARIA state/heading reference, consumed only as styling or accessibility structure.",
+    "evidence": "equipment/components/EquipmentOptimizer.tsx:596; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
+  },
+  "0ce66c3f7e646f14b7504d95abe7bfa6f1fd6fceaac9f8029c7b75b424901256": {
+    "classification": "technical",
+    "reason": "Button variant/size enum or non-visible ARIA state/heading reference, consumed only as styling or accessibility structure.",
+    "evidence": "equipment/components/EquipmentOptimizer.tsx:665; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
+  },
+  "93df41bb06677a258400c811d5ec2dda73ec2a78bce8b4288fc651208dbb2b1a": {
+    "classification": "technical",
+    "reason": "Button variant/size enum or non-visible ARIA state/heading reference, consumed only as styling or accessibility structure.",
+    "evidence": "equipment/components/EquipmentOptimizer.tsx:775; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
+  },
+  "5a27ba6697999bffc9677c82be0aecf19dc7a0abf2f283519d87639f305dc71c": {
+    "classification": "technical",
+    "reason": "Button variant/size enum or non-visible ARIA state/heading reference, consumed only as styling or accessibility structure.",
+    "evidence": "equipment/components/EquipmentOptimizer.tsx:781; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
+  },
+  "d745f678771ea35fe3fee082d9b4158aaafaca504cef0461c2e744eea15b6a8d": {
+    "classification": "technical",
+    "reason": "Button variant/size enum or non-visible ARIA state/heading reference, consumed only as styling or accessibility structure.",
+    "evidence": "equipment/components/EquipmentOptimizer.tsx:782; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
+  },
+  "f45fa0a336f274fec819e3993b13a46e3726618426db0c9aa5b4c4ca7354c5b9": {
+    "classification": "technical",
+    "reason": "Button variant/size enum or non-visible ARIA state/heading reference, consumed only as styling or accessibility structure.",
+    "evidence": "equipment/components/EquipmentOptimizer.tsx:783; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
+  },
+  "c97ee3fefeecb613692c0668fbb71e6a9ffb71fdbc1e26b30185bc1b6088f319": {
+    "classification": "technical",
+    "reason": "Button variant/size enum or non-visible ARIA state/heading reference, consumed only as styling or accessibility structure.",
+    "evidence": "equipment/components/EquipmentOptimizer.tsx:784; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
+  },
+  "a25d64aa08a79c5ae8918edd99f39e669e4dc69a944249b20303ee9c5c1004e9": {
+    "classification": "technical",
+    "reason": "Button variant/size enum or non-visible ARIA state/heading reference, consumed only as styling or accessibility structure.",
+    "evidence": "equipment/components/EquipmentOptimizer.tsx:784; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
+  },
+  "60de3b06a9e274ed3f38aa29fddcf499550b43b2caceadd2a664d081c05d100b": {
+    "classification": "technical",
+    "reason": "Button variant/size enum or non-visible ARIA state/heading reference, consumed only as styling or accessibility structure.",
+    "evidence": "equipment/components/EquipmentOptimizer.tsx:881; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
+  },
+  "75e79f2a8da22b8e7cfd776f993a06f6b54ffccb3f2229c04c631ab63a53e59b": {
+    "classification": "technical",
+    "reason": "Button variant/size enum or non-visible ARIA state/heading reference, consumed only as styling or accessibility structure.",
+    "evidence": "equipment/components/EquipmentOptimizer.tsx:882; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
+  },
+  "ee6cf20581d3887dd172ff0024e97be058566d67662753337981752dba81b28d": {
+    "classification": "technical",
+    "reason": "Button variant/size enum or non-visible ARIA state/heading reference, consumed only as styling or accessibility structure.",
+    "evidence": "equipment/components/EquipmentOptimizer.tsx:902; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
+  },
+  "a274a79b38fc357d7adca70deca3a907336cd2d62373a8d2c4c37a71070d4b6c": {
+    "classification": "technical",
+    "reason": "Button variant/size enum or non-visible ARIA state/heading reference, consumed only as styling or accessibility structure.",
+    "evidence": "equipment/components/EquipmentView.tsx:260; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
+  },
+  "d18fc9c229484779272a42409fd48474ed80bec34d6477a6623dda791972d6bc": {
+    "classification": "technical",
+    "reason": "Button variant/size enum or non-visible ARIA state/heading reference, consumed only as styling or accessibility structure.",
+    "evidence": "equipment/components/EquipmentView.tsx:264; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
+  },
+  "f6622ab1c88d04fddf031795365082337ba95585ff0d7057c08cc4009383349a": {
+    "classification": "technical",
+    "reason": "Stable Equipment menu item identity; the visible label is a separate LocalizedText key.",
+    "evidence": "equipment/components/EquipmentView.tsx:266; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
+  },
+  "b863a8a3b480fe33a1e63591d3e01aa9847e70700ee34d420d56d2540d833c6b": {
+    "classification": "technical",
+    "reason": "Stable Equipment menu item identity; the visible label is a separate LocalizedText key.",
+    "evidence": "equipment/components/EquipmentView.tsx:267; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
+  },
+  "a0528965cea613033af30ca1e33f6156158efb0d636d27e7b5c4de78fbe9b9ec": {
+    "classification": "technical",
+    "reason": "Button variant/size enum or non-visible ARIA state/heading reference, consumed only as styling or accessibility structure.",
+    "evidence": "equipment/components/EquipmentView.tsx:468; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
+  },
+  "418eb6665613c01658d6d895aa77a262536f8ed63b4b1dcaccc7afb654ca196d": {
+    "classification": "technical",
+    "reason": "Button variant/size enum or non-visible ARIA state/heading reference, consumed only as styling or accessibility structure.",
+    "evidence": "equipment/components/EquipmentView.tsx:469; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
+  },
+  "c240104e70fd71d845fd57980825a43490d97d4e3ed5e1823422769490b2b363": {
+    "classification": "technical",
+    "reason": "Button variant/size enum or non-visible ARIA state/heading reference, consumed only as styling or accessibility structure.",
+    "evidence": "equipment/components/EquipmentView.tsx:471; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
+  },
+  "c2883638fa13cbf358e37499801ca606950dba862b86f1afbd0143a43e404f93": {
+    "classification": "technical",
+    "reason": "Button variant/size enum or non-visible ARIA state/heading reference, consumed only as styling or accessibility structure.",
+    "evidence": "equipment/components/EquipmentView.tsx:473; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
+  },
+  "0598971bbdc81986213b2f5a3d7c7324277ac980b16864158ed59f9cc4f7d48c": {
+    "classification": "technical",
+    "reason": "Stable Equipment menu item identity; the visible label is a separate LocalizedText key.",
+    "evidence": "equipment/components/EquipmentView.tsx:475; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
+  },
+  "59ac64ea5edd4deacc7137e7325c2a8afb1d8004b585c2179807b17e4e837d10": {
+    "classification": "technical",
+    "reason": "Stable Equipment menu item identity; the visible label is a separate LocalizedText key.",
+    "evidence": "equipment/components/EquipmentView.tsx:476; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
+  },
+  "55b3ee2dade0aae8606d3420650f29236d58486e4a9c56dc6a9e4e45613247f1": {
+    "classification": "technical",
+    "reason": "Button variant/size enum or non-visible ARIA state/heading reference, consumed only as styling or accessibility structure.",
+    "evidence": "settings/ConfigurationDraftSession.tsx:252; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
+  },
+  "b8b1c0be93e292e37a71aba4392f6da4516cc22ee1de4071d31cec35018a18f2": {
+    "classification": "technical",
+    "reason": "Button variant/size enum or non-visible ARIA state/heading reference, consumed only as styling or accessibility structure.",
+    "evidence": "settings/ConfigurationDraftSession.tsx:287; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
+  },
+  "a16b86cea8e934aab854c4df2e7cb5dc2ea4123b07a06453531b533f11bf2957": {
+    "classification": "technical",
+    "reason": "Button variant/size enum or non-visible ARIA state/heading reference, consumed only as styling or accessibility structure.",
+    "evidence": "settings/components/AutoAdvisorSettingsModal.tsx:210; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
+  },
+  "36ffec1f781c7eb45c38f5a35970e2e170a25c62ac69c108af9a0b6cf11c9d8e": {
+    "classification": "technical",
+    "reason": "Button variant/size enum or non-visible ARIA state/heading reference, consumed only as styling or accessibility structure.",
+    "evidence": "settings/components/AutoAdvisorSettingsModal.tsx:241; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
+  },
+  "67c625e64559d4d37ebf66d2549192a2c238e69be2db1f9eb41d41c0b2a8f380": {
+    "classification": "technical",
+    "reason": "Button variant/size enum or non-visible ARIA state/heading reference, consumed only as styling or accessibility structure.",
+    "evidence": "settings/components/AutoAdvisorSettingsModal.tsx:249; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
+  },
+  "a71dd94472b2d3297e2d141561b202534ea66c444b289d537dae84ac7762395e": {
+    "classification": "technical",
+    "reason": "Button variant/size enum or non-visible ARIA state/heading reference, consumed only as styling or accessibility structure.",
+    "evidence": "settings/components/AutoAdvisorSettingsModal.tsx:438; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
+  },
+  "2cc7adb906a96b1909161e345c61b99565df8d036928641ecf2f31a689e06c24": {
+    "classification": "technical",
+    "reason": "Button variant/size enum or non-visible ARIA state/heading reference, consumed only as styling or accessibility structure.",
+    "evidence": "settings/components/AutoBeriWorldSettingsModal.tsx:354; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
+  },
+  "d069ca0264115a20bb29875b674fa6b41a2dc9b9fee3299c9daf7ffc6446e472": {
+    "classification": "technical",
+    "reason": "Button variant/size enum or non-visible ARIA state/heading reference, consumed only as styling or accessibility structure.",
+    "evidence": "settings/components/AutoBeriWorldSettingsModal.tsx:528; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
+  },
+  "5fa2c7bd7489a992978eb292b7c610597511f9b6dc1b816be0fdba5b026fa339": {
+    "classification": "technical",
+    "reason": "Button variant/size enum or non-visible ARIA state/heading reference, consumed only as styling or accessibility structure.",
+    "evidence": "settings/components/AutoBeriWorldSettingsModal.tsx:536; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
+  },
+  "8c2209534a24e351242000ca60be3623c20f41569f454281b8024d409f30b362": {
+    "classification": "technical",
+    "reason": "Button variant/size enum or non-visible ARIA state/heading reference, consumed only as styling or accessibility structure.",
+    "evidence": "settings/components/AutoBeriWorldSettingsModal.tsx:544; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
+  },
+  "575b095fb2fe343f9bc0ddb0b3a1c8ec181161a6b70bd6a182cbc33132109912": {
+    "classification": "technical",
+    "reason": "Button variant/size enum or non-visible ARIA state/heading reference, consumed only as styling or accessibility structure.",
+    "evidence": "settings/components/AutoBirdSettingsModal.tsx:398; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
+  },
+  "bce0f725ddc792e04592f56e65a62cdb47ebeba592a1f452ad55e1b498916448": {
+    "classification": "technical",
+    "reason": "Button variant/size enum or non-visible ARIA state/heading reference, consumed only as styling or accessibility structure.",
+    "evidence": "settings/components/AutoBirdSettingsModal.tsx:540; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
+  },
+  "eab78d1273d35f10bb634736d8705918c7087ef4c8dbebc021b1ef15058fa283": {
+    "classification": "technical",
+    "reason": "Button variant/size enum or non-visible ARIA state/heading reference, consumed only as styling or accessibility structure.",
+    "evidence": "settings/components/AutoFortressSettingsModal.tsx:239; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
+  },
+  "d1cbde74bc9009f0da792734065adaa52737cc891ea1fb4aefe3b479a92b7971": {
+    "classification": "technical",
+    "reason": "Button variant/size enum or non-visible ARIA state/heading reference, consumed only as styling or accessibility structure.",
+    "evidence": "settings/components/AutoHospitalSettingsModal.tsx:180; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
+  },
+  "851784548b86abb5da41f945a406fbce95cc25ba61aac900ba23dd9d6dd8f705": {
+    "classification": "technical",
+    "reason": "Button variant/size enum or non-visible ARIA state/heading reference, consumed only as styling or accessibility structure.",
+    "evidence": "settings/components/AutoInvasionSettingsModal.tsx:248; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
+  },
+  "df6c9ae6fd231e1178d1e95db73e90c8e8806795d6ce30bcfda2ad95292eff2a": {
+    "classification": "technical",
+    "reason": "Button variant/size enum or non-visible ARIA state/heading reference, consumed only as styling or accessibility structure.",
+    "evidence": "settings/components/AutoKhanSettingsModal.tsx:264; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
+  },
+  "62670598dab34d1c3343362d883d06435dbdc61d12ec53d124b5774260c88ae6": {
+    "classification": "technical",
+    "reason": "Button variant/size enum or non-visible ARIA state/heading reference, consumed only as styling or accessibility structure.",
+    "evidence": "settings/components/AutoNomadSettingsModal.tsx:250; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
+  },
+  "975772e32e7cb8353b826c18b8c7b7bbdd36baaf89babd6f50d5c5533c94bac5": {
+    "classification": "technical",
+    "reason": "Button variant/size enum or non-visible ARIA state/heading reference, consumed only as styling or accessibility structure.",
+    "evidence": "settings/components/AutoSceatResSettingsModal.tsx:399; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
+  },
+  "80873cd119924dd966b0edd63f1096fc991c547c6c70403dff005b84e304eaf1": {
+    "classification": "technical",
+    "reason": "Button variant/size enum or non-visible ARIA state/heading reference, consumed only as styling or accessibility structure.",
+    "evidence": "settings/components/AutoSceatResSettingsModal.tsx:432; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
+  },
+  "599937a41625c05518ee1bbaaa9a064382c81a1d5756602dd3ca3a8b245fee9e": {
+    "classification": "technical",
+    "reason": "Button variant/size enum or non-visible ARIA state/heading reference, consumed only as styling or accessibility structure.",
+    "evidence": "settings/components/AutoSceatResSettingsModal.tsx:437; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
+  },
+  "9ae3bc651207fab6127dbdfda8ee2177ee8bf098ed6a919bf18fffa66b13d7e5": {
+    "classification": "technical",
+    "reason": "Button variant/size enum or non-visible ARIA state/heading reference, consumed only as styling or accessibility structure.",
+    "evidence": "settings/components/AutoSceatResSettingsModal.tsx:442; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
+  },
+  "e3206586721633a13b499d2900450307a2b466d51090e4f2f315e7c0ca61e02a": {
+    "classification": "technical",
+    "reason": "Button variant/size enum or non-visible ARIA state/heading reference, consumed only as styling or accessibility structure.",
+    "evidence": "settings/components/AutoSceatResSettingsModal.tsx:448; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
+  },
+  "7cdafb6c6d5fc23987d29bc9a01bad5cbcd76d1668d7ab382ba46897e15247c4": {
+    "classification": "technical",
+    "reason": "Button variant/size enum or non-visible ARIA state/heading reference, consumed only as styling or accessibility structure.",
+    "evidence": "settings/components/AutoStationSettingsModal.tsx:172; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
+  },
+  "3cfddfaed16eff3154dac3195e7d949e3f9d352cae802d981b109102b93f9f3a": {
+    "classification": "technical",
+    "reason": "Button variant/size enum or non-visible ARIA state/heading reference, consumed only as styling or accessibility structure.",
+    "evidence": "settings/components/AutoStationSettingsModal.tsx:276; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
+  },
+  "e84c581175764e3ed7c53bcaa968e59c2b31a1361330733118bca9fa0fc8aca7": {
+    "classification": "technical",
+    "reason": "Button variant/size enum or non-visible ARIA state/heading reference, consumed only as styling or accessibility structure.",
+    "evidence": "settings/components/AutoStormSettingsModal.tsx:695; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
+  },
+  "8a9d676b97652ba5cfb356c8009a7cb171dde123798c457ece3f5a9731c1b19a": {
+    "classification": "technical",
+    "reason": "Button variant/size enum or non-visible ARIA state/heading reference, consumed only as styling or accessibility structure.",
+    "evidence": "settings/components/AutoStormSettingsModal.tsx:904; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
+  },
+  "3a2a63fdba61023bee0607786daab21d16fa294639a45406dd7754e68683ee3d": {
+    "classification": "technical",
+    "reason": "Button variant/size enum or non-visible ARIA state/heading reference, consumed only as styling or accessibility structure.",
+    "evidence": "settings/components/AutoStormSettingsModal.tsx:1293; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
+  },
+  "5417533cb2387c3a72d520d983e85033c4f209b32e3c1c77c03d03e671ff53e7": {
+    "classification": "technical",
+    "reason": "Button variant/size enum or non-visible ARIA state/heading reference, consumed only as styling or accessibility structure.",
+    "evidence": "settings/components/AutoStormSettingsModal.tsx:1301; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
+  },
+  "3bcf1380a9d64c9577cd271fb58e7eaa0e6d164960ac04e9ad2a8a157bb73dd2": {
+    "classification": "technical",
+    "reason": "Button variant/size enum or non-visible ARIA state/heading reference, consumed only as styling or accessibility structure.",
+    "evidence": "settings/components/AutoStormSettingsModal.tsx:1309; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
+  },
+  "72fef637a4deabba2dce98f87f844859553f158eb292fce36efb43231ab36743": {
+    "classification": "technical",
+    "reason": "Button variant/size enum or non-visible ARIA state/heading reference, consumed only as styling or accessibility structure.",
+    "evidence": "settings/components/AutoStormSettingsModal.tsx:1595; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
+  },
+  "3cceb427474994597ce8a2b443119caf743bd08358128a36acecc8fe3d676db8": {
+    "classification": "technical",
+    "reason": "Button variant/size enum or non-visible ARIA state/heading reference, consumed only as styling or accessibility structure.",
+    "evidence": "settings/components/AutoStormSettingsModal.tsx:1604; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
+  },
+  "99900aaa5fba3d38f9b063536edea93c2cbf0730616b5cc552a0d3f05eb4916b": {
+    "classification": "technical",
+    "reason": "Button variant/size enum or non-visible ARIA state/heading reference, consumed only as styling or accessibility structure.",
+    "evidence": "settings/components/AutoTCISettingsModal.tsx:361; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
+  },
+  "703fb5e84940aafaa72f4b596de4a433827416f725039f2a3462119923c7b739": {
+    "classification": "technical",
+    "reason": "Button variant/size enum or non-visible ARIA state/heading reference, consumed only as styling or accessibility structure.",
+    "evidence": "settings/components/AutoTCISettingsModal.tsx:371; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
+  },
+  "725c014400c3c390477c087318b6a2a17ba68af1ccf8fff4489b303a09d19e6f": {
+    "classification": "technical",
+    "reason": "Button variant/size enum or non-visible ARIA state/heading reference, consumed only as styling or accessibility structure.",
+    "evidence": "settings/components/AutoTCISettingsModal.tsx:532; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
+  },
+  "09e93fbd844b46184da9449f9a2aae7c6fcf7da2691e8d33193e4a712e182bb2": {
+    "classification": "technical",
+    "reason": "Button variant/size enum or non-visible ARIA state/heading reference, consumed only as styling or accessibility structure.",
+    "evidence": "settings/components/AutoTCISettingsModal.tsx:545; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
+  },
+  "7930112863668061b66ea649c0d49d5f1697d4fac2de628619fa2cbdd47f750c": {
+    "classification": "technical",
+    "reason": "Button variant/size enum or non-visible ARIA state/heading reference, consumed only as styling or accessibility structure.",
+    "evidence": "settings/components/AutoTCISettingsModal.tsx:558; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
+  },
+  "b362798bd49d865bf0e6a965efbe23961ae9614ca4732531bcb7e4822f89ab0a": {
+    "classification": "technical",
+    "reason": "Button variant/size enum or non-visible ARIA state/heading reference, consumed only as styling or accessibility structure.",
+    "evidence": "settings/components/AutoTowerSettingsModal.tsx:201; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
+  },
+  "2e0868c17bb49f64f439a7a3b195986e4bd2066b59f6f585f412806257e32798": {
+    "classification": "technical",
+    "reason": "Button variant/size enum or non-visible ARIA state/heading reference, consumed only as styling or accessibility structure.",
+    "evidence": "settings/components/AutomationDurationModal.tsx:103; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
+  },
+  "3fbad17e6c570863768fe6630c2b683cc3e05cb840b97e95bd3cd335f364e458": {
+    "classification": "technical",
+    "reason": "Button variant/size enum or non-visible ARIA state/heading reference, consumed only as styling or accessibility structure.",
+    "evidence": "settings/components/AutomationDurationModal.tsx:104; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
+  },
+  "d8d21c6d2ded1abf1a5a62855d1df2cc66515b202b3d26664b0e2318697a6d46": {
+    "classification": "technical",
+    "reason": "Button variant/size enum or non-visible ARIA state/heading reference, consumed only as styling or accessibility structure.",
+    "evidence": "settings/components/AutomationDurationModal.tsx:115; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
+  },
+  "da61d795369861721240dd3b728e02ae5ac54cff4f2561db8f78bfc8a39617fb": {
+    "classification": "technical",
+    "reason": "Button variant/size enum or non-visible ARIA state/heading reference, consumed only as styling or accessibility structure.",
+    "evidence": "settings/components/AutomationDurationModal.tsx:115; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
+  },
+  "c87f41951cb277094c78b1282510213dac12b9e39c6ea0c000a187963e1e4cb9": {
+    "classification": "technical",
+    "reason": "Button variant/size enum or non-visible ARIA state/heading reference, consumed only as styling or accessibility structure.",
+    "evidence": "settings/components/AutomationRunStrip.tsx:61; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
+  },
+  "2f37151d37dbb94bd5ad644a162d0b5a04354c2a75c1699b643d019ecae63efd": {
+    "classification": "technical",
+    "reason": "Button variant/size enum or non-visible ARIA state/heading reference, consumed only as styling or accessibility structure.",
+    "evidence": "settings/components/AutomationRunStrip.tsx:66; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
+  },
+  "56e44665d48fcc143ce1cce44ffe330aeb9f5758335a7b13f9ba9d9805158eff": {
+    "classification": "technical",
+    "reason": "Button variant/size enum or non-visible ARIA state/heading reference, consumed only as styling or accessibility structure.",
+    "evidence": "settings/components/CommanderAssignmentPanel.tsx:163; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
+  },
+  "ca2666cd0082f2f2df28412cd17485e07b46f78dfdae58fd64893bc61ac81d34": {
+    "classification": "technical",
+    "reason": "Button variant/size enum or non-visible ARIA state/heading reference, consumed only as styling or accessibility structure.",
+    "evidence": "settings/components/CommanderAssignmentPanel.tsx:166; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
+  },
+  "ada348fa3545652463da3fb1f8b312aa04f8d8e6bae0cdcc36cf5e2a119ad694": {
+    "classification": "technical",
+    "reason": "Button variant/size enum or non-visible ARIA state/heading reference, consumed only as styling or accessibility structure.",
+    "evidence": "settings/components/CommanderAssignmentPanel.tsx:222; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
+  },
+  "a328d9b20505f0aaa092cdbe3e8efd81ea4c2501731e45e3ba1f82988d85afda": {
+    "classification": "technical",
+    "reason": "Button variant/size enum or non-visible ARIA state/heading reference, consumed only as styling or accessibility structure.",
+    "evidence": "settings/components/CommanderAssignmentPanel.tsx:241; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
+  },
+  "3c585e67d0594b8538d721c5b7907381d8c4750234c9c3590a7d7aa09fd918d4": {
+    "classification": "technical",
+    "reason": "Button variant/size enum or non-visible ARIA state/heading reference, consumed only as styling or accessibility structure.",
+    "evidence": "settings/components/DefenseSetupField.tsx:270; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
+  },
+  "04782b0c9ba70d606d415e36715158bbeba9abe1c11971bcdb5e7aa8314d4bd5": {
+    "classification": "technical",
+    "reason": "Button variant/size enum or non-visible ARIA state/heading reference, consumed only as styling or accessibility structure.",
+    "evidence": "settings/components/DefenseSetupField.tsx:301; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
+  },
+  "f3bdae38f448540532aae3c695549e428ebaeadea814d24711ded8f0c7c0c735": {
+    "classification": "technical",
+    "reason": "Button variant/size enum or non-visible ARIA state/heading reference, consumed only as styling or accessibility structure.",
+    "evidence": "settings/components/DefenseSetupField.tsx:305; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
+  },
+  "62212c4ce1306874907ddcfa6966a4110f35dd2908763bafbb563e356bea4a2d": {
+    "classification": "technical",
+    "reason": "Button variant/size enum or non-visible ARIA state/heading reference, consumed only as styling or accessibility structure.",
+    "evidence": "settings/components/DefenseSetupField.tsx:363; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
+  },
+  "bd7d687bd7c960c82426d4dc71c1cc0cf5d55e3164861871781a46744f7bf615": {
+    "classification": "technical",
+    "reason": "Button variant/size enum or non-visible ARIA state/heading reference, consumed only as styling or accessibility structure.",
+    "evidence": "settings/components/DefenseSetupField.tsx:428; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
+  },
+  "bd3ff0437f6c105f86ee19803185fe0ced3ef1d294fbcab0b581af86b981de6d": {
+    "classification": "technical",
+    "reason": "Button variant/size enum or non-visible ARIA state/heading reference, consumed only as styling or accessibility structure.",
+    "evidence": "settings/components/EventAttackSetupField.tsx:347; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
+  },
+  "8c4997bcc81916b4da10d8f4a5c24ac565bb4d496f9eea313f940ac918b9bc17": {
+    "classification": "technical",
+    "reason": "Button variant/size enum or non-visible ARIA state/heading reference, consumed only as styling or accessibility structure.",
+    "evidence": "settings/components/EventAttackSetupField.tsx:379; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
+  },
+  "84361060c49db6dbb49095affe12bb1643c2fef4334937544dc7b3e65ba805e2": {
+    "classification": "technical",
+    "reason": "Button variant/size enum or non-visible ARIA state/heading reference, consumed only as styling or accessibility structure.",
+    "evidence": "settings/components/EventAttackSetupField.tsx:383; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
+  },
+  "d9b04e48dcf3a82f97ba1bce692404e449d26d5461ad0b96a6c29d1ae01097e1": {
+    "classification": "technical",
+    "reason": "Button variant/size enum or non-visible ARIA state/heading reference, consumed only as styling or accessibility structure.",
+    "evidence": "settings/components/EventAttackSetupField.tsx:459; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
+  },
+  "886f257d93073982f17cb04ec0bf7d532f53331fcc957b777d44f207655bb3ba": {
+    "classification": "technical",
+    "reason": "Button variant/size enum or non-visible ARIA state/heading reference, consumed only as styling or accessibility structure.",
+    "evidence": "settings/components/EventAttackSetupField.tsx:529; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
+  },
+  "2ded5b3b52e19e187cffdf86de31f0c9851dc0176178f067549dcf5b583d7c22": {
+    "classification": "technical",
+    "reason": "Button variant/size enum or non-visible ARIA state/heading reference, consumed only as styling or accessibility structure.",
+    "evidence": "settings/components/FeatureGuideModal.tsx:37; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
+  },
+  "4a4e3ce088623320d5eec72e36300989c6835b1d5cd8e21861a00059ff74f4fb": {
+    "classification": "technical",
+    "reason": "Button variant/size enum or non-visible ARIA state/heading reference, consumed only as styling or accessibility structure.",
+    "evidence": "settings/components/FeatureGuideModal.tsx:57; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
+  },
+  "0b4f897bd5c9aab716aa817047a54e7e3f9dfbfd0f9ae52c9d11c57ec5e048df": {
+    "classification": "technical",
+    "reason": "Button variant/size enum or non-visible ARIA state/heading reference, consumed only as styling or accessibility structure.",
+    "evidence": "settings/components/FeatureGuideModal.tsx:70; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
+  },
+  "c130382a104cf5b0b6a3c86a94fbeb0d37df9d7636d1554263e636dd109e7766": {
+    "classification": "technical",
+    "reason": "Button variant/size enum or non-visible ARIA state/heading reference, consumed only as styling or accessibility structure.",
+    "evidence": "settings/components/QueueProductionSettingsModal.tsx:509; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
+  },
+  "24c4bc18bde7942f2b817ba463c7c1fbacc25a058edecd8df28a75a25cfcda15": {
+    "classification": "technical",
+    "reason": "Button variant/size enum or non-visible ARIA state/heading reference, consumed only as styling or accessibility structure.",
+    "evidence": "settings/components/QueueProductionSettingsModal.tsx:558; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
+  },
+  "f2762c9d06ee70d33ce7ecbed9ef99fea2074f82f726e6f53fbb7caa659acd1a": {
+    "classification": "technical",
+    "reason": "Button variant/size enum or non-visible ARIA state/heading reference, consumed only as styling or accessibility structure.",
+    "evidence": "settings/components/QueueProductionSettingsModal.tsx:615; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
+  },
+  "9891993db5f6f3fc4813944b18e5e911f943dde31d898da005c24defafecfcef": {
+    "classification": "technical",
+    "reason": "Button variant/size enum or non-visible ARIA state/heading reference, consumed only as styling or accessibility structure.",
+    "evidence": "settings/components/QueueProductionSettingsModal.tsx:694; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
+  },
+  "17d92c696b4f5bc46583fd311baee143cbc6107f1b9a89e4090c9d03e1477d3e": {
+    "classification": "technical",
+    "reason": "Button variant/size enum or non-visible ARIA state/heading reference, consumed only as styling or accessibility structure.",
+    "evidence": "settings/components/QueueProductionSettingsModal.tsx:752; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
+  },
+  "cdbb7427e6381a0e0a7033b29aa2a9ab374eaf6e203283fa82d0ff71b3efd745": {
+    "classification": "technical",
+    "reason": "Button variant/size enum or non-visible ARIA state/heading reference, consumed only as styling or accessibility structure.",
+    "evidence": "settings/components/QueueProductionSettingsModal.tsx:1008; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
+  },
+  "e72caa64d82bc7326b8138e96c202027ae223e511de726f73f5197d65953b781": {
+    "classification": "technical",
+    "reason": "Button variant/size enum or non-visible ARIA state/heading reference, consumed only as styling or accessibility structure.",
+    "evidence": "settings/components/WeeklyScheduler.tsx:934; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
+  },
+  "aa6889719ed6f3005e8ca2075a9294294cab94f644f872178c69a2ad0ab953a9": {
+    "classification": "technical",
+    "reason": "Button variant/size enum or non-visible ARIA state/heading reference, consumed only as styling or accessibility structure.",
+    "evidence": "settings/components/WeeklyScheduler.tsx:1072; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
+  },
+  "98c11b89c67c2dab8581e2f75cf6766ae812416003f74f954a32eca54a01dc69": {
+    "classification": "technical",
+    "reason": "Button variant/size enum or non-visible ARIA state/heading reference, consumed only as styling or accessibility structure.",
+    "evidence": "settings/components/WeeklyScheduler.tsx:1078; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
+  },
+  "3f36276d71a823c517cec805cc8717001daa1043ca2c25471f938dee6fe4ff54": {
+    "classification": "technical",
+    "reason": "Button variant/size enum or non-visible ARIA state/heading reference, consumed only as styling or accessibility structure.",
+    "evidence": "settings/components/WeeklyScheduler.tsx:1084; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
+  },
+  "a006fe3ff451a0df331c3abfb6481c6f4df4d5fd821e4a128971098705c5b330": {
+    "classification": "technical",
+    "reason": "Button variant/size enum or non-visible ARIA state/heading reference, consumed only as styling or accessibility structure.",
+    "evidence": "settings/components/WeeklyScheduler.tsx:1100; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
+  },
+  "cf4ce21e47b68d0330b34a9e7b8494e380fff3e03c2a0a1879e11bb049bdeabc": {
+    "classification": "technical",
+    "reason": "Button variant/size enum or non-visible ARIA state/heading reference, consumed only as styling or accessibility structure.",
+    "evidence": "settings/components/WeeklyScheduler.tsx:1211; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
+  },
+  "9d035decd3e57bf0bbe6ddcff76611232c67b606e079a95c2b2ded73f4569eb7": {
+    "classification": "technical",
+    "reason": "Button variant/size enum or non-visible ARIA state/heading reference, consumed only as styling or accessibility structure.",
+    "evidence": "settings/components/WeeklyScheduler.tsx:1244; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
+  },
+  "0c0e488ba58c2a13c433f167086518e686fff77bce96dd7ae13c2146904628dc": {
+    "classification": "technical",
+    "reason": "Button variant/size enum or non-visible ARIA state/heading reference, consumed only as styling or accessibility structure.",
+    "evidence": "settings/useDraftRecovery.tsx:218; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
+  },
+  "83e32c0f7b989ae8c2f46875b8656cc649ebd8028a1a7763632c439052dd9a08": {
+    "classification": "technical",
+    "reason": "Button variant/size enum or non-visible ARIA state/heading reference, consumed only as styling or accessibility structure.",
+    "evidence": "settings/useDraftRecovery.tsx:222; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
+  },
+  "88863d9fc905ef4d1bf3be07afda41c0b488183053f48bff6297d6dc688827b7": {
+    "classification": "technical",
+    "reason": "Button variant/size enum or non-visible ARIA state/heading reference, consumed only as styling or accessibility structure.",
+    "evidence": "settings/useDraftRecovery.tsx:240; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
+  },
+  "e4ce59ff6384808873d5424e84c1acb154e2c00fa3a377c87f9998fb228f8007": {
+    "classification": "technical",
+    "reason": "Button variant/size enum or non-visible ARIA state/heading reference, consumed only as styling or accessibility structure.",
+    "evidence": "views/AttackPresetsView.tsx:320; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
+  },
+  "066960bfd348de1e8a1f8434cc70e6faa00e721fc9d7122f9930c0642dfbde95": {
+    "classification": "technical",
+    "reason": "Button variant/size enum or non-visible ARIA state/heading reference, consumed only as styling or accessibility structure.",
+    "evidence": "views/AttackPresetsView.tsx:356; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
+  },
+  "f2e22b503a65bf9e1e71d759d75789cdb0c9239e0c8672339ed95eac673f22a6": {
+    "classification": "technical",
+    "reason": "Button variant/size enum or non-visible ARIA state/heading reference, consumed only as styling or accessibility structure.",
+    "evidence": "views/AttackPresetsView.tsx:436; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
+  },
+  "1ffaaaa8ecd1c80f05610205e86c6e01f582e8113236c20099fa0480fcf4f563": {
+    "classification": "technical",
+    "reason": "Button variant/size enum or non-visible ARIA state/heading reference, consumed only as styling or accessibility structure.",
+    "evidence": "views/AttackPresetsView.tsx:513; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
+  },
+  "980a6d8831b1fe26087bc2149dc8e1af645e8abb87da555d7978686071152862": {
+    "classification": "technical",
+    "reason": "Button variant/size enum or non-visible ARIA state/heading reference, consumed only as styling or accessibility structure.",
+    "evidence": "views/AttackPresetsView.tsx:514; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
+  },
+  "01b66c9a1b8c0fbd7a5013a0dd0289e3fc700a468a7afc69853329fcda6fb1c4": {
+    "classification": "technical",
+    "reason": "Button variant/size enum or non-visible ARIA state/heading reference, consumed only as styling or accessibility structure.",
+    "evidence": "views/AttackPresetsView.tsx:515; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
+  },
+  "dd800542894c66c5a3c6e7fd1364cc3fabc5d18f3c2efd197bd8a3c481bba30e": {
+    "classification": "technical",
+    "reason": "Button variant/size enum or non-visible ARIA state/heading reference, consumed only as styling or accessibility structure.",
+    "evidence": "views/AttackPresetsView.tsx:516; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
+  },
+  "a719895b0afd8f13a4d7e17dfb0489c4f8685d8cc0b5994b99a254db73956f62": {
+    "classification": "technical",
+    "reason": "Button variant/size enum or non-visible ARIA state/heading reference, consumed only as styling or accessibility structure.",
+    "evidence": "views/AutomationView.tsx:823; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
+  },
+  "2a549c51063f912d9ed4fb5ba8f9a1840659e1f08019c9d8973188e618b02844": {
+    "classification": "technical",
+    "reason": "Button variant/size enum or non-visible ARIA state/heading reference, consumed only as styling or accessibility structure.",
+    "evidence": "views/AutomationView.tsx:955; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
+  },
+  "14c3ecb2709e4ec2881fad4203571d560f6ce2c48aa8eca8878ad8d514fa849b": {
+    "classification": "technical",
+    "reason": "Button variant/size enum or non-visible ARIA state/heading reference, consumed only as styling or accessibility structure.",
+    "evidence": "views/DefensePresetsView.tsx:326; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
+  },
+  "40ab51f92fc716f79e28ea2fa05d39cfb31702517f8fe86817067e99fbbc672e": {
+    "classification": "technical",
+    "reason": "Button variant/size enum or non-visible ARIA state/heading reference, consumed only as styling or accessibility structure.",
+    "evidence": "views/DefensePresetsView.tsx:335; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
+  },
+  "30d1a69e1e53ca34c7999d9f74f6bc25027cc7c794af15b8ab28b58e89402776": {
+    "classification": "technical",
+    "reason": "Button variant/size enum or non-visible ARIA state/heading reference, consumed only as styling or accessibility structure.",
+    "evidence": "views/DefensePresetsView.tsx:379; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
+  },
+  "04382e5d73063abbbc25c1f729fbf9fd656fc7c00f89c995ff9dec8284ab1659": {
+    "classification": "technical",
+    "reason": "Button variant/size enum or non-visible ARIA state/heading reference, consumed only as styling or accessibility structure.",
+    "evidence": "views/DefensePresetsView.tsx:434; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
+  },
+  "26553788e304e3e177285f7aa0f0f8674bad22a1ae0dd9d94d07669a19621312": {
+    "classification": "technical",
+    "reason": "Button variant/size enum or non-visible ARIA state/heading reference, consumed only as styling or accessibility structure.",
+    "evidence": "views/DefensePresetsView.tsx:435; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
+  },
+  "89574d06197e77af45db07ed43001f87cf6ad8658244b8eba50345fcc0adc72c": {
+    "classification": "technical",
+    "reason": "Button variant/size enum or non-visible ARIA state/heading reference, consumed only as styling or accessibility structure.",
+    "evidence": "views/DefensePresetsView.tsx:436; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
+  },
+  "957ce89e85399e7306a293d36cd6f4769f710ebf813a54a76e33c10bccbfa8fa": {
+    "classification": "technical",
+    "reason": "Button variant/size enum or non-visible ARIA state/heading reference, consumed only as styling or accessibility structure.",
+    "evidence": "views/DefensePresetsView.tsx:475; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
+  },
+  "bd12c606e34bd77378b67f8a6d643aa960f321bf1321b5d9c1e5437e02225ee6": {
+    "classification": "technical",
+    "reason": "Button variant/size enum or non-visible ARIA state/heading reference, consumed only as styling or accessibility structure.",
+    "evidence": "views/SettingsView.tsx:1222; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
+  },
+  "db96c203258e35a952b04b591b2e71eeb81028f29626d23a5479e5a8c606dc28": {
+    "classification": "technical",
+    "reason": "Button variant/size enum or non-visible ARIA state/heading reference, consumed only as styling or accessibility structure.",
+    "evidence": "views/SettingsView.tsx:1358; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
+  },
+  "5d74dff9b6339b098a8ee0e6c8fcdbf58cc8d4b7cedf62fffb69ba6a580fbe1b": {
+    "classification": "technical",
+    "reason": "Button variant/size enum or non-visible ARIA state/heading reference, consumed only as styling or accessibility structure.",
+    "evidence": "views/SettingsView.tsx:1367; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
+  },
+  "85745a981cb986083c51d795c856343343f31f9b18c78289a2ca702d64a5bb94": {
+    "classification": "technical",
+    "reason": "Button variant/size enum or non-visible ARIA state/heading reference, consumed only as styling or accessibility structure.",
+    "evidence": "worldIntelligence/components/WorldAllianceDetailView.tsx:203; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
+  },
+  "f3a2b2b1bc286516e1d89a2655dbbffe70946bff6f3a723a26fbd912c10b21c1": {
+    "classification": "technical",
+    "reason": "Button variant/size enum or non-visible ARIA state/heading reference, consumed only as styling or accessibility structure.",
+    "evidence": "worldIntelligence/components/WorldEventHistory.tsx:518; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
+  },
+  "f444052e4cad0eb6a2f980f87c8e51d0fd26e5cc1868d69e1ae12c2b167e3968": {
+    "classification": "technical",
+    "reason": "Button variant/size enum or non-visible ARIA state/heading reference, consumed only as styling or accessibility structure.",
+    "evidence": "worldIntelligence/components/WorldEventHistory.tsx:725; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
+  },
+  "8325d5033e8a2615ca9795afb30dbd53de44cf48f51459698b21f133c400138f": {
+    "classification": "technical",
+    "reason": "Button variant/size enum or non-visible ARIA state/heading reference, consumed only as styling or accessibility structure.",
+    "evidence": "worldIntelligence/components/WorldEventHistory.tsx:728; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
+  },
+  "df86f725c11e5c77c60a2b37dfc553df774f167181cf082427f0128ea4341ac9": {
+    "classification": "technical",
+    "reason": "Button variant/size enum or non-visible ARIA state/heading reference, consumed only as styling or accessibility structure.",
+    "evidence": "worldIntelligence/components/WorldEventHistory.tsx:754; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
+  },
+  "52df3d8d0019cb2d9882ab391e1fe2e2dc5d00ee52e6dde391df4aef79a58eac": {
+    "classification": "technical",
+    "reason": "Button variant/size enum or non-visible ARIA state/heading reference, consumed only as styling or accessibility structure.",
+    "evidence": "worldIntelligence/components/WorldEventHistory.tsx:784; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
+  },
+  "28adeb7aa6d7c813b172b1e93512f4e154d6dd26e348d469eb53254628add7a9": {
+    "classification": "technical",
+    "reason": "Button variant/size enum or non-visible ARIA state/heading reference, consumed only as styling or accessibility structure.",
+    "evidence": "worldIntelligence/components/WorldIntelligenceView.tsx:185; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
+  },
+  "e8da82c0e155f4e04b70408c0b5e6afc938fbfd2661d7856bcf9426aa8aec54f": {
+    "classification": "technical",
+    "reason": "Button variant/size enum or non-visible ARIA state/heading reference, consumed only as styling or accessibility structure.",
+    "evidence": "worldIntelligence/components/WorldIntelligenceView.tsx:232; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
+  },
+  "54d7337ada73d6239b08522e87f4e6004d4802b7716badb16dd8f0bd86919f93": {
+    "classification": "technical",
+    "reason": "Button variant/size enum or non-visible ARIA state/heading reference, consumed only as styling or accessibility structure.",
+    "evidence": "Rift/components/RiftArrivalClock.tsx:58; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
+  },
+  "4f15cd18a3535fa375f9b71a1195c987c4a23a369fd922bc16bbefd2b5c7d086": {
+    "classification": "technical",
+    "reason": "Button variant/size enum or non-visible ARIA state/heading reference, consumed only as styling or accessibility structure.",
+    "evidence": "Rift/components/RiftArrivalClock.tsx:86; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
+  },
+  "5c3a1f6ac3568fcf36151244ff3730a0ad93940b98e22d95c95e974736a6f29c": {
+    "classification": "technical",
+    "reason": "Button variant/size enum or non-visible ARIA state/heading reference, consumed only as styling or accessibility structure.",
+    "evidence": "allianceTargets/components/AllianceTargetsView.tsx:423; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
+  },
+  "dce715a83c9269cde272fad26bfb47c53fa9adbcab3c7fdb6a21fe72a53172da": {
+    "classification": "technical",
+    "reason": "Button variant/size enum or non-visible ARIA state/heading reference, consumed only as styling or accessibility structure.",
+    "evidence": "allianceTargets/components/AllianceTargetsView.tsx:435; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
+  },
+  "584941a56ae0828f42fba2acaf529fc960e47aba2fd7ca2b259febcbb87d6ded": {
+    "classification": "technical",
+    "reason": "Button variant/size enum or non-visible ARIA state/heading reference, consumed only as styling or accessibility structure.",
+    "evidence": "components/Sidebar.tsx:71; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
+  },
+  "e83a5769915ee4463cdb319792356ef83506a9fb966ac490322589ac2bb960fc": {
+    "classification": "technical",
+    "reason": "Button variant/size enum or non-visible ARIA state/heading reference, consumed only as styling or accessibility structure.",
+    "evidence": "components/TroopPickerModal.tsx:331; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
+  },
+  "cb5e5c1d0c89eb8e203cfec28b114bfc40c24e5a25ae3ca0254c8bd1e888287f": {
+    "classification": "technical",
+    "reason": "Button variant/size enum or non-visible ARIA state/heading reference, consumed only as styling or accessibility structure.",
+    "evidence": "components/TroopPickerModal.tsx:372; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
+  },
+  "7b01c90ee66ffbf537de040b69c6625848975e40819bfc7b33ac242ac04d0b0d": {
+    "classification": "technical",
+    "reason": "Button variant/size enum or non-visible ARIA state/heading reference, consumed only as styling or accessibility structure.",
+    "evidence": "components/ThemeToggle.tsx:16; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
+  },
+  "cd4ea34091a2eeb077d35d32ea4ca983a3c2bfdae0a866ee8fb812bb867e9dee": {
+    "classification": "technical",
+    "reason": "Button variant/size enum or non-visible ARIA state/heading reference, consumed only as styling or accessibility structure.",
+    "evidence": "components/ui/SectionCard.tsx:51; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
+  },
+  "b6c859baf90648faede60008c93e3ffa4505a53017735b5afcc3b5113f6cedd2": {
+    "classification": "technical",
+    "reason": "Button variant/size enum or non-visible ARIA state/heading reference, consumed only as styling or accessibility structure.",
+    "evidence": "components/ui/SectionHeader.tsx:16; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
+  },
+  "9722419704b51d00c8ac3c6f2309dd0e59172441cf70d0d7b9677827d4c57d78": {
+    "classification": "technical",
+    "reason": "Button variant/size enum or native SVG aria-hidden state, consumed as styling or accessibility structure rather than display copy.",
+    "evidence": "components/AttackSetupModal.tsx:304; CIT-65 Button API/size migration or decorative leftIcon SVG sink."
+  },
+  "8d9f7826365314039f0a7e33ef00e1e496cd440d47d0693c245aec5020990b73": {
+    "classification": "technical",
+    "reason": "Button variant/size enum or native SVG aria-hidden state, consumed as styling or accessibility structure rather than display copy.",
+    "evidence": "components/DetailBackButton.tsx:14; CIT-65 Button API/size migration or decorative leftIcon SVG sink."
+  },
+  "4b7cd23c4bed2c4fa97c70acd12426e54f3e7c7248a77c4de8bd2689d7dd223e": {
+    "classification": "technical",
+    "reason": "Button variant/size enum or native SVG aria-hidden state, consumed as styling or accessibility structure rather than display copy.",
+    "evidence": "equipment/components/EquipmentOptimizer.tsx:664; CIT-65 Button API/size migration or decorative leftIcon SVG sink."
+  },
+  "1850b467c0fd675eb02abedc9608b54c03ad3290b2c5fbff37f505b45c09fcba": {
+    "classification": "technical",
+    "reason": "Button variant/size enum or native SVG aria-hidden state, consumed as styling or accessibility structure rather than display copy.",
+    "evidence": "settings/components/AutoFortressSettingsModal.tsx:207; CIT-65 Button API/size migration or decorative leftIcon SVG sink."
+  },
+  "6745b00ea1156428b4b9dd442cf654d01d3889247e2ff321e8fe0f70f4da6a17": {
+    "classification": "technical",
+    "reason": "Button variant/size enum or native SVG aria-hidden state, consumed as styling or accessibility structure rather than display copy.",
+    "evidence": "worldIntelligence/components/WorldEventHistory.tsx:501; CIT-65 Button API/size migration or decorative leftIcon SVG sink."
+  },
   "95b0488069d0a570c0d45f231921a002ba11ad008a9b644e2693a9c8ee9137b6": {
     "classification": "technical",
     "reason": "Component tone, variant, size, ARIA value, locale identifier or typed message key; not displayed prose.",
@@ -11533,11 +12608,6 @@
     "classification": "technical",
     "reason": "Component tone, variant, size, ARIA value, locale identifier or typed message key; not displayed prose.",
     "evidence": "CIT-64 components/ui/Banner.tsx: ghost is passed to a typed component prop, formatter locale, or LocalizedText messageKey; the displayed body is defined in sourceMessages.ts."
-  },
-  "d8b2bdc627cd2739c926fbbd90046e4319eee7be4964f31d1f0e17479d77898d": {
-    "classification": "technical",
-    "reason": "Component tone, variant, size, ARIA value, locale identifier or typed message key; not displayed prose.",
-    "evidence": "CIT-64 components/ui/Banner.tsx: icon is passed to a typed component prop, formatter locale, or LocalizedText messageKey; the displayed body is defined in sourceMessages.ts."
   },
   "09c1a93cdf48b6acdcb90da3a875578ee2f26fec498a4dba55bb571671832313": {
     "classification": "technical",

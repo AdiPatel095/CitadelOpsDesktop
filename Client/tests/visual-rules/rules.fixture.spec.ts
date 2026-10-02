@@ -167,3 +167,15 @@ test('Delta isolates Arabic gain and loss signs with semantic colours', async ({
     }, token)).toBe(true);
   }
 });
+test('R11 rejects duplicate primaries, including disabled actions, in every region type', async ({ page }) => {
+  const { assertOnePrimaryPerRegion } = await import('../visual/rules');
+  for (const region of ['data-region="card"', 'data-region="toolbar"', 'data-region="page-header"', 'role="dialog"']) {
+    await page.setContent(`<section ${region}><button data-variant="primary">A</button><button data-variant="primary" disabled>B</button></section>`);
+    await expect(assertOnePrimaryPerRegion(page)).rejects.toThrow(/R11/);
+  }
+});
+test('R11 assigns nested actions to the nearest region and ignores hidden controls', async ({ page }) => {
+  const { assertOnePrimaryPerRegion } = await import('../visual/rules');
+  await page.setContent('<section data-region="card"><button data-variant="primary">A</button><div data-region="toolbar"><button data-variant="primary">B</button></div><button hidden data-variant="primary">Hidden</button></section>');
+  await assertOnePrimaryPerRegion(page);
+});

@@ -56,7 +56,7 @@ export const CastleRequirementField: React.FC<CastleRequirementFieldProps> = ({
     : offered;
   return (
     <div id={id} className="block">
-      <span className="mb-1.5 flex items-center gap-2 text-[10px] font-black uppercase tracking-wider text-text-muted">
+      <span className="mb-1.5 flex items-center gap-2 text-caption font-semibold text-text-muted">
         <Castle className="h-3.5 w-3.5" aria-hidden="true" /> {label}
       </span>
       <Select

@@ -41,12 +41,12 @@ export const SettingsToggleRow: React.FC<SettingsToggleRowProps> = ({
   return (
     <div className={`flex items-start justify-between gap-4 rounded-global border px-4 py-3 ${toneClass} ${disabled ? 'opacity-55' : ''} ${className}`} {...props}>
       <div className="min-w-0">
-        <div className="flex items-center gap-2 text-sm font-bold text-text-main">
+        <div className="flex items-center gap-2 text-body font-semibold text-text-main">
           {icon && <span className={iconClass} aria-hidden="true">{icon}</span>}
           {title}
         </div>
-        {description && <div className="mt-0.5 text-[11px] font-medium leading-relaxed text-text-muted">{description}</div>}
-        {disabled && disabledReason && <div className="mt-1 text-[11px] font-semibold text-warning">{disabledReason}</div>}
+        {description && <div className="mt-0.5 text-caption font-medium text-text-muted">{description}</div>}
+        {disabled && disabledReason && <div className="mt-1 text-caption font-semibold text-warning">{disabledReason}</div>}
       </div>
       <Switch checked={checked} onChange={onChange} disabled={disabled} ariaLabel={accessibleName} />
     </div>

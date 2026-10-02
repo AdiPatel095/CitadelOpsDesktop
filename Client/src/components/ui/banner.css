@@ -19,5 +19,3 @@
 .ui-banner__content { flex: 1; min-width: 0; }
 .ui-banner__title { margin-bottom: var(--space-4); color: var(--text-primary); font-weight: var(--font-weight-700); }
 .ui-banner__action { margin-inline-start: auto; }
-.ui-banner .m3-button-text { color: var(--text-primary); }
-.ui-banner .m3-button-text:hover:not(:disabled) { background: var(--state-hover); }

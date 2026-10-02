@@ -52,7 +52,7 @@ export default function CurrencyView() {
 		<div className="flex flex-col gap-8 pb-8">
 			<StaleSessionBanner />
 			{groups.map((group) => (
-				<SectionCard key={group.name} variant="solid" title={group.name} titleClassName="text-xl text-primary" className="flex flex-col" contentClassName="p-6">
+				<SectionCard key={group.name} variant="solid" title={group.name} titleClassName="text-title text-primary" className="flex flex-col" contentClassName="">
 					<div className="currency-responsive-grid">
 						{group.items.map((item) => <AmountCard key={`${group.name}-${item.id}`} item={item} />)}
 					</div>
@@ -65,7 +65,7 @@ export default function CurrencyView() {
 function AmountCard({ item }: { item: DefinitionAmount }) {
 	return (
 		<div className="flex flex-col items-center justify-center p-4 gap-3 bg-bg-card border border-border-base rounded-global shadow-sm hover:border-primary/50 hover:bg-bg-card-hover transition-colors">
-			<span className="text-xs font-bold text-text-muted uppercase tracking-wider text-center h-8 flex items-center justify-center">
+			<span className="text-caption font-semibold text-text-muted text-center h-8 flex items-center justify-center">
 				{item.name}
 			</span>
 			<div className="h-14 flex items-center justify-center">
@@ -75,8 +75,8 @@ function AmountCard({ item }: { item: DefinitionAmount }) {
 					<Icons.Database className="w-10 h-10 text-primary" />
 				)}
 			</div>
-			<span className="text-lg font-bold text-text-main font-mono mt-1">{item.amount.toLocaleString()}</span>
-			{item.code && <span className="text-[10px] text-text-muted font-mono">{item.code}</span>}
+			<span className="text-body-lg font-semibold text-text-main font-mono mt-1">{item.amount.toLocaleString()}</span>
+			{item.code && <span className="text-caption text-text-muted font-mono">{item.code}</span>}
 		</div>
 	);
 }

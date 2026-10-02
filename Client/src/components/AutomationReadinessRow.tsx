@@ -65,8 +65,8 @@ export const AutomationReadinessRow: React.FC<{
   const waiting = report.checks.filter((check) => check.state === 'pending' || check.state === 'unavailable').length;
   const panelId = `automation-readiness-${featureId}`;
   return (
-    <div ref={rootRef} className="mt-1.5 text-xs" data-automation-readiness={featureId} data-readiness-overall={report.overall}>
-      <button
+    <div ref={rootRef} className="mt-1.5 text-caption" data-automation-readiness={featureId} data-readiness-overall={report.overall}>
+      <button data-button-pattern="disclosure"
         ref={toggleRef}
         type="button"
         className="flex w-full min-w-0 flex-wrap items-center gap-1.5 rounded-md px-1 py-0.5 text-left text-text-muted hover:text-text-main focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary"
@@ -76,7 +76,7 @@ export const AutomationReadinessRow: React.FC<{
       >
         <Icon className={`h-3.5 w-3.5 shrink-0 ${TONE[report.overall]}`} aria-hidden="true" />
         <span className="font-semibold text-text-main"><LocalizedText messageKey="featureReadiness.title" />:</span>
-        <Badge variant={BADGE[report.overall]} className="normal-case tracking-normal">
+        <Badge variant={BADGE[report.overall]} className="normal-case">
           <LocalizedText messageKey="readiness.overall" params={{ state: report.overall }} />
         </Badge>
         {blocked + waiting > 0 ? (
@@ -95,7 +95,7 @@ export const AutomationReadinessRow: React.FC<{
       <div id={panelId} hidden={!expanded} className="mt-1.5 space-y-1.5">
         {expanded ? (
           <>
-            <p className="text-[11px] text-text-muted"><LocalizedText messageKey="featureReadiness.notAction" /></p>
+            <p className="text-caption text-text-muted"><LocalizedText messageKey="featureReadiness.notAction" /></p>
             <ReadinessPanel report={report} onFix={fix} />
           </>
         ) : null}

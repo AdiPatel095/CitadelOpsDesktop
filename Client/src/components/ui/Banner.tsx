@@ -26,7 +26,7 @@ export function Banner({ tone, title, children, action, onDismiss, dismissLabel,
         <div>{children}</div>
       </div>
       {action && <div className="ui-banner__action">{action}</div>}
-      {onDismiss && <Button variant="ghost" size="icon" aria-label={dismissLabel ?? t('common.close')} onClick={onDismiss}><X size={16} aria-hidden="true" /></Button>}
+      {onDismiss && <Button variant="ghost" iconOnly aria-label={dismissLabel ?? t('common.close')} onClick={onDismiss}><X size={16} aria-hidden="true" /></Button>}
     </div>
   );
 }

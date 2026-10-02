@@ -78,8 +78,8 @@ export function CastleCopyBody<Draft, T>({ descriptor, context, featureLabel, pr
             onChange={(event) => setInput((current) => withDestination(current, destination.key, event.target.checked))}
             className="h-4 w-4"
           />
-          <label htmlFor={inputId} className="min-w-0 whitespace-normal break-words text-sm font-bold text-text-main">{destination.castle.name}</label>
-          <Badge variant={STATE_BADGE[destination.state]} className="normal-case tracking-normal">
+          <label htmlFor={inputId} className="min-w-0 whitespace-normal break-words text-body font-semibold text-text-main">{destination.castle.name}</label>
+          <Badge variant={STATE_BADGE[destination.state]} className="normal-case">
             <LocalizedText messageKey="castleCopy.state" params={{ state: destination.state }} />
           </Badge>
         </div>
@@ -91,8 +91,8 @@ export function CastleCopyBody<Draft, T>({ descriptor, context, featureLabel, pr
           </ul>
         ) : null}
         {destination.changes.length > 0 ? (
-          <table className="mt-2 w-full text-left text-xs">
-            <thead className="text-[10px] uppercase tracking-wider text-text-muted">
+          <table className="mt-2 w-full text-left text-caption">
+            <thead className="text-caption text-text-muted">
               <tr>
                 <th scope="col" className="py-1 pr-2 font-bold"><LocalizedText messageKey="castleCopy.fields" /></th>
                 <th scope="col" className="py-1 font-bold"><LocalizedText messageKey="castleCopy.toColumn" /></th>
@@ -144,14 +144,14 @@ export function CastleCopyBody<Draft, T>({ descriptor, context, featureLabel, pr
   };
 
   return (
-      <div className="space-y-4 text-sm" data-castle-copy={descriptor.featureId}>
+      <div className="space-y-4 text-body" data-castle-copy={descriptor.featureId}>
         {noticeKey ? (
-          <p role="status" className="rounded-global border border-warning/30 bg-warning/10 px-3 py-2 text-xs font-semibold text-text-main" data-castle-copy-notice><LocalizedText messageKey={noticeKey} /></p>
+          <p role="status" className="rounded-global border border-warning/30 bg-warning/10 px-3 py-2 text-caption font-semibold text-text-main" data-castle-copy-notice><LocalizedText messageKey={noticeKey} /></p>
         ) : null}
         <label className="flex flex-wrap items-center gap-2">
-          <span className="text-xs font-bold uppercase tracking-wider text-text-muted"><LocalizedText messageKey="castleCopy.source" /></span>
+          <span className="text-caption font-semibold text-text-muted"><LocalizedText messageKey="castleCopy.source" /></span>
           <select
-            className="rounded-global border border-border-base bg-bg-input px-2 py-1 text-sm text-text-main"
+            className="rounded-global border border-border-base bg-bg-input px-2 py-1 text-body text-text-main"
             value={sourceKey}
             onChange={(event) => onSource(event.target.value)}
           >
@@ -160,13 +160,13 @@ export function CastleCopyBody<Draft, T>({ descriptor, context, featureLabel, pr
         </label>
 
         {!preview.sourceConfigured ? (
-          <p className="rounded-global border border-warning/30 bg-warning/10 px-3 py-2 text-xs text-text-main"><LocalizedText messageKey="castleCopy.nothingToCopy" params={{ castle: source?.name ?? '' }} /></p>
+          <p className="rounded-global border border-warning/30 bg-warning/10 px-3 py-2 text-caption text-text-main"><LocalizedText messageKey="castleCopy.nothingToCopy" params={{ castle: source?.name ?? '' }} /></p>
         ) : (
           <>
             <fieldset className="space-y-1.5">
-              <legend className="text-xs font-bold uppercase tracking-wider text-text-muted"><LocalizedText messageKey="castleCopy.fields" /></legend>
+              <legend className="text-caption font-semibold text-text-muted"><LocalizedText messageKey="castleCopy.fields" /></legend>
               {descriptor.fields.map((field) => (
-                <label key={field.id} className="flex items-center gap-2 text-xs text-text-main">
+                <label key={field.id} className="flex items-center gap-2 text-caption text-text-main">
                   <input
                     type="checkbox"
                     checked={input.fields.has(field.id)}
@@ -178,18 +178,18 @@ export function CastleCopyBody<Draft, T>({ descriptor, context, featureLabel, pr
                     : <LocalizedText messageKey={field.labelKey} />}
                 </label>
               ))}
-              {consequential ? <p className="pl-6 text-[11px] text-text-muted"><LocalizedText messageKey="castleCopy.include.helper" /></p> : null}
+              {consequential ? <p className="pl-6 text-caption text-text-muted"><LocalizedText messageKey="castleCopy.include.helper" /></p> : null}
             </fieldset>
 
             <div className="space-y-2">
               <div className="flex flex-wrap items-center justify-between gap-2">
-                <h3 className="text-xs font-bold uppercase tracking-wider text-text-muted"><LocalizedText messageKey="castleCopy.destinations" /></h3>
+                <h3 className="text-title-sm font-bold text-text-muted"><LocalizedText messageKey="castleCopy.destinations" /></h3>
                 <Button variant="ghost" size="sm" onClick={() => setInput((current) => withAllCompatible(current, preview))}>
                   <LocalizedText messageKey="castleCopy.selectAllCompatible" />
                 </Button>
               </div>
               {preview.destinations.length === 0 ? (
-                <p className="text-xs text-text-muted"><LocalizedText messageKey="castleCopy.noDestinations" /></p>
+                <p className="text-caption text-text-muted"><LocalizedText messageKey="castleCopy.noDestinations" /></p>
               ) : (
                 <ul className="space-y-2">{preview.destinations.map(renderDestination)}</ul>
               )}
@@ -197,7 +197,7 @@ export function CastleCopyBody<Draft, T>({ descriptor, context, featureLabel, pr
           </>
         )}
 
-        <div className="space-y-1 border-t border-border-base pt-3 text-[11px] leading-relaxed text-text-muted">
+        <div className="space-y-1 border-t border-border-base pt-3 text-caption text-text-muted">
           <p><LocalizedText messageKey={preview.unsupported} /></p>
           <p className="font-semibold text-text-main"><LocalizedText messageKey="castleCopy.draftOnly" /></p>
           {running ? (
@@ -275,7 +275,7 @@ export function CastleCopyDialog<Draft, T>({ descriptor, draft, sourceKey: initi
       title={<ModalTitle className="castle-copy-title" icon={<Copy className="h-5 w-5" />}><LocalizedText messageKey="castleCopy.title" params={{ feature: featureLabel, castle: source?.name ?? '' }} /></ModalTitle>}
       footer={(
         <div className="flex w-full flex-wrap items-center justify-between gap-2">
-          <span className="text-xs text-text-muted"><LocalizedText messageKey="castleCopy.selected" params={{ count: size }} /></span>
+          <span className="text-caption text-text-muted"><LocalizedText messageKey="castleCopy.selected" params={{ count: size }} /></span>
           <div className="flex gap-2">
             <Button variant="ghost" onClick={onClose}><LocalizedText messageKey="castleCopy.cancel" /></Button>
             <Button variant="primary" disabled={size === 0} onClick={apply}><LocalizedText messageKey="castleCopy.apply" /></Button>
