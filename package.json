@@ -14,6 +14,7 @@
     "server:dev": "go run .",
     "build": "npm run client:build && go build -tags desktop -o CitadelOpsDesktop .",
     "build:server": "go build -o CitadelOpsDesktop .",
-    "test": "go test ./... && npm run client:test"
+    "test": "go test ./... && npm run client:test",
+    "check:mirror": "node scripts/check-mirror.mjs --portal ../CitadelOpsFrontend --desktop ."
   }
 }
