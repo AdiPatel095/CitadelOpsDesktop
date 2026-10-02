@@ -21,12 +21,21 @@ test('other areas, suites, controls and rules remain enforced', () => {
 });
 
 test('recorded shared findings require the exact case and failure fingerprint', () => {
-  const recorded = { ...baseline[0], view: 'support', width: 390, locale: 'en', theme: 'light', detail: finding.detail };
-  const scope = { ...context, view: 'support', width: 390, locale: 'en', theme: 'light' };
+  const recorded = { ...baseline[0], view: 'support', width: 390, locale: 'en', theme: 'light', deployment: 'desktop', detail: finding.detail };
+  const scope = { ...context, view: 'support', width: 390, locale: 'en', theme: 'light', deployment: 'desktop' };
   assert.equal(applyGateBaseline([finding], [recorded], scope).excluded.length, 1);
-  for (const altered of [{ view: 'settings' }, { width: 1440 }, { locale: 'ar' }, { theme: 'dark' }]) {
+  for (const altered of [{ view: 'settings' }, { width: 1440 }, { locale: 'ar' }, { theme: 'dark' }, { deployment: 'portal' }]) {
     assert.deepEqual(applyGateBaseline([finding], [recorded], { ...scope, ...altered }).remaining, [finding]);
   }
   const different = { ...finding, detail: 'another failure' };
   assert.deepEqual(applyGateBaseline([different], [recorded], scope).remaining, [different]);
+});
+
+test('a recorded source fingerprint cannot suppress a changed or differently owned node', () => {
+  const source = { ...finding, baselineElement: 'stable-frame-node', sourceFingerprint: 'known-source', sharedOwner: 'shared owner' };
+  const record = { ...baseline[0], element: source.baselineElement, sourceFingerprint: source.sourceFingerprint, owner: source.sharedOwner };
+  assert.equal(applyGateBaseline([source], [record], context).excluded.length, 1);
+  for (const other of [{ ...source, sourceFingerprint: 'changed-source' }, { ...source, sharedOwner: undefined }, { ...source, baselineElement: 'area-owned-node' }]) {
+    assert.deepEqual(applyGateBaseline([other], [record], context).remaining, [other]);
+  }
 });

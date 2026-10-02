@@ -87,30 +87,30 @@ function alertStyles(category: AppNotification['category']) {
   switch (category) {
     case 'green':
       return {
-        bg: 'bg-emerald-500/10 dark:bg-emerald-500/20',
-        border: 'border-emerald-500/20 dark:border-emerald-500/50',
-        text: 'text-emerald-950 dark:text-white font-semibold',
-        list: 'text-emerald-950/90 dark:text-white/95',
-        icon: <Icons.Check className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />,
-        shadow: 'shadow-[0_0_15px_rgba(16,185,129,0.1)] dark:shadow-[0_0_15px_rgba(16,185,129,0.2)]',
+        bg: 'bg-[var(--status-success-bg)]',
+        border: 'border-[var(--status-success-border)]',
+        text: 'text-[var(--status-success)] font-semibold',
+        list: 'text-[var(--status-success)]',
+        icon: <Icons.Check className="h-5 w-5 text-[var(--status-success)]" />,
+        shadow: 'shadow-md',
       };
     case 'red':
       return {
-        bg: 'bg-red-500/10 dark:bg-red-500/20',
-        border: 'border-red-500/20 dark:border-red-500/50',
-        text: 'text-red-950 dark:text-white font-semibold',
-        list: 'text-red-950/90 dark:text-red-100',
-        icon: <Icons.AlertCircle className="h-5 w-5 text-red-600 dark:text-red-400" />,
-        shadow: 'shadow-[0_0_15px_rgba(239,68,68,0.1)] dark:shadow-[0_0_15px_rgba(239,68,68,0.2)]',
+        bg: 'bg-[var(--status-danger-bg)]',
+        border: 'border-[var(--status-danger-border)]',
+        text: 'text-[var(--status-danger)] font-semibold',
+        list: 'text-[var(--status-danger)]',
+        icon: <Icons.AlertCircle className="h-5 w-5 text-[var(--status-danger)]" />,
+        shadow: 'shadow-md',
       };
     default:
       return {
-        bg: 'bg-amber-500/10 dark:bg-amber-500/20',
-        border: 'border-amber-500/20 dark:border-amber-500/50',
-        text: 'text-amber-950 dark:text-white font-semibold',
-        list: 'text-amber-950/90 dark:text-white/95',
-        icon: <Icons.AlertTriangle className="h-5 w-5 text-amber-600 dark:text-amber-400" />,
-        shadow: 'shadow-[0_0_15px_rgba(245,158,11,0.1)] dark:shadow-[0_0_15px_rgba(245,158,11,0.2)]',
+        bg: 'bg-[var(--status-warning-bg)]',
+        border: 'border-[var(--status-warning-border)]',
+        text: 'text-[var(--status-warning)] font-semibold',
+        list: 'text-[var(--status-warning)]',
+        icon: <Icons.AlertTriangle className="h-5 w-5 text-[var(--status-warning)]" />,
+        shadow: 'shadow-md',
       };
   }
 }

@@ -1,3 +1,5 @@
+import { annotateSystemSources } from './systemSources';
+import { areaFor } from '../../scripts/visual/gate-report.mjs';
 import AxeBuilder from '@axe-core/playwright';
 import { test } from '@playwright/test';
 import { openCase, writeReport } from './harness';
@@ -26,7 +28,7 @@ for (const locale of ['en', 'ar'] as const) {
           }
         }
         verifyNetwork();
-        await writeReport(testInfo, 'a11y', entry, violations, options);
+        await writeReport(testInfo, 'a11y', entry, areaFor(entry.name).startsWith('d') ? await annotateSystemSources(page, violations) : violations, options);
       });
     }
   }

@@ -502,6 +502,7 @@ export const AutoTCISettingsModal: React.FC<AutoTCISettingsModalProps> = ({ isOp
                                 {meta?.category ? <span>· {meta.category}</span> : null}
                               </div>
                               <div
+                                dir="ltr"
                                 className="mt-1 font-mono text-caption text-text-muted/90"
                                 title={meta ? formatGroupTiersLine(meta) : undefined}
                               >

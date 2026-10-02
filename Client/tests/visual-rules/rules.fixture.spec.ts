@@ -1,3 +1,4 @@
+import { annotateSystemSources } from '../gate/systemSources';
 import { existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { createElement } from 'react';
@@ -201,4 +202,16 @@ test('Arabic gate rejects an unisolated English fallback', async ({ page }) => {
   const { scanDesignDOM } = await import('../gate/designScan');
   await page.setContent('<html lang="ar" dir="rtl"><body><span lang="en" style="unicode-bidi:normal">English fallback</span></body></html>');
   expect((await page.evaluate(scanDesignDOM, 'ar')).map(finding => finding.rule)).toEqual(['bidiFallback', 'bidiIsolation']);
+});
+
+test('system source evidence separates shared frames from caller accent styling', async ({ page }) => {
+  await page.setContent('<div id="root" data-view="support"><header class="ui-card__header"><span id="shared">Inherited frame colour</span><span id="owned" class="text-primary">Caller colour</span></header></div>');
+  const findings = ['shared', 'owned'].map(id => ({ rule: 'R2', element: `span#${id}`, detail: 'color: rgb(225, 122, 98) (--accent)' }));
+  const [shared, owned] = await annotateSystemSources(page, findings);
+  expect(shared.sharedOwner).toContain('shared UI follow-up');
+  expect(owned.sharedOwner).toBeUndefined();
+  expect(shared.baselineElement).toBe('span#shared');
+  await page.locator('#shared').evaluate(element => element.classList.add('changed-source'));
+  const [changed] = await annotateSystemSources(page, findings);
+  expect(changed.sourceFingerprint).not.toBe(shared.sourceFingerprint);
 });

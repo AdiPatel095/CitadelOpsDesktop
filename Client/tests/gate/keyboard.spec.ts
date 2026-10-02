@@ -55,7 +55,8 @@ async function keyboardWalk(page: Page): Promise<Violation[]> {
     }).map((element, index) => {
       const id = String(index);
       element.setAttribute('data-gate-keyboard', id);
-      return { id, label: `${element.tagName.toLowerCase()} ${element.getAttribute('aria-label') ?? element.textContent?.trim().replace(/\s+/g, ' ').slice(0, 100) ?? ''}` };
+      const scope = element.closest('#workspace-navigation') ? ' (workspace navigation)' : '';
+      return { id, label: `${element.tagName.toLowerCase()} ${element.getAttribute('aria-label') ?? element.textContent?.trim().replace(/\s+/g, ' ').slice(0, 100) ?? ''}${scope}` };
     });
   });
   const violations: Violation[] = [];
