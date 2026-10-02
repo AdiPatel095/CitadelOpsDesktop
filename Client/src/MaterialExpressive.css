@@ -171,7 +171,7 @@ select {
 }
 
 .liquid-sidebar-toolbar-copy span {
-    color: var(--md-sys-color-primary);
+    color: var(--text-secondary);
     font-size: var(--font-size-12);
     line-height: var(--line-height-12);
     font-weight: var(--font-weight-600);
@@ -282,13 +282,14 @@ select {
     height: 0.45rem;
     margin-left: auto;
     border-radius: var(--md-sys-shape-corner-full);
-    background: var(--md-sys-color-primary);
+    background: transparent;
     opacity: 0;
     transition:
         opacity var(--md-sys-motion-duration-short) linear;
 }
 
 .liquid-nav-item-active .liquid-nav-active-indicator {
+    background: var(--accent);
     width: 1.15rem;
     opacity: 1;
 }
