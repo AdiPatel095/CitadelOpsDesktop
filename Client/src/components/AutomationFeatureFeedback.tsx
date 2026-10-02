@@ -51,7 +51,9 @@ export const AutomationFeatureFeedback: React.FC<{
    * (that stays on the Automation page row, which is the one place a start is confirmed).
    */
   compact?: boolean;
-}> = ({ featureId, enabled, onOpenSettings, launchesByFeature, accountLabel, buildLaneActive, compact = false }) => {
+  /** The status panel already owns the feature status and reason. */
+  hideStatus?: boolean;
+}> = ({ featureId, enabled, onOpenSettings, launchesByFeature, accountLabel, buildLaneActive, compact = false, hideStatus = false }) => {
   const description = useAutomationDescription(featureId, { buildLaneActive });
   const player = useAutomationPlayerStatus(featureId, { buildLaneActive }).overall;
   const { operations, state } = useCitadelAPI();
@@ -70,7 +72,7 @@ export const AutomationFeatureFeedback: React.FC<{
     <div className={compact ? 'space-y-1.5' : 'mt-1 space-y-1.5'} data-automation-feedback={featureId} data-feedback-compact={compact ? 'true' : undefined}>
       {showPhase ? (
         <div className="flex flex-wrap items-start gap-1.5 text-caption text-text-muted" data-automation-phase={description.phase}>
-          {compact ? <StatusBadge {...player} /> : null}
+          {compact && !hideStatus ? <StatusBadge {...player} /> : null}
           <span className="min-w-0 flex-1">
             {description.nextStep === 'clear-lock' ? (
               <Button variant="ghost" size="sm" className="ml-1" onClick={() => document.getElementById('automation-safety-panel')?.scrollIntoView({ block: 'center', behavior: 'smooth' })}>

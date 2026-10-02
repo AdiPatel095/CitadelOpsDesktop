@@ -26,6 +26,11 @@ export type PrioritySignal =
 const ATTENTION_RANK: Record<AttentionStatus, number> = { 'needs-attention': 0, blocked: 1, paused: 2 };
 const FEATURE_RANK = new Map<string, number>(AUTOMATION_FEATURE_ORDER.map((id, index) => [id, index]));
 
+/** Station and Bird already have their own status and reason in the panel. */
+export function panelAttentionEntries(entries: FeatureStatus[]): FeatureStatus[] {
+  return entries.filter(entry => entry.featureId !== 'autoStation' && entry.featureId !== 'autoBird');
+}
+
 function isAttentionStatus(status: PlayerStatus): status is AttentionStatus {
   return status === 'needs-attention' || status === 'blocked' || status === 'paused';
 }

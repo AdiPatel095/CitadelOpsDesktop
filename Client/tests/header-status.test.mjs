@@ -11,7 +11,7 @@ const source = existsSync(`${root}/src/commandCenter`) ? '/src/commandCenter' : 
 const cacheDir = mkdtempSync(join(tmpdir(), 'cit-header-status-'));
 const vite = await createServer({ root, cacheDir, configFile: false, appType: 'custom', logLevel: 'silent', server: { middlewareMode: true, hmr: false } });
 after(async () => { await vite.close(); rmSync(cacheDir, { recursive: true, force: true }); });
-const { attentionEntries, prioritySignal } = await vite.ssrLoadModule(`${source}/components/header/headerStatus.ts`);
+const { attentionEntries, panelAttentionEntries, prioritySignal } = await vite.ssrLoadModule(`${source}/components/header/headerStatus.ts`);
 const { AUTOMATION_FEATURE_ORDER } = await vite.ssrLoadModule(`${source}/settings/automationFeatureNames.ts`);
 const { automationPlayerStatus } = await vite.ssrLoadModule(`${source}/settings/readiness/playerStatus.ts`);
 
@@ -183,3 +183,12 @@ test('cluster accessible name follows the viewer list format in en and de', () =
 });
 
 }
+
+for (const status of ['paused', 'blocked', 'needs-attention']) test(`panel keeps one dedicated Station/Bird status when ${status}`, () => {
+  const features = [entry('autoStation', status), entry('autoBird', status), entry('autoTowers', status)];
+  const attention = attentionEntries(features);
+  const panelEntries = panelAttentionEntries(attention);
+  assert.deepEqual(panelEntries, [features[2]]);
+  assert.equal(attention.length, 3, 'header attention count retains both dedicated features');
+  assert.equal(panelEntries[0].reason, reason, 'other feature reasons remain intact');
+});

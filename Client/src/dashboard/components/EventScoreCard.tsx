@@ -78,9 +78,9 @@ const EventScoreCard: React.FC<EventScoreCardProps> = ({ live, event, onOpenRank
   return (
     <SectionCard
       variant="solid"
-      title={eventName}
+      title={<bdi>{eventName}</bdi>}
       description={localizeStatic("ui.dashboard.components.eventScoreCard.description.live.event.score.and.reward.progress.4a67ced7")}
-      titleClassName="truncate text-primary"
+      titleClassName="truncate text-text-main"
       descriptionClassName="font-bold"
       headerClassName="feature-event-score-header flex-wrap gap-3"
       className="feature-event-score-card flex min-h-0 flex-col"

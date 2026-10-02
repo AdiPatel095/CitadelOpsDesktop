@@ -75,7 +75,7 @@ function ActivityGroupCard({ group }: { group: ActivityGroup }) {
 	return (
 		<div className="rounded-global border border-border-light bg-bg-card/40 p-4">
 			<div className="flex items-start gap-3">
-				<span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-global border border-primary/20 bg-primary/10 text-primary" aria-hidden="true">
+				<span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-global border border-border-base bg-bg-tertiary text-text-muted" aria-hidden="true">
 					{group.icon}
 				</span>
 				<div className="min-w-0">

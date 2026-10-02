@@ -56,7 +56,7 @@ const CastleQueuesCard: React.FC<CastleQueuesCardProps> = ({ title = 'Queues' })
       variant="solid"
       title={title}
       description={localizeStatic("copy.queues")}
-      titleClassName="text-primary"
+      titleClassName="text-text-main"
       descriptionClassName="font-bold"
       className="flex min-h-0 flex-col"
       contentClassName="custom-scrollbar flex-1 overflow-y-auto"

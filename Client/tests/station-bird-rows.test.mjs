@@ -77,7 +77,7 @@ test('row and popover show the same feedback: one shared component, compact only
   const [header, feedback] = await Promise.all([source('components/header/StatusPanel.tsx'), source('components/AutomationFeatureFeedback.tsx')]);
   for (const [id, , , enabled, opener] of ROWS) {
     const capitalised = id === 'autoStation' ? 'Station' : 'Bird';
-    assert.match(header, new RegExp(`<AutomationFeatureFeedback featureId="${id}" enabled=\\{${enabled}\\} onOpenSettings=\\{\\(\\) => dialog\\(onOpenAuto${capitalised}Settings\\)\\} compact />`));
+    assert.match(header, new RegExp(`<AutomationFeatureFeedback featureId="${id}" enabled=\\{${enabled}\\} onOpenSettings=\\{\\(\\) => dialog\\(onOpenAuto${capitalised}Settings\\)\\} compact hideStatus />`));
     assert.ok(opener);
   }
   // Phase, next step, failed Start/Stop and first result are rendered for compact and full alike.

@@ -1,3 +1,4 @@
+import '../../views/core-views.css';
 import { useLocale as useStaticLocale } from "../../i18n/LocaleContext";
 import React, { useState } from 'react';
 import CastleOverviewCard from './CastleOverviewCard';

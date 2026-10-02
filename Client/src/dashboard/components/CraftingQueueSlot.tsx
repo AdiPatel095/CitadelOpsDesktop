@@ -41,7 +41,7 @@ const CraftingQueueSlot: React.FC<CraftingQueueSlotProps> = ({ row, boxSize = 58
     <div
       className={`relative flex shrink-0 flex-col items-center justify-center gap-0.5 rounded-global border px-1 py-0.5 text-center ${
         row.active
-          ? 'border-primary ring-2 ring-primary/35 shadow-sm bg-bg-card'
+          ? 'border-border-base ring-2 ring-border-base shadow-sm bg-bg-card'
           : 'border-border-light border-solid bg-bg-card'
       }`}
       style={{ width: boxSize + 14, minHeight: boxSize + 10 }}

@@ -1,6 +1,14 @@
 {
   "files": [
     {
+      "portal": "src/commandCenter/views/core-views.css",
+      "desktop": "Client/src/views/core-views.css"
+    },
+    {
+      "portal": "src/commandCenter/components/AutoBirdCycles.css",
+      "desktop": "Client/src/components/AutoBirdCycles.css"
+    },
+    {
       "portal": "Docs/OnboardingCoverage.md",
       "desktop": "Docs/OnboardingCoverage.md"
     },
