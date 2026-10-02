@@ -1,8 +1,6 @@
 /** Explicit source-assigned static text keys. Missing locale entries remain English fallback. */
 export const sourceMessages = {
   "analytics.noAttributedHelp": "New confirmed reports for this automation will begin populating this view.",
-  "playerTracker.noHistoryPortal": "Connect the game once to begin collecting player analytics.",
-  "playerTracker.noHistory": "Connect and log in to see your collected player analytics.",
   "playerTracker.historyUnavailable": "Could not load player history",
 
   "ui.tabs.previous": "Show previous tabs",

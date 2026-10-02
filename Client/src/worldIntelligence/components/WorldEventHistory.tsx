@@ -513,7 +513,7 @@ export const WorldEventHistory = ({
 
 
 			<ViewState status={viewStatus({ hasData: eventGroups.length > 0, loading: directoryLoading, error: Boolean(error) })}
-        error={{ title: localizeStatic('events.directoryFailed'), onRetry: () => void refreshBoards(), retryLabel: localizeStatic('ui.state.retry') }}
+        error={{ title: localizeStatic('events.directoryFailed'), description: directoryLoading ? localizeStatic('ui.worldIntelligence.components.worldEventHistory.loading.event.history.49c99bd3') : undefined, onRetry: () => void refreshBoards(), retryLabel: localizeStatic('ui.state.retry') }}
         loading={{ label: localizeStatic('ui.worldIntelligence.components.worldEventHistory.loading.event.history.49c99bd3'), variant: 'table' }}
         empty={{ icon: <CalendarDays />, title: localizeStatic('ui.worldIntelligence.components.worldEventHistory.title.no.event.runs.collected.yet.9b8636ba'), description: localizeStatic('ui.worldIntelligence.components.worldEventHistory.description.the.view.is.ready.for.backend.1.fe44c28a') }}>
 

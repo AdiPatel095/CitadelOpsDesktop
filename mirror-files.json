@@ -789,6 +789,10 @@
       "desktop": "Client/tests/onboarding-browser/visualStates.ts"
     },
     {
+      "portal": "src/commandCenter/mock/visualStates.ts",
+      "desktop": "Client/tests/onboarding-browser/visualStates.ts"
+    },
+    {
       "portal": "src/commandCenter/playerTracker/components/PlayerTrackerWallet.ts",
       "desktop": "Client/src/playerTracker/components/PlayerTrackerWallet.ts"
     },
@@ -1247,6 +1251,10 @@
     {
       "portal": "src/commandCenter/worldIntelligence/useServerLabel.ts",
       "desktop": "Client/src/worldIntelligence/useServerLabel.ts"
+    },
+    {
+      "portal": "src/context/visualStates.ts",
+      "desktop": "Client/tests/onboarding-browser/visualStates.ts"
     },
     {
       "portal": "tests/check-retired-classes.test.mjs",

@@ -427,7 +427,7 @@ const BattleStatsView: React.FC = () => {
         flush
       >
             <ViewState status={viewStatus({ hasData: filteredReports.length > 0, loading: isLoading, error: Boolean(sourceError) })}
-              error={{ title: localizeStatic(sourceKey), onRetry: () => void loadReports(), retryLabel: localizeStatic('ui.state.retry') }} loading={{ label: localizeStatic('battle.loading'), variant: 'table' }}
+              error={{ title: localizeStatic(sourceKey), description: isLoading ? localizeStatic('battle.loading') : undefined, onRetry: () => void loadReports(), retryLabel: localizeStatic('ui.state.retry') }} loading={{ label: localizeStatic('battle.loading'), variant: 'table' }}
               empty={{ title: localizeStatic('ui.battleStats.components.battleStatsView.no.player.battle.reports.match.the.current.c7977008') }}>
             <table className="battle-table w-full text-sm">
               <thead>

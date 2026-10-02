@@ -4,9 +4,11 @@ import { prepare, openView, settle } from './harness';
 
 for (const theme of ['dark', 'light'] as const) for (const locale of ['en', 'de', 'ar']) {
   test(`Feature Stats tabs ${theme} ${locale}`, async ({ page }) => {
-    await page.addInitScript(locale => localStorage.setItem('citadelops.viewer-locale', locale), locale);
+    await page.addInitScript(() => localStorage.setItem('citadelops.viewer-locale', 'en'));
     const seal = await prepare(page, theme);
     await openView(page, 'Feature Stats', 'events'); await settle(page);
+    await page.evaluate(locale => { localStorage.setItem('citadelops.viewer-locale', locale); window.dispatchEvent(new CustomEvent('citadelops:viewer-locale', { detail: locale })); }, locale);
+    await expect.poll(() => page.locator('.ui-tabs').evaluate(element => getComputedStyle(element).direction)).toBe(locale === 'ar' ? 'rtl' : 'ltr');
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
     const list = page.locator('.ui-tabs__scroller');
     if (page.viewportSize()!.width < 768) {

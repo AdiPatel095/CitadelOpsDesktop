@@ -435,9 +435,9 @@ const PlayerTrackerView = () => {
       <StaleSessionBanner />
 
       <ViewState status={viewStatus({ hasData: Boolean(current), loading: historyLoading, error: Boolean(loadError) })}
-        error={{ title: localizeStatic('playerTracker.historyUnavailable'), onRetry: () => setRetryToken(token => token + 1), retryLabel: localizeStatic('ui.state.retry') }}
+        error={{ title: localizeStatic('playerTracker.historyUnavailable'), description: historyLoading ? localizeStatic('ui.state.loading') : undefined, onRetry: () => setRetryToken(token => token + 1), retryLabel: localizeStatic('ui.state.retry') }}
         loading={{ label: localizeStatic('ui.state.loading'), variant: 'cards' }}
-        empty={{ title: localizeStatic('playerTracker.noHistory') }}>
+        empty={{ title: localizeStatic('ui.playerTracker.components.playerTrackerView.connect.the.game.once.to.begin.collecting.eae341bc') }}>
         <>
           <Card className="">
             <CardHeader className="flex-wrap gap-4">

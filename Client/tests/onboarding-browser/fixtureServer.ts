@@ -216,6 +216,7 @@ export class FixtureServer {
       return json(retention);
     }
     if (path.startsWith('/history/')) return json({ reports: [], samples: [], rangeSeconds: 86_400 });
+    if (path === '/analytics/resource-aggregates') return json({ aggregates: [] });
     if (path.startsWith('/world-intelligence/')) return json({ entries: [], runs: [], rows: [], datasets: [] });
     if (path.startsWith('/buildings/')) return error(501, 'preview_unavailable', 'Simulated preview: building capture and blueprint previews are not available.');
     this.record('blocked', `GET ${route}: no fixture route`);

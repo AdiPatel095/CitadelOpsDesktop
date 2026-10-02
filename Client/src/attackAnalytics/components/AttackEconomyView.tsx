@@ -269,7 +269,7 @@ const AttackEconomyView = ({
       )}
 
       <ViewState status={viewStatus({ hasData: rangedAggregates.length > 0, loading, error: Boolean(loadError) })}
-        error={{ title: localizeStatic('ui.attackAnalytics.components.attackEconomyView.history.unavailable.cf319f4d'), onRetry: () => void loadAggregates(), retryLabel: localizeStatic('ui.state.retry') }}
+        error={{ title: localizeStatic('ui.attackAnalytics.components.attackEconomyView.history.unavailable.cf319f4d'), description: loading ? localizeStatic('ui.state.loading') : undefined, onRetry: () => void loadAggregates(), retryLabel: localizeStatic('ui.state.retry') }}
         loading={{ label: localizeStatic('ui.state.loading'), variant: 'table' }}
         empty={{ title: localizeStatic('analytics.noAttributed', { metric: selectedMetric.label.toLocaleLowerCase() }), description: localizeStatic('analytics.noAttributedHelp'), icon: <Trophy /> }}>
       <Card className="">
