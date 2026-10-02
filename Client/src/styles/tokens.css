@@ -1,0 +1,481 @@
+/* CIT-62 PR-3. Desktop is upstream; mirror this file byte-for-byte.
+ * Semantic names from CIT-60 §§3–5. Colour, radius, shape and elevation roles follow spec; typography and spacing stay held.
+ */
+
+/* Typography and spacing are owned by CIT-63/CIT-74; preserve develop values. */
+
+:root,
+[data-theme="light"] {
+    color-scheme: light;
+    --surface-canvas: #f8f0df;
+    --surface-card: #FFFDF7;
+    --surface-inset: #F6ECDA;
+    --surface-control: #ECDEC7;
+    --surface-control-strong: #E2D1B6;
+    --surface-overlay: #FFFDF7;
+    --surface-field: #FFFDF7;
+    --surface-inverse: #2D2218;
+    --text-primary: #2D2218;
+    --text-secondary: #695743;
+    --text-muted: #766754;
+    --text-disabled: #A69988;
+    --text-inverse: #F8F0DF;
+    --text-on-accent: #FFF8E7;
+    --border-subtle: #E4D5C1;
+    --border-default: #CBB99C;
+    --border-strong: #88745B;
+    --accent: #A33A2B;
+    --accent-hover: #882E23;
+    --accent-pressed: #74261D;
+    --accent-container: #F1D5AB;
+    --text-on-accent-container: #432018;
+    --state-hover: rgb(45 34 24 / 6%);
+    --state-pressed: rgb(45 34 24 / 10%);
+    --state-selected: #ECDEC7;
+    --focus-ring: #2D2218;
+    --fill-disabled: #EEE7DD;
+    --scrim: rgb(45 34 24 / 48%);
+    --control-on: #47752F;
+    --control-on-thumb: #FFFDF7;
+    --segment-track: #ECDEC7;
+    --segment-thumb: #FFFDF7;
+    --data-1: #83591F;
+    --data-2: #376B7B;
+    --data-3: #4D713E;
+    --data-4: #7A4D7E;
+    --status-success: #47752f;
+    --status-success-bg: #E6F2DC;
+    --status-success-border: #AEC69F;
+    --status-warning: #8A5A0C;
+    --status-warning-bg: #FBEACB;
+    --status-warning-border: #D3B888;
+    --status-danger: #A71E3D;
+    --status-danger-bg: #FDE4E4;
+    --status-danger-border: #DF9FAA;
+    --status-info: #376B7B;
+    --status-info-bg: #DCEDF2;
+    --status-info-border: #A2C0C8;
+    --status-neutral: #695743;
+    --status-neutral-bg: #ECDEC7;
+    --status-neutral-border: #BEAF99;
+    --font-sans: "Manrope", "Manrope Fallback", system-ui, "Segoe UI Variable Text", "Segoe UI", Roboto, "Noto Sans", "Helvetica Neue", Arial, sans-serif;
+    --font-system: system-ui, "Segoe UI Variable Text", "Segoe UI", Roboto, "Noto Sans", "Helvetica Neue", Arial, sans-serif;
+    --elevation-1: 0 1px 2px rgb(45 34 24 / 6%), 0 2px 8px rgb(45 34 24 / 4%);
+    --elevation-2: 0 2px 4px rgb(45 34 24 / 8%), 0 8px 24px rgb(45 34 24 / 8%);
+    --elevation-3: 0 4px 8px rgb(45 34 24 / 10%), 0 16px 40px rgb(45 34 24 / 12%);
+    --elevation-4: 0 8px 16px rgb(45 34 24 / 12%), 0 24px 64px rgb(45 34 24 / 20%);
+    /* Structural compatibility: essential spinners, illustration geometry and non-elevation rings. Font and spacing values remain held for CIT-63/CIT-74. */
+}
+
+[data-theme="dark"] {
+    color-scheme: dark;
+    --surface-canvas: #15110d;
+    --surface-card: #211B15;
+    --surface-inset: #2C241C;
+    --surface-control: #3C3025;
+    --surface-control-strong: #46392C;
+    --surface-overlay: #30271E;
+    --surface-field: #15110D;
+    --surface-inverse: #F0E3C8;
+    --text-primary: #F0E3C8;
+    --text-secondary: #C8B79A;
+    --text-muted: #A4947E;
+    --text-disabled: #63584C;
+    --text-inverse: #15110D;
+    --text-on-accent: #4E130D;
+    --border-subtle: #3B3126;
+    --border-default: #514332;
+    --border-strong: #9A8462;
+    --accent: #E17A62;
+    --accent-hover: #F08D72;
+    --accent-pressed: #F5A58F;
+    --accent-container: #76291F;
+    --text-on-accent-container: #FFDBCF;
+    --state-hover: rgb(240 227 200 / 6%);
+    --state-pressed: rgb(240 227 200 / 10%);
+    --state-selected: #3C3025;
+    --focus-ring: #F0E3C8;
+    --fill-disabled: #29231D;
+    --scrim: rgb(0 0 0 / 64%);
+    --control-on: #91C56E;
+    --control-on-thumb: #15110D;
+    --segment-track: #2C241C;
+    --segment-thumb: #46392C;
+    --data-1: #E1BB65;
+    --data-2: #76ADBD;
+    --data-3: #9BC38A;
+    --data-4: #C89BD0;
+    --status-success: #91c56e;
+    --status-success-bg: #222D19;
+    --status-success-border: #496237;
+    --status-warning: #e0b75b;
+    --status-warning-bg: #362914;
+    --status-warning-border: #725B2D;
+    --status-danger: #FB939B;
+    --status-danger-bg: #431D1F;
+    --status-danger-border: #83464A;
+    --status-info: #76adbd;
+    --status-info-bg: #142C33;
+    --status-info-border: #365963;
+    --status-neutral: #C8B79A;
+    --status-neutral-bg: #3C3025;
+    --status-neutral-border: #6D5F4E;
+    --font-sans: "Manrope", "Manrope Fallback", system-ui, "Segoe UI Variable Text", "Segoe UI", Roboto, "Noto Sans", "Helvetica Neue", Arial, sans-serif;
+    --font-system: system-ui, "Segoe UI Variable Text", "Segoe UI", Roboto, "Noto Sans", "Helvetica Neue", Arial, sans-serif;
+    --elevation-1: 0 1px 2px rgb(0 0 0 / 40%), 0 2px 8px rgb(0 0 0 / 16%);
+    --elevation-2: 0 2px 4px rgb(0 0 0 / 44%), 0 8px 24px rgb(0 0 0 / 24%);
+    --elevation-3: 0 4px 8px rgb(0 0 0 / 48%), 0 16px 40px rgb(0 0 0 / 36%);
+    --elevation-4: 0 8px 16px rgb(0 0 0 / 52%), 0 24px 64px rgb(0 0 0 / 56%);
+    /* Structural compatibility: essential spinners, illustration geometry and non-elevation rings. Font and spacing values remain held for CIT-63/CIT-74. */
+}
+
+/* CIT-63: script stacks follow the element language, including nested text. */
+:lang(ar) { --font-sans: var(--font-sans-ar); }
+:lang(ja) { --font-sans: var(--font-sans-ja); }
+:lang(ko) { --font-sans: var(--font-sans-ko); }
+:lang(zh-CN) { --font-sans: var(--font-sans-zh-CN); }
+:lang(zh-TW) { --font-sans: var(--font-sans-zh-TW); }
+
+/* LEGACY ALIAS LAYER — semantic colours; non-colour values remain compatible.
+ * --compat-* stores values without a spec equivalent. Existing stylesheet
+ * overrides reference these tokens so their cascade and appearance stay intact.
+ */
+
+:root,
+[data-theme="light"] {
+    --app-header-height: var(--compat-app-header-height);
+    --app-sidebar-width: var(--compat-app-sidebar-width);
+    --app-shell-gap: var(--compat-app-shell-gap);
+    --app-content-pad: var(--compat-app-content-pad);
+    --app-content-max: var(--compat-app-content-max);
+    --font-mono-ui: var(--compat-font-mono-ui);
+    --font-mono: var(--compat-font-mono);
+    --portal-sidebar-width: var(--app-sidebar-width);
+    --portal-header-height: var(--app-header-height);
+    --portal-content-max: var(--app-content-max);
+}
+
+[data-theme="dark"] {
+    --app-header-height: var(--compat-app-header-height);
+    --app-sidebar-width: var(--compat-app-sidebar-width);
+    --app-shell-gap: var(--compat-app-shell-gap);
+    --app-content-pad: var(--compat-app-content-pad);
+    --app-content-max: var(--compat-app-content-max);
+    --font-mono-ui: var(--compat-font-mono-ui);
+    --font-mono: var(--compat-font-mono);
+    --portal-sidebar-width: var(--app-sidebar-width);
+    --portal-header-height: var(--app-header-height);
+    --portal-content-max: var(--app-content-max);
+}
+
+.cop-landing {
+    --cop-primary: var(--accent);
+    --cop-primary-strong: var(--accent-hover);
+    --cop-primary-soft: var(--accent-container);
+    --cop-gold: var(--data-1);
+    --cop-gold-bright: var(--data-1);
+    --cop-green: var(--status-success);
+    --cop-green-strong: var(--status-success);
+    --cop-surface: var(--surface-canvas);
+    --cop-surface-low: var(--surface-card);
+    --cop-surface-high: var(--surface-control);
+    --cop-surface-highest: var(--surface-field);
+    --cop-ink: var(--text-primary);
+    --cop-ink-muted: var(--text-secondary);
+    --cop-outline: var(--border-strong);
+    --cop-outline-soft: var(--border-subtle);
+    --cop-white: var(--surface-card);
+    --cop-shadow: var(--shadow-raised);
+    --cop-shadow-soft: var(--shadow-panel);
+}
+
+/* Fixed illustration colours (CIT-60 §3.5 exemption) and shadow tints held for PR-3. */
+:root,
+[data-theme="light"],
+[data-theme="dark"] {
+    --art-landing-night-horizon: #14251e;
+    --art-landing-night-far-ridge: #31493f;
+    --art-landing-night-sky: #283a35;
+    --art-landing-night-mid-sky: #233b2e;
+    --art-landing-near-ridge: #315438;
+    --art-landing-night-sun: rgba(228, 210, 170, 0.18);
+    --art-landing-backdrop-green: #597a67;
+    --art-landing-stars: rgba(255,255,255,0.26);
+    --art-landing-night-near-ridge: #172e25;
+    --art-landing-far-ridge: #78906a;
+    --art-landing-mid-ridge: #587652;
+    --art-landing-backdrop-gold: #b79b69;
+    --art-landing-mid-sky: #96ad78;
+    --art-landing-sun: rgba(255, 239, 166, 0.55);
+    --art-landing-sun-border: rgba(255, 248, 205, 0.8);
+    --art-landing-sky: #d5dfb6;
+    --art-landing-horizon: #365b36;
+    --compat-mask-opaque: #000;
+    --compat-shadow-tint-15181f: #15181f;
+    --compat-shadow-tint-18-26-18-0p2: rgba(18, 26, 18, 0.2);
+    --compat-shadow-tint-198-213-187-0p22: rgba(198, 213, 187, 0.22);
+    --compat-shadow-tint-18-27-18-0p28: rgba(18, 27, 18, 0.28);
+    --compat-shadow-tint-000: #000;
+    --compat-shadow-tint-255-224-139-0p6: rgba(255, 224, 139, 0.6);
+    --compat-shadow-tint-18-24-18-0p22: rgba(18, 24, 18, 0.22);
+    --compat-shadow-tint-20-18-12-0p2: rgba(20, 18, 12, 0.2);
+    --compat-shadow-tint-0-0-0-55: rgb(0 0 0 / 55%);
+    --compat-shadow-tint-0-0-0-20: rgb(0 0 0 / 20%);
+    --compat-shadow-tint-155-215-119-0p14: rgba(155, 215, 119, 0.14);
+    --compat-shadow-tint-ffd54a: #ffd54a;
+    --compat-shadow-tint-0-0-0-0p2: rgba(0, 0, 0, 0.2);
+    --compat-shadow-tint-18-27-18-0p3: rgba(18, 27, 18, 0.3);
+}
+
+/* CIT-60 §5.2: the signature corner follows reading direction and compact cards. */
+/* Shared structural roles: one definition for both themes. Typography and spacing remain held.
+ */
+:root,
+[data-theme="light"],
+[data-theme="dark"] {
+    --radius-xs: 4px;
+    --radius-sm: 8px;
+    --radius-md: 12px;
+    --radius-lg: 16px;
+    --radius-xl: 24px;
+    --radius-2xl: 32px;
+    --radius-3xl: 48px;
+    --radius-full: 9999px;
+    --shape-card: 32px 12px 32px 32px;
+    --shape-hero: 48px 16px 48px 48px;
+    --duration-fast: 120ms;
+    --duration-base: 200ms;
+    --duration-slow: 280ms;
+    --duration-slower: 400ms;
+    --ease-standard: cubic-bezier(0.2, 0, 0, 1);
+    --ease-enter: cubic-bezier(0.05, 0.7, 0.1, 1);
+    --ease-exit: cubic-bezier(0.3, 0, 0.8, 0.15);
+    --layer-sticky: 100;
+    --layer-drawer: 200;
+    --layer-popover: 300;
+    --layer-modal: 400;
+    --layer-toast: 500;
+    --layer-tooltip: 600;
+    --radius-none: 0;
+    --duration-reduced: 0.01ms;
+    --compat-animation-static: none;
+    --compat-ring-shadow-1: 0 0 0 3px color-mix(in srgb, currentColor 12%, transparent);
+    --compat-spinner-duration-1: 1.2s;
+    --compat-art-radius-1: 42% 58% 68% 32% / 38% 34% 66% 62%;
+    --compat-art-radius-2: 70% 30% 48% 52% / 48% 62% 38% 52%;
+    --compat-art-radius-3: 28% 72% 38% 62% / 66% 34% 66% 34%;
+    --compat-ring-shadow-2: 0 0 0 3px color-mix(in srgb, var(--success) 18%, transparent);
+    --compat-ring-shadow-3: 0 0 0 3px color-mix(in srgb, var(--warning) 18%, transparent);
+    --compat-art-radius-4: 38% 62% 67% 33% / 61% 32% 68% 39%;
+    --compat-ring-shadow-4: 0 0 0 3px color-mix(in srgb, var(--success) 16%, transparent);
+    --compat-ring-shadow-5: inset 3px 0 0 var(--md-sys-color-primary);
+    --compat-art-radius-5: 50%;
+    --compat-ring-shadow-6: 0 0 0 3px color-mix(in srgb, var(--success) 20%, transparent);
+    --compat-spinner-duration-2: 1s;
+    --compat-ring-shadow-7: inset 0 0 0 1px color-mix(in srgb, var(--accent) 24%, transparent);
+    --compat-art-shadow-1: 0 0 70px var(--compat-shadow-tint-255-224-139-0p6);
+    --compat-art-shadow-2: 0 0 58px var(--compat-shadow-tint-198-213-187-0p22);
+    --compat-art-shadow-3: 0 18px 35px var(--compat-shadow-tint-18-26-18-0p2);
+    --compat-art-shadow-4: 0 0 0 4px var(--compat-shadow-tint-155-215-119-0p14);
+    --compat-art-radius-6: 0.6rem 0.6rem 1.1rem 0.6rem;
+    --compat-art-shadow-5: 0 12px 24px var(--compat-shadow-tint-20-18-12-0p2);
+    --compat-ring-shadow-8: 0 0 0 4px color-mix(in srgb, var(--status-success) 14%, transparent);
+    --compat-art-radius-7: 0 0 0 100%;
+    --compat-art-shadow-6: 0 0 0 5px color-mix(in srgb, var(--accent) 20%, transparent);
+    --compat-art-shadow-7: 0 0 0 3px color-mix(in srgb, var(--compat-shadow-tint-15181f) 70%, transparent), 0 0 18px color-mix(in srgb, var(--compat-shadow-tint-ffd54a) 80%, transparent);
+    --compat-art-shadow-8: 0 2px 8px var(--compat-shadow-tint-0-0-0-55);
+    --compat-art-shadow-9: 0 0 0 2px color-mix(in srgb, var(--compat-shadow-tint-15181f) 70%, transparent), 0 0 10px color-mix(in srgb, var(--compat-shadow-tint-ffd54a) 80%, transparent);
+    --compat-ring-shadow-9: 0 0 0 4px color-mix(in srgb, var(--primary) 70%, transparent);
+    --compat-spinner-duration-3: 700ms;
+    --compat-ring-shadow-10: 0 0 18px color-mix(in srgb, var(--primary) 24%, transparent);
+    --compat-ring-shadow-11: 0 0 24px color-mix(in srgb, var(--primary) 20%, transparent);
+    --compat-ring-shadow-12: 0 0 24px color-mix(in srgb, var(--primary) 18%, transparent);
+    --compat-ring-shadow-13: 0 0 0 2px color-mix(in srgb, var(--primary) 30%, transparent), 0 12px 24px color-mix(in srgb, var(--primary) 18%, transparent);
+    --compat-ring-shadow-14: 0 0 28px color-mix(in srgb, var(--primary) 18%, transparent);
+    --compat-ring-shadow-15: 0 0 38px color-mix(in srgb, var(--primary) 13%, transparent);
+    --compat-ring-shadow-16: inset 0 1px 0 color-mix(in srgb, white 10%, transparent);
+    --compat-ring-shadow-19: inset 0 0 0 1px color-mix(in srgb, currentColor 18%, transparent);
+    --compat-ring-shadow-20: 0 0 0.45rem currentColor;
+    --compat-art-radius-8: 42% 58% 32% 68% / 62% 36% 64% 38%;
+    --compat-art-radius-9: 28% 72% 58% 42% / 58% 34% 66% 42%;
+    --compat-ring-shadow-22: inset 0.42rem 0 var(--md-sys-color-primary);
+    --compat-ring-shadow-23: inset 0 -2px 0 var(--md-sys-color-primary);
+    --compat-ring-shadow-24: 0 0 0 3px color-mix(in srgb, var(--success) 14%, transparent);
+    --compat-ring-shadow-25: 0 0 0 3px color-mix(in srgb, var(--warning) 14%, transparent);
+    --compat-ring-shadow-26: 0 0 0 3px color-mix(in srgb, var(--error) 14%, transparent);
+    --compat-theme-portal-animate-fade-in: fadeIn var(--duration-base) var(--ease-enter) forwards;
+    --compat-theme-portal-animate-fade-in-right: fadeInRight var(--duration-slow) var(--ease-enter) forwards;
+    --compat-theme-portal-animate-fade-out-right: fadeOutRight calc(var(--duration-slow) * 0.75) var(--ease-exit) forwards;
+    --compat-theme-desktop-animate-fade-in: fadeIn var(--duration-base) var(--ease-enter) forwards;
+    --compat-theme-desktop-animate-fade-in-right: fadeInRight var(--duration-slow) var(--ease-enter) forwards;
+    --compat-theme-desktop-animate-fade-out-right: fadeOutRight calc(var(--duration-slow) * 0.75) var(--ease-exit) forwards;
+    --compat-theme-public-animate-fade-in: fade-in var(--duration-base) var(--ease-enter) both;
+    --radius-control: var(--radius-md);
+    --radius-surface: var(--radius-2xl);
+    --radius-pill: var(--radius-full);
+    --shadow-shell: var(--elevation-1);
+    --shadow-raised: var(--elevation-2);
+    --shadow-panel: var(--elevation-1);
+    --shadow-modal: var(--elevation-4);
+    --md-sys-shape-corner-extra-small: var(--radius-xs);
+    --md-sys-shape-corner-small: var(--radius-sm);
+    --md-sys-shape-corner-medium: var(--radius-md);
+    --md-sys-shape-corner-large: var(--radius-xl);
+    --md-sys-shape-corner-extra-large: var(--radius-2xl);
+    --md-sys-shape-corner-full: var(--radius-full);
+    --md-expressive-shape-card: var(--shape-card);
+    --md-expressive-shape-hero: var(--shape-hero);
+    --md-expressive-shape-shell: var(--shape-card);
+    --md-sys-motion-duration-short: var(--duration-fast);
+    --md-sys-motion-duration-medium: var(--duration-base);
+    --md-sys-motion-duration-long: var(--duration-slow);
+    --md-sys-motion-easing-standard: var(--ease-standard);
+    --md-sys-motion-easing-emphasized: var(--ease-enter);
+    --radius-global: var(--radius-xl);
+    --shadow-glow: var(--elevation-0);
+    --shadow-glow-active: var(--elevation-0);
+    --shadow-floating: var(--elevation-3);
+    --selection: color-mix(in srgb, var(--accent) 24%, transparent);
+    --compat-primary-glow: color-mix(in srgb, var(--md-sys-color-primary) 22%, transparent);
+    --compat-secondary-glow: color-mix(in srgb, var(--md-sys-color-secondary) 18%, transparent);
+    --compat-theme-portal-shadow-glow: var(--elevation-0);
+    --compat-theme-portal-shadow-glow-active: var(--elevation-0);
+    --compat-command-shadow-raised: var(--elevation-2);
+    --compat-command-shadow-panel: var(--elevation-1);
+    --compat-theme-desktop-radius-global: var(--radius-xl);
+    --compat-theme-desktop-shadow-glow: var(--elevation-0);
+    --compat-theme-desktop-shadow-glow-active: var(--elevation-0);
+    --surface-default: var(--surface-card);
+    --surface-subtle: var(--surface-inset);
+    --border-control: var(--border-strong);
+    --content-strong: var(--text-primary);
+    --content-muted: var(--text-secondary);
+    --action-primary: var(--accent);
+    --action-primary-hover: var(--accent-hover);
+    --status-inactive: var(--status-neutral);
+    --bg-app: var(--surface-canvas);
+    --bg-card: var(--surface-card);
+    --bg-card-hover: var(--surface-control);
+    --bg-input: var(--surface-field);
+    --border-base: var(--border-default);
+    --border-light: var(--border-subtle);
+    --text-main: var(--text-primary);
+    --text-inverted: var(--text-on-accent);
+    --primary: var(--accent);
+    --primary-hover: var(--accent-hover);
+    --primary-glow: var(--compat-primary-glow);
+    --success: var(--status-success);
+    --warning: var(--status-warning);
+    --error: var(--status-danger);
+    --info: var(--status-info);
+    --surface-shell: var(--surface-card);
+    --surface-panel: var(--surface-card);
+    --surface-raised: var(--surface-card);
+    --control-background: var(--surface-control);
+    --control-shadow: var(--elevation-0);
+    --control-active-background: var(--accent-container);
+    --md-sys-color-primary: var(--accent);
+    --md-sys-color-on-primary: var(--text-on-accent);
+    --md-sys-color-primary-container: var(--accent-container);
+    --md-sys-color-on-primary-container: var(--text-on-accent-container);
+    --md-sys-color-secondary: var(--data-1);
+    --md-sys-color-on-secondary: var(--text-inverse);
+    --md-sys-color-secondary-container: var(--surface-control);
+    --md-sys-color-on-secondary-container: var(--text-primary);
+    --md-sys-color-tertiary: var(--status-success);
+    --md-sys-color-on-tertiary: var(--text-inverse);
+    --md-sys-color-tertiary-container: var(--status-success-bg);
+    --md-sys-color-on-tertiary-container: var(--status-success);
+    --md-sys-color-error: var(--status-danger);
+    --md-sys-color-on-error: var(--text-inverse);
+    --md-sys-color-error-container: var(--status-danger-bg);
+    --md-sys-color-on-error-container: var(--status-danger);
+    --md-sys-color-surface: var(--surface-canvas);
+    --md-sys-color-surface-dim: var(--surface-canvas);
+    --md-sys-color-surface-bright: var(--surface-control-strong);
+    --md-sys-color-surface-container-lowest: var(--surface-card);
+    --md-sys-color-surface-container-low: var(--surface-card);
+    --md-sys-color-surface-container: var(--surface-inset);
+    --md-sys-color-surface-container-high: var(--surface-control);
+    --md-sys-color-surface-container-highest: var(--surface-field);
+    --md-sys-color-on-surface: var(--text-primary);
+    --md-sys-color-on-surface-variant: var(--text-secondary);
+    --md-sys-color-outline: var(--border-strong);
+    --md-sys-color-outline-variant: var(--border-default);
+    --md-sys-color-inverse-surface: var(--surface-inverse);
+    --md-sys-color-inverse-on-surface: var(--text-inverse);
+    --secondary: var(--data-1);
+    --secondary-hover: var(--data-1);
+    --secondary-glow: var(--compat-secondary-glow);
+    --md-ref-typeface-brand: var(--font-sans);
+    --md-ref-typeface-plain: var(--font-sans);
+    --control-height-badge: 24px;
+    --control-height-sm: 32px;
+    --control-height-md: 40px;
+    --control-height-touch: 44px;
+    --control-height-lg: 48px;
+    --elevation-0: none;
+    --compat-app-header-height: clamp(5rem, 6.2dvh, 5.75rem);
+    --compat-app-sidebar-width: clamp(16.5rem, 15vw, 18.25rem);
+    --compat-app-shell-gap: clamp(0.75rem, 0.9vw, 1.15rem);
+    --compat-app-content-pad: clamp(1rem, 1.45vw, 2.25rem);
+    --compat-app-content-max: 1880px;
+    --compat-font-mono-ui: "SFMono-Regular", "Cascadia Code", "Roboto Mono", Consolas, monospace;
+    --compat-font-mono: "SFMono-Regular", "Cascadia Code", "Roboto Mono", Consolas, monospace;
+    --compat-command-font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
+    --font-size-12: 12px;
+    --line-height-12: 16px;
+    --font-size-13: 13px;
+    --line-height-13: 18px;
+    --font-size-14: 14px;
+    --line-height-14: 20px;
+    --font-size-16: 16px;
+    --line-height-16: 24px;
+    --font-size-20: 20px;
+    --line-height-20: 28px;
+    --font-size-24: 24px;
+    --line-height-24: 32px;
+    --font-size-32: 32px;
+    --line-height-32: 40px;
+    --font-size-48: 48px;
+    --line-height-48: 52px;
+    --font-size-64: 64px;
+    --line-height-64: 68px;
+    --font-weight-400: 400;
+    --font-weight-500: 500;
+    --font-weight-600: 600;
+    --font-weight-700: 700;
+    --space-2: 2px;
+    --space-4: 4px;
+    --space-8: 8px;
+    --space-12: 12px;
+    --space-16: 16px;
+    --space-20: 20px;
+    --space-24: 24px;
+    --space-32: 32px;
+    --space-40: 40px;
+    --space-48: 48px;
+    --space-64: 64px;
+    --space-96: 96px;
+    --font-sans-ar: "Manrope", "SF Arabic", "Geeza Pro", "Segoe UI", "Noto Sans Arabic", "Noto Naskh Arabic", Tahoma, sans-serif;
+    --font-sans-ja: "Manrope", "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Yu Gothic UI", "Meiryo UI", Meiryo, "Noto Sans CJK JP", "Noto Sans JP", sans-serif;
+    --font-sans-ko: "Manrope", "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans CJK KR", "Noto Sans KR", sans-serif;
+    --font-sans-zh-CN: "Manrope", "PingFang SC", "Microsoft YaHei UI", "Microsoft YaHei", "Noto Sans CJK SC", "Noto Sans SC", sans-serif;
+    --font-sans-zh-TW: "Manrope", "PingFang TC", "Microsoft JhengHei UI", "Microsoft JhengHei", "Noto Sans CJK TC", "Noto Sans TC", sans-serif;
+}
+[dir="rtl"] {
+    --shape-card: 12px 32px 32px 32px;
+    --shape-hero: 16px 48px 48px 48px;
+}
+
+@media (max-width: 767px) {
+    :root,
+    [data-theme="light"],
+    [data-theme="dark"] {
+        --shape-card: 24px 12px 24px 24px;
+    }
+
+    [dir="rtl"] {
+        --shape-card: 12px 24px 24px 24px;
+    }
+}

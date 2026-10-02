@@ -30807,6 +30807,26 @@
     "sha256": "3e5e8c970e3cfbb704719636d99733d3ef830e036fca4866bcc2bdeb04b003e2"
   },
   "schemaVersion": 1,
-  "sourceCatalogSha256": "cba88a556876c527afb10f67b6b7a5a3707731f44498bba75cdd4499ab735354",
-  "sourceRevision": "241956183b3f847f9dd018384beaed3a92e83a8c"
+  "sourceCatalogSha256": "4e00f36f5e7a2c91bbe54f61f52c2d2e5bb3fb46fb2cfd71eee3418833ceaf60",
+  "sourceRevision": "56c2acba0f847e2675c7842588213c66710eeadc",
+  "playerLanguageBatch": {
+    "story": "CIT-68",
+    "source": "Engineering/Plans/CIT-68 Player-language copy.md Revision 1 §2a",
+    "englishFallbackKeys": [
+      "server.automation.event_gate.berimond.inactive",
+      "server.automation.event_gate.berimond.opening",
+      "server.automation.event_gate.berimond.unobserved",
+      "server.automation.event_gate.invasion.inactive",
+      "server.automation.event_gate.invasion.opening",
+      "server.automation.event_gate.invasion.unobserved",
+      "server.automation.event_gate.khan.inactive",
+      "server.automation.event_gate.khan.opening",
+      "server.automation.event_gate.khan.unobserved",
+      "server.automation.event_gate.nomad_samurai.inactive",
+      "server.automation.event_gate.nomad_samurai.opening",
+      "server.automation.event_gate.nomad_samurai.unobserved",
+      "server.automation.watching_for_incoming_attacks.60f06f25"
+    ],
+    "translationStatus": "pending all-locale translation batch; old translations invalidated"
+  }
 }

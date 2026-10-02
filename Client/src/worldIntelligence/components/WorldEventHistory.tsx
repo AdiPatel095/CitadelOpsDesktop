@@ -102,8 +102,6 @@ interface WorldEventHistoryProps {
 
 export const WorldEventHistory = ({
 	worldId,
-	eventRuns = 0,
-	eventScores = 0,
 	currentPlayerId,
 	currentLeagueByEvent,
 	worldUpdate,
@@ -477,12 +475,6 @@ export const WorldEventHistory = ({
 		));
 	}, [entries.length, paginationSelection]);
 	const visibleEntries = entries.slice(safePage * eventPageSize, (safePage + 1) * eventPageSize);
-	const loadedBoards = useMemo(() => [
-		...Object.values(runBoards).flatMap((candidate) => eventBoardsFromRun(candidate.response)),
-		...(stormPublicBoard ? [stormPublicBoard] : []),
-	], [runBoards, stormPublicBoard]);
-	const loadedScoreRows = loadedBoards.reduce((total, candidate) => total + candidate.entries.length, 0);
-	const knownRunCount = Math.max(eventRuns, runs.length);
 	const optionalFilterCount = Number(needsRunSelector) + Number(needsBoardSelector) + Number(needsLeagueSelector);
 	const filterGridColumns = optionalFilterCount >= 2
 		? 'xl:grid-cols-4'
@@ -509,9 +501,7 @@ export const WorldEventHistory = ({
 				<Button variant="ghost" size="icon" aria-label={localizeStatic("ui.worldIntelligence.components.worldEventHistory.aria-label.refresh.event.history.6f3331e2")} onClick={() => void refreshBoards()} isLoading={loading}><RefreshCw className="h-4 w-4" /></Button>
 			</div>
 			<div className="mb-4 flex flex-wrap gap-2">
-				<Badge variant="outline">{localizeStatic('events.collectedRuns',{count:knownRunCount})}</Badge>
-				<Badge variant="outline">{localizeStatic('events.currentRows',{count:eventScores>0?eventScores:loadedScoreRows})}</Badge>
-				<Badge variant="outline">{localizeStatic('events.cachedBoards',{count:loadedBoards.length})}</Badge>
+                {latestBoardObservation(selectedBoard?.entries ?? []) && <Badge variant="outline">{localizeStatic('copy.updated', { time: formatDateTime(latestBoardObservation(selectedBoard?.entries ?? []), locale, localizeStatic) })}</Badge>}
 				{selectedRunKey && selectedRunKey !== stormRunKey && (
 					<Badge variant={boardStreamStatus === 'connected' ? 'success' : 'warning'}>
 						{boardLoading || boardStreamStatus === 'connecting' ? 'Loading leaderboard base' : boardStreamStatus === 'connected' ? 'Leaderboard subscribed' : 'Leaderboard fallback active'}

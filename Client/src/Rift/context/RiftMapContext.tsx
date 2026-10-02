@@ -15,7 +15,7 @@ import type { HorseTravelBoostID } from '../../settings/HorseTravelBoost';
 
 export type { CRACommanderSelection, CRACommanderSelectionStrategy } from '../../api/Contracts';
 
-export interface ReplayRiftCRALaunchOptions {
+export type ReplayRiftCRALaunchOptions = {
   launchId: string;
   /** Exact legacy override. Mutually exclusive with commanderSelection. */
   commanderID?: number;
@@ -28,7 +28,7 @@ export interface ReplayRiftCRALaunchOptions {
   attackSetup?: AttackSetupDraft;
   /** Local wall-clock arrival at the Rift (unix seconds). Omit or 0 for immediate resend. */
   arriveAtUnix?: number;
-}
+};
 
 export interface RiftMapContextValue {
   riftMapCoords: RiftMapCoords | null;

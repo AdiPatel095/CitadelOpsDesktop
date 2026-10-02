@@ -11,7 +11,7 @@ export interface SelectOption {
 
 export interface SelectProps {
   value: string;
-  options: SelectOption[];
+  options: readonly SelectOption[];
   onChange: (value: string) => void;
   placeholder?: React.ReactNode;
   icon?: React.ReactNode;

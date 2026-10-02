@@ -1,0 +1,84 @@
+{
+  "story": "CIT-68",
+  "source": "Product/CIT-59 UI decisions M1-M8.md M3/M8; Engineering/Plans/CIT-68 Player-language copy.md; Revision 1 §2a",
+  "policy": "English source; other locales fall back to English pending the translation batch",
+  "keys": {
+    "copy.queues": {
+      "english": "Recruitment, tools and production in progress",
+      "sha256": "05b30522c050a4d11f2d3cea849e8f46d3a3a499e834d14817de0a77bf26c67b"
+    },
+    "copy.today": {
+      "english": "{state, select, known {{count, number} today} other {Today: not counted yet}}",
+      "sha256": "68e462fded982915097ac132ab4227c821bde09612b91374b865109a539d4e10"
+    },
+    "copy.todayTitle": {
+      "english": "{state, select, known {Confirmed attacks launched by {feature} today: {count, number}.} other {Counting starts after the game''s next daily reset.}}",
+      "sha256": "9490ee54d71a3c4afd0ce2fadf605bfee762ff3f6695218865f6c1fe2c6728ce"
+    },
+    "copy.connecting": {
+      "english": "Connecting…",
+      "sha256": "72021eb70e91b4d58254586a8519393a281eb830c165bf1ec42a5057d425bcaf"
+    },
+    "copy.reconnecting": {
+      "english": "Reconnecting…",
+      "sha256": "27b80374e1151af6df7824a358606c77502548bff4d467e4ae2e146801f601ce"
+    },
+    "copy.connectingGame": {
+      "english": "Connecting to the game…",
+      "sha256": "55c577299f630d5cbfed28032b252bf958ae188d0f9cf2a270fe88a6507896e6"
+    },
+    "copy.loggingIn": {
+      "english": "Logging in to the game…",
+      "sha256": "0c3a11ebf162314b0ecfd9b576fd46b2023d0f0a4f2c365810052216c8f40f54"
+    },
+    "copy.offlineSaved": {
+      "english": "Offline · saved data from {time}",
+      "sha256": "c58cc7d22b8d5d3806bee80a321e40c9bc728a54e7559133268f492bde663ba2"
+    },
+    "copy.offlineSavedTitle": {
+      "english": "CitadelOps isn''t playing this account right now. You''re seeing data saved at {time}. Reconnect to start it again.",
+      "sha256": "ba38415430cd9c7b1947d44d97f480a0354d74c7defd0bb78cb54c873ea6b482"
+    },
+    "copy.attacksToday": {
+      "english": "{count} attacks today",
+      "sha256": "da6b41b81b1fcb9590bc8ba472d23f233347a3abe62c546e059e904d15673df8"
+    },
+    "copy.rankings": {
+      "english": "Player rankings for {server}: Might, Honor and alliance.",
+      "sha256": "8d0292ffe1a2860c8f1731e29011106aca0376124cda47505e255faf112142ca"
+    },
+    "copy.loadingHistory": {
+      "english": "Loading public history for {server}…",
+      "sha256": "71cca59f477447fc77be177191e7538ecc9f3ba9a836d1f3e87c9e4f849017a2"
+    },
+    "copy.noProfile": {
+      "english": "No public profile found on {server}.",
+      "sha256": "d471b1bc57c7e6c35111151f1fe0520e341c3fb471428fe0b58afd340cda8ee3"
+    },
+    "copy.updated": {
+      "english": "Updated {time}",
+      "sha256": "2f87419441e6111b4d62893d3c4ef5ddeb2c8e1af82fabab6132856faf77f907"
+    },
+    "copy.ranked": {
+      "english": "Ranked",
+      "sha256": "1f4f6aeccaf8b95d32b61bc38389336bc145da297fd7d217ddd47b315be8a4fe"
+    },
+    "copy.riftCapture": {
+      "english": "Launch one castle attack on the Rift in-game. CitadelOps will capture its commander, formation, and travel time here for reuse.",
+      "sha256": "9306b7b1a31d3109bdbb8cc9621846c1e0dcd3fdd0eac5552a327f229dfc96fa"
+    },
+    "copy.khanPause": {
+      "english": "At or above this threshold, Auto Khan opens the main castle gates once for six hours and immediately stops attacks, cooldown skips, and new taunts. Auto Khan pauses without changing your settings; after the gate expires, it refreshes defense and resumes only when the projected offensive wall count is below the threshold. This uses the game's current ruby cost for the six-hour open-gate option.",
+      "sha256": "0d67ef0a62aa1b9e54201fd624c1a2a80330983c5d472be11e9c94b6fd3b5559"
+    },
+    "equipment.effectsGroupedDescription": {
+      "english": "Effects grouped by the game's own effect categories.",
+      "sha256": "cfc0c9a82e022159850c6ec238e4428a0bd24ece53aae6af3f000028dc749ca4"
+    },
+    "equipment.canonicalUnavailable": {
+      "english": "Effect data from the game isn't available right now. Your last results are kept, and Reconfigure is paused while CitadelOps retries.",
+      "sha256": "da0a40524f419bf1bfc7315ed1edad1b46efa059f284ba831e6d1a54d75535c2"
+    }
+  },
+  "revision": 1
+}

@@ -115,3 +115,28 @@ English-equality exception is `allowEnglish[key][locale] = "reason"` in its
 family. Record each batch as model-authored, pending native review, then run the
 plan's project checks and hand the pair to Sophie. Claire confirms the batch
 has merged before any release that ships its strings.
+
+## CIT-92 translation batch 2
+
+Batch 2: **model-authored, pending native review**. The shared fixture
+`tests/fixtures/translation-batches/batch-2.json` records 45 keys added or
+changed after the batch-1 cuts. All 45 have entries in all 25 non-English
+locales (1,125 locale/key pairs). Existing German and Arabic missing-castle
+translations are reused verbatim; 1,123 entries are added. The shared catalogs,
+English sources and fixture are byte-identical between desktop and portal.
+French “Minutes” has a locale-specific unchanged-spelling reason in the
+fixture. ICU placeholders, select options, rich tags, CLDR plural categories
+and formatting are checked by the existing batch tests.
+
+The desktop cut is `3b3066d87fb98cb89b01908a508cde13745fc2fe`; the portal cut
+is `89e8011a9aeeac2a822a32bf87c124d7eebab468`. The previous cuts are
+`90a15fa3f7fcdb2a1864dd74a0debf1bffa5e959` and
+`a80e5a8bb612f446956f82d1668ecc62d9a82a9e`, respectively. The assigned family
+is `shared`. Native-speaker review remains pending; this batch does not
+establish whole-application translated coverage. Claire confirms both PRs
+have merged before a release that ships these strings.
+
+The batch-2 cut was refreshed after CIT-88 merged. All 25 locales use the
+current `copy.today` and `copy.todayTitle` messages without the obsolete
+`state` selector, and include `copy.since`, `copy.sinceTitle`,
+`copy.attacksSaved` and `copy.countUnknownTitle`.

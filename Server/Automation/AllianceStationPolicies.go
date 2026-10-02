@@ -660,7 +660,7 @@ func (*AutoStationPolicy) Evaluate(_ context.Context, snapshot Snapshot) (decisi
 		}, nil
 	}
 	return Decision{
-		Status: "armed", Detail: "Monitoring canonical movement snapshots for incoming attacks", DetailDescriptor: Localization.New("server.automation.monitoring_canonical_movement_snapshots.e588c775", "Monitoring canonical movement snapshots for incoming attacks", nil),
+		Status: "armed", Detail: "Watching for incoming attacks", DetailDescriptor: Localization.New("server.automation.watching_for_incoming_attacks.60f06f25", "Watching for incoming attacks", nil),
 		EventDriven: true, Metrics: metrics,
 	}, nil
 }
@@ -748,8 +748,15 @@ func protectionModeOpenGateDecision(
 		}
 	}
 	if unsupportedCastle > 0 {
+		name := castleName(snapshot.State.Castles[unsupportedCastle])
+		detail := fmt.Sprintf("Troops at %s can't be stationed safely, and its kingdom doesn't support Open Gates", name)
+		descriptor := Localization.New("server.automation.stationing_unsafe_unsupported_gates", "Troops at {castle} can't be stationed safely, and its kingdom doesn't support Open Gates", Localization.Params{"castle": name})
+		if snapshot.State.Player.ProtectionMode.PreparingOrActive(snapshot.Now) {
+			detail = fmt.Sprintf("Protection Mode stops troops being stationed, and %s's kingdom doesn't support Open Gates", name)
+			descriptor = Localization.New("server.automation.protection_mode_unsupported_gates", "Protection Mode stops troops being stationed, and {castle}'s kingdom doesn't support Open Gates", Localization.Params{"castle": name})
+		}
 		return Decision{
-			Status: "blocked", Detail: fmt.Sprintf("Protection Mode suppresses stationing; Open Gates is not capture-confirmed for castle %d's kingdom", unsupportedCastle), DetailDescriptor: Localization.New("server.automation.protection_mode_suppresses_stationing.028adab4", "Protection Mode suppresses stationing; Open Gates is not capture-confirmed for castle {p0}'s kingdom", Localization.Params{"p0": unsupportedCastle}),
+			Status: "blocked", Detail: detail, DetailDescriptor: descriptor,
 			NextCheckAt: snapshot.Now.Add(30 * time.Second), Metrics: metrics,
 		}
 	}

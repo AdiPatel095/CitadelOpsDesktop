@@ -1,7 +1,7 @@
 import React from 'react';
 import { CalendarDays, Timer } from 'lucide-react';
 import { useCitadelAPI } from '../../api/ApiContext';
-import { Badge } from '../../components/ui/Badge';
+import { StatusBadge } from '../../components/ui/StatusBadge';
 import { Button } from '../../components/ui/Button';
 import { StopControl } from '../../components/StopControl';
 import { useAuth } from '../../context/AuthContext';
@@ -10,7 +10,7 @@ import { LocalizedText } from '../../i18n/LocalizedText';
 import { configurationSection } from '../Configuration';
 import { normalizeFeatureSchedules, scheduleSummary } from '../SchedulerTypes';
 import { AUTOMATION_ENABLED_KEYS, type SettingsFeatureId } from '../disclosure/placement';
-import { useAutomationDescription } from '../readiness/useAutomationDescription';
+import { useAutomationPlayerStatus } from '../readiness/useAutomationPlayerStatus';
 
 export interface AutomationRunStripProps {
   featureId: SettingsFeatureId;
@@ -35,7 +35,7 @@ export const AutomationRunStrip: React.FC<AutomationRunStripProps> = ({ featureI
   const enabledKey = AUTOMATION_ENABLED_KEYS[featureId];
   const running = automationEnabledByKey[enabledKey] === true;
   const timedUntil = automationTimedUntilByKey[enabledKey];
-  const description = useAutomationDescription(featureId);
+  const player = useAutomationPlayerStatus(featureId).overall;
   const schedule = scheduleId
     ? normalizeFeatureSchedules(configurationSection(configuration, 'scheduler').featureSchedules)[scheduleId]
     : undefined;
@@ -44,9 +44,7 @@ export const AutomationRunStrip: React.FC<AutomationRunStripProps> = ({ featureI
     <div className="mb-4 rounded-global border border-border-base bg-bg-card/40 px-4 py-3" data-settings-run-strip={featureId}>
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex min-w-0 flex-wrap items-center gap-2">
-          <Badge variant={running ? 'primary' : 'outline'} className="normal-case tracking-normal">
-            <LocalizedText messageKey="runtimeState.phase" params={{ phase: description.phase.replaceAll('-', '_') }} />
-          </Badge>
+          <StatusBadge {...player} />
           {timedUntil ? (
             <span className="text-[11px] font-medium text-text-muted">
               <LocalizedText messageKey="settingsRun.until" params={{ time: date(timedUntil, { hour: 'numeric', minute: '2-digit' }) }} />

@@ -2171,6 +2171,7 @@ type DailyAttackState struct {
 	ServerThreshold      int64     `json:"serverThreshold"`
 	GrowthRate           float64   `json:"growthRate"`
 	SessionStartedAt     time.Time `json:"sessionStartedAt,omitempty"`
+	CountingStartedAt    time.Time `json:"countingStartedAt,omitempty"`
 	ObservedAt           time.Time `json:"observedAt,omitempty"`
 	ConnectionGeneration uint64    `json:"-"`
 }
