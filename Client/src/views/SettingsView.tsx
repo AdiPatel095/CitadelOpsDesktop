@@ -1007,6 +1007,7 @@ const SettingsView: React.FC = () => {
 						type="button"
 						role="radio"
 						aria-checked={configuredConnectionMode === 'full'}
+						data-current-selection={configuredConnectionMode === 'full' ? 'true' : undefined}
 						disabled={connectionModePending}
 						onClick={() => selectConnectionMode('full')}
 						className={`group rounded-global border p-4 text-left transition-colors disabled:cursor-wait disabled:opacity-70 ${
@@ -1038,6 +1039,7 @@ const SettingsView: React.FC = () => {
 						type="button"
 						role="radio"
 						aria-checked={configuredConnectionMode === 'background'}
+						data-current-selection={configuredConnectionMode === 'background' ? 'true' : undefined}
 						disabled={connectionModePending}
 						onClick={() => selectConnectionMode('background')}
 						className={`group rounded-global border p-4 text-left transition-colors disabled:cursor-wait disabled:opacity-70 ${
@@ -1348,7 +1350,7 @@ const SettingsView: React.FC = () => {
 							}`}
 						>
 							<Icons.GripVertical className="h-5 w-5 shrink-0 text-text-muted" aria-hidden="true" />
-							<span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-bg-card text-caption font-semibold tabular-nums text-primary ring-1 ring-border-base">
+							<span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-bg-card text-caption font-semibold tabular-nums text-text-main ring-1 ring-border-base">
 								{index + 1}
 							</span>
 							<span className="min-w-0 flex-1">
