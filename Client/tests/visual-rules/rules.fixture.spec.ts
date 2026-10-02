@@ -1,3 +1,4 @@
+import AxeBuilder from '@axe-core/playwright';
 import { existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { createElement } from 'react';
@@ -112,11 +113,14 @@ test('neutral status colours are allowed on disabled and off controls', async ({
 
 const root = fileURLToPath(new URL('../../', import.meta.url));
 const source = existsSync(join(root, 'src/commandCenter')) ? 'src/commandCenter' : 'src';
+let renderBadge: (variant: 'success' | 'warning') => string;
 let vite: Awaited<ReturnType<typeof createServer>>;
 let renderSwitch: (checked: boolean, disabled?: boolean) => string;
 let renderDelta: (value: number, text: string) => string;
 test.beforeAll(async () => {
   vite = await createServer({ root, configFile: false, appType: 'custom', logLevel: 'silent', server: { middlewareMode: true, hmr: false } });
+  const { Badge } = await vite.ssrLoadModule(`/${source}/components/ui/Badge.tsx`);
+  renderBadge = variant => renderToStaticMarkup(createElement(Badge, { variant }, variant === 'success' ? 'Ready' : 'Waiting'));
   const { Switch } = await vite.ssrLoadModule(`/${source}/components/ui/Switch.tsx`);
   const { DeltaValue } = await vite.ssrLoadModule(`/${source}/components/ui/DeltaValue.tsx`);
   renderSwitch = (checked, disabled = false) => renderToStaticMarkup(createElement(Switch, { checked, disabled, onChange() {}, ariaLabel: `${disabled ? 'Disabled' : 'Enabled'} ${checked ? 'on' : 'off'}` }));
@@ -201,4 +205,32 @@ test('Arabic gate rejects an unisolated English fallback', async ({ page }) => {
   const { scanDesignDOM } = await import('../gate/designScan');
   await page.setContent('<html lang="ar" dir="rtl"><body><span lang="en" style="unicode-bidi:normal">English fallback</span></body></html>');
   expect((await page.evaluate(scanDesignDOM, 'ar')).map(finding => finding.rule)).toEqual(['bidiFallback', 'bidiIsolation']);
+});
+
+// Real Badge markup and its shipped CSS: test the composed colors, not just tokens.
+test('readiness chips meet AA text contrast in each theme', async ({ page }, testInfo) => {
+  const tokens = await readFile(join(root, source, 'styles/tokens.css'), 'utf8');
+  const aliases = await readFile(join(root, source, 'styles/tokens-app.css'), 'utf8');
+  const css = await readFile(join(root, source, 'MaterialExpressive.css'), 'utf8');
+  await page.setContent(`<style>${tokens} ${aliases} ${css}</style><main>${renderBadge('success')}${renderBadge('warning')}</main>`);
+  await page.locator('html').evaluate((element, theme) => element.setAttribute('data-theme', theme), testInfo.project.name);
+  for (const tone of ['success', 'warning']) {
+    await expect(page.locator(`.m3-chip-${tone}`)).toHaveAttribute('data-status-role', tone);
+  }
+  const ratios = await page.locator('.m3-chip').evaluateAll(elements => elements.map(element => {
+    const style = getComputedStyle(element);
+    const luminance = (rgb: string) => {
+      const channels = rgb.match(/[\d.]+/g)!.slice(0, 3).map(Number).map(value => {
+        const channel = value / 255;
+        return channel <= 0.04045 ? channel / 12.92 : ((channel + 0.055) / 1.055) ** 2.4;
+      });
+      return channels[0] * 0.2126 + channels[1] * 0.7152 + channels[2] * 0.0722;
+    };
+    const [low, high] = [luminance(style.color), luminance(style.backgroundColor)].sort((a, b) => a - b);
+    return { tone: element.getAttribute('data-status-role'), color: style.color, background: style.backgroundColor, ratio: (high + 0.05) / (low + 0.05) };
+  }));
+  for (const result of ratios) expect(result.ratio, `${result.tone} contrast`).toBeGreaterThanOrEqual(4.5);
+  const axe = await new AxeBuilder({ page }).include('.m3-chip').withRules(['color-contrast']).analyze();
+  expect(axe.violations).toEqual([]);
+  await testInfo.attach('chip-contrast', { body: JSON.stringify({ theme: testInfo.project.name, ratios }), contentType: 'application/json' });
 });
