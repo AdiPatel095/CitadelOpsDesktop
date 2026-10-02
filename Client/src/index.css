@@ -437,62 +437,6 @@
         box-shadow: var(--shadow-shell);
     }
 
-    .liquid-header-inner {
-        display: flex;
-        min-width: 0;
-        width: 100%;
-        align-items: center;
-        justify-content: space-between;
-        gap: clamp(0.55rem, 0.8vw, 0.85rem);
-    }
-
-    .liquid-brand {
-        display: flex;
-        min-width: 0;
-        flex-shrink: 0;
-        align-items: center;
-        gap: clamp(0.65rem, 0.9vw, 1rem);
-    }
-
-    .liquid-brand-copy { min-width: 0; }
-
-    .liquid-header-status-strip {
-        display: flex;
-        min-width: 0;
-        flex: 1;
-        align-items: center;
-        justify-content: flex-start;
-        gap: clamp(0.6rem, 0.9vw, 1rem);
-        overflow-x: auto;
-        overflow-y: hidden;
-        padding: 0.5rem 0.25rem;
-        scroll-padding-inline: 0.5rem;
-    }
-
-    .liquid-header-status-strip > :first-child { margin-left: auto; }
-
-    .liquid-header-status-strip > :last-child { margin-right: auto; }
-
-    .liquid-header-controls {
-        display: flex;
-        flex-shrink: 0;
-        align-items: center;
-        gap: 0.75rem;
-    }
-
-    .liquid-auto-bird-button { max-width: min(22rem, 38vw); }
-
-    .liquid-brand-mark {
-        display: grid;
-        width: 2.55rem;
-        height: 2.55rem;
-        place-items: center;
-        border: 1px solid var(--border-base);
-        border-radius: var(--radius-global);
-        background: var(--surface-control);
-        box-shadow: var(--shadow-raised);
-    }
-
     .liquid-sidebar {
         position: fixed;
         top: calc(var(--app-header-height) + (var(--app-shell-gap) * 2));
@@ -3537,20 +3481,6 @@
     @media (max-width: 920px) {
         .liquid-header { padding-inline: 0.75rem; }
 
-        .liquid-brand { gap: 0.65rem; }
-
-        .liquid-brand-mark {
-            width: 2.25rem;
-            height: 2.25rem;
-        }
-
-        .liquid-header-status-strip {
-            justify-content: flex-start;
-            scrollbar-width: none;
-        }
-
-        .liquid-header-status-strip::-webkit-scrollbar { display: none; }
-
         .liquid-main { margin-left: calc(var(--app-sidebar-width) + (var(--app-shell-gap) * 2)); }
 
         .liquid-sidebar-scroll,
@@ -3579,19 +3509,6 @@
     @media (max-width: 680px) {
         .liquid-header { padding-inline: 0.55rem; }
 
-        .liquid-brand-copy { display: none; }
-
-        .liquid-header-inner { gap: 0.45rem; }
-
-        .liquid-header-status-strip {
-            gap: 0.5rem;
-            padding-block: 0.35rem;
-        }
-
-        .liquid-header-controls { gap: 0.45rem; }
-
-        .liquid-auto-bird-button { max-width: 11rem; }
-
         .liquid-sidebar-scroll { padding: 0.5rem 0.35rem; }
 
         .liquid-nav-item { padding-block: 0.62rem; }
@@ -3600,11 +3517,6 @@
 
     @media (max-height: 760px) {
         .liquid-header { padding-inline: 0.75rem; }
-
-        .liquid-brand-mark {
-            width: 2.15rem;
-            height: 2.15rem;
-        }
 
         .liquid-sidebar-scroll { padding-block: 0.5rem; }
 
@@ -3648,7 +3560,6 @@
 
 /* Viewer-local controls use logical spacing and inherit document direction. */
 html[dir="rtl"] input[type="number"], html[dir="rtl"] code { direction: ltr; unicode-bidi: isolate; }
-@media (max-width: 640px) { }
 
 
 a { color: var(--text-primary); text-decoration: underline; text-decoration-thickness: 1px; }

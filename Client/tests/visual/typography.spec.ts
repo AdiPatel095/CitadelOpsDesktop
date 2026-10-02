@@ -7,6 +7,7 @@ for (const entry of cases) for (const theme of themes) {
   test(`type scale: ${entry.name}-${theme}`, async ({page})=>{
     const verifyNetwork=await prepare(page,theme,entry.states,entry.scenario);
     await openView(page,entry.label,entry.view);
+    if (entry.name === 'header-panel') await page.locator('.header-status-cluster').click();
     if ('settings' in entry) await openSettings(page);
     await settle(page);await scanTypography(page);verifyNetwork();
   });

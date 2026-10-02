@@ -116,7 +116,7 @@ test('report mode emits file:line findings and succeeds without changing fixture
   assert.match(result.stdout, /View\.tsx:2 <button> needs/);
   assert.match(result.stdout, /nested\/View\.tsx:1 <Button variant="danger"> needs leftIcon=/);
   assert.match(result.stdout, /Raw-button report: 2 violation\(s\) in 4 TSX file\(s\)/);
-  assert.match(result.stdout, /components\/Header\.tsx raw-button markers \(CIT-69/);
+  assert.doesNotMatch(result.stdout, /components\/Header\.tsx/);
   assert.deepEqual(checkRoot(root), before);
 }));
 
