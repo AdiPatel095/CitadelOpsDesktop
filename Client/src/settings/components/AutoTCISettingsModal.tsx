@@ -358,25 +358,25 @@ export const AutoTCISettingsModal: React.FC<AutoTCISettingsModalProps> = ({ isOp
     <div className="flex flex-col items-center gap-1">
       <span className="text-caption font-semibold text-text-muted">{label}</span>
       <div className="flex items-center gap-1">
-        <button
+        <Button iconOnly variant="ghost"
           type="button"
-          className="flex h-8 w-8 items-center justify-center rounded-lg border border-border-base bg-bg-app text-text-main hover:bg-bg-card-hover disabled:opacity-40"
+          className="flex items-center justify-center"
           disabled={decDisabled}
           onClick={onDec}
           aria-label={decLabel}
         >
           <Minus className="h-4 w-4" />
-        </button>
-        <span className="min-w-[32px] text-center font-mono text-body font-semibold tabular-nums">{value}</span>
-        <button
+        </Button>
+        <span className="min-w-[32px] text-center font-mono text-body font-bold tabular-nums">{value}</span>
+        <Button iconOnly variant="ghost"
           type="button"
-          className="flex h-8 w-8 items-center justify-center rounded-lg border border-border-base bg-bg-app text-text-main hover:bg-bg-card-hover disabled:opacity-40"
+          className="flex items-center justify-center"
           disabled={incDisabled}
           onClick={onInc}
           aria-label={incLabel}
         >
           <Plus className="h-4 w-4" />
-        </button>
+        </Button>
       </div>
     </div>
   );
@@ -529,33 +529,33 @@ export const AutoTCISettingsModal: React.FC<AutoTCISettingsModalProps> = ({ isOp
                                 'Decrease level ceiling',
                                 'Increase level ceiling',
                               )}
-                              <button
+                              <Button variant="secondary"
                                 type="button"
                                 onClick={() => removeItem(castleId, item.id)}
-                                className="flex h-8 items-center gap-1.5 rounded-lg px-2 text-caption font-semibold text-error/90 hover:bg-error/10"
+                                className="flex items-center gap-1.5"
                               >
                                 <Trash2 className="h-3.5 w-3.5" />
                                 <LocalizedText messageKey="ui.settings.components.autoTCISettingsModal.remove.c3812fc4" />
-                              </button>
+                              </Button>
                             </div>
                           </div>
                         );
                       })}
                     </div>
-                    <button
+                    <Button variant="secondary"
                       type="button"
                       onClick={() => handleAddItem(castleId)}
-                      className="mt-4 flex w-full items-center justify-center gap-2 rounded-global border-2 border-dashed border-border-base py-3.5 text-body font-medium text-text-muted transition-colors hover:border-primary hover:bg-primary/5 hover:text-primary"
+                      className="mt-4 flex w-full items-center justify-center gap-2 transition-colors"
                     >
                       <Plus className="h-4 w-4" />
                       <LocalizedText messageKey="ui.settings.components.autoTCISettingsModal.add.construction.item.095fa798" />
-                    </button>
+                    </Button>
                   </div>
                 ) : (
                   <div className="flex min-h-[10rem] flex-col items-center justify-center py-8">
                     <div className="mb-3 text-center text-caption font-semibold text-text-muted/60">
                       <LocalizedText messageKey="ui.settings.components.autoTCISettingsModal.no.construction.items.selected.0fef5a0b" /></div>
-                    <Button variant="outline" size="sm" onClick={() => handleAddItem(castleId)} leftIcon={<Plus className="h-4 w-4" />}>
+                    <Button variant="secondary" size="sm" onClick={() => handleAddItem(castleId)} leftIcon={<Plus className="h-4 w-4" />}>
                       <LocalizedText messageKey="ui.settings.components.autoTCISettingsModal.add.construction.item.095fa798" /></Button>
                   </div>
                 )}

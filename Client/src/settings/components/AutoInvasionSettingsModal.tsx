@@ -245,7 +245,7 @@ export const AutoInvasionSettingsModal: React.FC<AutoInvasionSettingsModalProps>
       title={localizeStatic("ui.settings.components.autoInvasionSettingsModal.title.auto.invasion.d43e5a94")}
       icon={<Crosshair className="h-5 w-5" />}
       description={localizeStatic("ui.settings.components.autoInvasionSettingsModal.description.foreign.lords.and.bloodcrow.attack.plan.0ee8d04e")}
-      titleTrailing={<Button variant="outline" size="sm" className="shrink-0" onClick={() => setIsGuideOpen(true)} leftIcon={<BookOpen className="h-4 w-4" />}><span lang={invasionGuideLocale}>{invasionGuidePack.ui.guideButton}</span></Button>}
+      titleTrailing={<Button variant="secondary" size="sm" className="shrink-0" onClick={() => setIsGuideOpen(true)} leftIcon={<BookOpen className="h-4 w-4" />}><span lang={invasionGuideLocale}>{invasionGuidePack.ui.guideButton}</span></Button>}
       onSave={() => void save()}
       isSaving={saving}
       saveDisabled={!canSave || !draftSession.ready}

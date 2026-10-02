@@ -1,15 +1,16 @@
+import { useLocale } from '../../i18n/LocaleContext';
 import { equipmentEventOptions } from '../EquipmentEventLoadouts';
 import { describeMessage } from '../../i18n/messages';
 import {formatMessage,type LocalizedMessage} from '../../i18n/formatMessage';
 import { useLocale as useStaticLocale } from "../../i18n/LocaleContext";
 import { LocalizedText } from "../../i18n/LocalizedText";
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Activity, RefreshCw, SlidersHorizontal, Sparkles } from 'lucide-react';
+import { Activity, Coins, PackageMinus, RefreshCw, SlidersHorizontal, Sparkles } from 'lucide-react';
 import { useCitadelAPI } from '../../api/ApiContext';
 import type { GemInstanceV2 } from '../../api/Contracts';
 import StaleSessionBanner from '../../components/StaleSessionBanner';
 import { Notifications } from '../../components/Notifications';
-import { Badge, Button, Card, CardContent, CardHeader, CardTitle, PillSelector, Select } from '../../components/ui';
+import { Badge, Button, OverflowMenu, Card, CardContent, CardHeader, CardTitle, PillSelector, Select } from '../../components/ui';
 import { useMetadata } from '../../context/MetadataContext';
 import { coinsUnderUpgradeReserve } from '../../utils/UpgradeCoinReserve';
 import {
@@ -51,6 +52,7 @@ import {
 } from './EquipmentTypes';
 
 export default function EquipmentView() {
+  const { message } = useLocale();
   const { t: localizeStatic } = useStaticLocale();
 	const { state, configuration, submitIntent } = useCitadelAPI();
 	const { effects, equipments, gems, troops, effectsStatus } = useMetadata();
@@ -255,12 +257,15 @@ export default function EquipmentView() {
       {effectsStatus !== 'ready' && <p role="status" className="text-body text-warning"><LocalizedText messageKey={effectsStatus === 'loading' ? 'equipment.canonicalLoading' : 'equipment.canonicalUnavailable'} /></p>}
       {hasMissingOfficialDescription && <p role="status" className="text-body text-text-muted"><LocalizedText messageKey="equipment.missingOfficialDescription" /></p>}
 			<Card className="equipment-workspace-card h-full min-h-0 flex flex-col">
-				<CardHeader className="flex flex-wrap items-center gap-4">
+				<CardHeader role="toolbar" data-region="toolbar" aria-labelledby="equipment-workspace-heading" className="flex flex-wrap items-center gap-4">
+          <span id="equipment-workspace-heading" className="sr-only">{mode}</span>
 					<PillSelector ariaLabel={localizeStatic("ui.equipment.components.equipmentView.ariaLabel.equipment.owner.type.8d4616c8")} value={mode} options={['Commander', 'Castellan']} onChange={(value) => setMode(value as EquipmentMode)} size="header" />
 					<div className="equipment-actions ml-auto">
-						<Button size="sm" variant="outline" disabled={controlsDisabled || leaders.length < 2} onClick={() => setShowSwap(true)}><RefreshCw className="mr-1.5 h-4 w-4" /><LocalizedText messageKey="ui.equipment.components.equipmentView.swap.gear.690c2557" /></Button>
-						<Button size="sm" disabled={!state?.session.loggedIn || busy} onClick={() => { setSellType('Gems'); setShowSell(true); }} className="border border-warning/30 bg-warning/10 text-warning hover:border-warning/50 hover:bg-warning/20"><LocalizedText messageKey="ui.equipment.components.equipmentView.sell.gems.8a1147dc" /></Button>
-						<Button size="sm" disabled={!state?.session.loggedIn || busy} onClick={() => { setSellType('Equipment'); setShowSell(true); }} className="border border-warning/30 bg-warning/10 text-warning hover:border-warning/50 hover:bg-warning/20"><LocalizedText messageKey="ui.equipment.components.equipmentView.sell.equipment.aadcdf54" /></Button>
+						<Button size="sm" variant="secondary" disabled={controlsDisabled || leaders.length < 2} onClick={() => setShowSwap(true)}><RefreshCw /><LocalizedText messageKey="equipment.actions.swap" /></Button>
+						<OverflowMenu label={message('equipment.actions.sell').text} triggerIcon={<Coins />} items={[
+              { id: 'gems', label: <LocalizedText messageKey="equipment.actions.sellGems" />, icon: <Coins />, destructive: true, disabled: !state?.session.loggedIn || busy, onSelect: () => { setSellType('Gems'); setShowSell(true); } },
+              { id: 'equipment', label: <LocalizedText messageKey="equipment.actions.sellEquipment" />, icon: <Coins />, destructive: true, disabled: !state?.session.loggedIn || busy, onSelect: () => { setSellType('Equipment'); setShowSell(true); } },
+            ]} />
 					</div>
 				</CardHeader>
 
@@ -268,7 +273,7 @@ export default function EquipmentView() {
 					<div className="equipment-loadout-list custom-scrollbar">
 						<div className="equipment-loadout-list-items">
 							{leaders.map((leader) => (
-								<button
+								<button data-button-pattern="row"
 									type="button"
 									key={leader.id}
 									onClick={() => setSelectedID(leader.id)}
@@ -444,6 +449,7 @@ function EquipmentStatsPane({
 	onReconfigure: () => void;
 	onEventLoadout: () => void;
 }) {
+  const { message } = useLocale();
 	if (!leader) return <p className="py-12 text-center text-body text-text-muted"><LocalizedText messageKey="ui.equipment.components.equipmentView.select.a.loadout.a4c3f8e7" /></p>;
 	const equipmentCount = rows.filter((row) => row.item).length;
 	const gemCount = rows.filter((row) => row.gem).length;
@@ -452,21 +458,23 @@ function EquipmentStatsPane({
 		<div className="p-4">
 			<div className="mb-4">
 				<div className="mb-2 flex items-center justify-between">
-					<CardTitle className="truncate text-body-lg">{leader.name}</CardTitle>
+					<CardTitle id="equipment-loadout-heading" className="truncate text-body-lg">{leader.name}</CardTitle>
 				</div>
 				<div className="flex flex-wrap items-center gap-2">
 					<Badge variant={combatMode === 'PvP' ? 'danger' : combatMode === 'PvE' ? 'success' : 'outline'}>
 						{combatMode ? `${combatMode} Stats` : 'Target Stats'}
 					</Badge>
 					<div className="ml-auto flex flex-wrap justify-end gap-2">
-						<Button size="sm" variant="outline" disabled={disabled || equipmentCount === 0} onClick={() => onUpgrade('equipment')}><LocalizedText messageKey="ui.equipment.components.equipmentView.upgrade.equipment.2cc9e2a4" /></Button>
-						<Button size="sm" disabled={disabled || upgradeableGemCount === 0} onClick={() => onUpgrade('gem')}><LocalizedText messageKey="ui.equipment.components.equipmentView.upgrade.gem.8be1f026" /></Button>
+						<Button size="sm" variant="secondary" disabled={disabled || equipmentCount === 0} onClick={() => onUpgrade('equipment')}><LocalizedText messageKey="ui.equipment.components.equipmentView.upgrade.equipment.2cc9e2a4" /><LocalizedText messageKey="equipment.actions.upgradeEquipment" /></Button>
+						<Button variant="secondary" size="sm" disabled={disabled || upgradeableGemCount === 0} onClick={() => onUpgrade('gem')}><LocalizedText messageKey="ui.equipment.components.equipmentView.upgrade.gem.8be1f026" /><LocalizedText messageKey="equipment.actions.upgradeGems" /></Button>
 						{leader.kind === 'commander' && (
-							<Button size="sm" variant="outline" disabled={disabled} onClick={onEventLoadout} leftIcon={<Sparkles className="h-4 w-4" />}><LocalizedText messageKey="ui.equipment.components.equipmentView.event.set.9308e6ac" /></Button>
+							<Button size="sm" variant="secondary" disabled={disabled} onClick={onEventLoadout} leftIcon={<Sparkles className="h-4 w-4" />}><LocalizedText messageKey="ui.equipment.components.equipmentView.event.set.9308e6ac" /><LocalizedText messageKey="equipment.actions.eventSet" /></Button>
 						)}
-						<Button size="sm" disabled={reconfigureDisabled} onClick={onReconfigure} leftIcon={<SlidersHorizontal className="h-4 w-4" />}><LocalizedText messageKey="ui.equipment.components.equipmentView.reconfigure.7458d4f3" /></Button>
-						<Button size="sm" variant="outline" disabled={disabled || equipmentCount === 0} onClick={() => onUnequip('equipment')}><LocalizedText messageKey="ui.equipment.components.equipmentView.unequip.equipment.a2039e49" /></Button>
-						<Button size="sm" disabled={disabled || gemCount === 0} onClick={() => onUnequip('gems')}><LocalizedText messageKey="ui.equipment.components.equipmentView.unequip.gem.d9a5f88e" /></Button>
+						<OverflowMenu label={message('equipment.actions.unequip').text} triggerIcon={<PackageMinus />} items={[
+              { id: 'equipment', label: <LocalizedText messageKey="equipment.actions.unequipEquipment" />, icon: <PackageMinus />, destructive: true, disabled: disabled || equipmentCount === 0, onSelect: () => onUnequip('equipment') },
+              { id: 'gems', label: <LocalizedText messageKey="equipment.actions.unequipGems" />, icon: <PackageMinus />, destructive: true, disabled: disabled || gemCount === 0, onSelect: () => onUnequip('gems') },
+            ]} />
+						<Button variant="primary" size="sm" disabled={reconfigureDisabled} onClick={onReconfigure} leftIcon={<SlidersHorizontal className="h-4 w-4" />}><LocalizedText messageKey="ui.equipment.components.equipmentView.reconfigure.7458d4f3" /><LocalizedText messageKey="equipment.actions.reconfigure" /></Button>
 					</div>
 				</div>
 			</div>

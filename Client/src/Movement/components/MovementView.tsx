@@ -337,7 +337,7 @@ const MovementView: React.FC = () => {
                                   state,
                                 ).length;
                                 return (
-                                  <button
+                                  <button data-button-pattern="tile"
                                     key={feature.id}
                                     type="button"
                                     className="rounded-full transition-transform hover:-translate-y-0.5 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 disabled:pointer-events-none disabled:opacity-40"
@@ -411,9 +411,9 @@ const MovementView: React.FC = () => {
                             <td className="px-4 py-4 align-top">
                               <div className="flex flex-wrap items-start gap-3">
                                 <div className="flex shrink-0 flex-wrap gap-2">
-                                  <button
+                                  <Button variant="ghost"
                                     type="button"
-                                    className="rounded-full transition-transform hover:-translate-y-0.5 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 disabled:pointer-events-none disabled:opacity-40"
+                                    className="transition-transform focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
                                     disabled={savingAssignments || selectedFeatureCount === COMMANDER_FEATURES.length}
                                     onClick={() => setAllCommanderFeatures(row.commanderId, true)}
                                     aria-label={`Select all features for ${row.name || `commander ${row.commanderId}`}`}
@@ -422,10 +422,10 @@ const MovementView: React.FC = () => {
                                       <CheckCircle2 className="h-3 w-3" />
                                       <LocalizedText messageKey="ui.movement.components.movementView.select.all.1fc9a387" />
                                     </Badge>
-                                  </button>
-                                  <button
+                                  </Button>
+                                  <Button variant="ghost"
                                     type="button"
-                                    className="rounded-full transition-transform hover:-translate-y-0.5 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 disabled:pointer-events-none disabled:opacity-40"
+                                    className="transition-transform focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
                                     disabled={savingAssignments || selectedFeatureCount === 0}
                                     onClick={() => setAllCommanderFeatures(row.commanderId, false)}
                                     aria-label={`Unselect all features for ${row.name || `commander ${row.commanderId}`}`}
@@ -434,7 +434,7 @@ const MovementView: React.FC = () => {
                                       <XCircle className="h-3 w-3" />
                                       <LocalizedText messageKey="ui.movement.components.movementView.unselect.all.d60bf0bb" />
                                     </Badge>
-                                  </button>
+                                  </Button>
                                 </div>
                                 <div className="flex min-w-48 flex-1 flex-wrap gap-2 border-l border-border-base pl-3">
                                   {COMMANDER_FEATURES.map((feature) => {
@@ -450,7 +450,7 @@ const MovementView: React.FC = () => {
                                       state,
                                     );
                                     return (
-                                      <button
+                                      <button data-button-pattern="tile"
                                         key={feature.id}
                                         type="button"
                                         className="rounded-full transition-transform hover:-translate-y-0.5 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 disabled:pointer-events-none disabled:opacity-40"

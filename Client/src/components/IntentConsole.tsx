@@ -104,7 +104,7 @@ const IntentConsole = () => {
           />
         </label>
         <div className="flex flex-wrap gap-3">
-          <Button variant="outline" onClick={() => void submit(true)} disabled={!intentName || submitting} leftIcon={<ScanSearch className="h-4 w-4" />}>
+          <Button variant="secondary" onClick={() => void submit(true)} disabled={!intentName || submitting} leftIcon={<ScanSearch className="h-4 w-4" />}>
             {t('intent.preview')}
           </Button>
           <Button variant="primary" onClick={() => void submit(false)} disabled={!intentName || submitting} leftIcon={<Play className="h-4 w-4" />}>

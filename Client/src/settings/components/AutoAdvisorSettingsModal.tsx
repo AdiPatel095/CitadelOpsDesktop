@@ -1,3 +1,4 @@
+import { Trash2 } from 'lucide-react';
 import { StopFooter } from '../../components/StopControl';
 import { useLocale as useStaticLocale } from "../../i18n/LocaleContext";
 import { LocalizedText } from "../../i18n/LocalizedText";
@@ -206,7 +207,7 @@ export const AutoAdvisorSettingsModal: React.FC<AutoAdvisorSettingsModalProps> =
         isOpen={isOpen}
         onClose={() => { if (!saving && !activating) onClose(); }}
         maxWidth="3xl"
-        titleTrailing={<Button variant="outline" size="sm" className="shrink-0" onClick={() => setIsGuideOpen(true)} leftIcon={<BookOpen className="h-4 w-4" />}><span lang={advisorGuideLocale}>{advisorGuidePack.ui.guideButton}</span></Button>}
+        titleTrailing={<Button variant="secondary" size="sm" className="shrink-0" onClick={() => setIsGuideOpen(true)} leftIcon={<BookOpen className="h-4 w-4" />}><span lang={advisorGuideLocale}>{advisorGuidePack.ui.guideButton}</span></Button>}
         title={localizeStatic("ui.settings.components.autoAdvisorSettingsModal.title.auto.advisor.3c6f5be4")}
         icon={<Bot className="h-5 w-5" />}
         description={localizeStatic("ui.settings.components.autoAdvisorSettingsModal.description.one.guarded.nomad.or.samurai.advisor.run.350d2486")}
@@ -237,7 +238,7 @@ export const AutoAdvisorSettingsModal: React.FC<AutoAdvisorSettingsModalProps> =
               <div className="flex flex-wrap gap-2">
                 {advisorActive ? (
                   <Button
-                    variant="outline"
+                    variant="secondary"
                     size="sm"
                     isLoading={refreshing}
                     onClick={() => void refreshOverview()}
@@ -245,7 +246,7 @@ export const AutoAdvisorSettingsModal: React.FC<AutoAdvisorSettingsModalProps> =
                   >
                     <LocalizedText messageKey="ui.settings.components.autoAdvisorSettingsModal.refresh.overview.10ffdcf1" /></Button>
                 ) : (
-                  <Button variant="danger" size="sm" disabled={!canActivate} onClick={openActivation}>
+                  <Button leftIcon={<Trash2 aria-hidden="true" />} variant="danger" size="sm" disabled={!canActivate} onClick={openActivation}>
                     <LocalizedText messageKey="ui.settings.components.autoAdvisorSettingsModal.activate.advisor.4259f0af" /></Button>
                 )}
               </div>
@@ -434,7 +435,7 @@ export const AutoAdvisorSettingsModal: React.FC<AutoAdvisorSettingsModalProps> =
         footer={(
           <>
             <Button variant="ghost" disabled={activating} onClick={() => setActivationOpen(false)}><LocalizedText messageKey="game.cancel" /></Button>
-            <Button
+            <Button leftIcon={<Trash2 aria-hidden="true" />}
               variant="danger"
               isLoading={activating}
               disabled={!canActivate || !activationAcknowledged}

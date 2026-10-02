@@ -443,26 +443,26 @@ const RiftAttackTemplate: React.FC = () => {
                             >
                               {label}
                             </span>
-                            <button
+                            <Button iconOnly variant="ghost"
                               type="button"
                               onClick={() => startRename(entry)}
                               disabled={activeActionId != null}
-                              className="shrink-0 p-1 rounded-md text-text-muted hover:text-primary hover:bg-bg-card-hover disabled:cursor-not-allowed disabled:opacity-40"
+                              className="shrink-0"
                               title={localizeStatic("ui.rift.components.riftAttackTemplate.title.rename.template.91f36a22")}
                               aria-label={`Rename ${label}`}
                             >
                               <Pencil className="w-3.5 h-3.5" />
-                            </button>
-                            <button
+                            </Button>
+                            <Button leftIcon={<Trash2 className="w-3.5 h-3.5" />} variant="danger"
                               type="button"
                               onClick={() => handleDelete(entry)}
                               disabled={activeActionId != null}
-                              className="shrink-0 p-1 rounded-md text-text-muted hover:text-error hover:bg-error/10 disabled:cursor-not-allowed disabled:opacity-40"
+                              className="shrink-0"
                               title={localizeStatic("ui.rift.components.riftAttackTemplate.title.delete.template.da9a9b35")}
                               aria-label={`Delete ${label}`}
                             >
-                              <Trash2 className="w-3.5 h-3.5" />
-                            </button>
+
+                            </Button>
                           </div>
                         )}
                       </td>

@@ -34,7 +34,7 @@ export function FeatureGuideModal({ feature, isOpen, onClose, showAdvisor = true
   const previewTitle = feature === 'autoTower' ? pack.ui.towerPreviewTitle : feature === 'autoBird' ? pack.ui.birdPreviewTitle : feature === 'autoStation' ? pack.ui.stationPreviewTitle : feature === 'autoFortress' ? pack.ui.fortressPreviewTitle : feature === 'autoInvasion' ? pack.ui.invasionPreviewTitle : feature === 'autoNomad' ? pack.ui.nomadPreviewTitle : feature === 'autoAdvisor' ? pack.ui.advisorPreviewTitle : feature === 'autoBeri' ? pack.ui.beriPreviewTitle : feature === 'autoStorm' ? pack.ui.stormPreviewTitle : pack.ui.khanPreviewTitle;
   return <>
     <Modal isOpen={isOpen} onClose={closeGuide} title={title} contentLang={locale} contentDir={locale === 'ar' ? 'rtl' : 'ltr'} closeLabel={pack.ui.backToSettings} maxWidth="3xl"
-      footer={<Button variant="outline" onClick={closeGuide}>{pack.ui.backToSettings}</Button>}>
+      footer={<Button variant="secondary" onClick={closeGuide}>{pack.ui.backToSettings}</Button>}>
       <div lang={locale} dir={locale === 'ar' ? 'rtl' : 'ltr'}>
         <p className="mb-4 text-body text-text-muted">{intro}</p>
         <p className="mb-4 text-body text-text-muted">{guide.recommendationIntro}</p>
@@ -54,11 +54,11 @@ export function FeatureGuideModal({ feature, isOpen, onClose, showAdvisor = true
                 })}
               </dl>
               {step.image && 'image' in content && content.image && <figure className="mt-3" style={{ maxWidth: locale === 'en' && feature !== 'autoFortress' && feature !== 'autoInvasion' && feature !== 'autoNomad' && feature !== 'autoAdvisor' && feature !== 'autoKhan' && feature !== 'autoBeri' && feature !== 'autoStorm' ? step.image.width : 680 }}>
-                <button type="button" onClick={() => setPreviewStepId(step.id)} aria-label={pack.ui.enlargePicture}
-                  className="block w-full overflow-hidden rounded-xl border border-border-base hover:border-primary focus-visible:outline-2 focus-visible:outline-primary">
+                <Button variant="secondary" type="button" onClick={() => setPreviewStepId(step.id)} aria-label={pack.ui.enlargePicture}
+                  className="block w-full overflow-hidden focus-visible:outline-2 focus-visible:outline-primary">
                   {locale === 'en' && feature !== 'autoFortress' && feature !== 'autoInvasion' && feature !== 'autoNomad' && feature !== 'autoAdvisor' && feature !== 'autoKhan' && feature !== 'autoBeri' && feature !== 'autoStorm' ? <img src={step.image.src} alt={content.image.alt} width={step.image.width} height={step.image.height} loading="lazy" className="h-auto w-full" /> :
                     <GuideIllustration pack={pack} kind={panelKind(feature, step.id)} locale={locale} alt={[pack.ui.illustrativeExample, content.title, pack.panels[panelKind(feature, step.id)].title].join(' — ')} showAdvisor={showAdvisor} />}
-                </button>
+                </Button>
                 <figcaption className="mt-2 text-caption text-text-muted">{(locale !== 'en' || feature === 'autoFortress' || feature === 'autoInvasion' || feature === 'autoNomad' || feature === 'autoAdvisor' || feature === 'autoKhan' || feature === 'autoBeri' || feature === 'autoStorm') && <strong>{pack.ui.illustrativeExample}. </strong>}{content.image.caption}</figcaption>
               </figure>}
             </li>;
@@ -67,7 +67,7 @@ export function FeatureGuideModal({ feature, isOpen, onClose, showAdvisor = true
       </div>
     </Modal>
     <Modal isOpen={isOpen && !!previewStep} onClose={() => setPreviewStepId(null)} title={previewTitle} contentLang={locale} contentDir={locale === 'ar' ? 'rtl' : 'ltr'} closeLabel={pack.ui.backToGuide} maxWidth="full"
-      footer={<Button variant="outline" onClick={() => setPreviewStepId(null)}>{pack.ui.backToGuide}</Button>}>
+      footer={<Button variant="secondary" onClick={() => setPreviewStepId(null)}>{pack.ui.backToGuide}</Button>}>
       {previewStep && (() => {
         const content = guide.steps[previewStep.id as keyof typeof guide.steps];
         if (!previewStep.image || !('image' in content) || !content.image) return null;

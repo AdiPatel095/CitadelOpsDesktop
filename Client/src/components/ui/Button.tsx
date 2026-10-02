@@ -1,65 +1,26 @@
-import React, { type ButtonHTMLAttributes } from 'react';
+import React, { type ButtonHTMLAttributes, type ReactNode } from 'react';
+import './button.css';
 
-export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: 'primary' | 'secondary' | 'ghost' | 'danger' | 'outline' | 'solid';
-  size?: 'sm' | 'md' | 'lg' | 'icon';
-  isLoading?: boolean;
-  leftIcon?: React.ReactNode;
-  rightIcon?: React.ReactNode;
+export type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'danger';
+export type ButtonSize = 'sm' | 'md' | 'lg';
+export interface ButtonStyle { variant?: ButtonVariant; size?: ButtonSize; iconOnly?: boolean; className?: string }
+export function buttonAttributes({ variant = 'secondary', size = 'md', iconOnly = false, className = '' }: ButtonStyle = {}): { className: string; 'data-variant': ButtonVariant; 'data-size': ButtonSize } {
+  return { className: `cit-button${iconOnly ? ' cit-button-icon' : ''} ${className}`.trim(), 'data-variant': variant, 'data-size': size };
 }
-
+export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement>, Omit<ButtonStyle, 'className'> {
+  isLoading?: boolean; leftIcon?: ReactNode; rightIcon?: ReactNode;
+}
 export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
-  (
-    {
-      className = '',
-      variant = 'primary',
-      size = 'md',
-      isLoading,
-      leftIcon,
-      rightIcon,
-      children,
-      disabled,
-      ...props
-    },
-    ref
-  ) => {
-    const baseStyles = 'm3-button inline-flex items-center justify-center font-semibold focus:outline-none disabled:cursor-not-allowed whitespace-nowrap';
-    
-    // Legacy solid callers have no variant class; preserve that rendering.
-    const variants: Partial<Record<NonNullable<ButtonProps['variant']>, string>> = {
-      primary: 'm3-button-filled',
-      secondary: 'm3-button-tonal',
-      ghost: 'm3-button-text',
-      danger: 'm3-button-danger',
-      outline: 'm3-button-outlined',
-    };
-
-    const sizes = {
-      sm: 'm3-button-sm px-3 py-1.5 text-caption gap-1.5',
-      md: 'm3-button-md px-4 py-2 text-body gap-2',
-      lg: 'm3-button-lg px-6 py-3 text-body-lg gap-3',
-      icon: 'm3-button-icon p-2 flex-shrink-0',
-    };
-
+  ({ className, variant = 'secondary', size = 'md', iconOnly, isLoading, leftIcon, rightIcon, children, disabled, title, ...props }, ref) => {
+    if (import.meta.env.DEV && iconOnly && !props['aria-label']) console.warn('Button iconOnly requires aria-label');
     return (
-      <button
-        ref={ref}
-        disabled={disabled || isLoading}
-        className={`${baseStyles} ${variants[variant]} ${sizes[size]} ${className}`}
-        {...props}
-      >
-        {isLoading && (
-          <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-current" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-          </svg>
-        )}
-        {!isLoading && leftIcon}
+      <button {...props} {...buttonAttributes({ className, variant, size, iconOnly })} ref={ref}
+        title={title ?? (iconOnly ? props['aria-label'] : undefined)} disabled={disabled || isLoading} aria-busy={isLoading || props['aria-busy']}>
+        {isLoading ? <svg className="cit-button-spinner" aria-hidden="true" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" strokeWidth="3" strokeDasharray="42 15" /></svg> : leftIcon ?? (isLoading !== undefined ? <span className="cit-button-loading-slot" aria-hidden="true" /> : null)}
         {children}
-        {!isLoading && rightIcon}
+        {rightIcon}
       </button>
     );
   }
 );
-
 Button.displayName = 'Button';

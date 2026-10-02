@@ -26,7 +26,7 @@ export const ScheduleSummaryRow: React.FC<ScheduleSummaryRowProps> = ({
     </div>
     <div className="flex shrink-0 items-center gap-2">
       {status}
-      <Button variant="outline" size="sm" onClick={onEdit} leftIcon={<CalendarDays className="h-4 w-4" />}>
+      <Button variant="secondary" size="sm" onClick={onEdit} leftIcon={<CalendarDays className="h-4 w-4" />}>
         {actionLabel}
       </Button>
     </div>

@@ -79,8 +79,8 @@ export function EquipmentSellModal({
 			title={<PillSelector ariaLabel={localizeStatic("ui.equipment.components.equipmentModals.ariaLabel.equipment.category.d378a1be")} value={relicTab} onChange={(value) => setRelicTab(value as RelicTab)} options={[{value:'Non Relic',label:localizeStatic('equipment.relicCategory',{category:'non'})},{value:'Relic 1.0',label:localizeStatic('equipment.relicCategory',{category:'relic1'})},{value:'Relic 2.0',label:localizeStatic('equipment.relicCategory',{category:'relic2'})}]} size="header" fullWidth />}
 			footer={(
 				<>
-					<Button variant="ghost" onClick={onClose}><LocalizedText messageKey="game.cancel" /></Button>
-					<Button variant="danger" onClick={confirm} isLoading={busy}><LocalizedText messageKey="ui.equipment.components.equipmentModals.confirm.sell.827ff403" /></Button>
+					<Button variant="secondary" onClick={onClose}><LocalizedText messageKey="game.cancel" /></Button>
+					<Button leftIcon={<Trash2 aria-hidden="true" />} variant="danger" onClick={confirm} isLoading={busy}><LocalizedText messageKey="ui.equipment.components.equipmentModals.confirm.sell.827ff403" /></Button>
 				</>
 			)}
 		>
@@ -169,8 +169,8 @@ export function EquipmentSwapModal({
 			maxWidth="2xl"
 			footer={(
 				<>
-					<Button variant="ghost" onClick={onClose}><LocalizedText messageKey="game.cancel" /></Button>
-					<Button disabled={otherID == null} onClick={() => otherID != null && onConfirm(otherID)} isLoading={busy}><LocalizedText messageKey="ui.equipment.components.equipmentModals.swap.pieces.86121fb1" /></Button>
+					<Button variant="secondary" onClick={onClose}><LocalizedText messageKey="game.cancel" /></Button>
+					<Button variant="primary" disabled={otherID == null} onClick={() => otherID != null && onConfirm(otherID)} isLoading={busy}><LocalizedText messageKey="ui.equipment.components.equipmentModals.swap.pieces.86121fb1" /></Button>
 				</>
 			)}
 		>
@@ -183,7 +183,7 @@ export function EquipmentSwapModal({
 					{available.map((candidate) => {
 						const equipped = Object.values(candidate.equipment).filter(Boolean).length;
 						return (
-							<button
+							<button data-button-pattern="card"
 								type="button"
 								key={candidate.id}
 								onClick={() => setOtherID(candidate.id)}
@@ -243,8 +243,8 @@ export function EquipmentEventModal({
 			maxWidth="2xl"
 			footer={(
 				<>
-					<Button variant="ghost" onClick={onClose}><LocalizedText messageKey="game.cancel" /></Button>
-					<Button
+					<Button variant="secondary" onClick={onClose}><LocalizedText messageKey="game.cancel" /></Button>
+					<Button variant="primary"
 						disabled={!canApply}
 						onClick={() => selectedEvent && onConfirm(selectedEvent, selectedTier ?? undefined)}
 						isLoading={busy}
@@ -282,7 +282,7 @@ export function EquipmentEventModal({
 								key={entry.option.value}
 								className={`overflow-hidden rounded-global border transition-colors ${isSelected ? 'border-primary/50 bg-primary/10' : 'border-border-base bg-bg-app/50 hover:bg-bg-card-hover'}`}
 							>
-								<button type="button" onClick={() => selectEvent(entry)} className="w-full p-3 text-left">
+								<button data-button-pattern="row" type="button" onClick={() => selectEvent(entry)} className="w-full p-3 text-left">
 									<span className="flex items-start gap-3">
 										<span className={`mt-0.5 h-4 w-4 shrink-0 rounded-full border-2 ${isSelected ? 'border-primary bg-primary shadow-[inset_0_0_0_3px_var(--bg-app)]' : 'border-border-base'}`} />
 										<span className="min-w-0 flex-1">
@@ -371,8 +371,8 @@ export function UnequipModal({
 			title={localizeStatic('equipment.unequip.title',{kind})}
 			footer={(
 				<>
-					<Button variant="ghost" onClick={onClose}><LocalizedText messageKey="game.cancel" /></Button>
-					<Button disabled={selected.size === 0} onClick={() => onConfirm(Array.from(selected))} isLoading={busy}>{localizeStatic('equipment.unequip.action',{count:selected.size})}</Button>
+					<Button variant="secondary" onClick={onClose}><LocalizedText messageKey="game.cancel" /></Button>
+					<Button leftIcon={<Trash2 aria-hidden="true" />} variant="danger" disabled={selected.size === 0} onClick={() => onConfirm(Array.from(selected))} isLoading={busy}>{localizeStatic('equipment.unequip.action',{count:selected.size})}</Button>
 				</>
 			)}
 		>
@@ -385,7 +385,7 @@ export function UnequipModal({
 					{available.map((row) => {
 						const id = kind === 'equipment' ? row.item?.id : row.gem?.id;
 						return (
-							<button
+							<button data-button-pattern="row"
 								type="button"
 								key={row.slot}
 								onClick={() => toggle(row.slot)}
@@ -460,8 +460,8 @@ export function UpgradeModal({
 			title={localizeStatic('equipment.upgrade.title',{kind})}
 			footer={(
 				<>
-					<Button variant="ghost" onClick={onClose}><LocalizedText messageKey="game.cancel" /></Button>
-					<Button
+					<Button variant="secondary" onClick={onClose}><LocalizedText messageKey="game.cancel" /></Button>
+					<Button variant="primary"
 						disabled={selectedID == null || selectedLevelCap == null || currentLevel >= selectedLevelCap || targetLevel <= currentLevel || targetLevel > selectedLevelCap || coinBlocked}
 						onClick={() => selectedID != null && onConfirm(selectedID, targetLevel)}
 						isLoading={busy}
@@ -481,7 +481,7 @@ export function UpgradeModal({
 						const level = item.level ?? 0;
 						const capped = levelCap != null && level >= levelCap;
 						return (
-							<button
+							<button data-button-pattern="row"
 								type="button"
 								key={`${row.slot}-${item.id}`}
 								disabled={levelCap == null || capped || item.id <= 0}

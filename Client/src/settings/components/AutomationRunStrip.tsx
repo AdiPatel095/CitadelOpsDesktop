@@ -58,12 +58,12 @@ export const AutomationRunStrip: React.FC<AutomationRunStripProps> = ({ featureI
         </div>
         <div className="flex min-w-0 flex-wrap items-center gap-2">
           {scheduleId && onOpenSchedule ? (
-            <Button variant="outline" size="sm" onClick={onOpenSchedule} leftIcon={<CalendarDays className="h-4 w-4" />}>
+            <Button variant="secondary" size="sm" onClick={onOpenSchedule} leftIcon={<CalendarDays className="h-4 w-4" />}>
               <LocalizedText messageKey="common.calendar" />
             </Button>
           ) : null}
           {onOpenDuration ? (
-            <Button variant="outline" size="sm" onClick={onOpenDuration} leftIcon={<Timer className="h-4 w-4" />}>
+            <Button variant="secondary" size="sm" onClick={onOpenDuration} leftIcon={<Timer className="h-4 w-4" />}>
               <LocalizedText messageKey="ui.settings.components.automationRunStrip.run.for.a.time.b8753047" />
             </Button>
           ) : null}

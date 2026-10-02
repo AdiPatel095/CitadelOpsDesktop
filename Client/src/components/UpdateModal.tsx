@@ -95,7 +95,7 @@ const UpdateModal = () => {
 			footer={!activelyInstalling ? (
 				<div className="flex w-full gap-3">
 					<Button variant="ghost" onClick={dismiss} className="flex-1"><LocalizedText messageKey="ui.components.updateModal.later.73b6e48a" /></Button>
-					<Button variant="outline" onClick={ignore} className="flex-1"><LocalizedText messageKey="ui.components.updateModal.ignore.fce77c34" /></Button>
+					<Button variant="secondary" onClick={ignore} className="flex-1"><LocalizedText messageKey="ui.components.updateModal.ignore.fce77c34" /></Button>
 					<Button variant="primary" onClick={install} className="flex-[2]" leftIcon={<Download className="h-4 w-4" />}>
 						{applicationUpdate.installSupported ? 'Update now' : 'Download'}
 					</Button>

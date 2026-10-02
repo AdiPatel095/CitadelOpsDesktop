@@ -488,9 +488,9 @@ export const LoggerDock = React.memo(function LoggerDock() {
                   <span className="liquid-log-live-dot" />
                   {liveStatus}
                 </span>
-                <Button
+                <Button iconOnly
                   variant="ghost"
-                  size="icon"
+                  size="md"
                   onClick={() => setOpen(false)}
                   className="liquid-log-close-button"
                   aria-label={t('activity.close')}
@@ -548,14 +548,14 @@ export const LoggerDock = React.memo(function LoggerDock() {
 
               <div className="liquid-log-toolbar-buttons">
                 {!isFollowingLive && (
-                  <Button type="button" variant="outline" size="sm" onClick={jumpToLatest} leftIcon={<Icons.ArrowRight className="h-4 w-4 rotate-90" />}>
+                  <Button type="button" variant="secondary" size="sm" onClick={jumpToLatest} leftIcon={<Icons.ArrowRight className="h-4 w-4 rotate-90" />}>
                     {t('activity.latest')}
                   </Button>
                 )}
-                <Button
+                <Button iconOnly
                   type="button"
-                  variant={liveUpdatesPaused ? 'outline' : 'ghost'}
-                  size="icon"
+                  variant="ghost"
+                  size="md"
                   className="liquid-log-toolbar-icon-button"
                   onClick={() => {
                     if (liveUpdatesPaused) void fetchTail();
@@ -566,10 +566,10 @@ export const LoggerDock = React.memo(function LoggerDock() {
                 >
                   {liveUpdatesPaused ? <Play className="h-4 w-4" /> : <Pause className="h-4 w-4" />}
                 </Button>
-                <Button
+                <Button iconOnly
                   type="button"
                   variant="ghost"
-                  size="icon"
+                  size="md"
                   className="liquid-log-toolbar-icon-button"
                   onClick={() => void copyLogData(
                     'visible-lines',
@@ -581,10 +581,10 @@ export const LoggerDock = React.memo(function LoggerDock() {
                 >
                   {copiedTarget === 'visible-lines' ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
                 </Button>
-                <Button
+                <Button iconOnly
                   type="button"
-                  variant="secondary"
-                  size="icon"
+                  variant="ghost"
+                  size="md"
                   className="liquid-log-toolbar-icon-button"
                   onClick={() => void fetchTail(true)}
                   disabled={isRefreshing}
@@ -666,10 +666,10 @@ export const LoggerDock = React.memo(function LoggerDock() {
       {!open && (
         <div className="liquid-log-handle" aria-live="polite">
           <div className="pointer-events-auto flex flex-row items-stretch shadow-2xl">
-            <button
+            <Button variant="secondary"
               type="button"
               onClick={() => setOpen(true)}
-              className="liquid-surface-edge group flex h-32 w-10 shrink-0 flex-col items-center justify-center gap-2 rounded-l-[16px] border-r-0 text-text-muted transition-all duration-300 hover:border-primary/50 hover:text-primary"
+              className="liquid-surface-edge group flex shrink-0 flex-col items-center justify-center gap-2 transition-all duration-300"
               title={t('activity.open')}
             >
               <Icons.Activity className="h-5 w-5 group-hover:animate-pulse" />
@@ -679,7 +679,7 @@ export const LoggerDock = React.memo(function LoggerDock() {
               >
                 {t('activity.label')}
               </span>
-            </button>
+            </Button>
           </div>
         </div>
       )}

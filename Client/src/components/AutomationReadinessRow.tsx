@@ -66,7 +66,7 @@ export const AutomationReadinessRow: React.FC<{
   const panelId = `automation-readiness-${featureId}`;
   return (
     <div ref={rootRef} className="mt-1.5 text-caption" data-automation-readiness={featureId} data-readiness-overall={report.overall}>
-      <button
+      <button data-button-pattern="disclosure"
         ref={toggleRef}
         type="button"
         className="flex w-full min-w-0 flex-wrap items-center gap-1.5 rounded-md px-1 py-0.5 text-left text-text-muted hover:text-text-main focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary"

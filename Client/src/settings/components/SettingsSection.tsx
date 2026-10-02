@@ -47,7 +47,7 @@ export const SettingsSection: React.FC<SettingsSectionProps> = ({ disclosure, se
       aria-labelledby={headingId}
       className={`rounded-global border border-dashed border-border-base bg-bg-card/30 ${className}`}
     >
-      <button
+      <button data-button-pattern="disclosure"
         type="button"
         className="flex w-full items-start justify-between gap-3 px-4 py-3 text-left"
         aria-expanded={expanded}

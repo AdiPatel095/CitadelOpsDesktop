@@ -132,8 +132,8 @@ const DefensePresetEditor: React.FC<DefensePresetEditorProps> = ({
       )}
       footer={
         <>
-          <Button variant="ghost" disabled={saving} onClick={onClose}><LocalizedText messageKey="game.cancel" /></Button>
-          <Button isLoading={saving} disabled={isMetadataLoading || unitsError != null} onClick={submit}>{saveLabel ?? <LocalizedText messageKey="common.savePreset" />}</Button>
+          <Button variant="secondary" disabled={saving} onClick={onClose}><LocalizedText messageKey="game.cancel" /></Button>
+          <Button variant="secondary" isLoading={saving} disabled={isMetadataLoading || unitsError != null} onClick={submit}>{saveLabel ?? <LocalizedText messageKey="common.savePreset" />}</Button>
         </>
       }
     >
@@ -335,7 +335,7 @@ const DefensePresetEditor: React.FC<DefensePresetEditorProps> = ({
               {draft.keep && !hasEditableCourtyardRows ? (
                 <Button
                   type="button"
-                  variant="outline"
+                  variant="secondary"
                   size="sm"
                   onClick={() => setDraft((current) => ({
                     ...current,
@@ -631,14 +631,14 @@ const ToolSlotGroup: React.FC<{
           const tool = slot.definitionId > 0 ? tools[slot.definitionId] : undefined;
           return (
             <div key={index} className="grid grid-cols-[2.25rem_minmax(0,1fr)_5.5rem_auto] items-end gap-2 rounded-global border border-border-base bg-bg-input/35 p-2">
-              <button
+              <Button variant="secondary"
                 type="button"
-                className="flex h-9 w-9 items-center justify-center rounded-global border border-border-base bg-bg-card/60 hover:border-primary/40"
+                className="flex items-center justify-center"
                 title={localizeStatic("ui.components.defensePresetEditor.title.choose.tool.138d3dd8")}
                 onClick={() => void pickTool(index)}
               >
                 {slot.definitionId > 0 ? <ToolImage toolId={slot.definitionId} size={30} showLevel={false} /> : <PackageSearch className="h-4 w-4 text-text-muted" />}
-              </button>
+              </Button>
               <div className="min-w-0">
                 <label className="mb-1 block truncate text-caption font-semibold text-text-muted">
                   {tool?.name || 'Tool ID'}
@@ -669,20 +669,20 @@ const ToolSlotGroup: React.FC<{
                 />
               </div>
               <div className="flex items-center pb-0.5">
-                <Button
+                <Button aria-label={localizeStatic("ui.components.defensePresetEditor.title.clear.tool.38a2dbae")} iconOnly
                   type="button"
                   variant="ghost"
-                  size="icon"
+                  size="md"
                   title={localizeStatic("ui.components.defensePresetEditor.title.clear.tool.38a2dbae")}
                   disabled={slot.definitionId <= 0}
                   onClick={() => replaceSlot(index, { definitionId: -1, amount: 0 })}
                 >
                   <Eraser className="h-3.5 w-3.5" />
                 </Button>
-                <Button
+                <Button aria-label={localizeStatic("ui.components.defensePresetEditor.title.remove.slot.8c09755d")} iconOnly
                   type="button"
                   variant="ghost"
-                  size="icon"
+                  size="md"
                   title={localizeStatic("ui.components.defensePresetEditor.title.remove.slot.8c09755d")}
                   onClick={() => onChange(slots.filter((_, candidateIndex) => candidateIndex !== index))}
                 >
@@ -740,7 +740,7 @@ const FixedDefenseToolSlotCard: React.FC<{
             <QuantityAssetTile
               size={88}
               visual={(
-                <button
+                <button data-button-pattern="tile"
                   type="button"
                   onClick={onPick}
                   disabled={pickerDisabled}
@@ -774,15 +774,15 @@ const FixedDefenseToolSlotCard: React.FC<{
               {tool?.name || `Tool #${slot.definitionId}`}
             </span>
           ) : (
-            <button
+            <Button variant="secondary"
               type="button"
               onClick={onPick}
               disabled={pickerDisabled}
-              className="mt-2 line-clamp-2 h-9 w-full text-center text-caption font-semibold text-text-main transition hover:text-primary disabled:cursor-not-allowed"
+              className="mt-2 line-clamp-2 w-full text-center text-caption transition"
               title={tool?.name || `Tool #${slot.definitionId}`}
             >
               {tool?.name || `Tool #${slot.definitionId}`}
-            </button>
+            </Button>
           )}
           <span className="mt-1 max-w-full truncate text-center font-mono text-caption text-text-muted">
             {locked ? purposeLabel : available == null ? purposeLabel : `${available.toLocaleString()} owned`}

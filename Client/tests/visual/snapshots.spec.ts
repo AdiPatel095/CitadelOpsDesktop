@@ -1,3 +1,4 @@
+import { assertOnePrimaryPerRegion } from './rules';
 import { expect, test } from '@playwright/test';
 import { cases, themes } from './cases';
 import { openSettings, openView, prepare, settle } from './harness';
@@ -10,6 +11,7 @@ for (const entry of cases) {
       if ('settings' in entry) await openSettings(page);
       await settle(page);
       verifyNetwork();
+      await assertOnePrimaryPerRegion(page);
       await expect(page).toHaveScreenshot(`${entry.name}-${testInfo.project.name}-${theme}.png`, {
         fullPage: false, animations: 'disabled', caret: 'hide',
       });

@@ -313,7 +313,7 @@ const DefensePresetsView: React.FC = () => {
               className="w-44 2xl:w-52"
             />
             <Button
-              variant="outline"
+              variant="secondary"
               isLoading={refreshing}
               disabled={!selectedCastle || applyingID != null}
               leftIcon={<RefreshCw className="h-4 w-4" />}
@@ -333,7 +333,7 @@ const DefensePresetsView: React.FC = () => {
             >
               <span className="hidden 2xl:inline"><LocalizedText messageKey="ui.views.defensePresetsView.capture.current.135de533" /></span>
             </Button>
-            <Button
+            <Button variant="ghost"
               leftIcon={<Plus className="h-4 w-4" />}
               title={localizeStatic("ui.views.defensePresetsView.title.create.a.defense.preset.974c17bd")}
               aria-label={localizeStatic("ui.views.defensePresetsView.aria-label.new.defense.preset.9f767a74")}
@@ -377,7 +377,7 @@ const DefensePresetsView: React.FC = () => {
             ? 'Try a different preset or source-castle name.'
             : 'Build one manually without live defense state, or refresh a castle and capture its current setup as a starting point.'}
           action={!query.trim() ? (
-            <Button leftIcon={<Plus className="h-4 w-4" />} onClick={() => setEditor({ presetID: null, draft: emptyDefensePresetDraft() })}>
+            <Button variant="secondary" leftIcon={<Plus className="h-4 w-4" />} onClick={() => setEditor({ presetID: null, draft: emptyDefensePresetDraft() })}>
               <LocalizedText messageKey="ui.views.defensePresetsView.create.preset.6d72507d" /></Button>
           ) : undefined}
         />
@@ -432,9 +432,9 @@ const PresetCard: React.FC<{
           {ownershipLine ? <p className="mt-1 text-caption text-text-muted">{ownershipLine}</p> : null}
         </div>
         <div className="flex items-center gap-1">
-          <Button variant="ghost" size="icon" disabled={busy} onClick={onEdit} title={localizeStatic("ui.views.defensePresetsView.title.edit.preset.d36585b9")}><Edit3 className="h-4 w-4" /></Button>
-          <Button variant="ghost" size="icon" disabled={busy} onClick={onDuplicate} title={localizeStatic("ui.views.defensePresetsView.title.duplicate.preset.a5c8c827")}><Copy className="h-4 w-4" /></Button>
-          <Button variant="ghost" size="icon" disabled={busy} onClick={onDelete} title={localizeStatic("ui.views.defensePresetsView.title.delete.preset.f307af85")} className="hover:!text-error"><Trash2 className="h-4 w-4" /></Button>
+          <Button aria-label={localizeStatic("ui.views.defensePresetsView.title.edit.preset.d36585b9")} iconOnly variant="ghost" size="md" disabled={busy} onClick={onEdit} title={localizeStatic("ui.views.defensePresetsView.title.edit.preset.d36585b9")}><Edit3 className="h-4 w-4" /></Button>
+          <Button aria-label={localizeStatic("ui.views.defensePresetsView.title.duplicate.preset.a5c8c827")} iconOnly variant="ghost" size="md" disabled={busy} onClick={onDuplicate} title={localizeStatic("ui.views.defensePresetsView.title.duplicate.preset.a5c8c827")}><Copy className="h-4 w-4" /></Button>
+          <Button aria-label={localizeStatic("ui.views.defensePresetsView.title.delete.preset.f307af85")} iconOnly variant="ghost" size="md" disabled={busy} onClick={onDelete} title={localizeStatic("ui.views.defensePresetsView.title.delete.preset.f307af85")} ><Trash2 className="h-4 w-4" /></Button>
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -473,7 +473,7 @@ const PresetCard: React.FC<{
           <div className="text-caption font-semibold">{compatibility.label}</div>
           <div className="mt-1 text-caption opacity-80">{compatibility.detail}</div>
         </div>
-        <Button
+        <Button variant="secondary"
           className="w-full"
           disabled={!target || busy}
           isLoading={applying}

@@ -483,7 +483,7 @@ const TCIBrowserCard: React.FC<TCIBrowserCardProps> = ({ item, isSelected, isAct
   const { t: localizeStatic } = useStaticLocale();
   const effectLine = formatEffectUpgradeLine(item);
   return (
-    <button
+    <button data-button-pattern="tile"
       type="button"
       className={`tci-browser-card ${isSelected ? 'tci-browser-card-selected' : ''} ${isActive ? 'tci-browser-card-active' : ''}`}
       aria-pressed={isSelected}
@@ -676,25 +676,25 @@ const TCILevelStepper: React.FC<TCILevelStepperProps> = ({
 }) => (
   <div className="tci-level-row">
     <span className="tci-level-label">{label}</span>
-    <button
+    <Button iconOnly variant="ghost"
       type="button"
-      className="tci-level-button"
+
       disabled={decrementDisabled}
       onClick={onDecrement}
       aria-label={`Decrease ${label.toLowerCase()}imum tier`}
     >
       <Minus className="h-3.5 w-3.5" />
-    </button>
+    </Button>
     <span className="tci-level-value">{value}</span>
-    <button
+    <Button iconOnly variant="ghost"
       type="button"
-      className="tci-level-button"
+
       disabled={incrementDisabled}
       onClick={onIncrement}
       aria-label={`Increase ${label.toLowerCase()}imum tier`}
     >
       <Plus className="h-3.5 w-3.5" />
-    </button>
+    </Button>
   </div>
 );
 

@@ -23,7 +23,7 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
   const {t,messageLocale} = useLocale();
   const displayEyebrow = eyebrow === undefined ? t('navigation.commandCenter') : eyebrow;
   return (
-  <header className={`m3-page-header ui-page-header ${className}`} {...props}>
+  <header data-region="page-header" className={`m3-page-header ui-page-header ${className}`} {...props}>
     <span className="m3-page-header-shape" aria-hidden="true" />
     <div className="ui-page-header-heading">
       {icon && <span className="ui-page-header-icon" aria-hidden="true">{icon}</span>}

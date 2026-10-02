@@ -506,7 +506,7 @@ export const QueueProductionSettingsModal: React.FC<QueueProductionSettingsModal
             {definition.emptyItemsLabel}
           </div>
           <Button
-            variant="outline"
+            variant="secondary"
             size="sm"
             onClick={() => handleAddItem(scope, addTitle)}
             leftIcon={<Plus className="h-4 w-4" />}
@@ -527,7 +527,7 @@ export const QueueProductionSettingsModal: React.FC<QueueProductionSettingsModal
       <div className="space-y-3">
         <div className="flex flex-wrap gap-4 content-start">
         {items.map((item, index) => (
-          <button
+          <button data-button-pattern="card"
             key={`${scope.type}-${scope.type === 'castle' ? scope.castleId : 'global'}-${item.id}`}
             type="button"
             className={`group/item relative flex w-[5.75rem] flex-col items-center gap-2 rounded-global border bg-bg-card/70 p-3 text-center shadow-sm transition-transform hover:-translate-y-1 hover:border-primary/45 ${
@@ -555,15 +555,15 @@ export const QueueProductionSettingsModal: React.FC<QueueProductionSettingsModal
             </span>
           </button>
         ))}
-        <button
+        <Button variant="secondary"
           type="button"
           onClick={() => handleAddItem(scope, addTitle)}
-          className="flex min-h-[9.35rem] w-[5.75rem] flex-col items-center justify-center gap-2 rounded-global border-2 border-dashed border-border-base bg-bg-card/45 text-caption font-semibold text-text-muted transition-colors hover:border-primary hover:bg-primary/5 hover:text-primary"
+          className="flex flex-col items-center justify-center gap-2 transition-colors"
           title={addLabel}
         >
           <Plus className="h-5 w-5" />
           <LocalizedText messageKey="ui.settings.components.queueProductionSettingsModal.select.2a78025d" />
-        </button>
+        </Button>
         </div>
         {showsRecruitRotation && (
           <p className="text-caption font-semibold text-text-muted">
@@ -612,7 +612,7 @@ export const QueueProductionSettingsModal: React.FC<QueueProductionSettingsModal
           </div>
           {!options.hideEditButton && (
             <Button
-              variant="outline"
+              variant="secondary"
               size="sm"
               onClick={options.onEdit}
               title={options.editTitle}
@@ -691,7 +691,7 @@ export const QueueProductionSettingsModal: React.FC<QueueProductionSettingsModal
               </Badge>
             )}
             <Button
-              variant="outline"
+              variant="secondary"
               size="sm"
               onClick={() => onOpenFeatureSchedule(definition.featureID, definition.featureLabel)}
               leftIcon={<CalendarDays className="h-4 w-4" />}
@@ -749,7 +749,7 @@ export const QueueProductionSettingsModal: React.FC<QueueProductionSettingsModal
             {schedule.slots.length} slot{schedule.slots.length === 1 ? '' : 's'}
           </Badge>
           <Button
-            variant="outline"
+            variant="secondary"
             size="sm"
             onClick={() => onOpenFeatureSchedule(definition.featureID, definition.featureLabel)}
             leftIcon={<CalendarDays className="h-4 w-4" />}
@@ -1003,9 +1003,9 @@ export const QueueProductionSettingsModal: React.FC<QueueProductionSettingsModal
                         </div>
                         <div className="flex shrink-0 items-center gap-2">
                           {!isGlobalMode && (
-                            <Button
+                            <Button aria-label={`${castle.name} ${definition.featureLabel} schedule`} iconOnly
                               variant="ghost"
-                              size="icon"
+                              size="md"
                               onClick={() => onOpenFeatureSchedule(castleScheduleID, `${definition.featureLabel} - ${castle.name}`)}
                               title={`${castle.name} ${definition.featureLabel} schedule`}
                             >

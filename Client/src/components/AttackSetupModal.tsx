@@ -301,7 +301,7 @@ const AttackSetupModal: React.FC<AttackSetupModalProps> = ({
             )}
           </div>
           <div className="flex items-center gap-2">
-            <Button variant="ghost" onClick={onClose} disabled={isSaving}><LocalizedText messageKey="game.cancel" /></Button>
+            <Button variant="secondary" onClick={onClose} disabled={isSaving}><LocalizedText messageKey="game.cancel" /></Button>
             <Button variant="primary" onClick={handleSave} disabled={!canSave} isLoading={isSaving}>
               {saveLabel ?? (isSaving ? 'Saving preset' : 'Save preset')}
             </Button>
@@ -364,9 +364,9 @@ const AttackSetupModal: React.FC<AttackSetupModalProps> = ({
           <div>
             <span className="mb-1.5 block text-caption font-semibold text-text-muted"><LocalizedText messageKey="ui.components.attackSetupModal.waves.ad5b8321" /></span>
             <div className="flex items-center gap-2">
-              <Button
-                variant="secondary"
-                size="icon"
+              <Button aria-label={localizeStatic("ui.components.attackSetupModal.title.remove.last.wave.99e9f782")} iconOnly
+                variant="ghost"
+                size="md"
                 onClick={() => setWaveCount(draft.waves.length - 1)}
                 disabled={draft.waves.length <= 1}
                 title={localizeStatic("ui.components.attackSetupModal.title.remove.last.wave.99e9f782")}
@@ -382,9 +382,9 @@ const AttackSetupModal: React.FC<AttackSetupModalProps> = ({
                 className="w-16 text-center font-mono font-bold"
                 aria-label={localizeStatic("ui.components.attackSetupModal.aria-label.wave.count.17eaea44")}
               />
-              <Button
-                variant="secondary"
-                size="icon"
+              <Button aria-label={localizeStatic("ui.components.attackSetupModal.title.add.wave.47a3b886")} iconOnly
+                variant="ghost"
+                size="md"
                 onClick={() => setWaveCount(draft.waves.length + 1)}
                 disabled={draft.waves.length >= MAX_WAVES}
                 title={localizeStatic("ui.components.attackSetupModal.title.add.wave.47a3b886")}
@@ -624,7 +624,7 @@ const WaveEditorCard: React.FC<WaveEditorCardProps> = ({
     >
       <CardHeader className="!m-0 !min-h-0">
         <div className="flex h-11 w-full items-center gap-1 overflow-hidden rounded-full px-1.5">
-          <button
+          <button data-button-pattern="disclosure"
             type="button"
             className="flex h-full min-w-0 flex-1 items-center justify-between gap-3 rounded-full px-2 text-left transition-colors hover:text-primary"
             aria-expanded={isOpen}
@@ -654,10 +654,10 @@ const WaveEditorCard: React.FC<WaveEditorCardProps> = ({
             </div>
           </button>
           <span className="h-5 w-px shrink-0 bg-border-base/80" aria-hidden="true" />
-          <Button
+          <Button iconOnly
             variant="ghost"
-            size="icon"
-            className="h-8 w-8 rounded-full !p-0"
+            size="md"
+
             onClick={onDuplicate}
             disabled={waveCount >= MAX_WAVES}
             title={localizeStatic("ui.components.attackSetupModal.title.duplicate.wave.2065f71e")}
@@ -665,10 +665,10 @@ const WaveEditorCard: React.FC<WaveEditorCardProps> = ({
           >
             <Copy className="h-3.5 w-3.5" />
           </Button>
-          <Button
+          <Button iconOnly
             variant="ghost"
-            size="icon"
-            className="h-8 w-8 rounded-full !p-0 hover:!text-error"
+            size="md"
+
             onClick={onClear}
             title={localizeStatic("ui.components.attackSetupModal.title.clear.wave.b1d53a3c")}
             aria-label={`Clear Wave ${waveIndex + 1}`}
@@ -966,7 +966,7 @@ const InventorySlotCard: React.FC<InventorySlotCardProps> = ({
           <QuantityAssetTile
             size={76}
             visual={(
-              <button
+              <button data-button-pattern="tile"
                 type="button"
                 onClick={onPick}
                 disabled={pickerDisabled}
@@ -1008,15 +1008,15 @@ const InventorySlotCard: React.FC<InventorySlotCardProps> = ({
             onRemove={() => onChange({ itemId: null, quantity: 0 })}
             removeLabel={`Clear ${slotLabel}`}
           />
-          <button
+          <Button variant="secondary"
             type="button"
             onClick={onPick}
             disabled={pickerDisabled}
-            className="mt-1.5 line-clamp-2 h-7 w-full text-center text-caption font-semibold text-text-main transition hover:text-primary disabled:cursor-not-allowed"
+            className="mt-1.5 line-clamp-2 w-full text-center text-caption transition"
             title={itemName}
           >
             {itemName}
-          </button>
+          </Button>
           <div className={`mt-1 truncate text-center font-mono text-caption ${overAllocated ? 'text-error' : 'text-text-muted'}`}>
             {overAllocated
               ? `${allocated.toLocaleString()}/${available.toLocaleString()} used`

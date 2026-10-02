@@ -249,7 +249,7 @@ export function useConfigurationDraftSession({
               <div className="text-body font-semibold text-error"><LocalizedText messageKey="ui.settings.configurationDraftSession.could.not.load.latest.settings.31ab2414" /></div>
               <p className="mt-1 text-caption text-text-main">{loadError}</p>
             </div>
-            <Button variant="outline" size="sm" onClick={() => void reloadLatest()} leftIcon={<RotateCcw className="h-4 w-4" />}>
+            <Button variant="secondary" size="sm" onClick={() => void reloadLatest()} leftIcon={<RotateCcw className="h-4 w-4" />}>
               <LocalizedText messageKey="ui.settings.configurationDraftSession.retry.942087cc" />
             </Button>
           </div>
@@ -284,7 +284,7 @@ export function useConfigurationDraftSession({
               </Button>
             ) : null}
             <Button
-              variant="outline"
+              variant="secondary"
               size="sm"
               disabled={loading}
               onClick={() => void (copied ? reloadAndDropCopy() : reloadLatest())}

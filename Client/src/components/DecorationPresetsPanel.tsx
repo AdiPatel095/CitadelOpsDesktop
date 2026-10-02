@@ -220,11 +220,11 @@ const DecorationPresetsPanel: React.FC = () => {
               placeholder={localizeStatic("common.presetName")}
               className="flex-1"
             />
-            <Button
+            <Button variant="secondary"
               disabled={!canSave}
               onClick={handleSave}
               leftIcon={<Save className="h-4 w-4" strokeWidth={2.25} />}
-              className="shrink-0 shadow-none hover:shadow-none"
+              className="shrink-0"
             >
               <LocalizedText messageKey="common.savePreset" /></Button>
           </div>
@@ -260,7 +260,7 @@ const DecorationPresetsPanel: React.FC = () => {
                 onClick={() => applyOperationId ? handleCancelApply() : selectedPreset && handleApply(selectedPreset.id)}
                 title={applyOperationId ? 'Cancel the running preset application' : 'Apply selected preset'}
                 leftIcon={<Play className="h-3.5 w-3.5" strokeWidth={2.5} />}
-                className="shadow-none hover:shadow-none"
+
               >
                 {applyOperationId ? (cancellingApply ? 'Cancelling…' : 'Cancel apply') : 'Apply'}
               </Button>
@@ -270,7 +270,7 @@ const DecorationPresetsPanel: React.FC = () => {
                 disabled={!selectedPreset || Boolean(applyOperationId)}
                 onClick={() => selectedPreset && handleDelete(selectedPreset.id)}
                 leftIcon={<Trash2 className="h-3.5 w-3.5" strokeWidth={2.25} />}
-                className="shadow-none hover:shadow-none"
+
               >
                 <LocalizedText messageKey="game.delete" /></Button>
             </div>

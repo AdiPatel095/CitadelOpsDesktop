@@ -43,7 +43,7 @@ const RiftCoordDisplay: React.FC = () => {
       headerClassName="flex-row gap-4"
       actions={(
         <Button
-          variant="outline"
+          variant="secondary"
           size="sm"
           className="shrink-0"
           disabled={!gameLoggedIn}

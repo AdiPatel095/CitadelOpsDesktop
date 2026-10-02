@@ -344,7 +344,7 @@ export const EventAttackSetupField: React.FC<EventAttackSetupFieldProps> = ({
           ) : null}
           {selectedPreset ? (
             <Button
-              variant="outline"
+              variant="secondary"
               size="sm"
               disabled={disabled}
               leftIcon={<Copy className="h-4 w-4" />}
@@ -376,11 +376,11 @@ export const EventAttackSetupField: React.FC<EventAttackSetupFieldProps> = ({
             <p role="alert" className="text-caption text-error"><LocalizedText messageKey="ui.settings.components.eventAttackSetupField.add.at.least.one.troop.before.saving.798500e7" /></p>
           ) : null}
           <div className="flex flex-wrap gap-2">
-            <Button variant="outline" size="sm" disabled={disabled} leftIcon={<Edit3 className="h-4 w-4" />} onClick={() => setEditing(true)}>
+            <Button variant="secondary" size="sm" disabled={disabled} leftIcon={<Edit3 className="h-4 w-4" />} onClick={() => setEditing(true)}>
               <LocalizedText messageKey="ui.settings.components.eventAttackSetupField.edit.composition.cf7f4829" />
             </Button>
             <Button
-              variant="outline"
+              variant="secondary"
               size="sm"
               disabled={disabled || recommendedSetup == null}
               ref={recommendTrigger}
@@ -456,7 +456,7 @@ export const EventAttackSetupField: React.FC<EventAttackSetupFieldProps> = ({
         footer={(
           <div className="flex w-full flex-wrap items-center justify-end gap-2">
             <Button variant="ghost" onClick={closePreview}><LocalizedText messageKey="game.cancel" /></Button>
-            <Button
+            <Button variant="secondary"
               disabled={recommendedSetup == null}
               onClick={() => {
                 if (recommendedSetup) applyInline(recommendedSetup);
@@ -526,7 +526,7 @@ export const EventAttackSetupField: React.FC<EventAttackSetupFieldProps> = ({
         footer={(
           <div className="flex w-full items-center justify-end gap-2">
             <Button variant="ghost" disabled={saveAsBusy} onClick={closeSaveAs}><LocalizedText messageKey="game.cancel" /></Button>
-            <Button isLoading={saveAsBusy} disabled={saveAsBusy} leftIcon={<Save className="h-4 w-4" />} onClick={() => void submitSaveAs()}>
+            <Button variant="secondary" isLoading={saveAsBusy} disabled={saveAsBusy} leftIcon={<Save className="h-4 w-4" />} onClick={() => void submitSaveAs()}>
               {saveAsFailed && !saveAsBusy ? <LocalizedText messageKey="ui.settings.components.eventAttackSetupField.try.again.d8b8392e" /> : <LocalizedText messageKey="ui.settings.components.eventAttackSetupField.save.preset.362a1376" />}
             </Button>
           </div>

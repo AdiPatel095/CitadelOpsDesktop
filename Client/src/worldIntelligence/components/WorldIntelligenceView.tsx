@@ -1,3 +1,4 @@
+import { Button } from '../../components/ui/Button';
 import { useServerLabel } from '../useServerLabel';
 import { useLocale as useStaticLocale } from "../../i18n/LocaleContext";
 import { LocalizedText } from "../../i18n/LocalizedText";
@@ -181,7 +182,7 @@ const WorldIntelligenceView = () => {
 				{error && (
 					<div className="flex items-start justify-between gap-3 rounded-global border border-error/30 bg-error/10 px-4 py-3 text-body text-error" role="alert">
 						<span>{error}</span>
-						<button type="button" aria-label={localizeStatic("ui.worldIntelligence.components.worldIntelligenceView.aria-label.dismiss.error.2db04667")} onClick={() => setError('')}><X className="h-4 w-4" /></button>
+						<Button iconOnly variant="ghost" type="button" aria-label={localizeStatic("ui.worldIntelligence.components.worldIntelligenceView.aria-label.dismiss.error.2db04667")} onClick={() => setError('')}><X className="h-4 w-4" /></Button>
 					</div>
 				)}
 				{profileLoading ? (
@@ -228,7 +229,7 @@ const WorldIntelligenceView = () => {
 			{error && (
 				<div className="flex items-start justify-between gap-3 rounded-global border border-error/30 bg-error/10 px-4 py-3 text-body text-error" role="alert">
 					<span>{error}</span>
-					<button type="button" aria-label={localizeStatic("ui.worldIntelligence.components.worldIntelligenceView.aria-label.dismiss.error.2db04667")} onClick={() => setError('')}><X className="h-4 w-4" /></button>
+					<Button iconOnly variant="ghost" type="button" aria-label={localizeStatic("ui.worldIntelligence.components.worldIntelligenceView.aria-label.dismiss.error.2db04667")} onClick={() => setError('')}><X className="h-4 w-4" /></Button>
 				</div>
 			)}
 

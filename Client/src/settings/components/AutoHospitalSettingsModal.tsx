@@ -177,7 +177,7 @@ export const AutoHospitalSettingsModal: React.FC<AutoHospitalSettingsModalProps>
                   {autoHospitalScheduleEnabled ? 'On' : 'Off'}
                 </Badge>
                 <Button
-                  variant="outline"
+                  variant="secondary"
                   size="sm"
                   onClick={() => onOpenFeatureSchedule('autoHospital', 'Auto Hospital')}
                   leftIcon={<CalendarDays className="h-4 w-4" />}

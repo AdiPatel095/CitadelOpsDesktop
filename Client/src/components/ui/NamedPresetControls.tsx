@@ -55,7 +55,7 @@ export const NamedPresetControls: React.FC<NamedPresetControlsProps> = ({
           <div className="min-w-0 flex-1">
             <Select value={selectedID} onChange={onSelectedIDChange} options={options} ariaLabel="Load preset" disabled={disabled} />
           </div>
-          <Button variant="outline" onClick={onApply} disabled={disabled} className="w-full shrink-0 bg-bg-card md:w-auto"><LocalizedText messageKey="common.apply" /></Button>
+          <Button variant="secondary" onClick={onApply} disabled={disabled} className="w-full shrink-0 bg-bg-card md:w-auto"><LocalizedText messageKey="common.apply" /></Button>
         </div>
       </div>
       <div className="grid grid-cols-2 gap-2 md:flex md:flex-wrap">

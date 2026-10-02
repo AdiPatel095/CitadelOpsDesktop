@@ -1,3 +1,4 @@
+import { Button } from './ui/Button';
 import { useLocale } from '../i18n/LocaleContext';
 import React from 'react';
 import { Moon, Sun } from 'lucide-react';
@@ -12,15 +13,10 @@ export const ThemeToggle: React.FC<ThemeToggleProps> = ({ className = '' }) => {
     const { theme, toggleTheme } = useTheme();
 
     return (
-        <button
+        <Button iconOnly variant="ghost"
             lang={messageLocale}
             onClick={toggleTheme}
-            className={`
-        m3-icon-button liquid-surface-edge flex items-center justify-center rounded-full p-2
-        text-text-muted hover:text-primary hover:border-primary/30
-        transition-all duration-200 ease-in-out
-        ${className}
-      `}
+            className={className}
             aria-label={t('theme.toggle')}
             title={theme === 'light' ? t('theme.switchDark') : t('theme.switchLight')}
         >
@@ -29,6 +25,6 @@ export const ThemeToggle: React.FC<ThemeToggleProps> = ({ className = '' }) => {
             ) : (
                 <Sun className="h-5 w-5" />
             )}
-        </button>
+        </Button>
     );
 };

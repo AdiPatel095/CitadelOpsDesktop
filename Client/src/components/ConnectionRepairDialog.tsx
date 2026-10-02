@@ -120,16 +120,16 @@ export const ConnectionRepairDialog: React.FC<{ onClose: () => void; onOpenSetti
               </Button>
             ) : null}
             {controls.canReconnect || wants.has('reconnect') ? (
-              <Button variant="outline" size="sm" disabled={busy || auth.dashboardConnectionStatus !== 'Connected'} onClick={() => run(() => auth.reconnectGame())}>
+              <Button variant="secondary" size="sm" disabled={busy || auth.dashboardConnectionStatus !== 'Connected'} onClick={() => run(() => auth.reconnectGame())}>
                 <LocalizedText messageKey="connectionRepair.action.reconnect" />
               </Button>
             ) : null}
             {canReenable ? (
-              <Button variant="outline" size="sm" disabled={busy} onClick={() => run(() => reauthorizeSavedLogin(submitIntent))}>
+              <Button variant="secondary" size="sm" disabled={busy} onClick={() => run(() => reauthorizeSavedLogin(submitIntent))}>
                 <LocalizedText messageKey="connectionRepair.action.reenable" />
               </Button>
             ) : null}
-            <Button variant="outline" size="sm" onClick={onOpenSettings}>
+            <Button variant="secondary" size="sm" onClick={onOpenSettings}>
               <LocalizedText messageKey="connectionRepair.action.openSettings" />
             </Button>
           </div>

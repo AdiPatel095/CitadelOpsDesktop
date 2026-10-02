@@ -114,7 +114,7 @@ const EventScoreCard: React.FC<EventScoreCardProps> = ({ live, event, onOpenRank
             {event && onOpenRanking && canOpenRanking && (
               <Button
                 type="button"
-                variant="solid"
+                variant="primary"
                 size="sm"
                 leftIcon={<Trophy className="h-3.5 w-3.5" />}
                 isLoading={rankingLoading}

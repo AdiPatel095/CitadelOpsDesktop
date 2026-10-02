@@ -169,7 +169,7 @@ export const AutoStationSettingsModal: React.FC<AutoStationSettingsModalProps> =
       title={localizeStatic("ui.settings.components.autoStationSettingsModal.title.auto.station.settings.eb56c8a6")}
       icon={<Shield className="h-5 w-5" />}
       description={localizeStatic("ui.settings.components.autoStationSettingsModal.description.choose.the.exact.troops.that.stay.behind.a5d0c68a")}
-      titleTrailing={<Button variant="outline" size="sm" onClick={() => setIsGuideOpen(true)} leftIcon={<BookOpen className="h-4 w-4" />}><span lang={guideLocale}>{guidePack.ui.guideButton}</span></Button>}
+      titleTrailing={<Button variant="secondary" size="sm" onClick={() => setIsGuideOpen(true)} leftIcon={<BookOpen className="h-4 w-4" />}><span lang={guideLocale}>{guidePack.ui.guideButton}</span></Button>}
       onSave={save}
       saveLabel="Save changes"
       isSaving={isSaving}
@@ -272,8 +272,8 @@ export const AutoStationSettingsModal: React.FC<AutoStationSettingsModalProps> =
                   </div>
                   {reserves.length === 0 ? (
                     <div className="flex flex-1 flex-col items-center justify-center gap-3 py-6">
-                      <p className="text-center text-caption font-medium text-text-muted"><LocalizedText messageKey="ui.settings.components.autoStationSettingsModal.no.defense.reserve.b4ce10ce" /></p>
-                      <Button variant="outline" size="sm" onClick={() => selectReserve(castle)} leftIcon={<Plus className="h-4 w-4" />}>
+                      <p className="text-center text-caption font-mediumr text-text-muted"><LocalizedText messageKey="ui.settings.components.autoStationSettingsModal.no.defense.reserve.b4ce10ce" /></p>
+                      <Button variant="secondary" size="sm" onClick={() => selectReserve(castle)} leftIcon={<Plus className="h-4 w-4" />}>
                         <LocalizedText messageKey="ui.settings.components.autoStationSettingsModal.add.troops.5264f439" /></Button>
                     </div>
                   ) : (

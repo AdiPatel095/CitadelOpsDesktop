@@ -351,7 +351,7 @@ export const AutoBeriWorldSettingsModal: React.FC<AutoBeriWorldSettingsModalProp
 			title={localizeStatic("ui.settings.components.autoBeriWorldSettingsModal.title.auto.beri.world.a579a63b")}
 			icon={<Swords className="h-5 w-5" />}
 			description={localizeStatic("ui.settings.components.autoBeriWorldSettingsModal.description.attack.berimond.towers.bring.the.loot.home.ff1b05e8")}
-			titleTrailing={<Button variant="outline" size="sm" className="shrink-0" onClick={() => setIsGuideOpen(true)} leftIcon={<BookOpen className="h-4 w-4" />}><span lang={beriGuideLocale}>{beriGuidePack.ui.guideButton}</span></Button>}
+			titleTrailing={<Button variant="secondary" size="sm" className="shrink-0" onClick={() => setIsGuideOpen(true)} leftIcon={<BookOpen className="h-4 w-4" />}><span lang={beriGuideLocale}>{beriGuidePack.ui.guideButton}</span></Button>}
 			maxWidth="4xl"
 			onSave={() => void save()}
 			saveLabel="Save"
@@ -525,7 +525,7 @@ export const AutoBeriWorldSettingsModal: React.FC<AutoBeriWorldSettingsModalProp
 							/>
 						</label>
 						<Button
-							variant="outline"
+							variant="secondary"
 							disabled={!captureCastle || capturing != null || blueprintBusy}
 							isLoading={capturing === 'functional'}
 							onClick={() => void captureBlueprint('functional')}
@@ -533,7 +533,7 @@ export const AutoBeriWorldSettingsModal: React.FC<AutoBeriWorldSettingsModalProp
 						>
 							<LocalizedText messageKey="ui.settings.components.autoBeriWorldSettingsModal.functional.b6656595" /></Button>
 						<Button
-							variant="outline"
+							variant="secondary"
 							disabled={!captureCastle || capturing != null || blueprintBusy}
 							isLoading={capturing === 'layout'}
 							onClick={() => void captureBlueprint('layout')}
@@ -541,7 +541,7 @@ export const AutoBeriWorldSettingsModal: React.FC<AutoBeriWorldSettingsModalProp
 						>
 							<LocalizedText messageKey="ui.settings.components.autoBeriWorldSettingsModal.layout.a5119091" /></Button>
 						<Button
-							variant="outline"
+							variant="secondary"
 							disabled={!captureCastle || capturing != null || blueprintBusy}
 							isLoading={capturing === 'exact'}
 							onClick={() => void captureBlueprint('exact')}

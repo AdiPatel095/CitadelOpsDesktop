@@ -54,10 +54,10 @@ const RiftArrivalClock: React.FC<RiftArrivalClockProps> = ({ entry, offsetMinute
   return (
     <div className="flex flex-col items-end gap-1">
       <div className="flex items-center gap-1">
-        <Button
-          variant="outline"
+        <Button iconOnly
+          variant="ghost"
           size="sm"
-          className="h-8 w-8 p-0"
+
           disabled={atEarliest}
           onClick={() => onOffsetChange(stepArrivalOffsetMinutes(offsetMinutes, -1))}
           title={atEarliest ? 'Already at earliest feather arrival' : '−1 min from earliest'}
@@ -65,12 +65,12 @@ const RiftArrivalClock: React.FC<RiftArrivalClockProps> = ({ entry, offsetMinute
         >
           <Minus className="h-3.5 w-3.5" />
         </Button>
-        <button
+        <Button variant="secondary"
           type="button"
           disabled={atEarliest}
           onClick={() => onOffsetChange(0)}
           aria-label={atEarliest ? 'Earliest Rift arrival selected' : 'Reset to earliest Rift arrival'}
-          className="flex min-w-[5.5rem] items-center justify-center gap-1 rounded-md border border-border-base bg-bg-card/60 px-2 py-1 text-body text-text-main transition-colors enabled:hover:border-primary/50 enabled:hover:bg-primary/10 disabled:cursor-default"
+          className="flex min-w-[5.5rem] items-center justify-center gap-1 transition-colors"
           title={
             atEarliest
               ? `Earliest feather arrival (${formatLocalArrivalFromUnix(minUnix)}) · TT ${formatTravelDuration(entry.oneWayTTSeconds)}`
@@ -81,11 +81,11 @@ const RiftArrivalClock: React.FC<RiftArrivalClockProps> = ({ entry, offsetMinute
         >
           <Clock className="h-3.5 w-3.5 text-text-muted shrink-0" />
           <span className="font-mono">{formatLocalArrivalFromUnix(arriveAtUnix)}</span>
-        </button>
-        <Button
-          variant="outline"
+        </Button>
+        <Button iconOnly
+          variant="ghost"
           size="sm"
-          className="h-8 w-8 p-0"
+
           onClick={() => onOffsetChange(stepArrivalOffsetMinutes(offsetMinutes, 1))}
           title={localizeStatic("ui.rift.components.riftArrivalClock.title.1.min.after.earliest.minute.boundary.e4303f0b")}
           aria-label={localizeStatic("ui.rift.components.riftArrivalClock.aria-label.increase.offset.by.one.minute.983ca39a")}
