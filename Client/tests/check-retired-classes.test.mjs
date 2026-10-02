@@ -60,3 +60,20 @@ test('enforcement applies only to selected rules and rejects unknown rules', () 
     assert.equal(check(...args).status, 2, args.join(' '));
   }
 }));
+
+
+test('CIT-67 excludes public CSS and catches hosted overrides while CIT-73 scans all src', () => fixture(({ write, check }) => {
+  write('commandCenter/safe.ts', 'export {};');
+  write('views/LandingPage.css', '.public { border-radius: var(--md-expressive-shape-card-alt); } .liquid-toggle {}');
+  assert.equal(check('--enforce', 'cit-67').status, 0);
+  assert.equal(check('--enforce', 'cit-73').status, 1);
+  write('portal.css', '.command-center-host .m3-card-content {}');
+  write('views/AccountCenterView.tsx', '<div className="m3-card" />');
+  write('commandCenter/cards.css', '.m3-section-card {}');
+  const result = check('--enforce', 'cit-67');
+  assert.equal(result.status, 1);
+  assert.ok(result.stdout.includes('src/portal.css:1 cit-67 m3-card'));
+  assert.ok(result.stdout.includes('src/views/AccountCenterView.tsx:1 cit-67 m3-card'));
+  assert.ok(result.stdout.includes('src/commandCenter/cards.css:1 cit-67 m3-section-card'));
+  assert.ok(!result.stdout.includes('cit-67 md-expressive-shape-card-alt'));
+}));

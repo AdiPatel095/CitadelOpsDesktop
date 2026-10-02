@@ -79,7 +79,7 @@ const IntentConsole = () => {
   return (
     <div lang={messageLocale}><SectionCard variant="solid" className="mb-6 w-full" title={t('intent.title')}
       icon={<span className="flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-500/10 text-indigo-400"><Braces className="h-4 w-4" /></span>}
-      description={t('intent.description')} contentClassName="space-y-4 p-6">
+      description={t('intent.description')} contentClassName="space-y-4 ">
         <Select
           value={intentName}
           onChange={selectIntent}

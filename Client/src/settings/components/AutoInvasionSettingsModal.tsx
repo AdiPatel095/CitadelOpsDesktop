@@ -258,7 +258,7 @@ export const AutoInvasionSettingsModal: React.FC<AutoInvasionSettingsModalProps>
       />
       <div className="space-y-3">
         <SettingsSection disclosure={disclosure} section="setup">
-        <Card variant="solid" className="p-4">
+        <Card variant="solid" className="">
           <div className="grid gap-4 md:grid-cols-2">
             <div className="md:col-span-2">
               <CastleRequirementField
@@ -300,7 +300,7 @@ export const AutoInvasionSettingsModal: React.FC<AutoInvasionSettingsModalProps>
         </SettingsSection>
 
         <SettingsSection disclosure={disclosure} section="event" className="space-y-3">
-        <Card id="auto-invasion-difficulty" variant="solid" className="p-4">
+        <Card id="auto-invasion-difficulty" variant="solid" className="">
           <div className="mb-3 flex items-start justify-between gap-3">
             <div>
               <div className="flex items-center gap-2 text-sm font-black text-text-main"><ShieldCheck className="h-4 w-4 text-primary" /> <LocalizedText messageKey="ui.settings.components.autoInvasionSettingsModal.event.difficulty.88766fcf" /></div>
@@ -341,7 +341,7 @@ export const AutoInvasionSettingsModal: React.FC<AutoInvasionSettingsModalProps>
           {!achievementsObserved ? <p className="mt-3 text-xs text-warning"><LocalizedText messageKey="ui.settings.components.autoInvasionSettingsModal.achievement.data.is.still.syncing.base.difficulties.bd6eea97" /></p> : null}
         </Card>
 
-        <Card variant="solid" className="p-4">
+        <Card variant="solid" className="">
           <div className="grid items-start gap-4 md:grid-cols-2">
             <label id="auto-invasion-score" className="flex min-w-0 flex-col">
               <span className="mb-1.5 flex min-h-6 items-center gap-2 text-[10px] font-black uppercase tracking-wider text-text-muted"><Target className="h-3.5 w-3.5" /> <LocalizedText messageKey="ui.settings.components.autoInvasionSettingsModal.stop.at.event.score.f1752bfd" /></span>
@@ -379,7 +379,7 @@ export const AutoInvasionSettingsModal: React.FC<AutoInvasionSettingsModalProps>
         </SettingsSection>
 
 		<SettingsSection disclosure={disclosure} section="fortify">
-		<Card id="auto-invasion-fortify" variant="solid" className="p-4">
+		<Card id="auto-invasion-fortify" variant="solid" className="">
 			<div className="flex items-start justify-between gap-4">
 				<div className="min-w-0">
 					<div className="flex items-center gap-2 text-sm font-black text-text-main"><ShieldPlus className="h-4 w-4 text-primary" /> <LocalizedText messageKey="ui.settings.components.autoInvasionSettingsModal.fortify.each.target.418c29a2" /></div>

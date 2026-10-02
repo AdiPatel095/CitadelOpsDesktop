@@ -340,7 +340,7 @@ export const AutoBuyerSettingsModal: React.FC<AutoBuyerSettingsModalProps> = ({ 
       contentNotice={<>{recovery.banner}{draftSession.conflictNotice}</>}
     >
       <div className="space-y-3">
-        <Card variant="solid" className="p-4">
+        <Card variant="solid" className="">
           <div className="flex items-start justify-between gap-4">
             <div>
               <h3 className="text-sm font-black text-text-main"><LocalizedText messageKey="ui.settings.components.autoBuyerSettingsModal.run.auto.buyer.d3b546dd" /></h3>
@@ -361,7 +361,7 @@ export const AutoBuyerSettingsModal: React.FC<AutoBuyerSettingsModalProps> = ({ 
         </Card>
 
         <SettingsSection disclosure={disclosure} section="limits">
-        <Card variant="solid" className="p-4">
+        <Card variant="solid" className="">
           <div className="mb-4 flex items-start gap-3">
             <span className="rounded-xl bg-primary/10 p-2 text-primary"><ShieldCheck className="h-5 w-5" /></span>
             <div>
@@ -417,9 +417,9 @@ export const AutoBuyerSettingsModal: React.FC<AutoBuyerSettingsModalProps> = ({ 
         </div>
 
         {loadError ? (
-          <Card variant="solid" className="border-error/40 p-4 text-sm text-error">{loadError}</Card>
+          <Card variant="solid" className="text-sm text-error">{loadError}</Card>
         ) : !projection ? (
-          <Card variant="solid" className="p-8 text-center text-sm text-text-muted"><LocalizedText messageKey="ui.settings.components.autoBuyerSettingsModal.loading.the.current.official.purchase.catalog.853de6af" /></Card>
+          <Card variant="solid" className="text-center text-sm text-text-muted"><LocalizedText messageKey="ui.settings.components.autoBuyerSettingsModal.loading.the.current.official.purchase.catalog.853de6af" /></Card>
         ) : null}
 
         {projection && section === 'shops' ? (
@@ -561,7 +561,7 @@ export const AutoBuyerSettingsModal: React.FC<AutoBuyerSettingsModalProps> = ({ 
                 </div>
               </Card>
             ) : (
-              <Card variant="solid" className="p-8 text-center text-sm text-text-muted"><LocalizedText messageKey="ui.settings.components.autoBuyerSettingsModal.no.supported.shops.are.available.in.the.0dc94162" /></Card>
+              <Card variant="solid" className="text-center text-sm text-text-muted"><LocalizedText messageKey="ui.settings.components.autoBuyerSettingsModal.no.supported.shops.are.available.in.the.0dc94162" /></Card>
             )}
           </div>
         ) : null}
@@ -651,7 +651,7 @@ export const AutoBuyerSettingsModal: React.FC<AutoBuyerSettingsModalProps> = ({ 
 
         {projection && section === 'feast' ? (
           <div className="space-y-3">
-            <Card variant="solid" className="p-4">
+            <Card variant="solid" className="">
               <div className="flex items-start justify-between gap-4">
                 <div>
                   <h3 className="text-sm font-black text-text-main"><LocalizedText messageKey="ui.settings.components.autoBuyerSettingsModal.maintain.a.food.production.feast.44cda31f" /></h3>
@@ -793,7 +793,7 @@ export const AutoBuyerSettingsModal: React.FC<AutoBuyerSettingsModalProps> = ({ 
               </div>
             </Card>
 
-            <Card variant="solid" className="border-border-base p-4">
+            <Card variant="solid" className="">
               <div className="flex items-start gap-3">
                 <Sparkles className="mt-0.5 h-5 w-5 shrink-0 text-text-muted" />
                 <div>

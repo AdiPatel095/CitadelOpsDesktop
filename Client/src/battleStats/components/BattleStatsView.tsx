@@ -528,7 +528,7 @@ const StatCard: React.FC<StatCardProps> = ({ label, value, tone }) => {
   }[tone];
 
   return (
-    <Card variant="solid" className="p-4">
+    <Card variant="solid" className="">
       <div className="text-xs uppercase tracking-wider text-text-muted font-semibold">{label}</div>
       <div className={`text-2xl font-bold mt-2 ${toneClass}`}>{value}</div>
     </Card>
@@ -993,8 +993,8 @@ const CollapsibleDetailCard: React.FC<{
   const contentId = useId();
 
   return (
-    <Card variant="solid" className="liquid-prominent-header-card">
-      <CardHeader className="liquid-card-header-prominent !p-0">
+    <Card variant="solid" className="">
+      <CardHeader className="">
         <button
           type="button"
           className="flex min-h-[4.75rem] w-full items-center justify-between gap-3 rounded-global px-6 py-5 text-left transition-colors hover:text-primary"
@@ -1014,7 +1014,7 @@ const CollapsibleDetailCard: React.FC<{
         </button>
       </CardHeader>
       {isOpen && (
-        <CardContent id={contentId} className="liquid-prominent-header-content">
+        <CardContent id={contentId} className="">
           {children}
         </CardContent>
       )}

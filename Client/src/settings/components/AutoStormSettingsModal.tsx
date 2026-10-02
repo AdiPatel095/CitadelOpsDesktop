@@ -698,7 +698,7 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
           onOpenDuration={onOpenAutomationDuration ? () => onOpenAutomationDuration(AUTOMATION_ENABLED_KEYS.autoStorm, 'Auto Storm') : undefined}
         />
         <SettingsSection disclosure={disclosure} section="castle">
-        <Card id="auto-storm-access" tabIndex={-1} variant="solid" className="p-4 outline-none">
+        <Card id="auto-storm-access" tabIndex={-1} variant="solid" className="outline-none">
           <SectionHeading
             icon={Castle}
             title={localizeStatic("ui.settings.components.autoStormSettingsModal.title.storm.castle.access.8c4a0314")}
@@ -762,7 +762,7 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
         </SettingsSection>
 
         <SettingsSection disclosure={disclosure} section="targets">
-          <Card id="auto-storm-branches" tabIndex={-1} variant="solid" className="p-4 outline-none">
+          <Card id="auto-storm-branches" tabIndex={-1} variant="solid" className="outline-none">
             <SectionHeading
               icon={Swords}
               title={localizeStatic("ui.settings.components.autoStormSettingsModal.title.forts.and.resource.islands.4ccb548f")}
@@ -935,7 +935,7 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
         </SettingsSection>
 
         <SettingsSection disclosure={disclosure} section="donors">
-          <Card variant="solid" className="p-4">
+          <Card variant="solid" className="">
             <div>
               <div className="flex items-start justify-between gap-4">
                 <div>
@@ -1071,7 +1071,7 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
         </SettingsSection>
 
         <SettingsSection disclosure={disclosure} section="shop">
-        <Card id="auto-storm-shop" tabIndex={-1} variant="solid" className="p-4 outline-none">
+        <Card id="auto-storm-shop" tabIndex={-1} variant="solid" className="outline-none">
           <SectionHeading
             icon={Package}
             title={localizeStatic("ui.settings.disclosure.placement.aquamarine.and.ruby.spending.1861ad41")}
@@ -1238,7 +1238,7 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
               <LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.lower.priority.numbers.run.first.an.uncapped.1a572fa0" /></p>
           ) : null}
         </Card>
-        <Card id="auto-storm-premium" variant="solid" className="mt-3 p-4">
+        <Card id="auto-storm-premium" variant="solid" className="mt-3">
           <SettingsToggleRow
             icon={<Sparkles className="h-3.5 w-3.5" />}
             title={localizeStatic("ui.settings.components.autoStormSettingsModal.title.allow.premium.costs.fd72d704")}
@@ -1268,7 +1268,7 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
             + countCustomValues(draft.harbor, stormDefaults.harbor, ['enabled', 'targetLevel'])}
           className="space-y-4"
         >
-        <Card variant="solid" className="p-4">
+        <Card variant="solid" className="">
           <SectionHeading
             icon={Camera}
             title={localizeStatic("ui.settings.components.autoStormSettingsModal.title.durable.castle.blueprints.36e000b1")}
@@ -1393,7 +1393,7 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
             </label>
           ) : null}
         </Card>
-        <Card variant="solid" className="p-4">
+        <Card variant="solid" className="">
           <SectionHeading
             icon={Hammer}
             title={localizeStatic("ui.settings.components.autoStormSettingsModal.title.construction.and.logistics.8e6e0606")}
@@ -1641,7 +1641,7 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
           customCount={countCustomValues(draft, stormDefaults, ['checkIntervalSec'])}
           className="space-y-4"
         >
-        <Card variant="solid" className="p-4">
+        <Card variant="solid" className="">
           <SectionHeading icon={Clock3} title={localizeStatic("ui.settings.components.autoStormSettingsModal.title.cadence.316d43c0")} description={localizeStatic("ui.settings.components.autoStormSettingsModal.description.map.refreshes.are.authoritative.scans.policy.checks.ab4ae38c")} />
           <div className="mt-4 grid gap-3 sm:grid-cols-2">
             <label>
