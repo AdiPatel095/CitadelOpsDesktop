@@ -1,4 +1,4 @@
-import { Delta } from '../../components/ui/Delta.tsx';
+import { DeltaValue } from.tsx';
 import { equipmentEventOptions } from '../EquipmentEventLoadouts';
 import { describeMessage } from '../../i18n/messages';
 import {formatMessage,type LocalizedMessage} from '../../i18n/formatMessage';

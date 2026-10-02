@@ -1,0 +1,23 @@
+.ui-banner {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-12);
+    padding: var(--space-12) var(--space-16);
+    border: 1px solid var(--banner-border);
+    border-radius: var(--radius-lg);
+    background: var(--banner-bg);
+    color: var(--text-secondary);
+    font-size: var(--font-size-12);
+}
+.ui-banner[data-banner="info"] { --banner-tone: var(--status-info); --banner-bg: var(--status-info-bg); --banner-border: var(--status-info-border); }
+.ui-banner[data-banner="success"] { --banner-tone: var(--status-success); --banner-bg: var(--status-success-bg); --banner-border: var(--status-success-border); }
+.ui-banner[data-banner="warning"] { --banner-tone: var(--status-warning); --banner-bg: var(--status-warning-bg); --banner-border: var(--status-warning-border); }
+.ui-banner[data-banner="danger"] { --banner-tone: var(--status-danger); --banner-bg: var(--status-danger-bg); --banner-border: var(--status-danger-border); }
+.ui-banner[data-banner="neutral"] { --banner-tone: var(--status-neutral); --banner-bg: var(--status-neutral-bg); --banner-border: var(--status-neutral-border); }
+.ui-banner__glyph { flex: 0 0 auto; color: var(--banner-tone); }
+.ui-banner__content { flex: 1; min-width: 0; }
+.ui-banner__title { margin-bottom: var(--space-4); color: var(--text-primary); font-weight: var(--font-weight-700); }
+.ui-banner__action { margin-inline-start: auto; }
+.ui-banner .m3-button-text { color: var(--text-primary); }
+.ui-banner .m3-button-text:hover:not(:disabled) { background: var(--state-hover); }

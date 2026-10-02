@@ -245,8 +245,16 @@
       "desktop": "Client/src/components/ui/AddSlot.tsx"
     },
     {
+      "portal": "src/commandCenter/components/ui/Badge.tsx",
+      "desktop": "Client/src/components/ui/Badge.tsx"
+    },
+    {
       "portal": "src/commandCenter/components/ui/Banner.tsx",
       "desktop": "Client/src/components/ui/Banner.tsx"
+    },
+    {
+      "portal": "src/commandCenter/components/ui/Card.tsx",
+      "desktop": "Client/src/components/ui/Card.tsx"
     },
     {
       "portal": "src/commandCenter/components/ui/CatalogPickerModal.tsx",
@@ -363,6 +371,10 @@
     {
       "portal": "src/commandCenter/config/Navigation.tsx",
       "desktop": "Client/src/config/Navigation.tsx"
+    },
+    {
+      "portal": "src/commandCenter/config/UnitPickerStorage.ts",
+      "desktop": "Client/src/config/UnitPickerStorage.ts"
     },
     {
       "portal": "src/commandCenter/configuration/PresetDocumentUpdate.ts",
