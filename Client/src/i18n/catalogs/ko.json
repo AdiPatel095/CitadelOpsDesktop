@@ -430,5 +430,13 @@
   "ui.state.loading": "불러오는 중…",
   "ui.state.retry": "다시 시도",
   "ui.tabs.next": "더 많은 탭 표시",
-  "ui.tabs.previous": "이전 탭 표시"
+  "ui.tabs.previous": "이전 탭 표시",
+  "header.panel.attacksToday": "오늘의 공격",
+  "header.panel.attention": "주의 필요",
+  "header.panel.connection": "연결",
+  "header.panel.openFeature": "{feature} 열기",
+  "header.signal.attention": "{count, plural, other {자동화 #개에 주의 필요}}",
+  "header.signal.incoming": "{count, number} 건 접근 중 · {state, select, known {첫 도착까지 {duration}} other {확인 중}}",
+  "header.signal.nextBird": "다음 병력 보호: {castle} · {state, select, due {지금 실행할 시간} other {{duration} 후}}",
+  "header.status.title": "상태"
 }

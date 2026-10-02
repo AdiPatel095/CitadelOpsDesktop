@@ -327,5 +327,8 @@
   "backend.spy_report.capture_fields": "Pateikite teigiamas mid, allianceID, castleID, sourcePlayerID ir scannedAtUnixMillis reikšmes.",
   "backend.spy_report.payload_json": "payload turi būti galiojantis JSON.",
   "backend.spy_report.payload_object": "payload turi būti JSON objektas.",
-  "backend.spy_report.session_fields": "Pateikite clientID ir teigiamas playerID bei allianceID reikšmes."
+  "backend.spy_report.session_fields": "Pateikite clientID ir teigiamas playerID bei allianceID reikšmes.",
+  "backend.hosted.cells_unavailable": "Gardelių vaidmenys nepasiekiami",
+  "backend.status.placement_slot": "Laukiama laisvos vietos mūsų serveriuose",
+  "backend.status.starting_server": "Paleidžiamas šios paskyros serveris"
 }

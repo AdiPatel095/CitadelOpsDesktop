@@ -430,5 +430,13 @@
   "ui.state.loading": "Carregando…",
   "ui.state.retry": "Tentar novamente",
   "ui.tabs.next": "Mostrar mais abas",
-  "ui.tabs.previous": "Mostrar abas anteriores"
+  "ui.tabs.previous": "Mostrar abas anteriores",
+  "header.panel.attacksToday": "Ataques hoje",
+  "header.panel.attention": "Precisa de atenção",
+  "header.panel.connection": "Conexão",
+  "header.panel.openFeature": "Abrir {feature}",
+  "header.signal.attention": "{count, plural, one {# automação precisa de atenção} many {# automações precisam de atenção} other {# automações precisam de atenção}}",
+  "header.signal.incoming": "{count, number} chegando · {state, select, known {primeiro em {duration}} other {verificando}}",
+  "header.signal.nextBird": "Próximo abrigo das tropas: {castle} · {state, select, due {executar agora} other {em {duration}}}",
+  "header.status.title": "Estado"
 }

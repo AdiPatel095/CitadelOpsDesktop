@@ -184,29 +184,6 @@ test('R11 assigns nested actions to the nearest region and ignores hidden contro
   await assertOnePrimaryPerRegion(page);
 });
 
-
-// Exercise the exact Arabic gate DOM scan; no product styles or snapshots.
-for (const fixture of [
-  { name: 'CIT-103 English ltr run', markup: '<span lang="en" dir="ltr">English fallback</span>' },
-  { name: 'inherited English ltr run', markup: '<div lang="en-US" dir="ltr"><span>English fallback</span></div>' },
-  { name: 'automatic direction', markup: '<span lang="en" dir="auto">English fallback</span>' },
-  { name: 'BDI ancestor', markup: '<bdi><span lang="en">English fallback</span></bdi>' },
-  { name: 'CSS isolate ancestor', markup: '<div style="unicode-bidi:isolate"><span lang="en">English fallback</span></div>' },
-  { name: 'CSS plaintext ancestor', markup: '<div style="unicode-bidi:plaintext"><span lang="en">English fallback</span></div>' },
-]) {
-  test(`Arabic gate accepts ${fixture.name}`, async ({ page }) => {
-    const { scanDesignDOM } = await import('../gate/designScan');
-    await page.setContent(`<html lang="ar" dir="rtl"><body>${fixture.markup}</body></html>`);
-    expect((await page.evaluate(scanDesignDOM, 'ar')).filter(finding => finding.rule.startsWith('bidi'))).toEqual([]);
-  });
-}
-
-test('Arabic gate rejects an unisolated English fallback', async ({ page }) => {
-  const { scanDesignDOM } = await import('../gate/designScan');
-  await page.setContent('<html lang="ar" dir="rtl"><body><span lang="en" style="unicode-bidi:normal">English fallback</span></body></html>');
-  expect((await page.evaluate(scanDesignDOM, 'ar')).map(finding => finding.rule)).toEqual(['bidiFallback', 'bidiIsolation']);
-});
-
 // Real Badge markup and its shipped CSS: test the composed colors, not just tokens.
 test('readiness chips meet AA text contrast in each theme', async ({ page }, testInfo) => {
   const tokens = await readFile(join(root, source, 'styles/tokens.css'), 'utf8');
@@ -233,4 +210,26 @@ test('readiness chips meet AA text contrast in each theme', async ({ page }, tes
   const axe = await new AxeBuilder({ page }).include('.m3-chip').withRules(['color-contrast']).analyze();
   expect(axe.violations).toEqual([]);
   await testInfo.attach('chip-contrast', { body: JSON.stringify({ theme: testInfo.project.name, ratios }), contentType: 'application/json' });
+});
+
+// Exercise the exact Arabic gate DOM scan; no product styles or snapshots.
+for (const fixture of [
+  { name: 'CIT-103 English ltr run', markup: '<span lang="en" dir="ltr">English fallback</span>' },
+  { name: 'inherited English ltr run', markup: '<div lang="en-US" dir="ltr"><span>English fallback</span></div>' },
+  { name: 'automatic direction', markup: '<span lang="en" dir="auto">English fallback</span>' },
+  { name: 'BDI ancestor', markup: '<bdi><span lang="en">English fallback</span></bdi>' },
+  { name: 'CSS isolate ancestor', markup: '<div style="unicode-bidi:isolate"><span lang="en">English fallback</span></div>' },
+  { name: 'CSS plaintext ancestor', markup: '<div style="unicode-bidi:plaintext"><span lang="en">English fallback</span></div>' },
+]) {
+  test(`Arabic gate accepts ${fixture.name}`, async ({ page }) => {
+    const { scanDesignDOM } = await import('../gate/designScan');
+    await page.setContent(`<html lang="ar" dir="rtl"><body>${fixture.markup}</body></html>`);
+    expect((await page.evaluate(scanDesignDOM, 'ar')).filter(finding => finding.rule.startsWith('bidi'))).toEqual([]);
+  });
+}
+
+test('Arabic gate rejects an unisolated English fallback', async ({ page }) => {
+  const { scanDesignDOM } = await import('../gate/designScan');
+  await page.setContent('<html lang="ar" dir="rtl"><body><span lang="en" style="unicode-bidi:normal">English fallback</span></body></html>');
+  expect((await page.evaluate(scanDesignDOM, 'ar')).map(finding => finding.rule)).toEqual(['bidiFallback', 'bidiIsolation']);
 });
