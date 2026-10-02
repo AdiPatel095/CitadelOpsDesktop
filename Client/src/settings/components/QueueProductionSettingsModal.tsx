@@ -502,7 +502,7 @@ export const QueueProductionSettingsModal: React.FC<QueueProductionSettingsModal
     if (items.length === 0) {
       return (
         <div className="flex min-h-[6.75rem] flex-col items-center justify-center rounded-global border border-dashed border-border-base bg-bg-card/45 p-5 text-center">
-          <div className="mb-3 text-caption font-semibold text-text-muted/70">
+          <div className="mb-3 text-caption font-semibold text-text-muted">
             {definition.emptyItemsLabel}
           </div>
           <Button

@@ -1187,6 +1187,7 @@ const SettingsView: React.FC = () => {
 							options={browserOptions}
 							onChange={selectBrowser}
 							placeholder={browserPlaceholder}
+							ariaLabel={t('settings.browser')}
 							icon={<Icons.Monitor className="w-4 h-4" />}
 							disabled={browserSelectionPending || browserInventory == null}
 						/>

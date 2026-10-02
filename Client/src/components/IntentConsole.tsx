@@ -85,6 +85,7 @@ const IntentConsole = () => {
           onChange={selectIntent}
           options={definitions.map((item) => ({ value: item.name, label: item.name }))}
           placeholder={t('intent.select')}
+          ariaLabel={t('intent.select')}
           menuGrowToViewport
         />
         {definition && (
