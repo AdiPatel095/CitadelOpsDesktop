@@ -1,6 +1,7 @@
 import { existsSync, lstatSync, readdirSync, readFileSync, writeFileSync, mkdirSync, renameSync, symlinkSync, readlinkSync, realpathSync, unlinkSync } from 'node:fs';
 import { join, dirname, resolve, isAbsolute } from 'node:path';
-import { fileURLToPath, pathToFileURL } from 'node:url';
+import { fileURLToPath } from 'node:url';
+import { isDirectEntry } from '../src/entrypoint.mjs';
 import { homedir } from 'node:os';
 import { createHash, randomUUID } from 'node:crypto';
 import { spawnSync } from 'node:child_process';
@@ -130,7 +131,7 @@ export async function host(action,{home=homedir(),source=modulePath,node=realpat
   }
   return {action,status:'unregistered',statePreserved:true};
 }
-if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+if (isDirectEntry(import.meta.url)) {
   const args=process.argv.slice(2);
   if (args.some(a => !['install','status','stop','uninstall','--dry-run'].includes(a)) || args.filter(a => a !== '--dry-run').length !== 1) { process.stderr.write('Usage: host.mjs install|status|stop|uninstall [--dry-run]\n'); process.exitCode=1; }
   else host(args.find(a => a !== '--dry-run'),{dryRun:args.includes('--dry-run')}).then(result => process.stdout.write(JSON.stringify(result,null,2)+'\n')).catch(error => { process.stderr.write(safeCode(error)+'\n'); process.exitCode=1; });
