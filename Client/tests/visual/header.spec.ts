@@ -3,7 +3,7 @@ import { prepare, settle } from './harness';
 import { assertDisabledNeutral, reportAccentUsage } from './rules';
 for (const theme of ['dark','light'] as const) test(`CIT-69 header layout and disclosure ${theme}`, async ({ page }) => {
   const verifyNetwork = await prepare(page, theme);
-  
+
   await settle(page);
   const header = page.locator('.liquid-header'); const width = page.viewportSize()!.width;
   await expect(header).toHaveCSS('height', width < 768 ? '64px' : '72px');
