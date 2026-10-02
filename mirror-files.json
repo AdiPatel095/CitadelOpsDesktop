@@ -309,6 +309,10 @@
       "desktop": "Client/src/components/ui/ToggleGroup.tsx"
     },
     {
+      "portal": "src/commandCenter/components/ui/delta.ts",
+      "desktop": "Client/src/components/ui/delta.ts"
+    },
+    {
       "portal": "src/commandCenter/components/ui/index.ts",
       "desktop": "Client/src/components/ui/index.ts"
     },
@@ -1225,6 +1229,10 @@
       "desktop": "Client/tests/check-retired-classes.test.mjs"
     },
     {
+      "portal": "tests/delta.test.mjs",
+      "desktop": "Client/tests/delta.test.mjs"
+    },
+    {
       "portal": "tests/status-badges.test.mjs",
       "desktop": "Client/tests/status-badges.test.mjs"
     },
@@ -1235,6 +1243,10 @@
     {
       "portal": "tests/view-states-logic.test.mjs",
       "desktop": "Client/tests/view-states-logic.test.mjs"
+    },
+    {
+      "portal": "tests/visual/rules.ts",
+      "desktop": "Client/tests/visual/rules.ts"
     }
   ],
   "unmirrored": []
