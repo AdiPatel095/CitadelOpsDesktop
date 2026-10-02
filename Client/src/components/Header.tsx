@@ -202,8 +202,8 @@ const Header: React.FC<HeaderProps> = ({
             />
           </div>
           <div className="liquid-brand-copy">
-            <div className="text-lg font-bold leading-tight text-text-main">CitadelOps</div>
-            <div className="text-[11px] font-medium leading-tight text-text-muted"><LocalizedText messageKey="navigation.commandCenter" /></div>
+            <div className="text-body-lg font-semibold text-text-main">CitadelOps</div>
+            <div className="text-caption font-medium text-text-muted"><LocalizedText messageKey="navigation.commandCenter" /></div>
           </div>
           <span className="liquid-header-connection"><ConnectionStatus value={connectionValue} /></span>
         </div>
@@ -339,7 +339,7 @@ const Header: React.FC<HeaderProps> = ({
 				title={botLocked
 					? 'Automation and scheduled game actions are locked. Click to resume them.'
 					: 'Automation is allowed to control the game. Click to lock all automated actions.'}
-				className="uppercase text-[11px]"
+				className="text-caption"
 				leftIcon={botLocked ? <Lock className="h-3.5 w-3.5" /> : <Unlock className="h-3.5 w-3.5" />}
 			>
 				<span lang={messageLocale} className="liquid-header-control-label">{botLocked ? t('bot.unlock') : t('bot.lock')}</span>
@@ -355,7 +355,7 @@ const Header: React.FC<HeaderProps> = ({
                 : gameConnectionState === 'suspended'
                   ? 'Retry the game login now. A suspended account will be refused until the suspension ends.'
                   : 'Reconnect to the game now instead of waiting for the retry timer'}
-              className="uppercase text-[11px]"
+              className="text-caption"
             >
               <span lang={messageLocale} className="liquid-header-control-label">{t('bot.reconnect')}</span>
             </Button>
@@ -367,7 +367,7 @@ const Header: React.FC<HeaderProps> = ({
               onClick={() => startGame()}
               disabled={!connectionControlsReady}
               title={connectionControlsReady ? 'Start or retry the game connection' : 'Waiting for current connection status'}
-              className="uppercase text-[11px]"
+              className="text-caption"
               leftIcon={<div className="w-1.5 h-1.5 rounded-full bg-white shadow-[0_0_8px] shadow-white/80" />}
             >
               <span lang={messageLocale} className="liquid-header-control-label">

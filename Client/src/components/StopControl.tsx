@@ -60,7 +60,7 @@ export const StopControl: React.FC<StopControlProps> = ({ enabledKey, featureId,
         </Button>
       ) : null}
       {failure ? (
-        <div role="alert" className="flex flex-wrap items-center gap-2 text-[11px] font-semibold text-error">
+        <div role="alert" className="flex flex-wrap items-center gap-2 text-caption font-semibold text-error">
           <span>
             <LocalizedText messageKey={failure.intent === 'stop' ? 'stopSemantics.failed' : 'stopSemantics.failedStart'} />
             {failure.message ? ` ${failure.message}` : ''}
@@ -71,7 +71,7 @@ export const StopControl: React.FC<StopControlProps> = ({ enabledKey, featureId,
         </div>
       ) : null}
       {showSemantics ? (
-        <details className="text-[11px] leading-relaxed text-text-muted">
+        <details className="text-caption text-text-muted">
           <summary className="flex cursor-pointer items-center gap-1 font-semibold text-text-main">
             <Info className="h-3 w-3" aria-hidden="true" /> <LocalizedText messageKey="stopSemantics.title" />
           </summary>
@@ -81,7 +81,7 @@ export const StopControl: React.FC<StopControlProps> = ({ enabledKey, featureId,
             ))}
           </ul>
           {semantics.inFlight.length > 0 ? (
-            <ul className="mt-1 list-none space-y-0.5 pl-4 font-mono text-[10px]">
+            <ul className="mt-1 list-none space-y-0.5 pl-4 font-mono text-caption">
               {semantics.inFlight.map((operation) => <li key={operation.id}>{operation.summary ?? operation.intent}</li>)}
             </ul>
           ) : null}

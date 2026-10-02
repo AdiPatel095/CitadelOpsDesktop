@@ -22,15 +22,15 @@ const RiftView: React.FC = () => {
           <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto sm:justify-end">
             <Badge
               variant={riftMapCoords?.found ? 'success' : 'warning'}
-              className="normal-case tracking-normal"
+              className="normal-case"
             >
               {riftMapCoords?.found ? 'Rift target acquired' : 'Open the world map near the Rift to acquire target'}
             </Badge>
-            <Badge variant="secondary" className="normal-case tracking-normal">
+            <Badge variant="secondary" className="normal-case">
               {launchCount} captured template{launchCount === 1 ? '' : 's'}
             </Badge>
             {castle ? (
-              <Badge variant="outline" className="normal-case tracking-normal">
+              <Badge variant="outline" className="normal-case">
                 Focus · {castle.name?.trim() || `Castle ${castle.id}`}
               </Badge>
             ) : null}

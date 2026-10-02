@@ -57,14 +57,14 @@ const CastleQueuesCard: React.FC<CastleQueuesCardProps> = ({ title = 'Queues' })
       title={title}
       description={localizeStatic("copy.queues")}
       titleClassName="text-primary"
-      descriptionClassName="font-bold uppercase tracking-wider"
+      descriptionClassName="font-bold"
       className="flex min-h-0 flex-col"
       contentClassName="custom-scrollbar flex-1 overflow-y-auto"
     >
         {!castle || queues.length === 0 ? (
           <div className="rounded-global border border-dashed border-border-light bg-bg-card/35 px-4 py-8 text-center">
-            <p className="text-sm font-medium text-text-main"><LocalizedText messageKey="ui.dashboard.components.castleQueuesCard.no.production.queues.observed.for.this.castle.0155ec18" /></p>
-            <p className="mx-auto mt-2 max-w-sm text-xs text-text-muted"><LocalizedText messageKey="ui.dashboard.components.castleQueuesCard.open.the.castle.in.game.to.refresh.76f08363" /></p>
+            <p className="text-body font-medium text-text-main"><LocalizedText messageKey="ui.dashboard.components.castleQueuesCard.no.production.queues.observed.for.this.castle.0155ec18" /></p>
+            <p className="mx-auto mt-2 max-w-sm text-caption text-text-muted"><LocalizedText messageKey="ui.dashboard.components.castleQueuesCard.open.the.castle.in.game.to.refresh.76f08363" /></p>
           </div>
         ) : (
           <div className="grid grid-cols-1 gap-6 pb-2 xl:grid-cols-2">
@@ -108,7 +108,7 @@ const CastleQueuesCard: React.FC<CastleQueuesCardProps> = ({ title = 'Queues' })
 								: Math.max(queue.activeSlots + queue.queueSlots, 1 + (production?.capacity ?? 0));
               return (
                 <div key={queue.id} className="flex flex-col gap-2.5">
-                  <h4 className="border-b border-border-base/50 pb-1 text-xs font-bold uppercase text-text-muted">{queue.label}</h4>
+                  <h4 className="border-b border-border-base/50 pb-1 text-title-sm font-bold text-text-muted">{queue.label}</h4>
                   <div className="flex flex-wrap gap-2">
                     {Array.from({ length: totalSlots }, (_, index) => {
                       const craftingRow = craftingRows[index];

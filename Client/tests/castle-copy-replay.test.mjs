@@ -232,7 +232,11 @@ test('right-to-left: a direction-aware arrow, isolated from/to, a localized "to"
   const dialog = await readFile(new URL('../src/settings/components/CastleCopyDialog.tsx', import.meta.url), 'utf8');
   assert.match(dialog, /<ModalTitle className="castle-copy-title"/);
   const css = await readFile(new URL('../src/index.css', import.meta.url), 'utf8');
-  assert.match(css, /\.castle-copy-title \.scheduler-modal-title-text \{[^}]*white-space: normal;[^}]*\}/);
+  const titleRule = css.match(/\.picker-modal-title-text,\s*\.scheduler-modal-title-text \{([^}]*)\}/)?.[1];
+  assert.ok(titleRule);
+  assert.match(titleRule, /overflow-wrap: anywhere/);
+  assert.doesNotMatch(titleRule, /text-overflow: ellipsis|white-space: nowrap|overflow: hidden|line-clamp/);
+  assert.doesNotMatch(css, /\.castle-copy-title \.scheduler-modal-title-text/);
 });
 
 const copyReplayHook = await vite.ssrLoadModule(`/src/settings/copy/useCastleCopyReplay.tsx`);

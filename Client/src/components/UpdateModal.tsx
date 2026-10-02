@@ -31,15 +31,15 @@ const UpdateModal = () => {
 							<CheckCircle2 className="h-12 w-12" />
 						</span>
 					</div>
-					<h1 className="mb-4 text-3xl font-bold"><LocalizedText messageKey="ui.components.updateModal.update.complete.2ca13025" /></h1>
-					<p className="mb-8 text-lg leading-relaxed text-text-muted">
+					<h1 className="mb-4 text-headline font-bold"><LocalizedText messageKey="ui.components.updateModal.update.complete.2ca13025" /></h1>
+					<p className="mb-8 text-body-lg text-text-muted">
 						Version <span className="font-semibold text-primary">{latestVersion}</span> is installed.
 					</p>
 					<Card variant="solid" className="mb-8">
-						<div className="flex items-center justify-center gap-3 text-xl font-bold text-primary">
+						<div className="flex items-center justify-center gap-3 text-title font-bold text-primary">
 							<RefreshCw className="h-6 w-6" /> <LocalizedText messageKey="ui.components.updateModal.restart.citadelops.8b96fc52" />
 						</div>
-						<p className="mt-3 text-sm text-text-muted"><LocalizedText messageKey="ui.components.updateModal.close.this.window.and.reopen.the.application.18c4d2b5" /></p>
+						<p className="mt-3 text-body text-text-muted"><LocalizedText messageKey="ui.components.updateModal.close.this.window.and.reopen.the.application.18c4d2b5" /></p>
 					</Card>
 				</div>
 			</div>,
@@ -86,10 +86,10 @@ const UpdateModal = () => {
 					<span className="mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-primary/20 text-primary shadow-[0_0_20px_var(--color-primary-glow)]">
 						<Download className="h-10 w-10" />
 					</span>
-					<div className="mb-4 rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-xs font-bold uppercase tracking-wider text-primary">
+					<div className="mb-4 rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-caption font-semibold text-primary">
 						{activelyInstalling ? 'Installing update' : 'Update available'}
 					</div>
-					<h3 className="text-2xl font-bold text-text-main">Version {latestVersion}</h3>
+					<h3 className="text-headline font-bold text-text-main">Version {latestVersion}</h3>
 				</div>
 			)}
 			footer={!activelyInstalling ? (
@@ -111,15 +111,15 @@ const UpdateModal = () => {
 						<div className="mb-2 h-3 w-full overflow-hidden rounded-full bg-bg-app">
 							<div className="h-full rounded-full bg-primary transition-all duration-300" style={{ width: `${applicationUpdate.progress}%` }} />
 						</div>
-						<p className="text-sm font-semibold text-text-muted">{applicationUpdate.progress}% complete</p>
+						<p className="text-body font-semibold text-text-muted">{applicationUpdate.progress}% complete</p>
 					</div>
 				)}
 				{(installError || applicationUpdate.error) && (
-					<div className="rounded-global border border-error/30 bg-error/10 px-4 py-3 text-sm font-semibold text-error">
+					<div className="rounded-global border border-error/30 bg-error/10 px-4 py-3 text-body font-semibold text-error">
 						{installError || applicationUpdate.error}
 					</div>
 				)}
-				<a href="https://citadelops.app/" target="_blank" rel="noopener noreferrer" className="text-sm font-medium text-primary hover:text-primary-hover">
+				<a href="https://citadelops.app/" target="_blank" rel="noopener noreferrer" className="text-body font-medium text-primary hover:text-primary-hover">
 					<LocalizedText messageKey="ui.components.updateModal.view.patch.notes.47b32ed8" /></a>
 			</div>
 		</Modal>

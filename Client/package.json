@@ -16,7 +16,7 @@
     "typecheck:node": "tsc -p tsconfig.node.json --noEmit",
     "test:visual": "node scripts/visual/run.mjs compare",
     "test:visual:update": "node scripts/visual/run.mjs update",
-    "lint:css": "stylelint \"src/**/*.css\"",
+    "lint:css": "stylelint \"src/**/*.css\" && npm run check:typography",
     "css:metrics": "node scripts/css-metrics.mjs",
     "check:arbitrary-values": "node scripts/check-arbitrary-values.mjs",
     "test:tokens": "node --test tests/design-tokens.test.mjs",
@@ -24,6 +24,7 @@
     "check:fonts": "python3 ../scripts/fonts/build-manrope --check",
     "test:fonts": "python3 ../scripts/fonts/test-gate.py",
     "check:mirror": "npm --prefix .. run check:mirror --",
+    "check:typography": "node scripts/typography/check.mjs",
     "check:retired-classes": "node scripts/check-retired-classes.mjs --enforce cit-67"
   },
   "dependencies": {

@@ -75,28 +75,28 @@ export function FeatureEventHistory({ entries, worldId, playerId, now, loading, 
   return <Card><CardContent>
     <div className="mb-4">
       <div className="flex items-center gap-2 font-bold text-text-main"><History className="h-5 w-5 text-primary" /> <LocalizedText messageKey="ui.events.components.featureEventHistory.previous.event.scores.81cc1811" /></div>
-      <p className="mt-1 text-xs text-text-muted"><LocalizedText messageKey="ui.events.components.featureEventHistory.final.known.account.score.for.each.collected.57490c30" /></p>
+      <p className="mt-1 text-caption text-text-muted"><LocalizedText messageKey="ui.events.components.featureEventHistory.final.known.account.score.for.each.collected.57490c30" /></p>
     </div>
     {eventOptions.length > 1 && <div className="mb-4 w-full sm:w-72"><Select ariaLabel={localizeStatic("ui.events.components.featureEventHistory.ariaLabel.filter.previous.scores.by.event.c0cc7d68")} value={selectedEvent} onChange={(value) => { setEventFilter(value); setPage(0); }} options={[{ value: 'all', label: localizeStatic('events.allPrevious') }, ...eventOptions]} menuGrowToViewport /></div>}
-    {error && <p role="status" className="mb-4 text-sm text-warning">{error}</p>}
-    {loading ? <p role="status" className="text-sm text-text-muted"><LocalizedText messageKey="ui.events.components.featureEventHistory.loading.previous.scores.9c87ef9b" /></p> : finals.length === 0 ? (
+    {error && <p role="status" className="mb-4 text-body text-warning">{error}</p>}
+    {loading ? <p role="status" className="text-body text-text-muted"><LocalizedText messageKey="ui.events.components.featureEventHistory.loading.previous.scores.9c87ef9b" /></p> : finals.length === 0 ? (
       <EmptyState size="sm" surface="plain" title={localizeStatic("ui.events.components.featureEventHistory.title.no.previous.scores.recorded.96363ebe")} description={localizeStatic("ui.events.components.featureEventHistory.description.completed.events.appear.here.when.a.known.2ec6ea2e")} />
     ) : <>
       <div className="overflow-x-auto">
-        <table className="w-full text-sm">
-          <thead><tr className="border-b border-border-base text-left text-xs text-text-muted">
+        <table className="w-full text-body">
+          <thead><tr className="border-b border-border-base text-left text-caption text-text-muted">
             <th scope="col" className="px-3 py-2"><LocalizedText messageKey="ui.events.components.featureEventHistory.event.4e1f49a9" /></th><th scope="col" className="px-3 py-2"><LocalizedText messageKey="ui.events.components.featureEventHistory.ended.7cdc804e" /></th>
             <th scope="col" className="px-3 py-2 text-right"><LocalizedText messageKey="ui.events.components.featureEventHistory.final.known.score.6da338f9" /></th><th scope="col" className="px-3 py-2 text-right"><LocalizedText messageKey="ui.events.components.featureEventHistory.rank.a4130d7d" /></th>
           </tr></thead>
           <tbody>{visible.map((entry) => <tr key={entry.occurrenceId} className="border-b border-border-base/50">
             <td className="px-3 py-3 font-semibold text-text-main"><span {...messageLanguageAttributes(eventNames(entry.eventId,entry.eventName))}>{eventNames(entry.eventId,entry.eventName).text}</span></td>
             <td className="whitespace-nowrap px-3 py-3 text-text-muted">{formatEventEndLocal(entry.eventEndsAt,locale,localizeStatic('events.unknown'))}</td>
-            <td className="whitespace-nowrap px-3 py-3 text-right tabular-nums text-text-main">{entry.score==null ? undefined : formatNumber(entry.score)} <span className="text-xs text-text-muted">{!entry.scoreUnit || entry.scoreUnit==='points' ? localizeStatic('events.points') : entry.scoreUnit}</span></td>
+            <td className="whitespace-nowrap px-3 py-3 text-right tabular-nums text-text-main">{entry.score==null ? undefined : formatNumber(entry.score)} <span className="text-caption text-text-muted">{!entry.scoreUnit || entry.scoreUnit==='points' ? localizeStatic('events.points') : entry.scoreUnit}</span></td>
             <td className="px-3 py-3 text-right tabular-nums text-text-muted">{entry.rank > 0 ? `#${formatNumber(entry.rank)}` : '—'}</td>
           </tr>)}</tbody>
         </table>
       </div>
-      <div className="mt-4 flex flex-wrap items-center justify-between gap-3 text-xs text-text-muted">
+      <div className="mt-4 flex flex-wrap items-center justify-between gap-3 text-caption text-text-muted">
         <span>{localizeStatic('events.historyPages',{count:filtered.length,page:safePage+1,pages})}</span>
         <div className="flex gap-2">
           <Button variant="secondary" size="sm" disabled={safePage === 0} onClick={() => setPage(safePage - 1)}><LocalizedText messageKey="ui.events.components.featureEventHistory.previous.a57b08a4" /></Button>

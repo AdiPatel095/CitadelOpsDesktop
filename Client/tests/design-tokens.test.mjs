@@ -155,15 +155,15 @@ test('legacy stylesheets retain the migrated secondary text role', () => {
   assert.match(theme, /--color-text-muted:\s*var\(--text-secondary\)/);
 });
 
-test('raw shape and motion fail lint while typography stays in warning mode', async () => {
+test('raw shape, motion and typography fail lint', async () => {
   const configFile = join(root, '.stylelintrc.json');
   const codeFilename = join(root, 'src/lint-contract.css');
   const invalid = await stylelint.lint({ configFile, codeFilename, code: 'div { border-radius: 7px; box-shadow: 0 1px 2px black; transition: opacity 150ms; opacity: 1 !important; font-size: 15px; font-weight: 600; }' });
   const warnings = invalid.results[0].warnings;
   assert.ok(invalid.errored);
-  assert.equal(warnings.filter((warning) => warning.severity === 'error').length, 4);
-  assert.equal(warnings.filter((warning) => warning.severity === 'warning').length, 2);
-  const valid = await stylelint.lint({ configFile, codeFilename, code: 'div { border-radius: var(--radius-md); box-shadow: var(--elevation-1); transition: opacity var(--duration-fast) var(--ease-standard); font-size: 15px; font-weight: 600; }' });
+  assert.equal(warnings.filter((warning) => warning.severity === 'error').length, 6);
+  assert.equal(warnings.filter((warning) => warning.severity === 'warning').length, 0);
+  const valid = await stylelint.lint({ configFile, codeFilename, code: 'div { border-radius: var(--radius-md); box-shadow: var(--elevation-1); transition: opacity var(--duration-fast) var(--ease-standard); font-size: var(--font-size-14); font-weight: var(--font-weight-600); }' });
   assert.equal(valid.errored, false);
-  assert.equal(valid.results[0].warnings.length, 2);
+  assert.equal(valid.results[0].warnings.length, 0);
 });

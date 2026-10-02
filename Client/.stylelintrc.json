@@ -62,8 +62,29 @@
         ]
       },
       {
-        "severity": "warning"
+        "severity": "error"
       }
     ]
-  }
+  },
+  "overrides": [
+    {
+      "files": [
+        "src/**/fonts.css"
+      ],
+      "rules": {
+        "declaration-property-value-allowed-list": [
+          {
+            "font-weight": [
+              "400 700",
+              "400 500",
+              "600 700"
+            ]
+          },
+          {
+            "severity": "error"
+          }
+        ]
+      }
+    }
+  ]
 }

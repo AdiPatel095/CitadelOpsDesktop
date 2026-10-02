@@ -40,19 +40,19 @@ export const StartConfirmDialog: React.FC<{ pending: PendingStart | null }> = ({
       )}
     >
       <div className="space-y-3" data-start-confirm={pending.featureId}>
-        <p className="text-sm text-text-main"><LocalizedText messageKey="startConfirm.intro" params={{ count: blocked.length }} /></p>
+        <p className="text-body text-text-main"><LocalizedText messageKey="startConfirm.intro" params={{ count: blocked.length }} /></p>
         <ul className="space-y-2">
           {blocked.map((check, index) => <ReadinessCheckLine key={`${check.id}:${check.slot ?? ''}:${index}`} check={check} />)}
         </ul>
         {undecided.length > 0 ? (
           <>
-            <p className="text-sm text-text-main"><LocalizedText messageKey="startConfirm.undecided" /></p>
+            <p className="text-body text-text-main"><LocalizedText messageKey="startConfirm.undecided" /></p>
             <ul className="space-y-2">
               {undecided.map((check, index) => <ReadinessCheckLine key={`${check.id}:${check.slot ?? ''}:${index}`} check={check} />)}
             </ul>
           </>
         ) : null}
-        <p className="border-t border-border-base pt-3 text-xs text-text-muted"><LocalizedText messageKey="startConfirm.authority" /></p>
+        <p className="border-t border-border-base pt-3 text-caption text-text-muted"><LocalizedText messageKey="startConfirm.authority" /></p>
       </div>
     </Modal>
   );

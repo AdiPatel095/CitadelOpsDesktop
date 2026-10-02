@@ -41,8 +41,8 @@ function ReleaseCard({ release, isLatest }: { release: PatchNotesRelease; isLate
         </>
       )}
       description={release.subtitleKey ? <LocalizedText messageKey={release.subtitleKey}/> : release.subtitle}
-      actions={release.date ? <span lang={locale} className="font-mono text-xs text-text-muted">{date(new Date(release.date),{year:'numeric',month:'long',day:'numeric',timeZone:'UTC'})}</span> : undefined}
-      titleClassName="text-xl"
+      actions={release.date ? <span lang={locale} className="font-mono text-caption text-text-muted">{date(new Date(release.date),{year:'numeric',month:'long',day:'numeric',timeZone:'UTC'})}</span> : undefined}
+      titleClassName="text-title"
       className={
         isLatest
           ? ''
@@ -61,11 +61,11 @@ function ReleaseCard({ release, isLatest }: { release: PatchNotesRelease; isLate
                 >
                   <LocalizedText messageKey={`patchNotes.kind.${group.kind}`}/>
                 </Badge>
-                <span className="text-xs tabular-nums text-text-muted" {...messageLanguageAttributes(message('patchNotes.changes',{count:group.items.length}))}>
+                <span className="text-caption tabular-nums text-text-muted" {...messageLanguageAttributes(message('patchNotes.changes',{count:group.items.length}))}>
                   {t('patchNotes.changes',{count:group.items.length})}
                 </span>
               </div>
-              <ul className="space-y-3 text-sm leading-relaxed text-text-main">
+              <ul className="space-y-3 text-body text-text-main">
                 {group.items.map((item, index) => (
                   <li key={`${release.version}-${group.kind}-${index}`} className="flex items-start gap-3">
                     <span aria-hidden="true" className="mt-[0.45rem] h-1.5 w-1.5 shrink-0 rounded-full bg-current opacity-55" />
@@ -98,7 +98,7 @@ const PatchNotesView: React.FC = () => {
         ))}
       </div>
 
-      <p className="mt-10 text-xs text-text-muted text-center">
+      <p className="mt-10 text-caption text-text-muted text-center">
         <LocalizedText messageKey="ui.views.patchNotesView.earlier.versions.will.appear.here.as.they.abab933c" /></p>
     </div>
   );

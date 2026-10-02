@@ -142,7 +142,7 @@ const VirtualizedToolGrid: React.FC<VirtualizedToolGridProps> = ({
                         {tool.name}
                       </span>
                       {stockQuantities?.[tool.id] != null ? (
-                        <span className="mt-1 block truncate text-[10px] font-semibold text-text-muted">
+                        <span className="mt-1 block truncate text-caption font-semibold text-text-muted">
                           {toolType(tool)} · available
                         </span>
                       ) : null}
