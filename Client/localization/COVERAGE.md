@@ -187,3 +187,22 @@ placement-slot and unavailable-cell-role messages. Older client and backend
 marketing translation backlogs remain outside this batch. Native-speaker
 review remains pending; this batch does not establish whole-application
 translated coverage. Claire confirms both PRs have merged before release.
+
+## CIT-111 translation batch 5
+
+Batch 5: **model-authored, pending native review**. The byte-identical fixture
+`tests/fixtures/translation-batches/batch-5.json` records the CEO-authorized
+release-note scope: 36 shared UI keys, 24 runtime keys and 48 portal-owned keys
+in all 25 non-English locales (2,700 locale/key pairs). Existing translations
+are reused; unchanged localized spellings are documented per locale in the
+fixture. Runtime packs, their provenance and coverage are synced into both
+clients. ICU parameters and select branches are preserved.
+
+Desktop cut: `4191936342597745ee62c3861ebf09c7e7d68057`; portal cut:
+`027e7588613394b0bc3401e852822c8ece2e814f`. Previous cuts are the batch-4
+fixture cuts. The runtime and portal gaps predate those cuts and are included
+by the explicit release-note list. English, backend and official catalogs are
+unchanged; older backlog keys remain out of scope and ship in English.
+This is bounded translation coverage, not whole-application completeness or
+native-speaker review. Sophie reviews Arabic per the batch template; Claire
+confirms both PRs have merged before release.
