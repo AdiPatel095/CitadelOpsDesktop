@@ -24,7 +24,7 @@
     "check:fonts": "python3 ../scripts/fonts/build-manrope --check",
     "test:fonts": "python3 ../scripts/fonts/test-gate.py",
     "check:mirror": "npm --prefix .. run check:mirror --",
-    "check:retired-classes": "node scripts/check-retired-classes.mjs"
+    "check:retired-classes": "node scripts/check-retired-classes.mjs --enforce cit-67"
   },
   "dependencies": {
     "@formatjs/icu-messageformat-parser": "^3.5.20",
