@@ -6,7 +6,7 @@ interface LevelBadgeProps {
 }
 
 const LevelBadge: React.FC<LevelBadgeProps> = ({ level, imageSize }) => {
-  const badgeSize = Math.max(24, imageSize * 0.32);
+  const badgeSize = Math.max(18, imageSize * 0.32);
 
   return (
     <span
@@ -29,7 +29,7 @@ const LevelBadge: React.FC<LevelBadgeProps> = ({ level, imageSize }) => {
       <span
         className="relative z-10 font-bold text-white"
         style={{
-          fontSize: 'var(--font-size-12)', lineHeight: 'var(--line-height-12)',
+          fontSize: Math.max(9, imageSize * 0.16),
           textShadow: '0 1px 2px rgba(0,0,0,0.5)',
         }}
       >

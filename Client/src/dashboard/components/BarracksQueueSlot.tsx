@@ -36,7 +36,7 @@ const BarracksQueueSlot: React.FC<BarracksQueueSlotProps> = ({ row, imageSize = 
     <div
       className={`relative flex shrink-0 items-center justify-center rounded-global border bg-bg-card ${
         row.active
-          ? 'border-border-base ring-2 ring-border-base shadow-sm'
+          ? 'border-primary ring-2 ring-primary/35 shadow-sm'
           : 'border-border-light border-solid'
       }`}
       style={{ width: imageSize + 18, height: imageSize + 18 }}
@@ -48,7 +48,7 @@ const BarracksQueueSlot: React.FC<BarracksQueueSlotProps> = ({ row, imageSize = 
         <UnitImage unitId={row.definitionId} size={imageSize} showLevel={true} className="!block" />
       )}
       <span
-        className="absolute -right-1 -top-1 z-20 flex min-h-[1.125rem] min-w-[1.125rem] max-w-[3.25rem] items-center justify-center rounded-full bg-red-600 px-1 text-caption font-semibold text-white shadow-md ring-2 ring-bg-card"
+        className="absolute -right-1 -top-1 z-20 flex min-h-[1.125rem] min-w-[1.125rem] max-w-[3.25rem] items-center justify-center rounded-full bg-red-600 px-1 text-[10px] font-bold leading-none text-white shadow-md ring-2 ring-bg-card"
         aria-label={`${formatQueueCount(row.amount)} in slot`}
       >
         {formatQueueCount(row.amount)}

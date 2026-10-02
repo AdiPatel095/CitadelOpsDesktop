@@ -1,4 +1,3 @@
-import '../../views/core-views.css';
 import { useServerLabel } from '../useServerLabel';
 import { useLocale as useStaticLocale } from "../../i18n/LocaleContext";
 import { LocalizedText } from "../../i18n/LocalizedText";
@@ -6,6 +5,9 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
 	CloudOff,
 	Database,
+	UserRound,
+	Users,
+	X,
 } from 'lucide-react';
 import { CitadelAPI, type WorldIntelligenceSubscriptionStatus } from '../../api/CitadelClient';
 import type {
@@ -18,9 +20,10 @@ import type {
 } from '../../api/Contracts';
 import {
 	Badge,
-	ErrorState,
-	ViewState,
-	viewStatus,
+	Card,
+	CardContent,
+	EmptyState,
+	PageHeader,
 	SectionCard,
 } from '../../components/ui';
 import { useCitadelAPI } from '../../api/ApiContext';
@@ -48,7 +51,6 @@ const WorldIntelligenceView = () => {
 	const [allianceProfile, setAllianceProfile] = useState<WorldIntelligenceAllianceProfileV1 | null>(null);
 	const [profileLoading, setProfileLoading] = useState(false);
 	const [error, setError] = useState('');
-	const [statusError, setStatusError] = useState('');
 	const directoryScrollRef = useRef(0);
 	const previousWorldUpdate = useRef<WorldIntelligenceUpdateManifestV1 | null>(null);
 	const coverageRequest = useRef(0);
@@ -56,9 +58,8 @@ const WorldIntelligenceView = () => {
 	const refreshStatus = useCallback(async () => {
 		try {
 			setStatus(await CitadelAPI.getWorldIntelligenceStatus());
-			setStatusError('');
 		} catch (requestError) {
-			setStatusError(errorMessage(requestError, 'Could not read World Intelligence status.'));
+			setError(errorMessage(requestError, 'Could not read World Intelligence status.'));
 		}
 	}, []);
 
@@ -76,6 +77,7 @@ const WorldIntelligenceView = () => {
 			setCoverageError('');
 		} catch (requestError) {
 			if (requestID !== coverageRequest.current) return;
+			setCoverage({ worlds: [] });
 			setCoverageError(errorMessage(requestError, 'Cloud coverage is temporarily unavailable.'));
 		}
 	}, [worldId]);
@@ -118,16 +120,13 @@ const WorldIntelligenceView = () => {
 
 	const openEntity = useCallback(async (entity: SelectedEntity) => {
 		if (!selected) directoryScrollRef.current = window.scrollY;
-		const same = selected?.type === entity.type && selected.id === entity.id && selected.worldId === entity.worldId;
 		setSelected(entity);
-		if (!same) {
-			setPlayerProfile(null);
-			setPlayerEventHistory(null);
-			setPlayerEventError('');
-			setAllianceProfile(null);
-			setError('');
-		}
+		setPlayerProfile(null);
+		setPlayerEventHistory(null);
+		setPlayerEventError('');
+		setAllianceProfile(null);
 		setProfileLoading(true);
+		setError('');
 		window.scrollTo({ top: 0, behavior: 'smooth' });
 		try {
 			if (entity.type === 'player') {
@@ -145,7 +144,6 @@ const WorldIntelligenceView = () => {
 			} else {
 				setAllianceProfile(await CitadelAPI.getWorldIntelligenceAlliance(entity.worldId, entity.id));
 			}
-			setError('');
 		} catch (requestError) {
 			setError(errorMessage(requestError, 'Could not load this profile.'));
 		} finally {
@@ -180,16 +178,23 @@ const WorldIntelligenceView = () => {
 				<nav aria-label={localizeStatic("ui.worldIntelligence.components.worldIntelligenceView.aria-label.world.intelligence.detail.navigation.cc8741b4")} className="world-intelligence-detail-nav sticky top-3 z-30 self-start">
 					<DetailBackButton label={localizeStatic("ui.worldIntelligence.components.worldIntelligenceView.label.back.to.world.intelligence.3f33ab67")} onClick={closeProfile} className="shadow-lg backdrop-blur" />
 				</nav>
-
-<ViewState size="lg" status={viewStatus({ hasData: Boolean(playerProfile || allianceProfile), loading: profileLoading, error: Boolean(error) })}
-          error={{ title: localizeStatic('ui.worldIntelligence.components.worldIntelligenceView.title.profile.unavailable.158e5a22'), description: profileLoading ? localizeStatic('copy.loadingHistory', { server: displayWorld(selected.worldId) }) : undefined, onRetry: () => void openEntity(selected), retryLabel: localizeStatic('ui.state.retry') }}
-          loading={{ label: localizeStatic('copy.loadingHistory', { server: displayWorld(selected.worldId) }), variant: 'cards' }}
-          empty={{ title: localizeStatic('ui.worldIntelligence.components.worldIntelligenceView.title.profile.unavailable.158e5a22'), description: localizeStatic('copy.noProfile', { server: displayWorld(selected.worldId) }) }}>
-        {error && (playerProfile || allianceProfile) && <ErrorState size="lg"
-          title={localizeStatic('ui.worldIntelligence.components.worldIntelligenceView.title.profile.unavailable.158e5a22')}
-          description={profileLoading ? localizeStatic('copy.loadingHistory', { server: displayWorld(selected.worldId) }) : undefined}
-          onRetry={() => void openEntity(selected)} retryLabel={localizeStatic('ui.state.retry')} />}
-        {playerProfile ? (
+				{error && (
+					<div className="flex items-start justify-between gap-3 rounded-global border border-error/30 bg-error/10 px-4 py-3 text-sm text-error" role="alert">
+						<span>{error}</span>
+						<button type="button" aria-label={localizeStatic("ui.worldIntelligence.components.worldIntelligenceView.aria-label.dismiss.error.2db04667")} onClick={() => setError('')}><X className="h-4 w-4" /></button>
+					</div>
+				)}
+				{profileLoading ? (
+					<>
+						<PageHeader
+							eyebrow={localizeStatic("ui.worldIntelligence.components.worldIntelligenceView.eyebrow.world.intelligence.dossier.9fad4808")}
+							title={selected.type === 'player' ? 'Loading player…' : 'Loading alliance…'}
+							description={localizeStatic('copy.loadingHistory', { server: displayWorld(selected.worldId) })}
+							icon={selected.type === 'player' ? <UserRound className="h-6 w-6" /> : <Users className="h-6 w-6" />}
+						/>
+						<Card><CardContent className="flex min-h-72 items-center justify-center text-sm text-text-muted"><LocalizedText messageKey="ui.worldIntelligence.components.worldIntelligenceView.loading.public.history.a3292dbc" /></CardContent></Card>
+					</>
+					) : playerProfile ? (
 						<>
 							<WorldPlayerDetailView
 								profile={playerProfile}
@@ -203,16 +208,29 @@ const WorldIntelligenceView = () => {
 						</>
 				) : allianceProfile ? (
 					<WorldAllianceDetailView profile={allianceProfile} onOpenPlayer={(player) => void openEntity({ type: 'player', id: player.playerId, worldId: player.worldId })} />
-) : null}
-        </ViewState>
-
+				) : (
+					<>
+						<PageHeader
+							eyebrow={localizeStatic("ui.worldIntelligence.components.worldIntelligenceView.eyebrow.world.intelligence.dossier.9fad4808")}
+							title={localizeStatic("ui.worldIntelligence.components.worldIntelligenceView.title.profile.unavailable.158e5a22")}
+							description={localizeStatic('copy.noProfile', { server: displayWorld(selected.worldId) })}
+							icon={selected.type === 'player' ? <UserRound className="h-6 w-6" /> : <Users className="h-6 w-6" />}
+						/>
+						<EmptyState size="lg" title={localizeStatic("ui.worldIntelligence.components.worldIntelligenceView.title.profile.unavailable.158e5a22")} description={localizeStatic("ui.worldIntelligence.components.worldIntelligenceView.description.no.usable.public.observations.were.returned.for.eb4c35e6")} />
+					</>
+				)}
 			</div>
 		);
 	}
 
 	return (
 		<div className="flex flex-col gap-6 pb-8">
-
+			{error && (
+				<div className="flex items-start justify-between gap-3 rounded-global border border-error/30 bg-error/10 px-4 py-3 text-sm text-error" role="alert">
+					<span>{error}</span>
+					<button type="button" aria-label={localizeStatic("ui.worldIntelligence.components.worldIntelligenceView.aria-label.dismiss.error.2db04667")} onClick={() => setError('')}><X className="h-4 w-4" /></button>
+				</div>
+			)}
 
 			{(featureReady || currentCoverage || coverageError) && <div className="flex flex-wrap items-center gap-2">
 				{featureReady && <Badge variant={subscriptionStatus === 'connected' ? 'success' : 'warning'}>
@@ -233,10 +251,14 @@ const WorldIntelligenceView = () => {
 				) : null}
 			</div>}
 
-<ViewState size="lg" status={viewStatus({ hasData: featureReady, loading: !status && Boolean(worldId), error: Boolean(statusError) })}
-        error={{ title: localizeStatic('events.directoryFailed'), onRetry: () => void refreshStatus(), retryLabel: localizeStatic('ui.state.retry') }}
-        loading={{ label: localizeStatic('ui.worldIntelligence.components.worldIntelligenceView.loading.public.history.a3292dbc'), variant: 'table' }}
-        empty={{ icon: <CloudOff />, title: localizeStatic('ui.worldIntelligence.components.worldIntelligenceView.title.connect.a.game.world.first.4f27f30b'), description: localizeStatic('ui.worldIntelligence.components.worldIntelligenceView.description.the.active.game.world.is.required.so.9726b203') }}>
+			{!featureReady ? (
+				<EmptyState
+					size="lg"
+					icon={<CloudOff className="h-7 w-7" />}
+					title={localizeStatic("ui.worldIntelligence.components.worldIntelligenceView.title.connect.a.game.world.first.4f27f30b")}
+					description={localizeStatic("ui.worldIntelligence.components.worldIntelligenceView.description.the.active.game.world.is.required.so.9726b203")}
+				/>
+			) : (
 				<SectionCard
 					title={localizeStatic("ui.worldIntelligence.components.worldIntelligenceView.title.world.rankings.6bfc08e5")}
 					description={localizeStatic('copy.rankings', { server: displayWorld(worldId) })}
@@ -254,7 +276,7 @@ const WorldIntelligenceView = () => {
 						onOpenAlliance={(allianceId, entityWorldId) => void openEntity({ type: 'alliance', id: allianceId, worldId: entityWorldId })}
 					/>
 				</SectionCard>
-</ViewState>
+			)}
 		</div>
 	);
 };

@@ -102,8 +102,8 @@ export const AutoSceatRecipePickerModal: React.FC<AutoSceatRecipePickerModalProp
       maxWidth="5xl"
       title={
         <span className="flex min-w-0 flex-col">
-          <span className="text-body-lg font-semibold">Choose {building?.name ?? 'Crafting'} Recipe</span>
-          <span className="mt-1 text-caption font-semibold text-text-muted">
+          <span className="text-lg font-black">Choose {building?.name ?? 'Crafting'} Recipe</span>
+          <span className="mt-1 text-xs font-semibold text-text-muted">
             <LocalizedText messageKey="ui.settings.components.autoSceatRecipePickerModal.only.the.highest.unlocked.level.for.each.e3cfcede" /></span>
         </span>
       }
@@ -117,7 +117,7 @@ export const AutoSceatRecipePickerModal: React.FC<AutoSceatRecipePickerModalProp
         />
 
         {!catalog.researchLoaded && (
-          <div className="rounded-global border border-warning/30 bg-warning/10 px-4 py-3 text-body font-semibold text-warning">
+          <div className="rounded-global border border-warning/30 bg-warning/10 px-4 py-3 text-sm font-semibold text-warning">
             <LocalizedText messageKey="ui.settings.components.autoSceatRecipePickerModal.research.unlocks.have.not.been.loaded.yet.cc854ae1" /></div>
         )}
 
@@ -135,22 +135,22 @@ export const AutoSceatRecipePickerModal: React.FC<AutoSceatRecipePickerModalProp
                     {recipe.output.iconUrl ? (
                       <img src={recipe.output.iconUrl} alt="" className="h-11 w-11 object-contain" />
                     ) : (
-                      <span className="text-body-lg font-semibold text-primary">{recipe.level}</span>
+                      <span className="text-lg font-black text-primary">{recipe.level}</span>
                     )}
                   </span>
                   <span className="min-w-0 flex-1">
-                    <span className="block truncate text-body font-semibold text-text-main">{recipe.output.name}</span>
+                    <span className="block truncate text-sm font-black text-text-main">{recipe.output.name}</span>
                     <span className="mt-2 flex flex-wrap items-center gap-1.5">
-                      <Badge className="px-2 py-1 text-caption" variant={recipe.type === 'Ruby' ? 'danger' : 'secondary'}>{recipe.type}</Badge>
-                      <Badge className="px-2 py-1 text-caption" variant="outline">Level {recipe.level}</Badge>
-                      <span className="inline-flex items-center gap-1 rounded-full border border-border-base bg-bg-input/55 px-2 py-1 text-caption font-semibold text-text-muted">
+                      <Badge className="px-2 py-1 text-[11px]" variant={recipe.type === 'Ruby' ? 'danger' : 'secondary'}>{recipe.type}</Badge>
+                      <Badge className="px-2 py-1 text-[11px]" variant="outline">Level {recipe.level}</Badge>
+                      <span className="inline-flex items-center gap-1 rounded-full border border-border-base bg-bg-input/55 px-2 py-1 text-[11px] font-bold text-text-muted">
                         <Clock3 className="h-3.5 w-3.5" />
                         {formatDuration(recipe.durationSec)}
                       </span>
                       {costs.map(([key, amount]) => {
                         const meta = recipeCostDisplay(catalog, key);
                         return (
-                          <span key={key} className="inline-flex items-center gap-1 rounded-full border border-border-base bg-bg-input/55 px-2 py-1 text-caption font-semibold text-text-muted">
+                          <span key={key} className="inline-flex items-center gap-1 rounded-full border border-border-base bg-bg-input/55 px-2 py-1 text-[11px] font-bold text-text-muted">
                             {meta.iconUrl && <img src={meta.iconUrl} alt="" className="h-4 w-auto max-w-7 object-contain" />}
                             {meta.name} {amount.toLocaleString()}
                           </span>
@@ -173,7 +173,7 @@ export const AutoSceatRecipePickerModal: React.FC<AutoSceatRecipePickerModalProp
             );
           })}
           {recipeGroups.length === 0 && (
-            <div className="col-span-full rounded-global border border-dashed border-border-base bg-bg-card/40 px-5 py-12 text-center text-body font-semibold text-text-muted">
+            <div className="col-span-full rounded-global border border-dashed border-border-base bg-bg-card/40 px-5 py-12 text-center text-sm font-semibold text-text-muted">
               <LocalizedText messageKey="ui.settings.components.autoSceatRecipePickerModal.no.available.recipes.match.this.search.24d55c33" /></div>
           )}
         </div>

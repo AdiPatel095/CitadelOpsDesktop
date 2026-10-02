@@ -17,8 +17,8 @@ export const AddSlot = React.forwardRef<HTMLButtonElement, AddSlotProps>(({
 }, ref) => {
   const layoutClass = {
     icon: 'items-center justify-center',
-    stacked: 'flex-col items-center justify-center gap-2 text-caption font-semibold',
-    inline: 'items-center justify-center gap-2 text-body font-semibold',
+    stacked: 'flex-col items-center justify-center gap-2 text-xs font-bold uppercase tracking-wide',
+    inline: 'items-center justify-center gap-2 text-sm font-semibold',
   }[layout];
 
   return (

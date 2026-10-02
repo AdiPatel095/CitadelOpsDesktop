@@ -293,15 +293,6 @@ export function formatEquipmentEffectValue(
 	return new Intl.NumberFormat(locale, { style: effect.unit === 'percent' ? 'percent' : 'decimal', signDisplay: 'exceptZero', minimumFractionDigits: Number.isInteger(value) ? 0 : 1, maximumFractionDigits: 1 }).format(effect.unit === 'percent' ? value / 100 : value);
 }
 
-export function formatAbsoluteEquipmentEffectValue(
-  effect: Pick<MappedEquipmentEffect | EquipmentEffectGroup | EquipmentEffectShowcase, 'unit' | 'displayValue'>,
-  value: number,
-  locale = 'en',
-): string {
-  if (effect.displayValue) return effect.displayValue;
-  return new Intl.NumberFormat(locale, { style: effect.unit === 'percent' ? 'percent' : 'decimal', signDisplay: 'never', minimumFractionDigits: Number.isInteger(value) ? 0 : 1, maximumFractionDigits: 1 }).format(effect.unit === 'percent' ? Math.abs(value) / 100 : Math.abs(value));
-}
-
 export function formatEquipmentEffectText(effect: MappedEquipmentEffect, includeCap = true, locale = 'en'): string {
 	const argument = effect.argumentLabel || (effect.argumentId ? `Unit ${effect.argumentId}` : '');
 	let text = effect.template.includes('{0}')

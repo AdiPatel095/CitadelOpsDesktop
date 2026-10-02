@@ -35,25 +35,8 @@
         "Client/src/i18n/sourceMessages.ts"
       ],
       "catalogDirectory": "Client/src/i18n/catalogs",
-      "keys": [
-        "header.panel.attacksToday",
-        "header.panel.attention",
-        "header.panel.connection",
-        "header.panel.openFeature",
-        "header.signal.attention",
-        "header.signal.incoming",
-        "header.signal.nextBird",
-        "header.status.title"
-      ],
-      "allowEnglish": {
-        "header.status.title": {
-          "de": "Status is the standard localized status label with unchanged spelling.",
-          "nl": "Status is the standard localized status label with unchanged spelling.",
-          "da": "Status is the standard localized status label with unchanged spelling.",
-          "no": "Status is the standard localized status label with unchanged spelling.",
-          "sv": "Status is the standard localized status label with unchanged spelling."
-        }
-      }
+      "keys": [],
+      "allowEnglish": {}
     },
     "runtime": {
       "repository": "desktop",

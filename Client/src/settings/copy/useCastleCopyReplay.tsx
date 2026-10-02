@@ -100,7 +100,7 @@ export function useCastleCopyReplayRun<Draft, T>(state: CastleCopyReplayState, o
   }, [phase, setPhase, setReplay, setReview, setStatus]);
 
   const statusNode = status && replay ? (
-    <p className="mb-4 rounded-global border border-primary/30 bg-primary/10 px-4 py-3 text-caption font-semibold text-text-main" role="status" data-castle-copy-reapplied>
+    <p className="mb-4 rounded-global border border-primary/30 bg-primary/10 px-4 py-3 text-xs font-semibold text-text-main" role="status" data-castle-copy-reapplied>
       <LocalizedText messageKey="castleCopy.reapplied" />
     </p>
   ) : null;

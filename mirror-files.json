@@ -1,14 +1,6 @@
 {
   "files": [
     {
-      "portal": "src/commandCenter/views/core-views.css",
-      "desktop": "Client/src/views/core-views.css"
-    },
-    {
-      "portal": "src/commandCenter/components/AutoBirdCycles.css",
-      "desktop": "Client/src/components/AutoBirdCycles.css"
-    },
-    {
       "portal": "Docs/OnboardingCoverage.md",
       "desktop": "Docs/OnboardingCoverage.md"
     },
@@ -17,20 +9,8 @@
       "desktop": "Docs/OnboardingEvaluation.md"
     },
     {
-      "portal": "playwright.gate.config.ts",
-      "desktop": "Client/playwright.gate.config.ts"
-    },
-    {
-      "portal": "scripts/check-raw-buttons.mjs",
-      "desktop": "Client/scripts/check-raw-buttons.mjs"
-    },
-    {
-      "portal": "scripts/check-retired-classes.mjs",
-      "desktop": "Client/scripts/check-retired-classes.mjs"
-    },
-    {
-      "portal": "scripts/visual/gate-report.mjs",
-      "desktop": "Client/scripts/visual/gate-report.mjs"
+      "portal": "src/commandCenter/KingdomPalette.css",
+      "desktop": "Client/src/KingdomPalette.css"
     },
     {
       "portal": "src/commandCenter/Movement/context/MovementContext.tsx",
@@ -133,6 +113,10 @@
       "desktop": "Client/src/components/Alerts.tsx"
     },
     {
+      "portal": "src/commandCenter/components/AutoStationHoverPopover.tsx",
+      "desktop": "Client/src/components/AutoStationHoverPopover.tsx"
+    },
+    {
       "portal": "src/commandCenter/components/AutomationFeatureFeedback.tsx",
       "desktop": "Client/src/components/AutomationFeatureFeedback.tsx"
     },
@@ -157,8 +141,8 @@
       "desktop": "Client/src/components/ConnectionRepairHost.tsx"
     },
     {
-      "portal": "src/commandCenter/components/ConnectionStatus.tsx",
-      "desktop": "Client/src/components/ConnectionStatus.tsx"
+      "portal": "src/commandCenter/components/DailyAttackTracker.tsx",
+      "desktop": "Client/src/components/DailyAttackTracker.tsx"
     },
     {
       "portal": "src/commandCenter/components/DetailBackButton.tsx",
@@ -221,32 +205,8 @@
       "desktop": "Client/src/components/UnitAtlasFrames.ts"
     },
     {
-      "portal": "src/commandCenter/components/automation/TimedRunButton.tsx",
-      "desktop": "Client/src/components/automation/TimedRunButton.tsx"
-    },
-    {
-      "portal": "src/commandCenter/components/automation/TimerTip.tsx",
-      "desktop": "Client/src/components/automation/TimerTip.tsx"
-    },
-    {
       "portal": "src/commandCenter/components/automation/attackCounts.ts",
       "desktop": "Client/src/components/automation/attackCounts.ts"
-    },
-    {
-      "portal": "src/commandCenter/components/automation/timedRun.ts",
-      "desktop": "Client/src/components/automation/timedRun.ts"
-    },
-    {
-      "portal": "src/commandCenter/components/automation/timerTipStorage.ts",
-      "desktop": "Client/src/components/automation/timerTipStorage.ts"
-    },
-    {
-      "portal": "src/commandCenter/components/header/headerStatus.ts",
-      "desktop": "Client/src/components/header/headerStatus.ts"
-    },
-    {
-      "portal": "src/commandCenter/components/playerStatusDisplay.ts",
-      "desktop": "Client/src/components/playerStatusDisplay.ts"
     },
     {
       "portal": "src/commandCenter/components/stationHeaderPill.ts",
@@ -255,26 +215,6 @@
     {
       "portal": "src/commandCenter/components/ui/AddSlot.tsx",
       "desktop": "Client/src/components/ui/AddSlot.tsx"
-    },
-    {
-      "portal": "src/commandCenter/components/ui/Badge.tsx",
-      "desktop": "Client/src/components/ui/Badge.tsx"
-    },
-    {
-      "portal": "src/commandCenter/components/ui/Banner.tsx",
-      "desktop": "Client/src/components/ui/Banner.tsx"
-    },
-    {
-      "portal": "src/commandCenter/components/ui/Button.tsx",
-      "desktop": "Client/src/components/ui/Button.tsx"
-    },
-    {
-      "portal": "src/commandCenter/components/ui/Card.css",
-      "desktop": "Client/src/components/ui/Card.css"
-    },
-    {
-      "portal": "src/commandCenter/components/ui/Card.tsx",
-      "desktop": "Client/src/components/ui/Card.tsx"
     },
     {
       "portal": "src/commandCenter/components/ui/CatalogPickerModal.tsx",
@@ -287,10 +227,6 @@
     {
       "portal": "src/commandCenter/components/ui/CollectionToolbar.tsx",
       "desktop": "Client/src/components/ui/CollectionToolbar.tsx"
-    },
-    {
-      "portal": "src/commandCenter/components/ui/DeltaValue.tsx",
-      "desktop": "Client/src/components/ui/DeltaValue.tsx"
     },
     {
       "portal": "src/commandCenter/components/ui/EmptyState.tsx",
@@ -309,16 +245,8 @@
       "desktop": "Client/src/components/ui/ModalTitle.tsx"
     },
     {
-      "portal": "src/commandCenter/components/ui/OverflowMenu.tsx",
-      "desktop": "Client/src/components/ui/OverflowMenu.tsx"
-    },
-    {
       "portal": "src/commandCenter/components/ui/PageHeader.tsx",
       "desktop": "Client/src/components/ui/PageHeader.tsx"
-    },
-    {
-      "portal": "src/commandCenter/components/ui/Panel.tsx",
-      "desktop": "Client/src/components/ui/Panel.tsx"
     },
     {
       "portal": "src/commandCenter/components/ui/PillSelector.tsx",
@@ -329,10 +257,6 @@
       "desktop": "Client/src/components/ui/QuantityAssetTile.tsx"
     },
     {
-      "portal": "src/commandCenter/components/ui/RoleTag.tsx",
-      "desktop": "Client/src/components/ui/RoleTag.tsx"
-    },
-    {
       "portal": "src/commandCenter/components/ui/ScheduleSummaryRow.tsx",
       "desktop": "Client/src/components/ui/ScheduleSummaryRow.tsx"
     },
@@ -341,84 +265,20 @@
       "desktop": "Client/src/components/ui/SectionCard.tsx"
     },
     {
-      "portal": "src/commandCenter/components/ui/SectionHeader.tsx",
-      "desktop": "Client/src/components/ui/SectionHeader.tsx"
-    },
-    {
       "portal": "src/commandCenter/components/ui/SettingsModal.tsx",
       "desktop": "Client/src/components/ui/SettingsModal.tsx"
-    },
-    {
-      "portal": "src/commandCenter/components/ui/StatusBadge.css",
-      "desktop": "Client/src/components/ui/StatusBadge.css"
-    },
-    {
-      "portal": "src/commandCenter/components/ui/StatusBadge.tsx",
-      "desktop": "Client/src/components/ui/StatusBadge.tsx"
     },
     {
       "portal": "src/commandCenter/components/ui/StatusIndicator.tsx",
       "desktop": "Client/src/components/ui/StatusIndicator.tsx"
     },
     {
-      "portal": "src/commandCenter/components/ui/Switch.tsx",
-      "desktop": "Client/src/components/ui/Switch.tsx"
-    },
-    {
-      "portal": "src/commandCenter/components/ui/Tabs.css",
-      "desktop": "Client/src/components/ui/Tabs.css"
-    },
-    {
-      "portal": "src/commandCenter/components/ui/Tabs.tsx",
-      "desktop": "Client/src/components/ui/Tabs.tsx"
-    },
-    {
       "portal": "src/commandCenter/components/ui/ToggleGroup.tsx",
       "desktop": "Client/src/components/ui/ToggleGroup.tsx"
     },
     {
-      "portal": "src/commandCenter/components/ui/ViewState.css",
-      "desktop": "Client/src/components/ui/ViewState.css"
-    },
-    {
-      "portal": "src/commandCenter/components/ui/ViewState.tsx",
-      "desktop": "Client/src/components/ui/ViewState.tsx"
-    },
-    {
-      "portal": "src/commandCenter/components/ui/banner.css",
-      "desktop": "Client/src/components/ui/banner.css"
-    },
-    {
-      "portal": "src/commandCenter/components/ui/button.css",
-      "desktop": "Client/src/components/ui/button.css"
-    },
-    {
-      "portal": "src/commandCenter/components/ui/delta.css",
-      "desktop": "Client/src/components/ui/delta.css"
-    },
-    {
-      "portal": "src/commandCenter/components/ui/delta.ts",
-      "desktop": "Client/src/components/ui/delta.ts"
-    },
-    {
       "portal": "src/commandCenter/components/ui/index.ts",
       "desktop": "Client/src/components/ui/index.ts"
-    },
-    {
-      "portal": "src/commandCenter/components/ui/overflow-menu.css",
-      "desktop": "Client/src/components/ui/overflow-menu.css"
-    },
-    {
-      "portal": "src/commandCenter/components/ui/switch.css",
-      "desktop": "Client/src/components/ui/switch.css"
-    },
-    {
-      "portal": "src/commandCenter/components/ui/tabsLogic.ts",
-      "desktop": "Client/src/components/ui/tabsLogic.ts"
-    },
-    {
-      "portal": "src/commandCenter/components/ui/viewStatus.ts",
-      "desktop": "Client/src/components/ui/viewStatus.ts"
     },
     {
       "portal": "src/commandCenter/config/Api.ts",
@@ -427,14 +287,6 @@
     {
       "portal": "src/commandCenter/config/Navigation.tsx",
       "desktop": "Client/src/config/Navigation.tsx"
-    },
-    {
-      "portal": "src/commandCenter/config/UnitPickerStorage.ts",
-      "desktop": "Client/src/config/UnitPickerStorage.ts"
-    },
-    {
-      "portal": "src/commandCenter/config/viewNavigation.ts",
-      "desktop": "Client/src/config/viewNavigation.ts"
     },
     {
       "portal": "src/commandCenter/configuration/PresetDocumentUpdate.ts",
@@ -457,20 +309,8 @@
       "desktop": "Client/src/dashboard/components/BarracksQueueSlot.tsx"
     },
     {
-      "portal": "src/commandCenter/dashboard/components/CastleOverviewCard.css",
-      "desktop": "Client/src/dashboard/components/CastleOverviewCard.css"
-    },
-    {
-      "portal": "src/commandCenter/dashboard/components/CastleOverviewCard.tsx",
-      "desktop": "Client/src/dashboard/components/CastleOverviewCard.tsx"
-    },
-    {
       "portal": "src/commandCenter/dashboard/components/CastleUnitCard.tsx",
       "desktop": "Client/src/dashboard/components/CastleUnitCard.tsx"
-    },
-    {
-      "portal": "src/commandCenter/dashboard/components/CastleView.tsx",
-      "desktop": "Client/src/dashboard/components/CastleView.tsx"
     },
     {
       "portal": "src/commandCenter/dashboard/components/CraftingQueueSlot.tsx",
@@ -671,6 +511,10 @@
     {
       "portal": "src/commandCenter/mock/onboarding/dock.tsx",
       "desktop": "Client/tests/onboarding-browser/dock.tsx"
+    },
+    {
+      "portal": "src/commandCenter/mock/onboarding/fixture.css",
+      "desktop": "Client/tests/onboarding-browser/fixture.css"
     },
     {
       "portal": "src/commandCenter/mock/onboarding/networkGuard.ts",
@@ -877,14 +721,6 @@
       "desktop": "Client/tests/onboarding-browser/scenarios/zero-castles.json"
     },
     {
-      "portal": "src/commandCenter/mock/onboarding/visualStates.ts",
-      "desktop": "Client/tests/onboarding-browser/visualStates.ts"
-    },
-    {
-      "portal": "src/commandCenter/mock/visualStates.ts",
-      "desktop": "Client/tests/onboarding-browser/visualStates.ts"
-    },
-    {
       "portal": "src/commandCenter/playerTracker/components/PlayerTrackerWallet.ts",
       "desktop": "Client/src/playerTracker/components/PlayerTrackerWallet.ts"
     },
@@ -1031,10 +867,6 @@
     {
       "portal": "src/commandCenter/settings/UnitUpgradeFamily.ts",
       "desktop": "Client/src/settings/UnitUpgradeFamily.ts"
-    },
-    {
-      "portal": "src/commandCenter/settings/automationFeatureNames.ts",
-      "desktop": "Client/src/settings/automationFeatureNames.ts"
     },
     {
       "portal": "src/commandCenter/settings/castleAutomations.ts",
@@ -1217,10 +1049,6 @@
       "desktop": "Client/src/settings/readiness/automationAttribution.ts"
     },
     {
-      "portal": "src/commandCenter/settings/readiness/automationPlayerStatusDisplay.ts",
-      "desktop": "Client/src/settings/readiness/automationPlayerStatusDisplay.ts"
-    },
-    {
       "portal": "src/commandCenter/settings/readiness/eventAttackReadiness.ts",
       "desktop": "Client/src/settings/readiness/eventAttackReadiness.ts"
     },
@@ -1269,10 +1097,6 @@
       "desktop": "Client/src/settings/readiness/useAutomationDescription.ts"
     },
     {
-      "portal": "src/commandCenter/settings/readiness/useAutomationPlayerStatus.ts",
-      "desktop": "Client/src/settings/readiness/useAutomationPlayerStatus.ts"
-    },
-    {
       "portal": "src/commandCenter/settings/readiness/useFeatureReadiness.ts",
       "desktop": "Client/src/settings/readiness/useFeatureReadiness.ts"
     },
@@ -1309,28 +1133,8 @@
       "desktop": "Client/src/settings/useDraftRecovery.tsx"
     },
     {
-      "portal": "src/commandCenter/styles/fonts.css",
-      "desktop": "Client/src/styles/fonts.css"
-    },
-    {
-      "portal": "src/commandCenter/styles/tokens-app.css",
-      "desktop": "Client/src/styles/tokens-app.css"
-    },
-    {
-      "portal": "src/commandCenter/styles/tokens.css",
-      "desktop": "Client/src/styles/tokens.css"
-    },
-    {
-      "portal": "src/commandCenter/styles/typography.css",
-      "desktop": "Client/src/styles/typography.css"
-    },
-    {
       "portal": "src/commandCenter/utils/UpgradeCoinReserve.ts",
       "desktop": "Client/src/utils/UpgradeCoinReserve.ts"
-    },
-    {
-      "portal": "src/commandCenter/views/automation-card.css",
-      "desktop": "Client/src/views/automation-card.css"
     },
     {
       "portal": "src/commandCenter/worldIntelligence/components/StormRanking.ts",
@@ -1355,158 +1159,7 @@
     {
       "portal": "src/commandCenter/worldIntelligence/useServerLabel.ts",
       "desktop": "Client/src/worldIntelligence/useServerLabel.ts"
-    },
-    {
-      "portal": "src/context/visualStates.ts",
-      "desktop": "Client/tests/onboarding-browser/visualStates.ts"
-    },
-    {
-      "portal": "tests/card-anatomy.test.mjs",
-      "desktop": "Client/tests/card-anatomy.test.mjs"
-    },
-    {
-      "portal": "tests/check-raw-buttons.test.mjs",
-      "desktop": "Client/tests/check-raw-buttons.test.mjs"
-    },
-    {
-      "portal": "tests/check-retired-classes.test.mjs",
-      "desktop": "Client/tests/check-retired-classes.test.mjs"
-    },
-    {
-      "portal": "tests/delta.test.mjs",
-      "desktop": "Client/tests/delta.test.mjs"
-    },
-    {
-      "portal": "tests/gate-report.test.mjs",
-      "desktop": "Client/tests/gate-report.test.mjs"
-    },
-    {
-      "portal": "tests/gate/checks.ts",
-      "desktop": "Client/tests/gate/checks.ts"
-    },
-    {
-      "portal": "tests/gate/harness.ts",
-      "desktop": "Client/tests/gate/harness.ts"
-    },
-    {
-      "portal": "tests/gate/keyboard.spec.ts",
-      "desktop": "Client/tests/gate/keyboard.spec.ts"
-    },
-    {
-      "portal": "tests/gate/layout.spec.ts",
-      "desktop": "Client/tests/gate/layout.spec.ts"
-    },
-    {
-      "portal": "tests/gate/views.ts",
-      "desktop": "Client/tests/gate/views.ts"
-    },
-    {
-      "portal": "tests/stale-session-banner.test.mjs",
-      "desktop": "Client/tests/stale-session-banner.test.mjs"
-    },
-    {
-      "portal": "tests/status-badges.test.mjs",
-      "desktop": "Client/tests/status-badges.test.mjs"
-    },
-    {
-      "portal": "tests/timed-run.test.mjs",
-      "desktop": "Client/tests/timed-run.test.mjs"
-    },
-    {
-      "portal": "tests/view-state-components.test.mjs",
-      "desktop": "Client/tests/view-state-components.test.mjs"
-    },
-    {
-      "portal": "tests/view-states-logic.test.mjs",
-      "desktop": "Client/tests/view-states-logic.test.mjs"
-    },
-    {
-      "portal": "tests/visual-rules/rules.fixture.spec.ts",
-      "desktop": "Client/tests/visual-rules/rules.fixture.spec.ts"
-    },
-    {
-      "portal": "tests/visual/cardAnatomy.ts",
-      "desktop": "Client/tests/visual/cardAnatomy.ts"
-    },
-    {
-      "portal": "tests/visual/rules.ts",
-      "desktop": "Client/tests/visual/rules.ts"
-    },
-    {
-      "portal": "src/commandCenter/components/header/useHeaderStatus.ts",
-      "desktop": "Client/src/components/header/useHeaderStatus.ts"
-    },
-    {
-      "portal": "src/commandCenter/components/header/StatusCluster.tsx",
-      "desktop": "Client/src/components/header/StatusCluster.tsx"
-    },
-    {
-      "portal": "src/commandCenter/components/header/StatusPanel.tsx",
-      "desktop": "Client/src/components/header/StatusPanel.tsx"
-    },
-    {
-      "portal": "src/commandCenter/components/header/header-status.css",
-      "desktop": "Client/src/components/header/header-status.css"
-    },
-    {
-      "portal": "src/commandCenter/components/ui/Popover.tsx",
-      "desktop": "Client/src/components/ui/Popover.tsx"
-    },
-    {
-      "portal": "src/commandCenter/components/ui/popover.css",
-      "desktop": "Client/src/components/ui/popover.css"
-    },
-    {
-      "portal": "src/commandCenter/config/HostedChrome.tsx",
-      "desktop": "Client/src/config/HostedChrome.tsx"
-    },
-    {
-      "portal": "tests/header-status.test.mjs",
-      "desktop": "Client/tests/header-status.test.mjs"
-    },
-    {
-      "portal": "tests/gate/a11y.spec.ts",
-      "desktop": "Client/tests/gate/a11y.spec.ts"
-    },
-    {
-      "portal": "tests/gate/designScan.ts",
-      "desktop": "Client/tests/gate/designScan.ts"
-    },
-    {
-      "portal": "tests/gate/enforcement.json",
-      "desktop": "Client/tests/gate/enforcement.json"
-    },
-    {
-      "portal": "tests/visual/coverage.spec.ts",
-      "desktop": "Client/tests/visual/coverage.spec.ts"
-    },
-    {
-      "portal": "scripts/visual/run-gate.mjs",
-      "desktop": "Client/scripts/visual/run-gate.mjs"
-    },
-    {
-      "portal": "src/commandCenter/battleStats/components/BattleStatsView.css",
-      "desktop": "Client/src/battleStats/components/BattleStatsView.css"
-    },
-    {
-      "portal": "src/commandCenter/Rift/components/RiftMaidenCommsPanel.css",
-      "desktop": "Client/src/Rift/components/RiftMaidenCommsPanel.css"
-    },
-    {
-      "portal": "src/commandCenter/allianceTargets/components/AllianceTargetsView.css",
-      "desktop": "Client/src/allianceTargets/components/AllianceTargetsView.css"
     }
   ],
-  "unmirrored": [
-    {
-      "portal": "src/commandCenter/components/AutoBirdCycles.tsx",
-      "desktop": "Client/src/components/AutoBirdCycles.tsx",
-      "reason": "CIT-69 preserves desktop localization and the portal birdCastleControls release gate."
-    },
-    {
-      "portal": "tests/gate/adapter.ts",
-      "desktop": "Client/tests/gate/adapter.ts",
-      "reason": "CIT-74 adapters bridge the sealed desktop fixture and portal preview servers while gate specs remain identical."
-    }
-  ]
+  "unmirrored": []
 }

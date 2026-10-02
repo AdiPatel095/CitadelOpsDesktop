@@ -265,7 +265,7 @@ export const FeatureScheduleModal: React.FC<FeatureScheduleModalProps> = ({
       cancelLabel="Close"
     >
       <div className="scheduler-modal-shell">
-        {saveError && <p className="mb-3 text-caption text-error">{saveError}</p>}
+        {saveError && <p className="mb-3 text-xs text-error">{saveError}</p>}
         <WeeklyScheduler
           value={selectedSchedule}
           onChange={handleScheduleChange}

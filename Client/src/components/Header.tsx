@@ -1,34 +1,547 @@
-import { Lock, Unlock, Menu } from 'lucide-react';
+import { useLocale as useStaticLocale } from "../i18n/LocaleContext";
+import { LocalizedText } from "../i18n/LocalizedText";
+import { useLocale } from '../i18n/LocaleContext';
+import React, { useEffect, useMemo, useState } from 'react';
+import { Bird, Lock, Menu, Radio, Settings, Shield, Trash2, Unlock } from 'lucide-react';
+import { useCitadelAPI } from '../api/ApiContext';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
-import { useLocale } from '../i18n/LocaleContext';
-import { HostedHeaderChromeSlot } from '../config/HostedChrome';
-import { Button } from './ui';
+import AutoBirdHoverPopover from './AutoBirdHoverPopover';
+import AutoStationHoverPopover from './AutoStationHoverPopover';
+import { stationHeaderPill } from './stationHeaderPill';
+import { AutomationFeatureFeedback } from './AutomationFeatureFeedback';
 import CastleFocusSwitcher from './CastleFocusSwitcher';
-import { StatusCluster } from './header/StatusCluster';
-import { useHeaderStatus } from './header/useHeaderStatus';
+import DailyAttackTracker from './DailyAttackTracker';
+import { Notifications } from './Notifications';
+import { Button } from './ui';
+
+function formatNextBirdIn(msLeft: number): string {
+  if (msLeft <= 0) return 'due now';
+  const totalM = Math.ceil(msLeft / 60000);
+  const h = Math.floor(totalM / 60);
+  const m = totalM % 60;
+  if (h > 0 && m > 0) return `${h}h ${m}m`;
+  if (h > 0) return `${h}h`;
+  return `${Math.max(1, m)}m`;
+}
+
+function formatConnectionSeconds(seconds: number): string {
+  if (seconds < 60) return `${seconds}s`;
+  const minutes = Math.floor(seconds / 60);
+  const remainder = seconds % 60;
+  return remainder > 0 ? `${minutes}m ${remainder}s` : `${minutes}m`;
+}
+
 interface HeaderProps {
-  onOpenAutoBirdSettings(): void; onOpenAutoStationSettings(): void;
-  onOpenAutomationDuration(featureKey: string, featureLabel: string): void;
-  onOpenNavigation(): void; navigationOpen: boolean;
+  onOpenAutoBirdSettings: () => void;
+  onOpenAutoStationSettings: () => void;
+  onOpenAutomationDuration: (featureKey: string, featureLabel: string) => void;
+  onOpenNavigation: () => void;
+  navigationOpen: boolean;
 }
-export default function Header({ onOpenNavigation, navigationOpen, ...actions }: HeaderProps) {
-  const { t } = useLocale(); const { theme } = useTheme();
-  const { botLocked, toggleBotLock, dashboardConnectionStatus, startGame, reconnectGame, gameConnectionState } = useAuth();
-  const surface = 'desktop';
-  const data = useHeaderStatus(surface);
-  return <header className="liquid-header"><div className="liquid-header-inner">
-    <Button variant="ghost" iconOnly className="liquid-mobile-nav-trigger" onClick={onOpenNavigation} aria-label={t('ui.components.header.aria-label.open.workspace.navigation.9df22e36')} aria-expanded={navigationOpen} aria-controls="workspace-navigation"><Menu aria-hidden="true" /></Button>
-    <div className="liquid-brand"><div className="liquid-brand-mark" data-brand-mark><img src={theme === 'light' ? '/logo-light.svg' : '/logo-dark.svg'} alt={t('ui.components.header.alt.citadel.ops.logo.ab367a3c')} width="28" height="28" /></div>
-      <div className="liquid-brand-copy"><div className="text-body-lg font-semibold">CitadelOps</div><div className="text-caption">{t('navigation.commandCenter')}</div></div>
-    </div>
-    <div className="liquid-castle-focus-slot"><CastleFocusSwitcher /></div>
-    <StatusCluster {...actions} surface={surface} data={data} />
-    <div className="liquid-header-controls">
-      {surface === 'desktop' && <Button variant="secondary" size="sm" className="header-lock" aria-label={botLocked ? t('bot.unlock') : t('bot.lock')} aria-pressed={botLocked} disabled={dashboardConnectionStatus !== 'Connected'} onClick={toggleBotLock} leftIcon={botLocked ? <Lock aria-hidden="true" /> : <Unlock aria-hidden="true" />}><span className="liquid-header-control-label">{botLocked ? t('bot.unlock') : t('bot.lock')}</span></Button>}
-      {surface === 'desktop' && data.gameReconnectAvailable && <Button variant="secondary" size="sm" className="header-wide-action" disabled={dashboardConnectionStatus !== 'Connected'} onClick={() => void reconnectGame()}>{t('bot.reconnect')}</Button>}
-      {surface === 'desktop' && !data.gameConnectionActive && <Button variant="primary" size="sm" className="header-wide-action" disabled={!data.connectionControlsReady} onClick={() => void startGame()}>{gameConnectionState === 'starting' ? t('bot.starting') : t('bot.start')}</Button>}
-      <HostedHeaderChromeSlot />
-    </div>
-  </div></header>;
-}
+
+const Header: React.FC<HeaderProps> = ({
+  onOpenAutoBirdSettings,
+  onOpenAutoStationSettings,
+  onOpenAutomationDuration,
+  onOpenNavigation,
+  navigationOpen,
+}) => {
+  const { t: localizeStatic } = useStaticLocale();
+  const { t, messageLocale, locale } = useLocale();
+  const { state, submitIntent } = useCitadelAPI();
+  const {
+    gameLoggedIn,
+    gameLoginCooldown,
+    gameLoginRetrySeconds,
+    gameConnectionState,
+    gameSocketConnected,
+    gameBrowserRunning,
+		gameBrowserName,
+    gameConnectionDetail,
+    dashboardConnectionStatus,
+    hasGameConnectionStatus,
+    startGame,
+    reconnectGame,
+    autoBirdEnabled,
+    autoBirdNextWakeUp,
+		autoBirdNextCastleName,
+		autoBirdCastleCycles,
+    toggleAutoBird,
+    autoStationEnabled,
+    autoStationState,
+    autoStationThreatCount,
+    autoStationNextImpact,
+    autoStationDetail,
+		toggleAutoStation,
+		botLocked,
+		toggleBotLock,
+		automationStates,
+		automationTimedUntilByKey,
+  } = useAuth();
+  const { theme } = useTheme();
+	const backgroundConnection = state?.session.mode === 'background';
+	const autoBirdStatus = automationStates.autoBird?.status ?? '';
+	const hasAutoBirdCycles = autoBirdCastleCycles.some((cycle) => cycle.nextCycleAtMs > 0 || !!cycle.pausedUntilMs);
+  const [clearingAutoBirdTracking, setClearingAutoBirdTracking] = useState(false);
+
+  const [nowTick, setNowTick] = useState(() => Date.now());
+  useEffect(() => {
+    if (!autoBirdEnabled && !hasAutoBirdCycles) return;
+    const id = window.setInterval(() => setNowTick(Date.now()), 30000);
+    return () => window.clearInterval(id);
+  }, [autoBirdEnabled, hasAutoBirdCycles]);
+
+  useEffect(() => {
+    if (!autoStationEnabled || !autoStationNextImpact) return;
+    const id = window.setInterval(() => setNowTick(Date.now()), 1000);
+    return () => window.clearInterval(id);
+  }, [autoStationEnabled, autoStationNextImpact]);
+
+  const autoBirdPill = useMemo(() => {
+    if (!autoBirdEnabled) {
+      return { on: false as const, text: 'Auto Bird off' };
+    }
+    if (!autoBirdNextWakeUp) {
+			switch (autoBirdStatus) {
+				case 'running':
+					return { on: true as const, text: 'Auto Bird sending…' };
+				case 'idle':
+					return { on: true as const, text: 'Auto Bird monitoring' };
+				case 'protected':
+					return { on: true as const, text: 'Auto Bird paused' };
+				case 'blocked':
+				case 'error':
+					return { on: true as const, text: 'Auto Bird needs attention' };
+				default:
+					return { on: true as const, text: 'Auto Bird checking…' };
+			}
+    }
+    const left = autoBirdNextWakeUp - nowTick;
+		const castle = autoBirdNextCastleName || 'Unknown castle';
+		return { on: true as const, text: `Next Bird: ${castle} · ${formatNextBirdIn(left)}` };
+	}, [autoBirdEnabled, autoBirdNextCastleName, autoBirdNextWakeUp, autoBirdStatus, nowTick]);
+
+	const autoBirdInteractionHint = automationTimedUntilByKey.auto_bird
+		? `Timed until ${new Date(automationTimedUntilByKey.auto_bird).toLocaleString(locale)}. Click toggles Auto Bird; right-click changes the duration.`
+		: gameLoggedIn
+			? 'Click toggles Auto Bird; right-click runs it for a duration.'
+			: 'Showing the last known cycles while disconnected. Right-click runs Auto Bird for a duration.';
+
+  const clearAutoBirdTracking = async () => {
+    if (clearingAutoBirdTracking) return;
+    if (!window.confirm(
+      'Clear all Auto Bird cycle tracking from CitadelOps memory? Settings, presets, Auto Station, and game movements will be kept. Auto Bird will rebuild tracking from current game state.',
+    )) return;
+    setClearingAutoBirdTracking(true);
+    try {
+      await submitIntent('auto_bird.clear_tracking', {}, { actor: 'ui:auto-bird' });
+      Notifications.success('Auto Bird tracking reset requested.');
+    } catch {
+      // The API context already presents the server error.
+    } finally {
+      setClearingAutoBirdTracking(false);
+    }
+  };
+
+  const autoStationPill = useMemo(() => stationHeaderPill({
+    enabled: autoStationEnabled,
+    status: autoStationState,
+    threatCount: autoStationThreatCount,
+    nextImpact: autoStationNextImpact,
+    now: nowTick,
+    stationName: t('automationPopover.station.title'),
+    blockedLabel: t('runtimeState.phase', { phase: 'blocked' }),
+  }), [autoStationEnabled, autoStationNextImpact, autoStationState, autoStationThreatCount, nowTick, t]);
+
+  const connectionPill = useMemo(() => {
+    if (dashboardConnectionStatus !== 'Connected') {
+      return {
+        tone: 'warning' as const,
+        pulse: true,
+        label: dashboardConnectionStatus === 'Connecting' ? t('copy.connecting') : t('copy.reconnecting'),
+        title: 'Game connection status is unavailable while the dashboard reconnects to CitadelOps.',
+      };
+    }
+    if (!hasGameConnectionStatus) {
+      return {
+        tone: 'warning' as const,
+        pulse: true,
+        label: 'Checking game status…',
+        title: 'Dashboard connected; waiting for the current game WebSocket status.',
+      };
+    }
+
+    switch (gameConnectionState) {
+      case 'connected':
+        return {
+          tone: gameLoggedIn ? 'success' as const : 'warning' as const,
+          pulse: true,
+          label: gameLoggedIn ? 'Game connected' : 'Checking game status…',
+          title: gameSocketConnected
+            ? 'Game WebSocket is open and the game login is confirmed.'
+            : 'Game login was reported, but the WebSocket is not currently open.',
+        };
+      case 'starting':
+        return {
+          tone: 'warning' as const,
+          pulse: true,
+          label: 'Starting game…',
+			title: backgroundConnection
+				? 'The direct background game connection is starting.'
+				: `${gameBrowserName} is starting and loading the game client.`,
+        };
+      case 'reconnecting':
+        return {
+          tone: 'warning' as const,
+          pulse: true,
+          label: backgroundConnection ? 'Reconnecting game…' : 'Reloading game…',
+          title: backgroundConnection
+				? 'CitadelOps is reconnecting directly to the game server.'
+				: 'The game tab is reloading to establish a fresh WebSocket.',
+        };
+      case 'connecting':
+        return {
+          tone: 'warning' as const,
+          pulse: true,
+          label: t('copy.connectingGame'),
+          title: 'The game WebSocket handshake is in progress.',
+        };
+      case 'authenticating':
+        return {
+          tone: 'warning' as const,
+          pulse: true,
+          label: t('copy.loggingIn'),
+          title: 'Game WebSocket is open; waiting for the game login to complete.',
+        };
+      case 'cooldown':
+        return {
+          tone: 'warning' as const,
+          pulse: true,
+          label: gameLoginCooldown > 0
+            ? `Login cooldown (${formatConnectionSeconds(gameLoginCooldown)})`
+            : gameLoginRetrySeconds > 0
+              ? `Retrying in ${formatConnectionSeconds(gameLoginRetrySeconds)}`
+              : 'Retrying login…',
+          title: gameConnectionDetail || 'The game server requested a login cooldown; CitadelOps will retry automatically.',
+        };
+      case 'suspended':
+        return {
+          tone: 'error' as const,
+          pulse: false,
+          label: gameLoginRetrySeconds > 0
+            ? `Account suspended (resumes in ${formatConnectionSeconds(gameLoginRetrySeconds)})`
+            : 'Account suspended',
+          title: gameConnectionDetail || 'The game reported the account as suspended; CitadelOps resumes automatically when the suspension ends.',
+        };
+      case 'released':
+        return {
+          tone: 'warning' as const,
+          pulse: false,
+          label: gameLoginRetrySeconds > 0
+            ? `Session released (retry in ${formatConnectionSeconds(gameLoginRetrySeconds)})`
+            : 'Session released',
+          title: gameConnectionDetail || 'The game session was released until the retry time; use Reconnect to try now.',
+        };
+      case 'error':
+        return {
+          tone: 'error' as const,
+          pulse: false,
+          label: 'Connection error',
+          title: gameConnectionDetail || 'The game connection failed. Start the bot to retry.',
+        };
+      case 'stopped':
+        return {
+          tone: 'error' as const,
+          pulse: false,
+          label: 'Game stopped',
+			title: backgroundConnection
+				? 'The direct background game connection is stopped.'
+				: gameBrowserRunning
+				? `The ${gameBrowserName} session is stopping.`
+				: 'The game browser and WebSocket are stopped.',
+        };
+      default:
+        return {
+          tone: 'error' as const,
+          pulse: gameLoginRetrySeconds > 0,
+          label: gameLoginRetrySeconds > 0
+            ? `Retrying in ${formatConnectionSeconds(gameLoginRetrySeconds)}`
+            : 'Game disconnected',
+          title: gameConnectionDetail || (gameLoginRetrySeconds > 0
+			? backgroundConnection
+				? 'CitadelOps will reconnect directly and retry the saved login automatically.'
+				: 'CitadelOps will reload the game and retry the saved login automatically.'
+            : 'No active game WebSocket is available.'),
+        };
+    }
+  }, [
+    t,
+		backgroundConnection,
+    dashboardConnectionStatus,
+    gameBrowserRunning,
+		gameBrowserName,
+    gameConnectionDetail,
+    gameConnectionState,
+    gameLoggedIn,
+    gameLoginCooldown,
+    gameLoginRetrySeconds,
+    gameSocketConnected,
+    hasGameConnectionStatus,
+  ]);
+
+  const connectionIconClass = connectionPill.tone === 'success'
+    ? 'liquid-header-connection-success'
+    : connectionPill.tone === 'warning'
+      ? 'liquid-header-connection-warning'
+      : 'liquid-header-connection-danger';
+  const desktopConnectionToneClass = connectionPill.tone === 'success'
+    ? 'm3-status-chip-success text-success'
+    : connectionPill.tone === 'warning'
+      ? 'm3-status-chip-warning text-warning'
+      : 'm3-status-chip-danger text-error';
+  const desktopConnectionDotClass = connectionPill.tone === 'success'
+    ? 'bg-success shadow-success/50'
+    : connectionPill.tone === 'warning'
+      ? 'bg-warning shadow-warning/50'
+      : 'bg-error shadow-error/50';
+  const gameConnectionActive = hasGameConnectionStatus && (
+    gameConnectionState === 'connecting' ||
+    gameConnectionState === 'authenticating' ||
+    gameConnectionState === 'connected' ||
+    gameConnectionState === 'cooldown' ||
+    gameConnectionState === 'reconnecting' ||
+    gameConnectionState === 'suspended' ||
+    gameConnectionState === 'released'
+  );
+  // While the runtime is waiting to reconnect on its own (relog delay,
+  // cooldown, suspension) or has released the session, the user can force an
+  // early retry instead of waiting out the timer.
+  const gameReconnectAvailable = hasGameConnectionStatus && (
+    gameConnectionState === 'cooldown' ||
+    gameConnectionState === 'reconnecting' ||
+    gameConnectionState === 'suspended' ||
+    gameConnectionState === 'released'
+  );
+  const connectionControlsReady =
+    dashboardConnectionStatus === 'Connected' &&
+    hasGameConnectionStatus &&
+    gameConnectionState !== 'starting';
+  return (
+    <header className="liquid-header transition-colors duration-300">
+      <div className="liquid-header-inner relative z-10">
+        <button
+          type="button"
+          className="liquid-mobile-nav-trigger"
+          onClick={onOpenNavigation}
+          aria-label={localizeStatic("ui.components.header.aria-label.open.workspace.navigation.9df22e36")}
+          aria-expanded={navigationOpen}
+          aria-controls="workspace-navigation"
+        >
+          <Menu className="h-5 w-5" />
+        </button>
+
+        {/* Left: Logo, Title */}
+        <div className="liquid-brand">
+          <div className="liquid-brand-mark">
+            <img
+              src={theme === 'light' ? '/logo-light.svg' : '/logo-dark.svg'}
+              alt={localizeStatic("ui.components.header.alt.citadel.ops.logo.ab367a3c")}
+              className="w-7 h-7 drop-shadow-[0_0_10px_var(--primary-glow)] transition-all duration-300"
+            />
+          </div>
+          <div className="liquid-brand-copy">
+            <div className="text-lg font-bold leading-tight text-text-main">CitadelOps</div>
+            <div className="text-[11px] font-medium leading-tight text-text-muted"><LocalizedText messageKey="navigation.commandCenter" /></div>
+          </div>
+          <span
+            className={`liquid-header-connection ${connectionIconClass} ${connectionPill.pulse ? 'liquid-header-connection-pulse' : ''}`}
+            role="status"
+            aria-label={connectionPill.label}
+            title={`${connectionPill.label}. ${connectionPill.title}`}
+          >
+            <Radio className="h-4 w-4" aria-hidden="true" />
+          </span>
+        </div>
+
+        {/* Center: Status Indicators */}
+        <div className="liquid-header-status-strip custom-scrollbar">
+          <div className="liquid-castle-focus-slot flex min-w-0 items-center gap-2">
+            <CastleFocusSwitcher />
+          </div>
+          <div className="liquid-status-dock" role="group" aria-label={localizeStatic("ui.components.header.aria-label.daily.attacks.and.automation.status.1f099931")}>
+            <DailyAttackTracker />
+
+            <div
+              className={`m3-status-chip liquid-desktop-connection-pill ${desktopConnectionToneClass}`}
+              title={connectionPill.title}
+              aria-live="polite"
+            >
+              <span className={`liquid-desktop-connection-dot ${connectionPill.pulse ? 'animate-pulse' : ''} ${desktopConnectionDotClass}`} aria-hidden="true" />
+              <span className="liquid-desktop-status-text">{connectionPill.label}</span>
+            </div>
+
+            <div className={`liquid-status-dock-item liquid-status-dock-action-group liquid-header-automation-pill ${autoBirdPill.on ? 'liquid-status-dock-item-success' : 'liquid-status-dock-item-muted'}`}>
+              <AutoBirdHoverPopover
+                cycles={autoBirdCastleCycles}
+                canControl={dashboardConnectionStatus === 'Connected'}
+                enabled={autoBirdEnabled}
+                now={nowTick}
+                hint={autoBirdInteractionHint}
+                feedback={<AutomationFeatureFeedback featureId="autoBird" enabled={autoBirdEnabled} onOpenSettings={onOpenAutoBirdSettings} compact />}
+              >
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => toggleAutoBird()}
+                  onContextMenu={(event) => {
+                    event.preventDefault();
+                    onOpenAutomationDuration('auto_bird', 'Auto Bird');
+                  }}
+                  className="liquid-status-dock-main liquid-status-dock-icon-button liquid-auto-bird-button"
+                  aria-label={`${autoBirdPill.text}. Hover for every castle cycle.`}
+                >
+                  <span className="liquid-status-dock-icon liquid-mobile-status-icon" aria-hidden="true">
+                    <Bird className="h-4 w-4" />
+                    <span className={`liquid-status-dock-dot ${autoBirdPill.on ? 'bg-success animate-pulse' : 'bg-text-muted'}`} />
+                  </span>
+                  <span className={`liquid-desktop-status-dot ${autoBirdPill.on ? 'bg-success animate-pulse' : 'bg-text-muted'}`} aria-hidden="true" />
+                  <span className="liquid-desktop-status-text">{autoBirdPill.text}</span>
+                </Button>
+              </AutoBirdHoverPopover>
+              <span className="liquid-status-dock-utilities">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  disabled={clearingAutoBirdTracking}
+                  onClick={() => void clearAutoBirdTracking()}
+                  className="liquid-status-dock-utility text-text-muted hover:text-error"
+                  title={localizeStatic("ui.components.header.title.clear.auto.bird.cycle.tracking.from.citadelops.cddc50b5")}
+                  aria-label={localizeStatic("ui.components.header.aria-label.clear.auto.bird.cycle.tracking.4813b36e")}
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={onOpenAutoBirdSettings}
+                  className="liquid-status-dock-utility"
+                  title={localizeStatic("ui.components.header.title.auto.bird.settings.158a0a4f")}
+                  aria-label={localizeStatic("ui.components.header.aria-label.open.auto.bird.settings.787f04dc")}
+                >
+                  <Settings className="h-4 w-4" />
+                </Button>
+              </span>
+            </div>
+
+            <div className={`liquid-status-dock-item liquid-status-dock-action-group liquid-header-automation-pill ${
+              autoStationPill.tone === 'on'
+                ? 'liquid-status-dock-item-success'
+                : autoStationPill.tone === 'warning'
+                  ? 'liquid-status-dock-item-warning'
+                  : autoStationPill.tone === 'error'
+                    ? 'liquid-status-dock-item-danger'
+                    : 'liquid-status-dock-item-muted'
+            }`}>
+              <AutoStationHoverPopover feedback={<AutomationFeatureFeedback featureId="autoStation" enabled={autoStationEnabled} onOpenSettings={onOpenAutoStationSettings} compact />}>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={toggleAutoStation}
+                onContextMenu={(event) => {
+                  event.preventDefault();
+                  onOpenAutomationDuration('auto_station', 'Auto Station');
+                }}
+                className="liquid-status-dock-main liquid-status-dock-icon-button liquid-auto-bird-button"
+                aria-label={autoStationPill.text}
+                title={automationTimedUntilByKey.auto_station
+                  ? `Timed until ${new Date(automationTimedUntilByKey.auto_station).toLocaleString(locale)}. Right-click to change the duration.`
+                  : `${autoStationDetail || 'Click to turn Auto Station on or off'}. Right-click to run it for a duration.`}
+              >
+                <span className="liquid-status-dock-icon liquid-mobile-status-icon" aria-hidden="true">
+                  <Shield className="h-4 w-4" />
+                  <span className={`liquid-status-dock-dot ${
+                    autoStationPill.tone === 'on'
+                      ? 'bg-success animate-pulse'
+                      : autoStationPill.tone === 'warning'
+                        ? 'bg-warning animate-pulse'
+                        : autoStationPill.tone === 'error'
+                          ? 'bg-error'
+                          : 'bg-text-muted'
+                  }`} />
+                </span>
+                <Shield className="liquid-desktop-status-icon h-4 w-4" aria-hidden="true" />
+                <span className="liquid-desktop-status-text">{autoStationPill.text}</span>
+              </Button>
+              </AutoStationHoverPopover>
+              <span className="liquid-status-dock-utilities">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={onOpenAutoStationSettings}
+                  className="liquid-status-dock-utility"
+                  title={localizeStatic("ui.components.header.title.auto.station.settings.eb56c8a6")}
+                  aria-label={localizeStatic("ui.components.header.aria-label.open.auto.station.settings.afad0824")}
+                >
+                  <Settings className="h-4 w-4" />
+                </Button>
+              </span>
+            </div>
+          </div>
+
+        </div>
+
+        {/* Right: bot controls */}
+        <div className="liquid-header-controls">
+			<Button
+				variant={botLocked ? 'danger' : 'outline'}
+				size="sm"
+				onClick={toggleBotLock}
+				disabled={dashboardConnectionStatus !== 'Connected'}
+				aria-pressed={botLocked}
+				title={botLocked
+					? 'Automation and scheduled game actions are locked. Click to resume them.'
+					: 'Automation is allowed to control the game. Click to lock all automated actions.'}
+				className="uppercase text-[11px]"
+				leftIcon={botLocked ? <Lock className="h-3.5 w-3.5" /> : <Unlock className="h-3.5 w-3.5" />}
+			>
+				<span lang={messageLocale} className="liquid-header-control-label">{botLocked ? t('bot.unlock') : t('bot.lock')}</span>
+			</Button>
+          {gameReconnectAvailable && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => reconnectGame()}
+              disabled={dashboardConnectionStatus !== 'Connected'}
+              title={gameConnectionState === 'cooldown'
+                ? 'Retry the game login now. The game may answer with another cooldown if its timer has not elapsed.'
+                : gameConnectionState === 'suspended'
+                  ? 'Retry the game login now. A suspended account will be refused until the suspension ends.'
+                  : 'Reconnect to the game now instead of waiting for the retry timer'}
+              className="uppercase text-[11px]"
+            >
+              <span lang={messageLocale} className="liquid-header-control-label">{t('bot.reconnect')}</span>
+            </Button>
+          )}
+          {!gameConnectionActive && (
+            <Button
+              variant="primary"
+              size="sm"
+              onClick={() => startGame()}
+              disabled={!connectionControlsReady}
+              title={connectionControlsReady ? 'Start or retry the game connection' : 'Waiting for current connection status'}
+              className="uppercase text-[11px]"
+              leftIcon={<div className="w-1.5 h-1.5 rounded-full bg-white shadow-[0_0_8px] shadow-white/80" />}
+            >
+              <span lang={messageLocale} className="liquid-header-control-label">
+                {gameConnectionState === 'starting' ? t('bot.starting') : t('bot.start')}
+              </span>
+            </Button>
+          )}
+        </div>
+      </div>
+    </header>
+  );
+};
+
+export default Header;

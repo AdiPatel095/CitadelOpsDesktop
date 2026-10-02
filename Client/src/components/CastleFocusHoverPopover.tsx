@@ -114,7 +114,7 @@ const CastleFocusHoverPopover: React.FC<Props> = ({
 
   const tooltipInner = heading ? (
     <>
-      <div className="mb-1.5 shrink-0 font-bold text-text-muted">{heading}</div>
+      <div className="mb-1.5 shrink-0 font-bold uppercase tracking-wide text-text-muted">{heading}</div>
       <ul
         className={`m-0 list-none space-y-1.5 overflow-y-auto p-0 pr-1 marker:hidden [scrollbar-gutter:stable] ${
           expandToViewport ? 'min-h-0 flex-1' : 'max-h-[min(70vh,28rem)]'
@@ -149,7 +149,7 @@ const CastleFocusHoverPopover: React.FC<Props> = ({
           maxHeight: panelGeom.maxHeight,
           zIndex: TOOLTIP_Z,
         }}
-        className="pointer-events-auto flex w-max max-w-[calc(100vw-2rem)] min-w-[10rem] flex-col rounded-global border border-border-base bg-bg-card px-3 py-2 text-left text-caption text-text-main shadow-xl shadow-black/20"
+        className="pointer-events-auto flex w-max max-w-[calc(100vw-2rem)] min-w-[10rem] flex-col rounded-global border border-border-base bg-bg-card px-3 py-2 text-left text-xs text-text-main shadow-xl shadow-black/20"
       >
         {tooltipInner}
       </div>,
@@ -179,7 +179,7 @@ const CastleFocusHoverPopover: React.FC<Props> = ({
       <span className="group inline-flex max-w-full cursor-help" aria-label={ariaLabel}>
         {children}
         <span
-          className={`pointer-events-none absolute top-full z-[300] mt-1.5 ${alignClass} w-max max-w-[min(100vw-2rem,20rem)] rounded-global border border-border-base bg-bg-card px-3 py-2 text-left text-caption text-text-main shadow-xl opacity-0 shadow-black/20 transition-opacity duration-150 group-hover:opacity-100 group-focus-within:opacity-100`}
+          className={`pointer-events-none absolute top-full z-[300] mt-1.5 ${alignClass} w-max max-w-[min(100vw-2rem,20rem)] rounded-global border border-border-base bg-bg-card px-3 py-2 text-left text-xs text-text-main shadow-xl opacity-0 shadow-black/20 transition-opacity duration-150 group-hover:opacity-100 group-focus-within:opacity-100`}
           role="tooltip"
         >
           {tooltipInner}

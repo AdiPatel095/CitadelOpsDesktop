@@ -53,8 +53,8 @@ export function LocaleProvider({children}: {children: React.ReactNode}) {
     return () => { active = false; };
   },[locale,connection]);
   useEffect(() => {
-    // The root follows the viewer; translated components retain their own language marks.
-    document.documentElement.lang = locale;
+    // Unconverted page content remains English; converted components mark their own language.
+    document.documentElement.lang = 'en';
     document.documentElement.dataset.viewerLocale = locale;
     document.documentElement.dir = locale === 'ar' ? 'rtl' : 'ltr';
   },[locale]);

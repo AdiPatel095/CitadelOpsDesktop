@@ -356,27 +356,27 @@ export const AutoTCISettingsModal: React.FC<AutoTCISettingsModalProps> = ({ isOp
     incLabel: string,
   ) => (
     <div className="flex flex-col items-center gap-1">
-      <span className="text-caption font-semibold text-text-muted">{label}</span>
+      <span className="text-[10px] font-bold uppercase tracking-wider text-text-muted">{label}</span>
       <div className="flex items-center gap-1">
-        <Button iconOnly variant="ghost"
+        <button
           type="button"
-          className="flex items-center justify-center"
+          className="flex h-8 w-8 items-center justify-center rounded-lg border border-border-base bg-bg-app text-text-main hover:bg-bg-card-hover disabled:opacity-40"
           disabled={decDisabled}
           onClick={onDec}
           aria-label={decLabel}
         >
           <Minus className="h-4 w-4" />
-        </Button>
-        <span className="min-w-[32px] text-center font-mono text-body font-bold tabular-nums">{value}</span>
-        <Button iconOnly variant="ghost"
+        </button>
+        <span className="min-w-[32px] text-center font-mono text-sm font-bold tabular-nums">{value}</span>
+        <button
           type="button"
-          className="flex items-center justify-center"
+          className="flex h-8 w-8 items-center justify-center rounded-lg border border-border-base bg-bg-app text-text-main hover:bg-bg-card-hover disabled:opacity-40"
           disabled={incDisabled}
           onClick={onInc}
           aria-label={incLabel}
         >
           <Plus className="h-4 w-4" />
-        </Button>
+        </button>
       </div>
     </div>
   );
@@ -390,8 +390,8 @@ export const AutoTCISettingsModal: React.FC<AutoTCISettingsModalProps> = ({ isOp
       isOpen={isOpen}
       onClose={handleClose}
       maxWidth="full"
-      title={<span className="text-text-main"><LocalizedText messageKey="ui.settings.components.autoTCISettingsModal.auto.tci.settings.f9b867dd" /></span>}
-      icon={<Hammer className="h-5 w-5 text-text-muted" />}
+      title={<span className="text-amber-500"><LocalizedText messageKey="ui.settings.components.autoTCISettingsModal.auto.tci.settings.f9b867dd" /></span>}
+      icon={<Hammer className="h-5 w-5 text-amber-500" />}
       description={(
             <>
               Per castle, pick construction item variants and set a <span className="font-medium text-text-main"><LocalizedText messageKey="ui.settings.components.autoTCISettingsModal.level.floor.and.ceiling.484f7a16" /></span>{' '}
@@ -413,7 +413,7 @@ export const AutoTCISettingsModal: React.FC<AutoTCISettingsModalProps> = ({ isOp
       />
       <div className="auto-tci-settings-workspace custom-scrollbar mx-auto flex w-full flex-col gap-5 overflow-y-auto pb-4">
         {saveError && (
-          <div className="rounded-global border border-error/30 bg-error/10 px-4 py-3 text-body font-semibold text-error" role="alert">
+          <div className="rounded-global border border-error/30 bg-error/10 px-4 py-3 text-sm font-semibold text-error" role="alert">
             {saveError}
           </div>
         )}
@@ -455,19 +455,19 @@ export const AutoTCISettingsModal: React.FC<AutoTCISettingsModalProps> = ({ isOp
           const hasItems = castleItems.length > 0;
 
           return (
-            <Card key={castle.id} variant="solid" className="flex min-h-0 shrink-0 flex-col">
-              <CardHeader className="flex flex-row items-center justify-between rounded-t-[calc(var(--radius-global)-1px)]">
+            <Card key={castle.id} variant="solid" className="flex min-h-0 shrink-0 flex-col border-border-base bg-bg-app">
+              <CardHeader className="flex flex-row items-center justify-between rounded-t-[calc(var(--radius-global)-1px)] border-b border-border-base bg-bg-card-hover px-5 py-3.5">
                 <div className="flex items-center gap-3">
-                  <CardTitle className="text-body-lg text-text-main">{castle.name}</CardTitle>
+                  <CardTitle className="text-lg text-text-main">{castle.name}</CardTitle>
                   {hasItems && (
-                    <Badge variant="secondary">
+                    <Badge variant="primary">
                       {castleItems.length} item{castleItems.length !== 1 ? 's' : ''}
                     </Badge>
                   )}
                 </div>
               </CardHeader>
 
-              <CardContent className="">
+              <CardContent className="bg-bg-app/30 p-5">
                 {hasItems ? (
                   <div className="w-full">
                     <div className="flex flex-col gap-3">
@@ -489,21 +489,20 @@ export const AutoTCISettingsModal: React.FC<AutoTCISettingsModalProps> = ({ isOp
                             title={labelFor(item.id)}
                           >
                             <div className="min-w-0 flex-1">
-                              <div className="text-body font-semibold text-text-main" title={meta?.label}>
+                              <div className="text-sm font-bold leading-snug text-text-main" title={meta?.label}>
                                 {meta?.label ?? `TCI #${item.id}`}
                               </div>
                               {effectLine && (
-                                <div className="mt-1 text-caption text-text-main/85" title={effectLine}>
+                                <div className="mt-1 text-xs leading-relaxed text-text-main/85" title={effectLine}>
                                   {effectLine}
                                 </div>
                               )}
-                              <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-caption font-medium text-text-muted">
+                              <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[10px] font-medium uppercase tracking-wide text-text-muted">
                                 <span>{meta ? levelRangeLabel(meta) : '—'}</span>
                                 {meta?.category ? <span>· {meta.category}</span> : null}
                               </div>
                               <div
-                                dir="ltr"
-                                className="mt-1 font-mono text-caption text-text-muted/90"
+                                className="mt-1 font-mono text-[10px] leading-relaxed text-text-muted/90"
                                 title={meta ? formatGroupTiersLine(meta) : undefined}
                               >
                                 {meta ? formatGroupTiersLine(meta) : `#${item.id}`}
@@ -530,33 +529,33 @@ export const AutoTCISettingsModal: React.FC<AutoTCISettingsModalProps> = ({ isOp
                                 'Decrease level ceiling',
                                 'Increase level ceiling',
                               )}
-                              <Button variant="secondary"
+                              <button
                                 type="button"
                                 onClick={() => removeItem(castleId, item.id)}
-                                className="flex items-center gap-1.5"
+                                className="flex h-8 items-center gap-1.5 rounded-lg px-2 text-xs font-semibold text-error/90 hover:bg-error/10"
                               >
                                 <Trash2 className="h-3.5 w-3.5" />
                                 <LocalizedText messageKey="ui.settings.components.autoTCISettingsModal.remove.c3812fc4" />
-                              </Button>
+                              </button>
                             </div>
                           </div>
                         );
                       })}
                     </div>
-                    <Button variant="secondary"
+                    <button
                       type="button"
                       onClick={() => handleAddItem(castleId)}
-                      className="mt-4 flex w-full items-center justify-center gap-2 transition-colors"
+                      className="mt-4 flex w-full items-center justify-center gap-2 rounded-global border-2 border-dashed border-border-base py-3.5 text-sm font-medium text-text-muted transition-colors hover:border-primary hover:bg-primary/5 hover:text-primary"
                     >
                       <Plus className="h-4 w-4" />
                       <LocalizedText messageKey="ui.settings.components.autoTCISettingsModal.add.construction.item.095fa798" />
-                    </Button>
+                    </button>
                   </div>
                 ) : (
                   <div className="flex min-h-[10rem] flex-col items-center justify-center py-8">
-                    <div className="mb-3 text-center text-caption font-semibold text-text-muted">
+                    <div className="mb-3 text-center text-xs font-bold uppercase tracking-wider text-text-muted/60">
                       <LocalizedText messageKey="ui.settings.components.autoTCISettingsModal.no.construction.items.selected.0fef5a0b" /></div>
-                    <Button variant="secondary" size="md" onClick={() => handleAddItem(castleId)} leftIcon={<Plus className="h-4 w-4" />}>
+                    <Button variant="outline" size="sm" onClick={() => handleAddItem(castleId)} leftIcon={<Plus className="h-4 w-4" />}>
                       <LocalizedText messageKey="ui.settings.components.autoTCISettingsModal.add.construction.item.095fa798" /></Button>
                   </div>
                 )}

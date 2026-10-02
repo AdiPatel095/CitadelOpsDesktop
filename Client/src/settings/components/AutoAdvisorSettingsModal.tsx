@@ -1,4 +1,3 @@
-import { Trash2 } from 'lucide-react';
 import { StopFooter } from '../../components/StopControl';
 import { useLocale as useStaticLocale } from "../../i18n/LocaleContext";
 import { LocalizedText } from "../../i18n/LocalizedText";
@@ -207,7 +206,7 @@ export const AutoAdvisorSettingsModal: React.FC<AutoAdvisorSettingsModalProps> =
         isOpen={isOpen}
         onClose={() => { if (!saving && !activating) onClose(); }}
         maxWidth="3xl"
-        titleTrailing={<Button variant="secondary" size="md" className="shrink-0" onClick={() => setIsGuideOpen(true)} leftIcon={<BookOpen className="h-4 w-4" />}><span lang={advisorGuideLocale}>{advisorGuidePack.ui.guideButton}</span></Button>}
+        titleTrailing={<Button variant="outline" size="sm" className="shrink-0" onClick={() => setIsGuideOpen(true)} leftIcon={<BookOpen className="h-4 w-4" />}><span lang={advisorGuideLocale}>{advisorGuidePack.ui.guideButton}</span></Button>}
         title={localizeStatic("ui.settings.components.autoAdvisorSettingsModal.title.auto.advisor.3c6f5be4")}
         icon={<Bot className="h-5 w-5" />}
         description={localizeStatic("ui.settings.components.autoAdvisorSettingsModal.description.one.guarded.nomad.or.samurai.advisor.run.350d2486")}
@@ -223,30 +222,30 @@ export const AutoAdvisorSettingsModal: React.FC<AutoAdvisorSettingsModalProps> =
         />
         <div className="space-y-3">
           <SettingsSection disclosure={disclosure} section="access" className="space-y-3">
-          <Card variant="solid" className="">
+          <Card variant="solid" className="p-4">
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div>
-                <div className="flex flex-wrap items-center gap-2 text-body font-semibold text-text-main">
-                  <ShieldCheck className="h-4 w-4 text-text-muted" /> Advisor access
+                <div className="flex flex-wrap items-center gap-2 text-sm font-black text-text-main">
+                  <ShieldCheck className="h-4 w-4 text-primary" /> Advisor access
                   <Badge variant={advisorActive ? 'success' : activeEvent ? 'warning' : 'secondary'}>
                     {advisorActive ? `${eventLabel} unlocked` : activeEvent ? `${eventLabel} locked` : 'No supported event'}
                   </Badge>
                 </div>
-                <p className="mt-1 text-caption text-text-muted">
+                <p className="mt-1 text-xs text-text-muted">
                   <LocalizedText messageKey="ui.settings.components.autoAdvisorSettingsModal.saving.or.enabling.automation.never.consumes.a.efe08b01" /></p>
               </div>
               <div className="flex flex-wrap gap-2">
                 {advisorActive ? (
                   <Button
-                    variant="secondary"
-                    size="md"
+                    variant="outline"
+                    size="sm"
                     isLoading={refreshing}
                     onClick={() => void refreshOverview()}
                     leftIcon={<RefreshCw className="h-3.5 w-3.5" />}
                   >
                     <LocalizedText messageKey="ui.settings.components.autoAdvisorSettingsModal.refresh.overview.10ffdcf1" /></Button>
                 ) : (
-                  <Button leftIcon={<Trash2 aria-hidden="true" />} variant="danger" size="md" disabled={!canActivate} onClick={openActivation}>
+                  <Button variant="danger" size="sm" disabled={!canActivate} onClick={openActivation}>
                     <LocalizedText messageKey="ui.settings.components.autoAdvisorSettingsModal.activate.advisor.4259f0af" /></Button>
                 )}
               </div>
@@ -258,15 +257,15 @@ export const AutoAdvisorSettingsModal: React.FC<AutoAdvisorSettingsModalProps> =
                 <LiveValue label={localizeStatic("ui.settings.components.autoAdvisorSettingsModal.label.universal.tokens.2aa0cdfa")} value={universalTokens.toLocaleString()} />
               </div>
             ) : (
-              <p className="mt-3 border-t border-border-base pt-3 text-caption text-warning"><LocalizedText messageKey="ui.settings.components.autoAdvisorSettingsModal.a.running.nomad.or.samurai.event.is.9842edd2" /></p>
+              <p className="mt-3 border-t border-border-base pt-3 text-xs text-warning"><LocalizedText messageKey="ui.settings.components.autoAdvisorSettingsModal.a.running.nomad.or.samurai.event.is.9842edd2" /></p>
             )}
           </Card>
 
           {run || summaryObserved ? (
-            <Card variant="solid" className="">
+            <Card variant="solid" className="p-4">
               <div className="flex flex-wrap items-center justify-between gap-2">
-                <div className="text-body font-semibold text-text-main"><LocalizedText messageKey="ui.settings.components.autoAdvisorSettingsModal.live.advisor.run.94f3f4a1" /></div>
-                <Badge variant={run?.status === 'completed' ? 'success' : run?.status === 'cancelled' ? 'warning' : 'secondary'}>
+                <div className="text-sm font-black text-text-main"><LocalizedText messageKey="ui.settings.components.autoAdvisorSettingsModal.live.advisor.run.94f3f4a1" /></div>
+                <Badge variant={run?.status === 'running' ? 'primary' : run?.status === 'completed' ? 'success' : run?.status === 'cancelled' ? 'warning' : 'secondary'}>
                   {run?.status ?? 'Overview only'}
                 </Badge>
               </div>
@@ -277,17 +276,17 @@ export const AutoAdvisorSettingsModal: React.FC<AutoAdvisorSettingsModalProps> =
                 <LiveValue label={localizeStatic("ui.settings.components.autoAdvisorSettingsModal.label.tools.lost.69310ec8")} value={(summary?.toolsLost ?? 0).toLocaleString()} />
               </div>
               {run?.status === 'cancelled' ? (
-                <p className="mt-3 text-caption text-warning"><LocalizedText messageKey="ui.settings.components.autoAdvisorSettingsModal.the.game.accepted.mcm.for.this.chain.d4ba7807" /></p>
+                <p className="mt-3 text-xs text-warning"><LocalizedText messageKey="ui.settings.components.autoAdvisorSettingsModal.the.game.accepted.mcm.for.this.chain.d4ba7807" /></p>
               ) : null}
             </Card>
           ) : null}
 
           </SettingsSection>
           <SettingsSection disclosure={disclosure} section="setup" className="space-y-3">
-          <Card variant="solid" className="">
+          <Card variant="solid" className="p-4">
             <div className="grid gap-4 md:grid-cols-2">
               <label className="block">
-                <span className="mb-1.5 flex items-center gap-2 text-caption font-semibold text-text-muted"><Castle className="h-3.5 w-3.5" /> <LocalizedText messageKey="ui.settings.components.autoAdvisorSettingsModal.source.castle.86d5a48e" /></span>
+                <span className="mb-1.5 flex items-center gap-2 text-[10px] font-black uppercase tracking-wider text-text-muted"><Castle className="h-3.5 w-3.5" /> <LocalizedText messageKey="ui.settings.components.autoAdvisorSettingsModal.source.castle.86d5a48e" /></span>
                 <Select
                   value={draft.sourceCastleId > 0 ? String(draft.sourceCastleId) : ''}
                   onChange={(value) => setDraft((current) => ({ ...current, sourceCastleId: Number(value) || 0 }))}
@@ -297,7 +296,7 @@ export const AutoAdvisorSettingsModal: React.FC<AutoAdvisorSettingsModalProps> =
                 />
               </label>
               <label className="block">
-                <span className="mb-1.5 flex items-center gap-2 text-caption font-semibold text-text-muted"><Swords className="h-3.5 w-3.5" /> <LocalizedText messageKey="ui.settings.components.autoAdvisorSettingsModal.advisor.attack.preset.275e72e7" /></span>
+                <span className="mb-1.5 flex items-center gap-2 text-[10px] font-black uppercase tracking-wider text-text-muted"><Swords className="h-3.5 w-3.5" /> <LocalizedText messageKey="ui.settings.components.autoAdvisorSettingsModal.advisor.attack.preset.275e72e7" /></span>
                 <Select
                   value={draft.presetId}
                   onChange={(presetId) => setDraft((current) => ({ ...current, presetId }))}
@@ -310,24 +309,24 @@ export const AutoAdvisorSettingsModal: React.FC<AutoAdvisorSettingsModalProps> =
             </div>
             {presetSummary ? (
               <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-border-base pt-3">
-                <span className="mr-1 text-caption text-text-muted"><LocalizedText messageKey="ui.settings.components.autoAdvisorSettingsModal.reserved.for.every.requested.attack.97e17b4a" /></span>
+                <span className="mr-1 text-xs text-text-muted"><LocalizedText messageKey="ui.settings.components.autoAdvisorSettingsModal.reserved.for.every.requested.attack.97e17b4a" /></span>
                 <Badge variant="outline">{presetSummary.waves} waves</Badge>
                 <Badge variant="outline">{presetSummary.troops.toLocaleString()} troops</Badge>
                 <Badge variant="outline">{presetSummary.tools.toLocaleString()} tools</Badge>
               </div>
             ) : null}
             {selectedPreset?.app && selectedOwner ? (
-              <p className="mt-2 text-caption text-warning">
+              <p className="mt-2 text-[11px] text-warning">
                 <LocalizedText messageKey="attackPresets.createdByOther" params={{ module: `${localizeStatic(selectedOwner.moduleLabelKey)} · ${localizeStatic(selectedOwner.slotLabelKey)}` }} />
               </p>
             ) : null}
           </Card>
 
-          <Card variant="solid" className="">
+          <Card variant="solid" className="p-4">
             <div className="mb-3 flex items-start justify-between gap-3">
               <div>
-                <div className="text-body font-semibold text-text-main"><LocalizedText messageKey="ui.settings.components.autoAdvisorSettingsModal.automated.event.difficulty.51db43ea" /></div>
-                <p className="mt-1 text-caption text-text-muted"><LocalizedText messageKey="ui.settings.components.autoAdvisorSettingsModal.if.the.event.has.not.started.auto.6ef8b422" /></p>
+                <div className="text-sm font-black text-text-main"><LocalizedText messageKey="ui.settings.components.autoAdvisorSettingsModal.automated.event.difficulty.51db43ea" /></div>
+                <p className="mt-1 text-xs text-text-muted"><LocalizedText messageKey="ui.settings.components.autoAdvisorSettingsModal.if.the.event.has.not.started.auto.6ef8b422" /></p>
               </div>
               <Badge variant="outline">{achievementsObserved ? 'Achievements synced' : 'Syncing achievements'}</Badge>
             </div>
@@ -347,14 +346,14 @@ export const AutoAdvisorSettingsModal: React.FC<AutoAdvisorSettingsModalProps> =
                 onChange={(samuraiDifficultyId) => setDraft((current) => ({ ...current, samuraiDifficultyId }))}
               />
             </div>
-            {difficultyCatalog.loading ? <p className="mt-3 text-caption text-text-muted"><LocalizedText messageKey="ui.settings.components.autoAdvisorSettingsModal.loading.official.event.difficulties.8ddbd72d" /></p> : null}
-            {difficultyCatalog.error ? <p className="mt-3 text-caption text-danger">{difficultyCatalog.error}</p> : null}
+            {difficultyCatalog.loading ? <p className="mt-3 text-xs text-text-muted"><LocalizedText messageKey="ui.settings.components.autoAdvisorSettingsModal.loading.official.event.difficulties.8ddbd72d" /></p> : null}
+            {difficultyCatalog.error ? <p className="mt-3 text-xs text-danger">{difficultyCatalog.error}</p> : null}
           </Card>
 
           </SettingsSection>
           <SettingsSection disclosure={disclosure} section="gates">
-          <Card variant="solid" className="">
-            <div className="mb-3 flex items-center gap-2 text-body font-semibold text-text-main"><Coins className="h-4 w-4 text-text-muted" /> <LocalizedText messageKey="ui.settings.components.autoAdvisorSettingsModal.resource.gates.05c86e14" /></div>
+          <Card variant="solid" className="p-4">
+            <div className="mb-3 flex items-center gap-2 text-sm font-black text-text-main"><Coins className="h-4 w-4 text-primary" /> <LocalizedText messageKey="ui.settings.components.autoAdvisorSettingsModal.resource.gates.05c86e14" /></div>
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
               <NumberField label={localizeStatic("ui.settings.components.autoAdvisorSettingsModal.label.all.in.coins.attack.5e43c9f3")} value={draft.coinCostPerAttack} min={1} suffix="coins" onChange={(value) => setInteger('coinCostPerAttack', value, 1, Number.MAX_SAFE_INTEGER, 500)} />
               <NumberField label={localizeStatic("ui.settings.components.autoAdvisorSettingsModal.label.keep.coins.0f999c56")} value={draft.minimumCoinReserve} min={0} suffix="reserve" onChange={(value) => setInteger('minimumCoinReserve', value, 0, Number.MAX_SAFE_INTEGER, 0)} />
@@ -380,13 +379,13 @@ export const AutoAdvisorSettingsModal: React.FC<AutoAdvisorSettingsModalProps> =
                 />
               ))}
             </div>
-            <p className="mt-3 text-caption text-text-muted"><LocalizedText messageKey="ui.settings.components.autoAdvisorSettingsModal.the.coin.value.is.the.conservative.total.b41f8b67" /></p>
+            <p className="mt-3 text-[11px] text-text-muted"><LocalizedText messageKey="ui.settings.components.autoAdvisorSettingsModal.the.coin.value.is.the.conservative.total.b41f8b67" /></p>
           </Card>
 
           </SettingsSection>
           <SettingsSection disclosure={disclosure} section="run-sizing">
           <div>
-            <div className="mb-3 flex items-center gap-2 text-body font-semibold text-text-main"><Clock3 className="h-4 w-4 text-text-muted" /> <LocalizedText messageKey="ui.settings.components.autoAdvisorSettingsModal.run.sizing.878bd208" /></div>
+            <div className="mb-3 flex items-center gap-2 text-sm font-black text-text-main"><Clock3 className="h-4 w-4 text-primary" /> <LocalizedText messageKey="ui.settings.components.autoAdvisorSettingsModal.run.sizing.878bd208" /></div>
             <div className="grid gap-4 sm:grid-cols-2">
               <NumberField
                 label={localizeStatic("ui.settings.components.autoAdvisorSettingsModal.label.maximum.attacks.950045b9")}
@@ -405,7 +404,7 @@ export const AutoAdvisorSettingsModal: React.FC<AutoAdvisorSettingsModalProps> =
                 onChange={(value) => setInteger('minimumRemainingSec', Number(value) * 60, 0, 86400, 1800)}
               />
             </div>
-            <p className="mt-3 text-caption text-text-muted"><LocalizedText messageKey="ui.settings.components.autoAdvisorSettingsModal.the.emitted.aac.is.the.smallest.safe.d2c50f19" /></p>
+            <p className="mt-3 text-[11px] text-text-muted"><LocalizedText messageKey="ui.settings.components.autoAdvisorSettingsModal.the.emitted.aac.is.the.smallest.safe.d2c50f19" /></p>
           </div>
 
           </SettingsSection>
@@ -422,7 +421,7 @@ export const AutoAdvisorSettingsModal: React.FC<AutoAdvisorSettingsModalProps> =
             />
           </SettingsSection>
 
-          <p className="rounded-global border border-border-base bg-bg-app/40 px-4 py-3 text-caption text-text-muted">
+          <p className="rounded-global border border-border-base bg-bg-app/40 px-4 py-3 text-xs text-text-muted">
             <LocalizedText messageKey="ui.settings.components.autoAdvisorSettingsModal.auto.advisor.launches.only.after.the.game.17ba6105" /></p>
         </div>
       </SettingsModal>
@@ -435,7 +434,7 @@ export const AutoAdvisorSettingsModal: React.FC<AutoAdvisorSettingsModalProps> =
         footer={(
           <>
             <Button variant="ghost" disabled={activating} onClick={() => setActivationOpen(false)}><LocalizedText messageKey="game.cancel" /></Button>
-            <Button leftIcon={<Trash2 aria-hidden="true" />}
+            <Button
               variant="danger"
               isLoading={activating}
               disabled={!canActivate || !activationAcknowledged}
@@ -447,17 +446,17 @@ export const AutoAdvisorSettingsModal: React.FC<AutoAdvisorSettingsModalProps> =
         )}
       >
         <div className="space-y-4">
-          <p className="text-body text-text-main">
+          <p className="text-sm leading-relaxed text-text-main">
             {activeEvent?.advisorFree
               ? 'The game reports this activation as free for the current event.'
               : `This command can consume one paid ${eventLabel} advisor token or one universal advisor token. The game chooses the eligible token.`}
           </p>
-          <div className="rounded-global border border-warning/30 bg-warning/10 p-4 text-caption text-warning">
+          <div className="rounded-global border border-warning/30 bg-warning/10 p-4 text-xs leading-relaxed text-warning">
             <LocalizedText messageKey="ui.settings.components.autoAdvisorSettingsModal.activation.unlocks.advisor.attacks.for.the.rest.a0dbc075" /></div>
           <div className="flex items-start justify-between gap-4 rounded-global border border-border-base p-4">
             <div>
-              <div className="text-body font-semibold text-text-main"><LocalizedText messageKey="ui.settings.components.autoAdvisorSettingsModal.confirm.paid.feature.activation.d59424f4" /></div>
-              <p className="mt-1 text-caption text-text-muted">
+              <div className="text-sm font-bold text-text-main"><LocalizedText messageKey="ui.settings.components.autoAdvisorSettingsModal.confirm.paid.feature.activation.d59424f4" /></div>
+              <p className="mt-1 text-xs text-text-muted">
                 {activeEvent?.advisorFree
                   ? 'I understand this unlock may allow enabled automation to launch immediately.'
                   : 'I understand this action may consume an advisor token acquired through a real-money purchase.'}
@@ -474,8 +473,8 @@ export const AutoAdvisorSettingsModal: React.FC<AutoAdvisorSettingsModalProps> =
 
 const LiveValue: React.FC<{ label: string; value: string }> = ({ label, value }) => (
   <div className="rounded-xl border border-border-base bg-bg-app/45 p-3">
-    <div className="text-caption font-semibold text-text-muted">{label}</div>
-    <div className="mt-1 font-mono text-body font-semibold text-text-main">{value}</div>
+    <div className="text-[10px] font-black uppercase tracking-wider text-text-muted">{label}</div>
+    <div className="mt-1 font-mono text-sm font-bold text-text-main">{value}</div>
   </div>
 );
 
@@ -489,9 +488,9 @@ interface DifficultySelectProps {
 
 const DifficultySelect: React.FC<DifficultySelectProps> = ({ label, value, options, through, onChange }) => (
   <label className="block">
-    <span className="mb-1.5 flex items-center justify-between gap-2 text-caption font-semibold text-text-muted">
+    <span className="mb-1.5 flex items-center justify-between gap-2 text-[10px] font-black uppercase tracking-wider text-text-muted">
       {label}
-      <span className="normal-case text-text-main">Through {through}</span>
+      <span className="normal-case tracking-normal text-primary">Through {through}</span>
     </span>
     <Select
       value={value > 0 ? String(value) : ''}
@@ -514,14 +513,14 @@ interface NumberFieldProps {
 
 const NumberField: React.FC<NumberFieldProps> = ({ label, value, min, max, suffix, onChange }) => (
   <label className="block">
-    <span className="mb-1.5 block text-caption font-semibold text-text-muted">{label}</span>
+    <span className="mb-1.5 block text-[10px] font-black uppercase tracking-wider text-text-muted">{label}</span>
     <Input
       type="number"
       min={min}
       max={max}
       value={value}
       onChange={(event) => onChange(event.target.value)}
-      rightIcon={<span className="text-caption text-text-muted">{suffix}</span>}
+      rightIcon={<span className="text-[10px] text-text-muted">{suffix}</span>}
       className="font-mono"
     />
   </label>

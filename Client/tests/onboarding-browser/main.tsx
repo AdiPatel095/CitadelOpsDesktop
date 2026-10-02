@@ -2,6 +2,7 @@ import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import '../../src/index.css';
 import '../../src/MaterialExpressive.css';
+import '../../src/KingdomPalette.css';
 import './fixture.css';
 import { Dock, SIMULATION_BANNER } from './dock';
 import { FixtureServer } from './fixtureServer';
@@ -53,10 +54,6 @@ for (const seed of server.built.storage) {
 }
 
 installFixtureTransport(server);
-if (params.get('mockToast') === 'success') {
-  const { Notifications } = await import('../../src/components/Notifications');
-  Notifications.success('CIT-74 synthetic success notification');
-}
 
 const { setViewerLocale } = await import('../../src/i18n/viewerLocaleStore');
 const locale = params.get('locale') ?? file.locale ?? 'en';

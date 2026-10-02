@@ -78,10 +78,10 @@ const EventScoreCard: React.FC<EventScoreCardProps> = ({ live, event, onOpenRank
   return (
     <SectionCard
       variant="solid"
-      title={<bdi>{eventName}</bdi>}
+      title={eventName}
       description={localizeStatic("ui.dashboard.components.eventScoreCard.description.live.event.score.and.reward.progress.4a67ced7")}
-      titleClassName="truncate text-text-main"
-      descriptionClassName="font-bold"
+      titleClassName="truncate text-primary"
+      descriptionClassName="font-bold uppercase tracking-wider"
       headerClassName="feature-event-score-header flex-wrap gap-3"
       className="feature-event-score-card flex min-h-0 flex-col"
       actions={(
@@ -114,7 +114,7 @@ const EventScoreCard: React.FC<EventScoreCardProps> = ({ live, event, onOpenRank
             {event && onOpenRanking && canOpenRanking && (
               <Button
                 type="button"
-                variant="primary"
+                variant="solid"
                 size="sm"
                 leftIcon={<Trophy className="h-3.5 w-3.5" />}
                 isLoading={rankingLoading}
@@ -124,7 +124,7 @@ const EventScoreCard: React.FC<EventScoreCardProps> = ({ live, event, onOpenRank
               >
                 <LocalizedText messageKey="ui.dashboard.components.eventScoreCard.alliance.ranking.c47701bb" /></Button>
             )}
-            <span className={`rounded-full border px-2.5 py-1 text-caption font-semibold ${live ? 'border-success/30 bg-success/10 text-success' : 'border-border-light bg-bg-card/50 text-text-muted'}`}>
+            <span className={`rounded-full border px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider ${live ? 'border-success/30 bg-success/10 text-success' : 'border-border-light bg-bg-card/50 text-text-muted'}`}>
               {live ? 'Live' : 'Last known'}
             </span>
           </div>
@@ -133,25 +133,25 @@ const EventScoreCard: React.FC<EventScoreCardProps> = ({ live, event, onOpenRank
     >
         {!event ? (
           <div className="rounded-global border border-dashed border-border-light bg-bg-card/35 px-4 py-7 text-center">
-            <p className="text-body font-medium text-text-main"><LocalizedText messageKey="ui.dashboard.components.eventScoreCard.no.supported.event.is.active.a62481df" /></p>
-            <p className="mx-auto mt-2 max-w-xl text-caption text-text-muted"><LocalizedText messageKey="ui.dashboard.components.eventScoreCard.the.page.will.switch.automatically.when.a.29d21b18" /></p>
+            <p className="text-sm font-medium text-text-main"><LocalizedText messageKey="ui.dashboard.components.eventScoreCard.no.supported.event.is.active.a62481df" /></p>
+            <p className="mx-auto mt-2 max-w-xl text-xs text-text-muted"><LocalizedText messageKey="ui.dashboard.components.eventScoreCard.the.page.will.switch.automatically.when.a.29d21b18" /></p>
           </div>
         ) : (
           <div className="flex flex-col gap-4">
             <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-5">
-              <MetricTile label={localizeStatic("ui.dashboard.components.eventScoreCard.label.your.score.5f49fcc8")} value={event.playerScore} tone="brand" className="[&_.ui-metric-value]:truncate" />
-              <MetricTile label={localizeStatic("ui.dashboard.components.eventScoreCard.label.your.rank.dd60f006")} value={formatRank(event.playerRank)} className="[&_.ui-metric-value]:truncate" />
-              <MetricTile label={localizeStatic("ui.dashboard.components.eventScoreCard.label.alliance.score.ce090cd8")} value={event.allianceScore} className="[&_.ui-metric-value]:truncate" />
-              <MetricTile label={localizeStatic("ui.dashboard.components.eventScoreCard.label.alliance.rank.d0816adc")} value={formatRank(event.allianceRank)} className="[&_.ui-metric-value]:truncate" />
+              <MetricTile label={localizeStatic("ui.dashboard.components.eventScoreCard.label.your.score.5f49fcc8")} value={event.playerScore} tone="brand" className="border-border-light bg-bg-card/40 px-4 py-3 [&_.ui-metric-value]:truncate [&_.ui-metric-value]:text-xl" />
+              <MetricTile label={localizeStatic("ui.dashboard.components.eventScoreCard.label.your.rank.dd60f006")} value={formatRank(event.playerRank)} className="border-border-light bg-bg-card/40 px-4 py-3 [&_.ui-metric-value]:truncate [&_.ui-metric-value]:text-xl" />
+              <MetricTile label={localizeStatic("ui.dashboard.components.eventScoreCard.label.alliance.score.ce090cd8")} value={event.allianceScore} className="border-border-light bg-bg-card/40 px-4 py-3 [&_.ui-metric-value]:truncate [&_.ui-metric-value]:text-xl" />
+              <MetricTile label={localizeStatic("ui.dashboard.components.eventScoreCard.label.alliance.rank.d0816adc")} value={formatRank(event.allianceRank)} className="border-border-light bg-bg-card/40 px-4 py-3 [&_.ui-metric-value]:truncate [&_.ui-metric-value]:text-xl" />
               <MetricTile
                 label={localizeStatic("ui.dashboard.components.eventScoreCard.label.reward.pages.54812284")}
                 value={formatRewardPages(event.rewardPagesReached, event.rewardPagesTotal)}
                 tone="success"
                 caption={rewardPagesCaption(event)}
-                className="col-span-2 [&_.ui-metric-value]:truncate md:col-span-1"
+                className="col-span-2 border-border-light bg-bg-card/40 px-4 py-3 [&_.ui-metric-value]:truncate [&_.ui-metric-value]:text-xl md:col-span-1"
               />
             </div>
-            <div className="flex flex-wrap items-center gap-x-5 gap-y-2 border-t border-border-base/60 pt-3 text-caption text-text-muted">
+            <div className="flex flex-wrap items-center gap-x-5 gap-y-2 border-t border-border-base/60 pt-3 text-xs text-text-muted">
               <span>Difficulty: <strong className="font-semibold text-text-main">{difficulty}</strong></span>
               {remainingSec > 0 && <span>Ends in: <strong className="font-mono font-semibold tabular-nums text-text-main">{formatRemaining(remainingSec)}</strong></span>}
               {(event.leagueId ?? 0) > 0 && <span>League: <strong className="font-semibold text-text-main">{event.leagueId}</strong></span>}

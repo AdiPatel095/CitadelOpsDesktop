@@ -44,7 +44,7 @@ const RiftArrivalClock: React.FC<RiftArrivalClockProps> = ({ entry, offsetMinute
 
   if (minUnix == null || arriveAtUnix == null) {
     return (
-      <span className="text-caption text-text-muted whitespace-nowrap" title={localizeStatic("ui.rift.components.riftArrivalClock.title.complete.a.successful.feather.launch.to.unlock.e783a7a8")}>
+      <span className="text-xs text-text-muted whitespace-nowrap" title={localizeStatic("ui.rift.components.riftArrivalClock.title.complete.a.successful.feather.launch.to.unlock.e783a7a8")}>
         <LocalizedText messageKey="ui.rift.components.riftArrivalClock.no.tt.yet.52ed44fe" /></span>
     );
   }
@@ -54,10 +54,10 @@ const RiftArrivalClock: React.FC<RiftArrivalClockProps> = ({ entry, offsetMinute
   return (
     <div className="flex flex-col items-end gap-1">
       <div className="flex items-center gap-1">
-        <Button iconOnly
-          variant="ghost"
+        <Button
+          variant="outline"
           size="sm"
-
+          className="h-8 w-8 p-0"
           disabled={atEarliest}
           onClick={() => onOffsetChange(stepArrivalOffsetMinutes(offsetMinutes, -1))}
           title={atEarliest ? 'Already at earliest feather arrival' : '−1 min from earliest'}
@@ -65,12 +65,12 @@ const RiftArrivalClock: React.FC<RiftArrivalClockProps> = ({ entry, offsetMinute
         >
           <Minus className="h-3.5 w-3.5" />
         </Button>
-        <Button variant="secondary"
+        <button
           type="button"
           disabled={atEarliest}
           onClick={() => onOffsetChange(0)}
           aria-label={atEarliest ? 'Earliest Rift arrival selected' : 'Reset to earliest Rift arrival'}
-          className="flex min-w-[5.5rem] items-center justify-center gap-1 transition-colors"
+          className="flex min-w-[5.5rem] items-center justify-center gap-1 rounded-md border border-border-base bg-bg-card/60 px-2 py-1 text-sm text-text-main transition-colors enabled:hover:border-primary/50 enabled:hover:bg-primary/10 disabled:cursor-default"
           title={
             atEarliest
               ? `Earliest feather arrival (${formatLocalArrivalFromUnix(minUnix)}) · TT ${formatTravelDuration(entry.oneWayTTSeconds)}`
@@ -81,11 +81,11 @@ const RiftArrivalClock: React.FC<RiftArrivalClockProps> = ({ entry, offsetMinute
         >
           <Clock className="h-3.5 w-3.5 text-text-muted shrink-0" />
           <span className="font-mono">{formatLocalArrivalFromUnix(arriveAtUnix)}</span>
-        </Button>
-        <Button iconOnly
-          variant="ghost"
+        </button>
+        <Button
+          variant="outline"
           size="sm"
-
+          className="h-8 w-8 p-0"
           onClick={() => onOffsetChange(stepArrivalOffsetMinutes(offsetMinutes, 1))}
           title={localizeStatic("ui.rift.components.riftArrivalClock.title.1.min.after.earliest.minute.boundary.e4303f0b")}
           aria-label={localizeStatic("ui.rift.components.riftArrivalClock.aria-label.increase.offset.by.one.minute.983ca39a")}
@@ -93,7 +93,7 @@ const RiftArrivalClock: React.FC<RiftArrivalClockProps> = ({ entry, offsetMinute
           <Plus className="h-3.5 w-3.5" />
         </Button>
       </div>
-      <span className="text-caption text-text-muted">
+      <span className="text-[10px] text-text-muted">
         {atEarliest ? 'earliest feather arrival' : `+${offsetMinutes}m · click time to reset`}
       </span>
     </div>

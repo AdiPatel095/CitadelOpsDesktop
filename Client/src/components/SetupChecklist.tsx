@@ -46,7 +46,7 @@ const StepRow: React.FC<{
   const next = step.nextStep;
   return (
     <li
-      className="flex items-start gap-2 rounded-lg px-2 py-1.5 text-caption"
+      className="flex items-start gap-2 rounded-lg px-2 py-1.5 text-xs leading-relaxed"
       aria-current={current ? 'step' : undefined}
       data-checklist-step={step.id}
       data-step-state={step.state}
@@ -55,7 +55,7 @@ const StepRow: React.FC<{
       <div className="min-w-0 flex-1">
         <div className="flex flex-wrap items-baseline gap-x-2">
           <span className="font-bold text-text-main"><LocalizedText messageKey={STEP_NAME[step.id]} /></span>
-          <span className={`text-caption font-semibold ${TONE[step.state]}`}><LocalizedText messageKey="checklist.state" params={{ state: step.state }} /></span>
+          <span className={`text-[10px] font-black uppercase tracking-wide ${TONE[step.state]}`}><LocalizedText messageKey="checklist.state" params={{ state: step.state }} /></span>
         </div>
         <p className="text-text-muted"><LocalizedText messageKey={step.messageKey} params={step.params} /></p>
         {step.detail?.text ? (
@@ -64,12 +64,12 @@ const StepRow: React.FC<{
           <p className="text-text-main"><LocalizedText messageKey={step.detail.messageKey} params={step.detail.params} /></p>
         ) : null}
         {step.evidence.at && step.state !== 'todo' ? (
-          <p className="text-caption text-text-muted"><LocalizedText messageKey="checklist.evidenceAt" params={{ at: Date.parse(step.evidence.at) }} /></p>
+          <p className="text-[10px] text-text-muted"><LocalizedText messageKey="checklist.evidenceAt" params={{ at: Date.parse(step.evidence.at) }} /></p>
         ) : null}
       </div>
       {next && next.kind !== 'wait' && step.state !== 'done' ? (
         <Button
-          variant={current ? 'primary' : 'secondary'}
+          variant={current ? 'primary' : 'outline'}
           size="sm"
           className="shrink-0"
           onClick={() => {
@@ -120,9 +120,9 @@ export const SetupChecklist: React.FC<SetupChecklistProps> = ({ goal, collapsed,
     >
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
-          <div className="text-caption font-semibold text-text-muted"><LocalizedText messageKey="checklist.eyebrow" /></div>
-          <h2 id={`goal-title-${goal.id}`} className="text-title-sm font-bold text-text-main"><LocalizedText messageKey={goal.titleKey} /></h2>
-          <p className="mt-0.5 text-caption text-text-muted"><LocalizedText messageKey={goal.outcomeKey} /></p>
+          <div className="text-[10px] font-black uppercase tracking-wider text-text-muted"><LocalizedText messageKey="checklist.eyebrow" /></div>
+          <h2 id={`goal-title-${goal.id}`} className="text-base font-black text-text-main"><LocalizedText messageKey={goal.titleKey} /></h2>
+          <p className="mt-0.5 text-xs text-text-muted"><LocalizedText messageKey={goal.outcomeKey} /></p>
         </div>
         <div className="flex flex-wrap gap-2">
           <Button variant="ghost" size="sm" onClick={() => onSetCollapsed(!collapsed)} aria-expanded={!collapsed} aria-controls={`goal-steps-${goal.id}`} rightIcon={<ChevronDown className={`h-4 w-4 transition-transform ${collapsed ? '' : 'rotate-180'}`} aria-hidden="true" />}>
@@ -138,12 +138,12 @@ export const SetupChecklist: React.FC<SetupChecklistProps> = ({ goal, collapsed,
           ))}
         </ol>
         {checklist.complete ? (
-          <p className="text-caption font-semibold text-text-main" data-checklist-all-done><LocalizedText messageKey="checklist.allDone" /></p>
+          <p className="text-xs font-semibold text-text-main" data-checklist-all-done><LocalizedText messageKey="checklist.allDone" /></p>
         ) : null}
-        <p className="text-caption text-text-muted"><LocalizedText messageKey="checklist.notComplete" /></p>
+        <p className="text-[11px] text-text-muted"><LocalizedText messageKey="checklist.notComplete" /></p>
         <div className="flex flex-wrap gap-2 border-t border-border-base pt-3">
-          <Button variant="secondary" size="sm" onClick={() => onOpenEditor()}><LocalizedText messageKey="checklist.action.openEditor" /></Button>
-          <Button variant="secondary" size="sm" onClick={onChooseAnother}><LocalizedText messageKey="checklist.chooseAnother" /></Button>
+          <Button variant="outline" size="sm" onClick={() => onOpenEditor()}><LocalizedText messageKey="checklist.action.openEditor" /></Button>
+          <Button variant="outline" size="sm" onClick={onChooseAnother}><LocalizedText messageKey="checklist.chooseAnother" /></Button>
           <Button variant="ghost" size="sm" onClick={onDone}><LocalizedText messageKey="checklist.doneWithGoal" /></Button>
         </div>
       </div>

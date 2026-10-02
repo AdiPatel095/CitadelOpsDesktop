@@ -117,7 +117,7 @@ function StatusBadge({ status }: { status: CommanderActivity }) {
   const meta = STATUS_META[status];
   const Icon = meta.icon;
   return (
-    <Badge variant={meta.variant} className="gap-1.5 whitespace-nowrap normal-case">
+    <Badge variant={meta.variant} className="gap-1.5 whitespace-nowrap normal-case tracking-normal">
       <Icon className={`h-3.5 w-3.5 ${status === 'syncing' ? 'animate-spin' : ''}`} />
       {meta.label}
     </Badge>
@@ -252,8 +252,8 @@ const MovementView: React.FC = () => {
     <div className="data-view-render-stable flex flex-col gap-6">
       <StaleSessionBanner />
 
-      <Card className="">
-        <CardHeader className="flex-wrap gap-3">
+      <Card className="liquid-prominent-header-card">
+        <CardHeader className="liquid-card-header-prominent flex-wrap gap-3">
           <PillSelector
             ariaLabel={localizeStatic("ui.movement.components.movementView.ariaLabel.commander.workspace.mode.d48ff88d")}
             value={mode}
@@ -262,21 +262,21 @@ const MovementView: React.FC = () => {
             size="header"
           />
           <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2 max-[720px]:w-full max-[720px]:flex-none">
-            <CardTitle className="text-body-lg text-text-main">
+            <CardTitle className="text-lg text-primary">
               {mode === 'Live Movements' ? 'Commanders' : 'Function assignments'}
-              <span className="ml-2 text-body font-normal text-text-muted">({rows.length})</span>
+              <span className="ml-2 text-sm font-normal text-text-muted">({rows.length})</span>
             </CardTitle>
             {mode === 'Live Movements' ? <Badge variant={snapshotBadge.variant}>{snapshotBadge.label}</Badge> : null}
             {assignmentsDirty ? <Badge variant="warning"><LocalizedText messageKey="ui.movement.components.movementView.unsaved.6250d572" /></Badge> : null}
             {mode === 'Live Movements' && rows.length > 0 ? (
-              <span className="text-caption text-text-muted">{availableCount} available</span>
+              <span className="text-xs text-text-muted">{availableCount} available</span>
             ) : null}
-            {mode === 'Live Movements' ? <span className="text-caption text-text-muted"><LocalizedText messageKey="ui.movement.components.movementView.live.socket.updates.0f117e61" /></span> : null}
+            {mode === 'Live Movements' ? <span className="text-xs text-text-muted"><LocalizedText messageKey="ui.movement.components.movementView.live.socket.updates.0f117e61" /></span> : null}
           </div>
           {mode === 'Functions' ? (
             <Button
               variant="primary"
-              size="md"
+              size="sm"
               disabled={!assignmentsDirty}
               isLoading={savingAssignments}
               onClick={() => void saveCommanderFeatures()}
@@ -286,7 +286,7 @@ const MovementView: React.FC = () => {
           ) : null}
           <Button
             variant="secondary"
-            size="md"
+            size="sm"
             className="shrink-0"
             disabled={!gameLoggedIn}
             onClick={() => refreshMovement(true)}
@@ -296,30 +296,30 @@ const MovementView: React.FC = () => {
             <LocalizedText messageKey="common.refresh" />
           </Button>
         </CardHeader>
-        <CardContent className="">
+        <CardContent className="liquid-prominent-header-content">
           {mode === 'Functions' ? (
             <div className="flex flex-col gap-4">
               <div className="rounded-global border border-border-light bg-bg-card/45 px-4 py-3 shadow-[var(--shadow-raised)]">
-                <p className="text-body font-semibold text-text-main"><LocalizedText messageKey="ui.movement.components.movementView.choose.the.commanders.each.automation.may.launch.f4da00ff" /></p>
-                <p className="mt-1 text-caption text-text-muted">
+                <p className="text-sm font-semibold text-text-main"><LocalizedText messageKey="ui.movement.components.movementView.choose.the.commanders.each.automation.may.launch.f4da00ff" /></p>
+                <p className="mt-1 text-xs text-text-muted">
                   <LocalizedText messageKey="ui.movement.components.movementView.every.function.defaults.to.all.commanders.use.31dd9bc0" /></p>
               </div>
               {rows.length === 0 ? (
-                <p className="text-body text-text-muted">
+                <p className="text-sm text-text-muted">
                   {gameLoggedIn
                     ? 'Waiting for the commander roster.'
                     : 'No commander roster was saved for the last session.'}
                 </p>
               ) : (
                 <div className="overflow-x-auto rounded-global border border-border-light bg-bg-card/30 shadow-[var(--shadow-raised)] custom-scrollbar">
-                  <table className="min-w-[44rem] w-full text-body">
+                  <table className="min-w-[44rem] w-full text-sm">
                     <thead>
-                      <tr className="border-b border-border-light bg-bg-card/65 text-left text-caption text-text-muted">
+                      <tr className="border-b border-border-light bg-bg-card/65 text-left text-[10px] uppercase tracking-wider text-text-muted">
                         <th className="w-64 px-4 py-2.5 font-semibold"><LocalizedText messageKey="game.commander" /></th>
                         <th className="px-4 py-2.5 font-semibold">
                           <div className="flex flex-col gap-2">
                             <span><LocalizedText messageKey="ui.movement.components.movementView.functions.toggle.for.all.commanders.e2e2425b" /></span>
-                            <div className="flex flex-wrap gap-1.5 normal-case">
+                            <div className="flex flex-wrap gap-1.5 normal-case tracking-normal">
                               {COMMANDER_FEATURES.map((feature) => {
                                 const assignedCount = commanderIDsAssignedToFeature(
                                   featureAssignments,
@@ -337,10 +337,10 @@ const MovementView: React.FC = () => {
                                   state,
                                 ).length;
                                 return (
-                                  <Button variant="secondary"
+                                  <button
                                     key={feature.id}
                                     type="button"
-                                    className="transition-transform"
+                                    className="rounded-full transition-transform hover:-translate-y-0.5 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 disabled:pointer-events-none disabled:opacity-40"
                                     aria-pressed={allAssigned}
                                     aria-label={`${allAssigned ? 'Disable' : 'Enable'} ${feature.label} for all commanders`}
                                     aria-description={localizeStatic("ui.movement.components.movementView.aria-description.right.click.to.configure.an.equipped.bonus.845b6341")}
@@ -355,8 +355,8 @@ const MovementView: React.FC = () => {
                                       : 'Right-click to require an equipped bonus-troop stat'}
                                   >
                                     <Badge
-                                      variant={savingAssignments || noneAssigned ? 'outline' : allAssigned ? 'success' : 'warning'}
-                                      className="gap-1.5 cursor-pointer normal-case shadow-sm"
+                                      variant={allAssigned ? 'success' : noneAssigned ? 'danger' : 'warning'}
+                                      className="gap-1.5 cursor-pointer normal-case tracking-normal shadow-sm"
                                     >
                                       {allAssigned
                                         ? <CheckCircle2 className="h-3 w-3" />
@@ -371,7 +371,7 @@ const MovementView: React.FC = () => {
                                         </>
                                       ) : null}
                                     </Badge>
-                                  </Button>
+                                  </button>
                                 );
                               })}
                             </div>
@@ -395,14 +395,14 @@ const MovementView: React.FC = () => {
                           >
                             <td className="px-4 py-4 align-top">
                               <div className="flex items-center gap-3">
-                                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-border-base bg-bg-app text-caption font-semibold text-text-main">
+                                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-primary/25 bg-primary/10 text-xs font-black text-primary shadow-[0_0_14px_color-mix(in_srgb,var(--color-primary)_12%,transparent)]">
                                   {visiblePosition ?? '—'}
                                 </span>
                                 <div className="min-w-0">
                                   <div className="truncate font-semibold text-text-main">
                                     {row.name || `Commander ${row.commanderId}`}
                                   </div>
-                                  <div className="mt-0.5 font-mono text-caption text-text-muted">
+                                  <div className="mt-0.5 font-mono text-[11px] text-text-muted">
                                     LID {row.commanderId}
                                   </div>
                                 </div>
@@ -411,26 +411,30 @@ const MovementView: React.FC = () => {
                             <td className="px-4 py-4 align-top">
                               <div className="flex flex-wrap items-start gap-3">
                                 <div className="flex shrink-0 flex-wrap gap-2">
-                                  <Button variant="ghost"
+                                  <button
                                     type="button"
-                                    className="transition-transform"
+                                    className="rounded-full transition-transform hover:-translate-y-0.5 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 disabled:pointer-events-none disabled:opacity-40"
                                     disabled={savingAssignments || selectedFeatureCount === COMMANDER_FEATURES.length}
                                     onClick={() => setAllCommanderFeatures(row.commanderId, true)}
                                     aria-label={`Select all features for ${row.name || `commander ${row.commanderId}`}`}
                                   >
-                                    <CheckCircle2 className="h-3 w-3" />
-                                    <LocalizedText messageKey="ui.movement.components.movementView.select.all.1fc9a387" />
-                                  </Button>
-                                  <Button variant="ghost"
+                                    <Badge variant="primary" className="gap-1.5 cursor-pointer normal-case tracking-normal shadow-sm">
+                                      <CheckCircle2 className="h-3 w-3" />
+                                      <LocalizedText messageKey="ui.movement.components.movementView.select.all.1fc9a387" />
+                                    </Badge>
+                                  </button>
+                                  <button
                                     type="button"
-                                    className="transition-transform"
+                                    className="rounded-full transition-transform hover:-translate-y-0.5 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 disabled:pointer-events-none disabled:opacity-40"
                                     disabled={savingAssignments || selectedFeatureCount === 0}
                                     onClick={() => setAllCommanderFeatures(row.commanderId, false)}
                                     aria-label={`Unselect all features for ${row.name || `commander ${row.commanderId}`}`}
                                   >
-                                    <XCircle className="h-3 w-3" />
-                                    <LocalizedText messageKey="ui.movement.components.movementView.unselect.all.d60bf0bb" />
-                                  </Button>
+                                    <Badge variant="danger" className="gap-1.5 cursor-pointer normal-case tracking-normal shadow-sm">
+                                      <XCircle className="h-3 w-3" />
+                                      <LocalizedText messageKey="ui.movement.components.movementView.unselect.all.d60bf0bb" />
+                                    </Badge>
+                                  </button>
                                 </div>
                                 <div className="flex min-w-48 flex-1 flex-wrap gap-2 border-l border-border-base pl-3">
                                   {COMMANDER_FEATURES.map((feature) => {
@@ -446,10 +450,10 @@ const MovementView: React.FC = () => {
                                       state,
                                     );
                                     return (
-                                      <Button variant="secondary"
+                                      <button
                                         key={feature.id}
                                         type="button"
-                                        className="transition-transform"
+                                        className="rounded-full transition-transform hover:-translate-y-0.5 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 disabled:pointer-events-none disabled:opacity-40"
                                         aria-pressed={assigned}
                                         disabled={savingAssignments}
                                         onClick={() => toggleCommanderFeature(
@@ -463,8 +467,8 @@ const MovementView: React.FC = () => {
                                           : undefined}
                                       >
                                         <Badge
-                                          variant={savingAssignments || !assigned ? 'outline' : meetsRequirement ? 'success' : 'warning'}
-                                          className="gap-1.5 cursor-pointer normal-case shadow-sm"
+                                          variant={assigned ? meetsRequirement ? 'success' : 'warning' : 'danger'}
+                                          className="gap-1.5 cursor-pointer normal-case tracking-normal shadow-sm"
                                         >
                                           {assigned && meetsRequirement
                                             ? <CheckCircle2 className="h-3 w-3" />
@@ -473,7 +477,7 @@ const MovementView: React.FC = () => {
                                               : <XCircle className="h-3 w-3" />}
                                           {feature.label}
                                         </Badge>
-                                      </Button>
+                                      </button>
                                     );
                                   })}
                                 </div>
@@ -488,16 +492,16 @@ const MovementView: React.FC = () => {
               )}
             </div>
           ) : rows.length === 0 ? (
-            <p className="text-body text-text-muted">
+            <p className="text-sm text-text-muted">
               {gameLoggedIn
                 ? 'Waiting for the commander roster.'
                 : 'No commander roster was saved for the last session.'}
             </p>
           ) : (
             <div className="overflow-x-auto rounded-lg border border-border-base custom-scrollbar">
-              <table className="min-w-[72rem] w-full table-fixed text-body">
+              <table className="min-w-[72rem] w-full table-fixed text-sm">
                 <thead>
-                  <tr className="border-b border-border-base bg-bg-card/50 text-left text-caption text-text-muted">
+                  <tr className="border-b border-border-base bg-bg-card/50 text-left text-[10px] uppercase tracking-wider text-text-muted">
                     <th className="w-52 px-3 py-2 font-semibold"><LocalizedText messageKey="game.commander" /></th>
                     <th className="w-32 px-3 py-2 font-semibold"><LocalizedText messageKey="ui.movement.components.movementView.status.920e413c" /></th>
                     <th className="w-32 px-3 py-2 font-semibold"><LocalizedText messageKey="game.kingdom" /></th>
@@ -527,7 +531,7 @@ const MovementView: React.FC = () => {
                           <div className="truncate font-medium text-text-main">
                             {row.name || `Commander ${row.commanderId}`}
                           </div>
-                          <div className="mt-0.5 font-mono text-caption text-text-muted">
+                          <div className="mt-0.5 font-mono text-xs text-text-muted">
                             LID {row.commanderId}
                             {Number.isFinite(row.visiblePosition) &&
                             row.visiblePosition < Number.MAX_SAFE_INTEGER
@@ -544,7 +548,7 @@ const MovementView: React.FC = () => {
                         <td className="px-3 py-3 text-text-main">
                           {active ? labelTargetType(active.typeId) : '—'}
                         </td>
-                        <td className="truncate px-3 py-3 font-mono text-caption text-text-muted">
+                        <td className="truncate px-3 py-3 font-mono text-xs text-text-muted">
                           {active
                             ? `(${active.sourceX ?? 0}, ${active.sourceY ?? 0}) → (${active.targetX}, ${active.targetY})`
                             : '—'}

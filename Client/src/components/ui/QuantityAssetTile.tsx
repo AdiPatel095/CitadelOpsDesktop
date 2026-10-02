@@ -29,7 +29,7 @@ export const QuantityAssetTile: React.FC<QuantityAssetTileProps> = ({
     </button>
     <div className="relative shrink-0" style={{ width: size, height: size }}>
       {visual}
-      <span className="absolute bottom-0 right-0 z-10 max-w-[calc(100%+8px)] translate-x-1/4 translate-y-1/4 truncate rounded-full bg-white px-2.5 py-0.5 text-center text-caption font-semibold tabular-nums text-slate-900 shadow-md ring-1 ring-black/10">
+      <span className="absolute bottom-0 right-0 z-10 max-w-[calc(100%+8px)] translate-x-1/4 translate-y-1/4 truncate rounded-full bg-white px-2.5 py-0.5 text-center text-[10px] font-bold tabular-nums text-slate-900 shadow-md ring-1 ring-black/10">
         {typeof quantity === 'number' ? quantity.toLocaleString() : quantity}
       </span>
     </div>

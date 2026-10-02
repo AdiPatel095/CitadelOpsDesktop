@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test, after } from 'node:test';
-import { existsSync, readFileSync } from 'node:fs';
+import { existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { createServer } from 'vite';
 
@@ -194,16 +194,3 @@ if (portal) {
     assert.equal(suspended.reason.params.time, NOW + 86400000);
   });
 }
-
-for (const [locale, expected] of [['de', 'Aus'], ['ar', 'إيقاف']]) test(`CIT-78 disabled → Off preserves ${locale} translation`, () => {
-  const catalog = JSON.parse(readFileSync(`${root}${src}/i18n/catalogs/${locale}.json`, 'utf8'));
-  const oldLabel = formatMessage(describeMessage('automation.status', { status: 'disabled' }), locale, catalog);
-  assert.equal(oldLabel.text, expected);
-  for (const result of [model.automationPlayerStatus(input(rt({ status: 'disabled' }))), model.automationPlayerStatus(input(rt(), { enabled: { configured: true, enabled: false } }))]) {
-    assert.equal(result.status, 'off');
-    const label = formatMessage(describeMessage(`playerStatus.${result.status}`), locale, catalog);
-    assert.equal(label.text, oldLabel.text);
-    assert.equal(label.translated, true);
-    assert.equal(label.resolvedLocale, locale);
-  }
-});

@@ -62,7 +62,7 @@ const EventActivityCard: React.FC<EventActivityCardProps> = ({ event }) => {
 			<div className="mt-4 grid gap-3 xl:grid-cols-2">
 				{groups.map((group) => <ActivityGroupCard key={group.key} group={group} />)}
 			</div>
-			<p className="mt-4 border-t border-border-base/60 pt-3 text-caption text-text-muted">
+			<p className="mt-4 border-t border-border-base/60 pt-3 text-xs text-text-muted">
 				{activityFootnote(family)}
 			</p>
 		</SectionCard>
@@ -75,12 +75,12 @@ function ActivityGroupCard({ group }: { group: ActivityGroup }) {
 	return (
 		<div className="rounded-global border border-border-light bg-bg-card/40 p-4">
 			<div className="flex items-start gap-3">
-				<span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-global border border-border-base bg-bg-tertiary text-text-muted" aria-hidden="true">
+				<span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-global border border-primary/20 bg-primary/10 text-primary" aria-hidden="true">
 					{group.icon}
 				</span>
 				<div className="min-w-0">
 					<h3 className="font-bold text-text-main">{group.label}</h3>
-					<p className="mt-0.5 text-caption text-text-muted">{group.description}</p>
+					<p className="mt-0.5 text-xs text-text-muted">{group.description}</p>
 				</div>
 			</div>
 			<div className={`mt-4 grid gap-x-3 gap-y-4 ${group.key === 'invasion' ? 'grid-cols-2 sm:grid-cols-4' : 'grid-cols-3'}`}>
@@ -99,8 +99,8 @@ function ActivityGroupCard({ group }: { group: ActivityGroup }) {
 function CompactMetric({ label, value, tone = 'text-text-main' }: { label: string; value: number; tone?: string }) {
 	return (
 		<div className="min-w-0">
-			<p className="truncate text-caption font-semibold text-text-muted">{label}</p>
-			<p className={`mt-1 font-mono text-body-lg font-semibold tabular-nums ${tone}`}>{value.toLocaleString()}</p>
+			<p className="truncate text-[9px] font-bold uppercase tracking-wider text-text-muted">{label}</p>
+			<p className={`mt-1 font-mono text-base font-black tabular-nums ${tone}`}>{value.toLocaleString()}</p>
 		</div>
 	);
 }

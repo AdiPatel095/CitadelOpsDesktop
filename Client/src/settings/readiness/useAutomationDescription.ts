@@ -12,7 +12,7 @@ import { describeFeatureState, featureStateLaneIds, type AutomationStateDescript
  * (per lane where the feature has lanes), the connection and the weekly schedule, through the pure
  * `describeFeatureState`. Read-only; `now` ticks every 30 seconds so timed runs and locks expire on screen.
  */
-function useDescriptionBuilder() {
+export function useAutomationDescription(featureId: SettingsFeatureId, options: { buildLaneActive?: boolean } = {}): AutomationStateDescription {
   const { automationStates, automationEnabledByKey, automationTimedUntilByKey, gameLoggedIn } = useAuth();
   const { state, configuration, operations } = useCitadelAPI();
   const presence = useHostedRuntimePresence();
@@ -21,25 +21,30 @@ function useDescriptionBuilder() {
     const interval = window.setInterval(() => setNow(Date.now()), 30_000);
     return () => window.clearInterval(interval);
   }, []);
-  return useMemo(() => (featureId: SettingsFeatureId, buildLaneActive = true): AutomationStateDescription => {
-    const enabledKey = AUTOMATION_ENABLED_KEYS[featureId];
-    const on = automationEnabledByKey[enabledKey] === true;
-    const timedUntil = automationTimedUntilByKey[enabledKey];
-    const raw = configuration?.sections?.scheduler as { featureSchedules?: unknown } | undefined;
-    const schedule = normalizeFeatureSchedules(raw?.featureSchedules)[featureId];
-    const inFlight = attributedReceipts(featureId, operations).filter(isActiveReceipt).length;
-    const lanes = featureStateLaneIds(featureId).map(id => ({ id, runtime: automationStates[id], active: id !== 'autoBeriWorldBuild' || buildLaneActive }));
-    return describeFeatureState(featureId, lanes,
+  const enabledKey = AUTOMATION_ENABLED_KEYS[featureId];
+  const on = automationEnabledByKey[enabledKey] === true;
+  const timedUntil = automationTimedUntilByKey[enabledKey];
+  const scheduleRaw = configuration?.sections?.scheduler as { featureSchedules?: unknown } | undefined;
+  const schedule = normalizeFeatureSchedules(scheduleRaw?.featureSchedules)[featureId];
+  return useMemo(() => {
+    const inFlight = attributedReceipts(featureId, operations).filter((receipt) => isActiveReceipt(receipt)).length;
+    const lanes = featureStateLaneIds(featureId).map((id) => ({
+      id,
+      runtime: automationStates[id],
+      active: id === 'autoBeriWorldBuild' ? options.buildLaneActive !== false : true,
+    }));
+    return describeFeatureState(
+      featureId,
+      lanes,
       on ? { configured: true, enabled: true, ...(timedUntil ? { expiresAtMs: timedUntil } : {}) } : { configured: false, enabled: false },
-      { connected: gameLoggedIn, presence, schedule: schedule?.enabled ? { enabled: true, allowedNow: scheduleAllowsAt(schedule, new Date(now)) } : undefined,
-        connectionSince: state?.session?.changedAt, inFlight, now }).overall;
-  }, [automationStates, automationEnabledByKey, automationTimedUntilByKey, gameLoggedIn, configuration, operations, presence, state?.session?.changedAt, now]);
-}
-export function useAutomationDescription(featureId: SettingsFeatureId, options: { buildLaneActive?: boolean } = {}): AutomationStateDescription {
-  const build = useDescriptionBuilder();
-  return useMemo(() => build(featureId, options.buildLaneActive), [build, featureId, options.buildLaneActive]);
-}
-export function useAutomationDescriptions(): Record<SettingsFeatureId, AutomationStateDescription> {
-  const build = useDescriptionBuilder();
-  return useMemo(() => Object.fromEntries(Object.keys(AUTOMATION_ENABLED_KEYS).map(id => [id, build(id as SettingsFeatureId)])) as Record<SettingsFeatureId, AutomationStateDescription>, [build]);
+      {
+        connected: gameLoggedIn,
+        presence: presence.mode ? { mode: presence.mode, checkpointObservedAt: presence.checkpointObservedAt } : undefined,
+        schedule: schedule?.enabled ? { enabled: true, allowedNow: scheduleAllowsAt(schedule, new Date(now)) } : undefined,
+        connectionSince: state?.session?.changedAt,
+        inFlight,
+        now,
+      },
+    ).overall;
+  }, [automationStates, featureId, gameLoggedIn, now, on, operations, options.buildLaneActive, presence.checkpointObservedAt, presence.mode, schedule, state?.session?.changedAt, timedUntil]);
 }

@@ -1,4 +1,3 @@
-import './BattleStatsView.css';
 import {formatLegacyBattleEffectPercent} from '../utils/BattleEffectNumber';
 import {battleLaneMessageKey} from '../utils/BattleLaneIdentity';
 import type {MessageKey,MessageParameters} from '../../i18n/messages';
@@ -19,7 +18,7 @@ import {
   Swords,
   Users,
 } from 'lucide-react';
-import { ViewState, viewStatus, Badge, Button, Card, CardContent, CardHeader, CardTitle, Input, MetricTile, SectionCard, Select } from '../../components/ui';
+import { Badge, Button, Card, CardContent, CardHeader, CardTitle, Input, MetricTile, SectionCard, Select } from '../../components/ui';
 import UnitImage from '../../components/UnitImage';
 import ToolImage from '../../components/ToolImage';
 import DetailBackButton from '../../components/DetailBackButton';
@@ -84,7 +83,7 @@ const BattleStatsView: React.FC = () => {
 
   const loadReports = async () => {
     setIsLoading(true);
-
+    setSourceError('');
     try {
       let emptySource = '';
       for (const source of dataSources) {
@@ -95,7 +94,6 @@ const BattleStatsView: React.FC = () => {
             continue;
           }
           setReports(loaded.reports);
-          setSourceError('');
           setSourceKey(loaded.source === dataSources[0] ? 'battle.sourceCloud' : 'battle.sourceLocal');
           setSelectedReportID((current) =>
             current && loaded.reports.some((report) => reportID(report) === current) ? current : null
@@ -105,10 +103,10 @@ const BattleStatsView: React.FC = () => {
       }
 
       setReports([]);
-      setSourceError('');
       setSourceKey(emptySource ? (emptySource === dataSources[0] ? 'battle.sourceCloudEmpty' : 'battle.sourceLocalEmpty') : 'battle.sourceMissing');
       setSelectedReportID(null);
     } catch (error) {
+      setReports([]);
       setSourceKey('battle.sourceFailed');
       setSourceError(error instanceof Error ? error.message : '');
       setSelectedReportID(null);
@@ -322,11 +320,11 @@ const BattleStatsView: React.FC = () => {
           <SectionCard
             className="2xl:h-full 2xl:w-full"
             title={localizeStatic("ui.battleStats.components.battleStatsView.title.battle.stats.5b31568e")}
-            description={<><LocalizedText messageKey={sourceKey}/></>}
+            description={<><LocalizedText messageKey={sourceKey}/>{sourceError && <span lang="en" dir="auto" data-translation-status="untranslated">: {sourceError}</span>}</>}
             descriptionClassName="mt-1.5 font-semibold"
-            actions={<Button aria-label={localizeStatic("ui.battleStats.components.battleStatsView.title.refresh.battle.reports.aac017c6")} iconOnly
+            actions={<Button
               variant="ghost"
-              size="md"
+              size="icon"
               onClick={() => void loadReports()}
               isLoading={isLoading}
               title={localizeStatic("ui.battleStats.components.battleStatsView.title.refresh.battle.reports.aac017c6")}
@@ -336,7 +334,6 @@ const BattleStatsView: React.FC = () => {
             contentClassName="battle-filters-grid"
           >
             <Input
-              aria-label={localizeStatic("ui.battleStats.components.battleStatsView.placeholder.find.player.alliance.castle.73efc22c")}
               value={searchTerm}
               onChange={(event) => setSearchTerm(event.target.value)}
               placeholder={localizeStatic("ui.battleStats.components.battleStatsView.placeholder.find.player.alliance.castle.73efc22c")}
@@ -345,18 +342,17 @@ const BattleStatsView: React.FC = () => {
 
             <FilterField label={localizeStatic("ui.battleStats.components.battleStatsView.label.date.range.8061bfb2")} icon={<CalendarDays className="w-4 h-4" />}>
               <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-                <Input type="date" aria-label={localizeStatic("analytics.battle.startDate")} value={startDate} onChange={(event) => setStartDate(event.target.value)} />
-                <Input type="date" aria-label={localizeStatic("analytics.battle.endDate")} value={endDate} onChange={(event) => setEndDate(event.target.value)} />
+                <Input type="date" value={startDate} onChange={(event) => setStartDate(event.target.value)} />
+                <Input type="date" value={endDate} onChange={(event) => setEndDate(event.target.value)} />
               </div>
             </FilterField>
 
             <FilterField label={localizeStatic("ui.battleStats.components.battleStatsView.label.alliance.player.f63402b3")} icon={<Users className="w-4 h-4" />}>
-              <Select ariaLabel={localizeStatic("ui.battleStats.components.battleStatsView.label.alliance.player.f63402b3")} value={selectedPlayer} options={playerOptions} onChange={setSelectedPlayer} menuGrowToViewport />
+              <Select value={selectedPlayer} options={playerOptions} onChange={setSelectedPlayer} menuGrowToViewport />
             </FilterField>
 
             <FilterField label={localizeStatic("ui.battleStats.components.battleStatsView.label.opponent.player.1f077c9a")} icon={<Swords className="w-4 h-4" />}>
               <Select
-                ariaLabel={localizeStatic("ui.battleStats.components.battleStatsView.label.opponent.player.1f077c9a")}
                 value={selectedOpponentPlayer}
                 options={opponentPlayerOptions}
                 onChange={setSelectedOpponentPlayer}
@@ -365,12 +361,11 @@ const BattleStatsView: React.FC = () => {
             </FilterField>
 
             <FilterField label={localizeStatic("ui.battleStats.components.battleStatsView.label.opponent.alliance.da7413e9")} icon={<Shield className="w-4 h-4" />}>
-              <Select ariaLabel={localizeStatic("ui.battleStats.components.battleStatsView.label.opponent.alliance.da7413e9")} value={selectedAlliance} options={allianceOptions} onChange={setSelectedAlliance} menuGrowToViewport />
+              <Select value={selectedAlliance} options={allianceOptions} onChange={setSelectedAlliance} menuGrowToViewport />
             </FilterField>
 
             <FilterField label={localizeStatic("ui.battleStats.components.battleStatsView.label.result.6e7d50e8")} icon={<BarChart3 className="w-4 h-4" />}>
               <Select
-                ariaLabel={localizeStatic("ui.battleStats.components.battleStatsView.label.result.6e7d50e8")}
                 value={selectedResult}
                 onChange={setSelectedResult}
                 options={[
@@ -385,7 +380,6 @@ const BattleStatsView: React.FC = () => {
 
             <FilterField label={localizeStatic("ui.battleStats.components.battleStatsView.label.role.14736a2e")} icon={<Castle className="w-4 h-4" />}>
               <Select
-                ariaLabel={localizeStatic("ui.battleStats.components.battleStatsView.label.role.14736a2e")}
                 value={selectedRole}
                 onChange={setSelectedRole}
                 options={[
@@ -396,7 +390,7 @@ const BattleStatsView: React.FC = () => {
               />
             </FilterField>
 
-            <Button variant="secondary" className="w-full" onClick={resetFilters}>
+            <Button variant="outline" className="w-full" onClick={resetFilters}>
               <LocalizedText messageKey="ui.battleStats.components.battleStatsView.reset.filters.10afa984" /></Button>
 
           </SectionCard>
@@ -431,12 +425,9 @@ const BattleStatsView: React.FC = () => {
         contentClassName="overflow-x-auto"
         flush
       >
-            <ViewState status={viewStatus({ hasData: filteredReports.length > 0, loading: isLoading, error: Boolean(sourceError) })}
-              error={{ title: localizeStatic(sourceKey), description: isLoading ? localizeStatic('battle.loading') : undefined, onRetry: () => void loadReports(), retryLabel: localizeStatic('ui.state.retry') }} loading={{ label: localizeStatic('battle.loading'), variant: 'table' }}
-              empty={{ title: localizeStatic('ui.battleStats.components.battleStatsView.no.player.battle.reports.match.the.current.c7977008') }}>
-            <table className="battle-table w-full text-body">
+            <table className="battle-table w-full text-sm">
               <thead>
-                <tr className="text-left text-caption text-text-muted border-b border-border-base">
+                <tr className="text-left text-xs uppercase tracking-wider text-text-muted border-b border-border-base">
                     <th className="px-4 py-3 font-semibold"><LocalizedText messageKey="ui.battleStats.components.battleStatsView.time.33b93476" /></th>
                     <th className="px-4 py-3 font-semibold"><LocalizedText messageKey="ui.battleStats.components.battleStatsView.attacker.2969c659" /></th>
                     <th className="px-4 py-3 font-semibold"><LocalizedText messageKey="ui.battleStats.components.battleStatsView.defender.157ddc59" /></th>
@@ -471,10 +462,10 @@ const BattleStatsView: React.FC = () => {
                         {formatNumber(metricValue(report.metrics, 'defenderLost', 'defenseLost'))}
                       </td>
                       <td className="px-3 py-3 text-right">
-                        <Button iconOnly
-                          variant="ghost"
-                          size="md"
-                          className="battle-stats-flat-control"
+                        <Button
+                          variant="secondary"
+                          size="icon"
+                          className="battle-stats-flat-control h-9 w-9 border-primary/40 text-primary hover:border-primary hover:bg-primary/10"
                           onClick={() => setSelectedReportID(reportID(report))}
                           title={localizeStatic("ui.battleStats.components.battleStatsView.title.go.to.report.details.81fac819")}
                           aria-label={localizeStatic('battle.openDetails',{attacker:combatantName(report.attacker,localizeStatic('battle.unknownPlayer')),defender:combatantName(report.defender,localizeStatic('battle.unknownPlayer'))})}
@@ -497,7 +488,10 @@ const BattleStatsView: React.FC = () => {
                 </Button>
               </div>
             )}
-            </ViewState>
+            {filteredReports.length === 0 && (
+              <div className="px-5 py-12 text-center text-text-muted">
+                <LocalizedText messageKey="ui.battleStats.components.battleStatsView.no.player.battle.reports.match.the.current.c7977008" /></div>
+            )}
       </SectionCard>
     </div>
   );
@@ -511,7 +505,7 @@ interface FilterFieldProps {
 
 const FilterField: React.FC<FilterFieldProps> = ({ label, icon, children }) => (
   <div className="space-y-2">
-    <div className="flex items-center gap-2 text-caption font-semibold text-text-muted">
+    <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-text-muted">
       {icon}
       <span>{label}</span>
     </div>
@@ -534,9 +528,9 @@ const StatCard: React.FC<StatCardProps> = ({ label, value, tone }) => {
   }[tone];
 
   return (
-    <Card variant="solid" className="">
-      <div className="text-caption r text-text-muted font-semibold">{label}</div>
-      <div className={`text-headline font-bold mt-2 ${toneClass}`}>{value}</div>
+    <Card variant="solid" className="p-4">
+      <div className="text-xs uppercase tracking-wider text-text-muted font-semibold">{label}</div>
+      <div className={`text-2xl font-bold mt-2 ${toneClass}`}>{value}</div>
     </Card>
   );
 };
@@ -546,7 +540,7 @@ const CombatantCell: React.FC<{ combatant?: BattleCombatant }> = ({ combatant })
  return (
   <div className="min-w-40">
     <div className="font-semibold text-text-main">{combatantName(combatant,localizeStatic('battle.unknownPlayer'))}</div>
-    <div className="text-caption text-text-muted">{allianceName(combatant,localizeStatic('battle.noAlliance'))}</div>
+    <div className="text-xs text-text-muted">{allianceName(combatant,localizeStatic('battle.noAlliance'))}</div>
   </div>
 );
 };
@@ -566,7 +560,7 @@ const ReportResultBadges: React.FC<{ result: string; size?: 'sm' | 'lg'; classNa
       ? 'border-warning/30 bg-warning/10 text-warning'
       : 'border-info/30 bg-info/10 text-info';
   const layoutClass = size === 'lg' ? 'justify-center gap-2' : 'min-w-[8rem] gap-1.5';
-  const badgeClass = size === 'lg' ? 'px-4 py-1.5 text-body md:text-body-lg' : 'battle-stats-flat-control';
+  const badgeClass = size === 'lg' ? 'px-4 py-1.5 text-sm md:text-base' : 'battle-stats-flat-control';
 
   return (
     <div className={`flex flex-wrap items-center ${layoutClass} ${className}`}>
@@ -613,10 +607,10 @@ const PlayerAggregateTable: React.FC<{ rows: PlayerAggregate[] }> = ({ rows }) =
   const formatRatio = (numerator:number, denominator:number) => denominator <= 0 ? (numerator > 0 ? '∞' : '--') : number(numerator / denominator,{minimumFractionDigits:2,maximumFractionDigits:2});
   return (
   <SectionCard className="flex h-full flex-col" title={t('battle.playerAggregate')} description={t('battle.playerAggregateDescription')} descriptionClassName="" actions={<Badge variant="secondary"><LocalizedText messageKey="battle.playerCount" params={{count:rows.length}}/></Badge>} contentClassName="flex min-h-0 flex-1 flex-col" flush>
-    <div tabIndex={0} className="min-h-0 flex-1 overflow-x-auto battle-aggregate-scroll">
-        <table className="battle-aggregate-table w-full text-body">
+    <div className="min-h-0 flex-1 overflow-x-auto">
+        <table className="battle-aggregate-table w-full text-sm">
           <thead>
-            <tr className="text-start text-caption text-text-muted border-b border-border-base">
+            <tr className="text-start text-xs uppercase tracking-wider text-text-muted border-b border-border-base">
               <th className="px-4 py-3 font-semibold"><LocalizedText messageKey="ui.battleStats.components.battleStatsView.player.64aee8c6" /></th>
               <th className="px-4 py-3 font-semibold text-end"><LocalizedText messageKey="ui.battleStats.components.battleStatsView.reports.dacca3cb" /></th>
               <th className="px-4 py-3 font-semibold text-end"><LocalizedText messageKey="battle.attacksDefenses"/></th>
@@ -630,7 +624,7 @@ const PlayerAggregateTable: React.FC<{ rows: PlayerAggregate[] }> = ({ rows }) =
               <tr key={row.key} className="h-[3.25rem] border-b border-border-base/70">
                 <td className="px-4 py-2">
                   <div className="font-semibold text-text-main">{row.name}</div>
-                  <div className="text-caption text-text-muted">{row.alliance}</div>
+                  <div className="text-xs text-text-muted">{row.alliance}</div>
                 </td>
                 <td className="px-4 py-2 text-end text-text-main font-semibold">{formatNumber(row.reports)}</td>
                 <td className="px-4 py-2 text-end text-text-muted">{formatNumber(row.attacks)} / {formatNumber(row.defenses)}</td>
@@ -666,10 +660,10 @@ const AllianceAggregateTable: React.FC<{ rows: AllianceAggregate[] }> = ({ rows 
   const formatRatio = (numerator:number, denominator:number) => denominator <= 0 ? (numerator > 0 ? '∞' : '--') : number(numerator / denominator,{minimumFractionDigits:2,maximumFractionDigits:2});
   return (
   <SectionCard className="flex h-full flex-col" title={t('battle.allianceAggregate')} description={t('battle.allianceAggregateDescription')} descriptionClassName="" actions={<Badge variant="secondary"><LocalizedText messageKey="battle.allianceCount" params={{count:rows.length}}/></Badge>} contentClassName="flex min-h-0 flex-1 flex-col" flush>
-    <div tabIndex={0} className="min-h-0 flex-1 overflow-x-auto battle-aggregate-scroll">
-        <table className="battle-aggregate-table w-full text-body">
+    <div className="min-h-0 flex-1 overflow-x-auto">
+        <table className="battle-aggregate-table w-full text-sm">
           <thead>
-            <tr className="text-start text-caption text-text-muted border-b border-border-base">
+            <tr className="text-start text-xs uppercase tracking-wider text-text-muted border-b border-border-base">
               <th className="px-4 py-3 font-semibold"><LocalizedText messageKey="ui.battleStats.components.battleStatsView.alliance.afe3c194" /></th>
               <th className="px-4 py-3 font-semibold text-end"><LocalizedText messageKey="ui.battleStats.components.battleStatsView.reports.dacca3cb" /></th>
               <th className="px-4 py-3 font-semibold text-end"><LocalizedText messageKey="battle.winsLosses"/></th>
@@ -973,18 +967,18 @@ const SplitMetricTile: React.FC<{
 
   return (
     <div className={`border rounded-global px-3 py-3 bg-bg-app ${borderClass}`}>
-      <div className="text-caption text-text-muted">{label}</div>
+      <div className="text-xs text-text-muted">{label}</div>
       <div className="mt-2 grid grid-cols-2 gap-2">
         <div className="rounded-global border border-border-base/70 bg-bg-card px-2 py-2">
-          <div className={`text-body-lg font-semibold ${toneClass}`}>{formatNumber(leftValue)}</div>
-          <div className="mt-1 text-caption font-semibold text-text-muted">{leftLabel}</div>
+          <div className={`text-lg font-bold leading-none ${toneClass}`}>{formatNumber(leftValue)}</div>
+          <div className="mt-1 text-[10px] font-semibold uppercase tracking-wider text-text-muted">{leftLabel}</div>
         </div>
         <div className="rounded-global border border-border-base/70 bg-bg-card px-2 py-2">
-          <div className={`text-body-lg font-semibold ${toneClass}`}>{formatNumber(rightValue)}</div>
-          <div className="mt-1 text-caption font-semibold text-text-muted">{rightLabel}</div>
+          <div className={`text-lg font-bold leading-none ${toneClass}`}>{formatNumber(rightValue)}</div>
+          <div className="mt-1 text-[10px] font-semibold uppercase tracking-wider text-text-muted">{rightLabel}</div>
         </div>
       </div>
-      {caption && <div className="mt-1 text-caption text-text-muted">{caption}</div>}
+      {caption && <div className="mt-1 text-[11px] text-text-muted">{caption}</div>}
     </div>
   );
 };
@@ -999,9 +993,9 @@ const CollapsibleDetailCard: React.FC<{
   const contentId = useId();
 
   return (
-    <Card variant="solid" className="">
-      <CardHeader className="">
-        <button data-button-pattern="disclosure"
+    <Card variant="solid" className="liquid-prominent-header-card">
+      <CardHeader className="liquid-card-header-prominent !p-0">
+        <button
           type="button"
           className="flex min-h-[4.75rem] w-full items-center justify-between gap-3 rounded-global px-6 py-5 text-left transition-colors hover:text-primary"
           aria-expanded={isOpen}
@@ -1010,7 +1004,7 @@ const CollapsibleDetailCard: React.FC<{
         >
           <div className="min-w-0">
             <CardTitle>{title}</CardTitle>
-            {subtitle && <p className="mt-1 truncate text-caption text-text-muted">{subtitle}</p>}
+            {subtitle && <p className="mt-1 truncate text-xs text-text-muted">{subtitle}</p>}
           </div>
           {isOpen ? (
             <ChevronDown className="h-5 w-5 shrink-0 text-text-muted" aria-hidden="true" />
@@ -1020,7 +1014,7 @@ const CollapsibleDetailCard: React.FC<{
         </button>
       </CardHeader>
       {isOpen && (
-        <CardContent id={contentId} className="">
+        <CardContent id={contentId} className="liquid-prominent-header-content">
           {children}
         </CardContent>
       )}
@@ -1041,20 +1035,20 @@ const EffectComparison: React.FC<{
 
   return (
     <CollapsibleDetailCard title={localizeStatic("ui.battleStats.components.battleStatsView.title.commander.castellan.6fdcda3b")} subtitle={localizeStatic('battle.matchup',{attacker:commanderName,defender:castellanName})}>
-      {hasOriginalText && <p className="text-caption text-text-muted" data-translation-status="untranslated"><LocalizedText messageKey="activity.untranslated"/></p>}
+      {hasOriginalText && <p className="text-xs text-text-muted" data-translation-status="untranslated"><LocalizedText messageKey="activity.untranslated"/></p>}
       {totalEffects > 0 ? (
         <div className="overflow-x-auto">
           <div className="min-w-[44rem] space-y-4">
             <div className="grid grid-cols-[1fr_1.5fr_1fr] divide-x divide-border-base overflow-hidden rounded-global border border-border-base bg-bg-app">
               <EffectComparisonHeader label={localizeStatic("game.commander")} name={commanderName} tone="danger" />
-              <div className="flex min-w-0 items-center justify-center bg-bg-surface/45 px-3 py-2 text-center text-caption font-semibold text-text-muted">
+              <div className="flex min-w-0 items-center justify-center bg-bg-surface/45 px-3 py-2 text-center text-[10px] font-bold uppercase tracking-wider text-text-muted">
                 <LocalizedText messageKey="ui.battleStats.components.battleStatsView.effect.2252d5cf" /></div>
               <EffectComparisonHeader label={localizeStatic("game.castellan")} name={castellanName} tone="info" />
             </div>
 
             {groups.map((group) => (
               <div key={group.key} className="space-y-2">
-                <div className="text-caption font-semibold text-text-muted">
+                <div className="text-[11px] uppercase tracking-wider font-bold text-text-muted">
                   {group.category}
                 </div>
                 <div className="space-y-px overflow-hidden rounded-global border border-border-base bg-border-base">
@@ -1064,7 +1058,7 @@ const EffectComparison: React.FC<{
                       className="grid min-h-12 grid-cols-[1fr_1.5fr_1fr] divide-x divide-border-base bg-bg-app"
                     >
                       <EffectComparisonValues effects={row.commander} side="commander" />
-                      <div className="flex items-center justify-center bg-bg-surface/45 px-4 py-2.5 text-center text-body font-semibold text-text-main">
+                      <div className="flex items-center justify-center bg-bg-surface/45 px-4 py-2.5 text-center text-sm font-semibold text-text-main">
                         {row.label}
                       </div>
                       <EffectComparisonValues effects={row.castellan} side="castellan" />
@@ -1076,7 +1070,7 @@ const EffectComparison: React.FC<{
           </div>
         </div>
       ) : (
-        <div className="text-body text-text-muted py-8 text-center"><LocalizedText messageKey="ui.battleStats.components.battleStatsView.no.parsed.leader.effects.for.this.report.2ecd0b30" /></div>
+        <div className="text-sm text-text-muted py-8 text-center"><LocalizedText messageKey="ui.battleStats.components.battleStatsView.no.parsed.leader.effects.for.this.report.2ecd0b30" /></div>
       )}
     </CollapsibleDetailCard>
   );
@@ -1091,8 +1085,8 @@ const EffectComparisonHeader: React.FC<{
 
   return (
     <div className={`flex min-w-0 flex-col items-center px-3 py-2 text-center ${toneClass}`}>
-      <div className="text-caption font-semibold">{label}</div>
-      <div className="mt-1 max-w-full truncate text-body font-semibold text-text-main">{name}</div>
+      <div className="text-[10px] font-bold uppercase tracking-wider">{label}</div>
+      <div className="mt-1 max-w-full truncate text-sm font-semibold text-text-main">{name}</div>
     </div>
   );
 };
@@ -1110,7 +1104,7 @@ const EffectComparisonValues: React.FC<{
   if (visibleEffects.length === 0) {
     return (
       <div
-        className="flex min-h-12 items-center justify-center px-3 py-2.5 text-center text-caption font-semibold text-text-muted/50"
+        className="flex min-h-12 items-center justify-center px-3 py-2.5 text-center text-xs font-semibold text-text-muted/50"
         aria-label={localizeStatic('battle.effectMissing',{side})}
       >
         -
@@ -1126,7 +1120,7 @@ const EffectComparisonValues: React.FC<{
           lang={effect.originalText ? '' : undefined}
           dir="auto"
           data-translation-status={effect.originalText ? 'untranslated' : undefined}
-          className="shrink-0 rounded-full border border-success/25 bg-success/10 px-2.5 py-1 text-caption font-semibold tabular-nums text-success"
+          className="shrink-0 rounded-full border border-success/25 bg-success/10 px-2.5 py-1 text-xs font-black tabular-nums text-success"
           title={effectDescription(effect,locale,localizeStatic('equipment.unknownEffect'))}
           aria-label={localizeStatic('battle.effectAccessible',{side,description:effectDescription(effect,locale,localizeStatic('equipment.unknownEffect')),value:effectValue(effect,locale)})}
         >
@@ -1188,8 +1182,8 @@ const ForceSidePanel: React.FC<{
   return (
     <section className="min-w-0 rounded-global border border-border-base bg-bg-app p-4">
       <div className="mb-4 min-w-0">
-        <div className={`text-caption font-semibold ${accentClass}`}>{title}</div>
-        <div className="mt-1 truncate text-body font-semibold text-text-main">{combatantName(combatant,localizeStatic('battle.unknownPlayer'))}</div>
+        <div className={`text-xs font-bold uppercase tracking-wider ${accentClass}`}>{title}</div>
+        <div className="mt-1 truncate text-sm font-semibold text-text-main">{combatantName(combatant,localizeStatic('battle.unknownPlayer'))}</div>
       </div>
       <div className="space-y-4">
         <RosterSection title={localizeStatic("ui.battleStats.components.battleStatsView.title.units.fought.795d7534")} items={units} kind="unit" valueClass={accentClass} />
@@ -1207,8 +1201,8 @@ const RosterSection: React.FC<{
 }> = ({ title, items, kind, valueClass }) => (
   <div>
     <div className="flex items-center justify-between gap-2 mb-2">
-      <div className="text-caption text-text-muted font-semibold">{title}</div>
-      <span className="text-caption text-text-muted">{items.length}</span>
+      <div className="text-xs uppercase tracking-wider text-text-muted font-semibold">{title}</div>
+      <span className="text-xs text-text-muted">{items.length}</span>
     </div>
     {items.length > 0 ? (
       <div className="grid grid-cols-[repeat(auto-fill,minmax(6.5rem,6.5rem))] gap-3">
@@ -1217,7 +1211,7 @@ const RosterSection: React.FC<{
         ))}
       </div>
     ) : (
-      <div className="border border-border-base rounded-global bg-bg-app px-3 py-4 text-body text-text-muted text-center">
+      <div className="border border-border-base rounded-global bg-bg-app px-3 py-4 text-sm text-text-muted text-center">
         <LocalizedText messageKey={kind === 'unit' ? 'battle.noParsedUnits' : 'battle.noParsedTools'}/>
       </div>
     )}
@@ -1265,11 +1259,11 @@ const BattleItemChip: React.FC<{
         )}
       </div>
       <div className="flex w-full shrink-0 flex-col items-center gap-1">
-        <span className="max-w-full rounded-full border border-border-base/70 bg-bg-app px-2 py-1 text-center text-body font-semibold text-text-main shadow-sm tabular-nums">
+        <span className="max-w-full rounded-full border border-border-base/70 bg-bg-app px-2 py-1 text-center text-sm font-bold leading-none text-text-main shadow-sm tabular-nums">
           {formatNumber(amount)}
         </span>
         {changeValue > 0 && (
-          <span className={`max-w-full rounded-full border px-2 py-0.5 text-center text-caption font-semibold tabular-nums ${deltaClass}`}>
+          <span className={`max-w-full rounded-full border px-2 py-0.5 text-center text-[11px] font-bold leading-none tabular-nums ${deltaClass}`}>
             -{formatNumber(changeValue)}
           </span>
         )}
@@ -1288,7 +1282,7 @@ const WaveRow: React.FC<{ wave: BattleWave; index: number }> = ({ wave, index })
   return (
     <div className="border border-border-base rounded-global bg-bg-app p-3">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-        <button data-button-pattern="disclosure"
+        <button
           type="button"
           className="flex min-w-0 items-center gap-2 text-left font-semibold text-text-main transition-colors hover:text-primary"
           aria-expanded={isExpanded}
@@ -1312,7 +1306,7 @@ const WaveRow: React.FC<{ wave: BattleWave; index: number }> = ({ wave, index })
         </div>
       )}
       {lanes.length === 0 && (
-        <div className="text-body text-text-muted"><LocalizedText messageKey="ui.battleStats.components.battleStatsView.no.lane.details.parsed.for.this.wave.892849b6" /></div>
+        <div className="text-sm text-text-muted"><LocalizedText messageKey="ui.battleStats.components.battleStatsView.no.lane.details.parsed.for.this.wave.892849b6" /></div>
       )}
     </div>
   );
@@ -1327,7 +1321,7 @@ const WaveLaneSummary: React.FC<{ lanes: BattleWaveLane[] }> = ({ lanes }) => {
 
       return (
         <div key={`${lane.lane ?? laneIndex}-${laneIndex}`} className="flex items-center gap-1.5">
-          <span className="text-caption text-text-muted font-semibold">
+          <span className="text-[11px] uppercase tracking-wider text-text-muted font-semibold">
             {laneLabel(lane, laneIndex,localizeStatic)}
           </span>
           <Badge variant={result === 'HELD' ? 'success' : 'warning'}><LocalizedText messageKey={result === 'HELD' ? 'battle.held' : 'battle.breached'}/></Badge>
@@ -1349,7 +1343,7 @@ const LaneDetailCard: React.FC<{ lane: BattleWaveLane; laneIndex: number }> = ({
   return (
     <div className="border border-border-base rounded-global bg-bg-card/40 p-3 min-w-0">
       <div className="flex items-center justify-between gap-2">
-        <span className="text-caption text-text-muted font-semibold">
+        <span className="text-xs uppercase tracking-wider text-text-muted font-semibold">
           {laneLabel(lane, laneIndex,localizeStatic)}
         </span>
         <Badge variant={result === 'HELD' ? 'success' : 'warning'}><LocalizedText messageKey={result === 'HELD' ? 'battle.held' : 'battle.breached'}/></Badge>
@@ -1391,8 +1385,8 @@ const LaneSidePanel: React.FC<{
   return (
     <div className="min-w-0">
       <div className="flex items-center justify-between gap-2">
-        <span className="text-caption text-text-muted font-semibold">{title}</span>
-        <span className={`rounded-full bg-bg-card px-2 py-0.5 text-caption font-semibold tabular-nums shadow-sm ring-1 ring-border-base/70 ${valueClass}`}>
+        <span className="text-[11px] uppercase tracking-wider text-text-muted font-semibold">{title}</span>
+        <span className={`rounded-full bg-bg-card px-2 py-0.5 text-xs font-bold tabular-nums shadow-sm ring-1 ring-border-base/70 ${valueClass}`}>
           {formatNumber(lost)}
         </span>
       </div>
@@ -1416,7 +1410,7 @@ const LaneItemStrip: React.FC<{
 
   return (
     <div>
-      <div className="text-caption text-text-muted font-semibold mb-1.5">{title}</div>
+      <div className="text-[11px] uppercase tracking-wider text-text-muted font-semibold mb-1.5">{title}</div>
       <div className="grid grid-cols-[repeat(auto-fill,minmax(5rem,5rem))] gap-2">
         {items.map((item, index) => (
           <BattleItemChip key={`${title}-${itemKey(item)}-${index}`} item={item} kind={kind} valueClass={valueClass} compact />

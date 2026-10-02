@@ -1,14 +1,5 @@
 /** Explicit source-assigned static text keys. Missing locale entries remain English fallback. */
 export const sourceMessages = {
-  "analytics.noAttributedHelp": "New confirmed reports for this automation will begin populating this view.",
-  "playerTracker.historyUnavailable": "Could not load player history",
-
-  "ui.tabs.previous": "Show previous tabs",
-  "ui.tabs.next": "Show more tabs",
-  "featureStats.tabs.label": "Feature stats",
-  "ui.state.retry": "Retry",
-  "ui.state.loading": "Loading…",
-
   "ui.movement.components.commanderRequirementModal.clear.requirement.b811adea": "Clear requirement",
   "ui.movement.components.commanderRequirementModal.apply.requirement.33b88b96": "Apply requirement",
   "ui.movement.components.commanderRequirementModal.only.commanders.whose.currently.equipped.gear.meets.d44315cf": "Only commanders whose currently equipped gear meets this limit can launch this function. Stats are discovered from live commander equipment and resolved by official effect and unit IDs. Event-scoped effects remain distinct and show their official target areas.",
@@ -113,9 +104,6 @@ export const sourceMessages = {
   "ui.components.defensePresetEditor.amount.49e96d7c": "Amount",
   "ui.components.defensePresetEditor.preserved.9d31b48b": "Preserved",
   "ui.components.staleSessionBanner.disconnected.last.known.data.166a8c99": "Disconnected — last known data",
-  "ui.components.staleSessionBanner.body.reloadTab": "Figures below may be out of date. Start the bot to reload the game tab and refresh live data.",
-  "ui.components.staleSessionBanner.body.reconnect": "Figures below may be out of date. Start the bot to reconnect directly and refresh live data.",
-  "ui.components.staleSessionBanner.body.hosted": "Figures below may be out of date. This hosted worker reconnects on its own; if it stays disconnected, check the account in Account Center.",
   "ui.components.tCIPickerModal.choose.a.design.to.inspect.its.full.35312c7b": "Choose a design to inspect its full upgrade chain.",
   "ui.components.tCIPickerModal.allowed.tier.range.d6cf09d9": "Allowed tier range",
   "ui.components.tCIPickerModal.upgrade.chain.2851d12f": "Upgrade chain",

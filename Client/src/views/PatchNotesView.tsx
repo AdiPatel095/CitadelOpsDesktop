@@ -14,7 +14,7 @@ import {
 import type { BadgeProps } from '../components/ui/Badge';
 
 const PATCH_NOTE_BADGE_VARIANT: Record<PatchNoteKind, NonNullable<BadgeProps['variant']>> = {
-  added: 'secondary',
+  added: 'primary',
   fixed: 'success',
   security: 'outline',
   changed: 'warning',
@@ -36,17 +36,17 @@ function ReleaseCard({ release, isLatest }: { release: PatchNotesRelease; isLate
       variant="solid"
       title={(
         <>
-          <bdi className="font-mono text-text-main">v{release.version}</bdi>
-          {isLatest && <Badge variant="secondary"><LocalizedText messageKey="ui.views.patchNotesView.current.e0d1b682" /></Badge>}
+          <span className="font-mono text-primary">v{release.version}</span>
+          {isLatest && <Badge variant="primary"><LocalizedText messageKey="ui.views.patchNotesView.current.e0d1b682" /></Badge>}
         </>
       )}
       description={release.subtitleKey ? <LocalizedText messageKey={release.subtitleKey}/> : release.subtitle}
-      actions={release.date ? <span lang={locale} className="font-mono text-caption text-text-muted">{date(new Date(release.date),{year:'numeric',month:'long',day:'numeric',timeZone:'UTC'})}</span> : undefined}
-      titleClassName="text-title"
+      actions={release.date ? <span lang={locale} className="font-mono text-xs text-text-muted">{date(new Date(release.date),{year:'numeric',month:'long',day:'numeric',timeZone:'UTC'})}</span> : undefined}
+      titleClassName="text-xl"
       className={
         isLatest
-          ? ''
-          : 'opacity-95'
+          ? 'liquid-prominent-header-card border-primary/25 shadow-[0_0_24px_-8px_var(--primary-glow)]'
+          : 'liquid-prominent-header-card border-border-base opacity-95'
       }
     >
       {groups.length > 0 && (
@@ -61,11 +61,11 @@ function ReleaseCard({ release, isLatest }: { release: PatchNotesRelease; isLate
                 >
                   <LocalizedText messageKey={`patchNotes.kind.${group.kind}`}/>
                 </Badge>
-                <span className="text-caption tabular-nums text-text-muted" {...messageLanguageAttributes(message('patchNotes.changes',{count:group.items.length}))}>
+                <span className="text-xs tabular-nums text-text-muted" {...messageLanguageAttributes(message('patchNotes.changes',{count:group.items.length}))}>
                   {t('patchNotes.changes',{count:group.items.length})}
                 </span>
               </div>
-              <ul className="space-y-3 text-body text-text-main">
+              <ul className="space-y-3 text-sm leading-relaxed text-text-main">
                 {group.items.map((item, index) => (
                   <li key={`${release.version}-${group.kind}-${index}`} className="flex items-start gap-3">
                     <span aria-hidden="true" className="mt-[0.45rem] h-1.5 w-1.5 shrink-0 rounded-full bg-current opacity-55" />
@@ -84,7 +84,7 @@ function ReleaseCard({ release, isLatest }: { release: PatchNotesRelease; isLate
 const PatchNotesView: React.FC = () => {
   const { t: localizeStatic } = useStaticLocale();
   return (
-    <div tabIndex={0} className="max-w-3xl mx-auto py-6 pb-16 focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary">
+    <div className="max-w-3xl mx-auto py-6 pb-16">
       <PageHeader
         className="mb-8"
         title={localizeStatic("ui.views.patchNotesView.title.patch.notes.e851faa6")}
@@ -98,7 +98,7 @@ const PatchNotesView: React.FC = () => {
         ))}
       </div>
 
-      <p className="mt-10 text-caption text-text-muted text-center">
+      <p className="mt-10 text-xs text-text-muted text-center">
         <LocalizedText messageKey="ui.views.patchNotesView.earlier.versions.will.appear.here.as.they.abab933c" /></p>
     </div>
   );

@@ -84,7 +84,7 @@ function rentalTotal(plan: AutoSceatBuildingPlan): number {
 
 function buildingIcon(queueTypeID: number): React.ReactNode {
   if (queueTypeID >= 3) return <ShieldCheck className="h-4 w-4 text-warning" />;
-  return <Factory className="h-4 w-4 text-text-muted" />;
+  return <Factory className="h-4 w-4 text-primary" />;
 }
 
 export const AutoSceatResSettingsModal: React.FC<AutoSceatResSettingsModalProps> = ({
@@ -238,8 +238,8 @@ export const AutoSceatResSettingsModal: React.FC<AutoSceatResSettingsModalProps>
       <div key={node.castleID} className="rounded-global border border-border-base bg-bg-card/55 px-4 py-3">
         <div className="flex items-center justify-between gap-3">
           <div className="min-w-0">
-            <div className="truncate text-body font-semibold text-text-main">{node.name}</div>
-            <div className="text-caption font-semibold text-text-muted">{node.role} · Kingdom {node.kingdomID}</div>
+            <div className="truncate text-sm font-black text-text-main">{node.name}</div>
+            <div className="text-[11px] font-semibold text-text-muted">{node.role} · Kingdom {node.kingdomID}</div>
           </div>
           <Badge variant={node.stormBuffer ? 'warning' : 'secondary'}>{node.stormBuffer ? 'Buffer' : 'Storage'}</Badge>
         </div>
@@ -249,7 +249,7 @@ export const AutoSceatResSettingsModal: React.FC<AutoSceatResSettingsModalProps>
             const max = node.storage[resource] ?? 0;
             if (amount <= 0 && max <= 0) return null;
             return (
-              <div key={resource} className="flex items-center justify-between rounded-lg bg-bg-input/45 px-2 py-1.5 text-caption font-semibold text-text-muted">
+              <div key={resource} className="flex items-center justify-between rounded-lg bg-bg-input/45 px-2 py-1.5 text-[10px] font-bold text-text-muted">
                 <span className="capitalize">{resource}</span>
                 <span className="tabular-nums text-text-main">{formatCompact(amount)} / {formatCompact(max)}</span>
               </div>
@@ -286,26 +286,26 @@ export const AutoSceatResSettingsModal: React.FC<AutoSceatResSettingsModalProps>
         />
         <div className="mx-auto flex w-full max-w-[1780px] flex-col gap-5 pb-2">
           {catalogError && (
-            <div className="rounded-global border border-error/30 bg-error/10 px-4 py-3 text-body font-semibold text-error">
+            <div className="rounded-global border border-error/30 bg-error/10 px-4 py-3 text-sm font-semibold text-error">
               {catalogError}
             </div>
           )}
           {saveError && (
-            <div className="rounded-global border border-error/30 bg-error/10 px-4 py-3 text-body font-semibold text-error" role="alert">
+            <div className="rounded-global border border-error/30 bg-error/10 px-4 py-3 text-sm font-semibold text-error" role="alert">
               {saveError}
             </div>
           )}
           <SettingsSection disclosure={disclosure} section="reserves">
-            <Card variant="solid" className="">
+            <Card variant="solid" className="p-5">
               <div className="grid gap-4 xl:grid-cols-[1fr_1.4fr]">
                 <div className="grid content-start gap-3 sm:grid-cols-2">
-                  <label className="grid gap-1.5 text-caption font-semibold text-text-muted">Minimum coin reserve
+                  <label className="grid gap-1.5 text-xs font-bold text-text-muted">Minimum coin reserve
                     <Input type="number" min={0} value={settings.minimumCoinReserve} onChange={(event) => setSettings((current) => normalizeAutoSceatResSettings({ ...current, minimumCoinReserve: Number(event.target.value) }))} leftIcon={<Coins className="h-4 w-4" />} />
                   </label>
-                  <label className="grid gap-1.5 text-caption font-semibold text-text-muted">Minimum ruby reserve
+                  <label className="grid gap-1.5 text-xs font-bold text-text-muted">Minimum ruby reserve
                     <Input type="number" min={0} value={settings.minimumRubyReserve} onChange={(event) => setSettings((current) => normalizeAutoSceatResSettings({ ...current, minimumRubyReserve: Number(event.target.value) }))} leftIcon={<Gem className="h-4 w-4" />} />
                   </label>
-                  <p className="sm:col-span-2 text-caption text-text-muted"><LocalizedText messageKey="ui.settings.components.autoSceatResSettingsModal.coins.and.rubies.below.these.amounts.are.8972d347" /></p>
+                  <p className="sm:col-span-2 text-[11px] leading-relaxed text-text-muted"><LocalizedText messageKey="ui.settings.components.autoSceatResSettingsModal.coins.and.rubies.below.these.amounts.are.8972d347" /></p>
                 </div>
                 <div className="grid content-start gap-2.5">
                 {renderToggle('Resource logistics', 'Drains sovereign-resource surplus into configured future queue refills, even while queues are full.', settings.autoKingdomTransport, (checked) => setSettings((current) => ({ ...current, autoKingdomTransport: checked })))}
@@ -313,7 +313,7 @@ export const AutoSceatResSettingsModal: React.FC<AutoSceatResSettingsModalProps>
                 {renderToggle('Allow ruby recipes', 'Explicit permission for recipes whose official cost includes C2/rubies.', settings.allowRubyRecipes, (checked) => setSettings((current) => ({ ...current, allowRubyRecipes: checked })))}
                 {renderToggle('Ruby-skip blocked overflow', 'Completes at most one Green main resource craft per cycle when threshold overflow cannot be moved, using the official remaining-time ruby price.', settings.useRubyOverflowSkip, (checked) => setSettings((current) => ({ ...current, useRubyOverflowSkip: checked })), !settings.autoKingdomTransport)}
                 {settings.useRubyOverflowSkip && (
-                  <div className="rounded-global border border-warning/30 bg-warning/8 px-3 py-2 text-caption font-semibold text-warning">
+                  <div className="rounded-global border border-warning/30 bg-warning/8 px-3 py-2 text-[10px] font-semibold leading-relaxed text-warning">
                     <LocalizedText messageKey="ui.settings.components.autoSceatResSettingsModal.ruby.spending.is.limited.to.production.slots.e2ddc881" /></div>
                 )}
                 </div>
@@ -327,12 +327,12 @@ export const AutoSceatResSettingsModal: React.FC<AutoSceatResSettingsModalProps>
                 <Card key={node.castleID} variant="solid">
                   <CardHeader className="flex flex-row items-center justify-between gap-3">
                     <div className="min-w-0">
-                      <CardTitle className="truncate text-body-lg">{node.name}</CardTitle>
-                      <p className="mt-1 text-caption font-semibold text-text-muted">{node.role} · Kingdom {node.kingdomID} · {node.buildings.length} crafting building{node.buildings.length === 1 ? '' : 's'}</p>
+                      <CardTitle className="truncate text-base">{node.name}</CardTitle>
+                      <p className="mt-1 text-xs font-semibold text-text-muted">{node.role} · Kingdom {node.kingdomID} · {node.buildings.length} crafting building{node.buildings.length === 1 ? '' : 's'}</p>
                     </div>
                     <Badge variant="success"><LocalizedText messageKey="ui.settings.components.autoSceatResSettingsModal.crafting.000b8216" /></Badge>
                   </CardHeader>
-                  <CardContent className="grid gap-4  xl:grid-cols-2">
+                  <CardContent className="grid gap-4 p-5 xl:grid-cols-2">
                     {node.buildings.map((building) => {
                       const plan = buildingPlan(node.castleID, building.queueTypeID);
                       const weeklyRental = rentalTotal(plan);
@@ -340,29 +340,29 @@ export const AutoSceatResSettingsModal: React.FC<AutoSceatResSettingsModalProps>
                         <div key={building.queueTypeID} className={`rounded-global border p-4 transition ${plan.enabled ? 'border-primary/30 bg-primary/[0.035]' : 'border-border-base bg-bg-card/45'}`}>
                           <div className="flex items-start justify-between gap-3">
                             <div className="min-w-0">
-                              <div className="flex items-center gap-2 text-body font-semibold text-text-main">{buildingIcon(building.queueTypeID)}{building.name}</div>
-                              <div className="mt-1 text-caption font-semibold text-text-muted">
+                              <div className="flex items-center gap-2 text-sm font-black text-text-main">{buildingIcon(building.queueTypeID)}{building.name}</div>
+                              <div className="mt-1 text-[11px] font-semibold text-text-muted">
                                 Live slots: {building.activeRecipes.length}/{building.activeCapacity} active · {building.queuedRecipes.length}/{building.queueCapacity} queued
                               </div>
                             </div>
                             <div className="flex items-center gap-2">
                               <Badge variant={plan.enabled ? 'success' : 'secondary'}>{plan.enabled ? 'On' : 'Off'}</Badge>
-                              <Switch checked={plan.enabled} onChange={(checked) => updateBuildingPlan(node.castleID, building.queueTypeID, (current) => ({ ...current, enabled: checked }))} ariaLabel={`Enable ${building.name} crafting in ${node.name}`} />
+                              <Switch checked={plan.enabled} onChange={(checked) => updateBuildingPlan(node.castleID, building.queueTypeID, (current) => ({ ...current, enabled: checked }))} size="sm" ariaLabel={`Enable ${building.name} crafting in ${node.name}`} />
                             </div>
                           </div>
 
                           <div className="mt-4 grid gap-2 rounded-global border border-border-base bg-bg-input/25 p-3 sm:grid-cols-2">
                             <div className="flex items-center justify-between gap-3">
                               <div>
-                                <div className="text-caption font-semibold text-text-main"><LocalizedText messageKey="ui.settings.components.autoSceatResSettingsModal.rent.second.active.deea61a0" /></div>
-                                <div className="text-caption font-semibold text-text-muted"><LocalizedText messageKey="ui.settings.components.autoSceatResSettingsModal.5m.coins.7.days.a508e0e6" /></div>
+                                <div className="text-xs font-bold text-text-main"><LocalizedText messageKey="ui.settings.components.autoSceatResSettingsModal.rent.second.active.deea61a0" /></div>
+                                <div className="text-[10px] font-semibold text-text-muted"><LocalizedText messageKey="ui.settings.components.autoSceatResSettingsModal.5m.coins.7.days.a508e0e6" /></div>
                               </div>
-                              <Switch checked={plan.autoRentActiveSlot} onChange={(checked) => updateBuildingPlan(node.castleID, building.queueTypeID, (current) => ({ ...current, autoRentActiveSlot: checked }))} ariaLabel={`Rent a second active slot for ${building.name} in ${node.name}`} />
+                              <Switch checked={plan.autoRentActiveSlot} onChange={(checked) => updateBuildingPlan(node.castleID, building.queueTypeID, (current) => ({ ...current, autoRentActiveSlot: checked }))} size="sm" ariaLabel={`Rent a second active slot for ${building.name} in ${node.name}`} />
                             </div>
                             <div className="flex items-center justify-between gap-3">
                               <div>
-                                <div className="text-caption font-semibold text-text-main"><LocalizedText messageKey="ui.settings.components.autoSceatResSettingsModal.rent.extra.queue.slots.0e3a3da0" /></div>
-                                <div className="text-caption font-semibold text-text-muted"><LocalizedText messageKey="ui.settings.components.autoSceatResSettingsModal.0.5m.10m.coins.7.days.2db82a0e" /></div>
+                                <div className="text-xs font-bold text-text-main"><LocalizedText messageKey="ui.settings.components.autoSceatResSettingsModal.rent.extra.queue.slots.0e3a3da0" /></div>
+                                <div className="text-[10px] font-semibold text-text-muted"><LocalizedText messageKey="ui.settings.components.autoSceatResSettingsModal.0.5m.10m.coins.7.days.2db82a0e" /></div>
                               </div>
                               <Switch
                                 checked={plan.autoRentQueueSlots > 0}
@@ -370,12 +370,13 @@ export const AutoSceatResSettingsModal: React.FC<AutoSceatResSettingsModalProps>
                                   ...current,
                                   autoRentQueueSlots: checked ? Math.max(1, current.autoRentQueueSlots) : 0,
                                 }))}
+                                size="sm"
                                 ariaLabel={`Rent extra queue slots for ${building.name} in ${node.name}`}
                               />
                             </div>
                             {plan.autoRentQueueSlots > 0 && (
                               <div className="sm:col-span-2">
-                                <div className="mb-1 text-caption font-semibold text-text-main"><LocalizedText messageKey="ui.settings.components.autoSceatResSettingsModal.queue.slots.to.rent.4b5d84c2" /></div>
+                                <div className="mb-1 text-xs font-bold text-text-main"><LocalizedText messageKey="ui.settings.components.autoSceatResSettingsModal.queue.slots.to.rent.4b5d84c2" /></div>
                                 <Select
                                   value={String(plan.autoRentQueueSlots)}
                                   onChange={(value) => updateBuildingPlan(node.castleID, building.queueTypeID, (current) => ({ ...current, autoRentQueueSlots: Number(value) }))}
@@ -387,15 +388,15 @@ export const AutoSceatResSettingsModal: React.FC<AutoSceatResSettingsModalProps>
                                 />
                               </div>
                             )}
-                            {weeklyRental > 0 && <div className="sm:col-span-2 text-caption font-semibold text-warning">Maximum selected renewal: {formatCompact(weeklyRental)} coins per 7 days for this building.</div>}
+                            {weeklyRental > 0 && <div className="sm:col-span-2 text-[10px] font-bold text-warning">Maximum selected renewal: {formatCompact(weeklyRental)} coins per 7 days for this building.</div>}
                           </div>
 
                           <div className="mt-4 flex items-center justify-between gap-3">
                             <div>
-                              <div className="text-caption font-semibold text-text-muted"><LocalizedText messageKey="ui.settings.components.autoSceatResSettingsModal.repeating.recipe.cycle.ca9d6751" /></div>
-                              <div className="mt-0.5 text-caption font-medium text-text-muted"><LocalizedText messageKey="ui.settings.components.autoSceatResSettingsModal.one.item.fills.every.slot.add.more.9a74f34c" /></div>
+                              <div className="text-xs font-black uppercase tracking-wide text-text-muted"><LocalizedText messageKey="ui.settings.components.autoSceatResSettingsModal.repeating.recipe.cycle.ca9d6751" /></div>
+                              <div className="mt-0.5 text-[10px] font-medium text-text-muted"><LocalizedText messageKey="ui.settings.components.autoSceatResSettingsModal.one.item.fills.every.slot.add.more.9a74f34c" /></div>
                             </div>
-                            <Button variant="secondary" size="md" onClick={() => setPickerTarget({ castleID: node.castleID, building })} leftIcon={<Plus className="h-4 w-4" />}><LocalizedText messageKey="ui.settings.components.autoSceatResSettingsModal.recipe.aec69352" /></Button>
+                            <Button variant="outline" size="sm" onClick={() => setPickerTarget({ castleID: node.castleID, building })} leftIcon={<Plus className="h-4 w-4" />}><LocalizedText messageKey="ui.settings.components.autoSceatResSettingsModal.recipe.aec69352" /></Button>
                           </div>
 
                           <div className="mt-3 grid gap-2">
@@ -404,16 +405,16 @@ export const AutoSceatResSettingsModal: React.FC<AutoSceatResSettingsModalProps>
                               return (
                                 <div key={`${step.recipeID}-${index}`} className="flex min-w-0 items-center gap-3 rounded-global border border-border-base bg-bg-card/65 px-3 py-2.5">
                                   <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-border-base bg-bg-input/60">
-                                    {recipe?.output.iconUrl ? <img src={recipe.output.iconUrl} alt="" className="h-8 w-8 object-contain" /> : <span className="text-caption font-semibold text-text-main">#{step.recipeID}</span>}
+                                    {recipe?.output.iconUrl ? <img src={recipe.output.iconUrl} alt="" className="h-8 w-8 object-contain" /> : <span className="text-xs font-black text-primary">#{step.recipeID}</span>}
                                   </span>
                                   <div className="min-w-0 flex-1">
-                                    <div className="truncate text-caption font-semibold text-text-main">{recipe?.output.name ?? `Recipe #${step.recipeID}`}</div>
-                                    <div className="mt-0.5 flex flex-wrap gap-1 text-caption font-semibold text-text-muted">
+                                    <div className="truncate text-xs font-black text-text-main">{recipe?.output.name ?? `Recipe #${step.recipeID}`}</div>
+                                    <div className="mt-0.5 flex flex-wrap gap-1 text-[10px] font-semibold text-text-muted">
                                       {recipe && <><span>Level {recipe.level}</span><span>·</span><span>{recipe.type}</span><span>·</span></>}
                                       <span>Recipe #{step.recipeID}</span>
                                     </div>
                                   </div>
-                                  <label className="flex shrink-0 items-center gap-1 text-caption font-semibold text-text-muted">
+                                  <label className="flex shrink-0 items-center gap-1 text-[10px] font-bold text-text-muted">
                                     ×
                                     <input
                                       type="number"
@@ -424,28 +425,28 @@ export const AutoSceatResSettingsModal: React.FC<AutoSceatResSettingsModalProps>
                                         ...current,
                                         steps: current.steps.map((item, itemIndex) => itemIndex === index ? { ...item, repeat: Number(event.target.value) } : item),
                                       }))}
-                                      className="w-14 rounded-lg border border-border-base bg-bg-input/70 px-2 py-1 text-center text-caption font-semibold text-text-main outline-none focus:border-primary"
+                                      className="w-14 rounded-lg border border-border-base bg-bg-input/70 px-2 py-1 text-center text-xs font-black text-text-main outline-none focus:border-primary"
                                     />
                                   </label>
                                   <div className="flex shrink-0 items-center">
-                                    <Button aria-label={localizeStatic("ui.settings.components.autoSceatResSettingsModal.title.move.up.c66feb5e")} iconOnly variant="ghost" size="md" disabled={index === 0} onClick={() => updateBuildingPlan(node.castleID, building.queueTypeID, (current) => {
+                                    <Button variant="ghost" size="icon" disabled={index === 0} onClick={() => updateBuildingPlan(node.castleID, building.queueTypeID, (current) => {
                                       const steps = [...current.steps];
                                       [steps[index - 1], steps[index]] = [steps[index], steps[index - 1]];
                                       return { ...current, steps };
                                     })} title={localizeStatic("ui.settings.components.autoSceatResSettingsModal.title.move.up.c66feb5e")}><ArrowUp className="h-3.5 w-3.5" /></Button>
-                                    <Button aria-label={localizeStatic("ui.settings.components.autoSceatResSettingsModal.title.move.down.40bb50da")} iconOnly variant="ghost" size="md" disabled={index === plan.steps.length - 1} onClick={() => updateBuildingPlan(node.castleID, building.queueTypeID, (current) => {
+                                    <Button variant="ghost" size="icon" disabled={index === plan.steps.length - 1} onClick={() => updateBuildingPlan(node.castleID, building.queueTypeID, (current) => {
                                       const steps = [...current.steps];
                                       [steps[index], steps[index + 1]] = [steps[index + 1], steps[index]];
                                       return { ...current, steps };
                                     })} title={localizeStatic("ui.settings.components.autoSceatResSettingsModal.title.move.down.40bb50da")}><ArrowDown className="h-3.5 w-3.5" /></Button>
-                                    <Button aria-label={localizeStatic("ui.settings.components.autoSceatResSettingsModal.title.remove.c3812fc4")} iconOnly variant="ghost" size="md"  onClick={() => updateBuildingPlan(node.castleID, building.queueTypeID, (current) => ({ ...current, steps: current.steps.filter((_, itemIndex) => itemIndex !== index), cursor: 0 }))} title={localizeStatic("ui.settings.components.autoSceatResSettingsModal.title.remove.c3812fc4")}><Trash2 className="h-3.5 w-3.5" /></Button>
+                                    <Button variant="ghost" size="icon" className="text-error" onClick={() => updateBuildingPlan(node.castleID, building.queueTypeID, (current) => ({ ...current, steps: current.steps.filter((_, itemIndex) => itemIndex !== index), cursor: 0 }))} title={localizeStatic("ui.settings.components.autoSceatResSettingsModal.title.remove.c3812fc4")}><Trash2 className="h-3.5 w-3.5" /></Button>
                                   </div>
                                 </div>
                               );
                             })}
                             {plan.steps.length === 0 && (
-                              <Button variant="secondary" type="button" onClick={() => setPickerTarget({ castleID: node.castleID, building })} className="text-center transition">
-                                <LocalizedText messageKey="ui.settings.components.autoSceatResSettingsModal.add.the.first.recipe.for.this.building.9195186d" /></Button>
+                              <button type="button" onClick={() => setPickerTarget({ castleID: node.castleID, building })} className="rounded-global border border-dashed border-border-base bg-bg-card/35 px-4 py-5 text-center text-xs font-semibold text-text-muted transition hover:border-primary/40 hover:text-primary">
+                                <LocalizedText messageKey="ui.settings.components.autoSceatResSettingsModal.add.the.first.recipe.for.this.building.9195186d" /></button>
                             )}
                           </div>
                         </div>
@@ -455,7 +456,7 @@ export const AutoSceatResSettingsModal: React.FC<AutoSceatResSettingsModalProps>
                 </Card>
               ))}
               {craftingNodes.length === 0 && (
-                <Card variant="solid"><CardContent className="text-center text-body font-semibold text-text-muted"><LocalizedText messageKey="ui.settings.components.autoSceatResSettingsModal.no.crafting.buildings.are.loaded.connect.the.d367e3ff" /></CardContent></Card>
+                <Card variant="solid"><CardContent className="p-10 text-center text-sm font-semibold text-text-muted"><LocalizedText messageKey="ui.settings.components.autoSceatResSettingsModal.no.crafting.buildings.are.loaded.connect.the.d367e3ff" /></CardContent></Card>
               )}
             </div>
 
@@ -468,21 +469,21 @@ export const AutoSceatResSettingsModal: React.FC<AutoSceatResSettingsModalProps>
             customCount={countCustomValues(settings, sceatDefaults, ['checkIntervalSec', 'minimumShipmentSize', 'overflowThresholdPercent'])}
           >
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-                  <label className="grid gap-1.5 text-caption font-semibold text-text-muted">
+                  <label className="grid gap-1.5 text-xs font-bold text-text-muted">
                     Check interval
                     <Input
                       type="number"
                       min={1}
                       value={Math.max(1, Math.round(settings.checkIntervalSec / 60))}
                       onChange={(event) => setSettings((current) => normalizeAutoSceatResSettings({ ...current, checkIntervalSec: Number(event.target.value) * 60 }))}
-                      rightIcon={<span className="text-caption font-semibold"><LocalizedText messageKey="ui.settings.components.autoSceatResSettingsModal.min.1f6fa6f6" /></span>}
+                      rightIcon={<span className="text-[10px] font-black uppercase"><LocalizedText messageKey="ui.settings.components.autoSceatResSettingsModal.min.1f6fa6f6" /></span>}
                     />
                   </label>
-                  <label className="grid gap-1.5 text-caption font-semibold text-text-muted">Minimum shipment
+                  <label className="grid gap-1.5 text-xs font-bold text-text-muted">Minimum shipment
                     <Input type="number" min={0} value={settings.minimumShipmentSize} onChange={(event) => setSettings((current) => normalizeAutoSceatResSettings({ ...current, minimumShipmentSize: Number(event.target.value) }))} />
                   </label>
-                  <label className="grid gap-1.5 text-caption font-semibold text-text-muted">Overflow starts
-                    <Input type="number" min={50} max={100} value={settings.overflowThresholdPercent} onChange={(event) => setSettings((current) => normalizeAutoSceatResSettings({ ...current, overflowThresholdPercent: Number(event.target.value) }))} rightIcon={<span className="text-caption font-semibold">%</span>} />
+                  <label className="grid gap-1.5 text-xs font-bold text-text-muted">Overflow starts
+                    <Input type="number" min={50} max={100} value={settings.overflowThresholdPercent} onChange={(event) => setSettings((current) => normalizeAutoSceatResSettings({ ...current, overflowThresholdPercent: Number(event.target.value) }))} rightIcon={<span className="text-xs font-black">%</span>} />
                   </label>
             </div>
           </SettingsSection>
@@ -496,7 +497,7 @@ export const AutoSceatResSettingsModal: React.FC<AutoSceatResSettingsModalProps>
           >
                 {renderToggle('Use transport time skips', 'Applies only selected skips, one command per confirmed response, to kingdom resource transports (TT 2).', settings.useKingdomTimeSkips, (checked) => setSettings((current) => ({ ...current, useKingdomTimeSkips: checked })), !settings.autoKingdomTransport)}
                 <div>
-                  <div className="text-caption font-semibold text-text-muted"><LocalizedText messageKey="ui.settings.components.autoSceatResSettingsModal.allowed.transport.skips.73eba8a9" /></div>
+                  <div className="text-xs font-black uppercase tracking-wide text-text-muted"><LocalizedText messageKey="ui.settings.components.autoSceatResSettingsModal.allowed.transport.skips.73eba8a9" /></div>
                   <ChoiceChipGroup
                     className="mt-2"
                     ariaLabel={localizeStatic("ui.settings.components.autoSceatResSettingsModal.ariaLabel.allowed.transport.skips.73eba8a9")}
@@ -513,7 +514,7 @@ export const AutoSceatResSettingsModal: React.FC<AutoSceatResSettingsModalProps>
                   {settings.useKingdomTimeSkips && settings.autoKingdomTransport && (
                     <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3">
                       {timeSkips.filter((skip) => settings.allowedTimeSkips.includes(skip.id)).map((skip) => (
-                        <label key={skip.id} className="grid gap-1 text-caption font-semibold text-text-muted">
+                        <label key={skip.id} className="grid gap-1 text-[10px] font-bold text-text-muted">
                           Keep {skip.label}
                           <Input
                             type="number"
@@ -526,14 +527,14 @@ export const AutoSceatResSettingsModal: React.FC<AutoSceatResSettingsModalProps>
                                 [skip.id]: Number(event.target.value),
                               },
                             }))}
-                            className="!py-1.5 text-caption"
+                            className="!py-1.5 text-xs"
                           />
                         </label>
                       ))}
                     </div>
                   )}
                 </div>
-                <div className="rounded-global border border-border-base bg-bg-input/35 px-4 py-3 text-caption font-medium text-text-muted">
+                <div className="rounded-global border border-border-base bg-bg-input/35 px-4 py-3 text-[11px] font-medium leading-relaxed text-text-muted">
                   <LocalizedText messageKey="ui.settings.components.autoSceatResSettingsModal.the.smallest.selected.skip.that.completes.a.e43403b9" /></div>
           </SettingsSection>
 
@@ -545,14 +546,14 @@ export const AutoSceatResSettingsModal: React.FC<AutoSceatResSettingsModalProps>
             <Card variant="solid">
               <CardHeader>
                 <div>
-                  <CardTitle className="flex items-center gap-2 text-body-lg"><Warehouse className="h-4 w-4 text-text-muted" /><LocalizedText messageKey="ui.settings.components.autoSceatResSettingsModal.additional.storage.nodes.017a7158" /></CardTitle>
-                  <p className="mt-1 text-caption text-text-muted"><LocalizedText messageKey="ui.settings.components.autoSceatResSettingsModal.the.four.crafting.castles.are.donors.and.35534627" /></p>
+                  <CardTitle className="flex items-center gap-2 text-base"><Warehouse className="h-4 w-4 text-primary" /><LocalizedText messageKey="ui.settings.components.autoSceatResSettingsModal.additional.storage.nodes.017a7158" /></CardTitle>
+                  <p className="mt-1 text-xs text-text-muted"><LocalizedText messageKey="ui.settings.components.autoSceatResSettingsModal.the.four.crafting.castles.are.donors.and.35534627" /></p>
                 </div>
               </CardHeader>
-              <CardContent className="grid gap-3">
+              <CardContent className="grid gap-3 p-4">
                 {storageNodes.map(renderStorageNode)}
-                {storageNodes.length === 0 && <div className="rounded-global border border-dashed border-border-base px-4 py-6 text-center text-caption font-semibold text-text-muted"><LocalizedText messageKey="ui.settings.components.autoSceatResSettingsModal.no.additional.storage.nodes.discovered.71f389fd" /></div>}
-                <div className="rounded-global border border-primary/20 bg-primary/[0.04] px-4 py-3 text-caption font-medium text-text-muted">
+                {storageNodes.length === 0 && <div className="rounded-global border border-dashed border-border-base px-4 py-6 text-center text-xs font-semibold text-text-muted"><LocalizedText messageKey="ui.settings.components.autoSceatResSettingsModal.no.additional.storage.nodes.discovered.71f389fd" /></div>}
+                <div className="rounded-global border border-primary/20 bg-primary/[0.04] px-4 py-3 text-[11px] font-medium leading-relaxed text-text-muted">
                   <LocalizedText messageKey="ui.settings.components.autoSceatResSettingsModal.logistics.capacity.is.calculated.automatically.from.current.52f0c37c" /></div>
               </CardContent>
             </Card>

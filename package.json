@@ -10,11 +10,11 @@
     "client:dev": "npm --prefix Client run dev",
     "client:build": "npm --prefix Client run build",
     "client:test": "npm --prefix Client test",
-    "check:mirror": "node scripts/check-mirror.mjs --portal ../CitadelOpsFrontend --desktop .",
     "preview:onboarding": "npm --prefix Client run preview:onboarding",
     "server:dev": "go run .",
     "build": "npm run client:build && go build -tags desktop -o CitadelOpsDesktop .",
     "build:server": "go build -o CitadelOpsDesktop .",
-    "test": "go test ./... && npm run client:test"
+    "test": "go test ./... && npm run client:test",
+    "check:mirror": "node scripts/check-mirror.mjs --portal ../CitadelOpsFrontend --desktop ."
   }
 }

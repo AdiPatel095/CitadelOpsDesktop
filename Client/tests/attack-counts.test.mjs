@@ -11,7 +11,7 @@ const vite = await createServer({
   appType: 'custom', logLevel: 'silent', server: { middlewareMode: true },
   plugins: [{ name: 'attack-count-header-contexts', enforce: 'pre',
     resolveId(source, importer) {
-      if (!importer?.endsWith('/header/StatusCluster.tsx')) return;
+      if (!importer?.endsWith('/DailyAttackTracker.tsx')) return;
       if (source.endsWith('/ApiContext')) return 'virtual:cit88-api';
       if (source.endsWith('/LocaleContext')) return 'virtual:cit88-locale';
       if (source.endsWith('/Deployment')) return 'virtual:cit88-presence';
@@ -25,7 +25,7 @@ const vite = await createServer({
 });
 const { rateView, dailyView } = await vite.ssrLoadModule('/src/components/automation/attackCounts.ts');
 const { messages } = await vite.ssrLoadModule('/src/i18n/messages.ts');
-const { attacksText } = await vite.ssrLoadModule('/src/components/header/headerStatus.ts');
+const { default: Tracker } = await vite.ssrLoadModule('/src/components/DailyAttackTracker.tsx');
 after(async () => {
   delete globalThis.__cit88State; delete globalThis.__cit88Locale; delete globalThis.__cit88Presence;
   await vite.close();
@@ -67,9 +67,10 @@ test('offline always withholds live counts even while the last live response is 
 });
 
 function header(state, presence={mode:'live'}) {
-  const locale={locale:'en',messageLocale:'en',number:n=>String(n),t:(key,params)=>String(new IntlMessageFormat(messages[key],'en').format(params))};
-  const value=attacksText({dailyAttacks:state?.dailyAttacks,presence},locale);
-  return renderToStaticMarkup(React.createElement('span',{title:value.title,'aria-label':value.text==='—'?value.title:value.text},value.text));
+  globalThis.__cit88State=state;
+  globalThis.__cit88Presence=presence;
+  globalThis.__cit88Locale={locale:'en',messageLocale:'en',number: n=>String(n),t:(key,params)=>String(new IntlMessageFormat(messages[key],'en').format(params))};
+  return renderToStaticMarkup(React.createElement(Tracker));
 }
 test('header unknown renders an em dash and the unknown accessible tooltip', () => {
   for (const state of [undefined, {}, {dailyAttacks:{count:0}}, {dailyAttacks:{observedAt,count:undefined}}, {dailyAttacks:{count:0,observedAt:'0001-01-01T00:00:00Z'}}]) {

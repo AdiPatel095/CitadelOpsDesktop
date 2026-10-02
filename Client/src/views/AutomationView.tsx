@@ -1,21 +1,12 @@
-import './core-views.css';
-import { AUTOMATION_FEATURE_NAMES } from '../settings/automationFeatureNames';
-import './automation-card.css';
-import { TimedRunButton } from '../components/automation/TimedRunButton';
-import { TimerTip } from '../components/automation/TimerTip';
-import { Card, Panel, SectionHeader } from '../components/ui';
-import { StatusBadge } from '../components/ui/StatusBadge';
-import { useAutomationPlayerStatus } from '../settings/readiness/useAutomationPlayerStatus';
-import { automationPlayerStatus } from '../settings/readiness/playerStatus';
-import type { SettingsFeatureId as StatusFeatureId } from '../settings/disclosure/placement';
 import { rateView, dailyView, type CountView } from '../components/automation/attackCounts';
 import { useHostedRuntimePresence } from '../config/Deployment';
-import {nextWakeParameters} from '../i18n/automationDuration';
-import {automationDetailMessage, automationLaneMessage} from '../i18n/automationMessages';
+import {nextWakeParameters,timedRemainingParameters} from '../i18n/automationDuration';
+import {automationDetailMessage, automationStatusMessage, automationLaneMessage} from '../i18n/automationMessages';
 import {useLocalizedMessage} from '../i18n/useLocalizedMessage';
 import {messageLanguageAttributes} from '../i18n/messageLanguage';
 import {describeMessage, type MessageKey, type MessageParameters} from '../i18n/messages';
 import type {LocalizedMessage} from '../i18n/formatMessage';
+import { LocalizedRichText } from "../i18n/LocalizedRichText";
 import { useLocale as useStaticLocale } from "../i18n/LocaleContext";
 import { LocalizedText } from "../i18n/LocalizedText";
 import React, { useEffect, useMemo, useState } from 'react';
@@ -27,6 +18,7 @@ import {
   Crosshair,
   Hammer,
   HeartPulse,
+  MousePointerClick,
   Settings,
   Shield,
   ShoppingCart,
@@ -45,6 +37,7 @@ import {
   ModalTitle,
   ScheduleSummaryRow,
   Switch,
+  type StatusTone,
 } from '../components/ui';
 import type { AttackLaunchRatesV2, AutomationStateV2 } from '../api/Contracts';
 import {
@@ -147,6 +140,9 @@ type DisplayTranslator = (key:MessageKey,params?:MessageParameters)=>string;
 function formatNextWake(timestamp:number,now:number,locale:string,t:DisplayTranslator):string {
   return t('automation.nextCheck',nextWakeParameters(timestamp,now,locale));
 }
+function formatTimedRemaining(expiresAt:number,now:number,locale:string,t:DisplayTranslator):string {
+  return t('automation.timeLeft',timedRemainingParameters(expiresAt,now,locale));
+}
 
 function combinedAutomationStatus(
   statuses: Array<string | undefined>,
@@ -206,24 +202,43 @@ function stormMissingDecorationWarningLanes(
   }];
 }
 
+function automationStatusTone(status: string): StatusTone {
+  switch (status.toLowerCase()) {
+    case 'complete':
+    case 'completed':
+    case 'success':
+      return 'success';
+    case 'failed':
+    case 'error':
+      return 'danger';
+    case 'blocked':
+    case 'gated':
+    case 'retrying':
+    case 'warning':
+      return 'warning';
+    case 'running':
+      return 'info';
+    case 'enabled':
+    case 'scheduled':
+      return 'brand';
+    default:
+      return 'neutral';
+  }
+}
+
 export function AutomationStatusLines({
-  featureId,
-  buildLaneActive,
   featureName,
   status,
   detail,
   detailDescriptor,
   lanes,
 }: {
-  featureId: StatusFeatureId;
-  buildLaneActive?: boolean;
   featureName: string;
   status: string;
   detail?: string;
   detailDescriptor?: LocalizedMessage;
   lanes?: AutomationStatusLane[];
 }) {
-  const player = useAutomationPlayerStatus(featureId, { buildLaneActive });
   const {t,locale,direction} = useStaticLocale();
   const hasLanes = Boolean(lanes?.length);
   const lines: AutomationStatusLane[] = hasLanes
@@ -237,22 +252,21 @@ export function AutomationStatusLines({
       lang={locale}
       dir={direction}
     >
-      {lines.map((line, index) => {
-        const value = index === 0 ? player.overall : line.id === 'builder-missing-decorations'
-          ? player.lanes.find(lane => lane.id === line.id)?.value ?? player.overall
-          : player.lanes[index - 1]?.value ?? player.overall;
-        return <AutomationStatusLine key={line.id} line={line} value={value} />;
-      })}
+      {lines.map((line) => <AutomationStatusLine key={line.id} line={line} />)}
     </div>
   );
 }
 
-function AutomationStatusLine({line, value}:{line:AutomationStatusLane; value:ReturnType<typeof automationPlayerStatus>}) {
+function AutomationStatusLine({line}:{line:AutomationStatusLane}) {
   const label=useLocalizedMessage(automationLaneMessage(line.id),line.label);
-  return <div className="automation-function-status-line">
+  const status=useLocalizedMessage(automationStatusMessage(line.status),line.status);
+  const detail=useLocalizedMessage(line.detailDescriptor,line.detail ?? '');
+  return <div className={`ui-status ui-status-${automationStatusTone(line.status)} automation-function-status-line ${line.label ? 'automation-function-status-line-lane' : ''} ${line.toggle ? 'automation-function-status-line-toggle' : ''}`}>
+    <span className="ui-status-symbol" aria-hidden="true" />
     {line.label ? <span className="automation-function-status-lane" {...messageLanguageAttributes(label)}>{label.text}</span> : null}
-    <StatusBadge {...value} />
-    {line.toggle ? <Switch checked={line.toggle.checked} onChange={line.toggle.onChange} ariaLabel={line.toggle.ariaLabel} disabled={line.toggle.disabled} className="automation-function-status-toggle" /> : null}
+    <span className="ui-status-label" {...messageLanguageAttributes(status)}>{status.text}</span>
+    {line.detail || line.toggle ? <span className="ui-status-detail" {...messageLanguageAttributes(detail)}>{detail.text}</span> : null}
+    {line.toggle ? <Switch checked={line.toggle.checked} onChange={line.toggle.onChange} size="sm" ariaLabel={line.toggle.ariaLabel} disabled={line.toggle.disabled} className="automation-function-status-toggle" /> : null}
   </div>;
 }
 
@@ -439,7 +453,7 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
       id: 'autoRecruit',
       enabledKey: 'recruit_troops',
       group: 'production',
-      name: AUTOMATION_FEATURE_NAMES.autoRecruit,
+      name: 'Auto Recruit',
       description: 'Keeps troop recruitment queues stocked from the configured plans.',
       enabled: recruitTroopsEnabled,
       detail: recruitTroopsEnabled ? automationStates.autoRecruit?.detail : undefined,
@@ -452,7 +466,7 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
       id: 'autoTool',
       enabledKey: 'auto_tool',
       group: 'production',
-      name: AUTOMATION_FEATURE_NAMES.autoTool,
+      name: 'Auto Tool',
       description: 'Maintains tool production queues across configured castles.',
       enabled: autoToolEnabled,
       detail: autoToolEnabled ? automationStates.autoTool?.detail : undefined,
@@ -465,7 +479,7 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
       id: 'autoHospital',
       enabledKey: 'auto_hospital',
       group: 'support',
-      name: AUTOMATION_FEATURE_NAMES.autoHospital,
+      name: 'Auto Hospital',
       description: 'Processes hospital queues using the configured healing priorities.',
       enabled: autoHospitalEnabled,
       detail: autoHospitalEnabled ? automationStates.autoHospital?.detail : undefined,
@@ -478,7 +492,7 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
       id: 'autoStation',
       enabledKey: 'auto_station',
       group: 'support',
-      name: AUTOMATION_FEATURE_NAMES.autoStation,
+      name: 'Auto Station',
       description: 'Moves troops out of a castle before an incoming attack lands, leaves behind only the troops you chose to defend, and recalls the rest when it is clear.',
       enabled: autoStationEnabled,
       detail: autoStationEnabled ? automationStates.autoStation?.detail : undefined,
@@ -491,7 +505,7 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
       id: 'autoBird',
       enabledKey: 'auto_bird',
       group: 'support',
-      name: AUTOMATION_FEATURE_NAMES.autoBird,
+      name: 'Auto Bird',
       description: "Sends each castle's troops to the nearest alliance member's castle in repeating Bird cycles, using only members with more protection days than you set, and keeping only the troops you set aside at home.",
       enabled: autoBirdEnabled,
       detail: autoBirdEnabled ? automationStates.autoBird?.detail : undefined,
@@ -504,7 +518,7 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
       id: 'autoTCI',
       enabledKey: 'auto_tci',
       group: 'upkeep',
-      name: AUTOMATION_FEATURE_NAMES.autoTCI,
+      name: 'Auto TCI',
       description: 'Equips and renews temporary construction items automatically.',
       enabled: autoTCIEnabled,
       detail: autoTCIEnabled
@@ -520,7 +534,7 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
       id: 'autoSceatRes',
       enabledKey: 'auto_sceat_resources',
       group: 'production',
-      name: AUTOMATION_FEATURE_NAMES.autoSceatRes,
+      name: 'Auto Sceat Resources',
       description: 'Balances kingdom resources and maintains Refinery, Toolsmith, Dragon Hoard, and Dragon Forge queues.',
       enabled: autoSceatResEnabled,
       detail: autoSceatResEnabled ? autoSceatRuntime?.detail : undefined,
@@ -537,7 +551,7 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
       id: 'autoFoodBalance',
       enabledKey: 'auto_food_balance',
       group: 'upkeep',
-      name: AUTOMATION_FEATURE_NAMES.autoFoodBalance,
+      name: 'Auto Food Balance',
       description: 'Protects Food, Honey, Mead, and Beef reserves across owned castles.',
       enabled: autoFoodBalanceEnabled,
       detail: autoFoodBalanceEnabled ? automationStates.autoFoodBalance?.detail : undefined,
@@ -550,7 +564,7 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
       id: 'autoBooster',
       enabledKey: 'auto_booster',
       group: 'upkeep',
-      name: AUTOMATION_FEATURE_NAMES.autoBooster,
+      name: 'Auto Booster',
       description: 'Buys only the 2,500-ruby daily global fortress-speed boost after a fresh exact-price and reserve check.',
       enabled: autoBoosterEnabled,
       detail: autoBoosterEnabled ? automationStates.autoBooster?.detail : undefined,
@@ -563,7 +577,7 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
       id: 'autoBuyer',
       enabledKey: 'auto_buyer',
       group: 'upkeep',
-      name: AUTOMATION_FEATURE_NAMES.autoBuyer,
+      name: 'Auto Buyer',
       description: 'Buys selected reset stock and maintains specialist and feast duration floors within explicit reserves.',
       enabled: autoBuyerEnabled,
       detail: autoBuyerEnabled ? automationStates.autoBuyer?.detail : undefined,
@@ -576,7 +590,7 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
 		id: 'autoTowers',
 		enabledKey: 'auto_towers',
 		group: 'offense',
-		name: AUTOMATION_FEATURE_NAMES.autoTowers,
+		name: 'Auto Towers',
 		description: 'Attacks ready robber-baron towers with regular waves or Baron Advisor chains bounded by a daily Time Skip budget.',
 		enabled: autoTowerEnabled,
 		detail: autoTowerEnabled ? automationStates.autoTowers?.detail : undefined,
@@ -589,7 +603,7 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
 		id: 'autoFortress',
 		enabledKey: 'auto_fortress',
 		group: 'offense',
-		name: AUTOMATION_FEATURE_NAMES.autoFortress,
+		name: 'Auto Fortress',
 		description: 'Wins outer-kingdom fortresses with a speed-first Direwolf wave, guarded supply, and exact cooldown tracking.',
 		enabled: autoFortressEnabled,
 		detail: autoFortressEnabled ? automationStates.autoFortress?.detail : undefined,
@@ -602,7 +616,7 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
       id: AUTO_EQUIPMENT_CLEANUP_FEATURE_ID,
       enabledKey: AUTO_EQUIPMENT_CLEANUP_ENABLED_KEY,
       group: 'upkeep',
-      name: AUTOMATION_FEATURE_NAMES.autoEquipmentCleanup,
+      name: 'Auto Equipment Cleanup',
       description: 'Sells eligible old non-relic equipment and gems from storage automatically.',
       enabled: autoEquipmentCleanup.enabled,
       detail: `${equipmentCleanupScheduleLabel} · polls every ${autoEquipmentCleanup.intervalMinutes} min`,
@@ -617,7 +631,7 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
       id: 'autoInvasion',
       enabledKey: 'auto_invasion',
       group: 'offense',
-      name: AUTOMATION_FEATURE_NAMES.autoInvasion,
+      name: 'Auto Invasion',
       description: 'Uses a CitadelOps attack preset against Foreign Lords and Bloodcrow castles until the score target is reached.',
       enabled: autoInvasionEnabled,
       detail: autoInvasionEnabled ? automationStates.autoInvasion?.detail : undefined,
@@ -630,7 +644,7 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
 		id: 'autoNomad',
 		enabledKey: 'auto_nomad',
 		group: 'offense',
-		name: AUTOMATION_FEATURE_NAMES.autoNomad,
+		name: 'Auto Nomad / Samurai',
 		description: 'Maxes four regular camps, locks the weakest, and chains available commanders into that one camp.',
 		enabled: autoNomadEnabled,
 		detail: autoNomadEnabled ? automationStates.autoNomad?.detail : undefined,
@@ -643,7 +657,7 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
 		id: 'autoAdvisor',
 		enabledKey: 'auto_advisor',
 		group: 'offense',
-		name: AUTOMATION_FEATURE_NAMES.autoAdvisor,
+		name: 'Auto Advisor',
 		description: 'Starts one server-managed Nomad or Samurai advisor chain, sized to event time and current resources.',
 		enabled: autoAdvisorEnabled,
 		detail: autoAdvisorEnabled ? automationStates.autoAdvisor?.detail : undefined,
@@ -656,7 +670,7 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
 		id: 'autoKhan',
 		enabledKey: 'auto_khan',
 		group: 'offense',
-		name: AUTOMATION_FEATURE_NAMES.autoKhan,
+		name: 'Auto Khan',
 		description: 'Chains Khan camp hits and retaliations while keeping the Great Empire main castle on its defense preset.',
 		enabled: autoKhanEnabled,
 		detail: autoKhanEnabled ? autoKhanAttackRuntime?.detail : undefined,
@@ -675,7 +689,7 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
 		id: 'autoBeriWorld',
 		enabledKey: 'auto_beri_world',
 		group: 'offense',
-		name: AUTOMATION_FEATURE_NAMES.autoBeriWorld,
+		name: 'Auto Beri World',
 		description: 'Transfers troops, attacks each next tower, brings the loot home, and spends confirmed Berimond resources on a captured camp build and upgrade target.',
 		enabled: autoBeriWorldEnabled,
 		detail: autoBeriWorldEnabled ? autoBeriTransferRuntime?.detail : undefined,
@@ -701,7 +715,7 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
       id: 'autoStorm',
       enabledKey: 'auto_storm',
       group: 'offense',
-      name: AUTOMATION_FEATURE_NAMES.autoStorm,
+      name: 'Auto Storm',
       description: 'Builds a captured Storm castle target, attacks selected forts and islands, and spends Aquamarine by priority.',
       enabled: autoStormEnabled,
       detail: autoStormEnabled ? autoStormRuntime?.detail : undefined,
@@ -821,7 +835,7 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
     focusReadinessTargetWhenReady(id);
   };
   const goalButton = (
-    <Button variant="secondary" size="md" id="goal-entry" onClick={() => setGoalPickerOpen(true)} data-goal-entry>
+    <Button variant="outline" size="sm" id="goal-entry" onClick={() => setGoalPickerOpen(true)} data-goal-entry>
       <LocalizedText messageKey="goalEntry.button" />
     </Button>
   );
@@ -841,7 +855,7 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
       ) : (
         <div className="flex flex-wrap items-center justify-between gap-2" data-goal-entry-row>
           {!anyAutomationOn ? (
-            <div className="min-w-0 text-caption" data-goal-empty>
+            <div className="min-w-0 text-xs" data-goal-empty>
               <div className="font-bold text-text-main"><LocalizedText messageKey="goalEntry.emptyTitle" /></div>
               <div className="text-text-muted"><LocalizedText messageKey="goalEntry.emptyBody" /></div>
             </div>
@@ -862,13 +876,23 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
   return (
     <div className="mx-auto flex w-full max-w-[1800px] flex-col gap-4 pb-10">
       <AutomationSafetyPanel states={automationStates} now={now} />
-      <TimerTip />
       {goalEntry}
       <div className="automation-function-groups">
         {groupedFeatures.map((group) => {
+          const GroupIcon = group.icon;
           return (
             <section key={group.id} className="automation-function-group">
-              <SectionHeader title={<bdi>{group.name}</bdi>} />
+              <div className="automation-function-group-heading">
+                <span className="automation-function-group-icon" aria-hidden="true">
+                  <GroupIcon className="h-4 w-4" />
+                </span>
+                <h2>{group.name}</h2>
+                <span className="automation-function-group-rule" aria-hidden="true" />
+                <div className="automation-right-click-banner automation-right-click-inline" role="note">
+                  <MousePointerClick aria-hidden="true" />
+                  <span><LocalizedRichText messageKey="ui.rich.views.automationView.right.click.a.toggle.for.temporary.activation.c34579ee" params={{}} tags={{strong0: children => <strong className="text-text-main">{children}</strong>}} /></span>
+                </div>
+              </div>
               <div className="automation-function-grid">
                 {group.features.map((feature) => {
                   const FeatureIcon = feature.icon;
@@ -876,84 +900,80 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
                   const attackLaunchCount = rateView(attackRates, feature.id, offline);
                   const dailyAttackLaunchCount = dailyView(attackRates, feature.id, offline);
                   return (
-                    <Card
+                    <div
                       key={feature.id}
                       className={`automation-function-row ${feature.enabled ? 'automation-function-row-active' : ''}`}
                     >
-                      <div className="automation-card-header">
-                        <span
-                          id={`automation-switch-${feature.id}`}
-                          className="shrink-0"
-                          onContextMenu={(event) => {
-                            event.preventDefault();
-                            onOpenAutomationDuration(feature.enabledKey, feature.name);
-                          }}
-                          title={`Right-click to run ${feature.name} for a duration`}
-                        >
-                          <Switch
-                            checked={feature.enabled}
-                            onChange={feature.onToggle}
-                            ariaLabel={`Toggle ${feature.name}`}
-                            disabled={feature.disabled}
-                          />
-                        </span>
-                        <div className="automation-card-title">
-                          <FeatureIcon className="h-3.5 w-3.5 shrink-0" />
-                          <h3><bdi>{feature.name}</bdi></h3>
+                      <span
+                        id={`automation-switch-${feature.id}`}
+                        className="shrink-0"
+                        onContextMenu={(event) => {
+                          event.preventDefault();
+                          onOpenAutomationDuration(feature.enabledKey, feature.name);
+                        }}
+                        title={`Right-click to run ${feature.name} for a duration`}
+                      >
+                        <Switch
+                          checked={feature.enabled}
+                          onChange={feature.onToggle}
+                          size="sm"
+                          ariaLabel={`Toggle ${feature.name}`}
+                          disabled={feature.disabled}
+                        />
+                      </span>
+                      <div className="automation-function-copy">
+                        <div className="flex min-w-0 items-center gap-2">
+                          <FeatureIcon className="h-3.5 w-3.5 shrink-0 text-text-muted" />
+                          <h3>{feature.name}</h3>
+                          {feature.group === 'offense' ? (
+                            <>
+                              <Badge
+                                variant="outline"
+                                className="shrink-0 whitespace-nowrap"
+                                title={attackRateTitle(feature.name, attackLaunchCount,locale,localizeStatic)}
+                                aria-label={attackRateTitle(feature.name, attackLaunchCount,locale,localizeStatic)}
+                              >
+                                {attackRateLabel(attackLaunchCount,localizeStatic)}
+                              </Badge>
+                              <Badge
+                                variant="outline"
+                                className="shrink-0 whitespace-nowrap"
+                                title={dailyAttackCountTitle(feature.name, dailyAttackLaunchCount,locale,localizeStatic)}
+                                aria-label={dailyAttackCountTitle(feature.name, dailyAttackLaunchCount,locale,localizeStatic)}
+                              >
+                                {dailyAttackCountLabel(dailyAttackLaunchCount,locale,localizeStatic)}
+                              </Badge>
+                            </>
+                          ) : null}
+                          {timedUntil ? <Badge variant="outline">{formatTimedRemaining(timedUntil, now,locale,localizeStatic)}</Badge> : null}
                         </div>
-                        <div className="automation-card-actions">
-                          <TimedRunButton featureName={feature.name} expiresAt={timedUntil} now={now}
-                            disabled={feature.disabled} onOpen={() => onOpenAutomationDuration(feature.enabledKey, feature.name)} />
-                          <Button iconOnly
-                            variant="ghost"
-                            size="md"
-                            className="automation-function-settings"
-                            onClick={feature.onOpenSettings}
-                            aria-label={`Open ${feature.name} settings`}
-                            title={`Open ${feature.name} settings`}
-                          >
-                            <Settings className="h-3.5 w-3.5" />
-                          </Button>
-                        </div>
+                        <p>{feature.description}</p>
+                        <AutomationStatusLines
+                          featureName={feature.name}
+                          status={feature.status}
+                          detail={feature.detail}
+                          detailDescriptor={feature.detailDescriptor ?? automationDetailMessage(feature.detail,automationStates[feature.id]?.detailDescriptor)}
+                          lanes={feature.statusLanes}
+                        />
+                        <AutomationFeatureFeedback
+                          featureId={feature.id as SettingsFeatureId}
+                          enabled={feature.enabled}
+                          onOpenSettings={feature.onOpenSettings}
+                          launchesByFeature={attackLaunchesByFeature}
+                          buildLaneActive={feature.id === 'autoBeriWorld' ? autoBeriBuildEnabled : undefined}
+                        />
                       </div>
-                      <AutomationStatusLines
-                        featureId={feature.id as StatusFeatureId}
-                        buildLaneActive={feature.id === 'autoBeriWorld' ? autoBeriBuildEnabled : undefined}
-                        featureName={feature.name}
-                        status={feature.status}
-                        detail={feature.detail}
-                        detailDescriptor={feature.detailDescriptor ?? automationDetailMessage(feature.detail,automationStates[feature.id]?.detailDescriptor)}
-                        lanes={feature.statusLanes}
-                      />
-                      {feature.group === 'offense' ? (
-                        <Panel className="automation-card-metrics">
-                          <Badge
-                            variant="outline"
-                            className="shrink-0 whitespace-nowrap"
-                            title={attackRateTitle(feature.name, attackLaunchCount,locale,localizeStatic)}
-                            aria-label={attackRateTitle(feature.name, attackLaunchCount,locale,localizeStatic)}
-                          >
-                            {attackRateLabel(attackLaunchCount,localizeStatic)}
-                          </Badge>
-                          <Badge
-                            variant="outline"
-                            className="shrink-0 whitespace-nowrap"
-                            title={dailyAttackCountTitle(feature.name, dailyAttackLaunchCount,locale,localizeStatic)}
-                            aria-label={dailyAttackCountTitle(feature.name, dailyAttackLaunchCount,locale,localizeStatic)}
-                          >
-                            {dailyAttackCountLabel(dailyAttackLaunchCount,locale,localizeStatic)}
-                          </Badge>
-                        </Panel>
-                      ) : null}
-                      <p className="automation-card-description"><bdi>{feature.description}</bdi></p>
-                      <AutomationFeatureFeedback
-                        featureId={feature.id as SettingsFeatureId}
-                        enabled={feature.enabled}
-                        onOpenSettings={feature.onOpenSettings}
-                        launchesByFeature={attackLaunchesByFeature}
-                        buildLaneActive={feature.id === 'autoBeriWorld' ? autoBeriBuildEnabled : undefined}
-                      />
-                    </Card>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="automation-function-settings"
+                        onClick={feature.onOpenSettings}
+                        aria-label={`Open ${feature.name} settings`}
+                        title={`Open ${feature.name} settings`}
+                      >
+                        <Settings className="h-3.5 w-3.5" />
+                      </Button>
+                    </div>
                   );
                 })}
               </div>
@@ -984,7 +1004,6 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
           <ScheduleSummaryRow
             summary={equipmentCleanupScheduleLabel}
             actionLabel="Edit schedule"
-            actionSize="md"
             className="bg-bg-card/45 p-4"
             onEdit={() => {
                 setIsEquipmentCleanupSettingsOpen(false);
@@ -992,7 +1011,7 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
             }}
           />
 
-          <p className="text-caption text-text-muted">
+          <p className="text-xs leading-relaxed text-text-muted">
             <LocalizedText messageKey="ui.views.automationView.the.schedule.decides.when.cleanup.may.run.ec3b83b8" /></p>
           </SettingsSection>
           <SettingsSection
@@ -1003,8 +1022,8 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
           >
           <div className="flex flex-wrap items-center justify-between gap-4 rounded-global border border-primary/20 bg-primary/5 p-4">
             <div className="min-w-0">
-              <div className="text-body font-semibold text-text-main"><LocalizedText messageKey="ui.views.automationView.poll.interval.47ea8f5d" /></div>
-              <p className="mt-1 text-caption text-text-muted"><LocalizedText messageKey="ui.views.automationView.checks.equipment.storage.at.this.interval.while.1ed68fd4" /></p>
+              <div className="text-sm font-bold text-text-main"><LocalizedText messageKey="ui.views.automationView.poll.interval.47ea8f5d" /></div>
+              <p className="mt-1 text-xs text-text-muted"><LocalizedText messageKey="ui.views.automationView.checks.equipment.storage.at.this.interval.while.1ed68fd4" /></p>
             </div>
             <div className="flex items-center gap-2">
               <div className="w-20">
@@ -1018,7 +1037,7 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
                   aria-label={localizeStatic("ui.views.automationView.aria-label.equipment.cleanup.poll.interval.in.minutes.a1c6845c")}
                 />
               </div>
-              <span className="text-caption font-semibold text-text-muted"><LocalizedText messageKey="ui.views.automationView.min.1f6fa6f6" /></span>
+              <span className="text-xs font-semibold text-text-muted"><LocalizedText messageKey="ui.views.automationView.min.1f6fa6f6" /></span>
             </div>
           </div>
 

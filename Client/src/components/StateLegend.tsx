@@ -44,10 +44,10 @@ export const StateLegend: React.FC<{ values: StateLegendValues; compact?: boolea
     },
   ];
   return (
-    <dl className={`flex flex-wrap gap-x-3 gap-y-1 text-caption ${className}`} data-state-legend data-legend-compact={compact ? 'true' : undefined} aria-label={undefined}>
+    <dl className={`flex flex-wrap gap-x-3 gap-y-1 text-[11px] leading-relaxed ${className}`} data-state-legend data-legend-compact={compact ? 'true' : undefined} aria-label={undefined}>
       {items.map((item) => (
         <div key={item.id} className="flex items-baseline gap-1" data-legend={item.id}>
-          <dt className="font-bold text-text-muted">{item.label}:</dt>
+          <dt className="font-bold uppercase tracking-wide text-text-muted">{item.label}:</dt>
           <dd className={`m-0 font-semibold ${item.tone}`}>{item.value}</dd>
         </div>
       ))}

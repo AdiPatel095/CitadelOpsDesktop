@@ -76,7 +76,7 @@ test('no inventoried literal remains in the dialog source', () => {
 });
 
 // Render the real dialog with isolated UI/auth boundaries and deterministic hooks/time.
-function renderDialog({ pause = false, amount = '1', locale = 'en', catalog = {}, saveError, currentUntil = 1790816400000 } = {}) {
+function renderDialog({ pause = false, amount = '1', locale = 'en', catalog = {}, saveError } = {}) {
   const setters = [];
   let stateIndex = 0;
   const react = { ...React, useEffect: () => {}, useMemo: fn => fn(), useState: initial => {
@@ -98,13 +98,11 @@ function renderDialog({ pause = false, amount = '1', locale = 'en', catalog = {}
     static now() { return 1790812800000; }
   }
   const t = (key, params) => translate(key, params, locale, catalog);
-  const auth = { automationTimedUntilByKey: { autoBird: currentUntil },
+  const auth = { automationTimedUntilByKey: { autoBird: 1790816400000 },
     enableAutomationFor: async () => { if (saveError !== undefined) throw saveError; } };
   const imports = {
     react, 'lucide-react': { TimerReset: () => null }, '../../context/AuthContext': { useAuth: () => auth },
     '../../i18n/automationDuration': { formatDurationEnd: (value, locale) => formatDurationEnd(value, locale, 'UTC') },
-    '../../components/StopControl': { StopControl: () => h('div', { 'data-duration-stop': true }) },
-    '../disclosure/placement': { featureIdForEnabledKey: () => 'autoBird' },
     '../../components/ui': ui, '../../i18n/LocaleContext': { useLocale: () => ({ t, locale }) },
     '../../i18n/LocalizedText': { LocalizedText: ({ messageKey }) => h('span', null, messageKey === 'game.cancel' ? 'Cancel' : t(messageKey)) },
   };
@@ -177,12 +175,4 @@ test('endsAt-first pseudo catalog reorders the full rendered run and pause messa
     assert.equal((html.match(/<p>(.*?)<\/p>/)?.[1] ?? ''), expected);
     assert.equal(text(html).split('01.10.2026, 01:00').length - 1, 2, 'end date appears once in the message and once in the existing current-run notice');
   }
-});
-
-// CIT-72: only the timed-run dialog exposes Stop; pause and idle remain unchanged.
-test('Stop is directly after the current run line, only in active run mode', () => {
-  const active = renderDialog().html;
-  assert.match(active, /Current timed run ends [^<]+<\/p><div data-duration-stop="true"><\/div>/);
-  assert.doesNotMatch(renderDialog({ pause: true }).html, /data-duration-stop/);
-  assert.doesNotMatch(renderDialog({ currentUntil: null }).html, /data-duration-stop/);
 });

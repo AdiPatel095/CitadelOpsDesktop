@@ -19,7 +19,7 @@ import type {
 	WorldIntelligenceRankingResponseV1,
 	WorldIntelligenceUpdateManifestV1,
 } from '../../api/Contracts';
-import { ViewState, viewStatus, Badge, Button, Card, CardContent, Input, MetricTile, Select } from '../../components/ui';
+import { Badge, Button, Card, CardContent, EmptyState, Input, MetricTile, Select } from '../../components/ui';
 import {
 	eventBoardSelectionKey,
 	eventPaginationSelectionKey,
@@ -194,9 +194,9 @@ export const WorldEventHistory = ({
 			return;
 		}
 		setDirectoryLoading(true);
+		setError('');
 		try {
 			await Promise.all([loadRunMetadata(requestID), loadReferenceRankings(requestID)]);
-            if (requestID === directoryRequest.current) setError('');
 		} catch (requestError) {
 			if (requestID === directoryRequest.current) {
 				setError(requestError instanceof Error ? requestError : new LocalizedError('events.directoryFailed'));
@@ -229,7 +229,6 @@ export const WorldEventHistory = ({
 			const requestID = directoryRequest.current;
 			try {
 				await Promise.all([loadRunMetadata(requestID), loadReferenceRankings(requestID)]);
-            if (requestID === directoryRequest.current) setError('');
 			} catch {
 				// Preserve the last usable directory; the manual refresh surfaces errors.
 			} finally {
@@ -496,10 +495,10 @@ export const WorldEventHistory = ({
 		<div>
 			<div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
 				<div>
-					<div className="flex items-center gap-2 text-body-lg font-semibold text-text-main"><Trophy className="h-5 w-5 text-text-muted" /> <LocalizedText messageKey="ui.worldIntelligence.components.worldEventHistory.player.rankings.7a29848b" /></div>
-						<p className="mt-1 text-caption text-text-muted"><LocalizedText messageKey="ui.worldIntelligence.components.worldEventHistory.name.might.honor.and.alliance.stay.visible.9556c88a" /></p>
+					<div className="flex items-center gap-2 text-base font-bold text-text-main"><Trophy className="h-5 w-5 text-primary" /> <LocalizedText messageKey="ui.worldIntelligence.components.worldEventHistory.player.rankings.7a29848b" /></div>
+						<p className="mt-1 text-xs text-text-muted"><LocalizedText messageKey="ui.worldIntelligence.components.worldEventHistory.name.might.honor.and.alliance.stay.visible.9556c88a" /></p>
 				</div>
-				<Button iconOnly variant="ghost" size="md" aria-label={localizeStatic("ui.worldIntelligence.components.worldEventHistory.aria-label.refresh.event.history.6f3331e2")} onClick={() => void refreshBoards()} isLoading={loading}><RefreshCw className="h-4 w-4" /></Button>
+				<Button variant="ghost" size="icon" aria-label={localizeStatic("ui.worldIntelligence.components.worldEventHistory.aria-label.refresh.event.history.6f3331e2")} onClick={() => void refreshBoards()} isLoading={loading}><RefreshCw className="h-4 w-4" /></Button>
 			</div>
 			<div className="mb-4 flex flex-wrap gap-2">
                 {latestBoardObservation(selectedBoard?.entries ?? []) && <Badge variant="outline">{localizeStatic('copy.updated', { time: formatDateTime(latestBoardObservation(selectedBoard?.entries ?? []), locale, localizeStatic) })}</Badge>}
@@ -510,17 +509,22 @@ export const WorldEventHistory = ({
 				)}
 			</div>
 
+			{error && <div className="mb-4 rounded-global border border-error/30 bg-error/10 px-4 py-3 text-sm text-error" role="alert">{error}</div>}
 
-
-			<ViewState status={viewStatus({ hasData: eventGroups.length > 0, loading: directoryLoading, error: Boolean(error) })}
-        error={{ title: localizeStatic('events.directoryFailed'), description: directoryLoading ? localizeStatic('ui.worldIntelligence.components.worldEventHistory.loading.event.history.49c99bd3') : undefined, onRetry: () => void refreshBoards(), retryLabel: localizeStatic('ui.state.retry') }}
-        loading={{ label: localizeStatic('ui.worldIntelligence.components.worldEventHistory.loading.event.history.49c99bd3'), variant: 'table' }}
-        empty={{ icon: <CalendarDays />, title: localizeStatic('ui.worldIntelligence.components.worldEventHistory.title.no.event.runs.collected.yet.9b8636ba'), description: localizeStatic('ui.worldIntelligence.components.worldEventHistory.description.the.view.is.ready.for.backend.1.fe44c28a') }}>
-
+			{directoryLoading && eventGroups.length === 0 ? (
+				<div className="flex min-h-72 items-center justify-center text-sm text-text-muted"><LocalizedText messageKey="ui.worldIntelligence.components.worldEventHistory.loading.event.history.49c99bd3" /></div>
+			) : eventGroups.length === 0 ? (
+				<EmptyState
+					size="md"
+					icon={<CalendarDays className="h-6 w-6" />}
+					title={localizeStatic("ui.worldIntelligence.components.worldEventHistory.title.no.event.runs.collected.yet.9b8636ba")}
+					description={localizeStatic("ui.worldIntelligence.components.worldEventHistory.description.the.view.is.ready.for.backend.1.fe44c28a")}
+				/>
+			) : (
 				<>
 					<div className={`mb-4 grid gap-3 md:grid-cols-2 ${filterGridColumns}`}>
 						<div>
-							<div className="mb-1 text-caption font-semibold text-text-muted"><LocalizedText messageKey="ui.worldIntelligence.components.worldEventHistory.event.4e1f49a9" /></div>
+							<div className="mb-1 text-[10px] font-bold uppercase tracking-wider text-text-muted"><LocalizedText messageKey="ui.worldIntelligence.components.worldEventHistory.event.4e1f49a9" /></div>
 							<Select
 								value={selectedEventKey}
 								onChange={(value) => {
@@ -538,7 +542,7 @@ export const WorldEventHistory = ({
 							/>
 						</div>
 						{needsRunSelector && <div>
-							<div className="mb-1 text-caption font-semibold text-text-muted"><LocalizedText messageKey="ui.worldIntelligence.components.worldEventHistory.event.dates.9acef6c1" /></div>
+							<div className="mb-1 text-[10px] font-bold uppercase tracking-wider text-text-muted"><LocalizedText messageKey="ui.worldIntelligence.components.worldEventHistory.event.dates.9acef6c1" /></div>
 							<Select
 								value={selectedRunKey}
 								onChange={(value) => { setRun(value); setBoard(''); setPage(0); }}
@@ -548,7 +552,7 @@ export const WorldEventHistory = ({
 							/>
 						</div>}
 						{needsBoardSelector && <div>
-							<div className="mb-1 text-caption font-semibold text-text-muted"><LocalizedText messageKey="ui.worldIntelligence.components.worldEventHistory.leaderboard.31b47121" /></div>
+							<div className="mb-1 text-[10px] font-bold uppercase tracking-wider text-text-muted"><LocalizedText messageKey="ui.worldIntelligence.components.worldEventHistory.leaderboard.31b47121" /></div>
 							<Select
 								value={selectedBoardKey}
 								onChange={(value) => { setBoard(value); setPage(0); }}
@@ -558,11 +562,11 @@ export const WorldEventHistory = ({
 							/>
 						</div>}
 						{needsLeagueSelector && <div>
-							<div className="mb-1 text-caption font-semibold text-text-muted"><LocalizedText messageKey="ui.worldIntelligence.components.worldEventHistory.level.league.dab1c62c" /></div>
+							<div className="mb-1 text-[10px] font-bold uppercase tracking-wider text-text-muted"><LocalizedText messageKey="ui.worldIntelligence.components.worldEventHistory.level.league.dab1c62c" /></div>
 							<Select value={league} onChange={(value) => { setLeague(value); setPage(0); }} options={leagueOptions} ariaLabel={localizeStatic("ui.worldIntelligence.components.worldEventHistory.ariaLabel.filter.event.scores.by.level.league.15d67b3a")} searchable menuGrowToViewport />
 						</div>}
 						<div>
-							<div className="mb-1 text-caption font-semibold text-text-muted"><LocalizedText messageKey="ui.worldIntelligence.components.worldEventHistory.player.or.alliance.ff83830f" /></div>
+							<div className="mb-1 text-[10px] font-bold uppercase tracking-wider text-text-muted"><LocalizedText messageKey="ui.worldIntelligence.components.worldEventHistory.player.or.alliance.ff83830f" /></div>
 							<Input
 								value={searchQuery}
 								onChange={(event) => { setSearchQuery(event.target.value); setPage(0); }}
@@ -606,7 +610,7 @@ export const WorldEventHistory = ({
 						onOpenAlliance={onOpenAlliance}
 					/>
 				</>
-</ViewState>
+			)}
 		</div>
 	);
 };
@@ -661,19 +665,19 @@ const WorldPlayerEventHistoryContent = ({ history, error = '', onOpenAlliance }:
 			<CardContent>
 				<div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
 					<div>
-						<div className="flex items-center gap-2 font-bold text-text-main"><History className="h-5 w-5 text-text-muted" /> <LocalizedText messageKey="ui.worldIntelligence.components.worldEventHistory.previous.scores.0b9095fa" /></div>
-						<p className="mt-1 text-caption text-text-muted"><LocalizedText messageKey="ui.worldIntelligence.components.worldEventHistory.final.known.public.score.from.each.completed.f94de1c4" /></p>
+						<div className="flex items-center gap-2 font-bold text-text-main"><History className="h-5 w-5 text-primary" /> <LocalizedText messageKey="ui.worldIntelligence.components.worldEventHistory.previous.scores.0b9095fa" /></div>
+						<p className="mt-1 text-xs text-text-muted"><LocalizedText messageKey="ui.worldIntelligence.components.worldEventHistory.final.known.public.score.from.each.completed.f94de1c4" /></p>
 					</div>
 					<div className="w-full sm:w-72">
 						<Select value={eventKey} onChange={(value) => { setEventKey(value); setPage(0); }} options={eventOptions} ariaLabel={localizeStatic("ui.worldIntelligence.components.worldEventHistory.ariaLabel.filter.this.player.s.previous.event.scores.d8bad75f")} searchable disabled={eventOptions.length <= 1} menuGrowToViewport />
 					</div>
 				</div>
-
-				<ViewState size="sm" status={viewStatus({ hasData: finalScores.length > 0, loading: false, error: Boolean(error) })}
-        error={{ title: localizeStatic('events.historyUnavailable') }} loading={{ label: localizeStatic('ui.state.loading'), variant: 'table' }}
-        empty={{ icon: <Trophy />, title: localizeStatic('ui.worldIntelligence.components.worldEventHistory.title.no.previous.scores.yet.10f2b810'), description: localizeStatic('ui.worldIntelligence.components.worldEventHistory.description.a.final.known.score.appears.here.after.949d3a8d') }}>
-<PlayerEventScoreTable entries={visible} page={safePage} pageCount={pageCount} total={entries.length} onPageChange={setPage} onOpenAlliance={onOpenAlliance} />
-</ViewState>
+				{error && <div className="mb-4 rounded-global border border-warning/30 bg-warning/10 px-4 py-3 text-sm text-warning" role="status">{error}</div>}
+				{entries.length === 0 ? (
+					<EmptyState size="sm" surface="plain" icon={<Trophy className="h-5 w-5" />} title={localizeStatic("ui.worldIntelligence.components.worldEventHistory.title.no.previous.scores.yet.10f2b810")} description={localizeStatic("ui.worldIntelligence.components.worldEventHistory.description.a.final.known.score.appears.here.after.949d3a8d")} />
+				) : (
+					<PlayerEventScoreTable entries={visible} page={safePage} pageCount={pageCount} total={entries.length} onPageChange={setPage} onOpenAlliance={onOpenAlliance} />
+				)}
 			</CardContent>
 		</Card>
 	);
@@ -695,34 +699,34 @@ const EventScoreTable = ({ entries, loading, regularPlayers, eventTitle, searchQ
 	onOpenAlliance: (allianceId: number, worldId: string) => void;
 }) => {
   const { t: localizeStatic,number:formatCount } = useStaticLocale();
-	if (loading && entries.length === 0) return <div className="flex min-h-72 items-center justify-center text-body text-text-muted"><LocalizedText messageKey="ui.worldIntelligence.components.worldEventHistory.loading.event.leaderboard.3950752a" /></div>;
+	if (loading && entries.length === 0) return <div className="flex min-h-72 items-center justify-center text-sm text-text-muted"><LocalizedText messageKey="ui.worldIntelligence.components.worldEventHistory.loading.event.leaderboard.3950752a" /></div>;
 	return (
 		<div className={`overflow-hidden rounded-global border border-border-base transition-opacity ${loading ? 'opacity-60' : ''}`} aria-busy={loading}>
 			<div className="max-h-[42rem] overflow-auto custom-scrollbar">
-				<table className="min-w-[68rem] w-full text-body">
-					<thead className="sticky top-0 z-10 bg-bg-card text-caption text-text-muted">
+				<table className="min-w-[68rem] w-full text-sm">
+					<thead className="sticky top-0 z-10 bg-bg-card text-[10px] uppercase tracking-wide text-text-muted">
 						<tr>
 							<SortableEventHeader rowSpan={2} label={localizeStatic("ui.worldIntelligence.components.worldEventHistory.label.name.dcd1d522")} column="name" sort={sort} onSort={onSort} className="min-w-56 text-left" />
 							<SortableEventHeader rowSpan={2} label={localizeStatic("ui.worldIntelligence.components.worldEventHistory.label.might.f68b032e")} column="might" sort={sort} onSort={onSort} className="min-w-32 text-right" align="right" />
 							<SortableEventHeader rowSpan={2} label={localizeStatic("ui.worldIntelligence.components.worldEventHistory.label.honor.22ea092e")} column="honor" sort={sort} onSort={onSort} className="min-w-32 text-right" align="right" />
 							<SortableEventHeader rowSpan={2} label={localizeStatic("ui.worldIntelligence.components.worldEventHistory.label.alliance.afe3c194")} column="alliance" sort={sort} onSort={onSort} className="min-w-52 text-left" />
-							<th colSpan={2} className="border-l border-border-base px-3 py-2 text-center text-text-main">{eventTitle}</th>
+							<th colSpan={2} className="border-l border-border-base px-3 py-2 text-center text-primary">{eventTitle}</th>
 						</tr>
 						<tr className="border-t border-border-base"><SortableEventHeader label={localizeStatic("ui.worldIntelligence.components.worldEventHistory.label.rank.a4130d7d")} column="rank" sort={sort} onSort={onSort} className="border-l border-border-base text-right" align="right" /><SortableEventHeader label={localizeStatic("ui.worldIntelligence.components.worldEventHistory.label.score.38e5a46c")} column="score" sort={sort} onSort={onSort} className="text-right" align="right" /></tr>
 					</thead>
 					<tbody>
 						{entries.length === 0 ? (
-							<tr className="border-t border-border-base"><td colSpan={6} className="px-4 py-14 text-center"><div className="font-bold text-text-main">{searchQuery.trim() ? localizeStatic('events.noMatchingPlayer',{query:searchQuery.trim()}) : localizeStatic('events.noScores')}</div><div className="mt-1 text-caption text-text-muted">{searchQuery.trim() ? localizeStatic('events.shorterSearch') : localizeStatic('events.noScoreHelp')}</div></td></tr>
+							<tr className="border-t border-border-base"><td colSpan={6} className="px-4 py-14 text-center"><div className="font-bold text-text-main">{searchQuery.trim() ? localizeStatic('events.noMatchingPlayer',{query:searchQuery.trim()}) : localizeStatic('events.noScores')}</div><div className="mt-1 text-xs text-text-muted">{searchQuery.trim() ? localizeStatic('events.shorterSearch') : localizeStatic('events.noScoreHelp')}</div></td></tr>
 						) : entries.map((entry) => {
 							const regular = regularPlayers.get(entry.playerId);
 							const allianceId = entry.allianceId ?? regular?.allianceId;
 							const allianceName = entry.allianceName || regular?.allianceName;
 							return <tr key={`${eventBoardIdentity(entry)}:${entry.leagueId}:${entry.playerId}`} className="border-t border-border-base hover:bg-bg-card-hover">
-								<td className="px-3 py-2.5"><Button variant="secondary" type="button" className="max-w-64 truncate text-left" onClick={() => onOpenPlayer(entry.playerId, entry.worldId)}>{entry.playerName}</Button></td>
+								<td className="px-3 py-2.5"><button type="button" className="max-w-64 truncate text-left font-bold text-text-main hover:text-primary" onClick={() => onOpenPlayer(entry.playerId, entry.worldId)}>{entry.playerName}</button></td>
 								<RegularMetricValue value={regular?.might} />
 								<RegularMetricValue value={regular?.honor} />
-								<td className="px-3 py-2.5">{allianceId ? <Button variant="secondary" type="button" className="max-w-56 truncate" onClick={() => onOpenAlliance(allianceId, entry.worldId)}>{allianceName || localizeStatic('events.allianceId',{id:String(allianceId)})}</Button> : <span className="text-text-muted"><LocalizedText messageKey="ui.worldIntelligence.components.worldEventHistory.no.alliance.623666da" /></span>}</td>
-								<td className="border-l border-border-base px-3 py-2.5 text-right font-mono font-bold text-text-main">#{formatCount(entry.rank)}</td>
+								<td className="px-3 py-2.5">{allianceId ? <button type="button" className="max-w-56 truncate font-semibold text-text-main hover:text-primary" onClick={() => onOpenAlliance(allianceId, entry.worldId)}>{allianceName || localizeStatic('events.allianceId',{id:String(allianceId)})}</button> : <span className="text-text-muted"><LocalizedText messageKey="ui.worldIntelligence.components.worldEventHistory.no.alliance.623666da" /></span>}</td>
+								<td className="border-l border-border-base px-3 py-2.5 text-right font-mono font-black text-primary">#{formatCount(entry.rank)}</td>
 								<td className="px-3 py-2.5 text-right"><EventScoreValue entry={entry} /></td>
 							</tr>;
 						})}
@@ -747,9 +751,9 @@ const SortableEventHeader = ({ label, column, sort, onSort, rowSpan, className =
 	const Icon = !active ? ArrowUpDown : sort.direction === 'ascending' ? ArrowUp : ArrowDown;
 	return (
 		<th rowSpan={rowSpan} aria-sort={active ? sort.direction : 'none'} className={`px-3 py-2 align-middle ${className}`}>
-			<Button variant="secondary" type="button" className={align === 'right' ? 'justify-end' : 'justify-start'} onClick={() => onSort(column)}>
+			<button type="button" className={`inline-flex w-full items-center gap-1.5 font-bold transition-colors hover:text-primary ${align === 'right' ? 'justify-end' : 'justify-start'} ${active ? 'text-primary' : ''}`} onClick={() => onSort(column)}>
 				{label}<Icon className={`h-3.5 w-3.5 ${active ? 'opacity-100' : 'opacity-45'}`} />
-			</Button>
+			</button>
 		</th>
 	);
 };
@@ -767,17 +771,17 @@ const PlayerEventScoreTable = ({ entries, page, pageCount, total, onPageChange, 
  return (
 	<div className="overflow-hidden rounded-global border border-border-base">
 		<div className="max-h-[36rem] overflow-auto custom-scrollbar">
-			<table className="min-w-[48rem] w-full text-body">
-				<thead className="sticky top-0 z-10 bg-bg-card text-caption text-text-muted">
+			<table className="min-w-[48rem] w-full text-sm">
+				<thead className="sticky top-0 z-10 bg-bg-card text-[10px] uppercase tracking-wide text-text-muted">
 					<tr><th className="px-3 py-2 text-left"><LocalizedText messageKey="ui.worldIntelligence.components.worldEventHistory.event.run.f913c08e" /></th><th className="px-3 py-2 text-left"><LocalizedText messageKey="ui.worldIntelligence.components.worldEventHistory.ended.local.63df442e" /></th><th className="px-3 py-2 text-right"><LocalizedText messageKey="ui.worldIntelligence.components.worldEventHistory.final.score.11c34366" /></th><th className="px-3 py-2 text-left"><LocalizedText messageKey="ui.worldIntelligence.components.worldEventHistory.alliance.afe3c194" /></th></tr>
 				</thead>
 				<tbody>
 					{entries.map((entry) => (
 						<tr key={entry.occurrenceId} className="border-t border-border-base hover:bg-bg-card-hover">
-							<td className="px-3 py-2.5"><div className="font-bold text-text-main" {...messageLanguageAttributes(eventNames(entry.eventId,entry.eventName))}>{eventNames(entry.eventId,entry.eventName).text}</div><div className="text-caption text-text-muted">{localizeStatic('events.runStarted',{date:formatDate(entry.runStartedOn,locale,localizeStatic)})}</div></td>
-							<td className="whitespace-nowrap px-3 py-2.5 text-caption font-semibold text-text-main">{formatEventEndLocal(entry.eventEndsAt,locale,localizeStatic('events.unknown'))}</td>
+							<td className="px-3 py-2.5"><div className="font-bold text-text-main" {...messageLanguageAttributes(eventNames(entry.eventId,entry.eventName))}>{eventNames(entry.eventId,entry.eventName).text}</div><div className="text-[11px] text-text-muted">{localizeStatic('events.runStarted',{date:formatDate(entry.runStartedOn,locale,localizeStatic)})}</div></td>
+							<td className="whitespace-nowrap px-3 py-2.5 text-xs font-semibold text-text-main">{formatEventEndLocal(entry.eventEndsAt,locale,localizeStatic('events.unknown'))}</td>
 							<td className="px-3 py-2.5 text-right"><EventScoreValue entry={entry} /></td>
-							<td className="px-3 py-2.5">{entry.allianceId ? <Button variant="secondary" type="button" className="max-w-56 truncate" onClick={() => onOpenAlliance(entry.allianceId!, entry.worldId)}>{entry.allianceName || localizeStatic('events.allianceId',{id:String(entry.allianceId)})}</Button> : <span className="text-text-muted"><LocalizedText messageKey="ui.worldIntelligence.components.worldEventHistory.no.alliance.623666da" /></span>}</td>
+							<td className="px-3 py-2.5">{entry.allianceId ? <button type="button" className="max-w-56 truncate font-semibold text-text-main hover:text-primary" onClick={() => onOpenAlliance(entry.allianceId!, entry.worldId)}>{entry.allianceName || localizeStatic('events.allianceId',{id:String(entry.allianceId)})}</button> : <span className="text-text-muted"><LocalizedText messageKey="ui.worldIntelligence.components.worldEventHistory.no.alliance.623666da" /></span>}</td>
 						</tr>
 					))}
 				</tbody>
@@ -790,7 +794,7 @@ const PlayerEventScoreTable = ({ entries, page, pageCount, total, onPageChange, 
 
 const EventScoreValue = ({ entry }: { entry: Pick<EventLeaderboardRow, 'score' | 'scoreKnown' | 'scoreUnit'> }) => {
  const {number:formatCount,t}=useStaticLocale();
- return entry.scoreKnown ? <div><div className="font-mono font-bold text-text-main">{formatCount(entry.score??0)}</div><div className="text-caption text-text-muted">{!entry.scoreUnit || entry.scoreUnit==='points' ? t('events.points') : entry.scoreUnit}</div></div> : <Badge variant="warning"><LocalizedText messageKey="ui.worldIntelligence.components.worldEventHistory.rank.only.ed37b9ae" /></Badge>;
+ return entry.scoreKnown ? <div><div className="font-mono font-black text-text-main">{formatCount(entry.score??0)}</div><div className="text-[10px] uppercase tracking-wide text-text-muted">{!entry.scoreUnit || entry.scoreUnit==='points' ? t('events.points') : entry.scoreUnit}</div></div> : <Badge variant="warning"><LocalizedText messageKey="ui.worldIntelligence.components.worldEventHistory.rank.only.ed37b9ae" /></Badge>;
 };
 const RegularMetricValue = ({ value }: { value?: number }) => {
  const {number:formatCount}=useStaticLocale();
@@ -802,7 +806,7 @@ const TablePager = ({ page, pageCount, total, noun, onPageChange }: { page: numb
 	const first = total === 0 ? 0 : page * eventPageSize + 1;
 	const last = Math.min(total, first + eventPageSize - 1);
 	return (
-		<div className="flex flex-col gap-2 border-t border-border-base bg-bg-input/25 px-4 py-3 text-caption text-text-muted sm:flex-row sm:items-center sm:justify-between">
+		<div className="flex flex-col gap-2 border-t border-border-base bg-bg-input/25 px-4 py-3 text-xs text-text-muted sm:flex-row sm:items-center sm:justify-between">
 			<span>{t(noun==='runs'?'events.runRange':'events.scoreRange',{first,last,total})}</span>
 			<div className="flex items-center gap-2">
 				<Button type="button" variant="ghost" size="sm" disabled={page <= 0} onClick={() => onPageChange(page - 1)}><ChevronLeft className="mr-1 h-4 w-4" /><LocalizedText messageKey="ui.worldIntelligence.components.worldEventHistory.previous.a57b08a4" /></Button>

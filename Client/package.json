@@ -15,20 +15,7 @@
     "typecheck:app": "tsc -p tsconfig.app.json --noEmit",
     "typecheck:node": "tsc -p tsconfig.node.json --noEmit",
     "test:visual": "node scripts/visual/run.mjs compare",
-    "test:rules": "playwright test -c playwright.rules.config.ts --trace off",
-    "test:visual:update": "node scripts/visual/run.mjs update",
-    "lint:css": "stylelint \"src/**/*.css\" && npm run check:typography",
-    "css:metrics": "node scripts/css-metrics.mjs",
-    "check:arbitrary-values": "node scripts/check-arbitrary-values.mjs",
-    "test:tokens": "node --test tests/design-tokens.test.mjs",
-    "prebuild": "python3 ../scripts/fonts/build-manrope --check",
-    "check:fonts": "python3 ../scripts/fonts/build-manrope --check",
-    "test:fonts": "python3 ../scripts/fonts/test-gate.py",
-    "check:mirror": "npm --prefix .. run check:mirror --",
-    "check:retired-classes": "node scripts/check-retired-classes.mjs --enforce cit-67,cit-73",
-    "check:buttons": "node scripts/check-raw-buttons.mjs src",
-    "check:typography": "node scripts/typography/check.mjs",
-    "test:gate": "node scripts/visual/run-gate.mjs"
+    "test:visual:update": "node scripts/visual/run.mjs update"
   },
   "dependencies": {
     "@formatjs/icu-messageformat-parser": "^3.5.20",
@@ -40,7 +27,6 @@
     "tailwindcss": "^4.1.17"
   },
   "devDependencies": {
-    "@axe-core/playwright": "4.13.0",
     "@eslint/js": "^9.39.1",
     "@playwright/test": "1.63.0",
     "@tailwindcss/vite": "^4.1.17",
@@ -52,7 +38,6 @@
     "eslint-plugin-react-hooks": "^7.0.1",
     "eslint-plugin-react-refresh": "^0.4.24",
     "globals": "^16.5.0",
-    "stylelint": "17.15.0",
     "typescript": "~5.9.3",
     "typescript-eslint": "^8.46.4",
     "vite": "^7.3.6"
