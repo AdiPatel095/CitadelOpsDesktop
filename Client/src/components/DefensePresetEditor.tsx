@@ -433,10 +433,10 @@ const DefenseFlankEditorCard: React.FC<{
 }) => (
   <Card
     variant="solid"
-    className={`liquid-prominent-header-card ${front ? 'ring-1 ring-warning/25' : ''} ${className}`}
+    className={` ${front ? ' ' : ''} ${className}`}
     aria-label={`${label} defense`}
   >
-    <CardHeader className="liquid-card-header-prominent !m-0 !min-h-0 min-w-0 flex-wrap items-start gap-3">
+    <CardHeader className="!m-0 !min-h-0 min-w-0 flex-wrap items-start gap-3">
       <div className="flex min-w-0 items-center gap-3">
         <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-global border ${
           front ? 'border-warning/40 bg-warning/12 text-warning' : 'border-primary/40 bg-primary/12 text-primary'
@@ -471,7 +471,7 @@ const DefenseFlankEditorCard: React.FC<{
         />
       </div>
     </CardHeader>
-    <CardContent className="liquid-prominent-header-content !px-3 !pb-3">
+    <CardContent className="">
       <ToolSlotGroup
         label={`${label} fixed defense positions`}
         slots={section.toolSlots}
@@ -515,10 +515,10 @@ const DefenseToolSectionCard: React.FC<{
   return (
     <Card
       variant="solid"
-      className={`liquid-prominent-header-card ring-1 ${headerTone.ring} ${className}`}
+      className={`  ${headerTone.ring} ${className}`}
       aria-label={`${label} defense tools`}
     >
-      <CardHeader className="liquid-card-header-prominent !m-0 !min-h-0 min-w-0 flex-wrap items-start gap-3">
+      <CardHeader className="!m-0 !min-h-0 min-w-0 flex-wrap items-start gap-3">
         <div className="flex min-w-0 items-center gap-3">
           <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-global border ${headerTone.icon}`}>
             {defenseSectionIcon(tone)}
@@ -532,7 +532,7 @@ const DefenseToolSectionCard: React.FC<{
           </div>
         </div>
       </CardHeader>
-      <CardContent className="liquid-prominent-header-content !px-3 !pb-3">
+      <CardContent className="">
         <ToolSlotGroup
           label={`${label} fixed defense positions`}
           slots={slots}
