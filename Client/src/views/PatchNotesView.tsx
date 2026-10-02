@@ -84,7 +84,7 @@ function ReleaseCard({ release, isLatest }: { release: PatchNotesRelease; isLate
 const PatchNotesView: React.FC = () => {
   const { t: localizeStatic } = useStaticLocale();
   return (
-    <div className="max-w-3xl mx-auto py-6 pb-16">
+    <div tabIndex={0} className="max-w-3xl mx-auto py-6 pb-16 focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary">
       <PageHeader
         className="mb-8"
         title={localizeStatic("ui.views.patchNotesView.title.patch.notes.e851faa6")}

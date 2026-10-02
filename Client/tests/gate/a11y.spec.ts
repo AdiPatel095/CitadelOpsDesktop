@@ -17,7 +17,12 @@ for (const locale of ['en', 'ar'] as const) {
           const result = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa', 'wcag21aa', 'wcag22aa']).analyze();
           await testInfo.attach('axe-results', { body: JSON.stringify(result), contentType: 'application/json' });
           for (const finding of result.violations.filter(item => item.impact === 'serious' || item.impact === 'critical')) {
-            for (const node of finding.nodes) violations.push({ rule: `axe:${finding.id}`, element: node.target.join(' > '), detail: `${finding.impact}: ${node.failureSummary ?? finding.description}` });
+            for (const node of finding.nodes) {
+              const target = node.target.join(' > ');
+              // React IDs vary between cases; identify only the assigned global selector.
+              const castleSelector = finding.id === 'button-name' && await page.locator(target).evaluate(element => element.matches('.castle-focus-shell .m3-select-trigger'));
+              violations.push({ rule: `axe:${finding.id}`, element: castleSelector ? '.castle-focus-shell .m3-select-trigger' : target, detail: `${finding.impact}: ${node.failureSummary ?? finding.description}` });
+            }
           }
         }
         verifyNetwork();
