@@ -10829,11 +10829,6 @@
     "reason": "Component variant, size, CSS class or DOM option value, not human display text.",
     "evidence": "Button/Badge/Modal variants and sizes, scrollIntoView options, ARIA/DOM attribute values and tone classes in the new CIT-20 components."
   },
-  "36d74201a13a7c7f74f62389b874b6e05e493d635e838eae08da0dd4c2805508": {
-    "classification": "technical",
-    "reason": "Component variant, size, CSS class or DOM option value, not human display text.",
-    "evidence": "Button/Badge/Modal variants and sizes, scrollIntoView options, ARIA/DOM attribute values and tone classes in the new CIT-20 components."
-  },
   "c8f27d0d082ac08330361f76ea4fd393933c09e22bfb77904bea2cda75c6d1d1": {
     "classification": "technical",
     "reason": "CSS class list, not display text.",
@@ -12624,9 +12619,44 @@
     "reason": "Component tone, variant, size, ARIA value, locale identifier or typed message key; not displayed prose.",
     "evidence": "CIT-64 equipment/components/EquipmentEffects.ts: en is passed to a typed component prop, formatter locale, or LocalizedText messageKey; the displayed body is defined in sourceMessages.ts."
   },
-  "1a22d8189a674c1a801488afc85d36600aea9625a3e8b3c71ad71018533c1b67": {
+  "8ba00eda37b2f8c78ef2408c9ab455fccac7877bcf4c2f22e127c47201eba628": {
     "classification": "technical",
-    "reason": "Component tone, variant, size, ARIA value, locale identifier or typed message key; not displayed prose.",
-    "evidence": "CIT-64 views/AutomationView.tsx: info is passed to a typed component prop, formatter locale, or LocalizedText messageKey; the displayed body is defined in sourceMessages.ts."
+    "reason": "Typed Button/Banner variant, size or ARIA value, or a DOM selector; not displayed prose.",
+    "evidence": "CIT-72 components/automation/TimedRunButton.tsx: secondary is a component option or focus-navigation selector; displayed messages use the three typed automation.timer keys."
+  },
+  "326d652fb7b374b5049f2e2fa9f926dc8e9d037d87e8987c083e19fb767884de": {
+    "classification": "technical",
+    "reason": "Typed Button/Banner variant, size or ARIA value, or a DOM selector; not displayed prose.",
+    "evidence": "CIT-72 components/automation/TimedRunButton.tsx: ghost is a component option or focus-navigation selector; displayed messages use the three typed automation.timer keys."
+  },
+  "11591d046ae4591ecbdffadca587a8df0c764c867fdf314043bec2ec1e64778d": {
+    "classification": "technical",
+    "reason": "Typed Button/Banner variant, size or ARIA value, or a DOM selector; not displayed prose.",
+    "evidence": "CIT-72 components/automation/TimedRunButton.tsx: sm is a component option or focus-navigation selector; displayed messages use the three typed automation.timer keys."
+  },
+  "a4d8b3982142ba8b6d90c9c4563970e7fb7493572efc3b80b506de9d998f48b9": {
+    "classification": "technical",
+    "reason": "Typed Button/Banner variant, size or ARIA value, or a DOM selector; not displayed prose.",
+    "evidence": "CIT-72 components/automation/TimedRunButton.tsx: md is a component option or focus-navigation selector; displayed messages use the three typed automation.timer keys."
+  },
+  "6860614e20e520f8ef0f7eef04619d77518c1fb1cac70ed40b7467a3a83d9667": {
+    "classification": "technical",
+    "reason": "Typed Button/Banner variant, size or ARIA value, or a DOM selector; not displayed prose.",
+    "evidence": "CIT-72 components/automation/TimedRunButton.tsx: true is a component option or focus-navigation selector; displayed messages use the three typed automation.timer keys."
+  },
+  "8ba1c65ce5a158114481f088959de850e502efb4881c8d1e26bad632395cac8b": {
+    "classification": "technical",
+    "reason": "Typed Button/Banner variant, size or ARIA value, or a DOM selector; not displayed prose.",
+    "evidence": "CIT-72 components/automation/TimerTip.tsx: [data-view] is a component option or focus-navigation selector; displayed messages use the three typed automation.timer keys."
+  },
+  "dfef84fa87fee456f9659fbf41239f128ec77fbd23da70d351dd8c68fd0379f5": {
+    "classification": "technical",
+    "reason": "Typed Button/Banner variant, size or ARIA value, or a DOM selector; not displayed prose.",
+    "evidence": "CIT-72 components/automation/TimerTip.tsx: [inert] is a component option or focus-navigation selector; displayed messages use the three typed automation.timer keys."
+  },
+  "b923a1d89d1efb1cc42c313dcd8a94ae7164b860ff8f1ed51b7e7396100739be": {
+    "classification": "technical",
+    "reason": "Typed Button/Banner variant, size or ARIA value, or a DOM selector; not displayed prose.",
+    "evidence": "CIT-72 components/automation/TimerTip.tsx: info is a component option or focus-navigation selector; displayed messages use the three typed automation.timer keys."
   }
 }

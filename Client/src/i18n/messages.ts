@@ -86,6 +86,10 @@ export const messages = {
   "automation.waitingLane": "Waiting for policy status: {lane, select, crafting {Crafting} logistics {Logistics} khan_attacks {Khan · Attacks} khan_cooldowns {Khan · Cooldowns} khan_rage {Khan · Rage} khan_defense {Khan · Defense} beri_transfers {Berimond · Transfers} beri_attacks {Berimond · Attacks} beri_tools {Berimond · Tools} beri_builder {Berimond · Builder} storm_combat {Storm · Combat} storm_shop {Aquamarine shop} storm_builder {Storm · Builder} other {Policy}}",
   "automation.missingDecorations": "{count, plural, one {# target decoration is unavailable in storage; skipped while the rest of the target continues.} other {# target decorations are unavailable in storage; skipped while the rest of the target continues.}}",
   "automation.nextCheck": "{state, select, waiting {Waiting for the next scheduled check} due {Next check is due now} other {Next check in {duration}}}",
+  // CIT-72, Daniel's plan §3 / Maya M7 (2026-10-01); English fallback pending translation batch.
+  "automation.timer.run": "Run {feature} for a set time",
+  "automation.timer.active": "{duration} left. Change or end the timed run for {feature}.",
+  "automation.timerTip": "Tip: use the timer button on a card to run that automation for a set time.",
   "automation.timeLeft": "{duration} left",
   "automation.rate": "{state, select, loading {Loading rate} unavailable {Rate unavailable} other {Attacks / hr: {count, number}}}",
   "automation.rateTitle": "{state, select, loading {Loading the current {feature} attack rate.} unavailable {The current {feature} attack rate is unavailable.} other {Attacks launched by {feature} in the past 60 minutes: {count, number}.}}",

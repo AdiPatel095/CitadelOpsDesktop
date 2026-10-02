@@ -974,27 +974,9 @@ select {
 
 .automation-function-grid { gap: 0.8rem; }
 
-.automation-function-row {
-    min-height: 8.5rem;
-    gap: 0.85rem;
-}
 
-.automation-function-copy h3 {
-    font-weight: var(--font-weight-700);
-}
 
-.automation-function-settings {
-    border-color: var(--md-sys-color-outline-variant);
-    background: var(--md-sys-color-surface-container-high);
-    box-shadow: var(--elevation-0);
-}
 
-.automation-function-settings:hover,
-.automation-function-settings:focus-visible {
-    border-color: var(--md-sys-color-primary);
-    background: var(--md-sys-color-primary-container);
-    box-shadow: var(--elevation-0);
-}
 
 .liquid-logger-panel { border-radius: var(--md-expressive-shape-card); }
 
@@ -1761,9 +1743,6 @@ select {
 
     .equipment-loadout-item { width: min(14rem, 74vw); }
 
-    .automation-function-row {
-        min-height: 0;
-    }
 }
 
 @media (max-width: 420px), (min-width: 761px) and (max-width: 920px) and (max-aspect-ratio: 10 / 21) {
