@@ -1,0 +1,17 @@
+{
+  "name": "citadel-ops-discord-support",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "engines": { "node": ">=25.9.0" },
+  "scripts": {
+    "start": "node src/index.mjs",
+    "test": "node --test test/*.test.mjs",
+    "check": "node scripts/check.mjs",
+    "install-service": "node scripts/host.mjs install",
+    "status": "node scripts/host.mjs status",
+    "stop": "node scripts/host.mjs stop",
+    "uninstall-service": "node scripts/host.mjs uninstall"
+  },
+  "dependencies": { "discord.js": "14.27.0" }
+}
