@@ -380,5 +380,19 @@
   "equipment.effectsGroupedDescription": "依照遊戲本身的效果類別分組顯示效果。",
   "setupReadiness.castlesNotInWorld": "{count, plural, =1 {已儲存的城堡{castle}不在目前帳號或世界中。請重新選擇或停用它。} one {已儲存的城堡{castle}及{others, plural, one {#座其他已啟用的城堡} other {#座其他已啟用的城堡}}不在目前帳號或世界中。請重新選擇或停用它們。} other {已儲存的城堡{castle}及{others, plural, one {#座其他已啟用的城堡} other {#座其他已啟用的城堡}}不在目前帳號或世界中。請重新選擇或停用它們。}}",
   "ui.components.header.alt.citadel.ops.logo.ab367a3c": "CitadelOps標誌",
-  "ui.rich.views.automationView.right.click.a.toggle.for.temporary.activation.c34579ee": "<strong0>按右鍵</strong0>點選開關以暫時啟用"
+  "ui.rich.views.automationView.right.click.a.toggle.for.temporary.activation.c34579ee": "<strong0>按右鍵</strong0>點選開關以暫時啟用",
+  "patchNotes.release.2.4.2.subtitle.b610e6ea056f": "引導式設定、更清楚的狀態和更快的儀表板",
+  "patchNotes.release.2.4.2.text.967317bd8af5": "“Set up with a goal”透過五步檢查清單提供引導，從連接遊戲到取得遊戲確認的第一個結果，可用於參加Khan活動或為所有城堡供應糧食等目標。",
+  "patchNotes.release.2.4.2.text.913f68e622ad": "每項自動化都有“Before you start”檢查，顯示哪些已準備就緒、哪些需要變更；如果有問題會阻止自動化執行，開始前會先要求確認。",
+  "patchNotes.release.2.4.2.text.26a86db1c10b": "遊牧民、武士、入侵、Khan、Storm和Beri World可直接在各自的設定中配置攻擊，無須先建立預設，並顯示每種配置需要的部隊和指揮官。",
+  "patchNotes.release.2.4.2.text.6cf29358ebf3": "“Copy to other castles”將一座城堡的配置複製到您選擇的城堡，標出無法複製的內容，並且在您按下“儲存”之前不會儲存任何內容。",
+  "patchNotes.release.2.4.2.text.6cea9639c58b": "設定中的語言選擇器以各語言自己的名稱列出語言，並新增“自動（裝置語言）”選項，跟隨裝置語言而不變更遊戲語言。",
+  "patchNotes.release.2.4.2.text.c6dbecdc2dfd": "攻擊計數器從零開始，顯示統計範圍是今天還是從指定時間開始，標記已儲存的計數，並在計數無法取得時說明。",
+  "patchNotes.release.2.4.2.text.b39c4f9899d3": "Auto Station無法保護城堡時會顯示琥珀色警告，而不是顯示為已就緒；如果原因是保護模式或Berimond沒有開放城門功能，也會解釋。",
+  "patchNotes.release.2.4.2.text.e400072927c7": "Auto Fortress和Auto Storm會暫時略過遊戲回報仍在冷卻的目標，轉向其他目標。Auto Storm現在可以正確讀取要塞冷卻時間和隱藏要塞。",
+  "patchNotes.release.2.4.2.text.2b9c8c5fa1bb": "定時執行和暫停對話框使用您語言的日期和時間格式顯示執行或暫停的結束時間，並採用正確的複數形式。",
+  "patchNotes.release.2.4.2.text.a9bf747fee6a": "通知至少在畫面上停留10秒，滑鼠停留在通知上或通知取得焦點時會等待。",
+  "patchNotes.release.2.4.2.text.1e14fe9e997a": "各處的用語更直接：自動化顯示“已關閉”而不是已停用，活動等待會說明恢復時間，為某項自動化關閉的指揮官顯示“此自動化已關閉”。",
+  "patchNotes.release.2.4.2.text.51cfb02c317b": "儀表板載入更快、使用的資料更少，並在短暫斷線後從中斷處繼續，而不是重新載入全部內容。",
+  "patchNotes.release.2.4.2.text.5859b00e3cb1": "新的設定畫面已翻譯為德語和阿拉伯語，所有支援的語言都會獲得更多翻譯文字；尚未翻譯的內容顯示為英語。"
 }

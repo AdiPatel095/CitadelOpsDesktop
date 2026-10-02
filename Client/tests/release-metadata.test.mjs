@@ -11,7 +11,7 @@ after(() => vite.close());
 
 test('release metadata agrees across runtime, packages and the current notes', async () => {
   const expected = notes.APP_VERSION_CURRENT;
-  assert.equal(expected, '2.4.1');
+  assert.equal(expected, '2.4.2');
   const version = await readFile(new URL('../../Server/App/Version.go', import.meta.url), 'utf8');
   assert.ok(version.includes(`const Version = "${expected}"`));
   for (const path of ['../package.json', '../package-lock.json', '../../package.json', '../../package-lock.json']) {
@@ -21,8 +21,9 @@ test('release metadata agrees across runtime, packages and the current notes', a
   }
 });
 
-test('release notes show 2.4.1 before 2.4.0 with canonical change groups', () => {
-  assert.deepEqual(notes.PATCH_NOTES_RELEASES.slice(0, 3).map(({ version }) => version), ['2.4.1', '2.4.0', '2.3.6']);
+test('release notes show 2.4.2 before 2.4.1 and 2.4.0 with canonical change groups', () => {
+  assert.deepEqual(notes.PATCH_NOTES_RELEASES.slice(0, 3).map(({ version }) => version), ['2.4.2', '2.4.1', '2.4.0']);
+  assert.equal(notes.PATCH_NOTES_RELEASES.filter(({ version }) => version === '2.4.2').length, 1);
   assert.equal(notes.PATCH_NOTES_RELEASES.filter(({ version }) => version === '2.4.1').length, 1);
   assert.equal(notes.PATCH_NOTES_RELEASES.filter(({ version }) => version === '2.4.0').length, 1);
   for (const release of notes.PATCH_NOTES_RELEASES) {

@@ -223,3 +223,7 @@ fixture cuts. The extractor does not read `richMessages.ts`; the fixture
 records the explicit CIT-113 scope and exact English source after generation.
 This establishes coverage for this key only. Native-speaker review remains
 pending; Claire confirms both PRs have merged before release.
+
+## Batch 7 — CIT-115 (2026-10-02)
+
+The 2.4.2 subtitle and 13 desktop patch-note lines (14 shared keys) are translated into all 25 non-English locales: **model-authored, pending native review**. Shared catalogs are byte-identical in desktop and portal. Existing translated UI labels are reused; untranslated UI labels retain the app’s English fallback. The eight portal-only additions remain English, per Daniel’s CIT-115 plan. The portal currently renders the shared notes in English as well.

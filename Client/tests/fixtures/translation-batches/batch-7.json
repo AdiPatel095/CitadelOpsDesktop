@@ -1,0 +1,64 @@
+{
+  "schema": 1,
+  "batch": 7,
+  "cuts": {
+    "desktop": {
+      "since": "eea80bff2bd206b03604f613fc7588ff3f8a472a",
+      "until": "d391956b8535d0b97c68a5881913de9207add998"
+    },
+    "portal": {
+      "since": "5e2fabdf42c8abab4d51b50ab2a8babf2cdf79ab",
+      "until": "a647f977e3a7291aef68ab8e5844055baaa4ea1d"
+    }
+  },
+  "command": [
+    "node",
+    "scripts/localization/translation-batch.mjs",
+    "--batch",
+    "7",
+    "--since",
+    "eea80bf",
+    "--until",
+    "HEAD",
+    "--peer-repo",
+    "../../cit-115-portal",
+    "--peer-since",
+    "5e2fabd",
+    "--peer-until",
+    "HEAD",
+    "--families",
+    "shared"
+  ],
+  "families": {
+    "shared": {
+      "repository": "desktop",
+      "sources": [
+        "Client/src/i18n/messages.ts",
+        "Client/src/i18n/sourceMessages.ts"
+      ],
+      "catalogDirectory": "Client/src/i18n/catalogs",
+      "keys": [
+        "patchNotes.release.2.4.2.subtitle.b610e6ea056f",
+        "patchNotes.release.2.4.2.text.1e14fe9e997a",
+        "patchNotes.release.2.4.2.text.26a86db1c10b",
+        "patchNotes.release.2.4.2.text.2b9c8c5fa1bb",
+        "patchNotes.release.2.4.2.text.51cfb02c317b",
+        "patchNotes.release.2.4.2.text.5859b00e3cb1",
+        "patchNotes.release.2.4.2.text.6cea9639c58b",
+        "patchNotes.release.2.4.2.text.6cf29358ebf3",
+        "patchNotes.release.2.4.2.text.913f68e622ad",
+        "patchNotes.release.2.4.2.text.967317bd8af5",
+        "patchNotes.release.2.4.2.text.a9bf747fee6a",
+        "patchNotes.release.2.4.2.text.b39c4f9899d3",
+        "patchNotes.release.2.4.2.text.c6dbecdc2dfd",
+        "patchNotes.release.2.4.2.text.e400072927c7"
+      ],
+      "allowEnglish": {}
+    }
+  },
+  "authorship": {
+    "status": "model-authored, pending native review",
+    "batch": 7,
+    "story": "CIT-115"
+  }
+}
