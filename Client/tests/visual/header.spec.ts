@@ -31,6 +31,7 @@ for (const theme of ['dark','light'] as const) test(`CIT-69 header layout and di
     await expect(section.locator('[data-player-status]')).toHaveCount(1);
     await expect(section.locator('.player-status-card-reason')).toHaveCount(1);
     await expect(section.locator('[data-automation-feedback] [data-player-status]')).toHaveCount(0);
+    await expect(panel.locator('.header-attention-entry').filter({ hasText: feature })).toHaveCount(0);
   }
   await expect(panel.locator('.header-bird-detail')).toHaveCount(0);
   await assertDisabledNeutral(page); await reportAccentUsage(page, 'header-panel');
