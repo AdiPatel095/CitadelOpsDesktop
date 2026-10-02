@@ -30,7 +30,8 @@ for (const theme of ['dark','light'] as const) test(`CIT-69 header layout and di
   }
   await page.keyboard.press('Escape'); await expect(panel).toBeHidden(); await expect(cluster).toBeFocused();
   await cluster.click();
-  await page.locator('[data-view]').first().click({ position: { x: 2, y: 2 } });
+  if (width < 768) await page.locator('.cit-popover-scrim').click({ position: { x: 2, y: 2 } });
+  else await page.locator('[data-view]').first().click({ position: { x: 2, y: 2 } });
   await expect(panel).toBeHidden(); await expect(cluster).toBeFocused();
   verifyNetwork();
 });
