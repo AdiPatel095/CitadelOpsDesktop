@@ -213,6 +213,14 @@
       "desktop": "Client/src/components/automation/attackCounts.ts"
     },
     {
+      "portal": "src/commandCenter/components/automation/timedRun.ts",
+      "desktop": "Client/src/components/automation/timedRun.ts"
+    },
+    {
+      "portal": "src/commandCenter/components/automation/timerTipStorage.ts",
+      "desktop": "Client/src/components/automation/timerTipStorage.ts"
+    },
+    {
       "portal": "src/commandCenter/components/header/headerStatus.ts",
       "desktop": "Client/src/components/header/headerStatus.ts"
     },
@@ -1219,6 +1227,10 @@
     {
       "portal": "tests/status-badges.test.mjs",
       "desktop": "Client/tests/status-badges.test.mjs"
+    },
+    {
+      "portal": "tests/timed-run.test.mjs",
+      "desktop": "Client/tests/timed-run.test.mjs"
     },
     {
       "portal": "tests/view-states-logic.test.mjs",
