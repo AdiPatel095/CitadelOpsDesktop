@@ -11,7 +11,12 @@ export async function designRules(page: Page, locale: string): Promise<Violation
   }
   for (const detail of await typographyFindings(page)) violations.push({ rule: detail.includes(': size ') ? 'R4' : detail.includes(': weight ') ? 'R5' : 'R13', element: detail.split(': ')[0], detail });
   try { await assertOnePrimaryPerRegion(page); } catch (error) { violations.push({ rule: 'R11', element: 'page', detail: String(error) }); }
-  violations.push(...await page.evaluate(locale => {
+  violations.push(...await page.evaluate(scanDesignDOM, locale));
+  return violations;
+}
+
+/** Self-contained DOM scan shared with browser rule fixtures. */
+export function scanDesignDOM(locale: string): Violation[] {
     const findings: { rule: string; element: string; detail: string }[] = [];
     const statuses = ['running', 'waiting', 'done', 'paused', 'blocked', 'needs-attention', 'off', 'unknown'];
     const visible = (element: Element) => element.getClientRects().length > 0 && getComputedStyle(element).visibility !== 'hidden';
@@ -37,12 +42,22 @@ export async function designRules(page: Page, locale: string): Promise<Violation
         if (code && !isolated) findings.push({ rule: 'bidiIdentity', element: label(element), detail: 'ID or code has no isolated direction' });
         if (code && !/mono/i.test(getComputedStyle(element).fontFamily)) findings.push({ rule: 'bidiMono', element: label(element), detail: 'ID or code does not use a mono font' });
         if (!text || !/[A-Za-z]/.test(text) || /[\u0600-\u06ff]/.test(text)) continue;
-        const fallback = element.closest('[lang="en"]');
-        if (fallback && fallback.getAttribute('dir') !== 'auto') findings.push({ rule: 'bidiFallback', element: label(element), detail: 'English fallback does not use dir=auto' });
-        if (!isolated) findings.push({ rule: 'bidiIsolation', element: label(element), detail: 'English fallback or game identity has no isolated direction' });
+        // CIT-103 uses lang=en + dir=ltr. Explicit auto direction and CSS/BDI
+        // isolation are equally valid. Do not count the document's RTL root.
+        let direction: string | null = null;
+        let language: string | null = null;
+        let englishIsolated = false;
+        for (let ancestor: HTMLElement | null = element; ancestor && ancestor !== document.documentElement; ancestor = ancestor.parentElement) {
+          direction ??= ancestor.getAttribute('dir')?.toLowerCase() ?? null;
+          language ??= ancestor.getAttribute('lang')?.toLowerCase() ?? null;
+          const bidi = getComputedStyle(ancestor).unicodeBidi;
+          if (ancestor.tagName === 'BDI' || ancestor.getAttribute('dir') === 'auto' || ['isolate', 'plaintext'].includes(bidi)) englishIsolated = true;
+        }
+        englishIsolated ||= direction === 'ltr' && /^en(?:-|$)/.test(language ?? '');
+        const fallback = /^en(?:-|$)/.test(language ?? '');
+        if (fallback && !englishIsolated) findings.push({ rule: 'bidiFallback', element: label(element), detail: 'English fallback has no isolated direction' });
+        if (!englishIsolated) findings.push({ rule: 'bidiIsolation', element: label(element), detail: 'English fallback or game identity has no isolated direction' });
       }
     }
     return findings;
-  }, locale));
-  return violations;
 }
