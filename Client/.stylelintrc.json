@@ -23,7 +23,7 @@
     "declaration-no-important": [
       true,
       {
-        "severity": "warning"
+        "severity": "error"
       }
     ],
     "declaration-property-value-disallowed-list": [
@@ -34,14 +34,31 @@
         "box-shadow": [
           "/^(?!var\\(|none$|inherit$|initial$|unset$|revert(?:-layer)?$).+/"
         ],
-        "font-size": [
-          "/^(?!var\\(|inherit$|initial$|unset$|revert(?:-layer)?$).+/"
-        ],
-        "font-weight": [
-          "/^(?!var\\(|inherit$|initial$|unset$|revert(?:-layer)?$).+/"
-        ],
         "/^(?:animation|transition)(?:-duration|-delay)?$/": [
           "/[\\d.]+m?s\\b/"
+        ]
+      },
+      {
+        "severity": "error"
+      }
+    ],
+    "declaration-property-value-allowed-list": [
+      {
+        "font-size": [
+          "/^var\\(/",
+          "inherit",
+          "initial",
+          "unset",
+          "revert",
+          "revert-layer"
+        ],
+        "font-weight": [
+          "/^var\\(/",
+          "inherit",
+          "initial",
+          "unset",
+          "revert",
+          "revert-layer"
         ]
       },
       {

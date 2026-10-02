@@ -22,4 +22,4 @@ Sophie runs `npm ci` and `npm run test:visual` at the exact PR head on this Mac.
 
 No redesign is included. The only product-source change is the explicit Tailwind source root needed by the fixture harness; production built CSS must remain byte-identical. Build/deployment configuration stays unchanged. Visual outputs and baselines are excluded from packaging, and capture requests remain on loopback.
 
-CIT-62 PR-1: run `npm run lint:css` (warnings only), `npm run check:arbitrary-values` (per-file ratchet; new files start at zero), and `npm run test:tokens`; never regenerate the raw-value baseline to hide an increase.
+CIT-62 PR-3: run `npm run lint:css` (colour, shape, motion and `!important` errors; font sizes and weights remain warnings until CIT-63), `npm run check:arbitrary-values` (per-file ratchet; new files start at zero), and `npm run test:tokens`; never regenerate the raw-value baseline to hide an increase.
