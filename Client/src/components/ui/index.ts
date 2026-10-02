@@ -23,3 +23,5 @@ export * from './ChoiceChipGroup';
 export * from './SettingsModal';
 export * from './Panel';
 export * from './SectionHeader';
+export * from './Tabs';
+export * from './ViewState';

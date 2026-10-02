@@ -10,7 +10,7 @@ import {
   Trophy,
 } from 'lucide-react';
 import StaleSessionBanner from '../../components/StaleSessionBanner';
-import { Badge, Button, Card, CardContent, CardHeader, CardTitle, PageHeader, PillSelector } from '../../components/ui';
+import { ViewState, viewStatus, Badge, Button, Card, CardContent, CardHeader, CardTitle, PageHeader, PillSelector } from '../../components/ui';
 import { Notifications } from '../../components/Notifications';
 import { useMetadata, type MetadataItem } from '../../context/MetadataContext';
 import { runtimeFetch } from '../../api/RuntimeURL';
@@ -220,7 +220,7 @@ const AttackEconomyView = ({
             {(selectedFeature === 'autoTowers' || selectedFeature === 'autoStorm') && (
               <Badge variant="secondary"><LocalizedText messageKey="ui.attackAnalytics.components.attackEconomyView.events.excluded.ad67c518" /></Badge>
             )}
-            {loadError && <Badge variant="danger"><LocalizedText messageKey="ui.attackAnalytics.components.attackEconomyView.history.unavailable.cf319f4d" /></Badge>}
+            {loadError && aggregates.length > 0 && <Badge variant="danger"><LocalizedText messageKey="ui.attackAnalytics.components.attackEconomyView.history.unavailable.cf319f4d" /></Badge>}
           </div>
         )}
       />}
@@ -268,8 +268,12 @@ const AttackEconomyView = ({
         />
       )}
 
+      <ViewState status={viewStatus({ hasData: rangedAggregates.length > 0, loading, error: Boolean(loadError) })}
+        error={{ title: localizeStatic('ui.attackAnalytics.components.attackEconomyView.history.unavailable.cf319f4d'), onRetry: () => void loadAggregates(), retryLabel: localizeStatic('ui.state.retry') }}
+        loading={{ label: localizeStatic('ui.state.loading'), variant: 'table' }}
+        empty={{ title: localizeStatic('analytics.noAttributed', { metric: selectedMetric.label.toLocaleLowerCase() }), description: localizeStatic('analytics.noAttributedHelp'), icon: <Trophy /> }}>
       <Card className="">
-        <CardHeader className="flex-wrap gap-4">
+        <CardHeader className=" flex-wrap gap-4">
           <div>
             <CardTitle className="flex items-center gap-2">
               <Activity className="h-5 w-5 text-primary" />
@@ -328,6 +332,7 @@ const AttackEconomyView = ({
           ))}
         </CardContent>
       </Card>
+      </ViewState>
     </div>
   );
 };

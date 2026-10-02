@@ -827,17 +827,7 @@ select {
     color: var(--md-sys-color-on-primary-container);
 }
 
-.m3-empty-state {
-    border-color: color-mix(in srgb, var(--md-sys-color-primary) 28%, var(--md-sys-color-outline-variant));
-    border-radius: var(--md-expressive-shape-hero);
-    background: var(--md-sys-color-surface-container-low);
-}
 
-.m3-empty-state-icon {
-    border: 0;
-    border-radius: var(--shape-card);
-    background: var(--md-sys-color-primary-container);
-}
 
 .m3-status-banner {
     border: 0;
@@ -1049,30 +1039,10 @@ select {
     box-shadow: var(--elevation-0);
 }
 
-.liquid-toggle-group {
-    border-color: var(--md-sys-color-outline-variant);
-    background: var(--md-sys-color-surface-container-high);
-    box-shadow: var(--elevation-0);
-}
 
-.liquid-toggle-indicator-primary {
-    background: var(--md-sys-color-primary-container);
-    box-shadow: var(--elevation-0);
-    outline: 0;
-}
 
-.liquid-toggle-indicator-neutral {
-    background: var(--md-sys-color-surface-container-lowest);
-    box-shadow: var(--shadow-panel);
-    outline: 0;
-}
 
-.liquid-toggle-indicator-ready {
-    transition:
-        transform var(--md-sys-motion-duration-medium) var(--md-sys-motion-easing-emphasized), opacity var(--md-sys-motion-duration-short) linear;
-}
 
-.liquid-toggle-btn-active-primary { color: var(--md-sys-color-on-primary-container); }
 
 .liquid-modal-overlay {
     background: color-mix(in srgb, var(--md-sys-color-inverse-surface) 44%, transparent);
@@ -1860,21 +1830,8 @@ select {
         min-height: 2.75rem;
     }
 
-    .liquid-toggle-group {
-        max-width: 100%;
-        justify-content: flex-start;
-        overflow-x: auto;
-        overflow-y: hidden;
-        overscroll-behavior-inline: contain;
-        scrollbar-width: none;
-    }
 
-    .liquid-toggle-group::-webkit-scrollbar { display: none; }
 
-    .liquid-toggle-btn {
-        min-height: 2.75rem;
-        flex: 0 0 auto;
-    }
 
     .liquid-content table { font-size: 0.78rem; }
 

@@ -18,7 +18,7 @@ import {
   Swords,
   Users,
 } from 'lucide-react';
-import { Badge, Button, Card, CardContent, CardHeader, CardTitle, Input, MetricTile, SectionCard, Select } from '../../components/ui';
+import { ViewState, viewStatus, Badge, Button, Card, CardContent, CardHeader, CardTitle, Input, MetricTile, SectionCard, Select } from '../../components/ui';
 import UnitImage from '../../components/UnitImage';
 import ToolImage from '../../components/ToolImage';
 import DetailBackButton from '../../components/DetailBackButton';
@@ -83,7 +83,7 @@ const BattleStatsView: React.FC = () => {
 
   const loadReports = async () => {
     setIsLoading(true);
-    setSourceError('');
+
     try {
       let emptySource = '';
       for (const source of dataSources) {
@@ -94,6 +94,7 @@ const BattleStatsView: React.FC = () => {
             continue;
           }
           setReports(loaded.reports);
+          setSourceError('');
           setSourceKey(loaded.source === dataSources[0] ? 'battle.sourceCloud' : 'battle.sourceLocal');
           setSelectedReportID((current) =>
             current && loaded.reports.some((report) => reportID(report) === current) ? current : null
@@ -103,10 +104,10 @@ const BattleStatsView: React.FC = () => {
       }
 
       setReports([]);
+      setSourceError('');
       setSourceKey(emptySource ? (emptySource === dataSources[0] ? 'battle.sourceCloudEmpty' : 'battle.sourceLocalEmpty') : 'battle.sourceMissing');
       setSelectedReportID(null);
     } catch (error) {
-      setReports([]);
       setSourceKey('battle.sourceFailed');
       setSourceError(error instanceof Error ? error.message : '');
       setSelectedReportID(null);
@@ -320,7 +321,7 @@ const BattleStatsView: React.FC = () => {
           <SectionCard
             className="2xl:h-full 2xl:w-full"
             title={localizeStatic("ui.battleStats.components.battleStatsView.title.battle.stats.5b31568e")}
-            description={<><LocalizedText messageKey={sourceKey}/>{sourceError && <span lang="en" dir="auto" data-translation-status="untranslated">: {sourceError}</span>}</>}
+            description={<><LocalizedText messageKey={sourceKey}/></>}
             descriptionClassName="mt-1.5 font-semibold"
             actions={<Button
               variant="ghost"
@@ -425,6 +426,9 @@ const BattleStatsView: React.FC = () => {
         contentClassName="overflow-x-auto"
         flush
       >
+            <ViewState status={viewStatus({ hasData: filteredReports.length > 0, loading: isLoading, error: Boolean(sourceError) })}
+              error={{ title: localizeStatic(sourceKey), onRetry: () => void loadReports(), retryLabel: localizeStatic('ui.state.retry') }} loading={{ label: localizeStatic('battle.loading'), variant: 'table' }}
+              empty={{ title: localizeStatic('ui.battleStats.components.battleStatsView.no.player.battle.reports.match.the.current.c7977008') }}>
             <table className="battle-table w-full text-sm">
               <thead>
                 <tr className="text-left text-xs uppercase tracking-wider text-text-muted border-b border-border-base">
@@ -488,10 +492,7 @@ const BattleStatsView: React.FC = () => {
                 </Button>
               </div>
             )}
-            {filteredReports.length === 0 && (
-              <div className="px-5 py-12 text-center text-text-muted">
-                <LocalizedText messageKey="ui.battleStats.components.battleStatsView.no.player.battle.reports.match.the.current.c7977008" /></div>
-            )}
+            </ViewState>
       </SectionCard>
     </div>
   );

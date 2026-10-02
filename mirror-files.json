@@ -313,8 +313,24 @@
       "desktop": "Client/src/components/ui/StatusIndicator.tsx"
     },
     {
+      "portal": "src/commandCenter/components/ui/Tabs.css",
+      "desktop": "Client/src/components/ui/Tabs.css"
+    },
+    {
+      "portal": "src/commandCenter/components/ui/Tabs.tsx",
+      "desktop": "Client/src/components/ui/Tabs.tsx"
+    },
+    {
       "portal": "src/commandCenter/components/ui/ToggleGroup.tsx",
       "desktop": "Client/src/components/ui/ToggleGroup.tsx"
+    },
+    {
+      "portal": "src/commandCenter/components/ui/ViewState.css",
+      "desktop": "Client/src/components/ui/ViewState.css"
+    },
+    {
+      "portal": "src/commandCenter/components/ui/ViewState.tsx",
+      "desktop": "Client/src/components/ui/ViewState.tsx"
     },
     {
       "portal": "src/commandCenter/components/ui/delta.ts",
@@ -1271,6 +1287,10 @@
     {
       "portal": "tests/timed-run.test.mjs",
       "desktop": "Client/tests/timed-run.test.mjs"
+    },
+    {
+      "portal": "tests/view-state-components.test.mjs",
+      "desktop": "Client/tests/view-state-components.test.mjs"
     },
     {
       "portal": "tests/view-states-logic.test.mjs",

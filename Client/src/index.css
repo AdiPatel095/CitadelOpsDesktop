@@ -2953,8 +2953,6 @@
         backdrop-filter: none;
         -webkit-backdrop-filter: none;
     }
-
-    .data-view-render-stable .liquid-toggle-group,
     .data-view-render-stable .backdrop-blur-xl,
     .data-view-render-stable .backdrop-blur-2xl {
         --tw-backdrop-blur: none;
@@ -3574,137 +3572,22 @@
         transform: translateY(-50%) translateX(var(--liquid-switch-travel));
     }
 
-    .liquid-toggle-group {
-        position: relative;
-        display: inline-flex;
-        height: var(--liquid-pill-selector-height);
-        min-height: var(--liquid-pill-selector-height);
-        align-items: center;
-        gap: 0;
-        max-width: 100%;
-        overflow: visible;
-        padding: 0;
-        border: 1px solid color-mix(in srgb, var(--primary) 16%, var(--border-base));
-        border-radius: var(--radius-pill);
-        background: var(--control-background);
-        box-shadow: var(--control-shadow);
-        font-size: var(--liquid-pill-selector-font-size);
-        isolation: isolate;
-        line-height: var(--liquid-pill-selector-line-height);
-    }
 
-    .liquid-toggle-group-full {
-        display: flex;
-        width: 100%;
-    }
 
-    .liquid-toggle-group-body {
-        --liquid-pill-selector-height: 2rem;
-        --liquid-pill-selector-active-height: 2.25rem;
-        --liquid-pill-selector-font-size: 0.75rem;
-        --liquid-pill-selector-line-height: 1rem;
-        --liquid-pill-selector-padding-inline: 0.75rem;
-        --liquid-pill-selector-active-inline-overflow: 0.25rem;
-    }
 
-    .liquid-toggle-group-header {
-        --liquid-pill-selector-height: 2.5rem;
-        --liquid-pill-selector-active-height: 2.75rem;
-        --liquid-pill-selector-font-size: 0.875rem;
-        --liquid-pill-selector-line-height: 1.25rem;
-        --liquid-pill-selector-padding-inline: 1.25rem;
-        --liquid-pill-selector-active-inline-overflow: 0.25rem;
-    }
 
-    .liquid-toggle-indicator {
-        position: absolute;
-        z-index: 1;
-        top: 50%;
-        left: 0;
-        width: calc(var(--liquid-toggle-indicator-width) + var(--liquid-pill-selector-active-inline-overflow) + var(--liquid-pill-selector-active-inline-overflow));
-        height: var(--liquid-pill-selector-active-height);
-        border-radius: var(--radius-pill);
-        opacity: 0;
-        pointer-events: none;
-        transform: translate3d(calc(var(--liquid-toggle-indicator-x) - var(--liquid-pill-selector-active-inline-overflow)), -50%, 0);
-        transition: none;
-        will-change: transform, width;
-    }
 
-    .liquid-toggle-indicator-ready {
-        opacity: 1;
-        transition: transform var(--duration-fast) var(--ease-standard), opacity var(--duration-fast) var(--ease-standard);
-    }
 
-    .liquid-toggle-indicator-primary {
-        background: var(--control-active-background);
-        box-shadow: var(--elevation-0);
-        outline: 1px solid color-mix(in srgb, var(--primary) 44%, var(--border-light));
-    }
 
-    .liquid-toggle-indicator-neutral {
-        background: var(--bg-card);
-        box-shadow: var(--shadow-raised);
-        outline: 1px solid var(--border-light);
-    }
 
-    .liquid-toggle-btn {
-        position: relative;
-        z-index: 2;
-        display: inline-flex;
-        height: 100%;
-        min-width: 0;
-        align-items: center;
-        justify-content: center;
-        gap: 0.42rem;
-        border: 0;
-        border-radius: var(--radius-pill);
-        outline: none;
-        font-weight: 600;
-        line-height: inherit;
-        padding: 0 var(--liquid-pill-selector-padding-inline);
-        white-space: nowrap;
-        cursor: pointer;
-        transition: color var(--duration-fast) var(--ease-standard), background-color var(--duration-fast) var(--ease-standard), transform var(--duration-fast) var(--ease-standard);
-    }
 
-    .liquid-toggle-btn-full { flex: 1 1 0; }
 
-    .liquid-toggle-btn-icon {
-        display: inline-flex;
-        width: 1rem;
-        height: 1rem;
-        flex-shrink: 0;
-        align-items: center;
-        justify-content: center;
-    }
 
-    .liquid-toggle-btn-inactive {
-        color: var(--text-secondary);
-        background: transparent;
-    }
 
-    .liquid-toggle-btn-inactive:hover {
-        color: var(--primary);
-        background: color-mix(in srgb, var(--primary) 9%, transparent);
-    }
 
-    .liquid-toggle-btn:focus-visible {
-        outline: 2px solid var(--primary);
-        outline-offset: 2px;
-    }
 
-    .liquid-toggle-btn-active { z-index: 3; }
 
-    .liquid-toggle-btn-active-primary {
-        color: color-mix(in srgb, var(--primary) 78%, var(--text-main));
-        background: transparent;
-    }
 
-    .liquid-toggle-btn-active-neutral {
-        color: var(--text-main);
-        background: transparent;
-    }
 
     .rounded-global { border-radius: var(--radius-global); }
 

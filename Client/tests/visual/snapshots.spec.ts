@@ -5,7 +5,7 @@ import { openSettings, openView, prepare, settle } from './harness';
 for (const entry of cases) {
   for (const theme of themes) {
     test(`${entry.name}-${theme}`, async ({ page }, testInfo) => {
-      const verifyNetwork = await prepare(page, theme);
+      const verifyNetwork = await prepare(page, theme, visualCase.states);
       await openView(page, entry.label, entry.view);
       if ('settings' in entry) await openSettings(page);
       await settle(page);

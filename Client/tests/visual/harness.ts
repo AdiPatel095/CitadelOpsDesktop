@@ -1,7 +1,8 @@
+import type { VisualCase } from './cases';
 import { readFile } from 'node:fs/promises';
 import { expect, type Page, type Request } from '@playwright/test';
 
-export async function prepare(page: Page, theme: 'dark' | 'light') {
+export async function prepare(page: Page, theme: 'dark' | 'light', states?: VisualCase['states']) {
   const intercepted = new WeakSet<Request>();
   const escapes: string[] = [];
   const unhandled: string[] = [];
@@ -29,14 +30,15 @@ export async function prepare(page: Page, theme: 'dark' | 'light') {
     if (new URL(socket.url()).hostname === '127.0.0.1') socket.connectToServer();
     else socket.close();
   });
-  await page.addInitScript((theme) => {
+  await page.addInitScript(({ theme, states }) => {
     localStorage.setItem('theme', theme);
+    if (states) localStorage.setItem('citadelops.visualStates', JSON.stringify(states)); else localStorage.removeItem('citadelops.visualStates');
     let seed = 61;
     Math.random = () => {
       seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0;
       return seed / 4294967296;
     };
-  }, theme);
+  }, { theme, states });
   await page.clock.setFixedTime(new Date('2026-09-29T12:00:00Z'));
   await page.goto('/?scenario=rich-account&locale=en&reset=1');
   await page.addStyleTag({ content: `

@@ -63,7 +63,7 @@ const EventRankingModal: React.FC<EventRankingModalProps> = ({
 				)}
 
 				{entries.length === 0 ? (
-					<EmptyState
+					<EmptyState surface="plain"
 						size="md"
 						icon={<Trophy className="h-7 w-7" />}
 						title={loading ? 'Loading the GGE ranking…' : 'No ranking rows returned'}

@@ -1,143 +1,32 @@
-import {useLocale} from '../../i18n/LocaleContext';
-import React, { useCallback, useLayoutEffect, useMemo, useRef } from 'react';
-
-export interface ToggleGroupOption {
-  value: string;
-  label: React.ReactNode;
-  icon?: React.ReactNode;
-  /** Native tooltip (useful for truncated labels in scrollable groups) */
-  title?: string;
-}
-
+import { useRef, type ReactNode, type KeyboardEvent } from 'react';
+import { useLocale } from '../../i18n/LocaleContext';
+import { Select } from './Select';
+import { nextTabIndex, segmentedMode } from './tabsLogic';
+import './Tabs.css';
+export interface ToggleGroupOption { value: string; label: ReactNode; icon?: ReactNode; title?: string; disabled?: boolean; }
 export interface ToggleGroupProps {
-  value: string;
-  options: readonly ToggleGroupOption[];
-  onChange: (value: string) => void;
-  ariaLabel: string;
-  className?: string;
-  size: 'header' | 'body';
-  fullWidth?: boolean;
-  variant?: 'primary' | 'neutral';
+  value: string; options: readonly ToggleGroupOption[]; onChange(value: string): void;
+  ariaLabel: string; className?: string; size: 'header' | 'body'; fullWidth?: boolean; variant?: 'primary' | 'neutral';
 }
-
-export const ToggleGroup: React.FC<ToggleGroupProps> = ({
-  value,
-  options,
-  onChange,
-  ariaLabel,
-  className = '',
-  size,
-  fullWidth = false,
-  variant = 'primary',
-}) => {
-  const {direction} = useLocale();
-  const groupRef = useRef<HTMLDivElement | null>(null);
-  const indicatorRef = useRef<HTMLSpanElement | null>(null);
-  const buttonRefs = useRef<Array<HTMLButtonElement | null>>([]);
-
-  const selectByKeyboard = (event: React.KeyboardEvent<HTMLButtonElement>, currentIndex: number) => {
-    let nextIndex = currentIndex;
-
-    switch (event.key) {
-      case 'ArrowLeft':
-        nextIndex = (currentIndex + (direction === 'rtl' ? 1 : -1) + options.length) % options.length;
-        break;
-      case 'ArrowUp':
-        nextIndex = (currentIndex - 1 + options.length) % options.length;
-        break;
-      case 'ArrowRight':
-        nextIndex = (currentIndex + (direction === 'rtl' ? -1 : 1) + options.length) % options.length;
-        break;
-      case 'ArrowDown':
-        nextIndex = (currentIndex + 1) % options.length;
-        break;
-      case 'Home':
-        nextIndex = 0;
-        break;
-      case 'End':
-        nextIndex = options.length - 1;
-        break;
-      default:
-        return;
-    }
-
+export function ToggleGroup({ value, options, onChange, ariaLabel, className = '', size, fullWidth = false }: ToggleGroupProps) {
+  const { direction } = useLocale();
+  const buttons = useRef<(HTMLButtonElement | null)[]>([]);
+  const active = options.findIndex(option => option.value === value && !option.disabled);
+  const first = options.findIndex(option => !option.disabled);
+  const keyboard = (event: KeyboardEvent<HTMLButtonElement>, index: number) => {
+    const key = event.key === 'ArrowUp' ? 'ArrowLeft' : event.key === 'ArrowDown' ? 'ArrowRight' : event.key;
+    if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(key)) return;
     event.preventDefault();
-    const nextOption = options[nextIndex];
-    if (!nextOption) return;
-    onChange(nextOption.value);
-    buttonRefs.current[nextIndex]?.focus();
+    const next = nextTabIndex(key, index, options, (event.key === 'ArrowUp' || event.key === 'ArrowDown') ? false : direction === 'rtl');
+    if (options[next]?.disabled) return;
+    onChange(options[next].value); buttons.current[next]?.focus({ preventScroll: true });
   };
-
-  const activeIndex = options.findIndex((option) => option.value === value);
-  const optionSignature = useMemo(
-    () => options.map((option) => option.value).join('\u0000'),
-    [options],
-  );
-  const syncIndicator = useCallback(() => {
-    const indicator = indicatorRef.current;
-    const activeButton = buttonRefs.current[activeIndex];
-    if (!indicator || !activeButton) {
-      indicator?.classList.remove('liquid-toggle-indicator-ready');
-      return;
-    }
-
-    indicator.style.setProperty('--liquid-toggle-indicator-x', `${activeButton.offsetLeft}px`);
-    indicator.style.setProperty('--liquid-toggle-indicator-width', `${activeButton.offsetWidth}px`);
-    indicator.classList.add('liquid-toggle-indicator-ready');
-  }, [activeIndex, direction]);
-
-  useLayoutEffect(() => {
-    syncIndicator();
-
-    if (typeof ResizeObserver === 'undefined') return undefined;
-    const observer = new ResizeObserver(syncIndicator);
-    if (groupRef.current) observer.observe(groupRef.current);
-    buttonRefs.current.forEach((button) => {
-      if (button) observer.observe(button);
-    });
-    return () => observer.disconnect();
-  }, [optionSignature, syncIndicator]);
-
-  return (
-    <div
-      ref={groupRef}
-      dir={direction}
-      className={`liquid-toggle-group liquid-toggle-group-${size} ${fullWidth ? 'liquid-toggle-group-full' : ''} ${className}`}
-      role="radiogroup"
-      aria-label={ariaLabel}
-    >
-      <span
-        ref={indicatorRef}
-        className={`liquid-toggle-indicator liquid-toggle-indicator-${variant}`}
-        aria-hidden="true"
-      />
-      {options.map((option, index) => {
-        const isActive = value === option.value;
-        const tip =
-          option.title ??
-          (typeof option.label === 'string' || typeof option.label === 'number' ? String(option.label) : undefined);
-        return (
-          <button
-            key={option.value}
-            ref={(node) => { buttonRefs.current[index] = node; }}
-            type="button"
-            role="radio"
-            aria-checked={isActive}
-            tabIndex={isActive || (activeIndex === -1 && index === 0) ? 0 : -1}
-            title={tip}
-            onClick={() => onChange(option.value)}
-            onKeyDown={(event) => selectByKeyboard(event, index)}
-            className={`liquid-toggle-btn liquid-toggle-btn-${size} ${fullWidth ? 'liquid-toggle-btn-full' : ''} ${
-              isActive
-                ? `liquid-toggle-btn-active liquid-toggle-btn-active-${variant}`
-                : 'liquid-toggle-btn-inactive'
-            }`}
-          >
-            {option.icon && <span className="liquid-toggle-btn-icon">{option.icon}</span>}
-            {option.label}
-          </button>
-        );
-      })}
-    </div>
-  );
-};
+  if (segmentedMode(options.length) === 'select') return <Select value={value} options={options.map(option => ({ ...option }))} onChange={onChange} ariaLabel={ariaLabel} className={className} />;
+  return <div role="radiogroup" aria-label={ariaLabel} dir={direction} className={`ui-segments ui-segments--${size} ${fullWidth ? 'ui-segments--full' : ''} ${className}`}>
+    {options.map((option, index) => <button type="button" key={option.value} ref={node => { buttons.current[index] = node; }} role="radio" aria-checked={value === option.value}
+      disabled={option.disabled} tabIndex={index === (active < 0 ? first : active) ? 0 : -1} title={option.title}
+      className="ui-segments__option" onClick={() => onChange(option.value)} onKeyDown={event => keyboard(event, index)}>
+      {option.icon}{option.label}
+    </button>)}
+  </div>;
+}

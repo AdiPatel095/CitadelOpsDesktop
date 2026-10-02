@@ -369,7 +369,7 @@ const DefensePresetsView: React.FC = () => {
           ))}
         </div>
       ) : (
-        <EmptyState
+        <EmptyState surface="plain"
           size="lg"
           icon={<Library className="h-6 w-6" />}
           title={query.trim() ? 'No matching presets' : 'Create your first defense preset'}

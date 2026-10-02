@@ -19,7 +19,7 @@ import type {
 	WorldIntelligenceRankingResponseV1,
 	WorldIntelligenceUpdateManifestV1,
 } from '../../api/Contracts';
-import { Badge, Button, Card, CardContent, EmptyState, Input, MetricTile, Select } from '../../components/ui';
+import { ViewState, viewStatus, Badge, Button, Card, CardContent, Input, MetricTile, Select } from '../../components/ui';
 import {
 	eventBoardSelectionKey,
 	eventPaginationSelectionKey,
@@ -194,9 +194,9 @@ export const WorldEventHistory = ({
 			return;
 		}
 		setDirectoryLoading(true);
-		setError('');
 		try {
 			await Promise.all([loadRunMetadata(requestID), loadReferenceRankings(requestID)]);
+            if (requestID === directoryRequest.current) setError('');
 		} catch (requestError) {
 			if (requestID === directoryRequest.current) {
 				setError(requestError instanceof Error ? requestError : new LocalizedError('events.directoryFailed'));
@@ -229,6 +229,7 @@ export const WorldEventHistory = ({
 			const requestID = directoryRequest.current;
 			try {
 				await Promise.all([loadRunMetadata(requestID), loadReferenceRankings(requestID)]);
+            if (requestID === directoryRequest.current) setError('');
 			} catch {
 				// Preserve the last usable directory; the manual refresh surfaces errors.
 			} finally {
@@ -509,18 +510,13 @@ export const WorldEventHistory = ({
 				)}
 			</div>
 
-			{error && <div className="mb-4 rounded-global border border-error/30 bg-error/10 px-4 py-3 text-sm text-error" role="alert">{error}</div>}
 
-			{directoryLoading && eventGroups.length === 0 ? (
-				<div className="flex min-h-72 items-center justify-center text-sm text-text-muted"><LocalizedText messageKey="ui.worldIntelligence.components.worldEventHistory.loading.event.history.49c99bd3" /></div>
-			) : eventGroups.length === 0 ? (
-				<EmptyState
-					size="md"
-					icon={<CalendarDays className="h-6 w-6" />}
-					title={localizeStatic("ui.worldIntelligence.components.worldEventHistory.title.no.event.runs.collected.yet.9b8636ba")}
-					description={localizeStatic("ui.worldIntelligence.components.worldEventHistory.description.the.view.is.ready.for.backend.1.fe44c28a")}
-				/>
-			) : (
+
+			<ViewState status={viewStatus({ hasData: eventGroups.length > 0, loading: directoryLoading, error: Boolean(error) })}
+        error={{ title: localizeStatic('events.directoryFailed'), onRetry: () => void refreshBoards(), retryLabel: localizeStatic('ui.state.retry') }}
+        loading={{ label: localizeStatic('ui.worldIntelligence.components.worldEventHistory.loading.event.history.49c99bd3'), variant: 'table' }}
+        empty={{ icon: <CalendarDays />, title: localizeStatic('ui.worldIntelligence.components.worldEventHistory.title.no.event.runs.collected.yet.9b8636ba'), description: localizeStatic('ui.worldIntelligence.components.worldEventHistory.description.the.view.is.ready.for.backend.1.fe44c28a') }}>
+
 				<>
 					<div className={`mb-4 grid gap-3 md:grid-cols-2 ${filterGridColumns}`}>
 						<div>
@@ -610,7 +606,7 @@ export const WorldEventHistory = ({
 						onOpenAlliance={onOpenAlliance}
 					/>
 				</>
-			)}
+</ViewState>
 		</div>
 	);
 };
@@ -672,12 +668,12 @@ const WorldPlayerEventHistoryContent = ({ history, error = '', onOpenAlliance }:
 						<Select value={eventKey} onChange={(value) => { setEventKey(value); setPage(0); }} options={eventOptions} ariaLabel={localizeStatic("ui.worldIntelligence.components.worldEventHistory.ariaLabel.filter.this.player.s.previous.event.scores.d8bad75f")} searchable disabled={eventOptions.length <= 1} menuGrowToViewport />
 					</div>
 				</div>
-				{error && <div className="mb-4 rounded-global border border-warning/30 bg-warning/10 px-4 py-3 text-sm text-warning" role="status">{error}</div>}
-				{entries.length === 0 ? (
-					<EmptyState size="sm" surface="plain" icon={<Trophy className="h-5 w-5" />} title={localizeStatic("ui.worldIntelligence.components.worldEventHistory.title.no.previous.scores.yet.10f2b810")} description={localizeStatic("ui.worldIntelligence.components.worldEventHistory.description.a.final.known.score.appears.here.after.949d3a8d")} />
-				) : (
-					<PlayerEventScoreTable entries={visible} page={safePage} pageCount={pageCount} total={entries.length} onPageChange={setPage} onOpenAlliance={onOpenAlliance} />
-				)}
+
+				<ViewState size="sm" status={viewStatus({ hasData: finalScores.length > 0, loading: false, error: Boolean(error) })}
+        error={{ title: localizeStatic('events.historyUnavailable') }} loading={{ label: localizeStatic('ui.state.loading'), variant: 'table' }}
+        empty={{ icon: <Trophy />, title: localizeStatic('ui.worldIntelligence.components.worldEventHistory.title.no.previous.scores.yet.10f2b810'), description: localizeStatic('ui.worldIntelligence.components.worldEventHistory.description.a.final.known.score.appears.here.after.949d3a8d') }}>
+<PlayerEventScoreTable entries={visible} page={safePage} pageCount={pageCount} total={entries.length} onPageChange={setPage} onOpenAlliance={onOpenAlliance} />
+</ViewState>
 			</CardContent>
 		</Card>
 	);

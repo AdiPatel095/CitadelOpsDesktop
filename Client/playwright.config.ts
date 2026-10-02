@@ -4,12 +4,12 @@ const port = 41736 + Number(process.env.CIT_VISUAL_PORT_OFFSET ?? 0);
 
 export default defineConfig({
   testDir: './tests/visual',
-  testMatch: ['snapshots.spec.ts', 'copy.spec.ts', 'views.spec.ts', 'fonts.spec.ts', 'anatomy.spec.ts'],
+  testMatch: ['snapshots.spec.ts', 'copy.spec.ts', 'views.spec.ts', 'fonts.spec.ts', 'tabs.spec.ts', 'states.spec.ts', 'anatomy.spec.ts'],
   timeout: 60_000,
   retries: 0,
   workers: 1,
   fullyParallel: false,
-  updateSnapshots: 'missing',
+  updateSnapshots: 'none',
   snapshotPathTemplate: '{testDir}/__screenshots__/{arg}{ext}',
   outputDir: 'test-results',
   reporter: [['list'], ['html', {

@@ -1,3 +1,4 @@
+import { VISUAL_STATES_KEY } from './visualStates';
 import type { LogEntry } from './fixtureServer';
 import type { FixtureServer } from './fixtureServer';
 import { FixtureSocket } from './fixtureSocket';
@@ -25,7 +26,7 @@ export function installFixtureTransport(server: FixtureServer): InstalledTranspo
     answer: (url, method, body) => {
       if (!url.pathname.startsWith('/api/')) return null;
       // A short delay keeps loading states visible instead of flashing.
-      return new Promise<Response>((resolve) => { window.setTimeout(() => { void server.handle(`${url.pathname}${url.search}`, method, body).then(resolve); }, 30); });
+      return new Promise<Response>((resolve) => { window.setTimeout(() => { void server.handle(`${url.pathname}${url.search}`, method, body, localStorage.getItem(VISUAL_STATES_KEY)).then(resolve); }, 30); });
     },
     socket: (url) => (url.includes(EVENTS_PATH) ? new FixtureSocket(url, server) : null),
   });

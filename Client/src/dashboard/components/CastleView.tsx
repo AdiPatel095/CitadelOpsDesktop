@@ -20,7 +20,7 @@ const CastleView: React.FC = () => {
     return (
       <div className="flex flex-col gap-6">
         <StaleSessionBanner />
-        <EmptyState
+        <EmptyState surface="plain"
           title={localizeStatic("ui.dashboard.components.castleView.title.no.castle.in.focus.5168d69e")}
           description={localizeStatic("ui.dashboard.components.castleView.description.choose.a.castle.from.the.focus.strip.1d7c4f72")}
           className="border-border-light bg-bg-card/50"
@@ -33,7 +33,7 @@ const CastleView: React.FC = () => {
     return (
       <div className="flex flex-col gap-6">
         <StaleSessionBanner />
-        <EmptyState
+        <EmptyState surface="plain"
           title={castleName}
           description={localizeStatic("ui.dashboard.components.castleView.description.no.castle.data.yet.for.this.focus.55cdfe24")}
           className="border-border-light bg-bg-card/60 [border-style:solid]"

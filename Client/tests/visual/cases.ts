@@ -1,8 +1,18 @@
-export const cases = [
+export type VisualCase = { name: string; label: string; view: string; settings?: boolean; states?: Partial<Record<'feature-history', 'empty' | 'loading' | 'error'>> };
+const baseCases: readonly VisualCase[] = [
   { name: 'castle', label: 'Castle', view: 'castle' },
   { name: 'automation', label: 'Automation', view: 'automation' },
   { name: 'equipment', label: 'Equipment', view: 'equipment' },
   { name: 'feature-stats', label: 'Feature Stats', view: 'events' },
   { name: 'settings-auto-towers', label: 'Automation', view: 'automation', settings: true },
-] as const;
+];
 export const themes = ['dark', 'light'] as const;
+
+const sources = { 'feature-stats': 'feature-history' } as const;
+export const cases: readonly VisualCase[] = baseCases.flatMap(visualCase => {
+  const source = sources[visualCase.name as keyof typeof sources];
+  if (!source) return [visualCase];
+  return [visualCase, ...(['empty', 'loading', 'error'] as const).map(state => ({
+    ...visualCase, name: `${visualCase.name}-${state}`, states: { [source]: state },
+  }))];
+});

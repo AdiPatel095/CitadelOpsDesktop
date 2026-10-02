@@ -1,5 +1,16 @@
 /** Explicit source-assigned static text keys. Missing locale entries remain English fallback. */
 export const sourceMessages = {
+  "analytics.noAttributedHelp": "New confirmed reports for this automation will begin populating this view.",
+  "playerTracker.noHistoryPortal": "Connect the game once to begin collecting player analytics.",
+  "playerTracker.noHistory": "Connect and log in to see your collected player analytics.",
+  "playerTracker.historyUnavailable": "Could not load player history",
+
+  "ui.tabs.previous": "Show previous tabs",
+  "ui.tabs.next": "Show more tabs",
+  "featureStats.tabs.label": "Feature stats",
+  "ui.state.retry": "Retry",
+  "ui.state.loading": "Loading…",
+
   "ui.movement.components.commanderRequirementModal.clear.requirement.b811adea": "Clear requirement",
   "ui.movement.components.commanderRequirementModal.apply.requirement.33b88b96": "Apply requirement",
   "ui.movement.components.commanderRequirementModal.only.commanders.whose.currently.equipped.gear.meets.d44315cf": "Only commanders whose currently equipped gear meets this limit can launch this function. Stats are discovered from live commander equipment and resolved by official effect and unit IDs. Event-scoped effects remain distinct and show their official target areas.",

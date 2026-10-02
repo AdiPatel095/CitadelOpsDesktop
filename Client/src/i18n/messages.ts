@@ -5,6 +5,7 @@ import { officialMessageKeys, officialMessageNouns } from './officialKeys';
 import { formatMessage, validateMessageCatalog } from './formatMessage';
 /** Add explicit descriptors here; never translate user names, IDs, or free-form input. */
 export const messages = {
+  "analytics.noAttributed": "No attributed {metric} yet",
   "copy.countUnknownTitle": "The attack count isn't available right now",
   "copy.attacksSaved": "{count, number} attacks, saved {time}",
   "copy.since": "{count, number} since {time}",

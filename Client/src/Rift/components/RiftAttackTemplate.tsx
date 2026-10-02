@@ -356,7 +356,7 @@ const RiftAttackTemplate: React.FC = () => {
         </div>}
       >
         {launches.length === 0 ? (
-          <EmptyState
+          <EmptyState surface="outlined"
             size="sm"
             title={localizeStatic("ui.rift.components.riftAttackTemplate.title.no.replay.templates.have.been.captured.yet.2678cbd0")}
             description={gameLoggedIn

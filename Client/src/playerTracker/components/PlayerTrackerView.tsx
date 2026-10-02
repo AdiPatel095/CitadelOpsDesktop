@@ -17,7 +17,7 @@ import {
 import StaleSessionBanner from '../../components/StaleSessionBanner';
 import type { FoodFilter, RoleFilter, TypeFilter } from '../../components/TroopPickerModal';
 import UnitImage from '../../components/UnitImage';
-import { Badge, Button, Card, CardContent, CardHeader, CardTitle, PillSelector, Select } from '../../components/ui';
+import { ViewState, viewStatus, Badge, Button, Card, CardContent, CardHeader, CardTitle, PillSelector, Select } from '../../components/ui';
 import { useAuth } from '../../context/AuthContext';
 import { useMetadata, type MetadataItem } from '../../context/MetadataContext';
 import { Notifications } from '../../components/Notifications';
@@ -201,6 +201,8 @@ const PlayerTrackerView = () => {
   const [troopRoleFilter, setTroopRoleFilter] = useState<RoleFilter>('all');
   const [troopFoodFilter, setTroopFoodFilter] = useState<FoodFilter>('all');
   const [selectedTroopUnitID, setSelectedTroopUnitID] = useState<number | null>(null);
+  const [historyLoading, setHistoryLoading] = useState(true);
+  const [retryToken, setRetryToken] = useState(0);
   const [loadError, setLoadError] = useState<string | null>(null);
 	const selectedExtraMetric = extraMetricDefinitions.find((definition) => definition.key === selectedMetric);
 	const scopedTracker = activePlayerID > 0 && tracker.current?.playerId !== activePlayerID ? emptyResponse : tracker;
@@ -259,6 +261,7 @@ const PlayerTrackerView = () => {
     let active = true;
     const controller = new AbortController();
     const load = async () => {
+      if (active) setHistoryLoading(true);
       try {
         const primarySeconds = ranges.find((range) => range.key === selectedRange)?.seconds;
         const troopSeconds = ranges.find((range) => range.key === troopRange)?.seconds;
@@ -276,6 +279,8 @@ const PlayerTrackerView = () => {
         if (!active) return;
         if (error instanceof DOMException && error.name === 'AbortError') return;
         setLoadError(error instanceof Error ? error.message : 'Could not load player history');
+      } finally {
+        if (active) setHistoryLoading(false);
       }
     };
     void load();
@@ -285,7 +290,7 @@ const PlayerTrackerView = () => {
       controller.abort();
       window.clearInterval(timer);
     };
-  }, [activePlayerID, metricDefinitions, selectedRange, troopMetadata, troopRange]);
+  }, [retryToken, activePlayerID, metricDefinitions, selectedRange, troopMetadata, troopRange]);
 
   const current = liveSample ?? scopedTracker.current;
   const series = useMemo(
@@ -429,12 +434,10 @@ const PlayerTrackerView = () => {
     <div className="flex flex-col gap-6 pb-8">
       <StaleSessionBanner />
 
-      {!current ? (
-        <Card>
-          <CardContent className="flex min-h-56 items-center justify-center  text-center text-text-muted">
-            <LocalizedText messageKey="ui.playerTracker.components.playerTrackerView.connect.the.game.once.to.begin.collecting.eae341bc" /></CardContent>
-        </Card>
-      ) : (
+      <ViewState status={viewStatus({ hasData: Boolean(current), loading: historyLoading, error: Boolean(loadError) })}
+        error={{ title: localizeStatic('playerTracker.historyUnavailable'), onRetry: () => setRetryToken(token => token + 1), retryLabel: localizeStatic('ui.state.retry') }}
+        loading={{ label: localizeStatic('ui.state.loading'), variant: 'cards' }}
+        empty={{ title: localizeStatic('playerTracker.noHistory') }}>
         <>
           <Card className="">
             <CardHeader className="flex-wrap gap-4">
@@ -779,7 +782,7 @@ const PlayerTrackerView = () => {
           </Card>
 
         </>
-      )}
+      </ViewState>
     </div>
   );
 };
