@@ -1,4 +1,5 @@
 import { TriangleAlert } from 'lucide-react';
+import './CastleOverviewCard.css';
 import type { CastleStateV2 } from '../../api/Contracts';
 import { useCitadelAPI } from '../../api/ApiContext';
 import { useMetadata } from '../../context/MetadataContext';

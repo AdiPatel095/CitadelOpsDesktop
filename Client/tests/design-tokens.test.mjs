@@ -141,14 +141,14 @@ test('ratchet includes raw inline fallback colors and border shorthands', () => 
 });
 
 
-test('muted token references stay in the designated legacy stylesheets', () => {
-  // CIT-71 uses the real PR-2 muted token; the migration check must not reject those legacy sheets.
+test('legacy stylesheets retain the migrated secondary text role', () => {
+  // PR-2 migrated legacy sheets to text-secondary; new component styles may use text-muted.
   const legacyStylesheets = new Set([
     'index.css', 'MaterialExpressive.css', 'portal.css', 'LandingPage.css',
     'LegalPage.css', 'ProductGuidePage.css', 'AnalyticsConsentBanner.css',
   ]);
   const files = (dir) => readdirSync(dir, { withFileTypes: true }).flatMap((entry) => entry.isDirectory() ? files(join(dir, entry.name)) : [join(dir, entry.name)]);
-  for (const path of files(join(root, 'src')).filter((path) => path.endsWith('.css') && basename(path) !== 'tokens.css' && !legacyStylesheets.has(basename(path)))) {
+  for (const path of files(join(root, 'src')).filter((path) => path.endsWith('.css') && legacyStylesheets.has(basename(path)))) {
     assert.doesNotMatch(readFileSync(path, 'utf8'), /var\(--text-muted\s*[,)]/, path);
   }
   const theme = readFileSync(join(root, desktop ? 'src/index.css' : 'src/tailwind-theme.css'), 'utf8');

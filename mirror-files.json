@@ -381,6 +381,10 @@
       "desktop": "Client/src/dashboard/components/BarracksQueueSlot.tsx"
     },
     {
+      "portal": "src/commandCenter/dashboard/components/CastleOverviewCard.css",
+      "desktop": "Client/src/dashboard/components/CastleOverviewCard.css"
+    },
+    {
       "portal": "src/commandCenter/dashboard/components/CastleOverviewCard.tsx",
       "desktop": "Client/src/dashboard/components/CastleOverviewCard.tsx"
     },
