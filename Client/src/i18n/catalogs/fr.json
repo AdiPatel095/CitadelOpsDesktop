@@ -430,5 +430,13 @@
   "ui.state.loading": "Chargement…",
   "ui.state.retry": "Réessayer",
   "ui.tabs.next": "Afficher plus d’onglets",
-  "ui.tabs.previous": "Afficher les onglets précédents"
+  "ui.tabs.previous": "Afficher les onglets précédents",
+  "header.panel.attacksToday": "Attaques aujourd’hui",
+  "header.panel.attention": "À vérifier",
+  "header.panel.connection": "Connexion",
+  "header.panel.openFeature": "Ouvrir {feature}",
+  "header.signal.attention": "{count, plural, one {# automatisation nécessite votre attention} many {# automatisations nécessitent votre attention} other {# automatisations nécessitent votre attention}}",
+  "header.signal.incoming": "{count, number} en approche · {state, select, known {première arrivée dans {duration}} other {vérification}}",
+  "header.signal.nextBird": "Prochaine mise à l’abri des troupes: {castle} · {state, select, due {à effectuer maintenant} other {dans {duration}}}",
+  "header.status.title": "État"
 }

@@ -430,5 +430,13 @@
   "ui.state.loading": "Загрузка…",
   "ui.state.retry": "Повторить",
   "ui.tabs.next": "Показать другие вкладки",
-  "ui.tabs.previous": "Показать предыдущие вкладки"
+  "ui.tabs.previous": "Показать предыдущие вкладки",
+  "header.panel.attacksToday": "Атаки сегодня",
+  "header.panel.attention": "Требует внимания",
+  "header.panel.connection": "Соединение",
+  "header.panel.openFeature": "Открыть {feature}",
+  "header.signal.attention": "{count, plural, one {# автоматизация требует внимания} few {# автоматизации требуют внимания} many {# автоматизаций требуют внимания} other {# автоматизации требуют внимания}}",
+  "header.signal.incoming": "{count, number} входящих · {state, select, known {первый через {duration}} other {проверка}}",
+  "header.signal.nextBird": "Следующее укрытие войск: {castle} · {state, select, due {пора выполнить} other {через {duration}}}",
+  "header.status.title": "Состояние"
 }

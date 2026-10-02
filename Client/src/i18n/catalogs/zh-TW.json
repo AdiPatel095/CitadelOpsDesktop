@@ -430,5 +430,13 @@
   "ui.state.loading": "載入中…",
   "ui.state.retry": "重試",
   "ui.tabs.next": "顯示更多分頁",
-  "ui.tabs.previous": "顯示之前的分頁"
+  "ui.tabs.previous": "顯示之前的分頁",
+  "header.panel.attacksToday": "今日攻擊",
+  "header.panel.attention": "需要關注",
+  "header.panel.connection": "連線",
+  "header.panel.openFeature": "開啟{feature}",
+  "header.signal.attention": "{count, plural, other {#項自動化需要關注}}",
+  "header.signal.incoming": "{count, number} 個來襲 · {state, select, known {首次抵達還剩{duration}} other {正在檢查}}",
+  "header.signal.nextBird": "下次部隊庇護: {castle} · {state, select, due {現在執行} other {{duration}後}}",
+  "header.status.title": "狀態"
 }

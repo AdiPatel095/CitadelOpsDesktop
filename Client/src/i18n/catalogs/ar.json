@@ -1157,5 +1157,13 @@
   "ui.state.loading": "جارٍ التحميل…",
   "ui.state.retry": "إعادة المحاولة",
   "ui.tabs.next": "عرض المزيد من علامات التبويب",
-  "ui.tabs.previous": "عرض علامات التبويب السابقة"
+  "ui.tabs.previous": "عرض علامات التبويب السابقة",
+  "header.panel.attacksToday": "هجمات اليوم",
+  "header.panel.attention": "يحتاج إلى انتباه",
+  "header.panel.connection": "الاتصال",
+  "header.panel.openFeature": "فتح {feature}",
+  "header.signal.attention": "{count, plural, zero {# عمليات أتمتة تحتاج إلى انتباه} one {# عملية أتمتة تحتاج إلى انتباه} two {# عمليتا أتمتة تحتاجان إلى انتباه} few {# عمليات أتمتة تحتاج إلى انتباه} many {# عملية أتمتة تحتاج إلى انتباه} other {# عملية أتمتة تحتاج إلى انتباه}}",
+  "header.signal.incoming": "{count, number} وارد · {state, select, known {الأول بعد {duration}} other {جارٍ التحقق}}",
+  "header.signal.nextBird": "الإيواء التالي للقوات: {castle} · {state, select, due {حان الموعد الآن} other {بعد {duration}}}",
+  "header.status.title": "الحالة"
 }

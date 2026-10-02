@@ -109,6 +109,8 @@ export function APIProvider({ children }: { children: ReactNode }) {
 	const catalogsReady = useRef(false);
 	const configurationReady = useRef(false);
 	const operationsReady = useRef(false);
+	const stateInstance = useRef<string | null>(null);
+	const operationSequence = useRef(0);
 	const operationNotificationIDs = useRef(new Map<string, string>());
 	const rubyUpgradeNotifications = useRef(new RubyUpgradeNotificationCoordinator());
 	useEffect(() => {
@@ -259,17 +261,41 @@ export function APIProvider({ children }: { children: ReactNode }) {
 	}, []);
 
   useEffect(() => {
+	const clearResumeCursor = CitadelAPI.setResumeCursorProvider((scope) => {
+		const current = stateResync.current();
+		if (scope !== runtimeScope || current == null || stateInstance.current == null) return null;
+		return {
+			instance: stateInstance.current, since: current.revision,
+			// If a greeting was interrupted before these arrived, force a full
+			// greeting rather than claiming that an absent part is already held.
+			ops: operationsReady.current ? operationSequence.current : -1,
+			config: configurationRef.current?.revision ?? -1,
+			catalog: CitadelAPI.getCatalogDigest(),
+		};
+	});
     const unsubscribeStatus = CitadelAPI.subscribeStatus((status) => {
 		setConnectionStatus(status);
-		// A reconnect greets with a fresh snapshot; whatever was buffered or requested belongs to the old socket.
+		// A reconnect supplies a snapshot or a merged patch; old socket requests and buffers are void.
 		if (status === 'Disconnected') resetStateStream();
 	});
 	const unsubscribeConfiguration = CitadelAPI.subscribeConfiguration(acceptConfigurationSnapshot);
     const unsubscribeEvents = CitadelAPI.subscribe((message) => {
       if (message.type === 'state.snapshot' && isGameState(message.payload)) {
+		const instance = typeof message.instance === 'string' && message.instance ? message.instance : null;
+		if (instance !== stateInstance.current) {
+			stateResync.forgetState();
+			operationSequence.current = 0;
+			operationsReady.current = false;
+		}
+		stateInstance.current = instance;
 		acceptStateSnapshot(message.payload);
         return;
       }
+	  if (message.type === 'state.resumed') {
+		// State revisions advance only when the merged patch is applied. The
+		// other held parts survive the skipped greeting snapshots.
+		return;
+	  }
 	  if (message.type === 'state.changed' && isStateChangeEvent(message.payload)) {
 		handleStateOutcome(stateResync.receiveEvent({
 			patch: message.payload.patch,
@@ -295,6 +321,7 @@ export function APIProvider({ children }: { children: ReactNode }) {
         return;
       }
 	  if (message.type === 'operations.snapshot' && isIntentReceiptArray(message.payload)) {
+		operationSequence.current = Math.max(operationSequence.current, message.sequence ?? 0);
 		const receipts = message.payload;
 		setOperations((current) => ({
 			...current,
@@ -305,6 +332,7 @@ export function APIProvider({ children }: { children: ReactNode }) {
 	  }
       if ((message.type === 'operation.changed' || message.type === 'intent.receipt') && isIntentReceipt(message.payload)) {
 		const receipt = message.payload;
+		if (message.type === 'operation.changed') operationSequence.current = Math.max(operationSequence.current, message.sequence ?? 0);
 		setOperations((current) => ({ ...current, [receipt.id]: receipt }));
 		if (message.gap) void refreshOperations();
 		publishOperationFailure(receipt);
@@ -325,6 +353,7 @@ export function APIProvider({ children }: { children: ReactNode }) {
 		refreshApplicationUpdate(), runtimeDiagnosticsEnabled ? refreshDiagnostics() : Promise.resolve(),
 	]);
     return () => {
+	  clearResumeCursor();
       unsubscribeEvents();
       unsubscribeStatus();
 	  unsubscribeConfiguration();
@@ -332,7 +361,7 @@ export function APIProvider({ children }: { children: ReactNode }) {
 	  resetStateStream();
       CitadelAPI.disconnect();
     };
-  }, [acceptConfigurationSnapshot, acceptStateSnapshot, handleStateOutcome, publishOperationFailure, refreshApplicationUpdate, refreshCatalogs, refreshConfiguration, refreshDiagnostics, refreshOperations, refreshState, resetStateStream, stateResync]);
+  }, [acceptConfigurationSnapshot, acceptStateSnapshot, handleStateOutcome, publishOperationFailure, refreshApplicationUpdate, refreshCatalogs, refreshConfiguration, refreshDiagnostics, refreshOperations, refreshState, resetStateStream, runtimeScope, stateResync]);
 
 	useEffect(() => {
 		const interval = window.setInterval(() => void refreshApplicationUpdate(), 5_000);

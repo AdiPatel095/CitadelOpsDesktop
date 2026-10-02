@@ -26,6 +26,13 @@ type ProfileExport struct {
 	ArchiveBytes int64                         `json:"archiveBytes"`
 }
 
+// ProfileExportRequest is private control-plane input. Older channel-switch
+// callers retain their existing drain; cell moves opt into finishOpen.
+type ProfileExportRequest struct {
+	Runtime.ProfileTransferIdentity
+	FinishOpen bool `json:"finishOpen,omitempty"`
+}
+
 type ProfileRestoreRequest struct {
 	Receipt       Runtime.ProfileArchiveReceipt `json:"receipt"`
 	TargetEpoch   uint64                        `json:"targetEpoch"`
@@ -57,7 +64,11 @@ func (o *Orchestrator) stoppedExportFence(identity Runtime.ProfileTransferIdenti
 // stopped. Retries verify the saved export instead of re-capturing a profile
 // whose durable files could have changed after the original stop receipt.
 func (o *Orchestrator) ExportSourceProfile(ctx context.Context, identity Runtime.ProfileTransferIdentity) (ProfileExport, error) {
-	if _, err := o.PrepareSourceHandover(ctx, identity); err != nil {
+	return o.exportSourceProfile(ctx, identity, false)
+}
+
+func (o *Orchestrator) exportSourceProfile(ctx context.Context, identity Runtime.ProfileTransferIdentity, finishOpen bool) (ProfileExport, error) {
+	if _, err := o.prepareSourceHandoverDrain(ctx, identity, true, finishOpen); err != nil {
 		return ProfileExport{}, err
 	}
 	o.reconcileMu.Lock()
@@ -208,11 +219,11 @@ func (reader *profileTransferReader) Read(buffer []byte) (int, error) {
 }
 
 func (o *Orchestrator) handleProfileExport(writer http.ResponseWriter, request *http.Request) {
-	var identity Runtime.ProfileTransferIdentity
-	if decodeControlJSON(writer, request, &identity) != nil {
+	var input ProfileExportRequest
+	if decodeControlJSON(writer, request, &input) != nil {
 		return
 	}
-	export, err := o.ExportSourceProfile(request.Context(), identity)
+	export, err := o.exportSourceProfile(request.Context(), input.ProfileTransferIdentity, input.FinishOpen)
 	if err != nil {
 		writeControlError(writer, http.StatusConflict, "profile_export_not_ready")
 		return

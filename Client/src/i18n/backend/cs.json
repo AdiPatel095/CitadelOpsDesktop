@@ -327,5 +327,8 @@
   "backend.spy_report.capture_fields": "Zadejte kladné hodnoty mid, allianceID, castleID, sourcePlayerID a scannedAtUnixMillis.",
   "backend.spy_report.payload_json": "payload musí obsahovat platný JSON.",
   "backend.spy_report.payload_object": "payload musí obsahovat objekt JSON.",
-  "backend.spy_report.session_fields": "Zadejte clientID a kladné hodnoty playerID a allianceID."
+  "backend.spy_report.session_fields": "Zadejte clientID a kladné hodnoty playerID a allianceID.",
+  "backend.hosted.cells_unavailable": "Role buněk nejsou dostupné",
+  "backend.status.placement_slot": "Čekání na volné místo na našich serverech",
+  "backend.status.starting_server": "Spouštění serveru pro tento účet"
 }

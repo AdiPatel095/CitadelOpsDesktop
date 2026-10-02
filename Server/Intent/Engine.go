@@ -133,6 +133,9 @@ type Engine struct {
 	labelsReady    bool
 
 	mu                    sync.RWMutex
+	admissionMu           sync.RWMutex
+	draining              bool
+	drainCancelled        map[string]bool
 	actions               map[string]Action
 	resolvers             map[string]StepResolver
 	dependencies          map[string]CommandDependencyResolver
@@ -411,6 +414,13 @@ type preparedSubmission struct {
 // true the returned receipt is final for this submission — an idempotent
 // replay or a reservation failure — and nothing was registered.
 func (engine *Engine) prepare(ctx context.Context, request Request) (*preparedSubmission, Receipt, bool) {
+	// Serialize admission with drain startup, including reservation and active
+	// registration. A drain cannot miss an operation still being admitted.
+	engine.admissionMu.RLock()
+	defer engine.admissionMu.RUnlock()
+	if engine.draining {
+		return nil, Receipt{ID: request.ID, Intent: request.Name, Status: StatusFailed, Phase: EffectPhaseCompleted, Error: "runtime is draining"}, true
+	}
 	if ctx == nil {
 		ctx = context.Background()
 	}
@@ -995,6 +1005,7 @@ func (engine *Engine) registerActive(id string, cancel context.CancelFunc) bool 
 func (engine *Engine) unregisterActive(id string) {
 	engine.mu.Lock()
 	delete(engine.active, id)
+	delete(engine.drainCancelled, id)
 	engine.mu.Unlock()
 }
 
@@ -1263,6 +1274,15 @@ func (engine *Engine) reserveDurableOperation(
 	}
 	engine.mu.Unlock()
 	return reserved, created, nil
+}
+
+// EventSequence returns the current operation stream head. Read it after
+// subscribing and before constructing a snapshot, so that snapshot cannot be
+// older than the sequence used to label it.
+func (engine *Engine) EventSequence() uint64 {
+	engine.mu.RLock()
+	defer engine.mu.RUnlock()
+	return engine.eventSequence
 }
 
 func (engine *Engine) Subscribe(buffer int) (<-chan Receipt, func()) {
@@ -1987,6 +2007,13 @@ func (engine *Engine) fail(receipt Receipt, err error) Receipt {
 		receipt.Phase = EffectPhaseReconciliationRequired
 	} else if errors.Is(err, context.Canceled) {
 		receipt.Status = StatusCancelled
+	}
+	engine.mu.RLock()
+	drainCancelled := engine.drainCancelled[receipt.ID]
+	engine.mu.RUnlock()
+	if drainCancelled && receipt.Plan != nil && receipt.Plan.Effect == EffectRead {
+		receipt.Status = StatusFailed
+		receipt.Phase = EffectPhaseCompleted
 	}
 	receipt = engine.withFailure(receipt, err)
 	now := time.Now().UTC()

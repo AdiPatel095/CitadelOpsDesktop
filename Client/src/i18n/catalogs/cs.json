@@ -430,5 +430,13 @@
   "ui.state.loading": "Načítání…",
   "ui.state.retry": "Zkusit znovu",
   "ui.tabs.next": "Zobrazit další karty",
-  "ui.tabs.previous": "Zobrazit předchozí karty"
+  "ui.tabs.previous": "Zobrazit předchozí karty",
+  "header.panel.attacksToday": "Dnešní útoky",
+  "header.panel.attention": "Vyžaduje pozornost",
+  "header.panel.connection": "Připojení",
+  "header.panel.openFeature": "Otevřít {feature}",
+  "header.signal.attention": "{count, plural, one {# automatizace vyžaduje pozornost} few {# automatizace vyžadují pozornost} many {# automatizace vyžaduje pozornost} other {# automatizací vyžaduje pozornost}}",
+  "header.signal.incoming": "{count, number} příchozích · {state, select, known {první za {duration}} other {kontrola}}",
+  "header.signal.nextBird": "Příští ukrytí vojska: {castle} · {state, select, due {provést nyní} other {za {duration}}}",
+  "header.status.title": "Stav"
 }
