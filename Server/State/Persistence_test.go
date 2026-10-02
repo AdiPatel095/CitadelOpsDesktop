@@ -1109,10 +1109,23 @@ func TestWriterStatsCountFilesAndSyncs(t *testing.T) {
 		t.Error("Stats waited for the writer mutex")
 	}
 	writer.mu.Unlock()
-	if err := os.Chmod(componentStatePath(directory), 0o500); err != nil {
+	// A regular file blocks writes with ENOTDIR even when the test runs as root.
+	statePath := componentStatePath(directory)
+	backupPath := statePath + ".backup"
+	if err := os.Rename(statePath, backupPath); err != nil {
 		t.Fatal(err)
 	}
-	t.Cleanup(func() { _ = os.Chmod(componentStatePath(directory), 0o700) })
+	t.Cleanup(func() {
+		if err := os.Remove(statePath); err != nil && !os.IsNotExist(err) {
+			t.Errorf("remove blocking file: %v", err)
+		}
+		if err := os.Rename(backupPath, statePath); err != nil {
+			t.Errorf("restore component state directory: %v", err)
+		}
+	})
+	if err := os.WriteFile(statePath, nil, 0o600); err != nil {
+		t.Fatal(err)
+	}
 	if err := writer.Save(apply(3), Components(ComponentPlayer)); err == nil {
 		t.Fatal("save to read-only directory succeeded")
 	}
