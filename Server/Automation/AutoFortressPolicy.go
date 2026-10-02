@@ -28,6 +28,8 @@ const (
 )
 
 type AutoFortressPolicy struct {
+	accountKey                 string
+	sharedScans                *State.WorldMapStore
 	mu                         sync.Mutex
 	lastFullScanRequested      map[State.KingdomID]time.Time
 	lastSupplyRefreshRequested map[State.KingdomID]time.Time
@@ -70,6 +72,13 @@ func NewAutoFortressPolicy() *AutoFortressPolicy {
 		lastFullScanRequested:      map[State.KingdomID]time.Time{},
 		lastSupplyRefreshRequested: map[State.KingdomID]time.Time{},
 	}
+}
+
+func NewSharedAutoFortressPolicy(accountKey string, scans *State.WorldMapStore) *AutoFortressPolicy {
+	p := NewAutoFortressPolicy()
+	p.accountKey = accountKey
+	p.sharedScans = scans
+	return p
 }
 
 func (*AutoFortressPolicy) ID() string         { return "autoFortress" }
@@ -173,6 +182,9 @@ func (policy *AutoFortressPolicy) Evaluate(_ context.Context, snapshot Snapshot)
 	if len(candidates) == 0 {
 		refreshInterval := time.Duration(settings.MapRefreshIntervalSec) * time.Second
 		for _, source := range sources {
+			if policy.sharedScans != nil && policy.accountKey != "" {
+				continue
+			}
 			if policy.fullScanDue(source.KingdomID, snapshot.Now, refreshInterval) {
 				policy.markFullScanRequested(source.KingdomID, snapshot.Now)
 				decision := autoFortressRequest(snapshot, metrics, fmt.Sprintf("Discover every fortress across %s", castleName(source)), "fortress.map.scan", map[string]any{
@@ -1217,4 +1229,12 @@ func detailDescriptorMap(maps []map[string]*Localization.Message) map[string]*Lo
 		return maps[0]
 	}
 	return map[string]*Localization.Message{}
+}
+
+func fortressScanScope(state State.GameState, kingdom State.KingdomID) State.MapScanScope {
+	world := state.Account.WorldID
+	if world == "" {
+		world = state.Session.ServerURL
+	}
+	return State.MapScanScope{Kind: "fortress", WorldID: world, Zone: state.Session.Namespace, KingdomID: kingdom}
 }
