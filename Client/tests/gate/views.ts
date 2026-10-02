@@ -61,6 +61,7 @@ export const gateCases: readonly GateCase[] = [
   })),
   ...(isDesktop ? [] : [
   { name: 'auth', variant: 'public', path: '/login', ready: 'main' },
+  { name: 'auth-signup', variant: 'public', path: '/login?mode=signup', ready: 'main' },
   ...(['add', 'login', 'access', 'delete'] as const).map(dialog => ({
     name: `account-dialog-${dialog}`, variant: 'app' as const, path: '/accounts', dialog, ready: '[role="dialog"]',
   })),
