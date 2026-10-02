@@ -2,11 +2,8 @@ import React, { useMemo } from 'react';
 import { useCitadelAPI } from '../api/ApiContext';
 import { useAuth } from '../context/AuthContext';
 import { LocalizedText } from '../i18n/LocalizedText';
-import { messageLanguageAttributes } from '../i18n/messageLanguage';
-import { useLocalizedMessage } from '../i18n/useLocalizedMessage';
 import { AUTOMATION_ENABLED_KEYS, type SettingsFeatureId } from '../settings/disclosure/placement';
 import { firstConfirmedResult } from '../settings/readiness/firstResult';
-import type { AutomationPhase } from '../settings/readiness/runtimeState';
 import { useAutomationDescription } from '../settings/readiness/useAutomationDescription';
 import { accountKey } from '../settings/requirements/castleRequirements';
 import { AutomationReadinessRow } from './AutomationReadinessRow';
@@ -17,13 +14,9 @@ import { goalById } from '../settings/onboarding/goals';
 import { useGoal } from '../settings/onboarding/goalStore';
 import { useGoalChecklist } from '../settings/onboarding/useChecklist';
 import { StateLegend } from './StateLegend';
-import { Badge } from './ui/Badge';
+import { StatusBadge } from './ui/StatusBadge';
+import { useAutomationPlayerStatus } from '../settings/readiness/useAutomationPlayerStatus';
 import { Button } from './ui/Button';
-
-const PHASE_BADGE: Record<AutomationPhase, 'primary' | 'secondary' | 'success' | 'warning' | 'danger' | 'outline'> = {
-  disabled: 'outline', stopped: 'outline', 'enabled-waiting': 'secondary', running: 'primary',
-  blocked: 'warning', error: 'danger', locked: 'warning', completed: 'secondary', unknown: 'outline',
-};
 
 const GoalLegendInner: React.FC<{ goal: NonNullable<ReturnType<typeof goalById>> }> = ({ goal }) => {
   const { legend } = useGoalChecklist(goal);
@@ -60,10 +53,10 @@ export const AutomationFeatureFeedback: React.FC<{
   compact?: boolean;
 }> = ({ featureId, enabled, onOpenSettings, launchesByFeature, accountLabel, buildLaneActive, compact = false }) => {
   const description = useAutomationDescription(featureId, { buildLaneActive });
+  const player = useAutomationPlayerStatus(featureId, { buildLaneActive }).overall;
   const { operations, state } = useCitadelAPI();
   const { automationEnabledSince, automationStates } = useAuth();
   const enabledKey = AUTOMATION_ENABLED_KEYS[featureId];
-  const message = useLocalizedMessage(description.runtimeDetail?.descriptor, description.runtimeDetail?.text ?? '');
   const result = useMemo(() => firstConfirmedResult(featureId, {
     operations,
     runtime: automationStates[featureId],
@@ -77,14 +70,8 @@ export const AutomationFeatureFeedback: React.FC<{
     <div className={compact ? 'space-y-1.5' : 'mt-1 space-y-1.5'} data-automation-feedback={featureId} data-feedback-compact={compact ? 'true' : undefined}>
       {showPhase ? (
         <div className="flex flex-wrap items-start gap-1.5 text-xs leading-relaxed text-text-muted" data-automation-phase={description.phase}>
-          <Badge variant={PHASE_BADGE[description.phase]} className="normal-case tracking-normal">
-            <LocalizedText messageKey="runtimeState.phase" params={{ phase: description.phase.replaceAll('-', '_') }} />
-          </Badge>
+          {compact ? <StatusBadge {...player} /> : null}
           <span className="min-w-0 flex-1">
-            <LocalizedText messageKey={description.messageKey} params={description.params} />
-            {description.runtimeDetail && (description.phase === 'error' || description.phase === 'blocked') ? (
-              <span className="block text-text-main" {...messageLanguageAttributes(message)}>{message.text}</span>
-            ) : null}
             {description.nextStep === 'clear-lock' ? (
               <Button variant="ghost" size="sm" className="ml-1" onClick={() => document.getElementById('automation-safety-panel')?.scrollIntoView({ block: 'center', behavior: 'smooth' })}>
                 <LocalizedText messageKey="runtimeState.goToLock" />

@@ -7039,61 +7039,6 @@
     "reason": "Settings disclosure identifier or typed message argument, not human display prose.",
     "evidence": "Summary builders return typed messageKeys with ICU select/plural arguments (on/off, unit, boost, position) that are identifiers, not display prose."
   },
-  "c988f6c938267e380d454e06de4363355ac477d5a373e4ee143fc66fd3660b2b": {
-    "classification": "technical",
-    "reason": "Settings disclosure identifier or typed message argument, not human display prose.",
-    "evidence": "Badge/Button variants, sizes, Intl date options and settingsRun.status select values are identifiers; visible text renders through typed messageKeys."
-  },
-  "838769501e7521068607d1a64afc9df824af76d05dd7fd84a9242ed0c882ea89": {
-    "classification": "technical",
-    "reason": "Component variant, size, CSS class or DOM option value, not human display text.",
-    "evidence": "Button/Badge/Modal variants and sizes, scrollIntoView options, ARIA/DOM attribute values and tone classes in the new CIT-20 components."
-  },
-  "1fad98db4e115ed3959720b902e391d08a221024e4f72c3c544ba4403005054f": {
-    "classification": "technical",
-    "reason": "Component variant, size, CSS class or DOM option value, not human display text.",
-    "evidence": "Button/Badge/Modal variants and sizes, scrollIntoView options, ARIA/DOM attribute values and tone classes in the new CIT-20 components."
-  },
-  "17763640066e903e7b12e9ce4241beef68b2149914d594c64db3d500280149f7": {
-    "classification": "technical",
-    "reason": "Component variant, size, CSS class or DOM option value, not human display text.",
-    "evidence": "Button/Badge/Modal variants and sizes, scrollIntoView options, ARIA/DOM attribute values and tone classes in the new CIT-20 components."
-  },
-  "8bf3006b844b3b32c70e57ba93aa3611fc8dc04709f0c1d8a319852e75daff8a": {
-    "classification": "technical",
-    "reason": "Internal identifier (feature id, configuration section, state, phase or receipt status name, event or storage key), not display prose.",
-    "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
-  },
-  "7e4200f855d04372d8112e6ee3241d1922694745eed6b0daa47dfd53d5d022fe": {
-    "classification": "technical",
-    "reason": "Component variant, size, CSS class or DOM option value, not human display text.",
-    "evidence": "Button/Badge/Modal variants and sizes, scrollIntoView options, ARIA/DOM attribute values and tone classes in the new CIT-20 components."
-  },
-  "3eb49585522c3c32f91c588f06da644cd9417e2b4fa1bcc2a466522c7c850be3": {
-    "classification": "technical",
-    "reason": "Component variant, size, CSS class or DOM option value, not human display text.",
-    "evidence": "Button/Badge/Modal variants and sizes, scrollIntoView options, ARIA/DOM attribute values and tone classes in the new CIT-20 components."
-  },
-  "6aab87a710738ea8eb1b137a0c15d0fd9e59290dfa017a5240f2cbf943dafaba": {
-    "classification": "technical",
-    "reason": "Component variant, size, CSS class or DOM option value, not human display text.",
-    "evidence": "Button/Badge/Modal variants and sizes, scrollIntoView options, ARIA/DOM attribute values and tone classes in the new CIT-20 components."
-  },
-  "db579ca46a2e7ee5edcfef3e561d1fb902965bd70937c0dffce27a335251f84b": {
-    "classification": "technical",
-    "reason": "Component variant, size, CSS class or DOM option value, not human display text.",
-    "evidence": "Button/Badge/Modal variants and sizes, scrollIntoView options, ARIA/DOM attribute values and tone classes in the new CIT-20 components."
-  },
-  "3211b5dfe7210504e57e7e86b8e505c085be53c339afaccbab1b9c5756f0fc24": {
-    "classification": "technical",
-    "reason": "Component variant, size, CSS class or DOM option value, not human display text.",
-    "evidence": "Button/Badge/Modal variants and sizes, scrollIntoView options, ARIA/DOM attribute values and tone classes in the new CIT-20 components."
-  },
-  "eeb3716c4f0c75cc172d03686a8727640648708166427dd101f1d6f80a3d6657": {
-    "classification": "technical",
-    "reason": "Component variant, size, CSS class or DOM option value, not human display text.",
-    "evidence": "Button/Badge/Modal variants and sizes, scrollIntoView options, ARIA/DOM attribute values and tone classes in the new CIT-20 components."
-  },
   "5799f5130fc3282f521d783f533b266038fb2e72c6de4a6e6336f769982207e7": {
     "classification": "technical",
     "reason": "Component variant, size, CSS class or DOM option value, not human display text.",
@@ -7274,11 +7219,6 @@
     "reason": "Component variant, size, CSS class or DOM option value, not human display text.",
     "evidence": "Button/Badge/Modal variants and sizes, scrollIntoView options, ARIA/DOM attribute values and tone classes in the new CIT-20 components."
   },
-  "eec3285957b430b4f1f7fe0c7e8d3d79169a0c3fd94e979124b037e9ae1730b0": {
-    "classification": "technical",
-    "reason": "Component variant, size, CSS class or DOM option value, not human display text.",
-    "evidence": "Button/Badge/Modal variants and sizes, scrollIntoView options, ARIA/DOM attribute values and tone classes in the new CIT-20 components."
-  },
   "e1ca1008620c08f294ab21a7e559489edda554a7fbf8239a972352ec0a2e8406": {
     "classification": "technical",
     "reason": "Component variant, size, CSS class or DOM option value, not human display text.",
@@ -7315,11 +7255,6 @@
     "evidence": "Readiness, runtime-state, first-result, Stop and Start-confirmation modules return typed message keys with ICU arguments; the keys are identifiers, not display prose."
   },
   "7a9dbb7f3ba74c4bf67f663526541f18385413973c09d6077f71db52216a57a4": {
-    "classification": "technical",
-    "reason": "Component variant, size, CSS class or DOM option value, not human display text.",
-    "evidence": "Button/Badge/Modal variants and sizes, scrollIntoView options, ARIA/DOM attribute values and tone classes in the new CIT-20 components."
-  },
-  "3ddddafd5de8d5be4e3d76b1ba38f1eb4526b4a8e1b91ca00ca14a3fbc8df273": {
     "classification": "technical",
     "reason": "Component variant, size, CSS class or DOM option value, not human display text.",
     "evidence": "Button/Badge/Modal variants and sizes, scrollIntoView options, ARIA/DOM attribute values and tone classes in the new CIT-20 components."
@@ -7430,11 +7365,6 @@
     "evidence": "Feature ids equal policy actor ids (Server/Automation), configuration sections and receipt statuses come from the runtime contracts, and phase/reason names are internal discriminators; display text lives in typed message keys."
   },
   "58b7435ae909d38f3aba098c390fd9766512bc4c16a79df68d8df1c7ae1437b3": {
-    "classification": "technical",
-    "reason": "Component variant, size, CSS class or DOM option value, not human display text.",
-    "evidence": "Button/Badge/Modal variants and sizes, scrollIntoView options, ARIA/DOM attribute values and tone classes in the new CIT-20 components."
-  },
-  "fa009e6cdfe13f916c1e172facd9c05bf05abd26eb72088304d0ed846b78b6df": {
     "classification": "technical",
     "reason": "Component variant, size, CSS class or DOM option value, not human display text.",
     "evidence": "Button/Badge/Modal variants and sizes, scrollIntoView options, ARIA/DOM attribute values and tone classes in the new CIT-20 components."
@@ -11513,5 +11443,65 @@
     "classification": "technical",
     "reason": "CIT-66 saved-status enum, fallback locale or descriptor identity; not display text.",
     "evidence": "playerStatus.ts uses localized message descriptors and listParams for saved-data reasons. These literals select the neutral enum, English fallback formatting or the identity of an unkeyed game-detail leaf."
+  },
+  "01ec9284620c809bcab8b13631a15169f62caa968777862170ae259cf607b73c": {
+    "classification": "technical",
+    "reason": "Status/role identifiers, typed catalog keys, locale/ARIA metadata; never displayed as raw labels.",
+    "evidence": "CIT-66 PR-C components/Header.tsx: desktop; StatusBadge and RoleTag render catalog labels and formatted reason descriptors; adapter identifiers are inputs to the tested pure player-status model."
+  },
+  "0afe50e6e3e444ca5d6d209c00e5ececa94b8c32557937e5b708b92b1086c0ed": {
+    "classification": "technical",
+    "reason": "Status/role identifiers, typed catalog keys, locale/ARIA metadata; never displayed as raw labels.",
+    "evidence": "CIT-66 PR-C components/ui/RoleTag.tsx: owner; StatusBadge and RoleTag render catalog labels and formatted reason descriptors; adapter identifiers are inputs to the tested pure player-status model."
+  },
+  "c98c2f2efa3ca7eaf10df05739df786c7781a35691b422806bccb7b11c241700": {
+    "classification": "technical",
+    "reason": "Status/role identifiers, typed catalog keys, locale/ARIA metadata; never displayed as raw labels.",
+    "evidence": "CIT-66 PR-C components/ui/RoleTag.tsx: admin; StatusBadge and RoleTag render catalog labels and formatted reason descriptors; adapter identifiers are inputs to the tested pure player-status model."
+  },
+  "c646fcb7230df74bfaeeb87bafa6bcce1922778496a7bdb8d8759648c1c82bac": {
+    "classification": "technical",
+    "reason": "Status/role identifiers, typed catalog keys, locale/ARIA metadata; never displayed as raw labels.",
+    "evidence": "CIT-66 PR-C components/ui/RoleTag.tsx: editor; StatusBadge and RoleTag render catalog labels and formatted reason descriptors; adapter identifiers are inputs to the tested pure player-status model."
+  },
+  "0dd6901a87945ed4f9314f3161df89a5bbca73f73e9fe3179ff4b8241133fab3": {
+    "classification": "technical",
+    "reason": "Status/role identifiers, typed catalog keys, locale/ARIA metadata; never displayed as raw labels.",
+    "evidence": "CIT-66 PR-C components/ui/RoleTag.tsx: `playerRole.${role}`; StatusBadge and RoleTag render catalog labels and formatted reason descriptors; adapter identifiers are inputs to the tested pure player-status model."
+  },
+  "435cb44cac8f554d5cdbba6b0fe7ebe2e4fdf3705f7e6586e86ed21fd4ee2508": {
+    "classification": "technical",
+    "reason": "Status/role identifiers, typed catalog keys, locale/ARIA metadata; never displayed as raw labels.",
+    "evidence": "CIT-66 PR-C components/ui/StatusBadge.tsx: needs-attention; StatusBadge and RoleTag render catalog labels and formatted reason descriptors; adapter identifiers are inputs to the tested pure player-status model."
+  },
+  "21a4aa8a0342e8b3381ee84cbd117acada7e9284c3a33ef55ffa616d1897436a": {
+    "classification": "user-content",
+    "reason": "Combines two already localized messages with punctuation only.",
+    "evidence": "CIT-66 PR-C components/ui/StatusBadge.tsx: `${label.text} \u00b7 ${detail.text}`; StatusBadge and RoleTag render catalog labels and formatted reason descriptors; adapter identifiers are inputs to the tested pure player-status model."
+  },
+  "fd6914fa591e9e73ccd158f57c9993d225382d3205193a184aa134312237a0a0": {
+    "classification": "technical",
+    "reason": "Status/role identifiers, typed catalog keys, locale/ARIA metadata; never displayed as raw labels.",
+    "evidence": "CIT-66 PR-C components/ui/StatusBadge.tsx: true; StatusBadge and RoleTag render catalog labels and formatted reason descriptors; adapter identifiers are inputs to the tested pure player-status model."
+  },
+  "d0df36c751a91064b06bfcc0982d7ad9cac1694f4797cc68f5d5d0ec7fcf3b30": {
+    "classification": "technical",
+    "reason": "Status/role identifiers, typed catalog keys, locale/ARIA metadata; never displayed as raw labels.",
+    "evidence": "CIT-66 PR-C settings/readiness/automationPlayerStatusDisplay.ts: en; StatusBadge and RoleTag render catalog labels and formatted reason descriptors; adapter identifiers are inputs to the tested pure player-status model."
+  },
+  "bd635e739327f96f9875872de5081bfa3e7dd046aaad007934061ceacea69099": {
+    "classification": "technical",
+    "reason": "Status/role identifiers, typed catalog keys, locale/ARIA metadata; never displayed as raw labels.",
+    "evidence": "CIT-66 PR-C settings/readiness/automationPlayerStatusDisplay.ts: builder-missing-decorations; StatusBadge and RoleTag render catalog labels and formatted reason descriptors; adapter identifiers are inputs to the tested pure player-status model."
+  },
+  "b2e5bce3c385b0afe47c443db97c72bfd70e5b03cacc9c2ef16dd1d7076533de": {
+    "classification": "technical",
+    "reason": "Status/role identifiers, typed catalog keys, locale/ARIA metadata; never displayed as raw labels.",
+    "evidence": "CIT-66 PR-C settings/readiness/automationPlayerStatusDisplay.ts: warning; StatusBadge and RoleTag render catalog labels and formatted reason descriptors; adapter identifiers are inputs to the tested pure player-status model."
+  },
+  "1b57cdee0f4172c98935f6c1c50035cb93c49102630f95e6c7fb6d9d3f879003": {
+    "classification": "technical",
+    "reason": "Status/role identifiers, typed catalog keys, locale/ARIA metadata; never displayed as raw labels.",
+    "evidence": "CIT-66 PR-C settings/readiness/automationPlayerStatusDisplay.ts: builder-missing-decorations; StatusBadge and RoleTag render catalog labels and formatted reason descriptors; adapter identifiers are inputs to the tested pure player-status model."
   }
 }

@@ -15,3 +15,8 @@ export function nextWakeParameters(timestamp:number,now:number,locale:string) {
 export function timedRemainingParameters(expiresAt:number,now:number,locale:string) {
   return {duration:automationDuration(Math.max(1,Math.ceil((expiresAt-now)/60_000)),locale)};
 }
+
+/** CIT-102: an absolute end time in the app's locale, without seconds. */
+export function formatDurationEnd(value: Date | number, locale: string, timeZone?: string): string {
+  return new Intl.DateTimeFormat(locale, { dateStyle: 'medium', timeStyle: 'short', ...(timeZone ? { timeZone } : {}) }).format(value);
+}

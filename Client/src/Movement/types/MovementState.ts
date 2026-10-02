@@ -73,7 +73,7 @@ function isCurrentPlayerMovement(state: GameStateV2, movement: MovementStateV2):
   if ((movement.ownerPlayerId ?? 0) > 0) {
     return state.player.id > 0 && movement.ownerPlayerId === state.player.id;
   }
-  if ((movement.sourceCastleId ?? 0) <= 0) return false;
+  if (movement.sourceCastleId == null || movement.sourceCastleId <= 0) return false;
   return Object.prototype.hasOwnProperty.call(state.castles, movement.sourceCastleId);
 }
 

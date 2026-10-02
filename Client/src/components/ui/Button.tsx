@@ -1,7 +1,7 @@
 import React, { type ButtonHTMLAttributes } from 'react';
 
 export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: 'primary' | 'secondary' | 'ghost' | 'danger' | 'outline';
+  variant?: 'primary' | 'secondary' | 'ghost' | 'danger' | 'outline' | 'solid';
   size?: 'sm' | 'md' | 'lg' | 'icon';
   isLoading?: boolean;
   leftIcon?: React.ReactNode;
@@ -25,7 +25,8 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   ) => {
     const baseStyles = 'm3-button inline-flex items-center justify-center font-semibold focus:outline-none disabled:cursor-not-allowed whitespace-nowrap';
     
-    const variants = {
+    // Legacy solid callers have no variant class; preserve that rendering.
+    const variants: Partial<Record<NonNullable<ButtonProps['variant']>, string>> = {
       primary: 'm3-button-filled',
       secondary: 'm3-button-tonal',
       ghost: 'm3-button-text',

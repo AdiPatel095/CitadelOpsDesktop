@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useCastleFocus } from '../context/CastleFocusContext';
 import { Select, type SelectOption } from './ui';

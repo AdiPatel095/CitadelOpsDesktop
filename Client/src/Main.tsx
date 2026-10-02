@@ -2,7 +2,6 @@ import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import './index.css'
 import './MaterialExpressive.css'
-import './KingdomPalette.css'
 import App from './App.tsx'
 import { LocaleProvider } from './i18n/LocaleContext'
 
