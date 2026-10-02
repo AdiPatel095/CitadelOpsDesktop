@@ -26,7 +26,7 @@ async function keyboardWalk(page: Page): Promise<Violation[]> {
   const reached = new Set<string>();
   // Leave the pointer-selected navigation control before starting the Tab walk.
   await page.evaluate(() => (document.activeElement as HTMLElement | null)?.blur());
-  const limit = Math.min(500, candidates.length * 2 + 10);
+  const limit = candidates.length * 2 + 10;
   let first: string | undefined;
   for (let step = 0; step < limit; step++) {
     await page.keyboard.press('Tab');
@@ -50,7 +50,6 @@ async function keyboardWalk(page: Page): Promise<Violation[]> {
   for (const candidate of candidates) {
     if (!reached.has(candidate.id)) violations.push({ rule: 'keyboardReachable', element: candidate.label, detail: 'Visible enabled control was not reached in the Tab cycle' });
   }
-  if (candidates.length * 2 + 10 > 500) violations.push({ rule: 'keyboardCoverage', element: 'page', detail: 'Traversal capped at 500 Tab presses' });
   return violations;
 }
 
