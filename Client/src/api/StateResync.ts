@@ -238,6 +238,12 @@ export class StateResync<S extends VersionedState, P extends VersionedPatch> {
 		this.buffer = [];
 	}
 
+	/** Discard state belonging to a different server instance, including lower revisions. */
+	forgetState(): void {
+		this.state = null;
+		this.connectionReset();
+	}
+
 	private request(reason: ResyncReason, now: number): ResyncRequest | null {
 		if (this.awaiting != null) return null;
 		if (now < this.nextRequestAt) {
