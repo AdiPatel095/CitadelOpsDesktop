@@ -48,16 +48,16 @@ export function AutomationSafetyPanel({ states, now }: {
   return (
     <section id="automation-safety-panel" className="rounded-xl border border-amber-500/50 bg-amber-500/5 p-4" aria-label={localizeStatic("ui.components.automationSafetyPanel.aria-label.automation.safety.locks.ed105d06")}>
       <h2 className="font-semibold text-text-main"><LocalizedText messageKey="ui.components.automationSafetyPanel.automation.safety.locks.ed105d06" /></h2>
-      <p className="mt-1 text-sm text-text-muted"><LocalizedText messageKey="ui.components.automationSafetyPanel.non.whitelisted.game.rejections.pause.only.their.56f5431b" /></p>
+      <p className="mt-1 text-body text-text-muted"><LocalizedText messageKey="ui.components.automationSafetyPanel.non.whitelisted.game.rejections.pause.only.their.56f5431b" /></p>
       {locked.map(([lane, state]) => {
         const lock = state.safetyLock!;
         const key = `${lane}:${lock.operationId}`;
         return (
           <div key={key} className="mt-4 space-y-2 border-t border-amber-500/20 pt-3">
             <p className="font-medium text-text-main">{lane} — {lock.opcode.toUpperCase()} {lock.code}</p>
-            <p className="break-all text-sm text-text-muted">Operation {lock.operationId} · {lock.intent} · {new Date(lock.observedAt).toLocaleString()}</p>
-            <p className="text-sm text-text-muted">{timestamp(lock.until) ? `Lane cooldown ends ${new Date(lock.until!).toLocaleString()}.` : 'Waiting for the game to refresh this legacy lock.'}</p>
-            {!timestamp(lock.until) && <><label className="block text-sm text-text-main">
+            <p className="break-all text-body text-text-muted">Operation {lock.operationId} · {lock.intent} · {new Date(lock.observedAt).toLocaleString()}</p>
+            <p className="text-body text-text-muted">{timestamp(lock.until) ? `Lane cooldown ends ${new Date(lock.until!).toLocaleString()}.` : 'Waiting for the game to refresh this legacy lock.'}</p>
+            {!timestamp(lock.until) && <><label className="block text-body text-text-main">
               Review and reason to resume
               <textarea className="mt-1 block w-full rounded border border-amber-500/30 bg-transparent p-2" maxLength={1000} rows={2}
                 value={reviews[key] ?? ''} disabled={pending !== undefined}
@@ -70,7 +70,7 @@ export function AutomationSafetyPanel({ states, now }: {
           </div>
         );
       })}
-      {error && <p role="alert" className="mt-3 text-sm text-red-400">{error}</p>}
+      {error && <p role="alert" className="mt-3 text-body text-red-400">{error}</p>}
     </section>
   );
 }

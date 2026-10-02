@@ -107,7 +107,7 @@ export const AutomationDurationModal: React.FC<AutomationDurationModalProps> = (
     >
       <div className="flex flex-col gap-4">
         <div className="rounded-global border border-primary/20 bg-primary/5 p-4">
-          <div className="text-sm font-bold text-text-main">{t('automationDurationDialog.quickDurations')}</div>
+          <div className="text-body font-semibold text-text-main">{t('automationDurationDialog.quickDurations')}</div>
           <div className="mt-3 grid grid-cols-3 gap-2">
             {durationPresets.map((preset) => (
               <Button
@@ -123,7 +123,7 @@ export const AutomationDurationModal: React.FC<AutomationDurationModalProps> = (
         </div>
 
         <div className="rounded-global border border-border-base bg-bg-card/45 p-4">
-          <div className="text-sm font-bold text-text-main">{t('automationDurationDialog.customDuration')}</div>
+          <div className="text-body font-semibold text-text-main">{t('automationDurationDialog.customDuration')}</div>
           <div className="mt-3 grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)] gap-3">
             <Input
               type="number"
@@ -145,10 +145,10 @@ export const AutomationDurationModal: React.FC<AutomationDurationModalProps> = (
               ariaLabel={t('automationDurationDialog.unitLabel')}
             />
           </div>
-          {!valid ? <p className="mt-2 text-xs text-error">{t('automationDurationDialog.invalidDuration')}</p> : null}
+          {!valid ? <p className="mt-2 text-caption text-error">{t('automationDurationDialog.invalidDuration')}</p> : null}
         </div>
 
-        <div className="rounded-global border border-border-base bg-bg-app/40 px-4 py-3 text-xs leading-relaxed text-text-muted">
+        <div className="rounded-global border border-border-base bg-bg-app/40 px-4 py-3 text-caption text-text-muted">
           {turnsOffAt ? (
             <p>
               {t(onPauseFor ? 'automationDurationDialog.pauseStarts' : 'automationDurationDialog.runStarts', { feature: featureLabel, endsAt: formatDurationEnd(turnsOffAt, locale) })}
@@ -160,7 +160,7 @@ export const AutomationDurationModal: React.FC<AutomationDurationModalProps> = (
           ) : null}
         </div>
 
-        {error ? <p className="text-xs text-error">{error}</p> : null}
+        {error ? <p className="text-caption text-error">{error}</p> : null}
       </div>
     </Modal>
   );

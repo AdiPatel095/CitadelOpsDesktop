@@ -21,8 +21,8 @@ export const ScheduleSummaryRow: React.FC<ScheduleSummaryRowProps> = ({
 }) => (
   <div className={`flex flex-wrap items-center justify-between gap-3 rounded-global border border-border-base bg-bg-input/35 px-4 py-3 ${className}`} {...props}>
     <div className="min-w-0">
-      <div className="text-sm font-bold text-text-main">{title}</div>
-      <div className="mt-0.5 text-[11px] font-medium text-text-muted">{summary}</div>
+      <div className="text-body font-semibold text-text-main">{title}</div>
+      <div className="mt-0.5 text-caption font-medium text-text-muted">{summary}</div>
     </div>
     <div className="flex shrink-0 items-center gap-2">
       {status}

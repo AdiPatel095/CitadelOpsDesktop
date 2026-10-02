@@ -59,9 +59,9 @@ function ResourceDepletionTimer({ amount, netPerHour }: { amount: number; netPer
     return () => window.clearInterval(id);
   }, [deadlineMs]);
 
-  if (extremeLong) return <p className="w-full text-right text-[10px] leading-tight text-text-muted tabular-nums"><LocalizedText messageKey="ui.dashboard.components.castleResourceCard.10y.9bc33c08" /></p>;
+  if (extremeLong) return <p className="w-full text-right text-caption text-text-muted tabular-nums"><LocalizedText messageKey="ui.dashboard.components.castleResourceCard.10y.9bc33c08" /></p>;
   if (deadlineMs == null || deadlineMs <= now) return null;
-  return <p className="w-full text-right text-[10px] leading-tight text-text-muted tabular-nums">{formatRemainingMs(deadlineMs - now)}</p>;
+  return <p className="w-full text-right text-caption text-text-muted tabular-nums">{formatRemainingMs(deadlineMs - now)}</p>;
 }
 
 const CastleResourceCard: React.FC<CastleResourceCardProps> = ({ title, resources }) => {
@@ -91,7 +91,7 @@ const CastleResourceCard: React.FC<CastleResourceCardProps> = ({ title, resource
             <div key={id} className="flex items-center gap-3 rounded-global border border-border-light bg-bg-card/45 p-2.5 shadow-sm transition-colors hover:border-primary/30 hover:bg-bg-card-hover/70">
               {icon ? <img src={icon} alt={name} className="h-8 w-8 shrink-0 object-contain drop-shadow-sm" /> : null}
               <div className="flex min-w-0 flex-1 flex-col gap-1.5">
-                <div className="flex items-center justify-between text-xs font-medium text-text-main">
+                <div className="flex items-center justify-between text-caption font-medium text-text-main">
                   <span className="mr-2 truncate" title={name}>{amount.toLocaleString()} / {capacity.toLocaleString()}</span>
                   <span className={`shrink-0 font-semibold ${production < 0 ? 'text-error' : 'text-success'}`}>
                     ({production > 0 ? '+' : ''}{production.toLocaleString()}/hr)

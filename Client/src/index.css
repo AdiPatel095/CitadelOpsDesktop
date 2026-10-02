@@ -3,6 +3,7 @@
 
 @import "tailwindcss" source("..");
 @import "./styles/fonts.css";
+@import "./styles/typography.css";
 
 @custom-variant dark (&:where([data-theme=dark], [data-theme=dark] *));
 
@@ -312,33 +313,32 @@
     .ui-page-header-title {
         margin: 0;
         color: var(--text-main);
-        font-size: clamp(1.45rem, 1.6vw, 2rem);
-        font-weight: 850;
-        line-height: 1.15;
+        font-size: var(--font-size-24);
+        font-weight: var(--font-weight-700);
+        line-height: var(--line-height-24);
     }
 
     .ui-page-header-description {
         max-width: 72ch;
         margin: 0.3rem 0 0;
         color: var(--text-secondary);
-        font-size: 0.875rem;
-        line-height: 1.45;
+        font-size: var(--font-size-14);
+        line-height: var(--line-height-14);
     }
 
     .ui-modal-title-description {
         margin-top: 0.25rem;
         color: var(--text-secondary);
-        font-size: 0.75rem;
-        font-weight: 650;
-        line-height: 1.35;
+        font-size: var(--font-size-12);
+        line-height: var(--line-height-12);
+        font-weight: var(--font-weight-600);
     }
 
     .ui-kicker {
         color: var(--text-secondary);
-        font-size: 0.62rem;
-        font-weight: 900;
-        letter-spacing: 0.1em;
-        text-transform: uppercase;
+        font-size: var(--font-size-12);
+        line-height: var(--line-height-12);
+        font-weight: var(--font-weight-600);
     }
 
     .ui-workspace-surface {
@@ -358,8 +358,8 @@
         align-items: baseline;
         gap: 0.4rem;
         color: var(--ui-status-color);
-        font-size: 0.75rem;
-        line-height: 1.35;
+        font-size: var(--font-size-12);
+        line-height: var(--line-height-12);
     }
 
     .ui-status-symbol {
@@ -373,14 +373,14 @@
 
     .ui-status-label {
         flex: 0 0 auto;
-        font-weight: 800;
+        font-weight: var(--font-weight-700);
     }
 
     .ui-status-detail {
         min-width: 0;
         overflow: hidden;
         color: var(--text-secondary);
-        font-weight: 600;
+        font-weight: var(--font-weight-600);
         text-overflow: ellipsis;
         white-space: nowrap;
     }
@@ -398,8 +398,9 @@
         justify-content: center;
         gap: 0.65rem;
         color: var(--text-secondary);
-        font-size: 0.875rem;
-        font-weight: 700;
+        font-size: var(--font-size-14);
+        line-height: var(--line-height-14);
+        font-weight: var(--font-weight-600);
     }
 
     .ui-workspace-loading-mark {
@@ -654,9 +655,9 @@
         gap: 0.5rem;
         padding: 0.45rem 0.65rem;
         color: var(--text-secondary);
-        font-size: 0.68rem;
-        font-weight: 700;
-        text-transform: uppercase;
+        font-size: var(--font-size-12);
+        line-height: var(--line-height-12);
+        font-weight: var(--font-weight-600);
         cursor: pointer;
         border: 0;
         border-radius: var(--radius-global);
@@ -782,17 +783,17 @@
 
     .liquid-log-title {
         color: var(--text-main);
-        font-size: 0.92rem;
-        font-weight: 850;
-        line-height: 1.2;
+        font-size: var(--font-size-16);
+        font-weight: var(--font-weight-600);
+        line-height: var(--line-height-16);
     }
 
     .liquid-log-subtitle {
         overflow: hidden;
         margin-top: 0.16rem;
         color: var(--text-secondary);
-        font-size: 0.75rem;
-        line-height: 1.35;
+        font-size: var(--font-size-12);
+        line-height: var(--line-height-12);
         text-overflow: ellipsis;
         white-space: nowrap;
     }
@@ -807,8 +808,9 @@
         align-items: center;
         gap: 0.42rem;
         color: var(--text-secondary);
-        font-size: 0.72rem;
-        font-weight: 700;
+        font-size: var(--font-size-12);
+        line-height: var(--line-height-12);
+        font-weight: var(--font-weight-600);
         white-space: nowrap;
     }
 
@@ -871,11 +873,9 @@
         justify-content: space-between;
         gap: 0.75rem;
         color: var(--text-secondary);
-        font-size: 0.64rem;
-        font-weight: 850;
-        letter-spacing: 0.055em;
-        line-height: 1;
-        text-transform: uppercase;
+        font-size: var(--font-size-12);
+        line-height: var(--line-height-12);
+        font-weight: var(--font-weight-600);
     }
 
     .liquid-log-shared-select > button,
@@ -884,7 +884,8 @@
         min-height: 2.45rem;
         border-radius: var(--radius-full);
         background: color-mix(in srgb, var(--bg-input) 72%, var(--surface-control));
-        font-size: 0.8rem;
+        font-size: var(--font-size-13);
+        line-height: var(--line-height-13);
         box-shadow: var(--elevation-0);
     }
 
@@ -896,9 +897,9 @@
     }
 
     .liquid-log-result-count {
-        font-size: 0.62rem;
-        font-weight: 700;
-        letter-spacing: 0;
+        font-size: var(--font-size-12);
+        line-height: var(--line-height-12);
+        font-weight: var(--font-weight-600);
         text-transform: none;
     }
 
@@ -973,8 +974,8 @@
             var(--bg-card);
         background-size: 100% 2.6rem, 100% 100%, 100% 100%;
         color: var(--text-main);
-        font-size: 0.88rem;
-        line-height: 1.5;
+        font-size: var(--font-size-14);
+        line-height: var(--line-height-14);
     }
 
     .liquid-log-stream::selection { background: color-mix(in srgb, var(--primary) 30%, transparent); }
@@ -993,7 +994,8 @@
     .liquid-log-empty {
         margin: auto;
         color: color-mix(in srgb, var(--text-secondary) 72%, transparent);
-        font-size: 0.95rem;
+        font-size: var(--font-size-16);
+        line-height: var(--line-height-16);
         font-style: italic;
     }
 
@@ -1042,8 +1044,9 @@
         overflow: hidden;
         color: var(--text-secondary);
         font-family: var(--font-mono-ui);
-        font-size: 0.7rem;
-        font-weight: 700;
+        font-size: var(--font-size-12);
+        line-height: var(--line-height-12);
+        font-weight: var(--font-weight-600);
         text-overflow: ellipsis;
         white-space: nowrap;
     }
@@ -1056,10 +1059,9 @@
         border: 1px solid var(--border-base);
         border-radius: var(--radius-pill);
         padding: 0.16rem 0.46rem;
-        font-size: 0.63rem;
-        font-weight: 850;
-        line-height: 1.2;
-        text-transform: uppercase;
+        font-size: var(--font-size-12);
+        line-height: var(--line-height-12);
+        font-weight: var(--font-weight-600);
     }
 
     .liquid-log-badge-send {
@@ -1108,8 +1110,8 @@
         display: block;
         overflow-wrap: anywhere;
         color: color-mix(in srgb, var(--text-main) 94%, var(--primary));
-        font-size: 0.84rem;
-        line-height: 1.48;
+        font-size: var(--font-size-13);
+        line-height: var(--line-height-13);
         white-space: pre-wrap;
         word-break: break-word;
     }
@@ -1211,10 +1213,9 @@
         align-items: center;
         margin: 0;
         color: var(--text-main);
-        font-size: clamp(1rem, 1vw, 1.25rem);
-        font-weight: 850;
-        letter-spacing: 0;
-        line-height: 1.1;
+        font-size: var(--font-size-20);
+        font-weight: var(--font-weight-600);
+        line-height: var(--line-height-20);
     }
 
     .liquid-modal-close {
@@ -1266,13 +1267,11 @@
     .picker-modal-title-text,
     .scheduler-modal-title-text {
         min-width: 0;
-        overflow: hidden;
         color: var(--text-main);
-        font-size: clamp(1.05rem, 1.05vw, 1.28rem);
-        font-weight: 900;
-        line-height: 1.1;
-        text-overflow: ellipsis;
-        white-space: nowrap;
+        font-size: var(--font-size-20);
+        font-weight: var(--font-weight-600);
+        line-height: var(--line-height-20);
+        overflow-wrap: anywhere;
     }
 
     .scheduler-modal-title {
@@ -1341,9 +1340,9 @@
     .schedule-toolbar-title h3 {
         margin: 0;
         color: var(--text-main);
-        font-size: clamp(1rem, 1.08vw, 1.25rem);
-        font-weight: 900;
-        line-height: 1.1;
+        font-size: var(--font-size-20);
+        font-weight: var(--font-weight-600);
+        line-height: var(--line-height-20);
     }
 
     .schedule-title-row {
@@ -1356,11 +1355,9 @@
 
     .schedule-kicker {
         color: var(--text-secondary);
-        font-size: 0.62rem;
-        font-weight: 900;
-        letter-spacing: 0.12em;
-        line-height: 1;
-        text-transform: uppercase;
+        font-size: var(--font-size-12);
+        line-height: var(--line-height-12);
+        font-weight: var(--font-weight-600);
     }
 
     .schedule-toolbar-icon {
@@ -1395,20 +1392,18 @@
     .schedule-hero-metric span {
         display: block;
         color: var(--text-secondary);
-        font-size: 0.58rem;
-        font-weight: 900;
-        letter-spacing: 0.1em;
-        line-height: 1;
-        text-transform: uppercase;
+        font-size: var(--font-size-12);
+        line-height: var(--line-height-12);
+        font-weight: var(--font-weight-600);
     }
 
     .schedule-hero-metric strong {
         display: block;
         margin-top: 0.32rem;
         color: var(--text-main);
-        font-size: 0.92rem;
-        font-weight: 900;
-        line-height: 1;
+        font-size: var(--font-size-14);
+        line-height: var(--line-height-14);
+        font-weight: var(--font-weight-600);
         white-space: nowrap;
     }
 
@@ -1444,10 +1439,9 @@
 
     .schedule-control-chip span {
         color: var(--text-secondary);
-        font-size: 0.68rem;
-        font-weight: 900;
-        letter-spacing: 0.08em;
-        text-transform: uppercase;
+        font-size: var(--font-size-12);
+        line-height: var(--line-height-12);
+        font-weight: var(--font-weight-600);
     }
 
     .schedule-grid-shell {
@@ -1494,10 +1488,9 @@
         justify-content: center;
         gap: 0.35rem;
         color: var(--text-secondary);
-        font-size: 0.62rem;
-        font-weight: 900;
-        letter-spacing: 0.1em;
-        text-transform: uppercase;
+        font-size: var(--font-size-12);
+        line-height: var(--line-height-12);
+        font-weight: var(--font-weight-600);
     }
 
     .schedule-day-heading {
@@ -1521,18 +1514,17 @@
 
     .schedule-day-short {
         color: var(--text-main);
-        font-size: 0.76rem;
-        font-weight: 900;
-        letter-spacing: 0.08em;
-        text-transform: uppercase;
+        font-size: var(--font-size-12);
+        line-height: var(--line-height-12);
+        font-weight: var(--font-weight-600);
     }
 
     .schedule-day-name {
         overflow: hidden;
         color: var(--text-secondary);
-        font-size: 0.62rem;
-        font-weight: 800;
-        line-height: 1;
+        font-size: var(--font-size-12);
+        line-height: var(--line-height-12);
+        font-weight: var(--font-weight-600);
         text-overflow: ellipsis;
         white-space: nowrap;
     }
@@ -1548,8 +1540,9 @@
         border-radius: var(--radius-pill);
         background: color-mix(in srgb, var(--primary) 8%, var(--surface-raised));
         color: color-mix(in srgb, var(--primary) 82%, var(--text-main));
-        font-size: 0.68rem;
-        font-weight: 900;
+        font-size: var(--font-size-12);
+        line-height: var(--line-height-12);
+        font-weight: var(--font-weight-600);
     }
 
     .schedule-time-column,
@@ -1585,8 +1578,9 @@
         padding-inline: 0.5rem;
         text-align: center;
         color: var(--text-secondary);
-        font-size: 0.58rem;
-        font-weight: 850;
+        font-size: var(--font-size-12);
+        line-height: var(--line-height-12);
+        font-weight: var(--font-weight-600);
     }
 
     .schedule-hour-line {
@@ -1647,9 +1641,9 @@
         min-width: 0;
         gap: 0.06rem;
         align-content: start;
-        font-size: clamp(0.58rem, 0.62vw, 0.68rem);
-        font-weight: 900;
-        line-height: 1.1;
+        font-size: var(--font-size-12);
+        line-height: var(--line-height-12);
+        font-weight: var(--font-weight-600);
     }
 
     .schedule-slot-time,
@@ -1667,8 +1661,9 @@
 
     .schedule-slot-duration {
         color: var(--text-secondary);
-        font-size: clamp(0.5rem, 0.5vw, 0.56rem);
-        font-weight: 850;
+        font-size: var(--font-size-12);
+        line-height: var(--line-height-12);
+        font-weight: var(--font-weight-600);
     }
 
     .schedule-slot-option-badge {
@@ -1684,8 +1679,9 @@
         border-radius: var(--radius-pill);
         background: color-mix(in srgb, var(--primary) 9%, var(--surface-raised));
         padding: 0.04rem 0.28rem;
-        font-size: 0.56rem;
-        font-weight: 850;
+        font-size: var(--font-size-12);
+        line-height: var(--line-height-12);
+        font-weight: var(--font-weight-600);
     }
 
     .schedule-slot-option-icon { flex-shrink: 0; }
@@ -1726,9 +1722,9 @@
         background: color-mix(in srgb, var(--primary) 14%, var(--surface-raised));
         padding: 0.02rem 0.18rem;
         color: color-mix(in srgb, var(--primary) 86%, var(--text-main));
-        font-size: 0.5rem;
-        font-weight: 950;
-        line-height: 1;
+        font-size: var(--font-size-12);
+        line-height: var(--line-height-12);
+        font-weight: var(--font-weight-600);
     }
 
     .schedule-slot-unit-name {
@@ -1743,9 +1739,9 @@
         display: -webkit-box;
         width: 100%;
         color: var(--text-main);
-        font-size: clamp(0.56rem, 0.54vw, 0.68rem);
-        font-weight: 850;
-        line-height: 1.16;
+        font-size: var(--font-size-12);
+        line-height: var(--line-height-12);
+        font-weight: var(--font-weight-600);
         text-align: center;
         white-space: normal;
         -webkit-box-orient: vertical;
@@ -1817,10 +1813,9 @@
         display: block;
         margin-bottom: 0.38rem;
         color: var(--text-secondary);
-        font-size: 0.62rem;
-        font-weight: 900;
-        letter-spacing: 0.1em;
-        text-transform: uppercase;
+        font-size: var(--font-size-12);
+        line-height: var(--line-height-12);
+        font-weight: var(--font-weight-600);
     }
 
     .schedule-option-panel {
@@ -1857,8 +1852,9 @@
     .schedule-troop-picker-name {
         overflow: hidden;
         color: var(--text-main);
-        font-size: 0.85rem;
-        font-weight: 800;
+        font-size: var(--font-size-16);
+        font-weight: var(--font-weight-600);
+        line-height: var(--line-height-16);
         text-overflow: ellipsis;
         white-space: nowrap;
     }
@@ -1867,8 +1863,9 @@
         margin-top: 0.12rem;
         color: var(--text-secondary);
         font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-        font-size: 0.72rem;
-        font-weight: 700;
+        font-size: var(--font-size-12);
+        line-height: var(--line-height-12);
+        font-weight: var(--font-weight-600);
     }
 
     .schedule-troop-picker-button { flex-shrink: 0; }
@@ -1891,8 +1888,9 @@
         background: color-mix(in srgb, var(--error) 10%, var(--surface-raised));
         color: var(--error);
         padding: 0.65rem 0.8rem;
-        font-size: 0.85rem;
-        font-weight: 750;
+        font-size: var(--font-size-14);
+        line-height: var(--line-height-14);
+        font-weight: var(--font-weight-600);
     }
 
     @media (min-width: 1280px) {
@@ -1958,9 +1956,9 @@
 
     .picker-toolbar-count {
         color: var(--text-main);
-        font-size: 1rem;
-        font-weight: 900;
-        line-height: 1.1;
+        font-size: var(--font-size-16);
+        line-height: var(--line-height-16);
+        font-weight: var(--font-weight-600);
     }
 
     .picker-selection-summary {
@@ -1972,8 +1970,9 @@
         border-radius: var(--radius-pill);
         background: color-mix(in srgb, var(--primary) 11%, var(--surface-raised));
         color: var(--primary);
-        font-size: 0.72rem;
-        font-weight: 900;
+        font-size: var(--font-size-12);
+        line-height: var(--line-height-12);
+        font-weight: var(--font-weight-600);
         padding: 0.42rem 0.72rem;
     }
 
@@ -2013,7 +2012,7 @@
     .picker-quick-pills { flex-shrink: 0; }
 
     .picker-results-scroll {
-        --picker-card-name-size: clamp(0.76rem, 0.58rem + 0.22vh, 0.86rem);
+        --picker-card-name-size: var(--font-size-16);
         --picker-card-body-padding: clamp(0.56rem, 0.72vh, 0.82rem);
         width: 100%;
         max-width: 1120px;
@@ -2087,8 +2086,9 @@
         min-width: 0;
         overflow: hidden;
         color: var(--text-main);
-        font-size: 0.9rem;
-        font-weight: 850;
+        font-size: var(--font-size-16);
+        font-weight: var(--font-weight-600);
+        line-height: var(--line-height-16);
         text-overflow: ellipsis;
         white-space: nowrap;
     }
@@ -2100,8 +2100,9 @@
         background: var(--surface-raised);
         color: var(--text-main);
         font-family: var(--font-mono-ui);
-        font-size: 0.68rem;
-        font-weight: 850;
+        font-size: var(--font-size-12);
+        line-height: var(--line-height-12);
+        font-weight: var(--font-weight-600);
         padding: 0.2rem 0.55rem;
     }
 
@@ -2161,8 +2162,9 @@
     .picker-card-id {
         color: color-mix(in srgb, var(--text-secondary) 78%, transparent);
         font-family: var(--font-mono-ui);
-        font-size: 0.62rem;
-        font-weight: 850;
+        font-size: var(--font-size-12);
+        line-height: var(--line-height-12);
+        font-weight: var(--font-weight-600);
     }
 
     .picker-grid-actions {
@@ -2221,8 +2223,9 @@
         background: var(--surface-raised);
         color: var(--text-main);
         font-family: var(--font-mono-ui);
-        font-size: 0.62rem;
-        font-weight: 850;
+        font-size: var(--font-size-12);
+        line-height: var(--line-height-12);
+        font-weight: var(--font-weight-600);
         padding: 0.15rem 0.5rem;
     }
 
@@ -2238,8 +2241,8 @@
         width: 100%;
         color: var(--text-main);
         font-size: var(--picker-card-name-size);
-        font-weight: 850;
-        line-height: 1.25;
+        line-height: var(--line-height-16);
+        font-weight: var(--font-weight-600);
         text-align: center;
     }
 
@@ -2256,11 +2259,10 @@
     .tci-level-label {
         width: 2rem;
         color: var(--text-secondary);
-        font-size: 0.6rem;
-        font-weight: 850;
-        letter-spacing: 0.06em;
+        font-size: var(--font-size-12);
+        line-height: var(--line-height-12);
+        font-weight: var(--font-weight-600);
         text-align: right;
-        text-transform: uppercase;
     }
 
     .tci-level-button {
@@ -2291,8 +2293,9 @@
         min-width: 1.6rem;
         color: var(--text-main);
         font-family: var(--font-mono-ui);
-        font-size: 0.9rem;
-        font-weight: 900;
+        font-size: var(--font-size-14);
+        line-height: var(--line-height-14);
+        font-weight: var(--font-weight-600);
         text-align: center;
         font-variant-numeric: tabular-nums;
     }
@@ -2390,11 +2393,10 @@
         min-width: 0;
         overflow: hidden;
         color: var(--text-secondary);
-        font-size: 0.58rem;
-        font-weight: 900;
-        letter-spacing: 0.08em;
+        font-size: var(--font-size-12);
+        line-height: var(--line-height-12);
+        font-weight: var(--font-weight-600);
         text-overflow: ellipsis;
-        text-transform: uppercase;
         white-space: nowrap;
     }
 
@@ -2408,8 +2410,9 @@
         background: var(--surface-raised);
         color: color-mix(in srgb, var(--text-main) 88%, var(--primary));
         font-family: var(--font-mono-ui);
-        font-size: 0.58rem;
-        font-weight: 850;
+        font-size: var(--font-size-12);
+        line-height: var(--line-height-12);
+        font-weight: var(--font-weight-600);
         padding: 0.24rem 0.44rem;
     }
 
@@ -2491,9 +2494,9 @@
         margin: 0;
         overflow: hidden;
         color: var(--text-main);
-        font-size: 0.87rem;
-        font-weight: 900;
-        line-height: 1.2;
+        font-size: var(--font-size-16);
+        font-weight: var(--font-weight-600);
+        line-height: var(--line-height-16);
         -webkit-box-orient: vertical;
         -webkit-line-clamp: 2;
     }
@@ -2503,19 +2506,18 @@
     .tci-browser-effect {
         margin: 0.38rem 0 0;
         color: color-mix(in srgb, var(--text-main) 82%, transparent);
-        font-size: 0.68rem;
-        font-weight: 630;
-        line-height: 1.38;
+        font-size: var(--font-size-12);
+        line-height: var(--line-height-12);
+        font-weight: var(--font-weight-600);
     }
 
     .tci-browser-level-summary {
         display: block;
         margin-top: 0.42rem;
         color: var(--text-secondary);
-        font-size: 0.59rem;
-        font-weight: 850;
-        letter-spacing: 0.06em;
-        text-transform: uppercase;
+        font-size: var(--font-size-12);
+        line-height: var(--line-height-12);
+        font-weight: var(--font-weight-600);
     }
 
     .tci-browser-mini-chain {
@@ -2543,21 +2545,24 @@
 
     .tci-browser-mini-tier strong {
         color: color-mix(in srgb, var(--tci-rarity) 72%, var(--text-main));
-        font-size: 0.64rem;
-        font-weight: 950;
+        font-size: var(--font-size-12);
+        line-height: var(--line-height-12);
+        font-weight: var(--font-weight-600);
     }
 
     .tci-browser-mini-tier small {
         color: var(--text-secondary);
-        font-size: 0.5rem;
-        font-weight: 750;
+        font-size: var(--font-size-12);
+        line-height: var(--line-height-12);
+        font-weight: var(--font-weight-600);
         white-space: nowrap;
     }
 
     .tci-browser-mini-arrow {
         color: color-mix(in srgb, var(--primary) 52%, var(--text-secondary));
-        font-size: 0.65rem;
-        font-weight: 900;
+        font-size: var(--font-size-12);
+        line-height: var(--line-height-12);
+        font-weight: var(--font-weight-600);
     }
 
     .tci-browser-mini-tier[data-rarity="1"],
@@ -2609,8 +2614,8 @@
     .tci-detail-panel-empty p {
         max-width: 15rem;
         margin: 0;
-        font-size: 0.78rem;
-        line-height: 1.5;
+        font-size: var(--font-size-12);
+        line-height: var(--line-height-12);
     }
 
     .tci-detail-hero {
@@ -2637,18 +2642,17 @@
 
     .tci-detail-kicker {
         color: var(--primary);
-        font-size: 0.58rem;
-        font-weight: 900;
-        letter-spacing: 0.09em;
-        text-transform: uppercase;
+        font-size: var(--font-size-12);
+        line-height: var(--line-height-12);
+        font-weight: var(--font-weight-600);
     }
 
     .tci-detail-heading h3 {
         margin: 0.28rem 0 0;
         color: var(--text-main);
-        font-size: 1.05rem;
-        font-weight: 950;
-        line-height: 1.16;
+        font-size: var(--font-size-16);
+        font-weight: var(--font-weight-600);
+        line-height: var(--line-height-16);
     }
 
     .tci-detail-badges {
@@ -2666,8 +2670,9 @@
         border-radius: var(--radius-pill);
         background: var(--surface-raised);
         color: var(--text-secondary);
-        font-size: 0.55rem;
-        font-weight: 800;
+        font-size: var(--font-size-12);
+        line-height: var(--line-height-12);
+        font-weight: var(--font-weight-600);
         padding: 0.28rem 0.45rem;
     }
 
@@ -2684,9 +2689,9 @@
         border-radius: var(--radius-lg);
         background: color-mix(in srgb, var(--bg-app) 34%, transparent);
         color: color-mix(in srgb, var(--text-main) 88%, transparent);
-        font-size: 0.7rem;
-        font-weight: 640;
-        line-height: 1.45;
+        font-size: var(--font-size-12);
+        line-height: var(--line-height-12);
+        font-weight: var(--font-weight-600);
         padding: 0.7rem;
     }
 
@@ -2709,16 +2714,17 @@
         justify-content: space-between;
         gap: 0.75rem;
         color: var(--text-secondary);
-        font-size: 0.62rem;
-        font-weight: 850;
-        letter-spacing: 0.06em;
-        text-transform: uppercase;
+        font-size: var(--font-size-12);
+        line-height: var(--line-height-12);
+        font-weight: var(--font-weight-600);
     }
 
     .tci-range-editor-heading strong {
         color: var(--primary);
         font-family: var(--font-mono-ui);
-        font-size: 0.75rem;
+        font-size: var(--font-size-16);
+        font-weight: var(--font-weight-600);
+        line-height: var(--line-height-16);
     }
 
     .tci-range-editor-controls {
@@ -2741,14 +2747,16 @@
 
     .tci-detail-chain-heading > span {
         color: var(--text-main);
-        font-size: 0.75rem;
-        font-weight: 900;
+        font-size: var(--font-size-16);
+        font-weight: var(--font-weight-600);
+        line-height: var(--line-height-16);
     }
 
     .tci-detail-chain-heading small {
         color: var(--text-secondary);
-        font-size: 0.58rem;
-        font-weight: 650;
+        font-size: var(--font-size-12);
+        line-height: var(--line-height-12);
+        font-weight: var(--font-weight-600);
     }
 
     .tci-detail-chain {
@@ -2793,14 +2801,16 @@
 
     .tci-detail-tier-level span {
         color: color-mix(in srgb, var(--tci-rarity) 76%, var(--text-main));
-        font-size: 0.86rem;
-        font-weight: 950;
+        font-size: var(--font-size-14);
+        line-height: var(--line-height-14);
+        font-weight: var(--font-weight-600);
     }
 
     .tci-detail-tier-level small {
         color: var(--text-secondary);
         font-family: var(--font-mono-ui);
-        font-size: 0.5rem;
+        font-size: var(--font-size-12);
+        line-height: var(--line-height-12);
     }
 
     .tci-detail-tier-copy { min-width: 0; }
@@ -2818,8 +2828,9 @@
         align-items: center;
         gap: 0.25rem;
         color: var(--text-secondary);
-        font-size: 0.54rem;
-        font-weight: 800;
+        font-size: var(--font-size-12);
+        line-height: var(--line-height-12);
+        font-weight: var(--font-weight-600);
     }
 
     .tci-detail-tier-meta strong { color: var(--text-main); }
@@ -2829,9 +2840,9 @@
         margin: 0.3rem 0 0;
         overflow: hidden;
         color: color-mix(in srgb, var(--text-main) 78%, transparent);
-        font-size: 0.59rem;
-        font-weight: 620;
-        line-height: 1.35;
+        font-size: var(--font-size-12);
+        line-height: var(--line-height-12);
+        font-weight: var(--font-weight-600);
         -webkit-box-orient: vertical;
         -webkit-line-clamp: 2;
     }
@@ -2945,7 +2956,7 @@
 
     .recruit-modal-shell .ui-card__header p,
     .recruit-modal-shell .ui-card__content p {
-        line-height: 1.35;
+        line-height: var(--line-height-14);
     }
 
     .battle-stats-flat-control {
@@ -3042,11 +3053,12 @@
 
     .battle-report-eyebrow,
     .battle-report-seal-label {
-        font-size: 0.62rem;
-        font-weight: 900;
-        letter-spacing: 0.13em;
-        text-transform: uppercase;
+        font-size: var(--font-size-12);
+        line-height: var(--line-height-12);
+        font-weight: var(--font-weight-600);
         color: var(--text-secondary);
+        text-transform: var(--eyebrow-case);
+        letter-spacing: var(--tracking-eyebrow);
     }
 
     .battle-report-dossier-title {
@@ -3055,8 +3067,9 @@
         overflow: hidden;
         text-overflow: ellipsis;
         white-space: nowrap;
-        font-size: clamp(1.1rem, 1.1vw, 1.55rem);
-        line-height: 1;
+        font-size: var(--font-size-20);
+        font-weight: var(--font-weight-600);
+        line-height: var(--line-height-20);
     }
 
     .detail-back-button-icon {
@@ -3109,10 +3122,9 @@
     }
 
     .battle-report-side-label {
-        font-size: 0.64rem;
-        font-weight: 950;
-        letter-spacing: 0.13em;
-        text-transform: uppercase;
+        font-size: var(--font-size-12);
+        line-height: var(--line-height-12);
+        font-weight: var(--font-weight-600);
         color: currentColor;
     }
 
@@ -3122,9 +3134,9 @@
         overflow: hidden;
         text-overflow: ellipsis;
         white-space: nowrap;
-        font-size: clamp(1.32rem, 1.7vw, 2.2rem);
-        font-weight: 950;
-        line-height: 0.95;
+        font-size: var(--font-size-20);
+        font-weight: var(--font-weight-600);
+        line-height: var(--line-height-20);
         color: var(--text-main);
     }
 
@@ -3134,8 +3146,9 @@
         overflow: hidden;
         text-overflow: ellipsis;
         white-space: nowrap;
-        font-size: 0.82rem;
-        font-weight: 800;
+        font-size: var(--font-size-13);
+        line-height: var(--line-height-13);
+        font-weight: var(--font-weight-600);
         color: var(--text-secondary);
     }
 
@@ -3150,8 +3163,9 @@
         border-radius: var(--radius-global);
         background: color-mix(in srgb, var(--bg-app) 76%, transparent);
         padding: 0.34rem 0.65rem;
-        font-size: 0.7rem;
-        font-weight: 850;
+        font-size: var(--font-size-12);
+        line-height: var(--line-height-12);
+        font-weight: var(--font-weight-600);
         color: var(--text-main);
     }
 
@@ -3197,8 +3211,9 @@
         overflow: hidden;
         text-overflow: ellipsis;
         white-space: nowrap;
-        font-size: 0.78rem;
-        font-weight: 850;
+        font-size: var(--font-size-12);
+        line-height: var(--line-height-12);
+        font-weight: var(--font-weight-600);
         color: var(--text-main);
     }
 
@@ -3237,10 +3252,9 @@
     }
 
     .battle-report-intel-label {
-        font-size: 0.6rem;
-        font-weight: 900;
-        letter-spacing: 0.12em;
-        text-transform: uppercase;
+        font-size: var(--font-size-12);
+        line-height: var(--line-height-12);
+        font-weight: var(--font-weight-600);
         color: var(--text-secondary);
     }
 
@@ -3249,8 +3263,9 @@
         overflow: hidden;
         text-overflow: ellipsis;
         white-space: nowrap;
-        font-size: 0.8rem;
-        font-weight: 850;
+        font-size: var(--font-size-13);
+        line-height: var(--line-height-13);
+        font-weight: var(--font-weight-600);
         color: var(--text-main);
     }
 
@@ -3301,9 +3316,9 @@
         box-shadow: var(--elevation-1);
         padding: 0.7rem 1rem;
         color: var(--text-secondary);
-        font-size: 1rem;
-        font-weight: 750;
-        line-height: 1.25;
+        font-size: var(--font-size-16);
+        line-height: var(--line-height-16);
+        font-weight: var(--font-weight-600);
     }
 
     .automation-right-click-banner svg {
@@ -3316,8 +3331,9 @@
 
     .automation-right-click-banner strong {
         margin-right: 0.22rem;
-        font-size: 1.1rem;
-        font-weight: 900;
+        font-size: var(--font-size-16);
+        line-height: var(--line-height-16);
+        font-weight: var(--font-weight-600);
     }
 
     .automation-function-group { min-width: 0; }
@@ -3346,9 +3362,9 @@
         margin: 0;
         overflow: hidden;
         color: var(--text-main);
-        font-size: 0.94rem;
-        font-weight: 850;
-        line-height: 1.3;
+        font-size: var(--font-size-16);
+        font-weight: var(--font-weight-600);
+        line-height: var(--line-height-16);
         text-overflow: ellipsis;
         white-space: nowrap;
     }
@@ -3359,9 +3375,9 @@
         margin: 0.22rem 0 0;
         overflow: hidden;
         color: var(--text-secondary);
-        font-size: 0.75rem;
-        font-weight: 600;
-        line-height: 1.4;
+        font-size: var(--font-size-12);
+        line-height: var(--line-height-12);
+        font-weight: var(--font-weight-600);
         -webkit-box-orient: vertical;
         -webkit-line-clamp: 2;
     }
@@ -3402,9 +3418,9 @@
 
     .automation-function-status-lane {
         color: var(--text-main);
-        font-size: 0.7rem;
-        font-weight: 800;
-        line-height: 1.35;
+        font-size: var(--font-size-12);
+        line-height: var(--line-height-12);
+        font-weight: var(--font-weight-600);
     }
 
     .automation-function-status-list-multi .automation-function-status-line:first-child {
@@ -3576,8 +3592,8 @@
         background: var(--control-background);
         box-shadow: var(--control-shadow);
         font-size: var(--liquid-pill-selector-font-size);
+        line-height: var(--liquid-pill-selector-line-height, var(--line-height-14));
         isolation: isolate;
-        line-height: var(--liquid-pill-selector-line-height);
     }
 
     .liquid-toggle-group-full {
@@ -3588,19 +3604,21 @@
     .liquid-toggle-group-body {
         --liquid-pill-selector-height: 2rem;
         --liquid-pill-selector-active-height: 2.25rem;
-        --liquid-pill-selector-font-size: 0.75rem;
+        --liquid-pill-selector-font-size: var(--font-size-12);
         --liquid-pill-selector-line-height: 1rem;
         --liquid-pill-selector-padding-inline: 0.75rem;
         --liquid-pill-selector-active-inline-overflow: 0.25rem;
+        --liquid-pill-selector-line-height: var(--line-height-12);
     }
 
     .liquid-toggle-group-header {
         --liquid-pill-selector-height: 2.5rem;
         --liquid-pill-selector-active-height: 2.75rem;
-        --liquid-pill-selector-font-size: 0.875rem;
+        --liquid-pill-selector-font-size: var(--font-size-14);
         --liquid-pill-selector-line-height: 1.25rem;
         --liquid-pill-selector-padding-inline: 1.25rem;
         --liquid-pill-selector-active-inline-overflow: 0.25rem;
+        --liquid-pill-selector-line-height: var(--line-height-14);
     }
 
     .liquid-toggle-indicator {
@@ -3647,7 +3665,7 @@
         border: 0;
         border-radius: var(--radius-pill);
         outline: none;
-        font-weight: 600;
+        font-weight: var(--font-weight-600);
         line-height: inherit;
         padding: 0 var(--liquid-pill-selector-padding-inline);
         white-space: nowrap;
@@ -3839,38 +3857,14 @@
 
     }
 
-    .castle-dashboard-grid {
-        display: grid;
-        gap: clamp(1rem, 1.1vw, 1.5rem);
-        align-items: start;
-    }
-
-    .castle-dashboard-left {
-        display: grid;
-        min-width: 0;
-        gap: clamp(1rem, 1.1vw, 1.5rem);
-    }
-
-    .castle-dashboard-units {
-        min-width: 0;
-        min-height: 0;
-    }
-
-    @media (min-width: 1100px) {
-        .castle-dashboard-grid {
-            grid-template-columns: minmax(22rem, 0.9fr) minmax(0, 1.3fr);
-            align-items: stretch;
-        }
-
-        .castle-dashboard-left { grid-template-rows: minmax(22rem, 0.9fr) minmax(18rem, 1.1fr); }
-
-        .castle-dashboard-left > .ui-card,
-        .castle-dashboard-units > .ui-card {
-            height: 100%;
-        }
-    }
-
+    .castle-dashboard-layout { container: castle-dashboard / inline-size; }
+    .castle-dashboard-grid { display: grid; gap: var(--space-24); align-items: start; }
     .castle-dashboard-grid > * { min-width: 0; }
+    @container castle-dashboard (min-width: 960px) {
+        .castle-dashboard-grid { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+    }
+
+
 
     @media (max-width: 920px) {
         .liquid-header { padding-inline: 0.75rem; }
@@ -3985,13 +3979,5 @@
 }
 
 /* Viewer-local controls use logical spacing and inherit document direction. */
-html[dir="rtl"] input[type="number"],
-html[dir="rtl"] code { direction: ltr; unicode-bidi: isolate; }
-
-/* The castle copy dialog title names two castles and a feature; it wraps instead of clipping (CIT-21, RTL and 375 px). */
-.castle-copy-title .scheduler-modal-title-text {
-  overflow: visible;
-  overflow-wrap: anywhere;
-  text-overflow: clip;
-  white-space: normal;
-}
+html[dir="rtl"] input[type="number"], html[dir="rtl"] code { direction: ltr; unicode-bidi: isolate; }
+@media (max-width: 640px) { }

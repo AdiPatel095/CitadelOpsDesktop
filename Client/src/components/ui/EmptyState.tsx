@@ -35,8 +35,8 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
           {icon}
         </span>
       )}
-      <div className="text-lg font-black text-text-main">{title}</div>
-      {description && <div className="mt-2 max-w-xl text-sm text-text-muted">{description}</div>}
+      <div className="text-title font-semibold text-text-main">{title}</div>
+      {description && <div className="mt-2 max-w-xl text-body text-text-muted">{description}</div>}
       {action && <div className="mt-5">{action}</div>}
     </div>
   );

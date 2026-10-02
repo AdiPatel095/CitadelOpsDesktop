@@ -36,10 +36,10 @@ export const NamedPresetControls: React.FC<NamedPresetControlsProps> = ({
   disabled = false,
 }) => (
   <Card variant="solid" className={`shrink-0 border-border-base bg-bg-app p-4 ${className}`}>
-    <div className="mb-3 text-xs font-bold uppercase tracking-wider text-primary"><LocalizedText messageKey="ui.components.ui.namedPresetControls.presets.954f93fe" /></div>
+    <div className="mb-3 text-caption font-semibold text-primary"><LocalizedText messageKey="ui.components.ui.namedPresetControls.presets.954f93fe" /></div>
     <div className="flex flex-col gap-4 lg:flex-row lg:flex-wrap lg:items-end">
       <label className="flex min-w-0 flex-1 flex-col gap-1.5 md:min-w-[220px]">
-        <span className="text-[10px] font-bold uppercase tracking-wider text-text-muted"><LocalizedText messageKey="common.presetName" /></span>
+        <span className="text-caption font-semibold text-text-muted"><LocalizedText messageKey="common.presetName" /></span>
         <Input
           type="text"
           placeholder="Name for new preset or rename on save"
@@ -50,7 +50,7 @@ export const NamedPresetControls: React.FC<NamedPresetControlsProps> = ({
         />
       </label>
       <div className="flex min-w-0 flex-[2] flex-col gap-1.5 md:min-w-[280px]">
-        <span className="text-[10px] font-bold uppercase tracking-wider text-text-muted"><LocalizedText messageKey="ui.components.ui.namedPresetControls.load.preset.f9d863d6" /></span>
+        <span className="text-caption font-semibold text-text-muted"><LocalizedText messageKey="ui.components.ui.namedPresetControls.load.preset.f9d863d6" /></span>
         <div className="flex flex-col gap-2 md:flex-row">
           <div className="min-w-0 flex-1">
             <Select value={selectedID} onChange={onSelectedIDChange} options={options} ariaLabel="Load preset" disabled={disabled} />
@@ -71,6 +71,6 @@ export const NamedPresetControls: React.FC<NamedPresetControlsProps> = ({
           <LocalizedText messageKey="game.delete" /></Button>
       </div>
     </div>
-    {help && <p className="mt-3 text-xs text-text-muted">{help}</p>}
+    {help && <p className="mt-3 text-caption text-text-muted">{help}</p>}
   </Card>
 );

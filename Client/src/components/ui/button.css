@@ -1,16 +1,16 @@
 .cit-button {
-  --button-height: var(--space-40); --button-padding: var(--space-16); --button-icon: var(--space-16); --button-font: var(--font-size-14);
+  --button-height: var(--space-40); --button-padding: var(--space-16); --button-icon: var(--space-16);
   --button-fill: var(--surface-control); --button-ink: var(--text-primary); --button-border: var(--border-default);
   --button-hover: color-mix(in srgb, var(--state-hover), var(--button-fill)); --button-pressed: color-mix(in srgb, var(--state-pressed), var(--button-fill));
   display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; gap: var(--space-8);
   min-block-size: var(--button-height); padding-block: 0; padding-inline: var(--button-padding);
   border: 1px solid var(--button-border); border-radius: var(--radius-full); background: var(--button-fill); color: var(--button-ink);
-  font-family: inherit; font-size: var(--button-font); font-weight: var(--font-weight-600); line-height: var(--line-height-14);
+  font-family: inherit; font-size: var(--font-size-14); font-weight: var(--font-weight-600); line-height: var(--line-height-14);
   text-decoration: none; white-space: nowrap; cursor: pointer;
   transition: border-radius var(--duration-fast) var(--ease-standard), background-color var(--duration-fast) var(--ease-standard);
 }
 .cit-button[data-size="sm"] { --button-height: var(--space-32); --button-padding: var(--space-12); }
-.cit-button[data-size="lg"] { --button-height: var(--space-48); --button-padding: var(--space-24); --button-icon: var(--space-20); --button-font: var(--font-size-16); }
+.cit-button[data-size="lg"] { --button-height: var(--space-48); --button-padding: var(--space-24); --button-icon: var(--space-20); font-size: var(--font-size-16); line-height: var(--line-height-16); }
 .cit-button svg, .cit-button-loading-slot { inline-size: var(--button-icon); block-size: var(--button-icon); flex-shrink: 0; margin: 0; }
 .cit-button-loading-slot { visibility: hidden; }
 .cit-button-icon { inline-size: var(--button-height); block-size: var(--button-height); padding: 0; }

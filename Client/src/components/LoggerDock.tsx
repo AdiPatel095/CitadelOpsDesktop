@@ -674,7 +674,7 @@ export const LoggerDock = React.memo(function LoggerDock() {
             >
               <Icons.Activity className="h-5 w-5 group-hover:animate-pulse" />
               <span
-                className="text-xs font-bold uppercase text-text-muted transition-colors group-hover:text-primary"
+                className="text-caption font-semibold text-text-muted transition-colors group-hover:text-primary"
                 style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)' }}
               >
                 {t('activity.label')}

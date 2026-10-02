@@ -19,10 +19,10 @@ const StaleSessionBanner: React.FC = () => {
   return (
     <div
       role="status"
-      className="m3-status-banner m3-status-banner-warning rounded-global px-4 py-3 text-sm text-text-main"
+      className="m3-status-banner m3-status-banner-warning rounded-global px-4 py-3 text-body text-text-main"
     >
       <p className="font-medium text-warning"><LocalizedText messageKey="ui.components.staleSessionBanner.disconnected.last.known.data.166a8c99" /></p>
-      <p className="mt-1 text-xs text-text-muted">
+      <p className="mt-1 text-caption text-text-muted">
         Figures below may be out of date.{' '}
         <Button variant="secondary"
           type="button"

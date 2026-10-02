@@ -36,20 +36,20 @@ export function FeatureGuideModal({ feature, isOpen, onClose, showAdvisor = true
     <Modal isOpen={isOpen} onClose={closeGuide} title={title} contentLang={locale} contentDir={locale === 'ar' ? 'rtl' : 'ltr'} closeLabel={pack.ui.backToSettings} maxWidth="3xl"
       footer={<Button variant="secondary" onClick={closeGuide}>{pack.ui.backToSettings}</Button>}>
       <div lang={locale} dir={locale === 'ar' ? 'rtl' : 'ltr'}>
-        <p className="mb-4 text-sm text-text-muted">{intro}</p>
-        <p className="mb-4 text-sm text-text-muted">{guide.recommendationIntro}</p>
+        <p className="mb-4 text-body text-text-muted">{intro}</p>
+        <p className="mb-4 text-body text-text-muted">{guide.recommendationIntro}</p>
         <ol className="space-y-6">
           {steps.map((step, index) => {
             const content = guide.steps[step.id as keyof typeof guide.steps];
             return <li key={step.id}>
-              <h3 className="mb-2 text-sm font-bold text-primary">{index + 1}. {content.title}</h3>
+              <h3 className="mb-2 text-title-sm font-bold text-primary">{index + 1}. {content.title}</h3>
               <dl className="space-y-3">
                 {step.items.map((item) => {
                   const translated = (content.items as Record<string, { label: string; description: string; recommendation?: string }>)[item.id];
                   return <div key={item.id}>
-                    <dt className="text-sm font-semibold text-text-main">{translated.label}</dt>
-                    <dd className="mt-1 text-sm leading-relaxed text-text-muted">{translated.description}</dd>
-                    {'recommendation' in translated && typeof translated.recommendation === 'string' && <dd className="mt-1 text-sm leading-relaxed text-text-main"><strong>{pack.ui.recommendedLabel}:</strong> {translated.recommendation}</dd>}
+                    <dt className="text-body font-semibold text-text-main">{translated.label}</dt>
+                    <dd className="mt-1 text-body text-text-muted">{translated.description}</dd>
+                    {'recommendation' in translated && typeof translated.recommendation === 'string' && <dd className="mt-1 text-body text-text-main"><strong>{pack.ui.recommendedLabel}:</strong> {translated.recommendation}</dd>}
                   </div>;
                 })}
               </dl>
@@ -59,7 +59,7 @@ export function FeatureGuideModal({ feature, isOpen, onClose, showAdvisor = true
                   {locale === 'en' && feature !== 'autoFortress' && feature !== 'autoInvasion' && feature !== 'autoNomad' && feature !== 'autoAdvisor' && feature !== 'autoKhan' && feature !== 'autoBeri' && feature !== 'autoStorm' ? <img src={step.image.src} alt={content.image.alt} width={step.image.width} height={step.image.height} loading="lazy" className="h-auto w-full" /> :
                     <GuideIllustration pack={pack} kind={panelKind(feature, step.id)} locale={locale} alt={[pack.ui.illustrativeExample, content.title, pack.panels[panelKind(feature, step.id)].title].join(' — ')} showAdvisor={showAdvisor} />}
                 </Button>
-                <figcaption className="mt-2 text-xs leading-relaxed text-text-muted">{(locale !== 'en' || feature === 'autoFortress' || feature === 'autoInvasion' || feature === 'autoNomad' || feature === 'autoAdvisor' || feature === 'autoKhan' || feature === 'autoBeri' || feature === 'autoStorm') && <strong>{pack.ui.illustrativeExample}. </strong>}{content.image.caption}</figcaption>
+                <figcaption className="mt-2 text-caption text-text-muted">{(locale !== 'en' || feature === 'autoFortress' || feature === 'autoInvasion' || feature === 'autoNomad' || feature === 'autoAdvisor' || feature === 'autoKhan' || feature === 'autoBeri' || feature === 'autoStorm') && <strong>{pack.ui.illustrativeExample}. </strong>}{content.image.caption}</figcaption>
               </figure>}
             </li>;
           })}

@@ -204,17 +204,17 @@ const RiftMaidenCommsPanel: React.FC<RiftMaidenCommsPanelProps> = ({ headerActio
 	}, [cancelling, maidenRun, submitIntent]);
 
   return (
-    <SectionCard variant="solid" title={localizeStatic("ui.rift.components.riftMaidenCommsPanel.title.maiden.comms.wave.b837a58e")} titleClassName="text-lg text-primary"
+    <SectionCard variant="solid" title={localizeStatic("ui.rift.components.riftMaidenCommsPanel.title.maiden.comms.wave.b837a58e")} titleClassName="text-title-sm text-primary"
       description={localizeStatic("ui.rift.components.riftMaidenCommsPanel.description.starts.an.exact.count.run.of.dummy.b844ea73")}
       descriptionClassName="" headerClassName="flex-wrap gap-3" actions={headerActions}
       contentClassName="flex flex-col gap-4">
         <div className="flex flex-col gap-2 min-w-0">
-          <p className="text-sm text-text-muted">
+          <p className="text-body text-text-muted">
 			Launch point: {mainCastle?.name || 'main castle'}.
             {' '}Attacks are staggered (4–5s apart, or Settings attack delay range).
           </p>
 					{maidenRun ? (
-						<p className={`text-xs font-semibold ${runActive ? 'text-primary' : maidenRun.status === 'completed' ? 'text-success' : 'text-text-muted'}`}>
+						<p className={`text-caption font-semibold ${runActive ? 'text-primary' : maidenRun.status === 'completed' ? 'text-success' : 'text-text-muted'}`}>
 							{runActive
 								? `Run active · ${maidenRun.attacksLaunched}/${maidenRun.requestedAttacks} confirmed · ${runRemaining} remaining`
 								: `Last run ${maidenRun.status} · ${maidenRun.attacksLaunched}/${maidenRun.requestedAttacks} confirmed`}
@@ -222,22 +222,22 @@ const RiftMaidenCommsPanel: React.FC<RiftMaidenCommsPanelProps> = ({ headerActio
 					) : null}
           {mainCastle ? (
             <div className="flex flex-col gap-1">
-              <p className="text-xs text-text-muted font-mono">
+              <p className="text-caption text-text-muted font-mono">
 				{mainCastle.name || 'Main castle'} · {probeReadyUnitIds.length} probe-ready unit type
                 {probeReadyUnitIds.length === 1 ? '' : 's'}
               </p>
-              <p className={`text-xs ${sendBlockedReason ? 'text-warning' : 'text-success'}`}>
+              <p className={`text-caption ${sendBlockedReason ? 'text-warning' : 'text-success'}`}>
                 {sendBlockedReason ?? `Ready · selected stock supports up to ${stockCommanderCapacity} commander probe${stockCommanderCapacity === 1 ? '' : 's'}.`}
               </p>
             </div>
           ) : (
-            <p className="text-xs text-amber-400/90"><LocalizedText messageKey="ui.rift.components.riftMaidenCommsPanel.no.main.castle.troop.data.yet.connect.4af49471" /></p>
+            <p className="text-caption text-amber-400/90"><LocalizedText messageKey="ui.rift.components.riftMaidenCommsPanel.no.main.castle.troop.data.yet.connect.4af49471" /></p>
           )}
           {sendStatus ? (
             <p
               role="status"
               aria-live="polite"
-              className={`text-xs ${sendStatus.error ? 'text-error' : 'text-success'}`}
+              className={`text-caption ${sendStatus.error ? 'text-error' : 'text-success'}`}
             >
               {sendStatus.message}
             </p>
@@ -275,8 +275,8 @@ const RiftMaidenCommsPanel: React.FC<RiftMaidenCommsPanelProps> = ({ headerActio
               <UnitImage unitId={unitWodID} size={28} showLevel={false} className="rounded-md shrink-0" />
             ) : null}
             <div className="min-w-0">
-              <p className="text-xs font-semibold text-text-main truncate">{unitLabel}</p>
-              <p className="text-[10px] font-mono text-text-muted">
+              <p className="text-caption font-semibold text-text-main truncate">{unitLabel}</p>
+              <p className="text-caption font-mono text-text-muted">
                 {selectedInStock
                   ? `${selectedQuantity.toLocaleString()} · up to ${stockCommanderCapacity} probes`
                   : `${selectedQuantity.toLocaleString()} · ${PROBE_UNITS_PER_COMMANDER} required`}
@@ -285,7 +285,7 @@ const RiftMaidenCommsPanel: React.FC<RiftMaidenCommsPanelProps> = ({ headerActio
           </div>
 
 					<label className="flex items-center gap-2 rounded-lg border border-border-base bg-bg-card/50 px-2.5 py-1.5">
-						<span className="text-xs font-semibold text-text-muted"><LocalizedText messageKey="ui.rift.components.riftMaidenCommsPanel.probe.goal.a822a868" /></span>
+						<span className="text-caption font-semibold text-text-muted"><LocalizedText messageKey="ui.rift.components.riftMaidenCommsPanel.probe.goal.a822a868" /></span>
 						<input
 							type="number"
 							min={1}
@@ -297,7 +297,7 @@ const RiftMaidenCommsPanel: React.FC<RiftMaidenCommsPanelProps> = ({ headerActio
 								const value = Math.trunc(Number(event.target.value));
 								setProbeGoal(Number.isFinite(value) ? Math.min(9999, Math.max(1, value)) : 1);
 							}}
-							className="w-20 bg-transparent text-right text-sm font-mono text-text-main outline-none disabled:opacity-60"
+							className="w-20 bg-transparent text-right text-body font-mono text-text-main outline-none disabled:opacity-60"
 							aria-label={localizeStatic("ui.rift.components.riftMaidenCommsPanel.aria-label.total.rift.maiden.probes.to.launch.3c331a79")}
 						/>
 					</label>

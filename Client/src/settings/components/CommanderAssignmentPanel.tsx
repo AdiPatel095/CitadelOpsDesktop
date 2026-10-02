@@ -140,7 +140,7 @@ export const CommanderAssignmentPanel: React.FC<CommanderAssignmentPanelProps> =
         aria-controls={`${id}-body`}
         onClick={() => onExpandedChange(!expanded)}
       >
-        <h3 id={headingId} tabIndex={-1} className="flex items-center gap-2 text-sm font-black text-text-main outline-none">
+        <h3 id={headingId} tabIndex={-1} className="flex items-center gap-2 text-title-sm font-bold text-text-main outline-none">
           <Users className="h-4 w-4 text-primary" aria-hidden="true" /> <LocalizedText messageKey="ui.settings.components.commanderAssignmentPanel.commanders.for.this.automation.3d1d017d" />
         </h3>
         {expanded ? <ChevronDown className="h-4 w-4 text-text-muted" aria-hidden="true" /> : <ChevronRight className="h-4 w-4 text-text-muted" aria-hidden="true" />}
@@ -149,12 +149,12 @@ export const CommanderAssignmentPanel: React.FC<CommanderAssignmentPanelProps> =
         <ReadinessCheckLine check={report.assignment} />
         <ReadinessCheckLine check={report.activity} />
       </ul>
-      {note ? <p className="mt-1.5 text-[11px] text-text-muted">{note}</p> : null}
+      {note ? <p className="mt-1.5 text-caption text-text-muted">{note}</p> : null}
 
       {expanded ? (
         <div id={`${id}-body`} className="mt-3 space-y-3 border-t border-border-base pt-3">
           <div className="flex flex-wrap items-center justify-between gap-2">
-            <span className="text-xs text-text-muted">
+            <span className="text-caption text-text-muted">
               {report.implicitAll
                 ? <LocalizedText messageKey="ui.settings.components.commanderAssignmentPanel.all.commanders.allowed.default.turning.one.off.c4ac1b89" />
                 : <LocalizedText messageKey="ui.settings.components.commanderAssignmentPanel.only.the.commanders.switched.on.below.may.9606a88a" />}
@@ -169,7 +169,7 @@ export const CommanderAssignmentPanel: React.FC<CommanderAssignmentPanelProps> =
             </div>
           </div>
           {report.rows.length === 0 ? (
-            <p className="text-xs text-text-muted"><LocalizedText messageKey="ui.settings.components.commanderAssignmentPanel.no.commanders.are.observed.in.this.account.8d3e969e" /></p>
+            <p className="text-caption text-text-muted"><LocalizedText messageKey="ui.settings.components.commanderAssignmentPanel.no.commanders.are.observed.in.this.account.8d3e969e" /></p>
           ) : (
             <ul className="divide-y divide-border-base rounded-global border border-border-base">
               {report.rows.map((row) => {
@@ -178,22 +178,22 @@ export const CommanderAssignmentPanel: React.FC<CommanderAssignmentPanelProps> =
                 return (
                   <li key={row.commanderId} className="flex flex-wrap items-center gap-2 px-3 py-2">
                     <div className="min-w-0 flex-1">
-                      <div className="truncate text-xs font-bold text-text-main">{row.name || `#${row.commanderId}`}</div>
+                      <div className="truncate text-caption font-semibold text-text-main">{row.name || `#${row.commanderId}`}</div>
                       <div className="mt-0.5 flex flex-wrap items-center gap-1.5">
                         <span id={stateId}>
                           {status.kind === 'activity' ? (
-                            <Badge variant={ACTIVITY_BADGE[row.activity]} className="normal-case tracking-normal">
+                            <Badge variant={ACTIVITY_BADGE[row.activity]} className="normal-case">
                               <LocalizedText messageKey={COMMANDER_ACTIVITY_LABEL_KEYS[row.activity]} />
                             </Badge>
                           ) : (
-                            <span className="text-[11px] text-text-muted"><LocalizedText messageKey="commanderAssignment.offForThisAutomation" /></span>
+                            <span className="text-caption text-text-muted"><LocalizedText messageKey="commanderAssignment.offForThisAutomation" /></span>
                           )}
                         </span>
                         {row.meetsRequirements
                           ? null
-                          : <Badge variant="danger" className="normal-case tracking-normal"><LocalizedText messageKey="ui.settings.components.commanderAssignmentPanel.does.not.meet.the.requirement.ad82a9a0" /></Badge>}
+                          : <Badge variant="danger" className="normal-case"><LocalizedText messageKey="ui.settings.components.commanderAssignmentPanel.does.not.meet.the.requirement.ad82a9a0" /></Badge>}
                         {row.otherFeatures.length > 0 ? (
-                          <span className="text-[11px] text-text-muted">
+                          <span className="text-caption text-text-muted">
                             <LocalizedText messageKey="commanderAssignment.alsoAssigned" params={{ features: featureList(row.otherFeatures) }} />
                           </span>
                         ) : null}
@@ -211,10 +211,10 @@ export const CommanderAssignmentPanel: React.FC<CommanderAssignmentPanelProps> =
               })}
             </ul>
           )}
-          <p className="text-[11px] text-text-muted">
+          <p className="text-caption text-text-muted">
             <LocalizedText messageKey="ui.settings.components.commanderAssignmentPanel.equipment.requirements.are.edited.under.commanders.assigning.1f4fcd46" />
           </p>
-          {saveError && !confirming ? <p role="alert" className="text-xs font-semibold text-error">{saveError}</p> : null}
+          {saveError && !confirming ? <p role="alert" className="text-caption font-semibold text-error">{saveError}</p> : null}
           <div className="flex flex-wrap justify-end gap-2">
             <Button variant="ghost" size="sm" disabled={!pending || saving} onClick={() => { setPending(null); setSaveError(''); }}>
               <LocalizedText messageKey="ui.settings.components.commanderAssignmentPanel.discard.assignment.changes.c07d4258" />
@@ -245,7 +245,7 @@ export const CommanderAssignmentPanel: React.FC<CommanderAssignmentPanelProps> =
         )}
       >
         {impact ? (
-          <div className="space-y-2 text-xs text-text-main">
+          <div className="space-y-2 text-caption text-text-main">
             <ul className="list-disc space-y-1 pl-5">
               {impact.added.map((change) => (
                 <li key={`add:${change.featureId}:${change.commanderId}`}>

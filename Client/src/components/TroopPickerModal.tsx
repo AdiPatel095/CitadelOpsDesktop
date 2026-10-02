@@ -673,7 +673,7 @@ const TroopPickerModal: React.FC<TroopPickerModalProps> = ({ isOpen, options, on
       filterDock={(
         <div className="picker-filter-dock">
           {stockNote ? (
-            <p className="mb-1 text-[11px] font-semibold text-warning" data-stock-observation={stockNote.reasonKey ? 'last-known' : 'observed'}>
+            <p className="mb-1 text-caption font-semibold text-warning" data-stock-observation={stockNote.reasonKey ? 'last-known' : 'observed'}>
               <LocalizedText messageKey={stockNote.messageKey} params={stockNote.params} />
               {stockNote.reasonKey ? <> · <LocalizedText messageKey={stockNote.reasonKey} /></> : null}
             </p>

@@ -812,8 +812,8 @@ const SettingsView: React.FC = () => {
 		>
 			<div className="grid gap-4 sm:grid-cols-2">
 				<div className="rounded-global border border-border-base bg-bg-app/35 p-4">
-					<h3 className="text-sm font-semibold text-text-main"><LocalizedText messageKey="ui.views.settingsView.export.this.setup.83b56584" /></h3>
-					<p className="mt-1 text-xs leading-relaxed text-text-muted">
+					<h3 className="text-title-sm font-semibold text-text-main"><LocalizedText messageKey="ui.views.settingsView.export.this.setup.83b56584" /></h3>
+					<p className="mt-1 text-caption text-text-muted">
 						<LocalizedText messageKey="ui.views.settingsView.downloads.automation.settings.enabled.states.schedules.priorities.a82b9eaf" /></p>
 					<Button
 						type="button"
@@ -828,8 +828,8 @@ const SettingsView: React.FC = () => {
 					</Button>
 				</div>
 				<div className="rounded-global border border-border-base bg-bg-app/35 p-4">
-					<h3 className="text-sm font-semibold text-text-main"><LocalizedText messageKey="ui.views.settingsView.import.another.setup.bdb5d4dc" /></h3>
-					<p className="mt-1 text-xs leading-relaxed text-text-muted">
+					<h3 className="text-title-sm font-semibold text-text-main"><LocalizedText messageKey="ui.views.settingsView.import.another.setup.bdb5d4dc" /></h3>
+					<p className="mt-1 text-caption text-text-muted">
 						<LocalizedText messageKey="ui.views.settingsView.validates.the.complete.file.before.replacing.matching.66a84281" /></p>
 					<input
 						ref={settingsFileInputRef}
@@ -851,10 +851,10 @@ const SettingsView: React.FC = () => {
 					</Button>
 				</div>
 			</div>
-			<div className="rounded-global border border-warning/25 bg-warning/5 px-4 py-3 text-xs leading-relaxed text-text-muted">
+			<div className="rounded-global border border-warning/25 bg-warning/5 px-4 py-3 text-caption text-text-muted">
 				<LocalizedText messageKey="ui.views.settingsView.imported.enabled.automations.and.schedules.take.effect.31528547" /></div>
-			{settingsTransferError && <p role="alert" className="text-xs font-medium text-error">{settingsTransferError}</p>}
-			{settingsTransferStatus && <p role="status" className="text-xs font-medium text-success">{settingsTransferStatus}</p>}
+			{settingsTransferError && <p role="alert" className="text-caption font-medium text-error">{settingsTransferError}</p>}
+			{settingsTransferStatus && <p role="status" className="text-caption font-medium text-success">{settingsTransferStatus}</p>}
 			</SectionCard>
 
 				<SectionCard
@@ -871,7 +871,7 @@ const SettingsView: React.FC = () => {
 			>
 					<div className="grid gap-4 lg:grid-cols-3">
 						<div>
-						<label className="mb-1.5 block text-[10px] font-bold uppercase tracking-wider text-text-muted">
+						<label className="mb-1.5 block text-caption font-semibold text-text-muted">
 							<LocalizedText messageKey="ui.views.settingsView.retention.quick.choices.dc7e675a" /></label>
 					<Select
 						value={selectedPlayerHistoryRetention}
@@ -895,12 +895,12 @@ const SettingsView: React.FC = () => {
 						ariaLabel={localizeStatic("ui.views.settingsView.ariaLabel.my.stats.saved.history.window.c06cf1f6")}
 					/>
 					{selectedPlayerHistoryRetentionOption?.description && (
-						<p className="mt-2 text-xs leading-relaxed text-text-muted">{selectedPlayerHistoryRetentionOption.description}</p>
+						<p className="mt-2 text-caption text-text-muted">{selectedPlayerHistoryRetentionOption.description}</p>
 					)}
 					</div>
 
 					<div>
-						<label htmlFor="player-history-days" className="mb-1.5 block text-[10px] font-bold uppercase tracking-wider text-text-muted">
+						<label htmlFor="player-history-days" className="mb-1.5 block text-caption font-semibold text-text-muted">
 							<LocalizedText messageKey="ui.views.settingsView.custom.day.limit.0cbda40f" /></label>
 						<div className="flex flex-col gap-2 sm:flex-row">
 							<Input
@@ -924,7 +924,7 @@ const SettingsView: React.FC = () => {
 							>
 								<LocalizedText messageKey="ui.views.settingsView.apply.days.fa368de9" /></Button>
 						</div>
-						<p className="mt-2 text-xs leading-relaxed text-text-muted">
+						<p className="mt-2 text-caption text-text-muted">
 							{playerHistoryDaysValid
 								? `${projectedPlayerHistoryRecordings.toLocaleString(locale)} recordings at the selected cadence · approximately ${formatStorageBytes(projectedPlayerHistoryRecordings * playerHistoryBytesPerRecording)}`
 								: playerHistoryRetention?.maximumDays != null
@@ -934,7 +934,7 @@ const SettingsView: React.FC = () => {
 						</div>
 
 						<div>
-							<label className="mb-1.5 block text-[10px] font-bold uppercase tracking-wider text-text-muted">
+							<label className="mb-1.5 block text-caption font-semibold text-text-muted">
 								<LocalizedText messageKey="ui.views.settingsView.record.my.stats.every.69b1cdde" /></label>
 							<Select
 								value={String(playerHistoryRecordingIntervalSeconds)}
@@ -949,32 +949,32 @@ const SettingsView: React.FC = () => {
 								disabled={playerHistoryRetentionLoading || playerHistoryRetentionPending || !playerHistoryRetention?.recordingIntervalOptions?.length}
 								ariaLabel={localizeStatic("ui.views.settingsView.ariaLabel.my.stats.recording.frequency.80e99156")}
 							/>
-							<p className="mt-2 text-xs leading-relaxed text-text-muted">
+							<p className="mt-2 text-caption text-text-muted">
 								<LocalizedText messageKey="ui.views.settingsView.snapshots.state.already.available.in.citadelops.it.83098a5f" /></p>
 						</div>
 					</div>
-					{playerHistoryRetentionPending && <p role="status" className="text-xs font-medium text-warning"><LocalizedText messageKey="ui.views.settingsView.updating.saved.history.policy.ed12bb26" /></p>}
+					{playerHistoryRetentionPending && <p role="status" className="text-caption font-medium text-warning"><LocalizedText messageKey="ui.views.settingsView.updating.saved.history.policy.ed12bb26" /></p>}
 
 				{playerHistoryRetention?.hosted && (
-					<div className="rounded-global border border-warning/25 bg-warning/5 px-4 py-3 text-xs leading-relaxed text-text-muted">
+					<div className="rounded-global border border-warning/25 bg-warning/5 px-4 py-3 text-caption text-text-muted">
 						Hosted runtime chart history is capped at {playerHistoryMaximumLabel || '30 days'}. Local desktop profiles can choose longer retention.{' '}
 						The platform's private-metrics archive is separate and follows its server-managed retention policy.
 					</div>
 				)}
 				{playerHistoryRetention && !playerHistoryRetention.hosted && (
-					<div className="rounded-global border border-cyan-400/20 bg-cyan-400/5 px-4 py-3 text-xs leading-relaxed text-text-muted"><LocalizedRichText messageKey="ui.rich.views.settingsView.local.desktop.mode.applies.this.policy.directly.d237d204" params={{"codeText0":"History/PlayerSamples.jsonl","codeText1":"Runtime/Reports.sqlite"}} tags={{code0: children => <code>{children}</code>, code1: children => <code>{children}</code>}} /></div>
+					<div className="rounded-global border border-cyan-400/20 bg-cyan-400/5 px-4 py-3 text-caption text-text-muted"><LocalizedRichText messageKey="ui.rich.views.settingsView.local.desktop.mode.applies.this.policy.directly.d237d204" params={{"codeText0":"History/PlayerSamples.jsonl","codeText1":"Runtime/Reports.sqlite"}} tags={{code0: children => <code>{children}</code>, code1: children => <code>{children}</code>}} /></div>
 				)}
 
 					<div className="grid gap-3 md:grid-cols-3">
 						<div className="rounded-global border border-border-base bg-bg-app/35 p-3">
-							<p className="text-xs font-bold text-text-main"><LocalizedText messageKey="ui.views.settingsView.selected.cadence.throughout.4aa0f3fb" /></p>
-							<p className="mt-1 text-[11px] leading-relaxed text-text-muted">
+							<p className="text-caption font-semibold text-text-main"><LocalizedText messageKey="ui.views.settingsView.selected.cadence.throughout.4aa0f3fb" /></p>
+							<p className="mt-1 text-caption text-text-muted">
 								Keeps at most one recording every {recordingIntervalLabel(playerHistoryRecordingIntervalSeconds)} across the complete selected window.
 							</p>
 					</div>
 					<div className="rounded-global border border-border-base bg-bg-app/35 p-3">
-						<p className="text-xs font-bold text-text-main"><LocalizedText messageKey="ui.views.settingsView.current.saved.limit.d3d03c64" /></p>
-						<p className="mt-1 text-[11px] leading-relaxed text-text-muted">
+						<p className="text-caption font-semibold text-text-main"><LocalizedText messageKey="ui.views.settingsView.current.saved.limit.d3d03c64" /></p>
+						<p className="mt-1 text-caption text-text-muted">
 							{playerHistoryRetention == null
 								? 'Loading the saved policy…'
 								: activePlayerHistoryRecordings == null
@@ -985,22 +985,22 @@ const SettingsView: React.FC = () => {
 						</p>
 					</div>
 					<div className="rounded-global border border-border-base bg-bg-app/35 p-3">
-						<p className="text-xs font-bold text-text-main"><LocalizedText messageKey="ui.views.settingsView.current.history.file.82597ba4" /></p>
-						<p className="mt-1 text-[11px] leading-relaxed text-text-muted">
+						<p className="text-caption font-semibold text-text-main"><LocalizedText messageKey="ui.views.settingsView.current.history.file.82597ba4" /></p>
+						<p className="mt-1 text-caption text-text-muted">
 							{formatStorageBytes(Number(playerHistoryRetention?.storage?.currentBytes) || 0)} now · ~{formatStorageBytes(playerHistoryBytesPerRecording)} per recording
 						</p>
 					</div>
 				</div>
 
-				<p className="text-[11px] leading-relaxed text-text-muted"><LocalizedRichText messageKey="ui.rich.views.settingsView.my.stats.uses.this.profile.s.codetext0.6d76bd61" params={{"codeText0":"History/PlayerSamples.jsonl"}} tags={{code0: children => <code>{children}</code>}} /></p>
-				{playerHistoryRetentionError && <p role="alert" className="text-xs font-medium text-error">{playerHistoryRetentionError}</p>}
-				{playerHistoryRetentionStatus && <p role="status" className="text-xs font-medium text-success">{playerHistoryRetentionStatus}</p>}
+				<p className="text-caption text-text-muted"><LocalizedRichText messageKey="ui.rich.views.settingsView.my.stats.uses.this.profile.s.codetext0.6d76bd61" params={{"codeText0":"History/PlayerSamples.jsonl"}} tags={{code0: children => <code>{children}</code>}} /></p>
+				{playerHistoryRetentionError && <p role="alert" className="text-caption font-medium text-error">{playerHistoryRetentionError}</p>}
+				{playerHistoryRetentionStatus && <p role="status" className="text-caption font-medium text-success">{playerHistoryRetentionStatus}</p>}
 			</SectionCard>
 
 		<SectionCard variant="solid" title={localizeStatic("ui.views.settingsView.title.game.connection.064c1922")} icon={<span className="flex h-8 w-8 items-center justify-center rounded-lg bg-sky-500/10"><Icons.Monitor className="h-4 w-4 text-sky-400" /></span>} contentClassName=" space-y-6">
 			<div>
-				<h3 className="text-sm font-semibold text-text-main"><LocalizedText messageKey="ui.views.settingsView.how.citadelops.connects.99c1207b" /></h3>
-				<p className="mt-1 max-w-3xl text-xs leading-relaxed text-text-muted">
+				<h3 className="text-title-sm font-semibold text-text-main"><LocalizedText messageKey="ui.views.settingsView.how.citadelops.connects.99c1207b" /></h3>
+				<p className="mt-1 max-w-3xl text-caption text-text-muted">
 					<LocalizedText messageKey="ui.views.settingsView.choose.whether.citadelops.opens.the.complete.game.3f2218c1" /></p>
 				<div role="radiogroup" aria-label={localizeStatic("ui.views.settingsView.aria-label.game.connection.mode.ab5b4380")} className="mt-4 grid gap-3 lg:grid-cols-2">
 					<button data-button-pattern="card"
@@ -1021,12 +1021,12 @@ const SettingsView: React.FC = () => {
 							</span>
 							<span className="min-w-0 flex-1">
 								<span className="flex items-center justify-between gap-2">
-									<span className="text-sm font-semibold text-text-main"><LocalizedText messageKey="ui.views.settingsView.full.application.fa267867" /></span>
+									<span className="text-body font-semibold text-text-main"><LocalizedText messageKey="ui.views.settingsView.full.application.fa267867" /></span>
 									{configuredConnectionMode === 'full' && <CheckCircle2 className="h-4 w-4 shrink-0 text-primary" />}
 								</span>
-								<span className="mt-1 block text-xs leading-relaxed text-text-muted">
+								<span className="mt-1 block text-caption text-text-muted">
 									<LocalizedText messageKey="ui.views.settingsView.opens.the.game.tab.so.you.can.2c67b74b" /></span>
-								<span className="mt-3 flex items-start gap-2 rounded-lg border border-warning/20 bg-warning/5 px-3 py-2 text-[11px] leading-relaxed text-warning">
+								<span className="mt-3 flex items-start gap-2 rounded-lg border border-warning/20 bg-warning/5 px-3 py-2 text-caption text-warning">
 									<TriangleAlert className="mt-0.5 h-3.5 w-3.5 shrink-0" />
 									<LocalizedText messageKey="ui.views.settingsView.uses.considerably.more.processor.and.memory.resources.fed03b83" />
 								</span>
@@ -1052,45 +1052,45 @@ const SettingsView: React.FC = () => {
 							</span>
 							<span className="min-w-0 flex-1">
 								<span className="flex items-center justify-between gap-2">
-									<span className="text-sm font-semibold text-text-main"><LocalizedText messageKey="ui.views.settingsView.background.only.49a3e804" /></span>
+									<span className="text-body font-semibold text-text-main"><LocalizedText messageKey="ui.views.settingsView.background.only.49a3e804" /></span>
 									{configuredConnectionMode === 'background' && <CheckCircle2 className="h-4 w-4 shrink-0 text-primary" />}
 								</span>
-								<span className="mt-1 block text-xs leading-relaxed text-text-muted">
+								<span className="mt-1 block text-caption text-text-muted">
 									<LocalizedText messageKey="ui.views.settingsView.connects.directly.to.the.game.server.without.6d3b673e" /></span>
-				<span className="mt-3 block text-[11px] leading-relaxed text-text-muted">
+				<span className="mt-3 block text-caption text-text-muted">
 					<LocalizedText messageKey="ui.views.settingsView.uses.the.login.and.server.selection.saved.f7efcfc1" /></span>
 							</span>
 						</div>
 					</button>
 				</div>
 				{connectionModeRestartRequired ? (
-					<p role="status" className="mt-3 text-xs font-medium text-warning">
+					<p role="status" className="mt-3 text-caption font-medium text-warning">
 						Currently running {activeConnectionMode === 'full' ? 'Full application' : 'Background only'} mode.
 						Restart CitadelOps to use {configuredConnectionMode === 'full' ? 'Full application' : 'Background only'} mode.
 					</p>
 				) : (
-					<p className="mt-3 text-xs text-text-muted"><LocalizedText messageKey="ui.views.settingsView.connection.mode.changes.are.applied.after.restarting.f4d4feb1" /></p>
+					<p className="mt-3 text-caption text-text-muted"><LocalizedText messageKey="ui.views.settingsView.connection.mode.changes.are.applied.after.restarting.f4d4feb1" /></p>
 				)}
 				{backgroundLoginNeedsReauthorization && (
 					<div className="mt-3 flex flex-wrap items-center gap-3 rounded-lg border border-warning/25 bg-warning/5 px-3 py-2.5">
-						<p className="min-w-0 flex-1 text-xs leading-relaxed text-warning">
+						<p className="min-w-0 flex-1 text-caption text-warning">
 							<LocalizedText messageKey="ui.views.settingsView.the.protected.saved.login.is.present.but.11f6025c" /></p>
 						<Button type="button" variant="secondary" disabled={connectionModePending} onClick={reauthorizeBackgroundLogin}>
 							{connectionModePending ? 'Re-enabling…' : 'Re-enable saved login'}
 						</Button>
 					</div>
 				)}
-				{connectionModeError && <p role="alert" className="mt-2 text-xs font-medium text-error">{connectionModeError}</p>}
+				{connectionModeError && <p role="alert" className="mt-2 text-caption font-medium text-error">{connectionModeError}</p>}
 				{configuredConnectionMode === 'background' && (
 					<form onSubmit={saveBackgroundLogin} className="mt-5 rounded-global border border-border-base bg-bg-app/45 p-4">
 						<div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
 							<div>
-								<h3 className="text-sm font-semibold text-text-main"><LocalizedText messageKey="ui.views.settingsView.background.game.login.97fc68bf" /></h3>
-								<p className="mt-1 max-w-3xl text-xs leading-relaxed text-text-muted">
+								<h3 className="text-title-sm font-semibold text-text-main"><LocalizedText messageKey="ui.views.settingsView.background.game.login.97fc68bf" /></h3>
+								<p className="mt-1 max-w-3xl text-caption text-text-muted">
 									<LocalizedText messageKey="ui.views.settingsView.enter.the.login.and.server.explicitly.the.06cfa482" /></p>
 							</div>
 							{backgroundLogin?.configured && (
-								<span className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-success/25 bg-success/10 px-2.5 py-1 text-[11px] font-semibold text-success">
+								<span className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-success/25 bg-success/10 px-2.5 py-1 text-caption font-semibold text-success">
 									<CheckCircle2 className="h-3.5 w-3.5" />
 									Saved for {backgroundLogin.server}
 								</span>
@@ -1098,7 +1098,7 @@ const SettingsView: React.FC = () => {
 						</div>
 						<div className="mt-4 grid gap-3 lg:grid-cols-3">
 							<div>
-								<label htmlFor="background-login-username" className="mb-1.5 block text-[10px] font-bold uppercase tracking-wider text-text-muted">
+								<label htmlFor="background-login-username" className="mb-1.5 block text-caption font-semibold text-text-muted">
 									{t('settings.username')}
 								</label>
 								<Input
@@ -1112,7 +1112,7 @@ const SettingsView: React.FC = () => {
 								/>
 							</div>
 							<div>
-								<label htmlFor="background-login-password" className="mb-1.5 block text-[10px] font-bold uppercase tracking-wider text-text-muted">
+								<label htmlFor="background-login-password" className="mb-1.5 block text-caption font-semibold text-text-muted">
 									{t('settings.password')}
 								</label>
 								<Input
@@ -1127,7 +1127,7 @@ const SettingsView: React.FC = () => {
 								/>
 							</div>
 							<div>
-								<label htmlFor="background-login-server" className="mb-1.5 block text-[10px] font-bold uppercase tracking-wider text-text-muted">
+								<label htmlFor="background-login-server" className="mb-1.5 block text-caption font-semibold text-text-muted">
 									{t('settings.server')}
 								</label>
 								<Input
@@ -1137,7 +1137,7 @@ const SettingsView: React.FC = () => {
 									value={backgroundServer}
 									onChange={(event) => setBackgroundServer(event.target.value)}
 									placeholder="US1"
-									className="font-mono uppercase"
+									className="font-mono"
 									disabled={backgroundLoginPending}
 									list="background-login-server-options"
 								/>
@@ -1146,7 +1146,7 @@ const SettingsView: React.FC = () => {
 										<option key={server.code} value={server.code}>{server.label}</option>
 									))}
 								</datalist>
-								<p className="mt-1.5 text-[11px] text-text-muted">
+								<p className="mt-1.5 text-caption text-text-muted">
 									{gameServers.length > 0
 										? 'Pick the world you play on; the directory resolves its connection address automatically.'
 										: 'Use the world code shown by the game, such as US1, GB1, or DE1.'}
@@ -1162,24 +1162,24 @@ const SettingsView: React.FC = () => {
 							>
 								{t('settings.backgroundLogin')}
 							</Button>
-							<p className="text-[11px] leading-relaxed text-text-muted">
+							<p className="text-caption text-text-muted">
 								<LocalizedText messageKey="ui.views.settingsView.saved.only.in.this.profile.s.protected.0d908c1f" /></p>
 						</div>
-						{backgroundLoginError && <p role="alert" className="mt-3 text-xs font-medium text-error">{backgroundLoginError}</p>}
-						{backgroundLoginMessage && <p role="status" className="mt-3 text-xs font-medium text-success">{backgroundLoginMessage}</p>}
+						{backgroundLoginError && <p role="alert" className="mt-3 text-caption font-medium text-error">{backgroundLoginError}</p>}
+						{backgroundLoginMessage && <p role="status" className="mt-3 text-caption font-medium text-success">{backgroundLoginMessage}</p>}
 					</form>
 				)}
 			</div>
 
 			<div className="border-t border-border-base pt-5">
 				<div>
-					<h3 className="text-sm font-semibold text-text-main mb-1"><LocalizedText messageKey="ui.views.settingsView.full.application.browser.59914007" /></h3>
-						<p className="text-xs text-text-muted mb-4">
+					<h3 className="text-title-sm font-semibold text-text-main mb-1"><LocalizedText messageKey="ui.views.settingsView.full.application.browser.59914007" /></h3>
+						<p className="text-caption text-text-muted mb-4">
 							<LocalizedText messageKey="ui.views.settingsView.full.application.mode.starts.with.your.system.37c8df4c" /></p>
 					</div>
 
 				<div className="w-full sm:max-w-[520px]">
-					<label className="block text-[10px] font-bold text-text-muted uppercase tracking-wider mb-1.5">
+					<label className="block text-caption font-semibold text-text-muted mb-1.5">
 						{t('settings.browser')}
 					</label>
 						<Select
@@ -1191,23 +1191,23 @@ const SettingsView: React.FC = () => {
 							disabled={browserSelectionPending || browserInventory == null}
 						/>
 						{selectedBrowser?.executablePath && (
-							<p className="mt-2 text-[11px] text-text-muted font-mono break-all">{selectedBrowser.executablePath}</p>
+							<p className="mt-2 text-caption text-text-muted font-mono break-all">{selectedBrowser.executablePath}</p>
 					)}
 					{browserInventory != null && browserInventory.available.length > 0 && !selectedBrowser && (
-						<p className="mt-2 text-xs text-text-muted">
+						<p className="mt-2 text-caption text-text-muted">
 							Detected: {browserInventory.available.map((browser) => browser.name).join(', ')}
 						</p>
 					)}
 						{browserInventory?.restartRequired && (
-							<p role="status" className="mt-2 text-xs text-warning">
+							<p role="status" className="mt-2 text-caption text-warning">
 								Currently using {currentBrowserName}. Restart CitadelOps to switch to {browserInventory.selected?.name}.
 							</p>
 						)}
 						{browserSelectionError && (
-						<p className="mt-2 text-xs text-error">{browserSelectionError}</p>
+						<p className="mt-2 text-caption text-error">{browserSelectionError}</p>
 					)}
 						<div className="mt-4 border-t border-border-base pt-4">
-						<label className="block text-[10px] font-bold text-text-muted uppercase tracking-wider mb-1.5">
+						<label className="block text-caption font-semibold text-text-muted mb-1.5">
 							<LocalizedText messageKey="ui.views.settingsView.custom.chromium.executable.45aa9d3d" /></label>
 						<div className="flex flex-col gap-2 sm:flex-row">
 							<Input
@@ -1227,15 +1227,15 @@ const SettingsView: React.FC = () => {
 								{t('settings.useExecutable')}
 							</Button>
 						</div>
-							<p className="mt-2 text-xs text-text-muted">
+							<p className="mt-2 text-caption text-text-muted">
 								<LocalizedText messageKey="ui.views.settingsView.use.this.for.chromium.based.builds.that.0d03b8ba" /></p>
 						</div>
 						<div className="mt-4 border-t border-border-base pt-4">
-							<h3 className="text-sm font-semibold text-text-main"><LocalizedText messageKey="ui.views.settingsView.relog.attempt.delay.bf7a1223" /></h3>
-							<p className="mt-1 text-xs leading-relaxed text-text-muted">
+							<h3 className="text-title-sm font-semibold text-text-main"><LocalizedText messageKey="ui.views.settingsView.relog.attempt.delay.bf7a1223" /></h3>
+							<p className="mt-1 text-caption text-text-muted">
 								<LocalizedText messageKey="ui.views.settingsView.wait.this.long.after.an.automatic.socket.c8fdd01d" /></p>
 							<div className="mt-3 w-full sm:max-w-[200px]">
-								<label htmlFor="relog-attempt-delay" className="block text-[10px] font-bold text-text-muted uppercase tracking-wider mb-1.5">
+								<label htmlFor="relog-attempt-delay" className="block text-caption font-semibold text-text-muted mb-1.5">
 									<LocalizedText messageKey="ui.views.settingsView.delay.minutes.49afca6d" /></label>
 								<Input
 									id="relog-attempt-delay"
@@ -1247,28 +1247,28 @@ const SettingsView: React.FC = () => {
 									onChange={(event) => setRelogDelayMinutes(event.target.value)}
 									onBlur={saveRelogDelay}
 									className="font-mono"
-									rightIcon={<span className="text-xs"><LocalizedText messageKey="ui.views.settingsView.min.1f6fa6f6" /></span>}
+									rightIcon={<span className="text-caption"><LocalizedText messageKey="ui.views.settingsView.min.1f6fa6f6" /></span>}
 								/>
 							</div>
-							<p className="mt-2 text-xs text-text-muted"><LocalizedText messageKey="ui.views.settingsView.default.5.minutes.allowed.range.1.minute.f05366bb" /></p>
-							{relogDelayError && <p role="alert" className="mt-2 text-xs font-medium text-error">{relogDelayError}</p>}
+							<p className="mt-2 text-caption text-text-muted"><LocalizedText messageKey="ui.views.settingsView.default.5.minutes.allowed.range.1.minute.f05366bb" /></p>
+							{relogDelayError && <p role="alert" className="mt-2 text-caption font-medium text-error">{relogDelayError}</p>}
 						</div>
 					</div>
 				</div>
 		</SectionCard>
 
         <SectionCard variant="solid" title={localizeStatic("ui.views.settingsView.title.attack.scheduler.b3c5e8d8")} icon={<span className="flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-500/10"><Icons.Activity className="h-4 w-4 text-indigo-400" /></span>} contentClassName=" space-y-8">
-			{settingsSaveError && <p className="text-xs text-error">{settingsSaveError}</p>}
+			{settingsSaveError && <p className="text-caption text-error">{settingsSaveError}</p>}
             <div className="space-y-4">
               <div>
-                <h3 className="text-sm font-semibold text-text-main mb-1"><LocalizedText messageKey="ui.views.settingsView.random.attack.timer.range.b8e88f73" /></h3>
-                <p className="text-xs text-text-muted mb-4">
+                <h3 className="text-title-sm font-semibold text-text-main mb-1"><LocalizedText messageKey="ui.views.settingsView.random.attack.timer.range.b8e88f73" /></h3>
+                <p className="text-caption text-text-muted mb-4">
                   <LocalizedText messageKey="ui.views.settingsView.set.the.minimum.and.maximum.delay.in.da041c17" /></p>
               </div>
 
               <div className="flex flex-col sm:flex-row sm:items-center gap-4">
                 <div className="relative flex-1 w-full sm:max-w-[200px]">
-                  <label htmlFor="min-attack-delay" className="block text-[10px] font-bold text-text-muted uppercase tracking-wider mb-1.5">
+                  <label htmlFor="min-attack-delay" className="block text-caption font-semibold text-text-muted mb-1.5">
                     <LocalizedText messageKey="ui.views.settingsView.min.delay.sec.aa48b238" /></label>
                   <Input
 					id="min-attack-delay"
@@ -1279,14 +1279,14 @@ const SettingsView: React.FC = () => {
                     onChange={handleMinChange}
                     onBlur={handleMinBlur}
                     className="font-mono"
-                    rightIcon={<span className="text-xs">s</span>}
+                    rightIcon={<span className="text-caption">s</span>}
                   />
                 </div>
 
                 <div className="hidden sm:block mt-6 text-text-muted font-bold">-</div>
 
                 <div className="relative flex-1 w-full sm:max-w-[200px]">
-                  <label htmlFor="max-attack-delay" className="block text-[10px] font-bold text-text-muted uppercase tracking-wider mb-1.5">
+                  <label htmlFor="max-attack-delay" className="block text-caption font-semibold text-text-muted mb-1.5">
                     <LocalizedText messageKey="ui.views.settingsView.max.delay.sec.4ad0aba4" /></label>
                   <Input
 					id="max-attack-delay"
@@ -1297,7 +1297,7 @@ const SettingsView: React.FC = () => {
                     onChange={handleMaxChange}
                     onBlur={handleMaxBlur}
                     className="font-mono"
-                    rightIcon={<span className="text-xs">s</span>}
+                    rightIcon={<span className="text-caption">s</span>}
                   />
                 </div>
               </div>
@@ -1307,8 +1307,8 @@ const SettingsView: React.FC = () => {
 
 			<div className="space-y-4">
 				<div>
-					<h3 className="text-sm font-semibold text-text-main mb-1"><LocalizedText messageKey="ui.views.settingsView.automated.attack.priority.11e13bd6" /></h3>
-					<p className="text-xs text-text-muted mb-4">
+					<h3 className="text-title-sm font-semibold text-text-main mb-1"><LocalizedText messageKey="ui.views.settingsView.automated.attack.priority.11e13bd6" /></h3>
+					<p className="text-caption text-text-muted mb-4">
 						<LocalizedText messageKey="ui.views.settingsView.drag.modules.into.priority.order.highest.first.631d17d1" /></p>
 				</div>
 
@@ -1347,12 +1347,12 @@ const SettingsView: React.FC = () => {
 							}`}
 						>
 							<Icons.GripVertical className="h-5 w-5 shrink-0 text-text-muted" aria-hidden="true" />
-							<span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-bg-card text-xs font-bold tabular-nums text-primary ring-1 ring-border-base">
+							<span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-bg-card text-caption font-semibold tabular-nums text-primary ring-1 ring-border-base">
 								{index + 1}
 							</span>
 							<span className="min-w-0 flex-1">
-								<span className="block text-xs font-bold text-text-main">{feature.label}</span>
-								<span className="mt-0.5 block text-[11px] leading-4 text-text-muted">{feature.detail}</span>
+								<span className="block text-caption font-semibold text-text-main">{feature.label}</span>
+								<span className="mt-0.5 block text-caption text-text-muted">{feature.detail}</span>
 							</span>
 							<span className="flex shrink-0 items-center gap-1">
 								<Button iconOnly variant="ghost"
@@ -1383,13 +1383,13 @@ const SettingsView: React.FC = () => {
 
         <SectionCard variant="solid" title={localizeStatic("ui.views.settingsView.title.equipment.upgrades.c92efd82")} icon={<span className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-500/10"><Icons.Shield className="h-4 w-4 text-emerald-400" /></span>} contentClassName=" space-y-4">
             <div>
-              <h3 className="text-sm font-semibold text-text-main mb-1"><LocalizedText messageKey="ui.views.settingsView.upgrade.step.delay.8a021bb3" /></h3>
-              <p className="text-xs text-text-muted mb-4">
+              <h3 className="text-title-sm font-semibold text-text-main mb-1"><LocalizedText messageKey="ui.views.settingsView.upgrade.step.delay.8a021bb3" /></h3>
+              <p className="text-caption text-text-muted mb-4">
                 <LocalizedText messageKey="ui.views.settingsView.pause.between.each.enchant.command.when.bulk.79cb327f" /></p>
             </div>
 
             <div className="relative flex-1 w-full sm:max-w-[200px]">
-              <label htmlFor="upgrade-step-delay" className="block text-[10px] font-bold text-text-muted uppercase tracking-wider mb-1.5">
+              <label htmlFor="upgrade-step-delay" className="block text-caption font-semibold text-text-muted mb-1.5">
                 <LocalizedText messageKey="ui.views.settingsView.delay.ms.199702c3" /></label>
               <Input
 				id="upgrade-step-delay"
@@ -1401,18 +1401,18 @@ const SettingsView: React.FC = () => {
                 onChange={(e) => setUpgradeEreDelayMs(e.target.value)}
                 onBlur={handleUpgradeDelayBlur}
                 className="font-mono"
-                rightIcon={<span className="text-xs"><LocalizedText messageKey="ui.views.settingsView.ms.f785c3ce" /></span>}
+                rightIcon={<span className="text-caption"><LocalizedText messageKey="ui.views.settingsView.ms.f785c3ce" /></span>}
               />
             </div>
 
             <div>
-              <h3 className="text-sm font-semibold text-text-main mb-1"><LocalizedText messageKey="ui.views.settingsView.coin.reserve.threshold.6b825237" /></h3>
-              <p className="text-xs text-text-muted mb-4">
+              <h3 className="text-title-sm font-semibold text-text-main mb-1"><LocalizedText messageKey="ui.views.settingsView.coin.reserve.threshold.6b825237" /></h3>
+              <p className="text-caption text-text-muted mb-4">
                 <LocalizedText messageKey="ui.views.settingsView.block.equipment.and.gem.upgrades.when.your.22ba7ede" /></p>
             </div>
 
             <div className="relative flex-1 w-full sm:max-w-[200px]">
-              <label htmlFor="upgrade-coin-reserve" className="block text-[10px] font-bold text-text-muted uppercase tracking-wider mb-1.5">
+              <label htmlFor="upgrade-coin-reserve" className="block text-caption font-semibold text-text-muted mb-1.5">
                 {t('settings.minimumCoins')}
               </label>
               <Input
@@ -1425,7 +1425,7 @@ const SettingsView: React.FC = () => {
                 onBlur={handleUpgradeCoinThresholdBlur}
                 className="font-mono"
               />
-              <p className="mt-2 text-xs text-text-muted">
+              <p className="mt-2 text-caption text-text-muted">
                 Reserve: <span className="font-mono font-semibold text-text-main">{parsedCoinThreshold.toLocaleString(locale)}</span> coins
               </p>
             </div>

@@ -343,8 +343,8 @@ export const AutoBuyerSettingsModal: React.FC<AutoBuyerSettingsModalProps> = ({ 
         <Card variant="solid" className="">
           <div className="flex items-start justify-between gap-4">
             <div>
-              <h3 className="text-sm font-black text-text-main"><LocalizedText messageKey="ui.settings.components.autoBuyerSettingsModal.run.auto.buyer.d3b546dd" /></h3>
-              <p className="mt-1 text-xs text-text-muted">
+              <h3 className="text-title-sm font-bold text-text-main"><LocalizedText messageKey="ui.settings.components.autoBuyerSettingsModal.run.auto.buyer.d3b546dd" /></h3>
+              <p className="mt-1 text-caption text-text-muted">
                 {autoBuyerEnabled
                   ? 'Auto Buyer is running and can act on the saved shop, specialist, and feast goals below.'
                   : 'Auto Buyer is paused. Saved goals, including feast upkeep, will not run until this master switch is on.'}
@@ -365,14 +365,14 @@ export const AutoBuyerSettingsModal: React.FC<AutoBuyerSettingsModalProps> = ({ 
           <div className="mb-4 flex items-start gap-3">
             <span className="rounded-xl bg-primary/10 p-2 text-primary"><ShieldCheck className="h-5 w-5" /></span>
             <div>
-              <h3 className="text-sm font-black text-text-main"><LocalizedText messageKey="ui.settings.components.autoBuyerSettingsModal.account.wide.safety.limits.f0306444" /></h3>
-              <p className="mt-1 text-xs text-text-muted"><LocalizedText messageKey="ui.settings.components.autoBuyerSettingsModal.auto.buyer.sends.one.bounded.operation.at.161e8417" /></p>
-              <p className="mt-1 text-xs text-text-muted"><LocalizedText messageKey="ui.settings.components.autoBuyerSettingsModal.invalid.saved.shop.or.specialist.goals.are.de1b733a" /></p>
+              <h3 className="text-title-sm font-bold text-text-main"><LocalizedText messageKey="ui.settings.components.autoBuyerSettingsModal.account.wide.safety.limits.f0306444" /></h3>
+              <p className="mt-1 text-caption text-text-muted"><LocalizedText messageKey="ui.settings.components.autoBuyerSettingsModal.auto.buyer.sends.one.bounded.operation.at.161e8417" /></p>
+              <p className="mt-1 text-caption text-text-muted"><LocalizedText messageKey="ui.settings.components.autoBuyerSettingsModal.invalid.saved.shop.or.specialist.goals.are.de1b733a" /></p>
             </div>
           </div>
           <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
             <label className="block xl:col-span-2">
-              <span className="mb-1.5 block text-[10px] font-black uppercase tracking-wider text-text-muted"><LocalizedText messageKey="ui.settings.components.autoBuyerSettingsModal.great.empire.main.castle.12ea8b60" /></span>
+              <span className="mb-1.5 block text-caption font-semibold text-text-muted"><LocalizedText messageKey="ui.settings.components.autoBuyerSettingsModal.great.empire.main.castle.12ea8b60" /></span>
               <Select
                 value={draft.sourceCastleId > 0 ? String(draft.sourceCastleId) : ''}
                 onChange={(value) => setDraft((current) => ({ ...current, sourceCastleId: Number(value) || 0 }))}
@@ -390,8 +390,8 @@ export const AutoBuyerSettingsModal: React.FC<AutoBuyerSettingsModalProps> = ({ 
           </div>
           <div className="mt-4 flex items-center justify-between gap-4 border-t border-border-base pt-4">
             <div>
-              <div className="text-sm font-bold text-text-main"><LocalizedText messageKey="ui.settings.components.autoBuyerSettingsModal.allow.ruby.priced.shop.packages.5285ebed" /></div>
-              <p className="mt-0.5 text-xs text-text-muted"><LocalizedText messageKey="ui.settings.components.autoBuyerSettingsModal.each.package.still.needs.its.own.per.23f9dcc5" /></p>
+              <div className="text-body font-semibold text-text-main"><LocalizedText messageKey="ui.settings.components.autoBuyerSettingsModal.allow.ruby.priced.shop.packages.5285ebed" /></div>
+              <p className="mt-0.5 text-caption text-text-muted"><LocalizedText messageKey="ui.settings.components.autoBuyerSettingsModal.each.package.still.needs.its.own.per.23f9dcc5" /></p>
             </div>
             <Switch
               checked={draft.allowRubyPackages}
@@ -417,16 +417,16 @@ export const AutoBuyerSettingsModal: React.FC<AutoBuyerSettingsModalProps> = ({ 
         </div>
 
         {loadError ? (
-          <Card variant="solid" className="text-sm text-error">{loadError}</Card>
+          <Card variant="solid" className="text-body text-error">{loadError}</Card>
         ) : !projection ? (
-          <Card variant="solid" className="text-center text-sm text-text-muted"><LocalizedText messageKey="ui.settings.components.autoBuyerSettingsModal.loading.the.current.official.purchase.catalog.853de6af" /></Card>
+          <Card variant="solid" className="text-center text-body text-text-muted"><LocalizedText messageKey="ui.settings.components.autoBuyerSettingsModal.loading.the.current.official.purchase.catalog.853de6af" /></Card>
         ) : null}
 
         {projection && section === 'shops' ? (
           <div className="space-y-3">
             <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-[minmax(0,18rem)_minmax(0,18rem)_minmax(0,1fr)]">
               <label className="block">
-                <span className="mb-1.5 block text-[10px] font-black uppercase tracking-wider text-text-muted"><LocalizedText messageKey="ui.settings.components.autoBuyerSettingsModal.shop.d00aae6b" /></span>
+                <span className="mb-1.5 block text-caption font-semibold text-text-muted"><LocalizedText messageKey="ui.settings.components.autoBuyerSettingsModal.shop.d00aae6b" /></span>
                 <Select
                   value={selectedShopId}
                   onChange={(value) => {
@@ -448,7 +448,7 @@ export const AutoBuyerSettingsModal: React.FC<AutoBuyerSettingsModalProps> = ({ 
                 />
               </label>
               <label className="block">
-                <span className="mb-1.5 block text-[10px] font-black uppercase tracking-wider text-text-muted"><LocalizedText messageKey="ui.settings.components.autoBuyerSettingsModal.currency.3ac1a9ec" /></span>
+                <span className="mb-1.5 block text-caption font-semibold text-text-muted"><LocalizedText messageKey="ui.settings.components.autoBuyerSettingsModal.currency.3ac1a9ec" /></span>
                 <Select
                   value={selectedCurrencyKey}
                   onChange={setSelectedCurrencyKey}
@@ -469,7 +469,7 @@ export const AutoBuyerSettingsModal: React.FC<AutoBuyerSettingsModalProps> = ({ 
                 />
               </label>
               <label className="block md:col-span-2 xl:col-span-1">
-                <span className="mb-1.5 block text-[10px] font-black uppercase tracking-wider text-text-muted"><LocalizedText messageKey="ui.settings.components.autoBuyerSettingsModal.search.selected.shop.8efc054e" /></span>
+                <span className="mb-1.5 block text-caption font-semibold text-text-muted"><LocalizedText messageKey="ui.settings.components.autoBuyerSettingsModal.search.selected.shop.8efc054e" /></span>
                 <Input
                   value={query}
                   onChange={(event) => setQuery(event.target.value)}
@@ -482,13 +482,13 @@ export const AutoBuyerSettingsModal: React.FC<AutoBuyerSettingsModalProps> = ({ 
               <Card key={selectedShop.id} variant="solid" className="overflow-hidden">
                 <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border-base px-4 py-3">
                   <div className="flex items-center gap-2">
-                    <h3 className="text-sm font-black text-text-main">{selectedShop.name}</h3>
+                    <h3 className="text-title-sm font-bold text-text-main">{selectedShop.name}</h3>
                     <Badge variant={selectedShop.requiresEvent ? 'warning' : 'outline'}>{selectedShop.requiresEvent ? 'Event only' : 'Reset tracked'}</Badge>
                     {(enabledPackageCountByShop.get(selectedShop.id) ?? 0) > 0 ? (
                       <Badge variant="secondary">{enabledPackageCountByShop.get(selectedShop.id)} selected</Badge>
                     ) : null}
                   </div>
-                  <span className="text-xs text-text-muted">
+                  <span className="text-caption text-text-muted">
                     {filteredPackages.length}{query.trim() || selectedCurrencyKey !== ALL_AUTO_BUYER_CURRENCIES ? ` of ${selectedShop.packageCount}` : ''} supported item{filteredPackages.length === 1 ? '' : 's'}
                   </span>
                 </div>
@@ -507,7 +507,7 @@ export const AutoBuyerSettingsModal: React.FC<AutoBuyerSettingsModalProps> = ({ 
                               <Badge variant={product.price.premium ? 'warning' : 'secondary'}>{formatPrice(product)}</Badge>
                               <Badge variant="outline">{purchased}/{product.stock} bought</Badge>
                             </div>
-                            {product.detail ? <p className="mt-1 text-xs text-text-muted">{product.detail}</p> : null}
+                            {product.detail ? <p className="mt-1 text-caption text-text-muted">{product.detail}</p> : null}
                           </div>
                           <div className="flex shrink-0 items-end gap-3">
                             <div className="w-44">
@@ -547,7 +547,7 @@ export const AutoBuyerSettingsModal: React.FC<AutoBuyerSettingsModalProps> = ({ 
                                 onChange={(maximumRubySpendPerReset) => updatePackage(product, { maximumRubySpendPerReset })}
                               />
                             ) : (
-                              <div className="rounded-xl border border-border-base bg-surface-base/40 px-3 py-2 text-xs text-text-muted">
+                              <div className="rounded-xl border border-border-base bg-surface-base/40 px-3 py-2 text-caption text-text-muted">
                                 <LocalizedText messageKey="ui.settings.components.autoBuyerSettingsModal.auto.buyer.stops.at.the.purchase.limit.d36cb70d" /></div>
                             )}
                           </div>
@@ -556,12 +556,12 @@ export const AutoBuyerSettingsModal: React.FC<AutoBuyerSettingsModalProps> = ({ 
                     );
                   })}
                   {filteredPackages.length === 0 ? (
-                    <div className="p-8 text-center text-sm text-text-muted"><LocalizedText messageKey="ui.settings.components.autoBuyerSettingsModal.no.supported.stock.limited.items.match.these.4d46bd61" /></div>
+                    <div className="p-8 text-center text-body text-text-muted"><LocalizedText messageKey="ui.settings.components.autoBuyerSettingsModal.no.supported.stock.limited.items.match.these.4d46bd61" /></div>
                   ) : null}
                 </div>
               </Card>
             ) : (
-              <Card variant="solid" className="text-center text-sm text-text-muted"><LocalizedText messageKey="ui.settings.components.autoBuyerSettingsModal.no.supported.shops.are.available.in.the.0dc94162" /></Card>
+              <Card variant="solid" className="text-center text-body text-text-muted"><LocalizedText messageKey="ui.settings.components.autoBuyerSettingsModal.no.supported.shops.are.available.in.the.0dc94162" /></Card>
             )}
           </div>
         ) : null}
@@ -570,9 +570,9 @@ export const AutoBuyerSettingsModal: React.FC<AutoBuyerSettingsModalProps> = ({ 
           <Card variant="solid" className="overflow-hidden">
             <div className="flex flex-wrap items-start justify-between gap-3 border-b border-border-base p-4">
               <div>
-                <h3 className="text-sm font-black text-text-main"><LocalizedText messageKey="ui.settings.components.autoBuyerSettingsModal.specialist.renewal.floors.c3cb9aea" /></h3>
-				<p className="mt-1 text-xs text-text-muted"><LocalizedText messageKey="ui.settings.components.autoBuyerSettingsModal.enabled.floors.stay.between.14.and.365.55fa81de" /></p>
-				{!specialistUpkeepSupported ? <p className="mt-2 text-xs text-amber-300">{projection.specialistUpkeep?.reason || 'This version cannot safely automate specialist purchases yet. Saved goals can be disabled.'}</p> : null}
+                <h3 className="text-title-sm font-bold text-text-main"><LocalizedText messageKey="ui.settings.components.autoBuyerSettingsModal.specialist.renewal.floors.c3cb9aea" /></h3>
+				<p className="mt-1 text-caption text-text-muted"><LocalizedText messageKey="ui.settings.components.autoBuyerSettingsModal.enabled.floors.stay.between.14.and.365.55fa81de" /></p>
+				{!specialistUpkeepSupported ? <p className="mt-2 text-caption text-amber-300">{projection.specialistUpkeep?.reason || 'This version cannot safely automate specialist purchases yet. Saved goals can be disabled.'}</p> : null}
               </div>
               <div className="flex gap-2">
                 <Button variant="ghost" onClick={() => setAllSpecialists(false)}><LocalizedText messageKey="ui.settings.components.autoBuyerSettingsModal.disable.all.6cb2279d" /></Button>
@@ -607,8 +607,8 @@ export const AutoBuyerSettingsModal: React.FC<AutoBuyerSettingsModalProps> = ({ 
                           <Badge variant="outline">{current?.permanent ? 'Permanent' : formatRemaining(current?.expiresAt)}</Badge>
 						  {enabled ? <Badge variant="outline">{status}</Badge> : null}
                         </div>
-						<p className="mt-1 text-xs text-text-muted">7 days · validated conservative maximum {safeMaximum > 0 ? safeMaximum.toLocaleString() : 'unavailable'} rubies; discounts may reduce the charge</p>
-						{latest ? <p className="mt-1 text-xs text-text-muted">{latest.outcome} · timer {formatObservedTimer(latest.timerBefore)} → {formatObservedTimer(latest.timerAfter)} · rubies {latest.rubyBeforeKnown ? (latest.rubyBefore ?? 0).toLocaleString() : 'unknown'} → {latest.rubyAfterKnown ? (latest.rubyAfter ?? 0).toLocaleString() : 'unknown'} · {latest.debitVerification}</p> : null}
+						<p className="mt-1 text-caption text-text-muted">7 days · validated conservative maximum {safeMaximum > 0 ? safeMaximum.toLocaleString() : 'unavailable'} rubies; discounts may reduce the charge</p>
+						{latest ? <p className="mt-1 text-caption text-text-muted">{latest.outcome} · timer {formatObservedTimer(latest.timerBefore)} → {formatObservedTimer(latest.timerAfter)} · rubies {latest.rubyBeforeKnown ? (latest.rubyBefore ?? 0).toLocaleString() : 'unknown'} → {latest.rubyAfterKnown ? (latest.rubyAfter ?? 0).toLocaleString() : 'unknown'} · {latest.debitVerification}</p> : null}
                       </div>
                       <Switch
                         checked={enabled}
@@ -654,8 +654,8 @@ export const AutoBuyerSettingsModal: React.FC<AutoBuyerSettingsModalProps> = ({ 
             <Card variant="solid" className="">
               <div className="flex items-start justify-between gap-4">
                 <div>
-                  <h3 className="text-sm font-black text-text-main"><LocalizedText messageKey="ui.settings.components.autoBuyerSettingsModal.maintain.a.food.production.feast.44cda31f" /></h3>
-                  <p className="mt-1 text-xs text-text-muted">
+                  <h3 className="text-title-sm font-bold text-text-main"><LocalizedText messageKey="ui.settings.components.autoBuyerSettingsModal.maintain.a.food.production.feast.44cda31f" /></h3>
+                  <p className="mt-1 text-caption text-text-muted">
                     {automaticFeastSourceSupported
                       ? 'The selected feast is started or extended one purchase at a time. Auto Buyer chooses the owned positive-net castle with the most food stored.'
                       : 'This version does not provide the automatic feast-source and purchase-evidence data these controls need.'}
@@ -674,7 +674,7 @@ export const AutoBuyerSettingsModal: React.FC<AutoBuyerSettingsModalProps> = ({ 
               {draft.feast.enabled || !selectedFeastSupported ? (
                 <div className="mt-4 grid gap-4 border-t border-border-base pt-4 md:grid-cols-2">
                   <label className="block md:col-span-2">
-                    <span className="mb-1.5 block text-[10px] font-black uppercase tracking-wider text-text-muted"><LocalizedText messageKey="ui.settings.components.autoBuyerSettingsModal.feast.e0c5a33c" /></span>
+                    <span className="mb-1.5 block text-caption font-semibold text-text-muted"><LocalizedText messageKey="ui.settings.components.autoBuyerSettingsModal.feast.e0c5a33c" /></span>
                     <Select
                       value={String(draft.feast.feastId)}
                       onChange={(value) => {
@@ -703,7 +703,7 @@ export const AutoBuyerSettingsModal: React.FC<AutoBuyerSettingsModalProps> = ({ 
                     />
                   </label>
                   <label className="block">
-                    <span className="mb-1.5 block text-[10px] font-black uppercase tracking-wider text-text-muted"><LocalizedText messageKey="ui.settings.components.autoBuyerSettingsModal.minimum.remaining.hours.7abcfe8a" /></span>
+                    <span className="mb-1.5 block text-caption font-semibold text-text-muted"><LocalizedText messageKey="ui.settings.components.autoBuyerSettingsModal.minimum.remaining.hours.7abcfe8a" /></span>
                     <Input
                       type="number"
                       min={1}
@@ -716,24 +716,24 @@ export const AutoBuyerSettingsModal: React.FC<AutoBuyerSettingsModalProps> = ({ 
                     />
                   </label>
                   <div className="rounded-xl border border-border-base bg-bg-subtle p-3">
-                    <div className="text-[10px] font-black uppercase tracking-wider text-text-muted"><LocalizedText messageKey="ui.settings.components.autoBuyerSettingsModal.automatic.food.source.14482610" /></div>
+                    <div className="text-caption font-semibold text-text-muted"><LocalizedText messageKey="ui.settings.components.autoBuyerSettingsModal.automatic.food.source.14482610" /></div>
                     {automaticFeastSourceSupported ? (
                       <>
-                        <div className="mt-1 text-sm font-bold text-text-main">
+                        <div className="mt-1 text-body font-semibold text-text-main">
                           {selectedSource ? `${selectedSource.name} · K${selectedSource.kingdomId} · ${selectedSource.x}:${selectedSource.y}` : 'Waiting for fresh eligible castle data'}
                         </div>
-                        <p className="mt-1 text-xs text-text-muted">
+                        <p className="mt-1 text-caption text-text-muted">
                           {selectedSourceID
                             ? `${formatMetric(autoBuyerRuntime?.metrics?.feastSourceFood)} food stored · ${formatMetric(autoBuyerRuntime?.metrics?.feastSourceNetFoodPerHour)} net food/hour`
                             : 'Selection waits for fresh stored-food and economy data from every usable owned castle; only positive-net castles qualify.'}
                         </p>
                       </>
-                    ) : <p className="mt-1 text-xs text-warning"><LocalizedText messageKey="ui.settings.components.autoBuyerSettingsModal.update.this.version.before.changing.or.enabling.4be32c9b" /></p>}
+                    ) : <p className="mt-1 text-caption text-warning"><LocalizedText messageKey="ui.settings.components.autoBuyerSettingsModal.update.this.version.before.changing.or.enabling.4be32c9b" /></p>}
                   </div>
                   {!selectedFeastSupported ? (
                     <div className="rounded-xl border border-warning/30 bg-warning/5 p-3 md:col-span-2">
-                      <div className="text-sm font-bold text-text-main"><LocalizedText messageKey="ui.settings.components.autoBuyerSettingsModal.automatic.purchase.unavailable.d44392f5" /></div>
-                      <p className="mt-0.5 text-xs text-text-muted">
+                      <div className="text-body font-semibold text-text-main"><LocalizedText messageKey="ui.settings.components.autoBuyerSettingsModal.automatic.purchase.unavailable.d44392f5" /></div>
+                      <p className="mt-0.5 text-caption text-text-muted">
                         {selectedFeast?.automaticPurchase?.reason ?? 'This feast cannot be purchased safely by Auto Buyer.'}
                         {preservingEnabledUnsupportedFeast
                           ? ' The saved selection is preserved so you can disable it or choose a supported feast.'
@@ -744,8 +744,8 @@ export const AutoBuyerSettingsModal: React.FC<AutoBuyerSettingsModalProps> = ({ 
                     <>
                       <div className="flex items-center justify-between gap-3 rounded-xl border border-warning/30 bg-warning/5 p-3">
                         <div>
-                          <div className="text-sm font-bold text-text-main"><LocalizedText messageKey="ui.settings.components.autoBuyerSettingsModal.allow.rubies.for.this.feast.c169ac60" /></div>
-                          <p className="mt-0.5 text-xs text-text-muted"><LocalizedText messageKey="ui.settings.components.autoBuyerSettingsModal.still.preserves.the.global.ruby.reserve.c2bfbc23" /></p>
+                          <div className="text-body font-semibold text-text-main"><LocalizedText messageKey="ui.settings.components.autoBuyerSettingsModal.allow.rubies.for.this.feast.c169ac60" /></div>
+                          <p className="mt-0.5 text-caption text-text-muted"><LocalizedText messageKey="ui.settings.components.autoBuyerSettingsModal.still.preserves.the.global.ruby.reserve.c2bfbc23" /></p>
                         </div>
                         <Switch
                           checked={draft.feast.allowRubies}
@@ -770,7 +770,7 @@ export const AutoBuyerSettingsModal: React.FC<AutoBuyerSettingsModalProps> = ({ 
                   )}
                 </div>
               ) : null}
-              <div className="mt-3 space-y-2 text-xs text-text-muted">
+              <div className="mt-3 space-y-2 text-caption text-text-muted">
                 <div className="flex items-center gap-2">
                   <Clock3 className="h-3.5 w-3.5" /> Current feast: {formatRemaining(state?.market.feast?.expiresAt)} · configured minimum {feastHoursValid ? `${feastHours}h` : 'invalid'}
                 </div>
@@ -797,8 +797,8 @@ export const AutoBuyerSettingsModal: React.FC<AutoBuyerSettingsModalProps> = ({ 
               <div className="flex items-start gap-3">
                 <Sparkles className="mt-0.5 h-5 w-5 shrink-0 text-text-muted" />
                 <div>
-                  <h3 className="text-sm font-black text-text-main"><LocalizedText messageKey="ui.settings.components.autoBuyerSettingsModal.timed.ruby.offers.are.staged.for.a.4ada9052" /></h3>
-                  <p className="mt-1 text-xs text-text-muted">{projection.timedOffers.reason ?? 'Unattended timed-offer purchases are disabled.'} The future flow will require an item match, a user ceiling, and the server-confirmed quote before purchase.</p>
+                  <h3 className="text-title-sm font-bold text-text-main"><LocalizedText messageKey="ui.settings.components.autoBuyerSettingsModal.timed.ruby.offers.are.staged.for.a.4ada9052" /></h3>
+                  <p className="mt-1 text-caption text-text-muted">{projection.timedOffers.reason ?? 'Unattended timed-offer purchases are disabled.'} The future flow will require an item match, a user ceiling, and the server-confirmed quote before purchase.</p>
                 </div>
               </div>
             </Card>
@@ -846,7 +846,7 @@ function NumberField({
 }) {
   return (
     <label className="block">
-      <span className="mb-1.5 block text-[10px] font-black uppercase tracking-wider text-text-muted">{label}</span>
+      <span className="mb-1.5 block text-caption font-semibold text-text-muted">{label}</span>
       <Input
         type="number"
         min={minimum}
@@ -858,7 +858,7 @@ function NumberField({
           ? Number(event.target.value)
           : clampAutoBuyerInteger(event.target.value, minimum, maximum, minimum))}
       />
-      {error ? <span className="mt-1 block text-xs text-red-300">{error}</span> : null}
+      {error ? <span className="mt-1 block text-caption text-red-300">{error}</span> : null}
     </label>
   );
 }

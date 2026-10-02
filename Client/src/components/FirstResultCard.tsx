@@ -29,11 +29,11 @@ const Icon: React.FC<{ state: FirstResultState }> = ({ state }) => {
 export const FirstResultCard: React.FC<{ result: FirstResult; accountLabel?: string; className?: string }> = ({ result, accountLabel, className = '' }) => {
   const reason = useLocalizedMessage(result.failure?.descriptor, result.failure?.text ?? '');
   return (
-    <div className={`rounded-lg border border-border-base bg-bg-app/40 px-3 py-2 text-xs leading-relaxed ${className}`} data-first-result={result.state}>
+    <div className={`rounded-lg border border-border-base bg-bg-app/40 px-3 py-2 text-caption ${className}`} data-first-result={result.state}>
       <div className="flex items-start gap-2">
         <Icon state={result.state} />
         <div className="min-w-0 flex-1">
-          <div className="text-[10px] font-black uppercase tracking-wider text-text-muted"><LocalizedText messageKey="firstResult.title" /></div>
+          <div className="text-caption font-semibold text-text-muted"><LocalizedText messageKey="firstResult.title" /></div>
           <p className={result.state === 'confirmed' ? 'font-semibold text-text-main' : 'text-text-main'}>
             <LocalizedText messageKey={result.summaryKey} params={result.params} />
           </p>

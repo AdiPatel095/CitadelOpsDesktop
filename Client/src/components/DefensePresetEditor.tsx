@@ -139,14 +139,14 @@ const DefensePresetEditor: React.FC<DefensePresetEditorProps> = ({
     >
       <div className="mx-auto flex w-full max-w-[2300px] flex-col gap-4">
 			{unitsError ? (
-				<div className="rounded-global border border-error/30 bg-error/10 px-4 py-3 text-sm font-semibold text-error">
+				<div className="rounded-global border border-error/30 bg-error/10 px-4 py-3 text-body font-semibold text-error">
 					{unitsError}
 				</div>
 			) : null}
         {nameVisible || draft.sourceCastleId != null ? <section className="rounded-global border border-border-base bg-bg-card/65 p-3 shadow-[var(--shadow-raised)]">
           {nameVisible ? (
             <>
-              <label className="mb-2 block text-xs font-black uppercase tracking-wider text-text-muted"><LocalizedText messageKey="common.presetName" /></label>
+              <label className="mb-2 block text-caption font-semibold text-text-muted"><LocalizedText messageKey="common.presetName" /></label>
               <Input
                 autoFocus
                 value={draft.name}
@@ -157,14 +157,14 @@ const DefensePresetEditor: React.FC<DefensePresetEditorProps> = ({
             </>
           ) : null}
           {draft.sourceCastleId != null ? (
-            <p className="mt-2 text-xs text-text-muted">
+            <p className="mt-2 text-caption text-text-muted">
               Captured from {draft.sourceCastleName || `Castle ${draft.sourceCastleId}`} and now editable as an independent preset.
             </p>
           ) : null}
         </section> : null}
 
         {validationError ? (
-          <div className="rounded-global border border-error/30 bg-error/10 px-4 py-3 text-sm font-semibold text-error">
+          <div className="rounded-global border border-error/30 bg-error/10 px-4 py-3 text-body font-semibold text-error">
             {validationError}
           </div>
         ) : null}
@@ -172,10 +172,10 @@ const DefensePresetEditor: React.FC<DefensePresetEditorProps> = ({
         <section aria-label={localizeStatic("ui.components.defensePresetEditor.aria-label.wall.formation.d775c51f")}>
           <div className="mb-3 flex flex-wrap items-end justify-between gap-3">
             <div>
-              <h3 className="flex items-center gap-2 text-base font-black text-text-main">
+              <h3 className="flex items-center gap-2 text-title-sm font-bold text-text-main">
                 <Shield className="h-4 w-4 text-primary" /> <LocalizedText messageKey="ui.components.defensePresetEditor.wall.formation.d775c51f" />
               </h3>
-              <p className="mt-1 text-xs text-text-muted">
+              <p className="mt-1 text-caption text-text-muted">
                 <LocalizedText messageKey="ui.components.defensePresetEditor.every.position.is.fixed.select.a.tool.b45f9582" /></p>
             </div>
             <Badge variant={wallSplitTotal(draft) === 100 ? 'primary' : 'danger'}>
@@ -225,15 +225,15 @@ const DefensePresetEditor: React.FC<DefensePresetEditorProps> = ({
             </div>
           </div>
 
-          <p className="mt-2 text-xs text-text-muted">
+          <p className="mt-2 text-caption text-text-muted">
             <LocalizedText messageKey="ui.components.defensePresetEditor.the.flank.split.must.total.100.ranged.661c8fad" /></p>
         </section>
 
         <section aria-label={localizeStatic("ui.components.defensePresetEditor.aria-label.moat.tools.f461b2a0")}>
           <div className="mb-3 flex flex-wrap items-end justify-between gap-3">
             <div>
-              <h3 className="flex items-center gap-2 text-base font-black text-text-main"><Waves className="h-4 w-4 text-info" /> <LocalizedText messageKey="ui.components.defensePresetEditor.moat.tools.f461b2a0" /></h3>
-              <p className="mt-1 text-xs text-text-muted"><LocalizedText messageKey="ui.components.defensePresetEditor.each.defense.section.has.one.fixed.moat.0f1c3a73" /></p>
+              <h3 className="flex items-center gap-2 text-title-sm font-bold text-text-main"><Waves className="h-4 w-4 text-info" /> <LocalizedText messageKey="ui.components.defensePresetEditor.moat.tools.f461b2a0" /></h3>
+              <p className="mt-1 text-caption text-text-muted"><LocalizedText messageKey="ui.components.defensePresetEditor.each.defense.section.has.one.fixed.moat.0f1c3a73" /></p>
             </div>
             <Badge variant="outline"><LocalizedText messageKey="ui.components.defensePresetEditor.3.fixed.moat.slots.2c862261" /></Badge>
           </div>
@@ -293,8 +293,8 @@ const DefensePresetEditor: React.FC<DefensePresetEditorProps> = ({
                 ariaLabel={localizeStatic("ui.components.defensePresetEditor.ariaLabel.include.courtyard.setup.in.this.defense.preset.f1d428bf")}
               />
               <span>
-                <span className="block text-sm font-black text-text-main"><LocalizedText messageKey="ui.components.defensePresetEditor.include.courtyard.setup.7218ecf4" /></span>
-                <span className="mt-1 block text-xs text-text-muted">
+                <span className="block text-body font-semibold text-text-main"><LocalizedText messageKey="ui.components.defensePresetEditor.include.courtyard.setup.7218ecf4" /></span>
+                <span className="mt-1 block text-caption text-text-muted">
                   <LocalizedText messageKey="ui.components.defensePresetEditor.capacity.ranged.allocation.three.keep.tool.slots.feaa0287" /></span>
               </span>
             </label>
@@ -322,10 +322,10 @@ const DefensePresetEditor: React.FC<DefensePresetEditorProps> = ({
 
           <div className="mb-3 mt-4 flex flex-wrap items-end justify-between gap-3">
             <div>
-              <h3 className="flex items-center gap-2 text-base font-black text-text-main">
+              <h3 className="flex items-center gap-2 text-title-sm font-bold text-text-main">
                 <Castle className="h-4 w-4 text-primary" /> <LocalizedText messageKey="ui.components.defensePresetEditor.courtyard.tools.ad001739" />
               </h3>
-              <p className="mt-1 text-xs text-text-muted">
+              <p className="mt-1 text-caption text-text-muted">
                 <LocalizedText messageKey="ui.components.defensePresetEditor.dfk.has.three.normal.keep.tool.slots.ea706cd9" /></p>
             </div>
             <div className="flex flex-wrap items-center gap-2">
@@ -445,10 +445,10 @@ const DefenseFlankEditorCard: React.FC<{
         </span>
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
-            <h4 className="text-base font-black text-text-main">{label}</h4>
+            <h4 className="text-title-sm font-bold text-text-main">{label}</h4>
             <Badge variant={front ? 'warning' : 'outline'}>{slotSummary}</Badge>
           </div>
-          <p className="mt-1 text-xs text-text-muted">{description}</p>
+          <p className="mt-1 text-caption text-text-muted">{description}</p>
         </div>
       </div>
 
@@ -525,10 +525,10 @@ const DefenseToolSectionCard: React.FC<{
           </span>
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-2">
-              <h4 className="text-base font-black text-text-main">{label}</h4>
+              <h4 className="text-title-sm font-bold text-text-main">{label}</h4>
               <Badge variant={locked ? 'secondary' : tone === 'sceat' ? 'warning' : 'outline'}>{slotSummary}</Badge>
             </div>
-            <p className="mt-1 text-xs text-text-muted">{description}</p>
+            <p className="mt-1 text-caption text-text-muted">{description}</p>
           </div>
         </div>
       </CardHeader>
@@ -584,8 +584,8 @@ const ToolSlotGroup: React.FC<{
     return (
       <div>
         <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-          <span className="text-[10px] font-black uppercase tracking-wider text-text-muted">{label}</span>
-          <span className="text-[10px] font-semibold text-text-muted">
+          <span className="text-caption font-semibold text-text-muted">{label}</span>
+          <span className="text-caption font-semibold text-text-muted">
             {fixedSlotSpecs.some((slot) => slot.locked)
               ? 'These values are read-only and preserved from the target castle.'
               : 'Select the image to change the assigned tool.'}
@@ -614,7 +614,7 @@ const ToolSlotGroup: React.FC<{
   return (
     <div>
       <div className="mb-2 flex items-center justify-between gap-2">
-        <span className="text-[10px] font-black uppercase tracking-wider text-text-muted">{label}</span>
+        <span className="text-caption font-semibold text-text-muted">{label}</span>
         <Button
           type="button"
           variant="ghost"
@@ -626,7 +626,7 @@ const ToolSlotGroup: React.FC<{
       </div>
       <div className="space-y-2">
         {renderedSlots.length === 0 ? (
-          <div className="rounded-global border border-dashed border-border-base px-3 py-4 text-center text-xs text-text-muted"><LocalizedText messageKey="ui.components.defensePresetEditor.no.slots.in.this.preset.6b67dec4" /></div>
+          <div className="rounded-global border border-dashed border-border-base px-3 py-4 text-center text-caption text-text-muted"><LocalizedText messageKey="ui.components.defensePresetEditor.no.slots.in.this.preset.6b67dec4" /></div>
         ) : renderedSlots.map((slot, index) => {
           const tool = slot.definitionId > 0 ? tools[slot.definitionId] : undefined;
           return (
@@ -640,7 +640,7 @@ const ToolSlotGroup: React.FC<{
                 {slot.definitionId > 0 ? <ToolImage toolId={slot.definitionId} size={30} showLevel={false} /> : <PackageSearch className="h-4 w-4 text-text-muted" />}
               </Button>
               <div className="min-w-0">
-                <label className="mb-1 block truncate text-[9px] font-black uppercase tracking-wider text-text-muted">
+                <label className="mb-1 block truncate text-caption font-semibold text-text-muted">
                   {tool?.name || 'Tool ID'}
                 </label>
                 <Input
@@ -657,7 +657,7 @@ const ToolSlotGroup: React.FC<{
                 />
               </div>
               <div>
-                <label className="mb-1 block text-[9px] font-black uppercase tracking-wider text-text-muted"><LocalizedText messageKey="ui.components.defensePresetEditor.amount.49e96d7c" /></label>
+                <label className="mb-1 block text-caption font-semibold text-text-muted"><LocalizedText messageKey="ui.components.defensePresetEditor.amount.49e96d7c" /></label>
                 <Input
                   type="number"
                   min={1}
@@ -720,7 +720,7 @@ const FixedDefenseToolSlotCard: React.FC<{
 
   return (
     <div className={`flex w-32 shrink-0 flex-col items-center rounded-global border p-2 ${tone.card}`} role="listitem">
-      <div className="mb-2 flex w-full items-center justify-between gap-1 text-[10px] font-black uppercase tracking-wide">
+      <div className="mb-2 flex w-full items-center justify-between gap-1 text-caption font-semibold">
         <span className={tone.text}>{kindLabel} slot {slotSpec.number}</span>
         <span className="max-w-[2.75rem] truncate font-mono text-text-muted">{hasTool ? `#${slot.definitionId}` : 'Empty'}</span>
       </div>
@@ -732,7 +732,7 @@ const FixedDefenseToolSlotCard: React.FC<{
               <div className={`flex h-full w-full items-center justify-center rounded-xl border bg-bg-input/55 ${tone.accent}`}>
                 <ToolImage toolId={slot.definitionId} size={80} showLevel={false} className="rounded-xl" />
               </div>
-              <span className="absolute bottom-0 right-0 z-10 translate-x-1/4 translate-y-1/4 rounded-full bg-white px-2.5 py-0.5 text-center font-mono text-[10px] font-bold tabular-nums text-slate-900 shadow-md ring-1 ring-black/10">
+              <span className="absolute bottom-0 right-0 z-10 translate-x-1/4 translate-y-1/4 rounded-full bg-white px-2.5 py-0.5 text-center font-mono text-caption font-semibold tabular-nums text-slate-900 shadow-md ring-1 ring-black/10">
                 ×{slot.amount.toLocaleString()}
               </span>
             </div>
@@ -760,7 +760,7 @@ const FixedDefenseToolSlotCard: React.FC<{
                   onChange={(event) => onChange({ ...slot, amount: toInteger(event.target.value, 0) })}
                   onClick={(event) => event.stopPropagation()}
                   placeholder="0"
-                  className="w-12 bg-transparent p-0 text-center font-mono text-[11px] font-black tabular-nums text-slate-900 outline-none"
+                  className="w-12 bg-transparent p-0 text-center font-mono text-caption font-semibold tabular-nums text-slate-900 outline-none"
                   aria-label={`${slotSpec.label} amount`}
                   title={`${slotSpec.label} amount`}
                 />
@@ -770,7 +770,7 @@ const FixedDefenseToolSlotCard: React.FC<{
             />
           )}
           {locked ? (
-            <span className="mt-2 line-clamp-2 flex h-9 w-full items-center justify-center text-center text-[11px] font-bold leading-tight text-text-main">
+            <span className="mt-2 line-clamp-2 flex h-9 w-full items-center justify-center text-center text-caption font-semibold text-text-main">
               {tool?.name || `Tool #${slot.definitionId}`}
             </span>
           ) : (
@@ -778,16 +778,16 @@ const FixedDefenseToolSlotCard: React.FC<{
               type="button"
               onClick={onPick}
               disabled={pickerDisabled}
-              className="mt-2 line-clamp-2 w-full text-center text-[11px] leading-tight transition"
+              className="mt-2 line-clamp-2 w-full text-center text-caption transition"
               title={tool?.name || `Tool #${slot.definitionId}`}
             >
               {tool?.name || `Tool #${slot.definitionId}`}
             </Button>
           )}
-          <span className="mt-1 max-w-full truncate text-center font-mono text-[10px] leading-none text-text-muted">
+          <span className="mt-1 max-w-full truncate text-center font-mono text-caption text-text-muted">
             {locked ? purposeLabel : available == null ? purposeLabel : `${available.toLocaleString()} owned`}
           </span>
-          <span className={`mt-2 rounded-full border px-2 py-0.5 text-[9px] font-black uppercase tracking-wide ${tone.chip}`}>
+          <span className={`mt-2 rounded-full border px-2 py-0.5 text-caption font-semibold ${tone.chip}`}>
             {locked ? 'Preserved' : `${kindLabel} only`}
           </span>
         </>
@@ -796,7 +796,7 @@ const FixedDefenseToolSlotCard: React.FC<{
           {locked ? (
             <div className="flex h-[88px] w-[88px] shrink-0 flex-col items-center justify-center gap-2 rounded-global border-2 border-dashed border-border-base bg-bg-input/25 text-text-muted">
               <LockKeyhole className="h-5 w-5" />
-              <span className="text-[9px] font-black uppercase tracking-wide"><LocalizedText messageKey="ui.components.defensePresetEditor.preserved.9d31b48b" /></span>
+              <span className="text-caption font-semibold"><LocalizedText messageKey="ui.components.defensePresetEditor.preserved.9d31b48b" /></span>
             </div>
           ) : (
             <AddSlot
@@ -805,16 +805,16 @@ const FixedDefenseToolSlotCard: React.FC<{
               layout="stacked"
               onClick={onPick}
               disabled={pickerDisabled}
-              className={`h-[88px] w-[88px] shrink-0 px-2 text-[9px] disabled:cursor-not-allowed disabled:opacity-40 ${tone.add}`}
+              className={`h-[88px] w-[88px] shrink-0 px-2 text-caption disabled:cursor-not-allowed disabled:opacity-40 ${tone.add}`}
               title={`Choose a ${purposeLabel.toLowerCase()} tool for ${slotSpec.label.toLowerCase()}`}
               aria-label={`Choose ${slotSpec.label} ${purposeLabel.toLowerCase()} tool`}
             />
           )}
-          <span className="mt-2 flex h-9 items-center text-center text-[11px] font-bold leading-tight text-text-muted">
+          <span className="mt-2 flex h-9 items-center text-center text-caption font-semibold text-text-muted">
             Empty {kindLabel.toLowerCase()} slot
           </span>
-          <span className="mt-1 text-center font-mono text-[10px] leading-none text-text-muted">{purposeLabel}</span>
-          <span className={`mt-2 rounded-full border px-2 py-0.5 text-[9px] font-black uppercase tracking-wide ${tone.chip}`}>
+          <span className="mt-1 text-center font-mono text-caption text-text-muted">{purposeLabel}</span>
+          <span className={`mt-2 rounded-full border px-2 py-0.5 text-caption font-semibold ${tone.chip}`}>
             {locked ? 'Preserved' : `${kindLabel} only`}
           </span>
         </>
@@ -832,7 +832,7 @@ const NumberField: React.FC<{
   onChange: (value: number) => void;
 }> = ({ className = '', label, value, minimum, maximum, onChange }) => (
   <div className={className}>
-    <label className="mb-1.5 block text-[10px] font-black uppercase tracking-wider text-text-muted">{label}</label>
+    <label className="mb-1.5 block text-caption font-semibold text-text-muted">{label}</label>
     <Input
       type="number"
       min={minimum}

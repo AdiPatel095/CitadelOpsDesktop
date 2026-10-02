@@ -281,7 +281,7 @@ export const EventAttackSetupField: React.FC<EventAttackSetupFieldProps> = ({
   const showSaved = mode !== 'inline';
   const showInline = mode !== 'saved';
   const summaryBadges = summary.summary ? (
-    <Badge variant="outline" className="normal-case tracking-normal">
+    <Badge variant="outline" className="normal-case">
       <LocalizedText
         messageKey="eventAttackSetup.summary"
         params={{ waves: summary.summary.waves, troops: summary.summary.troops, tools: summary.summary.tools }}
@@ -292,7 +292,7 @@ export const EventAttackSetupField: React.FC<EventAttackSetupFieldProps> = ({
   return (
     <div id={id} ref={fieldRef} tabIndex={-1} className="min-w-0 space-y-3 rounded-xl border border-border-base bg-bg-app/35 p-3 outline-none focus-visible:ring-2 focus-visible:ring-primary/40">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <span id={`${fieldId}-label`} className="flex items-center gap-2 text-[10px] font-black uppercase tracking-wider text-text-muted">
+        <span id={`${fieldId}-label`} className="flex items-center gap-2 text-caption font-semibold text-text-muted">
           <Swords className="h-3.5 w-3.5" aria-hidden="true" /> {label}
         </span>
         <ChoiceChipGroup<FieldMode>
@@ -323,22 +323,22 @@ export const EventAttackSetupField: React.FC<EventAttackSetupFieldProps> = ({
             menuGrowToViewport
           />
           {value.source === 'preset' && value.missing ? (
-            <p role="alert" className="text-xs text-error"><LocalizedText messageKey="ui.settings.components.eventAttackSetupField.the.selected.preset.does.not.exist.anymore.9c6d37cc" /></p>
+            <p role="alert" className="text-caption text-error"><LocalizedText messageKey="ui.settings.components.eventAttackSetupField.the.selected.preset.does.not.exist.anymore.9c6d37cc" /></p>
           ) : null}
           {selectedPreset ? (
             <div className="flex flex-wrap items-center gap-2">
-              <span className="text-xs font-semibold text-text-main">{selectedPreset.name}</span>
+              <span className="text-caption font-semibold text-text-main">{selectedPreset.name}</span>
               {selectedPreset.app ? appCreatedPresetBadge() : null}
               {summaryBadges}
             </div>
           ) : null}
           {owner && ownerDefinition ? (
-            <p className="text-[11px] text-warning">
+            <p className="text-caption text-warning">
               <LocalizedText messageKey="attackPresets.createdByOther" params={{ module: `${localizeStatic(ownerDefinition.moduleLabelKey)} · ${localizeStatic(ownerDefinition.slotLabelKey)}` }} />
             </p>
           ) : null}
           {otherReferrers.length > 0 ? (
-            <p className="text-[11px] text-text-muted">
+            <p className="text-caption text-text-muted">
               <LocalizedText messageKey="eventAttackSetup.alsoUsedBy" params={{ referrers: describeReferences(otherReferrers) }} />
             </p>
           ) : null}
@@ -354,7 +354,7 @@ export const EventAttackSetupField: React.FC<EventAttackSetupFieldProps> = ({
             </Button>
           ) : null}
           {mode === 'saved' && value.source === 'inline' ? (
-            <p className="text-[11px] text-text-muted"><LocalizedText messageKey="ui.settings.components.eventAttackSetupField.this.attack.still.uses.the.setup.configured.643b868e" /></p>
+            <p className="text-caption text-text-muted"><LocalizedText messageKey="ui.settings.components.eventAttackSetupField.this.attack.still.uses.the.setup.configured.643b868e" /></p>
           ) : null}
         </div>
       ) : null}
@@ -363,17 +363,17 @@ export const EventAttackSetupField: React.FC<EventAttackSetupFieldProps> = ({
         <div className="space-y-2 border-t border-border-base pt-2">
           {inlineSetup ? (
             <div className="flex flex-wrap items-center gap-2">
-              <span className="text-xs font-semibold text-text-main">{generatedName}</span>
+              <span className="text-caption font-semibold text-text-main">{generatedName}</span>
               {appCreatedPresetBadge()}
               {summaryBadges}
             </div>
           ) : value.source === 'preset' ? (
-            <p className="text-xs text-text-muted"><LocalizedText messageKey="ui.settings.components.eventAttackSetupField.this.attack.uses.the.saved.preset.until.af2cf4a8" /></p>
+            <p className="text-caption text-text-muted"><LocalizedText messageKey="ui.settings.components.eventAttackSetupField.this.attack.uses.the.saved.preset.until.af2cf4a8" /></p>
           ) : (
-            <p className="text-xs text-text-muted"><LocalizedText messageKey="ui.settings.components.eventAttackSetupField.no.setup.is.configured.here.yet.start.06ce2916" /></p>
+            <p className="text-caption text-text-muted"><LocalizedText messageKey="ui.settings.components.eventAttackSetupField.no.setup.is.configured.here.yet.start.06ce2916" /></p>
           )}
           {inlineSetup && inlineTroops === 0 ? (
-            <p role="alert" className="text-xs text-error"><LocalizedText messageKey="ui.settings.components.eventAttackSetupField.add.at.least.one.troop.before.saving.798500e7" /></p>
+            <p role="alert" className="text-caption text-error"><LocalizedText messageKey="ui.settings.components.eventAttackSetupField.add.at.least.one.troop.before.saving.798500e7" /></p>
           ) : null}
           <div className="flex flex-wrap gap-2">
             <Button variant="secondary" size="sm" disabled={disabled} leftIcon={<Edit3 className="h-4 w-4" />} onClick={() => setEditing(true)}>
@@ -396,17 +396,17 @@ export const EventAttackSetupField: React.FC<EventAttackSetupFieldProps> = ({
             ) : null}
           </div>
           {recommendedSetup == null && recommendation.requirements.length > 0 ? (
-            <ul className="space-y-1 text-[11px] text-text-muted">
+            <ul className="space-y-1 text-caption text-text-muted">
               {recommendation.requirements.map((requirement) => (
                 <li key={requirement.id}><LocalizedText messageKey={requirement.messageKey} /></li>
               ))}
             </ul>
           ) : null}
           {inlineSetup ? (
-            <p className="text-[11px] text-text-muted"><LocalizedText messageKey="ui.settings.components.eventAttackSetupField.saved.as.a.preset.marked.created.by.a742674a" /></p>
+            <p className="text-caption text-text-muted"><LocalizedText messageKey="ui.settings.components.eventAttackSetupField.saved.as.a.preset.marked.created.by.a742674a" /></p>
           ) : null}
           {targetType === 'pvp' ? (
-            <p className="text-[11px] text-text-muted"><LocalizedText messageKey="ui.settings.components.eventAttackSetupField.pvp.tool.limits.use.the.non.legendary.c8d16933" /></p>
+            <p className="text-caption text-text-muted"><LocalizedText messageKey="ui.settings.components.eventAttackSetupField.pvp.tool.limits.use.the.non.legendary.c8d16933" /></p>
           ) : null}
         </div>
       ) : null}
@@ -470,14 +470,14 @@ export const EventAttackSetupField: React.FC<EventAttackSetupFieldProps> = ({
       >
         <div className="space-y-4">
           <div className="flex flex-wrap items-center gap-2">
-            <span className="text-sm font-bold text-text-main">{sourceCastle?.name?.trim() || (sourceCastle ? `#${sourceCastle.id}` : '')}</span>
-            <Badge variant="outline" className="normal-case tracking-normal">{label}</Badge>
+            <span className="text-body font-semibold text-text-main">{sourceCastle?.name?.trim() || (sourceCastle ? `#${sourceCastle.id}` : '')}</span>
+            <Badge variant="outline" className="normal-case">{label}</Badge>
             {recipePending.length > 0 ? (
-              <Badge variant="warning" className="normal-case tracking-normal"><LocalizedText messageKey="ui.settings.components.eventAttackSetupField.starter.values.pending.product.review.9369cca7" /></Badge>
+              <Badge variant="warning" className="normal-case"><LocalizedText messageKey="ui.settings.components.eventAttackSetupField.starter.values.pending.product.review.9369cca7" /></Badge>
             ) : null}
           </div>
           {value.source !== 'none' ? (
-            <p className="rounded-global border border-warning/40 bg-warning/10 px-3 py-2 text-xs text-text-main">
+            <p className="rounded-global border border-warning/40 bg-warning/10 px-3 py-2 text-caption text-text-main">
               <LocalizedText messageKey="ui.settings.components.eventAttackSetupField.applying.replaces.this.attack.s.current.setup.3028457b" />
             </p>
           ) : null}
@@ -485,7 +485,7 @@ export const EventAttackSetupField: React.FC<EventAttackSetupFieldProps> = ({
             <div key={waveIndex} className="grid gap-2 sm:grid-cols-3">
               {LANES.map((laneKey) => (
                 <div key={laneKey} className="min-w-0 rounded-global border border-border-base bg-bg-app/35 p-2">
-                  <div className="mb-1 text-[10px] font-black uppercase tracking-wider text-text-muted">
+                  <div className="mb-1 text-caption font-semibold text-text-muted">
                     {laneKey === 'L'
                       ? <LocalizedText messageKey="ui.settings.components.eventAttackSetupField.left.flank.95721338" />
                       : laneKey === 'M'
@@ -494,7 +494,7 @@ export const EventAttackSetupField: React.FC<EventAttackSetupFieldProps> = ({
                   </div>
                   <ul className="space-y-1">
                     {wave[laneKey].troops.filter((entry) => entry.itemId != null && entry.quantity > 0).map((entry, index) => (
-                      <li key={`${entry.itemId}:${index}`} className="flex items-center gap-2 text-xs text-text-main">
+                      <li key={`${entry.itemId}:${index}`} className="flex items-center gap-2 text-caption text-text-main">
                         <UnitImage unitId={entry.itemId ?? 0} size={24} />
                         <span className="min-w-0 flex-1 truncate">{getTroop(entry.itemId ?? 0)?.name ?? `#${entry.itemId}`}</span>
                         <span className="font-mono tabular-nums">{entry.quantity.toLocaleString(locale)}</span>
@@ -505,10 +505,10 @@ export const EventAttackSetupField: React.FC<EventAttackSetupFieldProps> = ({
               ))}
             </div>
           )) : null}
-          <ul className="list-disc space-y-1 pl-5 text-xs text-text-muted">
+          <ul className="list-disc space-y-1 pl-5 text-caption text-text-muted">
             {recommendation.notes.map((note) => <li key={note}><LocalizedText messageKey={note} /></li>)}
           </ul>
-          <p className="text-[11px] text-text-muted">
+          <p className="text-caption text-text-muted">
             <LocalizedText messageKey="ui.settings.components.eventAttackSetupField.commanders.tools.travel.and.spending.choices.are.011e83cf" />
           </p>
         </div>
@@ -540,7 +540,7 @@ export const EventAttackSetupField: React.FC<EventAttackSetupFieldProps> = ({
           }}
         >
           <label className="block">
-            <span className="mb-1.5 block text-[11px] font-black uppercase tracking-wider text-text-muted"><LocalizedText messageKey="common.presetName" /></span>
+            <span className="mb-1.5 block text-caption font-semibold text-text-muted"><LocalizedText messageKey="common.presetName" /></span>
             <Input
               value={saveAsName}
               ref={saveAsInput}
@@ -553,7 +553,7 @@ export const EventAttackSetupField: React.FC<EventAttackSetupFieldProps> = ({
               }}
             />
           </label>
-          {saveAsError ? <p id={`${fieldId}-save-error`} role="alert" className="text-xs font-semibold text-error">{saveAsError}</p> : null}
+          {saveAsError ? <p id={`${fieldId}-save-error`} role="alert" className="text-caption font-semibold text-error">{saveAsError}</p> : null}
         </form>
       </Modal>
     </div>

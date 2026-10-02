@@ -203,18 +203,18 @@ export const DefenseSetupField: React.FC<DefenseSetupFieldProps> = ({
   const showSaved = mode !== 'inline';
   const showInline = mode !== 'saved';
   const summaryBadge = summary.summary ? (
-    <Badge variant="outline" className="normal-case tracking-normal">
+    <Badge variant="outline" className="normal-case">
       <LocalizedText messageKey="defenseSetup.summary" params={{ tools: summary.summary.toolAmount, types: summary.summary.toolTypes.length }} />
     </Badge>
   ) : null;
   const toollessNote = summary.summary && summary.summary.toolAmount === 0 ? (
-    <p className="text-[11px] font-semibold text-warning"><LocalizedText messageKey={DEFENSE_NO_TOOLS} /></p>
+    <p className="text-caption font-semibold text-warning"><LocalizedText messageKey={DEFENSE_NO_TOOLS} /></p>
   ) : null;
 
   return (
     <div id={id} ref={fieldRef} tabIndex={-1} className="min-w-0 space-y-3 rounded-xl border border-border-base bg-bg-app/35 p-3 outline-none focus-visible:ring-2 focus-visible:ring-primary/40">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <span className="flex items-center gap-2 text-[10px] font-black uppercase tracking-wider text-text-muted">
+        <span className="flex items-center gap-2 text-caption font-semibold text-text-muted">
           <Shield className="h-3.5 w-3.5" aria-hidden="true" /> {label}
         </span>
         <ChoiceChipGroup<FieldMode>
@@ -245,23 +245,23 @@ export const DefenseSetupField: React.FC<DefenseSetupFieldProps> = ({
             menuGrowToViewport
           />
           {value.source === 'preset' && value.missing ? (
-            <p role="alert" className="text-xs text-error"><LocalizedText messageKey="ui.settings.components.eventAttackSetupField.the.selected.preset.does.not.exist.anymore.9c6d37cc" /></p>
+            <p role="alert" className="text-caption text-error"><LocalizedText messageKey="ui.settings.components.eventAttackSetupField.the.selected.preset.does.not.exist.anymore.9c6d37cc" /></p>
           ) : null}
           {selectedPreset ? (
             <div className="flex flex-wrap items-center gap-2">
-              <span className="text-xs font-semibold text-text-main">{selectedPreset.name}</span>
+              <span className="text-caption font-semibold text-text-main">{selectedPreset.name}</span>
               {selectedPreset.app ? appCreatedPresetBadge() : null}
               {summaryBadge}
             </div>
           ) : null}
           {selectedPreset ? toollessNote : null}
           {owner && ownerDefinition ? (
-            <p className="text-[11px] text-warning">
+            <p className="text-caption text-warning">
               <LocalizedText messageKey="attackPresets.createdByOther" params={{ module: `${localizeStatic(ownerDefinition.moduleLabelKey)} · ${localizeStatic(ownerDefinition.slotLabelKey)}` }} />
             </p>
           ) : null}
           {otherReferrers.length > 0 ? (
-            <p className="text-[11px] text-text-muted">
+            <p className="text-caption text-text-muted">
               <LocalizedText messageKey="eventAttackSetup.alsoUsedBy" params={{ referrers: describeReferences(otherReferrers) }} />
             </p>
           ) : null}
@@ -277,7 +277,7 @@ export const DefenseSetupField: React.FC<DefenseSetupFieldProps> = ({
             </Button>
           ) : null}
           {mode === 'saved' && value.source === 'inline' ? (
-            <p className="text-[11px] text-text-muted"><LocalizedText messageKey="ui.settings.components.defenseSetupField.this.defense.still.uses.the.setup.configured.22a9bc7d" /></p>
+            <p className="text-caption text-text-muted"><LocalizedText messageKey="ui.settings.components.defenseSetupField.this.defense.still.uses.the.setup.configured.22a9bc7d" /></p>
           ) : null}
         </div>
       ) : null}
@@ -286,16 +286,16 @@ export const DefenseSetupField: React.FC<DefenseSetupFieldProps> = ({
         <div className="space-y-2 border-t border-border-base pt-2">
           {inlineSetup ? (
             <div className="flex flex-wrap items-center gap-2">
-              <span className="text-xs font-semibold text-text-main">{generatedName}</span>
+              <span className="text-caption font-semibold text-text-main">{generatedName}</span>
               {appCreatedPresetBadge()}
               {summaryBadge}
             </div>
           ) : null}
           {inlineSetup ? toollessNote : null}
           {inlineSetup ? null : value.source === 'preset' ? (
-            <p className="text-xs text-text-muted"><LocalizedText messageKey="ui.settings.components.defenseSetupField.this.defense.uses.the.saved.preset.until.c319bac8" /></p>
+            <p className="text-caption text-text-muted"><LocalizedText messageKey="ui.settings.components.defenseSetupField.this.defense.uses.the.saved.preset.until.c319bac8" /></p>
           ) : (
-            <p className="text-xs text-text-muted"><LocalizedText messageKey="ui.settings.components.defenseSetupField.no.defense.is.configured.here.yet.edit.6eac4105" /></p>
+            <p className="text-caption text-text-muted"><LocalizedText messageKey="ui.settings.components.defenseSetupField.no.defense.is.configured.here.yet.edit.6eac4105" /></p>
           )}
           <div className="flex flex-wrap gap-2">
             <Button variant="secondary" size="sm" disabled={disabled} leftIcon={<Edit3 className="h-4 w-4" />} onClick={() => setEditing(true)}>
@@ -323,10 +323,10 @@ export const DefenseSetupField: React.FC<DefenseSetupFieldProps> = ({
             ) : null}
           </div>
           {starter.reason ? (
-            <p className="text-[11px] text-text-muted"><LocalizedText messageKey={starter.reason} /></p>
+            <p className="text-caption text-text-muted"><LocalizedText messageKey={starter.reason} /></p>
           ) : null}
           {inlineSetup ? (
-            <p className="text-[11px] text-text-muted"><LocalizedText messageKey="ui.settings.components.defenseSetupField.saved.as.a.defense.preset.marked.created.a3d9482e" /></p>
+            <p className="text-caption text-text-muted"><LocalizedText messageKey="ui.settings.components.defenseSetupField.saved.as.a.defense.preset.marked.created.a3d9482e" /></p>
           ) : null}
         </div>
       ) : null}
@@ -374,22 +374,22 @@ export const DefenseSetupField: React.FC<DefenseSetupFieldProps> = ({
       >
         <div className="space-y-3">
           <div className="flex flex-wrap items-center gap-2">
-            {starterCastleName ? <span className="text-sm font-bold text-text-main">{starterCastleName}</span> : null}
-            <Badge variant="outline" className="normal-case tracking-normal">{label}</Badge>
+            {starterCastleName ? <span className="text-body font-semibold text-text-main">{starterCastleName}</span> : null}
+            <Badge variant="outline" className="normal-case">{label}</Badge>
             {starter.pendingReviews.length > 0 ? (
-              <Badge variant="warning" className="normal-case tracking-normal"><LocalizedText messageKey="ui.settings.components.eventAttackSetupField.starter.values.pending.product.review.9369cca7" /></Badge>
+              <Badge variant="warning" className="normal-case"><LocalizedText messageKey="ui.settings.components.eventAttackSetupField.starter.values.pending.product.review.9369cca7" /></Badge>
             ) : null}
           </div>
           {value.source !== 'none' ? (
-            <p className="rounded-global border border-warning/40 bg-warning/10 px-3 py-2 text-xs text-text-main">
+            <p className="rounded-global border border-warning/40 bg-warning/10 px-3 py-2 text-caption text-text-main">
               <LocalizedText messageKey="ui.settings.components.defenseSetupField.applying.replaces.this.defense.s.current.setup.f63ccd88" />
             </p>
           ) : null}
           {starter.setup && starterSummary ? (
-            <div className="grid grid-cols-3 gap-2 text-center text-xs">
+            <div className="grid grid-cols-3 gap-2 text-center text-caption">
               {(['left', 'middle', 'right'] as const).map((side) => (
                 <div key={side} className="rounded-global border border-border-base bg-bg-app/35 p-2">
-                  <div className="text-[10px] font-black uppercase tracking-wider text-text-muted">
+                  <div className="text-caption font-semibold text-text-muted">
                     {side === 'left'
                       ? <LocalizedText messageKey="ui.settings.components.defenseSetupField.left.wall.09cae679" />
                       : side === 'middle'
@@ -399,7 +399,7 @@ export const DefenseSetupField: React.FC<DefenseSetupFieldProps> = ({
                   <div className="font-mono tabular-nums text-text-main">{starter.setup?.wall[side].unitPercent}%</div>
                 </div>
               ))}
-              <div className="col-span-3 text-left text-xs text-text-muted">
+              <div className="col-span-3 text-left text-caption text-text-muted">
                 <LocalizedText messageKey="defenseSetup.summary" params={{ tools: starterSummary.toolAmount, types: starterSummary.toolTypes.length }} />
                 {starterSummary.toolAmount === 0 ? (
                   <span className="mt-1 block font-semibold text-warning"><LocalizedText messageKey={DEFENSE_NO_TOOLS} /></span>
@@ -407,7 +407,7 @@ export const DefenseSetupField: React.FC<DefenseSetupFieldProps> = ({
               </div>
             </div>
           ) : null}
-          <p className="text-[11px] text-text-muted">
+          <p className="text-caption text-text-muted">
             <LocalizedText messageKey="ui.settings.components.defenseSetupField.auto.khan.applies.this.defense.to.the.e4380389" />
           </p>
         </div>
@@ -439,7 +439,7 @@ export const DefenseSetupField: React.FC<DefenseSetupFieldProps> = ({
           }}
         >
           <label className="block">
-            <span className="mb-1.5 block text-[11px] font-black uppercase tracking-wider text-text-muted"><LocalizedText messageKey="common.presetName" /></span>
+            <span className="mb-1.5 block text-caption font-semibold text-text-muted"><LocalizedText messageKey="common.presetName" /></span>
             <Input
               value={saveAsName}
               ref={saveAsInput}
@@ -452,7 +452,7 @@ export const DefenseSetupField: React.FC<DefenseSetupFieldProps> = ({
               }}
             />
           </label>
-          {saveAsError ? <p id={`${fieldId}-save-error`} role="alert" className="text-xs font-semibold text-error">{saveAsError}</p> : null}
+          {saveAsError ? <p id={`${fieldId}-save-error`} role="alert" className="text-caption font-semibold text-error">{saveAsError}</p> : null}
         </form>
       </Modal>
     </div>

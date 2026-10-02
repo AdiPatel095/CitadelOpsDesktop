@@ -27,7 +27,7 @@ const RiftCoordDisplay: React.FC = () => {
     <SectionCard
       variant="solid"
       title={localizeStatic("ui.rift.components.riftCoordDisplay.title.rift.location.891a4f8c")}
-      titleClassName="text-lg text-primary"
+      titleClassName="text-title-sm text-primary"
       description={(
         <>
           Single world Rift on K{riftKid || 0}
@@ -55,7 +55,7 @@ const RiftCoordDisplay: React.FC = () => {
       )}
     >
       {!found || !rift ? (
-          <p className="text-sm text-text-muted">
+          <p className="text-body text-text-muted">
             {gameLoggedIn
               ? 'Rift not in map cache yet. Open the world map near the Rift or press Refresh to request GAA.'
               : 'No Rift tile in the last snapshot. Connect and refresh after the map has loaded once.'}
@@ -67,11 +67,11 @@ const RiftCoordDisplay: React.FC = () => {
                 <MapPin className="h-5 w-5" />
               </div>
               <div>
-                <p className="text-[10px] uppercase tracking-wider text-text-muted font-semibold"><LocalizedText messageKey="ui.rift.components.riftCoordDisplay.coordinates.117c132e" /></p>
-                <p className="text-2xl font-bold font-mono text-text-main mt-0.5">
+                <p className="text-caption text-text-muted font-semibold"><LocalizedText messageKey="ui.rift.components.riftCoordDisplay.coordinates.117c132e" /></p>
+                <p className="text-body-lg font-semibold font-mono text-text-main mt-0.5">
                   {rift.x}, {rift.y}
                 </p>
-                <p className="text-sm text-text-muted mt-1">
+                <p className="text-body text-text-muted mt-1">
                   Rift
                   {rift.name?.trim() ? ` · ${rift.name.trim()}` : ''}
                 </p>
@@ -80,18 +80,18 @@ const RiftCoordDisplay: React.FC = () => {
 
             {hasCastleCoords ? (
               <div className="w-full rounded-lg border border-border-base bg-bg-card/40 px-4 py-3 md:w-auto md:min-w-[12rem]">
-                <p className="text-[10px] uppercase tracking-wider text-text-muted font-semibold">
+                <p className="text-caption text-text-muted font-semibold">
                   From {castleName}
                 </p>
-                <p className="text-lg font-semibold text-text-main mt-1">
+                <p className="text-body-lg font-semibold text-text-main mt-1">
                   {riftMapCoords?.distance ?? 0} tiles
                 </p>
-                <p className="text-xs font-mono text-text-muted mt-1">
+                <p className="text-caption font-mono text-text-muted mt-1">
                   Δ {formatRiftDelta(riftMapCoords?.deltaX ?? 0, riftMapCoords?.deltaY ?? 0)}
                 </p>
               </div>
             ) : (
-              <p className="text-sm text-text-muted">
+              <p className="text-body text-text-muted">
                 <LocalizedText messageKey="ui.rift.components.riftCoordDisplay.focus.a.castle.with.map.coords.to.26a9ff5c" /></p>
             )}
           </div>
