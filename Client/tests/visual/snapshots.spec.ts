@@ -1,6 +1,7 @@
 import { expect, test } from '@playwright/test';
 import { cases, themes } from './cases';
 import { openSettings, openView, prepare, settle } from './harness';
+import { assertDisabledNeutral, reportAccentUsage } from './rules';
 
 for (const entry of cases) {
   for (const theme of themes) {
@@ -9,6 +10,8 @@ for (const entry of cases) {
       await openView(page, entry.label, entry.view);
       if ('settings' in entry) await openSettings(page);
       await settle(page);
+      await reportAccentUsage(page, entry.name);
+      await assertDisabledNeutral(page);
       verifyNetwork();
       await expect(page).toHaveScreenshot(`${entry.name}-${testInfo.project.name}-${theme}.png`, {
         fullPage: false, animations: 'disabled', caret: 'hide',
