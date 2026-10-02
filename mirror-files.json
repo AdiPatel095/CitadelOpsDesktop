@@ -125,10 +125,6 @@
       "desktop": "Client/src/components/Alerts.tsx"
     },
     {
-      "portal": "src/commandCenter/components/AutoStationHoverPopover.tsx",
-      "desktop": "Client/src/components/AutoStationHoverPopover.tsx"
-    },
-    {
       "portal": "src/commandCenter/components/AutomationFeatureFeedback.tsx",
       "desktop": "Client/src/components/AutomationFeatureFeedback.tsx"
     },
@@ -155,10 +151,6 @@
     {
       "portal": "src/commandCenter/components/ConnectionStatus.tsx",
       "desktop": "Client/src/components/ConnectionStatus.tsx"
-    },
-    {
-      "portal": "src/commandCenter/components/DailyAttackTracker.tsx",
-      "desktop": "Client/src/components/DailyAttackTracker.tsx"
     },
     {
       "portal": "src/commandCenter/components/DetailBackButton.tsx",
@@ -219,6 +211,14 @@
     {
       "portal": "src/commandCenter/components/UnitAtlasFrames.ts",
       "desktop": "Client/src/components/UnitAtlasFrames.ts"
+    },
+    {
+      "portal": "src/commandCenter/components/automation/TimedRunButton.tsx",
+      "desktop": "Client/src/components/automation/TimedRunButton.tsx"
+    },
+    {
+      "portal": "src/commandCenter/components/automation/TimerTip.tsx",
+      "desktop": "Client/src/components/automation/TimerTip.tsx"
     },
     {
       "portal": "src/commandCenter/components/automation/attackCounts.ts",
@@ -1321,6 +1321,10 @@
       "desktop": "Client/src/utils/UpgradeCoinReserve.ts"
     },
     {
+      "portal": "src/commandCenter/views/automation-card.css",
+      "desktop": "Client/src/views/automation-card.css"
+    },
+    {
       "portal": "src/commandCenter/worldIntelligence/components/StormRanking.ts",
       "desktop": "Client/src/worldIntelligence/components/StormRanking.ts"
     },
@@ -1419,7 +1423,45 @@
     {
       "portal": "tests/visual/rules.ts",
       "desktop": "Client/tests/visual/rules.ts"
+    },
+    {
+      "portal": "src/commandCenter/components/header/useHeaderStatus.ts",
+      "desktop": "Client/src/components/header/useHeaderStatus.ts"
+    },
+    {
+      "portal": "src/commandCenter/components/header/StatusCluster.tsx",
+      "desktop": "Client/src/components/header/StatusCluster.tsx"
+    },
+    {
+      "portal": "src/commandCenter/components/header/StatusPanel.tsx",
+      "desktop": "Client/src/components/header/StatusPanel.tsx"
+    },
+    {
+      "portal": "src/commandCenter/components/header/header-status.css",
+      "desktop": "Client/src/components/header/header-status.css"
+    },
+    {
+      "portal": "src/commandCenter/components/ui/Popover.tsx",
+      "desktop": "Client/src/components/ui/Popover.tsx"
+    },
+    {
+      "portal": "src/commandCenter/components/ui/popover.css",
+      "desktop": "Client/src/components/ui/popover.css"
+    },
+    {
+      "portal": "src/commandCenter/config/HostedChrome.tsx",
+      "desktop": "Client/src/config/HostedChrome.tsx"
+    },
+    {
+      "portal": "tests/header-status.test.mjs",
+      "desktop": "Client/tests/header-status.test.mjs"
     }
   ],
-  "unmirrored": []
+  "unmirrored": [
+    {
+      "portal": "src/commandCenter/components/AutoBirdCycles.tsx",
+      "desktop": "Client/src/components/AutoBirdCycles.tsx",
+      "reason": "CIT-69 preserves desktop localization and the portal birdCastleControls release gate."
+    }
+  ]
 }
