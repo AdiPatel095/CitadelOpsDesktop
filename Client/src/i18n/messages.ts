@@ -40,6 +40,10 @@ export const messages = {
   "autoBird.cycles.resendLabel": "Resend bird from {castle}",
   "autoBird.cycles.featureLabel": "{castle} Auto Bird",
 
+  // CIT-74 analytics: accessible names; English source, translation batch pending.
+  "analytics.battle.startDate": "Start date",
+  "analytics.battle.endDate": "End date",
+  "analytics.commanders.filter": "Filter commanders",
   // CIT-69: Daniel's header status plan section 3; English source, translation batch pending.
   "header.status.title": "Status",
   "header.signal.incoming": "{count, number} incoming \u00b7 {state, select, known {first in {duration}} other {checking}}",

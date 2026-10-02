@@ -345,7 +345,7 @@ const RiftAttackTemplate: React.FC = () => {
           ) : null}
           <Button
             variant="secondary"
-            size="sm"
+            size="md"
             onClick={() => setAttackSetupOpen(true)}
             disabled={!attackSetupInventory}
             title={attackSetupInventory ? 'Configure the formation used for Rift replays' : 'Castle inventory is not available'}
@@ -506,7 +506,7 @@ const RiftAttackTemplate: React.FC = () => {
                           />
                           <Button
                             variant="primary"
-                            size="sm"
+                            size="md"
                             disabled={!canAttack || (activeActionId != null && activeActionId !== `replay:${entry.id}`)}
                             isLoading={activeActionId === `replay:${entry.id}`}
                             onClick={() => handleAttack(entry, canAttack)}

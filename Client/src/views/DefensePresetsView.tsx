@@ -284,7 +284,7 @@ const DefensePresetsView: React.FC = () => {
       <CollectionToolbar
         summary={(
           <>
-            <Badge variant={document.presets.length > 0 ? 'primary' : 'secondary'}>
+            <Badge variant="secondary">
               {document.presets.length} preset{document.presets.length === 1 ? '' : 's'}
             </Badge>
             {appCreatedCount > 0 ? (
@@ -421,7 +421,7 @@ const PresetCard: React.FC<{
       <CardHeader className="flex-wrap items-start gap-3">
         <div className="min-w-0">
           <div className="flex items-center gap-2">
-            <Shield className="h-4 w-4 shrink-0 text-primary" />
+            <Shield className="h-4 w-4 shrink-0 text-text-main" />
             <h2 className="truncate text-title-sm font-bold text-text-main">{preset.name}</h2>
             {preset.app ? appCreatedPresetBadge() : null}
           </div>
@@ -459,7 +459,7 @@ const PresetCard: React.FC<{
             <Badge variant="warning"><LocalizedText messageKey="ui.views.defensePresetsView.front.4.wall.2.gate.f7988e8b" /></Badge>
             <Badge variant="outline"><LocalizedText messageKey="ui.views.defensePresetsView.right.4.wall.de6cefdf" /></Badge>
             <Badge variant="outline">{summary.moatSlots} moat slots</Badge>
-            <Badge variant={preset.keep ? 'primary' : 'secondary'}>
+            <Badge variant="secondary">
               {summary.courtyardSlots > 0
                 ? `${summary.courtyardSlots} courtyard slots`
                 : preset.keep

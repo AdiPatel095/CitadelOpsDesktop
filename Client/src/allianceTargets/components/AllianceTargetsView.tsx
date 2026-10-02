@@ -1,3 +1,4 @@
+import './AllianceTargetsView.css';
 import { useLocale as useStaticLocale } from "../../i18n/LocaleContext";
 import { LocalizedText } from "../../i18n/LocalizedText";
 import type { MessageKey } from "../../i18n/messages";
@@ -419,7 +420,7 @@ const AllianceTargetsContent = memo(({
             </span>
             <div className="flex items-center gap-2">
               <Button iconOnly
-                size="sm"
+                size="md"
                 variant="ghost"
                 disabled={loading || safePage <= 1}
                 onClick={() => changePage(Math.max(1, safePage - 1))}
@@ -431,7 +432,7 @@ const AllianceTargetsContent = memo(({
                 Page {safePage} of {pageCount}
               </span>
               <Button iconOnly
-                size="sm"
+                size="md"
                 variant="ghost"
                 disabled={loading || safePage >= pageCount}
                 onClick={() => changePage(Math.min(pageCount, safePage + 1))}
@@ -477,7 +478,7 @@ const TargetRow = memo(({ target, canSpy, sending, sendingBlocked, loadingIntel,
     </td>
     <td className="px-4 py-3">
       <div className="flex min-w-0 items-center gap-2">
-        <Castle className="h-4 w-4 shrink-0 text-primary" />
+        <Castle className="h-4 w-4 shrink-0 text-text-main" />
         <span className="truncate font-medium text-text-main" title={target.targetCastle.name || undefined}>
           {target.targetCastle.name || target.targetCastle.typeName || 'Player castle'}
         </span>
@@ -488,15 +489,15 @@ const TargetRow = memo(({ target, canSpy, sending, sendingBlocked, loadingIntel,
     </td>
 	<td className="px-4 py-3">
 	  {target.spyReport ? (
-		<button data-button-pattern="card"
+		<Button variant="secondary"
 		  type="button"
-		  className="group w-full rounded-global border border-border-base bg-bg-card/45 px-2.5 py-2 text-left transition hover:border-primary/45 hover:bg-primary/6 disabled:cursor-wait disabled:opacity-60"
+		  className="alliance-target-intel"
 		  disabled={intelBlocked}
 		  onClick={() => onIntel(target)}
 		  title="Open latest spy intelligence"
 		>
-		  <span className="flex items-center justify-between gap-2">
-			<span className="inline-flex items-center gap-1.5 text-caption font-semibold text-text-main group-hover:text-primary">
+		  <span className="alliance-target-intel-summary">
+			<span className="inline-flex items-center gap-1.5 text-caption font-semibold text-text-main">
 			  <FileSearch className="h-3.5 w-3.5" />
 			  {loadingIntel ? 'Loading…' : `${target.spyReport.totalTroops.toLocaleString()} troops`}
 			</span>
@@ -508,7 +509,7 @@ const TargetRow = memo(({ target, canSpy, sending, sendingBlocked, loadingIntel,
 			<Clock3 className="h-3 w-3" />
 			{formatReportAge(target.spyReport.capturedAtUnixMillis)}
 		  </span>
-		</button>
+		</Button>
 	  ) : (
 		<div className="flex items-center gap-1.5 text-caption text-text-muted">
 		  <FileSearch className="h-3.5 w-3.5 opacity-60" />
@@ -522,9 +523,9 @@ const TargetRow = memo(({ target, canSpy, sending, sendingBlocked, loadingIntel,
     </td>
     <td className="px-4 py-3 text-right font-semibold tabular-nums">{target.distance.toFixed(1)}</td>
     <td className="px-4 py-3 text-right">
-      <div className="inline-flex items-center gap-1.5">
+      <div className="flex flex-wrap items-center justify-end gap-1.5">
         <Button
-          size="sm"
+          size="md"
           variant="secondary"
           disabled={!canSpy || target.underBird || sendingBlocked}
           isLoading={sending}
@@ -533,7 +534,7 @@ const TargetRow = memo(({ target, canSpy, sending, sendingBlocked, loadingIntel,
         >
           <LocalizedText messageKey="ui.allianceTargets.components.allianceTargetsView.spy.aa01aabf" /></Button>
         <Button
-          size="sm"
+          size="md"
           variant="secondary"
 		  onClick={() => onAttack(target)}
 		  leftIcon={<Swords className="h-4 w-4" />}
@@ -849,7 +850,7 @@ const AllianceTargetAttackModal = ({ target, onClose }: AllianceTargetAttackModa
 						<div>
 							<div className="flex items-center gap-2 font-bold text-text-main">
 								{previewLoading ? (
-									<RefreshCw className="h-4 w-4 animate-spin text-primary" />
+									<RefreshCw className="h-4 w-4 animate-spin text-text-main" />
 								) : previewError || shortages.length > 0 ? (
 									<AlertTriangle className="h-4 w-4 text-error" />
 								) : (
