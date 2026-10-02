@@ -303,7 +303,7 @@ const AttackPresetsView: React.FC = () => {
       <CollectionToolbar
         summary={(
           <>
-          <Badge variant={document.presets.length > 0 ? 'primary' : 'secondary'}>
+          <Badge variant="secondary">
             {document.presets.length} preset{document.presets.length === 1 ? '' : 's'}
           </Badge>
           {appCreatedCount > 0 ? (
@@ -456,7 +456,7 @@ const AttackPresetsView: React.FC = () => {
               rows={9}
               spellCheck={false}
               placeholder={'%xt%EmpireEx_21%cra%1%{"A":[...]}%'}
-              className="w-full resize-y rounded-global border border-border-base bg-bg-input/70 px-4 py-3 font-mono text-caption font-normal text-text-main shadow-inner outline-none transition focus:border-primary focus:ring-1 focus:ring-primary"
+              className="w-full resize-y rounded-global border border-border-base bg-bg-input/70 px-4 py-3 font-mono text-caption font-normal text-text-main shadow-inner outline-none transition focus:border-focus-ring focus:ring-1 focus:ring-focus-ring"
             />
           </label>
           {importError ? (
@@ -489,18 +489,18 @@ const PresetCard: React.FC<{
       <CardHeader className="flex-wrap items-start gap-3">
         <div className="min-w-0">
           <div className="flex items-center gap-2">
-            <Swords className="h-4 w-4 shrink-0 text-primary" />
+            <Swords className="h-4 w-4 shrink-0 text-text-main" />
             <h2 className="truncate text-title-sm font-bold text-text-main">{preset.name}</h2>
           </div>
           <div className="mt-1 flex flex-wrap items-center gap-2">
             <Badge
-              variant={preset.targetType === 'pvp' ? 'primary' : 'success'}
+              variant="secondary"
               className="normal-case"
             >
               {preset.targetType === 'pvp' ? 'PvP' : 'PvE'}
             </Badge>
             {preset.useTroopFamilies ? (
-              <Badge variant="primary" className="normal-case"><LocalizedText messageKey="ui.views.attackPresetsView.family.fill.30bc122b" /></Badge>
+              <Badge variant="secondary" className="normal-case"><LocalizedText messageKey="ui.views.attackPresetsView.family.fill.30bc122b" /></Badge>
             ) : null}
             {preset.app ? appCreatedPresetBadge() : null}
             <span className="text-caption text-text-muted">
@@ -550,15 +550,15 @@ const PresetTargetTypeChoice: React.FC<{
   <button data-button-pattern="card"
     type="button"
     onClick={onSelect}
-    className="group rounded-global border border-border-base bg-bg-card/65 p-5 text-left shadow-[var(--shadow-raised)] transition hover:-translate-y-0.5 hover:border-primary/55 hover:bg-primary/8 focus:outline-none focus:ring-2 focus:ring-primary/45"
+    className="group rounded-global border border-border-base bg-bg-card/65 p-5 text-left shadow-[var(--shadow-raised)] transition hover:-translate-y-0.5 hover:border-primary/55 hover:bg-primary/8 focus:outline-none focus:ring-2 focus:ring-focus-ring/45"
   >
     <div className="flex items-start justify-between gap-3">
       <div className="flex items-center gap-3">
-        <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-global border ${type === 'pvp' ? 'border-primary/40 bg-primary/12 text-primary' : 'border-success/40 bg-success/12 text-success'}`}>
+        <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-global border ${type === 'pvp' ? 'border-primary/40 bg-primary/12 text-text-main' : 'border-success/40 bg-success/12 text-success'}`}>
           {type === 'pvp' ? <Swords className="h-5 w-5" /> : <Shield className="h-5 w-5" />}
         </span>
         <div>
-          <div className="text-body-lg font-semibold text-text-main group-hover:text-primary">{title}</div>
+          <div className="text-body-lg font-semibold text-text-main group-hover:text-text-main">{title}</div>
           <Badge
             variant={type === 'pvp' ? 'primary' : 'success'}
             className="mt-1 normal-case"
@@ -574,7 +574,7 @@ const PresetTargetTypeChoice: React.FC<{
       <MetricTile size="sm" label="Center" value={limits.M.toLocaleString()} />
       <MetricTile size="sm" label="Right" value={limits.R.toLocaleString()} />
     </div>
-    <div className="mt-4 text-caption font-semibold text-primary">Select {type.toUpperCase()}</div>
+    <div className="mt-4 text-caption font-semibold text-text-main">Select {type.toUpperCase()}</div>
   </button>
 );
 

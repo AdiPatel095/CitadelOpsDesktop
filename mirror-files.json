@@ -1475,6 +1475,18 @@
     {
       "portal": "scripts/visual/run-gate.mjs",
       "desktop": "Client/scripts/visual/run-gate.mjs"
+    },
+    {
+      "portal": "src/commandCenter/battleStats/components/BattleStatsView.css",
+      "desktop": "Client/src/battleStats/components/BattleStatsView.css"
+    },
+    {
+      "portal": "src/commandCenter/Rift/components/RiftMaidenCommsPanel.css",
+      "desktop": "Client/src/Rift/components/RiftMaidenCommsPanel.css"
+    },
+    {
+      "portal": "src/commandCenter/allianceTargets/components/AllianceTargetsView.css",
+      "desktop": "Client/src/allianceTargets/components/AllianceTargetsView.css"
     }
   ],
   "unmirrored": [

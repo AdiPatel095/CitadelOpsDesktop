@@ -1,3 +1,4 @@
+import './BattleStatsView.css';
 import {formatLegacyBattleEffectPercent} from '../utils/BattleEffectNumber';
 import {battleLaneMessageKey} from '../utils/BattleLaneIdentity';
 import type {MessageKey,MessageParameters} from '../../i18n/messages';
@@ -335,6 +336,7 @@ const BattleStatsView: React.FC = () => {
             contentClassName="battle-filters-grid"
           >
             <Input
+              aria-label={localizeStatic("ui.battleStats.components.battleStatsView.placeholder.find.player.alliance.castle.73efc22c")}
               value={searchTerm}
               onChange={(event) => setSearchTerm(event.target.value)}
               placeholder={localizeStatic("ui.battleStats.components.battleStatsView.placeholder.find.player.alliance.castle.73efc22c")}
@@ -343,17 +345,18 @@ const BattleStatsView: React.FC = () => {
 
             <FilterField label={localizeStatic("ui.battleStats.components.battleStatsView.label.date.range.8061bfb2")} icon={<CalendarDays className="w-4 h-4" />}>
               <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-                <Input type="date" value={startDate} onChange={(event) => setStartDate(event.target.value)} />
-                <Input type="date" value={endDate} onChange={(event) => setEndDate(event.target.value)} />
+                <Input type="date" aria-label={localizeStatic("analytics.battle.startDate")} value={startDate} onChange={(event) => setStartDate(event.target.value)} />
+                <Input type="date" aria-label={localizeStatic("analytics.battle.endDate")} value={endDate} onChange={(event) => setEndDate(event.target.value)} />
               </div>
             </FilterField>
 
             <FilterField label={localizeStatic("ui.battleStats.components.battleStatsView.label.alliance.player.f63402b3")} icon={<Users className="w-4 h-4" />}>
-              <Select value={selectedPlayer} options={playerOptions} onChange={setSelectedPlayer} menuGrowToViewport />
+              <Select ariaLabel={localizeStatic("ui.battleStats.components.battleStatsView.label.alliance.player.f63402b3")} value={selectedPlayer} options={playerOptions} onChange={setSelectedPlayer} menuGrowToViewport />
             </FilterField>
 
             <FilterField label={localizeStatic("ui.battleStats.components.battleStatsView.label.opponent.player.1f077c9a")} icon={<Swords className="w-4 h-4" />}>
               <Select
+                ariaLabel={localizeStatic("ui.battleStats.components.battleStatsView.label.opponent.player.1f077c9a")}
                 value={selectedOpponentPlayer}
                 options={opponentPlayerOptions}
                 onChange={setSelectedOpponentPlayer}
@@ -362,11 +365,12 @@ const BattleStatsView: React.FC = () => {
             </FilterField>
 
             <FilterField label={localizeStatic("ui.battleStats.components.battleStatsView.label.opponent.alliance.da7413e9")} icon={<Shield className="w-4 h-4" />}>
-              <Select value={selectedAlliance} options={allianceOptions} onChange={setSelectedAlliance} menuGrowToViewport />
+              <Select ariaLabel={localizeStatic("ui.battleStats.components.battleStatsView.label.opponent.alliance.da7413e9")} value={selectedAlliance} options={allianceOptions} onChange={setSelectedAlliance} menuGrowToViewport />
             </FilterField>
 
             <FilterField label={localizeStatic("ui.battleStats.components.battleStatsView.label.result.6e7d50e8")} icon={<BarChart3 className="w-4 h-4" />}>
               <Select
+                ariaLabel={localizeStatic("ui.battleStats.components.battleStatsView.label.result.6e7d50e8")}
                 value={selectedResult}
                 onChange={setSelectedResult}
                 options={[
@@ -381,6 +385,7 @@ const BattleStatsView: React.FC = () => {
 
             <FilterField label={localizeStatic("ui.battleStats.components.battleStatsView.label.role.14736a2e")} icon={<Castle className="w-4 h-4" />}>
               <Select
+                ariaLabel={localizeStatic("ui.battleStats.components.battleStatsView.label.role.14736a2e")}
                 value={selectedRole}
                 onChange={setSelectedRole}
                 options={[
@@ -608,7 +613,7 @@ const PlayerAggregateTable: React.FC<{ rows: PlayerAggregate[] }> = ({ rows }) =
   const formatRatio = (numerator:number, denominator:number) => denominator <= 0 ? (numerator > 0 ? '∞' : '--') : number(numerator / denominator,{minimumFractionDigits:2,maximumFractionDigits:2});
   return (
   <SectionCard className="flex h-full flex-col" title={t('battle.playerAggregate')} description={t('battle.playerAggregateDescription')} descriptionClassName="" actions={<Badge variant="secondary"><LocalizedText messageKey="battle.playerCount" params={{count:rows.length}}/></Badge>} contentClassName="flex min-h-0 flex-1 flex-col" flush>
-    <div className="min-h-0 flex-1 overflow-x-auto">
+    <div tabIndex={0} className="min-h-0 flex-1 overflow-x-auto battle-aggregate-scroll">
         <table className="battle-aggregate-table w-full text-body">
           <thead>
             <tr className="text-start text-caption text-text-muted border-b border-border-base">
@@ -661,7 +666,7 @@ const AllianceAggregateTable: React.FC<{ rows: AllianceAggregate[] }> = ({ rows 
   const formatRatio = (numerator:number, denominator:number) => denominator <= 0 ? (numerator > 0 ? '∞' : '--') : number(numerator / denominator,{minimumFractionDigits:2,maximumFractionDigits:2});
   return (
   <SectionCard className="flex h-full flex-col" title={t('battle.allianceAggregate')} description={t('battle.allianceAggregateDescription')} descriptionClassName="" actions={<Badge variant="secondary"><LocalizedText messageKey="battle.allianceCount" params={{count:rows.length}}/></Badge>} contentClassName="flex min-h-0 flex-1 flex-col" flush>
-    <div className="min-h-0 flex-1 overflow-x-auto">
+    <div tabIndex={0} className="min-h-0 flex-1 overflow-x-auto battle-aggregate-scroll">
         <table className="battle-aggregate-table w-full text-body">
           <thead>
             <tr className="text-start text-caption text-text-muted border-b border-border-base">
