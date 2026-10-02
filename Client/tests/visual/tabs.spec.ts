@@ -1,5 +1,4 @@
 import { test, expect } from '@playwright/test';
-import { cases } from './cases';
 import { prepare, openView, settle } from './harness';
 
 for (const theme of ['dark', 'light'] as const) for (const locale of ['en', 'de', 'ar']) {
@@ -24,9 +23,21 @@ for (const theme of ['dark', 'light'] as const) for (const locale of ['en', 'de'
           }, side);
           await expect(list).toHaveAttribute(`data-fade-${side}`, String(overflowing));
           await expect(page.locator(`.ui-tabs__arrow--${side}`)).toHaveCount(overflowing ? 1 : 0);
+          if (overflowing) {
+            const arrow = page.locator(`.ui-tabs__arrow--${side}`);
+            expect(await arrow.evaluate((button, side) => {
+              const rect = button.getBoundingClientRect();
+              const parent = button.parentElement!.getBoundingClientRect();
+              return Math.abs(rect.top - parent.top) <= 1 && (side === 'left' ? Math.abs(rect.left - parent.left) <= 1 : Math.abs(rect.right - parent.right) <= 1);
+            }, side)).toBe(true);
+          }
         }
         expect(await list.evaluate(element => getComputedStyle(element).maskImage)).not.toBe('none');
       };
+      await checkEdges();
+      const initialScroll = await list.evaluate(element => element.scrollLeft);
+      await page.locator(`.ui-tabs__arrow--${locale === 'ar' ? 'left' : 'right'}`).click();
+      await expect.poll(() => list.evaluate((element, initial) => Math.abs(element.scrollLeft - initial), initialScroll)).toBeGreaterThan(10);
       await checkEdges();
       const tab = list.getByRole('tab', { selected: true });
       await tab.focus();

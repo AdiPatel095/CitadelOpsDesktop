@@ -12,7 +12,7 @@
 .ui-tabs__tab:focus-visible, .ui-segments__option:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: -2px; }
 .ui-tabs__tab:disabled { color: var(--text-disabled); cursor: not-allowed; }
 .ui-tabs__indicator { position: absolute; inset-inline: 0; bottom: 0; height: 3px; border-radius: var(--radius-full); background: var(--accent); transform-origin: left; }
-.ui-tabs__arrow { position: absolute; z-index: 1; top: 0; background: var(--surface-card); }
+.ui-tabs .ui-tabs__arrow { position: absolute; z-index: 1; top: 0; background: var(--surface-card); }
 .ui-tabs__arrow--left { left: 0; }
 .ui-tabs__arrow--right { right: 0; }
 .ui-tabs:has(.ui-tabs__arrow--left) { padding-left: 40px; }
