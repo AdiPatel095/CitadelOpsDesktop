@@ -16,11 +16,13 @@ for (const theme of ['dark', 'light'] as const) for (const locale of ['en', 'de'
     } else {
       await expect(list).toBeVisible();
       const checkEdges = async () => {
+        let anyOverflow = false;
         for (const side of ['left', 'right']) {
           const overflowing = await list.evaluate((element, side) => {
             const rect = element.getBoundingClientRect();
             return [...element.querySelectorAll('[role="tab"]')].some(tab => side === 'left' ? tab.getBoundingClientRect().left < rect.left - 1 : tab.getBoundingClientRect().right > rect.right + 1);
           }, side);
+          anyOverflow ||= overflowing;
           await expect(list).toHaveAttribute(`data-fade-${side}`, String(overflowing));
           await expect(page.locator(`.ui-tabs__arrow--${side}`)).toHaveCount(overflowing ? 1 : 0);
           if (overflowing) {
@@ -32,9 +34,17 @@ for (const theme of ['dark', 'light'] as const) for (const locale of ['en', 'de'
             }, side)).toBe(true);
           }
         }
-        expect(await list.evaluate(element => getComputedStyle(element).maskImage)).not.toBe('none');
+        const mask = await list.evaluate(element => getComputedStyle(element).maskImage);
+        if (anyOverflow) expect(mask).not.toBe('none'); else expect(mask).toBe('none');
+        return anyOverflow;
       };
-      await checkEdges();
+      if (!await checkEdges()) {
+        // The merged type scale can fit all labels at 1440 px. Exercise overflow
+        // separately without requiring a fade when there is no overflowing edge.
+        await page.locator('.ui-tabs').evaluate(element => { element.style.maxWidth = '480px'; });
+        await expect.poll(() => list.evaluate(element => element.scrollWidth > element.clientWidth)).toBe(true);
+        await checkEdges();
+      }
       const initialScroll = await list.evaluate(element => element.scrollLeft);
       await page.locator(`.ui-tabs__arrow--${locale === 'ar' ? 'left' : 'right'}`).click();
       await expect.poll(() => list.evaluate((element, initial) => Math.abs(element.scrollLeft - initial), initialScroll)).toBeGreaterThan(10);
