@@ -12464,11 +12464,6 @@
     "reason": "Button variant/size enum or non-visible ARIA state/heading reference, consumed only as styling or accessibility structure.",
     "evidence": "worldIntelligence/components/WorldAllianceDetailView.tsx:203; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
   },
-  "f3a2b2b1bc286516e1d89a2655dbbffe70946bff6f3a723a26fbd912c10b21c1": {
-    "classification": "technical",
-    "reason": "Button variant/size enum or non-visible ARIA state/heading reference, consumed only as styling or accessibility structure.",
-    "evidence": "worldIntelligence/components/WorldEventHistory.tsx:518; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
-  },
   "f444052e4cad0eb6a2f980f87c8e51d0fd26e5cc1868d69e1ae12c2b167e3968": {
     "classification": "technical",
     "reason": "Button variant/size enum or non-visible ARIA state/heading reference, consumed only as styling or accessibility structure.",
@@ -12488,16 +12483,6 @@
     "classification": "technical",
     "reason": "Button variant/size enum or non-visible ARIA state/heading reference, consumed only as styling or accessibility structure.",
     "evidence": "worldIntelligence/components/WorldEventHistory.tsx:784; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
-  },
-  "28adeb7aa6d7c813b172b1e93512f4e154d6dd26e348d469eb53254628add7a9": {
-    "classification": "technical",
-    "reason": "Button variant/size enum or non-visible ARIA state/heading reference, consumed only as styling or accessibility structure.",
-    "evidence": "worldIntelligence/components/WorldIntelligenceView.tsx:185; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
-  },
-  "e8da82c0e155f4e04b70408c0b5e6afc938fbfd2661d7856bcf9426aa8aec54f": {
-    "classification": "technical",
-    "reason": "Button variant/size enum or non-visible ARIA state/heading reference, consumed only as styling or accessibility structure.",
-    "evidence": "worldIntelligence/components/WorldIntelligenceView.tsx:232; CIT-65 Button/OverflowMenu contracts and the JSX/native-attribute sink."
   },
   "54d7337ada73d6239b08522e87f4e6004d4802b7716badb16dd8f0bd86919f93": {
     "classification": "technical",
