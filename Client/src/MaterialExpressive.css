@@ -461,15 +461,15 @@ select {
 }
 
 .m3-chip-success {
-    border: 1px solid color-mix(in srgb, var(--success) 34%, var(--md-sys-color-outline-variant));
-    background: color-mix(in srgb, var(--success) 11%, var(--md-sys-color-surface-container));
-    color: var(--success);
+    border: 1px solid var(--status-success-border);
+    background: var(--status-success-bg);
+    color: var(--status-success);
 }
 
 .m3-chip-warning {
-    border: 1px solid color-mix(in srgb, var(--warning) 34%, var(--md-sys-color-outline-variant));
-    background: color-mix(in srgb, var(--warning) 11%, var(--md-sys-color-surface-container));
-    color: var(--warning);
+    border: 1px solid var(--status-warning-border);
+    background: var(--status-warning-bg);
+    color: var(--status-warning);
 }
 
 .m3-chip-danger {
