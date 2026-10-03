@@ -12,8 +12,8 @@ type finalDispatchGates struct {
 	tickets *travelTicketDispatchGate
 }
 
-func newFinalDispatchGates(coins *coinDispatchGate, tickets *travelTicketDispatchGate) *finalDispatchGates {
-	return &finalDispatchGates{gates: []Intent.FinalDispatchProvider{coins, tickets}, tickets: tickets}
+func newFinalDispatchGates(coins *coinDispatchGate, tickets *travelTicketDispatchGate, extra ...Intent.FinalDispatchProvider) *finalDispatchGates {
+	return &finalDispatchGates{gates: append([]Intent.FinalDispatchProvider{coins, tickets}, extra...), tickets: tickets}
 }
 func (g *finalDispatchGates) Validate(ctx context.Context, input Intent.PlanningContext, step Intent.Step) error {
 	for _, gate := range g.gates {

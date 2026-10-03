@@ -430,7 +430,7 @@ func New(ctx context.Context, config Config) (*Application, error) {
 	session.SetAutomationLocked(application.automationLocked())
 	intents.SetExecutionGate(application.executionGate)
 	intents.SetAdmissionWeightProvider(application.attackAdmissionWeight)
-	dispatchGates := newFinalDispatchGates(application.coinGate, newTravelTicketDispatchGate())
+	dispatchGates := newFinalDispatchGates(application.coinGate, newTravelTicketDispatchGate(), newSpecialCostDispatchGate())
 	intents.SetFinalDispatchProvider(dispatchGates)
 	intents.SetDispatchEvidenceCollector(captureDispatchBoundaryEvidence)
 	application.Scheduler = Scheduling.NewScheduler(state, intents)
@@ -457,8 +457,8 @@ func New(ctx context.Context, config Config) (*Application, error) {
 		state, configuration, gameData, intents,
 		Automation.NewSharedStormScanPolicy(application.AccountKey, config.WorldMaps),
 		Automation.NewSharedFortressScanPolicy(application.AccountKey, config.WorldMaps),
-		Automation.NewRecruitPolicy(),
-		Automation.NewToolPolicy(),
+		Automation.NewRecruitPolicy(resolveProductionCosts),
+		Automation.NewToolPolicy(resolveProductionCosts),
 		Automation.NewHospitalPolicy(),
 		Automation.NewAllianceHelpPolicy(),
 		Automation.NewAutoEquipmentCleanupPolicy(),
