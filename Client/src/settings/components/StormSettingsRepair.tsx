@@ -1,7 +1,7 @@
 import type { GameStateV2 } from '../../api/Contracts';
 import { LocalizedText } from '../../i18n/LocalizedText';
 import { Button } from '../../components/ui';
-import { legacyStormRepairKeys, useLegacyAsStorm } from '../stormRole';
+import { legacyStormRepairKeys, stormRepairDraft } from '../stormRole';
 
 export function StormSettingsRepair<T>({ entries, state, onChange }: {
   entries: Readonly<Record<string, T>>; state: GameStateV2 | null; onChange: (draft: Record<string, T>) => void;
@@ -10,7 +10,7 @@ export function StormSettingsRepair<T>({ entries, state, onChange }: {
   const repairable = legacyStormRepairKeys(entries, state);
   return <>{stale.map((key) => <div key={key} className="flex flex-wrap items-center gap-2 text-sm text-text-muted">
     <LocalizedText messageKey="castleRequirement.missingOption" params={{ id: key }} />
-    {repairable.includes(key) && <Button variant="ghost" size="sm" onClick={() => onChange(useLegacyAsStorm(entries, key, state))}>
+    {repairable.includes(key) && <Button variant="ghost" size="sm" onClick={() => onChange(stormRepairDraft(entries, key, state))}>
       <LocalizedText messageKey="stormRole.useLegacy" />
     </Button>}
     <Button variant="ghost" size="sm" onClick={() => { const draft = { ...entries }; delete draft[key]; onChange(draft); }}>

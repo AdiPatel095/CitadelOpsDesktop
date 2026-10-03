@@ -39,14 +39,14 @@ test('legacy repair is a draft choice, never overwrites, leaves cancel/save owne
   const saved = { 10: reserve, 98: reserve, 99: [{ id: 1, amount: 45 }] };
   const before = structuredClone(saved);
   assert.deepEqual(role.legacyStormRepairKeys(saved, state), ['98', '99']);
-  const draft = role.useLegacyAsStorm(saved, '98', state);
+  const draft = role.stormRepairDraft(saved, '98', state);
   assert.deepEqual(draft.storm, reserve);
   assert.equal(draft[98], undefined);
   assert.deepEqual(saved, before); // Cancel discards draft; no writer is involved.
   assert.deepEqual(role.legacyStormRepairKeys(draft, state), []);
-  assert.deepEqual(role.useLegacyAsStorm(draft, '99', state), draft);
+  assert.deepEqual(role.stormRepairDraft(draft, '99', state), draft);
   assert.deepEqual(role.legacyStormRepairKeys({ 20: reserve, 99: reserve }, state), []);
-  assert.deepEqual(role.useLegacyAsStorm(saved, '10', state), saved);
+  assert.deepEqual(role.stormRepairDraft(saved, '10', state), saved);
 });
 
 test('Storm event changes readiness and attribution without changing saved configuration', () => {

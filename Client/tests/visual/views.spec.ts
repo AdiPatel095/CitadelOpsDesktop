@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test';
+import type { CastleStateV2 } from '../../src/api/Contracts';
 import { prepare, settle, openView } from './harness';
 
 const views = [
@@ -103,7 +104,8 @@ for (const feature of ['autoTowers', 'autoBird', 'autoStation'] as const) {
     await page.evaluate(async () => {
       const fixturePath = '/main.tsx';
       const { server } = await import(/* @vite-ignore */ fixturePath);
-      const old = Object.values(server.built.state.castles).find((castle: any) => castle.kingdomId === 4) as any;
+      const old = (Object.values(server.built.state.castles) as CastleStateV2[]).find((castle) => castle.kingdomId === 4);
+      if (!old) throw new Error('Synthetic Storm castle is missing');
       server.file.runtime = [{ label: 'Synthetic next Storm event', state: { castles: { [old.id]: null, 998: { ...old, id: 998, name: 'Synthetic next Storm' } } } }];
       server.advance();
     });

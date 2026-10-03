@@ -29,7 +29,7 @@ export function legacyStormRepairKeys<T>(entries: Readonly<Record<string, T>>, s
   if (!state || Object.keys(state.castles).length === 0 || Object.hasOwn(normalizeStormKeys(entries, state), STORM_SETTINGS_KEY)) return [];
   return Object.keys(entries).filter((key) => /^\d+$/.test(key) && !state.castles[key]);
 }
-export function useLegacyAsStorm<T>(entries: Readonly<Record<string, T>>, key: string, state: GameStateV2 | null): Record<string, T> {
+export function stormRepairDraft<T>(entries: Readonly<Record<string, T>>, key: string, state: GameStateV2 | null): Record<string, T> {
   if (!legacyStormRepairKeys(entries, state).includes(key)) return { ...entries };
   const draft: Record<string, T> = { ...entries, storm: entries[key] };
   delete draft[key];
