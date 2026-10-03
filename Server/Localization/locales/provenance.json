@@ -34107,43 +34107,5 @@
     "sha256": "3e5e8c970e3cfbb704719636d99733d3ef830e036fca4866bcc2bdeb04b003e2"
   },
   "schemaVersion": 1,
-  "sourceCatalogSha256": "20136589ac89b3b51f55864a351a9ca42da46dc37cacef545c867761fb31b34a",
-  "sourceRevision": "56c2acba0f847e2675c7842588213c66710eeadc",
-  "playerLanguageBatch": {
-    "story": "CIT-68",
-    "source": "Engineering/Plans/CIT-68 Player-language copy.md Revision 1 §2a",
-    "englishFallbackKeys": [
-      "server.automation.event_gate.berimond.inactive",
-      "server.automation.event_gate.berimond.opening",
-      "server.automation.event_gate.berimond.unobserved",
-      "server.automation.event_gate.invasion.inactive",
-      "server.automation.event_gate.invasion.opening",
-      "server.automation.event_gate.invasion.unobserved",
-      "server.automation.event_gate.khan.inactive",
-      "server.automation.event_gate.khan.opening",
-      "server.automation.event_gate.khan.unobserved",
-      "server.automation.event_gate.nomad_samurai.inactive",
-      "server.automation.event_gate.nomad_samurai.opening",
-      "server.automation.event_gate.nomad_samurai.unobserved",
-      "server.automation.watching_for_incoming_attacks.60f06f25"
-    ],
-    "translationStatus": "pending all-locale translation batch; old translations invalidated"
-  },
-  "opcodeRejectionFixes": {
-    "story": "CIT-120",
-    "source": "Engineering/Plans/CIT-120 Official default kingdom list for buildings.md; Product/Opcode rejection fixes 2026-10-03 decision.md R5",
-    "baseRevision": "dc79aca3389c947b6ae663250ad838f4272275a0",
-    "englishFallbackKeys": [
-      "server.buildings.kingdom_unavailable"
-    ],
-    "translationStatus": "English only; pending the epic CIT-116 batched locale translation story"
-  },
-  "opcodeRejectionQueueBatch": {
-    "story": "CIT-117",
-    "source": "Engineering/Plans/CIT-117 Recruitment queue counts only usable slots.md Waiting (AC5)",
-    "englishFallbackKeys": [
-      "server.automation.production_queues_full_at"
-    ],
-    "translationStatus": "pending opcode rejection epic all-locale translation batch"
-  }
+  "sourceRevision": "56c2acba0f847e2675c7842588213c66710eeadc"
 }

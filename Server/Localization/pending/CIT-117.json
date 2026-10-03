@@ -1,0 +1,8 @@
+{
+  "story": "CIT-117",
+  "source": "Engineering/Plans/CIT-117 Recruitment queue counts only usable slots.md Waiting (AC5)",
+  "englishFallbackKeys": [
+    "server.automation.production_queues_full_at"
+  ],
+  "translationStatus": "pending opcode rejection epic all-locale translation batch"
+}
