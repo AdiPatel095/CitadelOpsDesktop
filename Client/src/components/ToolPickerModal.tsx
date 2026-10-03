@@ -1,23 +1,13 @@
-import { useLocale as useStaticLocale } from "../i18n/LocaleContext";
+export type { ToolPickerOptions, ToolPickerResult, ToolPickerSelectionMode } from './ToolPicker';
+import { toolPickerBridge, type ToolPickerOptions, type ToolPickerResult } from './ToolPicker';
+import { useLocale as useStaticLocale } from '../i18n/useLocale';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Check } from 'lucide-react';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import ToolImage from './ToolImage';
-import { useMetadata, type MetadataItem } from '../context/MetadataContext';
+import { type MetadataItem } from '../context/MetadataContext';
+import { useMetadata } from '../context/useMetadata';
 import { CatalogPickerModal, EmptyState } from './ui';
-
-export type ToolPickerSelectionMode = 'single' | 'multi';
-
-export interface ToolPickerOptions {
-  mode: ToolPickerSelectionMode;
-  title?: string;
-  preselected?: number[];
-  allowedToolIds?: number[];
-  /** Optional available stock counts shown on each tool card. */
-  stockQuantities?: Record<number, number>;
-}
-
-export type ToolPickerResult = number | number[] | null;
 
 interface ToolPickerModalProps {
   isOpen: boolean;
@@ -158,18 +148,6 @@ const VirtualizedToolGrid: React.FC<VirtualizedToolGridProps> = ({
   );
 };
 
-let resolvePickerPromise: ((value: ToolPickerResult) => void) | null = null;
-let setPickerState: React.Dispatch<React.SetStateAction<{ isOpen: boolean; options: ToolPickerOptions | null }>> | null = null;
-
-export function showToolPicker(options: ToolPickerOptions): Promise<ToolPickerResult> {
-  return new Promise((resolve) => {
-    resolvePickerPromise = resolve;
-    if (setPickerState) {
-      setPickerState({ isOpen: true, options });
-    }
-  });
-}
-
 export const ToolPickerProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [state, setState] = useState<{ isOpen: boolean; options: ToolPickerOptions | null }>({
     isOpen: false,
@@ -177,17 +155,17 @@ export const ToolPickerProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   });
 
   useEffect(() => {
-    setPickerState = setState;
+    toolPickerBridge.setState = setState;
     return () => {
-      setPickerState = null;
+      toolPickerBridge.setState = null;
     };
   }, []);
 
   const handleClose = useCallback((result: ToolPickerResult) => {
     setState({ isOpen: false, options: null });
-    if (resolvePickerPromise) {
-      resolvePickerPromise(result);
-      resolvePickerPromise = null;
+    if (toolPickerBridge.resolve) {
+      toolPickerBridge.resolve(result);
+      toolPickerBridge.resolve = null;
     }
   }, []);
 

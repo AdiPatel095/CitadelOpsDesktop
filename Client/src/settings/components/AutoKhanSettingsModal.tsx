@@ -2,7 +2,7 @@ import { StopFooter } from '../../components/StopControl';
 import {useLocalizedMessage} from '../../i18n/useLocalizedMessage';
 import {parseMessageDescriptor} from '../../i18n/messageDescriptor';
 import {messageLanguageAttributes} from '../../i18n/messageLanguage';
-import { useLocale as useStaticLocale } from "../../i18n/LocaleContext";
+import { useLocale as useStaticLocale } from '../../i18n/useLocale';
 import { LocalizedText } from "../../i18n/LocalizedText";
 import React, { useEffect, useMemo, useState } from 'react';
 import {
@@ -26,7 +26,7 @@ import { attackSetupRef, attackSetupRefUsable, type AttackSetupRef } from '../..
 import { attackPresetReferences, defensePresetReferences } from '../../attackPresets/AttackPresetReferences';
 import { Notifications } from '../../components/Notifications';
 import { Badge, Button, Card, Input, SettingsModal, Switch } from '../../components/ui';
-import { useMetadata } from '../../context/MetadataContext';
+import { useMetadata } from '../../context/useMetadata';
 import {
   DEFENSE_PRESETS_SECTION,
   parseDefensePresetDocument,
@@ -70,7 +70,8 @@ import { AUTOMATION_ENABLED_KEYS } from '../disclosure/placement';
 import { countCustomValues, khanStopLimitsSummary, travelLine } from '../disclosure/summaries';
 import { useSettingsDisclosure } from '../disclosure/useSettingsDisclosure';
 import { AutomationRunStrip } from './AutomationRunStrip';
-import { collapsedSettingNote, SettingsSection } from './SettingsSection';
+import { SettingsSection } from './SettingsSection';
+import { collapsedSettingNote } from './collapsedSettingNote';
 import { englishGuidePack, useGuideLocale } from '../../config/useGuideLocale';
 import { useDraftRecovery } from '../useDraftRecovery';
 

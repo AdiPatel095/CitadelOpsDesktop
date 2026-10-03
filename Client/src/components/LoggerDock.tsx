@@ -10,7 +10,7 @@ import { Check, Copy, Pause, Play, RefreshCw, Search, X } from 'lucide-react';
 import { Icons } from './Icons';
 import { Notifications } from './Notifications';
 import { Button, Input, Select } from './ui';
-import { useLocale } from '../i18n/LocaleContext';
+import { useLocale } from '../i18n/useLocale';
 import { useLocalizedMessages } from '../i18n/useLocalizedMessages';
 import { parseMessageDescriptor } from '../i18n/messageDescriptor';
 import { telemetryEntries } from '../i18n/telemetryMessages';

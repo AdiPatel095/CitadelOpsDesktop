@@ -1,5 +1,5 @@
 import { useServerLabel } from '../useServerLabel';
-import { useLocale as useStaticLocale } from "../../i18n/LocaleContext";
+import { useLocale as useStaticLocale } from '../../i18n/useLocale';
 import { LocalizedText } from "../../i18n/LocalizedText";
 import { useEffect, useMemo, useState } from 'react';
 import { Activity, Castle, ShieldCheck, Sparkles, Users } from 'lucide-react';
@@ -9,13 +9,8 @@ import type {
 	WorldIntelligencePlayerObservationV1,
 	WorldIntelligencePublicMetricV1,
 } from '../../api/Contracts';
-import {
-	bucketMetricPoints,
-	TrendChart,
-	type ChartTimeWindow,
-	type RangeKey,
-	type TrackerMetricPoint,
-} from '../../playerTracker/components/PlayerTrackerView';
+import { TrendChart, type ChartTimeWindow, type RangeKey, type TrackerMetricPoint } from '../../playerTracker/components/PlayerTrackerView';
+import { bucketMetricPoints } from '../../playerTracker/components/bucketMetricPoints';
 import {
 	Badge,
 	Button,

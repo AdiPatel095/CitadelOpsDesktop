@@ -19,9 +19,9 @@ import {
   type QueueableProductionField,
 } from '../QueueableProductionCatalog';
 import { WeeklyScheduler, type ScheduleSlotOptionsConfig } from './WeeklyScheduler';
-import { useCitadelAPI } from '../../api/ApiContext';
+import { useCitadelAPI } from '../../api/useCitadelAPI';
 import { configurationSection } from '../Configuration';
-import { useMetadata } from '../../context/MetadataContext';
+import { useMetadata } from '../../context/useMetadata';
 import { highestUnitIDsByFamily, unitIDsAvailableByFamilyAcrossCastles } from '../UnitUpgradeFamily';
 import {
   queueProductionCastleConfigurationKey,

@@ -6,7 +6,7 @@ import type { SettingsFeatureId } from '../settings/disclosure/placement';
 import type { CheckState, ReadinessCheck } from '../settings/readiness/Readiness';
 import { clearPendingRowFocus, requestSettingsFix, ROW_FOCUS_EVENT, takePendingRowFocus } from '../settings/readiness/settingsFixRequest';
 import { useFeatureReadiness } from '../settings/readiness/useFeatureReadiness';
-import { useCitadelAPI } from '../api/ApiContext';
+import { useCitadelAPI } from '../api/useCitadelAPI';
 import { scopeKey } from '../settings/onboarding/accountScope';
 import { GOAL_SAVED_SECTION, isSavedSection } from '../settings/onboarding/goals';
 import { useGoal } from '../settings/onboarding/goalStore';

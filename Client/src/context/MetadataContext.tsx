@@ -1,54 +1,17 @@
+import { MetadataContext, type MetadataItem, type MetadataContextValue } from './useMetadata';
+export type { MetadataItem } from './useMetadata';
 import { canonicalEffectCoverage } from '../equipment/CanonicalEffectCoverage';
 import { canonicalEffectReducer, usableCanonicalEffects } from '../equipment/CanonicalEffectState';
 import { equipmentEffectTemplates } from '../equipment/EquipmentEffectLocalization';
 import { metadataName, translationValues } from '../i18n/officialMetadata';
 import { loadOfficialMessages, invalidateOfficialMessages } from '../i18n/officialMessages';
-import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, useReducer } from 'react';
-import { useCitadelAPI } from '../api/ApiContext';
+import { useCallback, useEffect, useMemo, useRef, useState, useReducer } from 'react';
+import { useCitadelAPI } from '../api/useCitadelAPI';
 import { CATALOG_MANIFEST_WAIT_MS, catalogLoadKey } from '../api/CatalogURL';
-import { useLocale } from '../i18n/LocaleContext';
+import { useLocale } from '../i18n/useLocale';
 import { CitadelAPI } from '../api/CitadelClient';
 import { officialEquipmentEffectScope } from '../equipment/EquipmentEffectApplicability';
 
-export interface MetadataItem {
-  id: number;
-  name: string;
-  nameLocale?: string;
-  localizationKey?: string;
-  translationStatus?: 'official' | 'fallback';
-  image?: string;
-  level?: number;
-  outputAmount?: number;
-  [key: string]: unknown;
-}
-
-interface MetadataContextValue {
-  troops: Record<number, MetadataItem>;
-  tools: Record<number, MetadataItem>;
-	buildings: Record<number, MetadataItem>;
-  decorations: Record<number, MetadataItem>;
-	resources: Record<number, MetadataItem>;
-	currencies: Record<number, MetadataItem>;
-	equipments: Record<number, MetadataItem>;
-	gems: Record<number, MetadataItem>;
-	effects: Record<number, MetadataItem>;
-	kingdoms: Record<number, MetadataItem>;
-  craftingRecipes: Record<number, MetadataItem>;
-  isLoading: boolean;
-  unitsLoading: boolean;
-  unitsError: string | null;
-  effectsStatus: 'loading' | 'ready' | 'unavailable';
-  getTroop: (id: number) => MetadataItem | undefined;
-  getTool: (id: number) => MetadataItem | undefined;
-	getBuilding: (id: number) => MetadataItem | undefined;
-	getEquipment: (id: number) => MetadataItem | undefined;
-	getGem: (id: number) => MetadataItem | undefined;
-	getEffect: (id: number) => MetadataItem | undefined;
-	getCraftingRecipe: (id: number) => MetadataItem | undefined;
-  getDecoration: (id: number) => MetadataItem | undefined;
-}
-
-const MetadataContext = createContext<MetadataContextValue | undefined>(undefined);
 
 export function MetadataProvider({ children }: { children: React.ReactNode }) {
 	const { catalogs } = useCitadelAPI();
@@ -362,11 +325,6 @@ export function MetadataProvider({ children }: { children: React.ReactNode }) {
   return <MetadataContext.Provider value={value}>{children}</MetadataContext.Provider>;
 }
 
-export function useMetadata(): MetadataContextValue {
-  const context = useContext(MetadataContext);
-  if (!context) throw new Error('useMetadata must be used within MetadataProvider');
-  return context;
-}
 
 type OfficialRecord = Record<string, unknown>;
 

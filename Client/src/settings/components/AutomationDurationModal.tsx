@@ -1,9 +1,9 @@
 import { formatDurationEnd } from "../../i18n/automationDuration";
-import { useLocale } from "../../i18n/LocaleContext";
+import { useLocale } from '../../i18n/useLocale';
 import { LocalizedText } from "../../i18n/LocalizedText";
 import React, { useEffect, useMemo, useState } from 'react';
 import { TimerReset } from 'lucide-react';
-import { useAuth } from '../../context/AuthContext';
+import { useAuth } from '../../context/useAuth';
 import { Button, Input, Modal, ModalTitle, Select } from '../../components/ui';
 
 interface AutomationDurationModalProps {

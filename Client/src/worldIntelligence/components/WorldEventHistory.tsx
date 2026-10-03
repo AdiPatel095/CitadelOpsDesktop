@@ -3,7 +3,7 @@ import {LocalizedError} from '../../i18n/LocalizedError';
 import {useLocalizedErrorState} from '../../i18n/useLocalizedErrorState';
 import {useEventDisplayNames} from '../../i18n/useEventDisplayNames';
 import type {MessageKey,MessageParameters} from '../../i18n/messages';
-import { useLocale as useStaticLocale } from "../../i18n/LocaleContext";
+import { useLocale as useStaticLocale } from '../../i18n/useLocale';
 import { LocalizedText } from "../../i18n/LocalizedText";
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ArrowDown, ArrowUp, ArrowUpDown, CalendarDays, ChevronLeft, ChevronRight, History, RefreshCw, Search, Trophy } from 'lucide-react';

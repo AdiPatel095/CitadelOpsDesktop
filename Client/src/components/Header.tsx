@@ -1,11 +1,11 @@
-import { useLocale as useStaticLocale } from "../i18n/LocaleContext";
+import { useLocale as useStaticLocale } from '../i18n/useLocale';
 import { LocalizedText } from "../i18n/LocalizedText";
-import { useLocale } from '../i18n/LocaleContext';
+import { useLocale } from '../i18n/useLocale';
 import React, { useEffect, useMemo, useState } from 'react';
 import { Bird, Lock, Menu, Radio, Settings, Shield, Trash2, Unlock } from 'lucide-react';
-import { useCitadelAPI } from '../api/ApiContext';
-import { useAuth } from '../context/AuthContext';
-import { useTheme } from '../context/ThemeContext';
+import { useCitadelAPI } from '../api/useCitadelAPI';
+import { useAuth } from '../context/useAuth';
+import { useTheme } from '../context/useTheme';
 import AutoBirdHoverPopover from './AutoBirdHoverPopover';
 import AutoStationHoverPopover from './AutoStationHoverPopover';
 import { stationHeaderPill } from './stationHeaderPill';

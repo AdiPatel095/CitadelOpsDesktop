@@ -2,7 +2,7 @@ import { LocalizedText } from "../i18n/LocalizedText";
 import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { CheckCircle2, Download, RefreshCw } from 'lucide-react';
-import { useCitadelAPI } from '../api/ApiContext';
+import { useCitadelAPI } from '../api/useCitadelAPI';
 import { Button, Card, Modal } from './ui';
 
 const ignoredVersionKey = 'ignoredVersion';

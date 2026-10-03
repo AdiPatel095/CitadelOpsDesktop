@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useLocale } from '../i18n/LocaleContext';
+import { useLocale } from '../i18n/useLocale';
 import english from './guideLocales/en.json';
 
 export type GuidePack = typeof english;

@@ -66,7 +66,8 @@ func evaluateBeriEventBuild(
 		return nil, false, "", err
 	}
 	stableRubyBlocked := rubyPolicyOnlyBlocked(stableDiff)
-	if !stableDiff.Satisfied && !stableRubyBlocked {
+	stableKingdomBlocked := kingdomOnlyBlocked(stableDiff)
+	if !stableDiff.Satisfied && !stableRubyBlocked && !stableKingdomBlocked {
 		if queueBlocked {
 			return nil, false, "The Berimond construction queue is occupied while the selected Stable level is pending", nil
 		}
@@ -178,7 +179,7 @@ func evaluateBeriEventBuild(
 	if err != nil {
 		return nil, false, "", err
 	}
-	if !decorationDiff.Satisfied {
+	if !decorationDiff.Satisfied && !kingdomOnlyBlocked(decorationDiff) {
 		if queueBlocked {
 			return nil, false, "The Berimond construction queue is occupied while target decorations are pending", nil
 		}
@@ -194,7 +195,12 @@ func evaluateBeriEventBuild(
 	metrics["targetBuildingsSatisfied"] = float64(stableDiff.Summary.SatisfiedCount + decorationDiff.Summary.SatisfiedCount + finalDiff.Summary.SatisfiedCount + fixedDiff.Summary.SatisfiedCount)
 	metrics["targetBuildingsTotal"] = float64(stableDiff.Summary.TargetCount + decorationDiff.Summary.TargetCount + finalDiff.Summary.TargetCount + fixedDiff.Summary.TargetCount)
 	metrics["targetActionsRemaining"] = float64(finalDiff.Summary.ActionCount + fixedDiff.Summary.ActionCount)
-	if finalDiff.Satisfied && fixedDiff.Satisfied {
+	if (finalDiff.Satisfied || kingdomOnlyBlocked(finalDiff)) && fixedDiff.Satisfied {
+		for _, diff := range []Buildings.TargetDiffResult{stableDiff, decorationDiff, finalDiff} {
+			if kingdomOnlyBlocked(diff) {
+				return nil, false, kingdomBlockedDetail(diff), nil
+			}
+		}
 		if stableRubyBlocked {
 			return nil, false, rubyPolicyDetail(stableDiff), nil
 		}
@@ -203,7 +209,7 @@ func evaluateBeriEventBuild(
 	if queueBlocked {
 		return nil, false, "The Berimond construction queue is occupied while final camp construction or upgrades are pending", nil
 	}
-	if !finalDiff.Satisfied {
+	if !finalDiff.Satisfied && !kingdomOnlyBlocked(finalDiff) {
 		return beriPhaseAction(snapshot, settings, castle, finalDiff, metrics, profile,
 			"Waiting for returned Berimond attack loot to finish target camp construction and upgrades")
 	}
@@ -418,6 +424,20 @@ func beriPhaseStorageDefinitions(diff Buildings.TargetDiffResult) []State.Buildi
 	result := make([]State.BuildingID, 0, len(diff.Actions))
 	for _, action := range diff.Actions {
 		if action.Intent == "building.construct" || action.Intent == "building.upgrade" {
+			blocked := false
+			for _, target := range diff.Targets {
+				if target.TargetID != action.TargetID {
+					continue
+				}
+				for _, issue := range target.Issues {
+					if issue.Code == "kingdom" {
+						blocked = true
+					}
+				}
+			}
+			if blocked {
+				continue
+			}
 			result = append(result, action.Definition.ID)
 		}
 	}
@@ -442,4 +462,35 @@ func beriTargetStorageCountReached(castle State.CastleState, target Buildings.Ta
 		}
 	}
 	return required > 0 && existing >= required
+}
+
+// Kingdom-ineligible targets stay pending without blocking later eligible work.
+// Eligible targets retain their resource, placement and queue prerequisites.
+func kingdomOnlyBlocked(diff Buildings.TargetDiffResult) bool {
+	blocked := false
+	for _, target := range diff.Targets {
+		if target.Status == Buildings.TargetStatusSatisfied {
+			continue
+		}
+		hasKingdom := false
+		for _, issue := range target.Issues {
+			if issue.Code == "kingdom" {
+				hasKingdom = true
+			}
+		}
+		if !hasKingdom {
+			return false
+		}
+		blocked = true
+	}
+	return blocked
+}
+
+func kingdomBlockedDetail(diff Buildings.TargetDiffResult) string {
+	for _, issue := range diff.Issues {
+		if issue.Code == "kingdom" {
+			return issue.Message
+		}
+	}
+	return ""
 }

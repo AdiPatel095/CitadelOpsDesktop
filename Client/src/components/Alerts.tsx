@@ -1,7 +1,7 @@
 import { parseMessageDescriptor } from '../i18n/messageDescriptor';
 import { useLocalizedMessages } from '../i18n/useLocalizedMessages';
 import { messageLanguageAttributes } from '../i18n/messageLanguage';
-import { useLocale as useStaticLocale } from "../i18n/LocaleContext";
+import { useLocale as useStaticLocale } from '../i18n/useLocale';
 import { useEffect, useSyncExternalStore } from 'react';
 import { Icons } from './Icons';
 import { NOTIFICATION_EXIT_MS, Notifications, type AppNotification, type VisibleNotification } from './Notifications';

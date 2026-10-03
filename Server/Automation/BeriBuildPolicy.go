@@ -136,6 +136,7 @@ func (*BeriBuildPolicy) Evaluate(_ context.Context, snapshot Snapshot) (result D
 	defer func() {
 		if resultErr == nil {
 			attachRubyUpgradeNotices(&result, snapshot, castle.ID, &target, shared.Build.AllowPremium)
+			attachBuildingKingdomNotices(&result, snapshot, castle, &target)
 		}
 	}()
 	decision, complete, detail, err := evaluateBeriEventBuild(
@@ -244,5 +245,41 @@ func beriBuildWaiting(now time.Time, detail string, metrics map[string]float64, 
 	return Decision{
 		Status: "waiting", Detail: detail, DetailDescriptor: Localization.First(descriptors), Metrics: metrics,
 		NextCheckAt: now.Add(30 * time.Second),
+	}
+}
+
+// Stable per-target detail keys use the coordinator's existing value-sensitive
+// status deduplication. They are recomputed from the current catalog each time.
+func attachBuildingKingdomNotices(decision *Decision, snapshot Snapshot, castle State.CastleState, target *Buildings.TargetCaptureResult) {
+	if target == nil || snapshot.GameData == nil {
+		return
+	}
+	catalog, err := snapshot.GameData.BuildingCatalog()
+	if err != nil {
+		return
+	}
+	for _, item := range target.Buildings {
+		definition, found := catalog.DefinitionView(int64(item.DefinitionID))
+		if !found {
+			continue
+		}
+		blocker := Buildings.BuildingKingdomBlocker(definition, castle.KingdomID, snapshot.Language)
+		if blocker == nil {
+			continue
+		}
+		if decision.Details == nil {
+			decision.Details = map[string]string{}
+		}
+		if decision.DetailsDescriptors == nil {
+			decision.DetailsDescriptors = map[string]*Localization.Message{}
+		}
+		key := "buildingKingdomNotice/" + item.TargetID
+		decision.Details[key] = blocker.Message
+		decision.DetailsDescriptors[key] = Localization.Clone(blocker.MessageDescriptor)
+		if decision.Request == nil && decision.Status != "blocked" {
+			decision.Status = "blocked"
+			decision.Detail = blocker.Message
+			decision.DetailDescriptor = Localization.Clone(blocker.MessageDescriptor)
+		}
 	}
 }

@@ -23,6 +23,7 @@ const dependencies = {
   'react/jsx-runtime': require('react/jsx-runtime'),
   './CitadelClient': clientModule,
   './RuntimeURL': transport,
+  './useCitadelAPI': await load('api/useCitadelAPI'),
   '../components/Notifications': { Notifications: { publish() {}, error() {} } },
 };
 const providerSource = readFileSync(new URL(`${SRC}api/ApiContext.tsx`, import.meta.url), 'utf8').replace(/import\.meta\.env/g, '({ DEV: false })');

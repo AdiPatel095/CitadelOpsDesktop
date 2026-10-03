@@ -1,9 +1,8 @@
 import React, { type ReactNode } from 'react';
 import { ChevronDown, ChevronRight, SlidersHorizontal } from 'lucide-react';
 import { Badge } from '../../components/ui/Badge';
-import { useLocale } from '../../i18n/LocaleContext';
+import { useLocale } from '../../i18n/useLocale';
 import { LocalizedText } from '../../i18n/LocalizedText';
-import type { ReadinessCheck } from '../readiness/Readiness';
 import { sectionPlacement, settingsSectionElementId } from '../disclosure/placement';
 import type { SettingsSummaryLine } from '../disclosure/summaries';
 import type { CollapsedFixTarget, SettingsDisclosure } from '../disclosure/useSettingsDisclosure';
@@ -88,23 +87,7 @@ export const SettingsSection: React.FC<SettingsSectionProps> = ({ disclosure, se
   );
 };
 
-/**
- * Readiness note for a blocked or waiting check whose control is inside a
- * collapsed Advanced section: the control's current value and where it lives.
- * `values` maps control ids to their current display value.
- */
-export function collapsedSettingNote(
-  disclosure: SettingsDisclosure,
-  values: Readonly<Record<string, ReactNode>> = {},
-): (check: ReadinessCheck) => ReactNode {
-  return (check) => {
-    const collapsed = disclosure.collapsedTarget(check);
-    if (!collapsed) return null;
-    return <CollapsedSettingNote collapsed={collapsed} value={values[collapsed.target.control]} />;
-  };
-}
-
-const CollapsedSettingNote: React.FC<{ collapsed: CollapsedFixTarget; value: ReactNode }> = ({ collapsed, value }) => {
+export const CollapsedSettingNote: React.FC<{ collapsed: CollapsedFixTarget; value: ReactNode }> = ({ collapsed, value }) => {
   const { t } = useLocale();
   return (
     <span className="block text-[11px] text-text-muted">
