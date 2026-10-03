@@ -2,15 +2,6 @@
   "story": "CIT-133",
   "source": "Engineering/Plans/CIT-133 Support sends must not use the paid premium commander.md; Revisions 1–5",
   "translationStatus": "English only; pending batched translation",
-  "messages": {
-    "server.support.commander_wait": "Support waiting: no free premium commander and no idle commander",
-    "server.support.manual_quota": "Not sent: no free premium commanders left today. CitadelOps never spends rubies on commanders.",
-    "server.support.manual_vip_unknown": "Not sent: VIP status unavailable. CitadelOps never spends rubies on commanders.",
-    "server.support.storm_quota": "Waiting: no free premium commanders left today (VIP daily allowance used). Rubies are never spent.",
-    "server.support.storm_vip_unknown": "Waiting: VIP status unavailable. Rubies are never spent.",
-    "server.support.premium_blocked": "Not sent: free premium commander reservation unavailable. CitadelOps never spends rubies on commanders.",
-    "server.rift.premium_capture": "Rift launch {name} was captured with the paid premium commander. Capture it again with one of your own commanders."
-  },
   "englishFallbackKeys": [
     "server.support.commander_wait",
     "server.support.manual_quota",

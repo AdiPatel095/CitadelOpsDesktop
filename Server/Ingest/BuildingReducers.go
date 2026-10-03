@@ -51,6 +51,15 @@ func reduceBuildingMutation(
 	} else {
 		for _, row := range mutationBuildingRows(frame.Opcode, frame.Payload, root) {
 			changed = applyBuildingMutationRow(&castle, row, gameData) || changed
+			if len(row) > 6 {
+				id := State.BuildingInstanceID(rowInt(row, 1))
+				if building, found := buildingFromCastleMaps(castle, id); found {
+					history := observedBuildingCompletions(building.CompletionEvents, building.ConstructionState, frame)
+					changed = !reflect.DeepEqual(building.CompletionEvents, history) || changed
+					building.CompletionEvents = history
+					setBuildingCompletionHistory(&castle, id, building.CompletionEvents)
+				}
+			}
 		}
 	}
 
@@ -234,6 +243,7 @@ func applyBuildingMutationRow(
 	if len(row) <= 8 && found && existing.DefinitionID == building.DefinitionID && existing.ConstructionState == building.ConstructionState && building.ProgressSec >= existing.ProgressSec {
 		building.ConstructionBoostPercent = existing.ConstructionBoostPercent
 	}
+	building.CompletionEvents = existing.CompletionEvents
 	building.Placed = building.GridX >= 0 && building.GridY >= 0
 	unchanged := found && reflect.DeepEqual(existing, building)
 	removeCastleBuildingMaps(castle, instanceID)
@@ -341,4 +351,24 @@ func buildingConstructionBoost(row []json.RawMessage) float64 {
 		return 0
 	}
 	return value
+}
+
+func observedBuildingCompletions(history []State.BuildingCompletionEvent, state int, frame Protocol.Frame) []State.BuildingCompletionEvent {
+	if state != State.BuildingStateBuildCompleted && state != State.BuildingStateUpgradeCompleted && state != State.BuildingStateDisassembledCompleted {
+		return history
+	}
+	event := State.BuildingCompletionEvent{Opcode: frame.Opcode, ConstructionState: state, ObservedAt: frame.ReceivedAt.UTC()}
+	if len(history) > 0 && history[len(history)-1] == event {
+		return history
+	}
+	start := max(0, len(history)-7)
+	return append(append([]State.BuildingCompletionEvent(nil), history[start:]...), event)
+}
+func setBuildingCompletionHistory(castle *State.CastleState, id State.BuildingInstanceID, history []State.BuildingCompletionEvent) {
+	for _, buildings := range []map[State.BuildingInstanceID]State.Building{castle.Buildings, castle.Layout.Objects, castle.Layout.Ground, castle.Layout.Fixed} {
+		if building, found := buildings[id]; found {
+			building.CompletionEvents = history
+			buildings[id] = building
+		}
+	}
 }

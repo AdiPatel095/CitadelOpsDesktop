@@ -36,6 +36,9 @@ var ErrPlanStale = errors.New("intent plan became stale before dispatch")
 var ErrOperationHistoryUnavailable = errors.New("stored operation history is unavailable")
 var ErrCoinUnavailable = errors.New("not enough coins for dispatch")
 
+// Only a committed rejection reconciliation may retire the rest of a plan.
+var errOperationReconciled = errors.New("operation completed in authoritative rejection refresh")
+
 type CoinUnavailableError struct {
 	BalanceUnavailable bool
 	Required           int64
@@ -159,6 +162,9 @@ type Engine struct {
 	subscribers           map[uint64]chan Receipt
 	eventSequence         uint64
 	persistenceErr        error
+
+	dispatchEvidenceCollector DispatchEvidenceCollector
+
 	// runtimeContext bounds detached executions. It belongs to the owning
 	// application, never to the API client that submitted the intent.
 	runtimeContext context.Context
@@ -718,6 +724,7 @@ func (engine *Engine) execute(prepared *preparedSubmission) Receipt {
 		completedThisAttempt := map[string]int{}
 		yielded := false
 		replan := false
+		operationReconciled := false
 		var replanCause error
 		wireCommits := &wireCommitCollector{}
 		evidenceBuffer := &operationEvidenceBuffer{}
@@ -828,6 +835,10 @@ func (engine *Engine) execute(prepared *preparedSubmission) Receipt {
 			for err == nil {
 				var exchange *CommandExchange
 				exchange, err = engine.executeStep(stepContext, currentRevision, step)
+				if errors.Is(err, errOperationReconciled) {
+					operationReconciled = true
+					err = nil
+				}
 				if evidence := evidenceBuffer.drain(); len(evidence) > 0 {
 					receipt.Evidence = append(receipt.Evidence, evidence...)
 					if persistErr := engine.update(receipt); persistErr != nil {
@@ -881,7 +892,8 @@ func (engine *Engine) execute(prepared *preparedSubmission) Receipt {
 					yielded = true
 					break
 				}
-				if errors.Is(err, ErrPlanStale) && !completedAnyStep(completedSteps) {
+				var recoveryFailure *rejectionReconciliationFailure
+				if errors.Is(err, ErrPlanStale) && !errors.As(err, &recoveryFailure) && !completedAnyStep(completedSteps) {
 					replan = true
 					replanCause = err
 					break
@@ -900,6 +912,9 @@ func (engine *Engine) execute(prepared *preparedSubmission) Receipt {
 					return engine.failAfterProgress(receipt, fmt.Errorf("commit acknowledged response: %w", err), completedSteps)
 				}
 				currentRevision = engine.state.Revision()
+			}
+			if operationReconciled {
+				break
 			}
 		}
 		if err := flushWireCommits(); err != nil {
@@ -1080,6 +1095,7 @@ func stepResumeKey(step Step) string {
 		fmt.Sprint(step.SuccessCodes),
 		fmt.Sprint(step.StaleCodes),
 		responseRetryPolicyKey(step.ResponseRetry),
+		rejectionReconciliationKey(step.RejectionReconciliation),
 		fmt.Sprint(step.CaptureResponse),
 		string(step.ExpectedResponsePayload),
 		fmt.Sprint(step.ResponseIdentity.PlayerID),
@@ -1397,6 +1413,7 @@ func (engine *Engine) executeStep(ctx context.Context, afterRevision uint64, ste
 		if !sameStrings(stepAwaitOpcodes(step), stepAwaitOpcodes(resolved)) {
 			return nil, fmt.Errorf("step resolver %q changed its declared response claims", step.Resolver)
 		}
+		resolvedContext = context.WithValue(resolvedContext, dispatchResolverContextKey{}, step.Resolver)
 		return engine.executeStep(resolvedContext, current.Revision, resolved)
 	}
 	if step.Action != "" {
@@ -1604,7 +1621,12 @@ func (engine *Engine) executeStep(ctx context.Context, afterRevision uint64, ste
 	engine.mu.RLock()
 	finalDispatchProvider := engine.finalDispatchProvider
 	engine.mu.RUnlock()
-	if step.FinalDispatchAction != "" || finalDispatchProvider != nil {
+	engine.mu.RLock()
+	evidenceCollector := engine.dispatchEvidenceCollector
+	engine.mu.RUnlock()
+	boundary := &dispatchBoundaryBuffer{}
+	ctx = context.WithValue(ctx, dispatchBoundaryContextKey{}, boundary)
+	if step.FinalDispatchAction != "" || finalDispatchProvider != nil || evidenceCollector != nil {
 		engine.mu.RLock()
 		action := engine.actions[step.FinalDispatchAction]
 		engine.mu.RUnlock()
@@ -1616,7 +1638,13 @@ func (engine *Engine) executeStep(ctx context.Context, afterRevision uint64, ste
 				}
 			}
 			if finalDispatchProvider != nil {
-				return finalDispatchProvider.Validate(dispatchContext, engine.planningContext(), concrete)
+				if err := finalDispatchProvider.Validate(dispatchContext, engine.planningContext(), concrete); err != nil {
+					return err
+				}
+			}
+			if evidenceCollector != nil && dispatchEvidenceOpcode(command.Opcode) {
+				source, _ := ctx.Value(dispatchResolverContextKey{}).(string)
+				boundary.set(evidenceCollector(dispatchContext, engine.planningContext(), concrete, source, payload))
 			}
 			return nil
 		})
@@ -1740,6 +1768,34 @@ func (engine *Engine) executeStep(ctx context.Context, afterRevision uint64, ste
 				}
 				responseErr := engine.unsuccessfulResponseFrame(frame.Frame)
 				guarded := engine.guardRejection(ctx, responseErr)
+				if recovery := step.RejectionReconciliation; recovery != nil && recovery.Code == *frame.Frame.ResponseCode {
+					// Read-only refresh is allowed while the originating lane is
+					// locked. No second FCO is sent here, even if still upgrading.
+					refreshContext := context.WithValue(ctx, dispatchPermitContextKey{}, dispatchPermit(nil))
+					refresh := RejectionRefresh{StartedAt: time.Now().UTC(), SessionGeneration: sessionAtSend.Generation, ConnectionGeneration: sessionAtSend.ConnectionGeneration}
+					refreshStep := recovery.Refresh
+					// Use the response timestamp locally; never retain the refresh exchange.
+					refreshStep.CaptureResponse = true
+					refreshed, refreshErr := engine.executeStep(refreshContext, engine.state.Revision(), refreshStep)
+					if refreshErr != nil {
+						return exchange, &rejectionReconciliationFailure{errors.Join(guarded, refreshErr)}
+					}
+					engine.mu.RLock()
+					reconcile := engine.actions[recovery.Action]
+					engine.mu.RUnlock()
+					if reconcile == nil {
+						return exchange, &rejectionReconciliationFailure{errors.Join(guarded, fmt.Errorf("reconciliation action is unavailable"))}
+					}
+					if refreshed != nil && refreshed.Response != nil && recovery.Refresh.ResponseBarrier == ResponseBarrierCommitted {
+						refresh.ObservedAt = refreshed.Response.ReceivedAt
+					}
+					reconcileContext := context.WithValue(ctx, rejectionRefreshContextKey{}, refresh)
+					if reconcileErr := reconcile(reconcileContext, recovery.Arguments); reconcileErr == nil {
+						return exchange, errOperationReconciled
+					} else {
+						return exchange, &rejectionReconciliationFailure{errors.Join(guarded, reconcileErr)}
+					}
+				}
 				var locked *LaneLockedError
 				if errors.As(guarded, &locked) {
 					return exchange, guarded
@@ -1856,6 +1912,10 @@ func (engine *Engine) refreshCoinsAfterDispatch(ctx context.Context) error {
 }
 
 func retryableStepResponse(step Step, err error) bool {
+	var recoveryFailure *rejectionReconciliationFailure
+	if errors.As(err, &recoveryFailure) {
+		return false
+	}
 	var locked *LaneLockedError
 	if errors.As(err, &locked) {
 		return false
@@ -2185,6 +2245,12 @@ func normalizePlan(definition Definition, revision uint64, plan Plan) Plan {
 	}
 	hasAttackLaunch := false
 	for index := range plan.Steps {
+		if plan.Steps[index].RejectionReconciliation != nil {
+			recovery := *plan.Steps[index].RejectionReconciliation
+			recovery.Arguments = append(json.RawMessage(nil), recovery.Arguments...)
+			recovery.Refresh = normalizePlan(Definition{}, revision, Plan{Steps: []Step{recovery.Refresh}}).Steps[0]
+			plan.Steps[index].RejectionReconciliation = &recovery
+		}
 		if plan.Steps[index].CoinCost != nil {
 			requirement := *plan.Steps[index].CoinCost
 			requirement.Source = strings.TrimSpace(requirement.Source)
@@ -2663,4 +2729,12 @@ func containsInt(values []int, wanted int) bool {
 		}
 	}
 	return false
+}
+
+func rejectionReconciliationKey(recovery *RejectionReconciliation) string {
+	if recovery == nil {
+		return ""
+	}
+	encoded, _ := json.Marshal(recovery)
+	return string(encoded)
 }

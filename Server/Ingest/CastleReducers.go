@@ -245,12 +245,17 @@ func reduceCastleSnapshot(
 		}
 	}
 	if hasLayout {
+		previousBuildings := castle.Buildings
 		castle.Buildings, castle.Layout = parseCastleLayoutLayers([]castleWireLayer{
 			{State.BuildingLayerBG, gca["BG"]}, {State.BuildingLayerBD, gca["BD"]},
 			{State.BuildingLayerT, gca["T"]}, {State.BuildingLayerG, gca["G"]}, {State.BuildingLayerD, gca["D"]},
 			{State.BuildingLayerFP, gca["FP"]},
 		}, gameData)
 		castle.Layout.ObservedAt = frame.ReceivedAt.UTC()
+		for id, building := range castle.Buildings {
+			history := observedBuildingCompletions(previousBuildings[id].CompletionEvents, building.ConstructionState, frame)
+			setBuildingCompletionHistory(&castle, id, history)
+		}
 	}
 	buildingProductionRaw, hasBuildingProduction := root["abpi"]
 	if hasBuildingProduction {

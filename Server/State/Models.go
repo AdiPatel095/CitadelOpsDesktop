@@ -453,7 +453,17 @@ type DefenseToolSlot struct {
 	Amount       int64  `json:"amount"`
 }
 
+type BuildingCompletionEvent struct {
+	Opcode            string    `json:"opcode"`
+	ConstructionState int       `json:"constructionState"`
+	ObservedAt        time.Time `json:"observedAt"`
+}
+
 type Building struct {
+	// CompletionEvents is a bounded diagnostic history, copied on append. It
+	// contains no object identity or layout coordinates and is never persisted.
+	CompletionEvents []BuildingCompletionEvent `json:"-"`
+
 	InstanceID               BuildingInstanceID `json:"instanceId"`
 	DefinitionID             BuildingID         `json:"definitionId"`
 	GridX                    int                `json:"gridX,omitempty"`

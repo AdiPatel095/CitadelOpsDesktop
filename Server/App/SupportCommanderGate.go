@@ -45,7 +45,7 @@ func newPremiumCommanderDispatchGate() *premiumCommanderDispatchGate {
 }
 
 func supportCommanderUnavailable(key string, params Localization.Params) error {
-	return &Intent.SupportCommanderUnavailableError{Message: Localization.SupportCommanderMessage(key, params)}
+	return &Intent.SupportCommanderUnavailableError{Message: supportCommanderMessage(key, params)}
 }
 
 func currentSupportVIP(input Intent.PlanningContext) bool {

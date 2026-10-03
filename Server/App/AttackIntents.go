@@ -1388,6 +1388,6 @@ func (application *Application) recordPremiumRiftCaptureWarning(id, name string,
 	if previous, loaded := application.riftPremiumCaptureNotices.Swap(id, signature); loaded && previous == signature {
 		return
 	}
-	message := Localization.SupportCommanderMessage("server.rift.premium_capture", Localization.Params{"name": name})
+	message := supportCommanderMessage("server.rift.premium_capture", Localization.Params{"name": name})
 	application.Telemetry.RecordFeatureActivityMessage("automation:rift", "rift.launch.replay", "WARN", "ATTACK", message.FallbackText, message)
 }

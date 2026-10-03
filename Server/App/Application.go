@@ -441,6 +441,7 @@ func New(ctx context.Context, config Config) (*Application, error) {
 		return CommanderFeatures.Decode(raw)
 	}
 	intents.SetFinalDispatchProvider(dispatchGates)
+	intents.SetDispatchEvidenceCollector(captureDispatchBoundaryEvidence)
 	application.Scheduler = Scheduling.NewScheduler(state, intents)
 	if err := application.registerCoreIntents(); err != nil {
 		return nil, err
