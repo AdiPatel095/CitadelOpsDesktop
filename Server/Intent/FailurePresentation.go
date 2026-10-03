@@ -102,6 +102,7 @@ func (engine *Engine) failurePresentation(receipt Receipt, err error) *FailurePr
 		return presentation
 	}
 
+	var supportUnavailable *SupportCommanderUnavailableError
 	visible := engine.humanizeText(err.Error())
 	lower := strings.ToLower(strings.TrimSpace(err.Error()))
 	switch {
@@ -112,6 +113,12 @@ func (engine *Engine) failurePresentation(receipt Receipt, err error) *FailurePr
 		presentation.ExplanationDescriptor = Localization.New("server.intent.the_game_did_not.cd415666", "The game did not confirm whether the action completed.", nil)
 		presentation.Recovery = "Check the game before retrying so a completed action is not duplicated."
 		presentation.RecoveryDescriptor = Localization.New("server.intent.check_the_game_before.df95f098", "Check the game before retrying so a completed action is not duplicated.", nil)
+	case errors.As(err, &supportUnavailable):
+		presentation.Kind = FailureAvailability
+		presentation.Severity = FailureSeverityWarning
+		presentation.Explanation = supportUnavailable.Error()
+		presentation.ExplanationDescriptor = supportUnavailable.LocalizationMessage()
+		presentation.Toast = !automationActor(receipt.Actor)
 	case commanderAvailabilityFailure(lower):
 		presentation.Kind = FailureAvailability
 		presentation.Severity = FailureSeverityWarning

@@ -434,3 +434,49 @@ func TestProductionCostCurrencyNamesAreGenericAndCaseInsensitive(t *testing.T) {
 		}
 	}
 }
+
+func TestCIT118MergedCompositePreservesAllDispatchGates(t *testing.T) {
+	for _, name := range []string{"premium commander", "coins", "feathers", "production costs"} {
+		t.Run(name, func(t *testing.T) {
+			input := specialCostInput(t, `{"wodID":88118,"costC1":"1"}`, `[["DGA",0]]`)
+			gates := newFinalDispatchGates(newCoinDispatchGate(), newTravelTicketDispatchGate(), newSpecialCostDispatchGate())
+			var step Intent.Step
+			switch name {
+			case "premium commander":
+				step = Intent.Step{Opcode: "cra", Payload: json.RawMessage(`{"LID":-14,"BPC":1}`)}
+			case "coins":
+				input.State.Player.Resources[1] = 0
+				step = costStep(88118, 1)
+			case "feathers":
+				input.State.Player.Currencies[22] = 0
+				input.State.Player.CurrencyObservations[22] = State.PlayerResourceObservation{ConnectionGeneration: 7, ObservedAt: time.Now().UTC()}
+				step = Intent.Step{Opcode: "cds", Payload: json.RawMessage(`{"SID":77118,"TX":50,"TY":0,"HBW":-1,"PTT":1,"LID":1,"BPC":0,"A":[[88118,1]]}`)}
+			case "production costs":
+				step = costStep(513, 1)
+			}
+			err := gates.Validate(coinGateContext("merged-"+name), input, step)
+			if err == nil {
+				t.Fatal("dispatch gate missing")
+			}
+			switch name {
+			case "premium commander":
+				var blocked *Intent.SupportCommanderUnavailableError
+				if !errors.As(err, &blocked) {
+					t.Fatalf("premium backstop missing: %v", err)
+				}
+			case "coins":
+				if !errors.Is(err, Intent.ErrCoinUnavailable) {
+					t.Fatalf("coin gate missing: %v", err)
+				}
+			case "feathers":
+				if !errors.Is(err, Intent.ErrCurrencyUnavailable) {
+					t.Fatalf("feather gate missing: %v", err)
+				}
+			case "production costs":
+				if !errors.Is(err, Intent.ErrBalanceUnavailable) {
+					t.Fatalf("production gate missing: %v", err)
+				}
+			}
+		})
+	}
+}

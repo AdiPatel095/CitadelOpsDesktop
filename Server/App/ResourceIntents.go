@@ -11,6 +11,7 @@ import (
 	"strings"
 	"time"
 
+	"CitadelDesktop/Server/Automation"
 	"CitadelDesktop/Server/GameData"
 	"CitadelDesktop/Server/Intent"
 	"CitadelDesktop/Server/Outbound"
@@ -561,6 +562,12 @@ func (application *Application) verifyKingdomTransportAvailable(_ context.Contex
 			}
 		}
 	case "troop":
+		if guard.TargetKingdomID == GameData.StormKingdomID {
+			gameData := currentGameData(application)
+			if block := Automation.StormKingdomArrivalBlock(&gameState, gameData, guard.TargetKingdomID, time.Now().UTC()); block != nil {
+				return Localization.WithError(fmt.Errorf("%s", block.Fallback), block)
+			}
+		}
 		if kingdomTroopTransportPending(gameState, guard.TargetKingdomID) {
 			return Localization.WithError(fmt.Errorf(
 				"%w: kingdom %d has a pending or settling troop transport",

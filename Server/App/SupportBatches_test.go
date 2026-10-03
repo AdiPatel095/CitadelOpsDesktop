@@ -34,7 +34,7 @@ func TestSupportResolversBatchEveryTroopExactlyOnce(t *testing.T) {
 			state.Castles[10] = State.CastleState{ID: 10, Focused: true, UnitsObservedAt: now, Units: State.CastleUnits{Stationed: amounts}}
 			state.Stationing["autoBird:10"] = State.StationingOperation{ID: "autoBird:10", Purpose: "autoBird", Phase: State.StationingPhaseDispatchReady, SourceCastleID: 10, TargetCastleID: 20, DelayHours: 6, Units: amounts, UnitsObservedAt: now}
 			app := &Application{State: State.NewStore(&state), Configuration: autoBirdFortressConfiguration(t, json.RawMessage(`{"auto_bird":true}`), 1)}
-			input := Intent.PlanningContext{State: state, GameData: data}
+			input := supportCommanderTestInput(t, Intent.PlanningContext{State: state, GameData: data})
 			manualArgs, _ := json.Marshal(stationRequest{SourceCastleID: 10, TargetCastleID: 20, DelayHours: 6, Units: units})
 			manual, err := resolveTroopsStationStep(t.Context(), input, manualArgs)
 			if err != nil {

@@ -16,8 +16,6 @@ import (
 	"CitadelDesktop/Server/State"
 )
 
-const stationLeaderID = -14
-
 type stationUnitRequest struct {
 	UnitID State.UnitID `json:"unitId"`
 	Amount int64        `json:"amount"`
@@ -130,6 +128,15 @@ func planTroopsStation(_ context.Context, input Intent.PlanningContext, argument
 	}
 	request.DispatchStartedAt = now
 	request.ConnectionGeneration = input.State.Session.ConnectionGeneration
+	if supportCommanderFeature(input) == "" {
+		// Fail the player's request before any context/route command is sent.
+		probe := input
+		probe.DryRun = true
+		probe.SupportSendKey = "manual-preflight"
+		if _, err := reservePremiumCommander(probe, false); err != nil {
+			return Intent.Plan{}, err
+		}
+	}
 	resolverArguments, _ := json.Marshal(request)
 	steps := []Intent.Step{stationCastleContextStep(source)}
 	if request.Purpose == "autoStation" || request.Purpose == "autoBird" {

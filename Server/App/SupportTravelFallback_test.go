@@ -51,6 +51,7 @@ func TestCoinHorseFallbackFeatureScopeAndFreshness(t *testing.T) {
 			t.Run(feature.lane+feature.name+rows, func(t *testing.T) {
 				input, _ := ticketReplayInput(t, rows)
 				input.GameData = coinHorseTravelData(t)
+				input = supportCommanderTestInput(t, input)
 				input.State.Player.ResourceObservations[1] = State.PlayerResourceObservation{ObservedAt: time.Now().UTC(), ConnectionGeneration: input.State.Session.ConnectionGeneration}
 				input.AutomationLane, input.IntentName = feature.lane, feature.name
 				step, err := supportDispatchStep(input, "Support", coinHorseTravelCastle(), State.AllianceHolding{X: 101, Y: 101}, 0, map[State.UnitID]int64{1: 10}, Intent.Step{}, supportCoinHorseEligible(input))
@@ -91,6 +92,7 @@ func TestCoinHorseFallbackFeatureScopeAndFreshness(t *testing.T) {
 func TestCoinHorseFallbackSwitchesEveryBatchAndUsesSharedCoinGate(t *testing.T) {
 	input, _ := ticketReplayInput(t, `[["PTT",2]]`)
 	input.GameData = coinHorseTravelData(t)
+	input = supportCommanderTestInput(t, input)
 	input.State.Player.ResourceObservations[1] = State.PlayerResourceObservation{ObservedAt: time.Now().UTC(), ConnectionGeneration: input.State.Session.ConnectionGeneration}
 	source := coinHorseTravelCastle()
 	input.State.Castles[10] = source
@@ -98,14 +100,15 @@ func TestCoinHorseFallbackSwitchesEveryBatchAndUsesSharedCoinGate(t *testing.T) 
 	for i := 1; i <= 21; i++ {
 		amounts[State.UnitID(i)] = 10
 	}
+	coins := newCoinDispatchGate()
+	gate := newFinalDispatchGates(coins, newTravelTicketDispatchGate())
+	input.SupportCommanders = gate
 	step, err := supportDispatchStep(input, "Support", source, State.AllianceHolding{X: 101, Y: 101}, 0, amounts, Intent.Step{}, true)
 	if err != nil || len(step.Batch) != 3 {
 		t.Fatalf("batch=%d err=%v", len(step.Batch), err)
 	}
-	coins := newCoinDispatchGate()
-	gate := newFinalDispatchGates(coins, newTravelTicketDispatchGate())
 	var total int64
-	for i, child := range step.Batch {
+	for _, child := range step.Batch {
 		fields := supportTravelPayload(t, child)
 		if string(fields["HBW"]) != "1007" || string(fields["PTT"]) != "0" {
 			t.Fatal("mixed batch travel")
@@ -116,7 +119,7 @@ func TestCoinHorseFallbackSwitchesEveryBatchAndUsesSharedCoinGate(t *testing.T) 
 		if err != nil {
 			t.Fatal(err)
 		}
-		if err := gate.Validate(coinGateContext(string(rune('a'+i))), input, child); err != nil {
+		if err := gate.Validate(coinGateContext(input.OperationID), input, child); err != nil {
 			t.Fatal(err)
 		}
 		total += cost.amount
@@ -135,6 +138,7 @@ func TestCoinHorseFallbackCoinShortageAndUnknownWaitWithoutLock(t *testing.T) {
 		t.Run(balance, func(t *testing.T) {
 			input, _ := ticketReplayInput(t, `[["PTT",0]]`)
 			input.GameData = coinHorseTravelData(t)
+			input = supportCommanderTestInput(t, input)
 			input.State.Player.ResourceObservations[1] = State.PlayerResourceObservation{ObservedAt: time.Now().UTC(), ConnectionGeneration: input.State.Session.ConnectionGeneration}
 			input.State.Castles[10] = coinHorseTravelCastle()
 			if balance == "short" {
@@ -209,6 +213,7 @@ func TestCapturedCDS327CoinHorseGolden(t *testing.T) {
 	}
 	input, _ := ticketReplayInput(t, `[["PTT",0]]`)
 	input.GameData = coinHorseTravelData(t)
+	input = supportCommanderTestInput(t, input)
 	input.State.Player.ResourceObservations[1] = State.PlayerResourceObservation{ObservedAt: time.Now().UTC(), ConnectionGeneration: input.State.Session.ConnectionGeneration}
 	var troops [][2]int64
 	if err := json.Unmarshal(golden["A"], &troops); err != nil {
@@ -286,6 +291,7 @@ func TestStationResolverUsesRuntimeFeatureForCoinHorseFallback(t *testing.T) {
 		t.Run(lane, func(t *testing.T) {
 			input, _ := ticketReplayInput(t, `[["PTT",0]]`)
 			input.GameData = coinHorseTravelData(t)
+			input = supportCommanderTestInput(t, input)
 			input.State.Player.ResourceObservations[1] = State.PlayerResourceObservation{ObservedAt: time.Now().UTC(), ConnectionGeneration: input.State.Session.ConnectionGeneration}
 			source := coinHorseTravelCastle()
 			source.Units = State.CastleUnits{Stationed: map[State.UnitID]int64{1: 10}}
@@ -322,7 +328,7 @@ func TestAutoBirdDispatchResolverUsesCoinHorseFallback(t *testing.T) {
 		state.Stationing["autoBird:10"] = State.StationingOperation{ID: "autoBird:10", Purpose: "autoBird", Phase: State.StationingPhaseDispatchReady, SourceCastleID: 10, TargetCastleID: 20, DelayHours: 8, UnitsObservedAt: now, UpdatedAt: now}
 		args, _ := json.Marshal(autoBirdCycleRequest{SourceCastleID: 10, TrackingID: "autoBird:10", MinimumDelayHours: 6, MaximumDelayHours: 12, MinimumSend: 1, DispatchStartedAt: now.Add(-time.Second), ExpectedTargetCastle: 20})
 		app := &Application{State: travelTicketTestStore(&state)}
-		step, err := app.resolveAutoBirdDispatchStep(t.Context(), Intent.PlanningContext{State: state, GameData: coinHorseTravelData(t), AutomationLane: identity.lane, IntentName: identity.name}, args)
+		step, err := app.resolveAutoBirdDispatchStep(t.Context(), supportCommanderTestInput(t, Intent.PlanningContext{State: state, GameData: coinHorseTravelData(t), AutomationLane: identity.lane, IntentName: identity.name}), args)
 		if err != nil {
 			t.Fatal(err)
 		}

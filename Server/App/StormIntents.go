@@ -14,6 +14,7 @@ import (
 
 	"CitadelDesktop/Server/AttackCapacity"
 	"CitadelDesktop/Server/AttackPresets"
+	"CitadelDesktop/Server/Automation"
 	"CitadelDesktop/Server/GameData"
 	"CitadelDesktop/Server/Intent"
 	"CitadelDesktop/Server/Outbound"
@@ -650,6 +651,11 @@ func planStormIslandReturn(_ context.Context, input Intent.PlanningContext, argu
 	if err := Intent.RequireTravelTickets(input, 1); err != nil {
 		return Intent.Plan{}, err
 	}
+	input.SupportSendKey = "storm-return:" + State.StormIslandReturnKey(request.KingdomID, request.IslandX, request.IslandY)
+	reservation, err := reservePremiumCommander(input, true)
+	if err != nil {
+		return Intent.Plan{}, err
+	}
 	route, _ := json.Marshal(struct {
 		TargetX int `json:"TX"`
 		TargetY int `json:"TY"`
@@ -667,7 +673,7 @@ func planStormIslandReturn(_ context.Context, input Intent.PlanningContext, argu
 		Travel   int        `json:"PTT"`
 		Delay    int        `json:"SD"`
 		Units    [][2]int64 `json:"A"`
-	}{request.IslandObjectID, castle.X, castle.Y, stationLeaderID, 0, -1, 1, 1, 0, wireUnits})
+	}{request.IslandObjectID, castle.X, castle.Y, premiumSupportCommander, 0, -1, 1, 1, 0, wireUnits})
 	steps := castleContextSteps(input, castle)
 	steps = append(steps,
 		contextCommandStep("Preview island return route", "sdi", route, "sdi").WithNameDescriptor(Localization.New("server.app.preview_island_return_route.280f06d9", "Preview island return route", nil)),
@@ -675,6 +681,11 @@ func planStormIslandReturn(_ context.Context, input Intent.PlanningContext, argu
 		commandStep("Return surviving island troops to Storm castle", "cds", dispatch, "cds", Localization.New("server.app.return_surviving_island_troops.44a6c20a", "Return surviving island troops to Storm castle", nil)),
 		Intent.Step{Name: "Complete island troop return", NameDescriptor: Localization.New("server.app.complete_island_troop_return.ab63dd3f", "Complete island troop return", nil), Action: "storm.island.return.complete", ActionArguments: arguments},
 	)
+	for i := range steps {
+		if steps[i].Opcode == "cds" {
+			steps[i].SupportCommanderReservation = reservation
+		}
+	}
 	key := State.StormIslandReturnKey(request.KingdomID, request.IslandX, request.IslandY)
 	return Intent.Plan{
 		Claims: []string{
@@ -904,6 +915,9 @@ func stormAttackContext(
 	}
 	if err := validateStormDefenseUnits(request.DefenseUnits); err != nil {
 		return stormAttackRequest{}, State.CastleState{}, State.MapObservation{}, GameData.StormIsleDefinition{}, err
+	}
+	if block := Automation.StormAttackArrivalBlock(&input.State, input.GameData, source, target, request.HorseTravelBoostID, now); block != nil {
+		return stormAttackRequest{}, State.CastleState{}, State.MapObservation{}, GameData.StormIsleDefinition{}, Localization.WithError(errors.New(block.Fallback), block)
 	}
 	return request, source, target, definition, nil
 }
@@ -1562,7 +1576,10 @@ func (application *Application) resolveStormAttackStep(
 	if err := validateStormAttackTroopReserve(body, source, input.GameData, attackRequest.MinimumTroops); err != nil {
 		return Intent.Step{}, err
 	}
-	return commandStep(fmt.Sprintf("Attack Storm %s at %d:%d", definition.Kind, target.X, target.Y), "cra", payload, "cra", Localization.New("server.app.attack_storm_p_at.118ef7c4", "Attack Storm {p0} at {p1}:{p2}", Localization.Params{"p0": fmt.Sprintf("%s", definition.Kind), "p1": target.X, "p2": target.Y})), nil
+	step := commandStep(fmt.Sprintf("Attack Storm %s at %d:%d", definition.Kind, target.X, target.Y), "cra", payload, "cra", Localization.New("server.app.attack_storm_p_at.118ef7c4", "Attack Storm {p0} at {p1}:{p2}", Localization.Params{"p0": fmt.Sprintf("%s", definition.Kind), "p1": target.X, "p2": target.Y}))
+	step.PreDispatchAction = "storm.attack.guard"
+	step.PreDispatchArguments = arguments
+	return step, nil
 }
 
 func validateStormAttackTroopReserve(

@@ -8,12 +8,14 @@ import (
 )
 
 type finalDispatchGates struct {
-	gates   []Intent.FinalDispatchProvider
-	tickets *travelTicketDispatchGate
+	gates      []Intent.FinalDispatchProvider
+	tickets    *travelTicketDispatchGate
+	commanders *premiumCommanderDispatchGate
 }
 
 func newFinalDispatchGates(coins *coinDispatchGate, tickets *travelTicketDispatchGate, extra ...Intent.FinalDispatchProvider) *finalDispatchGates {
-	return &finalDispatchGates{gates: append([]Intent.FinalDispatchProvider{coins, tickets}, extra...), tickets: tickets}
+	commanders := newPremiumCommanderDispatchGate()
+	return &finalDispatchGates{gates: append([]Intent.FinalDispatchProvider{commanders, coins, tickets}, extra...), tickets: tickets, commanders: commanders}
 }
 func (g *finalDispatchGates) Validate(ctx context.Context, input Intent.PlanningContext, step Intent.Step) error {
 	for _, gate := range g.gates {
@@ -46,4 +48,17 @@ func (g *finalDispatchGates) Completed(ctx context.Context, input Intent.Plannin
 }
 func (g *finalDispatchGates) AvailableCurrency(state State.GameState, id State.CurrencyID) (int64, int64, bool) {
 	return g.tickets.AvailableCurrency(state, id)
+}
+
+func (g *finalDispatchGates) ReservePremiumCommander(input Intent.PlanningContext) (string, bool) {
+	return g.commanders.ReservePremiumCommander(input)
+}
+func (g *finalDispatchGates) SelectSupportCommander(input Intent.PlanningContext, feature string, source State.CastleState) (State.CommanderID, string, error) {
+	return g.commanders.SelectSupportCommander(input, feature, source)
+}
+func (g *finalDispatchGates) ReleaseSupportCommander(token string) {
+	g.commanders.ReleaseSupportCommander(token)
+}
+func (g *finalDispatchGates) OperationFinished(ctx context.Context) {
+	g.commanders.OperationFinished(ctx)
 }

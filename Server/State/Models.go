@@ -322,7 +322,11 @@ type VIPState struct {
 	Points       int64 `json:"points,omitempty"`
 	Level        int   `json:"level,omitempty"`
 	RemainingSec int   `json:"remainingSec,omitempty"`
-	Upgrade      int   `json:"upgrade,omitempty"`
+	// UPG is the official client's _usedPremiumCommanders, not a VIP upgrade.
+	UsedPremiumCommanders int       `json:"usedPremiumCommanders,omitempty"`
+	ObservedAt            time.Time `json:"-"`
+	Generation            uint64    `json:"-"`
+	ConnectionGeneration  uint64    `json:"-"`
 }
 
 type CastleState struct {
@@ -923,6 +927,7 @@ type CastellanState struct {
 }
 
 type MovementState struct {
+	HorseBoosterWID *int64                 `json:"horseBoosterWid,omitempty"`
 	ID              MovementID             `json:"id"`
 	TypeID          int                    `json:"typeId,omitempty"`
 	Direction       int                    `json:"direction"`
@@ -1300,10 +1305,14 @@ type MarketState struct {
 }
 
 type KingdomTransportUnlock struct {
-	KingdomID KingdomID `json:"kingdomId"`
-	Unlocked  bool      `json:"unlocked"`
-	Created   bool      `json:"created"`
-	Stage     int       `json:"stage,omitempty"`
+	EventEndsAt                  time.Time `json:"eventEndsAt,omitzero"`
+	EventObservedFrom            time.Time `json:"eventObservedFrom,omitzero"`
+	EventEndObservedAt           time.Time `json:"eventEndObservedAt,omitzero"`
+	EventEndConnectionGeneration uint64    `json:"eventEndConnectionGeneration,omitempty"`
+	KingdomID                    KingdomID `json:"kingdomId"`
+	Unlocked                     bool      `json:"unlocked"`
+	Created                      bool      `json:"created"`
+	Stage                        int       `json:"stage,omitempty"`
 }
 
 type KingdomTransportGood struct {
@@ -1815,6 +1824,7 @@ func (state StormIslandReturnState) UnitsToReturn() map[UnitID]int64 {
 }
 
 type StormState struct {
+	TravelObservations            map[string]StormTravelObservation `json:"travelObservations,omitempty"`
 	LastScannedAt                 map[CastleID]time.Time            `json:"lastScannedAt"`
 	Map                           StormMapState                     `json:"map"`
 	IslandReturns                 map[string]StormIslandReturnState `json:"islandReturns"`
