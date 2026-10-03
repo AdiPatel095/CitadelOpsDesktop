@@ -215,7 +215,7 @@ test('focus-rule fixture: control with no indicator fails', async ({ page }) => 
     span { display: inline-block; outline: 2px solid blue; }</style>
     <button aria-label="No focus indicator"><span>Static decoration</span></button>`);
   expect(await keyboardWalk(page)).toEqual([{
-    rule: 'focusVisible', element: 'button No focus indicator',
+    rule: 'focusVisible', element: 'button No focus indicator', controlId: '0',
     detail: 'Tab focus has no detected visible outline, shadow, background or border indicator',
   }]);
 });
@@ -236,7 +236,7 @@ test('focus-rule fixture: shadow controls retain unfocused snapshots', async ({ 
     });
   });
   expect(await keyboardWalk(page)).toEqual([{
-    rule: 'focusVisible', element: 'button Shadow no ring',
+    rule: 'focusVisible', element: 'button Shadow no ring', controlId: '1',
     detail: 'Tab focus has no detected visible outline, shadow, background or border indicator',
   }]);
 });
