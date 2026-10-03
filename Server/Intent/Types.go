@@ -46,7 +46,25 @@ type CommanderHoldRegistry interface {
 	CommanderHeldAt(id State.CommanderID, now time.Time) bool
 }
 
+// SupportCommanderProvider is process-local, shared by support planners and dispatch.
+type SupportCommanderProvider interface {
+	ReservePremiumCommander(PlanningContext) (string, bool)
+	SelectSupportCommander(PlanningContext, string, State.CastleState) (State.CommanderID, string, error)
+	ReleaseSupportCommander(string)
+}
+
+type SupportCommanderUnavailableError struct{ Message *Localization.Message }
+
+func (e *SupportCommanderUnavailableError) Error() string { return e.Message.FallbackText }
+func (e *SupportCommanderUnavailableError) LocalizationMessage() *Localization.Message {
+	return Localization.Clone(e.Message)
+}
+
 type PlanningContext struct {
+	OperationID          string
+	DryRun               bool
+	SupportSendKey       string
+	SupportCommanders    SupportCommanderProvider
 	AutomationLane       string
 	IntentName           string
 	CurrencyAvailability CurrencyAvailabilityProvider
@@ -109,8 +127,20 @@ type ResponseRetryPolicy struct {
 	DelayMillis    int             `json:"delayMillis"`
 }
 
+// RejectionReconciliation refreshes authoritative state after one definitive
+// rejection. It never retries the mutating command. The action succeeds only
+// when the refreshed state proves the operation is already complete.
+type RejectionReconciliation struct {
+	Code      int             `json:"code"`
+	Refresh   Step            `json:"refresh"`
+	Action    string          `json:"action"`
+	Arguments json.RawMessage `json:"arguments"`
+}
+
 type Step struct {
-	NameDescriptor *Localization.Message `json:"nameDescriptor,omitempty"`
+	SupportCommanderReservation string                   `json:"supportCommanderReservation,omitempty"`
+	NameDescriptor              *Localization.Message    `json:"nameDescriptor,omitempty"`
+	RejectionReconciliation     *RejectionReconciliation `json:"rejectionReconciliation,omitempty"`
 	// Batch is a resolver-only expansion, checkpointed as ordinary sequential steps
 	// before any command is sent. Children cannot contain deferred resolvers.
 	Batch []Step `json:"-"`

@@ -24,8 +24,9 @@ func TestResourceShipmentPlannersUseOfficialWireKeys(t *testing.T) {
 	source.Resources[3] = State.ResourceBalance{Amount: 50_000}
 	gameState.Castles[source.ID] = source
 	gameState.Castles[target.ID] = target
-	gameState.Market.Castles[source.ID] = State.MarketCastleState{CastleID: source.ID, AvailableBarrows: 10}
+	gameState.Market.Castles[source.ID] = State.MarketCastleState{ObservedAt: time.Now().UTC(), CastleID: source.ID, AvailableBarrows: 1000}
 	gameState.Market.ObservedAt = time.Now().UTC()
+	gameState.Market.CaravanLevelLoaded = true
 
 	marketPlan, err := planMarketResourceShipment(t.Context(), Intent.PlanningContext{State: gameState, GameData: gameData}, json.RawMessage(`{
 		"sourceCastleId":10,"targetCastleId":20,"resourceId":3,"amount":12000
@@ -102,7 +103,7 @@ func TestResourceLogisticsRefreshSkipsMarketForSingleCastleKingdoms(t *testing.T
 	}
 }
 
-func TestResourceLogisticsRefreshSkipsMarketWhileBarrowsAreLeased(t *testing.T) {
+func TestResourceLogisticsRefreshesMarketWhileBarrowsAreLeased(t *testing.T) {
 	gameData := resourceIntentGameData(t)
 	gameState := State.NewGameState()
 	gameState.Player.ID = 1
@@ -122,7 +123,7 @@ func TestResourceLogisticsRefreshSkipsMarketWhileBarrowsAreLeased(t *testing.T) 
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(plan.Steps) != 1 || plan.Steps[0].Opcode != "kpi" {
+	if !slices.ContainsFunc(plan.Steps, func(step Intent.Step) bool { return step.Opcode == "cmi" }) {
 		t.Fatalf("leased-barrow refresh steps = %#v", plan.Steps)
 	}
 }
@@ -254,8 +255,9 @@ func TestResourceShipmentPlannerSelectsTransportFromCastleKingdoms(t *testing.T)
 	gameState.Castles[source.ID] = source
 	gameState.Castles[sameKingdomTarget.ID] = sameKingdomTarget
 	gameState.Castles[crossKingdomTarget.ID] = crossKingdomTarget
-	gameState.Market.Castles[source.ID] = State.MarketCastleState{CastleID: source.ID, AvailableBarrows: 10}
+	gameState.Market.Castles[source.ID] = State.MarketCastleState{ObservedAt: time.Now().UTC(), CastleID: source.ID, AvailableBarrows: 1000}
 	gameState.Market.ObservedAt = time.Now().UTC()
+	gameState.Market.CaravanLevelLoaded = true
 	gameState.KingdomTransport.ObservedAt = time.Now().UTC()
 	gameState.KingdomTransport.Unlocks[crossKingdomTarget.KingdomID] = State.KingdomTransportUnlock{
 		KingdomID: crossKingdomTarget.KingdomID, Unlocked: true,
@@ -385,8 +387,9 @@ func TestMarketShipmentPlannerRejectsUnsupportedHorseTravelBoost(t *testing.T) {
 	source.Resources[3] = State.ResourceBalance{Amount: 50_000}
 	gameState.Castles[source.ID] = source
 	gameState.Castles[target.ID] = target
-	gameState.Market.Castles[source.ID] = State.MarketCastleState{CastleID: source.ID, AvailableBarrows: 10}
+	gameState.Market.Castles[source.ID] = State.MarketCastleState{ObservedAt: time.Now().UTC(), CastleID: source.ID, AvailableBarrows: 1000}
 	gameState.Market.ObservedAt = time.Now().UTC()
+	gameState.Market.CaravanLevelLoaded = true
 
 	_, err := planMarketResourceShipment(t.Context(), Intent.PlanningContext{
 		State: gameState, GameData: gameData,
@@ -409,8 +412,9 @@ func TestMarketShipmentPlannerRechecksMissingHorseBuilding(t *testing.T) {
 	target := resourceIntentCastle(20, 0, 110, 215)
 	gameState.Castles[source.ID] = source
 	gameState.Castles[target.ID] = target
-	gameState.Market.Castles[source.ID] = State.MarketCastleState{CastleID: source.ID, AvailableBarrows: 10}
+	gameState.Market.Castles[source.ID] = State.MarketCastleState{ObservedAt: time.Now().UTC(), CastleID: source.ID, AvailableBarrows: 1000}
 	gameState.Market.ObservedAt = time.Now().UTC()
+	gameState.Market.CaravanLevelLoaded = true
 
 	_, err := planMarketResourceShipment(t.Context(), Intent.PlanningContext{
 		State: gameState, GameData: gameData,
@@ -431,8 +435,9 @@ func TestMarketShipmentPlannerRejectsBarrowsWithoutMarketplace(t *testing.T) {
 	source.Resources[3] = State.ResourceBalance{Amount: 50_000}
 	gameState.Castles[source.ID] = source
 	gameState.Castles[target.ID] = target
-	gameState.Market.Castles[source.ID] = State.MarketCastleState{CastleID: source.ID, AvailableBarrows: 10}
+	gameState.Market.Castles[source.ID] = State.MarketCastleState{ObservedAt: time.Now().UTC(), CastleID: source.ID, AvailableBarrows: 1000}
 	gameState.Market.ObservedAt = time.Now().UTC()
+	gameState.Market.CaravanLevelLoaded = true
 
 	_, err := planMarketResourceShipment(t.Context(), Intent.PlanningContext{State: gameState, GameData: gameData}, json.RawMessage(`{
 		"sourceCastleId":10,"targetCastleId":20,"resourceId":3,"amount":12000
@@ -452,10 +457,11 @@ func TestMarketShipmentPlannerRejectsStaleAvailabilityReservedByMovement(t *test
 	source.Resources[3] = State.ResourceBalance{Amount: 50_000}
 	gameState.Castles[source.ID] = source
 	gameState.Castles[target.ID] = target
-	gameState.Market.Castles[source.ID] = State.MarketCastleState{
+	gameState.Market.Castles[source.ID] = State.MarketCastleState{ObservedAt: time.Now().UTC(),
 		CastleID: source.ID, TotalBarrows: 10, AvailableBarrows: 10,
 	}
 	gameState.Market.ObservedAt = time.Now().UTC()
+	gameState.Market.CaravanLevelLoaded = true
 	returnsAt := time.Now().UTC().Add(time.Hour)
 	gameState.Movements[50] = State.MovementState{
 		ID: 50, Direction: 1, OwnerPlayerID: 1, SourceCastleID: target.ID, TargetCastleID: source.ID,
@@ -465,7 +471,7 @@ func TestMarketShipmentPlannerRejectsStaleAvailabilityReservedByMovement(t *test
 	_, err := planMarketResourceShipment(t.Context(), Intent.PlanningContext{
 		State: gameState, GameData: gameData,
 	}, json.RawMessage(`{"sourceCastleId":10,"targetCastleId":20,"resourceId":3,"amount":12000}`))
-	if err == nil || !strings.Contains(err.Error(), "no observed available market barrows") {
+	if !errors.Is(err, Intent.ErrBalanceUnavailable) {
 		t.Fatalf("leased-barrow shipment error = %v", err)
 	}
 }
@@ -691,8 +697,9 @@ func TestAutoFoodBalanceMarketShipmentRejectsDestinationOverfill(t *testing.T) {
 	target.Resources[3] = State.ResourceBalance{Amount: 10_000, Capacity: &capacity}
 	gameState.Castles[source.ID] = source
 	gameState.Castles[target.ID] = target
-	gameState.Market.Castles[source.ID] = State.MarketCastleState{CastleID: source.ID, AvailableBarrows: 10}
+	gameState.Market.Castles[source.ID] = State.MarketCastleState{ObservedAt: time.Now().UTC(), CastleID: source.ID, AvailableBarrows: 1000}
 	gameState.Market.ObservedAt = time.Now().UTC()
+	gameState.Market.CaravanLevelLoaded = true
 
 	_, err := planMarketResourceShipment(t.Context(), Intent.PlanningContext{
 		State: gameState, GameData: gameData,
@@ -716,8 +723,9 @@ func TestAutoFoodBalanceMarketShipmentRechecksDestinationCapacityBeforeSend(t *t
 	target.Resources[3] = State.ResourceBalance{Amount: 10_000, Capacity: &capacity}
 	gameState.Castles[source.ID] = source
 	gameState.Castles[target.ID] = target
-	gameState.Market.Castles[source.ID] = State.MarketCastleState{CastleID: source.ID, AvailableBarrows: 10}
+	gameState.Market.Castles[source.ID] = State.MarketCastleState{ObservedAt: time.Now().UTC(), CastleID: source.ID, AvailableBarrows: 1000}
 	gameState.Market.ObservedAt = time.Now().UTC()
+	gameState.Market.CaravanLevelLoaded = true
 
 	plan, err := planMarketResourceShipment(t.Context(), Intent.PlanningContext{
 		State: gameState, GameData: gameData,
@@ -913,8 +921,9 @@ func TestAutoFoodBalanceReceiptLogsActualDonorAndTargetCastles(t *testing.T) {
 	target.Name = "Target Castle"
 	gameState.Castles[donor.ID] = donor
 	gameState.Castles[target.ID] = target
-	gameState.Market.Castles[donor.ID] = State.MarketCastleState{CastleID: donor.ID, AvailableBarrows: 10}
+	gameState.Market.Castles[donor.ID] = State.MarketCastleState{ObservedAt: time.Now().UTC(), CastleID: donor.ID, AvailableBarrows: 1000}
 	gameState.Market.ObservedAt = time.Now().UTC()
+	gameState.Market.CaravanLevelLoaded = true
 
 	registry := Intent.NewRegistry()
 	if err := registry.Register(Intent.Definition{

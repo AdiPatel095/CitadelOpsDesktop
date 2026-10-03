@@ -23,7 +23,7 @@ func RegisterCoreReducers(registry *Registry) error {
 	)
 	movements := components(
 		State.ComponentMovements, State.ComponentMovementSnapshot, State.ComponentCommanders,
-		State.ComponentKhan, State.ComponentEventScores,
+		State.ComponentKhan, State.ComponentEventScores, State.ComponentStorm,
 	)
 	invasionRecovery := components(
 		State.ComponentInvasion, State.ComponentEventScores,
@@ -82,10 +82,10 @@ func RegisterCoreReducers(registry *Registry) error {
 		{"fce", components(State.ComponentMarket), reduceFeastCostReduction},
 		{"agb", components(State.ComponentPlayer, State.ComponentEventScores), combineReducers(reduceResponseResources, reduceGlobalEffectPurchaseAcknowledgement)},
 		{"cmi", components(State.ComponentMarket, State.ComponentCastles), reduceMarketInfo},
-		{"kpi", components(State.ComponentKingdomTransport), reduceKingdomTransport},
-		{"kgt", components(State.ComponentKingdomTransport), reduceKingdomTransport},
-		{"kut", components(State.ComponentKingdomTransport), reduceKingdomTransport},
-		{"msk", components(State.ComponentKingdomTransport), reduceKingdomTransport},
+		{"kpi", components(State.ComponentKingdomTransport, State.ComponentStorm), reduceKingdomTransport},
+		{"kgt", components(State.ComponentKingdomTransport, State.ComponentStorm), reduceKingdomTransport},
+		{"kut", components(State.ComponentKingdomTransport, State.ComponentStorm), reduceKingdomTransport},
+		{"msk", components(State.ComponentKingdomTransport, State.ComponentStorm), reduceKingdomTransport},
 		{"rei", components(State.ComponentResearch), reduceResearch},
 		{"sie", components(State.ComponentSubscriptions), reduceSubscriptions},
 		{"upc", components(State.ComponentSubscriptions), reduceSubscriptions},
@@ -114,7 +114,7 @@ func RegisterCoreReducers(registry *Registry) error {
 		{"adi", worldMap.Union(components(State.ComponentAttackDialog)), reduceAttackDialog},
 		{"gas", components(State.ComponentAttackPresets), reduceAttackPresets},
 		{"sin", components(State.ComponentInventory), reduceStorageInventory},
-		{"gbc", components(State.ComponentInventory), reduceConstructionOffers},
+		{"gbc", components(State.ComponentInventory, State.ComponentStorm), reduceConstructionOffers},
 		{"csp", components(State.ComponentInventory), reduceConstructionSpaceLeft},
 		{"sne", reports, reduceReportNotices},
 		{"dms", reports, reduceDeletedReportMessages},
@@ -214,6 +214,7 @@ func RegisterCoreReducers(registry *Registry) error {
 		}},
 		{[]string{"csm", "cds"}, []reducerStep{
 			{writes: movements, reducer: newMovementReducer(false)},
+			{writes: components(State.ComponentMarket), reducer: reduceMarketBarrowLeases},
 			{writes: invasionRecovery, reducer: reduceInvasionReservationMovements},
 		}},
 	}
@@ -234,6 +235,7 @@ func RegisterCoreReducers(registry *Registry) error {
 	}
 	if err := registry.registerComponentSequence("gam",
 		reducerStep{writes: movements, reducer: newMovementReducer(true)},
+		reducerStep{writes: components(State.ComponentMarket), reducer: reduceMarketBarrowLeases},
 		reducerStep{writes: invasionRecovery, reducer: reduceInvasionReservationMovements},
 		reducerStep{writes: components(State.ComponentAdvisor, State.ComponentEventScores), reducer: reduceAdvisorMovement},
 		reducerStep{writes: player, reducer: reducePlayerTitles},
@@ -243,6 +245,7 @@ func RegisterCoreReducers(registry *Registry) error {
 	for _, opcode := range []string{"cat", "mcm"} {
 		if err := registry.registerComponentSequence(opcode,
 			reducerStep{writes: movements, reducer: newMovementReducer(false)},
+			reducerStep{writes: components(State.ComponentMarket), reducer: reduceMarketBarrowLeases},
 			reducerStep{writes: invasionRecovery, reducer: reduceInvasionReservationMovements},
 			reducerStep{writes: components(State.ComponentAdvisor, State.ComponentEventScores), reducer: reduceAdvisorMovement},
 		); err != nil {
@@ -251,6 +254,7 @@ func RegisterCoreReducers(registry *Registry) error {
 	}
 	if err := registry.registerComponentSequence("cra",
 		reducerStep{writes: movements, reducer: craMovements},
+		reducerStep{writes: components(State.ComponentMarket), reducer: reduceMarketBarrowLeases},
 		reducerStep{writes: invasionRecovery, reducer: reduceInvasionReservationMovements},
 		reducerStep{writes: components(State.ComponentRift), reducer: reduceRiftLaunchAck},
 		reducerStep{writes: components(State.ComponentAdvisor, State.ComponentEventScores), reducer: reduceAdvisorMovement},
@@ -267,6 +271,7 @@ func RegisterCoreReducers(registry *Registry) error {
 	}
 	if err := registry.registerComponentSequence("crm",
 		reducerStep{writes: movements, reducer: newMovementReducer(false)},
+		reducerStep{writes: components(State.ComponentMarket), reducer: reduceMarketBarrowLeases},
 		reducerStep{writes: invasionRecovery, reducer: reduceInvasionReservationMovements},
 		reducerStep{writes: resources, reducer: reduceResponseResources},
 	); err != nil {

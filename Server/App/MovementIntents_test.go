@@ -110,9 +110,9 @@ func TestPlanTroopsStationRefreshesFocusedSourceAndDefersManifest(t *testing.T) 
 	if err != nil {
 		t.Fatal(err)
 	}
-	plan, err := planTroopsStation(t.Context(), Intent.PlanningContext{
+	plan, err := planTroopsStation(t.Context(), supportCommanderTestInput(t, Intent.PlanningContext{
 		State: gameState, GameData: gameData,
-	}, json.RawMessage(`{
+	}), json.RawMessage(`{
 		"sourceCastleId":10,"targetCastleId":20,"delayHours":1,
 		"purpose":"autoStation","trackingId":"autoStation:10","units":[{"unitId":489,"amount":100}]
 	}`))
@@ -143,9 +143,9 @@ func TestPlanAutoBirdRequiresManifestObservedAfterItsCastleRefreshStarts(t *test
 		t.Fatal(err)
 	}
 	beforePlan := time.Now().UTC()
-	plan, err := planTroopsStation(t.Context(), Intent.PlanningContext{
+	plan, err := planTroopsStation(t.Context(), supportCommanderTestInput(t, Intent.PlanningContext{
 		State: gameState, GameData: gameData,
-	}, json.RawMessage(`{
+	}), json.RawMessage(`{
 		"sourceCastleId":10,"targetCastleId":20,"delayHours":1,
 		"purpose":"autoBird","freshManifest":true,
 		"units":[{"unitId":489,"amount":100}]
@@ -177,7 +177,7 @@ func TestResolveTroopsStationClampsAutomationToRefreshedUnits(t *testing.T) {
 		CastleID: 20, KingdomID: 0, X: 342, Y: 604, SlotType: 1,
 	}}
 	seedStationAuthority(&gameState, time.Now())
-	step, err := resolveTroopsStationStep(t.Context(), Intent.PlanningContext{State: gameState}, stationFreshTestArguments(json.RawMessage(`{
+	step, err := resolveTroopsStationStep(t.Context(), supportCommanderTestInput(t, Intent.PlanningContext{State: gameState}), stationFreshTestArguments(json.RawMessage(`{
 		"sourceCastleId":10,"targetCastleId":20,"delayHours":1,"purpose":"autoStation",
 		"units":[{"unitId":215,"amount":68180},{"unitId":216,"amount":39237},{"unitId":489,"amount":92}]
 	}`)))
@@ -227,9 +227,9 @@ func TestResolveAutoBirdRebuildsManifestFromFreshJAA(t *testing.T) {
 		t.Fatal(err)
 	}
 	seedStationAuthority(&gameState, time.Now())
-	step, err := resolveTroopsStationStep(t.Context(), Intent.PlanningContext{
+	step, err := resolveTroopsStationStep(t.Context(), supportCommanderTestInput(t, Intent.PlanningContext{
 		State: gameState, GameData: gameData,
-	}, stationFreshTestArguments(json.RawMessage(`{
+	}), stationFreshTestArguments(json.RawMessage(`{
 		"sourceCastleId":10,"targetCastleId":20,"delayHours":1,
 		"purpose":"autoBird","freshManifest":true,
 		"freshUnitsObservedAfter":"2026-07-29T00:00:00Z","minimumSend":100,

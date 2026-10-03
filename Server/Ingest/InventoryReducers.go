@@ -245,20 +245,39 @@ func reduceConstructionOffers(
 	}
 	var payload struct {
 		Products []struct {
-			ProductID wireInt64 `json:"PID"`
-			Amount    wireInt64 `json:"AMT"`
+			ProductID wireInt64       `json:"PID"`
+			Amount    json.RawMessage `json:"AMT"`
 		} `json:"PL"`
 	}
 	if err := json.Unmarshal(frame.Payload, &payload); err != nil {
 		return nil, false, fmt.Errorf("decode construction offers: %w", err)
 	}
 	next := make(map[State.PackageID]int64, len(payload.Products))
+	explicit := make(map[State.PackageID]int64, len(payload.Products))
 	for _, product := range payload.Products {
-		if product.ProductID > 0 && product.Amount >= 0 {
-			next[State.PackageID(product.ProductID)] = int64(product.Amount)
+		amount, valid := rawInt64(product.Amount)
+		if !valid {
+			amount = 0
+		} // Preserve existing counter decoding semantics.
+		if product.ProductID > 0 {
+			id := State.PackageID(product.ProductID)
+			delete(explicit, id)
+			if amount < 0 {
+				continue
+			}
+			next[id] = amount
+			if valid {
+				explicit[id] = amount
+			}
 		}
 	}
-	if reflect.DeepEqual(gameState.Inventory.ConstructionOffers, next) &&
+	capsChanged := false
+	if gameState.Inventory.ConstructionOffersKingdomID == GameData.StormKingdomID {
+		capsChanged = gameState.ReconcileStormPackageCaps(
+			gameState.Inventory.ConstructionOffersCastleID, GameData.StormLunaShopTableID, explicit, frame.ReceivedAt,
+		)
+	}
+	if !capsChanged && reflect.DeepEqual(gameState.Inventory.ConstructionOffers, next) &&
 		gameState.Inventory.ConstructionOffersObservedAt.Equal(frame.ReceivedAt) {
 		return nil, false, nil
 	}
@@ -267,7 +286,11 @@ func reduceConstructionOffers(
 		gameState.Inventory.ConstructionOffersCastleID,
 		gameState.Inventory.ConstructionOffersKingdomID,
 	)
-	return []string{"inventory", "construction-offers"}, true, nil
+	domains := []string{"inventory", "construction-offers"}
+	if capsChanged {
+		domains = append(domains, "storm")
+	}
+	return domains, true, nil
 }
 
 // reduceConstructionSpaceLeft records the server's construction-item inventory

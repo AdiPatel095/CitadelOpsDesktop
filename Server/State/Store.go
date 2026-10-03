@@ -1453,6 +1453,7 @@ func cloneGameStateComponents(source GameState, components ComponentSet) GameSta
 			clone.Market.Castles[id] = castle
 		}
 		clone.Market.Boosters = cloneMap(source.Market.Boosters)
+		clone.Market.BarrowLeases = cloneMap(source.Market.BarrowLeases)
 	}
 	if components.Has(ComponentKingdomTransport) {
 		clone.KingdomTransport.Unlocks = cloneMap(source.KingdomTransport.Unlocks)
@@ -1539,6 +1540,15 @@ func cloneGameStateComponents(source GameState, components ComponentSet) GameSta
 		clone.Invasion.FortifyCurrencies = append([]string(nil), source.Invasion.FortifyCurrencies...)
 	}
 	if components.Has(ComponentStorm) {
+		clone.Storm.PackageCapBlocks = cloneMap(source.Storm.PackageCapBlocks)
+		clone.Storm.TravelObservations = cloneMap(source.Storm.TravelObservations)
+		for key, observation := range clone.Storm.TravelObservations {
+			if observation.HorseBoosterWID != nil {
+				option := *observation.HorseBoosterWID
+				observation.HorseBoosterWID = &option
+				clone.Storm.TravelObservations[key] = observation
+			}
+		}
 		clone.Storm.LastScannedAt = cloneMap(source.Storm.LastScannedAt)
 		clone.Storm.Map.Targets = source.materializedStormTargets()
 		clone.Storm.IslandReturns = make(map[string]StormIslandReturnState, len(source.Storm.IslandReturns))

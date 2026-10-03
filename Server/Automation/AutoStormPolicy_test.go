@@ -349,6 +349,7 @@ func TestAutoStormLaunchCarriesConcreteCapacityLimitedPresetAndTroopReserve(t *t
 	storm.X, storm.Y = 100, 100
 	storm.Units.Stationed[14] = 1_290
 	state.Castles[storm.ID] = storm
+	fundAutoStormArrivalForTest(&state, storm, now)
 	state.Commanders[1] = State.CommanderState{ID: 1, Available: true}
 	target := State.MapObservation{
 		KingdomID: autoStormKingdomID, X: 101, Y: 101, TypeID: autoStormFortMapTypeID,
@@ -708,6 +709,7 @@ func TestAutoStormTroopImportMaterializesFamilyFromSelectedDonorInventory(t *tes
 	state.KingdomTransport.Unlocks[autoStormKingdomID] = State.KingdomTransportUnlock{
 		KingdomID: autoStormKingdomID, Unlocked: true,
 	}
+	fundAutoStormArrivalForTest(&state, storm, now)
 	target := State.MapObservation{
 		KingdomID: autoStormKingdomID, X: 101, Y: 101, TypeID: autoStormIslandMapTypeID,
 		OwnerID: -403, ObjectID: 777, StormIsleID: 4, StormCooldownRemaining: 3_600, ObservedAt: now,
@@ -884,6 +886,7 @@ func TestAutoStormIslandLaunchWaitsForReportBeforeChoosingOccupier(t *testing.T)
 	storm.Units.Stationed[11] = 100
 	storm.Units.Stationed[12] = 2
 	state.Castles[storm.ID] = storm
+	fundAutoStormArrivalForTest(&state, storm, now)
 	state.Commanders[1] = State.CommanderState{ID: 1, Available: true}
 	target := State.MapObservation{
 		KingdomID: 4, X: 101, Y: 101, TypeID: autoStormIslandMapTypeID, OwnerID: -403,

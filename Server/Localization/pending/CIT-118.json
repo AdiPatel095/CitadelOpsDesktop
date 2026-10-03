@@ -1,0 +1,17 @@
+{
+  "story": "CIT-118",
+  "source": "Engineering/Plans/CIT-118 Recruitment checks every unit cost.md; Addendum 1",
+  "englishFallbackKeys": [
+    "server.balance.castle_short",
+    "server.balance.castle_unavailable",
+    "server.balance.recovery",
+    "server.balance.short",
+    "server.balance.unavailable",
+    "server.balance.waiting",
+    "server.production.cost_short",
+    "server.production.cost_unavailable",
+    "server.production.cost_unknown",
+    "server.production.needs_rubies"
+  ],
+  "translationStatus": "English only; pending the epic CIT-116 batched locale translation story"
+}

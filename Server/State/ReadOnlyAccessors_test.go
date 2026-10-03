@@ -234,7 +234,7 @@ var gameStateReadOnlyConversions = []struct {
 	{"State/ClientProjection.go", "NewClientStateSnapshot", "state", 0, false},
 	{"State/Store.go", "NewStoreWithWorldMap", "initial", 0, false},
 	{"State/Store.go", "NewStore", "initial", 0, false},
-	{"State/MarketBarrowLeases.go", "NextMarketBarrowLeaseRelease", "gameState", 0, false},
+	{"State/MarketBarrowLeases.go", "MarketBarrowSourceStatusAt", "gameState", 0, false},
 	{"State/NomadSequentialArrival.go", "NomadSequentialArrivalBlockAt", "gameState", 0, false},
 	{"State/Models.go", "OutstandingHospitalAllianceHelpRequests", "state", 0, false},
 	{"State/Models.go", "OwnAllianceHelpListCurrent", "state", 0, false},

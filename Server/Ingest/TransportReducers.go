@@ -53,6 +53,7 @@ func reduceMarketInfo(
 		castleID := State.CastleID(castleIDValue)
 		marketCastle := State.MarketCastleState{
 			CastleID:         castleID,
+			ObservedAt:       frame.ReceivedAt,
 			KingdomID:        State.KingdomID(rawInteger(row["KID"])),
 			TotalBarrows:     int(rawInteger(row["TC"])),
 			AvailableBarrows: int(rawInteger(row["AC"])),
@@ -107,7 +108,8 @@ func reduceMarketInfo(
 		gameState.Market.Castles = next
 		gameState.Market.ObservedAt = frame.ReceivedAt
 	}
-	return []string{"market", "castles", "resources"}, marketChanged || castleResourcesChanged, nil
+	leasesChanged := State.RecordMarketBarrowLeases(gameState, frame.ReceivedAt)
+	return []string{"market", "castles", "resources"}, marketChanged || castleResourcesChanged || leasesChanged, nil
 }
 
 func reduceMarketBooster(
@@ -646,10 +648,22 @@ func reduceKingdomTransport(
 			if kingdomID < 0 {
 				continue
 			}
-			next.Unlocks[kingdomID] = State.KingdomTransportUnlock{
+			unlock := State.KingdomTransportUnlock{
 				KingdomID: kingdomID, Unlocked: rawInteger(row["U"]) != 0,
 				Created: rawInteger(row["C"]) != 0, Stage: int(rawInteger(row["SL"])),
 			}
+			if kingdomID == GameData.StormKingdomID {
+				if remaining, known := rawJSONInt64(row["KRS"]); known && remaining > 0 && remaining <= math.MaxInt64/int64(time.Second) {
+					unlock.EventEndsAt = frame.ReceivedAt.Add(time.Duration(remaining) * time.Second)
+				}
+				unlock.EventEndObservedAt = frame.ReceivedAt
+				unlock.EventEndConnectionGeneration = gameState.Session.ConnectionGeneration
+				unlock.EventObservedFrom = frame.ReceivedAt
+				if previous, exists := gameState.KingdomTransport.Unlocks[kingdomID]; exists && State.SameEventOccurrence(previous.EventEndsAt, unlock.EventEndsAt) && !previous.EventObservedFrom.IsZero() {
+					unlock.EventObservedFrom = previous.EventObservedFrom
+				}
+			}
+			next.Unlocks[kingdomID] = unlock
 		}
 	}
 	if hasResources {
@@ -713,7 +727,11 @@ func reduceKingdomTransport(
 		return nil, false, nil
 	}
 	gameState.KingdomTransport = next
-	return []string{"kingdom-transport"}, true, nil
+	domains := []string{"kingdom-transport"}
+	if fullSnapshot && gameState.ReconcileStormPackageCapEventEnd(frame.ReceivedAt) {
+		domains = append(domains, "storm")
+	}
+	return domains, true, nil
 }
 
 func cloneKingdomTransportState(source State.KingdomTransportState) State.KingdomTransportState {

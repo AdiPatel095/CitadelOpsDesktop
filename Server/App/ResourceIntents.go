@@ -11,6 +11,7 @@ import (
 	"strings"
 	"time"
 
+	"CitadelDesktop/Server/Automation"
 	"CitadelDesktop/Server/GameData"
 	"CitadelDesktop/Server/Intent"
 	"CitadelDesktop/Server/Outbound"
@@ -88,17 +89,7 @@ func planResourceLogisticsRefresh(_ context.Context, input Intent.PlanningContex
 	}
 	if marketRequired {
 		claims = append(claims, "castle-focus")
-		originalCastle, hadOriginalFocus := resourceLogisticsFocusedCastle(input.State)
-		// GAA retains the selected castle but leaves the session in map mode.
-		// CMI needs castle context even when the cached Focused flag is true.
-		steps = append(steps, castleContextSteps(input, marketCastle)...)
-		steps = append(steps,
-			commandStep("Refresh caravan boosters", "boi", json.RawMessage(`{}`), "boi", Localization.New("server.app.refresh_caravan_boosters.5aebc1d2", "Refresh caravan boosters", nil)),
-			commandStep("Refresh market capacity", "cmi", json.RawMessage(`{"S":1,"KID":-1}`), "cmi", Localization.New("server.app.refresh_market_capacity.6d2166f5", "Refresh market capacity", nil)),
-		)
-		if hadOriginalFocus && originalCastle.ID != marketCastle.ID {
-			steps = append(steps, castleFocusStep(originalCastle))
-		}
+		steps = append(steps, marketRefreshSteps(input, marketCastle)...)
 		summary = "Refresh market and kingdom-resource logistics state"
 		summaryLocalizationMessage = Localization.New("server.app.refresh_market_and_kingdom.b7274adb", "Refresh market and kingdom-resource logistics state", nil)
 	}
@@ -119,9 +110,6 @@ func resourceLogisticsMarketCastle(input Intent.PlanningContext) (State.CastleSt
 		}
 	}
 	if !hasSameKingdomPair {
-		return State.CastleState{}, false, nil
-	}
-	if !State.NextMarketBarrowLeaseRelease(&input.State, time.Now().UTC()).IsZero() {
 		return State.CastleState{}, false, nil
 	}
 	if input.GameData == nil {
@@ -270,10 +258,16 @@ func planMarketResourceShipment(ctx context.Context, input Intent.PlanningContex
 			return Intent.Plan{}, err
 		}
 	}
-	market, observed := input.State.Market.Castles[source.ID]
-	availableBarrows := State.AvailableMarketBarrowsAt(&input.State, market, time.Now().UTC())
-	if !observed || input.State.Market.ObservedAt.IsZero() || availableBarrows <= 0 {
-		return Intent.Plan{}, Localization.WithError(fmt.Errorf("source castle %d has no observed available market barrows", source.ID), Localization.New("server.app.source_castle_p_has.f0ba5631", "source castle {p0} has no observed available market barrows", Localization.Params{"p0": fmt.Sprintf("%d", source.ID)}))
+	now := time.Now().UTC()
+	status := State.MarketBarrowSourceStatusAt(&input.State, source.ID, now)
+	market := input.State.Market.Castles[source.ID]
+	availableBarrows := State.AvailableMarketBarrowsAt(&input.State, market, now)
+	refresh := !status.Ready && !status.RefreshAt.After(now)
+	if !refresh {
+		required, capacityErr := marketBarrowsRequired(input, source.ID, request.Amount)
+		if !status.Ready || capacityErr != nil || required > availableBarrows {
+			return Intent.Plan{}, marketBarrowAvailabilityError(input, source.ID, int64(required), int64(availableBarrows), 0, status.Ready && capacityErr == nil)
+		}
 	}
 	payload, _ := json.Marshal(struct {
 		KingdomID State.KingdomID `json:"KID"`
@@ -304,11 +298,13 @@ func planMarketResourceShipment(ctx context.Context, input Intent.PlanningContex
 			ActionArguments: guardArguments,
 		})}, steps...)
 	}
+	claims := []string{"resource-transport", "castle:" + strconv.FormatInt(int64(source.ID), 10), "castle:" + strconv.FormatInt(int64(target.ID), 10)}
+	if refresh {
+		steps = append(marketRefreshSteps(input, source), steps...)
+		claims = append(claims, "castle-focus")
+	}
 	return Intent.Plan{
-		Claims: []string{
-			"resource-transport", "castle:" + strconv.FormatInt(int64(source.ID), 10),
-			"castle:" + strconv.FormatInt(int64(target.ID), 10),
-		},
+		Claims:  claims,
 		Summary: fmt.Sprintf("Ship %d %s from %s to %s", request.Amount, resourceName, castleLabel(source), castleLabel(target)), SummaryDescriptor: gameNameDescriptor(Localization.New("server.app.ship_p_p_from.7de39e09", "Ship {p0} {p1} from {p2} to {p3}", Localization.Params{"p0": request.Amount, "p1": fmt.Sprintf("%s", resourceName), "p2": fmt.Sprintf("%s", castleLabel(source)), "p3": fmt.Sprintf("%s", castleLabel(target))}), input, "p1", "resources", int64(request.ResourceID), resourceName),
 		Steps: steps,
 	}, nil
@@ -561,6 +557,12 @@ func (application *Application) verifyKingdomTransportAvailable(_ context.Contex
 			}
 		}
 	case "troop":
+		if guard.TargetKingdomID == GameData.StormKingdomID {
+			gameData := currentGameData(application)
+			if block := Automation.StormKingdomArrivalBlock(&gameState, gameData, guard.TargetKingdomID, time.Now().UTC()); block != nil {
+				return Localization.WithError(fmt.Errorf("%s", block.Fallback), block)
+			}
+		}
 		if kingdomTroopTransportPending(gameState, guard.TargetKingdomID) {
 			return Localization.WithError(fmt.Errorf(
 				"%w: kingdom %d has a pending or settling troop transport",
@@ -991,4 +993,17 @@ func officialCurrencyID(store *GameData.Store, jsonKey string) (State.CurrencyID
 		}
 	}
 	return 0, Localization.WithError(fmt.Errorf("currency %s is not in the current official catalog", jsonKey), Localization.New("server.app.currency_p_is_not.f421b875", "currency {p0} is not in the current official catalog", Localization.Params{"p0": fmt.Sprintf("%s", jsonKey)}))
+}
+
+// CMI requires castle context even when a cached focus remains after GAA.
+func marketRefreshSteps(input Intent.PlanningContext, castle State.CastleState) []Intent.Step {
+	original, hadOriginal := resourceLogisticsFocusedCastle(input.State)
+	steps := castleContextSteps(input, castle)
+	steps = append(steps,
+		commandStep("Refresh caravan boosters", "boi", json.RawMessage(`{}`), "boi", Localization.New("server.app.refresh_caravan_boosters.5aebc1d2", "Refresh caravan boosters", nil)),
+		commandStep("Refresh market capacity", "cmi", json.RawMessage(`{"S":1,"KID":-1}`), "cmi", Localization.New("server.app.refresh_market_capacity.6d2166f5", "Refresh market capacity", nil)))
+	if hadOriginal && original.ID != castle.ID {
+		steps = append(steps, castleFocusStep(original))
+	}
+	return steps
 }

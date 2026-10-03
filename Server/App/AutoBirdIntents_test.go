@@ -357,9 +357,9 @@ func TestResolveAutoBirdDispatchRebuildsEveryEligibleTroopFromLatestJAA(t *testi
 		DispatchStartedAt: now.Add(-time.Second), ExpectedTargetCastle: 20,
 	})
 	application := &Application{State: travelTicketTestStore(&gameState)}
-	step, err := application.resolveAutoBirdDispatchStep(t.Context(), Intent.PlanningContext{
+	step, err := application.resolveAutoBirdDispatchStep(t.Context(), supportCommanderTestInput(t, Intent.PlanningContext{
 		State: gameState, GameData: gameData,
-	}, request)
+	}), request)
 	if err != nil {
 		t.Fatal(err)
 	}

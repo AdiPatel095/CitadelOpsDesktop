@@ -9,6 +9,7 @@ func TestMarketBarrowLeaseUsesReturnLegAndCapsStaleAvailability(t *testing.T) {
 	now := time.Date(2026, 7, 22, 23, 30, 0, 0, time.UTC)
 	returnsAt := now.Add(10 * time.Minute)
 	gameState := NewGameState()
+	gameState.Session.ChangedAt = time.Time{}
 	gameState.Player.ID = 1
 	gameState.Castles[10] = CastleState{ID: 10}
 	gameState.Movements[50] = MovementState{
@@ -24,7 +25,9 @@ func TestMarketBarrowLeaseUsesReturnLegAndCapsStaleAvailability(t *testing.T) {
 	if available := AvailableMarketBarrowsAt(&gameState, market, now); available != 25 {
 		t.Fatalf("lease-adjusted available barrows = %d, want 25", available)
 	}
-	if available := AvailableMarketBarrowsAt(&gameState, market, returnsAt); available != 100 {
+	market.ObservedAt = returnsAt.Add(time.Nanosecond)
+	gameState.Market.Castles[market.CastleID] = market
+	if available := AvailableMarketBarrowsAt(&gameState, market, returnsAt.Add(time.Nanosecond)); available != 100 {
 		t.Fatalf("returned barrows remained leased: %d", available)
 	}
 }
@@ -50,6 +53,7 @@ func TestMarketBarrowLeaseKeepsHomeFleetReservedAcrossReturnTransition(t *testin
 	arrivesAt := now.Add(81 * time.Second)
 	returnsAt := arrivesAt.Add(81 * time.Second)
 	state := NewGameState()
+	state.Session.ChangedAt = time.Time{}
 	state.Player.ID = 1
 	market := MarketCastleState{CastleID: 10, TotalBarrows: 125, AvailableBarrows: 125}
 	for i, carts := range []int{90, 26, 7, 2} {
@@ -83,7 +87,152 @@ func TestMarketBarrowLeaseKeepsHomeFleetReservedAcrossReturnTransition(t *testin
 	state.Movements[99] = MovementState{ID: 99, Direction: 1, OwnerPlayerID: 2,
 		SourceCastleID: 20, TargetCastleID: 10, MarketBarrows: 50, ReturnsAt: &returnsAt}
 	check(returnsAt.Add(-time.Nanosecond))
-	if available := AvailableMarketBarrowsAt(&state, market, returnsAt); available != 125 {
+	market.ObservedAt = returnsAt.Add(time.Nanosecond)
+	state.Market.Castles[market.CastleID] = market
+	if available := AvailableMarketBarrowsAt(&state, market, returnsAt.Add(time.Nanosecond)); available != 125 {
 		t.Fatalf("completed return did not release fleet: %d", available)
+	}
+}
+
+func TestMarketBarrowRecordRetentionAndConfirmation(t *testing.T) {
+	if MarketBarrowLeaseRetention < MarketBarrowFreshness {
+		t.Fatal("retention shorter than freshness")
+	}
+	now := time.Date(2026, 10, 3, 12, 0, 0, 0, time.UTC)
+	r := now.Add(time.Minute)
+	for _, tc := range []struct {
+		name         string
+		at, observed time.Time
+		want         int
+	}{
+		{"at return", r, now, 100}, {"past return", r.Add(time.Second), now, 100},
+		{"observation at return", r, r, 100}, {"confirmed", r.Add(time.Nanosecond), r.Add(time.Nanosecond), 0},
+		{"last retained instant", r.Add(MarketBarrowLeaseRetention - time.Nanosecond), now, 100},
+		{"retention boundary", r.Add(MarketBarrowLeaseRetention), now, 0},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			gs := NewGameState()
+			gs.Session.ChangedAt = time.Time{}
+			gs.Player.ID = 1
+			gs.Castles[10] = CastleState{ID: 10}
+			gs.Market.Castles[10] = MarketCastleState{CastleID: 10, TotalBarrows: 100, AvailableBarrows: 100, ObservedAt: now}
+			gs.Movements[50] = MovementState{ID: 50, Direction: 1, OwnerPlayerID: 1, SourceCastleID: 20, TargetCastleID: 10, MarketBarrows: 100, ReturnsAt: &r}
+			if !RecordMarketBarrowLeases(&gs, now) {
+				t.Fatal("not recorded")
+			}
+			if got := MarketBarrowLeaseAt(&gs, 10, now).Barrows; got != 100 {
+				t.Fatalf("double count: %d", got)
+			}
+			delete(gs.Movements, 50)
+			row := gs.Market.Castles[10]
+			row.ObservedAt = tc.observed
+			gs.Market.Castles[10] = row
+			lease := MarketBarrowLeaseAt(&gs, 10, tc.at)
+			if lease.Barrows != tc.want || lease.AwaitingConfirmation != tc.want {
+				t.Fatalf("lease=%+v want=%d", lease, tc.want)
+			}
+			if tc.name == "retention boundary" && MarketBarrowSourceStatusAt(&gs, 10, tc.at).Ready {
+				t.Fatal("expired projection authorized stale source")
+			}
+			RecordMarketBarrowLeases(&gs, tc.at)
+			if len(gs.Market.BarrowLeases) == 0 && tc.want > 0 {
+				t.Fatal("record pruned early")
+			}
+		})
+	}
+}
+
+func TestMarketBarrowSourceFreshnessAndDeferral(t *testing.T) {
+	now := time.Date(2026, 10, 3, 12, 0, 0, 0, time.UTC)
+	for _, tc := range []struct {
+		name              string
+		observed, changed time.Time
+		missing           bool
+		wantReady         bool
+		wantRefresh       time.Time
+	}{
+		{"fresh", now.Add(-MarketBarrowFreshness + time.Nanosecond), time.Time{}, false, true, time.Time{}},
+		{"boundary", now.Add(-MarketBarrowFreshness), time.Time{}, false, false, now},
+		{"future", now.Add(time.Nanosecond), time.Time{}, false, false, now},
+		{"session changed", now.Add(-time.Second), now, false, false, now},
+		{"unknown", time.Time{}, time.Time{}, false, false, now},
+		{"omitted", now, time.Time{}, true, false, now.Add(MarketBarrowFreshness)},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			gs := NewGameState()
+			gs.Session.ChangedAt = time.Time{}
+			gs.Session.ChangedAt = tc.changed
+			gs.Market.ObservedAt = tc.observed
+			if !tc.missing {
+				gs.Market.Castles[10] = MarketCastleState{CastleID: 10, ObservedAt: tc.observed}
+			}
+			got := MarketBarrowSourceStatusAt(&gs, 10, now)
+			if got.Ready != tc.wantReady || !got.RefreshAt.Equal(tc.wantRefresh) {
+				t.Fatalf("status=%+v", got)
+			}
+		})
+	}
+	gs := NewGameState()
+	gs.Session.ChangedAt = time.Time{}
+	gs.Player.ID = 1
+	gs.Castles[10] = CastleState{ID: 10}
+	r := now.Add(time.Minute)
+	gs.Market.Castles[10] = MarketCastleState{CastleID: 10, TotalBarrows: 100, AvailableBarrows: 100, ObservedAt: now.Add(-3 * time.Minute)}
+	gs.Market.BarrowLeases = map[MovementID]MarketBarrowLeaseRecord{50: {HomeCastleID: 10, Barrows: 100, ReleasesAt: r}}
+	if got := MarketBarrowSourceStatusAt(&gs, 10, now); got.Ready || !got.RefreshAt.Equal(r) {
+		t.Fatalf("full fleet: %+v", got)
+	}
+	gs.Market.Castles[20] = MarketCastleState{CastleID: 20, ObservedAt: now.Add(-3 * time.Minute)}
+	if got := MarketBarrowSourceStatusAt(&gs, 20, now); !got.RefreshAt.Equal(now) {
+		t.Fatalf("other fleet deferred source: %+v", got)
+	}
+}
+
+func TestMarketBarrowRecordUpsertKeepsLatestReturn(t *testing.T) {
+	now := time.Date(2026, 10, 3, 12, 0, 0, 0, time.UTC)
+	r := now.Add(time.Minute)
+	gs := NewGameState()
+	gs.Session.ChangedAt = time.Time{}
+	gs.Player.ID = 1
+	gs.Castles[10] = CastleState{ID: 10}
+	gs.Movements[50] = MovementState{ID: 50, OwnerPlayerID: 1, SourceCastleID: 10, TargetCastleID: 20, MarketBarrows: 75, ReturnsAt: &r}
+	if !RecordMarketBarrowLeases(&gs, now) {
+		t.Fatal("insert")
+	}
+	earlier := now.Add(30 * time.Second)
+	m := gs.Movements[50]
+	m.ReturnsAt = &earlier
+	m.MarketBarrows = 80
+	gs.Movements[50] = m
+	if !RecordMarketBarrowLeases(&gs, now) {
+		t.Fatal("update")
+	}
+	if got := gs.Market.BarrowLeases[50]; got.Barrows != 80 || !got.ReleasesAt.Equal(r) {
+		t.Fatalf("record=%+v", got)
+	}
+	if RecordMarketBarrowLeases(&gs, now) {
+		t.Fatal("unchanged upsert")
+	}
+}
+
+func TestMarketBarrowRecordCloneIsolation(t *testing.T) {
+	gs := NewGameState()
+	r := time.Now().Add(time.Minute)
+	gs.Market.BarrowLeases = map[MovementID]MarketBarrowLeaseRecord{50: {HomeCastleID: 10, Barrows: 125, ReleasesAt: r}}
+	store := NewStore(&gs)
+	snapshot := store.Snapshot()
+	delete(snapshot.Market.BarrowLeases, 50)
+	if len(store.ReadOnlyView().Market.BarrowLeases) != 1 {
+		t.Fatal("snapshot aliases record map")
+	}
+	_, err := store.ApplyComponents(Components(ComponentMarket), func(state *GameState) ([]string, bool, error) {
+		delete(state.Market.BarrowLeases, 50)
+		return nil, false, nil
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(store.ReadOnlyView().Market.BarrowLeases) != 1 {
+		t.Fatal("uncommitted selective mutation leaked")
 	}
 }

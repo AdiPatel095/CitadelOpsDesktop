@@ -1,0 +1,8 @@
+{
+  "story": "CIT-126",
+  "source": "Engineering/Plans/CIT-126 Capped package stays capped until reset is proven.md",
+  "englishFallbackKeys": [
+    "server.storm.package_cap_blocked"
+  ],
+  "translationStatus": "English only; pending the epic CIT-116 batched locale translation story"
+}

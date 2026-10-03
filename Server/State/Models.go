@@ -322,7 +322,11 @@ type VIPState struct {
 	Points       int64 `json:"points,omitempty"`
 	Level        int   `json:"level,omitempty"`
 	RemainingSec int   `json:"remainingSec,omitempty"`
-	Upgrade      int   `json:"upgrade,omitempty"`
+	// UPG is the official client's _usedPremiumCommanders, not a VIP upgrade.
+	UsedPremiumCommanders int       `json:"usedPremiumCommanders,omitempty"`
+	ObservedAt            time.Time `json:"-"`
+	Generation            uint64    `json:"-"`
+	ConnectionGeneration  uint64    `json:"-"`
 }
 
 type CastleState struct {
@@ -449,7 +453,17 @@ type DefenseToolSlot struct {
 	Amount       int64  `json:"amount"`
 }
 
+type BuildingCompletionEvent struct {
+	Opcode            string    `json:"opcode"`
+	ConstructionState int       `json:"constructionState"`
+	ObservedAt        time.Time `json:"observedAt"`
+}
+
 type Building struct {
+	// CompletionEvents is a bounded diagnostic history, copied on append. It
+	// contains no object identity or layout coordinates and is never persisted.
+	CompletionEvents []BuildingCompletionEvent `json:"-"`
+
 	InstanceID               BuildingInstanceID `json:"instanceId"`
 	DefinitionID             BuildingID         `json:"definitionId"`
 	GridX                    int                `json:"gridX,omitempty"`
@@ -913,6 +927,7 @@ type CastellanState struct {
 }
 
 type MovementState struct {
+	HorseBoosterWID *int64                 `json:"horseBoosterWid,omitempty"`
 	ID              MovementID             `json:"id"`
 	TypeID          int                    `json:"typeId,omitempty"`
 	Direction       int                    `json:"direction"`
@@ -1130,6 +1145,7 @@ type MarketAreaEffect struct {
 }
 
 type MarketCastleState struct {
+	ObservedAt       time.Time              `json:"observedAt,omitempty"`
 	CastleID         CastleID               `json:"castleId"`
 	KingdomID        KingdomID              `json:"kingdomId"`
 	TotalBarrows     int                    `json:"totalBarrows"`
@@ -1245,10 +1261,11 @@ func (feast MarketFeastState) FreshAt(now time.Time, sessionChangedAt time.Time,
 }
 
 type MarketState struct {
-	Castles             map[CastleID]MarketCastleState `json:"castles"`
-	Boosters            map[int]MarketBoosterState     `json:"boosters"`
-	Feast               MarketFeastState               `json:"feast"`
-	FeastLastPurchaseAt time.Time                      `json:"feastLastPurchaseAt,omitempty"`
+	BarrowLeases        map[MovementID]MarketBarrowLeaseRecord `json:"barrowLeases,omitempty"`
+	Castles             map[CastleID]MarketCastleState         `json:"castles"`
+	Boosters            map[int]MarketBoosterState             `json:"boosters"`
+	Feast               MarketFeastState                       `json:"feast"`
+	FeastLastPurchaseAt time.Time                              `json:"feastLastPurchaseAt,omitempty"`
 	// FeastPurchasePending prevents a resource-spending BFS from being replayed
 	// after its outcome could not be reconciled. The latch is durable across
 	// restarts and is cleared only by an authoritative expected-feast result,
@@ -1290,10 +1307,14 @@ type MarketState struct {
 }
 
 type KingdomTransportUnlock struct {
-	KingdomID KingdomID `json:"kingdomId"`
-	Unlocked  bool      `json:"unlocked"`
-	Created   bool      `json:"created"`
-	Stage     int       `json:"stage,omitempty"`
+	EventEndsAt                  time.Time `json:"eventEndsAt,omitzero"`
+	EventObservedFrom            time.Time `json:"eventObservedFrom,omitzero"`
+	EventEndObservedAt           time.Time `json:"eventEndObservedAt,omitzero"`
+	EventEndConnectionGeneration uint64    `json:"eventEndConnectionGeneration,omitempty"`
+	KingdomID                    KingdomID `json:"kingdomId"`
+	Unlocked                     bool      `json:"unlocked"`
+	Created                      bool      `json:"created"`
+	Stage                        int       `json:"stage,omitempty"`
 }
 
 type KingdomTransportGood struct {
@@ -1805,6 +1826,9 @@ func (state StormIslandReturnState) UnitsToReturn() map[UnitID]int64 {
 }
 
 type StormState struct {
+	PackageCapBlocks              map[string]StormPackageCapBlock   `json:"packageCapBlocks,omitempty"`
+	LunaShopPendingCap            int64                             `json:"lunaShopPendingCap,omitempty"`
+	TravelObservations            map[string]StormTravelObservation `json:"travelObservations,omitempty"`
 	LastScannedAt                 map[CastleID]time.Time            `json:"lastScannedAt"`
 	Map                           StormMapState                     `json:"map"`
 	IslandReturns                 map[string]StormIslandReturnState `json:"islandReturns"`

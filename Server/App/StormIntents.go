@@ -14,6 +14,7 @@ import (
 
 	"CitadelDesktop/Server/AttackCapacity"
 	"CitadelDesktop/Server/AttackPresets"
+	"CitadelDesktop/Server/Automation"
 	"CitadelDesktop/Server/GameData"
 	"CitadelDesktop/Server/Intent"
 	"CitadelDesktop/Server/Outbound"
@@ -650,6 +651,11 @@ func planStormIslandReturn(_ context.Context, input Intent.PlanningContext, argu
 	if err := Intent.RequireTravelTickets(input, 1); err != nil {
 		return Intent.Plan{}, err
 	}
+	input.SupportSendKey = "storm-return:" + State.StormIslandReturnKey(request.KingdomID, request.IslandX, request.IslandY)
+	reservation, err := reservePremiumCommander(input, true)
+	if err != nil {
+		return Intent.Plan{}, err
+	}
 	route, _ := json.Marshal(struct {
 		TargetX int `json:"TX"`
 		TargetY int `json:"TY"`
@@ -667,7 +673,7 @@ func planStormIslandReturn(_ context.Context, input Intent.PlanningContext, argu
 		Travel   int        `json:"PTT"`
 		Delay    int        `json:"SD"`
 		Units    [][2]int64 `json:"A"`
-	}{request.IslandObjectID, castle.X, castle.Y, stationLeaderID, 0, -1, 1, 1, 0, wireUnits})
+	}{request.IslandObjectID, castle.X, castle.Y, premiumSupportCommander, 0, -1, 1, 1, 0, wireUnits})
 	steps := castleContextSteps(input, castle)
 	steps = append(steps,
 		contextCommandStep("Preview island return route", "sdi", route, "sdi").WithNameDescriptor(Localization.New("server.app.preview_island_return_route.280f06d9", "Preview island return route", nil)),
@@ -675,6 +681,11 @@ func planStormIslandReturn(_ context.Context, input Intent.PlanningContext, argu
 		commandStep("Return surviving island troops to Storm castle", "cds", dispatch, "cds", Localization.New("server.app.return_surviving_island_troops.44a6c20a", "Return surviving island troops to Storm castle", nil)),
 		Intent.Step{Name: "Complete island troop return", NameDescriptor: Localization.New("server.app.complete_island_troop_return.ab63dd3f", "Complete island troop return", nil), Action: "storm.island.return.complete", ActionArguments: arguments},
 	)
+	for i := range steps {
+		if steps[i].Opcode == "cds" {
+			steps[i].SupportCommanderReservation = reservation
+		}
+	}
 	key := State.StormIslandReturnKey(request.KingdomID, request.IslandX, request.IslandY)
 	return Intent.Plan{
 		Claims: []string{
@@ -694,6 +705,7 @@ func planStormShopPurchase(_ context.Context, input Intent.PlanningContext, argu
 	if err != nil {
 		return Intent.Plan{}, err
 	}
+	arguments, _ = json.Marshal(request)
 	historyPayload, _ := json.Marshal(struct {
 		CastleID  State.CastleID  `json:"CID"`
 		KingdomID State.KingdomID `json:"KID"`
@@ -729,7 +741,11 @@ func planStormShopPurchase(_ context.Context, input Intent.PlanningContext, argu
 		purchaseLabels = append(purchaseLabels, fmt.Sprintf("%d x %s", purchase.request.Amount, itemName))
 		purchaseMessages = append(purchaseMessages, Localization.New("server.storm.purchase_list_item", "{amount, number} x Luna package {packageID}", Localization.Params{"amount": purchase.request.Amount, "packageID": strconv.FormatInt(int64(purchase.request.ProductID), 10)}))
 		totalCost += purchase.request.Amount * purchase.item.AquamarinePrice
-		steps = append(steps, shopCommandStep("Purchase "+itemName+" from Luna", "sbp", payload, 0).WithNameDescriptor(Localization.New("server.storm.purchase_step", "Purchase package {packageID} from Luna", Localization.Params{"packageID": strconv.FormatInt(int64(purchase.request.ProductID), 10)})))
+		step := shopCommandStep("Purchase "+itemName+" from Luna", "sbp", payload, 0).WithNameDescriptor(Localization.New("server.storm.purchase_step", "Purchase package {packageID} from Luna", Localization.Params{"packageID": strconv.FormatInt(int64(purchase.request.ProductID), 10)}))
+		guardArguments, _ := json.Marshal(stormShopPurchaseRequest{CastleID: castle.ID, Purchases: []stormShopPurchaseLineRequest{purchase.request}, AquamarineReserve: request.AquamarineReserve})
+		step.FinalDispatchAction = "storm.shop.guard"
+		step.FinalDispatchArguments = guardArguments
+		steps = append(steps, step)
 	}
 	summary := fmt.Sprintf("Buy %s from Luna for %d Aquamarine at %s", stormShopFriendlyList(purchaseLabels), totalCost, castleLabel(castle))
 	return Intent.Plan{
@@ -905,6 +921,9 @@ func stormAttackContext(
 	if err := validateStormDefenseUnits(request.DefenseUnits); err != nil {
 		return stormAttackRequest{}, State.CastleState{}, State.MapObservation{}, GameData.StormIsleDefinition{}, err
 	}
+	if block := Automation.StormAttackArrivalBlock(&input.State, input.GameData, source, target, request.HorseTravelBoostID, now); block != nil {
+		return stormAttackRequest{}, State.CastleState{}, State.MapObservation{}, GameData.StormIsleDefinition{}, Localization.WithError(errors.New(block.Fallback), block)
+	}
 	return request, source, target, definition, nil
 }
 
@@ -1022,10 +1041,16 @@ func stormShopPurchaseContext(
 	}
 	purchases := make([]stormShopPurchaseLine, 0, len(normalized))
 	totalCost := int64(0)
+	var capMessage *Localization.Message
+	var capDetail string
 	for _, line := range normalized {
 		item, found := input.GameData.StormShopPackage(int64(line.ProductID))
 		if !found {
 			return stormShopPurchaseRequest{}, State.CastleState{}, nil, Localization.WithError(fmt.Errorf("package %d is not sold by Luna's trade boat", line.ProductID), Localization.New("server.app.package_p_is_not.7e02298e", "package {p0} is not sold by Luna's trade boat", Localization.Params{"p0": fmt.Sprintf("%d", line.ProductID)}))
+		}
+		if input.State.StormPackageBlocked(castle.ID, GameData.StormLunaShopTableID, line.ProductID, time.Now().UTC()) {
+			capDetail, capMessage = Intent.StormPackageCapStatus(userFacingGameName(item.Name))
+			continue
 		}
 		if line.Amount > (math.MaxInt64-totalCost)/item.AquamarinePrice {
 			return stormShopPurchaseRequest{}, State.CastleState{}, nil, Localization.WithError(fmt.Errorf("Storm shop amount is too large"), Localization.New("server.app.storm_shop_amount_is.16ee5f1d", "Storm shop amount is too large", nil))
@@ -1039,6 +1064,9 @@ func stormShopPurchaseContext(
 		}
 		purchases = append(purchases, stormShopPurchaseLine{request: line, item: item})
 	}
+	if len(purchases) == 0 && capMessage != nil {
+		return stormShopPurchaseRequest{}, State.CastleState{}, nil, Localization.WithError(errors.New(capDetail), capMessage)
+	}
 	if totalCost > math.MaxInt64-request.AquamarineReserve {
 		return stormShopPurchaseRequest{}, State.CastleState{}, nil, Localization.WithError(fmt.Errorf("Storm shop amount is too large"), Localization.New("server.app.storm_shop_amount_is.16ee5f1d", "Storm shop amount is too large", nil))
 	}
@@ -1047,7 +1075,10 @@ func stormShopPurchaseContext(
 	if available < required {
 		return stormShopPurchaseRequest{}, State.CastleState{}, nil, Localization.WithError(fmt.Errorf("Storm castle has %d Aquamarine; purchases and reserve require %d", available, required), Localization.New("server.app.storm_castle_has_p.63b05463", "Storm castle has {p0} Aquamarine; purchases and reserve require {p1}", Localization.Params{"p0": available, "p1": required}))
 	}
-	request.Purchases = normalized
+	request.Purchases = make([]stormShopPurchaseLineRequest, 0, len(purchases))
+	for _, purchase := range purchases {
+		request.Purchases = append(request.Purchases, purchase.request)
+	}
 	return request, castle, purchases, nil
 }
 
@@ -1562,7 +1593,10 @@ func (application *Application) resolveStormAttackStep(
 	if err := validateStormAttackTroopReserve(body, source, input.GameData, attackRequest.MinimumTroops); err != nil {
 		return Intent.Step{}, err
 	}
-	return commandStep(fmt.Sprintf("Attack Storm %s at %d:%d", definition.Kind, target.X, target.Y), "cra", payload, "cra", Localization.New("server.app.attack_storm_p_at.118ef7c4", "Attack Storm {p0} at {p1}:{p2}", Localization.Params{"p0": fmt.Sprintf("%s", definition.Kind), "p1": target.X, "p2": target.Y})), nil
+	step := commandStep(fmt.Sprintf("Attack Storm %s at %d:%d", definition.Kind, target.X, target.Y), "cra", payload, "cra", Localization.New("server.app.attack_storm_p_at.118ef7c4", "Attack Storm {p0} at {p1}:{p2}", Localization.Params{"p0": fmt.Sprintf("%s", definition.Kind), "p1": target.X, "p2": target.Y}))
+	step.PreDispatchAction = "storm.attack.guard"
+	step.PreDispatchArguments = arguments
+	return step, nil
 }
 
 func validateStormAttackTroopReserve(

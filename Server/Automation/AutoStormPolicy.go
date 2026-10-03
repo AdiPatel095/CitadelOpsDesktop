@@ -192,7 +192,7 @@ func (*AutoStormPolicy) EnabledKey() string { return "auto_storm" }
 func (*AutoStormPolicy) WakeDomains() []string {
 	return []string{
 		"attacks", "buildings", "castles", "construction-items", "construction-offers", "inventory", "map-storm", "movements",
-		"reports", "resources", "storm", "storm-scan", "units", "kingdom-transport",
+		"vip", "reports", "resources", "storm", "storm-scan", "units", "kingdom-transport",
 	}
 }
 
@@ -1438,6 +1438,8 @@ func evaluateAutoStormShop(
 	totalCost := int64(0)
 	includesUnlimited := false
 	seenPackages := map[State.PackageID]struct{}{}
+	var capDetail string
+	var capMessage *Localization.Message
 	for _, rule := range rules {
 		if rule.PackageID <= 0 || (!rule.Unlimited && rule.TargetPurchases <= 0) {
 			continue
@@ -1449,6 +1451,12 @@ func evaluateAutoStormShop(
 		item, found := snapshot.GameData.StormShopPackage(int64(rule.PackageID))
 		if !found {
 			return nil, false, fmt.Sprintf("Configured package %d is not sold by Luna", rule.PackageID), nil
+		}
+		if snapshot.State.StormPackageBlocked(castle.ID, GameData.StormLunaShopTableID, rule.PackageID, snapshot.Now) {
+			if capMessage == nil {
+				capDetail, capMessage = Intent.StormPackageCapStatus(item.Name)
+			}
+			continue
 		}
 		purchased := offers[rule.PackageID]
 		if item.Stock > 0 && purchased >= item.Stock {
@@ -1503,6 +1511,9 @@ func evaluateAutoStormShop(
 		}
 	}
 	if len(purchases) == 0 {
+		if capMessage != nil {
+			return &Decision{Status: "waiting", Detail: capDetail, DetailDescriptor: capMessage, Metrics: metrics, NextCheckAt: snapshot.Now.Add(autoStormShopWatchdogInterval)}, false, "", nil
+		}
 		return nil, true, "Aquamarine shop goals complete", nil
 	}
 	arguments, _ := json.Marshal(map[string]any{
@@ -1516,6 +1527,11 @@ func evaluateAutoStormShop(
 		detailLocalizationMessage = Localization.New("server.storm.purchase_ready_unlimited", "Buy {purchases} from Luna for {cost, number} Aquamarine (unlimited goal)", Localization.Params{"cost": totalCost})
 	}
 	detailLocalizationMessage = Localization.WithLists(detailLocalizationMessage, detail, map[string][]*Localization.Message{"purchases": purchaseMessages})
+	if capMessage != nil {
+		detail = capDetail + ". " + detail
+		detailLocalizationMessage.Context = []*Localization.Message{Localization.Clone(capMessage)}
+		detailLocalizationMessage = Localization.Bind(detailLocalizationMessage, detail)
+	}
 	return &Decision{
 		Status: "ready", Detail: detail, DetailDescriptor: Localization.Clone(detailLocalizationMessage),
 		NextCheckAt: snapshot.Now.Add(2 * time.Second), Metrics: metrics,
@@ -1675,6 +1691,10 @@ func evaluateAutoStormCombat(
 	}
 	waitingDetail := ""
 	for _, candidate := range candidates {
+		if block := StormAttackArrivalBlock(&snapshot.State, snapshot.GameData, castle, candidate.Observation, settings.HorseTravelBoostID, snapshot.Now); block != nil {
+			waitingDetail = block.Fallback
+			continue
+		}
 		preset, found := AttackPresets.Find(document, candidate.PresetID)
 		if !found {
 			continue

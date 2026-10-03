@@ -211,6 +211,7 @@ func TestStormAttackReplansWhenCommanderAvailabilityChanges(t *testing.T) {
 			StormIsleID: 7, StormVictoryCount: 5, ObservedAt: now,
 		},
 	}
+	fundStormArrivalForTest(&state, time.Now().UTC())
 	arguments := json.RawMessage(`{
 		"sourceCastleId":40,"kingdomId":4,"targetTypeId":25,"targetX":101,"targetY":102,
 		"stormIsleId":7,"minimumVictoryCount":4,"commanderIds":[43],
@@ -281,6 +282,7 @@ func TestStormAttackResolverDoesNotExpandConcretePresetAndEnforcesTroopReserve(t
 		},
 	}
 	unitID := int64(10)
+	fundStormArrivalForTest(&state, time.Now().UTC())
 	request := resolvedStormAttackRequest{
 		stormAttackRequest: stormAttackRequest{
 			SourceCastleID: 40, KingdomID: stormIntentKingdomID,
@@ -702,6 +704,7 @@ func TestStormAttackContextEnforcesMinimumFortAttacksRemaining(t *testing.T) {
 			StormIsleID: 7, StormVictoryCount: 7, ObservedAt: time.Now().UTC(),
 		},
 	}
+	fundStormArrivalForTest(&state, time.Now().UTC())
 	input := Intent.PlanningContext{State: state, GameData: gameData}
 	request := json.RawMessage(`{
 		"sourceCastleId":40,"kingdomId":4,"targetTypeId":25,"targetX":101,"targetY":102,
@@ -754,6 +757,7 @@ func TestStormAttackContextUsesIslandReadyAndExpiryLabels(t *testing.T) {
 		ObjectID: 777, StormIsleID: 4, StormCooldownRemaining: 3_600, ObservedAt: now.Add(-time.Minute),
 	}
 	state.Map[4] = map[string]State.MapObservation{"101:102": target}
+	fundStormArrivalForTest(&state, time.Now().UTC())
 	input := Intent.PlanningContext{State: state, GameData: gameData}
 	request := json.RawMessage(`{
 		"sourceCastleId":40,"kingdomId":4,"targetTypeId":24,"targetX":101,"targetY":102,
@@ -835,7 +839,7 @@ func TestPlanStormIslandReturnUsesIslandAsSourceAndStormCastleAsDestination(t *t
 		"sourceCastleId":40,"kingdomId":4,"islandX":101,"islandY":102,
 		"islandObjectId":777,"reportId":202,"units":[{"unitId":10,"amount":4},{"unitId":12,"amount":4}]
 	}`)
-	plan, err := planStormIslandReturn(context.Background(), Intent.PlanningContext{State: state, GameData: gameData}, request)
+	plan, err := planStormIslandReturn(context.Background(), supportCommanderTestInput(t, Intent.PlanningContext{State: state, GameData: gameData}), request)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -1115,6 +1119,7 @@ func TestStormFortWithoutObjectIDPlansConsumesAndResolves(t *testing.T) {
 	state.Map[stormIntentKingdomID] = map[string]State.MapObservation{"101:102": fort}
 	state.Storm.Map.Targets = map[string]State.MapObservation{"101:102": fort}
 
+	fundStormArrivalForTest(&state, time.Now().UTC())
 	plan, err := planStormAttack(t.Context(), Intent.PlanningContext{State: state, GameData: gameData}, json.RawMessage(`{
 		"sourceCastleId":40,"kingdomId":4,"targetTypeId":25,"targetX":101,"targetY":102,
 		"stormIsleId":7,"minimumVictoryCount":4,"commanderIds":[43],
@@ -1214,6 +1219,7 @@ func TestHiddenStormFortIsRefusedByPlannerAndCRAGuard(t *testing.T) {
 	}
 	state.Map[stormIntentKingdomID] = map[string]State.MapObservation{"101:102": fort}
 	gameData := stormAttackTestGameData(t)
+	fundStormArrivalForTest(&state, time.Now().UTC())
 	arguments := json.RawMessage(`{
 		"sourceCastleId":40,"kingdomId":4,"targetTypeId":25,"targetX":101,"targetY":102,
 		"stormIsleId":7,"minimumVictoryCount":4,"commanderIds":[43],

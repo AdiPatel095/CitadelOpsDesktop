@@ -32,10 +32,11 @@ func TestCraftingLogisticsPolicyRunsAsIndependentAutoSceatLane(t *testing.T) {
 	}
 }
 
-func TestCraftingPolicyWaitsForMarketBarrowReturnBeforeLogisticsRefresh(t *testing.T) {
+func TestCraftingPolicyDoesNotRefreshUnusedMarketSources(t *testing.T) {
 	now := time.Date(2026, 7, 22, 23, 30, 0, 0, time.UTC)
 	returnsAt := now.Add(10 * time.Minute)
 	gameState := State.NewGameState()
+	gameState.Session.ChangedAt = time.Time{}
 	gameState.Player.ID = 1
 	source := craftingLogisticsCastle(10, 0, 10, 10)
 	source.Buildings[1] = State.Building{InstanceID: 1, DefinitionID: 137}
@@ -58,7 +59,7 @@ func TestCraftingPolicyWaitsForMarketBarrowReturnBeforeLogisticsRefresh(t *testi
 	if err != nil {
 		t.Fatal(err)
 	}
-	if decision.Status != "waiting" || decision.Request != nil || !decision.NextCheckAt.Equal(returnsAt.Add(time.Second)) {
+	if decision.Status != "idle" || decision.Request != nil {
 		t.Fatalf("market lease decision = %+v", decision)
 	}
 }
@@ -67,6 +68,7 @@ func TestCraftingPolicyShipsMissingResourceAcrossKingdoms(t *testing.T) {
 	now := time.Date(2026, 7, 11, 12, 0, 0, 0, time.UTC)
 	gameData := craftingLogisticsGameData(t)
 	gameState := State.NewGameState()
+	gameState.Session.ChangedAt = time.Time{}
 	source := craftingLogisticsCastle(10, 0, 10, 10)
 	target := craftingLogisticsCastle(20, 1, 20, 20)
 	capacity := float64(100_000)
@@ -116,6 +118,7 @@ func TestCraftingPolicyShipsMissingResourceAcrossKingdoms(t *testing.T) {
 func TestCraftingPolicyShipsMissingResourceWithinKingdomBelowKingdomMinimum(t *testing.T) {
 	now := time.Date(2026, 7, 25, 12, 0, 0, 0, time.UTC)
 	gameState := State.NewGameState()
+	gameState.Session.ChangedAt = time.Time{}
 	source := craftingLogisticsCastle(10, 0, 10, 10)
 	target := craftingLogisticsCastle(20, 0, 20, 20)
 	capacity := float64(100_000)
@@ -129,7 +132,7 @@ func TestCraftingPolicyShipsMissingResourceWithinKingdomBelowKingdomMinimum(t *t
 	gameState.Castles[target.ID] = target
 	gameState.Market.ObservedAt = now
 	gameState.Market.CaravanLevelLoaded = true
-	gameState.Market.Castles[source.ID] = State.MarketCastleState{
+	gameState.Market.Castles[source.ID] = State.MarketCastleState{ObservedAt: now,
 		CastleID: source.ID, KingdomID: source.KingdomID, AvailableBarrows: 100,
 	}
 	gameState.KingdomTransport.ObservedAt = now
@@ -156,6 +159,7 @@ func TestCraftingPolicyShipsMissingResourceWithinKingdomBelowKingdomMinimum(t *t
 func TestCraftingPolicyDrainsGreenOutpostLootWhileQueueIsFull(t *testing.T) {
 	now := time.Date(2026, 7, 21, 12, 0, 0, 0, time.UTC)
 	gameState := State.NewGameState()
+	gameState.Session.ChangedAt = time.Time{}
 	source := craftingLogisticsCastle(10, 0, 10, 10)
 	target := craftingLogisticsCastle(20, 1, 20, 20)
 	source.Name = "Green Outpost"
@@ -202,6 +206,7 @@ func TestCraftingPolicyDrainsGreenOutpostLootWhileQueueIsFull(t *testing.T) {
 func TestCraftingPolicyMainCastleDonatesSurplusAfterPreservingOwnRefill(t *testing.T) {
 	now := time.Date(2026, 7, 21, 12, 0, 0, 0, time.UTC)
 	gameState := State.NewGameState()
+	gameState.Session.ChangedAt = time.Time{}
 	source := craftingLogisticsCastle(10, 0, 10, 10)
 	target := craftingLogisticsCastle(20, 1, 20, 20)
 	source.Name = "Green Main Castle"
@@ -252,6 +257,7 @@ func TestCraftingPolicyMainCastleDonatesSurplusAfterPreservingOwnRefill(t *testi
 func TestCraftingPolicyLootDrainPrefersSovereignResourceKingdom(t *testing.T) {
 	now := time.Date(2026, 7, 21, 12, 0, 0, 0, time.UTC)
 	gameState := State.NewGameState()
+	gameState.Session.ChangedAt = time.Time{}
 	ordinarySource := craftingLogisticsCastle(10, 0, 10, 10)
 	towerLootSource := craftingLogisticsCastle(30, 2, 30, 30)
 	target := craftingLogisticsCastle(20, 1, 20, 20)
@@ -296,6 +302,7 @@ func TestCraftingPolicyLootDrainPrefersSovereignResourceKingdom(t *testing.T) {
 func TestCraftingPolicyLootDrainFallsBackWhenPreferredSourceIsUnavailable(t *testing.T) {
 	now := time.Date(2026, 7, 21, 12, 0, 0, 0, time.UTC)
 	gameState := State.NewGameState()
+	gameState.Session.ChangedAt = time.Time{}
 	fallbackSource := craftingLogisticsCastle(10, 0, 10, 10)
 	reservedPreferredSource := craftingLogisticsCastle(30, 2, 30, 30)
 	target := craftingLogisticsCastle(20, 1, 20, 20)
@@ -340,6 +347,7 @@ func TestCraftingPolicyLootDrainFallsBackWhenPreferredSourceIsUnavailable(t *tes
 func TestCraftingPolicyLootDrainUsesGreenOutpostThroughMarketplace(t *testing.T) {
 	now := time.Date(2026, 7, 21, 12, 0, 0, 0, time.UTC)
 	gameState := State.NewGameState()
+	gameState.Session.ChangedAt = time.Time{}
 	source := craftingLogisticsCastle(10, 0, 10, 10)
 	target := craftingLogisticsCastle(20, 0, 20, 20)
 	source.Name = "Green Outpost"
@@ -359,7 +367,7 @@ func TestCraftingPolicyLootDrainUsesGreenOutpostThroughMarketplace(t *testing.T)
 	gameState.Castles[target.ID] = target
 	gameState.Market.ObservedAt = now
 	gameState.Market.CaravanLevelLoaded = true
-	gameState.Market.Castles[source.ID] = State.MarketCastleState{
+	gameState.Market.Castles[source.ID] = State.MarketCastleState{ObservedAt: now,
 		CastleID: source.ID, KingdomID: source.KingdomID, AvailableBarrows: 100,
 	}
 	configuration := Configuration.Snapshot{Sections: map[string]json.RawMessage{
@@ -397,6 +405,7 @@ func TestCraftingPolicyLootDrainUsesOwnedCapitalAndMetropolisSources(t *testing.
 		t.Run(test.name, func(t *testing.T) {
 			now := time.Date(2026, 7, 21, 12, 0, 0, 0, time.UTC)
 			gameState := State.NewGameState()
+			gameState.Session.ChangedAt = time.Time{}
 			source := craftingLogisticsCastle(10, 2, 10, 10)
 			target := craftingLogisticsCastle(20, 1, 20, 20)
 			source.Name = test.name
@@ -455,6 +464,7 @@ func TestCraftingPolicyStorageNodesNeverCreateQueuesOrRefillDemand(t *testing.T)
 		t.Run(test.name, func(t *testing.T) {
 			now := time.Date(2026, 7, 21, 12, 0, 0, 0, time.UTC)
 			gameState := State.NewGameState()
+			gameState.Session.ChangedAt = time.Time{}
 			storage := craftingLogisticsCastle(10, test.kingdomID, 10, 10)
 			storage.Name = test.name
 			storage.SlotType = test.slotType
@@ -496,6 +506,7 @@ func TestCraftingPolicyStorageNodesNeverCreateQueuesOrRefillDemand(t *testing.T)
 func TestCraftingPolicyLootDrainWaitsForPendingKingdomShipment(t *testing.T) {
 	now := time.Date(2026, 7, 21, 12, 0, 0, 0, time.UTC)
 	gameState := State.NewGameState()
+	gameState.Session.ChangedAt = time.Time{}
 	source := craftingLogisticsCastle(10, 0, 10, 10)
 	target := craftingLogisticsCastle(20, 1, 20, 20)
 	capacity := float64(100_000)
@@ -537,6 +548,7 @@ func TestCraftingPolicyLootDrainWaitsForPendingKingdomShipment(t *testing.T) {
 func TestCraftingPolicyRedistributesKhanLootAsOneCapacityFillingShipment(t *testing.T) {
 	now := time.Date(2026, 7, 25, 12, 0, 0, 0, time.UTC)
 	gameState := State.NewGameState()
+	gameState.Session.ChangedAt = time.Time{}
 	source := craftingLogisticsCastle(10, 0, 10, 10)
 	target := craftingLogisticsCastle(20, 1, 20, 20)
 	source.Name = "Green Main Castle"
@@ -615,6 +627,7 @@ func TestCraftingPolicyRedistributesKhanLootAsOneCapacityFillingShipment(t *test
 func TestCraftingPolicyDoesNotRequireMarketForSingleCastleKingdoms(t *testing.T) {
 	now := time.Date(2026, 7, 11, 12, 0, 0, 0, time.UTC)
 	gameState := State.NewGameState()
+	gameState.Session.ChangedAt = time.Time{}
 	mainCastle := craftingLogisticsCastle(10, 0, 10, 10)
 	mainCastle.Buildings[100] = State.Building{InstanceID: 100, DefinitionID: 137}
 	dungeonCastle := craftingLogisticsCastle(20, 3, 20, 20)
@@ -639,6 +652,7 @@ func TestCraftingPolicyDoesNotRequireMarketForSingleCastleKingdoms(t *testing.T)
 func TestCraftingPolicyUsesSmallestCoveringKingdomTimeSkip(t *testing.T) {
 	now := time.Date(2026, 7, 11, 12, 0, 0, 0, time.UTC)
 	gameState := State.NewGameState()
+	gameState.Session.ChangedAt = time.Time{}
 	gameState.Market.ObservedAt = now
 	gameState.Market.CaravanLevelLoaded = true
 	gameState.KingdomTransport.ObservedAt = now
@@ -669,6 +683,7 @@ func TestCraftingPolicyUsesSmallestCoveringKingdomTimeSkip(t *testing.T) {
 func TestCraftingPolicyRentsConfiguredSlotOnlyWhenNextRecipeIsAffordable(t *testing.T) {
 	now := time.Date(2026, 7, 11, 12, 0, 0, 0, time.UTC)
 	gameState := State.NewGameState()
+	gameState.Session.ChangedAt = time.Time{}
 	castle := craftingLogisticsCastle(20, 0, 20, 20)
 	capacity := float64(100_000)
 	castle.Resources[6] = State.ResourceBalance{Amount: 20_000, Capacity: &capacity}
@@ -700,6 +715,7 @@ func TestCraftingPolicyRentsConfiguredSlotOnlyWhenNextRecipeIsAffordable(t *test
 func TestCraftingPolicyMovesSameKingdomOverflowBelowKingdomMinimum(t *testing.T) {
 	now := time.Date(2026, 7, 11, 12, 0, 0, 0, time.UTC)
 	gameState := State.NewGameState()
+	gameState.Session.ChangedAt = time.Time{}
 	source := craftingLogisticsCastle(10, 0, 10, 10)
 	target := craftingLogisticsCastle(20, 0, 20, 20)
 	capacity := float64(100_000)
@@ -711,7 +727,7 @@ func TestCraftingPolicyMovesSameKingdomOverflowBelowKingdomMinimum(t *testing.T)
 	gameState.Player.Resources[1] = 1_000_000
 	gameState.Market.ObservedAt = now
 	gameState.Market.CaravanLevelLoaded = true
-	gameState.Market.Castles[source.ID] = State.MarketCastleState{
+	gameState.Market.Castles[source.ID] = State.MarketCastleState{ObservedAt: now,
 		CastleID: source.ID, KingdomID: source.KingdomID, AvailableBarrows: 100,
 	}
 	gameState.KingdomTransport.ObservedAt = now
@@ -737,6 +753,7 @@ func TestCraftingPolicyMovesSameKingdomOverflowBelowKingdomMinimum(t *testing.T)
 func TestCraftingPolicyRequiresMarketplaceForSameKingdomShipment(t *testing.T) {
 	now := time.Date(2026, 7, 11, 12, 0, 0, 0, time.UTC)
 	gameState := State.NewGameState()
+	gameState.Session.ChangedAt = time.Time{}
 	source := craftingLogisticsCastle(10, 0, 10, 10)
 	target := craftingLogisticsCastle(20, 0, 20, 20)
 	capacity := float64(100_000)
@@ -750,7 +767,7 @@ func TestCraftingPolicyRequiresMarketplaceForSameKingdomShipment(t *testing.T) {
 	gameState.Castles[target.ID] = target
 	gameState.Market.ObservedAt = now
 	gameState.Market.CaravanLevelLoaded = true
-	gameState.Market.Castles[source.ID] = State.MarketCastleState{
+	gameState.Market.Castles[source.ID] = State.MarketCastleState{ObservedAt: now,
 		CastleID: source.ID, KingdomID: source.KingdomID, AvailableBarrows: 100,
 	}
 	gameState.KingdomTransport.ObservedAt = now
@@ -774,6 +791,7 @@ func TestCraftingPolicyRequiresMarketplaceForSameKingdomShipment(t *testing.T) {
 func TestCraftingPolicyRequiresMarketplaceForOverflowShipment(t *testing.T) {
 	now := time.Date(2026, 7, 11, 12, 0, 0, 0, time.UTC)
 	gameState := State.NewGameState()
+	gameState.Session.ChangedAt = time.Time{}
 	source := craftingLogisticsCastle(10, 0, 10, 10)
 	target := craftingLogisticsCastle(20, 0, 20, 20)
 	capacity := float64(100_000)
@@ -784,7 +802,7 @@ func TestCraftingPolicyRequiresMarketplaceForOverflowShipment(t *testing.T) {
 	gameState.Player.Resources[1] = 1_000_000
 	gameState.Market.ObservedAt = now
 	gameState.Market.CaravanLevelLoaded = true
-	gameState.Market.Castles[source.ID] = State.MarketCastleState{
+	gameState.Market.Castles[source.ID] = State.MarketCastleState{ObservedAt: now,
 		CastleID: source.ID, KingdomID: source.KingdomID, AvailableBarrows: 100,
 	}
 	gameState.KingdomTransport.ObservedAt = now
@@ -807,6 +825,7 @@ func TestCraftingPolicyRequiresMarketplaceForOverflowShipment(t *testing.T) {
 func TestCraftingPolicyMovesBlockedOverflowToStorm(t *testing.T) {
 	now := time.Date(2026, 7, 11, 12, 0, 0, 0, time.UTC)
 	gameState := State.NewGameState()
+	gameState.Session.ChangedAt = time.Time{}
 	source := craftingLogisticsCastle(10, 0, 10, 10)
 	storm := craftingLogisticsCastle(40, 4, 40, 40)
 	capacity := float64(100_000)
@@ -838,6 +857,7 @@ func TestCraftingPolicyRubySkipsOneCraftWhenOverflowCannotMove(t *testing.T) {
 	now := time.Date(2026, 7, 11, 12, 0, 0, 0, time.UTC)
 	remaining := 50
 	gameState := State.NewGameState()
+	gameState.Session.ChangedAt = time.Time{}
 	main := craftingLogisticsCastle(10, 0, 10, 10)
 	main.SlotType = 1
 	capacity := float64(100_000)
@@ -938,5 +958,43 @@ func craftingLogisticsCastle(id State.CastleID, kingdom State.KingdomID, x int, 
 			Buildings:              map[State.BuildingInstanceID]State.CraftingBuilding{},
 			OutputBoostByQueueType: map[int]float64{},
 		},
+	}
+}
+
+func TestCraftingMarketSourceDeferralKeepsOtherDonorsEligible(t *testing.T) {
+	now := time.Date(2026, 10, 3, 12, 0, 0, 0, time.UTC)
+	r := now.Add(time.Minute)
+	state := State.NewGameState()
+	state.Session.ChangedAt = now.Add(-time.Hour)
+	state.Player.ID = 1
+	state.Market.CaravanLevelLoaded = true
+	capacity := float64(100000)
+	for _, id := range []State.CastleID{10, 15, 20} {
+		castle := craftingLogisticsCastle(id, 0, int(id), int(id))
+		castle.Buildings[1] = State.Building{InstanceID: 1, DefinitionID: 137}
+		castle.Resources[6] = State.ResourceBalance{Amount: 50000, Capacity: &capacity}
+		state.Castles[id] = castle
+		state.Market.Castles[id] = State.MarketCastleState{CastleID: id, TotalBarrows: 100, AvailableBarrows: 100, ObservedAt: now}
+	}
+	row := state.Market.Castles[10]
+	row.ObservedAt = now.Add(-3 * time.Minute)
+	state.Market.Castles[10] = row
+	state.Market.BarrowLeases = map[State.MovementID]State.MarketBarrowLeaseRecord{50: {HomeCastleID: 10, Barrows: 100, ReleasesAt: r}}
+	snapshot := Snapshot{State: state, GameData: craftingLogisticsGameData(t), Now: now}
+	decision, ready := sameKingdomShipmentDecision(craftingSettings{}, snapshot, state.Castles[20], 6, 1000, time.Minute)
+	if !ready || decision.Request == nil || decision.Request.Name != "resource.ship" {
+		t.Fatalf("decision=%+v", decision)
+	}
+	var args struct {
+		SourceCastleID int `json:"sourceCastleId"`
+	}
+	_ = json.Unmarshal(decision.Request.Arguments, &args)
+	if args.SourceCastleID != 15 {
+		t.Fatalf("blocked donor=%s", decision.Request.Arguments)
+	}
+	delete(snapshot.State.Castles, 15)
+	decision, ready = sameKingdomShipmentDecision(craftingSettings{}, snapshot, state.Castles[20], 6, 1000, time.Minute)
+	if !ready || decision.Request != nil || !decision.NextCheckAt.Equal(r) {
+		t.Fatalf("deferred=%+v", decision)
 	}
 }

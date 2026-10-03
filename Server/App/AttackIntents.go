@@ -3,6 +3,7 @@ package App
 import (
 	"CitadelDesktop/Server/Localization"
 	"context"
+	"crypto/sha256"
 	"encoding/json"
 	"fmt"
 	"math"
@@ -560,6 +561,14 @@ func (application *Application) planRiftReplay(_ context.Context, input Intent.P
 	var fields map[string]json.RawMessage
 	if json.Unmarshal(launch.Body, &fields) != nil {
 		return Intent.Plan{}, Localization.WithError(fmt.Errorf("Rift launch %q has an invalid command body", request.LaunchID), Localization.New("server.app.rift_launch_p_has.b09d26bb", "Rift launch {p0} has an invalid command body", Localization.Params{"p0": fmt.Sprintf("%q", request.LaunchID)}))
+	}
+	if premiumCommanderPayload(launch.Body) {
+		name := strings.TrimSpace(launch.DisplayName)
+		if name == "" {
+			name = request.LaunchID
+		}
+		application.recordPremiumRiftCaptureWarning(request.LaunchID, name, launch.Body)
+		return Intent.Plan{}, supportCommanderUnavailable("server.rift.premium_capture", Localization.Params{"name": name})
 	}
 	if request.CommanderID != nil {
 		fields["LID"], _ = json.Marshal(*request.CommanderID)
@@ -1367,4 +1376,18 @@ func rawMapInt(values map[string]json.RawMessage, key string) int64 {
 	var value int64
 	_ = json.Unmarshal(values[key], &value)
 	return value
+}
+
+// Status is emitted once per captured template version. The captured bytes are
+// only hashed; neither substitution nor persistence changes the template.
+func (application *Application) recordPremiumRiftCaptureWarning(id, name string, body json.RawMessage) {
+	if application == nil || application.Telemetry == nil {
+		return
+	}
+	signature := fmt.Sprintf("%x:%s", sha256.Sum256(body), name)
+	if previous, loaded := application.riftPremiumCaptureNotices.Swap(id, signature); loaded && previous == signature {
+		return
+	}
+	message := supportCommanderMessage("server.rift.premium_capture", Localization.Params{"name": name})
+	application.Telemetry.RecordFeatureActivityMessage("automation:rift", "rift.launch.replay", "WARN", "ATTACK", message.FallbackText, message)
 }
