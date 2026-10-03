@@ -1815,6 +1815,8 @@ func (state StormIslandReturnState) UnitsToReturn() map[UnitID]int64 {
 }
 
 type StormState struct {
+	PackageCapBlocks              map[string]StormPackageCapBlock   `json:"packageCapBlocks,omitempty"`
+	LunaShopPendingCap            int64                             `json:"lunaShopPendingCap,omitempty"`
 	LastScannedAt                 map[CastleID]time.Time            `json:"lastScannedAt"`
 	Map                           StormMapState                     `json:"map"`
 	IslandReturns                 map[string]StormIslandReturnState `json:"islandReturns"`

@@ -17,6 +17,7 @@ type stormMutationPart uint8
 const (
 	stormLastScannedMutable stormMutationPart = 1 << iota
 	stormIslandReturnsMutable
+	stormPackageCapBlocksMutable
 )
 
 // stormTargetGeneration is the tenant-private negative overlay on the shared

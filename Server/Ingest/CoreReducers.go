@@ -114,7 +114,7 @@ func RegisterCoreReducers(registry *Registry) error {
 		{"adi", worldMap.Union(components(State.ComponentAttackDialog)), reduceAttackDialog},
 		{"gas", components(State.ComponentAttackPresets), reduceAttackPresets},
 		{"sin", components(State.ComponentInventory), reduceStorageInventory},
-		{"gbc", components(State.ComponentInventory), reduceConstructionOffers},
+		{"gbc", components(State.ComponentInventory, State.ComponentStorm), reduceConstructionOffers},
 		{"csp", components(State.ComponentInventory), reduceConstructionSpaceLeft},
 		{"sne", reports, reduceReportNotices},
 		{"dms", reports, reduceDeletedReportMessages},

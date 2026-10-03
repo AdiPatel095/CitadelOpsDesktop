@@ -3135,6 +3135,7 @@
   "server.storm.failed_activity": "Could not complete purchase of {purchases} from Luna for {cost, number} Aquamarine at {castle}. {explanation}",
   "server.storm.import_troops": "Import {amount, number} guarded troops from {castle}",
   "server.storm.import_troops_id": "Import {amount, number} guarded troops from castle {id}",
+  "server.storm.package_cap_blocked": "Package {name} is at its purchase limit for this event",
   "server.storm.partial": "Purchase of {purchases} from Luna for {cost, number} Aquamarine at {castle} completed only in part.",
   "server.storm.purchase_list_item": "{amount, number} x Luna package {packageID}",
   "server.storm.purchase_plan": "Buy {purchases} from Luna for {cost, number} Aquamarine at {castle}",
