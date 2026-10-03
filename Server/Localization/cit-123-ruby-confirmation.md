@@ -10,3 +10,5 @@ Source: Daniel's CIT-123 plan (2026-10-03, Addenda 1 and 2) and Product/Opcode r
 | `server.automation.auto_booster_ruby_confirmation_hold` | Same shared notice producer | A prior quote holds this occurrence until a newer permissive setting observation. |
 
 All messages use descriptors and new keys. No translations or existing English strings are changed. Quotes never authorize spending or replace the saved game setting.
+
+`scripts/intent-safety.test.mjs` classifies `server.intent.ruby_confirmation_required` as an English-only failure receipt, separate from the 45 authored intent failure/recovery translations. It checks the exact English source and ICU rendering and confirms all 25 locale packs leave it to fallback. Unregistered intent additions still fail the authored inventory check; this registration does not add translation credit or authorize confirmation.

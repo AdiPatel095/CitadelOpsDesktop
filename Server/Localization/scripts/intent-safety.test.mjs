@@ -7,7 +7,17 @@ if(!formatterPath) throw new Error('Pass the installed intl-messageformat/index.
 const {IntlMessageFormat}=await import(pathToFileURL(path.resolve(formatterPath)).href);
 const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..');
 const source=JSON.parse(fs.readFileSync(path.join(root,'en.json')));
-const keys=Object.keys(source).filter(key=>key.startsWith('server.intent.')&&!key.startsWith('server.intent.description.')&&!['server.intent.safety_lock_released','server.intent.safety_lock_cleared'].includes(key));
+// CIT-123 Addendum 2 requires this scoped AGB/440 failure receipt. R5 defers
+// translations to the batched story; see ../cit-123-ruby-confirmation.md.
+// Register its English fallback explicitly, without claiming authored coverage.
+const englishOnlyIntentMessages={
+ 'server.intent.ruby_confirmation_required':'Daily boost needs confirmation in the game',
+};
+for(const [key,message] of Object.entries(englishOnlyIntentMessages)) {
+ assert.equal(source[key],message,`${key}: reviewed English-only receipt changed`);
+ assert.equal(new IntlMessageFormat(source[key],'en').format(),message);
+}
+const keys=Object.keys(source).filter(key=>key.startsWith('server.intent.')&&!key.startsWith('server.intent.description.')&&!['server.intent.safety_lock_released','server.intent.safety_lock_cleared'].includes(key)&&!Object.hasOwn(englishOnlyIntentMessages,key));
 assert.equal(keys.length,45,'Review new intent messages and extend the complete authored module');
 // Authorship review fixtures: these are deliberately local vocabulary assertions,
 // not a claim that a substring check establishes full linguistic correctness.
@@ -54,9 +64,13 @@ function check(pack,locale) {
  assert.doesNotMatch(manual,/30/,`${locale}: manual review must not promise timed recovery`);
  assert.notEqual(pack['server.intent.action_partial'],pack['server.intent.action_unconfirmed']);
 }
-let rendered=0;
+let rendered=0,englishFallbacks=0;
 for(const locale of Object.keys(vocabulary)) {
  const pack=JSON.parse(fs.readFileSync(path.join(root,'locales',locale+'.json')));
+ for(const key of Object.keys(englishOnlyIntentMessages)) {
+  assert.ok(!Object.hasOwn(pack,key),`${locale}: reclassify newly authored intent translation ${key}`);
+  englishFallbacks++;
+ }
  check(pack,locale);
  for(const key of keys) {
   assert.ok(pack[key],`${locale}: missing intent translation ${key}`);
@@ -70,4 +84,4 @@ for(const locale of Object.keys(vocabulary)) {
 const german=JSON.parse(fs.readFileSync(path.join(root,'locales/de.json')));
 assert.throws(()=>check({...german,['server.intent.auto_buyer_will_retry.7675c4dc']:'Der automatische Einkauf kauft sofort.'},'de'),/safety\/terminology/);
 assert.throws(()=>check({...german,['server.intent.safety_lock.review_recovery']:german['server.intent.safety_lock.review_recovery']+' 30'},'de'),/manual review/);
-console.log(`Rendered ${rendered} intent messages; 225 safety/terminology fixtures and negative purchase/lock regressions passed.`);
+console.log(`Rendered ${rendered} authored intent messages; ${englishFallbacks} explicit English fallback classifications, 225 safety/terminology fixtures and negative purchase/lock regressions passed.`);
