@@ -1,0 +1,136 @@
+{
+  "automation.autoBird": {
+    "version": 2,
+    "activePresetId": null,
+    "ignoreSettings": {
+      "settings": {
+        "10": [],
+        "20": [
+          {
+            "id": 1,
+            "amount": 37
+          }
+        ],
+        "99": [
+          {
+            "id": 1,
+            "amount": 9
+          }
+        ],
+        "storm": [
+          {
+            "id": 1,
+            "amount": 37
+          }
+        ]
+      },
+      "minDelay": 6,
+      "maxDelay": 12,
+      "minSend": 0,
+      "minRPTDays": 3
+    },
+    "presets": {
+      "version": 1,
+      "lastSelectedPresetId": null,
+      "presets": [
+        {
+          "id": "synthetic-one",
+          "name": "Synthetic One",
+          "settings": {
+            "10": [],
+            "20": [
+              {
+                "id": 1,
+                "amount": 41
+              }
+            ],
+            "99": [
+              {
+                "id": 1,
+                "amount": 9
+              }
+            ],
+            "storm": [
+              {
+                "id": 1,
+                "amount": 41
+              }
+            ]
+          },
+          "minDelay": 6,
+          "maxDelay": 12,
+          "minSend": 0,
+          "minRPTDays": 3
+        },
+        {
+          "id": "synthetic-two",
+          "name": "Synthetic Two",
+          "settings": {
+            "10": [],
+            "20": [
+              {
+                "id": 1,
+                "amount": 45
+              }
+            ],
+            "99": [
+              {
+                "id": 1,
+                "amount": 9
+              }
+            ],
+            "storm": [
+              {
+                "id": 1,
+                "amount": 45
+              }
+            ]
+          },
+          "minDelay": 6,
+          "maxDelay": 12,
+          "minSend": 0,
+          "minRPTDays": 3
+        }
+      ]
+    },
+    "stormLegacyKey": "20"
+  },
+  "automation.autoStation": {
+    "version": 1,
+    "leadTimeSec": 60,
+    "recallWhenClear": true,
+    "minRPTDays": 3,
+    "openGateFallback": false,
+    "settings": {
+      "10": [],
+      "20": [
+        {
+          "id": 1,
+          "amount": 37
+        }
+      ],
+      "99": [
+        {
+          "id": 1,
+          "amount": 9
+        }
+      ],
+      "storm": [
+        {
+          "id": 1,
+          "amount": 37
+        }
+      ]
+    },
+    "stormLegacyKey": "20"
+  },
+  "automation.autoTowers": {
+    "castles": {
+      "storm": {
+        "enabled": true,
+        "unitId": 1,
+        "radius": 10
+      }
+    }
+  }
+}

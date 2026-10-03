@@ -8,7 +8,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"strconv"
 	"time"
 )
 
@@ -47,7 +46,8 @@ func (a *Application) guardOpenGate(ctx context.Context, arguments json.RawMessa
 	}
 	reserved := map[State.UnitID]int64{}
 	if !state.Player.ProtectionMode.PreparingOrActive(now) {
-		for _, item := range config.Settings[strconv.FormatInt(int64(request.CastleID), 10)] {
+		reserves, _ := Automation.CastleSettingsEntry(config.Settings, state.Castles[request.CastleID])
+		for _, item := range reserves {
 			reserved[item.ID] = item.Amount
 		}
 	}

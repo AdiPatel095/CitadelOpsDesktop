@@ -48,7 +48,7 @@ export function parseAutoTowerClientState(raw: unknown): AutoTowerClientStateV4 
   const castles: Record<string, AutoTowerCastleSettings> = {};
   if (document.castles && typeof document.castles === 'object' && !Array.isArray(document.castles)) {
     for (const [castleId, value] of Object.entries(document.castles as Record<string, unknown>)) {
-      if (!/^\d+$/.test(castleId) || value == null || typeof value !== 'object' || Array.isArray(value)) continue;
+      if (!(castleId === 'storm' || /^\d+$/.test(castleId)) || value == null || typeof value !== 'object' || Array.isArray(value)) continue;
       const candidate = value as Partial<AutoTowerCastleSettings>;
       castles[castleId] = {
         enabled: candidate.enabled === true,

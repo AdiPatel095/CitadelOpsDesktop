@@ -120,11 +120,24 @@ func (application *Application) guardAutoBirdBatch(ctx context.Context, argument
 	if err := ctx.Err(); err != nil {
 		return err
 	}
-	if application.Configuration == nil || !Automation.AutoBirdDispatchAllowed(application.Configuration.Snapshot(), request.Cycle.PresetID, time.Now()) {
+	if application.Configuration == nil {
+		return fmt.Errorf("%w: Auto Bird is disabled", Intent.ErrPlanStale)
+	}
+	configuration := application.Configuration.Snapshot()
+	if !Automation.AutoBirdDispatchAllowed(configuration, request.Cycle.PresetID, time.Now()) {
 		return fmt.Errorf("%w: Auto Bird is disabled", Intent.ErrPlanStale)
 	}
 	// read-only view: guards must not mutate state
 	state := application.State.ReadOnlyView()
+	castle := state.Castles[request.Cycle.SourceCastleID]
+	if !Automation.AutoBirdStormReserveConfigured(configuration, castle, request.Cycle.PresetID) {
+		name := castle.Name
+		if name == "" {
+			name = fmt.Sprintf("castle %d", castle.ID)
+		}
+		detail := fmt.Sprintf("Auto Bird skips %s: no troops to keep are set for the Storm castle.", name)
+		return Localization.WithError(fmt.Errorf("%w: %s", Intent.ErrPlanStale, detail), Localization.New("stormRole.birdUnconfigured", "Auto Bird skips {castle}: no troops to keep are set for the Storm castle.", Localization.Params{"castle": name}))
+	}
 	if err := validateStationSession(state, "autoBird", request.Cycle.ConnectionGeneration, time.Now()); err != nil {
 		return err
 	}

@@ -19,7 +19,6 @@ const cases = [
   ['autoStation', { settings: { 42: [{ id: 1, amount: 5 }] } }],
   ['autoBird', { ignoreSettings: { settings: { 42: [{ id: 1, amount: 5 }] } } }],
   ...['autoKhan', 'autoNomad', 'autoInvasion', 'autoAdvisor', 'autoBeriWorld', 'autoBuyer'].map((feature) => [feature, { sourceCastleId: 42 }]),
-  ['autoStorm', { unlock: { enabled: true, prebuiltCastleId: 42 } }],
 ];
 
 for (const [feature, saved] of cases) {
@@ -61,7 +60,7 @@ test('Buyer includes its feast source and lists a feature only once', () => {
 });
 
 test('Storm requires enabled unlock or a named decoration preset, ignoring unrelated castle fields', () => {
-  const check = (saved) => automationsActingOnCastle({ 'automation.autoStorm': saved }, 42);
+  const check = (saved) => automationsActingOnCastle({ 'automation.autoStorm': saved }, 42, 4);
   assert.deepEqual(check({ unlock: { enabled: false, prebuiltCastleId: 42 } }), []);
   assert.deepEqual(check({ decorationPresetCastleId: 42, decorationPresetId: '' }), []);
   assert.deepEqual(check({ decorationPresetCastleId: 42, decorationPresetId: 'saved-preset' }), ['autoStorm']);

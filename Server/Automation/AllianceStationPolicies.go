@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"CitadelDesktop/Server/Configuration"
+	"CitadelDesktop/Server/GameData"
 	"CitadelDesktop/Server/Intent"
 	"CitadelDesktop/Server/State"
 )
@@ -186,7 +187,14 @@ func (*AutoBirdPolicy) Evaluate(_ context.Context, snapshot Snapshot) (decision 
 	allianceHoldings := protectedHoldings(snapshot.State.Alliance, 0)
 	var nextCheck time.Time
 	eligibleCastles := make([]State.CastleID, 0, len(castleIDs))
+	var skippedStorm *State.CastleState
 	for _, castleID := range castleIDs {
+		castle := snapshot.State.Castles[castleID]
+		reserves, _ := CastleSettingsEntry(settings.IgnoreSettings.Settings, castle)
+		if castle.KingdomID == GameData.StormKingdomID && len(stationReserveUnits(reserves)) == 0 {
+			skippedStorm = &castle
+			continue
+		}
 		if snapshot.State.AutoBirdPaused(castleID, snapshot.Now) {
 			if until := snapshot.State.AutoBirdControl(castleID).PausedUntil; until != nil {
 				nextCheck = earlierTime(nextCheck, *until)
@@ -196,6 +204,17 @@ func (*AutoBirdPolicy) Evaluate(_ context.Context, snapshot Snapshot) (decision 
 		eligibleCastles = append(eligibleCastles, castleID)
 	}
 	castleIDs = eligibleCastles
+	if skippedStorm != nil {
+		defer func() {
+			if err != nil || decision.Request == nil {
+				return
+			}
+			notice := fmt.Sprintf("Auto Bird skips %s: no troops to keep are set for the Storm castle.", castleName(*skippedStorm))
+			descriptor := Localization.New("stormRole.birdUnconfigured", "Auto Bird skips {castle}: no troops to keep are set for the Storm castle.", Localization.Params{"castle": castleName(*skippedStorm)})
+			decision.Detail += "; " + notice
+			decision.DetailDescriptor = Localization.Join(decision.DetailDescriptor, descriptor)
+		}()
+	}
 
 	for _, castleID := range castleIDs {
 		castle := snapshot.State.Castles[castleID]
@@ -227,7 +246,7 @@ func (*AutoBirdPolicy) Evaluate(_ context.Context, snapshot Snapshot) (decision 
 				castle, settings, snapshot.Now, "Refresh expired Auto Bird troop inventory", castleDecisionDescriptor("bird_refresh_expired", castle, nil),
 			), time.Time{}), nil
 		}
-		arguments := autoBirdCycleArguments(castle.ID, settings)
+		arguments := autoBirdCycleArguments(castle, settings)
 		return withAutoBirdSchedule(snapshot, Decision{
 			Status: "ready",
 			Detail: fmt.Sprintf(
@@ -280,7 +299,7 @@ func (*AutoBirdPolicy) Evaluate(_ context.Context, snapshot Snapshot) (decision 
 			nextCheck = earlierTime(nextCheck, *operation.NextAttemptAt)
 			continue
 		}
-		arguments := autoBirdCycleArguments(castle.ID, settings)
+		arguments := autoBirdCycleArguments(castle, settings)
 		return withAutoBirdSchedule(snapshot, Decision{
 			Status: "reconciling",
 			Detail: fmt.Sprintf("Refresh movement timing for %s without relaunching it", castleName(castle)), DetailDescriptor: Localization.New("server.automation.refresh_movement_timing_for.385cd686", "Refresh movement timing for {p0} without relaunching it", Localization.Params{"p0": fmt.Sprintf("%s", castleName(castle))}),
@@ -348,6 +367,13 @@ func (*AutoBirdPolicy) Evaluate(_ context.Context, snapshot Snapshot) (decision 
 			nextCheck = snapshot.Now.Add(allianceRosterRefreshInterval)
 		}
 	}
+	if skippedStorm != nil {
+		return withAutoBirdSchedule(snapshot, Decision{
+			Status: "waiting", Detail: fmt.Sprintf("Auto Bird skips %s: no troops to keep are set for the Storm castle.", castleName(*skippedStorm)),
+			DetailDescriptor: Localization.New("stormRole.birdUnconfigured", "Auto Bird skips {castle}: no troops to keep are set for the Storm castle.", Localization.Params{"castle": castleName(*skippedStorm)}),
+			NextCheckAt:      nextCheck,
+		}, time.Time{}), nil
+	}
 	return withAutoBirdSchedule(snapshot, Decision{
 		Status: "idle", Detail: "Each castle is independently waiting for troops, a target, or its bird return", DetailDescriptor: Localization.New("server.automation.each_castle_is_independently.0d0d1581", "Each castle is independently waiting for troops, a target, or its bird return", nil),
 		NextCheckAt: nextCheck,
@@ -400,7 +426,7 @@ func autoBirdDiscoverDecision(
 		Status: "discovering",
 		Detail: fmt.Sprintf("%s for %s", reason, castleName(castle)), DetailDescriptor: Localization.First(descriptors),
 		NextCheckAt:         now.Add(30 * time.Second),
-		Request:             &Intent.Request{Name: "auto_bird.discover", Arguments: autoBirdCycleArguments(castle.ID, settings)},
+		Request:             &Intent.Request{Name: "auto_bird.discover", Arguments: autoBirdCycleArguments(castle, settings)},
 		ReevaluateOnSuccess: true,
 		ReevaluateOnStale:   true,
 	}
@@ -417,14 +443,15 @@ func autoBirdPrepareDecision(
 		Status: "preparing",
 		Detail: fmt.Sprintf("%s for %s", reason, castleName(castle)), DetailDescriptor: Localization.First(descriptors),
 		NextCheckAt:         now.Add(30 * time.Second),
-		Request:             &Intent.Request{Name: "auto_bird.prepare", Arguments: autoBirdCycleArguments(castle.ID, settings)},
+		Request:             &Intent.Request{Name: "auto_bird.prepare", Arguments: autoBirdCycleArguments(castle, settings)},
 		ReevaluateOnSuccess: true,
 		ReevaluateOnStale:   true,
 	}
 }
 
-func autoBirdCycleArguments(castleID State.CastleID, settings autoBirdConfiguration) json.RawMessage {
-	reserves := settings.IgnoreSettings.Settings[strconv.FormatInt(int64(castleID), 10)]
+func autoBirdCycleArguments(castle State.CastleState, settings autoBirdConfiguration) json.RawMessage {
+	castleID := castle.ID
+	reserves, _ := CastleSettingsEntry(settings.IgnoreSettings.Settings, castle)
 	values := map[string]any{
 		"sourceCastleId":    castleID,
 		"trackingId":        autoBirdTrackingID(castleID),
@@ -545,7 +572,7 @@ func (*AutoStationPolicy) Evaluate(_ context.Context, snapshot Snapshot) (decisi
 				nextWindow = minTime(nextWindow, window.Earliest.Add(-time.Duration(settings.LeadTimeSec)*time.Second))
 				continue
 			}
-			reserves := settings.Settings[strconv.FormatInt(int64(castle.ID), 10)]
+			reserves, _ := CastleSettingsEntry(settings.Settings, castle)
 			if active, fresh, remaining, known := trackedStationRemainder(snapshot, castle, reserves); active {
 				if !fresh {
 					return refreshTrackedStationInventory(snapshot, castle), nil
@@ -560,7 +587,7 @@ func (*AutoStationPolicy) Evaluate(_ context.Context, snapshot Snapshot) (decisi
 				continue
 			}
 			target, found := nearestHolding(protectedTargets, castle)
-			units := stationableUnits(snapshot, castle, settings.Settings[strconv.FormatInt(int64(castle.ID), 10)])
+			units := stationableUnits(snapshot, castle, reserves)
 			if !found || len(units) == 0 {
 				unresolved = true
 				if settings.OpenGateFallback {
@@ -689,7 +716,7 @@ func protectionModeOpenGateDecision(
 	uncovered := make([]State.CastleID, 0, len(threats))
 	for _, castleID := range sortedThreatCastleIDs(threats) {
 		castle := snapshot.State.Castles[castleID]
-		reserves := settings.Settings[strconv.FormatInt(int64(castle.ID), 10)]
+		reserves, _ := CastleSettingsEntry(settings.Settings, castle)
 		if snapshot.State.Player.ProtectionMode.PreparingOrActive(snapshot.Now) {
 			reserves = nil
 		}
