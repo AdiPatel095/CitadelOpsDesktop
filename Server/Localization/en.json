@@ -2532,6 +2532,7 @@
   "server.automation.preset_needs_p_of.e2c90e67": "Preset needs {p0} of item {p1}; source castle has {p2}",
   "server.automation.production_configuration_has_no.1324228e": "production configuration has no castles object",
   "server.automation.production_configuration_has_no.db57eec1": "production configuration has no castle {p0}",
+  "server.automation.production_queues_full_at": "All observed production queues are full at {used} of {usable}",
   "server.automation.protection_expired_refresh_defense.96e84028": "Protection expired; refresh defense before checking recovery",
   "server.automation.protection_mode_is_preparing.89ac07e7": "Protection Mode is preparing or active; Auto Bird stationing is disabled",
   "server.automation.protection_mode_is_preparing.9107f9a8": "Protection Mode is preparing or active; Auto Station will use Open Gates instead of stationing",

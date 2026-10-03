@@ -21,6 +21,10 @@ func stateMarshalFixture() GameState {
 	state.SetMapObservation(MapObservation{KingdomID: 4, X: 20, Y: 21, TypeID: MapTypeRift, Level: 50, ObservedAt: now})
 	state.SetScalableEventScore(71, ScalableEventScore{EventID: 71, PlayerScore: 123, ObservedAt: now})
 	state.EventScores.ActiveEventID = 71
+	state.Castles[1] = CastleState{ID: 1, Production: map[int]ProductionQueue{0: {
+		LineID: 0, Capacity: 2, ObservedAt: now, Queued: []QueueItem{},
+		Slots: []QueueSlot{{Permanent: true, Occupied: true}, {ExpiresAt: now.Add(time.Minute)}, {}},
+	}}}
 	return state
 }
 
