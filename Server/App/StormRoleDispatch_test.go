@@ -73,7 +73,7 @@ func TestStormRoleFinalDispatchCurrentPositiveReserve(t *testing.T) {
 					if err != nil {
 						t.Fatal(err)
 					}
-					app := &Application{State: State.NewStore(&state), Configuration: config}
+					app := &Application{State: travelTicketTestStore(&state), Configuration: config}
 					sender := &stormReserveClearingSender{config: config, replacement: configFor(entries)}
 					registry := Intent.NewRegistry()
 					if err := registry.Register(Intent.Definition{Name: "test.storm.final", Effect: Intent.EffectLaunch, Planner: func(_ context.Context, _ Intent.PlanningContext, args json.RawMessage) (Intent.Plan, error) {
@@ -88,7 +88,7 @@ func TestStormRoleFinalDispatchCurrentPositiveReserve(t *testing.T) {
 					if err := engine.RegisterAction("auto_bird.batch.guard", app.guardAutoBirdBatch); err != nil {
 						t.Fatal(err)
 					}
-					args, err := json.Marshal(autoBirdCycleRequest{SourceCastleID: 10, TrackingID: "autoBird:10", PresetID: preset, ExpectedTargetCastle: 20, MinimumDelayHours: 6, MaximumDelayHours: 12, DispatchStartedAt: now.Add(-time.Second), Reserves: []stationUnitRequest{{UnitID: 489, Amount: 37}}})
+					args, err := json.Marshal(autoBirdCycleRequest{ConnectionGeneration: app.State.Snapshot().Session.ConnectionGeneration, SourceCastleID: 10, TrackingID: "autoBird:10", PresetID: preset, ExpectedTargetCastle: 20, MinimumDelayHours: 6, MaximumDelayHours: 12, DispatchStartedAt: now.Add(-time.Second), Reserves: []stationUnitRequest{{UnitID: 489, Amount: 37}}})
 					if err != nil {
 						t.Fatal(err)
 					}
@@ -133,4 +133,26 @@ func TestStormRoleFinalDispatchCurrentPositiveReserve(t *testing.T) {
 		}
 	}
 
+}
+
+func TestStormRolePositiveAndMainZeroReserveSurplus(t *testing.T) {
+	_, data := autoBirdIntentTestState(t, time.Now().UTC())
+	for _, test := range []struct {
+		name     string
+		reserves []stationUnitRequest
+		kingdom  State.KingdomID
+		want     int64
+	}{
+		{"main absent", nil, 0, 100},
+		{"main zero", []stationUnitRequest{{UnitID: 489, Amount: 0}}, 0, 100},
+		{"Storm keep one", []stationUnitRequest{{UnitID: 489, Amount: 1}}, 4, 99},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			castle := State.CastleState{ID: 10, KingdomID: test.kingdom, Units: State.CastleUnits{Stationed: map[State.UnitID]int64{489: 100}}}
+			manifest, total, err := autoBirdStationManifest(data, castle, test.reserves, false)
+			if err != nil || total != test.want || manifest[489] != test.want {
+				t.Fatalf("surplus: %#v total=%d error=%v", manifest, total, err)
+			}
+		})
+	}
 }
