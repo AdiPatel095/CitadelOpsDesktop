@@ -8,7 +8,7 @@
     "desktop": "2a4bf3211c5315ade1a7dae51a59fa49c9c4ec1b",
     "portal": "87a6bd03c9b9ea30c20ea1b7dcfa9ed6380be876"
   },
-  "translationStatus": "English source only; next 26-locale batch must merge before the update ships.",
+  "translationStatus": "German and Arabic replacements authored; remaining locales pending the next 26-locale batch before the update ships.",
   "translatorNote": "Troops located in the player's own castle. Do NOT use the word for 'stationed'. In these features, 'station' means sending troops to another castle.",
   "messages": {
     "unitStock.reserveInCastle": {
@@ -41,5 +41,10 @@
       "english": "Troop counts are unknown until the castle syncs.",
       "sourceHash": "c92a195850cc5d703550690d4cfccf00b1594c9c6fa9405c17a22a1b7488f0a2"
     }
-  }
+  },
+  "authoredLocales": [
+    "ar",
+    "de"
+  ],
+  "authoring": "Direct agent-authored translations; no native-speaker review claimed."
 }
