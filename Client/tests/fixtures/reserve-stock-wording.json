@@ -1,0 +1,45 @@
+{
+  "schema": 1,
+  "issue": "CIT-138",
+  "plan": "Engineering/Plans/Auto Bird reserve label wording.md",
+  "planRevision": 1,
+  "productDecision": "Product/Reserve stock line wording.md",
+  "sourceBases": {
+    "desktop": "2a4bf3211c5315ade1a7dae51a59fa49c9c4ec1b",
+    "portal": "87a6bd03c9b9ea30c20ea1b7dcfa9ed6380be876"
+  },
+  "translationStatus": "English source only; next 26-locale batch must merge before the update ships.",
+  "translatorNote": "Troops located in the player's own castle. Do NOT use the word for 'stationed'. In these features, 'station' means sending troops to another castle.",
+  "messages": {
+    "unitStock.reserveInCastle": {
+      "previousKey": "unitStock.reserveStationed",
+      "english": "Keep {required, number} · {stationed, number} in castle",
+      "sourceHash": "27f6985d3e328b9583f8011008d3d072b7ea530f6ae14db7190ef02c1ec270ff"
+    },
+    "unitStock.requiredInCastle": {
+      "previousKey": "unitStock.requiredStationed",
+      "english": "{required, number} needed · {stationed, number} in castle",
+      "sourceHash": "35f5dd0376831ee3d50f5460277c7624bad5e309be81f84b2060d85a1aa5e2cf"
+    },
+    "unitStock.state.validInCastle": {
+      "previousKey": "unitStock.state.valid",
+      "english": "Enough in castle",
+      "sourceHash": "c361681083d523a8cea5040c4521deda3fdb621be3f68ab4c6a78bc2a2899509"
+    },
+    "unitStock.state.missingInCastle": {
+      "previousKey": "unitStock.state.missing",
+      "english": "None in castle",
+      "sourceHash": "290b4445c60e6a81ee23a4ed0f8a605a59960e9f155d11d84cb848915dd8e407"
+    },
+    "unitStock.reserveCoveredInCastle": {
+      "previousKey": "ui.settings.requirements.unitRequirements.stationed.stock.covers.every.reserve.c4f36080",
+      "english": "Troops in the castle cover every reserve.",
+      "sourceHash": "05f0fe143ff2512f14cd6510b1299b98b163c0853e419bf8d7bed61b0f73c5b8"
+    },
+    "unitStock.countsUnknown": {
+      "previousKey": "ui.settings.requirements.unitRequirements.stationed.troops.are.unknown.until.the.castle.1e3d382e",
+      "english": "Troop counts are unknown until the castle syncs.",
+      "sourceHash": "c92a195850cc5d703550690d4cfccf00b1594c9c6fa9405c17a22a1b7488f0a2"
+    }
+  }
+}

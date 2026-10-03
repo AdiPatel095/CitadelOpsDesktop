@@ -10,9 +10,9 @@ import type { ObservationFreshness } from '../requirements/observationFreshness'
 import type { UnitStockLine, UnitStockLineState } from '../requirements/unitRequirements';
 
 const LINE_ICON: Record<UnitStockLineState, { icon: LucideIcon; tone: string; label: MessageKey }> = {
-  valid: { icon: CheckCircle2, tone: 'text-success', label: 'unitStock.state.valid' },
+  valid: { icon: CheckCircle2, tone: 'text-success', label: 'unitStock.state.validInCastle' },
   short: { icon: AlertTriangle, tone: 'text-warning', label: 'unitStock.state.short' },
-  missing: { icon: XCircle, tone: 'text-error', label: 'unitStock.state.missing' },
+  missing: { icon: XCircle, tone: 'text-error', label: 'unitStock.state.missingInCastle' },
   unknown: { icon: HelpCircle, tone: 'text-error', label: 'unitStock.state.unknown' },
 };
 
@@ -47,7 +47,7 @@ export const UnitStockList: React.FC<UnitStockListProps> = ({ lines, mode = 'req
                 <span className="min-w-0 flex-1 truncate">{item?.name ?? `#${line.itemId}`}</span>
                 <span className="shrink-0 font-mono text-[11px] tabular-nums text-text-muted">
                   <LocalizedText
-                    messageKey={mode === 'reserve' ? 'unitStock.reserveStationed' : 'unitStock.requiredStationed'}
+                    messageKey={mode === 'reserve' ? 'unitStock.reserveInCastle' : 'unitStock.requiredInCastle'}
                     params={{ required: line.required, stationed: line.stationed }}
                   />
                 </span>

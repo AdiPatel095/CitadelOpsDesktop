@@ -82,7 +82,7 @@ export function evaluateUnitStock(input: UnitStockInput): UnitStockResult {
   const castle = input.castle;
   if (!castle) {
     return {
-      check: { ...base, state: 'unavailable', messageKey: input.messages?.unobserved ?? message('ui.settings.requirements.unitRequirements.stationed.troops.are.unknown.until.the.castle.1e3d382e') },
+      check: { ...base, state: 'unavailable', messageKey: input.messages?.unobserved ?? message('unitStock.countsUnknown') },
       lines: [],
       freshness: null,
     };
@@ -127,7 +127,7 @@ export function evaluateUnitStock(input: UnitStockInput): UnitStockResult {
     if (short > 0) {
       return { lines, freshness, check: { ...base, state: 'pending', messageKey: message('unitStock.reserveAboveStock'), params: { count: short } } };
     }
-    return { lines, freshness, check: { ...base, state: 'valid', messageKey: input.messages?.valid ?? message('ui.settings.requirements.unitRequirements.stationed.stock.covers.every.reserve.c4f36080') } };
+    return { lines, freshness, check: { ...base, state: 'valid', messageKey: input.messages?.valid ?? message('unitStock.reserveCoveredInCastle') } };
   }
 
   if ((missing > 0 || short > 0) && input.decidedAtLaunch === 'stock') {
