@@ -191,7 +191,7 @@ func (*AutoBirdPolicy) Evaluate(_ context.Context, snapshot Snapshot) (decision 
 	for _, castleID := range castleIDs {
 		castle := snapshot.State.Castles[castleID]
 		reserves, _ := CastleSettingsEntry(settings.IgnoreSettings.Settings, castle)
-		if castle.KingdomID == GameData.StormKingdomID && len(reserves) == 0 {
+		if castle.KingdomID == GameData.StormKingdomID && len(stationReserveUnits(reserves)) == 0 {
 			skippedStorm = &castle
 			continue
 		}

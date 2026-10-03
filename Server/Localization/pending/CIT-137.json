@@ -8,5 +8,5 @@
   ],
   "translations": "Deferred to the next 26-locale batch",
   "translatorNote": "Use the official glossary term for the Storm Islands castle.",
-  "addendum": "Revision 2 Maya deltas: exact no-troops-to-keep status and non-blocking setup check"
+  "addendum": "Revision 2 notes 1-3: exact no-troops-to-keep status, non-blocking setup check, dual-write compatibility, positive keep reserve rule"
 }

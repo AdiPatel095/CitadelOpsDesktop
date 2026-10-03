@@ -4,6 +4,8 @@ import (
 	"CitadelDesktop/Server/Configuration"
 	"CitadelDesktop/Server/State"
 	"encoding/json"
+	"os"
+	"reflect"
 	"strings"
 	"testing"
 	"time"
@@ -43,7 +45,7 @@ func TestStormRoleAutoBirdGuardAndReserveGolden(t *testing.T) {
 	s, _ := autoBirdEligibleTestState(t, now)
 	storm := State.CastleState{ID: 20, KingdomID: 4, Name: "Synthetic Storm"}
 	s.Castles[20] = storm
-	for _, raw := range []string{`{"ignoreSettings":{"settings":{}}}`, `{"ignoreSettings":{"settings":{"storm":[]}}}`, `{"ignoreSettings":{"settings":{"storm":[],"20":[{"id":489,"amount":37}]}}}`} {
+	for _, raw := range []string{`{"ignoreSettings":{"settings":{}}}`, `{"ignoreSettings":{"settings":{"storm":[]}}}`, `{"ignoreSettings":{"settings":{"storm":[{"id":489,"amount":0}]}}}`, `{"ignoreSettings":{"settings":{"storm":[{"id":0,"amount":1}]}}}`, `{"ignoreSettings":{"settings":{"storm":[{"id":489,"amount":-1}]}}}`, `{"ignoreSettings":{"settings":{"10":[{"id":489,"amount":0}],"storm":[{"id":489,"amount":0}]}}}`, `{"ignoreSettings":{"settings":{"storm":[],"20":[{"id":489,"amount":37}]}}}`} {
 		config := Configuration.Snapshot{Sections: map[string]json.RawMessage{"automation.autoBird": json.RawMessage(raw)}}
 		decision, err := NewAutoBirdPolicy().Evaluate(t.Context(), Snapshot{State: s, Configuration: config, Now: now})
 		if err != nil || decision.Request == nil {
@@ -152,8 +154,8 @@ func TestStormRoleCurrentDispatchReserveRows(t *testing.T) {
 		want bool
 	}{
 		{`{}`, false}, {`{"storm":[]}`, false}, {`{"20":[{"id":489,"amount":37}]}`, true},
-		{`{"storm":[],"20":[{"id":489,"amount":37}]}`, false}, {`{"storm":[{"id":489,"amount":0}]}`, true},
-		{`{"storm":[{"id":0,"amount":37}]}`, true}, {`{"storm":[{"id":489,"amount":-1}]}`, true},
+		{`{"storm":[],"20":[{"id":489,"amount":37}]}`, false}, {`{"storm":[{"id":489,"amount":0}]}`, false},
+		{`{"storm":[{"id":0,"amount":37}]}`, false}, {`{"storm":[{"id":489,"amount":-1}]}`, false}, {`{"storm":[{"id":489,"amount":1}]}`, true},
 	} {
 		for _, preset := range []string{"", "synthetic"} {
 			raw := `{"ignoreSettings":{"settings":` + test.rows + `}}`
@@ -167,6 +169,78 @@ func TestStormRoleCurrentDispatchReserveRows(t *testing.T) {
 			if !AutoBirdStormReserveConfigured(config, State.CastleState{ID: 10, KingdomID: 0}, preset) {
 				t.Fatal("main castle semantics changed")
 			}
+		}
+	}
+}
+
+// The fixture is also checked against both clients' real Save normalizers.
+// These local structs deliberately reproduce the pre-role numeric-only reader.
+func TestStormRoleOldReaderGolden(t *testing.T) {
+	raw, err := os.ReadFile("../../Client/tests/fixtures/storm-role-dual-write.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	var sections map[string]json.RawMessage
+	if err := json.Unmarshal(raw, &sections); err != nil {
+		t.Fatal(err)
+	}
+	type oldReserveSection struct {
+		Settings map[string][]reserveSetting `json:"settings"`
+	}
+	var oldBird struct {
+		IgnoreSettings oldReserveSection `json:"ignoreSettings"`
+		Presets        struct {
+			Presets []oldReserveSection `json:"presets"`
+		} `json:"presets"`
+	}
+	var oldStation oldReserveSection
+	if err := json.Unmarshal(sections["automation.autoBird"], &oldBird); err != nil {
+		t.Fatal(err)
+	}
+	if err := json.Unmarshal(sections["automation.autoStation"], &oldStation); err != nil {
+		t.Fatal(err)
+	}
+	if len(oldBird.Presets.Presets) != 2 {
+		t.Fatal("golden must exercise every preset")
+	}
+	maps := []map[string][]reserveSetting{oldBird.IgnoreSettings.Settings, oldStation.Settings}
+	for _, preset := range oldBird.Presets.Presets {
+		maps = append(maps, preset.Settings)
+	}
+	state := State.NewGameState()
+	state.Castles[20] = State.CastleState{ID: 20, KingdomID: 4}
+	for _, entries := range maps {
+		if len(entries["20"]) == 0 || !reflect.DeepEqual(entries["20"], entries["storm"]) {
+			t.Fatalf("old numeric reader lost reserves: %#v", entries)
+		}
+		bound := BoundCastleEntries(entries, &state)
+		if len(bound) != 1 || bound[0].Key != "storm" || !reflect.DeepEqual(bound[0].Entry, entries["storm"]) {
+			t.Fatalf("new reader bound mirror twice: %#v", bound)
+		}
+	}
+	var towers struct {
+		Castles map[string]json.RawMessage `json:"castles"`
+	}
+	if err := json.Unmarshal(sections["automation.autoTowers"], &towers); err != nil {
+		t.Fatal(err)
+	}
+	if _, mirrored := towers.Castles["20"]; mirrored || len(BoundCastleEntries(towers.Castles, &state)) != 1 {
+		t.Fatalf("Towers must bind its role once without a mirror: %#v", towers)
+	}
+}
+
+func TestStormRoleOnePositiveReservePassesPlanning(t *testing.T) {
+	now := time.Now().UTC()
+	state, _ := autoBirdEligibleTestState(t, now)
+	castle := state.Castles[10]
+	castle.KingdomID = 4
+	state.Castles[10] = castle
+	state.Alliance.Holdings[0].KingdomID = 4
+	for _, raw := range []string{`{"ignoreSettings":{"settings":{"storm":[{"id":489,"amount":1}]}}}`, `{"activePresetId":"synthetic","presets":{"presets":[{"id":"synthetic","settings":{"storm":[{"id":489,"amount":1}]}}]}}`} {
+		config := Configuration.Snapshot{Sections: map[string]json.RawMessage{"automation.autoBird": json.RawMessage(raw)}}
+		decision, err := NewAutoBirdPolicy().Evaluate(t.Context(), Snapshot{State: state, Configuration: config, Now: now})
+		if err != nil || decision.Request == nil || strings.Contains(decision.Detail, "no troops to keep") {
+			t.Fatalf("positive reserve did not proceed: %+v %v", decision, err)
 		}
 	}
 }

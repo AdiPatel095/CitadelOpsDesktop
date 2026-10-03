@@ -1,4 +1,4 @@
-import { castleForSettingsKey, castleSettingsEntry, normalizeStormKeys } from '../stormRole';
+import { castleForSettingsKey, castleSettingsEntry, normalizeStormKeys, stormReserveConfigured } from '../stormRole';
 import type { CastleStateV2, GameStateV2 } from '../../api/Contracts';
 import type { MetadataItem } from '../../context/MetadataContext';
 import type { MessageKey } from '../../i18n/messages';
@@ -215,6 +215,7 @@ export function evaluateFortressReadiness(input: FortressReadinessInput): Fortre
 
 export interface ReserveReadinessInput extends MetadataInput {
   featureId: 'autoStation' | 'autoBird';
+  stormLegacyKey?: string;
   state: GameStateV2 | null;
   reserves: Readonly<Record<string, ReadonlyArray<{ id: number; amount: number }>>>;
 }
@@ -235,12 +236,12 @@ export function evaluateReserveReadiness(input: ReserveReadinessInput): ReserveR
   }
   if (input.featureId === 'autoBird') {
     const stormCastle = castleForSettingsKey('storm', input.state);
-    if (stormCastle && !castleSettingsEntry(input.reserves, stormCastle)?.length) {
+    if (stormCastle && !stormReserveConfigured(castleSettingsEntry(input.reserves, stormCastle))) {
       checks.push({ id: 'storm-reserve', state: 'pending', messageKey: message('stormRole.birdUnconfigured'), params: { castle: stormCastle.name || `castle ${stormCastle.id}` }, fix: 'settings', slot: 'storm' });
     }
   }
   const castleDataObserved = !castlesUnobserved(input.state);
-  for (const [castleId, reserves] of Object.entries(normalizeStormKeys(input.reserves, input.state))) {
+  for (const [castleId, reserves] of Object.entries(normalizeStormKeys(input.reserves, input.state, { stormLegacyKey: input.stormLegacyKey }))) {
     if (reserves.length === 0) continue;
     const castle = castleForSettingsKey(castleId, input.state);
     if (!castle) {

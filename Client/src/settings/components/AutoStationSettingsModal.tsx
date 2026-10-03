@@ -26,6 +26,7 @@ import {
 import {
   DEFAULT_AUTO_STATION_STATE,
   parseAutoStationClientState,
+  normalizeAutoStationStormSettings,
   type AutoStationClientStateV1,
 } from '../AutoStationClientState';
 import { useCitadelAPI } from '../../api/useCitadelAPI';
@@ -75,7 +76,7 @@ export const AutoStationSettingsModal: React.FC<AutoStationSettingsModalProps> =
   const { troops, tools, unitsLoading, unitsError } = useMetadata();
   const [state, setState] = useState<AutoStationClientStateV1>(() => parseAutoStationClientState(null));
   const castles = stormEditorCastles(castleOptionsFromState(gameState), Object.hasOwn(state.settings, 'storm'));
-  const roleSettings = normalizeStormKeys(state.settings, gameState);
+  const roleSettings = normalizeStormKeys(state.settings, gameState, { stormLegacyKey: state.stormLegacyKey });
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
 
@@ -99,11 +100,12 @@ export const AutoStationSettingsModal: React.FC<AutoStationSettingsModalProps> =
     featureId: 'autoStation',
     state: gameState,
     reserves: state.settings,
+    stormLegacyKey: state.stormLegacyKey,
     troops,
     tools,
     metadataReady: !unitsLoading && !unitsError,
     observation: setup.observation,
-  }), [gameState, state.settings, tools, troops, unitsError, unitsLoading, setup.observation]);
+  }), [gameState, state.settings, state.stormLegacyKey, tools, troops, unitsError, unitsLoading, setup.observation]);
 
   const fixReadiness = (check: ReadinessCheck) => {
     if (!disclosure.fix(check)) focusReadinessTarget('auto-station-castles');
@@ -111,7 +113,7 @@ export const AutoStationSettingsModal: React.FC<AutoStationSettingsModalProps> =
 
   const selectReserve = async (castle: CastleOptionV2) => {
     const castleID = castleSettingsKey(castle);
-    const current = castleSettingsEntry(state.settings, castle) ?? [];
+    const current = castleSettingsEntry(roleSettings, castle) ?? [];
     const preselectedQuantities: Record<number, number> = {};
     current.forEach((troop) => {
       preselectedQuantities[troop.id] = troop.amount;
@@ -130,7 +132,7 @@ export const AutoStationSettingsModal: React.FC<AutoStationSettingsModalProps> =
     }));
     setState((previous) => ({
       ...previous,
-      settings: { ...normalizeStormKeys(previous.settings, gameState), [castleID]: troops },
+      settings: { ...normalizeStormKeys(previous.settings, gameState, { stormLegacyKey: previous.stormLegacyKey }), [castleID]: troops },
     }));
   };
 
@@ -138,8 +140,8 @@ export const AutoStationSettingsModal: React.FC<AutoStationSettingsModalProps> =
     setState((previous) => ({
       ...previous,
       settings: {
-        ...normalizeStormKeys(previous.settings, gameState),
-        [castleID]: (normalizeStormKeys(previous.settings, gameState)[castleID] ?? []).filter((troop) => troop.id !== unitID),
+        ...normalizeStormKeys(previous.settings, gameState, { stormLegacyKey: previous.stormLegacyKey }),
+        [castleID]: (normalizeStormKeys(previous.settings, gameState, { stormLegacyKey: previous.stormLegacyKey })[castleID] ?? []).filter((troop) => troop.id !== unitID),
       },
     }));
   };
@@ -149,7 +151,7 @@ export const AutoStationSettingsModal: React.FC<AutoStationSettingsModalProps> =
     setIsSaving(true);
     setSaveError(null);
     try {
-      await draftSession.save(parseAutoStationClientState({ ...state, settings: normalizeStormKeys(state.settings, gameState) }));
+      await draftSession.save(normalizeAutoStationStormSettings(parseAutoStationClientState(state), gameState));
       onClose();
     } catch (error) {
       setSaveError(genericSaveError(error, copyReplay, 'Could not save Auto Station settings.'));
@@ -260,7 +262,7 @@ export const AutoStationSettingsModal: React.FC<AutoStationSettingsModalProps> =
         <ReadinessPanel report={readiness.report} onFix={fixReadiness} noteFor={collapsedSettingNote(disclosure)} />
 
         <SettingsSection disclosure={disclosure} section="reserves">
-        <StormSettingsRepair entries={state.settings} state={gameState} onChange={(settings) => setState((previous) => ({ ...previous, settings }))} />
+        <StormSettingsRepair stormLegacyKey={state.stormLegacyKey} entries={state.settings} state={gameState} onChange={(settings) => setState((previous) => ({ ...previous, settings }))} />
         <div id="auto-station-castles" tabIndex={-1} className="custom-scrollbar min-h-0 flex-1 overflow-y-auto pr-1 outline-none">
           {castles.length === 0 && (
             <p className="py-8 text-center text-sm text-text-muted"><LocalizedText messageKey="ui.settings.components.autoStationSettingsModal.loading.castles.37f1e3a3" /></p>
@@ -268,13 +270,13 @@ export const AutoStationSettingsModal: React.FC<AutoStationSettingsModalProps> =
           <div className="grid grid-cols-1 gap-4 pb-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {castles.map((castle) => {
               const castleID = castleSettingsKey(castle);
-              const reserves = castleSettingsEntry(state.settings, castle) ?? [];
+              const reserves = castleSettingsEntry(roleSettings, castle) ?? [];
               const stock = readiness.stockByCastle[castleID];
               return (
                 <Card key={castle.id} variant="solid" className="flex flex-col bg-bg-card-hover/40 p-4 shadow-inner">
                   <div className="mb-3 border-b border-border-base pb-2">
                     <h3 className="text-sm font-bold text-primary">{castle.kingdomId === 4 ? <LocalizedText messageKey={castle.id === 0 ? "stormRole.idleLabel" : "stormRole.label"} /> : castle.name || `${castle.type} castle`}</h3>
-                    {castleID === 'storm' && <Button variant="ghost" size="sm" onClick={() => setState((previous) => { const settings = normalizeStormKeys(previous.settings, gameState); delete settings.storm; return { ...previous, settings }; })}><LocalizedText messageKey="stormRole.remove" /></Button>}
+                    {castleID === 'storm' && <Button variant="ghost" size="sm" onClick={() => setState((previous) => { const settings = normalizeStormKeys(previous.settings, gameState, { stormLegacyKey: previous.stormLegacyKey }); delete settings.storm; return { ...previous, settings }; })}><LocalizedText messageKey="stormRole.remove" /></Button>}
                     <p className="mt-1 text-[11px] text-text-muted"><LocalizedText messageKey="ui.settings.components.autoStationSettingsModal.these.amounts.remain.in.the.castle.e33daec5" /></p>
                   </div>
                   {reserves.length === 0 ? (

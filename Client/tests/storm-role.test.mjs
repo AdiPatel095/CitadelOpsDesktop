@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { existsSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { after, test } from 'node:test';
 import { fileURLToPath } from 'node:url';
 import { createServer } from 'vite';
@@ -8,7 +8,8 @@ const source = existsSync(`${root}/src/commandCenter`) ? '/src/commandCenter' : 
 const vite = await createServer({ root, configFile: false, appType: 'custom', logLevel: 'silent', server: { middlewareMode: true, hmr: false } });
 const role = await vite.ssrLoadModule(`${source}/settings/stormRole.ts`);
 const setup = await vite.ssrLoadModule(`${source}/settings/requirements/setupReadiness.ts`);
-const { parseAutoStationClientState } = await vite.ssrLoadModule(`${source}/settings/AutoStationClientState.ts`);
+const { parseAutoStationClientState, normalizeAutoStationStormSettings } = await vite.ssrLoadModule(`${source}/settings/AutoStationClientState.ts`);
+const { parseAutoBirdClientState, normalizeAutoBirdStormSettings, activateAutoBirdPreset } = await vite.ssrLoadModule(`${source}/settings/AutoBirdClientState.ts`);
 const { parseAutoTowerClientState } = await vite.ssrLoadModule(`${source}/settings/AutoTowerClientState.ts`);
 const { castleCandidates } = await vite.ssrLoadModule(`${source}/settings/copy/candidates.ts`);
 const { automationsActingOnCastle } = await vite.ssrLoadModule(`${source}/settings/castleAutomations.ts`);
@@ -79,12 +80,12 @@ test('Storm event changes readiness and attribution without changing saved confi
 test('Auto Bird Storm reserve check is pending, role-aware and confined to owned Storm castles', () => {
   const evaluate = (reserves, live = state, featureId = 'autoBird') => setup.evaluateReserveReadiness({ ...metadata, state: live, reserves, featureId }).report;
   const guard = (report) => report.checks.find((check) => check.id === 'storm-reserve');
-  for (const reserves of [{}, { storm: [] }, { 20: [] }, { storm: [], 20: reserve }, { 10: [] }]) {
+  for (const reserves of [{}, { storm: [] }, { storm: [{ id: 1, amount: 0 }] }, { storm: [{ id: 0, amount: 1 }] }, { storm: [{ id: 1, amount: -1 }] }, { 20: [] }, { storm: [], 20: reserve }, { 10: [] }]) {
     const report = evaluate(reserves);
     assert.deepEqual(guard(report), { id: 'storm-reserve', state: 'pending', messageKey: 'stormRole.birdUnconfigured', params: { castle: 'Synthetic Storm' }, fix: 'settings', slot: 'storm' });
     assert.equal(report.overall, 'pending', 'the Storm guard is non-blocking');
   }
-  for (const reserves of [{ storm: reserve }, { 20: reserve }, { 10: [], storm: reserve }]) assert.equal(guard(evaluate(reserves)), undefined);
+  for (const reserves of [{ storm: [{ id: 1, amount: 1 }] }, { storm: reserve }, { 20: reserve }, { 10: [], storm: reserve }]) assert.equal(guard(evaluate(reserves)), undefined);
   for (const reserves of [{}, { 10: [] }, { storm: [] }]) {
     assert.equal(guard(evaluate(reserves, { castles: { 10: main } })), undefined, 'no owned Storm castle');
     assert.equal(guard(evaluate(reserves, state, 'autoStation')), undefined, 'Station has no Bird guard');
@@ -103,4 +104,79 @@ test('all three editor copy descriptors read the current-ID legacy Storm draft a
     assert.equal(previewCastleCopy(descriptor, draft, 'storm', ['10'], context).sourceConfigured, true, descriptor.featureId);
     assert.deepEqual(saved, { 20: record }, 'copy read does not persist or alter the legacy map');
   }
+});
+
+
+test('Bird and Station Save mirror every map, move only the marked mirror and clear it without a Storm castle', () => {
+  const maps = { storm: reserve, 10: [], 98: [{ id: 1, amount: 8 }], 99: [{ id: 1, amount: 9 }] };
+  const bird = parseAutoBirdClientState({ ignoreSettings: { settings: maps }, presets: { version: 1, presets: [
+    { id: 'synthetic-one', name: 'Synthetic One', settings: { ...maps, storm: [{ id: 1, amount: 41 }] } },
+    { id: 'synthetic-zero', name: 'Synthetic Zero', settings: { ...maps, storm: [{ id: 1, amount: 0 }] } },
+    { id: 'synthetic-empty', name: 'Synthetic Empty', settings: {} },
+  ] } });
+  const station = parseAutoStationClientState({ settings: maps });
+  const original = structuredClone({ bird, station });
+  assert.deepEqual(normalizeAutoStationStormSettings(parseAutoStationClientState({}), { castles: { 10: main } }).settings, { storm: [] });
+  assert.deepEqual(normalizeAutoBirdStormSettings(parseAutoBirdClientState({}), { castles: { 10: main } }).ignoreSettings.settings, { storm: [] });
+  const birdMaps = (saved) => [saved.ignoreSettings.settings, ...saved.presets.presets.map((preset) => preset.settings)];
+  for (const [saved, normalize, getMaps] of [[bird, normalizeAutoBirdStormSettings, birdMaps], [station, normalizeAutoStationStormSettings, (saved) => [saved.settings]]]) {
+    const first = normalize(saved, state);
+    assert.equal(first.stormLegacyKey, '20');
+    for (const map of getMaps(first)) assert.deepEqual(map[20], map.storm);
+    assert.deepEqual(normalize(first, state), first, 'Save is idempotent');
+    const next = normalize(first, { castles: { 10: main, 21: { ...storm, id: 21 } } });
+    assert.equal(next.stormLegacyKey, '21');
+    for (const [index, map] of getMaps(next).entries()) {
+      assert.equal(map[20], undefined, 'only the marked old mirror is removed');
+      assert.deepEqual(map[21], map.storm);
+      assert.deepEqual(map[98], getMaps(first)[index][98], 'unmarked numeric keys survive');
+      assert.deepEqual(map[99], getMaps(first)[index][99]);
+      assert.deepEqual(map[10], getMaps(first)[index][10], 'main castle unchanged');
+    }
+    const absent = normalize(next, { castles: { 10: main } });
+    assert.equal(Object.hasOwn(absent, 'stormLegacyKey'), false);
+    for (const [index, map] of getMaps(absent).entries()) {
+      assert.equal(map[21], undefined);
+      assert.deepEqual(map.storm, getMaps(first)[index].storm);
+      assert.deepEqual(map[98], getMaps(first)[index][98]);
+      assert.deepEqual(map[99], getMaps(first)[index][99]);
+    }
+  }
+  assert.deepEqual({ bird, station }, original, 'Save transformations never mutate the draft');
+  const legacy = normalizeAutoStationStormSettings(parseAutoStationClientState({ settings: { 20: reserve, 99: reserve } }), state);
+  assert.deepEqual(legacy.settings, { 20: reserve, 99: reserve, storm: reserve });
+  assert.deepEqual(normalizeAutoBirdStormSettings(bird, state).presets.presets[1].settings.storm, [{ id: 1, amount: 0 }], 'zero rows are mirrored, not filtered');
+  assert.equal(activateAutoBirdPreset(normalizeAutoBirdStormSettings(bird, state), 'synthetic-one').stormLegacyKey, '20');
+  for (const marker of [20, 'storm', '0', 'invalid']) {
+    assert.equal(parseAutoBirdClientState({ stormLegacyKey: marker }).stormLegacyKey, undefined);
+    assert.equal(parseAutoStationClientState({ stormLegacyKey: marker }).stormLegacyKey, undefined);
+  }
+});
+
+test('marker mirrors are absent from readiness, attribution and repair while unmarked keys remain', () => {
+  const entries = { storm: reserve, 99: reserve, 98: reserve };
+  const report = setup.evaluateReserveReadiness({ ...metadata, state, reserves: entries, stormLegacyKey: '99', featureId: 'autoBird' });
+  assert.deepEqual(report.castlesNotInWorld, ['98']);
+  assert.equal(report.stockByCastle['99'], undefined);
+  assert.deepEqual(role.legacyStormRepairKeys({ 99: reserve, 98: reserve }, state, '99'), ['98']);
+  assert.deepEqual(role.legacyStormRepairKeys({ 99: reserve }, state, '99'), []);
+  assert.deepEqual(role.stormRepairDraft({ 99: reserve }, '99', state, '99'), { 99: reserve });
+  const sections = { 'automation.autoBird': { stormLegacyKey: '99', ignoreSettings: { settings: entries } }, 'automation.autoStation': { stormLegacyKey: '99', settings: entries } };
+  assert.deepEqual(automationsActingOnCastle(sections, 99, 0), []);
+  assert.deepEqual(automationsActingOnCastle(sections, 98, 0), ['autoStation', 'autoBird']);
+  assert.deepEqual(automationsActingOnCastle(sections, 20, 4), ['autoStation', 'autoBird']);
+  const context = { ...metadata, state, candidates: castleCandidates([main, storm], state, { keyFor: role.castleSettingsKey }) };
+  assert.ok(configuredSources(birdCopyDescriptor, { storm: [{ id: 1, amount: 0 }] }, context).some((castle) => castle.key === 'storm'), 'generic copy continues to accept zero rows');
+});
+
+test('new-client Save matches the shared old-reader golden fixture', () => {
+  const golden = JSON.parse(readFileSync(`${root}/tests/fixtures/storm-role-dual-write.json`, 'utf8'));
+  for (const [key, parse, normalize] of [['automation.autoBird', parseAutoBirdClientState, normalizeAutoBirdStormSettings], ['automation.autoStation', parseAutoStationClientState, normalizeAutoStationStormSettings]]) {
+    const source = structuredClone(golden[key]);
+    delete source.stormLegacyKey;
+    const maps = key === 'automation.autoBird' ? [source.ignoreSettings.settings, ...source.presets.presets.map((preset) => preset.settings)] : [source.settings];
+    for (const map of maps) delete map[20];
+    assert.deepEqual(normalize(parse(source), state), golden[key]);
+  }
+  assert.deepEqual(role.normalizeStormKeys({ 20: { enabled: true }, storm: { enabled: true } }, state), { storm: { enabled: true } }, 'Towers remains role-only');
 });

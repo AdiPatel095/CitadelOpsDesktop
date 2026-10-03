@@ -1171,6 +1171,10 @@
     {
       "desktop": "Client/tests/storm-role.test.mjs",
       "portal": "tests/storm-role.test.mjs"
+    },
+    {
+      "desktop": "Client/tests/fixtures/storm-role-dual-write.json",
+      "portal": "tests/fixtures/storm-role-dual-write.json"
     }
   ],
   "unmirrored": []

@@ -43,13 +43,14 @@ export function automationsActingOnCastle(
         return Object.values(normalizeAutoSceatResSettings(section).castles[key]?.buildings ?? {})
           .some((building) => building.steps.length > 0);
       case 'autoStation': {
-        const row = castleSettingsEntry(parseAutoStationClientState(section).settings, castle);
+        const saved = parseAutoStationClientState(section);
+        const row = castleSettingsEntry(saved.settings, castle, saved.stormLegacyKey);
         return row !== undefined && stationCopyDescriptor.isConfigured(row);
       }
       case 'autoBird': {
         const saved = parseAutoBirdClientState(section);
         const active = saved.presets.presets.find((preset) => preset.id === saved.activePresetId);
-        const row = castleSettingsEntry(active?.settings ?? saved.ignoreSettings.settings, castle);
+        const row = castleSettingsEntry(active?.settings ?? saved.ignoreSettings.settings, castle, saved.stormLegacyKey);
         return Array.isArray(row) && birdCopyDescriptor.isConfigured(row);
       }
       case 'autoKhan': return parseAutoKhanClientState(section).sourceCastleId === id;

@@ -74,7 +74,8 @@ for (const feature of ['autoTowers', 'autoBird', 'autoStation'] as const) {
         : { settings: { 999: reserve } };
       await server.handle(`/api/v2/config/automation.${feature}`, 'PUT', { value });
       server.log = [];
-      return server.configuration().revision;
+      const storm = (Object.values(server.built.state.castles) as CastleStateV2[]).find((castle) => castle.kingdomId === 4);
+      return { revision: server.configuration().revision, stormID: String(storm?.id) };
     }, feature);
     const label = { autoTowers: 'Auto Towers', autoBird: 'Auto Bird', autoStation: 'Auto Station' }[feature];
     await page.locator('[data-view="automation"]').getByRole('button', { name: `Open ${label} settings`, exact: true }).click();
@@ -86,7 +87,7 @@ for (const feature of ['autoTowers', 'autoBird', 'autoStation'] as const) {
       const { server } = await import(/* @vite-ignore */ fixturePath);
       return { revision: server.configuration().revision, saved: server.configuration().sections[`automation.${feature}`], writes: server.log.filter((entry: { kind: string }) => entry.kind === 'config').length };
     }, feature);
-    expect((await snapshot()).revision).toBe(seed);
+    expect((await snapshot()).revision).toBe(seed.revision);
     expect((await snapshot()).writes).toBe(0);
     await dialog.getByRole('button', { name: 'Cancel', exact: true }).click();
     await page.locator('[data-view="automation"]').getByRole('button', { name: `Open ${label} settings`, exact: true }).click();
@@ -97,7 +98,14 @@ for (const feature of ['autoTowers', 'autoBird', 'autoStation'] as const) {
     const entries = feature === 'autoTowers' ? after.saved.castles : feature === 'autoBird' ? after.saved.ignoreSettings.settings : after.saved.settings;
     expect(entries.storm).toBeDefined();
     expect(entries['999']).toBeUndefined();
-    expect(after.revision).toBe(seed + 1);
+    if (feature === 'autoTowers') {
+      expect(entries[seed.stormID]).toBeUndefined();
+      expect(after.saved.stormLegacyKey).toBeUndefined();
+    } else {
+      expect(entries[seed.stormID]).toEqual(entries.storm);
+      expect(after.saved.stormLegacyKey).toBe(seed.stormID);
+    }
+    expect(after.revision).toBe(seed.revision + 1);
     expect(after.writes).toBe(1);
     // The fixture's next runtime frame replaces the owned Storm ID; the saved
     // section and configuration revision remain unchanged.
@@ -106,16 +114,42 @@ for (const feature of ['autoTowers', 'autoBird', 'autoStation'] as const) {
       const { server } = await import(/* @vite-ignore */ fixturePath);
       const old = (Object.values(server.built.state.castles) as CastleStateV2[]).find((castle) => castle.kingdomId === 4);
       if (!old) throw new Error('Synthetic Storm castle is missing');
-      server.file.runtime = [{ label: 'Synthetic next Storm event', state: { castles: { [old.id]: null, 998: { ...old, id: 998, name: 'Synthetic next Storm' } } } }];
+      server.file.runtime = [{ label: 'Synthetic next Storm event', state: { castles: { [old.id]: null, 998: { ...old, id: 998, name: 'Synthetic next Storm' } } } }, { label: 'Synthetic Storm absent', state: { castles: { 998: null } } }];
       server.advance();
     });
     await page.locator('[data-view="automation"]').getByRole('button', { name: `Open ${label} settings`, exact: true }).click();
     await expect(dialog.getByText('Storm castle', { exact: true }).first()).toBeVisible();
     await expect(dialog.getByText(/Saved castle.*not in this world/)).toHaveCount(0);
-    expect((await snapshot()).revision).toBe(seed + 1);
+    expect((await snapshot()).revision).toBe(seed.revision + 1);
     expect((await snapshot()).writes).toBe(1);
     verifyNetwork();
     await page.screenshot({ path: testInfo.outputPath(`${feature}-storm-repair.png`) });
+    await dialog.getByRole('button', { name: 'Save changes', exact: true }).click();
+    await expect(dialog).toHaveCount(0);
+    const moved = await snapshot();
+    expect(moved.revision).toBe(seed.revision + 2);
+    const movedEntries = feature === 'autoTowers' ? moved.saved.castles : feature === 'autoBird' ? moved.saved.ignoreSettings.settings : moved.saved.settings;
+    expect(movedEntries[seed.stormID]).toBeUndefined();
+    if (feature !== 'autoTowers') {
+      expect(moved.saved.stormLegacyKey).toBe('998');
+      expect(movedEntries['998']).toEqual(movedEntries.storm);
+    }
+    await page.evaluate(async () => {
+      const fixturePath = '/main.tsx';
+      const { server } = await import(/* @vite-ignore */ fixturePath);
+      if (!server.advance()) throw new Error('Synthetic absent frame was not applied');
+    });
+    await page.locator('[data-view="automation"]').getByRole('button', { name: `Open ${label} settings`, exact: true }).click();
+    await expect(dialog.getByText('Storm castle · used when you have one', { exact: true }).first()).toBeVisible();
+    await expect(dialog.getByText(/Saved castle.*not in this world/)).toHaveCount(0);
+    await dialog.getByRole('button', { name: 'Save changes', exact: true }).click();
+    await expect(dialog).toHaveCount(0);
+    const absent = await snapshot();
+    const absentEntries = feature === 'autoTowers' ? absent.saved.castles : feature === 'autoBird' ? absent.saved.ignoreSettings.settings : absent.saved.settings;
+    expect(absentEntries.storm).toEqual(entries.storm);
+    expect(absentEntries['998']).toBeUndefined();
+    expect(absent.saved.stormLegacyKey).toBeUndefined();
+    verifyNetwork();
   });
 }
 
@@ -124,15 +158,15 @@ for (const theme of ['dark', 'light'] as const) {
   test(`Storm reserve setup Fix focuses the Storm card ${theme}`, async ({ page }, testInfo) => {
     const verifyNetwork = await prepare(page, theme);
     await openView(page, 'Automation', 'automation');
-    const seed = await page.evaluate(async () => {
+    const seed = await page.evaluate(async (theme) => {
       const fixturePath = '/main.tsx';
       const { server } = await import(/* @vite-ignore */ fixturePath);
       const storm = (Object.values(server.built.state.castles) as CastleStateV2[]).find((castle) => castle.kingdomId === 4);
       if (!storm) throw new Error('Synthetic Storm castle is missing');
-      await server.handle('/api/v2/config/automation.autoBird', 'PUT', { value: { ignoreSettings: { settings: { storm: [] } }, presets: { presets: [] }, activePresetId: null } });
+      await server.handle('/api/v2/config/automation.autoBird', 'PUT', { value: { ignoreSettings: { settings: { storm: theme === 'light' ? [{ id: 1, amount: 0 }] : [] } }, presets: { presets: [] }, activePresetId: null } });
       server.log = [];
       return { revision: server.configuration().revision, name: storm.name || `castle ${storm.id}` };
-    });
+    }, theme);
     await page.locator('[data-view="automation"]').getByRole('button', { name: 'Open Auto Bird settings', exact: true }).click();
     const dialog = page.getByRole('dialog');
     const guardText = `Auto Bird skips ${seed.name}: no troops to keep are set for the Storm castle.`;

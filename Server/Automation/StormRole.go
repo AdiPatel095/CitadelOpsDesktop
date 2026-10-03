@@ -47,8 +47,8 @@ func BoundCastleEntries[T any](entries map[string]T, state *State.GameState) []C
 	return bindings
 }
 
-// AutoBirdStormReserveConfigured rechecks raw reserve rows in the current
-// selected configuration. Main castles and zero-valued rows keep their semantics.
+// AutoBirdStormReserveConfigured rechecks effective positive reserve rows in the
+// current selected configuration. Main castles keep their existing semantics.
 func AutoBirdStormReserveConfigured(configuration Configuration.Snapshot, castle State.CastleState, presetID string) bool {
 	if castle.KingdomID != GameData.StormKingdomID {
 		return true
@@ -64,5 +64,5 @@ func AutoBirdStormReserveConfigured(configuration Configuration.Snapshot, castle
 		entries = preset.Settings
 	}
 	rows, _ := CastleSettingsEntry(entries, castle)
-	return len(rows) > 0
+	return len(stationReserveUnits(rows)) > 0
 }
