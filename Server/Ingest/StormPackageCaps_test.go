@@ -22,6 +22,7 @@ func TestStormPackageCapReplay48Then43(t *testing.T) {
 	state.Inventory.ConstructionOffersCastleID = 910040
 	state.Inventory.ConstructionOffersKingdomID = 4
 	at := time.Now().UTC()
+	state.Session.ChangedAt = at.Add(-time.Hour)
 	code := 0
 	history := func(size int, include bool, stamp time.Time) {
 		products := make([]map[string]int64, 0, size)
@@ -48,9 +49,18 @@ func TestStormPackageCapReplay48Then43(t *testing.T) {
 	if _, changed, err := reduceStormShopCommand(t.Context(), command, &state, data); err != nil || !changed {
 		t.Fatalf("command changed=%v err=%v", changed, err)
 	}
+	// The cap response must use the authoritative KRS deadline, not seven days.
+	if _, _, err := reduceKingdomTransport(t.Context(), Protocol.Frame{Direction: Protocol.DirectionInbound, Opcode: "kpi", ResponseCode: &code, ReceivedAt: at.Add(-time.Second), Payload: json.RawMessage(`{"UL":[{"KID":4,"U":1,"C":1,"KRS":120}]}`)}, &state, data); err != nil {
+		t.Fatal(err)
+	}
 	code = 237
 	if _, changed, err := reduceStormShopResponse(t.Context(), Protocol.Frame{Direction: Protocol.DirectionInbound, Opcode: "sbp", ResponseCode: &code, Payload: json.RawMessage(`{}`), ReceivedAt: at.Add(3 * time.Second)}, &state, data); err != nil || !changed {
 		t.Fatalf("response changed=%v err=%v", changed, err)
+	}
+	for _, block := range state.Storm.PackageCapBlocks {
+		if !block.ExpiresAt.Equal(at.Add(119 * time.Second)) {
+			t.Fatal("237 cap expiry did not use KRS deadline")
+		}
 	}
 	code = 0
 	history(43, false, at.Add(4*time.Second))
@@ -78,5 +88,48 @@ func TestStormPackageCapReplay48Then43(t *testing.T) {
 	}
 	if state.StormPackageBlocked(910040, -1, 3119, at.Add(7*time.Second)) {
 		t.Fatal("explicit below-cap history did not lift block")
+	}
+}
+
+func TestStormPackageCapLaterKRSProofBindsFallbackWithoutMutatingPriorGeneration(t *testing.T) {
+	blockedAt := time.Now().UTC().Add(-2 * time.Minute)
+	initial := State.NewGameState()
+	initial.Session.ConnectionGeneration = 9
+	initial.Session.ChangedAt = blockedAt.Add(-time.Hour)
+	initial.Castles[910040] = State.CastleState{ID: 910040, KingdomID: 4}
+	initial.BlockStormPackage(910040, -1, 3119, 4, blockedAt)
+	store := State.NewStore(&initial)
+	before := store.ReadOnlyView()
+	registry := NewRegistry()
+	if err := RegisterCoreReducers(registry); err != nil {
+		t.Fatal(err)
+	}
+	pipeline := NewPipeline(store, nil, registry)
+	observedAt := blockedAt.Add(time.Second)
+	if _, err := pipeline.HandleRawAt(t.Context(), `%xt%kpi%1%0%{"UL":[{"KID":4,"U":1,"C":1,"KRS":60}]}%`, Protocol.DirectionInbound, observedAt); err != nil {
+		t.Fatal(err)
+	}
+	current := store.ReadOnlyView()
+	wantEnd := observedAt.Add(time.Minute)
+	for _, block := range current.Storm.PackageCapBlocks {
+		if !block.ExpiresAt.Equal(wantEnd) || !block.EventEndsAt.Equal(wantEnd) {
+			t.Fatal("KRS proof did not bind cap expiry")
+		}
+	}
+	for _, block := range before.Storm.PackageCapBlocks {
+		if !block.ExpiresAt.Equal(blockedAt.Add(7*24*time.Hour)) || !block.EventEndsAt.IsZero() {
+			t.Fatal("KRS binding mutated prior immutable generation")
+		}
+	}
+	if !current.StormPackageBlocked(910040, -1, 3119, wantEnd.Add(-time.Nanosecond)) || current.StormPackageBlocked(910040, -1, 3119, wantEnd) {
+		t.Fatal("cap did not end exactly with event")
+	}
+	// A later event cannot revive the old block even if the castle still exists.
+	if _, err := pipeline.HandleRawAt(t.Context(), `%xt%kpi%1%0%{"UL":[{"KID":4,"U":1,"C":1,"KRS":3600}]}%`, Protocol.DirectionInbound, wantEnd.Add(time.Second)); err != nil {
+		t.Fatal(err)
+	}
+	current = store.ReadOnlyView()
+	if len(current.Storm.PackageCapBlocks) != 0 {
+		t.Fatal("new event revived expired cap block")
 	}
 }

@@ -8,12 +8,13 @@ import (
 // StormPackageCapBlock is scoped to the owned Storm castle and Luna table.
 // Session reconnects do not establish a new event occurrence.
 type StormPackageCapBlock struct {
-	CastleID  CastleID  `json:"castleId"`
-	TableID   int64     `json:"tableId"`
-	PackageID PackageID `json:"packageId"`
-	Cap       int64     `json:"cap"`
-	BlockedAt time.Time `json:"blockedAt"`
-	ExpiresAt time.Time `json:"expiresAt"`
+	CastleID    CastleID  `json:"castleId"`
+	TableID     int64     `json:"tableId"`
+	PackageID   PackageID `json:"packageId"`
+	Cap         int64     `json:"cap"`
+	BlockedAt   time.Time `json:"blockedAt"`
+	EventEndsAt time.Time `json:"eventEndsAt,omitempty"`
+	ExpiresAt   time.Time `json:"expiresAt"`
 }
 
 func StormShopOccurrenceKey(castleID CastleID, tableID int64) string {
@@ -37,8 +38,13 @@ func (state *GameState) MutableStormPackageCapBlocks() map[string]StormPackageCa
 
 func (state *GameState) BlockStormPackage(castleID CastleID, tableID int64, packageID PackageID, cap int64, observedAt time.Time) {
 	blocks := state.MutableStormPackageCapBlocks()
-	// The authoritative event end will be supplied by CIT-122. Until then the
-	// bounded fallback is seven days; an omitted counter cannot shorten it.
+	// Capture the KRS-derived deadline while its session/connection authority
+	// is valid. Missing or stale proof retains the bounded seven-day fallback.
+	end, proven := state.StormEventEndAt(observedAt)
+	expiresAt := observedAt.Add(7 * 24 * time.Hour)
+	if proven {
+		expiresAt = end
+	}
 	for key, block := range blocks {
 		if !observedAt.Before(block.ExpiresAt) {
 			delete(blocks, key)
@@ -46,7 +52,7 @@ func (state *GameState) BlockStormPackage(castleID CastleID, tableID int64, pack
 	}
 	blocks[stormPackageCapKey(castleID, tableID, packageID)] = StormPackageCapBlock{
 		CastleID: castleID, TableID: tableID, PackageID: packageID, Cap: cap,
-		BlockedAt: observedAt, ExpiresAt: observedAt.Add(7 * 24 * time.Hour),
+		BlockedAt: observedAt, EventEndsAt: end, ExpiresAt: expiresAt,
 	}
 }
 
@@ -68,6 +74,30 @@ func (state *GameState) ReconcileStormPackageCaps(castleID CastleID, tableID int
 			delete(state.MutableStormPackageCapBlocks(), key)
 			changed = true
 		}
+	}
+	return changed
+}
+
+// ReconcileStormPackageCapEventEnd binds fallback blocks when a later full KRS
+// observation proves the deadline. Once captured, a deadline survives missing
+// countdowns and reconnects; a later event cannot extend an earlier block.
+func (state *GameState) ReconcileStormPackageCapEventEnd(observedAt time.Time) bool {
+	end, proven := state.StormEventEndAt(observedAt)
+	changed := false
+	for key, block := range state.Storm.PackageCapBlocks {
+		if !observedAt.IsZero() && !observedAt.Before(block.ExpiresAt) {
+			delete(state.MutableStormPackageCapBlocks(), key)
+			changed = true
+			continue
+		}
+		castle, owned := state.Castles[block.CastleID]
+		if !proven || !block.EventEndsAt.IsZero() || observedAt.Before(block.BlockedAt) ||
+			!owned || castle.KingdomID != stormKingdomID {
+			continue
+		}
+		block.EventEndsAt, block.ExpiresAt = end, end
+		state.MutableStormPackageCapBlocks()[key] = block
+		changed = true
 	}
 	return changed
 }

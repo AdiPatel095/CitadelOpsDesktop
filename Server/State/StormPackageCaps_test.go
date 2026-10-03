@@ -102,3 +102,73 @@ func TestStormPackageCapSurvivesComponentSnapshot(t *testing.T) {
 		t.Fatal("snapshot/restart lifted cap block")
 	}
 }
+
+func TestStormPackageCapExpiresAtProvenKRSEventEnd(t *testing.T) {
+	now := time.Date(2026, 10, 3, 18, 0, 0, 0, time.UTC)
+	for _, duration := range []time.Duration{time.Hour, 30 * 24 * time.Hour} {
+		t.Run(duration.String(), func(t *testing.T) {
+			state := NewGameState()
+			state.Session.ConnectionGeneration = 9
+			state.Session.ChangedAt = now.Add(-time.Hour)
+			end := now.Add(duration)
+			state.KingdomTransport.Unlocks[4] = KingdomTransportUnlock{KingdomID: 4, Unlocked: true, EventEndsAt: end, EventEndObservedAt: now.Add(-time.Minute), EventEndConnectionGeneration: 9}
+			state.BlockStormPackage(910040, -1, 910126, 4, now)
+			block := state.Storm.PackageCapBlocks[stormPackageCapKey(910040, -1, 910126)]
+			if !block.EventEndsAt.Equal(end) || !block.ExpiresAt.Equal(end) {
+				t.Fatalf("cap expiry=%v, want proven end %v", block.ExpiresAt, end)
+			}
+			if !state.StormPackageBlocked(910040, -1, 910126, end.Add(-time.Nanosecond)) {
+				t.Fatal("block lifted before event end")
+			}
+			if state.StormPackageBlocked(910040, -1, 910126, end) || state.StormPackageBlocked(910040, -1, 910126, end.Add(time.Second)) {
+				t.Fatal("block outlived event end")
+			}
+			// Missing countdowns or a reconnect cannot extend a captured deadline.
+			state.KingdomTransport.Unlocks[4] = KingdomTransportUnlock{KingdomID: 4}
+			state.Session.ConnectionGeneration++
+			state.ReconcileStormPackageCapEventEnd(now.Add(time.Minute))
+			if !state.Storm.PackageCapBlocks[stormPackageCapKey(910040, -1, 910126)].ExpiresAt.Equal(end) {
+				t.Fatal("lost deadline extended cap block")
+			}
+			state.ReconcileStormPackageCapEventEnd(end)
+			if len(state.Storm.PackageCapBlocks) != 0 {
+				t.Fatal("expired block retained")
+			}
+		})
+	}
+}
+
+func TestStormPackageCapUnknownOrStaleEndUsesBoundedFallback(t *testing.T) {
+	now := time.Date(2026, 10, 3, 18, 0, 0, 0, time.UTC)
+	for _, tc := range []struct {
+		name   string
+		change func(*GameState)
+	}{
+		{"missing", func(state *GameState) { delete(state.KingdomTransport.Unlocks, 4) }},
+		{"wrong connection", func(state *GameState) { state.Session.ConnectionGeneration++ }},
+		{"before session", func(state *GameState) { state.Session.ChangedAt = now }},
+		{"future observation", func(state *GameState) {
+			row := state.KingdomTransport.Unlocks[4]
+			row.EventEndObservedAt = now.Add(time.Second)
+			state.KingdomTransport.Unlocks[4] = row
+		}},
+		{"closed", func(state *GameState) {
+			row := state.KingdomTransport.Unlocks[4]
+			row.Unlocked = false
+			state.KingdomTransport.Unlocks[4] = row
+		}},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			state := NewGameState()
+			state.Session.ConnectionGeneration = 9
+			state.Session.ChangedAt = now.Add(-time.Hour)
+			state.KingdomTransport.Unlocks[4] = KingdomTransportUnlock{KingdomID: 4, Unlocked: true, EventEndsAt: now.Add(time.Hour), EventEndObservedAt: now.Add(-time.Minute), EventEndConnectionGeneration: 9}
+			tc.change(&state)
+			state.BlockStormPackage(910040, -1, 910126, 4, now)
+			block := state.Storm.PackageCapBlocks[stormPackageCapKey(910040, -1, 910126)]
+			if !block.EventEndsAt.IsZero() || !block.ExpiresAt.Equal(now.Add(7*24*time.Hour)) {
+				t.Fatal("unknown/stale event end authorized expiry")
+			}
+		})
+	}
+}
