@@ -226,81 +226,90 @@ func TestDispatchBoundaryOnlyTargetedRejections(t *testing.T) {
 }
 
 func TestFCORejectionRefreshesWithoutBlindResend(t *testing.T) {
-	for _, outcome := range []string{"upgrading", "completed", "unknown", "stale", "refresh_rejected", "missing_object", "session_changed", "connection_changed", "missing_layout", "missing_queue", "other_snapshot"} {
-		t.Run(outcome, func(t *testing.T) {
-			state := boundaryTestState()
-			step := boundaryTestStep("fco")
-			args, _ := json.Marshal(buildingFinishFreeReconciliation{CastleID: dispatchTestCastle, BuildingInstanceID: dispatchTestObject, SnapshotAfter: time.Now().UTC(), InitialConstructionState: State.BuildingStateUpgradeInProgress})
-			step.RejectionReconciliation = &Intent.RejectionReconciliation{Code: 5, Refresh: castleFocusStep(state.Castles[dispatchTestCastle]), Action: "test.reconcile", Arguments: args}
-			engine, store, sender := boundaryTestEngine(t, state, step, "", 5, Intent.Step{Action: "test.after"})
-			if err := engine.RegisterAction("test.after", func(context.Context, json.RawMessage) error { return fmt.Errorf("retired operation continued") }); err != nil {
-				t.Fatal(err)
-			}
-			app := &Application{State: store}
-			if err := engine.RegisterAction("test.reconcile", app.reconcileBuildingFinishFree); err != nil {
-				t.Fatal(err)
-			}
-			sender.beforeResponse = func(opcode string) error {
-				if opcode == "jaa" && outcome == "refresh_rejected" {
-					return fmt.Errorf("synthetic refresh transport failure")
-				}
-				return nil
-			}
-			sender.reduceRefresh = func(frame Protocol.Frame, state *State.GameState) ([]string, bool, error) {
-				castle := state.Castles[dispatchTestCastle]
-				if outcome != "stale" {
-					now := frame.ReceivedAt
-					if outcome == "other_snapshot" {
-						now = now.Add(time.Nanosecond)
+	for _, lane := range []string{"", "build"} {
+		t.Run("lane="+lane, func(t *testing.T) {
+			for _, outcome := range []string{"upgrading", "completed", "unknown", "stale", "refresh_rejected", "missing_object", "session_changed", "connection_changed", "missing_layout", "missing_queue", "other_snapshot"} {
+				t.Run(outcome, func(t *testing.T) {
+					state := boundaryTestState()
+					step := boundaryTestStep("fco")
+					args, _ := json.Marshal(buildingFinishFreeReconciliation{CastleID: dispatchTestCastle, BuildingInstanceID: dispatchTestObject, SnapshotAfter: time.Now().UTC(), InitialConstructionState: State.BuildingStateUpgradeInProgress})
+					step.RejectionReconciliation = &Intent.RejectionReconciliation{Code: 5, Refresh: castleFocusStep(state.Castles[dispatchTestCastle]), Action: "test.reconcile", Arguments: args}
+					engine, store, sender := boundaryTestEngine(t, state, step, "", 5, Intent.Step{Action: "test.after"})
+					if err := engine.RegisterAction("test.after", func(context.Context, json.RawMessage) error { return fmt.Errorf("retired operation continued") }); err != nil {
+						t.Fatal(err)
 					}
-					castle.ContextSnapshotObservedAt = now
-					if outcome != "missing_layout" {
-						castle.Layout.ObservedAt = now
+					app := &Application{State: store}
+					if err := engine.RegisterAction("test.reconcile", app.reconcileBuildingFinishFree); err != nil {
+						t.Fatal(err)
 					}
-					if outcome != "missing_queue" {
-						castle.BuildingQueue.ObservedAt = now
+					sender.beforeResponse = func(opcode string) error {
+						if opcode == "jaa" && outcome == "refresh_rejected" {
+							return fmt.Errorf("synthetic refresh transport failure")
+						}
+						return nil
 					}
-				}
-				if outcome == "completed" || outcome == "unknown" || outcome == "missing_layout" || outcome == "missing_queue" || outcome == "other_snapshot" || outcome == "connection_changed" {
-					building := castle.Buildings[dispatchTestObject]
-					building.ConstructionState = State.BuildingStateUpgradeCompleted
-					if outcome == "unknown" {
-						building.ConstructionState = State.BuildingStateWaitingForServer
+					sender.reduceRefresh = func(frame Protocol.Frame, state *State.GameState) ([]string, bool, error) {
+						castle := state.Castles[dispatchTestCastle]
+						if outcome != "stale" {
+							now := frame.ReceivedAt
+							if outcome == "other_snapshot" {
+								now = now.Add(time.Nanosecond)
+							}
+							castle.ContextSnapshotObservedAt = now
+							if outcome != "missing_layout" {
+								castle.Layout.ObservedAt = now
+							}
+							if outcome != "missing_queue" {
+								castle.BuildingQueue.ObservedAt = now
+							}
+						}
+						if outcome == "completed" || outcome == "unknown" || outcome == "missing_layout" || outcome == "missing_queue" || outcome == "other_snapshot" || outcome == "connection_changed" {
+							building := castle.Buildings[dispatchTestObject]
+							building.ConstructionState = State.BuildingStateUpgradeCompleted
+							if outcome == "unknown" {
+								building.ConstructionState = State.BuildingStateWaitingForServer
+							}
+							castle.Buildings[dispatchTestObject] = building
+							castle.BuildingQueue.Slots = nil
+						}
+						if outcome == "missing_object" {
+							delete(castle.Buildings, dispatchTestObject)
+							castle.BuildingQueue.Slots = nil
+						}
+						if outcome == "session_changed" {
+							state.Session.Generation++
+						}
+						if outcome == "connection_changed" {
+							state.Session.ConnectionGeneration++
+						}
+						state.SetCastle(dispatchTestCastle, castle)
+						return []string{"castles"}, true, nil
 					}
-					castle.Buildings[dispatchTestObject] = building
-					castle.BuildingQueue.Slots = nil
-				}
-				if outcome == "missing_object" {
-					delete(castle.Buildings, dispatchTestObject)
-					castle.BuildingQueue.Slots = nil
-				}
-				if outcome == "session_changed" {
-					state.Session.Generation++
-				}
-				if outcome == "connection_changed" {
-					state.Session.ConnectionGeneration++
-				}
-				state.SetCastle(dispatchTestCastle, castle)
-				return []string{"castles"}, true, nil
+
+					actor := "test"
+					if lane != "" {
+						actor = "automation:" + lane
+					}
+					receipt := engine.Submit(t.Context(), Intent.Request{Name: "test.dispatch", Actor: actor, AutomationLane: lane})
+					want := Intent.StatusFailed
+					if outcome == "completed" {
+						want = Intent.StatusSucceeded
+					}
+					if receipt.Status != want {
+						t.Fatalf("status %s, want %s: %s", receipt.Status, want, receipt.Error)
+					}
+					if strings.Join(sender.sends, ",") != "fco,jaa" {
+						t.Fatalf("blind resend or missing refresh: %v", sender.sends)
+					}
+					if len(receipt.Evidence) != 1 {
+						t.Fatalf("missing FCO evidence: %+v", receipt)
+					}
+					if lock := engine.AutomationLaneLock("build"); lane != "" && (!lock.Active(time.Now()) || lock.Code != 5) {
+						t.Fatalf("lane backstop changed: %+v", lock)
+					}
+				})
 			}
 
-			receipt := engine.Submit(t.Context(), Intent.Request{Name: "test.dispatch", Actor: "automation:build", AutomationLane: "build"})
-			want := Intent.StatusFailed
-			if outcome == "completed" {
-				want = Intent.StatusSucceeded
-			}
-			if receipt.Status != want {
-				t.Fatalf("status %s, want %s: %s", receipt.Status, want, receipt.Error)
-			}
-			if strings.Join(sender.sends, ",") != "fco,jaa" {
-				t.Fatalf("blind resend or missing refresh: %v", sender.sends)
-			}
-			if len(receipt.Evidence) != 1 {
-				t.Fatalf("missing FCO evidence: %+v", receipt)
-			}
-			if lock := engine.AutomationLaneLock("build"); !lock.Active(time.Now()) || lock.Code != 5 {
-				t.Fatalf("lane backstop changed: %+v", lock)
-			}
 		})
 	}
 }
@@ -403,6 +412,9 @@ func TestQA128RefreshMustCommitAfterRejection(t *testing.T) {
 	}
 	receipt := engine.Submit(t.Context(), Intent.Request{Name: "test.dispatch", Actor: "test"})
 	t.Logf("sends=%v status=%s evidence=%d", sender.sends, receipt.Status, len(receipt.Evidence))
+	if strings.Join(sender.sends, ",") != "fco,jaa" {
+		t.Fatalf("blind resend after empty refresh: %v", sender.sends)
+	}
 	if receipt.Status != Intent.StatusFailed {
 		t.Fatalf("retired from pre-rejection snapshot despite empty JAA: actual=%s expected=failed without fresh committed rejection refresh", receipt.Status)
 	}

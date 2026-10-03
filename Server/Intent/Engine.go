@@ -881,7 +881,8 @@ func (engine *Engine) execute(prepared *preparedSubmission) Receipt {
 					yielded = true
 					break
 				}
-				if errors.Is(err, ErrPlanStale) && !completedAnyStep(completedSteps) {
+				var recoveryFailure *rejectionReconciliationFailure
+				if errors.Is(err, ErrPlanStale) && !errors.As(err, &recoveryFailure) && !completedAnyStep(completedSteps) {
 					replan = true
 					replanCause = err
 					break
@@ -1765,13 +1766,13 @@ func (engine *Engine) executeStep(ctx context.Context, afterRevision uint64, ste
 					refreshStep.CaptureResponse = true
 					refreshed, refreshErr := engine.executeStep(refreshContext, engine.state.Revision(), refreshStep)
 					if refreshErr != nil {
-						return exchange, errors.Join(guarded, refreshErr)
+						return exchange, &rejectionReconciliationFailure{errors.Join(guarded, refreshErr)}
 					}
 					engine.mu.RLock()
 					reconcile := engine.actions[recovery.Action]
 					engine.mu.RUnlock()
 					if reconcile == nil {
-						return exchange, errors.Join(guarded, fmt.Errorf("reconciliation action is unavailable"))
+						return exchange, &rejectionReconciliationFailure{errors.Join(guarded, fmt.Errorf("reconciliation action is unavailable"))}
 					}
 					if refreshed != nil && refreshed.Response != nil && recovery.Refresh.ResponseBarrier == ResponseBarrierCommitted {
 						refresh.ObservedAt = refreshed.Response.ReceivedAt
@@ -1780,7 +1781,7 @@ func (engine *Engine) executeStep(ctx context.Context, afterRevision uint64, ste
 					if reconcileErr := reconcile(reconcileContext, recovery.Arguments); reconcileErr == nil {
 						return exchange, errOperationReconciled
 					} else {
-						return exchange, errors.Join(guarded, reconcileErr)
+						return exchange, &rejectionReconciliationFailure{errors.Join(guarded, reconcileErr)}
 					}
 				}
 				var locked *LaneLockedError
@@ -1889,6 +1890,10 @@ func (engine *Engine) refreshCoinsAfterDispatch(ctx context.Context) error {
 }
 
 func retryableStepResponse(step Step, err error) bool {
+	var recoveryFailure *rejectionReconciliationFailure
+	if errors.As(err, &recoveryFailure) {
+		return false
+	}
 	var locked *LaneLockedError
 	if errors.As(err, &locked) {
 		return false

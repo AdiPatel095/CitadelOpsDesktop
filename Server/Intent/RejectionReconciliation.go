@@ -16,6 +16,13 @@ type RejectionRefresh struct {
 
 type rejectionRefreshContextKey struct{}
 
+// A failed recovery follows an acknowledged rejection, not pre-dispatch
+// staleness. Preserve its causes for diagnostics without allowing replanning
+// or a response retry to replay the rejected mutation.
+type rejectionReconciliationFailure struct{ error }
+
+func (failure *rejectionReconciliationFailure) Unwrap() error { return failure.error }
+
 func RejectionRefreshFromContext(ctx context.Context) (RejectionRefresh, bool) {
 	refresh, ok := ctx.Value(rejectionRefreshContextKey{}).(RejectionRefresh)
 	return refresh, ok
