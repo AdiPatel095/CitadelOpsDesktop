@@ -73,8 +73,9 @@ func planProductionEnqueue(_ context.Context, input Intent.PlanningContext, argu
 			return Intent.Plan{}, Localization.WithError(fmt.Errorf("scheduled production must enqueue one stack before reevaluating the schedule"), Localization.New("server.app.scheduled_production_must_enqueue.c8ceac3b", "scheduled production must enqueue one stack before reevaluating the schedule", nil))
 		}
 	}
+	now := time.Now().UTC()
 	queue, ok := castle.Production[request.LineID]
-	if !ok || State.ProductionQueueNeedsRefresh(&input.State, queue, time.Now().UTC()) ||
+	if !ok || State.ProductionQueueNeedsRefresh(&input.State, queue, now) ||
 		State.ProductionQueuePredatesCastleSnapshot(castle, queue) {
 		return Intent.Plan{}, Localization.WithError(fmt.Errorf(
 			"%w: production line %d needs a current slot observation for castle %d",
@@ -113,9 +114,8 @@ func planProductionEnqueue(_ context.Context, input Intent.PlanningContext, argu
 	}
 	definitionLabel := productionDefinitionLabel(input.GameData, input.Language, collection, request.DefinitionID)
 	// Queue capacity represents the QS slots, not the active production stack.
-	occupied := len(queue.Queued)
-	queueCapacity := productionQueueCapacity(input.State, request.LineID, queue, input.GameData)
-	if queueCapacity <= 0 || occupied >= queueCapacity {
+	freeSlots := State.ProductionQueueFreeSlots(queue, now)
+	if freeSlots == 0 {
 		if request.FillAvailable {
 			return Intent.Plan{Summary: fmt.Sprintf("Production line %d is already full at %s", request.LineID, castleLabel(castle)), SummaryDescriptor: Localization.New("server.app.production_line_p_is.54538668", "Production line {p0} is already full at {p1}", Localization.Params{"p0": fmt.Sprintf("%d", request.LineID), "p1": fmt.Sprintf("%s", castleLabel(castle))})}, nil
 		}
@@ -143,7 +143,7 @@ func planProductionEnqueue(_ context.Context, input Intent.PlanningContext, argu
 	}{request.LineID, request.DefinitionID, request.Amount, -1, 0, sessionKey, castle.KingdomID, request.CastleID})
 	stackCount := 1
 	if request.FillAvailable {
-		stackCount = queueCapacity - occupied
+		stackCount = freeSlots
 	}
 	steps := castleContextSteps(input, castle)
 	recruitment := request.LineID == recruitmentProductionLineID
@@ -270,7 +270,7 @@ func (application *Application) verifyProductionQueueCapacityAt(arguments json.R
 			Intent.ErrPlanStale, request.DefinitionID, request.CastleID,
 		), Localization.New("server.app.intent_plan_became_stale.03239d94", "intent plan became stale before dispatch: production definition {p1} is no longer available at castle {p2}", Localization.Params{"p1": fmt.Sprintf("%d", request.DefinitionID), "p2": fmt.Sprintf("%d", request.CastleID)}))
 	}
-	available := productionQueueCapacity(gameState, request.LineID, queue, gameData) - len(queue.Queued)
+	available := State.ProductionQueueFreeSlots(queue, now)
 	if available < request.ExpectedFreeSlots || request.FillAvailable && available != request.ExpectedFreeSlots {
 		return fmt.Errorf(
 			"%w: production line %d free slots changed from %d to %d",
@@ -346,14 +346,8 @@ func productionDefinitionAvailable(castle State.CastleState, lineID int, definit
 }
 
 func productionQueueCapacity(state State.GameState, lineID int, queue State.ProductionQueue, gameData *GameData.Store) int {
-	// The observed slot count is authoritative: the server reports every slot
-	// the player owns, including slots granted by capacity effects the VIP
-	// model below knows nothing about. Clamping to the VIP expectation used
-	// to discard those effect slots; the base+VIP expectation now serves only
-	// as the fallback before the first queue snapshot arrives. If a stale
-	// observation ever overshoots, the enqueue verify-capacity guard
-	// revalidates against live state before dispatch.
-	if queue.Capacity > 0 {
+	// QS entitlement data is authoritative, including a zero usable capacity.
+	if len(queue.Slots) > 0 || !queue.ObservedAt.IsZero() {
 		return queue.Capacity
 	}
 	expected, _ := productionVIPQueueCapacity(state, lineID, gameData)

@@ -427,7 +427,7 @@ func TestRuntimeNestedResponseReducers(t *testing.T) {
 		Opcode: "bup", Direction: Protocol.DirectionInbound, ResponseCode: &code, ReceivedAt: observedAt,
 		Payload: json.RawMessage(`{
 			"gcu":{"C1":900},"sce":[["STP",12]],"grc":{"AID":100,"W":777},
-			"spl":{"LID":1,"PS":{"WID":20,"TUA":5,"RCT":60},"QS":[{"P":{"WID":20,"TUA":10}},{"SI":{"RUT":50,"VIP":1}}]}
+			"spl":{"LID":1,"PS":{"WID":20,"TUA":5,"RCT":60},"QS":[{"P":{"WID":20,"TUA":10},"SI":{"RUT":-1}},{"SI":{"RUT":50,"VIP":1}}]}
 		}`),
 	})
 	if err != nil {

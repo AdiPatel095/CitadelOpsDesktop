@@ -34107,7 +34107,7 @@
     "sha256": "3e5e8c970e3cfbb704719636d99733d3ef830e036fca4866bcc2bdeb04b003e2"
   },
   "schemaVersion": 1,
-  "sourceCatalogSha256": "15ed83dbf211c706a832abaa6c617f6c99d2465bed5977ef30970a1f3f348a41",
+  "sourceCatalogSha256": "8151da427a6699e8ee44884dbeb27c7523e447ec47f261752fedc3431f3a56c0",
   "sourceRevision": "56c2acba0f847e2675c7842588213c66710eeadc",
   "playerLanguageBatch": {
     "story": "CIT-68",
@@ -34137,5 +34137,13 @@
       "server.buildings.kingdom_unavailable"
     ],
     "translationStatus": "English only; pending the epic CIT-116 batched locale translation story"
+  },
+  "opcodeRejectionQueueBatch": {
+    "story": "CIT-117",
+    "source": "Engineering/Plans/CIT-117 Recruitment queue counts only usable slots.md Waiting (AC5)",
+    "englishFallbackKeys": [
+      "server.automation.production_queues_full_at"
+    ],
+    "translationStatus": "pending opcode rejection epic all-locale translation batch"
   }
 }

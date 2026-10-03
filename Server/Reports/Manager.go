@@ -321,6 +321,8 @@ func (manager *Manager) fetch(ctx context.Context, notice State.ReportNotice, na
 // reportFetchUnavailable classifies a failed fetch only from the structured
 // game response, never from receipt text (message IDs can contain any digits).
 // Official BSDCommand treats NO_SPY_DATA (130) and NO_SUCH_MESSAGE (66) alike.
+// Official BLSCommand also treats MESSAGEDATA_TOO_OLD (225) as unavailable;
+// BLMCommand and BLDCommand give 225 no special handling.
 // NO_SUCH_MESSAGE on the battle-report fetches (summary, waves, details) keeps
 // the terminal handling the previous text matching gave it ("response code 66
 // ... has been deleted").
@@ -332,7 +334,9 @@ func reportFetchUnavailable(receipt Intent.Receipt) bool {
 	switch strings.ToLower(strings.TrimSpace(receipt.Failure.GameOpcode)) {
 	case "bsd":
 		return code == 130 || code == 66
-	case "bls", "blm", "bld":
+	case "bls":
+		return code == 66 || code == 225
+	case "blm", "bld":
 		return code == 66
 	default:
 		return false
