@@ -107,7 +107,7 @@ func reduceInitialState(
 		changed = changed || updated
 	}
 	if raw := root["vip"]; len(raw) > 0 {
-		updated, err := applyVIPInfo(raw, gameState)
+		updated, err := applyVIPInfo(raw, gameState, frame.ReceivedAt)
 		if err != nil {
 			return nil, false, err
 		}
@@ -232,13 +232,13 @@ func reduceInitialState(
 		changed = true
 	}
 	domains := []string{
-		"player", "castles", "resources", "currencies", "alliance", "commanders", "castellans",
+		"player", "vip", "castles", "resources", "currencies", "alliance", "commanders", "castellans",
 		"equipment", "generals", "general-skills", "reports", "subscriptions", "market", "kingdom-transport", "production", "events", "event-scores", "global-effects", "achievements", "legend-skills",
 		"attacks",
 	}
 	if accountChanged {
 		domains = []string{
-			"session-context", "player", "castles", "resources", "currencies", "alliance", "alliances",
+			"session-context", "player", "vip", "castles", "resources", "currencies", "alliance", "alliances",
 			"commanders", "castellans", "generals", "general-skills", "equipment", "gems", "inventory",
 			"movements", "stationing", "scheduled", "automations", "reports", "subscriptions", "market",
 			"kingdom-transport", "production", "crafting", "buildings", "building-layout", "building-queue",
@@ -798,8 +798,8 @@ func reduceVIPInfo(
 	if !frameSucceeded(frame) || len(frame.Payload) == 0 {
 		return nil, false, nil
 	}
-	changed, err := applyVIPInfo(frame.Payload, gameState)
-	return []string{"player"}, changed, err
+	changed, err := applyVIPInfo(frame.Payload, gameState, frame.ReceivedAt)
+	return []string{"player", "vip"}, changed, err
 }
 
 func reduceAllianceInfo(
@@ -985,14 +985,28 @@ func applyDecodedPlayerInfo(player wirePlayerInfo, gameState *State.GameState) b
 	return changed
 }
 
-func applyVIPInfo(raw json.RawMessage, gameState *State.GameState) (bool, error) {
+func applyVIPInfo(raw json.RawMessage, gameState *State.GameState, observedAt time.Time) (bool, error) {
 	var values map[string]json.RawMessage
 	if err := json.Unmarshal(raw, &values); err != nil {
 		return false, fmt.Errorf("decode VIP state: %w", err)
 	}
+	if observedAt.IsZero() || observedAt.Before(gameState.Player.VIP.ObservedAt) {
+		return false, nil
+	}
+	for _, key := range []string{"VP", "VRS", "UPG"} {
+		var value *int64
+		if json.Unmarshal(values[key], &value) != nil || value == nil || *value < 0 {
+			// Remember ordering but revoke quota authority until a complete VIP frame.
+			next := State.VIPState{ObservedAt: observedAt}
+			changed := !reflect.DeepEqual(gameState.Player.VIP, next)
+			gameState.Player.VIP = next
+			return changed, nil
+		}
+	}
 	next := State.VIPState{
 		Points: rawInteger(values["VP"]), Level: int(rawInteger(values["VRL"])),
-		RemainingSec: int(rawInteger(values["VRS"])), Upgrade: int(rawInteger(values["UPG"])),
+		RemainingSec: int(rawInteger(values["VRS"])), UsedPremiumCommanders: int(rawInteger(values["UPG"])),
+		ObservedAt: observedAt, Generation: gameState.Session.Generation, ConnectionGeneration: gameState.Session.ConnectionGeneration,
 	}
 	if reflect.DeepEqual(gameState.Player.VIP, next) {
 		return false, nil

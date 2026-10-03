@@ -65,3 +65,27 @@ func (holds *commanderLaunchHolds) CommanderHeldAt(id State.CommanderID, now tim
 	}
 	return true
 }
+
+// Unsent support reservations release their holds; acknowledged movements retain
+// a short bridge until the ordinary movement snapshot owns availability.
+func (holds *commanderLaunchHolds) ReleaseCommanders(ids []State.CommanderID) {
+	if holds == nil {
+		return
+	}
+	holds.mu.Lock()
+	defer holds.mu.Unlock()
+	for _, id := range ids {
+		delete(holds.until, id)
+	}
+}
+
+// Complete a support hold without an availability gap before the movement
+// snapshot catches up to the acknowledged CDS.
+func (holds *commanderLaunchHolds) CompleteSupportHold(id State.CommanderID, until time.Time) {
+	if holds == nil {
+		return
+	}
+	holds.mu.Lock()
+	defer holds.mu.Unlock()
+	holds.until[id] = until
+}

@@ -216,7 +216,7 @@ func TestKingdomTroopShipmentUsesCapturedKutShape(t *testing.T) {
 	gameState.Castles[donor.ID] = donor
 	gameState.Castles[target.ID] = target
 	gameState.KingdomTransport.ObservedAt = time.Now().UTC()
-	gameState.KingdomTransport.Unlocks[4] = State.KingdomTransportUnlock{KingdomID: 4, Unlocked: true}
+	gameState.KingdomTransport.Unlocks[4] = stormArrivalTestUnlock(time.Now().UTC(), gameState.Session.ConnectionGeneration)
 
 	plan, err := planKingdomTroopShipment(t.Context(), Intent.PlanningContext{State: gameState, GameData: gameData}, json.RawMessage(`{
 		"sourceCastleId":10,"targetCastleId":40,"targetKingdomId":4,
@@ -245,7 +245,7 @@ func TestOwnedKingdomTroopPlansArmBeforeDispatchAndUseGBDConfirmation(t *testing
 	gameState.Castles[donor.ID] = donor
 	gameState.Castles[target.ID] = target
 	gameState.KingdomTransport.ObservedAt = time.Now().UTC()
-	gameState.KingdomTransport.Unlocks[4] = State.KingdomTransportUnlock{KingdomID: 4, Unlocked: true}
+	gameState.KingdomTransport.Unlocks[4] = stormArrivalTestUnlock(time.Now().UTC(), gameState.Session.ConnectionGeneration)
 
 	plan, err := planKingdomTroopShipment(t.Context(), Intent.PlanningContext{State: gameState, GameData: gameData}, json.RawMessage(`{
 		"sourceCastleId":10,"targetCastleId":40,"targetKingdomId":4,"owner":"autoFortress","workflowId":"owned-1",
@@ -544,7 +544,7 @@ func TestKingdomTroopShipmentRejectsToolsAndSkipUsesTroopTransportType(t *testin
 	gameState.Castles[donor.ID] = donor
 	gameState.Castles[target.ID] = target
 	gameState.KingdomTransport.ObservedAt = time.Now().UTC()
-	gameState.KingdomTransport.Unlocks[4] = State.KingdomTransportUnlock{KingdomID: 4, Unlocked: true}
+	gameState.KingdomTransport.Unlocks[4] = stormArrivalTestUnlock(time.Now().UTC(), gameState.Session.ConnectionGeneration)
 
 	_, err := planKingdomTroopShipment(t.Context(), Intent.PlanningContext{State: gameState, GameData: gameData}, json.RawMessage(`{
 		"sourceCastleId":10,"targetCastleId":40,"targetKingdomId":4,"units":[{"unitId":30,"amount":1}]
@@ -599,7 +599,7 @@ func TestKingdomTroopShipmentRejectsStormBelowMeadFloor(t *testing.T) {
 	gameState.Castles[donor.ID] = donor
 	gameState.Castles[target.ID] = target
 	gameState.KingdomTransport.ObservedAt = time.Now().UTC()
-	gameState.KingdomTransport.Unlocks[4] = State.KingdomTransportUnlock{KingdomID: 4, Unlocked: true}
+	gameState.KingdomTransport.Unlocks[4] = stormArrivalTestUnlock(time.Now().UTC(), gameState.Session.ConnectionGeneration)
 
 	_, err := planKingdomTroopShipment(t.Context(), Intent.PlanningContext{
 		State: gameState, GameData: gameData,
@@ -626,7 +626,7 @@ func TestKingdomTroopShipmentCapCountsAwayTargetTroops(t *testing.T) {
 		Units: map[State.UnitID]int64{10: 6},
 	}
 	gameState.KingdomTransport.ObservedAt = time.Now().UTC()
-	gameState.KingdomTransport.Unlocks[4] = State.KingdomTransportUnlock{KingdomID: 4, Unlocked: true}
+	gameState.KingdomTransport.Unlocks[4] = stormArrivalTestUnlock(time.Now().UTC(), gameState.Session.ConnectionGeneration)
 
 	_, err := planKingdomTroopShipment(t.Context(), Intent.PlanningContext{
 		State: gameState, GameData: gameData,
@@ -651,7 +651,7 @@ func TestKingdomTroopShipmentAddsExecutionTimeCapGuard(t *testing.T) {
 	gameState.Castles[donor.ID] = donor
 	gameState.Castles[target.ID] = target
 	gameState.KingdomTransport.ObservedAt = time.Now().UTC()
-	gameState.KingdomTransport.Unlocks[4] = State.KingdomTransportUnlock{KingdomID: 4, Unlocked: true}
+	gameState.KingdomTransport.Unlocks[4] = stormArrivalTestUnlock(time.Now().UTC(), gameState.Session.ConnectionGeneration)
 
 	plan, err := planKingdomTroopShipment(t.Context(), Intent.PlanningContext{
 		State: gameState, GameData: gameData,
@@ -677,7 +677,7 @@ func TestKingdomTroopShipmentRejectsChangedExpectedAttackReset(t *testing.T) {
 	gameState.Castles[donor.ID] = donor
 	gameState.Castles[target.ID] = target
 	gameState.KingdomTransport.ObservedAt = time.Now().UTC()
-	gameState.KingdomTransport.Unlocks[4] = State.KingdomTransportUnlock{KingdomID: 4, Unlocked: true}
+	gameState.KingdomTransport.Unlocks[4] = stormArrivalTestUnlock(time.Now().UTC(), gameState.Session.ConnectionGeneration)
 	gameState.DailyAttacks.SessionStartedAt = time.Date(2026, time.September, 9, 0, 0, 0, 0, time.UTC)
 	expected := gameState.DailyAttacks.SessionStartedAt.Add(-24 * time.Hour)
 	arguments, err := json.Marshal(kingdomTroopShipmentRequest{
@@ -700,7 +700,7 @@ func TestKingdomTroopShipmentRejectsChangedExpectedAttackReset(t *testing.T) {
 func kingdomTroopIntentGameData(t *testing.T) *GameData.Store {
 	t.Helper()
 	store, err := GameData.DecodeStore([]byte(`{
-		"versionInfo":[],"buildings":[],
+		"versionInfo":[],"buildings":[],"kingdoms":[{"kID":4,"unitTravelTime":7200}],
 		"units":[{"wodID":10},{"wodID":20},{"wodID":30,"slotTypes":"1,2"}],
 		"resources":[{"resourceID":12,"JSONKey":"MEAD"}],
 		"currencies":[{"currencyID":1005,"JSONKey":"MS5"}],

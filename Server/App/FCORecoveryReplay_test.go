@@ -62,6 +62,7 @@ func TestQA128RealFinishPlannerUnknownRefreshMustNotReplay(t *testing.T) {
 	data := buildingIntentGameData(t)
 	engine := Intent.NewEngine(registry, store, coinGateStoreProvider{store: data}, sender, pipeline)
 	engine.SetDispatchEvidenceCollector(captureDispatchBoundaryEvidence)
+	engine.SetFinalDispatchProvider(newFinalDispatchGates(newCoinDispatchGate(), newTravelTicketDispatchGate()))
 	if err := engine.RegisterStepResolver("building.finish_free.build", resolveBuildingFinishFreeStep); err != nil {
 		t.Fatal(err)
 	}

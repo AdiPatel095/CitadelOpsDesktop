@@ -4,12 +4,14 @@ import (
 	"CitadelDesktop/Server/Localization"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"sort"
 	"strconv"
 	"strings"
 	"time"
 
+	"CitadelDesktop/Server/Automation"
 	"CitadelDesktop/Server/Configuration"
 	"CitadelDesktop/Server/GameData"
 	"CitadelDesktop/Server/Intent"
@@ -78,6 +80,9 @@ func planKingdomTroopShipment(_ context.Context, input Intent.PlanningContext, a
 	if input.State.KingdomTransport.ObservedAt.IsZero() || !observed || !unlock.Unlocked {
 		return Intent.Plan{}, Localization.WithError(fmt.Errorf("kingdom troop transport to %d is not observed as unlocked", target.KingdomID), Localization.New("server.app.kingdom_troop_transport_to.4cc4aa9e", "kingdom troop transport to {p0} is not observed as unlocked", Localization.Params{"p0": fmt.Sprintf("%d", target.KingdomID)}))
 	}
+	if block := Automation.StormKingdomArrivalBlock(&input.State, input.GameData, target.KingdomID, time.Now().UTC()); block != nil {
+		return Intent.Plan{}, Localization.WithError(errors.New(block.Fallback), block)
+	}
 	if kingdomTroopTransportPending(input.State, target.KingdomID) {
 		return Intent.Plan{}, Localization.WithError(fmt.Errorf("kingdom %d already has a pending or settling troop transport", target.KingdomID), Localization.New("server.app.kingdom_p_already_has.d3109204", "kingdom {p0} already has a pending or settling troop transport", Localization.Params{"p0": fmt.Sprintf("%d", target.KingdomID)}))
 	}
@@ -135,6 +140,10 @@ func planKingdomTroopShipment(_ context.Context, input Intent.PlanningContext, a
 		})
 	}
 	steps = append(steps, commandStep("Start kingdom troop transfer", "kut", payload, "kut", Localization.New("server.app.start_kingdom_troop_transfer.9fd0d909", "Start kingdom troop transfer", nil)))
+	if target.KingdomID == GameData.StormKingdomID {
+		steps[len(steps)-1].PreDispatchAction = "kingdom.transport.verify_available"
+		steps[len(steps)-1].PreDispatchArguments = guardArguments
+	}
 	if strings.TrimSpace(request.Owner) != "" {
 		if strings.TrimSpace(request.WorkflowID) == "" {
 			return Intent.Plan{}, Localization.WithError(fmt.Errorf("owned kingdom troop transfer requires workflowId"), Localization.New("server.app.owned_kingdom_troop_transfer.e62d15f9", "owned kingdom troop transfer requires workflowId", nil))
@@ -443,6 +452,9 @@ func (application *Application) guardKingdomTroopWorkflowDispatch(ctx context.Co
 		return err
 	}
 	gameState := application.State.ReadOnlyView()
+	if block := Automation.StormKingdomArrivalBlock(&gameState, currentGameData(application), request.TargetKingdomID, time.Now().UTC()); block != nil {
+		return Localization.WithError(errors.New(block.Fallback), block)
+	}
 	workflow, exists := gameState.KingdomTransport.TroopWorkflows[request.TargetKingdomID]
 	if !exists || workflow.ID != request.WorkflowID || workflow.Owner != request.Owner || workflow.Status != "armed" {
 		return Localization.WithError(fmt.Errorf("%w: owned kingdom troop workflow changed before dispatch", Intent.ErrPlanStale), Localization.New("server.app.intent_plan_became_stale.85fe9706", "intent plan became stale before dispatch: owned kingdom troop workflow changed before dispatch", nil))

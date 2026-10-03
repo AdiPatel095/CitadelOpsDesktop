@@ -43,7 +43,7 @@ func ticketReplayInput(t *testing.T, rows string) (Intent.PlanningContext, *Stat
 			t.Fatal(err)
 		}
 	}
-	input := Intent.PlanningContext{State: store.Snapshot(), GameData: data}
+	input := supportCommanderTestInput(t, Intent.PlanningContext{State: store.Snapshot(), GameData: data})
 	return input, store
 }
 
