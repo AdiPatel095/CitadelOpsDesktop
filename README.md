@@ -141,3 +141,39 @@ commit or share those local files.
 For the application boundaries and package ownership model, see
 [`Architecture.md`](Architecture.md). Feature-specific notes are under
 [`Docs/`](Docs/).
+
+## Worker/backend cell contracts
+
+Any PR changing a cell contract type must regenerate and sync its synthetic
+fixtures from both senders' production Go types. Merge the worker and backend
+contract PRs together. No real account data belongs in these fixtures.
+
+From the desktop checkout:
+
+```sh
+node scripts/contracts/sync-cell-contracts.mjs --backend ../CitadelOpsBackend
+node scripts/contracts/sync-cell-contracts.mjs --backend ../CitadelOpsBackend --check
+```
+
+From the backend checkout, use the same desktop-owned script:
+
+```sh
+node ../CitadelOpsDesktop/scripts/contracts/sync-cell-contracts.mjs --backend .
+node ../CitadelOpsDesktop/scripts/contracts/sync-cell-contracts.mjs --backend . --check
+```
+
+Use the actual sibling checkout paths for worktrees. The sync runs both sender
+`TestGenerateCellContracts` tests with `-update`, copies payloads and generated
+`.keys.json` required-ness metadata both ways, then runs both
+`TestReceiveCellContracts` tests. `--check` writes no fixtures and fails on sender
+golden drift, differing copies, missing files or extra copied files. Sophie runs
+`--check` before passing either PR.
+
+Receivers use production decoding: plain JSON on the backend and
+`decodeControlJSON` (strict unknown-field rejection) on the worker. Presence and
+required-ness are checked recursively; reviewed optional keys and their reasons
+live in each receiver's `testdata/contracts/optional-keys.json`. The backend's
+load byte fields are signed, so overrides exercise their maximum positive value;
+other unsigned fields exceed the signed range. Raw configuration sections remain
+opaque JSON as in production. Dashboard streams and portal contracts are outside
+this suite.

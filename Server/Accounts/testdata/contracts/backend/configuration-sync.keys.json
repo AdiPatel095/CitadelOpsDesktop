@@ -1,0 +1,10 @@
+{
+  "configuration": false,
+  "configuration.revision": false,
+  "configuration.schemaVersion": false,
+  "configuration.sections": false,
+  "configuration.updatedAt": false,
+  "digest": false,
+  "placementEpoch": false,
+  "schemaVersion": false
+}
