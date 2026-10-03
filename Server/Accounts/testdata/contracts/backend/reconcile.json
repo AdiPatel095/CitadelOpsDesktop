@@ -1,0 +1,23 @@
+{
+  "preserveRuntimes": [
+    "preserveRuntimes"
+  ],
+  "schemaVersion": 5,
+  "revision": 9223372036854775813,
+  "runtimes": [
+    {
+      "runtimeId": "runtimeId",
+      "tenantId": "tenantId",
+      "placementEpoch": 9223372036854775818,
+      "leaseExpiresAt": "2026-10-03T12:34:56.123456789Z",
+      "startSession": true,
+      "onDisconnect": "onDisconnect",
+      "privateMetrics": {
+        "token": "token",
+        "expiresAt": "2026-10-03T12:34:56.123456789Z"
+      },
+      "desiredConfigurationRevision": 9223372036854775824,
+      "desiredConfigurationDigest": "desiredConfigurationDigest"
+    }
+  ]
+}

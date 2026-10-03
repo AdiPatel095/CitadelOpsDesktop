@@ -115,7 +115,7 @@ func (store *SQLiteOperationStore) pruneTerminalHistory(ctx context.Context) err
 			SELECT operation_id
 			FROM intent_operations
 			WHERE status NOT IN (?, ?, ?, ?, ?)
-			ORDER BY updated_at DESC
+			ORDER BY julianday(updated_at) DESC, rowid DESC
 			LIMIT -1 OFFSET ?
 		)
 	`, StatusPlanning, StatusQueued, StatusRunning, StatusPaused, StatusReconciling, operationHistoryLimit)
@@ -247,7 +247,7 @@ func (store *SQLiteOperationStore) Recent(ctx context.Context, limit int) ([]Sto
 	rows, err := store.db.QueryContext(ctx, `
 		SELECT request_hash, receipt_json
 		FROM intent_operations
-		ORDER BY updated_at DESC
+		ORDER BY julianday(updated_at) DESC, rowid DESC
 		LIMIT ?
 	`, limit)
 	if err != nil {
