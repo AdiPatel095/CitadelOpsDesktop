@@ -18,7 +18,7 @@ const supportUnitTypeLimit = Protocol.MaximumSupportUnitTypes
 
 // Freeze the freshly resolved manifest once. Each disjoint batch becomes an
 // ordinary acknowledged step, so a resume cannot repartition or replay troops.
-func supportDispatchStep(name string, source State.CastleState, target State.AllianceHolding, wait int, amounts map[State.UnitID]int64, after Intent.Step) Intent.Step {
+func supportDispatchStep(input Intent.PlanningContext, name string, source State.CastleState, target State.AllianceHolding, wait int, amounts map[State.UnitID]int64, after Intent.Step) (Intent.Step, error) {
 	ids := make([]int64, 0, len(amounts))
 	for id, amount := range amounts {
 		if amount > 0 {
@@ -26,6 +26,9 @@ func supportDispatchStep(name string, source State.CastleState, target State.All
 		}
 	}
 	sort.Slice(ids, func(i, j int) bool { return ids[i] < ids[j] })
+	if err := Intent.RequireTravelTickets(input, int64((len(ids)+supportUnitTypeLimit-1)/supportUnitTypeLimit)); err != nil {
+		return Intent.Step{}, err
+	}
 	steps := []Intent.Step{}
 	for start := 0; start < len(ids); start += supportUnitTypeLimit {
 		end := min(start+supportUnitTypeLimit, len(ids))
@@ -60,9 +63,9 @@ func supportDispatchStep(name string, source State.CastleState, target State.All
 	}
 	// Preserve the single-command resolver contract when only one batch is needed.
 	if len(ids) <= supportUnitTypeLimit && len(steps) > 0 {
-		return steps[0]
+		return steps[0], nil
 	}
-	return Intent.Step{Batch: steps}
+	return Intent.Step{Batch: steps}, nil
 }
 
 // A paused operation keeps its frozen batches. Fail instead of sending a stale

@@ -126,6 +126,22 @@ func (engine *Engine) failurePresentation(receipt Receipt, err error) *FailurePr
 		presentation.Recovery = "The feature lane will reevaluate after troop availability changes."
 		presentation.RecoveryDescriptor = Localization.New("server.intent.the_feature_lane_will.482d1118", "The feature lane will reevaluate after troop availability changes.", nil)
 		presentation.Toast = !automationActor(receipt.Actor) || receipt.Status != StatusFailed
+	case errors.Is(err, ErrCurrencyUnavailable):
+		presentation.Kind = FailureAvailability
+		presentation.Severity = FailureSeverityWarning
+		presentation.ExplanationDescriptor = Localization.FromError(err)
+		presentation.Explanation = "Travel ticket balance is unavailable; waiting for fresh game data"
+		var shortage *CurrencyUnavailableError
+		if errors.As(err, &shortage) {
+			presentation.ExplanationDescriptor = shortage.LocalizationMessage()
+			presentation.Explanation = presentation.ExplanationDescriptor.Fallback
+			if shortage.Known {
+				presentation.Explanation = fmt.Sprintf("Not enough travel tickets: %d needed, %d available", shortage.Required, max(int64(0), shortage.Observed-shortage.Pending))
+			}
+		}
+		presentation.Recovery = "The feature lane will reevaluate after the authoritative travel ticket balance changes."
+		presentation.RecoveryDescriptor = Localization.New("server.travel_tickets.recovery", "The feature lane will reevaluate after the authoritative travel ticket balance changes.", nil)
+		presentation.Toast = !automationActor(receipt.Actor)
 	case errors.Is(err, ErrCoinUnavailable):
 		presentation.Kind = FailureAvailability
 		presentation.Severity = FailureSeverityWarning

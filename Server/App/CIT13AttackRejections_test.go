@@ -79,7 +79,7 @@ func TestAttackGuardsRefuseRejectedTargets(t *testing.T) {
 	State.RecordAttackTargetRejection(&gameState, State.AttackTargetRejection{
 		KingdomID: 1, TargetTypeID: State.MapTypeKingdomFortress, X: 101, Y: 100, Opcode: "abi", Code: 95, ObservedAt: now,
 	})
-	application := &Application{State: State.NewStore(&gameState)}
+	application := &Application{State: travelTicketTestStore(&gameState)}
 	guardArguments, _ := json.Marshal(craSendGuardRequest{
 		SourceX: 100, SourceY: 100, TargetX: 101, TargetY: 100, KingdomID: 1,
 		DialogObservedAt: now.Add(-time.Second),
@@ -94,6 +94,7 @@ func TestAttackGuardsRefuseRejectedTargets(t *testing.T) {
 func TestStormCRACoolingDownRecordsNoLaunchAndDefersTarget(t *testing.T) {
 	now := time.Now().UTC()
 	gameState := State.NewGameState()
+	fundTravelTicketsForTest(&gameState)
 	gameState.Session = State.SessionState{
 		Generation: 1, BaselineGeneration: 1, ConnectionGeneration: 1,
 		Status: "connected", LoggedIn: true, SocketReady: true, Namespace: "EmpireEx_21",
@@ -102,7 +103,7 @@ func TestStormCRACoolingDownRecordsNoLaunchAndDefersTarget(t *testing.T) {
 		"101:102": {KingdomID: stormIntentKingdomID, X: 101, Y: 102, TypeID: stormIntentFortMapTypeID, StormIsleID: 7, ObservedAt: now},
 		"110:110": {KingdomID: stormIntentKingdomID, X: 110, Y: 110, TypeID: stormIntentFortMapTypeID, StormIsleID: 7, ObservedAt: now},
 	}
-	stateStore := State.NewStore(&gameState)
+	stateStore := travelTicketTestStore(&gameState)
 	registry := Ingest.NewRegistry()
 	if err := Ingest.RegisterCoreReducers(registry); err != nil {
 		t.Fatal(err)
@@ -185,6 +186,7 @@ func (sender *craRejectingSender) Send(ctx context.Context, payload []byte) erro
 func TestStormAttackContextRefusesRejectedTargetWithoutStale(t *testing.T) {
 	now := time.Now().UTC()
 	state := State.NewGameState()
+	fundTravelTicketsForTest(&state)
 	state.Castles[40] = State.CastleState{ID: 40, KingdomID: stormIntentKingdomID, X: 100, Y: 100, Focused: true}
 	state.Commanders[43] = State.CommanderState{ID: 43, Available: true}
 	state.Map[stormIntentKingdomID] = map[string]State.MapObservation{
@@ -235,6 +237,7 @@ func indexOf(values []string, wanted string) int {
 func TestStormPlanAccountsLaunchOnlyAfterCRA(t *testing.T) {
 	now := time.Now().UTC()
 	state := State.NewGameState()
+	fundTravelTicketsForTest(&state)
 	state.Castles[40] = State.CastleState{ID: 40, KingdomID: stormIntentKingdomID, X: 100, Y: 100, Focused: true}
 	state.Commanders[43] = State.CommanderState{ID: 43, Available: true}
 	state.Map[stormIntentKingdomID] = map[string]State.MapObservation{

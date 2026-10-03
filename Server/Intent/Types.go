@@ -47,11 +47,12 @@ type CommanderHoldRegistry interface {
 }
 
 type PlanningContext struct {
-	State           State.GameState
-	GameData        *GameData.Store
-	Language        *GameData.LanguageStore
-	Partitions      State.PartitionVersions
-	ProtocolContext State.ProtocolContextState
+	CurrencyAvailability CurrencyAvailabilityProvider
+	State                State.GameState
+	GameData             *GameData.Store
+	Language             *GameData.LanguageStore
+	Partitions           State.PartitionVersions
+	ProtocolContext      State.ProtocolContextState
 	// CommanderHolds is consulted (and fed) by CRA commander selection so
 	// back-to-back launches never race the movement refresh into the same
 	// commander. Nil outside full application composition (tests).

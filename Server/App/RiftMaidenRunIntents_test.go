@@ -19,6 +19,7 @@ func TestRiftMaidenRunStartPersistsExactGoalAndBusyCandidates(t *testing.T) {
 		t.Fatal(err)
 	}
 	gameState := State.NewGameState()
+	fundTravelTicketsForTest(&gameState)
 	gameState.Castles[1] = State.CastleState{
 		ID: 1, SlotType: 1, KingdomID: 0, X: 7, Y: 8,
 		Units: State.CastleUnits{Stationed: map[State.UnitID]int64{216: 99}},
@@ -44,7 +45,7 @@ func TestRiftMaidenRunStartPersistsExactGoalAndBusyCandidates(t *testing.T) {
 		!containsString(plan.Claims, "rift-launch:maiden-wave") {
 		t.Fatalf("start plan = %#v", plan)
 	}
-	application := &Application{State: State.NewStore(&gameState)}
+	application := &Application{State: travelTicketTestStore(&gameState)}
 	if err := application.startRiftMaidenRun(context.Background(), plan.Steps[0].ActionArguments); err != nil {
 		t.Fatal(err)
 	}
@@ -77,6 +78,7 @@ func TestRiftMaidenRunLaunchCannotExceedRemainingGoal(t *testing.T) {
 		t.Fatal(err)
 	}
 	gameState := State.NewGameState()
+	fundTravelTicketsForTest(&gameState)
 	gameState.Castles[1] = State.CastleState{
 		ID: 1, SlotType: 1, KingdomID: 0, X: 7, Y: 8,
 		Units: State.CastleUnits{Stationed: map[State.UnitID]int64{216: 99}},

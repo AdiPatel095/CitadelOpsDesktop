@@ -440,6 +440,11 @@ func planFortressAttack(_ context.Context, input Intent.PlanningContext, argumen
 	if err != nil {
 		return Intent.Plan{}, err
 	}
+	if _, travel := horseTravelBoostFields(request.HorseTravelBoostID); travel == 1 {
+		if err := Intent.RequireTravelTickets(input, 1); err != nil {
+			return Intent.Plan{}, err
+		}
+	}
 	if blockedPlan, blocked, err := dailyAttackLimitPlan(input.State, request.DailyAttackLimit); err != nil {
 		return Intent.Plan{}, err
 	} else if blocked {
@@ -516,7 +521,7 @@ func buildFortressAttackStep(input Intent.PlanningContext, request fortressResol
 		return Intent.Step{}, err
 	}
 	attack := towerAttackBody(source, target, request.CommanderID, State.UnitID(GameData.DirewolfUnitID), capacity.Capacity.Left, capacity.Capacity.Right)
-	if err := applyCastleHorseTravelBoost(&attack, input.GameData, source, request.HorseTravelBoostID); err != nil {
+	if err := applyCastleHorseTravelBoost(&attack, input, source, request.HorseTravelBoostID); err != nil {
 		return Intent.Step{}, Localization.WithError(fmt.Errorf("resolve fortress horse travel boost: %w", err), Localization.ErrorContext(Localization.New("server.app.resolve_fortress_horse_travel.7e4df96c", "resolve fortress horse travel boost", nil), err))
 	}
 	body, err := json.Marshal(attack)

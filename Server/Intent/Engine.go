@@ -2259,6 +2259,9 @@ func (engine *Engine) SetCommanderHolds(registry CommanderHoldRegistry) {
 
 func (engine *Engine) planningContext() PlanningContext {
 	input := PlanningContext{CommanderHolds: engine.commanderHolds}
+	engine.mu.RLock()
+	input.CurrencyAvailability, _ = engine.finalDispatchProvider.(CurrencyAvailabilityProvider)
+	engine.mu.RUnlock()
 	if provider, ok := engine.state.(interface{ PlanningView() State.PlanningView }); ok {
 		view := provider.PlanningView()
 		input.State = view.State

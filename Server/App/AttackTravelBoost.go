@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"CitadelDesktop/Server/GameData"
+	"CitadelDesktop/Server/Intent"
 	"CitadelDesktop/Server/State"
 )
 
@@ -64,16 +65,21 @@ func resolveCastleHorseTravelBoostFields(
 
 func applyCastleHorseTravelBoost(
 	body *attackBody,
-	gameData *GameData.Store,
+	input Intent.PlanningContext,
 	castle State.CastleState,
 	value int,
 ) error {
 	if body == nil {
 		return Localization.WithError(fmt.Errorf("attack body is unavailable"), Localization.New("server.app.attack_body_is_unavailable.3cdf3bc4", "attack body is unavailable", nil))
 	}
-	booster, premiumTravel, err := resolveCastleHorseTravelBoostFields(gameData, castle, value)
+	booster, premiumTravel, err := resolveCastleHorseTravelBoostFields(input.GameData, castle, value)
 	if err != nil {
 		return err
+	}
+	if premiumTravel == 1 {
+		if err := Intent.RequireTravelTickets(input, 1); err != nil {
+			return err
+		}
 	}
 	body.Booster = booster
 	body.PremiumTravel = premiumTravel

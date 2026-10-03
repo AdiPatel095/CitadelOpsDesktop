@@ -130,6 +130,8 @@ func autoAdvisorPolicySnapshot(t *testing.T, now time.Time) Snapshot {
 	}
 	gameState.Commanders[1] = State.CommanderState{ID: 1, Available: true}
 	gameState.Player.Resources[1] = 100_000
+	gameState.Session.ConnectionGeneration = 1
+	gameState.Player.CurrencyObservations[22] = State.PlayerResourceObservation{ObservedAt: now, ConnectionGeneration: 1}
 	gameState.Player.Currencies[22] = 10
 	gameState.Player.Currencies[1005] = 10
 	gameState.EventScores.ActiveEventID = 80

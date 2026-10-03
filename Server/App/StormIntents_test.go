@@ -145,6 +145,7 @@ func TestPlanStormCastleUnlockUsesCapturedOfficialWireShape(t *testing.T) {
 		t.Fatal(err)
 	}
 	state := State.NewGameState()
+	fundTravelTicketsForTest(&state)
 	state.Player.ID = 42
 	state.Player.Level = 70
 	state.KingdomTransport.ObservedAt = time.Now().UTC()
@@ -178,6 +179,7 @@ func TestPlanStormCastleUnlockUsesCapturedOfficialWireShape(t *testing.T) {
 
 func TestPlanStormCastleRefreshRequestsCurrentPlayerDirectory(t *testing.T) {
 	state := State.NewGameState()
+	fundTravelTicketsForTest(&state)
 	state.Player.ID = 42
 	plan, err := planStormCastleRefresh(t.Context(), Intent.PlanningContext{State: state}, nil)
 	if err != nil {
@@ -200,6 +202,7 @@ func TestStormAttackReplansWhenCommanderAvailabilityChanges(t *testing.T) {
 	}
 	now := time.Now().UTC()
 	state := State.NewGameState()
+	fundTravelTicketsForTest(&state)
 	state.Castles[40] = State.CastleState{ID: 40, KingdomID: stormIntentKingdomID, X: 100, Y: 100, Focused: true}
 	state.Commanders[43] = State.CommanderState{ID: 43, Available: false}
 	state.Map[stormIntentKingdomID] = map[string]State.MapObservation{
@@ -259,6 +262,7 @@ func TestStormAttackResolverDoesNotExpandConcretePresetAndEnforcesTroopReserve(t
 	}
 	now := time.Now().UTC()
 	state := State.NewGameState()
+	fundTravelTicketsForTest(&state)
 	state.Castles[40] = State.CastleState{
 		ID: 40, KingdomID: stormIntentKingdomID, X: 100, Y: 100, Focused: true,
 		Units: State.CastleUnits{Stationed: map[State.UnitID]int64{10: 110}},
@@ -375,6 +379,7 @@ func TestStormMapConcentricRingsExpandOutwardFromSixFifty(t *testing.T) {
 func TestStormMapSweepExpandsOnlyForTargetsInsideEdgeBuffer(t *testing.T) {
 	startedAt := time.Date(2026, time.July, 23, 12, 0, 0, 0, time.UTC)
 	state := State.NewGameState()
+	fundTravelTicketsForTest(&state)
 	state.Map[stormIntentKingdomID] = map[string]State.MapObservation{
 		"500:650": {
 			KingdomID: stormIntentKingdomID, X: 500, Y: 650, TypeID: 12,
@@ -414,6 +419,7 @@ func TestStormMapSweepExpandsOnlyForTargetsInsideEdgeBuffer(t *testing.T) {
 
 func TestPlanFullStormMapScanUsesOneLeaseHeldBurstStep(t *testing.T) {
 	state := State.NewGameState()
+	fundTravelTicketsForTest(&state)
 	state.Castles[40] = State.CastleState{
 		ID: 40, KingdomID: stormIntentKingdomID, X: 100, Y: 50, Focused: true,
 	}
@@ -437,6 +443,7 @@ func TestPlanFullStormMapScanUsesOneLeaseHeldBurstStep(t *testing.T) {
 
 func TestPlanCooperativeStormMapScanUsesOnlyLeasedWindows(t *testing.T) {
 	state := State.NewGameState()
+	fundTravelTicketsForTest(&state)
 	state.Castles[40] = State.CastleState{
 		ID: 40, KingdomID: stormIntentKingdomID, X: 100, Y: 50, Focused: true,
 	}
@@ -557,6 +564,7 @@ func TestStormMapGAABurstPreservesCatalogResponseCodeMeaning(t *testing.T) {
 
 func TestPlanStormMapScanRejectsSecondAttemptInsideTwoHours(t *testing.T) {
 	state := State.NewGameState()
+	fundTravelTicketsForTest(&state)
 	state.Castles[40] = State.CastleState{ID: 40, KingdomID: stormIntentKingdomID, X: 300, Y: 300, Focused: true}
 	state.Storm.Map = State.StormMapState{
 		SourceCastleID: 40,
@@ -576,6 +584,7 @@ func TestPlanStormMapScanRejectsSecondAttemptInsideTwoHours(t *testing.T) {
 func TestCaptureStormScanBuildsAuthoritativeMapState(t *testing.T) {
 	startedAt := time.Date(2026, time.July, 15, 12, 0, 0, 0, time.UTC)
 	state := State.NewGameState()
+	fundTravelTicketsForTest(&state)
 	state.Session.ServerURL = "storm-test.example"
 	state.Player.ID = 99
 	state.Castles[40] = State.CastleState{ID: 40, KingdomID: stormIntentKingdomID, X: 300, Y: 300, Focused: true}
@@ -593,7 +602,7 @@ func TestCaptureStormScanBuildsAuthoritativeMapState(t *testing.T) {
 			ObservedAt: startedAt.Add(2 * time.Second),
 		},
 	}
-	application := &Application{State: State.NewStore(&state)}
+	application := &Application{State: travelTicketTestStore(&state)}
 	scanRequest := stormMapScanRequest{
 		SourceCastleID: 40,
 		FullMap:        true,
@@ -640,6 +649,7 @@ func TestCaptureStormScanBuildsAuthoritativeMapState(t *testing.T) {
 func TestCaptureTargetedStormScanRefreshesTrackedCooldown(t *testing.T) {
 	startedAt := time.Date(2026, time.July, 21, 19, 18, 0, 0, time.UTC)
 	state := State.NewGameState()
+	fundTravelTicketsForTest(&state)
 	state.Castles[40] = State.CastleState{ID: 40, KingdomID: stormIntentKingdomID, Focused: true}
 	state.Storm.Map = State.StormMapState{
 		SourceCastleID: 40,
@@ -657,7 +667,7 @@ func TestCaptureTargetedStormScanRefreshesTrackedCooldown(t *testing.T) {
 			StormCooldownRemaining: 36_000, ObservedAt: startedAt.Add(time.Second),
 		},
 	}
-	application := &Application{State: State.NewStore(&state)}
+	application := &Application{State: travelTicketTestStore(&state)}
 	request, err := json.Marshal(stormMapScanRequest{
 		SourceCastleID: 40, Targeted: true,
 		Bounds: State.StormMapBounds{X1: 612, Y1: 667, X2: 612, Y2: 667}, ScanStartedAt: startedAt,
@@ -684,6 +694,7 @@ func TestStormAttackContextEnforcesMinimumFortAttacksRemaining(t *testing.T) {
 		t.Fatal(err)
 	}
 	state := State.NewGameState()
+	fundTravelTicketsForTest(&state)
 	state.Castles[40] = State.CastleState{ID: 40, KingdomID: 4}
 	state.Map[4] = map[string]State.MapObservation{
 		"101:102": {
@@ -736,6 +747,7 @@ func TestStormAttackContextUsesIslandReadyAndExpiryLabels(t *testing.T) {
 	}
 	now := time.Now().UTC()
 	state := State.NewGameState()
+	fundTravelTicketsForTest(&state)
 	state.Castles[40] = State.CastleState{ID: 40, KingdomID: 4}
 	target := State.MapObservation{
 		KingdomID: 4, X: 101, Y: 102, TypeID: stormIntentIslandMapTypeID, OwnerID: -403,
@@ -772,12 +784,13 @@ func TestStormAttackContextUsesIslandReadyAndExpiryLabels(t *testing.T) {
 
 func TestConsumeStormIslandTargetRecordsReportGatedReturn(t *testing.T) {
 	state := State.NewGameState()
+	fundTravelTicketsForTest(&state)
 	state.Castles[40] = State.CastleState{ID: 40, KingdomID: 4}
 	state.Map[4] = map[string]State.MapObservation{
 		"101:102": {KingdomID: 4, X: 101, Y: 102, TypeID: stormIntentIslandMapTypeID, ObjectID: 777},
 	}
 	state.Storm.Map.Targets["101:102"] = state.Map[4]["101:102"]
-	application := &Application{State: State.NewStore(&state)}
+	application := &Application{State: travelTicketTestStore(&state)}
 	arguments, err := json.Marshal(stormTargetConsumeRequest{
 		SourceCastleID: 40, KingdomID: 4, TargetTypeID: stormIntentIslandMapTypeID,
 		TargetX: 101, TargetY: 102, IslandObjectID: 777, LeaveBehind: 1,
@@ -810,6 +823,7 @@ func TestPlanStormIslandReturnUsesIslandAsSourceAndStormCastleAsDestination(t *t
 		t.Fatal(err)
 	}
 	state := State.NewGameState()
+	fundTravelTicketsForTest(&state)
 	state.Castles[40] = State.CastleState{ID: 40, KingdomID: 4, X: 200, Y: 300, Focused: true}
 	key := State.StormIslandReturnKey(4, 101, 102)
 	state.Storm.IslandReturns[key] = State.StormIslandReturnState{
@@ -871,6 +885,7 @@ func TestPlanStormShopPurchaseUsesLunaStorefrontWireShape(t *testing.T) {
 	}
 	now := time.Now().UTC()
 	state := State.NewGameState()
+	fundTravelTicketsForTest(&state)
 	state.Castles[40] = State.CastleState{
 		ID: 40, KingdomID: 4,
 		Resources: map[State.ResourceID]State.ResourceBalance{GameData.StormAquamarineID: {Amount: 100_000}},
@@ -971,6 +986,7 @@ func TestPlanStormShopPurchaseUsesLunaStorefrontWireShape(t *testing.T) {
 func TestCooperativeCaptureBindsIdentityForTargetedRefresh(t *testing.T) {
 	startedAt := time.Date(2026, time.August, 17, 0, 0, 0, 0, time.UTC)
 	state := State.NewGameState()
+	fundTravelTicketsForTest(&state)
 	state.Session.ServerURL = "wss://ep-live-us1-game.goodgamestudios.com:443"
 	state.Player.ID = 901
 	state.Castles[40] = State.CastleState{ID: 40, KingdomID: stormIntentKingdomID, Focused: true}
@@ -1026,10 +1042,11 @@ func TestCooperativeCaptureBindsIdentityForTargetedRefresh(t *testing.T) {
 func TestTargetedRefreshBindsUnboundIdentity(t *testing.T) {
 	startedAt := time.Date(2026, time.August, 17, 1, 0, 0, 0, time.UTC)
 	state := State.NewGameState()
+	fundTravelTicketsForTest(&state)
 	state.Session.ServerURL = "wss://ep-live-us1-game.goodgamestudios.com:443"
 	state.Player.ID = 901
 	state.Castles[40] = State.CastleState{ID: 40, KingdomID: stormIntentKingdomID, Focused: true}
-	application := &Application{State: State.NewStore(&state)}
+	application := &Application{State: travelTicketTestStore(&state)}
 	if err := application.captureStormScanRequest(stormMapScanRequest{
 		SourceCastleID: 40, Targeted: true,
 		Bounds:        State.StormMapBounds{X1: 650, Y1: 650, X2: 650, Y2: 650},
@@ -1085,6 +1102,7 @@ func TestStormFortWithoutObjectIDPlansConsumesAndResolves(t *testing.T) {
 	}
 	now := time.Now().UTC()
 	state := State.NewGameState()
+	fundTravelTicketsForTest(&state)
 	state.Castles[40] = State.CastleState{
 		ID: 40, KingdomID: stormIntentKingdomID, X: 100, Y: 100, Focused: true,
 		Units: State.CastleUnits{Stationed: map[State.UnitID]int64{10: 110}},
@@ -1116,7 +1134,7 @@ func TestStormFortWithoutObjectIDPlansConsumesAndResolves(t *testing.T) {
 		consume.TargetTypeID != stormIntentFortMapTypeID {
 		t.Fatalf("fort consume arguments = %s err=%v", consumeArguments, err)
 	}
-	stateStore := State.NewStore(&state)
+	stateStore := travelTicketTestStore(&state)
 	if err := (&Application{State: stateStore}).consumeStormTarget(t.Context(), consumeArguments); err != nil {
 		t.Fatalf("fort consumption with ObjectID 0 rejected: %v", err)
 	}
@@ -1158,13 +1176,14 @@ func TestStormIslandConsumeKeepsOfficialObjectID(t *testing.T) {
 		KingdomID: stormIntentKingdomID, X: 100, Y: 101, TypeID: stormIntentIslandMapTypeID, ObjectID: 3319,
 	}
 	state := State.NewGameState()
+	fundTravelTicketsForTest(&state)
 	state.Castles[40] = State.CastleState{ID: 40, KingdomID: stormIntentKingdomID, X: 90, Y: 90}
 	state.Storm.Map.Targets = map[string]State.MapObservation{"100:101": island}
 	arguments, _ := json.Marshal(stormTargetConsumeRequest{
 		SourceCastleID: 40, KingdomID: stormIntentKingdomID, TargetTypeID: stormIntentIslandMapTypeID,
 		TargetX: 100, TargetY: 101, IslandObjectID: island.ObjectID, LeaveBehind: 1,
 	})
-	stateStore := State.NewStore(&state)
+	stateStore := travelTicketTestStore(&state)
 	if err := (&Application{State: stateStore}).consumeStormTarget(t.Context(), arguments); err != nil {
 		t.Fatal(err)
 	}
@@ -1186,6 +1205,7 @@ func TestStormIslandConsumeKeepsOfficialObjectID(t *testing.T) {
 func TestHiddenStormFortIsRefusedByPlannerAndCRAGuard(t *testing.T) {
 	now := time.Now().UTC()
 	state := State.NewGameState()
+	fundTravelTicketsForTest(&state)
 	state.Castles[40] = State.CastleState{ID: 40, KingdomID: stormIntentKingdomID, X: 100, Y: 100, Focused: true}
 	state.Commanders[43] = State.CommanderState{ID: 43, Available: true}
 	fort := State.MapObservation{

@@ -430,7 +430,8 @@ func New(ctx context.Context, config Config) (*Application, error) {
 	session.SetAutomationLocked(application.automationLocked())
 	intents.SetExecutionGate(application.executionGate)
 	intents.SetAdmissionWeightProvider(application.attackAdmissionWeight)
-	intents.SetFinalDispatchProvider(application.coinGate)
+	dispatchGates := newFinalDispatchGates(application.coinGate, newTravelTicketDispatchGate())
+	intents.SetFinalDispatchProvider(dispatchGates)
 	application.Scheduler = Scheduling.NewScheduler(state, intents)
 	if err := application.registerCoreIntents(); err != nil {
 		return nil, err
@@ -488,6 +489,7 @@ func New(ctx context.Context, config Config) (*Application, error) {
 		Automation.NewAutoStormShopPolicy(),
 		Automation.NewAutoStormBuildPolicy(),
 	)
+	application.Automation.SetCurrencyAvailability(dispatchGates)
 	// A typed-nil store must never reach the interface, so pick the provider
 	// explicitly: telemetry on desktop, the receipt ledger when hosted.
 	var attackLaunchProvider Automation.AttackLaunchCountsProvider

@@ -552,6 +552,11 @@ func planStormAttack(_ context.Context, input Intent.PlanningContext, arguments 
 	if err != nil {
 		return Intent.Plan{}, err
 	}
+	if _, travel := horseTravelBoostFields(request.HorseTravelBoostID); travel == 1 {
+		if err := Intent.RequireTravelTickets(input, 1); err != nil {
+			return Intent.Plan{}, err
+		}
+	}
 	if blockedPlan, blocked, err := dailyAttackLimitPlan(input.State, request.DailyAttackLimit); err != nil {
 		return Intent.Plan{}, err
 	} else if blocked {
@@ -641,6 +646,9 @@ func planStormIslandReturn(_ context.Context, input Intent.PlanningContext, argu
 		amount := amounts[unitID]
 		wireUnits = append(wireUnits, [2]int64{int64(unitID), amount})
 		returnTotal += amount
+	}
+	if err := Intent.RequireTravelTickets(input, 1); err != nil {
+		return Intent.Plan{}, err
 	}
 	route, _ := json.Marshal(struct {
 		TargetX int `json:"TX"`
@@ -1538,7 +1546,7 @@ func (application *Application) resolveStormAttackStep(
 		return Intent.Step{}, Localization.WithError(fmt.Errorf("build Storm preset %q: %w", attackRequest.Preset.Name, err), Localization.ErrorContext(Localization.New("server.app.build_storm_preset_p.a5e2af16", "build Storm preset {p0}", Localization.Params{"p0": fmt.Sprintf("%q", attackRequest.Preset.Name)}), err))
 	}
 	body := invasionAttackBody(source, target, request.CommanderID, built)
-	if err := applyCastleHorseTravelBoost(&body, input.GameData, source, attackRequest.HorseTravelBoostID); err != nil {
+	if err := applyCastleHorseTravelBoost(&body, input, source, attackRequest.HorseTravelBoostID); err != nil {
 		return Intent.Step{}, Localization.WithError(fmt.Errorf("resolve Storm horse travel boost: %w", err), Localization.ErrorContext(Localization.New("server.app.resolve_storm_horse_travel.e47b07d3", "resolve Storm horse travel boost", nil), err))
 	}
 	if definition.Kind == GameData.StormIsleKindIsland {
