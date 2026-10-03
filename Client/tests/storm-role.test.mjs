@@ -70,3 +70,21 @@ test('Storm event changes readiness and attribution without changing saved confi
   assert.equal(parseAutoStationClientState({ settings: saved }).settings.storm.length, 1);
   assert.equal(parseAutoTowerClientState({ castles: { storm: { enabled: true } } }).castles.storm.enabled, true);
 });
+
+
+test('Auto Bird Storm reserve check is pending, role-aware and confined to owned Storm castles', () => {
+  const evaluate = (reserves, live = state, featureId = 'autoBird') => setup.evaluateReserveReadiness({ ...metadata, state: live, reserves, featureId }).report;
+  const guard = (report) => report.checks.find((check) => check.id === 'storm-reserve');
+  for (const reserves of [{}, { storm: [] }, { 20: [] }, { storm: [], 20: reserve }, { 10: [] }]) {
+    const report = evaluate(reserves);
+    assert.deepEqual(guard(report), { id: 'storm-reserve', state: 'pending', messageKey: 'stormRole.birdUnconfigured', params: { castle: 'Synthetic Storm' }, fix: 'settings', slot: 'storm' });
+    assert.equal(report.overall, 'pending', 'the Storm guard is non-blocking');
+  }
+  for (const reserves of [{ storm: reserve }, { 20: reserve }, { 10: [], storm: reserve }]) assert.equal(guard(evaluate(reserves)), undefined);
+  for (const reserves of [{}, { 10: [] }, { storm: [] }]) {
+    assert.equal(guard(evaluate(reserves, { castles: { 10: main } })), undefined, 'no owned Storm castle');
+    assert.equal(guard(evaluate(reserves, state, 'autoStation')), undefined, 'Station has no Bird guard');
+  }
+  const unnamed = { ...storm, name: '' };
+  assert.equal(guard(evaluate({}, { castles: { 20: unnamed } })).params.castle, 'castle 20');
+});

@@ -1,4 +1,4 @@
-import { castleForSettingsKey, normalizeStormKeys } from '../stormRole';
+import { castleForSettingsKey, castleSettingsEntry, normalizeStormKeys } from '../stormRole';
 import type { CastleStateV2, GameStateV2 } from '../../api/Contracts';
 import type { MetadataItem } from '../../context/MetadataContext';
 import type { MessageKey } from '../../i18n/messages';
@@ -232,6 +232,12 @@ export function evaluateReserveReadiness(input: ReserveReadinessInput): ReserveR
   if (!input.state) {
     checks.push({ id: 'castles', state: 'unavailable', messageKey: message('ui.settings.requirements.setupReadiness.castle.data.has.not.been.observed.yet.76ce81b7'), fix: 'connection' });
     return { report: { featureId: input.featureId, checks, overall: aggregateReadiness(checks) }, stockByCastle, castlesNotInWorld };
+  }
+  if (input.featureId === 'autoBird') {
+    const stormCastle = castleForSettingsKey('storm', input.state);
+    if (stormCastle && !castleSettingsEntry(input.reserves, stormCastle)?.length) {
+      checks.push({ id: 'storm-reserve', state: 'pending', messageKey: message('stormRole.birdUnconfigured'), params: { castle: stormCastle.name || `castle ${stormCastle.id}` }, fix: 'settings', slot: 'storm' });
+    }
   }
   const castleDataObserved = !castlesUnobserved(input.state);
   for (const [castleId, reserves] of Object.entries(normalizeStormKeys(input.reserves, input.state))) {

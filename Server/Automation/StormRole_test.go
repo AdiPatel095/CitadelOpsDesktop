@@ -49,6 +49,9 @@ func TestStormRoleAutoBirdGuardAndReserveGolden(t *testing.T) {
 		if err != nil || decision.Request == nil {
 			t.Fatalf("main castle should proceed: %+v %v", decision, err)
 		}
+		if !strings.Contains(decision.Detail, "Auto Bird skips Synthetic Storm: no troops to keep are set for the Storm castle.") {
+			t.Fatalf("missing Storm guard notice: %s", decision.Detail)
+		}
 		var args struct {
 			CastleID int64 `json:"sourceCastleId"`
 		}
@@ -58,7 +61,7 @@ func TestStormRoleAutoBirdGuardAndReserveGolden(t *testing.T) {
 		}
 		delete(s.Castles, 10)
 		decision, err = NewAutoBirdPolicy().Evaluate(t.Context(), Snapshot{State: s, Configuration: config, Now: now})
-		if err != nil || decision.Request != nil || !strings.Contains(decision.Detail, "has no Auto Bird settings yet") {
+		if err != nil || decision.Request != nil || decision.Detail != "Auto Bird skips Synthetic Storm: no troops to keep are set for the Storm castle." {
 			t.Fatalf("Storm guard: %+v %v", decision, err)
 		}
 		s.Castles[10] = State.CastleState{ID: 10, KingdomID: 0}

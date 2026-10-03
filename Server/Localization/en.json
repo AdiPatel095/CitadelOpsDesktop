@@ -3187,6 +3187,6 @@
   "server.telemetry.channel.rift.label": "Rift",
   "server.telemetry.channel.websocket_game.description": "Every game WebSocket frame, including actions performed directly in the game.",
   "server.telemetry.channel.websocket_game.label": "All Game Traffic",
-  "stormRole.birdUnconfigured": "Auto Bird skips {castle}: this Storm castle has no Auto Bird settings yet.",
+  "stormRole.birdUnconfigured": "Auto Bird skips {castle}: no troops to keep are set for the Storm castle.",
   "stormRole.waiting": "Waiting for a Storm castle"
 }

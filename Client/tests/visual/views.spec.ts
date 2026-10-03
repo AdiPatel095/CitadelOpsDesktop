@@ -118,3 +118,37 @@ for (const feature of ['autoTowers', 'autoBird', 'autoStation'] as const) {
     await page.screenshot({ path: testInfo.outputPath(`${feature}-storm-repair.png`) });
   });
 }
+
+
+for (const theme of ['dark', 'light'] as const) {
+  test(`Storm reserve setup Fix focuses the Storm card ${theme}`, async ({ page }, testInfo) => {
+    const verifyNetwork = await prepare(page, theme);
+    await openView(page, 'Automation', 'automation');
+    const seed = await page.evaluate(async () => {
+      const fixturePath = '/main.tsx';
+      const { server } = await import(/* @vite-ignore */ fixturePath);
+      const storm = (Object.values(server.built.state.castles) as CastleStateV2[]).find((castle) => castle.kingdomId === 4);
+      if (!storm) throw new Error('Synthetic Storm castle is missing');
+      await server.handle('/api/v2/config/automation.autoBird', 'PUT', { value: { ignoreSettings: { settings: { storm: [] } }, presets: { presets: [] }, activePresetId: null } });
+      server.log = [];
+      return { revision: server.configuration().revision, name: storm.name || `castle ${storm.id}` };
+    });
+    await page.locator('[data-view="automation"]').getByRole('button', { name: 'Open Auto Bird settings', exact: true }).click();
+    const dialog = page.getByRole('dialog');
+    const guardText = `Auto Bird skips ${seed.name}: no troops to keep are set for the Storm castle.`;
+    const line = dialog.locator('li').filter({ hasText: guardText });
+    await expect(line).toBeVisible();
+    await expect(line).toContainText('Decided at Start');
+    await line.getByRole('button', { name: 'Fix', exact: true }).click();
+    await expect(dialog.locator('#auto-bird-castle-storm')).toBeFocused();
+    await expect(dialog.locator('#auto-bird-castle-storm')).toBeInViewport();
+    const after = await page.evaluate(async () => {
+      const fixturePath = '/main.tsx';
+      const { server } = await import(/* @vite-ignore */ fixturePath);
+      return { revision: server.configuration().revision, writes: server.log.filter((entry: { kind: string }) => entry.kind === 'config').length };
+    });
+    expect(after).toEqual({ revision: seed.revision, writes: 0 });
+    verifyNetwork();
+    await page.screenshot({ path: testInfo.outputPath(`storm-reserve-fix-${theme}.png`) });
+  });
+}

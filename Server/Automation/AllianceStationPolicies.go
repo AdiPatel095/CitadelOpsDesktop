@@ -209,8 +209,8 @@ func (*AutoBirdPolicy) Evaluate(_ context.Context, snapshot Snapshot) (decision 
 			if err != nil || decision.Request == nil {
 				return
 			}
-			notice := fmt.Sprintf("Auto Bird skips %s: this Storm castle has no Auto Bird settings yet.", castleName(*skippedStorm))
-			descriptor := Localization.New("stormRole.birdUnconfigured", "Auto Bird skips {castle}: this Storm castle has no Auto Bird settings yet.", Localization.Params{"castle": castleName(*skippedStorm)})
+			notice := fmt.Sprintf("Auto Bird skips %s: no troops to keep are set for the Storm castle.", castleName(*skippedStorm))
+			descriptor := Localization.New("stormRole.birdUnconfigured", "Auto Bird skips {castle}: no troops to keep are set for the Storm castle.", Localization.Params{"castle": castleName(*skippedStorm)})
 			decision.Detail += "; " + notice
 			decision.DetailDescriptor = Localization.Join(decision.DetailDescriptor, descriptor)
 		}()
@@ -369,8 +369,8 @@ func (*AutoBirdPolicy) Evaluate(_ context.Context, snapshot Snapshot) (decision 
 	}
 	if skippedStorm != nil {
 		return withAutoBirdSchedule(snapshot, Decision{
-			Status: "waiting", Detail: fmt.Sprintf("Auto Bird skips %s: this Storm castle has no Auto Bird settings yet.", castleName(*skippedStorm)),
-			DetailDescriptor: Localization.New("stormRole.birdUnconfigured", "Auto Bird skips {castle}: this Storm castle has no Auto Bird settings yet.", Localization.Params{"castle": castleName(*skippedStorm)}),
+			Status: "waiting", Detail: fmt.Sprintf("Auto Bird skips %s: no troops to keep are set for the Storm castle.", castleName(*skippedStorm)),
+			DetailDescriptor: Localization.New("stormRole.birdUnconfigured", "Auto Bird skips {castle}: no troops to keep are set for the Storm castle.", Localization.Params{"castle": castleName(*skippedStorm)}),
 			NextCheckAt:      nextCheck,
 		}, time.Time{}), nil
 	}

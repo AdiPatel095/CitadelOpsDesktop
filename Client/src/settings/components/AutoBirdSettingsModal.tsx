@@ -538,7 +538,7 @@ export const AutoBirdSettingsModal: React.FC<AutoBirdSettingsModalProps> = ({ is
               const visibleItems = visibleAutoBirdReserveItems(items, fortressProtected);
               const stock = birdReadiness.stockByCastle[cid];
               return (
-                <Card key={castle.id} variant="solid" className="flex flex-col bg-bg-card-hover/40 p-4 shadow-inner">
+                <Card key={castle.id} id={cid === 'storm' ? 'auto-bird-castle-storm' : undefined} tabIndex={cid === 'storm' ? -1 : undefined} variant="solid" className="flex flex-col bg-bg-card-hover/40 p-4 shadow-inner">
                   <div className="mb-3 flex flex-wrap items-center gap-2 border-b border-border-base pb-2">
                     <h3 className="text-sm font-bold text-primary">{castle.kingdomId === 4 ? <LocalizedText messageKey={castle.id === 0 ? "stormRole.idleLabel" : "stormRole.label"} /> : castle.name}</h3>
                   </div>

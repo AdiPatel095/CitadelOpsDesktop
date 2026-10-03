@@ -34107,7 +34107,7 @@
     "sha256": "3e5e8c970e3cfbb704719636d99733d3ef830e036fca4866bcc2bdeb04b003e2"
   },
   "schemaVersion": 1,
-  "sourceCatalogSha256": "d50f4e3c2a5f1ad698c3cc8c1812eb7eaf4414757cf7a55b2a94695d5e9685de",
+  "sourceCatalogSha256": "448a20bd9fa877871b135096a267696b355507afd009a56fe45a55a4b9e113fe",
   "sourceRevision": "56c2acba0f847e2675c7842588213c66710eeadc",
   "playerLanguageBatch": {
     "story": "CIT-68",
@@ -34155,6 +34155,7 @@
       "stormRole.waiting"
     ],
     "translations": "Deferred to the next 26-locale batch",
-    "translatorNote": "Use the official glossary term for the Storm Islands castle."
+    "translatorNote": "Use the official glossary term for the Storm Islands castle.",
+    "addendum": "Revision 2 Maya deltas: exact no-troops-to-keep status and non-blocking setup check"
   }
 }

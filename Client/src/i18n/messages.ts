@@ -11,7 +11,7 @@ export const messages = {
   "stormRole.useLegacy": "Use as Storm castle settings",
   "stormRole.remove": "Remove",
   "stormRole.waiting": "Waiting for a Storm castle",
-  "stormRole.birdUnconfigured": "Auto Bird skips {castle}: this Storm castle has no Auto Bird settings yet.",
+  "stormRole.birdUnconfigured": "Auto Bird skips {castle}: no troops to keep are set for the Storm castle.",
   "copy.countUnknownTitle": "The attack count isn't available right now",
   "copy.attacksSaved": "{count, number} attacks, saved {time}",
   "copy.since": "{count, number} since {time}",
