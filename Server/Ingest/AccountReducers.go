@@ -149,7 +149,7 @@ func reduceInitialState(
 		changed = changed || updated
 	}
 	if raw := root["gal"]; len(raw) > 0 {
-		updated, err := applyAllianceSummary(raw, gameState)
+		updated, err := applyAllianceSummary(raw, frame.ReceivedAt, gameState)
 		if err != nil {
 			return nil, false, err
 		}
@@ -1101,7 +1101,7 @@ func applyPlayerCurrencies(raw json.RawMessage, gameState *State.GameState, game
 	return changed, nil
 }
 
-func applyAllianceSummary(raw json.RawMessage, gameState *State.GameState) (bool, error) {
+func applyAllianceSummary(raw json.RawMessage, observedAt time.Time, gameState *State.GameState) (bool, error) {
 	var alliance struct {
 		ID   *wireInt64 `json:"AID"`
 		Name string     `json:"N"`
@@ -1110,6 +1110,19 @@ func applyAllianceSummary(raw json.RawMessage, gameState *State.GameState) (bool
 		return false, fmt.Errorf("decode alliance summary: %w", err)
 	}
 	changed := false
+	// GBD's own alliance summary establishes help membership independently of
+	// the existing own-player/roster freshness marker. Omitted AID is unknown.
+	if alliance.ID != nil && *alliance.ID >= -1 {
+		if *alliance.ID == -1 && gameState.Player.AllianceID != 0 {
+			// Explicit none blocks help without changing the legacy gal roster
+			// or AllianceObservedAt handling below.
+			gameState.Player.AllianceID = 0
+			changed = true
+		}
+		if State.ObserveAllianceMembership(gameState, State.AllianceID(*alliance.ID), observedAt) {
+			changed = true
+		}
+	}
 	if alliance.ID != nil && *alliance.ID >= 0 && (gameState.Alliance.ID != State.AllianceID(*alliance.ID) || gameState.Player.AllianceID != State.AllianceID(*alliance.ID)) {
 		setOwnAlliance(gameState, State.AllianceID(*alliance.ID))
 		gameState.Player.AllianceObservedAt = time.Time{}

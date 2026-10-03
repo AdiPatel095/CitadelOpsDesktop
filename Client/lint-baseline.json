@@ -10,9 +10,6 @@
     "src/attackAnalytics/components/AttackEconomyView.tsx": {
       "react-hooks/set-state-in-effect": 1
     },
-    "src/battleStats/components/BattleStatsView.tsx": {
-      "react-hooks/preserve-manual-memoization": 2
-    },
     "src/components/AttackSetupModal.tsx": {
       "react-hooks/set-state-in-effect": 1
     },
@@ -32,7 +29,6 @@
       "react-hooks/set-state-in-effect": 2
     },
     "src/components/ToolImage.tsx": {
-      "react-hooks/preserve-manual-memoization": 1,
       "react-hooks/set-state-in-effect": 1
     },
     "src/components/ToolPickerModal.tsx": {
@@ -42,7 +38,6 @@
       "react-hooks/set-state-in-effect": 1
     },
     "src/components/UnitImage.tsx": {
-      "react-hooks/preserve-manual-memoization": 1,
       "react-hooks/set-state-in-effect": 1
     },
     "src/context/AuthContext.tsx": {
@@ -59,9 +54,6 @@
     },
     "src/dashboard/components/CraftingQueueSlot.tsx": {
       "react-hooks/set-state-in-effect": 1
-    },
-    "src/dashboard/components/EventScoreCard.tsx": {
-      "react-hooks/preserve-manual-memoization": 2
     },
     "src/equipment/components/EquipmentModals.tsx": {
       "react-hooks/set-state-in-effect": 6
@@ -86,9 +78,6 @@
     },
     "src/settings/components/FeatureGuideModal.tsx": {
       "react-hooks/set-state-in-effect": 1
-    },
-    "src/settings/components/WeeklyScheduler.tsx": {
-      "react-hooks/immutability": 1
     },
     "src/settings/copy/useCastleCopyReplay.tsx": {
       "react-hooks/refs": 1

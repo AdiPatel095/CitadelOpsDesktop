@@ -1,0 +1,9 @@
+{
+  "story": "CIT-120",
+  "source": "Engineering/Plans/CIT-120 Official default kingdom list for buildings.md; Product/Opcode rejection fixes 2026-10-03 decision.md R5",
+  "baseRevision": "dc79aca3389c947b6ae663250ad838f4272275a0",
+  "englishFallbackKeys": [
+    "server.buildings.kingdom_unavailable"
+  ],
+  "translationStatus": "English only; pending the epic CIT-116 batched locale translation story"
+}

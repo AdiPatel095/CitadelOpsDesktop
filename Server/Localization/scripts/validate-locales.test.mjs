@@ -25,7 +25,8 @@ try {
  }
  const good={quantity:'Für {name} {count, number, ::precision-integer} Einheiten behalten',plural:'{count, plural, one {Eine Einheit behalten} other {# Einheiten behalten}}',selection:'{mode, select, safe {Behalten} stop {Stoppen} other {Warten}}'};
  assert.equal(run(good).status,0,'locale plural grammar should be accepted');
- assert.match(run(good,p=>p.sourceCatalogSha256='stale').stderr,/Source catalog hash changed/);
+ for(const value of ['stale',sha(JSON.stringify(english)),null]) assert.match(run(good,p=>p.sourceCatalogSha256=value).stderr,/retired: per-entry sourceSha256 binds each translation/);
+ for(const key of ['unknown','playerLanguageBatch','opcodeRejectionFixes','opcodeRejectionQueueBatch']) assert.match(run(good,p=>p[key]={story:'CIT-test'}).stderr,/Unknown top-level provenance key/);
  assert.match(run({...good,selection:'{mode, select, safe {Behalten} other {Warten}}'}).stderr,/select branches changed/);
  assert.match(run({...good,quantity:'Einheiten behalten'}).stderr,/numeric style changed|argument mismatch/);
  assert.match(run({...good,quantity:'Für {name} {count, number} Einheiten behalten'}).stderr,/numeric style changed/);
