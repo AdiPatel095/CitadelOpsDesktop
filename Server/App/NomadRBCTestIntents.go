@@ -242,7 +242,7 @@ func (application *Application) resolveNomadRBCTestAttackStep(
 		return Intent.Step{}, Localization.WithError(fmt.Errorf("build RBC trial preset %q: %w", request.Preset.Name, err), Localization.ErrorContext(Localization.New("server.app.build_rbc_trial_preset.d2a79ad2", "build RBC trial preset {p0}", Localization.Params{"p0": fmt.Sprintf("%q", request.Preset.Name)}), err))
 	}
 	attack := invasionAttackBody(source, target, request.CommanderID, built)
-	if err := applyCastleHorseTravelBoost(&attack, input.GameData, source, request.HorseTravelBoostID); err != nil {
+	if err := applyCastleHorseTravelBoost(&attack, input, source, request.HorseTravelBoostID); err != nil {
 		return Intent.Step{}, Localization.WithError(fmt.Errorf("resolve RBC trial horse travel boost: %w", err), Localization.ErrorContext(Localization.New("server.app.resolve_rbc_trial_horse.2294264c", "resolve RBC trial horse travel boost", nil), err))
 	}
 	body, err := json.Marshal(attack)

@@ -99,10 +99,11 @@ type GlobalEffectBoostState struct {
 }
 
 const (
-	GlobalEffectPurchaseUnresolved = "unresolved"
-	GlobalEffectPurchaseAccepted   = "accepted"
-	GlobalEffectPurchaseConfirmed  = "confirmed"
-	GlobalEffectPurchaseRejected   = "rejected"
+	GlobalEffectPurchaseUnresolved           = "unresolved"
+	GlobalEffectPurchaseAccepted             = "accepted"
+	GlobalEffectPurchaseConfirmed            = "confirmed"
+	GlobalEffectPurchaseRejected             = "rejected"
+	GlobalEffectPurchaseConfirmationRequired = "confirmation_required"
 )
 
 // GlobalEffectPurchaseRecord is the durable, user-visible receipt for one
@@ -111,6 +112,7 @@ type GlobalEffectPurchaseRecord struct {
 	GlobalEffectID       int64     `json:"globalEffectId"`
 	OccurrenceEndsAt     time.Time `json:"occurrenceEndsAt"`
 	ExpiresAt            time.Time `json:"expiresAt"`
+	QuotedC2             int64     `json:"quotedC2,omitempty"`
 	QuotedRubyCost       int64     `json:"quotedRubyCost"`
 	QuotedBonusValue     int64     `json:"quotedBonusValue"`
 	MinimumRubyReserve   int64     `json:"minimumRubyReserve"`

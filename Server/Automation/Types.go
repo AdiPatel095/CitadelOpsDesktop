@@ -12,6 +12,7 @@ import (
 )
 
 type Snapshot struct {
+	CurrencyAvailability         Intent.CurrencyAvailabilityProvider
 	Language                     *GameData.LanguageStore
 	State                        State.GameState
 	Configuration                Configuration.Snapshot

@@ -26,6 +26,8 @@ func TestAutoBoosterPurchaseRefreshesGuardsAndSendsAuthoritativeAGBShape(t *test
 	now := time.Now().UTC()
 	endsAt := now.Add(time.Hour).Truncate(time.Minute)
 	gameState := State.NewGameState()
+	gameState.Session = State.SessionState{Generation: 1, BaselineGeneration: 1, LoggedIn: true, SocketReady: true}
+	gameState.Player.RubyConfirmation = State.RubyConfirmationState{Known: true, Amount: -1, Generation: 1}
 	gameState.Session.ChangedAt = now.Add(-time.Minute)
 	gameState.Player.Resources[2] = 10_000
 	gameState.Player.ResourceObservations[2] = State.PlayerResourceObservation{ObservedAt: now}
@@ -67,6 +69,8 @@ func TestAutoBoosterPurchaseRefreshesGuardsAndSendsAuthoritativeAGBShape(t *test
 
 func TestAutoBoosterFinalControlsRejectQueuedSettingChanges(t *testing.T) {
 	gameState := State.NewGameState()
+	gameState.Session = State.SessionState{Generation: 1, BaselineGeneration: 1, LoggedIn: true, SocketReady: true}
+	gameState.Player.RubyConfirmation = State.RubyConfirmationState{Known: true, Amount: -1, Generation: 1}
 	gameState.Session.LoggedIn = true
 	gameState.Session.SocketReady = true
 	configuration, err := Configuration.Open(t.TempDir(), map[string]json.RawMessage{
@@ -106,6 +110,8 @@ func TestAutoBoosterReconcileRecoversAcceptedAGBFromDurableReceipt(t *testing.T)
 	now := time.Now().UTC().Truncate(time.Second)
 	endsAt := now.Add(time.Hour).Truncate(time.Minute)
 	gameState := State.NewGameState()
+	gameState.Session = State.SessionState{Generation: 1, BaselineGeneration: 1, LoggedIn: true, SocketReady: true}
+	gameState.Player.RubyConfirmation = State.RubyConfirmationState{Known: true, Amount: -1, Generation: 1}
 	gameState.Session.ConnectionGeneration = 5
 	gameState.EventScores.Inventory = autoBoosterIntentInventory(now, endsAt, 2500, false)
 	gameState.EventScores.Inventory.GlobalEffectBaselineGeneration = 5
@@ -178,6 +184,8 @@ func TestAutoBoosterEnginePipelinePurchasesOnceForBothResponseOrderings(t *testi
 			now := time.Now().UTC().Add(-time.Second).Truncate(time.Second)
 			endsAt := now.Add(time.Hour).Truncate(time.Minute)
 			gameState := State.NewGameState()
+			gameState.Session = State.SessionState{Generation: 1, BaselineGeneration: 1, LoggedIn: true, SocketReady: true}
+			gameState.Player.RubyConfirmation = State.RubyConfirmationState{Known: true, Amount: -1, Generation: 1}
 			gameState.Session.LoggedIn = true
 			gameState.Session.SocketReady = true
 			gameState.Session.ConnectionGeneration = 8
@@ -300,6 +308,8 @@ func TestAutoBoosterRefreshExecutesWithEnforcedResourceDeclarations(t *testing.T
 	now := time.Now().UTC().Add(-time.Second).Truncate(time.Second)
 	endsAt := now.Add(time.Hour).Truncate(time.Minute)
 	gameState := State.NewGameState()
+	gameState.Session = State.SessionState{Generation: 1, BaselineGeneration: 1, LoggedIn: true, SocketReady: true}
+	gameState.Player.RubyConfirmation = State.RubyConfirmationState{Known: true, Amount: -1, Generation: 1}
 	gameState.Session.LoggedIn = true
 	gameState.Session.SocketReady = true
 	gameState.Session.ConnectionGeneration = 12
@@ -331,6 +341,8 @@ func TestAutoBoosterIndeterminateDispatchStaysBlockedUntilTerminalGBDReconciliat
 	now := time.Now().UTC().Add(-time.Second).Truncate(time.Second)
 	endsAt := now.Add(time.Hour).Truncate(time.Minute)
 	gameState := State.NewGameState()
+	gameState.Session = State.SessionState{Generation: 1, BaselineGeneration: 1, LoggedIn: true, SocketReady: true}
+	gameState.Player.RubyConfirmation = State.RubyConfirmationState{Known: true, Amount: -1, Generation: 1}
 	gameState.Session.LoggedIn = true
 	gameState.Session.SocketReady = true
 	gameState.Session.ConnectionGeneration = 12
@@ -531,6 +543,7 @@ func autoBoosterGBDFixture(t *testing.T, observedAt, endsAt time.Time, boosted b
 		boostedIDs = "[2]"
 	}
 	return json.RawMessage(fmt.Sprintf(`{
+			"opt":{"CC2T":-1},
 			"gpi":{"UID":456,"PID":123,"PN":"Fixture Player"},
 			"tei":{"TE":[
 				{"TRID":610,"GE":[[2,%d,10.0]],"SGE":[]},
@@ -544,6 +557,8 @@ func TestAutoBoosterPurchaseGuardRejectsChangedQuoteBalanceAndBoostState(t *test
 	now := time.Now().UTC()
 	endsAt := now.Add(time.Hour).Truncate(time.Minute)
 	gameState := State.NewGameState()
+	gameState.Session = State.SessionState{Generation: 1, BaselineGeneration: 1, LoggedIn: true, SocketReady: true}
+	gameState.Player.RubyConfirmation = State.RubyConfirmationState{Known: true, Amount: -1, Generation: 1}
 	gameState.Session.ChangedAt = now.Add(-time.Minute)
 	gameState.Player.Resources[2] = 10_000
 	gameState.Player.ResourceObservations[2] = State.PlayerResourceObservation{ObservedAt: now}

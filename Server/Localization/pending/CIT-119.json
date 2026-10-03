@@ -1,0 +1,13 @@
+{
+  "story": "CIT-119",
+  "source": "Engineering/Plans/CIT-119 Travel tickets checked for attack and support.md; Addendum 3",
+  "englishFallbackKeys": [
+    "server.support.coin_horse",
+    "server.support.coin_horse_short",
+    "server.support.coin_horse_unavailable",
+    "server.travel_tickets.recovery",
+    "server.travel_tickets.short",
+    "server.travel_tickets.unavailable"
+  ],
+  "translationStatus": "English only; pending the epic CIT-116 batched locale translation story"
+}

@@ -221,8 +221,12 @@ func (*AutoAdvisorPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decisi
 	}
 	featherCapacity := autoAdvisorMaxAttackCount
 	if settings.HorseTravelBoostID <= 0 {
-		featherID := currencyIDForJSONKey(snapshot.GameData, "PTT")
-		featherCapacity = max(0, int(snapshot.State.Player.Currencies[featherID])-int(settings.MinimumFeatherReserve))
+		observed, pending, known := Intent.TravelTicketBudget(snapshot.State, snapshot.CurrencyAvailability)
+		if !known {
+			message := Localization.New("server.travel_tickets.unavailable", "Travel ticket balance is unavailable; waiting for fresh game data", nil)
+			return autoAdvisorWaiting(snapshot.Now, message.Fallback, metrics, message), nil
+		}
+		featherCapacity = int(min(int64(autoAdvisorMaxAttackCount), max(int64(0), observed-pending-settings.MinimumFeatherReserve)))
 	}
 	timeSkipCapacity := autoAdvisorMaxAttackCount
 	if target.Definition.CooldownSec > 0 {
