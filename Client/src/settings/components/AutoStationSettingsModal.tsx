@@ -305,7 +305,7 @@ export const AutoStationSettingsModal: React.FC<AutoStationSettingsModalProps> =
                   )}
                   <CastleCopyButton
                     descriptor={stationCopyDescriptor}
-                    draft={state.settings}
+                    draft={roleSettings}
                     sourceKey={castleID}
                     context={copyContext}
                     featureLabel="Auto Station"

@@ -144,3 +144,29 @@ func TestStormRoleAutoStationKeepsReserves(t *testing.T) {
 		t.Fatalf("station reserves lost: %s", d.Request.Arguments)
 	}
 }
+
+func TestStormRoleCurrentDispatchReserveRows(t *testing.T) {
+	storm := State.CastleState{ID: 20, KingdomID: 4}
+	for _, test := range []struct {
+		rows string
+		want bool
+	}{
+		{`{}`, false}, {`{"storm":[]}`, false}, {`{"20":[{"id":489,"amount":37}]}`, true},
+		{`{"storm":[],"20":[{"id":489,"amount":37}]}`, false}, {`{"storm":[{"id":489,"amount":0}]}`, true},
+		{`{"storm":[{"id":0,"amount":37}]}`, true}, {`{"storm":[{"id":489,"amount":-1}]}`, true},
+	} {
+		for _, preset := range []string{"", "synthetic"} {
+			raw := `{"ignoreSettings":{"settings":` + test.rows + `}}`
+			if preset != "" {
+				raw = `{"presets":{"presets":[{"id":"synthetic","settings":` + test.rows + `}]}}`
+			}
+			config := Configuration.Snapshot{Sections: map[string]json.RawMessage{"automation.autoBird": json.RawMessage(raw)}}
+			if got := AutoBirdStormReserveConfigured(config, storm, preset); got != test.want {
+				t.Fatalf("rows %s preset %q: got %v", test.rows, preset, got)
+			}
+			if !AutoBirdStormReserveConfigured(config, State.CastleState{ID: 10, KingdomID: 0}, preset) {
+				t.Fatal("main castle semantics changed")
+			}
+		}
+	}
+}

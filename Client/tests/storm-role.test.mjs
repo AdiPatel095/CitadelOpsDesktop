@@ -12,6 +12,10 @@ const { parseAutoStationClientState } = await vite.ssrLoadModule(`${source}/sett
 const { parseAutoTowerClientState } = await vite.ssrLoadModule(`${source}/settings/AutoTowerClientState.ts`);
 const { castleCandidates } = await vite.ssrLoadModule(`${source}/settings/copy/candidates.ts`);
 const { automationsActingOnCastle } = await vite.ssrLoadModule(`${source}/settings/castleAutomations.ts`);
+const { previewCastleCopy, configuredSources } = await vite.ssrLoadModule(`${source}/settings/copy/castleCopy.ts`);
+const { birdCopyDescriptor } = await vite.ssrLoadModule(`${source}/settings/copy/features/bird.ts`);
+const { stationCopyDescriptor } = await vite.ssrLoadModule(`${source}/settings/copy/features/station.ts`);
+const { towersCopyDescriptor } = await vite.ssrLoadModule(`${source}/settings/copy/features/towers.ts`);
 after(() => vite.close());
 const main = { id: 10, kingdomId: 0, name: 'Synthetic Main', units: { stationed: { 1: 100 } }, resources: {} };
 const storm = { ...main, id: 20, kingdomId: 4, name: 'Synthetic Storm' };
@@ -87,4 +91,16 @@ test('Auto Bird Storm reserve check is pending, role-aware and confined to owned
   }
   const unnamed = { ...storm, name: '' };
   assert.equal(guard(evaluate({}, { castles: { 20: unnamed } })).params.castle, 'castle 20');
+});
+
+
+test('all three editor copy descriptors read the current-ID legacy Storm draft as a configured role', () => {
+  const context = { ...metadata, state, candidates: castleCandidates([main, storm], state, { keyFor: role.castleSettingsKey }) };
+  for (const [descriptor, record] of [[birdCopyDescriptor, reserve], [stationCopyDescriptor, reserve], [towersCopyDescriptor, { enabled: true, unitId: 1, radius: 10 }]]) {
+    const saved = { 20: record };
+    const draft = role.normalizeStormKeys(saved, state);
+    assert.ok(configuredSources(descriptor, draft, context).some((castle) => castle.key === 'storm'), descriptor.featureId);
+    assert.equal(previewCastleCopy(descriptor, draft, 'storm', ['10'], context).sourceConfigured, true, descriptor.featureId);
+    assert.deepEqual(saved, { 20: record }, 'copy read does not persist or alter the legacy map');
+  }
 });

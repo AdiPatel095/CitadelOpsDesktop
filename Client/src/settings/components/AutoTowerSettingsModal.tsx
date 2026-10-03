@@ -286,7 +286,7 @@ export const AutoTowerSettingsModal: React.FC<AutoTowerSettingsModalProps> = ({ 
                 </p>
                 <CastleCopyButton
                   descriptor={towersCopyDescriptor}
-                  draft={settings}
+                  draft={roleSettings}
                   sourceKey={castleSettingsKey(castle)}
                   context={copyContext}
                   featureLabel="Auto Towers"

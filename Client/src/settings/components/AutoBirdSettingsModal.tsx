@@ -591,7 +591,7 @@ export const AutoBirdSettingsModal: React.FC<AutoBirdSettingsModalProps> = ({ is
                   )}
                   <CastleCopyButton
                     descriptor={birdCopyDescriptor}
-                    draft={settings}
+                    draft={roleSettings}
                     sourceKey={cid}
                     context={copyContext}
                     featureLabel="Auto Bird"

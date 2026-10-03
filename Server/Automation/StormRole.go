@@ -1,6 +1,7 @@
 package Automation
 
 import (
+	"CitadelDesktop/Server/Configuration"
 	"CitadelDesktop/Server/GameData"
 	"CitadelDesktop/Server/State"
 	"sort"
@@ -44,4 +45,24 @@ func BoundCastleEntries[T any](entries map[string]T, state *State.GameState) []C
 	}
 	sort.Slice(bindings, func(i, j int) bool { return bindings[i].Castle.ID < bindings[j].Castle.ID })
 	return bindings
+}
+
+// AutoBirdStormReserveConfigured rechecks raw reserve rows in the current
+// selected configuration. Main castles and zero-valued rows keep their semantics.
+func AutoBirdStormReserveConfigured(configuration Configuration.Snapshot, castle State.CastleState, presetID string) bool {
+	if castle.KingdomID != GameData.StormKingdomID {
+		return true
+	}
+	settings := defaultAutoBirdConfiguration()
+	decodeSection(configuration, "automation.autoBird", &settings)
+	entries := settings.IgnoreSettings.Settings
+	if presetID != "" {
+		preset, ok := findAutoBirdPreset(settings.Presets.Presets, presetID)
+		if !ok {
+			return false
+		}
+		entries = preset.Settings
+	}
+	rows, _ := CastleSettingsEntry(entries, castle)
+	return len(rows) > 0
 }

@@ -152,3 +152,49 @@ for (const theme of ['dark', 'light'] as const) {
     await page.screenshot({ path: testInfo.outputPath(`storm-reserve-fix-${theme}.png`) });
   });
 }
+
+
+// Sophie's D2 regression: a legacy own-ID entry must be configured for copy
+// before Save normalizes it. Opening and cancelling the copy must not write.
+for (const feature of ['autoBird', 'autoStation', 'autoTowers'] as const) {
+  test(`current-ID legacy Storm copy ${feature}`, async ({ page }, testInfo) => {
+    const verifyNetwork = await prepare(page, 'dark');
+    const seed = await page.evaluate(async (feature) => {
+      const fixturePath = '/main.tsx';
+      const { server } = await import(/* @vite-ignore */ fixturePath);
+      const storm = (Object.values(server.built.state.castles) as CastleStateV2[]).find((castle) => castle.kingdomId === 4);
+      if (!storm) throw new Error('Synthetic Storm castle is missing');
+      const row = [{ id: 1, amount: 37 }];
+      const value = feature === 'autoTowers' ? { castles: { [storm.id]: { enabled: true, unitId: 1, radius: 10 } } }
+        : feature === 'autoBird' ? { ignoreSettings: { settings: { [storm.id]: row } }, presets: { presets: [] }, activePresetId: null }
+        : { settings: { [storm.id]: row } };
+      await server.handle(`/api/v2/config/automation.${feature}`, 'PUT', { value });
+      server.log = [];
+      return server.configuration().revision;
+    }, feature);
+    await openView(page, 'Automation', 'automation');
+
+    const label = { autoBird: 'Auto Bird', autoStation: 'Auto Station', autoTowers: 'Auto Towers' }[feature];
+    await page.locator('[data-view="automation"]').getByRole('button', { name: `Open ${label} settings`, exact: true }).click();
+    const dialog = page.getByRole('dialog');
+    const heading = dialog.getByText('Storm castle', { exact: true }).first();
+    await expect(heading).toBeVisible();
+    const card = heading.locator('xpath=ancestor::div[.//button[contains(.,"Copy to other castles")]][1]');
+    await card.getByRole('button', { name: 'Copy to other castles…', exact: true }).click();
+    const copy = page.getByRole('dialog').last();
+    await expect(copy.getByText(/has no setup to copy yet/)).toHaveCount(0);
+    await expect(copy.locator(`[data-castle-copy="${feature}"]`)).toBeVisible();
+    await expect(copy.getByRole('button', { name: 'Apply to draft', exact: true })).toBeEnabled();
+    await page.screenshot({ path: testInfo.outputPath(`${feature}-legacy-copy.png`) });
+    await copy.getByRole('button', { name: 'Cancel', exact: true }).click();
+    await dialog.getByRole('button', { name: 'Cancel', exact: true }).click();
+
+    const after = await page.evaluate(async () => {
+      const fixturePath = '/main.tsx';
+      const { server } = await import(/* @vite-ignore */ fixturePath);
+      return { revision: server.configuration().revision, writes: server.log.filter((entry: { kind: string }) => entry.kind === 'config').length };
+    });
+    expect(after).toEqual({ revision: seed, writes: 0 });
+    verifyNetwork();
+  });
+}
