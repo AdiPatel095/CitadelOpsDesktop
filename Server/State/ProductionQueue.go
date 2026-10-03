@@ -7,6 +7,10 @@ import "time"
 // valid long-running queue by age alone; the active completion time supplies
 // the authoritative point at which its slot state must be read again.
 func ProductionQueueNeedsRefresh(state *GameState, queue ProductionQueue, now time.Time) bool {
+	if queue.LineID != 2 && queue.Capacity > 0 && len(queue.Slots) == 0 {
+		// Pre-slot snapshots must be refreshed, including after persistence.
+		return true
+	}
 	if queue.ObservedAt.IsZero() {
 		return true
 	}
@@ -28,4 +32,20 @@ func ProductionQueueNeedsRefresh(state *GameState, queue ProductionQueue, now ti
 func ProductionQueuePredatesCastleSnapshot(castle CastleState, queue ProductionQueue) bool {
 	return !castle.ContextSnapshotObservedAt.IsZero() &&
 		queue.ObservedAt.Before(castle.ContextSnapshotObservedAt)
+}
+
+// ProductionQueueFreeSlots counts empty slots whose observed entitlement is
+// still usable at the supplied planning or dispatch time. Compact hospital
+// queues retain their separate capacity representation.
+func ProductionQueueFreeSlots(queue ProductionQueue, at time.Time) int {
+	if queue.LineID == 2 {
+		return max(0, queue.Capacity-len(queue.Queued))
+	}
+	free := 0
+	for _, slot := range queue.Slots {
+		if !slot.Occupied && (slot.Permanent || !slot.ExpiresAt.IsZero() && at.Before(slot.ExpiresAt)) {
+			free++
+		}
+	}
+	return free
 }

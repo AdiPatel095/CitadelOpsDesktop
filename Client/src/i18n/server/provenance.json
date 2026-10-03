@@ -34107,7 +34107,7 @@
     "sha256": "3e5e8c970e3cfbb704719636d99733d3ef830e036fca4866bcc2bdeb04b003e2"
   },
   "schemaVersion": 1,
-  "sourceCatalogSha256": "4e00f36f5e7a2c91bbe54f61f52c2d2e5bb3fb46fb2cfd71eee3418833ceaf60",
+  "sourceCatalogSha256": "fa86c0b6c76950bfb5195671fa5a951288aceda4b7259aae956443d37b66cd21",
   "sourceRevision": "56c2acba0f847e2675c7842588213c66710eeadc",
   "playerLanguageBatch": {
     "story": "CIT-68",
@@ -34128,5 +34128,13 @@
       "server.automation.watching_for_incoming_attacks.60f06f25"
     ],
     "translationStatus": "pending all-locale translation batch; old translations invalidated"
+  },
+  "opcodeRejectionQueueBatch": {
+    "story": "CIT-117",
+    "source": "Engineering/Plans/CIT-117 Recruitment queue counts only usable slots.md Waiting (AC5)",
+    "englishFallbackKeys": [
+      "server.automation.production_queues_full_at"
+    ],
+    "translationStatus": "pending opcode rejection epic all-locale translation batch"
   }
 }

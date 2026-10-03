@@ -64,7 +64,7 @@ func TestPlanProductionEnqueueUsesDefaultSessionKeyBeforeObservation(t *testing.
 	gameState.Castles[77] = State.CastleState{
 		ID:         77,
 		KingdomID:  4,
-		Production: map[int]State.ProductionQueue{0: {LineID: 0, ObservedAt: time.Now().UTC()}},
+		Production: map[int]State.ProductionQueue{0: {Slots: permanentProductionSlots(2, 0), LineID: 0, ObservedAt: time.Now().UTC()}},
 	}
 	gameState.Player.VIP = State.VIPState{Level: 10}
 	plan, err := planProductionEnqueue(context.Background(), Intent.PlanningContext{
@@ -113,8 +113,8 @@ func TestPlanProductionEnqueueRejectsUntrustworthyQueueSnapshots(t *testing.T) {
 		name  string
 		queue State.ProductionQueue
 	}{
-		{name: "previous session", queue: State.ProductionQueue{LineID: 0, Capacity: 5, ObservedAt: changedAt.Add(-time.Second)}},
-		{name: "elapsed active stack", queue: State.ProductionQueue{
+		{name: "previous session", queue: State.ProductionQueue{Slots: permanentProductionSlots(5, 0), LineID: 0, Capacity: 5, ObservedAt: changedAt.Add(-time.Second)}},
+		{name: "elapsed active stack", queue: State.ProductionQueue{Slots: permanentProductionSlots(5, 0),
 			LineID: 0, Capacity: 5, ObservedAt: now, Active: &State.QueueItem{CompletesAt: &elapsed},
 		}},
 	} {
@@ -145,7 +145,7 @@ func TestPlanProductionEnqueueDoesNotCountActiveStackAgainstQueueSlots(t *testin
 	gameState.Castles[77] = State.CastleState{
 		ID: 77,
 		Production: map[int]State.ProductionQueue{
-			0: {
+			0: {Slots: permanentProductionSlots(5, 4),
 				LineID: 0, Capacity: 5, ObservedAt: time.Now().UTC(),
 				Active: &State.QueueItem{Definition: State.DefinitionRef{Collection: "units", ID: 489}, Amount: 110},
 				Queued: make([]State.QueueItem, 4),
@@ -176,7 +176,7 @@ func TestPlanProductionEnqueueRejectsDefinitionMissingFromLiveQueueableCatalog(t
 	gameState.Castles[77] = State.CastleState{
 		ID: 77,
 		Production: map[int]State.ProductionQueue{
-			0: {LineID: 0, Capacity: 5, ObservedAt: now},
+			0: {Slots: permanentProductionSlots(5, 0), LineID: 0, Capacity: 5, ObservedAt: now},
 		},
 		QueueableObservedAt: now,
 		QueueableProduction: map[int][]State.DefinitionRef{
@@ -202,7 +202,7 @@ func TestPlanProductionEnqueueFillsEveryAvailableQueueSlotWithOneFocus(t *testin
 	gameState.Castles[77] = State.CastleState{
 		ID: 77,
 		Production: map[int]State.ProductionQueue{
-			0: {LineID: 0, Capacity: 5, ObservedAt: time.Now().UTC()},
+			0: {Slots: permanentProductionSlots(5, 0), LineID: 0, Capacity: 5, ObservedAt: time.Now().UTC()},
 		},
 	}
 	plan, err := planProductionEnqueue(context.Background(), Intent.PlanningContext{
@@ -252,7 +252,7 @@ func TestPlanProductionEnqueueFillOnlyUsesFreeQueueSlots(t *testing.T) {
 	gameState.Castles[77] = State.CastleState{
 		ID: 77,
 		Production: map[int]State.ProductionQueue{
-			0: {LineID: 0, Capacity: 5, ObservedAt: time.Now().UTC(), Queued: make([]State.QueueItem, 4)},
+			0: {Slots: permanentProductionSlots(5, 4), LineID: 0, Capacity: 5, ObservedAt: time.Now().UTC(), Queued: make([]State.QueueItem, 4)},
 		},
 	}
 	plan, err := planProductionEnqueue(context.Background(), Intent.PlanningContext{
@@ -291,7 +291,7 @@ func TestPlanRecruitmentBUPAlwaysRequestsAllianceHelpAfterBatch(t *testing.T) {
 	gameState.Castles[77] = State.CastleState{
 		ID: 77, Focused: true,
 		Production: map[int]State.ProductionQueue{
-			0: {LineID: 0, Capacity: 5, ObservedAt: now},
+			0: {Slots: permanentProductionSlots(5, 0), LineID: 0, Capacity: 5, ObservedAt: now},
 		},
 	}
 	input := Intent.PlanningContext{
@@ -350,7 +350,7 @@ func TestPlanToolProductionDoesNotQueueRecruitmentAllianceHelp(t *testing.T) {
 	gameState.Castles[77] = State.CastleState{
 		ID: 77,
 		Production: map[int]State.ProductionQueue{
-			1: {LineID: 1, Capacity: 1, ObservedAt: time.Now().UTC()},
+			1: {Slots: permanentProductionSlots(1, 0), LineID: 1, Capacity: 1, ObservedAt: time.Now().UTC()},
 		},
 	}
 	plan, err := planProductionEnqueue(t.Context(), Intent.PlanningContext{
@@ -385,7 +385,7 @@ func TestPlanProductionFillTreatsAlreadyFullQueueAsSatisfied(t *testing.T) {
 	gameState.Castles[77] = State.CastleState{
 		ID: 77,
 		Production: map[int]State.ProductionQueue{
-			0: {LineID: 0, Capacity: 5, ObservedAt: time.Now().UTC(), Queued: make([]State.QueueItem, 5)},
+			0: {Slots: permanentProductionSlots(5, 5), LineID: 0, Capacity: 5, ObservedAt: time.Now().UTC(), Queued: make([]State.QueueItem, 5)},
 		},
 	}
 	plan, err := planProductionEnqueue(context.Background(), Intent.PlanningContext{
@@ -404,7 +404,7 @@ func TestVerifyProductionQueueCapacityRejectsStaleFullQueue(t *testing.T) {
 	gameState.Castles[77] = State.CastleState{
 		ID: 77, Focused: true,
 		Production: map[int]State.ProductionQueue{
-			1: {LineID: 1, Capacity: 5, ObservedAt: time.Now().UTC(), Queued: make([]State.QueueItem, 5)},
+			1: {Slots: permanentProductionSlots(5, 5), LineID: 1, Capacity: 5, ObservedAt: time.Now().UTC(), Queued: make([]State.QueueItem, 5)},
 		},
 	}
 	application := &Application{State: State.NewStore(&gameState)}
@@ -430,7 +430,7 @@ func TestPlanProductionEnqueueCarriesScheduledSelectionIntoCapacityGuard(t *test
 	gameState.Castles[77] = State.CastleState{
 		ID: 77,
 		Production: map[int]State.ProductionQueue{
-			0: {LineID: 0, Capacity: 5, ObservedAt: now},
+			0: {Slots: permanentProductionSlots(5, 0), LineID: 0, Capacity: 5, ObservedAt: now},
 		},
 	}
 	arguments, _ := json.Marshal(map[string]any{
@@ -463,7 +463,7 @@ func TestVerifyProductionQueueCapacityRejectsDefinitionThatBecameUnavailable(t *
 	gameState.Castles[77] = State.CastleState{
 		ID: 77, Focused: true,
 		Production: map[int]State.ProductionQueue{
-			0: {LineID: 0, Capacity: 5, ObservedAt: now},
+			0: {Slots: permanentProductionSlots(5, 0), LineID: 0, Capacity: 5, ObservedAt: now},
 		},
 		QueueableObservedAt: now,
 		QueueableProduction: map[int][]State.DefinitionRef{
@@ -489,7 +489,7 @@ func TestVerifyProductionQueueCapacityRequiresPostFocusObservation(t *testing.T)
 	gameState.Castles[77] = State.CastleState{
 		ID: 77, Focused: true,
 		Production: map[int]State.ProductionQueue{
-			0: {LineID: 0, Capacity: 5, ObservedAt: observedAt},
+			0: {Slots: permanentProductionSlots(5, 0), LineID: 0, Capacity: 5, ObservedAt: observedAt},
 		},
 	}
 	arguments, _ := json.Marshal(productionQueueCapacityGuard{
@@ -514,6 +514,7 @@ func TestVerifyProductionQueueCapacityRequiresPostFocusObservation(t *testing.T)
 
 	queue := castle.Production[0]
 	queue.ObservedAt = castle.ContextSnapshotObservedAt
+	queue.Slots = permanentProductionSlots(queue.Capacity, len(queue.Queued))
 	castle.Production[0] = queue
 	gameState.Castles[77] = castle
 	application = &Application{State: State.NewStore(&gameState)}
@@ -530,7 +531,7 @@ func TestVerifyProductionQueueCapacityRejectsElapsedActiveQueue(t *testing.T) {
 	gameState.Castles[77] = State.CastleState{
 		ID: 77, Focused: true,
 		Production: map[int]State.ProductionQueue{
-			0: {
+			0: {Slots: permanentProductionSlots(5, 0),
 				LineID: 0, Capacity: 5, ObservedAt: now.Add(-time.Minute),
 				Active: &State.QueueItem{CompletesAt: &now},
 			},
@@ -551,7 +552,7 @@ func TestVerifyProductionQueueCapacityRejectsExpiredScheduledSelection(t *testin
 	gameState.Castles[77] = State.CastleState{
 		ID: 77, Focused: true,
 		Production: map[int]State.ProductionQueue{
-			0: {LineID: 0, Capacity: 5, ObservedAt: now},
+			0: {Slots: permanentProductionSlots(5, 0), LineID: 0, Capacity: 5, ObservedAt: now},
 		},
 	}
 	application := &Application{State: State.NewStore(&gameState)}
@@ -621,7 +622,7 @@ func TestPlanProductionEnqueueDerivesGloryTitleGuardForDirectLevel11Request(t *t
 	gameState.Castles[77] = State.CastleState{
 		ID: 77,
 		Production: map[int]State.ProductionQueue{
-			0: {LineID: 0, Capacity: 2, ObservedAt: now},
+			0: {Slots: permanentProductionSlots(2, 0), LineID: 0, Capacity: 2, ObservedAt: now},
 		},
 	}
 
@@ -774,4 +775,13 @@ func TestObservedProductionStackHonorsScopedLearnedFloor(t *testing.T) {
 	if got := observedProductionStack(gameState, queue, 512); got != 132 {
 		t.Fatalf("unit 512 must not inherit unit 489's 260 floor, got %d", got)
 	}
+}
+
+// Synthetic QS fixture: permanent slots with the specified occupied prefix.
+func permanentProductionSlots(capacity, occupied int) []State.QueueSlot {
+	slots := make([]State.QueueSlot, capacity)
+	for index := range slots {
+		slots[index] = State.QueueSlot{Permanent: true, Occupied: index < occupied}
+	}
+	return slots
 }
