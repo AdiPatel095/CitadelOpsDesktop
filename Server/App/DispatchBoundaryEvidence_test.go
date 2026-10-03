@@ -127,6 +127,9 @@ func boundaryTestStep(opcode string) Intent.Step {
 	if opcode == "fco" {
 		payload = json.RawMessage(fmt.Sprintf(`{"OID":%d,"FS":1}`, dispatchTestObject))
 	}
+	if opcode == "crm" {
+		payload = json.RawMessage(fmt.Sprintf(`{"SID":%d,"TX":87654323,"TY":87654324,"G":[["F",3905]],"PTT":0}`, dispatchTestCastle))
+	}
 	step := commandStep("Synthetic dispatch", opcode, payload, opcode)
 	step.FinalDispatchAction = "test.guard"
 	step.FinalDispatchArguments = json.RawMessage(fmt.Sprintf(`{"castleId":%d}`, dispatchTestCastle))
@@ -140,6 +143,7 @@ func TestDispatchBoundaryRejectionReceipts(t *testing.T) {
 		source string
 		fields []string
 	}{
+		{"crm", 109, "", []string{"market"}},
 		{"hru", 63, "", []string{"hospitalQueue", "capacity", "occupancy", "focus", "finalGuard", "source"}},
 		{"hru", 63, "hospital.heal.build", []string{"hospitalQueue", "capacity", "occupancy", "focus", "finalGuard", "source"}},
 		{"ahr", 2, "alliance.help.build", []string{"hospitalJob", "jobIdentity", "listIdentity", "helpRequests", "helpObservedAt", "helpGeneration", "castle", "session"}},

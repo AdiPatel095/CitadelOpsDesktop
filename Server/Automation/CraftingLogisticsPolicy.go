@@ -45,15 +45,9 @@ func (*CraftingLogisticsPolicy) Evaluate(_ context.Context, snapshot Snapshot) (
 		}, nil
 	}
 	if settings.AutoKingdomTransport {
-		logisticsStale, marketLeaseUntil, err := craftingLogisticsStale(snapshot, interval)
+		logisticsStale, _, err := craftingLogisticsStale(snapshot, interval)
 		if err != nil {
 			return Decision{}, err
-		}
-		if !marketLeaseUntil.IsZero() {
-			return Decision{
-				Status: "waiting", Detail: "Waiting for leased market barrows to return before refreshing logistics", DetailDescriptor: Localization.New("server.automation.waiting_for_leased_market.d1cafa3e", "Waiting for leased market barrows to return before refreshing logistics", nil),
-				NextCheckAt: marketLeaseUntil.Add(time.Second),
-			}, nil
 		}
 		if logisticsStale {
 			return Decision{
@@ -129,13 +123,23 @@ func (*CraftingLogisticsPolicy) Evaluate(_ context.Context, snapshot Snapshot) (
 		}
 	}
 	if decision, ready := craftingLootDrainDecision(settings, snapshot); ready {
-		return decision, nil
+		if decision.Request != nil {
+			return decision, nil
+		}
+		if deferredTransportWait == nil {
+			deferredTransportWait = &decision
+		}
 	}
 	if decision, ready := craftingOverflowRedistributionDecision(settings, snapshot); ready {
 		return decision, nil
 	}
 	if decision, ready := marketOverflowDecision(settings, snapshot, interval); ready {
-		return decision, nil
+		if decision.Request != nil {
+			return decision, nil
+		}
+		if deferredTransportWait == nil {
+			deferredTransportWait = &decision
+		}
 	}
 	if decision, ready := stormOverflowDecision(settings, snapshot, interval); ready {
 		return decision, nil

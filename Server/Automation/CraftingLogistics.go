@@ -73,14 +73,7 @@ func craftingLogisticsStale(snapshot Snapshot, interval time.Duration) (bool, ti
 	if !marketRequired && !kingdomRequired {
 		return false, time.Time{}, nil
 	}
-	marketStale := false
-	if marketRequired {
-		if snapshot.State.Market.ObservedAt.IsZero() || !snapshot.State.Market.CaravanLevelLoaded {
-			marketStale = true
-		} else {
-			marketStale = snapshot.Now.Sub(snapshot.State.Market.ObservedAt) >= interval
-		}
-	}
+	marketStale := marketRequired && !snapshot.State.Market.CaravanLevelLoaded
 	kingdomStale := false
 	if kingdomRequired {
 		if snapshot.State.KingdomTransport.ObservedAt.IsZero() {
@@ -93,9 +86,6 @@ func craftingLogisticsStale(snapshot Snapshot, interval time.Duration) (bool, ti
 		return true, time.Time{}, nil
 	}
 	if marketStale {
-		if releasesAt := State.NextMarketBarrowLeaseRelease(&snapshot.State, snapshot.Now); !releasesAt.IsZero() {
-			return false, releasesAt, nil
-		}
 		return true, time.Time{}, nil
 	}
 	return false, time.Time{}, nil
@@ -151,6 +141,7 @@ func craftingTransportDecision(
 	missing map[State.ResourceID]float64,
 	interval time.Duration,
 ) (Decision, bool) {
+	waiting := Decision{}
 	resourceIDs := make([]State.ResourceID, 0, len(missing))
 	for id := range missing {
 		resourceIDs = append(resourceIDs, id)
@@ -167,13 +158,18 @@ func craftingTransportDecision(
 		}
 		shortfall -= incoming
 		if decision, ready := sameKingdomShipmentDecision(settings, snapshot, target, resourceID, shortfall, interval); ready {
-			return decision, true
+			if decision.Request != nil {
+				return decision, true
+			}
+			if waiting.Status == "" {
+				waiting = decision
+			}
 		}
 		if decision, handled := crossKingdomShipmentDecision(settings, snapshot, target, resourceID, shortfall, interval); handled {
 			return decision, true
 		}
 	}
-	return Decision{}, false
+	return waiting, waiting.Status != ""
 }
 
 type craftingLootDrainCandidate struct {
@@ -198,6 +194,7 @@ func craftingLootDrainDecision(settings craftingSettings, snapshot Snapshot) (De
 		return Decision{}, false
 	}
 	best := craftingLootDrainCandidate{}
+	waiting := Decision{}
 	for _, resourceID := range sovereignResourceIDs(snapshot.GameData) {
 		// State.Castles is the player's owned-castle roster. Keep every slot type
 		// eligible: the four crafting castles are donors/storage too, alongside
@@ -225,6 +222,17 @@ func craftingLootDrainDecision(settings craftingSettings, snapshot Snapshot) (De
 				if shortfall <= 0 {
 					continue
 				}
+				if source.KingdomID == target.KingdomID && craftingHasMarketplace(snapshot.GameData, source) {
+					if decision, blocked := marketSourceDecision(snapshot, source.ID); blocked {
+						if decision.Request != nil {
+							return decision, true
+						}
+						if waiting.Status == "" || decision.NextCheckAt.Before(waiting.NextCheckAt) {
+							waiting = decision
+						}
+						continue
+					}
+				}
 				candidate, ready := craftingLootDrainRoute(
 					settings, snapshot, source, target, resourceID, available, shortfall, targetDemand, targetBalance,
 				)
@@ -236,7 +244,7 @@ func craftingLootDrainDecision(settings craftingSettings, snapshot Snapshot) (De
 		}
 	}
 	if best.amount <= 0 {
-		return Decision{}, false
+		return waiting, waiting.Status != ""
 	}
 	shipmentArguments := map[string]any{
 		"sourceCastleId": best.source.ID, "targetCastleId": best.target.ID,
@@ -356,7 +364,7 @@ func craftingLootDrainRoute(
 		}
 		market, observed := snapshot.State.Market.Castles[source.ID]
 		availableBarrows := State.AvailableMarketBarrowsAt(&snapshot.State, market, snapshot.Now)
-		if !observed || availableBarrows <= 0 {
+		if !observed || !State.MarketBarrowSourceStatusAt(&snapshot.State, source.ID, snapshot.Now).Ready || availableBarrows <= 0 {
 			return craftingLootDrainCandidate{}, false
 		}
 		capacityPerBarrow = marketCapacityPerBarrow(snapshot, market)
@@ -444,6 +452,7 @@ func sameKingdomShipmentDecision(
 ) (Decision, bool) {
 	best := State.CastleState{}
 	bestAvailable := float64(0)
+	waiting := Decision{}
 	for _, sourceID := range sortedCastleIDs(snapshot.State.Castles) {
 		source := snapshot.State.Castles[sourceID]
 		if source.ID == target.ID || source.KingdomID != target.KingdomID {
@@ -452,9 +461,21 @@ func sameKingdomShipmentDecision(
 		if !craftingHasMarketplace(snapshot.GameData, source) {
 			continue
 		}
+		if sourceAvailableResource(settings, snapshot, source, resourceID) <= 0 {
+			continue
+		}
+		if decision, blocked := marketSourceDecision(snapshot, source.ID); blocked {
+			if decision.Request != nil {
+				return decision, true
+			}
+			if waiting.Status == "" || decision.NextCheckAt.Before(waiting.NextCheckAt) {
+				waiting = decision
+			}
+			continue
+		}
 		market, observed := snapshot.State.Market.Castles[source.ID]
 		availableBarrows := State.AvailableMarketBarrowsAt(&snapshot.State, market, snapshot.Now)
-		if !observed || availableBarrows <= 0 {
+		if !observed || !State.MarketBarrowSourceStatusAt(&snapshot.State, source.ID, snapshot.Now).Ready || availableBarrows <= 0 {
 			continue
 		}
 		capacityPerBarrow := marketCapacityPerBarrow(snapshot, market)
@@ -468,7 +489,7 @@ func sameKingdomShipmentDecision(
 		}
 	}
 	if best.ID <= 0 || bestAvailable <= 0 {
-		return Decision{}, false
+		return waiting, waiting.Status != ""
 	}
 	amount := math.Min(shortfall, bestAvailable)
 	if balance := target.Resources[resourceID]; balance.Capacity != nil {
@@ -740,4 +761,31 @@ func transportableResource(jsonKey string) bool {
 	default:
 		return false
 	}
+}
+
+// Freshness belongs to the donor. A deferred donor never blocks scanning others.
+func marketSourceDecision(snapshot Snapshot, source State.CastleID) (Decision, bool) {
+	status := State.MarketBarrowSourceStatusAt(&snapshot.State, source, snapshot.Now)
+	if !status.Ready && !status.RefreshAt.After(snapshot.Now) {
+		return Decision{Status: "ready", Detail: "Refresh market and kingdom-resource logistics",
+			DetailDescriptor: Localization.New("server.automation.refresh_market_and_kingdom.08cd4e1a", "Refresh market and kingdom-resource logistics", nil),
+			NextCheckAt:      snapshot.Now.Add(2 * time.Second), Request: &Intent.Request{Name: "resource.logistics.refresh", Arguments: json.RawMessage(`{}`)}, ReevaluateOnSuccess: true}, true
+	}
+	if status.Ready {
+		row := snapshot.State.Market.Castles[source]
+		if State.AvailableMarketBarrowsAt(&snapshot.State, row, snapshot.Now) > 0 {
+			return Decision{}, false
+		}
+		lease := State.MarketBarrowLeaseAt(&snapshot.State, source, snapshot.Now)
+		if lease.ReleasesAt.IsZero() {
+			return Decision{}, false
+		}
+		status.RefreshAt = lease.ReleasesAt
+	}
+	decision := Decision{Status: "waiting", NextCheckAt: status.RefreshAt}
+	if _, exists := snapshot.State.Market.Castles[source]; exists {
+		decision.Detail = "Waiting for leased market barrows to return before refreshing logistics"
+		decision.DetailDescriptor = Localization.New("server.automation.waiting_for_leased_market.d1cafa3e", "Waiting for leased market barrows to return before refreshing logistics", nil)
+	}
+	return decision, true
 }

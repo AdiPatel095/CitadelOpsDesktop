@@ -53,6 +53,7 @@ func reduceMarketInfo(
 		castleID := State.CastleID(castleIDValue)
 		marketCastle := State.MarketCastleState{
 			CastleID:         castleID,
+			ObservedAt:       frame.ReceivedAt,
 			KingdomID:        State.KingdomID(rawInteger(row["KID"])),
 			TotalBarrows:     int(rawInteger(row["TC"])),
 			AvailableBarrows: int(rawInteger(row["AC"])),
@@ -107,7 +108,8 @@ func reduceMarketInfo(
 		gameState.Market.Castles = next
 		gameState.Market.ObservedAt = frame.ReceivedAt
 	}
-	return []string{"market", "castles", "resources"}, marketChanged || castleResourcesChanged, nil
+	leasesChanged := State.RecordMarketBarrowLeases(gameState, frame.ReceivedAt)
+	return []string{"market", "castles", "resources"}, marketChanged || castleResourcesChanged || leasesChanged, nil
 }
 
 func reduceMarketBooster(

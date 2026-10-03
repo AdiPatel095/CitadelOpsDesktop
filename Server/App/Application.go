@@ -432,7 +432,7 @@ func New(ctx context.Context, config Config) (*Application, error) {
 	session.SetAutomationLocked(application.automationLocked())
 	intents.SetExecutionGate(application.executionGate)
 	intents.SetAdmissionWeightProvider(application.attackAdmissionWeight)
-	dispatchGates := newFinalDispatchGates(application.coinGate, newTravelTicketDispatchGate(), newSpecialCostDispatchGate())
+	dispatchGates := newFinalDispatchGates(application.coinGate, newTravelTicketDispatchGate(), newSpecialCostDispatchGate(), newMarketBarrowDispatchGate())
 	dispatchGates.commanders.assignments = func() (CommanderFeatures.Configuration, error) {
 		raw, exists := application.Configuration.Section(CommanderFeatures.Section)
 		if !exists {

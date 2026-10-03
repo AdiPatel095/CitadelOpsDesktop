@@ -31,7 +31,7 @@ func (buffer *dispatchBoundaryBuffer) set(value any) {
 }
 func dispatchEvidenceOpcode(opcode string) bool {
 	switch strings.ToLower(opcode) {
-	case "hru", "ahr", "fco":
+	case "hru", "ahr", "fco", "crm":
 		return true
 	}
 	return false
@@ -44,7 +44,8 @@ func recordDispatchRejection(ctx context.Context, err error) {
 	opcode := strings.ToLower(response.Opcode)
 	if !((opcode == "hru" && response.Meaning.Code == 63) ||
 		(opcode == "ahr" && response.Meaning.Code == 2) ||
-		(opcode == "fco" && response.Meaning.Code == 5)) {
+		(opcode == "fco" && response.Meaning.Code == 5) ||
+		(opcode == "crm" && response.Meaning.Code == 109)) {
 		return
 	}
 	buffer, _ := ctx.Value(dispatchBoundaryContextKey{}).(*dispatchBoundaryBuffer)

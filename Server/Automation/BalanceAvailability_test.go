@@ -161,3 +161,45 @@ func TestBalanceAvailabilityEventDomains(t *testing.T) {
 		}
 	}
 }
+
+func TestMarketBarrowAvailabilityWaitAndSourceWake(t *testing.T) {
+	now := time.Now().UTC()
+	key := Intent.MarketBarrowBalanceKey(77127)
+	shortage := &Intent.BalanceUnavailableError{Key: key, Required: 2, Observed: 1, Known: true, CastleName: "Invented keep"}
+	result := operationResult{policyID: "autoFoodBalance", receipt: Intent.Receipt{Status: Intent.StatusFailed, RawError: shortage.Error(), Failure: &Intent.FailurePresentation{Explanation: shortage.Detail(), ExplanationDescriptor: shortage.LocalizationMessage()}}}
+	gate, ok := operationResultCoinAvailabilityGate(result)
+	if !ok || gate.key != key || gate.detailDescriptor.Key != "server.market_barrows.short" {
+		t.Fatalf("gate=%+v", gate)
+	}
+	current := &policyRuntime{running: true, evaluatedStateRevision: 10}
+	_, immediate := completePolicyRun(current, result, now)
+	if immediate || current.coinAvailabilityGate == nil || !current.failureBlockedUntil.IsZero() || !current.nextCheck.Equal(now.Add(30*time.Second)) {
+		t.Fatalf("runtime=%+v", current)
+	}
+	for _, event := range []struct {
+		name, domain                  string
+		sourceObserved, otherObserved time.Time
+		missing, wake                 bool
+	}{
+		{"movement tick", "movements", now, now, false, false},
+		{"same row market tick", "market", now, now, false, false},
+		{"other castle cmi", "market", now, now.Add(time.Second), false, false},
+		{"source cmi in wrong domain", "movements", now.Add(time.Second), now, false, false},
+		{"source cmi", "market", now.Add(time.Second), now, false, true},
+		{"source omitted", "market", now, now, true, true},
+	} {
+		t.Run(event.name, func(t *testing.T) {
+			state := State.NewGameState()
+			if !event.missing {
+				state.Market.Castles[77127] = State.MarketCastleState{CastleID: 77127, ObservedAt: event.sourceObserved}
+			}
+			state.Market.Castles[77128] = State.MarketCastleState{CastleID: 77128, ObservedAt: event.otherObserved}
+			gate.observedAt = now
+			current := &policyRuntime{coinAvailabilityGate: &gate, evaluatedStateRevision: 10}
+			clearCoinAvailabilityGates(map[string]*policyRuntime{"sample": current}, State.Event{Revision: 11, Domains: []string{event.domain}}, &state)
+			if (current.coinAvailabilityGate == nil) != event.wake {
+				t.Fatalf("wake=%t want=%t", current.coinAvailabilityGate == nil, event.wake)
+			}
+		})
+	}
+}

@@ -31,6 +31,7 @@ func (state *GameState) prepareStationingMutation(source *GameState) {
 
 func (state *GameState) prepareMarketMutation(source *GameState) {
 	state.Market = source.Market
+	state.Market.BarrowLeases = cloneMap(source.Market.BarrowLeases)
 	state.Market.Castles = cloneMap(source.Market.Castles)
 	state.Market.Boosters = cloneMap(source.Market.Boosters)
 }

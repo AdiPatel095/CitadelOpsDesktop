@@ -120,15 +120,9 @@ func (*FoodBalancePolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decisi
 	if decision, refresh := foodBalanceStateRefreshDecision(snapshot, stateRefreshInterval); refresh {
 		return decision, nil
 	}
-	logisticsStale, marketLeaseUntil, logisticsErr := foodBalanceLogisticsStale(snapshot, logisticsRefreshInterval, settings.AutoKingdomTransport)
+	logisticsStale, _, logisticsErr := foodBalanceLogisticsStale(snapshot, logisticsRefreshInterval, settings.AutoKingdomTransport)
 	if logisticsErr != nil {
 		return Decision{}, logisticsErr
-	}
-	if !marketLeaseUntil.IsZero() {
-		rememberWaiting(Decision{
-			Status: "waiting", Detail: "Waiting for leased market barrows to return before refreshing logistics", DetailDescriptor: Localization.New("server.automation.waiting_for_leased_market.d1cafa3e", "Waiting for leased market barrows to return before refreshing logistics", nil),
-			NextCheckAt: marketLeaseUntil.Add(time.Second),
-		})
 	}
 	if logisticsStale {
 		return Decision{
@@ -275,14 +269,7 @@ func foodBalanceLogisticsStale(snapshot Snapshot, interval time.Duration, includ
 	if !marketRequired && !kingdomRequired {
 		return false, time.Time{}, nil
 	}
-	marketStale := false
-	if marketRequired {
-		if snapshot.State.Market.ObservedAt.IsZero() || !snapshot.State.Market.CaravanLevelLoaded {
-			marketStale = true
-		} else {
-			marketStale = snapshot.Now.Sub(snapshot.State.Market.ObservedAt) >= interval
-		}
-	}
+	marketStale := marketRequired && !snapshot.State.Market.CaravanLevelLoaded
 	kingdomStale := false
 	if kingdomRequired {
 		if snapshot.State.KingdomTransport.ObservedAt.IsZero() {
@@ -295,9 +282,6 @@ func foodBalanceLogisticsStale(snapshot Snapshot, interval time.Duration, includ
 		return true, time.Time{}, nil
 	}
 	if marketStale {
-		if releasesAt := State.NextMarketBarrowLeaseRelease(&snapshot.State, snapshot.Now); !releasesAt.IsZero() {
-			return false, releasesAt, nil
-		}
 		return true, time.Time{}, nil
 	}
 	return false, time.Time{}, nil
@@ -573,6 +557,9 @@ func foodBalanceMarketShipmentFromDonor(
 	}
 	if !hasMarketplace {
 		return Decision{}, false, nil
+	}
+	if decision, blocked := marketSourceDecision(snapshot, donor.projection.castle.ID); blocked {
+		return decision, decision.Request != nil, nil
 	}
 	market, observed := snapshot.State.Market.Castles[donor.projection.castle.ID]
 	availableBarrows := State.AvailableMarketBarrowsAt(&snapshot.State, market, snapshot.Now)

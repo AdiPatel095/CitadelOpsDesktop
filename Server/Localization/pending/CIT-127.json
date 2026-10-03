@@ -1,0 +1,9 @@
+{
+  "story": "CIT-127",
+  "source": "Engineering/Plans/CIT-127 Market barrows are fresh at dispatch.md; Addendum 1",
+  "englishFallbackKeys": [
+    "server.market_barrows.short",
+    "server.market_barrows.unavailable"
+  ],
+  "translationStatus": "English only; pending the epic CIT-116 batched locale translation story"
+}

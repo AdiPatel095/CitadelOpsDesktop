@@ -14,6 +14,7 @@ type finalDispatchGates struct {
 }
 
 func newFinalDispatchGates(coins *coinDispatchGate, tickets *travelTicketDispatchGate, extra ...Intent.FinalDispatchProvider) *finalDispatchGates {
+	// Preserve commander, coin and ticket gates; extras include special costs and market barrows.
 	commanders := newPremiumCommanderDispatchGate()
 	return &finalDispatchGates{gates: append([]Intent.FinalDispatchProvider{commanders, coins, tickets}, extra...), tickets: tickets, commanders: commanders}
 }
