@@ -37,6 +37,7 @@ func TestAllianceHelpPolicyBootstrapsCurrentSessionOnce(t *testing.T) {
 	state := State.NewGameState()
 	state.Session.Generation = 7
 	state.Player.AllianceID = 9
+	state.Player.AllianceMembershipID = state.Player.AllianceID
 	state.Player.AllianceMembershipObservedAt = now
 	state.Player.AllianceMembershipGeneration = 7
 	decision, err := NewAllianceHelpPolicy().Evaluate(context.Background(), Snapshot{
@@ -68,6 +69,7 @@ func TestAllianceHelpPolicyImmediatelyAnswersPendingRequests(t *testing.T) {
 	state := State.NewGameState()
 	state.Session.Generation = 7
 	state.Player.AllianceID = 9
+	state.Player.AllianceMembershipID = state.Player.AllianceID
 	state.Player.AllianceMembershipObservedAt = now
 	state.Player.AllianceMembershipGeneration = 7
 	state.AllianceHelpRequests.OthersObservedGeneration = 7
@@ -132,6 +134,7 @@ func TestAllianceHelpMembershipPausedStatusDeduplicatesAndResumes(t *testing.T) 
 	}
 	_, err = store.ApplyComponents(State.Components(State.ComponentPlayer), func(s *State.GameState) ([]string, bool, error) {
 		s.Player.AllianceID = 9
+		s.Player.AllianceMembershipID = s.Player.AllianceID
 		s.Player.AllianceMembershipObservedAt = now
 		s.Player.AllianceMembershipGeneration = 7
 		return []string{"player", "alliance-help"}, true, nil

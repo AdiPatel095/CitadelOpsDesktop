@@ -26,6 +26,7 @@ func TestPlanAllianceHelpRequestUsesCapturedAHRPayload(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			state := State.NewGameState()
 			state.Player.AllianceID = 9
+			state.Player.AllianceMembershipID = state.Player.AllianceID
 			state.Player.AllianceMembershipObservedAt = time.Now().UTC()
 			observedAt := time.Now().UTC()
 			state.Player.ID = 501
@@ -106,6 +107,7 @@ func TestPlanAllianceHelpRequestUsesCapturedAHRPayload(t *testing.T) {
 func TestRecruitmentAllianceHelpResolverRequiresExactCommittedCastleContext(t *testing.T) {
 	state := State.NewGameState()
 	state.Player.AllianceID = 9
+	state.Player.AllianceMembershipID = state.Player.AllianceID
 	state.Player.AllianceMembershipObservedAt = time.Now().UTC()
 	observedAt := time.Now().UTC()
 	state.Player.ID = 501
@@ -162,6 +164,7 @@ func TestRecruitmentAllianceHelpResolverRequiresExactCommittedCastleContext(t *t
 func TestRecruitmentBUPAllianceHelpIgnoresRAHAndHistoricalFocusCoverage(t *testing.T) {
 	state := State.NewGameState()
 	state.Player.AllianceID = 9
+	state.Player.AllianceMembershipID = state.Player.AllianceID
 	state.Player.AllianceMembershipObservedAt = time.Now().UTC()
 	state.Player.ID = 501
 	state.Session.Generation = 7
@@ -229,6 +232,7 @@ func TestRecruitmentBUPAllianceHelpIgnoresRAHAndHistoricalFocusCoverage(t *testi
 func TestRecruitmentBUPAllianceHelpMarkersRequireExactFocus(t *testing.T) {
 	state := State.NewGameState()
 	state.Player.AllianceID = 9
+	state.Player.AllianceMembershipID = state.Player.AllianceID
 	state.Player.AllianceMembershipObservedAt = time.Now().UTC()
 	state.Player.ID = 501
 	state.Session.Generation = 7
@@ -264,6 +268,7 @@ func TestRecruitmentBUPAllianceHelpMarkersRequireExactFocus(t *testing.T) {
 func TestRecruitmentBUPCoveredMarkerRequiresCommittedLifecycleEvidence(t *testing.T) {
 	state := State.NewGameState()
 	state.Player.AllianceID = 9
+	state.Player.AllianceMembershipID = state.Player.AllianceID
 	state.Player.AllianceMembershipObservedAt = time.Now().UTC()
 	state.Player.ID = 501
 	state.Session.Generation = 7
@@ -289,6 +294,7 @@ func TestRecruitmentBUPMarkerStopsWhenReusedCoverageExpired(t *testing.T) {
 	now := time.Now().UTC()
 	state := State.NewGameState()
 	state.Player.AllianceID = 9
+	state.Player.AllianceMembershipID = state.Player.AllianceID
 	state.Player.AllianceMembershipObservedAt = time.Now().UTC()
 	state.Player.ID = 501
 	state.Session.Generation = 7
@@ -340,6 +346,7 @@ func TestRecruitmentAllianceHelpRequiresQueueFromCommittedCastleSnapshot(t *test
 	now := time.Now().UTC()
 	state := State.NewGameState()
 	state.Player.AllianceID = 9
+	state.Player.AllianceMembershipID = state.Player.AllianceID
 	state.Player.AllianceMembershipObservedAt = time.Now().UTC()
 	state.Player.ID = 501
 	state.Session.Generation = 7
@@ -377,6 +384,7 @@ func TestAllianceHelpRejectsCurrentRetainedUnfocusableCastle(t *testing.T) {
 	now := time.Date(2026, 8, 28, 12, 0, 0, 0, time.UTC)
 	state := State.NewGameState()
 	state.Player.AllianceID = 9
+	state.Player.AllianceMembershipID = state.Player.AllianceID
 	state.Player.AllianceMembershipObservedAt = time.Now().UTC()
 	state.Session.ChangedAt = now.Add(-time.Minute)
 	state.KingdomTransport.ObservedAt = now
@@ -406,6 +414,7 @@ func TestAllianceHelpRejectsCurrentRetainedUnfocusableCastle(t *testing.T) {
 func TestPlanHospitalAllianceHelpStopsAtObservedAccountLimit(t *testing.T) {
 	state := State.NewGameState()
 	state.Player.AllianceID = 9
+	state.Player.AllianceMembershipID = state.Player.AllianceID
 	state.Player.AllianceMembershipObservedAt = time.Now().UTC()
 	state.Session.Generation = 7
 	state.Player.AllianceMembershipGeneration = 7
@@ -446,6 +455,7 @@ func TestPlanHospitalAllianceHelpStopsAtObservedAccountLimit(t *testing.T) {
 func TestHospitalAllianceHelpWaitsForCurrentRequestList(t *testing.T) {
 	state := State.NewGameState()
 	state.Player.AllianceID = 9
+	state.Player.AllianceMembershipID = state.Player.AllianceID
 	state.Player.AllianceMembershipObservedAt = time.Now().UTC()
 	state.Session.Generation = 7
 	state.Player.AllianceMembershipGeneration = 7
@@ -478,6 +488,7 @@ func TestRecruitmentAllianceHelpIgnoresPendingOwnRequestWhenQueueLacksRAH(t *tes
 	now := time.Now().UTC()
 	state := State.NewGameState()
 	state.Player.AllianceID = 9
+	state.Player.AllianceMembershipID = state.Player.AllianceID
 	state.Player.AllianceMembershipObservedAt = time.Now().UTC()
 	state.Player.ID = 501
 	state.Session.Generation = 7
@@ -525,6 +536,7 @@ func TestRecruitmentAllianceHelpIgnoresPendingOwnRequestWhenQueueLacksRAH(t *tes
 func TestAllianceHelpGuardReplansAtAuthoritativeHospitalLimit(t *testing.T) {
 	state := State.NewGameState()
 	state.Player.AllianceID = 9
+	state.Player.AllianceMembershipID = state.Player.AllianceID
 	state.Player.AllianceMembershipObservedAt = time.Now().UTC()
 	state.Session.Generation = 7
 	state.Player.AllianceMembershipGeneration = 7
@@ -555,6 +567,7 @@ func TestAllianceHelpGuardSkipsRecruitmentSlotWithRAH(t *testing.T) {
 	now := time.Now().UTC()
 	state := State.NewGameState()
 	state.Player.AllianceID = 9
+	state.Player.AllianceMembershipID = state.Player.AllianceID
 	state.Player.AllianceMembershipObservedAt = time.Now().UTC()
 	state.Session.Generation = 7
 	state.Player.AllianceMembershipGeneration = 7
@@ -593,6 +606,7 @@ func TestAllianceHelpResolverRejectsRecruitmentSlotWithRAH(t *testing.T) {
 	now := time.Now().UTC()
 	state := State.NewGameState()
 	state.Player.AllianceID = 9
+	state.Player.AllianceMembershipID = state.Player.AllianceID
 	state.Player.AllianceMembershipObservedAt = time.Now().UTC()
 	state.Session.Generation = 7
 	state.Player.AllianceMembershipGeneration = 7
@@ -636,6 +650,7 @@ func allianceHelpContainsString(values []string, expected string) bool {
 func TestPlanAllianceHelpRequestRejectsToolQueue(t *testing.T) {
 	state := State.NewGameState()
 	state.Player.AllianceID = 9
+	state.Player.AllianceMembershipID = state.Player.AllianceID
 	state.Player.AllianceMembershipObservedAt = time.Now().UTC()
 	state.Castles[77] = State.CastleState{
 		ID: 77,
@@ -651,6 +666,7 @@ func TestPlanAllianceHelpRequestRejectsToolQueue(t *testing.T) {
 func TestMarkAllianceHelpRequestedDoesNotInferRecruitmentSuccess(t *testing.T) {
 	state := State.NewGameState()
 	state.Player.AllianceID = 9
+	state.Player.AllianceMembershipID = state.Player.AllianceID
 	state.Player.AllianceMembershipObservedAt = time.Now().UTC()
 	state.Session.Generation = 9
 	state.Player.AllianceMembershipGeneration = 9
@@ -686,6 +702,7 @@ func TestMarkAllianceHelpRequestedDoesNotInferRecruitmentSuccess(t *testing.T) {
 func TestMarkHospitalAllianceHelpOnlyMarksMatchingJob(t *testing.T) {
 	state := State.NewGameState()
 	state.Player.AllianceID = 9
+	state.Player.AllianceMembershipID = state.Player.AllianceID
 	state.Player.AllianceMembershipObservedAt = time.Now().UTC()
 	state.Session.Generation = 9
 	state.Player.AllianceMembershipGeneration = 9
@@ -713,6 +730,7 @@ func TestMarkHospitalAllianceHelpOnlyMarksMatchingJob(t *testing.T) {
 func TestPlanAllianceHelpAnswerAllUsesCapturedHelpAllPayload(t *testing.T) {
 	state := State.NewGameState()
 	state.Player.AllianceID = 9
+	state.Player.AllianceMembershipID = state.Player.AllianceID
 	state.Player.AllianceMembershipObservedAt = time.Now().UTC()
 	state.Session.Generation = 7
 	state.Player.AllianceMembershipGeneration = 7
@@ -747,6 +765,7 @@ func TestPlanAllianceHelpAnswerAllUsesCapturedHelpAllPayload(t *testing.T) {
 func TestAllianceHelpAnswerAllResolverRejectsCompletedBatch(t *testing.T) {
 	state := State.NewGameState()
 	state.Player.AllianceID = 9
+	state.Player.AllianceMembershipID = state.Player.AllianceID
 	state.Player.AllianceMembershipObservedAt = time.Now().UTC()
 	state.Session.Generation = 7
 	state.Player.AllianceMembershipGeneration = 7
@@ -765,6 +784,7 @@ func TestAllianceHelpAnswerAllResolverRejectsCompletedBatch(t *testing.T) {
 func TestAllianceHelpAnswerAllAllowsOneUnobservedSessionBootstrap(t *testing.T) {
 	state := State.NewGameState()
 	state.Player.AllianceID = 9
+	state.Player.AllianceMembershipID = state.Player.AllianceID
 	state.Player.AllianceMembershipObservedAt = time.Now().UTC()
 	state.Session.Generation = 7
 	state.Player.AllianceMembershipGeneration = 7
@@ -806,6 +826,7 @@ func TestAllianceHelpAnswerAllAllowsOneUnobservedSessionBootstrap(t *testing.T) 
 func TestMarkAllianceHelpAnsweredPreservesNewRequests(t *testing.T) {
 	state := State.NewGameState()
 	state.Player.AllianceID = 9
+	state.Player.AllianceMembershipID = state.Player.AllianceID
 	state.Player.AllianceMembershipObservedAt = time.Now().UTC()
 	state.Session.Generation = 7
 	state.Player.AllianceMembershipGeneration = 7
@@ -833,6 +854,7 @@ func TestMarkAllianceHelpAnsweredPreservesNewRequests(t *testing.T) {
 func TestRecruitmentAllianceHelpUsesSharedEligibilityAndHonors269(t *testing.T) {
 	state := State.NewGameState()
 	state.Player.AllianceID = 9
+	state.Player.AllianceMembershipID = state.Player.AllianceID
 	state.Player.AllianceMembershipObservedAt = time.Now().UTC()
 	observedAt := time.Now().UTC()
 	state.Player.ID = 501

@@ -31,8 +31,7 @@ func applyOwnAllianceSnapshot(root map[string]json.RawMessage, observed time.Tim
 			}
 			setOwnAlliance(state, State.AllianceID(aid))
 			state.Player.AllianceObservedAt = observed
-			state.Player.AllianceMembershipObservedAt = observed
-			state.Player.AllianceMembershipGeneration = state.Session.Generation
+			State.ObserveAllianceMembership(state, State.AllianceID(aid), observed)
 			return true
 		}
 		for _, key := range []string{"O", "gca", "gaa"} {

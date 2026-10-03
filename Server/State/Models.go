@@ -209,8 +209,9 @@ type AccountBindingState struct {
 
 type PlayerState struct {
 	// Process-local membership authority for alliance help; never restored.
-	AllianceMembershipObservedAt time.Time `json:"-"`
-	AllianceMembershipGeneration uint64    `json:"-"`
+	AllianceMembershipID         AllianceID `json:"-"`
+	AllianceMembershipObservedAt time.Time  `json:"-"`
+	AllianceMembershipGeneration uint64     `json:"-"`
 
 	// Process-local game setting authority; never restored from a saved profile.
 	RubyConfirmation   RubyConfirmationState  `json:"-"`

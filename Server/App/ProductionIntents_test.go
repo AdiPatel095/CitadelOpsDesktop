@@ -278,6 +278,7 @@ func TestPlanRecruitmentBUPAlwaysRequestsAllianceHelpAfterBatch(t *testing.T) {
 	now := time.Now().UTC()
 	gameState.Session.Generation = 7
 	gameState.Player.AllianceID = 9
+	gameState.Player.AllianceMembershipID = gameState.Player.AllianceID
 	gameState.Player.AllianceMembershipObservedAt = time.Now().UTC()
 	gameState.Player.AllianceMembershipGeneration = 7
 	gameState.Session.ConnectionGeneration = 3

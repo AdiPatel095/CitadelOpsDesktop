@@ -15,6 +15,7 @@ func membershipTestState(at time.Time) State.GameState {
 	s.Player.ID = 7
 	s.Player.AllianceID = 9
 	s.Player.AllianceObservedAt = at
+	s.Player.AllianceMembershipID = s.Player.AllianceID
 	s.Player.AllianceMembershipObservedAt = at
 	s.Player.AllianceMembershipGeneration = 7
 	s.Session.Generation = 7
@@ -71,6 +72,25 @@ func TestCIT121PlanFreshGBDMembershipRepro(t *testing.T) {
 	// Legacy GBD freshness stays deliberately separate from the help record.
 	if !got.Player.AllianceObservedAt.IsZero() {
 		t.Fatal("GBD changed legacy freshness semantics")
+	}
+}
+
+func TestCIT121OmittedAIDKeepsNoAlliance(t *testing.T) {
+	at := time.Now().UTC()
+	store, pipeline := commandCorrelationPipeline(t, membershipTestState(at))
+	for i, raw := range []string{
+		`%xt%aha%1%270%{"KID":15}%`,
+		`%xt%gbd%1%0%{"gpi":{"PID":7},"gal":{}}%`,
+		`%xt%gaa%1%0%{"KID":0,"AI":[],"OI":[{"OID":7,"RPT":0}]}%`,
+	} {
+		if _, err := pipeline.HandleRawAt(t.Context(), raw, Protocol.DirectionInbound, at.Add(time.Duration(i)*time.Second)); err != nil {
+			t.Fatal(err)
+		}
+		got := store.ReadOnlyView()
+		if got.Player.AllianceMembershipID != 0 || !got.Player.AllianceMembershipObservedAt.Equal(at) ||
+			got.Player.AllianceMembershipGeneration != 7 || State.AllianceMembershipCurrent(&got) {
+			t.Fatalf("omitted AID changed authoritative none: %+v", got.Player)
+		}
 	}
 }
 

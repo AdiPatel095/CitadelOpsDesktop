@@ -1118,10 +1118,7 @@ func applyAllianceSummary(raw json.RawMessage, observedAt time.Time, gameState *
 			gameState.Player.AllianceID = 0
 			changed = true
 		}
-		if gameState.Player.AllianceMembershipObservedAt != observedAt ||
-			gameState.Player.AllianceMembershipGeneration != gameState.Session.Generation {
-			gameState.Player.AllianceMembershipObservedAt = observedAt
-			gameState.Player.AllianceMembershipGeneration = gameState.Session.Generation
+		if State.ObserveAllianceMembership(gameState, State.AllianceID(*alliance.ID), observedAt) {
 			changed = true
 		}
 	}

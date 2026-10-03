@@ -132,11 +132,10 @@ func reduceAllianceHelpMembershipRejection(
 		(*frame.ResponseCode != 270 && *frame.ResponseCode != 114) {
 		return nil, false, nil
 	}
-	changed := gameState.Player.AllianceID != 0 ||
-		gameState.Player.AllianceMembershipObservedAt != frame.ReceivedAt ||
-		gameState.Player.AllianceMembershipGeneration != gameState.Session.Generation
+	changed := gameState.Player.AllianceID != 0
 	gameState.Player.AllianceID = 0
-	gameState.Player.AllianceMembershipObservedAt = frame.ReceivedAt
-	gameState.Player.AllianceMembershipGeneration = gameState.Session.Generation
+	if State.ObserveAllianceMembership(gameState, 0, frame.ReceivedAt) {
+		changed = true
+	}
 	return []string{"player", "alliance-help"}, changed, nil
 }

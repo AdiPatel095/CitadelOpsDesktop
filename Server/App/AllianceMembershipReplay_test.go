@@ -18,6 +18,7 @@ func helpMembershipReplayState(now time.Time) State.GameState {
 	state := State.NewGameState()
 	state.Player.ID = 7
 	state.Player.AllianceID = 9
+	state.Player.AllianceMembershipID = state.Player.AllianceID
 	state.Player.AllianceMembershipObservedAt = now
 	state.Player.AllianceMembershipGeneration = 7
 	state.Session.Generation = 7
@@ -87,6 +88,61 @@ func assertAllHelpLocallyBlocked(t *testing.T, input Intent.PlanningContext) {
 		if !errors.Is(err, Intent.ErrPlanStale) || step.Command.Opcode != "" || step.Opcode != "" {
 			t.Fatalf("%s resolver did not locally block: %+v err=%v", tc.name, step, err)
 		}
+	}
+}
+
+func TestCIT121RosterDoesNotReviveNoAlliance(t *testing.T) {
+	for _, tc := range []struct{ name, none string }{
+		{"AHA270", `%xt%aha%1%270%{"KID":15}%`},
+		{"AHR114", `%xt%ahr%1%114%{"ID":205,"T":2}%`},
+		{"gal0", `%xt%gbd%1%0%{"gpi":{"PID":7},"gal":{"AID":0}}%`},
+		{"gal-1", `%xt%gbd%1%0%{"gpi":{"PID":7},"gal":{"AID":-1}}%`},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			at := time.Now().UTC()
+			initial := helpMembershipReplayState(at)
+			initial.Player.AllianceObservedAt = time.Time{}
+			store, pipeline := helpMembershipReplayPipeline(t, initial)
+			for i, raw := range []string{
+				`%xt%gbd%1%0%{"gpi":{"PID":7},"gal":{"AID":9}}%`,
+				tc.none,
+				`%xt%ain%1%0%{"A":{"AID":9,"M":[{"OID":7,"AID":9}]}}%`,
+			} {
+				if _, err := pipeline.HandleRawAt(t.Context(), raw, Protocol.DirectionInbound, at.Add(time.Duration(i)*time.Second)); err != nil {
+					t.Fatal(err)
+				}
+			}
+			input := helpMembershipReplayInput(store)
+			if State.AllianceMembershipCurrent(&input.State) || input.State.Player.AllianceMembershipID != 0 {
+				t.Fatal("roster revived authoritative none")
+			}
+			assertAllHelpLocallyBlocked(t, input)
+			roster := input.State.Alliances[9]
+			if input.State.Player.AllianceID != 9 || len(roster.Members) != 1 || roster.Members[0].PlayerID != 7 {
+				t.Fatalf("legacy roster effect changed: player=%d roster=%+v", input.State.Player.AllianceID, roster)
+			}
+			// Sender shape from TestOwnGAANoAllianceUnlocksOptInAutoStationGate.
+			if _, err := pipeline.HandleRawAt(t.Context(), `%xt%gaa%1%0%{"KID":0,"AI":[],"OI":[{"OID":7,"AID":9,"RPT":0}]}%`, Protocol.DirectionInbound, at.Add(3*time.Second)); err != nil {
+				t.Fatal(err)
+			}
+			input = helpMembershipReplayInput(store)
+			if !State.AllianceMembershipCurrent(&input.State) {
+				t.Fatal("fresh own-player GAA did not restore membership")
+			}
+			plan, err := planAllianceHelpAnswerAll(t.Context(), input, json.RawMessage(`{"allowUnobserved":true}`))
+			if err != nil || len(plan.Steps) != 2 {
+				t.Fatalf("AHA did not resume: %+v err=%v", plan, err)
+			}
+			step, err := resolveAllianceHelpAnswerAllStep(t.Context(), input, plan.Steps[0].ResolverArguments)
+			if err != nil || step.Command.Opcode != "aha" {
+				t.Fatalf("AHA not sendable after recovery: %+v err=%v", step, err)
+			}
+			for _, automation := range input.State.Automations {
+				if !automation.SafetyLock.ObservedAt.IsZero() {
+					t.Fatal("local membership block created a lane safety lock")
+				}
+			}
+		})
 	}
 }
 
