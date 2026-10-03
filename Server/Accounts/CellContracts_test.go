@@ -12,8 +12,8 @@ import (
 var updateCellContracts = flag.Bool("update", false, "regenerate sender cell contract fixtures")
 
 func TestGenerateCellContracts(t *testing.T) {
-	defer contractfill.Inventory(t, "testdata/contracts/worker", []string{"status", "reconcile-response", "configuration-sync-response"})
-	for _, name := range []string{"status", "reconcile-response", "configuration-sync-response"} {
+	defer contractfill.Inventory(t, "testdata/contracts/worker", []string{"status", "reconcile-response"}, "configuration-sync-ack.first", "configuration-sync-ack.repeat", "control-fence")
+	for _, name := range []string{"status", "reconcile-response"} {
 		t.Run(name, func(t *testing.T) {
 			var status CellStatus
 			if err := contractfill.Fill(&status, map[string]any{
@@ -26,6 +26,8 @@ func TestGenerateCellContracts(t *testing.T) {
 			contractfill.Golden(t, "testdata/contracts/worker", name, &status, *updateCellContracts)
 		})
 	}
+	t.Run("configuration-sync-ack", func(t *testing.T) { configurationResponseGoldens(t, *updateCellContracts) })
+	t.Run("control-fence", func(t *testing.T) { controlFenceGolden(t, *updateCellContracts) })
 }
 
 func TestReceiveCellContracts(t *testing.T) {

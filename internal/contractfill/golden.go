@@ -59,12 +59,15 @@ func ReadReceiver(t *testing.T, directory, name string) ([]byte, map[string]bool
 }
 
 // Inventory fails if a fixture is missing or has no corresponding test case.
-func Inventory(t *testing.T, directory string, names []string) {
+func Inventory(t *testing.T, directory string, names []string, bodies ...string) {
 	t.Helper()
 	expected := map[string]bool{}
 	for _, name := range names {
 		expected[name+".json"] = true
 		expected[name+".keys.json"] = true
+	}
+	for _, name := range bodies {
+		expected[name+".json"] = true
 	}
 	entries, err := os.ReadDir(directory)
 	if err != nil {
@@ -78,5 +81,33 @@ func Inventory(t *testing.T, directory string, names []string) {
 	}
 	for name := range expected {
 		t.Fatalf("missing contract fixture: %s", name)
+	}
+}
+
+// GoldenBody records the real handler body without inventing a response type
+// or required-ness metadata for a map acknowledgement the backend ignores.
+func GoldenBody(t *testing.T, directory, name string, raw []byte, update bool) {
+	t.Helper()
+	var canonical bytes.Buffer
+	if err := json.Indent(&canonical, bytes.TrimSpace(raw), "", "  "); err != nil {
+		t.Fatal(err)
+	}
+	expected := append(canonical.Bytes(), '\n')
+	path := filepath.Join(directory, name+".json")
+	if update {
+		if err := os.MkdirAll(directory, 0755); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.WriteFile(path, expected, 0644); err != nil {
+			t.Fatal(err)
+		}
+		return
+	}
+	committed, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !bytes.Equal(expected, committed) {
+		t.Fatalf("sender fixture drift: %s; run sync-cell-contracts.mjs", path)
 	}
 }
