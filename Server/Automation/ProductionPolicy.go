@@ -109,6 +109,7 @@ func (policy *ProductionPolicy) Evaluate(_ context.Context, snapshot Snapshot) (
 	configured := 0
 	observed := 0
 	full := 0
+	fullUsed, fullUsable := 0, 0
 	unknownStackCapacity := 0
 	missingScheduledDefinition := 0
 	unavailableDefinition := 0
@@ -208,8 +209,10 @@ func (policy *ProductionPolicy) Evaluate(_ context.Context, snapshot Snapshot) (
 		// stack must not consume one of those slots.
 		occupied := len(queue.Queued)
 		queueCapacity := policy.queueCapacity(&snapshot.State, queue, snapshot.GameData)
-		if queueCapacity <= 0 || occupied >= queueCapacity {
+		if State.ProductionQueueFreeSlots(queue, snapshot.Now) == 0 {
 			full++
+			fullUsed += occupied
+			fullUsable += queueCapacity
 			if policy.lineID == 0 && occupied >= queueCapacity {
 				if productionID := eligibleAllianceHelpProductionID(&snapshot.State, castleID, queue, snapshot.Now); productionID > 0 {
 					arguments, _ := json.Marshal(map[string]any{"productionId": productionID})
@@ -355,8 +358,13 @@ func (policy *ProductionPolicy) Evaluate(_ context.Context, snapshot Snapshot) (
 		detail = "Waiting for production queues to be observed in the game session"
 		detailLocalizationMessage = Localization.New("server.automation.waiting_for_production_queues.f20c8904", "Waiting for production queues to be observed in the game session", nil)
 	} else if configured > 0 && observed == full {
+		status = "waiting"
 		detail = "All observed production queues are full"
 		detailLocalizationMessage = Localization.New("server.automation.all_observed_production_queues.ffa007f7", "All observed production queues are full", nil)
+		if policy.lineID == 0 {
+			detail = fmt.Sprintf("All observed production queues are full at %d of %d", fullUsed, fullUsable)
+			detailLocalizationMessage = Localization.New("server.automation.production_queues_full_at", "All observed production queues are full at {used} of {usable}", Localization.Params{"used": fullUsed, "usable": fullUsable})
+		}
 	} else if focusUnavailable > 0 && configured == 0 {
 		detail = "Configured production castles are not focusable in the current kingdom session"
 		detailLocalizationMessage = Localization.New("server.automation.configured_production_castles_are.45e8f583", "Configured production castles are not focusable in the current kingdom session", nil)
@@ -737,13 +745,10 @@ func advanceProductionCursor(raw json.RawMessage, castleKey string, cursor int) 
 }
 
 func (policy *ProductionPolicy) queueCapacity(state *State.GameState, queue State.ProductionQueue, gameData *GameData.Store) int {
-	expected, known := productionVIPQueueCapacity(state, policy.lineID, gameData)
-	if queue.Capacity <= 0 {
-		return expected
-	}
-	if !known || queue.Capacity < expected {
+	if len(queue.Slots) > 0 || !queue.ObservedAt.IsZero() {
 		return queue.Capacity
 	}
+	expected, _ := productionVIPQueueCapacity(state, policy.lineID, gameData)
 	return expected
 }
 
