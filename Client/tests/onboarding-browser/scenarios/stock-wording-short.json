@@ -1,0 +1,125 @@
+{
+  "id": "stock-wording-short",
+  "title": "Synthetic stock wording: short",
+  "purpose": "CIT-138 settings visual coverage with synthetic reserve and home stock only.",
+  "step": "-",
+  "platforms": [
+    "desktop",
+    "hosted"
+  ],
+  "modules": [
+    "autoBird",
+    "autoStation",
+    "autoTowers",
+    "autoNomad"
+  ],
+  "columns": [
+    "readiness"
+  ],
+  "base": "rich",
+  "simulated": [
+    "banner: Simulated preview: sample data only. Nothing here reaches the game or an account.",
+    "dock: Candidate <short SHA>"
+  ],
+  "expect": [
+    "Reserve stock and its check are visible in the captured settings frame."
+  ],
+  "patch": {
+    "state": {
+      "castles": {
+        "4101": {
+          "units": {
+            "stationed": {
+              "1": 70000
+            }
+          }
+        }
+      }
+    },
+    "config": {
+      "automation.autoBird": {
+        "version": 2,
+        "activePresetId": null,
+        "ignoreSettings": {
+          "settings": {
+            "4101": [
+              {
+                "id": 1,
+                "amount": 100000
+              }
+            ]
+          }
+        },
+        "presets": {
+          "version": 1,
+          "presets": []
+        }
+      },
+      "automation.autoStation": {
+        "version": 1,
+        "settings": {
+          "4101": [
+            {
+              "id": 1,
+              "amount": 100000
+            }
+          ]
+        }
+      },
+      "automation.autoTowers": {
+        "version": 4,
+        "castles": {
+          "4101": {
+            "enabled": true,
+            "radius": 15,
+            "unitId": 1,
+            "maidenOnly": false
+          }
+        }
+      },
+      "automation.autoNomad": {
+        "version": 5,
+        "sourceCastleId": 4101,
+        "nomadPresetId": "synthetic-stock-attack"
+      },
+      "attacks.presets": {
+        "version": 1,
+        "presets": [
+          {
+            "id": "synthetic-stock-attack",
+            "name": "Synthetic stock attack",
+            "targetType": "pve",
+            "useTroopFamilies": false,
+            "createdAt": "2026-09-29T12:00:00Z",
+            "updatedAt": "2026-09-29T12:00:00Z",
+            "waves": [
+              {
+                "L": {
+                  "troops": [
+                    {
+                      "itemId": 1,
+                      "quantity": 120
+                    }
+                  ],
+                  "tools": []
+                },
+                "M": {
+                  "troops": [],
+                  "tools": []
+                },
+                "R": {
+                  "troops": [],
+                  "tools": []
+                }
+              }
+            ],
+            "courtyardSupport": {
+              "troops": [],
+              "tools": []
+            }
+          }
+        ]
+      }
+    }
+  }
+}

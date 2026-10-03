@@ -1,0 +1,17 @@
+{
+  "story": "CIT-138",
+  "planRevision": 1,
+  "source": "Engineering/Plans/Auto Bird reserve label wording.md Revision 1",
+  "englishFallbackKeys": [
+    "unitStock.countsUnknown",
+    "unitStock.requiredInCastle",
+    "unitStock.reserveCoveredInCastle",
+    "unitStock.reserveInCastle",
+    "unitStock.state.missingInCastle",
+    "unitStock.state.validInCastle"
+  ],
+  "sourceFamily": "shared UI (Client/src/i18n/messages.ts and mirrored client copy)",
+  "translationStatus": "German and Arabic authored for the existing onboarding translation fixture; remaining locales pending the next 26-locale batch before release.",
+  "translatorNote": "Troops located in the player's own castle. Do NOT use the word for 'stationed'. In these features, 'station' means sending troops to another castle.",
+  "authoring": "Direct agent-authored German and Arabic translations; no native-speaker review claimed."
+}

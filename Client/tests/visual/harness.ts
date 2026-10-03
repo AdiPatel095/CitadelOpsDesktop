@@ -1,7 +1,7 @@
 import { readFile } from 'node:fs/promises';
 import { expect, type Page, type Request } from '@playwright/test';
 
-export async function prepare(page: Page, theme: 'dark' | 'light') {
+export async function prepare(page: Page, theme: 'dark' | 'light', scenario = 'rich-account') {
   const intercepted = new WeakSet<Request>();
   const escapes: string[] = [];
   const unhandled: string[] = [];
@@ -38,7 +38,7 @@ export async function prepare(page: Page, theme: 'dark' | 'light') {
     };
   }, theme);
   await page.clock.setFixedTime(new Date('2026-09-29T12:00:00Z'));
-  await page.goto('/?scenario=rich-account&locale=en&reset=1');
+  await page.goto(`/?scenario=${scenario}&locale=en&reset=1`);
   await page.addStyleTag({ content: `
     #fixture-banner, #fixture-dock { display: none !important; }
     #root { margin-top: 0 !important; height: 100dvh !important; transform: none !important; }
@@ -57,8 +57,8 @@ export async function openView(page: Page, label: string, view: string) {
   await expect(page.locator(`[data-view="${view}"]`)).toBeVisible();
 }
 
-export async function openSettings(page: Page) {
-  await page.getByRole('button', { name: 'Open Auto Towers settings', exact: true }).click();
+export async function openSettings(page: Page, feature = 'Auto Towers') {
+  await page.locator('[data-view="automation"]').getByRole('button', { name: `Open ${feature} settings`, exact: true }).click();
   await expect(page.getByRole('dialog')).toBeVisible();
 }
 

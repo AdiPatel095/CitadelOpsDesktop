@@ -16,6 +16,8 @@ after(async () => {
   await vite.close();
 });
 
+const { messages, interpolate } = await vite.ssrLoadModule('/src/i18n/messages.ts');
+
 const troops = { 1: { id: 1, name: 'A' }, 2: { id: 2, name: 'B' } };
 const tools = { 500: { id: 500, name: 'Ladder' } };
 // The dashboard projection zeroes unitsObservedAt (Go zero time); freshness comes from the session (CIT-15 D1).
@@ -55,7 +57,9 @@ test('decided at launch: quantity keeps missing blocked, stock refills make it p
 });
 
 test('no castle and loading family data are unavailable', () => {
-  assert.equal(units.evaluateUnitStock({ castle: null, observation: LIVE, requests: [], troops, tools, metadataReady: true }).check.state, 'unavailable');
+  const noCastle = units.evaluateUnitStock({ castle: null, observation: LIVE, requests: [], troops, tools, metadataReady: true });
+  assert.equal(noCastle.check.state, 'unavailable');
+  assert.equal(interpolate(messages[noCastle.check.messageKey], noCastle.check.params), 'Troop counts are unknown until the castle syncs.');
   assert.equal(stock([{ itemId: 1, amount: 1, kind: 'troop' }], { useTroopFamilies: true, metadataReady: false }).check.state, 'unavailable');
 });
 
@@ -86,6 +90,7 @@ test('D1: zero-time counts are compared only while this connection is current', 
 test('reserves: above stock is pending, unknown units block, covered reserves are valid', () => {
   const covered = stock([{ itemId: 1, amount: 50, kind: 'troop' }], { mode: 'reserve' });
   assert.equal(covered.check.state, 'valid');
+  assert.equal(interpolate(messages[covered.check.messageKey], covered.check.params), 'Troops in the castle cover every reserve.');
   const above = stock([{ itemId: 2, amount: 50, kind: 'troop' }], { mode: 'reserve' });
   assert.equal(above.check.state, 'pending');
   assert.equal(above.lines[0].state, 'short');
