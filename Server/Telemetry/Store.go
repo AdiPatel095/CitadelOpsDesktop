@@ -291,6 +291,15 @@ func (store *Store) BeginWebSocketGameSession() {
 	_, _ = store.ensureChannelSessionLocked(ChannelWebSocketGame, time.Now(), true)
 }
 
+// InboundResponseFailed classifies response codes within their protocol domain.
+// Core uses 10005 for success; ordinary game commands use zero.
+func InboundResponseFailed(opcode string, code int) bool {
+	if strings.HasPrefix(strings.ToLower(opcode), "core_") {
+		return code != 10005
+	}
+	return code != 0
+}
+
 // Record receives every decoded game frame from the ingest pipeline. The websocket channel
 // deliberately stores the complete original wire payload, including login and long responses.
 func (store *Store) Record(frame Protocol.CommittedFrame, reduceErr error) {
@@ -298,7 +307,7 @@ func (store *Store) Record(frame Protocol.CommittedFrame, reduceErr error) {
 		return
 	}
 	direction := logDirection(frame.Frame.Direction)
-	if frame.Frame.Direction == Protocol.DirectionInbound && frame.Frame.ResponseCode != nil && *frame.Frame.ResponseCode != 0 {
+	if frame.Frame.Direction == Protocol.DirectionInbound && frame.Frame.ResponseCode != nil && InboundResponseFailed(frame.Frame.Opcode, *frame.Frame.ResponseCode) {
 		direction = "ERROR"
 	}
 	payload := strings.TrimSpace(frame.Frame.Raw)
