@@ -146,7 +146,12 @@ func (engine *Engine) failurePresentation(receipt Receipt, err error) *FailurePr
 		presentation.Kind = FailureAvailability
 		presentation.Severity = FailureSeverityWarning
 		presentation.Explanation = cleanFailureText(err.Error())
-		presentation.ExplanationDescriptor = nil
+		presentation.ExplanationDescriptor = Localization.FromError(err)
+		var shortage *CoinUnavailableError
+		if errors.As(err, &shortage) && shortage.LocalizationMessage() != nil {
+			presentation.ExplanationDescriptor = shortage.LocalizationMessage()
+			presentation.Explanation = presentation.ExplanationDescriptor.FallbackText
+		}
 		presentation.Recovery = "The feature lane will reevaluate after the authoritative coin balance changes."
 		presentation.RecoveryDescriptor = Localization.New("server.intent.the_feature_lane_will.fdf76403", "The feature lane will reevaluate after the authoritative coin balance changes.", nil)
 		presentation.Toast = !automationActor(receipt.Actor)

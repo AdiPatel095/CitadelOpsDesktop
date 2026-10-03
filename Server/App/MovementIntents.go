@@ -245,11 +245,13 @@ func resolveTroopsStationStep(_ context.Context, input Intent.PlanningContext, a
 	if request.Purpose != "" {
 		after = Intent.Step{Name: "Track accepted support batch", NameDescriptor: Localization.New("server.app.track_accepted_support_batch.167c6a02", "Track accepted support batch", nil), Action: "movement.track_station", ActionArguments: arguments}
 	}
-	step, err := supportDispatchStep(input, "Station troops", source, target, request.DelayHours, amounts, after)
+	step, err := supportDispatchStep(input, "Station troops", source, target, request.DelayHours, amounts, after, supportCoinHorseEligible(input))
 	if err != nil {
 		return Intent.Step{}, err
 	}
-	step.NameDescriptor = Localization.New("server.app.station_troops.2778f606", "Station troops", nil)
+	if step.CoinCost == nil {
+		step.NameDescriptor = Localization.New("server.app.station_troops.2778f606", "Station troops", nil)
+	}
 	if automation {
 		guard := func(s *Intent.Step) {
 			if s.Opcode != "cds" {

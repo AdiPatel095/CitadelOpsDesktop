@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"math"
+	"strings"
 
 	"CitadelDesktop/Server/Localization"
 	"CitadelDesktop/Server/State"
@@ -65,4 +66,18 @@ func RequireTravelTickets(input PlanningContext, needed int64) error {
 		return Localization.WithError(err, err.LocalizationMessage())
 	}
 	return nil
+}
+
+const SupportCoinHorseSource = "auto support coin-horse reserve"
+
+func (err *CoinUnavailableError) LocalizationMessage() *Localization.Message {
+	if !strings.Contains(err.Source, SupportCoinHorseSource) {
+		return nil
+	}
+	if err.BalanceUnavailable {
+		message := Localization.New("server.support.coin_horse_unavailable", "Waiting for a coin horse: coin balance is unavailable; waiting for fresh game data", nil)
+		return Localization.Bind(message, message.Fallback)
+	}
+	available := max(int64(0), err.Observed-err.Pending)
+	return Localization.Bind(Localization.New("server.support.coin_horse_short", "Waiting: not enough coins for a coin horse ({needed} needed, {available} available)", Localization.Params{"needed": err.Required, "available": available}), fmt.Sprintf("Waiting: not enough coins for a coin horse (%d needed, %d available)", err.Required, available))
 }

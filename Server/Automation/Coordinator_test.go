@@ -2232,3 +2232,28 @@ func TestCoordinatorTravelTicketShortageWaitsAndWakesOnlyOnTicketObservation(t *
 		t.Fatal("fresh ticket observation did not wake planner")
 	}
 }
+
+func TestCoinHorseAvailabilityWaitWakesOnFreshCoinObservation(t *testing.T) {
+	for _, unknown := range []bool{false, true} {
+		now := time.Now().UTC()
+		shortage := &Intent.CoinUnavailableError{Required: 20, Observed: 1, Source: Intent.SupportCoinHorseSource, BalanceUnavailable: unknown}
+		result := operationResult{receipt: Intent.Receipt{Status: Intent.StatusFailed, Error: shortage.Error()}, nextCheck: now.Add(time.Minute)}
+		gate, ok := operationResultCoinAvailabilityGate(result)
+		if !ok || gate.detailDescriptor == nil || gate.detail == "" {
+			t.Fatal("missing localized coin horse wait")
+		}
+		current := &policyRuntime{evaluatedStateRevision: 10}
+		_, ok = completePolicyRun(current, result, now)
+		if ok || current.coinAvailabilityGate == nil || !current.failureBlockedUntil.IsZero() {
+			t.Fatal("coin shortage entered failure pause")
+		}
+		current.coinAvailabilityGate.observedAt = now
+		state := coordinatorReadyState()
+		state.Player.Resources[1] = 1
+		state.Player.ResourceObservations[1] = State.PlayerResourceObservation{ObservedAt: now.Add(time.Second), ConnectionGeneration: state.Session.ConnectionGeneration}
+		clearCoinAvailabilityGates(map[string]*policyRuntime{"autoStation": current}, State.Event{Revision: 11, Domains: []string{"resources"}}, &state)
+		if current.coinAvailabilityGate != nil || !current.evaluationPending {
+			t.Fatal("fresh coin observation did not wake fallback")
+		}
+	}
+}

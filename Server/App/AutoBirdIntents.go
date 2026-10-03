@@ -771,11 +771,13 @@ func (application *Application) resolveAutoBirdDispatchStep(
 		)
 	}
 	step, err := supportDispatchStep(input, "Dispatch Auto Bird troops", source, target, operation.DelayHours, manifest,
-		Intent.Step{Name: "Track accepted Auto Bird batch", NameDescriptor: Localization.New("server.app.track_accepted_auto_bird.4524d09b", "Track accepted Auto Bird batch", nil), Action: "auto_bird.movement.capture", ActionArguments: arguments})
+		Intent.Step{Name: "Track accepted Auto Bird batch", NameDescriptor: Localization.New("server.app.track_accepted_auto_bird.4524d09b", "Track accepted Auto Bird batch", nil), Action: "auto_bird.movement.capture", ActionArguments: arguments}, supportCoinHorseEligible(input))
 	if err != nil {
 		return Intent.Step{}, err
 	}
-	step = step.WithNameDescriptor(Localization.New("server.app.dispatch_auto_bird_troops.9e71a86c", "Dispatch Auto Bird troops", nil))
+	if step.CoinCost == nil {
+		step = step.WithNameDescriptor(Localization.New("server.app.dispatch_auto_bird_troops.9e71a86c", "Dispatch Auto Bird troops", nil))
+	}
 	guard := func(step *Intent.Step) {
 		if step.Opcode != "cds" {
 			return

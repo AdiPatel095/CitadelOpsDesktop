@@ -194,11 +194,11 @@ func TestSupportPlansAllBatchesAgainstTicketBudget(t *testing.T) {
 	for i := 1; i <= 21; i++ {
 		amounts[State.UnitID(i)] = 1
 	}
-	if _, err := supportDispatchStep(input, "Support", State.CastleState{ID: 10}, State.AllianceHolding{}, 0, amounts, Intent.Step{}); !errors.Is(err, Intent.ErrCurrencyUnavailable) {
+	if _, err := supportDispatchStep(input, "Support", State.CastleState{ID: 10}, State.AllianceHolding{}, 0, amounts, Intent.Step{}, false); !errors.Is(err, Intent.ErrCurrencyUnavailable) {
 		t.Fatalf("three batches ignored shortage: %v", err)
 	}
 	delete(amounts, 21)
-	step, err := supportDispatchStep(input, "Support", State.CastleState{ID: 10}, State.AllianceHolding{}, 0, amounts, Intent.Step{})
+	step, err := supportDispatchStep(input, "Support", State.CastleState{ID: 10}, State.AllianceHolding{}, 0, amounts, Intent.Step{}, false)
 	if err != nil || len(step.Batch) != 2 {
 		t.Fatalf("two funded batches = %d, %v", len(step.Batch), err)
 	}
@@ -218,6 +218,7 @@ func TestRiftCapturedChoiceWaitsWithoutFallback(t *testing.T) {
 // replayTravelSender validates exactly as the real outbound router does, and
 // records only commands that passed the final dispatch boundary.
 type replayTravelSender struct {
+	gameData *GameData.Store
 	payloads []json.RawMessage
 	store    *State.Store
 	observer *coinGateEngineObserver
@@ -236,8 +237,22 @@ func (s *replayTravelSender) Send(ctx context.Context, raw []byte) error {
 	}
 	s.payloads = append(s.payloads, append(json.RawMessage(nil), frame.Payload...))
 	responseAt := time.Now().UTC()
+	var coinCost int64
+	if s.gameData != nil && frame.Opcode == "cds" {
+		cost, costErr := supportCoinCost(Intent.PlanningContext{State: s.store.Snapshot(), GameData: s.gameData}, frame.Payload)
+		if costErr != nil {
+			return costErr
+		}
+		coinCost = cost.amount
+	}
 	_, err = s.store.ApplyComponents(State.Components(State.ComponentPlayer), func(state *State.GameState) ([]string, bool, error) {
-		state.Player.Currencies[22]--
+		var travel struct{ PTT int }
+		json.Unmarshal(frame.Payload, &travel)
+		if travel.PTT == 1 {
+			state.Player.Currencies[22]--
+		}
+		state.Player.Resources[1] -= float64(coinCost)
+		state.Player.ResourceObservations[1] = State.PlayerResourceObservation{ObservedAt: responseAt, ConnectionGeneration: state.Session.ConnectionGeneration}
 		state.Player.CurrencyObservations[22] = State.PlayerResourceObservation{ObservedAt: responseAt, ConnectionGeneration: state.Session.ConnectionGeneration}
 		return []string{"currencies"}, true, nil
 	})

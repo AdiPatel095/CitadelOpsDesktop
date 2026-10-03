@@ -1293,6 +1293,11 @@ func operationResultCoinAvailabilityGate(result operationResult) (coinAvailabili
 	}
 	if _, err := fmt.Sscanf(raw, "not enough coins for dispatch: %d needed plus %d reserved; %d available from %d observed after %d pending", &required, &reserve, &available, &observed, &pending); err == nil {
 		gate.observed = observed
+		shortage := &Intent.CoinUnavailableError{Required: required, Reserve: reserve, Observed: observed, Pending: pending, Source: raw, BalanceUnavailable: strings.Contains(raw, "current-session balance unavailable")}
+		if message := shortage.LocalizationMessage(); message != nil {
+			gate.detailDescriptor = message
+			gate.detail = message.FallbackText
+		}
 	}
 
 	return gate, true

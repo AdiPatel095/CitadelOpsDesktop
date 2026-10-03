@@ -47,6 +47,8 @@ type CommanderHoldRegistry interface {
 }
 
 type PlanningContext struct {
+	AutomationLane       string
+	IntentName           string
 	CurrencyAvailability CurrencyAvailabilityProvider
 	State                State.GameState
 	GameData             *GameData.Store
