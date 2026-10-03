@@ -101,9 +101,9 @@ function renderDialog({ pause = false, amount = '1', locale = 'en', catalog = {}
   const auth = { automationTimedUntilByKey: { autoBird: 1790816400000 },
     enableAutomationFor: async () => { if (saveError !== undefined) throw saveError; } };
   const imports = {
-    react, 'lucide-react': { TimerReset: () => null }, '../../context/AuthContext': { useAuth: () => auth },
+    react, 'lucide-react': { TimerReset: () => null }, '../../context/useAuth': { useAuth: () => auth },
     '../../i18n/automationDuration': { formatDurationEnd: (value, locale) => formatDurationEnd(value, locale, 'UTC') },
-    '../../components/ui': ui, '../../i18n/LocaleContext': { useLocale: () => ({ t, locale }) },
+    '../../components/ui': ui, '../../i18n/useLocale': { useLocale: () => ({ t, locale }) },
     '../../i18n/LocalizedText': { LocalizedText: ({ messageKey }) => h('span', null, messageKey === 'game.cancel' ? 'Cancel' : t(messageKey)) },
   };
   const module = { exports: {} };

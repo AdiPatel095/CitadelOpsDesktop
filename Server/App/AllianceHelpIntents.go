@@ -49,6 +49,11 @@ func planAllianceHelpAnswerAll(
 	if err := decodeIntentArguments(arguments, &options); err != nil {
 		return Intent.Plan{}, err
 	}
+	if !State.AllianceMembershipCurrent(&input.State) {
+		message := allianceHelpMembershipPausedMessage()
+		return Intent.Plan{Summary: message.Fallback, SummaryDescriptor: message}, nil
+	}
+
 	listIDs := State.PendingOtherAllianceHelpListIDs(&input.State)
 	if len(listIDs) == 0 {
 		if !options.AllowUnobserved || input.State.Session.Generation == 0 ||
@@ -96,6 +101,11 @@ func resolveAllianceHelpAnswerAllStep(
 	if err := decodeIntentArguments(arguments, &request); err != nil {
 		return Intent.Step{}, err
 	}
+	if !State.AllianceMembershipCurrent(&input.State) {
+		message := allianceHelpMembershipPausedMessage()
+		return Intent.Step{}, Localization.WithError(fmt.Errorf("%w: %s", Intent.ErrPlanStale, message.Fallback), message)
+	}
+
 	if request.SessionGeneration == 0 || request.SessionGeneration != input.State.Session.Generation {
 		return Intent.Step{}, Localization.WithError(fmt.Errorf("%w: alliance-help session changed", Intent.ErrPlanStale), Localization.New("server.app.intent_plan_became_stale.c4717979", "intent plan became stale before dispatch: alliance-help session changed", nil))
 	}
@@ -178,6 +188,11 @@ func planAllianceHelpRequest(_ context.Context, input Intent.PlanningContext, ar
 	if err := decodeIntentArguments(arguments, &request); err != nil {
 		return Intent.Plan{}, err
 	}
+	if !State.AllianceMembershipCurrent(&input.State) {
+		message := allianceHelpMembershipPausedMessage()
+		return Intent.Plan{Summary: message.Fallback, SummaryDescriptor: message}, nil
+	}
+
 	if request.ProductionID <= 0 {
 		return Intent.Plan{}, Localization.WithError(fmt.Errorf("alliance help requires a positive production job id"), Localization.New("server.app.alliance_help_requires_a.eec16f9d", "alliance help requires a positive production job id", nil))
 	}
@@ -263,6 +278,11 @@ func (application *Application) resolveAllianceHelpRequestStep(
 	if err := decodeIntentArguments(arguments, &request); err != nil {
 		return Intent.Step{}, err
 	}
+	if !State.AllianceMembershipCurrent(&input.State) {
+		message := allianceHelpMembershipPausedMessage()
+		return Intent.Step{}, Localization.WithError(fmt.Errorf("%w: %s", Intent.ErrPlanStale, message.Fallback), message)
+	}
+
 	if request.ProductionID <= 0 {
 		return Intent.Step{}, Localization.WithError(fmt.Errorf("alliance help requires a positive production job id"), Localization.New("server.app.alliance_help_requires_a.eec16f9d", "alliance help requires a positive production job id", nil))
 	}
@@ -326,6 +346,11 @@ func (application *Application) resolveRecruitmentBUPAllianceHelpStep(
 	if err := decodeIntentArguments(arguments, &request); err != nil {
 		return Intent.Step{}, err
 	}
+	if !State.AllianceMembershipCurrent(&input.State) {
+		message := allianceHelpMembershipPausedMessage()
+		return Intent.Step{}, Localization.WithError(fmt.Errorf("%w: %s", Intent.ErrPlanStale, message.Fallback), message)
+	}
+
 	castle, exists := input.State.Castles[request.CastleID]
 	if !exists || State.CastleFocusKnownUnavailable(&input.State, castle) ||
 		!recruitmentAllianceHelpContextCurrent(input, castle) {
@@ -642,4 +667,10 @@ func allianceHelpLineSupported(lineID int) bool {
 func allianceHelpEligible(state State.GameState, productionID int64) bool {
 	job, eligible := findAllianceHelpJob(state, productionID)
 	return eligible && allianceHelpLineSupported(job.LineID)
+}
+
+// CIT-121 / Product decision Story E: English source; translations are batched
+// separately. One shared reason covers unknown, stale, and absent membership.
+func allianceHelpMembershipPausedMessage() *Localization.Message {
+	return Localization.New("server.automation.alliance_help_membership.paused", "Alliance help is paused: you aren't in an alliance", nil)
 }

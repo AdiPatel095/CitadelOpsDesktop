@@ -1,3 +1,5 @@
+import type { GameStateV2 } from '../api/Contracts';
+import { normalizeStormKeys, parseStormLegacyKey, stormLegacyKeyFor } from './stormRole';
 import { queueConfigurationUpdate } from './Configuration';
 
 export interface AutoStationTroopReserve {
@@ -7,6 +9,7 @@ export interface AutoStationTroopReserve {
 
 export interface AutoStationClientStateV1 {
   version: 1;
+  stormLegacyKey?: string;
   leadTimeSec: number;
   recallWhenClear: boolean;
   minRPTDays: number;
@@ -37,7 +40,7 @@ export function parseAutoStationClientState(raw: unknown): AutoStationClientStat
   const settings: Record<string, AutoStationTroopReserve[]> = {};
   if (source.settings && typeof source.settings === 'object' && !Array.isArray(source.settings)) {
     Object.entries(source.settings as Record<string, unknown>).forEach(([castleID, value]) => {
-      if (!Array.isArray(value) || !/^\d+$/.test(castleID)) return;
+      if (!Array.isArray(value) || !(castleID === 'storm' || /^\d+$/.test(castleID))) return;
       const byUnit = new Map<number, number>();
       value.forEach((entry) => {
         if (!entry || typeof entry !== 'object' || Array.isArray(entry)) return;
@@ -51,6 +54,7 @@ export function parseAutoStationClientState(raw: unknown): AutoStationClientStat
   }
   return {
     version: 1,
+    ...(parseStormLegacyKey(source.stormLegacyKey) ? { stormLegacyKey: parseStormLegacyKey(source.stormLegacyKey) } : {}),
     leadTimeSec: clampInteger(source.leadTimeSec, 60, 60, 3600),
     recallWhenClear: source.recallWhenClear !== false,
     minRPTDays: clampInteger(source.minRPTDays, 3, 0, 30),
@@ -62,4 +66,12 @@ export function parseAutoStationClientState(raw: unknown): AutoStationClientStat
 export function persistAutoStationClientState(state: AutoStationClientStateV1) {
   const normalized = parseAutoStationClientState(state);
   return queueConfigurationUpdate('automation.autoStation', normalized);
+}
+
+
+export function normalizeAutoStationStormSettings(saved: AutoStationClientStateV1, state: GameStateV2 | null): AutoStationClientStateV1 {
+  const { stormLegacyKey: previous, ...section } = saved;
+  const settings = normalizeStormKeys(saved.settings, state, { stormLegacyKey: previous, dualWrite: true });
+  const stormLegacyKey = Object.hasOwn(settings, 'storm') ? stormLegacyKeyFor(state) : undefined;
+  return { ...section, ...(stormLegacyKey ? { stormLegacyKey } : {}), settings };
 }

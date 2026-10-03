@@ -57,17 +57,19 @@ type DirectWebSocketConfig struct {
 	Namespace  string
 	Language   string
 
-	dialer            *websocket.Dialer
-	serverURLOverride string
-	pingInterval      time.Duration
-	movementInterval  time.Duration
-	handshakeTimeout  time.Duration
-	buildResolver     func(context.Context, string) (string, error)
-	outboxPauseBytes  int
-	outboxResumeBytes int
-	ingestStallLimit  time.Duration
-	forwarderStopped  chan<- uint64 // test-only exit signal; nil in production
-	serveReturned     chan<- error  // test-only connection result; nil in production
+	dialer                *websocket.Dialer
+	serverURLOverride     string
+	pingInterval          time.Duration
+	movementInterval      time.Duration
+	handshakeTimeout      time.Duration
+	buildResolver         func(context.Context, string) (string, error)
+	outboxPauseBytes      int
+	outboxResumeBytes     int
+	ingestStallLimit      time.Duration
+	forwarderStopped      chan<- uint64                    // test-only exit signal; nil in production
+	serveReturned         chan<- error                     // test-only connection result; nil in production
+	movementSent          func(seq uint64, at time.Time)   // test-only send start; nil in production
+	movementPauseObserved func(epoch uint64, at time.Time) // test-only first paused tick; nil in production
 }
 
 type DirectWebSocketTransport struct {
@@ -98,9 +100,10 @@ type DirectWebSocketTransport struct {
 	forceNextStart     bool
 	reconnectPolicy    ReconnectPolicy
 
-	writeMu   sync.Mutex
-	pendingMu sync.Mutex
-	pending   []directPendingResponse
+	writeMu         sync.Mutex
+	movementSendSeq uint64 // test-only sequence, protected by writeMu
+	pendingMu       sync.Mutex
+	pending         []directPendingResponse
 	// allianceHelpPlayerID and allianceHelpCastleID are refreshed from the
 	// authoritative JAA castle-focus reply. Recruitment AHR does not carry its
 	// target in the outbound payload, so each pending request snapshots this
@@ -1001,6 +1004,7 @@ func (transport *DirectWebSocketTransport) serveConnected(
 	stallTicker := time.NewTicker(5 * time.Second)
 	defer stallTicker.Stop()
 	subscriptionRefreshDue := false
+	var observedPauseEpoch uint64
 	// The official client PULLS its subscription packages (C2S "sie") at
 	// startup — the server never volunteers them on login or in the gbd
 	// baseline. In browser mode the embedded official client makes that
@@ -1070,9 +1074,17 @@ func (transport *DirectWebSocketTransport) serveConnected(
 				return err
 			}
 		case <-movementTicker.C:
-			if outbox.isPaused() {
+			paused, epoch, _ := outbox.pauseState()
+			if paused {
+				if transport.config.movementPauseObserved != nil && epoch != observedPauseEpoch {
+					observedPauseEpoch = epoch
+					transport.config.movementPauseObserved(epoch, time.Now())
+				}
 				continue
 			}
+			// At most one gam already past the pause check may be sent when a
+			// pause begins. Ingest accounting also allows one frame past the
+			// pause mark; earlier writes may arrive at the peer during the pause.
 			frame := fmt.Sprintf("%%xt%%%s%%gam%%%d%%{}%%", transport.profile.Namespace, roomID)
 			if _, err := transport.sendInternal(
 				connection, frame, connectionGeneration, "session:background:movement-refresh", "gam",
@@ -1158,6 +1170,10 @@ func (transport *DirectWebSocketTransport) sendInternal(
 		return false, nil
 	}
 	transport.invalidateAllianceHelpContextForOutbound(payload)
+	if transport.config.movementSent != nil && causation == "session:background:movement-refresh" {
+		transport.movementSendSeq++
+		transport.config.movementSent(transport.movementSendSeq, time.Now())
+	}
 	err := transport.writeApplicationFrameLocked(context.Background(), connection, []byte(payload))
 	transport.writeMu.Unlock()
 	if err != nil {

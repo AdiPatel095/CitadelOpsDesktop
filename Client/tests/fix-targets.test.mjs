@@ -58,7 +58,8 @@ const EVALUATORS = {
   autoTowers: [functionBody(setup, 'evaluateTowerReadiness'), commanders],
   autoFortress: [functionBody(setup, 'evaluateFortressReadiness'), commanders],
   autoFoodBalance: [functionBody(setup, 'evaluateFoodBalanceReadiness')],
-  autoStation: [functionBody(setup, 'evaluateReserveReadiness')],
+  // Static ID extraction cannot follow the Auto Bird-only branch.
+  autoStation: [functionBody(setup, 'evaluateReserveReadiness').replace("id: 'storm-reserve'", '')],
   autoBird: [functionBody(setup, 'evaluateReserveReadiness')],
 };
 
@@ -100,4 +101,9 @@ test('slot-specific targets win over the plain check id', () => {
   assert.equal(fixTargetFor('autoKhan', { id: 'rage-booster' }).section, 'stop-limits', 'a collapsed Advanced control is revealed before focus');
   assert.equal(fixTargetFor('autoKhan', { id: 'protection' }), null);
   assert.equal(fixTargetFor('autoTowers', { id: 'unknown-check' }), null);
+});
+
+test('Storm reserve fix reveals and focuses the Storm castle card', () => {
+  assert.deepEqual(fixTargetFor('autoBird', { id: 'storm-reserve', slot: 'storm' }), { section: 'castles', control: 'auto-bird-castle-storm' });
+  assert.equal(fixTargetFor('autoStation', { id: 'storm-reserve', slot: 'storm' }), null);
 });

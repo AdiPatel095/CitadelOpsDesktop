@@ -1,24 +1,14 @@
-import { createContext, useContext, useMemo, type ReactNode } from 'react';
+import { FixtureAPIContext, type FixtureAPIContextValue } from './useCitadelAPI.mock';
+import { useMemo, type ReactNode } from 'react';
 import type {
 	CatalogManifest,
 	ConfigurationSnapshot,
-	EquipmentOptimizeRequest,
-	EquipmentOptimizeResponse,
 	GameStateV2,
 	IntentReceipt,
 } from '../../src/api/Contracts';
 
 export type FixtureRequestMode = 'normal' | 'few' | 'no-gear' | 'error' | 'delayed' | 'timeout';
 export type FixtureApplyMode = 'success' | 'authoritative-failure' | 'stale-rejection';
-
-interface FixtureAPIContextValue {
-	state: GameStateV2;
-	catalogs: CatalogManifest;
-	configuration: ConfigurationSnapshot;
-	optimizeEquipment: (input: EquipmentOptimizeRequest) => Promise<EquipmentOptimizeResponse>;
-	submitIntent: (name: string, args?: Record<string, unknown>) => Promise<IntentReceipt>;
-	updateConfiguration: (section: string, value: unknown) => Promise<ConfigurationSnapshot>;
-}
 
 interface FixtureAPIProviderProps {
 	children: ReactNode;
@@ -30,8 +20,6 @@ interface FixtureAPIProviderProps {
 	onConfiguration: (next: ConfigurationSnapshot, section: string, value: unknown) => void;
 	onApply: (name: string, args: Record<string, unknown>, outcome: FixtureApplyMode) => void;
 }
-
-const FixtureAPIContext = createContext<FixtureAPIContextValue | null>(null);
 
 export function FixtureAPIProvider({
 	children,
@@ -99,10 +87,4 @@ export function FixtureAPIProvider({
 	}), [applyMode, catalogs, configuration, onApply, onConfiguration, requestMode, state]);
 
 	return <FixtureAPIContext.Provider value={value}>{children}</FixtureAPIContext.Provider>;
-}
-
-export function useCitadelAPI(): FixtureAPIContextValue {
-	const context = useContext(FixtureAPIContext);
-	if (!context) throw new Error('CIT-7 fixture API provider is missing');
-	return context;
 }

@@ -1,4 +1,5 @@
-import { useLocale as useStaticLocale } from "../../i18n/LocaleContext";
+import { bucketMetricPoints } from './bucketMetricPoints';
+import { useLocale as useStaticLocale } from '../../i18n/useLocale';
 import { LocalizedText } from "../../i18n/LocalizedText";
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react';
 import {
@@ -18,10 +19,11 @@ import StaleSessionBanner from '../../components/StaleSessionBanner';
 import type { FoodFilter, RoleFilter, TypeFilter } from '../../components/TroopPickerModal';
 import UnitImage from '../../components/UnitImage';
 import { Badge, Button, Card, CardContent, CardHeader, CardTitle, PillSelector, Select } from '../../components/ui';
-import { useAuth } from '../../context/AuthContext';
-import { useMetadata, type MetadataItem } from '../../context/MetadataContext';
+import { useAuth } from '../../context/useAuth';
+import { type MetadataItem } from '../../context/MetadataContext';
+import { useMetadata } from '../../context/useMetadata';
 import { Notifications } from '../../components/Notifications';
-import { useCitadelAPI } from '../../api/ApiContext';
+import { useCitadelAPI } from '../../api/useCitadelAPI';
 import type { CastleStateV2 } from '../../api/Contracts';
 import { runtimeFetch } from '../../api/RuntimeURL';
 import { collectWalletMetricIDs, retainedWalletBalance } from './PlayerTrackerWallet';
@@ -1762,29 +1764,6 @@ function filterMetricPointsRange(points: TrackerMetricPoint[], range: RangeKey):
   if (!definition?.seconds) return points;
   const cutoff = Math.floor(Date.now() / 1000) - definition.seconds;
   return points.filter((point) => point.timestampUnix >= cutoff);
-}
-
-export function bucketMetricPoints(
-  points: TrackerMetricPoint[],
-  range: RangeKey,
-  bucketSecondsOverride?: number,
-): TrackerMetricPoint[] {
-  const bucketSeconds = bucketSecondsOverride ?? (range === '24h'
-    ? 60
-    : range === '7d'
-      ? 60 * 60
-      : 24 * 60 * 60);
-  const buckets = new Map<number, TrackerMetricPoint>();
-  for (const point of points) {
-    const bucket = Math.floor(point.timestampUnix / bucketSeconds);
-    const existing = buckets.get(bucket);
-    // Retention keeps the observation closest to the start of each UTC
-    // bucket, so rendering follows the same rule even before a prune runs.
-    if (!existing || point.timestampUnix < existing.timestampUnix) {
-      buckets.set(bucket, point);
-    }
-  }
-  return [...buckets.values()].sort((left, right) => left.timestampUnix - right.timestampUnix);
 }
 
 function formatTrackerInterval(secondsValue: number): string {

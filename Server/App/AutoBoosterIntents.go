@@ -10,6 +10,7 @@ import (
 	"strings"
 	"time"
 
+	"CitadelDesktop/Server/Automation"
 	"CitadelDesktop/Server/GameData"
 	"CitadelDesktop/Server/Intent"
 	"CitadelDesktop/Server/Outbound"
@@ -139,6 +140,11 @@ func autoBoosterPurchaseContextForOperation(input Intent.PlanningContext, argume
 	if contract.DailyGlobalEffectID != request.GlobalEffectID || contract.DailyBoostPercent <= 0 {
 		return request, Localization.WithError(fmt.Errorf("official fortress-speed global effect changed; refusing purchase"), Localization.New("server.app.official_fortress_speed_global.57f52413", "official fortress-speed global effect changed; refusing purchase", nil))
 	}
+	setting := input.State.Player.RubyConfirmation
+	if blocked, code := State.RubyConfirmationBlocks(setting, input.State.Session, GameData.FortressDailyBoosterRubyCost); blocked {
+		detail, descriptor := Automation.AutoBoosterConfirmationNotice(setting, code)
+		return request, Localization.WithError(fmt.Errorf("%w: %s", Intent.ErrPlanStale, detail), descriptor)
+	}
 	inventory := input.State.EventScores.Inventory
 	baseline := inventory.GlobalEffectBaselineObservedAt
 	if baseline.IsZero() || baseline.After(now) || inventory.GlobalEffectBaselineGeneration != input.State.Session.ConnectionGeneration || (!input.State.Session.ChangedAt.IsZero() && baseline.Before(input.State.Session.ChangedAt)) || requireFresh && now.Sub(baseline) >= autoBoosterPurchaseFreshness {
@@ -154,6 +160,10 @@ func autoBoosterPurchaseContextForOperation(input Intent.PlanningContext, argume
 		}
 	}
 	if record, found := inventory.GlobalEffectPurchases[request.GlobalEffectID]; found && State.SameEventOccurrence(record.OccurrenceEndsAt, effect.EndsAt) {
+		if State.RubyConfirmationPurchaseHeld(setting, input.State.Session, record, GameData.FortressDailyBoosterRubyCost) {
+			detail, descriptor := Automation.AutoBoosterConfirmationNotice(setting, "")
+			return request, Localization.WithError(fmt.Errorf("%w: %s", Intent.ErrPlanStale, detail), descriptor)
+		}
 		ownedPending := record.Outcome == State.GlobalEffectPurchaseUnresolved && pendingOperationID != "" && record.OperationID == pendingOperationID
 		if !ownedPending && (record.Outcome == State.GlobalEffectPurchaseUnresolved || record.Outcome == State.GlobalEffectPurchaseAccepted || record.Outcome == State.GlobalEffectPurchaseConfirmed) {
 			return request, Localization.WithError(fmt.Errorf("%w: a purchase is already unresolved, accepted, or active for this window", Intent.ErrPlanStale), Localization.New("server.app.intent_plan_became_stale.d683f550", "intent plan became stale before dispatch: a purchase is already unresolved, accepted, or active for this window", nil))
@@ -305,7 +315,7 @@ func (application *Application) mutateAutoBoosterPurchase(ctx context.Context, a
 			}
 			return nil, false, nil
 		case "reject":
-			if !matches || record.Outcome == State.GlobalEffectPurchaseAccepted || record.Outcome == State.GlobalEffectPurchaseConfirmed {
+			if !matches || record.Outcome == State.GlobalEffectPurchaseAccepted || record.Outcome == State.GlobalEffectPurchaseConfirmed || record.Outcome == State.GlobalEffectPurchaseConfirmationRequired {
 				return nil, false, nil
 			}
 			record.Outcome, record.ResultObservedAt, record.Detail = State.GlobalEffectPurchaseRejected, now, "The game explicitly rejected the boost purchase"

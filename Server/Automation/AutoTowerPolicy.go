@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"math"
 	"sort"
-	"strconv"
 	"time"
 
 	"CitadelDesktop/Server/AttackCapacity"
@@ -106,6 +105,24 @@ func (*AutoTowerPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision
 			EventDriven: true,
 		}, nil
 	}
+	onlyStormEnabled := false
+	for key, plan := range settings.Castles {
+		if !plan.Enabled {
+			continue
+		}
+		if key != StormSettingsKey {
+			onlyStormEnabled = false
+			break
+		}
+		onlyStormEnabled = true
+	}
+	if onlyStormEnabled && len(BoundCastleEntries(map[string]autoTowerCastle{StormSettingsKey: settings.Castles[StormSettingsKey]}, &snapshot.State)) == 0 {
+		return Decision{
+			Status: "waiting", Detail: "Waiting for a Storm castle",
+			DetailDescriptor: Localization.New("stormRole.waiting", "Waiting for a Storm castle", nil),
+			NextCheckAt:      snapshot.Now.Add(policyInterval(settings.CheckIntervalSec, 30)),
+		}, nil
+	}
 	if !validHorseTravelBoostID(settings.HorseTravelBoostID) {
 		return Decision{Status: "waiting", Detail: "Choose a supported horse travel boost", DetailDescriptor: Localization.New("server.automation.choose_a_supported_horse.0d7016a8", "Choose a supported horse travel boost", nil), EventDriven: true}, nil
 	}
@@ -163,7 +180,7 @@ func (*AutoTowerPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision
 			Detail: fmt.Sprintf("Refresh complete tower map around %s", castleName(castle)), DetailDescriptor: Localization.New("server.automation.refresh_complete_tower_map.2dcabea9", "Refresh complete tower map around {p0}", Localization.Params{"p0": fmt.Sprintf("%s", castleName(castle))}),
 			NextCheckAt:         snapshot.Now.Add(2 * time.Second),
 			Request:             &Intent.Request{Name: "tower.queue.scan", Arguments: arguments},
-			ScheduleKey:         towerCastleScheduleKey(castle.ID),
+			ScheduleKey:         towerCastleScheduleKey(castle),
 			ReevaluateOnSuccess: true,
 		}, nil
 	}
@@ -287,7 +304,7 @@ func (*AutoTowerPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision
 				NextCheckAt:         snapshot.Now.Add(2 * time.Second),
 				Metrics:             metrics,
 				Request:             &Intent.Request{Name: "tower.queue.target.refresh", Arguments: arguments},
-				ScheduleKey:         towerCastleScheduleKey(selected.Castle.ID),
+				ScheduleKey:         towerCastleScheduleKey(selected.Castle),
 				ReevaluateOnSuccess: true,
 			}, nil
 		}
@@ -311,7 +328,7 @@ func (*AutoTowerPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision
 					NextCheckAt:         snapshot.Now.Add(2 * time.Second),
 					Metrics:             metrics,
 					Request:             &Intent.Request{Name: "tower.advisor.activate", Arguments: arguments},
-					ScheduleKey:         towerCastleScheduleKey(selected.Castle.ID),
+					ScheduleKey:         towerCastleScheduleKey(selected.Castle),
 					ReevaluateOnSuccess: true,
 					ReevaluateOnStale:   true,
 				}, nil
@@ -324,7 +341,7 @@ func (*AutoTowerPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision
 			}
 			return Decision{
 				Status: "waiting", Detail: detail, DetailDescriptor: Localization.Clone(detailLocalizationMessage), EventDriven: true, Metrics: metrics,
-				ScheduleKey: towerCastleScheduleKey(selected.Castle.ID),
+				ScheduleKey: towerCastleScheduleKey(selected.Castle),
 			}, nil
 		}
 		attackArguments := map[string]any{
@@ -347,7 +364,7 @@ func (*AutoTowerPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision
 			NextCheckAt:         snapshot.Now.Add(2 * time.Second),
 			Metrics:             metrics,
 			Request:             &Intent.Request{Name: "tower.attack", Arguments: arguments},
-			ScheduleKey:         towerCastleScheduleKey(selected.Castle.ID),
+			ScheduleKey:         towerCastleScheduleKey(selected.Castle),
 			ReevaluateOnSuccess: true,
 			ReevaluateOnStale:   true,
 		}, nil
@@ -377,6 +394,7 @@ func (*AutoTowerPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision
 	if configured == 0 {
 		detail = "No enabled castle has a troop configured"
 		detailLocalizationMessage = Localization.New("server.automation.no_enabled_castle_has.72b05111", "No enabled castle has a troop configured", nil)
+
 	} else if activeCount > 0 {
 		detail = "No additional tower target is ready; active tower movements continue independently"
 		detailLocalizationMessage = Localization.New("server.automation.no_additional_tower_target.f48b64fe", "No additional tower target is ready; active tower movements continue independently", nil)
@@ -461,14 +479,9 @@ func filterAutoTowerHorseTravelBoostCastles(
 	filtered := make(map[string]autoTowerCastle, len(settings.Castles))
 	configured := 0
 	unsupported := 0
-	for _, castleKey := range sortedNumericKeys(settings.Castles) {
-		plan := settings.Castles[castleKey]
+	for _, binding := range BoundCastleEntries(settings.Castles, &snapshot.State) {
+		castleKey, castle, plan := binding.Key, binding.Castle, binding.Entry
 		if !plan.Enabled || plan.UnitID <= 0 {
-			continue
-		}
-		castleID, _ := strconv.ParseInt(castleKey, 10, 64)
-		castle, exists := snapshot.State.Castles[State.CastleID(castleID)]
-		if !exists {
 			continue
 		}
 		configured++
@@ -485,7 +498,7 @@ func filterAutoTowerHorseTravelBoostCastles(
 				Detail: fmt.Sprintf("Refresh travel-building state at %s", castleName(castle)), DetailDescriptor: Localization.New("server.automation.refresh_travel_building_state.7d626275", "Refresh travel-building state at {p0}", Localization.Params{"p0": fmt.Sprintf("%s", castleName(castle))}),
 				NextCheckAt:         snapshot.Now.Add(2 * time.Second),
 				Request:             &Intent.Request{Name: "game.focus_castle", Arguments: arguments},
-				ScheduleKey:         towerCastleScheduleKey(castle.ID),
+				ScheduleKey:         towerCastleScheduleKey(castle),
 				ReevaluateOnSuccess: true,
 			}, nil
 		}
@@ -500,7 +513,7 @@ func filterAutoTowerHorseTravelBoostCastles(
 				Detail: fmt.Sprintf("Refresh travel-building state at %s", castleName(castle)), DetailDescriptor: Localization.New("server.automation.refresh_travel_building_state.7d626275", "Refresh travel-building state at {p0}", Localization.Params{"p0": fmt.Sprintf("%s", castleName(castle))}),
 				NextCheckAt:         snapshot.Now.Add(2 * time.Second),
 				Request:             &Intent.Request{Name: "game.focus_castle", Arguments: arguments},
-				ScheduleKey:         towerCastleScheduleKey(castle.ID),
+				ScheduleKey:         towerCastleScheduleKey(castle),
 				ReevaluateOnSuccess: true,
 			}, nil
 		case errors.Is(err, GameData.ErrHorseTravelBoostUnavailable):
@@ -528,13 +541,9 @@ func filterAutoTowerHorseTravelBoostCastles(
 
 func nextAutoTowerScheduleOpening(snapshot Snapshot, settings autoTowerSettings) time.Time {
 	var earliest time.Time
-	for _, castleKey := range sortedNumericKeys(settings.Castles) {
-		plan := settings.Castles[castleKey]
+	for _, binding := range BoundCastleEntries(settings.Castles, &snapshot.State) {
+		castleKey, plan := binding.Key, binding.Entry
 		if !plan.Enabled || plan.UnitID <= 0 {
-			continue
-		}
-		castleID, _ := strconv.ParseInt(castleKey, 10, 64)
-		if _, exists := snapshot.State.Castles[State.CastleID(castleID)]; !exists {
 			continue
 		}
 		allowed, next := scheduleAllows(snapshot.Configuration, "autoTowers:"+castleKey, snapshot.Now)
@@ -550,14 +559,9 @@ func queuedTowerCandidates(snapshot Snapshot, settings autoTowerSettings) ([]tow
 	reserved := activeTowerTargetKeys(&snapshot.State, snapshot.Now)
 	activeCount := 0
 	configured := 0
-	for _, castleKey := range sortedNumericKeys(settings.Castles) {
-		plan := settings.Castles[castleKey]
+	for _, binding := range BoundCastleEntries(settings.Castles, &snapshot.State) {
+		castleKey, castle, plan := binding.Key, binding.Castle, binding.Entry
 		if !plan.Enabled || plan.UnitID <= 0 {
-			continue
-		}
-		castleIDValue, _ := strconv.ParseInt(castleKey, 10, 64)
-		castle, exists := snapshot.State.Castles[State.CastleID(castleIDValue)]
-		if !exists {
 			continue
 		}
 		configured++
@@ -728,17 +732,12 @@ func nextTowerQueueScan(snapshot Snapshot, settings autoTowerSettings, refreshIn
 		scanned time.Time
 	}
 	candidates := make([]candidate, 0)
-	for _, castleKey := range sortedNumericKeys(settings.Castles) {
-		plan := settings.Castles[castleKey]
+	for _, binding := range BoundCastleEntries(settings.Castles, &snapshot.State) {
+		castleKey, castle, plan := binding.Key, binding.Castle, binding.Entry
 		if !plan.Enabled || plan.UnitID <= 0 {
 			continue
 		}
 		if allowed, _ := scheduleAllows(snapshot.Configuration, "autoTowers:"+castleKey, snapshot.Now); !allowed {
-			continue
-		}
-		castleIDValue, _ := strconv.ParseInt(castleKey, 10, 64)
-		castle, exists := snapshot.State.Castles[State.CastleID(castleIDValue)]
-		if !exists {
 			continue
 		}
 		scanned := snapshot.State.TowerQueue.LastScannedAt[castle.ID]
@@ -772,8 +771,8 @@ func clampTowerRadius(value int) int {
 	return value
 }
 
-func towerCastleScheduleKey(castleID State.CastleID) string {
-	return "autoTowers:" + strconv.FormatInt(int64(castleID), 10)
+func towerCastleScheduleKey(castle State.CastleState) string {
+	return "autoTowers:" + CastleSettingsKey(castle)
 }
 
 func towerMapRefreshInterval(value int) time.Duration {

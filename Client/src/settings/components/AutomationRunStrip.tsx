@@ -1,11 +1,11 @@
 import React from 'react';
 import { CalendarDays, Timer } from 'lucide-react';
-import { useCitadelAPI } from '../../api/ApiContext';
+import { useCitadelAPI } from '../../api/useCitadelAPI';
 import { Badge } from '../../components/ui/Badge';
 import { Button } from '../../components/ui/Button';
 import { StopControl } from '../../components/StopControl';
-import { useAuth } from '../../context/AuthContext';
-import { useLocale } from '../../i18n/LocaleContext';
+import { useAuth } from '../../context/useAuth';
+import { useLocale } from '../../i18n/useLocale';
 import { LocalizedText } from '../../i18n/LocalizedText';
 import { configurationSection } from '../Configuration';
 import { normalizeFeatureSchedules, scheduleSummary } from '../SchedulerTypes';

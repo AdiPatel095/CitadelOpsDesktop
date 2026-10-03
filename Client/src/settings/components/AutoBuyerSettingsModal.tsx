@@ -1,10 +1,10 @@
 import { StopFooter } from '../../components/StopControl';
-import { useLocale as useStaticLocale } from "../../i18n/LocaleContext";
+import { useLocale as useStaticLocale } from '../../i18n/useLocale';
 import { LocalizedText } from "../../i18n/LocalizedText";
 import React, { useEffect, useMemo, useState } from 'react';
 import { Clock3, Coins, PackageSearch, ShieldCheck, ShoppingCart, Sparkles, Store, Users } from 'lucide-react';
 import { CitadelAPI } from '../../api/CitadelClient';
-import { useCitadelAPI } from '../../api/ApiContext';
+import { useCitadelAPI } from '../../api/useCitadelAPI';
 import { castleOptionsFromState } from '../../api/Selectors';
 import type {
   AutoBuyerFeastV1,
@@ -14,7 +14,7 @@ import type {
 } from '../../api/Contracts';
 import { Notifications } from '../../components/Notifications';
 import { Badge, Button, Card, Input, Select, SettingsModal, Switch } from '../../components/ui';
-import { useAuth } from '../../context/AuthContext';
+import { useAuth } from '../../context/useAuth';
 import {
   AUTO_BUYER_MAXIMUM_SPECIALIST_DAYS,
   AUTO_BUYER_MINIMUM_SPECIALIST_DAYS,

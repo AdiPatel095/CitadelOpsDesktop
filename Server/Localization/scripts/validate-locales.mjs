@@ -43,7 +43,9 @@ function numberStyles(nodes, result = new Map()) {
 const sourceAST=Object.fromEntries(Object.entries(english).map(([key,text])=>[key,parse(text)]));
 const {createHash} = await import('node:crypto');
 const hash = value => createHash('sha256').update(value).digest('hex');
-if(provenance.sourceCatalogSha256 && provenance.sourceCatalogSha256!==hash(englishBytes)) throw new Error('Source catalog hash changed');
+if(Object.hasOwn(provenance,'sourceCatalogSha256')) throw new Error('sourceCatalogSha256 retired: per-entry sourceSha256 binds each translation');
+const provenanceKeys=new Set(['authoring','entries','featureGlossary','schemaVersion','sourceRevision']);
+for(const key of Object.keys(provenance)) if(!provenanceKeys.has(key)) throw new Error(`Unknown top-level provenance key: ${key}`);
 const glossaryPath=path.join(root,'feature-names.json');
 const glossaryBytes=fs.existsSync(glossaryPath)?fs.readFileSync(glossaryPath):null;
 if(provenance.featureGlossary && (!glossaryBytes || provenance.featureGlossary.sha256!==hash(glossaryBytes))) throw new Error('Feature glossary source hash changed');

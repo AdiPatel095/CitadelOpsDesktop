@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
-import { useCitadelAPI } from '../../api/ApiContext';
-import { useAuth } from '../../context/AuthContext';
+import { useCitadelAPI } from '../../api/useCitadelAPI';
+import { useAuth } from '../../context/useAuth';
 import { readSavedAt, useDraftLine, type DraftLine } from '../DraftRecovery';
 import { AUTOMATION_ENABLED_KEYS } from '../disclosure/placement';
 import { firstConfirmedResult, type FirstResult } from '../readiness/firstResult';

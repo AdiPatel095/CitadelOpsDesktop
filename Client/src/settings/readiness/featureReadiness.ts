@@ -259,11 +259,12 @@ function fortressReadiness(inputs: FeatureReadinessInputs): ReadinessReport {
 }
 
 function reserveReadiness(featureId: 'autoStation' | 'autoBird', inputs: FeatureReadinessInputs): ReadinessReport {
-  const reserves = featureId === 'autoStation'
-    ? parseAutoStationClientState(section(inputs, 'automation.autoStation')).settings
-    : parseAutoBirdClientState(section(inputs, 'automation.autoBird')).ignoreSettings.settings;
+  const saved = featureId === 'autoStation'
+    ? parseAutoStationClientState(section(inputs, 'automation.autoStation'))
+    : parseAutoBirdClientState(section(inputs, 'automation.autoBird'));
+  const reserves = 'settings' in saved ? saved.settings : saved.ignoreSettings.settings;
   return evaluateReserveReadiness({
-    featureId, state: inputs.state, reserves, troops: inputs.troops, tools: inputs.tools,
+    featureId, state: inputs.state, reserves, stormLegacyKey: saved.stormLegacyKey, troops: inputs.troops, tools: inputs.tools,
     metadataReady: inputs.metadataReady, observation: inputs.observation,
   }).report;
 }

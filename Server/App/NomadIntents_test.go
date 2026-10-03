@@ -35,6 +35,7 @@ func TestNomadCooldownSkipUsesLockedTargetAndOfficialRubyCeiling(t *testing.T) {
 	}
 	now := time.Now().UTC()
 	gameState := State.NewGameState()
+	fundTravelTicketsForTest(&gameState)
 	gameState.Player.Resources[2] = 20_000
 	gameState.Map[0] = map[string]State.MapObservation{
 		"101:102": {
@@ -86,7 +87,7 @@ func TestNomadCooldownSkipUsesLockedTargetAndOfficialRubyCeiling(t *testing.T) {
 		t.Fatalf("cooldown reset ignored the configured ruby ceiling: %v", err)
 	}
 	application := &Application{
-		State: State.NewStore(&gameState), GameData: appTestGameDataManagerFromCatalog(t, nomadCooldownSkipCatalog),
+		State: travelTicketTestStore(&gameState), GameData: appTestGameDataManagerFromCatalog(t, nomadCooldownSkipCatalog),
 	}
 	pending := gameState
 	pending.NomadCamps.Cooldowns["0:101:102"] = State.NomadCampCooldownState{
@@ -143,6 +144,7 @@ func TestNomadChainLaunchesClearedCampWithoutSpeculativeCooldownSkips(t *testing
 	}
 	now := time.Now().UTC()
 	gameState := State.NewGameState()
+	fundTravelTicketsForTest(&gameState)
 	gameState.Castles[1] = State.CastleState{
 		ID: 1, KingdomID: 0, X: 100, Y: 100, Focused: true,
 		Units: State.CastleUnits{Stationed: map[State.UnitID]int64{77: 1_000, 244: 100}},
@@ -288,7 +290,7 @@ func TestNomadChainLaunchesClearedCampWithoutSpeculativeCooldownSkips(t *testing
 	}
 	finalStep.AwaitOpcode = ""
 	finalStep.SuccessCodes = nil
-	stateStore := State.NewStore(&gameState)
+	stateStore := travelTicketTestStore(&gameState)
 	manager := appTestGameDataManagerFromCatalog(t, nomadCooldownSkipCatalog)
 	sender := &nomadFinalDispatchSender{}
 	registry := Intent.NewRegistry()
@@ -350,7 +352,7 @@ func TestNomadChainLaunchesClearedCampWithoutSpeculativeCooldownSkips(t *testing
 		ID: 86115613, Direction: 0, SourceCastleID: 1, KingdomID: 0, TargetX: 101, TargetY: 100,
 		CommanderID: &first.CommanderID, ArrivesAt: &arrival, ObservedAt: now.Add(time.Second),
 	}
-	application := &Application{State: State.NewStore(&gameState)}
+	application := &Application{State: travelTicketTestStore(&gameState)}
 	if err := application.captureNomadCampLaunch(t.Context(), launches[0].ResolverArguments); err != nil {
 		t.Fatalf("capture accepted 62-second camp movement: %v", err)
 	}
@@ -461,6 +463,7 @@ func TestNomadLevelSelectsOneAvailableCommanderFromCandidatePool(t *testing.T) {
 	}
 	now := time.Now().UTC()
 	gameState := State.NewGameState()
+	fundTravelTicketsForTest(&gameState)
 	gameState.Castles[1] = State.CastleState{
 		ID: 1, KingdomID: 0, X: 100, Y: 100, Focused: true,
 		Units: State.CastleUnits{Stationed: map[State.UnitID]int64{77: 200}},
@@ -542,6 +545,7 @@ func TestNomadChainArrivalGuardRejectsOvertaking(t *testing.T) {
 	previousArrival := time.Date(2026, 7, 14, 15, 0, 0, 0, time.UTC)
 	currentArrival := previousArrival.Add(-time.Second)
 	gameState := State.NewGameState()
+	fundTravelTicketsForTest(&gameState)
 	gameState.Movements[10] = State.MovementState{
 		ID: 10, Direction: 0, SourceCastleID: 1, KingdomID: 0, TargetX: 101, TargetY: 100,
 		CommanderID: &previousCommander, ArrivesAt: &previousArrival,
@@ -550,7 +554,7 @@ func TestNomadChainArrivalGuardRejectsOvertaking(t *testing.T) {
 		ID: 11, Direction: 0, SourceCastleID: 1, KingdomID: 0, TargetX: 101, TargetY: 100,
 		CommanderID: &currentCommander, ArrivesAt: &currentArrival,
 	}
-	application := &Application{State: State.NewStore(&gameState)}
+	application := &Application{State: travelTicketTestStore(&gameState)}
 	arguments, _ := json.Marshal(nomadChainArrivalGuard{
 		SourceCastleID: 1, KingdomID: 0, TargetX: 101, TargetY: 100,
 		PreviousCommander: previousCommander, CurrentCommander: currentCommander,

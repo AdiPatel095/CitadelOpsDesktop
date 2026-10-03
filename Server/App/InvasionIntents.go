@@ -370,6 +370,11 @@ func planInvasionAttack(_ context.Context, input Intent.PlanningContext, argumen
 	if err != nil {
 		return Intent.Plan{}, err
 	}
+	if _, travel := horseTravelBoostFields(request.HorseTravelBoostID); travel == 1 {
+		if err := Intent.RequireTravelTickets(input, 1); err != nil {
+			return Intent.Plan{}, err
+		}
+	}
 	if blockedPlan, blocked, err := dailyAttackLimitPlan(input.State, request.DailyAttackLimit); err != nil {
 		return Intent.Plan{}, err
 	} else if blocked {
@@ -685,7 +690,7 @@ func (application *Application) resolveInvasionAttackStep(
 		return Intent.Step{}, Localization.WithError(fmt.Errorf("build invasion preset %q: %w", request.Preset.Name, err), Localization.ErrorContext(Localization.New("server.app.build_invasion_preset_p.fd7df034", "build invasion preset {p0}", Localization.Params{"p0": fmt.Sprintf("%q", request.Preset.Name)}), err))
 	}
 	attack := invasionAttackBody(source, target, request.CommanderID, built)
-	if err := applyCastleHorseTravelBoost(&attack, input.GameData, source, request.HorseTravelBoostID); err != nil {
+	if err := applyCastleHorseTravelBoost(&attack, input, source, request.HorseTravelBoostID); err != nil {
 		return Intent.Step{}, Localization.WithError(fmt.Errorf("resolve invasion horse travel boost: %w", err), Localization.ErrorContext(Localization.New("server.app.resolve_invasion_horse_travel.a12049ae", "resolve invasion horse travel boost", nil), err))
 	}
 	body, err := json.Marshal(attack)

@@ -18,6 +18,12 @@ type directOutboxFrame struct {
 	bytes int
 }
 
+type directPauseEpoch struct {
+	epoch     uint64
+	pausedAt  time.Time
+	resumedAt time.Time
+}
+
 // directFrameOutbox retains accepted frames across transport runs. The lease
 // serializes the send and keyed removal even during an immediate Stop/Start.
 type directFrameOutbox struct {
@@ -28,11 +34,14 @@ type directFrameOutbox struct {
 	pauseBytes  int
 	resumeBytes int
 	paused      bool
+	pausedAt    time.Time
+	pauseEpoch  uint64
 	lastForward time.Time
 	wake        chan struct{}
 	resume      chan struct{}
 	lease       chan struct{}
-	afterSend   func(seq uint64) // nil in production; set before starting forwarders
+	afterSend   func(seq uint64)   // nil in production; set before starting forwarders
+	pauseEpochs []directPauseEpoch // test-only history; nil in production
 }
 
 func newDirectFrameOutbox(pauseBytes, resumeBytes int) *directFrameOutbox {
@@ -62,6 +71,11 @@ func (outbox *directFrameOutbox) push(frame RawFrame) {
 	if !outbox.paused && outbox.bytes >= outbox.pauseBytes {
 		outbox.paused = true
 		outbox.lastForward = time.Now()
+		outbox.pausedAt = outbox.lastForward
+		outbox.pauseEpoch++
+		if outbox.pauseEpochs != nil {
+			outbox.pauseEpochs = append(outbox.pauseEpochs, directPauseEpoch{epoch: outbox.pauseEpoch, pausedAt: outbox.pausedAt})
+		}
 	}
 	outbox.mu.Unlock()
 	select {
@@ -71,9 +85,15 @@ func (outbox *directFrameOutbox) push(frame RawFrame) {
 }
 
 func (outbox *directFrameOutbox) isPaused() bool {
+	paused, _, _ := outbox.pauseState()
+	return paused
+}
+
+// pauseState snapshots the pause and its identity under the same lock.
+func (outbox *directFrameOutbox) pauseState() (bool, uint64, time.Time) {
 	outbox.mu.Lock()
 	defer outbox.mu.Unlock()
-	return outbox.paused
+	return outbox.paused, outbox.pauseEpoch, outbox.pausedAt
 }
 
 func (outbox *directFrameOutbox) resumed() <-chan struct{} { return outbox.resume }
@@ -99,6 +119,9 @@ func (outbox *directFrameOutbox) remove(seq uint64) bool {
 	}
 	outbox.lastForward = time.Now()
 	if outbox.paused && outbox.bytes < outbox.resumeBytes {
+		if len(outbox.pauseEpochs) > 0 {
+			outbox.pauseEpochs[len(outbox.pauseEpochs)-1].resumedAt = outbox.lastForward
+		}
 		outbox.paused = false
 		select {
 		case outbox.resume <- struct{}{}:

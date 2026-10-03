@@ -2,7 +2,7 @@ import React, { useMemo } from 'react';
 import { Castle } from 'lucide-react';
 import type { GameStateV2 } from '../../api/Contracts';
 import { Select, type SelectOption } from '../../components/ui/Select';
-import { useLocale } from '../../i18n/LocaleContext';
+import { useLocale } from '../../i18n/useLocale';
 import { castleOptionsFor, evaluateCastleReference, type CastlePurpose } from '../requirements/castleRequirements';
 import type { ObservationContext } from '../requirements/observationFreshness';
 import { ReadinessCheckLine } from './ReadinessPanel';

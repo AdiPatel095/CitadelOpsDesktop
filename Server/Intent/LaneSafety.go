@@ -149,9 +149,28 @@ func (engine *Engine) guardRejection(ctx context.Context, err error) error {
 	request, _ := ctx.Value(laneSafetyContextKey{}).(Request)
 	lane := requestLane(request)
 	var response *ResponseCodeError
+	var confirmation *ConfirmationRequiredError
+	if errors.As(err, &confirmation) {
+		return err
+	}
 	var locked *LaneLockedError
 	if lane == "" || errors.As(err, &locked) || !errors.As(err, &response) || response.Meaning.Code == 0 || rejectionAllowsRecovery(response.Opcode, response.Meaning.Code) {
 		return err
+	}
+	if quote, matches := confirmationQuoteRejection(request, response); matches {
+		setting := engine.state.ReadOnlyView().Player.RubyConfirmation
+		if evidenceErr := RecordOperationEvidence(ctx, "confirmation_required", map[string]any{
+			"opcode": response.Opcode, "code": response.Meaning.Code, "quotedC2": quote,
+			"settingAmount": setting.Amount, "settingObservedAt": setting.ObservedAt, "rejectedAt": response.ReceivedAt,
+		}); evidenceErr != nil {
+			return evidenceErr
+		}
+		response.Meaning = GameData.ResponseCodeMeaning{
+			Code: response.Meaning.Code, Message: "Daily boost needs confirmation in the game",
+			MessageDescriptor: Localization.New("server.intent.ruby_confirmation_required", "Daily boost needs confirmation in the game", nil),
+			Source:            GameData.ResponseCodeObserved, Kind: GameData.ResponseCodeAvailability, ExpectedState: true,
+		}
+		return &ConfirmationRequiredError{Response: response, QuotedC2: quote}
 	}
 	engine.laneSafety.mu.Lock()
 	defer engine.laneSafety.mu.Unlock()
@@ -304,4 +323,11 @@ func (engine *Engine) rubyRejectionPresentation(request Request, lock State.Auto
 		return blocker.Message, Localization.Clone(blocker.MessageDescriptor)
 	}
 	return "", nil
+}
+
+func confirmationQuoteRejection(request Request, response *ResponseCodeError) (int64, bool) {
+	if response == nil || requestLane(request) != "autoBooster" || !strings.EqualFold(strings.TrimSpace(response.Opcode), "agb") || response.Meaning.Code != 440 {
+		return 0, false
+	}
+	return State.RubyConfirmationQuote(response.Payload)
 }

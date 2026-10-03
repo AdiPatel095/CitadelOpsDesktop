@@ -34107,34 +34107,5 @@
     "sha256": "3e5e8c970e3cfbb704719636d99733d3ef830e036fca4866bcc2bdeb04b003e2"
   },
   "schemaVersion": 1,
-  "sourceCatalogSha256": "fa86c0b6c76950bfb5195671fa5a951288aceda4b7259aae956443d37b66cd21",
-  "sourceRevision": "56c2acba0f847e2675c7842588213c66710eeadc",
-  "playerLanguageBatch": {
-    "story": "CIT-68",
-    "source": "Engineering/Plans/CIT-68 Player-language copy.md Revision 1 §2a",
-    "englishFallbackKeys": [
-      "server.automation.event_gate.berimond.inactive",
-      "server.automation.event_gate.berimond.opening",
-      "server.automation.event_gate.berimond.unobserved",
-      "server.automation.event_gate.invasion.inactive",
-      "server.automation.event_gate.invasion.opening",
-      "server.automation.event_gate.invasion.unobserved",
-      "server.automation.event_gate.khan.inactive",
-      "server.automation.event_gate.khan.opening",
-      "server.automation.event_gate.khan.unobserved",
-      "server.automation.event_gate.nomad_samurai.inactive",
-      "server.automation.event_gate.nomad_samurai.opening",
-      "server.automation.event_gate.nomad_samurai.unobserved",
-      "server.automation.watching_for_incoming_attacks.60f06f25"
-    ],
-    "translationStatus": "pending all-locale translation batch; old translations invalidated"
-  },
-  "opcodeRejectionQueueBatch": {
-    "story": "CIT-117",
-    "source": "Engineering/Plans/CIT-117 Recruitment queue counts only usable slots.md Waiting (AC5)",
-    "englishFallbackKeys": [
-      "server.automation.production_queues_full_at"
-    ],
-    "translationStatus": "pending opcode rejection epic all-locale translation batch"
-  }
+  "sourceRevision": "56c2acba0f847e2675c7842588213c66710eeadc"
 }

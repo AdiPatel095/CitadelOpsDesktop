@@ -1,15 +1,18 @@
+import { castleSettingsKey, castleSettingsEntry, normalizeStormKeys, stormEditorCastles } from '../stormRole';
+import { StormSettingsRepair } from './StormSettingsRepair';
 import { StopFooter } from '../../components/StopControl';
 import { castleCandidates } from '../copy/candidates';
 import { stationCopyDescriptor } from '../copy/features/station';
 import { copyReapplied, genericSaveError, useCastleCopyReplayRun, useCastleCopyReplayState } from '../copy/useCastleCopyReplay';
 import { CastleCopyButton } from './CastleCopyDialog';
-import { useLocale as useStaticLocale } from "../../i18n/LocaleContext";
+import { useLocale as useStaticLocale } from '../../i18n/useLocale';
 import { LocalizedText } from "../../i18n/LocalizedText";
 import React, { useEffect, useMemo, useState } from 'react';
 import { BookOpen, Plus, Shield } from 'lucide-react';
 import { useGuideLocale } from '../../config/useGuideLocale';
 import { FeatureGuideModal } from './FeatureGuideModal';
-import { showTroopPicker, type UnitWithQuantity } from '../../components/TroopPickerModal';
+import { type UnitWithQuantity } from '../../components/TroopPickerModal';
+import { showTroopPicker } from '../../components/TroopPicker';
 import UnitImage from '../../components/UnitImage';
 import {
   AddSlot,
@@ -23,12 +26,13 @@ import {
 import {
   DEFAULT_AUTO_STATION_STATE,
   parseAutoStationClientState,
+  normalizeAutoStationStormSettings,
   type AutoStationClientStateV1,
 } from '../AutoStationClientState';
-import { useCitadelAPI } from '../../api/ApiContext';
+import { useCitadelAPI } from '../../api/useCitadelAPI';
 import { castleOptionsFromState, type CastleOptionV2 } from '../../api/Selectors';
 import { useConfigurationDraftSession } from '../ConfigurationDraftSession';
-import { useMetadata } from '../../context/MetadataContext';
+import { useMetadata } from '../../context/useMetadata';
 import { evaluateReserveReadiness } from '../requirements/setupReadiness';
 import { useSetupContext } from '../requirements/useSetupContext';
 import { focusReadinessTarget } from '../readiness/focusReadinessTarget';
@@ -38,7 +42,8 @@ import { countCustomValues, stationFiltersSummary } from '../disclosure/summarie
 import { useSettingsDisclosure } from '../disclosure/useSettingsDisclosure';
 import { AutomationRunStrip } from './AutomationRunStrip';
 import { ReadinessCheckLine, ReadinessPanel } from './ReadinessPanel';
-import { collapsedSettingNote, SettingsSection } from './SettingsSection';
+import { SettingsSection } from './SettingsSection';
+import { collapsedSettingNote } from './collapsedSettingNote';
 import { UnitStockList } from './UnitStockList';
 import { useDraftRecovery } from '../useDraftRecovery';
 
@@ -69,8 +74,9 @@ export const AutoStationSettingsModal: React.FC<AutoStationSettingsModalProps> =
   const draftSession = useConfigurationDraftSession({ isOpen, section: 'automation.autoStation', sessionKey: setup.sessionKey, copyReplay: copyReplay.sessionOption });
   const disclosure = useSettingsDisclosure('autoStation');
   const { troops, tools, unitsLoading, unitsError } = useMetadata();
-  const castles = castleOptionsFromState(gameState);
   const [state, setState] = useState<AutoStationClientStateV1>(() => parseAutoStationClientState(null));
+  const castles = stormEditorCastles(castleOptionsFromState(gameState), Object.hasOwn(state.settings, 'storm'));
+  const roleSettings = normalizeStormKeys(state.settings, gameState, { stormLegacyKey: state.stormLegacyKey });
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
 
@@ -87,26 +93,27 @@ export const AutoStationSettingsModal: React.FC<AutoStationSettingsModalProps> =
 
   const copyContext = useMemo(() => ({
     state: gameState, troops, tools, metadataReady: !unitsLoading && !unitsError, observation: setup.observation,
-    candidates: castleCandidates(castles, gameState),
+    candidates: castleCandidates(castles.filter((castle) => castle.id > 0), gameState, { keyFor: castleSettingsKey }),
   }), [castles, gameState, setup.observation, tools, troops, unitsError, unitsLoading]);
-  const copyRun = useCastleCopyReplayRun(copyReplay, { descriptor: stationCopyDescriptor, draft: state.settings, context: copyContext, featureLabel: 'Auto Station', applyDraft: (next) => setState((previous) => ({ ...previous, settings: next })), isOpen });
+  const copyRun = useCastleCopyReplayRun(copyReplay, { descriptor: stationCopyDescriptor, draft: roleSettings, context: copyContext, featureLabel: 'Auto Station', applyDraft: (next) => setState((previous) => ({ ...previous, settings: next })), isOpen });
   const readiness = useMemo(() => evaluateReserveReadiness({
     featureId: 'autoStation',
     state: gameState,
     reserves: state.settings,
+    stormLegacyKey: state.stormLegacyKey,
     troops,
     tools,
     metadataReady: !unitsLoading && !unitsError,
     observation: setup.observation,
-  }), [gameState, state.settings, tools, troops, unitsError, unitsLoading, setup.observation]);
+  }), [gameState, state.settings, state.stormLegacyKey, tools, troops, unitsError, unitsLoading, setup.observation]);
 
   const fixReadiness = (check: ReadinessCheck) => {
     if (!disclosure.fix(check)) focusReadinessTarget('auto-station-castles');
   };
 
   const selectReserve = async (castle: CastleOptionV2) => {
-    const castleID = String(castle.id);
-    const current = state.settings[castleID] ?? [];
+    const castleID = castleSettingsKey(castle);
+    const current = castleSettingsEntry(roleSettings, castle) ?? [];
     const preselectedQuantities: Record<number, number> = {};
     current.forEach((troop) => {
       preselectedQuantities[troop.id] = troop.amount;
@@ -125,7 +132,7 @@ export const AutoStationSettingsModal: React.FC<AutoStationSettingsModalProps> =
     }));
     setState((previous) => ({
       ...previous,
-      settings: { ...previous.settings, [castleID]: troops },
+      settings: { ...normalizeStormKeys(previous.settings, gameState, { stormLegacyKey: previous.stormLegacyKey }), [castleID]: troops },
     }));
   };
 
@@ -133,8 +140,8 @@ export const AutoStationSettingsModal: React.FC<AutoStationSettingsModalProps> =
     setState((previous) => ({
       ...previous,
       settings: {
-        ...previous.settings,
-        [castleID]: (previous.settings[castleID] ?? []).filter((troop) => troop.id !== unitID),
+        ...normalizeStormKeys(previous.settings, gameState, { stormLegacyKey: previous.stormLegacyKey }),
+        [castleID]: (normalizeStormKeys(previous.settings, gameState, { stormLegacyKey: previous.stormLegacyKey })[castleID] ?? []).filter((troop) => troop.id !== unitID),
       },
     }));
   };
@@ -144,7 +151,7 @@ export const AutoStationSettingsModal: React.FC<AutoStationSettingsModalProps> =
     setIsSaving(true);
     setSaveError(null);
     try {
-      await draftSession.save(parseAutoStationClientState(state));
+      await draftSession.save(normalizeAutoStationStormSettings(parseAutoStationClientState(state), gameState));
       onClose();
     } catch (error) {
       setSaveError(genericSaveError(error, copyReplay, 'Could not save Auto Station settings.'));
@@ -255,19 +262,21 @@ export const AutoStationSettingsModal: React.FC<AutoStationSettingsModalProps> =
         <ReadinessPanel report={readiness.report} onFix={fixReadiness} noteFor={collapsedSettingNote(disclosure)} />
 
         <SettingsSection disclosure={disclosure} section="reserves">
+        <StormSettingsRepair stormLegacyKey={state.stormLegacyKey} entries={state.settings} state={gameState} onChange={(settings) => setState((previous) => ({ ...previous, settings }))} />
         <div id="auto-station-castles" tabIndex={-1} className="custom-scrollbar min-h-0 flex-1 overflow-y-auto pr-1 outline-none">
           {castles.length === 0 && (
             <p className="py-8 text-center text-sm text-text-muted"><LocalizedText messageKey="ui.settings.components.autoStationSettingsModal.loading.castles.37f1e3a3" /></p>
           )}
           <div className="grid grid-cols-1 gap-4 pb-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {castles.map((castle) => {
-              const castleID = String(castle.id);
-              const reserves = state.settings[castleID] ?? [];
+              const castleID = castleSettingsKey(castle);
+              const reserves = castleSettingsEntry(roleSettings, castle) ?? [];
               const stock = readiness.stockByCastle[castleID];
               return (
                 <Card key={castle.id} variant="solid" className="flex flex-col bg-bg-card-hover/40 p-4 shadow-inner">
                   <div className="mb-3 border-b border-border-base pb-2">
-                    <h3 className="text-sm font-bold text-primary">{castle.name || `${castle.type} castle`}</h3>
+                    <h3 className="text-sm font-bold text-primary">{castle.kingdomId === 4 ? <LocalizedText messageKey={castle.id === 0 ? "stormRole.idleLabel" : "stormRole.label"} /> : castle.name || `${castle.type} castle`}</h3>
+                    {castleID === 'storm' && <Button variant="ghost" size="sm" onClick={() => setState((previous) => { const settings = normalizeStormKeys(previous.settings, gameState, { stormLegacyKey: previous.stormLegacyKey }); delete settings.storm; return { ...previous, settings }; })}><LocalizedText messageKey="stormRole.remove" /></Button>}
                     <p className="mt-1 text-[11px] text-text-muted"><LocalizedText messageKey="ui.settings.components.autoStationSettingsModal.these.amounts.remain.in.the.castle.e33daec5" /></p>
                   </div>
                   {reserves.length === 0 ? (
@@ -298,7 +307,7 @@ export const AutoStationSettingsModal: React.FC<AutoStationSettingsModalProps> =
                   )}
                   <CastleCopyButton
                     descriptor={stationCopyDescriptor}
-                    draft={state.settings}
+                    draft={roleSettings}
                     sourceKey={castleID}
                     context={copyContext}
                     featureLabel="Auto Station"

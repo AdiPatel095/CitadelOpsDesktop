@@ -12,8 +12,8 @@ const vite = await createServer({
   appType: 'custom', logLevel: 'silent', server: { middlewareMode: true },
   plugins: [{ name: 'reserve-stock-test-contexts', enforce: 'pre',
     resolveId(source) {
-      if (source.endsWith('/MetadataContext')) return 'virtual:cit138-metadata';
-      if (source.endsWith('/LocaleContext')) return 'virtual:cit138-locale';
+      if (source.endsWith('/MetadataContext') || source.endsWith('/useMetadata')) return 'virtual:cit138-metadata';
+      if (source.endsWith('/LocaleContext') || source.endsWith('/useLocale')) return 'virtual:cit138-locale';
     },
     load(id) {
       if (id === 'virtual:cit138-metadata') return 'export const useMetadata = () => ({ getTroop: id => ({ id, name: "Troop " + id }), getTool: id => ({ id, name: "Tool " + id }) });';

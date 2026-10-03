@@ -1,13 +1,13 @@
-import { useLocale as useStaticLocale } from "../../i18n/LocaleContext";
+import { useLocale as useStaticLocale } from '../../i18n/useLocale';
 import { LocalizedText } from "../../i18n/LocalizedText";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { CalendarDays, Clock, Plus, Search, Trash2, Wand2 } from 'lucide-react';
 import { Badge, Button, Input, Select, SettingsModal, Switch } from '../../components/ui';
-import { showTroopPicker } from '../../components/TroopPickerModal';
-import { showToolPicker } from '../../components/ToolPickerModal';
+import { showTroopPicker } from '../../components/TroopPicker';
+import { showToolPicker } from '../../components/ToolPicker';
 import UnitImage from '../../components/UnitImage';
 import ToolImage from '../../components/ToolImage';
-import { useMetadata } from '../../context/MetadataContext';
+import { useMetadata } from '../../context/useMetadata';
 import { highestAvailableUnitIDInFamily, unitUpgradeFamily } from '../UnitUpgradeFamily';
 import {
   DAY_MINUTES,
@@ -293,6 +293,16 @@ export const WeeklyScheduler: React.FC<WeeklySchedulerProps> = ({
   const gridShellRef = useRef<HTMLDivElement | null>(null);
   const dragRef = useRef<DragState | null>(null);
   const suppressNextClickRef = useRef(false);
+  const isDragging = draggingSlot !== null;
+
+  useEffect(() => {
+    if (!isDragging) return;
+    const previousUserSelect = document.body.style.userSelect;
+    document.body.style.userSelect = 'none';
+    return () => {
+      document.body.style.userSelect = previousUserSelect;
+    };
+  }, [isDragging]);
 
   const dayOptions = useMemo(
     () => WEEK_DAYS.map((day) => ({ value: String(day.value), label: day.label })),
@@ -425,7 +435,6 @@ export const WeeklyScheduler: React.FC<WeeklySchedulerProps> = ({
 
       if (drag.mode === 'create') {
         if (!drag.hasMoved || drag.day == null || drag.originMinute == null) return;
-        document.body.style.userSelect = 'none';
         const currentMinute = drag.originMinute + delta;
         const nextSlot = slotFromDragCreate(
           drag.day,
@@ -491,7 +500,6 @@ export const WeeklyScheduler: React.FC<WeeklySchedulerProps> = ({
       dragRef.current = null;
       setDraggingSlot(null);
       setCopyPreviewSlots([]);
-      document.body.style.userSelect = '';
       if (drag?.hasMoved) {
         suppressNextClickRef.current = true;
         window.setTimeout(() => {
@@ -505,7 +513,6 @@ export const WeeklyScheduler: React.FC<WeeklySchedulerProps> = ({
     return () => {
       window.removeEventListener('pointermove', handlePointerMove);
       window.removeEventListener('pointerup', handlePointerUp);
-      document.body.style.userSelect = '';
     };
   }, [buildSideCopySlots, copySlotToAdjacentDays, updateSlot, upsertSlot]);
 
@@ -517,7 +524,6 @@ export const WeeklyScheduler: React.FC<WeeklySchedulerProps> = ({
     if (event.button !== 0) return;
     event.preventDefault();
     event.stopPropagation();
-    document.body.style.userSelect = 'none';
     setCopyPreviewSlots([]);
     const dayColumn = event.currentTarget.closest('[data-schedule-day]')?.getBoundingClientRect();
     dragRef.current = {

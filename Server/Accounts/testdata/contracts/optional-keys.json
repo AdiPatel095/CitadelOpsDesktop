@@ -1,0 +1,10 @@
+{
+  "language": "Resolved world endpoint, zone and language may be omitted; the worker supplies defaults.",
+  "preserveRuntimes": "Ordinary reconciles omit the handover-only preserved runtime list.",
+  "runtimes[].desiredConfigurationDigest": "Configuration acknowledgements and desired state are optional for compatibility with older cells.",
+  "runtimes[].desiredConfigurationRevision": "Configuration acknowledgements and desired state are optional for compatibility with older cells.",
+  "runtimes[].onDisconnect": "Omitted onDisconnect uses the worker compatibility default hold.",
+  "runtimes[].privateMetrics": "Private metrics grants and reporting state are optional per placement.",
+  "serverUrl": "Resolved world endpoint, zone and language may be omitted; the worker supplies defaults.",
+  "zone": "Resolved world endpoint, zone and language may be omitted; the worker supplies defaults."
+}

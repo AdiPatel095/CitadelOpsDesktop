@@ -182,7 +182,7 @@ func (application *Application) resolveAdvisorAttackStep(
 		attackBody:  invasionAttackBody(source, target, request.CommanderID, built),
 		AttackCount: request.AttackCount, Mode: 0, AdvisorType: 1,
 	}
-	if err := applyCastleHorseTravelBoost(&body.attackBody, input.GameData, source, request.HorseTravelBoostID); err != nil {
+	if err := applyCastleHorseTravelBoost(&body.attackBody, input, source, request.HorseTravelBoostID); err != nil {
 		return Intent.Step{}, Localization.WithError(fmt.Errorf("resolve advisor horse travel boost: %w", err), Localization.ErrorContext(Localization.New("server.app.resolve_advisor_horse_travel.0c805cee", "resolve advisor horse travel boost", nil), err))
 	}
 	payload, err := json.Marshal(body)
@@ -294,12 +294,8 @@ func advisorAttackContext(
 		}
 	}
 	if _, premiumTravel := horseTravelBoostFields(request.HorseTravelBoostID); premiumTravel == 1 {
-		available := int64(input.State.Player.Currencies[advisorPegasusTicketID]) - request.MinimumFeatherReserve
-		if available < int64(request.AttackCount) {
-			return request, State.CastleState{}, State.MapObservation{}, GameData.EventCampDefinition{}, fmt.Errorf(
-				"advisor needs one travel feather per attack; %d are available above reserve for %d attacks",
-				max(int64(0), available), request.AttackCount,
-			)
+		if err := Intent.RequireTravelTickets(input, int64(request.AttackCount)+request.MinimumFeatherReserve); err != nil {
+			return request, State.CastleState{}, State.MapObservation{}, GameData.EventCampDefinition{}, err
 		}
 	}
 	if needed := int64(max(0, request.AttackCount-1)); selected.Definition.CooldownSec > 0 &&

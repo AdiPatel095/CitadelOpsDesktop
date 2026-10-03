@@ -1,9 +1,9 @@
-import { useLocale as useStaticLocale } from "../../i18n/LocaleContext";
+import { useLocale as useStaticLocale } from '../../i18n/useLocale';
 import React from 'react';
 import StaleSessionBanner from '../../components/StaleSessionBanner';
 import { Badge } from '../../components/ui';
-import { useCastleFocus } from '../../context/CastleFocusContext';
-import { useRiftMap } from '../context/RiftMapContext';
+import { useCastleFocus } from '../../context/useCastleFocus';
+import { useRiftMap } from '../context/useRiftMap';
 import RiftAttackTemplate from './RiftAttackTemplate';
 import RiftMaidenCommsPanel from './RiftMaidenCommsPanel';
 

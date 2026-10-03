@@ -1,5 +1,5 @@
 import { SectionCard, Select } from '../components/ui';
-import { useLocale } from './LocaleContext';
+import { useLocale } from './useLocale';
 import { locales, normalizeLocale } from './locales';
 
 /** Viewer-only preference: no account settings or game-language mutations. */

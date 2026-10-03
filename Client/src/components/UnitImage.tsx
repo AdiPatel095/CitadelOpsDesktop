@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Shield } from 'lucide-react';
-import { useMetadata } from '../context/MetadataContext';
+import { useMetadata } from '../context/useMetadata';
 import LevelBadge from './LevelBadge';
 import { unitAtlasDefinition, type UnitAtlasDefinition } from './UnitAtlasFrames';
 

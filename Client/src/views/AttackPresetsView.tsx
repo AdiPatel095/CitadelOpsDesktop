@@ -1,5 +1,5 @@
 import { LocalizedRichText } from "../i18n/LocalizedRichText";
-import { useLocale as useStaticLocale } from "../i18n/LocaleContext";
+import { useLocale as useStaticLocale } from '../i18n/useLocale';
 import { LocalizedText } from "../i18n/LocalizedText";
 import React, { Suspense, useEffect, useMemo, useRef, useState } from 'react';
 import {
@@ -12,7 +12,7 @@ import {
   Swords,
   Trash2,
 } from 'lucide-react';
-import { useCitadelAPI } from '../api/ApiContext';
+import { useCitadelAPI } from '../api/useCitadelAPI';
 import type { AttackSetupDraft } from '../components/AttackSetupModal';
 import {
   Badge,

@@ -214,7 +214,7 @@
     "reason": "Search index includes both original protocol event/message and translated display text; never rendered directly.",
     "evidence": "LoggerDock parsedLines.searchText is consumed only by filteredLines searchQuery.includes matching."
   },
-  "50884613fe28f87dfb2d71411ca16dcbe7661a3d164d2a67c2e8d180d3ecae76": {
+  "c9a8fc20e9dbe3816d8ec9d920d16deff8ff4a2d0dd800d121c8f8b92541f697": {
     "classification": "technical",
     "reason": "Account-scope or event-filter identity; display text uses independently localized event names and all-previous label.",
     "evidence": "FeatureEventHistory.tsx scope guards account history responses; eventFilter/selectedEvent and options.value use all as the canonical filter token. No identity is translated."

@@ -1,4 +1,4 @@
-import {useLocale} from '../../i18n/LocaleContext';
+import { useLocale } from '../../i18n/useLocale';
 import React, { type HTMLAttributes, type ReactNode } from 'react';
 
 export interface MetricTileProps extends Omit<HTMLAttributes<HTMLDivElement>, 'title'> {

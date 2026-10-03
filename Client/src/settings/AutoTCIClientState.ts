@@ -1,4 +1,4 @@
-import { clampLevelCeiling, normalizeLevelRange } from '../components/TCIPickerModal';
+import { clampLevelCeiling, normalizeLevelRange } from '../components/TCIPicker';
 import {
   emptyPresetsFile,
   parsePresetsPayload,

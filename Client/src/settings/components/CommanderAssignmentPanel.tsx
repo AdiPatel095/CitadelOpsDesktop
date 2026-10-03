@@ -7,7 +7,7 @@ import { Button } from '../../components/ui/Button';
 import { Modal } from '../../components/ui/Modal';
 import { ModalTitle } from '../../components/ui/ModalTitle';
 import { Switch } from '../../components/ui/Switch';
-import { useLocale } from '../../i18n/LocaleContext';
+import { useLocale } from '../../i18n/useLocale';
 import { LocalizedText } from '../../i18n/LocalizedText';
 import { COMMANDER_ACTIVITY_LABEL_KEYS } from '../../Movement/types/CommanderActivity';
 import type { CommanderFeatureConfigurationV2, CommanderFeatureID } from '../../Movement/types/CommanderFeatureAssignments';

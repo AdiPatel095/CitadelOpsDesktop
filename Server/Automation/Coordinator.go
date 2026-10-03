@@ -37,6 +37,7 @@ type Coordinator struct {
 	configuration                  *Configuration.Store
 	gameData                       GameDataProvider
 	telemetry                      AttackLaunchCountsProvider
+	currencyAvailability           Intent.CurrencyAvailabilityProvider
 	traceMu                        sync.Mutex
 	lastAutoStationTrace           string
 	intents                        IntentSubmitter
@@ -65,6 +66,10 @@ func (coordinator *Coordinator) profilerContext() context.Context {
 
 // SetTelemetry supplies confirmed feature-attack launches to policy snapshots.
 // It must be called before Run starts.
+func (coordinator *Coordinator) SetCurrencyAvailability(provider Intent.CurrencyAvailabilityProvider) {
+	coordinator.currencyAvailability = provider
+}
+
 func (coordinator *Coordinator) SetTelemetry(telemetry AttackLaunchCountsProvider) {
 	if coordinator == nil {
 		return
@@ -126,9 +131,11 @@ type troopAvailabilityGate struct {
 }
 
 type coinAvailabilityGate struct {
-	detail     string
-	observed   int64
-	observedAt time.Time
+	detailDescriptor *Localization.Message
+	currencyID       State.CurrencyID
+	detail           string
+	observed         int64
+	observedAt       time.Time
 }
 
 type operationResult struct {
@@ -593,7 +600,8 @@ func (coordinator *Coordinator) evaluate(
 		}
 		current.failureBlockedUntil = time.Time{}
 		snapshot := Snapshot{
-			State: state, Configuration: configuration, GameData: gameDataStore, Language: language, Telemetry: coordinator.telemetry, Now: now,
+			CurrencyAvailability: coordinator.currencyAvailability,
+			State:                state, Configuration: configuration, GameData: gameDataStore, Language: language, Telemetry: coordinator.telemetry, Now: now,
 			PolicyConfigurationChanged:   previouslyEvaluated && configurationChanged,
 			ConfigurationExternallyOwned: coordinator.externalConfigurationAuthority.Load(),
 		}
@@ -1149,6 +1157,7 @@ func (coordinator *Coordinator) recordCoinAvailabilityGate(id string, gate coinA
 		current.Enabled = true
 		current.Status = "gated"
 		current.Detail = gate.detail
+		current.DetailDescriptor = Localization.Clone(gate.detailDescriptor)
 		current.NextCheckAt = nil
 		current.LastError = ""
 		return current
@@ -1257,6 +1266,22 @@ func operationResultCoinAvailabilityGate(result operationResult) (coinAvailabili
 		return coinAvailabilityGate{}, false
 	}
 	raw := strings.TrimSpace(receipt.DiagnosticError())
+	if marker := strings.Index(strings.ToLower(raw), "not enough travel tickets for dispatch:"); marker >= 0 {
+		gate := coinAvailabilityGate{detail: receipt.Error, currencyID: Intent.TravelTicketCurrencyID}
+		var required, available, pending int64
+		if _, err := fmt.Sscanf(raw[marker:], "not enough travel tickets for dispatch: %d needed; %d available from %d observed after %d pending", &required, &available, &gate.observed, &pending); err != nil {
+			return coinAvailabilityGate{}, false
+		}
+		known := !strings.Contains(raw[marker:], "current-session balance unavailable")
+		shortage := &Intent.CurrencyUnavailableError{CurrencyID: Intent.TravelTicketCurrencyID, Required: required, Observed: gate.observed, Pending: pending, Known: known}
+		gate.detailDescriptor = shortage.LocalizationMessage()
+		if known {
+			gate.detail = fmt.Sprintf("Not enough travel tickets: %d needed, %d available", required, available)
+		} else {
+			gate.detail = gate.detailDescriptor.Fallback
+		}
+		return gate, true
+	}
 	if !strings.Contains(strings.ToLower(raw), Intent.ErrCoinUnavailable.Error()) {
 		return coinAvailabilityGate{}, false
 	}
@@ -1266,12 +1291,15 @@ func operationResultCoinAvailabilityGate(result operationResult) (coinAvailabili
 	if marker >= 0 {
 		raw = raw[marker:]
 	}
-	if _, err := fmt.Sscanf(raw,
-		"not enough coins for dispatch: %d needed plus %d reserved; %d available from %d observed after %d pending",
-		&required, &reserve, &available, &observed, &pending,
-	); err == nil {
+	if _, err := fmt.Sscanf(raw, "not enough coins for dispatch: %d needed plus %d reserved; %d available from %d observed after %d pending", &required, &reserve, &available, &observed, &pending); err == nil {
 		gate.observed = observed
+		shortage := &Intent.CoinUnavailableError{Required: required, Reserve: reserve, Observed: observed, Pending: pending, Source: raw, BalanceUnavailable: strings.Contains(raw, "current-session balance unavailable")}
+		if message := shortage.LocalizationMessage(); message != nil {
+			gate.detailDescriptor = message
+			gate.detail = message.FallbackText
+		}
 	}
+
 	return gate, true
 }
 
@@ -1287,6 +1315,10 @@ func coinAvailabilityGateChanged(gate *coinAvailabilityGate, state *State.GameSt
 	if gate == nil {
 		return false
 	}
+	if gate.currencyID != 0 {
+		observation := state.Player.CurrencyObservations[gate.currencyID]
+		return state.Player.Currencies[gate.currencyID] != float64(gate.observed) || (!gate.observedAt.IsZero() && observation.ObservedAt.After(gate.observedAt))
+	}
 	observation := state.Player.ResourceObservations[State.ResourceID(1)]
 	return state.Player.Resources[State.ResourceID(1)] != float64(gate.observed) ||
 		(!gate.observedAt.IsZero() && observation.ObservedAt.After(gate.observedAt))
@@ -1294,7 +1326,7 @@ func coinAvailabilityGateChanged(gate *coinAvailabilityGate, state *State.GameSt
 
 func clearCoinAvailabilityGates(runtime map[string]*policyRuntime, event State.Event, state *State.GameState) {
 	sessionChanged := stateEventHasDomain(event, "session")
-	resourcesChanged := stateEventHasDomain(event, "resources")
+	resourcesChanged := stateEventHasDomain(event, "resources") || stateEventHasDomain(event, "currencies")
 	if !sessionChanged && !resourcesChanged {
 		return
 	}

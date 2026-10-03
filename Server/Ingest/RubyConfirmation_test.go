@@ -65,3 +65,31 @@ func TestUnchangedGBDRubySettingDoesNotWakeBuilder(t *testing.T) {
 		t.Fatalf("unknown domains=%v err=%v", domains, err)
 	}
 }
+
+func TestRubyConfirmationFreshUnchangedObservationWakesHeldOccurrence(t *testing.T) {
+	rejectedAt := time.Date(2026, 9, 23, 12, 0, 0, 0, time.UTC)
+	for _, opcode := range []string{"opt", "gbd"} {
+		t.Run(opcode, func(t *testing.T) {
+			state := State.NewGameState()
+			state.Session.Generation = 1
+			state.Player.RubyConfirmation = State.RubyConfirmationState{Known: true, Amount: -1, Generation: 1, ObservedAt: rejectedAt.Add(-time.Second)}
+			state.EventScores.Inventory.GlobalEffects = map[int64]State.GlobalEffectAvailability{2: {GlobalEffectID: 2, EndsAt: rejectedAt.Add(time.Hour)}}
+			state.EventScores.Inventory.GlobalEffectPurchases = map[int64]State.GlobalEffectPurchaseRecord{2: {GlobalEffectID: 2, OccurrenceEndsAt: rejectedAt.Add(time.Hour), Outcome: State.GlobalEffectPurchaseConfirmationRequired, ResultObservedAt: rejectedAt}}
+			reducer := reduceRubyConfirmation
+			payload := json.RawMessage(`{"CC2T":-1}`)
+			if opcode == "gbd" {
+				reducer = reduceInitialState
+				payload = json.RawMessage(`{"opt":{"CC2T":-1}}`)
+			}
+			for _, tc := range []struct {
+				at   time.Time
+				wake bool
+			}{{rejectedAt.Add(-time.Nanosecond), false}, {rejectedAt, false}, {rejectedAt.Add(time.Nanosecond), true}} {
+				domains, _, err := reducer(t.Context(), Protocol.Frame{Opcode: opcode, Payload: payload, ReceivedAt: tc.at}, &state, nil)
+				if err != nil || slices.Contains(domains, "ruby-confirmation") != tc.wake || !state.Player.RubyConfirmation.ObservedAt.Equal(tc.at) {
+					t.Fatalf("domains=%v setting=%+v err=%v", domains, state.Player.RubyConfirmation, err)
+				}
+			}
+		})
+	}
+}

@@ -228,6 +228,11 @@ func planNomadCampAttack(_ context.Context, input Intent.PlanningContext, argume
 	if err != nil {
 		return Intent.Plan{}, err
 	}
+	if _, travel := horseTravelBoostFields(request.HorseTravelBoostID); travel == 1 {
+		if err := Intent.RequireTravelTickets(input, int64(len(resolution.Selected))); err != nil {
+			return Intent.Plan{}, err
+		}
+	}
 	resolution.Selected = orderNomadChainCommanders(input, source, target, resolution.Selected)
 	request.CommanderIDs = append([]State.CommanderID(nil), resolution.Selected...)
 	resolvedPresets, err := validateNomadCampPresetInventory(
@@ -582,7 +587,7 @@ func (application *Application) resolveNomadCampAttackStep(
 		return Intent.Step{}, Localization.WithError(fmt.Errorf("build camp preset %q: %w", request.Preset.Name, err), Localization.ErrorContext(Localization.New("server.app.build_camp_preset_p.792dbb97", "build camp preset {p0}", Localization.Params{"p0": fmt.Sprintf("%q", request.Preset.Name)}), err))
 	}
 	attack := invasionAttackBody(source, target, request.CommanderID, built)
-	if err := applyCastleHorseTravelBoost(&attack, input.GameData, source, request.HorseTravelBoostID); err != nil {
+	if err := applyCastleHorseTravelBoost(&attack, input, source, request.HorseTravelBoostID); err != nil {
 		return Intent.Step{}, Localization.WithError(fmt.Errorf("resolve camp horse travel boost: %w", err), Localization.ErrorContext(Localization.New("server.app.resolve_camp_horse_travel.cbe6226c", "resolve camp horse travel boost", nil), err))
 	}
 	body, err := json.Marshal(attack)

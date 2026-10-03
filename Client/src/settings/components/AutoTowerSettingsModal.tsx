@@ -1,16 +1,18 @@
+import { castleSettingsKey, castleSettingsEntry, normalizeStormKeys, stormEditorCastles } from '../stormRole';
+import { StormSettingsRepair } from './StormSettingsRepair';
 import { StopFooter } from '../../components/StopControl';
 import { castleCandidates } from '../copy/candidates';
 import { towersCopyDescriptor } from '../copy/features/towers';
 import { copyReapplied, genericSaveError, useCastleCopyReplayRun, useCastleCopyReplayState } from '../copy/useCastleCopyReplay';
 import { CastleCopyButton } from './CastleCopyDialog';
-import { useLocale as useStaticLocale } from "../../i18n/LocaleContext";
+import { useLocale as useStaticLocale } from '../../i18n/useLocale';
 import { LocalizedText } from "../../i18n/LocalizedText";
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { BookOpen, Bot, Crosshair, FastForward, TicketCheck } from 'lucide-react';
 import UnitImage from '../../components/UnitImage';
-import { showTroopPicker } from '../../components/TroopPickerModal';
+import { showTroopPicker } from '../../components/TroopPicker';
 import { Button, Card, Input, SettingsModal, SettingsToggleRow, Switch } from '../../components/ui';
-import { useCitadelAPI } from '../../api/ApiContext';
+import { useCitadelAPI } from '../../api/useCitadelAPI';
 import { castleOptionsFromState } from '../../api/Selectors';
 import {
 	AUTO_TOWER_MAXIMUM_DAILY_TIME_SKIPS,
@@ -28,7 +30,7 @@ import HorseTravelBoostSelect from './HorseTravelBoostSelect';
 import { DailyAttackLimitField } from './DailyAttackLimitField';
 import type { HorseTravelBoostID } from '../HorseTravelBoost';
 import { useConfigurationDraftSession } from '../ConfigurationDraftSession';
-import { useMetadata } from '../../context/MetadataContext';
+import { useMetadata } from '../../context/useMetadata';
 import { COMMANDER_FEATURE_SECTION } from '../../Movement/types/CommanderFeatureAssignments';
 import { savedCommanderAssignments } from '../requirements/commanderAssignmentDraft';
 import { evaluateCommanderEligibility } from '../requirements/commanderEligibility';
@@ -43,7 +45,8 @@ import { AUTOMATION_ENABLED_KEYS } from '../disclosure/placement';
 import { countCustomValues, towerAdvisorSummary, towerScanSummary, travelLine } from '../disclosure/summaries';
 import { useSettingsDisclosure } from '../disclosure/useSettingsDisclosure';
 import { AutomationRunStrip } from './AutomationRunStrip';
-import { collapsedSettingNote, SettingsSection } from './SettingsSection';
+import { SettingsSection } from './SettingsSection';
+import { collapsedSettingNote } from './collapsedSettingNote';
 import { useDraftRecovery } from '../useDraftRecovery';
 
 interface AutoTowerSettingsModalProps {
@@ -71,8 +74,9 @@ export const AutoTowerSettingsModal: React.FC<AutoTowerSettingsModalProps> = ({ 
   const { troops, tools, unitsLoading, unitsError } = useMetadata();
   const [commandersOpen, setCommandersOpen] = useState(false);
   const disclosure = useSettingsDisclosure('autoTowers');
-  const castles = castleOptionsFromState(state);
   const [settings, setSettings] = useState<Record<string, AutoTowerCastleSettings>>({});
+  const castles = stormEditorCastles(castleOptionsFromState(state), Object.hasOwn(settings, 'storm'));
+  const roleSettings = normalizeStormKeys(settings, state);
   const [mapRefreshIntervalSec, setMapRefreshIntervalSec] = useState(1800);
   const [dailyAttackLimit, setDailyAttackLimit] = useState(0);
   const [horseTravelBoostId, setHorseTravelBoostId] = useState<HorseTravelBoostID>(-1);
@@ -105,9 +109,9 @@ export const AutoTowerSettingsModal: React.FC<AutoTowerSettingsModalProps> = ({ 
   const commanderAssignments = useMemo(() => savedCommanderAssignments(draftSession.sections), [draftSession.sections]);
   const copyContext = useMemo(() => ({
     state, troops, tools, metadataReady: !unitsLoading && !unitsError, observation: setup.observation,
-    candidates: castleCandidates(castles, state),
+    candidates: castleCandidates(castles.filter((castle) => castle.id > 0), state, { keyFor: castleSettingsKey }),
   }), [castles, setup.observation, state, tools, troops, unitsError, unitsLoading]);
-  const copyRun = useCastleCopyReplayRun(copyReplay, { descriptor: towersCopyDescriptor, draft: settings, context: copyContext, featureLabel: 'Auto Towers', applyDraft: setSettings, isOpen });
+  const copyRun = useCastleCopyReplayRun(copyReplay, { descriptor: towersCopyDescriptor, draft: roleSettings, context: copyContext, featureLabel: 'Auto Towers', applyDraft: setSettings, isOpen });
   const readiness = useMemo(() => evaluateTowerReadiness({
     state,
     castles: settings,
@@ -134,12 +138,12 @@ export const AutoTowerSettingsModal: React.FC<AutoTowerSettingsModalProps> = ({ 
   };
 
   const settingsFor = useCallback((castleID: number): AutoTowerCastleSettings => (
-    settings[String(castleID)] ?? defaultAutoTowerCastleSettings()
-  ), [settings]);
+    castleSettingsEntry(settings, castles.find((castle) => castle.id === castleID) ?? { id: castleID, kingdomId: 0 }) ?? defaultAutoTowerCastleSettings()
+  ), [settings, castles]);
 
   const updateCastle = (castleID: number, update: Partial<AutoTowerCastleSettings>) => {
-    const key = String(castleID);
-    setSettings((current) => ({ ...current, [key]: { ...(current[key] ?? defaultAutoTowerCastleSettings()), ...update } }));
+    const key = castleSettingsKey(castles.find((castle) => castle.id === castleID) ?? { id: castleID, kingdomId: 0 });
+    setSettings((current) => ({ ...normalizeStormKeys(current, state), [key]: { ...(normalizeStormKeys(current, state)[key] ?? defaultAutoTowerCastleSettings()), ...update } }));
   };
 
   const chooseTroop = async (castleID: number) => {
@@ -170,7 +174,7 @@ export const AutoTowerSettingsModal: React.FC<AutoTowerSettingsModalProps> = ({ 
         useAdvisor,
         autoActivateAdvisor,
         maximumDailyTimeSkips,
-        castles: settings,
+        castles: normalizeStormKeys(settings, state),
       });
       onClose();
     } catch (error) {
@@ -219,16 +223,18 @@ export const AutoTowerSettingsModal: React.FC<AutoTowerSettingsModalProps> = ({ 
       )}
 
       <SettingsSection disclosure={disclosure} section="castles" className="mb-4">
+        <StormSettingsRepair entries={settings} state={state} onChange={setSettings} />
         <div id="auto-towers-castles" tabIndex={-1} className="grid grid-cols-1 gap-4 outline-none sm:grid-cols-2 xl:grid-cols-3">
           {castles.map((castle) => {
             const plan = settingsFor(castle.id);
             const stock = state?.castles[String(castle.id)]?.units.stationed[String(plan.unitId)] ?? 0;
-            const stockResult = plan.enabled ? readiness.stockByCastle[String(castle.id)] : undefined;
+            const stockResult = plan.enabled ? readiness.stockByCastle[castleSettingsKey(castle)] : undefined;
             return (
               <Card key={castle.id} variant="solid" className="flex flex-col gap-4 bg-bg-card-hover/40 p-4 shadow-inner">
                 <div className="flex items-start justify-between gap-3 border-b border-border-base pb-3">
                   <div className="min-w-0">
-                    <h3 className="truncate text-sm font-bold text-primary">{castle.name}</h3>
+                    <h3 className="truncate text-sm font-bold text-primary">{castle.kingdomId === 4 ? <LocalizedText messageKey={castle.id === 0 ? "stormRole.idleLabel" : "stormRole.label"} /> : castle.name}</h3>
+                    {castle.kingdomId === 4 && <Button variant="ghost" size="sm" onClick={() => setSettings((previous) => { const draft = normalizeStormKeys(previous, state); delete draft.storm; return draft; })}><LocalizedText messageKey="stormRole.remove" /></Button>}
                     <p className="mt-0.5 text-xs text-text-muted">{castle.kingdomId}:{castle.x}:{castle.y}</p>
                   </div>
                   <Switch
@@ -280,8 +286,8 @@ export const AutoTowerSettingsModal: React.FC<AutoTowerSettingsModalProps> = ({ 
                 </p>
                 <CastleCopyButton
                   descriptor={towersCopyDescriptor}
-                  draft={settings}
-                  sourceKey={String(castle.id)}
+                  draft={roleSettings}
+                  sourceKey={castleSettingsKey(castle)}
                   context={copyContext}
                   featureLabel="Auto Towers"
                   onApply={(next, replay) => { setSettings(next); copyReplay.setReplay(replay); copyReplay.setStatus(false); }}
@@ -400,7 +406,7 @@ export const AutoTowerSettingsModal: React.FC<AutoTowerSettingsModalProps> = ({ 
               return (
                 <div key={castle.id} className="grid gap-3 rounded-xl border border-border-base bg-bg-app/50 p-3">
                   <div className="flex items-center justify-between gap-2">
-                    <span className="truncate text-xs font-bold text-primary">{castle.name}</span>
+                    <span className="truncate text-xs font-bold text-primary">{castle.kingdomId === 4 ? <LocalizedText messageKey={castle.id === 0 ? "stormRole.idleLabel" : "stormRole.label"} /> : castle.name}</span>
                     {plan.enabled ? null : <span className="text-[10px] font-semibold uppercase text-text-muted"><LocalizedText messageKey="ui.settings.components.autoTowerSettingsModal.castle.off.539be403" /></span>}
                   </div>
                   <div className="flex items-center justify-between gap-3">
