@@ -3184,5 +3184,6 @@
   "server.telemetry.channel.rift.description": "Launched Rift attacks and other completed Rift actions.",
   "server.telemetry.channel.rift.label": "Rift",
   "server.telemetry.channel.websocket_game.description": "Every game WebSocket frame, including actions performed directly in the game.",
-  "server.telemetry.channel.websocket_game.label": "All Game Traffic"
+  "server.telemetry.channel.websocket_game.label": "All Game Traffic",
+  "server.buildings.kingdom_unavailable": "{building} (building {definitionID}) is not available in kingdom {kingdomID}"
 }
