@@ -1133,6 +1133,10 @@
       "desktop": "Client/src/settings/useDraftRecovery.tsx"
     },
     {
+      "portal": "src/commandCenter/useNow.ts",
+      "desktop": "Client/src/useNow.ts"
+    },
+    {
       "portal": "src/commandCenter/utils/UpgradeCoinReserve.ts",
       "desktop": "Client/src/utils/UpgradeCoinReserve.ts"
     },
@@ -1161,5 +1165,21 @@
       "desktop": "Client/src/worldIntelligence/useServerLabel.ts"
     }
   ],
-  "unmirrored": []
+  "unmirrored": [
+    {
+      "portal": "src/commandCenter/api/useCitadelAPI.ts",
+      "desktop": "Client/src/api/useCitadelAPI.ts",
+      "reason": "portal re-export over its own provider; the desktop split it in CIT-104 12ae243b"
+    },
+    {
+      "portal": "src/commandCenter/context/useAuth.ts",
+      "desktop": "Client/src/context/useAuth.ts",
+      "reason": "portal re-export over its own provider; the desktop split it in CIT-104 12ae243b"
+    },
+    {
+      "portal": "src/commandCenter/context/useMetadata.ts",
+      "desktop": "Client/src/context/useMetadata.ts",
+      "reason": "portal re-export over its own provider; the desktop split it in CIT-104 12ae243b"
+    }
+  ]
 }
