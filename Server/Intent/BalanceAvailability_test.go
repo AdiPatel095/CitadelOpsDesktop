@@ -185,3 +185,30 @@ func TestCIT119FeatherWaitUnchanged(t *testing.T) {
 		}
 	}
 }
+
+func TestMarketBarrowBalanceContract(t *testing.T) {
+	key := MarketBarrowBalanceKey(77127)
+	parsed, err := ParseBalanceKey(key.String())
+	if err != nil || parsed != key || key.String() != "market_barrows:77127" || !key.Valid() {
+		t.Fatalf("key=%+v err=%v", key, err)
+	}
+	for _, bad := range []string{"market_barrows:0", "market_barrows:1@2", "market_barrows:01"} {
+		if _, err := ParseBalanceKey(bad); err == nil {
+			t.Fatalf("accepted %s", bad)
+		}
+	}
+	if _, _, known := ObservedBalance(balanceTestState(), key); known {
+		t.Fatal("time-dependent barrows authorized by generic balance")
+	}
+	for _, known := range []bool{false, true} {
+		shortage := &BalanceUnavailableError{Key: key, Known: known, Required: 2, Observed: 2, Pending: 1, CastleName: "Invented keep"}
+		message := shortage.LocalizationMessage()
+		want := "server.market_barrows.unavailable"
+		if known {
+			want = "server.market_barrows.short"
+		}
+		if message.Key != want || message.FallbackText != shortage.Detail() || !errors.Is(shortage, ErrBalanceUnavailable) {
+			t.Fatalf("message=%+v", message)
+		}
+	}
+}

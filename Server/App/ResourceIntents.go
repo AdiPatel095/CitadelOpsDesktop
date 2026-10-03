@@ -266,7 +266,7 @@ func planMarketResourceShipment(ctx context.Context, input Intent.PlanningContex
 	if !refresh {
 		required, capacityErr := marketBarrowsRequired(input, source.ID, request.Amount)
 		if !status.Ready || capacityErr != nil || required > availableBarrows {
-			return Intent.Plan{}, marketBarrowPlanningUnavailable(source.ID)
+			return Intent.Plan{}, marketBarrowAvailabilityError(input, source.ID, int64(required), int64(availableBarrows), 0, status.Ready && capacityErr == nil)
 		}
 	}
 	payload, _ := json.Marshal(struct {

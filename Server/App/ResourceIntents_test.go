@@ -471,7 +471,7 @@ func TestMarketShipmentPlannerRejectsStaleAvailabilityReservedByMovement(t *test
 	_, err := planMarketResourceShipment(t.Context(), Intent.PlanningContext{
 		State: gameState, GameData: gameData,
 	}, json.RawMessage(`{"sourceCastleId":10,"targetCastleId":20,"resourceId":3,"amount":12000}`))
-	if err == nil || !strings.Contains(err.Error(), "no observed available market barrows") {
+	if !errors.Is(err, Intent.ErrBalanceUnavailable) {
 		t.Fatalf("leased-barrow shipment error = %v", err)
 	}
 }

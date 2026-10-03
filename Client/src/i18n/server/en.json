@@ -3128,6 +3128,8 @@
   "server.intent.there_are_not_enough.ae9bd389": "There are not enough eligible troops available for this action.",
   "server.intent.wait_for_commander": "Wait for a commander to return; the feature lane will reevaluate automatically.",
   "server.intent.wait_for_the_current.5e0a4685": "Wait for the current game state to finish refreshing before trying again.",
+  "server.market_barrows.short": "Waiting: not enough market barrows in {castle} ({needed} needed, {available} available)",
+  "server.market_barrows.unavailable": "Waiting: market barrows in {castle} need a fresh market check",
   "server.production.cost_short": "Skipped {unit}: not enough {balance} ({needed} needed, {available} available)",
   "server.production.cost_unavailable": "Skipped {unit}: the {balance} balance is unavailable",
   "server.production.cost_unknown": "Skipped {unit}: unknown cost type {field}",

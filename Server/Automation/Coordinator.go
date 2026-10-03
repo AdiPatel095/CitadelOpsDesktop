@@ -296,7 +296,7 @@ func (coordinator *Coordinator) Run(ctx context.Context) {
 		}
 		// Availability waits also read balance and castle observations before
 		// routing the event through the policy wake index.
-		if stateEventHasDomain(event, "session") || stateEventHasDomain(event, "units") || stateEventHasDomain(event, "resources") || stateEventHasDomain(event, "currencies") || stateEventHasDomain(event, "castles") {
+		if stateEventHasDomain(event, "session") || stateEventHasDomain(event, "units") || stateEventHasDomain(event, "resources") || stateEventHasDomain(event, "currencies") || stateEventHasDomain(event, "castles") || stateEventHasDomain(event, "market") {
 			state := coordinator.state.ReadOnlyView()
 			clearTroopAvailabilityGates(runtime, event, &state)
 			clearCoinAvailabilityGates(runtime, event, &state)
@@ -1348,6 +1348,9 @@ func coinAvailabilityGateChanged(gate *coinAvailabilityGate, state *State.GameSt
 		id := State.ResourceID(key.ID)
 		observation := state.Player.ResourceObservations[id]
 		return state.Player.Resources[id] != float64(gate.observed) || (!gate.observedAt.IsZero() && observation.ObservedAt.After(gate.observedAt))
+	case Intent.BalanceMarketBarrows:
+		row, exists := state.Market.Castles[State.CastleID(key.ID)]
+		return !exists || (!gate.observedAt.IsZero() && row.ObservedAt.After(gate.observedAt))
 	case Intent.BalanceCastleResource:
 		castle, exists := state.Castles[key.CastleID]
 		return !exists || (!gate.observedAt.IsZero() && castle.ContextSnapshotObservedAt.After(gate.observedAt))
@@ -1357,7 +1360,7 @@ func coinAvailabilityGateChanged(gate *coinAvailabilityGate, state *State.GameSt
 
 func clearCoinAvailabilityGates(runtime map[string]*policyRuntime, event State.Event, state *State.GameState) {
 	sessionChanged := stateEventHasDomain(event, "session")
-	resourcesChanged := stateEventHasDomain(event, "resources") || stateEventHasDomain(event, "currencies") || stateEventHasDomain(event, "castles")
+	resourcesChanged := stateEventHasDomain(event, "resources") || stateEventHasDomain(event, "currencies") || stateEventHasDomain(event, "castles") || stateEventHasDomain(event, "market")
 	if !sessionChanged && !resourcesChanged {
 		return
 	}
@@ -1372,6 +1375,8 @@ func clearCoinAvailabilityGates(runtime map[string]*policyRuntime, event State.E
 				domain = "currencies"
 			case Intent.BalanceCastleResource:
 				domain = "castles"
+			case Intent.BalanceMarketBarrows:
+				domain = "market"
 			}
 			if !stateEventHasDomain(event, domain) {
 				continue

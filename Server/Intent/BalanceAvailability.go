@@ -15,6 +15,7 @@ type BalanceKind string
 
 const (
 	BalanceCurrency       BalanceKind = "currency"
+	BalanceMarketBarrows  BalanceKind = "market_barrows"
 	BalancePlayerResource BalanceKind = "player_resource"
 	BalanceCastleResource BalanceKind = "castle_resource"
 )
@@ -34,12 +35,15 @@ func PlayerResourceBalanceKey(id State.ResourceID) BalanceKey {
 func CastleResourceBalanceKey(castle State.CastleID, resource State.ResourceID) BalanceKey {
 	return BalanceKey{Kind: BalanceCastleResource, ID: int64(resource), CastleID: castle}
 }
+func MarketBarrowBalanceKey(castle State.CastleID) BalanceKey {
+	return BalanceKey{Kind: BalanceMarketBarrows, ID: int64(castle)}
+}
 func (key BalanceKey) Valid() bool {
 	if key.ID <= 0 {
 		return false
 	}
 	switch key.Kind {
-	case BalanceCurrency, BalancePlayerResource:
+	case BalanceCurrency, BalancePlayerResource, BalanceMarketBarrows:
 		return key.CastleID == 0
 	case BalanceCastleResource:
 		return key.CastleID > 0
@@ -75,7 +79,7 @@ func ParseBalanceKey(text string) (BalanceKey, error) {
 	return key, nil
 }
 func ObservedBalance(state State.GameState, key BalanceKey) (amount int64, observation State.PlayerResourceObservation, known bool) {
-	if !key.Valid() {
+	if !key.Valid() || key.Kind == BalanceMarketBarrows {
 		return
 	}
 	if key.Kind == BalanceCurrency {
@@ -122,6 +126,12 @@ func (err *BalanceUnavailableError) Error() string {
 }
 func (err *BalanceUnavailableError) Unwrap() error { return ErrBalanceUnavailable }
 func (err *BalanceUnavailableError) Detail() string {
+	if err.Key.Kind == BalanceMarketBarrows {
+		if !err.Known {
+			return fmt.Sprintf("Waiting: market barrows in %s need a fresh market check", err.CastleName)
+		}
+		return fmt.Sprintf("Waiting: not enough market barrows in %s (%d needed, %d available)", err.CastleName, err.Required, max(int64(0), err.Observed-err.Pending))
+	}
 	if err.Key.Kind == BalanceCastleResource {
 		if !err.Known {
 			return fmt.Sprintf("Waiting: %s in %s is unavailable; waiting for a fresh castle snapshot", err.Name, err.CastleName)
@@ -136,7 +146,13 @@ func (err *BalanceUnavailableError) Detail() string {
 func (err *BalanceUnavailableError) LocalizationMessage() *Localization.Message {
 	params := Localization.Params{"balance": err.Name, "needed": err.Required, "available": max(int64(0), err.Observed-err.Pending), "castle": err.CastleName}
 	var message *Localization.Message
-	if err.Key.Kind == BalanceCastleResource {
+	if err.Key.Kind == BalanceMarketBarrows {
+		if err.Known {
+			message = Localization.New("server.market_barrows.short", "Waiting: not enough market barrows in {castle} ({needed} needed, {available} available)", params)
+		} else {
+			message = Localization.New("server.market_barrows.unavailable", "Waiting: market barrows in {castle} need a fresh market check", params)
+		}
+	} else if err.Key.Kind == BalanceCastleResource {
 		if err.Known {
 			message = Localization.New("server.balance.castle_short", "Waiting: not enough {balance} in {castle} ({needed} needed, {available} available)", params)
 		} else {
@@ -146,6 +162,9 @@ func (err *BalanceUnavailableError) LocalizationMessage() *Localization.Message 
 		message = Localization.New("server.balance.short", "Waiting: not enough {balance} ({needed} needed, {available} available)", params)
 	} else {
 		message = Localization.New("server.balance.unavailable", "Waiting: the {balance} balance is unavailable; waiting for fresh game data", params)
+	}
+	if err.Key.Kind == BalanceMarketBarrows {
+		return Localization.Bind(message, err.Detail())
 	}
 	return Localization.Bind(message.WithGameParam("balance", err.NameKey, err.Name), err.Detail())
 }
