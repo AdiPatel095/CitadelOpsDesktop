@@ -53,9 +53,9 @@ test('CIT-74 Bird return time uses the viewer locale', async ({ page }) => {
   test.skip(![390, 1440].includes(page.viewportSize()!.width));
   const entry = gateCases.find(entry => entry.name === 'header-panel')!;
   const { verifyNetwork } = await openCase(page, entry, { locale: 'ar', theme: 'dark' });
-  const returns = page.locator('.header-bird-cycles .text-caption').filter({ hasText: /^Return / });
+  const returnLabel = (await import('../../src/i18n/catalogs/ar.json', { with: { type: 'json' } })).default['autoBird.cycles.returnTime']; const returns = page.locator('.header-bird-cycles .text-caption').filter({ hasText: returnLabel.replace('{time}', '') });
   const expected = formatDurationEnd(new Date('2026-09-29T12:09:00Z'), 'ar', 'UTC');
-  await expect(returns.first()).toHaveText(`Return ${expected}`);
+  await expect(returns.first()).toHaveText(returnLabel.replace('{time}', `\u2068${expected}\u2069`));
   await expect(page.locator('.header-bird-detail')).toHaveCount(0);
   verifyNetwork();
 });
