@@ -1453,6 +1453,7 @@ func cloneGameStateComponents(source GameState, components ComponentSet) GameSta
 			clone.Market.Castles[id] = castle
 		}
 		clone.Market.Boosters = cloneMap(source.Market.Boosters)
+		clone.Market.BarrowLeases = cloneMap(source.Market.BarrowLeases)
 	}
 	if components.Has(ComponentKingdomTransport) {
 		clone.KingdomTransport.Unlocks = cloneMap(source.KingdomTransport.Unlocks)

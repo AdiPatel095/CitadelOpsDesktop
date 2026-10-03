@@ -48,7 +48,9 @@ func TestMarketReturnWireKeepsCartsReservedAtHome(t *testing.T) {
 	if got := State.AvailableMarketBarrowsAt(&state, market, returnsAt.Add(-time.Second)); got != 0 {
 		t.Fatalf("persisted return lost cart reservation: %d", got)
 	}
-	if got := State.AvailableMarketBarrowsAt(&state, market, returnsAt); got != 125 {
+	market.ObservedAt = returnsAt.Add(time.Nanosecond)
+	state.Market.Castles[market.CastleID] = market
+	if got := State.AvailableMarketBarrowsAt(&state, market, returnsAt.Add(time.Nanosecond)); got != 125 {
 		t.Fatalf("completed return did not release carts: %d", got)
 	}
 }

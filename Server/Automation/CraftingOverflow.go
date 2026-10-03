@@ -165,9 +165,36 @@ func marketOverflowDecision(settings craftingSettings, snapshot Snapshot, interv
 		amount   float64
 	}
 	best := candidate{}
+	waiting := Decision{}
 	for _, sourceID := range sortedCastleIDs(snapshot.State.Castles) {
 		source := snapshot.State.Castles[sourceID]
 		if !craftingHasMarketplace(snapshot.GameData, source) {
+			continue
+		}
+		// Refresh only donors with overflow that can fit an owned destination.
+		eligible := false
+		for _, resource := range sovereignResourceIDs(snapshot.GameData) {
+			if craftingOverflowAmount(settings, snapshot, source, resource) <= 0 {
+				continue
+			}
+			for _, target := range snapshot.State.Castles {
+				balance := target.Resources[resource]
+				if target.ID != source.ID && target.KingdomID == source.KingdomID && balance.Capacity != nil && *balance.Capacity-balance.Amount-incomingMarketResource(snapshot, target, resource) > 0 {
+					eligible = true
+					break
+				}
+			}
+		}
+		if !eligible {
+			continue
+		}
+		if decision, blocked := marketSourceDecision(snapshot, source.ID); blocked {
+			if decision.Request != nil {
+				return decision, true
+			}
+			if waiting.Status == "" || decision.NextCheckAt.Before(waiting.NextCheckAt) {
+				waiting = decision
+			}
 			continue
 		}
 		market, observed := snapshot.State.Market.Castles[source.ID]
@@ -204,7 +231,7 @@ func marketOverflowDecision(settings craftingSettings, snapshot Snapshot, interv
 		}
 	}
 	if best.amount <= 0 {
-		return Decision{}, false
+		return waiting, waiting.Status != ""
 	}
 	arguments, _ := json.Marshal(map[string]any{
 		"sourceCastleId": best.source.ID, "targetCastleId": best.target.ID,

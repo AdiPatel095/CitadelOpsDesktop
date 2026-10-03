@@ -214,6 +214,7 @@ func RegisterCoreReducers(registry *Registry) error {
 		}},
 		{[]string{"csm", "cds"}, []reducerStep{
 			{writes: movements, reducer: newMovementReducer(false)},
+			{writes: components(State.ComponentMarket), reducer: reduceMarketBarrowLeases},
 			{writes: invasionRecovery, reducer: reduceInvasionReservationMovements},
 		}},
 	}
@@ -234,6 +235,7 @@ func RegisterCoreReducers(registry *Registry) error {
 	}
 	if err := registry.registerComponentSequence("gam",
 		reducerStep{writes: movements, reducer: newMovementReducer(true)},
+		reducerStep{writes: components(State.ComponentMarket), reducer: reduceMarketBarrowLeases},
 		reducerStep{writes: invasionRecovery, reducer: reduceInvasionReservationMovements},
 		reducerStep{writes: components(State.ComponentAdvisor, State.ComponentEventScores), reducer: reduceAdvisorMovement},
 		reducerStep{writes: player, reducer: reducePlayerTitles},
@@ -243,6 +245,7 @@ func RegisterCoreReducers(registry *Registry) error {
 	for _, opcode := range []string{"cat", "mcm"} {
 		if err := registry.registerComponentSequence(opcode,
 			reducerStep{writes: movements, reducer: newMovementReducer(false)},
+			reducerStep{writes: components(State.ComponentMarket), reducer: reduceMarketBarrowLeases},
 			reducerStep{writes: invasionRecovery, reducer: reduceInvasionReservationMovements},
 			reducerStep{writes: components(State.ComponentAdvisor, State.ComponentEventScores), reducer: reduceAdvisorMovement},
 		); err != nil {
@@ -251,6 +254,7 @@ func RegisterCoreReducers(registry *Registry) error {
 	}
 	if err := registry.registerComponentSequence("cra",
 		reducerStep{writes: movements, reducer: craMovements},
+		reducerStep{writes: components(State.ComponentMarket), reducer: reduceMarketBarrowLeases},
 		reducerStep{writes: invasionRecovery, reducer: reduceInvasionReservationMovements},
 		reducerStep{writes: components(State.ComponentRift), reducer: reduceRiftLaunchAck},
 		reducerStep{writes: components(State.ComponentAdvisor, State.ComponentEventScores), reducer: reduceAdvisorMovement},
@@ -267,6 +271,7 @@ func RegisterCoreReducers(registry *Registry) error {
 	}
 	if err := registry.registerComponentSequence("crm",
 		reducerStep{writes: movements, reducer: newMovementReducer(false)},
+		reducerStep{writes: components(State.ComponentMarket), reducer: reduceMarketBarrowLeases},
 		reducerStep{writes: invasionRecovery, reducer: reduceInvasionReservationMovements},
 		reducerStep{writes: resources, reducer: reduceResponseResources},
 	); err != nil {

@@ -1140,6 +1140,7 @@ type MarketAreaEffect struct {
 }
 
 type MarketCastleState struct {
+	ObservedAt       time.Time              `json:"observedAt,omitempty"`
 	CastleID         CastleID               `json:"castleId"`
 	KingdomID        KingdomID              `json:"kingdomId"`
 	TotalBarrows     int                    `json:"totalBarrows"`
@@ -1255,10 +1256,11 @@ func (feast MarketFeastState) FreshAt(now time.Time, sessionChangedAt time.Time,
 }
 
 type MarketState struct {
-	Castles             map[CastleID]MarketCastleState `json:"castles"`
-	Boosters            map[int]MarketBoosterState     `json:"boosters"`
-	Feast               MarketFeastState               `json:"feast"`
-	FeastLastPurchaseAt time.Time                      `json:"feastLastPurchaseAt,omitempty"`
+	BarrowLeases        map[MovementID]MarketBarrowLeaseRecord `json:"barrowLeases,omitempty"`
+	Castles             map[CastleID]MarketCastleState         `json:"castles"`
+	Boosters            map[int]MarketBoosterState             `json:"boosters"`
+	Feast               MarketFeastState                       `json:"feast"`
+	FeastLastPurchaseAt time.Time                              `json:"feastLastPurchaseAt,omitempty"`
 	// FeastPurchasePending prevents a resource-spending BFS from being replayed
 	// after its outcome could not be reconciled. The latch is durable across
 	// restarts and is cleared only by an authoritative expected-feast result,

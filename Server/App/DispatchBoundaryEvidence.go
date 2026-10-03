@@ -132,6 +132,40 @@ func captureDispatchBoundaryEvidence(ctx context.Context, input Intent.PlanningC
 		"castleObservedAt": castle.ContextSnapshotObservedAt, "focus": focus,
 		"session": map[string]any{"generation": input.State.Session.Generation, "connectionGeneration": input.State.Session.ConnectionGeneration}}
 	switch opcode {
+	case "crm":
+		var source State.CastleID
+		_ = json.Unmarshal(payload["SID"], &source)
+		var goods [][]json.RawMessage
+		_ = json.Unmarshal(payload["G"], &goods)
+		var amount int64
+		if len(goods) == 1 && len(goods[0]) >= 2 {
+			_ = json.Unmarshal(goods[0][1], &amount)
+		}
+		now := time.Now().UTC()
+		row := input.State.Market.Castles[source]
+		ids := make([]State.CastleID, 0, len(input.State.Castles))
+		for id := range input.State.Castles {
+			ids = append(ids, id)
+		}
+		sort.Slice(ids, func(i, j int) bool { return ids[i] < ids[j] })
+		ordinal := 0
+		for i, id := range ids {
+			if id == source {
+				ordinal = i + 1
+				break
+			}
+		}
+		required, err := marketBarrowsRequired(input, source, amount)
+		age := float64(0)
+		if !row.ObservedAt.IsZero() {
+			age = now.Sub(row.ObservedAt).Seconds()
+		}
+		snapshot["market"] = map[string]any{"sourceOrdinal": ordinal, "availableBarrows": row.AvailableBarrows,
+			"totalBarrows": row.TotalBarrows, "observedAt": row.ObservedAt, "ageSec": age,
+			"lastRefreshAt": input.State.Market.ObservedAt, "requiredBarrows": required, "capacityKnown": err == nil,
+			"computedAvailable": State.AvailableMarketBarrowsAt(&input.State, row, now),
+			"lease":             State.MarketBarrowLeaseAt(&input.State, source, now),
+			"ready":             State.MarketBarrowSourceStatusAt(&input.State, source, now).Ready}
 	case "hru":
 		snapshot["hospitalQueue"] = sanitizedHospitalQueue(castle.Production[2])
 		snapshot["capacity"] = castle.Production[2].Capacity
