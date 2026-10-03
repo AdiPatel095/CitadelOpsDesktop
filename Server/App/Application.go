@@ -432,6 +432,7 @@ func New(ctx context.Context, config Config) (*Application, error) {
 	intents.SetAdmissionWeightProvider(application.attackAdmissionWeight)
 	dispatchGates := newFinalDispatchGates(application.coinGate, newTravelTicketDispatchGate())
 	intents.SetFinalDispatchProvider(dispatchGates)
+	intents.SetDispatchEvidenceCollector(captureDispatchBoundaryEvidence)
 	application.Scheduler = Scheduling.NewScheduler(state, intents)
 	if err := application.registerCoreIntents(); err != nil {
 		return nil, err
