@@ -1,0 +1,62 @@
+{
+  "id": "copy-mixed",
+  "title": "Copy: Direwolves reserved at an outer main castle",
+  "purpose": "Auto Fortress reserves Direwolves at Frostmere; the Bird keep list on Stonehaven copies without them.",
+  "step": "10",
+  "platforms": [
+    "desktop",
+    "hosted"
+  ],
+  "modules": [
+    "autoBird",
+    "autoFortress"
+  ],
+  "simulated": [
+    "banner: Simulated preview: sample data only. Nothing here reaches the game or an account.",
+    "dock: Candidate <short SHA>"
+  ],
+  "expect": [
+    "Frostmere is 'needs a look': Direwolves dropped and named once (no separate stock line); the rest needs an explicit include."
+  ],
+  "patch": {
+    "config": {
+      "automation.autoFortress": {
+        "version": 1,
+        "kingdoms": {
+          "2": {
+            "enabled": true
+          }
+        },
+        "direwolfPurchaseLimit": 0
+      },
+      "automation.enabled": {
+        "auto_fortress": true
+      },
+      "automation.autoBird": {
+        "version": 2,
+        "ignoreSettings": {
+          "settings": {
+            "4101": [
+              {
+                "id": 1,
+                "amount": 500
+              },
+              {
+                "id": 277,
+                "amount": 200
+              }
+            ]
+          },
+          "minDelay": 6,
+          "maxDelay": 12,
+          "minSend": 0,
+          "minRPTDays": 3
+        },
+        "activePresetId": null
+      }
+    }
+  },
+  "columns": [
+    "copy"
+  ]
+}

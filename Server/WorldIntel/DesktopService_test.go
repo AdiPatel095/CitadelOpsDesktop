@@ -11,7 +11,7 @@ func TestDesktopServiceReportsSharedDataReaderMode(t *testing.T) {
 	gameState := State.NewGameState()
 	gameState.Account.WorldID = "https://WORLD.EXAMPLE/socket"
 	service := NewDesktopService(
-		State.NewStore(gameState),
+		State.NewStore(&gameState),
 		NewCloudClient(ClientConfig{BaseURL: "https://intel.example/v1", ClientVersion: "test"}),
 	)
 	status := service.Status(context.Background())

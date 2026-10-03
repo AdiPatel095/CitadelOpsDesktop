@@ -1,4 +1,5 @@
 import { useLocale } from './i18n/LocaleContext';
+import { ConnectionRepairHost } from './components/ConnectionRepairHost';
 import React, { lazy, Suspense, useEffect, useRef, useState, type ComponentType } from 'react';
 import { Providers } from './Providers';
 import Header from './components/Header';
@@ -34,6 +35,7 @@ interface SettingsModalProps {
   isOpen: boolean;
   onClose: () => void;
   onOpenFeatureSchedule?: (id: string, label: string) => void;
+  onOpenAutomationDuration?: (featureKey: string, label: string) => void;
 }
 
 function lazyNamed<P>(loader: () => Promise<unknown>, exportName: string) {
@@ -152,6 +154,8 @@ const AppContent: React.FC = () => {
       onOpenAutoKhanSettings={openSettings('khan')}
       onOpenAutoBeriWorldSettings={openSettings('beri')}
       onOpenAutoStormSettings={openSettings('storm')}
+      onOpenAutoStationSettings={openSettings('station')}
+      onOpenAutoBirdSettings={openSettings('bird')}
       autoEquipmentCleanup={autoEquipmentCleanup}
       onOpenFeatureSchedule={openSchedule}
       onOpenAutomationDuration={openDuration}
@@ -186,12 +190,14 @@ const AppContent: React.FC = () => {
       </main>
 
       <Alerts />
+      <ConnectionRepairHost onOpenSettings={() => setActiveView('settings')} />
       {SettingsModal && (
         <Suspense fallback={null}>
           <SettingsModal
             isOpen
             onClose={() => setActiveSettingsModal(null)}
             onOpenFeatureSchedule={openSchedule}
+            onOpenAutomationDuration={openDuration}
           />
         </Suspense>
       )}

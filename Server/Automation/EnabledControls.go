@@ -16,10 +16,21 @@ type automationEnabledControl struct {
 	Timed     bool      `json:"-"`
 }
 
+var enabledControlsMemo sectionMemo[map[string]automationEnabledControl]
+
+// automationEnabledControls returns the parsed enabled controls. The map is
+// shared between callers and must not be modified.
 func automationEnabledControls(snapshot Configuration.Snapshot) map[string]automationEnabledControl {
+	return enabledControlsMemo.get(snapshot.Sections[automationEnabledSection], func() map[string]automationEnabledControl {
+		configurationParses.Add(1)
+		return parseAutomationEnabledControls(snapshot.Sections[automationEnabledSection])
+	})
+}
+
+func parseAutomationEnabledControls(raw json.RawMessage) map[string]automationEnabledControl {
 	result := map[string]automationEnabledControl{}
 	var document map[string]json.RawMessage
-	if json.Unmarshal(snapshot.Sections[automationEnabledSection], &document) != nil {
+	if json.Unmarshal(raw, &document) != nil {
 		return result
 	}
 	for feature, raw := range document {

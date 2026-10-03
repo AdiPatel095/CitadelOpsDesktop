@@ -58,8 +58,8 @@ func reduceProductionSnapshot(
 	if !ok {
 		return nil, false, nil
 	}
-	recruitmentHelpOutstanding := State.HasOutstandingRecruitmentAllianceHelpRequest(*gameState, castleID)
-	preserveRequestedHelp := State.OwnAllianceHelpStateCurrent(*gameState)
+	recruitmentHelpOutstanding := State.HasOutstandingRecruitmentAllianceHelpRequest(gameState, castleID)
+	preserveRequestedHelp := State.OwnAllianceHelpStateCurrent(gameState)
 	castle, ok = gameState.MutableCastleParts(castleID, State.CastlePartProduction)
 	if !ok {
 		return nil, false, nil
@@ -79,6 +79,10 @@ func reduceProductionSnapshot(
 	if changed {
 		gameState.SetCastleParts(castleID, castle, State.CastlePartProduction)
 		domains = append(domains, "castles", "production")
+		// An AHR 269 record ends once its rejected jobs leave the queue.
+		if State.PruneRecruitmentHelpIneligibility(gameState, frame.ReceivedAt) {
+			helpChanged = true
+		}
 	}
 	if helpChanged {
 		domains = append(domains, "alliance-help")
@@ -99,8 +103,8 @@ func reduceEmbeddedProductionSnapshots(
 	if !ok {
 		return nil, false, nil
 	}
-	var root map[string]json.RawMessage
-	if err := json.Unmarshal(frame.Payload, &root); err != nil {
+	root, err := frame.PayloadRoot()
+	if err != nil {
 		return nil, false, fmt.Errorf("decode embedded production snapshots: %w", err)
 	}
 	castle, ok = gameState.MutableCastleParts(castleID, State.CastlePartProduction)
@@ -109,8 +113,8 @@ func reduceEmbeddedProductionSnapshots(
 	}
 	changed := false
 	helpChanged := false
-	recruitmentHelpOutstanding := State.HasOutstandingRecruitmentAllianceHelpRequest(*gameState, castleID)
-	preserveRequestedHelp := State.OwnAllianceHelpStateCurrent(*gameState)
+	recruitmentHelpOutstanding := State.HasOutstandingRecruitmentAllianceHelpRequest(gameState, castleID)
+	preserveRequestedHelp := State.OwnAllianceHelpStateCurrent(gameState)
 	for key, raw := range root {
 		if !strings.HasPrefix(key, "spl") || key == "spl" || len(raw) == 0 {
 			continue
@@ -136,6 +140,10 @@ func reduceEmbeddedProductionSnapshots(
 	if changed {
 		gameState.SetCastleParts(castleID, castle, State.CastlePartProduction)
 		domains = append(domains, "castles", "production")
+		// An AHR 269 record ends once its rejected jobs leave the queue.
+		if State.PruneRecruitmentHelpIneligibility(gameState, frame.ReceivedAt) {
+			helpChanged = true
+		}
 	}
 	if helpChanged {
 		domains = append(domains, "alliance-help")

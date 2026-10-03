@@ -25,6 +25,7 @@ import (
 	"CitadelDesktop/Server/Ingest"
 	"CitadelDesktop/Server/Intent"
 	"CitadelDesktop/Server/PrivateMetrics"
+	"CitadelDesktop/Server/Profiling"
 	"CitadelDesktop/Server/Reports"
 	"CitadelDesktop/Server/RiftTemplates"
 	RuntimeKernel "CitadelDesktop/Server/Runtime"
@@ -36,6 +37,13 @@ import (
 )
 
 const GameDataRefreshInterval = 6 * time.Hour
+
+const (
+	// defaultStatePersistenceWindow bounds background group-commit latency.
+	// Safety-critical changes use saveStateEvent's synchronous flush.
+	defaultStatePersistenceWindow = 15 * time.Second
+	statePersistenceRetryDelay    = 2 * time.Second
+)
 
 type Config struct {
 	DataDir string
@@ -76,15 +84,20 @@ type Config struct {
 }
 
 type Application struct {
-	DataDir          string
-	AccountKey       string
-	BackgroundOnly   bool
-	State            *State.Store
-	GameData         *GameData.Manager
-	WorldMaps        *State.WorldMapStore
-	Configuration    *Configuration.Store
-	History          *History.Store
-	Telemetry        *Telemetry.Store
+	DataDir        string
+	AccountKey     string
+	BackgroundOnly bool
+	State          *State.Store
+	GameData       *GameData.Manager
+	WorldMaps      *State.WorldMapStore
+	Configuration  *Configuration.Store
+	History        *History.Store
+	// Telemetry is nil in the hosted composition (BackgroundOnly), which never
+	// creates a store: no frame or feature log is written or buffered.
+	Telemetry *Telemetry.Store
+	// AttackLaunches is the hosted replacement for the telemetry-backed launch
+	// counters, derived from intent receipts. Nil when telemetry serves them.
+	AttackLaunches   *AttackLaunchLedger
 	Ingest           *Ingest.Pipeline
 	Session          *Session.Controller
 	Intents          *Intent.Engine
@@ -110,11 +123,14 @@ type Application struct {
 	statePersistence          chan statePersistenceRequest
 	statePersistenceDone      chan struct{}
 	statePersistenceStarted   atomic.Bool
+	statePersistenceWindow    time.Duration
+	stateWriter               atomic.Pointer[State.ComponentSnapshotWriter]
 	controlConfigurationState atomic.Uint32
 	backgroundOnly            bool
 	ownsGameData              bool
 	ownsUpdates               bool
 	refreshGameDataAll        func(context.Context) error
+	gameDataSyncPending       atomic.Bool
 	startOnce                 sync.Once
 	shutdownDone              chan struct{}
 }
@@ -216,7 +232,7 @@ func New(ctx context.Context, config Config) (*Application, error) {
 		initial.LanguageVersion = current.Metadata().LanguageVersion
 		EquipmentDomain.HydrateState(&initial, current)
 	}
-	state := State.NewStoreWithWorldMap(initial, config.WorldMaps)
+	state := State.NewStoreWithWorldMap(&initial, config.WorldMaps)
 	if migrationErr := Reports.MigrateLegacyHistory(config.DataDir, history, initial.Player.ID); migrationErr != nil {
 		startupErr = errors.Join(startupErr, migrationErr)
 	}
@@ -229,11 +245,23 @@ func New(ctx context.Context, config Config) (*Application, error) {
 	}
 	ingest := Ingest.NewPipeline(state, gameData, registry)
 	ingest.SetProfileID(profileLease.ProfileID)
-	telemetry := Telemetry.NewStore(5000)
-	if telemetryErr := telemetry.SetDataDir(config.DataDir); telemetryErr != nil {
-		startupErr = errors.Join(startupErr, Localization.WithError(fmt.Errorf("initialize logger: %w", telemetryErr), Localization.ErrorContext(Localization.New("server.app.initialize_logger.453e61ce", "initialize logger", nil), telemetryErr)))
+	// The hosted composition keeps no frame or feature logs at all: no store,
+	// no disk files, no in-memory tails, and nothing recording into one.
+	var telemetry *Telemetry.Store
+	closeTelemetry := false
+	defer func() {
+		if closeTelemetry {
+			_ = telemetry.CloseContext(context.Background())
+		}
+	}()
+	if !config.BackgroundOnly {
+		telemetry = Telemetry.NewStore(5000)
+		closeTelemetry = true
+		if telemetryErr := telemetry.SetDataDir(config.DataDir); telemetryErr != nil {
+			startupErr = errors.Join(startupErr, Localization.WithError(fmt.Errorf("initialize logger: %w", telemetryErr), Localization.ErrorContext(Localization.New("server.app.initialize_logger.453e61ce", "initialize logger", nil), telemetryErr)))
+		}
+		ingest.SetTelemetry(telemetry)
 	}
-	ingest.SetTelemetry(telemetry)
 	transport := config.Transport
 	if transport == nil && (config.Chromium != nil || config.BackgroundOnly) {
 		mode := Session.ConnectionModeFull
@@ -300,6 +328,18 @@ func New(ctx context.Context, config Config) (*Application, error) {
 	if err := intents.SetOperationStore(ctx, operationStore); err != nil {
 		return nil, Localization.WithError(fmt.Errorf("recover intent operations: %w", err), Localization.ErrorContext(Localization.New("server.app.recover_intent_operations.9d357f70", "recover intent operations", nil), err))
 	}
+	// Hosted runtimes have no telemetry store, so their confirmed attack
+	// launch counters come from a ledger over the same intent receipts. If it
+	// cannot open, the badges report unavailable rather than a wrong number.
+	var attackLaunches *AttackLaunchLedger
+	if config.BackgroundOnly {
+		ledger, ledgerErr := OpenAttackLaunchLedger(ctx, operationStore, nil)
+		if ledgerErr != nil {
+			startupErr = errors.Join(startupErr, fmt.Errorf("open attack launch ledger: %w", ledgerErr))
+		} else {
+			attackLaunches = ledger
+		}
+	}
 	reportStore, err := Reports.OpenSQLiteStore(config.DataDir)
 	if err != nil {
 		return nil, Localization.WithError(fmt.Errorf("open report analytics store: %w", err), Localization.ErrorContext(Localization.New("server.app.open_report_analytics_store.d17d5d65", "open report analytics store", nil), err))
@@ -330,10 +370,13 @@ func New(ctx context.Context, config Config) (*Application, error) {
 	var privateMetricsPublisher *PrivateMetrics.Publisher
 	var checkpointPublisher *PrivateMetrics.CheckpointPublisher
 	if config.PrivateMetricsClient != nil && config.PrivateMetricsClient.Enabled() {
+		// One settle window for both publishers: a handover needs an actual
+		// checkpoint upload and an actual metrics upload at the same moment.
+		publishSettle := PrivateMetrics.NewSettle(0)
 		privateMetricsPublisher, err = PrivateMetrics.NewPublisher(PrivateMetrics.PublisherConfig{
 			RuntimeID: strings.TrimSpace(config.AccountKey), State: state, GameData: gameData,
 			Reports: reportStore, Client: config.PrivateMetricsClient,
-			Placement: config.PrivateMetricsPlacement,
+			Placement: config.PrivateMetricsPlacement, Settle: publishSettle,
 		})
 		if err != nil {
 			return nil, Localization.WithError(fmt.Errorf("initialize private metrics publisher: %w", err), Localization.ErrorContext(Localization.New("server.app.initialize_private_metrics_publisher.b0796171", "initialize private metrics publisher", nil), err))
@@ -342,6 +385,7 @@ func New(ctx context.Context, config Config) (*Application, error) {
 			checkpointPublisher, err = PrivateMetrics.NewCheckpointPublisher(PrivateMetrics.CheckpointPublisherConfig{
 				RuntimeID: strings.TrimSpace(config.AccountKey), State: state, Configuration: configuration,
 				Intents: intents, Client: config.PrivateMetricsClient, Placement: config.PrivateMetricsPlacement,
+				Settle: publishSettle,
 			})
 			if err != nil {
 				return nil, Localization.WithError(fmt.Errorf("initialize dashboard checkpoint publisher: %w", err), Localization.ErrorContext(Localization.New("server.app.initialize_dashboard_checkpoint_publisher.db9f6578", "initialize dashboard checkpoint publisher", nil), err))
@@ -359,7 +403,7 @@ func New(ctx context.Context, config Config) (*Application, error) {
 	application := &Application{
 		DataDir: config.DataDir, AccountKey: strings.TrimSpace(config.AccountKey),
 		BackgroundOnly: config.BackgroundOnly,
-		State:          state, GameData: gameData, WorldMaps: config.WorldMaps, Configuration: configuration, History: history, Telemetry: telemetry,
+		State:          state, GameData: gameData, WorldMaps: config.WorldMaps, Configuration: configuration, History: history, Telemetry: telemetry, AttackLaunches: attackLaunches,
 		Ingest: ingest, Session: session, Intents: intents, OperationStore: operationStore, ReportStore: reportStore,
 		ProfileLease: profileLease, StartupErr: startupErr,
 		Updates:              updates,
@@ -410,6 +454,7 @@ func New(ctx context.Context, config Config) (*Application, error) {
 	application.Automation = Automation.NewCoordinator(
 		state, configuration, gameData, intents,
 		Automation.NewSharedStormScanPolicy(application.AccountKey, config.WorldMaps),
+		Automation.NewSharedFortressScanPolicy(application.AccountKey, config.WorldMaps),
 		Automation.NewRecruitPolicy(),
 		Automation.NewToolPolicy(),
 		Automation.NewHospitalPolicy(),
@@ -428,7 +473,7 @@ func New(ctx context.Context, config Config) (*Application, error) {
 		Automation.NewFoodBalancePolicy(),
 		Automation.NewAutoTowerPolicy(),
 		Automation.NewInvasionRecoveryPolicy(),
-		Automation.NewAutoFortressPolicy(),
+		Automation.NewSharedAutoFortressPolicy(application.AccountKey, config.WorldMaps),
 		Automation.NewAutoInvasionPolicy(),
 		Automation.NewAutoNomadPolicy(),
 		Automation.NewAutoAdvisorPolicy(),
@@ -443,7 +488,18 @@ func New(ctx context.Context, config Config) (*Application, error) {
 		Automation.NewAutoStormShopPolicy(),
 		Automation.NewAutoStormBuildPolicy(),
 	)
-	application.Automation.SetTelemetry(telemetry)
+	// A typed-nil store must never reach the interface, so pick the provider
+	// explicitly: telemetry on desktop, the receipt ledger when hosted.
+	var attackLaunchProvider Automation.AttackLaunchCountsProvider
+	switch {
+	case telemetry != nil:
+		attackLaunchProvider = telemetry
+	case attackLaunches != nil:
+		attackLaunchProvider = attackLaunches
+	}
+	if attackLaunchProvider != nil {
+		application.Automation.SetTelemetry(attackLaunchProvider)
+	}
 	application.Automation.SetExternalConfigurationAuthority(config.BackgroundOnly)
 	application.Reports = Reports.NewManagerWithCloudClient(
 		state, history, intents, config.ReportsCloudClient, reportStore,
@@ -452,12 +508,13 @@ func New(ctx context.Context, config Config) (*Application, error) {
 	// storage for compatibility, but no runtime or status API is composed.
 	application.API = API.NewServer(API.Config{
 		Version: Version, BuildRevision: BuildRevision, BuildID: BuildID,
-		State: state, GameData: gameData, Configuration: configuration, History: history, Telemetry: telemetry,
+		State: state, GameData: gameData, Configuration: configuration, History: history, Telemetry: telemetry, AttackLaunches: attackLaunchProvider,
 		Intents: intents, ReportAnalytics: reportStore, Session: session, Updates: application.Updates, Diagnostics: application.Diagnostics,
 		CloudReports:    application.Reports.CloudClient(),
 		BackgroundLogin: application.BackgroundLogin, BackgroundOnly: config.BackgroundOnly, Persistence: application,
 		WorldIntel: application.WorldIntel,
 	})
+	closeTelemetry = false
 	closeOperationStore = false
 	closeReportStore = false
 	closeProfileLease = false
@@ -478,7 +535,9 @@ func (application *Application) start(ctx context.Context) {
 	application.Session.SetAutomationLocked(application.automationLocked())
 	go application.syncAutomationLock(ctx, configurationEvents, unsubscribeConfiguration)
 	persistenceReady := make(chan struct{})
-	go application.persistState(ctx, persistenceReady)
+	go Profiling.Do(ctx, func(ctx context.Context) {
+		application.persistState(ctx, persistenceReady)
+	}, Profiling.LabelStage, Profiling.StagePersist)
 	<-persistenceReady
 	application.statePersistenceStarted.Store(true)
 	go application.captureIntentLogs(ctx)
@@ -486,7 +545,7 @@ func (application *Application) start(ctx context.Context) {
 		defer close(application.shutdownDone)
 		<-ctx.Done()
 		<-application.statePersistenceDone
-		application.Telemetry.Close()
+		_ = application.Telemetry.CloseContext(context.Background())
 		if application.Reports != nil {
 			application.Reports.Wait()
 		}
@@ -536,7 +595,7 @@ func (application *Application) start(ctx context.Context) {
 		go application.Checkpoints.Run(ctx)
 	}
 	go application.runMovementClock(ctx)
-	go application.Automation.Run(ctx)
+	go Profiling.Do(ctx, application.Automation.Run, Profiling.LabelStage, Profiling.StageAutomation)
 	go application.Reports.Run(ctx)
 	go application.Scheduler.Run(ctx)
 }
@@ -610,7 +669,7 @@ func (application *Application) Wait(ctx context.Context) error {
 }
 
 func (application *Application) captureIntentLogs(ctx context.Context) {
-	if application == nil || application.Intents == nil || application.Telemetry == nil {
+	if application == nil || application.Intents == nil || (application.Telemetry == nil && application.AttackLaunches == nil) {
 		return
 	}
 	events, unsubscribe := application.Intents.Subscribe(512)
@@ -626,7 +685,13 @@ func (application *Application) captureIntentLogs(ctx context.Context) {
 }
 
 func (application *Application) recordIntentLog(receipt Intent.Receipt) {
-	if application == nil || application.Telemetry == nil {
+	if application == nil {
+		return
+	}
+	if application.AttackLaunches != nil {
+		application.AttackLaunches.RecordReceipt(context.Background(), receipt)
+	}
+	if application.Telemetry == nil {
 		return
 	}
 	for _, activity := range featureActivities(receipt) {
@@ -636,13 +701,29 @@ func (application *Application) recordIntentLog(receipt Intent.Receipt) {
 	}
 }
 
+func (application *Application) statePersistenceWindowDuration() time.Duration {
+	if application.statePersistenceWindow == 0 {
+		return defaultStatePersistenceWindow
+	}
+	return application.statePersistenceWindow
+}
+
+func (application *Application) StatePersistenceStats() State.PersistenceStats {
+	if application == nil {
+		return State.PersistenceStats{}
+	}
+	return application.stateWriter.Load().Stats()
+}
+
 func (application *Application) persistState(ctx context.Context, ready chan<- struct{}) {
 	defer close(application.statePersistenceDone)
 	events, unsubscribe := application.State.Subscribe(128)
 	defer unsubscribe()
 	subscriptionBaseline := application.State.Revision()
 	close(ready)
+	window := application.statePersistenceWindowDuration()
 	writer := State.NewComponentSnapshotWriter(application.DataDir)
+	application.stateWriter.Store(writer)
 	var timer *time.Timer
 	var timerChannel <-chan time.Time
 	var pending State.PersistenceBatch
@@ -653,7 +734,7 @@ func (application *Application) persistState(ctx context.Context, ready chan<- s
 			return false
 		}
 		if timer == nil {
-			timer = time.NewTimer(2 * time.Second)
+			timer = time.NewTimer(window)
 			timerChannel = timer.C
 		}
 		return true
@@ -735,7 +816,7 @@ func (application *Application) persistState(ctx context.Context, ready chan<- s
 			force(request)
 		case <-timerChannel:
 			if flush() != nil {
-				timer = time.NewTimer(2 * time.Second)
+				timer = time.NewTimer(statePersistenceRetryDelay)
 				timerChannel = timer.C
 			}
 		}
@@ -1060,17 +1141,29 @@ func (application *Application) refreshGameData(ctx context.Context) error {
 	if application.refreshGameDataAll != nil {
 		return application.refreshGameDataAll(ctx)
 	}
-	return refreshGameDataStore(ctx, application.State, application.GameData)
+	return refreshGameDataStore(ctx, application.State, application.GameData, &application.gameDataSyncPending)
 }
 
-func refreshGameDataStore(ctx context.Context, state *State.Store, gameData *GameData.Manager) error {
+// refreshGameDataStore refreshes the official data and rehydrates this runtime
+// only when the store changed, or when the previous rehydration failed.
+func refreshGameDataStore(ctx context.Context, state *State.Store, gameData *GameData.Manager, syncPending *atomic.Bool) error {
 	if state == nil || gameData == nil {
 		return Localization.WithError(fmt.Errorf("official game data is unavailable"), Localization.New("server.app.official_game_data_is.ff6f65a7", "official game data is unavailable", nil))
 	}
-	if err := gameData.Refresh(ctx); err != nil {
+	changed, err := gameData.RefreshChanged(ctx)
+	if err != nil {
 		return err
 	}
-	return synchronizeGameDataStore(state, gameData)
+	if !changed && !syncPending.Load() {
+		// Same item and language versions: the runtime already runs this store.
+		return nil
+	}
+	syncPending.Store(true)
+	if err := synchronizeGameDataStore(state, gameData); err != nil {
+		return err
+	}
+	syncPending.Store(false)
+	return nil
 }
 
 // SynchronizeGameData applies the current process-owned catalog generation to

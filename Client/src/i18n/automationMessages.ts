@@ -8,7 +8,7 @@ export function automationDetailMessage(detail: string | undefined, value: unkno
   const parsed = parseMessageDescriptor(value);
   return parsed?.fallbackText === detail ? parsed : undefined;
 }
-const statuses = new Set(['idle','armed','cooldown','defending','discovering','evacuating','preparing','protected','protecting','recalling','reconciling','refreshing','replenishing','resolving','taunting','threat','yielding','complete','completed','success','failed','error','blocked','gated','retrying','warning','running','enabled','scheduled','ready','waiting','disabled']);
+const statuses = new Set(['idle','armed','cooldown','defending','discovering','evacuating','preparing','protected','protecting','recalling','reconciling','refreshing','replenishing','resolving','taunting','threat','yielding','complete','completed','success','failed','error','blocked','gated','retrying','warning','running','enabled','scheduled','ready','waiting','disabled','unknown']);
 const lanes = new Set(['overall','crafting','logistics','attacks','cooldowns','rage','defense','transfers','tools','combat','aquamarine-shop','builder','builder-missing-decorations']);
 export function automationStatusMessage(status: string): LocalizedMessage | undefined {
   return statuses.has(status) || !status ? describeMessage('automation.status',{status:status || 'other'}) : undefined;

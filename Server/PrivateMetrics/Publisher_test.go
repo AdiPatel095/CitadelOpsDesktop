@@ -2,6 +2,7 @@ package PrivateMetrics
 
 import (
 	"bytes"
+	"compress/gzip"
 	"context"
 	"encoding/json"
 	"errors"
@@ -63,6 +64,7 @@ type receivedPublication struct {
 	authorization  string
 	idempotencyKey string
 	body           []byte
+	encoding       string
 	request        PublishRequest
 	receivedAt     time.Time
 }
@@ -84,7 +86,17 @@ func publicationServer(t *testing.T, respond func(ordinal int, request *http.Req
 	received := make(chan receivedPublication, 32)
 	var ordinal atomic.Int64
 	server := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
-		body, _ := io.ReadAll(io.LimitReader(request.Body, 2<<20))
+		reader := io.Reader(request.Body)
+		if request.Header.Get("Content-Encoding") == "gzip" {
+			gzipReader, err := gzip.NewReader(request.Body)
+			if err != nil {
+				t.Errorf("gzip publication: %v", err)
+				writer.WriteHeader(http.StatusBadRequest)
+				return
+			}
+			reader = gzipReader
+		}
+		body, _ := io.ReadAll(io.LimitReader(reader, 2<<20))
 		var payload PublishRequest
 		if err := json.Unmarshal(body, &payload); err != nil {
 			t.Errorf("decode publication: %v", err)
@@ -94,7 +106,7 @@ func publicationServer(t *testing.T, respond func(ordinal int, request *http.Req
 		received <- receivedPublication{
 			authorization:  request.Header.Get("Authorization"),
 			idempotencyKey: request.Header.Get("Idempotency-Key"), body: body, request: payload,
-			receivedAt: time.Now(),
+			encoding: request.Header.Get("Content-Encoding"), receivedAt: time.Now(),
 		}
 		respond(int(ordinal.Add(1)), request, writer)
 	}))
@@ -441,12 +453,12 @@ func TestPublisherStopsSpendingRefusedGrantUntilPlacementRotates(t *testing.T) {
 	}
 }
 
-func TestPlacementRotationFollowsCadenceInsteadOfBursting(t *testing.T) {
+func TestReadyNewEpochPublishesBeforeSteadyCadence(t *testing.T) {
 	server, received := publicationServer(t, func(_ int, _ *http.Request, writer http.ResponseWriter) {
 		writer.WriteHeader(http.StatusNoContent)
 	})
 	now := time.Now().UTC()
-	interval := 400 * time.Millisecond
+	interval := 800 * time.Millisecond
 	publisher := startPublisher(t, server, PublisherConfig{
 		Placement: testPlacement(now, 4, 10, strings.Repeat("a", 48)),
 		Interval:  interval, Debounce: time.Millisecond,
@@ -456,15 +468,12 @@ func TestPlacementRotationFollowsCadenceInsteadOfBursting(t *testing.T) {
 	if err := publisher.SetPlacement(testPlacement(now, 5, 11, rotatedToken)); err != nil {
 		t.Fatal(err)
 	}
-	if burst := drainPublications(received, interval/3); len(burst) != 0 {
-		t.Fatalf("placement rotation burst %d publications outside the cadence", len(burst))
-	}
 	next := awaitPublication(t, received)
 	if next.authorization != "Bearer "+rotatedToken || next.request.PlacementEpoch != 5 {
-		t.Fatalf("cadence publication after rotation = %+v", next)
+		t.Fatalf("new-epoch publication = %+v", next)
 	}
-	if elapsed := next.receivedAt.Sub(first.receivedAt); elapsed < interval-interval/10 {
-		t.Fatalf("publication after rotation arrived after %s, before the %s cadence", elapsed, interval)
+	if elapsed := next.receivedAt.Sub(first.receivedAt); elapsed >= interval/2 {
+		t.Fatalf("ready new epoch waited %s; should publish before the %s steady cadence", elapsed, interval)
 	}
 }
 

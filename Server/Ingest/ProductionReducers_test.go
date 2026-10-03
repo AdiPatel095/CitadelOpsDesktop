@@ -136,7 +136,7 @@ func TestProductionSnapshotDoesNotCarryRequestedHelpAcrossSessionGeneration(t *t
 	if gameState.Castles[77].Production[0].Active.AllianceHelpRequested {
 		t.Fatal("prior-session item flag survived a current production snapshot")
 	}
-	if State.HasOutstandingRecruitmentAllianceHelpRequest(gameState, 77) {
+	if State.HasOutstandingRecruitmentAllianceHelpRequest(&gameState, 77) {
 		t.Fatal("prior-session recruitment castle guard remained active")
 	}
 }
@@ -165,7 +165,7 @@ func TestProductionSnapshotExplicitFalseClearsCurrentRequestedRecruitmentHelp(t 
 		t.Fatalf("reduce production snapshot changed=%t err=%v", changed, err)
 	}
 	if gameState.Castles[77].Production[0].Active.AllianceHelpRequested ||
-		State.HasOutstandingRecruitmentAllianceHelpRequest(gameState, 77) {
+		State.HasOutstandingRecruitmentAllianceHelpRequest(&gameState, 77) {
 		t.Fatalf("explicit RAH=false did not clear recruitment help: queue=%#v state=%#v",
 			gameState.Castles[77].Production[0], gameState.AllianceHelpRequests)
 	}
@@ -199,7 +199,7 @@ func TestProductionSnapshotPartialTrueReconcilesCastleGuard(t *testing.T) {
 	queue := gameState.Castles[77].Production[0]
 	if queue.Active == nil || !queue.Active.AllianceHelpRequested ||
 		len(queue.Queued) != 1 || queue.Queued[0].AllianceHelpRequested ||
-		!State.HasOutstandingRecruitmentAllianceHelpRequest(gameState, 77) {
+		!State.HasOutstandingRecruitmentAllianceHelpRequest(&gameState, 77) {
 		t.Fatalf("partial RAH=true did not preserve per-item state and guard the castle: queue=%#v state=%#v",
 			queue, gameState.AllianceHelpRequests)
 	}
@@ -229,7 +229,7 @@ func TestProductionSnapshotDoesNotCarryPriorSessionRequestedHelp(t *testing.T) {
 		t.Fatalf("reduce production snapshot changed=%t err=%v", changed, err)
 	}
 	if gameState.Castles[77].Production[0].Active.AllianceHelpRequested ||
-		State.HasOutstandingRecruitmentAllianceHelpRequest(gameState, 77) {
+		State.HasOutstandingRecruitmentAllianceHelpRequest(&gameState, 77) {
 		t.Fatalf("prior-session recruitment help survived a fresh snapshot: queue=%#v state=%#v",
 			gameState.Castles[77].Production[0], gameState.AllianceHelpRequests)
 	}
@@ -297,7 +297,7 @@ func TestHospitalCompactZeroReductionPreservesConfirmedAHR(t *testing.T) {
 	}
 	queue := gameState.Castles[77].Production[2]
 	if len(queue.Queued) != 1 || !queue.Queued[0].AllianceHelpRequested ||
-		!State.HasOutstandingHospitalAllianceHelpRequest(gameState, 1374447446) {
+		!State.HasOutstandingHospitalAllianceHelpRequest(&gameState, 1374447446) {
 		t.Fatalf("zero reduction erased confirmed hospital AHR: queue=%#v help=%#v",
 			queue, gameState.AllianceHelpRequests)
 	}
@@ -336,7 +336,7 @@ func TestRecruitmentAllianceHelpEventMarksWholeCastleQueue(t *testing.T) {
 			t.Fatalf("queued recruitment item %d was not marked: %#v", index, item)
 		}
 	}
-	if !State.HasOutstandingRecruitmentAllianceHelpRequest(gameState, 77) {
+	if !State.HasOutstandingRecruitmentAllianceHelpRequest(&gameState, 77) {
 		t.Fatal("successful recruitment help was not retained for the castle")
 	}
 	if gameState.AllianceHelpRequests.OwnObservedGeneration != 3 {
@@ -365,7 +365,7 @@ func TestCompletedRecruitmentHelpAHLRemovalRetainsBoundedGrace(t *testing.T) {
 	if _, changed, err := reduceAllianceHelpRequest(t.Context(), completed, &gameState, gameData); err != nil || !changed {
 		t.Fatalf("retain completed recruitment help changed=%t err=%v", changed, err)
 	}
-	if !State.HasOutstandingRecruitmentAllianceHelpRequest(gameState, 77) {
+	if !State.HasOutstandingRecruitmentAllianceHelpRequest(&gameState, 77) {
 		t.Fatal("server-retained P=3 recruitment request did not preserve lifecycle coverage")
 	}
 
@@ -375,7 +375,7 @@ func TestCompletedRecruitmentHelpAHLRemovalRetainsBoundedGrace(t *testing.T) {
 	if _, changed, err := reduceAllianceHelpRequest(t.Context(), removed, &gameState, gameData); err != nil || !changed {
 		t.Fatalf("remove completed recruitment help changed=%t err=%v", changed, err)
 	}
-	if !State.RecruitmentAllianceHelpCovers(gameState, 77, removed.ReceivedAt, 10*time.Second) {
+	if !State.RecruitmentAllianceHelpCovers(&gameState, 77, removed.ReceivedAt, 10*time.Second) {
 		t.Fatal("P=3/AHD completion grace was not retained")
 	}
 }
@@ -405,7 +405,7 @@ func TestRecruitmentHelpAHHAndAHDTrackExactOwnLifecycle(t *testing.T) {
 			requests[0].Progress != progress || requests[0].MaximumHelpers != 3 {
 			t.Fatalf("own recruitment P=%d lifecycle=%#v", progress, requests)
 		}
-		if progress < 3 && !State.RecruitmentAllianceHelpCovers(gameState, 77, frame.ReceivedAt, time.Minute) {
+		if progress < 3 && !State.RecruitmentAllianceHelpCovers(&gameState, 77, frame.ReceivedAt, time.Minute) {
 			t.Fatalf("pending own recruitment P=%d did not suppress duplicate AHR", progress)
 		}
 	}
@@ -424,7 +424,7 @@ func TestRecruitmentHelpAHHAndAHDTrackExactOwnLifecycle(t *testing.T) {
 	if len(removed) != 1 || !removed[0].RemovedAt.Equal(deleteFrame.ReceivedAt) {
 		t.Fatalf("post-AHD own recruitment lifecycle=%#v", removed)
 	}
-	if !State.RecruitmentAllianceHelpCovers(gameState, 77, deleteFrame.ReceivedAt, 10*time.Second) {
+	if !State.RecruitmentAllianceHelpCovers(&gameState, 77, deleteFrame.ReceivedAt, 10*time.Second) {
 		t.Fatal("P=3/AHD request did not retain bounded grace")
 	}
 }
@@ -511,10 +511,10 @@ func TestAllianceHelpListMarksOnlyOwnHospitalJob(t *testing.T) {
 	if !queued[0].AllianceHelpRequested || queued[1].AllianceHelpRequested {
 		t.Fatalf("unexpected hospital alliance-help state: %#v", queued)
 	}
-	if got := State.OutstandingHospitalAllianceHelpRequests(gameState); got != 2 {
+	if got := State.OutstandingHospitalAllianceHelpRequests(&gameState); got != 2 {
 		t.Fatalf("authoritative hospital alliance-help count = %d, want 2", got)
 	}
-	if !State.HasOutstandingHospitalAllianceHelpRequest(gameState, 23) {
+	if !State.HasOutstandingHospitalAllianceHelpRequest(&gameState, 23) {
 		t.Fatal("completed server-side hospital help request was not retained")
 	}
 }
@@ -573,13 +573,13 @@ func TestCompleteHospitalSnapshotPrunesOnlyVanishedJobsFromRefreshedCastle(t *te
 	if _, changed, err := reduceProductionSnapshot(t.Context(), frame, &gameState, nil); err != nil || !changed {
 		t.Fatalf("reduce hospital snapshot changed=%t err=%v", changed, err)
 	}
-	if State.HasOutstandingHospitalAllianceHelpRequest(gameState, 201) {
+	if State.HasOutstandingHospitalAllianceHelpRequest(&gameState, 201) {
 		t.Fatal("vanished hospital job still consumes an alliance-help slot")
 	}
-	if !State.HasOutstandingHospitalAllianceHelpRequest(gameState, 301) {
+	if !State.HasOutstandingHospitalAllianceHelpRequest(&gameState, 301) {
 		t.Fatal("another castle's hospital request was pruned by the local snapshot")
 	}
-	if got := State.OutstandingHospitalAllianceHelpRequests(gameState); got != 1 {
+	if got := State.OutstandingHospitalAllianceHelpRequests(&gameState); got != 1 {
 		t.Fatalf("outstanding hospital alliance-help requests = %d, want 1", got)
 	}
 }
@@ -594,14 +594,12 @@ func TestOutboundAllianceHelpDoesNotMarkBeforeSuccessfulResponse(t *testing.T) {
 		LineID: 2, Queued: []State.QueueItem{{ProductionID: 201}, {ProductionID: 202}},
 	}
 	gameState.Castles[castle.ID] = castle
-	store := State.NewStore(gameState)
+	store := State.NewStore(&gameState)
 	registry := NewRegistry()
 	if err := RegisterCoreReducers(registry); err != nil {
 		t.Fatal(err)
 	}
-	if registry.HasOutbound("ahr") {
-		t.Fatal("outbound AHR still has an optimistic state reducer")
-	}
+	assertOutboundAllianceHelpCapturesOnlyCommandContext(t, registry)
 	pipeline := NewPipeline(store, nil, registry)
 	if _, err := pipeline.HandleFrame(t.Context(), Protocol.Frame{
 		Direction: Protocol.DirectionOutbound, Opcode: "ahr",
@@ -638,9 +636,7 @@ func TestOutboundOrRejectedRecruitmentAllianceHelpDoesNotPoisonState(t *testing.
 	if err := RegisterCoreReducers(registry); err != nil {
 		t.Fatal(err)
 	}
-	if registry.HasOutbound("ahr") {
-		t.Fatal("outbound AHR still has an optimistic state reducer")
-	}
+	assertOutboundAllianceHelpCapturesOnlyCommandContext(t, registry)
 	rejected := 175
 	frame := Protocol.Frame{
 		Direction: Protocol.DirectionInbound, Opcode: "ahh", ResponseCode: &rejected,
@@ -651,7 +647,7 @@ func TestOutboundOrRejectedRecruitmentAllianceHelpDoesNotPoisonState(t *testing.
 	}
 	queue := gameState.Castles[77].Production[0]
 	if queue.Active.AllianceHelpRequested || queue.Queued[0].AllianceHelpRequested ||
-		State.HasOutstandingRecruitmentAllianceHelpRequest(gameState, 77) {
+		State.HasOutstandingRecruitmentAllianceHelpRequest(&gameState, 77) {
 		t.Fatalf("outbound/rejected recruitment help poisoned state: queue=%#v help=%#v", queue, gameState.AllianceHelpRequests)
 	}
 }
@@ -824,5 +820,15 @@ func TestProductionLearnedStackHighWaterAndSubscriptionScopeReset(t *testing.T) 
 	queue = gameState.Castles[77].Production[0]
 	if queue.LearnedStacks[489] != 220 || queue.LearnedStackScope != "" {
 		t.Fatalf("post-lapse learned = %v scope %q, want re-learned 489→220 under empty scope", queue.LearnedStacks, queue.LearnedStackScope)
+	}
+}
+
+// The outbound AHR reducer only records the request identity for correlating
+// its reply (CIT-13 AHR 269). It must never write castle or alliance-help state.
+func assertOutboundAllianceHelpCapturesOnlyCommandContext(t *testing.T, registry *Registry) {
+	t.Helper()
+	outbound := registry.registered("ahr", Protocol.DirectionOutbound)
+	if outbound.writes&^State.Components(State.ComponentCommandContext) != 0 {
+		t.Fatalf("outbound AHR has an optimistic state reducer: writes=%v", outbound.writes)
 	}
 }

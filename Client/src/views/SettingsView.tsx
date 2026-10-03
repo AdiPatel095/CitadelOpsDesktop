@@ -1,3 +1,4 @@
+import { LanguageSelector } from '../i18n/LanguageSelector';
 import { LocalizedRichText } from "../i18n/LocalizedRichText";
 import { useLocale as useStaticLocale } from "../i18n/LocaleContext";
 import { LocalizedText } from "../i18n/LocalizedText";
@@ -27,7 +28,8 @@ import type {
 	PlayerHistoryRetentionV1,
 	SettingsBundleV1,
 } from '../api/Contracts';
-import { Badge, Button, Input, PageHeader, SectionCard, Select, SettingsToggleRow } from '../components/ui';
+import { Badge, Button, Input, PageHeader, SectionCard, Select } from '../components/ui';
+import { backgroundLoginNeedsReauthorization as backgroundLoginNeedsReauthorizationFor, reauthorizeSavedLogin } from '../settings/connection/connectionControls';
 import { asRecord, configurationSection, numericSetting } from '../settings/Configuration';
 import {
 	applyPortableClientPreferences,
@@ -80,7 +82,7 @@ function retentionMagnitude(value: string): number | null {
 	if (!match) return null;
 	const amount = Number(match[1]);
 	const hoursPerUnit = { h: 1, d: 24, w: 7 * 24, y: 365 * 24 }[match[2]];
-	return amount * hoursPerUnit;
+	return hoursPerUnit == null ? Number.NaN : amount * hoursPerUnit;
 }
 
 function retentionDays(value: string): number | null {
@@ -448,10 +450,7 @@ const SettingsView: React.FC = () => {
 		? 'background'
 		: 'full';
 	const connectionModeRestartRequired = configuredConnectionMode !== activeConnectionMode;
-	const backgroundLoginNeedsReauthorization = configuredConnectionMode === 'background'
-		&& activeConnectionMode === 'background'
-		&& !state?.session.loggedIn
-		&& state?.session.detail?.toLowerCase().includes('saved login that has been disabled');
+	const backgroundLoginNeedsReauthorization = backgroundLoginNeedsReauthorizationFor(configuredConnectionMode, state?.session);
 
 	const selectConnectionMode = (mode: GameConnectionMode) => {
 		if (mode === configuredConnectionMode || connectionModePending) return;
@@ -471,8 +470,7 @@ const SettingsView: React.FC = () => {
 		if (connectionModePending) return;
 		setConnectionModePending(true);
 		setConnectionModeError('');
-		void submitIntent('session.background.prepare')
-			.then(() => submitIntent('session.start'))
+		void reauthorizeSavedLogin(submitIntent)
 			.catch((error) => {
 				setConnectionModeError(error instanceof Error ? error : 'Could not re-enable the saved game login');
 			})
@@ -804,6 +802,7 @@ const SettingsView: React.FC = () => {
       />
 
       <div className="grid grid-cols-1 gap-6">
+        <LanguageSelector />
 		<SectionCard
 			variant="solid"
 			title={t('settings.transfer')}

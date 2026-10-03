@@ -1,6 +1,7 @@
+import { StopFooter } from '../../components/StopControl';
 import { useLocale as useStaticLocale } from "../../i18n/LocaleContext";
 import { LocalizedText } from "../../i18n/LocalizedText";
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   Anchor,
   ArrowDown,
@@ -32,8 +33,30 @@ import { CitadelAPI } from '../../api/CitadelClient';
 import {
   ATTACK_PRESETS_SECTION,
   parseAttackPresetDocument,
-  summarizeAttackPreset,
 } from '../../attackPresets/AttackPresetTypes';
+import { attackSetupRef, attackSetupRefUsable, type AttackSetupRef } from '../../attackPresets/AppCreatedPresets';
+import { attackPresetReferences } from '../../attackPresets/AttackPresetReferences';
+import { COMMANDER_FEATURE_SECTION } from '../../Movement/types/CommanderFeatureAssignments';
+import { useConfigurationDraftSession } from '../ConfigurationDraftSession';
+import {
+  saveInlineSetupAsUserPreset,
+  saveModuleWithAppCreatedPresets,
+  type AppCreatedPresetSaveWarning,
+} from '../AppCreatedPresetSave';
+import { recommendEventAttackSetup } from '../onboarding/EventAttackRecommendation';
+import { pendingStarterReviews } from '../onboarding/StarterRecipes';
+import { evaluateStormReadiness, stormStockCastle } from '../readiness/stormReadiness';
+import { focusReadinessTarget } from '../readiness/focusReadinessTarget';
+import type { ReadinessCheck } from '../readiness/Readiness';
+import { savedCommanderAssignments } from '../requirements/commanderAssignmentDraft';
+import { evaluateCommanderEligibility } from '../requirements/commanderEligibility';
+import { evaluateUnitStock } from '../requirements/unitRequirements';
+import { useHostedRuntimePresence } from '../../config/Deployment';
+import { useSetupContext } from '../requirements/useSetupContext';
+import { CommanderAssignmentPanel } from './CommanderAssignmentPanel';
+import { EventAttackSetupField } from './EventAttackSetupField';
+import { ReadinessCheckLine, ReadinessPanel } from './ReadinessPanel';
+import { UnitStockList } from './UnitStockList';
 import { Notifications } from '../../components/Notifications';
 import { showTroopPicker, type UnitWithQuantity } from '../../components/TroopPickerModal';
 import UnitImage from '../../components/UnitImage';
@@ -60,12 +83,35 @@ import { presentAutoStormTroopCap } from '../AutoStormTroopCapPresentation';
 import HorseTravelBoostSelect from './HorseTravelBoostSelect';
 import { DailyAttackLimitField } from './DailyAttackLimitField';
 import { FeatureGuideModal } from './FeatureGuideModal';
+import { AUTOMATION_ENABLED_KEYS } from '../disclosure/placement';
+import { parseStormCastleOptions, preferredStormCastleOption, type StormCastleOption } from '../StormCastleOptions';
+import { checkIntervalLine, countCustomValues, mapRefreshLine, stormConstructionSummary, stormPriorityLine, travelLine } from '../disclosure/summaries';
+import { useSettingsDisclosure } from '../disclosure/useSettingsDisclosure';
+import { AutomationRunStrip } from './AutomationRunStrip';
+import { collapsedSettingNote, SettingsSection } from './SettingsSection';
 import { englishGuidePack, useGuideLocale } from '../../config/useGuideLocale';
+import { useDraftRecovery } from '../useDraftRecovery';
+
+/** What the editor holds right after it loads a saved configuration: used by the load effect and by draft recovery. */
+function stormFromSections(sections: Record<string, unknown> | undefined) {
+  const current = parseAutoStormClientState(sections?.[AUTO_STORM_SECTION]);
+  const blueprints = parseAutoStormBlueprintDocument(sections?.[AUTO_STORM_BLUEPRINTS_SECTION]);
+  const target = blueprints.blueprints[blueprints.activeId]?.target ?? current.target;
+  const presets = parseAttackPresetDocument(sections?.[ATTACK_PRESETS_SECTION]);
+  return {
+    draft: { ...current, ...(target ? { target } : {}) },
+    fortsRef: attackSetupRef(current.forts.presetId, presets, AUTO_STORM_SECTION, 'forts'),
+    islandsRef: attackSetupRef(current.islands.presetId, presets, AUTO_STORM_SECTION, 'islands'),
+  };
+}
 
 interface AutoStormSettingsModalProps {
   isOpen: boolean;
   onClose: () => void;
+  onOpenAutomationDuration?: (featureKey: string, featureLabel: string) => void;
 }
+
+const stormDefaults = defaultAutoStormClientState();
 
 interface DecorationPresetOption {
   value: string;
@@ -86,17 +132,6 @@ interface LunaPackage {
   buildingId: number;
   buildingAmount: number;
   rewardDetail: string;
-}
-
-interface StormCastleOption {
-  id: number;
-  name: string;
-  minLevel: number;
-  costWood: number;
-  costStone: number;
-  costFood: number;
-  costCoins: number;
-  costPremium: number;
 }
 
 const FORT_LEVELS = [40, 50, 60, 70, 80];
@@ -134,11 +169,24 @@ const TIME_SKIP_RESERVES = [
 ];
 const LUNA_PACKAGE_ID_SET = new Set(AUTO_STORM_LUNA_PACKAGE_IDS);
 
-export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ isOpen, onClose }) => {
+export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ isOpen, onClose, onOpenAutomationDuration }) => {
+  const disclosure = useSettingsDisclosure('autoStorm');
   const { t: localizeStatic } = useStaticLocale();
-  const { state, configuration, captureBuildingTarget, updateConfiguration } = useCitadelAPI();
-  const { getTool, getTroop } = useMetadata();
+  const { captureBuildingTarget } = useCitadelAPI();
+  const setup = useSetupContext(AUTO_STORM_SECTION, useHostedRuntimePresence());
+  const state = setup.state;
+  const { getTool, getTroop, troops, tools, unitsLoading, unitsError } = useMetadata();
+  const draftSession = useConfigurationDraftSession({
+    isOpen,
+    section: AUTO_STORM_SECTION,
+    configurationDependencies: [ATTACK_PRESETS_SECTION, AUTO_STORM_BLUEPRINTS_SECTION, COMMANDER_FEATURE_SECTION],
+    sessionKey: setup.sessionKey,
+  });
+  const configurationSections = draftSession.sections;
   const [draft, setDraft] = useState<AutoStormClientStateV1>(defaultAutoStormClientState);
+  const [fortsRef, setFortsRef] = useState<AttackSetupRef>({ source: 'none' });
+  const [islandsRef, setIslandsRef] = useState<AttackSetupRef>({ source: 'none' });
+  const [commandersOpen, setCommandersOpen] = useState(false);
   const [captureCastleId, setCaptureCastleId] = useState(0);
   const [capturing, setCapturing] = useState<BuildingTargetCaptureMode | null>(null);
   const { locale: stormGuideLocale, pack: stormGuidePack } = useGuideLocale();
@@ -159,7 +207,6 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
   const [troopCapRefreshTick, setTroopCapRefreshTick] = useState(0);
   const [draggedTargetPriority, setDraggedTargetPriority] = useState<AutoStormTargetPriority | null>(null);
   const [targetPriorityDropTarget, setTargetPriorityDropTarget] = useState<AutoStormTargetPriority | null>(null);
-  const initializedOpen = useRef(false);
   const troopCap = useMemo(() => presentAutoStormTroopCap(troopCapPreview), [troopCapPreview]);
 
   const stormCastles = useMemo(() => Object.values(state?.castles ?? {})
@@ -172,18 +219,21 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
   const selectedUnlockOption = stormCastleOptions.find((option) => option.id === draft.unlock.prebuiltCastleId);
   const stormUnlockState = state?.kingdomTransport.unlocks['4'];
   const attackPresets = useMemo(
-    () => parseAttackPresetDocument(configuration?.sections[ATTACK_PRESETS_SECTION]),
-    [configuration?.sections],
+    () => parseAttackPresetDocument(configurationSections?.[ATTACK_PRESETS_SECTION]),
+    [configurationSections],
   );
+  const presetReferences = useMemo(() => attackPresetReferences(configurationSections), [configurationSections]);
+  const commanderAssignments = useMemo(() => savedCommanderAssignments(configurationSections), [configurationSections]);
   const decorationOptions = useMemo(
-    () => parseDecorationPresetOptions(configuration?.sections['decorations.presets'], state?.castles ?? {}),
-    [configuration?.sections, state?.castles],
+    () => parseDecorationPresetOptions(configurationSections?.['decorations.presets'], state?.castles ?? {}),
+    [configurationSections, state?.castles],
   );
   const selectedDecorationValue = decorationOptions.find((option) => (
     option.castleId === draft.decorationPresetCastleId && option.presetId === draft.decorationPresetId
   ))?.value ?? '';
-  const selectedFortPreset = attackPresets.presets.find((preset) => preset.id === draft.forts.presetId);
-  const selectedIslandPreset = attackPresets.presets.find((preset) => preset.id === draft.islands.presetId);
+  const refPresetId = (ref: AttackSetupRef) => ref.source === 'none' ? '' : ref.presetId;
+  const fortsPresetId = refPresetId(fortsRef);
+  const islandsPresetId = refPresetId(islandsRef);
   const troopCapPreviewSettings = useMemo(() => ({
     version: 1,
     troopImport: {
@@ -191,21 +241,22 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
       minimumTroops: draft.troopImport.minimumTroops,
       historyHours: AUTO_STORM_TROOP_HISTORY_HOURS,
     },
+    // The server preview resolves saved preset ids; a new inline setup is previewed after the first save.
     forts: {
       enabled: draft.forts.enabled,
-      presetId: draft.forts.presetId,
+      presetId: fortsPresetId,
     },
     islands: {
       enabled: draft.islands.enabled,
-      presetId: draft.islands.presetId,
+      presetId: islandsPresetId,
       defenseUnits: draft.islands.defenseUnits,
     },
   }), [
     draft.forts.enabled,
-    draft.forts.presetId,
+    fortsPresetId,
     draft.islands.defenseUnits,
     draft.islands.enabled,
-    draft.islands.presetId,
+    islandsPresetId,
     draft.troopImport.enabled,
     draft.troopImport.minimumTroops,
   ]);
@@ -247,30 +298,25 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
     && state.inventory.constructionOffersObservedAt,
   );
 
-  const savedConfiguration = configuration?.sections[AUTO_STORM_SECTION];
   const blueprintDocument = useMemo(
-    () => parseAutoStormBlueprintDocument(configuration?.sections[AUTO_STORM_BLUEPRINTS_SECTION]),
-    [configuration?.sections],
+    () => parseAutoStormBlueprintDocument(configurationSections?.[AUTO_STORM_BLUEPRINTS_SECTION]),
+    [configurationSections],
   );
-  const activeBlueprint = blueprintDocument.blueprints[blueprintDocument.activeId];
   const savedBlueprints = Object.values(blueprintDocument.blueprints)
     .sort((left, right) => left.id.localeCompare(right.id));
 
   useEffect(() => {
-    if (!isOpen) {
-      initializedOpen.current = false;
-      return;
-    }
-    if (initializedOpen.current || !configuration) return;
-    const current = parseAutoStormClientState(savedConfiguration);
-    const target = activeBlueprint?.target ?? current.target;
-    setDraft({ ...current, ...(target ? { target } : {}) });
-    setCaptureCastleId(target?.castleId ?? 0);
+    if (!isOpen || !draftSession.initialSnapshot) return;
+    // Baseline at open (draft session): background refreshes never reset the draft.
+    const initial = stormFromSections(draftSession.initialSections);
+    setDraft(initial.draft);
+    setFortsRef(initial.fortsRef);
+    setIslandsRef(initial.islandsRef);
+    setCaptureCastleId(initial.draft.target?.castleId ?? 0);
     setBlueprintPreview(null);
     setDraggedTargetPriority(null);
     setTargetPriorityDropTarget(null);
-    initializedOpen.current = true;
-  }, [activeBlueprint?.target, configuration, isOpen, savedConfiguration]);
+  }, [draftSession.initialSections, draftSession.openKey, draftSession.initialSnapshot, isOpen]);
 
   useEffect(() => {
     if (!isOpen || captureCastleId > 0 || stormCastles.length === 0) return;
@@ -305,7 +351,7 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
   }, [isOpen]);
 
   useEffect(() => {
-    if (!isOpen || !configuration || !draft.troopImport.enabled) {
+    if (!isOpen || !draftSession.ready || !draft.troopImport.enabled) {
       setTroopCapPreview(null);
       setTroopCapPreviewError('');
       setLoadingTroopCapPreview(false);
@@ -334,7 +380,7 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
       window.clearTimeout(timer);
     };
   }, [
-    configuration?.revision,
+    draftSession.ready,
     draft.troopImport.enabled,
     isOpen,
     state?.dailyAttacks?.observedAt,
@@ -383,11 +429,10 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
           .find((candidate) => candidate.severity === 'error');
         throw new Error(issue?.message ?? 'The captured Storm blueprint cannot be compiled safely.');
       }
-	  const savedBlueprints = configuration?.sections[AUTO_STORM_BLUEPRINTS_SECTION];
-	  await updateConfiguration(
+	  // Blueprint writes go through the draft session (whole-configuration CAS) like the module save.
+	  await draftSession.saveSection(
 		AUTO_STORM_BLUEPRINTS_SECTION,
-		saveAutoStormBlueprint(savedBlueprints, preview.target),
-		savedBlueprints === undefined ? undefined : { expectedValue: savedBlueprints },
+		saveAutoStormBlueprint(configurationSections?.[AUTO_STORM_BLUEPRINTS_SECTION], preview.target),
 	  );
       setBlueprintPreview(preview);
       setDraft((current) => ({
@@ -408,11 +453,9 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
     const blueprint = blueprintDocument.blueprints[id];
     if (!blueprint) return;
     try {
-	  const savedBlueprints = configuration?.sections[AUTO_STORM_BLUEPRINTS_SECTION];
-	  await updateConfiguration(
+	  await draftSession.saveSection(
 		AUTO_STORM_BLUEPRINTS_SECTION,
-		activateAutoStormBlueprint(savedBlueprints, id),
-		savedBlueprints === undefined ? undefined : { expectedValue: savedBlueprints },
+		activateAutoStormBlueprint(configurationSections?.[AUTO_STORM_BLUEPRINTS_SECTION], id),
 	  );
       setDraft((current) => ({ ...current, target: blueprint.target }));
       setCaptureCastleId(blueprint.target.castleId);
@@ -426,11 +469,9 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
   const deactivateBlueprint = async () => {
     if (capturing || saving) return;
     try {
-	  const savedBlueprints = configuration?.sections[AUTO_STORM_BLUEPRINTS_SECTION];
-	  await updateConfiguration(
+	  await draftSession.saveSection(
 		AUTO_STORM_BLUEPRINTS_SECTION,
-		activateAutoStormBlueprint(savedBlueprints, ''),
-		savedBlueprints === undefined ? undefined : { expectedValue: savedBlueprints },
+		activateAutoStormBlueprint(configurationSections?.[AUTO_STORM_BLUEPRINTS_SECTION], ''),
 	  );
       setDraft((current) => {
         const { target: _target, ...rest } = current;
@@ -452,6 +493,7 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
       preselected: draft.islands.defenseUnits.map((unit) => unit.unitId),
       preselectedQuantities: quantities,
       stockQuantities: stormCastle?.units.stationed,
+      stockObservation: { castle: stormCastle ?? null, observation },
     });
     if (!Array.isArray(result)) return;
     const defenseUnits = (result as UnitWithQuantity[])
@@ -496,11 +538,11 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
     setTargetPriorityDropTarget(null);
   };
 
-  const fortValid = !draft.forts.enabled || (draft.forts.levels.length > 0 && Boolean(draft.forts.presetId));
+  const fortValid = !draft.forts.enabled || (draft.forts.levels.length > 0 && attackSetupRefUsable(fortsRef, attackPresets));
   const islandsValid = !draft.islands.enabled || (
     draft.islands.resources.length > 0
     && draft.islands.sizes.length > 0
-    && Boolean(draft.islands.presetId)
+    && attackSetupRefUsable(islandsRef, attackPresets)
     && draft.islands.defenseUnits.every((unit) => unit.unitId > 0 && unit.amount > 0)
   );
   const shopIDs = draft.aquamarine.purchases.map((purchase) => purchase.packageId);
@@ -518,25 +560,102 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
   const unlockValid = !draft.unlock.enabled || Boolean(selectedUnlockOption);
   const canSave = fortValid && islandsValid && shopValid && targetValid && troopImportValid && unlockValid;
 
+  const metadataReady = !unitsLoading && !unitsError;
+  const observation = setup.observation;
+  const selectedDonors = useMemo(() => draft.troopImport.donorCastleIds
+    .map((castleId) => state?.castles?.[String(castleId)])
+    .filter((castle): castle is NonNullable<typeof castle> => castle != null && castle.kingdomId !== 4), [draft.troopImport.donorCastleIds, state?.castles]);
+  // Attacks launch from the Storm castle; enabled donors import troops (never tools) before launch.
+  const stockCastle = useMemo(
+    () => stormStockCastle(stormCastle ?? null, selectedDonors, draft.troopImport.enabled, tools),
+    [draft.troopImport.enabled, selectedDonors, stormCastle, tools],
+  );
+  const recipePending = useMemo(() => pendingStarterReviews(), []);
+  // The recommendation reads the Storm castle's own stock only.
+  const recommendation = useMemo(
+    () => recommendEventAttackSetup({ sourceCastle: stormCastle ?? null, observation, troops, tools, metadataReady, eventId: 0 }),
+    [metadataReady, observation, stormCastle, tools, troops],
+  );
+  const decorationLabel = decorationOptions.find((option) => option.value === selectedDecorationValue)?.label;
+  const readiness = useMemo(() => evaluateStormReadiness({
+    draft,
+    forts: fortsRef,
+    islands: islandsRef,
+    state,
+    stormCastle: stormCastle ?? null,
+    document: attackPresets,
+    troops,
+    tools,
+    metadataReady,
+    observation,
+    buildActive: draft.target != null || Boolean(blueprintDocument.activeId),
+    decorationLabel,
+    unlockOffer: { loaded: !loadingStormCastleOptions && !stormCastleOptionsError, offeredIds: stormCastleOptions.map((option) => option.id) },
+    commanders: evaluateCommanderEligibility({
+      featureId: 'autoStorm',
+      state,
+      assignments: commanderAssignments,
+      movement: setup.movement,
+      gameLoggedIn: setup.gameLoggedIn,
+      now: Date.now(),
+    }),
+  }), [attackPresets, blueprintDocument.activeId, commanderAssignments, decorationLabel, draft, fortsRef, islandsRef, loadingStormCastleOptions, metadataReady, observation, setup.gameLoggedIn, setup.movement, state, stormCastle, stormCastleOptions, stormCastleOptionsError, tools, troops]);
+  const islandDefenseStock = useMemo(() => draft.islands.defenseUnits.length > 0 ? evaluateUnitStock({
+    castle: stockCastle,
+    observation,
+    requests: draft.islands.defenseUnits.map((unit) => ({ itemId: unit.unitId, amount: unit.amount, kind: 'troop' as const })),
+    troops,
+    tools,
+    metadataReady,
+    decidedAtLaunch: 'quantity',
+  }) : null, [draft.islands.defenseUnits, metadataReady, observation, stockCastle, tools, troops]);
+  const fixReadiness = (check: ReadinessCheck) => {
+    if (check.id === 'commanders' || check.id === 'commander-assignment') {
+      setCommandersOpen(true);
+      window.requestAnimationFrame(() => focusReadinessTarget('auto-storm-commanders-heading'));
+      return;
+    }
+    disclosure.fix(check);
+  };
+  const moduleLabel = localizeStatic('attackPresets.module.autoStorm');
+  const stockLabel = stormCastle
+    ? localizeStatic('stormReadiness.inventoryLabel', {
+      castle: stormCastle.name?.trim() || `#${stormCastle.id}`,
+      donors: draft.troopImport.enabled ? selectedDonors.length : 0,
+    })
+    : undefined;
+
   const save = async () => {
     if (!canSave || saving) return;
     setSaving(true);
+    const warnings: AppCreatedPresetSaveWarning[] = [];
     try {
-      const parsed = parseAutoStormClientState(draft);
-      let settings: Omit<AutoStormClientStateV1, 'target'> | AutoStormClientStateV1 = parsed;
-      if (blueprintDocument.activeId) {
-        const { target: _legacyTarget, ...withoutLegacyTarget } = parsed;
-        settings = withoutLegacyTarget;
-      }
-	  await updateConfiguration(
-		AUTO_STORM_SECTION,
-		settings,
-		savedConfiguration === undefined ? undefined : { expectedValue: savedConfiguration },
-	  );
+      await saveModuleWithAppCreatedPresets({
+        draftSession,
+        section: AUTO_STORM_SECTION,
+        slots: [
+          { slot: 'forts', ref: fortsRef, moduleLabel, slotLabel: localizeStatic('attackPresets.slot.forts') },
+          { slot: 'islands', ref: islandsRef, moduleLabel, slotLabel: localizeStatic('attackPresets.slot.islands') },
+        ],
+        buildSectionValue: (ids) => {
+          const parsed = parseAutoStormClientState({
+            ...draft,
+            forts: { ...draft.forts, presetId: ids.forts },
+            islands: { ...draft.islands, presetId: ids.islands },
+          });
+          if (!blueprintDocument.activeId) return parsed;
+          const { target: _legacyTarget, ...withoutLegacyTarget } = parsed;
+          return withoutLegacyTarget;
+        },
+        formatPresetName: (module, slot) => localizeStatic('attackPresets.appCreatedName', { module, slot }),
+        warnings,
+      });
       Notifications.success('Auto Storm settings saved.');
+      if (warnings.includes('cleanup-pending')) Notifications.warning(localizeStatic('attackPresets.cleanupPending'));
       onClose();
     } catch (error) {
       Notifications.error(error instanceof Error ? error.message : 'Could not save Auto Storm settings.');
+      if (warnings.includes('cleanup-pending')) Notifications.warning(localizeStatic('attackPresets.rollbackPending'));
     } finally {
       setSaving(false);
     }
@@ -546,9 +665,19 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
   const targetCastle = target ? state?.castles[String(target.castleId)] : undefined;
   const aquamarineBalance = stormCastle?.resources['9']?.amount ?? 0;
 
+  const loadedStorm = stormFromSections(draftSession.sections);
+  const recovery = useDraftRecovery({ section: AUTO_STORM_SECTION, isOpen, draftSession, draft: draft, loaded: loadedStorm.draft, extras: { fortsRef, islandsRef }, loadedExtras: { fortsRef: loadedStorm.fortsRef, islandsRef: loadedStorm.islandsRef } });
+  useEffect(() => {
+    const extras = draftSession.recoveredExtras?.value as { fortsRef?: AttackSetupRef; islandsRef?: AttackSetupRef } | undefined;
+    if (!extras) return;
+    if (extras.fortsRef) setFortsRef(extras.fortsRef);
+    if (extras.islandsRef) setIslandsRef(extras.islandsRef);
+  }, [draftSession.recoveredExtras]);
+
   return (
     <>
     <SettingsModal
+      footerLeading={<StopFooter featureId="autoStorm" />}
       isOpen={isOpen}
       onClose={() => { if (!saving && !capturing) onClose(); }}
       maxWidth="full"
@@ -557,12 +686,19 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
       description={localizeStatic("ui.settings.components.autoStormSettingsModal.description.reconcile.a.captured.storm.castle.attack.selected.f13374ef")}
       onSave={() => void save()}
       isSaving={saving}
-      saveDisabled={!canSave}
+      saveDisabled={!canSave || !draftSession.ready}
       cancelDisabled={capturing != null}
+      contentDisabled={!draftSession.ready}
+      contentNotice={<>{recovery.banner}{draftSession.conflictNotice}</>}
     >
       <div className="space-y-4">
         <div className="flex justify-end"><Button variant="outline" size="sm" onClick={() => setIsGuideOpen(true)} leftIcon={<BookOpen className="h-4 w-4" />}><span lang={stormPack === englishGuidePack ? "en" : stormGuideLocale}>{stormPack.ui.guideButton}</span></Button></div>
-        <Card variant="solid" className="p-4">
+        <AutomationRunStrip
+          featureId="autoStorm"
+          onOpenDuration={onOpenAutomationDuration ? () => onOpenAutomationDuration(AUTOMATION_ENABLED_KEYS.autoStorm, 'Auto Storm') : undefined}
+        />
+        <SettingsSection disclosure={disclosure} section="castle">
+        <Card id="auto-storm-access" tabIndex={-1} variant="solid" className="p-4 outline-none">
           <SectionHeading
             icon={Castle}
             title={localizeStatic("ui.settings.components.autoStormSettingsModal.title.storm.castle.access.8c4a0314")}
@@ -575,7 +711,8 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
             </div>
             <Switch
               checked={draft.unlock.enabled}
-              disabled={loadingStormCastleOptions || stormCastleOptions.length === 0}
+              // Turning the unlock off must always work, even when no official castle is offered right now.
+              disabled={!draft.unlock.enabled && (loadingStormCastleOptions || stormCastleOptions.length === 0)}
               onChange={(enabled) => setDraft((current) => ({
                 ...current,
                 unlock: {
@@ -622,290 +759,15 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
           {stormCastleOptionsError ? <p className="mt-2 text-xs text-error">{stormCastleOptionsError}</p> : null}
           {!unlockValid ? <p className="mt-2 text-xs text-error"><LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.choose.a.currently.available.official.storm.castle.25a907f3" /></p> : null}
         </Card>
+        </SettingsSection>
 
-        <Card variant="solid" className="p-4">
-          <SectionHeading
-            icon={Camera}
-            title={localizeStatic("ui.settings.components.autoStormSettingsModal.title.durable.castle.blueprints.36e000b1")}
-            description={localizeStatic("ui.settings.components.autoStormSettingsModal.description.capture.a.reusable.end.state.each.mode.e37c0a19")}
-          />
-          <div className="mt-4 grid gap-3 lg:grid-cols-[minmax(0,1fr)_repeat(3,auto)] lg:items-end">
-            <label className="block">
-              <FieldLabel><LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.storm.castle.2fd1da3a" /></FieldLabel>
-              <Select
-                value={stormCastle ? String(stormCastle.id) : ''}
-                onChange={(value) => setCaptureCastleId(Number(value) || 0)}
-                options={stormCastles.map((castle) => ({
-                  value: String(castle.id),
-                  label: `${castle.name?.trim() || `Castle ${castle.id}`} · ${castle.x}:${castle.y}`,
-                }))}
-                placeholder={stormCastles.length > 0 ? 'Choose Storm castle' : 'Unlock Storm first'}
-                disabled={stormCastles.length === 0 || capturing != null}
-                menuGrowToViewport
-              />
-            </label>
-            <Button
-              variant="outline"
-              disabled={!stormCastle || capturing != null}
-              isLoading={capturing === 'functional'}
-              onClick={() => void capture('functional')}
-              leftIcon={<Hammer className="h-4 w-4" />}
-            >
-              <LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.functional.b6656595" /></Button>
-            <Button
-              variant="outline"
-              disabled={!stormCastle || capturing != null}
-              isLoading={capturing === 'layout'}
-              onClick={() => void capture('layout')}
-              leftIcon={<Castle className="h-4 w-4" />}
-            >
-              <LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.layout.a5119091" /></Button>
-            <Button
-              variant="outline"
-              disabled={!stormCastle || capturing != null}
-              isLoading={capturing === 'exact'}
-              onClick={() => void capture('exact')}
-              leftIcon={<Camera className="h-4 w-4" />}
-            >
-              <LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.exact.clone.0174197d" /></Button>
-          </div>
-
-          {savedBlueprints.length > 0 ? (
-            <div className="mt-3 flex flex-wrap items-center gap-2">
-              <span className="text-[11px] font-semibold text-text-muted"><LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.saved.b6199040" /></span>
-              {savedBlueprints.map((blueprint) => (
-                <Button
-                  key={blueprint.id}
-                  size="sm"
-                  variant={blueprint.id === blueprintDocument.activeId ? 'primary' : 'ghost'}
-                  disabled={capturing != null || saving}
-                  onClick={() => void activateBlueprint(blueprint.id)}
-                >
-                  {blueprint.name}
-                </Button>
-              ))}
-            </div>
-          ) : null}
-
-          {target ? (
-            <div className="mt-4 rounded-global border border-primary/20 bg-primary/5 p-3">
-              <div className="flex flex-wrap items-center justify-between gap-3">
-                <div>
-                  <div className="flex flex-wrap items-center gap-2">
-                    <Badge variant="success">{captureModeLabel(target.mode)}</Badge>
-                    <span className="text-sm font-bold text-text-main">
-                      {targetCastle?.name?.trim() || `Castle ${target.castleId}`}
-                    </span>
-                  </div>
-                  <p className="mt-1 text-xs text-text-muted">Captured {formatDate(target.capturedAt)} from revision {target.revision.toLocaleString()}.</p>
-                </div>
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  onClick={() => void deactivateBlueprint()}
-                  leftIcon={<Trash2 className="h-3.5 w-3.5" />}
-                >
-                  <LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.pause.target.ba267ca2" /></Button>
-              </div>
-              <div className="mt-3 flex flex-wrap gap-2">
-                <Badge variant="outline">{target.summary.groundCount} ground tiles</Badge>
-                <Badge variant="outline">{target.summary.buildingCount} buildings</Badge>
-                <Badge variant="outline">{target.summary.fixedCount} fixed</Badge>
-                <Badge variant="outline">{target.summary.decorationCount} decorations</Badge>
-                {blueprintPreview ? (
-                  <Badge variant="outline">
-                    Preflight: {blueprintPreview.satisfiedCount}/{blueprintPreview.targetCount} satisfied · {blueprintPreview.actionCount} actions
-                  </Badge>
-                ) : null}
-              </div>
-            </div>
-          ) : (
-            <p className="mt-3 rounded-global border border-border-base bg-bg-app/35 px-3 py-2 text-xs text-text-muted">
-              <LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.no.castle.target.is.required.for.combat.f9ca213e" /></p>
-          )}
-
-          {target && target.mode !== 'exact' && target.mode !== 'full' ? (
-            <label className="mt-4 block border-t border-border-base pt-4">
-              <FieldLabel icon={Sparkles}><LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.decoration.preset.applied.after.construction.3ec5caba" /></FieldLabel>
-              <Select
-                value={selectedDecorationValue}
-                onChange={(value) => {
-                  const option = decorationOptions.find((candidate) => candidate.value === value);
-                  setDraft((current) => ({
-                    ...current,
-                    decorationPresetCastleId: option?.castleId ?? 0,
-                    decorationPresetId: option?.presetId ?? '',
-                  }));
-                }}
-                options={decorationOptions.map((option) => ({ value: option.value, label: option.label }))}
-                placeholder={decorationOptions.length > 0 ? 'Optional saved decoration preset' : 'Save a decoration preset first'}
-                disabled={decorationOptions.length === 0}
-                searchable
-                menuGrowToViewport
-              />
-              <p className="mt-2 text-xs text-text-muted"><LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.the.preset.may.come.from.any.castle.42cc0294" /></p>
-            </label>
-          ) : null}
-        </Card>
-
-        <div className="grid gap-4 xl:grid-cols-2">
-          <Card variant="solid" className="p-4">
-            <SectionHeading
-              icon={Hammer}
-              title={localizeStatic("ui.settings.components.autoStormSettingsModal.title.construction.and.logistics.8e6e0606")}
-              description={localizeStatic("ui.settings.components.autoStormSettingsModal.description.gift.packets.are.cleared.after.expansions.storage.3cefb10e")}
-            />
-            <div className="mt-4 space-y-3">
-              <SettingsToggleRow
-                icon={<Truck className="h-3.5 w-3.5" />}
-                title={localizeStatic("ui.settings.components.autoStormSettingsModal.title.transport.missing.resources.b76e94ff")}
-                description={localizeStatic("ui.settings.components.autoStormSettingsModal.description.ship.available.resources.from.another.owned.kingdom.cfa81f3c")}
-                checked={draft.build.allowResourceTransport}
-                onChange={(allowResourceTransport) => updateBuild(setDraft, { allowResourceTransport })}
-              />
-              <SettingsToggleRow
-                icon={<FastForward className="h-3.5 w-3.5" />}
-                title={localizeStatic("ui.settings.components.autoStormSettingsModal.title.use.time.skips.a5caaa59")}
-                description={localizeStatic("ui.settings.components.autoStormSettingsModal.description.advance.construction.resource.transport.or.troop.transport.326defea")}
-                checked={draft.build.allowTimeSkips}
-                onChange={(allowTimeSkips) => updateBuild(setDraft, { allowTimeSkips })}
-              />
-              <SettingsToggleRow
-                icon={<Sparkles className="h-3.5 w-3.5" />}
-                title={localizeStatic("ui.settings.components.autoStormSettingsModal.title.allow.premium.costs.fd72d704")}
-                description={localizeStatic("ui.settings.components.autoStormSettingsModal.description.permit.premium.construction.paths.harbor.levels.2.e7439d0f")}
-                checked={draft.build.allowPremium}
-                onChange={(allowPremium) => updateBuild(setDraft, { allowPremium })}
-                tone="warning"
-              />
-              <SettingsToggleRow
-                icon={<Trash2 className="h-3.5 w-3.5" />}
-                title={localizeStatic("ui.settings.components.autoStormSettingsModal.title.allow.demolition.b9a49e66")}
-                description={localizeStatic("ui.settings.components.autoStormSettingsModal.description.permit.exact.reconciliation.to.demolish.unmanaged.buildings.e7ae16af")}
-                checked={draft.build.allowDemolition}
-                onChange={(allowDemolition) => updateBuild(setDraft, { allowDemolition })}
-                warning
-              />
-            </div>
-
-            <div className="mt-4 border-t border-border-base pt-4">
-              <FieldLabel><LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.storm.castle.spending.reserves.d7661852" /></FieldLabel>
-              <div className="grid grid-cols-3 gap-2">
-                {RESOURCE_RESERVES.map((resource) => (
-                  <label key={resource.key} className="block">
-                    <span className="mb-1 block text-[10px] font-semibold text-text-muted">{resource.label}</span>
-                    <Input
-                      type="number"
-                      min={0}
-                      value={draft.build.resourceReserves[resource.key] ?? 0}
-                      onChange={(event) => updateNumberMap(
-                        setDraft,
-                        'resourceReserves',
-                        resource.key,
-                        clampAutoStormInteger(event.target.value, 0, Number.MAX_SAFE_INTEGER, 0),
-                      )}
-                      className="font-mono"
-                    />
-                  </label>
-                ))}
-              </div>
-            </div>
-
-            {draft.build.allowResourceTransport ? (
-              <div className="mt-4 border-t border-border-base pt-4">
-                <FieldLabel><LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.protected.donor.reserves.1ab79630" /></FieldLabel>
-                <div className="grid grid-cols-3 gap-2">
-                  {RESOURCE_RESERVES.map((resource) => (
-                    <label key={resource.key} className="block">
-                      <span className="mb-1 block text-[10px] font-semibold text-text-muted">{resource.label}</span>
-                      <Input
-                        type="number"
-                        min={0}
-                        value={draft.build.sourceResourceReserves[resource.key] ?? 0}
-                        onChange={(event) => updateNumberMap(
-                          setDraft,
-                          'sourceResourceReserves',
-                          resource.key,
-                          clampAutoStormInteger(event.target.value, 0, Number.MAX_SAFE_INTEGER, 0),
-                        )}
-                        className="font-mono"
-                      />
-                    </label>
-                  ))}
-                </div>
-                <p className="mt-2 text-[11px] text-text-muted">
-                  <LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.multi.resource.shipments.may.use.every.amount.cfd5df72" /></p>
-              </div>
-            ) : null}
-
-            {draft.build.allowTimeSkips ? (
-              <div className="mt-4 border-t border-border-base pt-4">
-                <FieldLabel><LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.time.skips.kept.in.reserve.07cf3bca" /></FieldLabel>
-                <div className="grid grid-cols-4 gap-2 sm:grid-cols-7">
-                  {TIME_SKIP_RESERVES.map((skip) => (
-                    <label key={skip.key} className="block">
-                      <span className="mb-1 block text-center text-[10px] font-semibold text-text-muted">{skip.label}</span>
-                      <Input
-                        type="number"
-                        min={0}
-                        value={draft.build.timeSkipReserve[skip.key] ?? 0}
-                        onChange={(event) => updateNumberMap(
-                          setDraft,
-                          'timeSkipReserve',
-                          skip.key,
-                          clampAutoStormInteger(event.target.value, 0, Number.MAX_SAFE_INTEGER, 0),
-                        )}
-                        className="px-2 text-center font-mono"
-                      />
-                    </label>
-                  ))}
-                </div>
-              </div>
-            ) : null}
-
-            <div className="mt-4 border-t border-border-base pt-4">
-              <div className="flex items-start justify-between gap-4">
-                <div>
-                  <div className="flex items-center gap-2 text-sm font-bold text-text-main"><Anchor className="h-4 w-4 text-primary" /> <LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.upgrade.harbor.da1bc184" /></div>
-                  <p className="mt-1 text-xs text-text-muted"><LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.override.the.captured.harbor.path.and.maintain.1d06a158" /></p>
-                </div>
-                <Switch
-                  checked={draft.harbor.enabled}
-                  onChange={(enabled) => setDraft((current) => ({ ...current, harbor: { ...current.harbor, enabled } }))}
-                  ariaLabel={localizeStatic("ui.settings.components.autoStormSettingsModal.ariaLabel.automate.storm.harbor.upgrades.9fb63b2d")}
-                />
-              </div>
-              {draft.harbor.enabled ? (
-                <div className="mt-3">
-                  <Select
-                    value={String(draft.harbor.targetLevel)}
-                    onChange={(value) => setDraft((current) => ({
-                      ...current,
-                      harbor: { ...current.harbor, targetLevel: Number(value) || 1 },
-                    }))}
-                    options={[1, 2, 3].map((level) => ({ value: String(level), label: `Harbor level ${level}` }))}
-                  />
-                  {draft.harbor.targetLevel > 1 && !draft.build.allowPremium ? (
-                    <p className="mt-2 text-xs text-warning"><LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.harbor.levels.2.3.are.premium.paths.398f3dd1" /></p>
-                  ) : null}
-                </div>
-              ) : null}
-            </div>
-          </Card>
-
-          <Card variant="solid" className="p-4">
+        <SettingsSection disclosure={disclosure} section="targets">
+          <Card id="auto-storm-branches" tabIndex={-1} variant="solid" className="p-4 outline-none">
             <SectionHeading
               icon={Swords}
               title={localizeStatic("ui.settings.components.autoStormSettingsModal.title.forts.and.resource.islands.4ccb548f")}
               description={localizeStatic("ui.settings.components.autoStormSettingsModal.description.each.target.type.has.its.own.attack.287a841c")}
             />
-
-            <div className="mt-4 rounded-global border border-border-base bg-bg-app/30 p-3">
-              <HorseTravelBoostSelect
-                value={draft.horseTravelBoostId}
-                onChange={(horseTravelBoostId) => setDraft((current) => ({ ...current, horseTravelBoostId }))}
-              />
-            </div>
 
             <div className="mt-4 rounded-global border border-border-base bg-bg-app/30 p-3">
               <div className="flex items-start justify-between gap-4">
@@ -947,102 +809,30 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
                     />
                     <p className="mt-1 text-[11px] text-text-muted"><LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.only.launch.against.forts.with.at.least.43220000" /></p>
                   </label>
-                  <PresetSelect
-                    value={draft.forts.presetId}
-                    onChange={(presetId) => setDraft((current) => ({ ...current, forts: { ...current.forts, presetId } }))}
-                    presets={attackPresets.presets}
-                    placeholder={localizeStatic("ui.settings.components.autoStormSettingsModal.placeholder.fort.attack.preset.9a1bfd17")}
+                  <EventAttackSetupField
+                    id="auto-storm-forts"
+                    label={<LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.placeholder.fort.attack.preset.9a1bfd17" />}
+                    section={AUTO_STORM_SECTION}
+                    slot="forts"
+                    moduleLabel={moduleLabel}
+                    slotLabel={localizeStatic('attackPresets.slot.forts')}
+                    value={fortsRef}
+                    onChange={setFortsRef}
+                    document={attackPresets}
+                    references={presetReferences}
+                    sourceCastle={stockCastle}
+                    observation={observation}
+                    eventId={0}
+                    recommendation={recommendation}
+                    recipePending={recipePending}
+                    onSaveAsPreset={(inline, name) => saveInlineSetupAsUserPreset(draftSession, inline, name)}
+                    readinessChecks={readiness.checks.filter((check) => check.slot === 'forts')}
+                    inventoryLabel={stockLabel}
+                    disabled={saving}
                   />
-                  {selectedFortPreset ? <PresetSummary preset={selectedFortPreset} /> : null}
                   {draft.forts.levels.length === 0 ? <p className="text-xs text-error"><LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.select.at.least.one.fort.level.32a7a693" /></p> : null}
                 </div>
               ) : null}
-            </div>
-
-            <div className="mt-3 rounded-global border border-border-base bg-bg-app/30 p-3">
-              <div>
-                <div className="flex items-center gap-2 text-sm font-bold text-text-main">
-                  <Crosshair className="h-4 w-4 text-primary" /> <LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.attack.target.priority.f25858a6" />
-                </div>
-                <p className="mt-1 text-xs text-text-muted">
-                  <LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.drag.enabled.targets.into.attack.order.highest.6f2dfc44" /></p>
-              </div>
-
-              {activeTargetPriorities.length > 0 ? (
-                <div className="mt-3 space-y-2 border-t border-border-base pt-3" role="list" aria-label={localizeStatic("ui.settings.components.autoStormSettingsModal.aria-label.auto.storm.target.priority.order.de42d734")}>
-                  {activeTargetPriorities.map((priority, index) => {
-                    const option = TARGET_PRIORITY_OPTIONS[priority];
-                    return (
-                      <div
-                        key={priority}
-                        role="listitem"
-                        draggable
-                        onDragStart={(event) => {
-                          event.dataTransfer.effectAllowed = 'move';
-                          event.dataTransfer.setData('text/plain', priority);
-                          setDraggedTargetPriority(priority);
-                        }}
-                        onDragOver={(event) => {
-                          event.preventDefault();
-                          event.dataTransfer.dropEffect = 'move';
-                          if (priority !== draggedTargetPriority) setTargetPriorityDropTarget(priority);
-                        }}
-                        onDragLeave={(event) => {
-                          if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setTargetPriorityDropTarget(null);
-                        }}
-                        onDrop={(event) => {
-                          event.preventDefault();
-                          const source = (draggedTargetPriority ?? event.dataTransfer.getData('text/plain')) as AutoStormTargetPriority;
-                          if (AUTO_STORM_TARGET_PRIORITIES.some((candidate) => candidate === source)) {
-                            moveTargetPriority(source, priority);
-                          }
-                          finishTargetPriorityDrag();
-                        }}
-                        onDragEnd={finishTargetPriorityDrag}
-                        className={`flex cursor-grab items-center gap-3 rounded-global border bg-bg-card/45 p-3 transition-colors active:cursor-grabbing ${
-                          draggedTargetPriority === priority
-                            ? 'border-primary/40 opacity-45'
-                            : targetPriorityDropTarget === priority
-                              ? 'border-primary bg-primary/10'
-                              : 'border-border-base hover:border-primary/30'
-                        }`}
-                      >
-                        <GripVertical className="h-5 w-5 shrink-0 text-text-muted" aria-hidden="true" />
-                        <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-bg-app text-xs font-bold tabular-nums text-primary ring-1 ring-border-base">
-                          {index + 1}
-                        </span>
-                        <span className="min-w-0 flex-1">
-                          <span className="block text-xs font-bold text-text-main">{option.label}</span>
-                          <span className="mt-0.5 block text-[11px] leading-4 text-text-muted">{option.detail}</span>
-                        </span>
-                        <span className="flex shrink-0 items-center gap-1">
-                          <button
-                            type="button"
-                            disabled={index === 0}
-                            onClick={() => moveTargetPriorityBy(priority, -1)}
-                            className="rounded-md p-1.5 text-text-muted transition-colors hover:bg-primary/10 hover:text-primary disabled:pointer-events-none disabled:opacity-25"
-                            aria-label={`Move ${option.label} up`}
-                          >
-                            <ArrowUp className="h-3.5 w-3.5" />
-                          </button>
-                          <button
-                            type="button"
-                            disabled={index === activeTargetPriorities.length - 1}
-                            onClick={() => moveTargetPriorityBy(priority, 1)}
-                            className="rounded-md p-1.5 text-text-muted transition-colors hover:bg-primary/10 hover:text-primary disabled:pointer-events-none disabled:opacity-25"
-                            aria-label={`Move ${option.label} down`}
-                          >
-                            <ArrowDown className="h-3.5 w-3.5" />
-                          </button>
-                        </span>
-                      </div>
-                    );
-                  })}
-                </div>
-              ) : (
-                <p className="mt-3 border-t border-border-base pt-3 text-xs text-text-muted">
-                  <LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.enable.forts.or.resource.islands.and.select.db2a7a68" /></p>
-              )}
             </div>
 
             <div className="mt-3 rounded-global border border-border-base bg-bg-app/30 p-3">
@@ -1083,13 +873,27 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
                       }))}
                     />
                   </div>
-                  <PresetSelect
-                    value={draft.islands.presetId}
-                    onChange={(presetId) => setDraft((current) => ({ ...current, islands: { ...current.islands, presetId } }))}
-                    presets={attackPresets.presets}
-                    placeholder={localizeStatic("ui.settings.components.autoStormSettingsModal.placeholder.island.attack.preset.1f0006d5")}
+                  <EventAttackSetupField
+                    id="auto-storm-islands"
+                    label={<LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.placeholder.island.attack.preset.1f0006d5" />}
+                    section={AUTO_STORM_SECTION}
+                    slot="islands"
+                    moduleLabel={moduleLabel}
+                    slotLabel={localizeStatic('attackPresets.slot.islands')}
+                    value={islandsRef}
+                    onChange={setIslandsRef}
+                    document={attackPresets}
+                    references={presetReferences}
+                    sourceCastle={stockCastle}
+                    observation={observation}
+                    eventId={0}
+                    recommendation={recommendation}
+                    recipePending={recipePending}
+                    onSaveAsPreset={(inline, name) => saveInlineSetupAsUserPreset(draftSession, inline, name)}
+                    readinessChecks={readiness.checks.filter((check) => check.slot === 'islands' && check.id !== 'islands-defense-units')}
+                    inventoryLabel={stockLabel}
+                    disabled={saving}
                   />
-                  {selectedIslandPreset ? <PresetSummary preset={selectedIslandPreset} /> : null}
 
                   <div className="border-t border-border-base pt-3">
                     <div className="flex flex-wrap items-center justify-between gap-3">
@@ -1113,6 +917,12 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
                         ))}
                       </div>
                     ) : <p className="mt-2 text-[11px] text-text-muted"><LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.automatic.minimum.occupation.after.victory.is.reported.4a4d8d99" /></p>}
+                    {islandDefenseStock ? (
+                      <div className="mt-3 space-y-2">
+                        <UnitStockList lines={islandDefenseStock.lines} freshness={islandDefenseStock.freshness} />
+                        <ul><ReadinessCheckLine check={islandDefenseStock.check} /></ul>
+                      </div>
+                    ) : null}
                   </div>
 
                   {draft.islands.resources.length === 0 || draft.islands.sizes.length === 0 ? (
@@ -1121,8 +931,12 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
                 </div>
               ) : null}
             </div>
+          </Card>
+        </SettingsSection>
 
-            <div className="mt-3 rounded-global border border-border-base bg-bg-app/30 p-3">
+        <SettingsSection disclosure={disclosure} section="donors">
+          <Card variant="solid" className="p-4">
+            <div>
               <div className="flex items-start justify-between gap-4">
                 <div>
                   <div className="flex items-center gap-2 text-sm font-bold text-text-main"><Truck className="h-4 w-4 text-primary" /> <LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.import.missing.troops.8667e705" /></div>
@@ -1157,6 +971,18 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
                       }))}
                     />
                   ) : <p className="text-xs text-text-muted"><LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.no.non.storm.donor.castles.are.currently.3215ee89" /></p>}
+                  {readiness.checks.filter((check) => check.id === 'donors').map((check) => (
+                    <ul key={check.id} id="auto-storm-donors" tabIndex={-1} className="mt-2 outline-none"><ReadinessCheckLine check={check} /></ul>
+                  ))}
+                  <p className="mt-2 text-[11px] text-text-muted"><LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.donors.are.checked.in.the.displayed.order.06f5ffd4" /></p>
+                  {!troopImportValid ? <p className="mt-2 text-xs text-error"><LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.select.at.least.one.currently.observed.donor.8e329343" /></p> : null}
+                </div>
+              ) : null}
+            </div>
+          </Card>
+          <div className="mt-3" id="auto-storm-import-sizing">
+          {draft.troopImport.enabled ? (
+            <div>
                   <div className="mt-3 grid gap-3 sm:grid-cols-2">
                     <label>
                       <FieldLabel><LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.minimum.troops.kept.after.launch.96092426" /></FieldLabel>
@@ -1226,7 +1052,7 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
                             ? troopCapPreviewError
                             : troopCap.available && troopCap.maximumTroops != null
                               ? troopCap.capBasis == null
-                                ? 'This runtime returned a legacy troop cap without reset-rate basis details.'
+                                ? 'The game returned a legacy troop cap without reset-rate basis details.'
                                 : troopCap.capBasis === 'reset_rate'
                                 ? `Using the ${troopCap.rateBasedTroops?.toLocaleString() ?? troopCap.maximumTroops.toLocaleString()} rate-based requirement because it exceeds the ${troopCap.baselineTroops.toLocaleString()} baseline.`
                                 : troopCap.capBasis === 'reserve'
@@ -1238,34 +1064,17 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
                   </div>
                   <p className="mt-3 text-[11px] text-text-muted">
                     <LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.the.cap.is.the.largest.of.the.4802a71d" /></p>
-                  <p className="mt-2 text-[11px] text-text-muted"><LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.donors.are.checked.in.the.displayed.order.06f5ffd4" /></p>
-                  {!troopImportValid ? <p className="mt-2 text-xs text-error"><LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.select.at.least.one.currently.observed.donor.8e329343" /></p> : null}
-                </div>
-              ) : null}
-            </div>
 
-            <div className="mt-4 border-t border-border-base pt-4">
-              <div>
-                <FieldLabel><LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.map.coverage.88c46857" /></FieldLabel>
-                <Input readOnly value={stormMapCoverage} />
-                <p className="mt-1 text-[11px] text-text-muted">
-                  {stormMapState?.windowCount && stormMapState.lastCompletedAt ? `Last completed ${formatDate(stormMapState.lastCompletedAt)}. ` : ''}
-                  Coverage is scoped to the current server and account, then expanded when a completed sweep reaches an observed map edge.
-                </p>
-                <p className="mt-1 text-[11px] text-text-muted">
-                  {stormOpportunities.ready} learned targets are ready now.
-                  {Number.isFinite(stormOpportunities.nextReadyAt) ? ` Next readyAt label: ${formatDate(new Date(stormOpportunities.nextReadyAt).toISOString())}.` : ''}
-                  {' '}Auto Storm wakes on these labels between full sweeps.
-                </p>
-              </div>
             </div>
-          </Card>
-        </div>
+          ) : <p className="text-xs text-text-muted"><LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.troop.import.is.off.so.no.troops.1db2da31" /></p>}
+          </div>
+        </SettingsSection>
 
-        <Card variant="solid" className="p-4">
+        <SettingsSection disclosure={disclosure} section="shop">
+        <Card id="auto-storm-shop" tabIndex={-1} variant="solid" className="p-4 outline-none">
           <SectionHeading
             icon={Package}
-            title={localizeStatic("ui.settings.components.autoStormSettingsModal.title.aquamarine.spending.9cd6c95d")}
+            title={localizeStatic("ui.settings.disclosure.placement.aquamarine.and.ruby.spending.1861ad41")}
             description={localizeStatic("ui.settings.components.autoStormSettingsModal.description.buy.prioritized.luna.packages.while.the.protected.babf384f")}
           />
           <div className="mt-4 grid gap-3 md:grid-cols-2">
@@ -1429,13 +1238,409 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
               <LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.lower.priority.numbers.run.first.an.uncapped.1a572fa0" /></p>
           ) : null}
         </Card>
+        <Card id="auto-storm-premium" variant="solid" className="mt-3 p-4">
+          <SettingsToggleRow
+            icon={<Sparkles className="h-3.5 w-3.5" />}
+            title={localizeStatic("ui.settings.components.autoStormSettingsModal.title.allow.premium.costs.fd72d704")}
+            description={localizeStatic("ui.settings.components.autoStormSettingsModal.description.permit.premium.construction.paths.harbor.levels.2.e7439d0f")}
+            checked={draft.build.allowPremium}
+            onChange={(allowPremium) => updateBuild(setDraft, { allowPremium })}
+            tone="warning"
+          />
+        </Card>
+        </SettingsSection>
 
-        <DailyAttackLimitField
-          value={draft.dailyAttackLimit}
-          onChange={(dailyAttackLimit) => setDraft((current) => ({ ...current, dailyAttackLimit }))}
-          serverState={state?.dailyAttacks}
-        />
+        <SettingsSection disclosure={disclosure} section="limits">
+        <div id="auto-storm-daily-limit" tabIndex={-1} className="outline-none">
+          <DailyAttackLimitField
+            value={draft.dailyAttackLimit}
+            onChange={(dailyAttackLimit) => setDraft((current) => ({ ...current, dailyAttackLimit }))}
+            serverState={state?.dailyAttacks}
+          />
+        </div>
+        </SettingsSection>
 
+        <SettingsSection
+          disclosure={disclosure}
+          section="construction"
+          summary={stormConstructionSummary(draft, draft.target != null || Boolean(blueprintDocument.activeId))}
+          customCount={countCustomValues(draft.build, stormDefaults.build, ['allowResourceTransport', 'allowTimeSkips', 'allowDemolition', 'resourceReserves', 'sourceResourceReserves', 'timeSkipReserve'])
+            + countCustomValues(draft.harbor, stormDefaults.harbor, ['enabled', 'targetLevel'])}
+          className="space-y-4"
+        >
+        <Card variant="solid" className="p-4">
+          <SectionHeading
+            icon={Camera}
+            title={localizeStatic("ui.settings.components.autoStormSettingsModal.title.durable.castle.blueprints.36e000b1")}
+            description={localizeStatic("ui.settings.components.autoStormSettingsModal.description.capture.a.reusable.end.state.each.mode.e37c0a19")}
+          />
+          <div className="mt-4 grid gap-3 lg:grid-cols-[minmax(0,1fr)_repeat(3,auto)] lg:items-end">
+            <label className="block">
+              <FieldLabel><LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.storm.castle.2fd1da3a" /></FieldLabel>
+              <Select
+                value={stormCastle ? String(stormCastle.id) : ''}
+                onChange={(value) => setCaptureCastleId(Number(value) || 0)}
+                options={stormCastles.map((castle) => ({
+                  value: String(castle.id),
+                  label: `${castle.name?.trim() || `Castle ${castle.id}`} · ${castle.x}:${castle.y}`,
+                }))}
+                placeholder={stormCastles.length > 0 ? 'Choose Storm castle' : 'Unlock Storm first'}
+                disabled={stormCastles.length === 0 || capturing != null}
+                menuGrowToViewport
+              />
+            </label>
+            <Button
+              variant="outline"
+              disabled={!stormCastle || capturing != null}
+              isLoading={capturing === 'functional'}
+              onClick={() => void capture('functional')}
+              leftIcon={<Hammer className="h-4 w-4" />}
+            >
+              <LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.functional.b6656595" /></Button>
+            <Button
+              variant="outline"
+              disabled={!stormCastle || capturing != null}
+              isLoading={capturing === 'layout'}
+              onClick={() => void capture('layout')}
+              leftIcon={<Castle className="h-4 w-4" />}
+            >
+              <LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.layout.a5119091" /></Button>
+            <Button
+              variant="outline"
+              disabled={!stormCastle || capturing != null}
+              isLoading={capturing === 'exact'}
+              onClick={() => void capture('exact')}
+              leftIcon={<Camera className="h-4 w-4" />}
+            >
+              <LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.exact.clone.0174197d" /></Button>
+          </div>
+
+          {savedBlueprints.length > 0 ? (
+            <div className="mt-3 flex flex-wrap items-center gap-2">
+              <span className="text-[11px] font-semibold text-text-muted"><LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.saved.b6199040" /></span>
+              {savedBlueprints.map((blueprint) => (
+                <Button
+                  key={blueprint.id}
+                  size="sm"
+                  variant={blueprint.id === blueprintDocument.activeId ? 'primary' : 'ghost'}
+                  disabled={capturing != null || saving}
+                  onClick={() => void activateBlueprint(blueprint.id)}
+                >
+                  {blueprint.name}
+                </Button>
+              ))}
+            </div>
+          ) : null}
+
+          {target ? (
+            <div className="mt-4 rounded-global border border-primary/20 bg-primary/5 p-3">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <Badge variant="success">{captureModeLabel(target.mode)}</Badge>
+                    <span className="text-sm font-bold text-text-main">
+                      {targetCastle?.name?.trim() || `Castle ${target.castleId}`}
+                    </span>
+                  </div>
+                  <p className="mt-1 text-xs text-text-muted">Captured {formatDate(target.capturedAt)} from revision {target.revision.toLocaleString()}.</p>
+                </div>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => void deactivateBlueprint()}
+                  leftIcon={<Trash2 className="h-3.5 w-3.5" />}
+                >
+                  <LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.pause.target.ba267ca2" /></Button>
+              </div>
+              <div className="mt-3 flex flex-wrap gap-2">
+                <Badge variant="outline">{target.summary.groundCount} ground tiles</Badge>
+                <Badge variant="outline">{target.summary.buildingCount} buildings</Badge>
+                <Badge variant="outline">{target.summary.fixedCount} fixed</Badge>
+                <Badge variant="outline">{target.summary.decorationCount} decorations</Badge>
+                {blueprintPreview ? (
+                  <Badge variant="outline">
+                    Preflight: {blueprintPreview.satisfiedCount}/{blueprintPreview.targetCount} satisfied · {blueprintPreview.actionCount} actions
+                  </Badge>
+                ) : null}
+              </div>
+            </div>
+          ) : (
+            <p className="mt-3 rounded-global border border-border-base bg-bg-app/35 px-3 py-2 text-xs text-text-muted">
+              <LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.no.castle.target.is.required.for.combat.f9ca213e" /></p>
+          )}
+
+          {target && target.mode !== 'exact' && target.mode !== 'full' ? (
+            <label className="mt-4 block border-t border-border-base pt-4">
+              <FieldLabel icon={Sparkles}><LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.decoration.preset.applied.after.construction.3ec5caba" /></FieldLabel>
+              <Select
+                value={selectedDecorationValue}
+                onChange={(value) => {
+                  const option = decorationOptions.find((candidate) => candidate.value === value);
+                  setDraft((current) => ({
+                    ...current,
+                    decorationPresetCastleId: option?.castleId ?? 0,
+                    decorationPresetId: option?.presetId ?? '',
+                  }));
+                }}
+                options={decorationOptions.map((option) => ({ value: option.value, label: option.label }))}
+                placeholder={decorationOptions.length > 0 ? 'Optional saved decoration preset' : 'Save a decoration preset first'}
+                disabled={decorationOptions.length === 0}
+                searchable
+                menuGrowToViewport
+              />
+              <p className="mt-2 text-xs text-text-muted"><LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.the.preset.may.come.from.any.castle.42cc0294" /></p>
+              <p className="mt-1 text-xs text-text-muted"><LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.optional.it.only.decorates.the.storm.castle.bda00004" /></p>
+            </label>
+          ) : null}
+        </Card>
+        <Card variant="solid" className="p-4">
+          <SectionHeading
+            icon={Hammer}
+            title={localizeStatic("ui.settings.components.autoStormSettingsModal.title.construction.and.logistics.8e6e0606")}
+            description={localizeStatic("ui.settings.components.autoStormSettingsModal.description.gift.packets.are.cleared.after.expansions.storage.3cefb10e")}
+          />
+          <div className="mt-4 space-y-3">
+            <SettingsToggleRow
+              icon={<Truck className="h-3.5 w-3.5" />}
+              title={localizeStatic("ui.settings.components.autoStormSettingsModal.title.transport.missing.resources.b76e94ff")}
+              description={localizeStatic("ui.settings.components.autoStormSettingsModal.description.ship.available.resources.from.another.owned.kingdom.cfa81f3c")}
+              checked={draft.build.allowResourceTransport}
+              onChange={(allowResourceTransport) => updateBuild(setDraft, { allowResourceTransport })}
+            />
+            <SettingsToggleRow
+              icon={<FastForward className="h-3.5 w-3.5" />}
+              title={localizeStatic("ui.settings.components.autoStormSettingsModal.title.use.time.skips.a5caaa59")}
+              description={localizeStatic("ui.settings.components.autoStormSettingsModal.description.advance.construction.resource.transport.or.troop.transport.326defea")}
+              checked={draft.build.allowTimeSkips}
+              onChange={(allowTimeSkips) => updateBuild(setDraft, { allowTimeSkips })}
+            />
+            <SettingsToggleRow
+              icon={<Trash2 className="h-3.5 w-3.5" />}
+              title={localizeStatic("ui.settings.components.autoStormSettingsModal.title.allow.demolition.b9a49e66")}
+              description={localizeStatic("ui.settings.components.autoStormSettingsModal.description.permit.exact.reconciliation.to.demolish.unmanaged.buildings.e7ae16af")}
+              checked={draft.build.allowDemolition}
+              onChange={(allowDemolition) => updateBuild(setDraft, { allowDemolition })}
+              warning
+            />
+          </div>
+
+          <div className="mt-4 border-t border-border-base pt-4">
+            <FieldLabel><LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.storm.castle.spending.reserves.d7661852" /></FieldLabel>
+            <div className="grid grid-cols-3 gap-2">
+              {RESOURCE_RESERVES.map((resource) => (
+                <label key={resource.key} className="block">
+                  <span className="mb-1 block text-[10px] font-semibold text-text-muted">{resource.label}</span>
+                  <Input
+                    type="number"
+                    min={0}
+                    value={draft.build.resourceReserves[resource.key] ?? 0}
+                    onChange={(event) => updateNumberMap(
+                      setDraft,
+                      'resourceReserves',
+                      resource.key,
+                      clampAutoStormInteger(event.target.value, 0, Number.MAX_SAFE_INTEGER, 0),
+                    )}
+                    className="font-mono"
+                  />
+                </label>
+              ))}
+            </div>
+          </div>
+
+          {draft.build.allowResourceTransport ? (
+            <div className="mt-4 border-t border-border-base pt-4">
+              <FieldLabel><LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.protected.donor.reserves.1ab79630" /></FieldLabel>
+              <div className="grid grid-cols-3 gap-2">
+                {RESOURCE_RESERVES.map((resource) => (
+                  <label key={resource.key} className="block">
+                    <span className="mb-1 block text-[10px] font-semibold text-text-muted">{resource.label}</span>
+                    <Input
+                      type="number"
+                      min={0}
+                      value={draft.build.sourceResourceReserves[resource.key] ?? 0}
+                      onChange={(event) => updateNumberMap(
+                        setDraft,
+                        'sourceResourceReserves',
+                        resource.key,
+                        clampAutoStormInteger(event.target.value, 0, Number.MAX_SAFE_INTEGER, 0),
+                      )}
+                      className="font-mono"
+                    />
+                  </label>
+                ))}
+              </div>
+              <p className="mt-2 text-[11px] text-text-muted">
+                <LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.multi.resource.shipments.may.use.every.amount.cfd5df72" /></p>
+            </div>
+          ) : null}
+
+          {draft.build.allowTimeSkips ? (
+            <div className="mt-4 border-t border-border-base pt-4">
+              <FieldLabel><LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.time.skips.kept.in.reserve.07cf3bca" /></FieldLabel>
+              <div className="grid grid-cols-4 gap-2 sm:grid-cols-7">
+                {TIME_SKIP_RESERVES.map((skip) => (
+                  <label key={skip.key} className="block">
+                    <span className="mb-1 block text-center text-[10px] font-semibold text-text-muted">{skip.label}</span>
+                    <Input
+                      type="number"
+                      min={0}
+                      value={draft.build.timeSkipReserve[skip.key] ?? 0}
+                      onChange={(event) => updateNumberMap(
+                        setDraft,
+                        'timeSkipReserve',
+                        skip.key,
+                        clampAutoStormInteger(event.target.value, 0, Number.MAX_SAFE_INTEGER, 0),
+                      )}
+                      className="px-2 text-center font-mono"
+                    />
+                  </label>
+                ))}
+              </div>
+            </div>
+          ) : null}
+
+          <div className="mt-4 border-t border-border-base pt-4">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <div className="flex items-center gap-2 text-sm font-bold text-text-main"><Anchor className="h-4 w-4 text-primary" /> <LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.upgrade.harbor.da1bc184" /></div>
+                <p className="mt-1 text-xs text-text-muted"><LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.override.the.captured.harbor.path.and.maintain.1d06a158" /></p>
+              </div>
+              <Switch
+                checked={draft.harbor.enabled}
+                onChange={(enabled) => setDraft((current) => ({ ...current, harbor: { ...current.harbor, enabled } }))}
+                ariaLabel={localizeStatic("ui.settings.components.autoStormSettingsModal.ariaLabel.automate.storm.harbor.upgrades.9fb63b2d")}
+              />
+            </div>
+            {draft.harbor.enabled ? (
+              <div className="mt-3">
+                <Select
+                  value={String(draft.harbor.targetLevel)}
+                  onChange={(value) => setDraft((current) => ({
+                    ...current,
+                    harbor: { ...current.harbor, targetLevel: Number(value) || 1 },
+                  }))}
+                  options={[1, 2, 3].map((level) => ({ value: String(level), label: `Harbor level ${level}` }))}
+                />
+                {draft.harbor.targetLevel > 1 && !draft.build.allowPremium ? (
+                  <p className="mt-2 text-xs text-warning"><LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.harbor.levels.2.3.are.premium.paths.398f3dd1" /></p>
+                ) : null}
+              </div>
+            ) : null}
+          </div>
+        </Card>
+        </SettingsSection>
+
+        <SettingsSection
+          disclosure={disclosure}
+          section="priority"
+          summary={[stormPriorityLine(activeTargetPriorities.length)]}
+        >
+            <div>
+              <div>
+                <div className="flex items-center gap-2 text-sm font-bold text-text-main">
+                  <Crosshair className="h-4 w-4 text-primary" /> <LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.attack.target.priority.f25858a6" />
+                </div>
+                <p className="mt-1 text-xs text-text-muted">
+                  <LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.drag.enabled.targets.into.attack.order.highest.6f2dfc44" /></p>
+              </div>
+
+              {activeTargetPriorities.length > 0 ? (
+                <div className="mt-3 space-y-2 border-t border-border-base pt-3" role="list" aria-label={localizeStatic("ui.settings.components.autoStormSettingsModal.aria-label.auto.storm.target.priority.order.de42d734")}>
+                  {activeTargetPriorities.map((priority, index) => {
+                    const option = TARGET_PRIORITY_OPTIONS[priority];
+                    return (
+                      <div
+                        key={priority}
+                        role="listitem"
+                        draggable
+                        onDragStart={(event) => {
+                          event.dataTransfer.effectAllowed = 'move';
+                          event.dataTransfer.setData('text/plain', priority);
+                          setDraggedTargetPriority(priority);
+                        }}
+                        onDragOver={(event) => {
+                          event.preventDefault();
+                          event.dataTransfer.dropEffect = 'move';
+                          if (priority !== draggedTargetPriority) setTargetPriorityDropTarget(priority);
+                        }}
+                        onDragLeave={(event) => {
+                          if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setTargetPriorityDropTarget(null);
+                        }}
+                        onDrop={(event) => {
+                          event.preventDefault();
+                          const source = (draggedTargetPriority ?? event.dataTransfer.getData('text/plain')) as AutoStormTargetPriority;
+                          if (AUTO_STORM_TARGET_PRIORITIES.some((candidate) => candidate === source)) {
+                            moveTargetPriority(source, priority);
+                          }
+                          finishTargetPriorityDrag();
+                        }}
+                        onDragEnd={finishTargetPriorityDrag}
+                        className={`flex cursor-grab items-center gap-3 rounded-global border bg-bg-card/45 p-3 transition-colors active:cursor-grabbing ${
+                          draggedTargetPriority === priority
+                            ? 'border-primary/40 opacity-45'
+                            : targetPriorityDropTarget === priority
+                              ? 'border-primary bg-primary/10'
+                              : 'border-border-base hover:border-primary/30'
+                        }`}
+                      >
+                        <GripVertical className="h-5 w-5 shrink-0 text-text-muted" aria-hidden="true" />
+                        <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-bg-app text-xs font-bold tabular-nums text-primary ring-1 ring-border-base">
+                          {index + 1}
+                        </span>
+                        <span className="min-w-0 flex-1">
+                          <span className="block text-xs font-bold text-text-main">{option.label}</span>
+                          <span className="mt-0.5 block text-[11px] leading-4 text-text-muted">{option.detail}</span>
+                        </span>
+                        <span className="flex shrink-0 items-center gap-1">
+                          <button
+                            type="button"
+                            disabled={index === 0}
+                            onClick={() => moveTargetPriorityBy(priority, -1)}
+                            className="rounded-md p-1.5 text-text-muted transition-colors hover:bg-primary/10 hover:text-primary disabled:pointer-events-none disabled:opacity-25"
+                            aria-label={`Move ${option.label} up`}
+                          >
+                            <ArrowUp className="h-3.5 w-3.5" />
+                          </button>
+                          <button
+                            type="button"
+                            disabled={index === activeTargetPriorities.length - 1}
+                            onClick={() => moveTargetPriorityBy(priority, 1)}
+                            className="rounded-md p-1.5 text-text-muted transition-colors hover:bg-primary/10 hover:text-primary disabled:pointer-events-none disabled:opacity-25"
+                            aria-label={`Move ${option.label} down`}
+                          >
+                            <ArrowDown className="h-3.5 w-3.5" />
+                          </button>
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <p className="mt-3 border-t border-border-base pt-3 text-xs text-text-muted">
+                  <LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.enable.forts.or.resource.islands.and.select.db2a7a68" /></p>
+              )}
+            </div>
+        </SettingsSection>
+
+        <SettingsSection
+          disclosure={disclosure}
+          section="travel"
+          summary={[travelLine(draft.horseTravelBoostId)]}
+          customCount={countCustomValues(draft, stormDefaults, ['horseTravelBoostId'])}
+        >
+              <HorseTravelBoostSelect
+                value={draft.horseTravelBoostId}
+                onChange={(horseTravelBoostId) => setDraft((current) => ({ ...current, horseTravelBoostId }))}
+              />
+        </SettingsSection>
+
+        <SettingsSection
+          disclosure={disclosure}
+          section="timing"
+          summary={[checkIntervalLine(draft.checkIntervalSec), mapRefreshLine(draft.mapRefreshIntervalSec)]}
+          customCount={countCustomValues(draft, stormDefaults, ['checkIntervalSec'])}
+          className="space-y-4"
+        >
         <Card variant="solid" className="p-4">
           <SectionHeading icon={Clock3} title={localizeStatic("ui.settings.components.autoStormSettingsModal.title.cadence.316d43c0")} description={localizeStatic("ui.settings.components.autoStormSettingsModal.description.map.refreshes.are.authoritative.scans.policy.checks.ab4ae38c")} />
           <div className="mt-4 grid gap-3 sm:grid-cols-2">
@@ -1466,6 +1671,40 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
             </label>
           </div>
         </Card>
+          <div className="rounded-global border border-border-base bg-bg-app/30 p-3">
+              <div>
+                <FieldLabel><LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.map.coverage.88c46857" /></FieldLabel>
+                <Input readOnly value={stormMapCoverage} />
+                <p className="mt-1 text-[11px] text-text-muted">
+                  {stormMapState?.windowCount && stormMapState.lastCompletedAt ? `Last completed ${formatDate(stormMapState.lastCompletedAt)}. ` : ''}
+                  Coverage is scoped to the current server and account, then expanded when a completed sweep reaches an observed map edge.
+                </p>
+                <p className="mt-1 text-[11px] text-text-muted">
+                  {stormOpportunities.ready} learned targets are ready now.
+                  {Number.isFinite(stormOpportunities.nextReadyAt) ? ` Next readyAt label: ${formatDate(new Date(stormOpportunities.nextReadyAt).toISOString())}.` : ''}
+                  {' '}Auto Storm wakes on these labels between full sweeps.
+                </p>
+              </div>
+          </div>
+        </SettingsSection>
+
+        <ReadinessPanel
+          report={readiness}
+          slotLabelKeys={{ forts: 'attackPresets.slot.forts', islands: 'attackPresets.slot.islands' }}
+          onFix={fixReadiness}
+          noteFor={collapsedSettingNote(disclosure)}
+        />
+        <CommanderAssignmentPanel
+          id="auto-storm-commanders"
+          featureId="autoStorm"
+          draftSession={draftSession}
+          state={setup.state}
+          movement={setup.movement}
+          gameLoggedIn={setup.gameLoggedIn}
+          expanded={commandersOpen}
+          onExpandedChange={setCommandersOpen}
+          disabled={saving}
+        />
       </div>
     </SettingsModal>
     <FeatureGuideModal feature="autoStorm" isOpen={isOpen && isGuideOpen} onClose={() => setIsGuideOpen(false)} />
@@ -1498,43 +1737,6 @@ function FieldLabel({ children, icon: Icon }: { children: React.ReactNode; icon?
   );
 }
 
-function PresetSelect({
-  value,
-  onChange,
-  presets,
-  placeholder,
-}: {
-  value: string;
-  onChange: (value: string) => void;
-  presets: ReturnType<typeof parseAttackPresetDocument>['presets'];
-  placeholder: string;
-}) {
-  return (
-    <label className="block">
-      <FieldLabel icon={Crosshair}><LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.attack.preset.407b93e9" /></FieldLabel>
-      <Select
-        value={value}
-        onChange={onChange}
-        options={presets.map((preset) => ({ value: preset.id, label: preset.name }))}
-        placeholder={presets.length > 0 ? placeholder : 'Create an Attack Preset first'}
-        disabled={presets.length === 0}
-        searchable
-        menuGrowToViewport
-      />
-    </label>
-  );
-}
-
-function PresetSummary({ preset }: { preset: ReturnType<typeof parseAttackPresetDocument>['presets'][number] }) {
-  const summary = summarizeAttackPreset(preset);
-  return (
-    <div className="flex flex-wrap gap-2">
-      <Badge variant="outline">{summary.waves} waves</Badge>
-      <Badge variant="outline">{summary.troops.toLocaleString()} troops</Badge>
-      <Badge variant="outline">{summary.tools.toLocaleString()} tools</Badge>
-    </div>
-  );
-}
 
 function autoStormTargetPriorityEnabled(
   state: AutoStormClientStateV1,
@@ -1636,35 +1838,6 @@ function parseDecorationPresetOptions(
     }
   }
   return result.sort((left, right) => left.label.localeCompare(right.label));
-}
-
-function parseStormCastleOptions(rows: Record<string, unknown>[], playerLevel?: number): StormCastleOption[] {
-  const availableLevel = playerLevel && playerLevel > 0 ? playerLevel : Number.MAX_SAFE_INTEGER;
-  const options: StormCastleOption[] = [];
-  for (const row of rows) {
-    const spaces = String(row.spaceIDs ?? '')
-      .split(',')
-      .map((value) => Number(value.trim()))
-      .filter(Number.isFinite);
-    const id = positiveInteger(row.preBuiltCastleID);
-    const minLevel = positiveInteger(row.minLevel);
-    if (!spaces.includes(4) || id <= 0 || minLevel > availableLevel) continue;
-    options.push({
-      id,
-      name: stringValue(row.comment2),
-      minLevel,
-      costWood: positiveInteger(row.costWood),
-      costStone: positiveInteger(row.costStone),
-      costFood: positiveInteger(row.costFood),
-      costCoins: positiveInteger(row.costC1),
-      costPremium: positiveInteger(row.costC2),
-    });
-  }
-  return options.sort((left, right) => left.id - right.id);
-}
-
-function preferredStormCastleOption(options: StormCastleOption[]): StormCastleOption | undefined {
-  return options.find((option) => option.costPremium === 0) ?? options[0];
 }
 
 function stormCastleOptionLabel(option: StormCastleOption): string {

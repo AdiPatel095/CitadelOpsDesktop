@@ -29,7 +29,7 @@ func TestSBPResponseRefreshesFocusedBerimondToolInventory(t *testing.T) {
 	if err := RegisterCoreReducers(registry); err != nil {
 		t.Fatal(err)
 	}
-	store := State.NewStore(gameState)
+	store := State.NewStore(&gameState)
 	pipeline := NewPipeline(store, staticGameDataProvider{store: gameData}, registry)
 	observedAt := time.Date(2026, 7, 29, 21, 13, 23, 0, time.UTC)
 	code := 0

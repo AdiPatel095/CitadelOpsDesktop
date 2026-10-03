@@ -22,3 +22,8 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Visual snapshot artifacts
+.visual/
+playwright-report/
+test-results/

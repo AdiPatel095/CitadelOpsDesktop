@@ -3,10 +3,10 @@ package State
 import (
 	"database/sql"
 	"encoding/json"
-	"fmt"
 	"net/url"
 	"reflect"
 	"sort"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -37,6 +37,7 @@ type WorldEventMapFact struct {
 	StormIsleID            int64 `json:"stormIsleId,omitempty"`
 	StormVictoryCount      int64 `json:"stormVictoryCount,omitempty"`
 	StormCooldownRemaining int   `json:"stormCooldownRemaining,omitempty"`
+	StormHidden            bool  `json:"stormHidden,omitempty"`
 }
 
 type worldFactMap map[KingdomID]*worldFactRegion
@@ -125,28 +126,26 @@ type WorldMapStore struct {
 	dbCloseOnce      sync.Once
 	dbCloseErr       error
 
-	stormParticipants map[string]map[string]time.Time
-	stormRosters      map[string]stormScanRoster
-	stormLeases       map[string]stormScanLease
-	nextStormLease    uint64
+	sharedMapScans
 }
 
 func NewWorldMapStore() *WorldMapStore {
 	return &WorldMapStore{
-		worlds:            map[string]*worldMapGeneration{},
-		subscribers:       map[uint64]chan WorldMapEvent{},
-		dirtyFacts:        map[string]persistedWorldMapChange{},
-		dirtyStormScans:   map[string]persistedStormScanWindow{},
-		persistWake:       make(chan struct{}, 1),
-		persistStop:       make(chan struct{}),
-		persistDone:       make(chan struct{}),
-		stormParticipants: map[string]map[string]time.Time{},
-		stormRosters:      map[string]stormScanRoster{},
-		stormLeases:       map[string]stormScanLease{},
+		worlds:          map[string]*worldMapGeneration{},
+		subscribers:     map[uint64]chan WorldMapEvent{},
+		dirtyFacts:      map[string]persistedWorldMapChange{},
+		dirtyStormScans: map[string]persistedStormScanWindow{},
+		persistWake:     make(chan struct{}, 1),
+		persistStop:     make(chan struct{}),
+		persistDone:     make(chan struct{}),
+		sharedMapScans:  newSharedMapScans(),
 	}
 }
 
 func CanonicalWorldID(raw string) string {
+	if host, zone, ok := strings.Cut(raw, "\x1f"); ok {
+		return CanonicalWorldID(host) + "\x1f" + strings.TrimSpace(zone)
+	}
 	raw = strings.TrimSpace(raw)
 	if raw == "" {
 		return ""
@@ -172,13 +171,17 @@ func CanonicalWorldID(raw string) string {
 	return strings.ToLower(raw)
 }
 
-func gameStateWorldID(state GameState) string {
+func SharedWorldID(state *GameState) string {
 	worldID := CanonicalWorldID(state.Account.WorldID)
 	if worldID == "" {
 		worldID = CanonicalWorldID(state.Session.ServerURL)
 	}
+	if strings.Contains(worldID, "-mz-") && strings.TrimSpace(state.Session.Namespace) != "" {
+		worldID += "\x1f" + strings.TrimSpace(state.Session.Namespace)
+	}
 	return worldID
 }
+func gameStateWorldID(state *GameState) string { return SharedWorldID(state) }
 
 func (store *WorldMapStore) Snapshot(worldID string) *worldMapGeneration {
 	if store == nil || CanonicalWorldID(worldID) == "" {
@@ -510,6 +513,7 @@ func worldMapFact(observation MapObservation) WorldMapFact {
 			Level: observation.Level, StormIsleID: observation.StormIsleID,
 			StormVictoryCount:      observation.StormVictoryCount,
 			StormCooldownRemaining: observation.StormCooldownRemaining,
+			StormHidden:            observation.StormHidden,
 		}
 	}
 	return fact
@@ -527,6 +531,7 @@ func (fact WorldMapFact) observation() MapObservation {
 		observation.StormIsleID = fact.Event.StormIsleID
 		observation.StormVictoryCount = fact.Event.StormVictoryCount
 		observation.StormCooldownRemaining = fact.Event.StormCooldownRemaining
+		observation.StormHidden = fact.Event.StormHidden
 	}
 	return observation
 }
@@ -561,7 +566,7 @@ func pruneIrrelevantMapObservations(state *GameState) {
 		}
 	}
 	for _, candidate := range mapRetentionRemovals(
-		privateMapRetentionCandidates(*state), now, accountPrivateMapRetentionLimit,
+		privateMapRetentionCandidates(state), now, accountPrivateMapRetentionLimit,
 	) {
 		delete(state.Map[candidate.kingdomID], candidate.key)
 		if len(state.Map[candidate.kingdomID]) == 0 {
@@ -601,7 +606,7 @@ func (store *Store) AdoptWorldMap(worldEvent WorldMapEvent) (Event, bool) {
 	store.writeMu.Lock()
 	defer store.writeMu.Unlock()
 	current := store.generation.Load()
-	if current == nil || gameStateWorldID(*current.state) != CanonicalWorldID(worldEvent.WorldID) {
+	if current == nil || gameStateWorldID(current.state) != CanonicalWorldID(worldEvent.WorldID) {
 		return Event{}, false
 	}
 	if current.state.sharedMap != nil && current.state.sharedMap.version >= worldEvent.Version {
@@ -609,7 +614,7 @@ func (store *Store) AdoptWorldMap(worldEvent WorldMapEvent) (Event, bool) {
 	}
 	changes := make([]MapChange, 0, len(worldEvent.Changes))
 	for _, change := range normalizeMapChanges(worldEvent.Changes) {
-		if !accountCanAccessSharedKingdom(*current.state, change.KingdomID) {
+		if !accountCanAccessSharedKingdom(current.state, change.KingdomID) {
 			continue
 		}
 		changes = append(changes, change)
@@ -624,7 +629,7 @@ func (store *Store) AdoptWorldMap(worldEvent WorldMapEvent) (Event, bool) {
 		domains = worldMapDomains(worldEvent.Domains, changes)
 	} else {
 		for _, kingdomID := range worldEvent.KingdomIDs {
-			if accountCanAccessSharedKingdom(*current.state, kingdomID) {
+			if accountCanAccessSharedKingdom(current.state, kingdomID) {
 				domains = worldMapDomains(worldEvent.Domains, nil)
 				break
 			}
@@ -643,9 +648,9 @@ func (store *Store) AdoptWorldMap(worldEvent WorldMapEvent) (Event, bool) {
 	candidate.Revision++
 	candidate.UpdatedAt = time.Now().UTC()
 	partitionSnapshot, changedPartitions := advancePartitionVersions(
-		current.versions, defaultPartitionKeys(*candidate, domains), candidate.Revision, candidate.UpdatedAt,
+		current.versions, defaultPartitionKeys(candidate, domains), candidate.Revision, candidate.UpdatedAt,
 	)
-	protocol := nextProtocolContext(current.protocol, *candidate, domains, nil, FocusSubcontext(""), candidate.UpdatedAt)
+	protocol := nextProtocolContext(current.protocol, candidate, domains, nil, FocusSubcontext(""), candidate.UpdatedAt)
 	next := &storeGeneration{state: candidate, versions: partitionSnapshot, protocol: protocol}
 	store.generation.Store(next)
 	components := []Component{}
@@ -654,7 +659,8 @@ func (store *Store) AdoptWorldMap(worldEvent WorldMapEvent) (Event, bool) {
 	}
 	event := Event{
 		Sequence: candidate.Revision, Revision: candidate.Revision, Domains: domains,
-		Components: components, Partitions: changedPartitions,
+		BaseRevision: current.state.Revision,
+		Components:   components, Partitions: changedPartitions,
 		OccurredAt: candidate.UpdatedAt, generation: next, mapChanges: changes,
 	}
 	if len(changes) > 0 {
@@ -665,7 +671,7 @@ func (store *Store) AdoptWorldMap(worldEvent WorldMapEvent) (Event, bool) {
 	return event, true
 }
 
-func (state GameState) LookupMapObservation(kingdomID KingdomID, key string) (MapObservation, bool) {
+func (state *GameState) LookupMapObservation(kingdomID KingdomID, key string) (MapObservation, bool) {
 	if observation, exists := state.lookupPrivateMapObservation(kingdomID, key); exists {
 		return observation, true
 	}
@@ -676,7 +682,7 @@ func (state GameState) LookupMapObservation(kingdomID KingdomID, key string) (Ma
 	return MapObservation{}, false
 }
 
-func (state GameState) RangeMapObservations(kingdomID KingdomID, visit func(string, MapObservation) bool) {
+func (state *GameState) RangeMapObservations(kingdomID KingdomID, visit func(string, MapObservation) bool) {
 	if visit == nil {
 		return
 	}
@@ -703,7 +709,7 @@ func (state GameState) RangeMapObservations(kingdomID KingdomID, visit func(stri
 // RangeMapObservationsByKind traverses only the physical feature partition a
 // caller requested. Private rows still shadow shared facts at the same
 // coordinate, preserving the logical GameState view without a full-map scan.
-func (state GameState) RangeMapObservationsByKind(
+func (state *GameState) RangeMapObservationsByKind(
 	kingdomID KingdomID,
 	kind MapProjectionKind,
 	visit func(string, MapObservation) bool,
@@ -728,7 +734,7 @@ func (state GameState) RangeMapObservationsByKind(
 	state.rangePrivateMapObservationsByKind(kingdomID, kind, visit)
 }
 
-func (state GameState) MapKingdomIDs() []KingdomID {
+func (state *GameState) MapKingdomIDs() []KingdomID {
 	set := make(map[KingdomID]struct{}, len(state.Map))
 	state.privateMapKingdomIDs(func(kingdomID KingdomID) { set[kingdomID] = struct{}{} })
 	if state.sharedMap != nil {
@@ -756,9 +762,10 @@ func (state *GameState) SetMapObservation(observation MapObservation) bool {
 	if !retained {
 		return false
 	}
-	key := fmt.Sprintf("%d:%d", observation.X, observation.Y)
+	key := MapCoordinateKey(observation.X, observation.Y)
 	current, exists := state.LookupMapObservation(observation.KingdomID, key)
-	if exists && reflect.DeepEqual(current, observation) {
+	// Map times are UTC; value equality also guards future non-comparable fields.
+	if exists && current == observation {
 		return false
 	}
 	newKind, _ := MapProjectionKindForType(observation.TypeID)
@@ -829,7 +836,7 @@ func (state *GameState) recordMapChange(change MapChange) {
 	state.pendingMapChanges[mapChangeKey(change.KingdomID, change.Key)] = change
 }
 
-func (state GameState) mapChanges() []MapChange {
+func (state *GameState) mapChanges() []MapChange {
 	changes := make([]MapChange, 0, len(state.pendingMapChanges))
 	for _, change := range state.pendingMapChanges {
 		changes = append(changes, change)
@@ -857,10 +864,27 @@ func normalizeMapChanges(changes []MapChange) []MapChange {
 }
 
 func mapChangeKey(kingdomID KingdomID, key string) string {
-	return fmt.Sprintf("%020d:%s", kingdomID, key)
+	text := strconv.FormatInt(int64(kingdomID), 10)
+	var builder strings.Builder
+	builder.Grow(21 + len(key))
+	if text[0] == '-' {
+		builder.WriteByte('-')
+		text = text[1:]
+		for i := len(text); i < 19; i++ {
+			builder.WriteByte('0')
+		}
+	} else {
+		for i := len(text); i < 20; i++ {
+			builder.WriteByte('0')
+		}
+	}
+	builder.WriteString(text)
+	builder.WriteByte(':')
+	builder.WriteString(key)
+	return builder.String()
 }
 
-func (state GameState) materializedMap() WorldMap {
+func (state *GameState) materializedMap() WorldMap {
 	private := state.materializedPrivateMap()
 	if state.sharedMap == nil {
 		return private
@@ -896,7 +920,7 @@ func (state GameState) materializedMap() WorldMap {
 // facts. A world match alone is insufficient: an account receives a kingdom's
 // shared rows only after its own private state proves that kingdom is unlocked
 // or contains one of its castles.
-func accountCanAccessSharedKingdom(state GameState, kingdomID KingdomID) bool {
+func accountCanAccessSharedKingdom(state *GameState, kingdomID KingdomID) bool {
 	if kingdomID == 0 {
 		return true
 	}
@@ -931,3 +955,5 @@ func (state *GameState) UnmarshalJSON(raw []byte) error {
 	state.mapOverlay = nil
 	return nil
 }
+
+func MapCoordinateKey(x, y int) string { return strconv.Itoa(x) + ":" + strconv.Itoa(y) }

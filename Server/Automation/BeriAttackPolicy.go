@@ -52,7 +52,7 @@ func (*BeriAttackPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decisio
 		return beriAttackWaiting(snapshot.Now, "Auto Beri World settings have not been saved", 30, Localization.New("server.automation.auto_beri_world_settings.a9d19bc3", "Auto Beri World settings have not been saved", nil)), nil
 	}
 	if decision, locked := limitedEventGate(
-		snapshot.State, snapshot.Now, []int64{GameData.BerimondEventID}, "Battle for Berimond",
+		&snapshot.State, snapshot.Now, []int64{GameData.BerimondEventID}, "Battle for Berimond",
 	); locked {
 		return decision, nil
 	}
@@ -77,7 +77,7 @@ func (*BeriAttackPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decisio
 	if _, blocked := dailyAttackLimitAllowance(snapshot, settings.DailyAttackLimit, interval, metrics); blocked != nil {
 		return *blocked, nil
 	}
-	commanderIDs, restricted := commanderFeatureCandidates(snapshot.State, snapshot.Configuration, "autoBeriWorld")
+	commanderIDs, restricted := commanderFeatureCandidates(&snapshot.State, snapshot.Configuration, "autoBeriWorld")
 	if restricted && len(commanderIDs) == 0 {
 		return beriAttackWaiting(snapshot.Now, "No commanders are assigned to Auto Beri World", settings.AttackCheckIntervalSec, Localization.New("server.automation.no_commanders_are_assigned.655a1b0f", "No commanders are assigned to Auto Beri World", nil)), nil
 	}
@@ -89,7 +89,7 @@ func (*BeriAttackPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decisio
 			NextCheckAt: snapshot.Now.Add(interval),
 		}, nil
 	}
-	castle, castleFound := beriCastle(snapshot.State)
+	castle, castleFound := beriCastle(&snapshot.State)
 	if !castleFound {
 		if snapshot.State.KingdomTransport.ObservedAt.IsZero() ||
 			snapshot.Now.Sub(snapshot.State.KingdomTransport.ObservedAt) >= beriKingdomRefreshAge {
@@ -122,7 +122,7 @@ func (*BeriAttackPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decisio
 		), nil
 	}
 
-	commanderID, available := nextAvailableFeatureCommander(snapshot.State, commanderIDs, restricted, snapshot.Now)
+	commanderID, available := nextAvailableFeatureCommander(&snapshot.State, commanderIDs, restricted, snapshot.Now)
 	if !available {
 		detail := "No commander is currently available"
 		var detailLocalizationMessage *Localization.Message = Localization.New("server.automation.no_commander_is_currently.25dd6b1e", "No commander is currently available", nil)
@@ -132,7 +132,7 @@ func (*BeriAttackPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decisio
 		}
 		return beriAttackWaiting(snapshot.Now, detail, settings.AttackCheckIntervalSec, Localization.Clone(detailLocalizationMessage)), nil
 	}
-	target, targetFound := beriPendingTarget(snapshot.State, snapshot.Now)
+	target, targetFound := beriPendingTarget(&snapshot.State, snapshot.Now)
 	if !targetFound {
 		return beriAttackIntentDecision(
 			snapshot.Now, beriLaunchRetryInterval, "Find the next available Berimond tower",
@@ -167,7 +167,7 @@ func (*BeriAttackPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decisio
 			NextCheckAt: snapshot.Now.Add(interval),
 		}, nil
 	}
-	unreflectedLaunches := unreflectedBeriTowerLaunches(snapshot.State, castle, snapshot.Now)
+	unreflectedLaunches := unreflectedBeriTowerLaunches(&snapshot.State, castle, snapshot.Now)
 	maximumCopies := len(snapshot.State.Commanders) + unreflectedLaunches + 1
 	availableCopies, err := availablePresetCopies(limitedPreset, castle, snapshot.GameData, maximumCopies)
 	if err != nil {
@@ -198,7 +198,7 @@ func (*BeriAttackPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decisio
 	), nil
 }
 
-func beriPendingTarget(gameState State.GameState, now time.Time) (State.MapObservation, bool) {
+func beriPendingTarget(gameState *State.GameState, now time.Time) (State.MapObservation, bool) {
 	state := gameState.Beri
 	if state.TargetObservedAt.IsZero() || !state.TargetInvalidatedAt.Before(state.TargetObservedAt) {
 		return State.MapObservation{}, false
@@ -213,7 +213,7 @@ func beriPendingTarget(gameState State.GameState, now time.Time) (State.MapObser
 }
 
 func unreflectedBeriTowerLaunches(
-	gameState State.GameState,
+	gameState *State.GameState,
 	source State.CastleState,
 	now time.Time,
 ) int {

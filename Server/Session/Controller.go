@@ -38,21 +38,29 @@ type Controller struct {
 
 const directTrafficQuietPeriod = 2 * time.Second
 
+const (
+	ingestQueueFrameLimit = 8192
+	ingestQueueByteLimit  = 32 << 20
+)
+
 type queuedIngestFrame struct {
+	bytes                int
 	observed             Ingest.ObservedFrame
 	connectionGeneration uint64
 }
 
 type ingestFrameQueue struct {
-	mu       sync.Mutex
-	changed  *sync.Cond
-	frames   []queuedIngestFrame
-	capacity int
-	closed   bool
+	mu        sync.Mutex
+	changed   *sync.Cond
+	frames    []queuedIngestFrame
+	capacity  int
+	bytes     int
+	byteLimit int
+	closed    bool
 }
 
-func newIngestFrameQueue(capacity int) *ingestFrameQueue {
-	queue := &ingestFrameQueue{capacity: capacity}
+func newIngestFrameQueue(capacity, byteLimit int) *ingestFrameQueue {
+	queue := &ingestFrameQueue{capacity: capacity, byteLimit: byteLimit}
 	queue.changed = sync.NewCond(&queue.mu)
 	return queue
 }
@@ -60,13 +68,14 @@ func newIngestFrameQueue(capacity int) *ingestFrameQueue {
 func (queue *ingestFrameQueue) push(frame queuedIngestFrame) bool {
 	queue.mu.Lock()
 	defer queue.mu.Unlock()
-	for !queue.closed && len(queue.frames) >= queue.capacity {
+	for !queue.closed && len(queue.frames) > 0 && (len(queue.frames) >= queue.capacity || queue.bytes+frame.bytes > queue.byteLimit) {
 		queue.changed.Wait()
 	}
 	if queue.closed {
 		return false
 	}
 	queue.frames = append(queue.frames, frame)
+	queue.bytes += frame.bytes
 	queue.changed.Signal()
 	return true
 }
@@ -81,6 +90,7 @@ func (queue *ingestFrameQueue) pop() (queuedIngestFrame, bool) {
 		return queuedIngestFrame{}, false
 	}
 	frame := queue.frames[0]
+	queue.bytes -= frame.bytes
 	queue.frames[0] = queuedIngestFrame{}
 	queue.frames = queue.frames[1:]
 	queue.changed.Signal()
@@ -96,6 +106,7 @@ func (queue *ingestFrameQueue) closeAndTakePending() []queuedIngestFrame {
 	queue.closed = true
 	pending := queue.frames
 	queue.frames = nil
+	queue.bytes = 0
 	queue.changed.Broadcast()
 	return pending
 }
@@ -310,8 +321,11 @@ func (controller *Controller) observeDirectTraffic(observedAt time.Time) {
 	controller.outbound.Notify()
 }
 
-func pausesAutomationForDirectTraffic(payload string, observedAt time.Time) bool {
-	frame, err := Protocol.Decode(payload, Protocol.DirectionOutbound, observedAt)
+func pausesAutomationForDirectTraffic(raw RawFrame) bool {
+	if raw.Decoded != nil {
+		return raw.Decoded.Opcode != "dcl"
+	}
+	frame, err := Protocol.Decode(raw.Payload, Protocol.DirectionOutbound, raw.ObservedAt)
 	if err != nil {
 		return true
 	}
@@ -521,7 +535,7 @@ func (controller *Controller) Status() Status {
 }
 
 func (controller *Controller) run(ctx context.Context, runID uint64) {
-	ingestQueue := newIngestFrameQueue(8192)
+	ingestQueue := newIngestFrameQueue(ingestQueueFrameLimit, ingestQueueByteLimit)
 	ingestDone := make(chan struct{})
 	discardPending := func(pending []queuedIngestFrame) {
 		for _, queued := range pending {
@@ -585,7 +599,7 @@ func (controller *Controller) run(ctx context.Context, runID uint64) {
 			}
 			if frame.Direction == Protocol.DirectionOutbound && frame.CausationOperationID == "" {
 				if reporter, ok := controller.transport.(OutboundCausationTransport); ok && reporter.ReportsOutboundCausation() {
-					if pausesAutomationForDirectTraffic(frame.Payload, frame.ObservedAt) {
+					if pausesAutomationForDirectTraffic(frame) {
 						controller.observeDirectTraffic(frame.ObservedAt)
 					}
 				}
@@ -596,10 +610,8 @@ func (controller *Controller) run(ctx context.Context, runID uint64) {
 			if !controller.acceptFrameGeneration(frame.ConnectionGeneration) {
 				continue
 			}
-			observed, err := controller.ingest.DecodeTransportFrameAt(
-				frame.Payload, frame.Direction, frame.ObservedAt, frame.ResponseToken, frame.CausationOperationID,
-			)
-			if err != nil {
+			observed, ok := controller.observeTransportFrame(frame)
+			if !ok {
 				continue
 			}
 			if observed.Frame.Namespace != "" {
@@ -613,6 +625,7 @@ func (controller *Controller) run(ctx context.Context, runID uint64) {
 			observed.ConnectionGeneration = frame.ConnectionGeneration
 			if !ingestQueue.push(queuedIngestFrame{
 				observed: observed, connectionGeneration: frame.ConnectionGeneration,
+				bytes: len(observed.Frame.Raw) + len(observed.Frame.Payload),
 			}) {
 				controller.ingest.DiscardObserved(observed, ctx.Err())
 				return
@@ -714,4 +727,12 @@ func (controller *Controller) applyStatus(status Status) {
 		gameState.Session = next
 		return []string{"session"}, true, nil
 	})
+}
+
+func (controller *Controller) observeTransportFrame(frame RawFrame) (Ingest.ObservedFrame, bool) {
+	if frame.Decoded != nil {
+		return controller.ingest.ObserveTransportFrame(*frame.Decoded, frame.ResponseToken, frame.CausationOperationID), true
+	}
+	observed, err := controller.ingest.DecodeTransportFrameAt(frame.Payload, frame.Direction, frame.ObservedAt, frame.ResponseToken, frame.CausationOperationID)
+	return observed, err == nil
 }

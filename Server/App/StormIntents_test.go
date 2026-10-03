@@ -593,7 +593,7 @@ func TestCaptureStormScanBuildsAuthoritativeMapState(t *testing.T) {
 			ObservedAt: startedAt.Add(2 * time.Second),
 		},
 	}
-	application := &Application{State: State.NewStore(state)}
+	application := &Application{State: State.NewStore(&state)}
 	scanRequest := stormMapScanRequest{
 		SourceCastleID: 40,
 		FullMap:        true,
@@ -657,7 +657,7 @@ func TestCaptureTargetedStormScanRefreshesTrackedCooldown(t *testing.T) {
 			StormCooldownRemaining: 36_000, ObservedAt: startedAt.Add(time.Second),
 		},
 	}
-	application := &Application{State: State.NewStore(state)}
+	application := &Application{State: State.NewStore(&state)}
 	request, err := json.Marshal(stormMapScanRequest{
 		SourceCastleID: 40, Targeted: true,
 		Bounds: State.StormMapBounds{X1: 612, Y1: 667, X2: 612, Y2: 667}, ScanStartedAt: startedAt,
@@ -777,7 +777,7 @@ func TestConsumeStormIslandTargetRecordsReportGatedReturn(t *testing.T) {
 		"101:102": {KingdomID: 4, X: 101, Y: 102, TypeID: stormIntentIslandMapTypeID, ObjectID: 777},
 	}
 	state.Storm.Map.Targets["101:102"] = state.Map[4]["101:102"]
-	application := &Application{State: State.NewStore(state)}
+	application := &Application{State: State.NewStore(&state)}
 	arguments, err := json.Marshal(stormTargetConsumeRequest{
 		SourceCastleID: 40, KingdomID: 4, TargetTypeID: stormIntentIslandMapTypeID,
 		TargetX: 101, TargetY: 102, IslandObjectID: 777, LeaveBehind: 1,
@@ -984,7 +984,7 @@ func TestCooperativeCaptureBindsIdentityForTargetedRefresh(t *testing.T) {
 	}
 	worldMaps := State.NewWorldMapStore()
 	application := &Application{
-		State: State.NewStoreWithWorldMap(state, worldMaps), WorldMaps: worldMaps, AccountKey: "acct-test",
+		State: State.NewStoreWithWorldMap(&state, worldMaps), WorldMaps: worldMaps, AccountKey: "acct-test",
 	}
 	worldID := state.Session.ServerURL
 	// The first heartbeat establishes the anonymous roster. Acquire again after
@@ -1029,7 +1029,7 @@ func TestTargetedRefreshBindsUnboundIdentity(t *testing.T) {
 	state.Session.ServerURL = "wss://ep-live-us1-game.goodgamestudios.com:443"
 	state.Player.ID = 901
 	state.Castles[40] = State.CastleState{ID: 40, KingdomID: stormIntentKingdomID, Focused: true}
-	application := &Application{State: State.NewStore(state)}
+	application := &Application{State: State.NewStore(&state)}
 	if err := application.captureStormScanRequest(stormMapScanRequest{
 		SourceCastleID: 40, Targeted: true,
 		Bounds:        State.StormMapBounds{X1: 650, Y1: 650, X2: 650, Y2: 650},
@@ -1068,5 +1068,172 @@ func TestStormCastleIdentityKeepsNamesLiteral(t *testing.T) {
 	m = stormCastleIdentity(State.CastleState{ID: 12345, Name: " <literal>{castle} "})
 	if m.Params["name"] != " <literal>{castle} " {
 		t.Fatal("name bytes changed")
+	}
+}
+
+// CIT-23: Storm forts carry no object ID (official DungeonIsleMapobjectVO).
+// Planning, target consumption and capacity resolution accept ObjectID 0, and
+// a stale persisted fort ObjectID (the kingdom ID) raises no mismatch.
+func TestStormFortWithoutObjectIDPlansConsumesAndResolves(t *testing.T) {
+	gameData, err := GameData.DecodeStore([]byte(`{
+		"versionInfo":[],"buildings":[],"effects":[],"effectCaps":[],
+		"units":[{"wodID":10}],
+		"isles":[{"IsleID":7,"type":"DUNGEON","dungeonlevel":40,"maxCountVictories":10,"countVictories":"0#1#2#3#4#5#6#7#8#9"}]
+	}`), GameData.SourceMetadata{ItemVersion: "test"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	now := time.Now().UTC()
+	state := State.NewGameState()
+	state.Castles[40] = State.CastleState{
+		ID: 40, KingdomID: stormIntentKingdomID, X: 100, Y: 100, Focused: true,
+		Units: State.CastleUnits{Stationed: map[State.UnitID]int64{10: 110}},
+	}
+	state.Commanders[43] = State.CommanderState{ID: 43, Available: true}
+	fort := State.MapObservation{
+		KingdomID: stormIntentKingdomID, X: 101, Y: 102, TypeID: stormIntentFortMapTypeID,
+		StormIsleID: 7, StormVictoryCount: 5, ObservedAt: now,
+	}
+	state.Map[stormIntentKingdomID] = map[string]State.MapObservation{"101:102": fort}
+	state.Storm.Map.Targets = map[string]State.MapObservation{"101:102": fort}
+
+	plan, err := planStormAttack(t.Context(), Intent.PlanningContext{State: state, GameData: gameData}, json.RawMessage(`{
+		"sourceCastleId":40,"kingdomId":4,"targetTypeId":25,"targetX":101,"targetY":102,
+		"stormIsleId":7,"minimumVictoryCount":4,"commanderIds":[43],
+		"preset":{"id":"fort","name":"Fort","waves":[]}
+	}`))
+	if err != nil {
+		t.Fatal(err)
+	}
+	var consumeArguments json.RawMessage
+	for _, step := range plan.Steps {
+		if step.Action == "storm.target.consume" {
+			consumeArguments = step.ActionArguments
+		}
+	}
+	var consume stormTargetConsumeRequest
+	if err := json.Unmarshal(consumeArguments, &consume); err != nil || consume.IslandObjectID != 0 ||
+		consume.TargetTypeID != stormIntentFortMapTypeID {
+		t.Fatalf("fort consume arguments = %s err=%v", consumeArguments, err)
+	}
+	stateStore := State.NewStore(&state)
+	if err := (&Application{State: stateStore}).consumeStormTarget(t.Context(), consumeArguments); err != nil {
+		t.Fatalf("fort consumption with ObjectID 0 rejected: %v", err)
+	}
+	accessorState1 := stateStore.ReadOnlyView()
+	if _, tracked := accessorState1.LookupStormTarget("101:102"); tracked {
+		t.Fatal("consumed fort remained tracked")
+	}
+
+	state.AttackDialog = State.AttackDialogState{
+		SourceCastleID: 40, KingdomID: stormIntentKingdomID, ObservedAt: now,
+		Target: State.AttackDialogTarget{TypeID: stormIntentFortMapTypeID, X: 101, Y: 102, StormIsleID: 7},
+	}
+	unitID := int64(10)
+	resolverArguments, _ := json.Marshal(resolvedStormAttackRequest{
+		stormAttackRequest: stormAttackRequest{
+			SourceCastleID: 40, KingdomID: stormIntentKingdomID,
+			TargetTypeID: stormIntentFortMapTypeID, TargetX: 101, TargetY: 102, StormIsleID: 7,
+			Preset: AttackPresets.Preset{ID: "concrete", Name: "Concrete", Waves: []AttackPresets.Wave{{
+				Middle: AttackPresets.Lane{Troops: []AttackPresets.Slot{{ItemID: &unitID, Quantity: 100}}},
+			}}},
+			MinimumTroops: 10, HorseTravelBoostID: -1,
+		},
+		CommanderID: 43,
+	})
+	for _, mapObjectID := range []int64{0, int64(stormIntentKingdomID)} {
+		observation := fort
+		observation.ObjectID = mapObjectID
+		state.Map[stormIntentKingdomID]["101:102"] = observation
+		if _, err := (&Application{}).resolveStormAttackStep(
+			t.Context(), Intent.PlanningContext{State: state, GameData: gameData}, resolverArguments,
+		); err != nil {
+			t.Fatalf("fort resolution with map ObjectID %d failed: %v", mapObjectID, err)
+		}
+	}
+}
+
+func TestStormIslandConsumeKeepsOfficialObjectID(t *testing.T) {
+	island := State.MapObservation{
+		KingdomID: stormIntentKingdomID, X: 100, Y: 101, TypeID: stormIntentIslandMapTypeID, ObjectID: 3319,
+	}
+	state := State.NewGameState()
+	state.Castles[40] = State.CastleState{ID: 40, KingdomID: stormIntentKingdomID, X: 90, Y: 90}
+	state.Storm.Map.Targets = map[string]State.MapObservation{"100:101": island}
+	arguments, _ := json.Marshal(stormTargetConsumeRequest{
+		SourceCastleID: 40, KingdomID: stormIntentKingdomID, TargetTypeID: stormIntentIslandMapTypeID,
+		TargetX: 100, TargetY: 101, IslandObjectID: island.ObjectID, LeaveBehind: 1,
+	})
+	stateStore := State.NewStore(&state)
+	if err := (&Application{State: stateStore}).consumeStormTarget(t.Context(), arguments); err != nil {
+		t.Fatal(err)
+	}
+	returnState := stateStore.ReadOnlyView().Storm.IslandReturns[State.StormIslandReturnKey(stormIntentKingdomID, 100, 101)]
+	if returnState.IslandObjectID != 3319 {
+		t.Fatalf("island return lost its object id: %#v", returnState)
+	}
+	zero, _ := json.Marshal(stormTargetConsumeRequest{
+		SourceCastleID: 40, KingdomID: stormIntentKingdomID, TargetTypeID: stormIntentIslandMapTypeID,
+		TargetX: 100, TargetY: 101, LeaveBehind: 1,
+	})
+	if err := (&Application{State: stateStore}).consumeStormTarget(t.Context(), zero); err == nil {
+		t.Fatal("island consumption without an object id was accepted")
+	}
+}
+
+// CIT-24: hidden Storm forts (official row[8] > 0) are refused by the planner
+// without ErrPlanStale and by the CRA send guard via the dialog or the map.
+func TestHiddenStormFortIsRefusedByPlannerAndCRAGuard(t *testing.T) {
+	now := time.Now().UTC()
+	state := State.NewGameState()
+	state.Castles[40] = State.CastleState{ID: 40, KingdomID: stormIntentKingdomID, X: 100, Y: 100, Focused: true}
+	state.Commanders[43] = State.CommanderState{ID: 43, Available: true}
+	fort := State.MapObservation{
+		KingdomID: stormIntentKingdomID, X: 101, Y: 102, TypeID: stormIntentFortMapTypeID,
+		StormIsleID: 7, StormVictoryCount: 5, StormHidden: true, ObservedAt: now,
+	}
+	state.Map[stormIntentKingdomID] = map[string]State.MapObservation{"101:102": fort}
+	gameData := stormAttackTestGameData(t)
+	arguments := json.RawMessage(`{
+		"sourceCastleId":40,"kingdomId":4,"targetTypeId":25,"targetX":101,"targetY":102,
+		"stormIsleId":7,"minimumVictoryCount":4,"commanderIds":[43],
+		"preset":{"id":"fort","name":"Fort","waves":[]}
+	}`)
+	if _, err := planStormAttack(t.Context(), Intent.PlanningContext{State: state, GameData: gameData}, arguments); err == nil ||
+		errors.Is(err, Intent.ErrPlanStale) || !strings.Contains(err.Error(), "hidden on the map") {
+		t.Fatalf("planner accepted a hidden fort: %v", err)
+	}
+	visible := fort
+	visible.StormHidden = false
+	state.Map[stormIntentKingdomID]["101:102"] = visible
+	if _, err := planStormAttack(t.Context(), Intent.PlanningContext{State: state, GameData: gameData}, arguments); err != nil {
+		t.Fatalf("visible fort was refused: %v", err)
+	}
+
+	guardArguments, _ := json.Marshal(craSendGuardRequest{
+		SourceX: 100, SourceY: 100, TargetX: 101, TargetY: 102, KingdomID: stormIntentKingdomID,
+		DialogObservedAt: now.Add(-time.Second),
+	})
+	for name, test := range map[string]struct {
+		dialogHidden bool
+		mapHidden    bool
+		fragment     string
+	}{
+		"dialog": {dialogHidden: true, fragment: "on cooldown"},
+		"map":    {mapHidden: true, fragment: "hidden on the map"},
+	} {
+		guardState := state
+		guardState.Map = map[State.KingdomID]map[string]State.MapObservation{stormIntentKingdomID: {"101:102": visible}}
+		if test.mapHidden {
+			guardState.Map[stormIntentKingdomID]["101:102"] = fort
+		}
+		guardState.AttackDialog = State.AttackDialogState{
+			SourceCastleID: 40, KingdomID: stormIntentKingdomID, ObservedAt: now,
+			Target: State.AttackDialogTarget{TypeID: stormIntentFortMapTypeID, X: 101, Y: 102, StormIsleID: 7, StormHidden: test.dialogHidden},
+		}
+		err := (&Application{State: State.NewStore(&guardState)}).guardCRASend(t.Context(), guardArguments)
+		if err == nil || errors.Is(err, Intent.ErrPlanStale) || !strings.Contains(err.Error(), test.fragment) {
+			t.Fatalf("%s: CRA guard accepted a hidden fort: %v", name, err)
+		}
 	}
 }

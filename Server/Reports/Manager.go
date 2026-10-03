@@ -285,7 +285,7 @@ func captureHeldForInvasionRecovery(snapshot State.GameState, capture State.Batt
 		if !reservation.RecoveryExhaustedAt.IsZero() {
 			continue
 		}
-		if Ingest.InvasionReservationReportCandidate(snapshot, reservation, capture) {
+		if Ingest.InvasionReservationReportCandidate(&snapshot, reservation, capture) {
 			return true
 		}
 	}
@@ -307,9 +307,7 @@ func (manager *Manager) fetch(ctx context.Context, notice State.ReportNotice, na
 		return
 	}
 	status := "error"
-	lowerError := strings.ToLower(receipt.Error)
-	if strings.Contains(receipt.Error, "130") || strings.Contains(receipt.Error, "66") ||
-		strings.Contains(lowerError, "unavailable") || strings.Contains(lowerError, "deleted") {
+	if reportFetchUnavailable(receipt) {
 		status = "unavailable"
 	}
 	manager.setNoticeStatus(notice.MessageID, status)
@@ -317,6 +315,27 @@ func (manager *Manager) fetch(ctx context.Context, notice State.ReportNotice, na
 		delete(manager.nextAttempt, notice.MessageID)
 	} else {
 		manager.nextAttempt[notice.MessageID] = time.Now().Add(reportRetryDelay)
+	}
+}
+
+// reportFetchUnavailable classifies a failed fetch only from the structured
+// game response, never from receipt text (message IDs can contain any digits).
+// Official BSDCommand treats NO_SPY_DATA (130) and NO_SUCH_MESSAGE (66) alike.
+// NO_SUCH_MESSAGE on the battle-report fetches (summary, waves, details) keeps
+// the terminal handling the previous text matching gave it ("response code 66
+// ... has been deleted").
+func reportFetchUnavailable(receipt Intent.Receipt) bool {
+	if receipt.Failure == nil || receipt.Failure.GameCode == nil {
+		return false
+	}
+	code := *receipt.Failure.GameCode
+	switch strings.ToLower(strings.TrimSpace(receipt.Failure.GameOpcode)) {
+	case "bsd":
+		return code == 130 || code == 66
+	case "bls", "blm", "bld":
+		return code == 66
+	default:
+		return false
 	}
 }
 
@@ -440,7 +459,8 @@ func (manager *Manager) Wait() {
 
 func (manager *Manager) loadArchivedMessages() {
 	current := map[int64]struct{}{}
-	manager.state.ReadOnlyView().RangeReportNotices(func(messageID int64, _ State.ReportNotice) bool {
+	accessorState1 := manager.state.ReadOnlyView()
+	accessorState1.RangeReportNotices(func(messageID int64, _ State.ReportNotice) bool {
 		current[messageID] = struct{}{}
 		return true
 	})

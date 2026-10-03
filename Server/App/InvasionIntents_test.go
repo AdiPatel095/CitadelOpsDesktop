@@ -292,13 +292,13 @@ func TestInvasionAttackGuardRejectsChangedLaunchBoundaries(t *testing.T) {
 			if guard.Action != "invasion.attack.guard" {
 				t.Fatalf("last invasion CRA dependency action = %q, want invasion.attack.guard", guard.Action)
 			}
-			application := &Application{State: State.NewStore(gameState)}
+			application := &Application{State: State.NewStore(&gameState)}
 			if err := application.guardInvasionAttack(t.Context(), guard.ActionArguments); err != nil {
 				t.Fatalf("unchanged launch boundary failed final guard: %v", err)
 			}
 
 			test.mutate(&gameState)
-			application.State = State.NewStore(gameState)
+			application.State = State.NewStore(&gameState)
 			err = application.guardInvasionAttack(t.Context(), guard.ActionArguments)
 			if err == nil || !strings.Contains(err.Error(), test.wantError) {
 				t.Fatalf("changed launch boundary error = %v, want %q", err, test.wantError)
@@ -381,7 +381,7 @@ func TestGuardInvasionTargetRequiresLaunchTimeMapObservation(t *testing.T) {
 		CommanderID: 7,
 	}
 	arguments, _ := json.Marshal(invasionTargetVerificationRequest{Request: request, RefreshStartedAt: now.Add(time.Second)})
-	application := &Application{State: State.NewStore(gameState)}
+	application := &Application{State: State.NewStore(&gameState)}
 	if err := application.guardInvasionTarget(t.Context(), arguments); err == nil {
 		t.Fatal("stale invasion target passed launch-time refresh guard")
 	}
@@ -389,7 +389,7 @@ func TestGuardInvasionTargetRequiresLaunchTimeMapObservation(t *testing.T) {
 	target := gameState.Map[0]["101:100"]
 	target.ObservedAt = now.Add(2 * time.Second)
 	gameState.Map[0]["101:100"] = target
-	application.State = State.NewStore(gameState)
+	application.State = State.NewStore(&gameState)
 	if err := application.guardInvasionTarget(t.Context(), arguments); err != nil {
 		t.Fatalf("fresh invasion target failed launch-time refresh guard: %v", err)
 	}
@@ -416,7 +416,7 @@ func TestCaptureInvasionLaunchTracksActiveEvent(t *testing.T) {
 		CommanderID: commanderID, CommanderKnown: true,
 		OperationID: "capture-invasion", ReservedAt: now.Add(-time.Second),
 	})
-	application := &Application{State: State.NewStore(gameState)}
+	application := &Application{State: State.NewStore(&gameState)}
 	arguments, _ := json.Marshal(resolvedInvasionAttackRequest{
 		invasionAttackRequest: invasionAttackRequest{
 			SourceCastleID: 1, EventID: 103, EventEndsAt: occurrenceEndsAt,
@@ -447,7 +447,8 @@ func TestCaptureInvasionLaunchTracksActiveEvent(t *testing.T) {
 }
 
 func TestInvasionTargetPreDispatchReservationAndDefinitiveRelease(t *testing.T) {
-	application := &Application{State: State.NewStore(State.NewGameState())}
+	accessorState1 := State.NewGameState()
+	application := &Application{State: State.NewStore(&accessorState1)}
 	commanderID := State.CommanderID(0)
 	arguments, _ := json.Marshal(struct {
 		KingdomID        State.KingdomID    `json:"KID"`
@@ -545,7 +546,7 @@ func TestInvasionTargetReservationLifecycleThroughIntentEngine(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			gameState, gameData, arguments := invasionReservationLifecycleFixture(t)
 			dataDir := t.TempDir()
-			stateStore := State.NewStore(gameState)
+			stateStore := State.NewStore(&gameState)
 			application := &Application{DataDir: dataDir, State: stateStore}
 
 			plan, err := planInvasionAttack(
@@ -718,8 +719,9 @@ func TestInvasionTargetReservationLifecycleThroughIntentEngine(t *testing.T) {
 					t.Fatalf("reservation source coordinates: memory=%#v persisted=%#v", inMemoryReservation, persistedReservation)
 				}
 				if test.opcode == "adi" {
+					accessorState2 := stateStore.ReadOnlyView()
 					if inMemoryReservation.CommanderKnown || persistedReservation.CommanderKnown ||
-						State.InvasionCommanderReserved(stateStore.ReadOnlyView(), 7) {
+						State.InvasionCommanderReserved(&accessorState2, 7) {
 						t.Fatalf("target-only ADI reservation held commander 7: memory=%#v persisted=%#v", inMemoryReservation, persistedReservation)
 					}
 				} else if !inMemoryReservation.CommanderKnown || !persistedReservation.CommanderKnown {
@@ -727,7 +729,7 @@ func TestInvasionTargetReservationLifecycleThroughIntentEngine(t *testing.T) {
 				}
 			}
 			if test.sendFailure == "indeterminate" {
-				restarted := State.NewStore(persisted)
+				restarted := State.NewStore(&persisted)
 				reservation, reserved := restarted.ReadOnlyView().Invasion.TargetReservation(0, 1165, 1166)
 				if !reserved || reservation.OperationID != operationID {
 					t.Fatalf("restarted reservation = %#v, found=%t", reservation, reserved)
@@ -912,7 +914,7 @@ func TestCaptureInvasionLaunchRejectsMovementOlderThanReservation(t *testing.T) 
 		CommanderID: commanderID, CommanderKnown: true,
 		OperationID: "new-cra", ReservedAt: now,
 	})
-	application := &Application{State: State.NewStore(state)}
+	application := &Application{State: State.NewStore(&state)}
 	arguments, _ := json.Marshal(resolvedInvasionAttackRequest{
 		invasionAttackRequest: invasionAttackRequest{
 			SourceCastleID: 1, EventID: 103, EventEndsAt: occurrenceEndsAt,
@@ -972,7 +974,7 @@ func TestInvasionReservationReconciliationRetainsFullMarkerAfterScopedGAMOmissio
 			InvasionAvailabilityKnown: true, ObservedAt: verification.ReconcileStartedAt.Add(2 * time.Second),
 		},
 	}
-	application := &Application{State: State.NewStore(state)}
+	application := &Application{State: State.NewStore(&state)}
 	if err := application.reconcileInvasionTargetReservation(t.Context(), plan.Steps[1].ActionArguments); err != nil {
 		t.Fatal(err)
 	}
@@ -1005,7 +1007,7 @@ func TestInvasionReservationReconciliationRecordsMatchedMovementAfterHAC(t *test
 		KingdomID: 0, TargetTypeID: State.MapTypeForeignLord, TargetX: 101, TargetY: 102,
 		StartedAt: reservedAt.Add(time.Second), ObservedAt: now, ArrivesAt: &arrivesAt, TravelSeconds: 60,
 	}
-	store := State.NewStore(state)
+	store := State.NewStore(&state)
 	registry := Ingest.NewRegistry()
 	if err := Ingest.RegisterCoreReducers(registry); err != nil {
 		t.Fatal(err)
@@ -1082,14 +1084,15 @@ func TestGuardInvasionTargetForgetsUnconfirmedTarget(t *testing.T) {
 		CommanderID: 7,
 	}
 	arguments, _ := json.Marshal(invasionTargetVerificationRequest{Request: request, RefreshStartedAt: now.Add(time.Second)})
-	application := &Application{State: State.NewStore(gameState)}
+	application := &Application{State: State.NewStore(&gameState)}
 	if err := application.guardInvasionTarget(t.Context(), arguments); err == nil {
 		t.Fatal("unconfirmed invasion target passed the guard")
 	}
 	// The 1x1 launch-time refresh is authoritative for the tile: the phantom
 	// must be gone so the immediate re-evaluation rotates instead of re-picking
 	// the same vanished castle until the next full sweep.
-	if _, exists := application.State.ReadOnlyView().LookupMapObservation(0, "101:100"); exists {
+	accessorState3 := application.State.ReadOnlyView()
+	if _, exists := accessorState3.LookupMapObservation(0, "101:100"); exists {
 		t.Fatal("guard left the vanished invasion castle in map state")
 	}
 	if len(application.State.ReadOnlyView().Invasion.FortifiedTargets) != 0 {
@@ -1110,7 +1113,7 @@ func TestForgetInvasionTargetPreservesConcurrentNewerObservation(t *testing.T) {
 	gameState := State.NewGameState()
 	gameState.Map[0] = map[string]State.MapObservation{"101:100": newer}
 	gameState.Invasion.FortifiedTargets[State.InvasionTargetKey(0, 101, 100)] = "STO"
-	application := &Application{State: State.NewStore(gameState)}
+	application := &Application{State: State.NewStore(&gameState)}
 
 	application.forgetInvasionTarget(stale)
 	result := application.State.ReadOnlyView()
@@ -1136,7 +1139,7 @@ func TestConsumeInvasionTargetPreservesNewerSameLevelReplacement(t *testing.T) {
 		KingdomID: 0, TargetTypeID: State.MapTypeForeignLord, X: 101, Y: 100,
 		OperationID: "consume-newer", ReservedAt: now,
 	})
-	application := &Application{State: State.NewStore(gameState)}
+	application := &Application{State: State.NewStore(&gameState)}
 	arguments, _ := json.Marshal(map[string]any{
 		"kingdomId": 0, "targetTypeId": State.MapTypeForeignLord,
 		"targetX": 101, "targetY": 100, "targetObjectId": 70,
@@ -1170,7 +1173,7 @@ func TestConsumeInvasionTargetRemovesObservationAtDispatchBoundary(t *testing.T)
 		KingdomID: 0, TargetTypeID: State.MapTypeForeignLord, X: 101, Y: 100,
 		OperationID: "consume-current", ReservedAt: now,
 	})
-	application := &Application{State: State.NewStore(gameState)}
+	application := &Application{State: State.NewStore(&gameState)}
 	arguments, _ := json.Marshal(map[string]any{
 		"kingdomId": 0, "targetTypeId": State.MapTypeForeignLord,
 		"targetX": 101, "targetY": 100, "targetObjectId": 70,
@@ -1206,7 +1209,7 @@ func TestBoundedInvasionScanIsAuthoritativeForItsWindowOnly(t *testing.T) {
 	gameState.Invasion.FortifiedTargets[State.InvasionTargetKey(0, 105, 100)] = "STO"
 	gameState.Invasion.FortifiedTargets[State.InvasionTargetKey(0, 106, 101)] = "STO"
 	gameState.Invasion.FortifiedTargets[State.InvasionTargetKey(0, 140, 140)] = "STO"
-	application := &Application{State: State.NewStore(gameState)}
+	application := &Application{State: State.NewStore(&gameState)}
 	arguments, _ := json.Marshal(invasionMapScanRequest{
 		SourceCastleID: 1, Radius: 50, ScanStartedAt: now,
 		Bounds: &State.StormMapBounds{X1: 81, Y1: 76, X2: 129, Y2: 124},
@@ -1277,7 +1280,7 @@ func TestFullInvasionScanRemovesMissingInRangeTargetAndFortification(t *testing.
 		gameState.Invasion.FortifiedTargets[State.InvasionTargetKey(0, x, 100)] = "STO"
 	}
 	gameState.Invasion.FortifiedTargets[State.InvasionTargetKey(0, 107, 100)] = "STO"
-	application := &Application{State: State.NewStore(gameState)}
+	application := &Application{State: State.NewStore(&gameState)}
 	arguments, _ := json.Marshal(invasionMapScanRequest{
 		SourceCastleID: 1, Radius: 50, ScanStartedAt: now,
 	})

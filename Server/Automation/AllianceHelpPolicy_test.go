@@ -17,7 +17,8 @@ func TestAllianceHelpPolicyUsesUrgentAllianceHelpWake(t *testing.T) {
 	if _, ok := any(policy).(CorePolicy); !ok {
 		t.Fatal("alliance help must be a core policy")
 	}
-	if !policyEnabled(policy, map[string]bool{}, State.GameState{}) {
+	accessorState1 := State.GameState{}
+	if !policyEnabled(policy, map[string]bool{}, &accessorState1) {
 		t.Fatal("core alliance help was disabled without a feature toggle")
 	}
 	if got := policyScheduleKey(policy); got != "" {

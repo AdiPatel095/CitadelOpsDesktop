@@ -111,7 +111,7 @@ func TestFortressAttackEngineFinalizesOnlyWithAuthoritativeMovement(t *testing.T
 			gameState := fortressIntentState(now)
 			gameState.Player.ID = 42
 			gameState.Session.ConnectionGeneration = 1
-			stateStore := State.NewStore(gameState)
+			stateStore := State.NewStore(&gameState)
 			ingestRegistry := Ingest.NewRegistry()
 			if err := Ingest.RegisterCoreReducers(ingestRegistry); err != nil {
 				t.Fatal(err)
@@ -229,6 +229,10 @@ type fortressEngineSender struct {
 	reconnectAfterGAA       bool
 	connectionGeneration    uint64
 	beforeFinalDispatch     func(string) error
+	// CIT-13: optional per-opcode response codes and outbound frame commits
+	// so outbound-capture reducers observe the command like production.
+	responseCodes map[string]int
+	feedOutbound  bool
 }
 
 func (*fortressEngineSender) Ready() bool               { return true }
@@ -256,6 +260,14 @@ func (sender *fortressEngineSender) Send(ctx context.Context, payload []byte) er
 	}
 	sender.opcodes = append(sender.opcodes, command.Opcode)
 	sender.events = append(sender.events, command.Opcode)
+	if sender.feedOutbound {
+		if _, err := sender.pipeline.HandleFrame(ctx, Protocol.Frame{
+			Direction: Protocol.DirectionOutbound, Opcode: command.Opcode, Payload: command.Payload,
+			ReceivedAt: time.Now().UTC(), CausationOperationID: Outbound.MetadataFromContext(ctx).OperationID,
+		}); err != nil {
+			return err
+		}
+	}
 	responseOpcode := command.Opcode
 	if command.Opcode == "jca" {
 		responseOpcode = "jaa"
@@ -287,6 +299,12 @@ func (sender *fortressEngineSender) Send(ctx context.Context, payload []byte) er
 	}
 	metadata := Outbound.MetadataFromContext(ctx)
 	code := 0
+	if override, found := sender.responseCodes[command.Opcode]; found {
+		code = override
+		if code != 0 {
+			responsePayload = nil
+		}
+	}
 	receivedAt := time.Now().UTC()
 	if !sender.gaaReceivedAt.IsZero() && command.Opcode == "gaa" {
 		receivedAt = sender.gaaReceivedAt
@@ -323,7 +341,7 @@ func runFortressEngineScenario(
 	gameState := fortressIntentState(now)
 	gameState.Player.ID = 42
 	gameState.Session.ConnectionGeneration = 1
-	stateStore := State.NewStore(gameState)
+	stateStore := State.NewStore(&gameState)
 	ingestRegistry := Ingest.NewRegistry()
 	if err := Ingest.RegisterCoreReducers(ingestRegistry); err != nil {
 		t.Fatal(err)
@@ -403,13 +421,15 @@ func TestFortressAttackRejectsNonAuthoritativeExactTargetResponsesBeforeABI(t *t
 				t.Fatalf("unsafe response launched attack: receipt=%+v opcodes=%v", receipt, sender.opcodes)
 			}
 			if test.name == "captured cooldown 84430" {
-				target, found := stateStore.ReadOnlyView().LookupMapObservation(1, "101:100")
+				accessorState1 := stateStore.ReadOnlyView()
+				target, found := accessorState1.LookupMapObservation(1, "101:100")
 				if !found || target.TowerCooldownRemaining != 84_430 {
 					t.Fatalf("captured cooldown projection=%#v found=%t", target, found)
 				}
 			}
 			if test.name == "explicit empty" || test.name == "wrong target" {
-				if _, found := stateStore.ReadOnlyView().LookupMapObservation(1, "101:100"); found {
+				accessorState2 := stateStore.ReadOnlyView()
+				if _, found := accessorState2.LookupMapObservation(1, "101:100"); found {
 					t.Fatal("authoritatively absent fortress remained eligible for another request")
 				}
 			}
@@ -498,7 +518,7 @@ func TestFortressTargetVerificationUsesTransportResponseCorrelation(t *testing.T
 	source.Focused = true
 	state.Castles[10] = source
 	state.Session.ConnectionGeneration = 1
-	store := State.NewStore(state)
+	store := State.NewStore(&state)
 	registry := Ingest.NewRegistry()
 	if err := Ingest.RegisterCoreReducers(registry); err != nil {
 		t.Fatal(err)
@@ -676,7 +696,7 @@ func TestCaptureFullFortressMapRemovesOnlyStaleTargetsInsideScannedWindows(t *te
 		"20:20":   {KingdomID: 1, X: 20, Y: 20, TypeID: State.MapTypeKingdomFortress, ObservedAt: startedAt.Add(time.Second)},
 		"200:200": {KingdomID: 1, X: 200, Y: 200, TypeID: State.MapTypeKingdomFortress, ObservedAt: startedAt.Add(-time.Hour)},
 	}
-	application := &Application{State: State.NewStore(state)}
+	application := &Application{State: State.NewStore(&state)}
 	if err := application.captureFullFortressMap(
 		fortressMapRequest{SourceCastleID: 10, KingdomID: 1, ScanStartedAt: startedAt},
 		[]towerMapWindow{{X1: 0, Y1: 0, X2: 89, Y2: 89}},

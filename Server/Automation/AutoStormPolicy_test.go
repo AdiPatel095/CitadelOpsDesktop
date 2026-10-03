@@ -75,7 +75,7 @@ func TestAutoStormMapScanBoundsStartAtSixFiftyCenter(t *testing.T) {
 	storm.X, storm.Y = 679, 596
 	state.Castles[storm.ID] = storm
 
-	bounds := autoStormMapScanBounds(state, storm)
+	bounds := autoStormMapScanBounds(&state, storm)
 	if bounds != (State.StormMapBounds{X1: 600, Y1: 600, X2: 700, Y2: 700}) {
 		t.Fatalf("initial bounds = %#v", bounds)
 	}
@@ -84,7 +84,7 @@ func TestAutoStormMapScanBoundsStartAtSixFiftyCenter(t *testing.T) {
 		NextBounds:     State.StormMapBounds{X1: 0, Y1: 0, X2: 908, Y2: 807},
 		Targets:        map[string]State.MapObservation{},
 	}
-	if next := autoStormMapScanBounds(state, storm); next != bounds {
+	if next := autoStormMapScanBounds(&state, storm); next != bounds {
 		t.Fatalf("next scan bounds = %#v, want center %#v", next, bounds)
 	}
 }
@@ -118,7 +118,7 @@ func TestAutoStormTroopCapPreviewUsesSettingsWithoutRuntimeTarget(t *testing.T) 
 	}`)
 
 	preview, err := PreviewAutoStormTroopCap(
-		state,
+		&state,
 		Configuration.Snapshot{Sections: map[string]json.RawMessage{
 			AttackPresets.ConfigurationSection: presets,
 		}},
@@ -199,7 +199,7 @@ func TestAutoStormTroopCapUsesConfirmedResetAttackCountDividedByTwentyFour(t *te
 		"troopImport":{"minimumTroops":0}
 	}`)
 	preview, err := PreviewAutoStormTroopCap(
-		state,
+		&state,
 		Configuration.Snapshot{Sections: map[string]json.RawMessage{AttackPresets.ConfigurationSection: presets}},
 		autoStormTestGameData(t),
 		autoStormTestAttackLaunchCounts{
@@ -235,6 +235,27 @@ func TestAutoStormTroopCapKeepsBaselineWhenResetTelemetryUnavailable(t *testing.
 	if !preview.Available || preview.ResetSessionAvailable || preview.MaximumTroops != 5_000 ||
 		preview.CapBasis != autoStormTroopCapBasisBaseline || !strings.Contains(preview.Detail, "unavailable") {
 		t.Fatalf("unavailable reset-session fallback = %#v", preview)
+	}
+}
+
+// A runtime with no attack-launch counter at all (no telemetry and no ledger)
+// keeps the baseline cap and explains itself in player language.
+func TestAutoStormTroopCapWithoutAnAttackCountSourceKeepsBaselineAndSaysSoPlainly(t *testing.T) {
+	now := time.Date(2026, time.July, 29, 12, 0, 0, 0, time.UTC)
+	state := State.NewGameState()
+	state.DailyAttacks.SessionStartedAt = now.Add(-time.Hour)
+	settings := defaultAutoStormSettings()
+	settings.Forts.Enabled = true
+	settings.Forts.PresetID = "fort"
+	preview, err := autoStormTroopCapPreview(Snapshot{
+		State: state, Configuration: autoStormTestTroopCapConfiguration(), GameData: autoStormTestGameData(t), Now: now,
+	}, settings)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !preview.Available || preview.ResetSessionAvailable || preview.CapBasis != autoStormTroopCapBasisBaseline ||
+		preview.Detail != "Confirmed attack count is not available yet." {
+		t.Fatalf("nil-provider preview = %#v", preview)
 	}
 }
 
@@ -465,11 +486,11 @@ func TestAutoStormTimeSkipUsesLargestAvailableNonCrossingOption(t *testing.T) {
 		state.Player.Currencies[currencyID] = 1
 	}
 
-	minutes, reserve, found := autoStormBuildingTimeSkip(state, nil, int64(23*time.Hour/time.Second))
+	minutes, reserve, found := autoStormBuildingTimeSkip(&state, nil, int64(23*time.Hour/time.Second))
 	if !found || minutes != 300 || reserve != 0 {
 		t.Fatalf("23-hour building skip = minutes %d reserve %d found %t", minutes, reserve, found)
 	}
-	key, currencyID, reserve, found := autoStormTransportTimeSkip(state, nil, 65*60)
+	key, currencyID, reserve, found := autoStormTransportTimeSkip(&state, nil, 65*60)
 	if !found || key != "MS5" || currencyID != 1005 || reserve != 0 {
 		t.Fatalf(
 			"65-minute transport skip = key %q currency %d reserve %d found %t",
@@ -483,7 +504,7 @@ func TestAutoStormTimeSkipCrossesOnlyAfterNoAvailableOptionFits(t *testing.T) {
 	state.Player.Currencies[1002] = 1
 	state.Player.Currencies[1003] = 1
 
-	minutes, reserve, found := autoStormBuildingTimeSkip(state, nil, 30)
+	minutes, reserve, found := autoStormBuildingTimeSkip(&state, nil, 30)
 	if !found || minutes != 5 || reserve != 0 {
 		t.Fatalf("30-second crossing skip = minutes %d reserve %d found %t", minutes, reserve, found)
 	}
@@ -1416,5 +1437,44 @@ func TestStormCastleActionDescriptorsDistinguishGeneratedNames(t *testing.T) {
 		if named == nil || named.Params["castle"] != " <literal>{castle} " {
 			t.Fatal("named castle bytes changed")
 		}
+	}
+}
+
+// CIT-24: a hidden Storm fort (official row[8] > 0) is never a candidate and
+// contributes no ready time; once a scan shows it visible it is eligible.
+func TestAutoStormSkipsHiddenFortWithoutReadyTime(t *testing.T) {
+	now := time.Now().UTC()
+	state := State.NewGameState()
+	storm := autoStormTestCastle(40, 4, "Storm")
+	storm.X, storm.Y = 100, 100
+	state.Castles[storm.ID] = storm
+	targets := map[string]State.MapObservation{
+		"101:101": {KingdomID: 4, X: 101, Y: 101, TypeID: autoStormFortMapTypeID, StormIsleID: 7, StormVictoryCount: 1, ObservedAt: now},
+		"105:105": {
+			KingdomID: 4, X: 105, Y: 105, TypeID: autoStormFortMapTypeID, StormIsleID: 7, StormVictoryCount: 1,
+			StormCooldownRemaining: 120, StormHidden: true, ObservedAt: now,
+		},
+	}
+	state.Map[4] = map[string]State.MapObservation{}
+	for key, target := range targets {
+		state.Map[4][key] = target
+	}
+	state.Storm.Map = State.StormMapState{SourceCastleID: storm.ID, LastAttemptAt: now, LastCompletedAt: now, Targets: targets}
+	settings := defaultAutoStormSettings()
+	settings.Forts.Enabled = true
+	snapshot := Snapshot{State: state, GameData: autoStormTestGameData(t), Now: now}
+
+	candidates, next := autoStormCombatOpportunities(snapshot, settings, storm)
+	if len(candidates) != 1 || candidates[0].Observation.X != 101 || !next.IsZero() {
+		t.Fatalf("hidden fort was a candidate or produced a ready time: %#v next=%v", candidates, next)
+	}
+
+	visible := targets["105:105"]
+	visible.StormHidden = false
+	visible.StormCooldownRemaining = 0
+	snapshot.State.Storm.Map.Targets["105:105"] = visible
+	snapshot.State.Map[4]["105:105"] = visible
+	if candidates, _ = autoStormCombatOpportunities(snapshot, settings, storm); len(candidates) != 2 {
+		t.Fatalf("visible fort did not become eligible: %#v", candidates)
 	}
 }

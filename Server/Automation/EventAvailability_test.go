@@ -17,14 +17,14 @@ func TestLimitedEventGateUsesOpeningGraceBeforeSoftLock(t *testing.T) {
 		ActiveByEvent: map[int64]State.EventAvailability{},
 	}
 
-	decision, locked := limitedEventGate(state, opening.Add(4*time.Second), []int64{72, 80}, "Nomad or Samurai event")
+	decision, locked := limitedEventGate(&state, opening.Add(4*time.Second), []int64{72, 80}, "Nomad or Samurai event")
 	if !locked || decision.Status != "opening-check" || !decision.NextCheckAt.Equal(opening.Add(5*time.Minute)) {
 		t.Fatalf("opening decision = %#v locked=%t", decision, locked)
 	}
 
-	decision, locked = limitedEventGate(state, opening.Add(5*time.Minute), []int64{72, 80}, "Nomad or Samurai event")
+	decision, locked = limitedEventGate(&state, opening.Add(5*time.Minute), []int64{72, 80}, "Nomad or Samurai event")
 	if !locked || decision.Status != "soft-locked" ||
-		!decision.NextCheckAt.Equal(opening.Add(24*time.Hour)) || !strings.Contains(decision.Detail, "not active") {
+		!decision.NextCheckAt.Equal(opening.Add(24*time.Hour)) || !strings.Contains(decision.Detail, "isn't running right now") {
 		t.Fatalf("settled decision = %#v locked=%t", decision, locked)
 	}
 }
@@ -38,7 +38,7 @@ func TestLimitedEventGateReopensImmediatelyFromAuthoritativeInventory(t *testing
 			80: {EventID: 80, EndsAt: now.Add(20 * time.Hour)},
 		},
 	}
-	if decision, locked := limitedEventGate(state, now, []int64{72, 80}, "Nomad or Samurai event"); locked {
+	if decision, locked := limitedEventGate(&state, now, []int64{72, 80}, "Nomad or Samurai event"); locked {
 		t.Fatalf("active event remained locked: %#v", decision)
 	}
 }
@@ -72,7 +72,7 @@ func TestLimitedEventDescriptorUsesWholeIdentityTemplates(t *testing.T) {
 		} {
 			state := State.NewGameState()
 			state.EventScores.Inventory.ObservedAt = phase.observed
-			decision, locked := limitedEventGate(state, phase.now, family.ids, family.label)
+			decision, locked := limitedEventGate(&state, phase.now, family.ids, family.label)
 			if !locked || decision.DetailDescriptor == nil || decision.DetailDescriptor.Fallback != decision.Detail || len(decision.DetailDescriptor.Params) != 0 {
 				t.Fatalf("lost whole event message: %+v", decision)
 			}

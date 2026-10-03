@@ -1,3 +1,4 @@
+import { StopFooter } from '../../components/StopControl';
 import { useLocale as useStaticLocale } from "../../i18n/LocaleContext";
 import { LocalizedText } from "../../i18n/LocalizedText";
 import React, { useEffect, useMemo, useState } from 'react';
@@ -10,6 +11,12 @@ import {
   parseAttackPresetDocument,
   summarizeAttackPreset,
 } from '../../attackPresets/AttackPresetTypes';
+import { attackPresetSelectOptions } from '../../attackPresets/AttackPresetOptionLabel';
+import { attackSetupRef } from '../../attackPresets/AppCreatedPresets';
+import { attackPresetSlotDefinition } from '../../attackPresets/AttackPresetReferences';
+import { useConfigurationDraftSession } from '../ConfigurationDraftSession';
+import { saveModuleWithAppCreatedPresets, type AppCreatedPresetSaveWarning } from '../AppCreatedPresetSave';
+import { useSetupContext } from '../requirements/useSetupContext';
 import { Notifications } from '../../components/Notifications';
 import { Badge, Button, Card, Input, Modal, ModalTitle, Select, SettingsModal, Switch } from '../../components/ui';
 import {
@@ -23,16 +30,34 @@ import {
 import { eventDifficultyName, useEventDifficultyOptions } from '../EventDifficultyOptions';
 import HorseTravelBoostSelect from './HorseTravelBoostSelect';
 import { FeatureGuideModal } from './FeatureGuideModal';
+import { AUTOMATION_ENABLED_KEYS } from '../disclosure/placement';
+import { countCustomValues, travelLine } from '../disclosure/summaries';
+import { useSettingsDisclosure } from '../disclosure/useSettingsDisclosure';
+import { AutomationRunStrip } from './AutomationRunStrip';
+import { SettingsSection } from './SettingsSection';
 import { englishGuidePack, useGuideLocale } from '../../config/useGuideLocale';
+import { useDraftRecovery } from '../useDraftRecovery';
 
 interface AutoAdvisorSettingsModalProps {
   isOpen: boolean;
   onClose: () => void;
+  onOpenAutomationDuration?: (featureKey: string, featureLabel: string) => void;
 }
 
-export const AutoAdvisorSettingsModal: React.FC<AutoAdvisorSettingsModalProps> = ({ isOpen, onClose }) => {
+const advisorDefaults = defaultAutoAdvisorClientState();
+
+export const AutoAdvisorSettingsModal: React.FC<AutoAdvisorSettingsModalProps> = ({ isOpen, onClose, onOpenAutomationDuration }) => {
+  const disclosure = useSettingsDisclosure('autoAdvisor');
   const { t: localizeStatic } = useStaticLocale();
-  const { state, configuration, submitIntent, updateConfiguration } = useCitadelAPI();
+  const { state, submitIntent } = useCitadelAPI();
+  const setup = useSetupContext(AUTO_ADVISOR_SECTION);
+  // Baseline at open (CIT-16): reusing an app-created preset promotes it in the same ordered save.
+  const draftSession = useConfigurationDraftSession({
+    isOpen,
+    section: AUTO_ADVISOR_SECTION,
+    configurationDependencies: [ATTACK_PRESETS_SECTION],
+    sessionKey: setup.sessionKey,
+  });
   const [draft, setDraft] = useState<AutoAdvisorClientStateV1>(defaultAutoAdvisorClientState);
   const [saving, setSaving] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
@@ -47,10 +72,11 @@ export const AutoAdvisorSettingsModal: React.FC<AutoAdvisorSettingsModalProps> =
 
   const castles = useMemo(() => castleOptionsFromState(state).filter((castle) => castle.kingdomId === 0), [state]);
   const presetDocument = useMemo(
-    () => parseAttackPresetDocument(configuration?.sections[ATTACK_PRESETS_SECTION]),
-    [configuration?.sections],
+    () => parseAttackPresetDocument(draftSession.sections?.[ATTACK_PRESETS_SECTION]),
+    [draftSession.sections],
   );
   const selectedPreset = presetDocument.presets.find((preset) => preset.id === draft.presetId);
+  const selectedOwner = selectedPreset?.app ? attackPresetSlotDefinition(selectedPreset.app.section, selectedPreset.app.slot) : undefined;
   const presetSummary = selectedPreset ? summarizeAttackPreset(selectedPreset) : null;
   const completedAchievements = state?.player.achievements?.completed ?? {};
   const achievementsObserved = Boolean(state?.player.achievements?.observedAt);
@@ -81,9 +107,9 @@ export const AutoAdvisorSettingsModal: React.FC<AutoAdvisorSettingsModalProps> =
   const summaryObserved = Boolean(summary?.observedAt && Date.parse(summary.observedAt) > 0);
 
   useEffect(() => {
-    if (!isOpen) return;
-    setDraft(parseAutoAdvisorClientState(configuration?.sections[AUTO_ADVISOR_SECTION]));
-  }, [configuration?.sections, isOpen]);
+    if (!isOpen || !draftSession.initialSnapshot) return;
+    setDraft(parseAutoAdvisorClientState(draftSession.initialSections?.[AUTO_ADVISOR_SECTION]));
+  }, [draftSession.initialSections, draftSession.openKey, draftSession.initialSnapshot, isOpen]);
 
   const canSave = draft.sourceCastleId > 0
     && Boolean(draft.presetId)
@@ -95,12 +121,27 @@ export const AutoAdvisorSettingsModal: React.FC<AutoAdvisorSettingsModalProps> =
   const save = async () => {
     if (saving || !canSave) return;
     setSaving(true);
+    const warnings: AppCreatedPresetSaveWarning[] = [];
     try {
-      await updateConfiguration(AUTO_ADVISOR_SECTION, draft);
+      // No inline mode: a selected app-created preset of another module is promoted before the module write.
+      await saveModuleWithAppCreatedPresets({
+        draftSession,
+        section: AUTO_ADVISOR_SECTION,
+        slots: [{
+          slot: 'attack',
+          ref: attackSetupRef(draft.presetId, presetDocument, AUTO_ADVISOR_SECTION, 'attack'),
+          moduleLabel: localizeStatic('attackPresets.module.autoAdvisor'),
+          slotLabel: localizeStatic('attackPresets.slot.attack'),
+        }],
+        buildSectionValue: (ids) => ({ ...draft, presetId: ids.attack }),
+        warnings,
+      });
       Notifications.success('Auto Advisor settings saved. No advisor token was consumed.');
+      if (warnings.includes('cleanup-pending')) Notifications.warning(localizeStatic('attackPresets.cleanupPending'));
       onClose();
     } catch (error) {
       Notifications.error(error instanceof Error ? error.message : 'Could not save Auto Advisor settings.');
+      if (warnings.includes('cleanup-pending')) Notifications.warning(localizeStatic('attackPresets.rollbackPending'));
     } finally {
       setSaving(false);
     }
@@ -156,9 +197,12 @@ export const AutoAdvisorSettingsModal: React.FC<AutoAdvisorSettingsModalProps> =
     setActivationOpen(true);
   };
 
+  const recovery = useDraftRecovery({ section: AUTO_ADVISOR_SECTION, isOpen, draftSession, draft: draft, loaded: parseAutoAdvisorClientState(draftSession.sections?.[AUTO_ADVISOR_SECTION]) });
+
   return (
     <>
       <SettingsModal
+        footerLeading={<StopFooter featureId="autoAdvisor" />}
         isOpen={isOpen}
         onClose={() => { if (!saving && !activating) onClose(); }}
         maxWidth="3xl"
@@ -168,9 +212,16 @@ export const AutoAdvisorSettingsModal: React.FC<AutoAdvisorSettingsModalProps> =
         description={localizeStatic("ui.settings.components.autoAdvisorSettingsModal.description.one.guarded.nomad.or.samurai.advisor.run.350d2486")}
         onSave={() => void save()}
         isSaving={saving}
-        saveDisabled={!canSave}
+        saveDisabled={!canSave || !draftSession.ready}
+        contentDisabled={!draftSession.ready}
+        contentNotice={<>{recovery.banner}{draftSession.conflictNotice}</>}
       >
+        <AutomationRunStrip
+          featureId="autoAdvisor"
+          onOpenDuration={onOpenAutomationDuration ? () => onOpenAutomationDuration(AUTOMATION_ENABLED_KEYS.autoAdvisor, 'Auto Advisor') : undefined}
+        />
         <div className="space-y-3">
+          <SettingsSection disclosure={disclosure} section="access" className="space-y-3">
           <Card variant="solid" className="p-4">
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div>
@@ -230,6 +281,8 @@ export const AutoAdvisorSettingsModal: React.FC<AutoAdvisorSettingsModalProps> =
             </Card>
           ) : null}
 
+          </SettingsSection>
+          <SettingsSection disclosure={disclosure} section="setup" className="space-y-3">
           <Card variant="solid" className="p-4">
             <div className="grid gap-4 md:grid-cols-2">
               <label className="block">
@@ -247,17 +300,12 @@ export const AutoAdvisorSettingsModal: React.FC<AutoAdvisorSettingsModalProps> =
                 <Select
                   value={draft.presetId}
                   onChange={(presetId) => setDraft((current) => ({ ...current, presetId }))}
-                  options={presetDocument.presets.map((preset) => ({ value: preset.id, label: preset.name }))}
+                  options={attackPresetSelectOptions(presetDocument.presets)}
                   placeholder={presetDocument.presets.length ? 'Choose a CitadelOps preset' : 'Create an Attack Preset first'}
                   disabled={presetDocument.presets.length === 0}
                   menuGrowToViewport
                 />
               </label>
-              <HorseTravelBoostSelect
-                className="block md:col-span-2"
-                value={draft.horseTravelBoostId}
-                onChange={(horseTravelBoostId) => setDraft((current) => ({ ...current, horseTravelBoostId }))}
-              />
             </div>
             {presetSummary ? (
               <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-border-base pt-3">
@@ -266,6 +314,11 @@ export const AutoAdvisorSettingsModal: React.FC<AutoAdvisorSettingsModalProps> =
                 <Badge variant="outline">{presetSummary.troops.toLocaleString()} troops</Badge>
                 <Badge variant="outline">{presetSummary.tools.toLocaleString()} tools</Badge>
               </div>
+            ) : null}
+            {selectedPreset?.app && selectedOwner ? (
+              <p className="mt-2 text-[11px] text-warning">
+                <LocalizedText messageKey="attackPresets.createdByOther" params={{ module: `${localizeStatic(selectedOwner.moduleLabelKey)} · ${localizeStatic(selectedOwner.slotLabelKey)}` }} />
+              </p>
             ) : null}
           </Card>
 
@@ -297,29 +350,8 @@ export const AutoAdvisorSettingsModal: React.FC<AutoAdvisorSettingsModalProps> =
             {difficultyCatalog.error ? <p className="mt-3 text-xs text-danger">{difficultyCatalog.error}</p> : null}
           </Card>
 
-          <Card variant="solid" className="p-4">
-            <div className="mb-3 flex items-center gap-2 text-sm font-black text-text-main"><Clock3 className="h-4 w-4 text-primary" /> <LocalizedText messageKey="ui.settings.components.autoAdvisorSettingsModal.run.sizing.878bd208" /></div>
-            <div className="grid gap-4 sm:grid-cols-2">
-              <NumberField
-                label={localizeStatic("ui.settings.components.autoAdvisorSettingsModal.label.maximum.attacks.950045b9")}
-                value={draft.maxAttackCount}
-                min={1}
-                max={AUTO_ADVISOR_MAX_ATTACKS}
-                suffix="AAC"
-                onChange={(value) => setInteger('maxAttackCount', value, 1, AUTO_ADVISOR_MAX_ATTACKS, AUTO_ADVISOR_MAX_ATTACKS)}
-              />
-              <NumberField
-                label={localizeStatic("ui.settings.components.autoAdvisorSettingsModal.label.stop.before.event.end.ef90dd74")}
-                value={Math.round(draft.minimumRemainingSec / 60)}
-                min={0}
-                max={1440}
-                suffix="min"
-                onChange={(value) => setInteger('minimumRemainingSec', Number(value) * 60, 0, 86400, 1800)}
-              />
-            </div>
-            <p className="mt-3 text-[11px] text-text-muted"><LocalizedText messageKey="ui.settings.components.autoAdvisorSettingsModal.the.emitted.aac.is.the.smallest.safe.d2c50f19" /></p>
-          </Card>
-
+          </SettingsSection>
+          <SettingsSection disclosure={disclosure} section="gates">
           <Card variant="solid" className="p-4">
             <div className="mb-3 flex items-center gap-2 text-sm font-black text-text-main"><Coins className="h-4 w-4 text-primary" /> <LocalizedText messageKey="ui.settings.components.autoAdvisorSettingsModal.resource.gates.05c86e14" /></div>
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
@@ -349,6 +381,45 @@ export const AutoAdvisorSettingsModal: React.FC<AutoAdvisorSettingsModalProps> =
             </div>
             <p className="mt-3 text-[11px] text-text-muted"><LocalizedText messageKey="ui.settings.components.autoAdvisorSettingsModal.the.coin.value.is.the.conservative.total.b41f8b67" /></p>
           </Card>
+
+          </SettingsSection>
+          <SettingsSection disclosure={disclosure} section="run-sizing">
+          <div>
+            <div className="mb-3 flex items-center gap-2 text-sm font-black text-text-main"><Clock3 className="h-4 w-4 text-primary" /> <LocalizedText messageKey="ui.settings.components.autoAdvisorSettingsModal.run.sizing.878bd208" /></div>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <NumberField
+                label={localizeStatic("ui.settings.components.autoAdvisorSettingsModal.label.maximum.attacks.950045b9")}
+                value={draft.maxAttackCount}
+                min={1}
+                max={AUTO_ADVISOR_MAX_ATTACKS}
+                suffix="AAC"
+                onChange={(value) => setInteger('maxAttackCount', value, 1, AUTO_ADVISOR_MAX_ATTACKS, AUTO_ADVISOR_MAX_ATTACKS)}
+              />
+              <NumberField
+                label={localizeStatic("ui.settings.components.autoAdvisorSettingsModal.label.stop.before.event.end.ef90dd74")}
+                value={Math.round(draft.minimumRemainingSec / 60)}
+                min={0}
+                max={1440}
+                suffix="min"
+                onChange={(value) => setInteger('minimumRemainingSec', Number(value) * 60, 0, 86400, 1800)}
+              />
+            </div>
+            <p className="mt-3 text-[11px] text-text-muted"><LocalizedText messageKey="ui.settings.components.autoAdvisorSettingsModal.the.emitted.aac.is.the.smallest.safe.d2c50f19" /></p>
+          </div>
+
+          </SettingsSection>
+          <SettingsSection
+            disclosure={disclosure}
+            section="travel"
+            summary={[travelLine(draft.horseTravelBoostId)]}
+            customCount={countCustomValues(draft, advisorDefaults, ['horseTravelBoostId'])}
+          >
+            <HorseTravelBoostSelect
+              className="block"
+              value={draft.horseTravelBoostId}
+              onChange={(horseTravelBoostId) => setDraft((current) => ({ ...current, horseTravelBoostId }))}
+            />
+          </SettingsSection>
 
           <p className="rounded-global border border-border-base bg-bg-app/40 px-4 py-3 text-xs text-text-muted">
             <LocalizedText messageKey="ui.settings.components.autoAdvisorSettingsModal.auto.advisor.launches.only.after.the.game.17ba6105" /></p>

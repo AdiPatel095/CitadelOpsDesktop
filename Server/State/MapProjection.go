@@ -193,6 +193,7 @@ func projectMapObservation(source MapObservation) (MapObservation, bool) {
 		projected.StormIsleID = source.StormIsleID
 		projected.StormVictoryCount = source.StormVictoryCount
 		projected.StormCooldownRemaining = source.StormCooldownRemaining
+		projected.StormHidden = source.StormHidden
 	case MapProjectionRift:
 		projected.ObjectID = source.ObjectID
 	}

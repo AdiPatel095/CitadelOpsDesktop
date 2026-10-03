@@ -35,9 +35,9 @@ func ownedKingdomTransportDecision(
 	timeSkipReserve map[string]int64,
 	snapshot Snapshot,
 ) (Decision, bool) {
-	workflows := ownedKingdomResourceWorkflows(snapshot.State, owner)
+	workflows := ownedKingdomResourceWorkflows(&snapshot.State, owner)
 	for _, workflow := range workflows {
-		pending, found := pendingKingdomResourceTransport(snapshot.State, workflow.KingdomID)
+		pending, found := pendingKingdomResourceTransport(&snapshot.State, workflow.KingdomID)
 		if !found {
 			arguments, _ := json.Marshal(map[string]any{
 				"owner": owner, "targetKingdomId": workflow.KingdomID,
@@ -77,7 +77,7 @@ func ownedKingdomTransportDecision(
 	return Decision{}, false
 }
 
-func ownedKingdomResourceWorkflows(gameState State.GameState, owner string) []State.KingdomResourceTransportWorkflow {
+func ownedKingdomResourceWorkflows(gameState *State.GameState, owner string) []State.KingdomResourceTransportWorkflow {
 	result := make([]State.KingdomResourceTransportWorkflow, 0, len(gameState.KingdomTransport.ResourceWorkflows))
 	for _, workflow := range gameState.KingdomTransport.ResourceWorkflows {
 		if workflow.Owner == owner {

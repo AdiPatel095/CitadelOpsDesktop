@@ -19,6 +19,7 @@ import (
 
 	"CitadelDesktop/Server/App"
 	"CitadelDesktop/Server/Configuration"
+	"CitadelDesktop/Server/Diagnostics"
 	"CitadelDesktop/Server/History"
 	"CitadelDesktop/Server/PrivateMetrics"
 	"CitadelDesktop/Server/Reports"
@@ -433,7 +434,7 @@ func newTestOrchestrator(t *testing.T) (*Supervisor, *TenantAuthenticator, *Orch
 	return supervisor, auth, orchestrator, clock.Now()
 }
 
-func newTestOrchestratorWithClock(t *testing.T) (*Supervisor, *TenantAuthenticator, *Orchestrator, *testClock) {
+func newTestOrchestratorWithClock(t *testing.T, samplers ...*Diagnostics.LoadSampler) (*Supervisor, *TenantAuthenticator, *Orchestrator, *testClock) {
 	t.Helper()
 	supervisor := newTestSupervisor(t)
 	auth, err := NewDynamicTenantAuthenticator([]byte(strings.Repeat("s", 32)), true)
@@ -441,10 +442,14 @@ func newTestOrchestratorWithClock(t *testing.T) (*Supervisor, *TenantAuthenticat
 		t.Fatal(err)
 	}
 	clock := &testClock{now: time.Now().UTC().Truncate(time.Second)}
+	var load *Diagnostics.LoadSampler
+	if len(samplers) > 0 {
+		load = samplers[0]
+	}
 	orchestrator, err := NewOrchestrator(OrchestratorConfig{
 		CellID: "cell-one", Token: testControlToken,
 		Supervisor: supervisor, DashboardAuth: auth, Now: clock.Now,
-		DrainTimeout: time.Second,
+		DrainTimeout: time.Second, LoadSampler: load,
 	})
 	if err != nil {
 		t.Fatal(err)
@@ -634,6 +639,11 @@ func TestOrchestratorFencesAndAcknowledgesAccountConfiguration(t *testing.T) {
 	if status.ConfigurationState != "ready" || status.AppliedConfigurationRevision != snapshot.Revision ||
 		status.AppliedConfigurationDigest != digest {
 		t.Fatalf("status after sync = %+v", status)
+	}
+	// A connected dashboard learns the canonical version (not the local store
+	// revision) from the sync, through the configuration store.
+	if authority := application.Configuration.AuthorityVersion(); authority.Revision != snapshot.Revision || authority.Digest != digest {
+		t.Fatalf("authority version after sync = %+v, want revision %d digest %s", authority, snapshot.Revision, digest)
 	}
 	waitForSessionState(t, application, "unavailable", "starting", "reconnecting", "error")
 
@@ -1037,5 +1047,85 @@ func TestOrchestratorKeepsTenantRuntimeAcrossGameDisconnectAndReconnectControl(t
 	}
 	if got := bytes.Count(body, []byte("password")); got != 0 {
 		t.Fatalf("reconnect response mentioned credentials: %s", body)
+	}
+}
+
+func TestOrchestratorStatusReportsLoadOnceSampled(t *testing.T) {
+	sampler := Diagnostics.NewLoadSampler()
+	_, _, orchestrator, _ := newTestOrchestratorWithClock(t, sampler)
+	data, err := json.Marshal(orchestrator.Status())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if bytes.Contains(data, []byte(`"load"`)) {
+		t.Fatalf("load present before sampling: %s", data)
+	}
+	sampler.Sample()
+	sampler.Sample()
+	status := orchestrator.Status()
+	if status.Load == nil || status.Load.CPUSamples != 1 || status.Load.CPUCores < 1 {
+		t.Fatalf("status load = %+v", status.Load)
+	}
+	server := httptest.NewServer(orchestrator.Handler())
+	defer server.Close()
+	ctx, cancel := context.WithTimeout(t.Context(), 5*time.Second)
+	defer cancel()
+	request, err := http.NewRequestWithContext(ctx, http.MethodGet, server.URL+"/orchestrator/v1/events", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	request.Header.Set("Authorization", "Bearer "+testControlToken)
+	response, err := http.DefaultClient.Do(request)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer response.Body.Close()
+	if response.StatusCode != http.StatusOK {
+		t.Fatalf("event status = %d", response.StatusCode)
+	}
+	scanner := bufio.NewScanner(response.Body)
+	for scanner.Scan() {
+		if data, ok := strings.CutPrefix(scanner.Text(), "data: "); ok {
+			var eventStatus CellStatus
+			if err := json.Unmarshal([]byte(data), &eventStatus); err != nil {
+				t.Fatal(err)
+			}
+			if eventStatus.Load == nil || *eventStatus.Load != *status.Load {
+				t.Fatalf("event load = %+v, want %+v", eventStatus.Load, status.Load)
+			}
+			return
+		}
+	}
+	t.Fatalf("event stream missing status: %v", scanner.Err())
+}
+
+func TestOrchestratorDiagnosticsIncludeLoad(t *testing.T) {
+	sampler := Diagnostics.NewLoadSampler()
+	_, _, orchestrator, _ := newTestOrchestratorWithClock(t, sampler)
+	for _, ready := range []bool{false, true} {
+		if ready {
+			sampler.Sample()
+			sampler.Sample()
+		}
+		request := httptest.NewRequest(http.MethodGet, "/orchestrator/v1/diagnostics", nil)
+		request.Header.Set("Authorization", "Bearer "+testControlToken)
+		response := httptest.NewRecorder()
+		orchestrator.Handler().ServeHTTP(response, request)
+		if response.Code != http.StatusOK {
+			t.Fatalf("diagnostics status = %d", response.Code)
+		}
+		var body struct {
+			Load *Diagnostics.LoadSnapshot `json:"load"`
+		}
+		if err := json.Unmarshal(response.Body.Bytes(), &body); err != nil {
+			t.Fatal(err)
+		}
+		if !ready {
+			if body.Load != nil || bytes.Contains(response.Body.Bytes(), []byte(`"load"`)) {
+				t.Fatal("diagnostics load present before sampling")
+			}
+		} else if body.Load == nil || *body.Load != *orchestrator.Status().Load {
+			t.Fatalf("diagnostics load = %+v, want status load", body.Load)
+		}
 	}
 }

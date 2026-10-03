@@ -191,8 +191,10 @@ func TestBossDungeonAttackDialogReducerOwnsADIComponents(t *testing.T) {
 	}
 	abi := registry.registered("abi", Protocol.DirectionInbound)
 	adi := registry.registered("adi", Protocol.DirectionInbound)
-	if abi.reducer == nil || abi.writes != adi.writes || !abi.writes.Has(State.ComponentAttackDialog) ||
-		!abi.writes.Has(State.ComponentWorldMap) {
+	// CIT-13: ABI adds a second step that only records COOLING_DOWN rejections.
+	if abi.reducer == nil || len(abi.steps) != 2 || abi.steps[0].writes != adi.writes ||
+		!abi.writes.Has(State.ComponentAttackDialog) || !abi.writes.Has(State.ComponentWorldMap) ||
+		abi.steps[1].writes != State.Components(State.ComponentCommandContext, State.ComponentAttackAnalytics) {
 		t.Fatalf("ABI reducer ownership = %v, ADI = %v", abi.writes.List(), adi.writes.List())
 	}
 	if !frameMutatesWorldMap(Protocol.Frame{Opcode: "abi", Direction: Protocol.DirectionInbound}) {
@@ -279,5 +281,51 @@ func TestReduceAttackDialogRefreshesTrackedStormOpportunity(t *testing.T) {
 	if tracked.OwnerID != -403 || !tracked.StormReadyAt().Equal(observedAt) ||
 		!tracked.StormExpiresAt(0).Equal(observedAt.Add(100*time.Second)) {
 		t.Fatalf("tracked Storm opportunity = %#v", tracked)
+	}
+}
+
+// CIT-23: an ADI/ABI dialog for a Storm fort carries no object ID (row[3] is
+// the kingdom ID); an island dialog keeps its official object ID.
+func TestStormAttackDialogObjectIDFollowsOfficialRowLayout(t *testing.T) {
+	gameData, err := GameData.DecodeStore([]byte(`{
+		"versionInfo":[],"buildings":[],"units":[],
+		"isles":[
+			{"IsleID":4,"type":"VILLAGEWOOD","dungeonlevel":70,"globalCooldown":115200,"occupationTime":14400},
+			{"IsleID":10,"type":"DUNGEON","dungeonlevel":40,"maxCountVictories":10,"countVictories":"0#1#2#3#4#5#6#7#8#9"}
+		]
+	}`), GameData.SourceMetadata{ItemVersion: "test"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	code := 0
+	for _, test := range []struct {
+		name     string
+		row      string
+		objectID int64
+		isleID   int64
+		cooldown int
+		ownerID  State.PlayerID
+		hidden   bool
+	}{
+		{"visible spied fort", `[25,104,105,4,3600,10,300,5,0]`, 0, 10, 300, 0, false},
+		{"hidden fort", `[25,106,107,4,-1,10,120,0,1]`, 0, 10, 120, 0, true},
+		{"hidden fort large flag", `[25,108,109,4,-1,10,0,0,200]`, 0, 10, 0, 0, true},
+		{"island", `[24,100,101,3319,-403,0,0,0,4,100]`, 3319, 4, 100, -403, false},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			gameState := State.NewGameState()
+			_, changed, err := reduceAttackDialog(t.Context(), Protocol.Frame{
+				Opcode: "adi", Direction: Protocol.DirectionInbound, ResponseCode: &code, ReceivedAt: time.Now().UTC(),
+				Payload: json.RawMessage(`{"KID":4,"SCID":40,"gaa":{"AI":` + test.row + `},"AE":[]}`),
+			}, &gameState, gameData)
+			if err != nil || !changed {
+				t.Fatalf("dialog changed=%t err=%v", changed, err)
+			}
+			target := gameState.AttackDialog.Target
+			if target.ObjectID != test.objectID || target.StormIsleID != test.isleID || target.StormCooldownRemaining != test.cooldown ||
+				target.OwnerID != test.ownerID || target.StormHidden != test.hidden {
+				t.Fatalf("%s dialog target = %#v", test.name, target)
+			}
+		})
 	}
 }

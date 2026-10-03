@@ -23,6 +23,8 @@ import (
 const sessionChangePollInterval = 25 * time.Millisecond
 const sessionReadyWaitTimeout = 10 * time.Second
 const wireCommitCleanupTimeout = 10 * time.Second
+const operationMemoryLimit = 500
+const operationMemoryBytes = 8 << 20
 
 // maximumStaleReplans bounds in-place retries of a plan that keeps going stale
 // before any step completes. Each retry re-runs the plan's command
@@ -31,6 +33,7 @@ const wireCommitCleanupTimeout = 10 * time.Second
 const maximumStaleReplans = 3
 
 var ErrPlanStale = errors.New("intent plan became stale before dispatch")
+var ErrOperationHistoryUnavailable = errors.New("stored operation history is unavailable")
 var ErrCoinUnavailable = errors.New("not enough coins for dispatch")
 
 type CoinUnavailableError struct {
@@ -130,6 +133,9 @@ type Engine struct {
 	labelsReady    bool
 
 	mu                    sync.RWMutex
+	admissionMu           sync.RWMutex
+	draining              bool
+	drainCancelled        map[string]bool
 	actions               map[string]Action
 	resolvers             map[string]StepResolver
 	dependencies          map[string]CommandDependencyResolver
@@ -143,6 +149,8 @@ type Engine struct {
 	durableOperations     map[string]struct{}
 	operationOrder        []string
 	operationIndex        map[string]struct{}
+	operationSizes        map[string]int
+	cachedOperationBytes  int
 	subscribers           map[uint64]chan Receipt
 	eventSequence         uint64
 	persistenceErr        error
@@ -176,7 +184,7 @@ func NewEngine(registry *Registry, state StateReader, gameData GameDataProvider,
 		registry: registry, state: state, gameData: gameData, sender: sender, observer: observer,
 		claims: newClaimManager(), admission: newAdmissionManager(availability), actions: map[string]Action{}, resolvers: map[string]StepResolver{},
 		dependencies: map[string]CommandDependencyResolver{}, active: map[string]context.CancelFunc{},
-		operations: map[string]Receipt{}, requestHashes: map[string]string{}, durableOperations: map[string]struct{}{}, operationIndex: map[string]struct{}{},
+		operations: map[string]Receipt{}, requestHashes: map[string]string{}, durableOperations: map[string]struct{}{}, operationIndex: map[string]struct{}{}, operationSizes: map[string]int{},
 		subscribers: map[uint64]chan Receipt{},
 	}
 }
@@ -256,7 +264,7 @@ func (engine *Engine) SetOperationStore(ctx context.Context, store OperationStor
 	if err != nil {
 		return err
 	}
-	recent, err := store.Recent(ctx, operationHistoryLimit)
+	recent, err := store.Recent(ctx, operationMemoryLimit)
 	if err != nil {
 		return err
 	}
@@ -268,12 +276,12 @@ func (engine *Engine) SetOperationStore(ctx context.Context, store OperationStor
 	engine.operationStore = store
 	for index := len(recent) - 1; index >= 0; index-- {
 		operation := recent[index]
-		engine.cacheOperationLocked(operation.Receipt, operation.RequestHash)
 		engine.durableOperations[operation.Receipt.ID] = struct{}{}
+		engine.cacheOperationLocked(operation.Receipt, operation.RequestHash)
 	}
 	for _, operation := range recovered {
-		engine.cacheOperationLocked(operation.Receipt, operation.RequestHash)
 		engine.durableOperations[operation.Receipt.ID] = struct{}{}
+		engine.cacheOperationLocked(operation.Receipt, operation.RequestHash)
 	}
 	engine.mu.Unlock()
 	return nil
@@ -406,6 +414,13 @@ type preparedSubmission struct {
 // true the returned receipt is final for this submission — an idempotent
 // replay or a reservation failure — and nothing was registered.
 func (engine *Engine) prepare(ctx context.Context, request Request) (*preparedSubmission, Receipt, bool) {
+	// Serialize admission with drain startup, including reservation and active
+	// registration. A drain cannot miss an operation still being admitted.
+	engine.admissionMu.RLock()
+	defer engine.admissionMu.RUnlock()
+	if engine.draining {
+		return nil, Receipt{ID: request.ID, Intent: request.Name, Status: StatusFailed, Phase: EffectPhaseCompleted, Error: "runtime is draining"}, true
+	}
 	if ctx == nil {
 		ctx = context.Background()
 	}
@@ -707,7 +722,7 @@ func (engine *Engine) execute(prepared *preparedSubmission) Receipt {
 		}))
 		dispatches := 0
 		expectedProtocolContext := currentInput.ProtocolContext
-		expectedWorldID, expectedPlayerID := State.BoundAccount(currentInput.State)
+		expectedWorldID, expectedPlayerID := State.BoundAccount(&currentInput.State)
 		expectedCatalogVersion := plan.CatalogVersion
 		attemptContext = context.WithValue(attemptContext, dispatchPermitContextKey{}, dispatchPermit(func(expectedRevision uint64) error {
 			if err := engine.checkLaneSafety(request); err != nil {
@@ -731,7 +746,7 @@ func (engine *Engine) execute(prepared *preparedSubmission) Receipt {
 				view.ProtocolContext.ConnectionGeneration != expectedProtocolContext.ConnectionGeneration {
 				return fmt.Errorf("%w: connection generation changed", ErrPlanStale)
 			}
-			currentWorldID, currentPlayerID := State.BoundAccount(view.State)
+			currentWorldID, currentPlayerID := State.BoundAccount(&view.State)
 			if expectedWorldID != "" && !strings.EqualFold(expectedWorldID, currentWorldID) {
 				return fmt.Errorf("%w: bound game world changed", ErrPlanStale)
 			}
@@ -990,6 +1005,7 @@ func (engine *Engine) registerActive(id string, cancel context.CancelFunc) bool 
 func (engine *Engine) unregisterActive(id string) {
 	engine.mu.Lock()
 	delete(engine.active, id)
+	delete(engine.drainCancelled, id)
 	engine.mu.Unlock()
 }
 
@@ -1102,11 +1118,15 @@ func (engine *Engine) Operation(id string) (Receipt, bool) {
 		return Receipt{}, false
 	}
 	engine.mu.Lock()
+	engine.durableOperations[operation.Receipt.ID] = struct{}{}
 	engine.cacheOperationLocked(operation.Receipt, operation.RequestHash)
 	engine.mu.Unlock()
 	return engine.humanizeReceiptIdentifiers(operation.Receipt), true
 }
 
+// RecentOperations returns memory history newest-first. Beyond that window,
+// stored receipts are most recently reserved first (SQLite rowid order), which
+// can differ slightly from submission order.
 func (engine *Engine) RecentOperations(ctx context.Context, limit int) ([]Receipt, error) {
 	if ctx == nil {
 		ctx = context.Background()
@@ -1118,6 +1138,7 @@ func (engine *Engine) RecentOperations(ctx context.Context, limit int) ([]Receip
 		return nil, err
 	}
 	engine.mu.RLock()
+	store := engine.operationStore
 	ids := append([]string(nil), engine.operationOrder...)
 	receipts := make(map[string]Receipt, len(engine.operations))
 	for id, receipt := range engine.operations {
@@ -1132,6 +1153,50 @@ func (engine *Engine) RecentOperations(ctx context.Context, limit int) ([]Receip
 		if receipt, ok := receipts[ids[index]]; ok {
 			out = append(out, engine.humanizeReceiptIdentifiers(receipt))
 		}
+	}
+	if len(out) < limit && store != nil {
+		stored, err := store.Page(ctx, "", limit+len(out))
+		if err != nil {
+			return nil, err
+		}
+		included := make(map[string]struct{}, len(out))
+		for _, receipt := range out {
+			included[receipt.ID] = struct{}{}
+		}
+		for _, operation := range stored {
+			if _, exists := included[operation.Receipt.ID]; exists {
+				continue
+			}
+			out = append(out, engine.humanizeReceiptIdentifiers(operation.Receipt))
+			included[operation.Receipt.ID] = struct{}{}
+			if len(out) == limit {
+				break
+			}
+		}
+	}
+	return out, nil
+}
+
+// OperationsBefore pages stored (durable) receipts strictly older, in reservation
+// order, than the stored operation beforeID. Read-only and dry-run receipts are
+// process-local and never part of stored history.
+func (engine *Engine) OperationsBefore(ctx context.Context, beforeID string, limit int) ([]Receipt, error) {
+	if ctx == nil {
+		ctx = context.Background()
+	}
+	engine.mu.RLock()
+	store := engine.operationStore
+	engine.mu.RUnlock()
+	if store == nil {
+		return nil, ErrOperationHistoryUnavailable
+	}
+	stored, err := store.Page(ctx, beforeID, limit)
+	if err != nil {
+		return nil, err
+	}
+	out := make([]Receipt, 0, len(stored))
+	for _, operation := range stored {
+		out = append(out, engine.humanizeReceiptIdentifiers(operation.Receipt))
 	}
 	return out, nil
 }
@@ -1209,6 +1274,15 @@ func (engine *Engine) reserveDurableOperation(
 	}
 	engine.mu.Unlock()
 	return reserved, created, nil
+}
+
+// EventSequence returns the current operation stream head. Read it after
+// subscribing and before constructing a snapshot, so that snapshot cannot be
+// older than the sequence used to label it.
+func (engine *Engine) EventSequence() uint64 {
+	engine.mu.RLock()
+	defer engine.mu.RUnlock()
+	return engine.eventSequence
 }
 
 func (engine *Engine) Subscribe(buffer int) (<-chan Receipt, func()) {
@@ -1640,6 +1714,7 @@ func (engine *Engine) executeStep(ctx context.Context, afterRevision uint64, ste
 			}
 			if exchange != nil {
 				response := frame.Frame
+				response.Raw = ""
 				exchange.Response = &response
 			}
 			if frame.Frame.ResponseCode != nil && *frame.Frame.ResponseCode != 0 {
@@ -1725,6 +1800,7 @@ func (engine *Engine) executeStep(ctx context.Context, afterRevision uint64, ste
 			}
 			if exchange != nil {
 				response := frame.Frame
+				response.Raw = ""
 				exchange.Response = &response
 			}
 			if finalDispatchProvider != nil {
@@ -1932,6 +2008,13 @@ func (engine *Engine) fail(receipt Receipt, err error) Receipt {
 	} else if errors.Is(err, context.Canceled) {
 		receipt.Status = StatusCancelled
 	}
+	engine.mu.RLock()
+	drainCancelled := engine.drainCancelled[receipt.ID]
+	engine.mu.RUnlock()
+	if drainCancelled && receipt.Plan != nil && receipt.Plan.Effect == EffectRead {
+		receipt.Status = StatusFailed
+		receipt.Phase = EffectPhaseCompleted
+	}
 	receipt = engine.withFailure(receipt, err)
 	now := time.Now().UTC()
 	receipt.CompletedAt = &now
@@ -2015,6 +2098,9 @@ func (engine *Engine) cacheOperationLocked(receipt Receipt, requestHash string) 
 		engine.operationOrder = append(engine.operationOrder, id)
 	}
 	engine.operations[id] = receipt
+	size := estimatedReceiptBytes(receipt)
+	engine.cachedOperationBytes += size - engine.operationSizes[id]
+	engine.operationSizes[id] = size
 	if requestHash != "" {
 		engine.requestHashes[id] = requestHash
 	}
@@ -2022,11 +2108,11 @@ func (engine *Engine) cacheOperationLocked(receipt Receipt, requestHash string) 
 }
 
 func (engine *Engine) evictOperationHistoryLocked() {
-	if engine.operationStore == nil || len(engine.operations) <= operationHistoryLimit {
+	if engine.operationStore == nil {
 		return
 	}
 	remainingAttempts := len(engine.operationOrder)
-	for len(engine.operations) > operationHistoryLimit && len(engine.operationOrder) > 0 && remainingAttempts > 0 {
+	for (len(engine.operations) > operationMemoryLimit || engine.cachedOperationBytes > operationMemoryBytes) && len(engine.operationOrder) > 0 && remainingAttempts > 0 {
 		id := engine.operationOrder[0]
 		engine.operationOrder = engine.operationOrder[1:]
 		if _, active := engine.active[id]; active {
@@ -2038,6 +2124,8 @@ func (engine *Engine) evictOperationHistoryLocked() {
 		delete(engine.requestHashes, id)
 		delete(engine.durableOperations, id)
 		delete(engine.operationIndex, id)
+		engine.cachedOperationBytes -= engine.operationSizes[id]
+		delete(engine.operationSizes, id)
 		remainingAttempts = len(engine.operationOrder)
 	}
 }

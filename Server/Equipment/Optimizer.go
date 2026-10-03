@@ -11,7 +11,6 @@ import (
 	"sort"
 	"strconv"
 	"strings"
-	"sync"
 
 	"CitadelDesktop/Server/GameData"
 	"CitadelDesktop/Server/State"
@@ -26,10 +25,12 @@ const (
 	maximumResultCount      = 10
 )
 
-var (
-	optimizerSlots     = []int{1, 2, 3, 4, 6}
-	officialRulesCache sync.Map // map[*GameData.Store]officialRules; game-data stores are immutable.
-)
+var optimizerSlots = []int{1, 2, 3, 4, 6}
+
+// officialRulesKey names the official rules derived from a game-data store. They
+// are held on the store itself (GameData.Store.Derived), so a refresh that
+// replaces the store releases them with it instead of pinning the retired store.
+const officialRulesKey = "equipment.officialRules"
 
 type officialRules struct {
 	caps          map[int64]effectCap
@@ -345,7 +346,7 @@ func SnapshotFingerprint(gameState State.GameState, gameData *GameData.Store, ki
 		return "", err
 	}
 	digest := sha256.New()
-	worldID, playerID := State.BoundAccount(gameState)
+	worldID, playerID := State.BoundAccount(&gameState)
 	catalogVersion, catalogDigest := "", ""
 	if gameData != nil {
 		metadata := gameData.Metadata()
@@ -1660,12 +1661,7 @@ func loadOfficialRules(gameData *GameData.Store) officialRules {
 	if gameData == nil {
 		return officialRules{caps: map[int64]effectCap{}, setBonuses: map[int64][]setBonus{}, effects: map[int64]effectDefinition{}, pvpAreaScores: map[int64]int{}, pveAreaScores: map[int64]int{}}
 	}
-	if cached, found := officialRulesCache.Load(gameData); found {
-		return cached.(officialRules)
-	}
-	rules := buildOfficialRules(gameData)
-	actual, _ := officialRulesCache.LoadOrStore(gameData, rules)
-	return actual.(officialRules)
+	return gameData.Derived(officialRulesKey, func() any { return buildOfficialRules(gameData) }).(officialRules)
 }
 
 func buildOfficialRules(gameData *GameData.Store) officialRules {

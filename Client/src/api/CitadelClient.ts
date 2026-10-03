@@ -3,6 +3,7 @@ import { responseMessageDescriptor, parseMessageDescriptor } from '../i18n/messa
 import { configurationBaseURL, configurationFetch, runtimeBasePath, runtimeFetch, runtimeURL } from './RuntimeURL';
 import { isOperationFailureStatus, operationFailureText } from './OperationNotifications';
 import { operationFailureReceiptFromHTTP } from './OperationHTTPFailure';
+import { catalogPath, manifestDigest } from './CatalogURL';
 import type {
   APIConnectionStatus,
   APIEnvelope,
@@ -94,7 +95,27 @@ export interface ConfigurationUpdateCondition {
 	expectedValue?: unknown;
 }
 
-class CitadelClient {
+export interface EventsResumeCursor {
+  instance: string;
+  since: number;
+  ops: number;
+  config: number;
+  catalog: string;
+}
+
+export class CitadelClient {
+  private resumeCursorProvider: ((scope: string) => EventsResumeCursor | null) | null = null;
+
+  /** Installed by the mounted provider; cleanup cannot remove a newer provider. */
+  setResumeCursorProvider(provider: (scope: string) => EventsResumeCursor | null): () => void {
+    this.resumeCursorProvider = provider;
+    return () => { if (this.resumeCursorProvider === provider) this.resumeCursorProvider = null; };
+  }
+
+  getCatalogDigest(): string {
+    return this.catalogDigest;
+  }
+
   private socket: WebSocket | null = null;
   private status: APIConnectionStatus = 'Disconnected';
   private listeners = new Set<EnvelopeListener>();
@@ -102,6 +123,7 @@ class CitadelClient {
 	private configurationListeners = new Map<ConfigurationListener, string>();
   private reconnectTimer: ReturnType<typeof setTimeout> | null = null;
   private reconnectAttempt = 0;
+  private catalogDigest = '';
   private intentionalClose = false;
   private pendingIntents = new Map<string, Promise<IntentReceipt>>();
   private operationWaiters = new Map<string, Set<(receipt: IntentReceipt) => void>>();
@@ -139,6 +161,23 @@ class CitadelClient {
       this.setStatus('Disconnected');
       this.scheduleReconnect();
     };
+  }
+
+  /**
+   * Asks the server for a fresh state snapshot over the open event socket. The
+   * reply arrives as a `state.snapshot` envelope carrying this id, in order with
+   * the state events, so events after the snapshot are guaranteed to follow it.
+   * Returns false when the socket is not open and the caller must use REST.
+   */
+  requestState(id: string): boolean {
+    const socket = this.socket;
+    if (socket == null || socket.readyState !== WebSocket.OPEN) return false;
+    try {
+      socket.send(JSON.stringify({ v: 2, id, type: 'query.state' }));
+      return true;
+    } catch {
+      return false;
+    }
   }
 
   disconnect() {
@@ -280,12 +319,23 @@ class CitadelClient {
     return this.request('/api/v2/locales');
   }
 
-  getCatalogManifest(): Promise<CatalogManifest> {
-    return this.request<CatalogManifest>('/api/v2/game-data');
+  async getCatalogManifest(): Promise<CatalogManifest> {
+    const manifest = await this.request<CatalogManifest>('/api/v2/game-data');
+    this.noteCatalogManifest(manifest);
+    return manifest;
   }
 
   getCatalog<T extends Record<string, unknown>>(name: string, locale?: string): Promise<CatalogResponse<T>> {
-    return this.request<CatalogResponse<T>>(`/api/v2/game-data/${encodeURIComponent(name)}${locale ? `?locale=${encodeURIComponent(locale)}` : ''}`);
+    return this.request<CatalogResponse<T>>(catalogPath(name, locale, this.catalogDigest));
+  }
+
+  /**
+   * Records the content digest the worker's catalog manifest names. Collection
+   * requests carry it from then on, so the worker can mark them immutable and the
+   * browser downloads each catalog version once (CIT-35).
+   */
+  noteCatalogManifest(manifest: unknown): void {
+    this.catalogDigest = manifestDigest(manifest);
   }
 
   getProjection<T>(name: string, locale?: string): Promise<T> {
@@ -740,6 +790,11 @@ class CitadelClient {
 
   private eventsURL(): string {
 	const url = new URL(runtimeURL('/api/v2/events'), window.location.origin);
+    const cursor = this.resumeCursorProvider?.(this.runtimeScope());
+    if (cursor) {
+      url.searchParams.set('resume', '1');
+      for (const [key, value] of Object.entries(cursor)) url.searchParams.set(key, String(value));
+    }
     url.protocol = url.protocol === 'https:' ? 'wss:' : 'ws:';
     return url.toString();
   }

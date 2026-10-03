@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"reflect"
 	"sort"
+	"time"
 
 	"CitadelDesktop/Server/GameData"
 	"CitadelDesktop/Server/Protocol"
@@ -15,6 +16,7 @@ import (
 
 const riftObservationTypeID = 43
 const maximumRiftLaunches = 15
+const riftTombstoneRetention = 24 * time.Hour
 
 func reduceRiftLaunchCapture(
 	_ context.Context,
@@ -72,6 +74,12 @@ func reduceRiftLaunchCapture(
 	gameState.Rift.Launches[id] = launch
 	gameState.Rift.PendingLaunchID = id
 	trimRiftLaunches(gameState, id)
+	cutoff := frame.ReceivedAt.Add(-riftTombstoneRetention).UnixMilli()
+	for launchID, deletedAt := range gameState.Rift.DeletedLaunchIDs {
+		if deletedAt < cutoff {
+			delete(gameState.Rift.DeletedLaunchIDs, launchID)
+		}
+	}
 	return []string{"rift"}, true, nil
 }
 
@@ -84,7 +92,7 @@ func reduceRiftLaunchAck(
 	if !frameSucceeded(frame) || gameState.Rift.PendingLaunchID == "" || len(frame.Payload) == 0 {
 		return nil, false, nil
 	}
-	items, _, err := movementItems(frame.Payload)
+	items, _, err := movementItems(frame)
 	if err != nil {
 		return nil, false, nil
 	}

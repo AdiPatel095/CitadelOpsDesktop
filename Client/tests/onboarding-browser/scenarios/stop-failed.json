@@ -1,0 +1,85 @@
+{
+  "id": "stop-failed",
+  "title": "Failed Stop",
+  "purpose": "The automation is on; the fixture rejects the first Stop write once.",
+  "step": "9",
+  "platforms": [
+    "desktop",
+    "hosted"
+  ],
+  "modules": [
+    "autoTowers"
+  ],
+  "simulated": [
+    "banner: Simulated preview: sample data only. Nothing here reaches the game or an account.",
+    "dock: Candidate <short SHA>"
+  ],
+  "expect": [
+    "Stop fails once: the switch keeps following the saved value (still on) with the failure and Retry. Retry succeeds and the saved switch turns off; the row keeps showing the last game report until you press Advance runtime, which applies 'The game reports it stopped' and the phase becomes Stopped."
+  ],
+  "fail": "stop",
+  "patch": {
+    "state": {
+      "automations": {
+        "autoTowers": {
+          "id": "autoTowers",
+          "enabled": true,
+          "updatedAt": "@now-30s",
+          "status": "running",
+          "detail": "Attacking a tower"
+        }
+      }
+    },
+    "config": {
+      "automation.autoTowers": {
+        "version": 4,
+        "checkIntervalSec": 30,
+        "mapRefreshIntervalSec": 1800,
+        "dailyAttackLimit": 0,
+        "horseTravelBoostId": -1,
+        "useAdvisor": false,
+        "autoActivateAdvisor": false,
+        "maximumDailyTimeSkips": 0,
+        "castles": {
+          "4101": {
+            "enabled": true,
+            "radius": 15,
+            "unitId": 2,
+            "maidenOnly": false
+          }
+        }
+      },
+      "automation.enabled": {
+        "auto_towers": true
+      }
+    }
+  },
+  "storage": [
+    {
+      "key": "citadelops.automation.enabledSince.v1.@accountKey",
+      "value": {
+        "auto_towers": "@now-120m"
+      }
+    }
+  ],
+  "columns": [
+    "phases"
+  ],
+  "runtime": [
+    {
+      "label": "The game reports it stopped",
+      "state": {
+        "automations": {
+          "autoTowers": {
+            "id": "autoTowers",
+            "enabled": false,
+            "status": "disabled",
+            "detail": "Stopped: automation is off in your saved settings",
+            "updatedAt": "@now",
+            "lastRunAt": "@now-1m"
+          }
+        }
+      }
+    }
+  ]
+}

@@ -51,3 +51,17 @@ func TestCleanupStorageFreshRequiresBothSuccessfulSnapshots(t *testing.T) {
 		t.Fatal("stale gem snapshot was treated as fresh")
 	}
 }
+
+func TestStorageSnapshotPredatingDispatchedSaleIsStale(t *testing.T) {
+	now := time.Date(2026, 9, 17, 10, 0, 0, 0, time.UTC)
+	gameState := State.NewGameState()
+	gameState.Observations["gei"] = State.ProtocolObservation{LastSuccessfulInboundAt: now.Add(-10 * time.Second)}
+	gameState.Inventory.EquipmentMutatedAt = now.Add(-5 * time.Second)
+	if StorageSnapshotFresh(gameState, "gei", now) {
+		t.Fatal("storage snapshot older than the latest sale dispatch was fresh")
+	}
+	gameState.Observations["gei"] = State.ProtocolObservation{LastSuccessfulInboundAt: now.Add(-5 * time.Second)}
+	if !StorageSnapshotFresh(gameState, "gei", now) {
+		t.Fatal("storage snapshot received with the sale dispatch was stale")
+	}
+}

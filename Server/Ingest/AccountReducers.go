@@ -25,8 +25,8 @@ func reduceInitialState(
 	if !frameSucceeded(frame) {
 		return nil, false, nil
 	}
-	var root map[string]json.RawMessage
-	if len(frame.Payload) == 0 || json.Unmarshal(frame.Payload, &root) != nil {
+	root, err := frame.PayloadRoot()
+	if len(frame.Payload) == 0 || err != nil {
 		return nil, false, fmt.Errorf("initial state payload is not a JSON object")
 	}
 	changed := false
@@ -41,7 +41,7 @@ func reduceInitialState(
 		incomingPlayerID := State.PlayerID(player.ID)
 		incomingUID := int64(player.UID)
 		incomingWorldID := strings.TrimSpace(gameState.Session.ServerURL)
-		boundWorldID, boundPlayerID := State.BoundAccount(*gameState)
+		boundWorldID, boundPlayerID := State.BoundAccount(gameState)
 		if incomingPlayerID > 0 && ((boundPlayerID > 0 && incomingPlayerID != boundPlayerID) ||
 			(incomingWorldID != "" && boundWorldID != "" && !strings.EqualFold(incomingWorldID, boundWorldID))) {
 			resetInitialAccountState(gameState)
@@ -328,8 +328,8 @@ func reducePlayerProtectionMode(
 	if !frameSucceeded(frame) || len(frame.Payload) == 0 {
 		return nil, false, nil
 	}
-	var root map[string]json.RawMessage
-	if err := json.Unmarshal(frame.Payload, &root); err != nil {
+	root, err := frame.PayloadRoot()
+	if err != nil {
 		return nil, false, fmt.Errorf("decode player protection mode envelope: %w", err)
 	}
 	membershipChanged := applyOwnAllianceSnapshot(root, frame.ReceivedAt, gameState)
@@ -764,8 +764,8 @@ func reducePlayerSummary(
 	if !frameSucceeded(frame) || len(frame.Payload) == 0 {
 		return nil, false, nil
 	}
-	var root map[string]json.RawMessage
-	if err := json.Unmarshal(frame.Payload, &root); err != nil {
+	root, err := frame.PayloadRoot()
+	if err != nil {
 		return nil, false, fmt.Errorf("decode player summary: %w", err)
 	}
 	beforePlayer := gameState.Player
@@ -893,6 +893,8 @@ func reduceAllianceInfo(
 	}
 	directoryChanged := !reflect.DeepEqual(gameState.Alliances[next.ID], next)
 	gameState.Alliances[next.ID] = next
+	pruned := pruneAllianceDirectory(gameState, frame.ReceivedAt, next.ID)
+	directoryChanged = directoryChanged || pruned
 	allianceChanged := false
 	if containsCurrentPlayer {
 		allianceChanged = !reflect.DeepEqual(gameState.Alliance, next)
@@ -909,6 +911,42 @@ func reduceAllianceInfo(
 		return nil, false, nil
 	}
 	return []string{"alliance", "alliances", "player"}, true, nil
+}
+
+const (
+	allianceDirectoryRetention = 7 * 24 * time.Hour
+	allianceDirectoryLimit     = 64 // entries besides the kept ones
+)
+
+func pruneAllianceDirectory(gameState *State.GameState, observedAt time.Time, observedID State.AllianceID) bool {
+	cutoff := observedAt.Add(-allianceDirectoryRetention)
+	others := make([]State.AllianceID, 0, len(gameState.Alliances))
+	changed := false
+	for id, alliance := range gameState.Alliances {
+		if id == observedID || id == gameState.Player.AllianceID || id == gameState.Alliance.ID {
+			continue
+		}
+		if alliance.ObservedAt.IsZero() || alliance.ObservedAt.Before(cutoff) {
+			delete(gameState.Alliances, id)
+			changed = true
+		} else {
+			others = append(others, id)
+		}
+	}
+	if len(others) > allianceDirectoryLimit {
+		sort.Slice(others, func(i, j int) bool {
+			a, b := gameState.Alliances[others[i]], gameState.Alliances[others[j]]
+			if a.ObservedAt.Equal(b.ObservedAt) {
+				return others[i] < others[j]
+			}
+			return a.ObservedAt.Before(b.ObservedAt)
+		})
+		for _, id := range others[:len(others)-allianceDirectoryLimit] {
+			delete(gameState.Alliances, id)
+		}
+		changed = true
+	}
+	return changed
 }
 
 type wirePlayerInfo struct {

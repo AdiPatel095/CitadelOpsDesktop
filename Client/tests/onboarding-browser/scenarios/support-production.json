@@ -1,0 +1,213 @@
+{
+  "id": "support-production",
+  "title": "Support and production dependencies",
+  "purpose": "Station/Bird reserves with one Fortress-reserved Direwolf castle, Recruit and Tool per-castle plans, Hospital, TCI, Sceat, Booster, Buyer and Advisor saved sections.",
+  "step": "6",
+  "platforms": [
+    "desktop",
+    "hosted"
+  ],
+  "modules": [
+    "autoStation",
+    "autoBird",
+    "autoRecruit",
+    "autoTool",
+    "autoHospital",
+    "autoTCI",
+    "autoSceatRes",
+    "autoBooster",
+    "autoBuyer",
+    "autoAdvisor",
+    "autoFortress",
+    "autoEquipmentCleanup"
+  ],
+  "simulated": [
+    "banner: Simulated preview: sample data only. Nothing here reaches the game or an account.",
+    "dock: Candidate <short SHA>"
+  ],
+  "expect": [
+    "Station and Bird have Automation rows beside their header chips; readiness for the minimal modules says exactly what the saved section proves.",
+    "Bird names the Direwolves reserved for Auto Fortress at Frostmere; Booster and Buyer show their spending-policy lines."
+  ],
+  "patch": {
+    "config": {
+      "automation.autoStation": {
+        "version": 1,
+        "leadTimeSec": 120,
+        "recallWhenClear": true,
+        "minRPTDays": 3,
+        "openGateFallback": false,
+        "settings": {
+          "4101": [
+            {
+              "id": 39,
+              "amount": 2000
+            }
+          ],
+          "4102": [
+            {
+              "id": 277,
+              "amount": 300
+            }
+          ]
+        }
+      },
+      "automation.autoBird": {
+        "version": 2,
+        "ignoreSettings": {
+          "settings": {
+            "4101": [
+              {
+                "id": 1,
+                "amount": 500
+              }
+            ],
+            "4102": [
+              {
+                "id": 277,
+                "amount": 200
+              }
+            ]
+          },
+          "minDelay": 6,
+          "maxDelay": 12,
+          "minSend": 0,
+          "minRPTDays": 3
+        },
+        "activePresetId": null
+      },
+      "automation.autoFortress": {
+        "version": 1,
+        "checkIntervalSec": 5,
+        "mapRefreshIntervalSec": 1800,
+        "dailyAttackLimit": 0,
+        "horseTravelBoostId": -1,
+        "direwolfPurchaseLimit": 0,
+        "minimumTabletReserve": 0,
+        "useTimeSkips": false,
+        "timeSkipReserve": {},
+        "kingdoms": {
+          "2": {
+            "enabled": true
+          }
+        }
+      },
+      "automation.recruitTroops": {
+        "version": 1,
+        "mode": "castle",
+        "checkIntervalSec": 300,
+        "recruitLevel10OnTitleLoss": false,
+        "globalItems": [],
+        "castles": {
+          "4101": {
+            "enabled": true,
+            "items": [
+              {
+                "id": 1,
+                "amount": 500
+              }
+            ]
+          },
+          "4103": {
+            "enabled": true,
+            "items": [
+              {
+                "id": 6,
+                "amount": 300
+              }
+            ]
+          }
+        }
+      },
+      "automation.autoTool": {
+        "version": 1,
+        "mode": "castle",
+        "checkIntervalSec": 300,
+        "globalItems": [],
+        "castles": {
+          "4101": {
+            "enabled": true,
+            "items": [
+              {
+                "id": 101,
+                "amount": 200
+              }
+            ]
+          }
+        }
+      },
+      "automation.autoHospital": {
+        "version": 1,
+        "checkIntervalSec": 300
+      },
+      "automation.constructionItems": {
+        "version": 1,
+        "checkIntervalSec": 900
+      },
+      "automation.autoSceatResources": {
+        "checkIntervalSec": 300,
+        "minimumShipmentSize": 10000,
+        "sourceReservePercent": 10,
+        "overflowThresholdPercent": 90,
+        "autoKingdomTransport": false,
+        "allowRubyRecipes": false,
+        "minimumRubyReserve": 0,
+        "castles": {}
+      },
+      "automation.autoBooster": {
+        "version": 1,
+        "checkIntervalSec": 60,
+        "rubyCostCeiling": 2500,
+        "minimumRubyReserve": 5000
+      },
+      "automation.autoBuyer": {
+        "version": 1,
+        "checkIntervalSec": 1800,
+        "historyRefreshSec": 3600,
+        "sourceCastleId": 4101,
+        "minimumRubyReserve": 5000,
+        "allowRubyPackages": false,
+        "packages": [],
+        "specialists": [],
+        "feast": {
+          "enabled": false,
+          "feastId": 8,
+          "minimumRemainingHours": 12,
+          "sourceCastleId": 0,
+          "minimumFoodReserve": 0,
+          "allowRubies": false,
+          "maximumRubyCostPerPurchase": 0
+        }
+      },
+      "automation.autoAdvisor": {
+        "version": 1,
+        "sourceCastleId": 4101,
+        "presetId": "",
+        "nomadDifficultyId": 721,
+        "samuraiDifficultyId": 801,
+        "maxAttackCount": 10,
+        "minimumRemainingSec": 1800,
+        "coinCostPerAttack": 500,
+        "minimumCoinReserve": 50000,
+        "rubyCostPerAttack": 0,
+        "minimumRubyReserve": 0,
+        "minimumFeatherReserve": 0,
+        "timeSkipReserve": {},
+        "checkIntervalSec": 30,
+        "mapRefreshIntervalSec": 300,
+        "horseTravelBoostId": -1
+      },
+      "automation.autoEquipmentCleanup": {
+        "version": 1,
+        "intervalMinutes": 15
+      },
+      "automation.enabled": {
+        "auto_fortress": true
+      }
+    }
+  },
+  "columns": [
+    "readiness",
+    "disclosure"
+  ]
+}

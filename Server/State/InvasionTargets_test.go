@@ -149,7 +149,7 @@ func TestInvasionTargetReservationRequiresNewEvidenceOrOwningOperation(t *testin
 	}
 
 	state.Invasion.ReserveTarget(reservation)
-	store := NewStore(state)
+	store := NewStore(&state)
 	snapshot := store.Snapshot()
 	delete(snapshot.Invasion.TargetReservations, InvasionTargetKey(0, 101, 102))
 	if _, found := store.Snapshot().Invasion.TargetReservation(0, 101, 102); !found {
@@ -167,7 +167,7 @@ func TestInvasionCommanderReservationDistinguishesLaunchFromTargetLock(t *testin
 		OperationID: "indeterminate-cra", ReservedAt: reservedAt,
 	}
 	state.Invasion.ReserveTarget(reservation)
-	if !InvasionCommanderReserved(state, 7) {
+	if !InvasionCommanderReserved(&state, 7) {
 		t.Fatal("occurrence-bound CRA reservation did not hold its commander")
 	}
 	if state.Invasion.DeferTargetReservation(0, 101, 102, "indeterminate-cra", reservedAt.Add(time.Minute)) {
@@ -177,7 +177,7 @@ func TestInvasionCommanderReservationDistinguishesLaunchFromTargetLock(t *testin
 		t.Fatal("could not back off full CRA reservation")
 	}
 	backedOff, found := state.Invasion.TargetReservation(0, 101, 102)
-	if !found || !backedOff.CommanderKnown || backedOff.CommanderID != 7 || !InvasionCommanderReserved(state, 7) {
+	if !found || !backedOff.CommanderKnown || backedOff.CommanderID != 7 || !InvasionCommanderReserved(&state, 7) {
 		t.Fatalf("full CRA backoff lost commander 7: %#v", backedOff)
 	}
 
@@ -191,7 +191,7 @@ func TestInvasionCommanderReservationDistinguishesLaunchFromTargetLock(t *testin
 		t.Fatal("could not defer target-only ADI reservation")
 	}
 	deferred, found := state.Invasion.TargetReservation(0, 101, 102)
-	if !found || deferred.CommanderKnown || InvasionCommanderReserved(state, 7) {
+	if !found || deferred.CommanderKnown || InvasionCommanderReserved(&state, 7) {
 		t.Fatalf("target-only lock unexpectedly owns a commander: %#v", deferred)
 	}
 
@@ -201,7 +201,7 @@ func TestInvasionCommanderReservationDistinguishesLaunchFromTargetLock(t *testin
 	reservation.OperationID = "indeterminate-cra"
 	reservation.OccurrenceEndsAt = time.Time{}
 	state.Invasion.ReserveTarget(reservation)
-	if InvasionCommanderReserved(state, 7) {
+	if InvasionCommanderReserved(&state, 7) {
 		t.Fatal("legacy reservation without an event boundary held a commander")
 	}
 }
@@ -227,7 +227,7 @@ func TestInvasionReservationMovementRequiresBoundSourceCommanderAndNewLaunch(t *
 		SourceCastleID: 1, SourceX: 100, SourceY: 100, SourceKnown: true,
 		CommanderID: 0, CommanderKnown: true, ReservedAt: reservedAt,
 	}
-	if movement, found := InvasionReservationMovement(state, reservation); !found || movement.ID != 10 {
+	if movement, found := InvasionReservationMovement(&state, reservation); !found || movement.ID != 10 {
 		t.Fatalf("matching reserved movement = %#v found=%t", movement, found)
 	}
 	returnMovement := MovementState{
@@ -238,13 +238,13 @@ func TestInvasionReservationMovementRequiresBoundSourceCommanderAndNewLaunch(t *
 	}
 	state.Movements[10] = returnMovement
 	delete(state.Castles, 1)
-	if movement, found := InvasionReservationMovement(state, reservation); !found || movement.ID != 10 {
+	if movement, found := InvasionReservationMovement(&state, reservation); !found || movement.ID != 10 {
 		t.Fatalf("short exact return movement was not recovered: %#v found=%t", movement, found)
 	}
 	returnMovement.StartedAt = reservedAt.Add(10 * time.Minute)
 	returnMovement.ObservedAt = reservedAt.Add(11 * time.Minute)
 	state.Movements[10] = returnMovement
-	if _, found := InvasionReservationMovement(state, reservation); found {
+	if _, found := InvasionReservationMovement(&state, reservation); found {
 		t.Fatal("late same-route return movement was treated as launch proof")
 	}
 
@@ -259,7 +259,7 @@ func TestInvasionReservationMovementRequiresBoundSourceCommanderAndNewLaunch(t *
 	otherSource.ArrivesAt = &arrivesAt
 	otherSource.ReturnsAt = nil
 	state.Movements[10] = otherSource
-	if _, found := InvasionReservationMovement(state, reservation); found {
+	if _, found := InvasionReservationMovement(&state, reservation); found {
 		t.Fatal("another source castle's movement matched the reservation")
 	}
 
@@ -267,7 +267,7 @@ func TestInvasionReservationMovementRequiresBoundSourceCommanderAndNewLaunch(t *
 	old.SourceCastleID = 1
 	old.StartedAt = reservedAt.Add(-time.Minute)
 	state.Movements[10] = old
-	if _, found := InvasionReservationMovement(state, reservation); found {
+	if _, found := InvasionReservationMovement(&state, reservation); found {
 		t.Fatal("historical commander movement matched the new reservation")
 	}
 
@@ -278,12 +278,12 @@ func TestInvasionReservationMovementRequiresBoundSourceCommanderAndNewLaunch(t *
 	late.StartedAt = reservedAt.Add(InvasionTargetReservationReconcileGrace + time.Second)
 	late.ObservedAt = late.StartedAt.Add(time.Second)
 	state.Movements[10] = late
-	if _, found := InvasionReservationMovement(state, reservation); found {
+	if _, found := InvasionReservationMovement(&state, reservation); found {
 		t.Fatal("late same-route outbound movement matched the reservation")
 	}
 	late.StartedAt = time.Time{}
 	state.Movements[10] = late
-	if _, found := InvasionReservationMovement(state, reservation); found {
+	if _, found := InvasionReservationMovement(&state, reservation); found {
 		t.Fatal("movement without a start boundary matched the reservation")
 	}
 
@@ -295,17 +295,17 @@ func TestInvasionReservationMovementRequiresBoundSourceCommanderAndNewLaunch(t *
 	unknownType.ObservedAt = reservedAt.Add(2 * time.Second)
 	unknownType.TargetTypeID = 0
 	state.Movements[10] = unknownType
-	if _, found := InvasionReservationMovement(state, reservation); found {
+	if _, found := InvasionReservationMovement(&state, reservation); found {
 		t.Fatal("unknown movement target type matched the invasion reservation")
 	}
 	unknownType.TargetTypeID = -1
 	state.Movements[10] = unknownType
-	if _, found := InvasionReservationMovement(state, reservation); found {
+	if _, found := InvasionReservationMovement(&state, reservation); found {
 		t.Fatal("negative movement target type matched the invasion reservation")
 	}
 
 	reservation.CommanderKnown = false
-	if _, found := InvasionReservationMovement(state, reservation); found {
+	if _, found := InvasionReservationMovement(&state, reservation); found {
 		t.Fatal("legacy reservation without commander identity attributed a movement")
 	}
 }
@@ -344,7 +344,7 @@ func TestNewStoreInvalidatesLegacyInvasionScanClock(t *testing.T) {
 			Level: 70, ObservedAt: now,
 		},
 	}
-	if scannedAt := NewStore(state).Snapshot().Invasion.LastScannedAt[1]; !scannedAt.IsZero() {
+	if scannedAt := NewStore(&state).Snapshot().Invasion.LastScannedAt[1]; !scannedAt.IsZero() {
 		t.Fatalf("legacy invasion scan clock survived schema migration: %s", scannedAt)
 	}
 }

@@ -125,7 +125,7 @@ func (policy *ProductionPolicy) Evaluate(_ context.Context, snapshot Snapshot) (
 		}
 		castle := binding.Castle
 		castleID := castle.ID
-		if State.CastleFocusKnownUnavailable(snapshot.State, castle) {
+		if State.CastleFocusKnownUnavailable(&snapshot.State, castle) {
 			focusUnavailable++
 			continue
 		}
@@ -170,7 +170,7 @@ func (policy *ProductionPolicy) Evaluate(_ context.Context, snapshot Snapshot) (
 				configuredCursor := castlePlan.Cursor
 				if snapshot.ConfigurationExternallyOwned {
 					if runtimeCursor, found := operationalCursor(
-						snapshot.State, policy.id, productionOperationalCursorKey(castleKey),
+						&snapshot.State, policy.id, productionOperationalCursorKey(castleKey),
 					); found {
 						configuredCursor = runtimeCursor
 					}
@@ -185,12 +185,12 @@ func (policy *ProductionPolicy) Evaluate(_ context.Context, snapshot Snapshot) (
 		configured++
 		queue, queueExists := castle.Production[policy.lineID]
 		queuePredatesCastle := !queueExists || State.ProductionQueuePredatesCastleSnapshot(castle, queue)
-		if queuePredatesCastle && castleSnapshotCurrent(snapshot.State, castle) {
+		if queuePredatesCastle && castleSnapshotCurrent(&snapshot.State, castle) {
 			// A current JAA/JCA already committed without this production line.
 			// Wait for authoritative line data instead of refocusing in a loop.
 			continue
 		}
-		if !queueExists || queuePredatesCastle || State.ProductionQueueNeedsRefresh(snapshot.State, queue, snapshot.Now) {
+		if !queueExists || queuePredatesCastle || State.ProductionQueueNeedsRefresh(&snapshot.State, queue, snapshot.Now) {
 			arguments, _ := json.Marshal(map[string]any{"castleId": castleID, "refresh": true})
 			policy.lastCastleID = castleID
 			return Decision{
@@ -207,11 +207,11 @@ func (policy *ProductionPolicy) Evaluate(_ context.Context, snapshot Snapshot) (
 		// QS contains the queue slots after the active production stack. The active
 		// stack must not consume one of those slots.
 		occupied := len(queue.Queued)
-		queueCapacity := policy.queueCapacity(snapshot.State, queue, snapshot.GameData)
+		queueCapacity := policy.queueCapacity(&snapshot.State, queue, snapshot.GameData)
 		if queueCapacity <= 0 || occupied >= queueCapacity {
 			full++
 			if policy.lineID == 0 && occupied >= queueCapacity {
-				if productionID := eligibleAllianceHelpProductionID(queue); productionID > 0 {
+				if productionID := eligibleAllianceHelpProductionID(&snapshot.State, castleID, queue, snapshot.Now); productionID > 0 {
 					arguments, _ := json.Marshal(map[string]any{"productionId": productionID})
 					policy.lastCastleID = castleID
 					return Decision{
@@ -278,7 +278,7 @@ func (policy *ProductionPolicy) Evaluate(_ context.Context, snapshot Snapshot) (
 			continue
 		}
 		target = resolvedTarget
-		amount := policy.targetAmount(snapshot.State, castle, target, snapshot.GameData)
+		amount := policy.targetAmount(&snapshot.State, castle, target, snapshot.GameData)
 		if amount <= 0 {
 			unknownStackCapacity++
 			continue
@@ -385,7 +385,7 @@ func (policy *ProductionPolicy) Evaluate(_ context.Context, snapshot Snapshot) (
 	return Decision{Status: status, Detail: detail, DetailDescriptor: Localization.Clone(detailLocalizationMessage), NextCheckAt: nextCheck}, nil
 }
 
-func castleSnapshotCurrent(state State.GameState, castle State.CastleState) bool {
+func castleSnapshotCurrent(state *State.GameState, castle State.CastleState) bool {
 	return !castle.ContextSnapshotObservedAt.IsZero() &&
 		(state.Session.Generation == 0 || state.Session.ChangedAt.IsZero() ||
 			!castle.ContextSnapshotObservedAt.Before(state.Session.ChangedAt))
@@ -736,7 +736,7 @@ func advanceProductionCursor(raw json.RawMessage, castleKey string, cursor int) 
 	return document, nil
 }
 
-func (policy *ProductionPolicy) queueCapacity(state State.GameState, queue State.ProductionQueue, gameData *GameData.Store) int {
+func (policy *ProductionPolicy) queueCapacity(state *State.GameState, queue State.ProductionQueue, gameData *GameData.Store) int {
 	expected, known := productionVIPQueueCapacity(state, policy.lineID, gameData)
 	if queue.Capacity <= 0 {
 		return expected
@@ -747,7 +747,7 @@ func (policy *ProductionPolicy) queueCapacity(state State.GameState, queue State
 	return expected
 }
 
-func productionVIPQueueCapacity(state State.GameState, lineID int, gameData *GameData.Store) (int, bool) {
+func productionVIPQueueCapacity(state *State.GameState, lineID int, gameData *GameData.Store) (int, bool) {
 	if gameData == nil || state.Player.VIP.Level <= 0 {
 		return productionBaseQueueCapacity, false
 	}
@@ -767,7 +767,7 @@ func productionVIPQueueCapacity(state State.GameState, lineID int, gameData *Gam
 }
 
 func (policy *ProductionPolicy) targetAmount(
-	state State.GameState,
+	state *State.GameState,
 	castle State.CastleState,
 	target productionTarget,
 	gameData *GameData.Store,
@@ -781,7 +781,7 @@ func (policy *ProductionPolicy) targetAmount(
 	return toolProductionStackAmount(castle, target.ID, gameData)
 }
 
-func recruitmentStackAmount(state State.GameState, castle State.CastleState, gameData *GameData.Store) int64 {
+func recruitmentStackAmount(state *State.GameState, castle State.CastleState, gameData *GameData.Store) int64 {
 	if gameData == nil {
 		return 0
 	}
@@ -811,7 +811,7 @@ func recruitmentStackAmount(state State.GameState, castle State.CastleState, gam
 	return best
 }
 
-func recruitmentSubscriptionStackBonus(state State.GameState, gameData *GameData.Store) int64 {
+func recruitmentSubscriptionStackBonus(state *State.GameState, gameData *GameData.Store) int64 {
 	if gameData == nil || len(state.Subscriptions) == 0 {
 		return 0
 	}

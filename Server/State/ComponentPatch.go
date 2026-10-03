@@ -62,11 +62,13 @@ type InventoryPatch struct {
 	ConstructionOffersCastleID      *CastleID                                  `json:"constructionOffersCastleId,omitempty"`
 	ConstructionOffersKingdomID     *KingdomID                                 `json:"constructionOffersKingdomId,omitempty"`
 	ConstructionOffersByCastle      *map[CastleID]ConstructionOfferSnapshot    `json:"constructionOffersByCastle,omitempty"`
+	LastPackagePurchaseDispatch     *PackagePurchaseDispatch                   `json:"lastPackagePurchaseDispatch,omitempty"`
 	Equipment                       *map[EquipmentInstanceID]EquipmentInstance `json:"equipment,omitempty"`
 	EquipmentChanges                *[]EquipmentChange                         `json:"equipmentChanges,omitempty"`
 	Gems                            *map[GemInstanceID]GemInstance             `json:"gems,omitempty"`
 	GemChanges                      *[]GemChange                               `json:"gemChanges,omitempty"`
 	GemStacks                       *map[GemID]int64                           `json:"gemStacks,omitempty"`
+	EquipmentMutatedAt              *time.Time                                 `json:"equipmentMutatedAt,omitempty"`
 	Items                           *map[string]map[int64]int64                `json:"items,omitempty"`
 	ItemsObservedAt                 *map[string]time.Time                      `json:"itemsObservedAt,omitempty"`
 	ItemChanges                     *[]InventoryItemChange                     `json:"itemChanges,omitempty"`
@@ -462,6 +464,7 @@ func inventoryComponentPatch(inventory *InventoryState, changes componentChanges
 		patch.ConstructionOffersCastleID = &inventory.ConstructionOffersCastleID
 		patch.ConstructionOffersKingdomID = &inventory.ConstructionOffersKingdomID
 		patch.ConstructionOffersByCastle = &inventory.ConstructionOffersByCastle
+		patch.LastPackagePurchaseDispatch = &inventory.LastPackagePurchaseDispatch
 	}
 	if parts&inventoryEquipmentMutable != 0 {
 		if changes.replaceEquipment || len(changes.equipmentIDs) == 0 {
@@ -499,6 +502,7 @@ func inventoryComponentPatch(inventory *InventoryState, changes componentChanges
 	}
 	if parts&inventoryGemStacksMutable != 0 {
 		patch.GemStacks = &inventory.GemStacks
+		patch.EquipmentMutatedAt = &inventory.EquipmentMutatedAt
 	}
 	if parts&inventoryItemsMutable != 0 {
 		patch.ItemsObservedAt = &inventory.ItemsObservedAt

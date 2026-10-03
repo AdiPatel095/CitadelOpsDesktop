@@ -110,7 +110,7 @@ func TestAutoBirdFreshJAAPreparationAppliesDerivedDirewolfReserve(t *testing.T) 
 	}
 	configuration := autoBirdFortressConfiguration(t, json.RawMessage(`{"auto_fortress":true}`), 1)
 	application := &Application{
-		State: State.NewStore(gameState), Configuration: configuration,
+		State: State.NewStore(&gameState), Configuration: configuration,
 		GameData: autoBirdFortressGameDataManager(t),
 	}
 	arguments, _ := json.Marshal(autoBirdCycleRequest{
@@ -154,7 +154,7 @@ func TestAutoBirdFinalDispatchRebuildsLateDirewolfBatchAndAllowsOrdinaryBatch(t 
 				UnitsObservedAt: now, UpdatedAt: now,
 			}
 			configuration := autoBirdFortressConfiguration(t, json.RawMessage(`{"auto_fortress":false,"auto_bird":true}`), 1)
-			state := State.NewStore(gameState)
+			state := State.NewStore(&gameState)
 			application := &Application{State: state, Configuration: configuration}
 			request, _ := json.Marshal(autoBirdCycleRequest{
 				SourceCastleID: 10, TrackingID: "autoBird:10", DispatchStartedAt: now.Add(-time.Second),

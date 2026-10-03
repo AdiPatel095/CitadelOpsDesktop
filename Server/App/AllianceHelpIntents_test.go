@@ -37,7 +37,7 @@ func TestPlanAllianceHelpRequestUsesCapturedAHRPayload(t *testing.T) {
 				Production: map[int]State.ProductionQueue{
 					test.lineID: {
 						LineID: test.lineID, ObservedAt: observedAt,
-						Active: &State.QueueItem{ProductionID: 2033307472},
+						Active: &State.QueueItem{ProductionID: 2033307472, Amount: 5},
 					},
 				},
 			}
@@ -114,7 +114,7 @@ func TestRecruitmentAllianceHelpResolverRequiresExactCommittedCastleContext(t *t
 		Production: map[int]State.ProductionQueue{
 			recruitmentProductionLineID: {
 				LineID: recruitmentProductionLineID, ObservedAt: observedAt,
-				Active: &State.QueueItem{ProductionID: 205, AllianceHelpAvailable: true},
+				Active: &State.QueueItem{ProductionID: 205, Amount: 5, AllianceHelpAvailable: true},
 			},
 		},
 	}
@@ -229,7 +229,7 @@ func TestRecruitmentBUPAllianceHelpMarkersRequireExactFocus(t *testing.T) {
 		},
 	}
 	state.Castles[77] = State.CastleState{ID: 77, KingdomID: 1, Focused: true}
-	store := State.NewStore(state)
+	store := State.NewStore(&state)
 	application := &Application{State: store}
 	arguments := json.RawMessage(`{"castleId":77}`)
 	if err := application.markRecruitmentBUPAllianceHelpDue(t.Context(), arguments); err != nil {
@@ -255,7 +255,7 @@ func TestRecruitmentBUPCoveredMarkerRequiresCommittedLifecycleEvidence(t *testin
 	state.Session.Generation = 7
 	state.Session.ConnectionGeneration = 3
 	state.Castles[77] = State.CastleState{ID: 77, KingdomID: 1, Focused: true}
-	store := State.NewStore(state)
+	store := State.NewStore(&state)
 	application := &Application{State: store}
 	arguments := json.RawMessage(`{"castleId":77}`)
 	if err := application.markRecruitmentBUPAllianceHelpDue(t.Context(), arguments); err != nil {
@@ -286,7 +286,7 @@ func TestRecruitmentBUPMarkerStopsWhenReusedCoverageExpired(t *testing.T) {
 		},
 	}
 	state.Castles[77] = State.CastleState{ID: 77, KingdomID: 1, Focused: true}
-	store := State.NewStore(state)
+	store := State.NewStore(&state)
 	protocol := store.ProtocolContext()
 	if !store.ObserveRecruitmentBUP(77, 7, 3, protocol.FocusEpoch) {
 		t.Fatal("initial recruitment BUP was not recorded")
@@ -333,7 +333,7 @@ func TestRecruitmentAllianceHelpRequiresQueueFromCommittedCastleSnapshot(t *test
 		Production: map[int]State.ProductionQueue{
 			recruitmentProductionLineID: {
 				LineID: recruitmentProductionLineID, ObservedAt: now.Add(-time.Minute),
-				Active: &State.QueueItem{ProductionID: 205, AllianceHelpAvailable: true},
+				Active: &State.QueueItem{ProductionID: 205, Amount: 5, AllianceHelpAvailable: true},
 			},
 		},
 	}
@@ -365,7 +365,7 @@ func TestAllianceHelpRejectsCurrentRetainedUnfocusableCastle(t *testing.T) {
 		Production: map[int]State.ProductionQueue{
 			hospitalProductionLineID: {
 				LineID: hospitalProductionLineID,
-				Active: &State.QueueItem{ProductionID: 204, AllianceHelpAvailable: true},
+				Active: &State.QueueItem{ProductionID: 204, Amount: 5, AllianceHelpAvailable: true},
 			},
 		},
 	}
@@ -402,7 +402,7 @@ func TestPlanHospitalAllianceHelpStopsAtObservedAccountLimit(t *testing.T) {
 		Production: map[int]State.ProductionQueue{
 			hospitalProductionLineID: {
 				LineID: hospitalProductionLineID,
-				Queued: []State.QueueItem{{ProductionID: 204}},
+				Queued: []State.QueueItem{{ProductionID: 204, Amount: 5}},
 			},
 		},
 	}
@@ -426,7 +426,7 @@ func TestHospitalAllianceHelpWaitsForCurrentRequestList(t *testing.T) {
 		Production: map[int]State.ProductionQueue{
 			hospitalProductionLineID: {
 				LineID: hospitalProductionLineID,
-				Queued: []State.QueueItem{{ProductionID: 204}},
+				Queued: []State.QueueItem{{ProductionID: 204, Amount: 5}},
 			},
 		},
 	}
@@ -467,7 +467,7 @@ func TestRecruitmentAllianceHelpIgnoresPendingOwnRequestWhenQueueLacksRAH(t *tes
 			recruitmentProductionLineID: {
 				LineID: recruitmentProductionLineID, ObservedAt: now,
 				Active: &State.QueueItem{ProductionID: 205, AllianceHelpAvailable: true, AllianceHelpRequested: true},
-				Queued: []State.QueueItem{{ProductionID: 206, AllianceHelpAvailable: true}},
+				Queued: []State.QueueItem{{ProductionID: 206, Amount: 5, AllianceHelpAvailable: true}},
 			},
 		},
 	}
@@ -498,7 +498,7 @@ func TestAllianceHelpGuardReplansAtAuthoritativeHospitalLimit(t *testing.T) {
 		Production: map[int]State.ProductionQueue{
 			hospitalProductionLineID: {
 				LineID: hospitalProductionLineID,
-				Queued: []State.QueueItem{{ProductionID: 204}},
+				Queued: []State.QueueItem{{ProductionID: 204, Amount: 5}},
 			},
 		},
 	}
@@ -613,12 +613,12 @@ func TestMarkAllianceHelpRequestedDoesNotInferRecruitmentSuccess(t *testing.T) {
 		Production: map[int]State.ProductionQueue{
 			0: {
 				LineID: 0,
-				Active: &State.QueueItem{ProductionID: 101, AllianceHelpAvailable: true},
-				Queued: []State.QueueItem{{ProductionID: 101}, {ProductionID: 102}},
+				Active: &State.QueueItem{ProductionID: 101, Amount: 5, AllianceHelpAvailable: true},
+				Queued: []State.QueueItem{{ProductionID: 101, Amount: 5}, {ProductionID: 102, Amount: 5}},
 			},
 		},
 	}
-	application := &Application{State: State.NewStore(state)}
+	application := &Application{State: State.NewStore(&state)}
 	if err := application.markAllianceHelpRequested(context.Background(), json.RawMessage(`{"productionId":101,"castleId":77,"lineId":0}`)); err != nil {
 		t.Fatal(err)
 	}
@@ -646,7 +646,7 @@ func TestMarkHospitalAllianceHelpOnlyMarksMatchingJob(t *testing.T) {
 			2: {LineID: 2, Queued: []State.QueueItem{{ProductionID: 201}, {ProductionID: 202}}},
 		},
 	}
-	application := &Application{State: State.NewStore(state)}
+	application := &Application{State: State.NewStore(&state)}
 	if err := application.markAllianceHelpRequested(context.Background(), json.RawMessage(`{"productionId":201,"castleId":77,"lineId":2}`)); err != nil {
 		t.Fatal(err)
 	}
@@ -725,7 +725,7 @@ func TestAllianceHelpAnswerAllAllowsOneUnobservedSessionBootstrap(t *testing.T) 
 		t.Fatalf("resolve bootstrap help-all: %v", err)
 	}
 
-	application := &Application{State: State.NewStore(state)}
+	application := &Application{State: State.NewStore(&state)}
 	if err := application.markAllianceHelpAnswered(t.Context(), plan.Steps[1].ActionArguments); err != nil {
 		t.Fatal(err)
 	}
@@ -751,7 +751,7 @@ func TestMarkAllianceHelpAnsweredPreservesNewRequests(t *testing.T) {
 	state.AllianceHelpRequests = State.AllianceHelpRequestState{
 		PendingOtherListIDs: []int64{101, 102, 103}, OthersObservedAt: time.Now().UTC(), OthersObservedGeneration: 7,
 	}
-	application := &Application{State: State.NewStore(state)}
+	application := &Application{State: State.NewStore(&state)}
 	if err := application.markAllianceHelpAnswered(
 		t.Context(), json.RawMessage(`{"listIds":[101,102],"sessionGeneration":7}`),
 	); err != nil {
@@ -763,5 +763,61 @@ func TestMarkAllianceHelpAnsweredPreservesNewRequests(t *testing.T) {
 	}
 	if generation := application.State.Snapshot().AllianceHelpRequests.LastHelpAllGeneration; generation != 7 {
 		t.Fatalf("last help-all generation = %d, want 7", generation)
+	}
+}
+
+// CIT-13 AHR 269: the official client requests T=6 help for the whole
+// recruitment list (CastleRecruitDialogUnits / ALLIANCE_HELP_RECRUITMENT_LIST),
+// so a queued job is valid. A job covered by a live 269 record is not.
+func TestRecruitmentAllianceHelpUsesSharedEligibilityAndHonors269(t *testing.T) {
+	state := State.NewGameState()
+	observedAt := time.Now().UTC()
+	state.Player.ID = 501
+	state.Session.Generation = 7
+	state.Session.ConnectionGeneration = 3
+	state.Castles[77] = State.CastleState{
+		ID: 77, X: 12, Y: 34, KingdomID: 1, Focused: true,
+		Production: map[int]State.ProductionQueue{0: {
+			LineID: 0, ObservedAt: observedAt,
+			Active: &State.QueueItem{ProductionID: 201, Amount: 8, AllianceHelpRequested: true},
+			Queued: []State.QueueItem{{ProductionID: 202, Amount: 8}, {ProductionID: 203, Amount: 8}},
+		}},
+	}
+	exact := State.ProtocolContextState{
+		SessionGeneration: 7, ConnectionGeneration: 3, FocusedCastleID: 77,
+		FocusSubcontext: State.FocusSubcontextCastle, FocusEpoch: 4,
+	}
+	resolve := func(state State.GameState, productionID int64) error {
+		arguments, _ := json.Marshal(allianceHelpRequest{ProductionID: productionID, CastleID: 77, LineID: 0})
+		_, err := (&Application{}).resolveAllianceHelpRequestStep(
+			t.Context(), Intent.PlanningContext{State: state, ProtocolContext: exact}, arguments,
+		)
+		return err
+	}
+	if err := resolve(state, 202); err != nil {
+		t.Fatalf("queued explicit-RAH-false job was refused: %v", err)
+	}
+	if err := resolve(state, 201); !errors.Is(err, Intent.ErrPlanStale) {
+		t.Fatalf("RAH job was accepted: %v", err)
+	}
+
+	if !State.RecordRecruitmentHelpIneligibility(&state, 77, "ahr-269", observedAt) {
+		t.Fatal("269 record was not stored")
+	}
+	plan, err := planAllianceHelpRequest(t.Context(), Intent.PlanningContext{State: state}, json.RawMessage(`{"productionId":202}`))
+	if err != nil || len(plan.Steps) != 0 || !strings.Contains(plan.Summary, "no longer eligible") {
+		t.Fatalf("269-rejected job was planned again: %#v err=%v", plan, err)
+	}
+	if err := resolve(state, 203); !errors.Is(err, Intent.ErrPlanStale) {
+		t.Fatalf("269-rejected job passed the resolver: %v", err)
+	}
+
+	castle := state.Castles[77]
+	queue := castle.Production[0]
+	queue.Queued = append(append([]State.QueueItem(nil), queue.Queued...), State.QueueItem{ProductionID: 204, Amount: 8})
+	castle.Production = map[int]State.ProductionQueue{0: queue}
+	state.Castles = map[State.CastleID]State.CastleState{77: castle}
+	if err := resolve(state, 204); err != nil {
+		t.Fatalf("job added after the 269 was refused: %v", err)
 	}
 }

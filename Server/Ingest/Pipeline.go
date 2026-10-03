@@ -2,7 +2,6 @@ package Ingest
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"strings"
@@ -12,6 +11,7 @@ import (
 
 	"CitadelDesktop/Server/GameData"
 	"CitadelDesktop/Server/Outbound"
+	"CitadelDesktop/Server/Profiling"
 	"CitadelDesktop/Server/Protocol"
 	"CitadelDesktop/Server/State"
 )
@@ -197,6 +197,7 @@ func (pipeline *Pipeline) ObserveFrame(frame Protocol.Frame) ObservedFrame {
 }
 
 func (pipeline *Pipeline) observeFrame(frame Protocol.Frame, causationOperationID string) ObservedFrame {
+	frame = frame.WithPayloadView()
 	observed := ObservedFrame{
 		Frame: frame, IngressID: pipeline.nextIngress.Add(1), ProfileID: pipeline.profileID,
 		DecoderVersion: observationDecoderVersion, CausationOperationID: strings.TrimSpace(causationOperationID),
@@ -211,7 +212,7 @@ func (pipeline *Pipeline) observeFrame(frame Protocol.Frame, causationOperationI
 		observed.FocusedCastleID = view.FocusedCastleID
 		observed.CatalogVersion = view.CatalogVersion
 	}
-	pipeline.publishWire(Protocol.CommittedFrame{Frame: frame, IngressID: observed.IngressID})
+	pipeline.publishWire(Protocol.CommittedFrame{Frame: frame.WithoutPayloadView(), IngressID: observed.IngressID})
 	return observed
 }
 
@@ -220,6 +221,19 @@ func (pipeline *Pipeline) CommitFrame(ctx context.Context, observed ObservedFram
 }
 
 func (pipeline *Pipeline) CommitFrameGuarded(
+	ctx context.Context,
+	observed ObservedFrame,
+	guard func() error,
+) (Protocol.CommittedFrame, error) {
+	var committed Protocol.CommittedFrame
+	var err error
+	Profiling.Do(ctx, func(labeled context.Context) {
+		committed, err = pipeline.commitFrameGuarded(labeled, observed, guard)
+	}, Profiling.LabelStage, Profiling.StageIngest, Profiling.LabelOpcode, observed.Frame.Opcode)
+	return committed, err
+}
+
+func (pipeline *Pipeline) commitFrameGuarded(
 	ctx context.Context,
 	observed ObservedFrame,
 	guard func() error,
@@ -290,6 +304,9 @@ func (pipeline *Pipeline) CommitFrameGuarded(
 	if pipeline.gameData != nil {
 		currentData, _ = pipeline.gameData.Current()
 	}
+	if frame.Direction == Protocol.DirectionOutbound && frame.Opcode == "gaa" {
+		pipeline.state.ObserveOutboundMapRead(frame.ReceivedAt)
+	}
 	registration := pipeline.registry.registered(frame.Opcode, frame.Direction)
 	reducer := registration.reducer
 	retainsObservation := State.RetainProtocolObservation(frame.Opcode) &&
@@ -314,8 +331,9 @@ func (pipeline *Pipeline) CommitFrameGuarded(
 			return Protocol.CommittedFrame{}, validateErr
 		}
 		pipeline.state.ObserveProtocolFocus(focusSubcontext, frame.ReceivedAt)
+		pipeline.settleContextReply(frame)
 		committed := Protocol.CommittedFrame{
-			Frame: frame, IngressID: observed.IngressID, Revision: pipeline.state.Revision(),
+			Frame: frame.WithoutPayloadView(), IngressID: observed.IngressID, Revision: pipeline.state.Revision(),
 		}
 		pipeline.publish(committed)
 		pipeline.completeWireCommit(observed.IngressID, committed, nil)
@@ -356,7 +374,7 @@ func (pipeline *Pipeline) CommitFrameGuarded(
 			return State.ScopedChange{}, validateErr
 		}
 		return State.ScopedChange{
-			Domains: domains, Partitions: scopedPartitionsForFrame(frame, *gameState, domains),
+			Domains: domains, Partitions: scopedPartitionsForFrame(frame, gameState, domains),
 			FocusSubcontext: focusSubcontext, Changed: retainsObservation || baselineChanged || reducerChanged,
 			DirtyComponents: dirtyComponents, DirtyComponentsSet: true,
 		}, nil
@@ -372,7 +390,7 @@ func (pipeline *Pipeline) CommitFrameGuarded(
 		reduceErr := err
 		if !retainsObservation {
 			committed := Protocol.CommittedFrame{
-				Frame: frame, IngressID: observed.IngressID, Revision: pipeline.state.Revision(), ReduceError: reduceErr.Error(),
+				Frame: frame.WithoutPayloadView(), IngressID: observed.IngressID, Revision: pipeline.state.Revision(), ReduceError: reduceErr.Error(),
 			}
 			pipeline.publish(committed)
 			pipeline.completeWireCommit(observed.IngressID, committed, reduceErr)
@@ -397,7 +415,7 @@ func (pipeline *Pipeline) CommitFrameGuarded(
 					dirtyComponents = dirtyComponents.Union(State.Components(State.ComponentSession))
 				}
 				return State.ScopedChange{
-					Domains: domains, Partitions: scopedPartitionsForFrame(frame, *gameState, domains),
+					Domains: domains, Partitions: scopedPartitionsForFrame(frame, gameState, domains),
 					FocusSubcontext: focusSubcontext, Changed: true,
 					DirtyComponents: dirtyComponents, DirtyComponentsSet: true,
 				}, nil
@@ -409,7 +427,7 @@ func (pipeline *Pipeline) CommitFrameGuarded(
 			return Protocol.CommittedFrame{}, err
 		}
 		committed := Protocol.CommittedFrame{
-			Frame: frame, IngressID: observed.IngressID, Revision: event.Revision,
+			Frame: frame.WithoutPayloadView(), IngressID: observed.IngressID, Revision: event.Revision,
 			Domains: event.Domains, ReduceError: reduceErr.Error(),
 		}
 		pipeline.publish(committed)
@@ -419,7 +437,7 @@ func (pipeline *Pipeline) CommitFrameGuarded(
 		}
 		return committed, reduceErr
 	}
-	committed := Protocol.CommittedFrame{Frame: frame, IngressID: observed.IngressID, Revision: event.Revision, Domains: event.Domains}
+	committed := Protocol.CommittedFrame{Frame: frame.WithoutPayloadView(), IngressID: observed.IngressID, Revision: event.Revision, Domains: event.Domains}
 	if pipeline.durabilityFence != nil && requiresDurabilityFence(event.Domains) {
 		if fenceErr := pipeline.durabilityFence(ctx, event); fenceErr != nil {
 			fenceErr = fmt.Errorf("persist committed %s frame revision %d: %w", frame.Opcode, event.Revision, fenceErr)
@@ -430,12 +448,25 @@ func (pipeline *Pipeline) CommitFrameGuarded(
 			return committed, fenceErr
 		}
 	}
+	pipeline.settleContextReply(frame)
 	pipeline.publish(committed)
 	pipeline.completeWireCommit(observed.IngressID, committed, nil)
 	if pipeline.telemetry != nil {
 		pipeline.telemetry.Record(committed, nil)
 	}
 	return committed, nil
+}
+
+// settleContextReply marks every earlier world-map read as handled once an
+// inbound GAA/JAA/JCA reply commits (JCA is answered as JAA).
+func (pipeline *Pipeline) settleContextReply(frame Protocol.Frame) {
+	if frame.Direction != Protocol.DirectionInbound {
+		return
+	}
+	switch frame.Opcode {
+	case "gaa", "jaa", "jca":
+		pipeline.state.ObserveContextReplySettled(frame.ReceivedAt)
+	}
 }
 
 func requiresDurabilityFence(domains []string) bool {
@@ -463,8 +494,8 @@ func observationAuthoritativePlayerID(frame Protocol.Frame) (State.PlayerID, boo
 	if frame.Direction != Protocol.DirectionInbound || !strings.EqualFold(strings.TrimSpace(frame.Opcode), "gbd") {
 		return 0, false
 	}
-	var root map[string]json.RawMessage
-	if len(frame.Payload) == 0 || json.Unmarshal(frame.Payload, &root) != nil {
+	root, err := frame.PayloadRoot()
+	if len(frame.Payload) == 0 || err != nil {
 		return 0, false
 	}
 	raw := root["gpi"]
@@ -751,4 +782,10 @@ func (pipeline *Pipeline) completeWireCommit(
 		close(commit.done)
 	}
 	pipeline.commitMu.Unlock()
+}
+
+func (pipeline *Pipeline) ObserveTransportFrame(frame Protocol.Frame, responseToken, causationOperationID string) ObservedFrame {
+	frame.ResponseToken = strings.TrimSpace(responseToken)
+	frame.CausationOperationID = strings.TrimSpace(causationOperationID)
+	return pipeline.observeFrame(frame, frame.CausationOperationID)
 }

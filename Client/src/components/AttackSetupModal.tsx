@@ -71,6 +71,10 @@ export interface AttackSetupModalProps {
   toolLimits?: AttackSetupToolLimits;
   allowTroopFamilyMode?: boolean;
   isSaving?: boolean;
+  /** 'hidden' omits the preset name field (inline module setups have a generated name). */
+  nameField?: 'hidden';
+  /** Replaces the default "Save preset" button text. */
+  saveLabel?: React.ReactNode;
   onClose: () => void;
   onSave: (draft: AttackSetupDraft) => void;
 }
@@ -113,6 +117,8 @@ const AttackSetupModal: React.FC<AttackSetupModalProps> = ({
   toolLimits,
   allowTroopFamilyMode = false,
   isSaving = false,
+  nameField,
+  saveLabel,
   onClose,
   onSave,
 }) => {
@@ -192,7 +198,7 @@ const AttackSetupModal: React.FC<AttackSetupModalProps> = ({
     () => findToolLimitIssues(draft, toolLimits),
     [draft, toolLimits]
   );
-  const canSave = draft.name.trim().length > 0
+  const canSave = (nameField === 'hidden' || draft.name.trim().length > 0)
     && totals.formationTroops > 0
     && toolLimitIssues.length === 0
     && !isMetadataLoading
@@ -297,7 +303,7 @@ const AttackSetupModal: React.FC<AttackSetupModalProps> = ({
           <div className="flex items-center gap-2">
             <Button variant="ghost" onClick={onClose} disabled={isSaving}><LocalizedText messageKey="game.cancel" /></Button>
             <Button variant="primary" onClick={handleSave} disabled={!canSave} isLoading={isSaving}>
-              {isSaving ? 'Saving preset' : 'Save preset'}
+              {saveLabel ?? (isSaving ? 'Saving preset' : 'Save preset')}
             </Button>
           </div>
         </div>
@@ -342,16 +348,18 @@ const AttackSetupModal: React.FC<AttackSetupModalProps> = ({
         ) : null}
 
         <section className="grid gap-3 rounded-global border border-border-base bg-bg-card/65 p-3 shadow-[var(--shadow-raised)] lg:grid-cols-[minmax(15rem,1.4fr)_auto_auto] lg:items-end">
-          <label className="block min-w-0">
-            <span className="mb-1.5 block text-[11px] font-black uppercase tracking-wider text-text-muted"><LocalizedText messageKey="common.presetName" /></span>
-            <Input
-              value={draft.name}
-              onChange={(event) => setDraft((current) => ({ ...current, name: event.target.value }))}
-              placeholder={localizeStatic("ui.components.attackSetupModal.placeholder.e.g.rbc.5.wave.ranged.9a9be634")}
-              maxLength={80}
-              className="font-semibold"
-            />
-          </label>
+          {nameField === 'hidden' ? null : (
+            <label className="block min-w-0">
+              <span className="mb-1.5 block text-[11px] font-black uppercase tracking-wider text-text-muted"><LocalizedText messageKey="common.presetName" /></span>
+              <Input
+                value={draft.name}
+                onChange={(event) => setDraft((current) => ({ ...current, name: event.target.value }))}
+                placeholder={localizeStatic("ui.components.attackSetupModal.placeholder.e.g.rbc.5.wave.ranged.9a9be634")}
+                maxLength={80}
+                className="font-semibold"
+              />
+            </label>
+          )}
 
           <div>
             <span className="mb-1.5 block text-[11px] font-black uppercase tracking-wider text-text-muted"><LocalizedText messageKey="ui.components.attackSetupModal.waves.ad5b8321" /></span>
@@ -953,7 +961,7 @@ const InventorySlotCard: React.FC<InventorySlotCardProps> = ({
         <span className="max-w-[3.25rem] truncate font-mono">{hasItem ? `#${slot.itemId}` : 'Empty'}</span>
       </div>
 
-      {hasItem ? (
+      {slot.itemId != null ? (
         <>
           <QuantityAssetTile
             size={76}

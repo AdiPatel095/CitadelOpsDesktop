@@ -106,7 +106,7 @@ func (*AutoInvasionPolicy) Evaluate(_ context.Context, snapshot Snapshot) (decis
 	score, found := snapshot.State.ActiveScalableEventScore()
 	if !found {
 		if decision, locked := limitedEventGate(
-			snapshot.State, snapshot.Now, []int64{foreignLordsEventID, bloodcrowEventID}, "Foreign Lords or Bloodcrow event",
+			&snapshot.State, snapshot.Now, []int64{foreignLordsEventID, bloodcrowEventID}, "Foreign Lords or Bloodcrow event",
 		); locked {
 			return decision, nil
 		}
@@ -115,7 +115,7 @@ func (*AutoInvasionPolicy) Evaluate(_ context.Context, snapshot Snapshot) (decis
 	targetTypeID, supported := invasionTargetType(score.EventID)
 	if !supported {
 		if decision, locked := limitedEventGate(
-			snapshot.State, snapshot.Now, []int64{foreignLordsEventID, bloodcrowEventID}, "Foreign Lords or Bloodcrow event",
+			&snapshot.State, snapshot.Now, []int64{foreignLordsEventID, bloodcrowEventID}, "Foreign Lords or Bloodcrow event",
 		); locked {
 			return decision, nil
 		}
@@ -128,8 +128,8 @@ func (*AutoInvasionPolicy) Evaluate(_ context.Context, snapshot Snapshot) (decis
 	if source.KingdomID != 0 {
 		return invasionWaiting(snapshot.Now, "Foreign Lords and Bloodcrow attacks require a Great Empire castle", Localization.New("server.automation.foreign_lords_and_bloodcrow.068958aa", "Foreign Lords and Bloodcrow attacks require a Great Empire castle", nil)), nil
 	}
-	activeTargets := activeInvasionTargets(snapshot.State, targetTypeID, snapshot.Now)
-	activeCount := activeInvasionAttackCount(snapshot.State, source.ID, targetTypeID, snapshot.Now)
+	activeTargets := activeInvasionTargets(&snapshot.State, targetTypeID, snapshot.Now)
+	activeCount := activeInvasionAttackCount(&snapshot.State, source.ID, targetTypeID, snapshot.Now)
 	metrics := map[string]float64{
 		"score": float64(score.PlayerScore), "scoreTarget": float64(settings.ScoreTarget),
 		"activeAttacks": float64(activeCount),
@@ -196,7 +196,7 @@ func (*AutoInvasionPolicy) Evaluate(_ context.Context, snapshot Snapshot) (decis
 		return *blocked, nil
 	}
 	commanderIDs, commandersRestricted := commanderFeatureCandidates(
-		snapshot.State,
+		&snapshot.State,
 		snapshot.Configuration,
 		"autoInvasion",
 	)
@@ -206,7 +206,7 @@ func (*AutoInvasionPolicy) Evaluate(_ context.Context, snapshot Snapshot) (decis
 			NextCheckAt: snapshot.Now.Add(policyInterval(settings.CheckIntervalSec, 30)), Metrics: metrics,
 		}, nil
 	}
-	commanderID, commanderAvailable := nextAvailableFeatureCommander(snapshot.State, commanderIDs, commandersRestricted, snapshot.Now)
+	commanderID, commanderAvailable := nextAvailableFeatureCommander(&snapshot.State, commanderIDs, commandersRestricted, snapshot.Now)
 	if !commanderAvailable {
 		detail := "No commander is currently available"
 		var detailLocalizationMessage *Localization.Message = Localization.New("server.automation.no_commander_is_currently.25dd6b1e", "No commander is currently available", nil)
@@ -233,7 +233,7 @@ func (*AutoInvasionPolicy) Evaluate(_ context.Context, snapshot Snapshot) (decis
 		}, nil
 	}
 
-	pool := invasionCandidatePool(snapshot.State, source, targetTypeID, fixedInvasionRadius, lastScan)
+	pool := invasionCandidatePool(&snapshot.State, source, targetTypeID, fixedInvasionRadius, lastScan)
 	metrics["knownTargets"] = float64(len(pool))
 	if len(pool) == 0 {
 		nextScan := lastScan.Add(refreshInterval)
@@ -246,7 +246,7 @@ func (*AutoInvasionPolicy) Evaluate(_ context.Context, snapshot Snapshot) (decis
 		}, nil
 	}
 	candidates, blocked := availableInvasionCandidates(
-		snapshot.State, pool, activeTargets, score.EventID, targetTypeID, snapshot.Now,
+		&snapshot.State, pool, activeTargets, score.EventID, targetTypeID, snapshot.Now,
 	)
 	metrics["availableTargets"] = float64(len(candidates))
 	metrics["busyTargets"] = float64(blocked.busy)
@@ -501,7 +501,7 @@ func addPresetCourtyardRequirements(
 	}
 }
 
-func activeInvasionTargets(gameState State.GameState, targetTypeID int, now time.Time) map[string]struct{} {
+func activeInvasionTargets(gameState *State.GameState, targetTypeID int, now time.Time) map[string]struct{} {
 	result := map[string]struct{}{}
 	gameState.RangeMovements(func(_ State.MovementID, movement State.MovementState) bool {
 		for _, target := range State.MovementMapEndpoints(movement) {
@@ -518,7 +518,7 @@ func activeInvasionTargets(gameState State.GameState, targetTypeID int, now time
 }
 
 func activeInvasionAttackCount(
-	gameState State.GameState,
+	gameState *State.GameState,
 	sourceCastleID State.CastleID,
 	targetTypeID int,
 	now time.Time,
@@ -544,7 +544,7 @@ func activeInvasionAttackCount(
 }
 
 func invasionReservationDueForReconciliation(
-	gameState State.GameState,
+	gameState *State.GameState,
 	now time.Time,
 ) (State.InvasionTargetReservation, State.MovementID, bool) {
 	keys := make([]string, 0, len(gameState.Invasion.TargetReservations))
@@ -599,7 +599,7 @@ func invasionReservationDueForReconciliation(
 }
 
 func invasionReservationReconciliationDecision(snapshot Snapshot, preferred State.CastleID) (Decision, bool) {
-	reservation, movementID, found := invasionReservationDueForReconciliation(snapshot.State, snapshot.Now)
+	reservation, movementID, found := invasionReservationDueForReconciliation(&snapshot.State, snapshot.Now)
 	if !found {
 		return Decision{}, false
 	}
@@ -678,7 +678,7 @@ func invasionReservationReconciliationDecision(snapshot Snapshot, preferred Stat
 }
 
 func invasionCandidatePool(
-	gameState State.GameState,
+	gameState *State.GameState,
 	source State.CastleState,
 	targetTypeID int,
 	radius int,
@@ -715,7 +715,7 @@ type invasionBlockedTargets struct {
 }
 
 func availableInvasionCandidates(
-	gameState State.GameState,
+	gameState *State.GameState,
 	pool []State.MapObservation,
 	active map[string]struct{},
 	eventID int64,

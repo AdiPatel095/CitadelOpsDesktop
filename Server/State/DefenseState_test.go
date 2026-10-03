@@ -15,7 +15,7 @@ func TestDefenseStateSnapshotIsDeepCopied(t *testing.T) {
 			Moat:          DefenseMoatState{LeftToolSlots: []DefenseToolSlot{{DefinitionID: 502, Amount: 1}}},
 		},
 	}
-	store := NewStore(state)
+	store := NewStore(&state)
 	snapshot := store.Snapshot()
 	castle := snapshot.Castles[10]
 	castle.Defense.Inventory[501] = 0

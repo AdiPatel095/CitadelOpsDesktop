@@ -106,3 +106,26 @@ func assertCleanupRequest(t *testing.T, decision Decision, err error, name strin
 		t.Fatalf("request arguments = %s err=%v, want category %s", decision.Request.Arguments, err, category)
 	}
 }
+
+// CIT-13 SEQ 214: after any dispatched sale the policy refreshes storage
+// before planning another batch, whatever the sale's outcome.
+func TestAutoEquipmentCleanupRefreshesAfterAnyDispatchedSale(t *testing.T) {
+	now := time.Date(2026, 9, 17, 10, 0, 0, 0, time.UTC)
+	gameState := State.NewGameState()
+	markCleanupSnapshotsFresh(&gameState, now.Add(-10*time.Second))
+	gameState.Inventory.Equipment[6558434873] = State.EquipmentInstance{ID: 6558434873, DefinitionID: 100, Slot: 1, RarityID: 2}
+	gameState.Inventory.Equipment[7] = State.EquipmentInstance{ID: 7, DefinitionID: 100, Slot: 1, RarityID: 2, WearerKind: "commander"}
+	gameState.Inventory.Equipment[8] = State.EquipmentInstance{ID: 8, DefinitionID: 100, Slot: 1, RarityID: 5}
+	gameState.Inventory.EquipmentMutatedAt = now.Add(-5 * time.Second)
+
+	policy := NewAutoEquipmentCleanupPolicy()
+	decision, err := policy.Evaluate(t.Context(), Snapshot{State: gameState, Now: now})
+	assertCleanupRequest(t, decision, err, "equipment.refresh", "")
+
+	markCleanupSnapshotsFresh(&gameState, now)
+	decision, err = policy.Evaluate(t.Context(), Snapshot{State: gameState, Now: now})
+	assertCleanupRequest(t, decision, err, "equipment.sell", "non_relic_equipment")
+	if decision.Metrics["eligibleEquipment"] != 1 {
+		t.Fatalf("protected boundary changed: %#v", decision.Metrics)
+	}
+}

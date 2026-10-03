@@ -18,7 +18,7 @@ func TestClientStateSnapshotKeepsOnlyDashboardMapKinds(t *testing.T) {
 	state.Map[4] = map[string]MapObservation{
 		"30:30": {KingdomID: 4, X: 30, Y: 30, TypeID: MapTypeRift, ObjectID: 93, ObservedAt: observedAt},
 	}
-	contents, err := json.Marshal(NewClientStateSnapshot(state))
+	contents, err := json.Marshal(NewClientStateSnapshot(&state))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -40,7 +40,7 @@ func TestClientStateSnapshotOmitsPrivateTroopWorkflows(t *testing.T) {
 		ID: "private-owned-transfer", Owner: "autoFortress", Status: "pending", KingdomID: 2,
 		Units: []KingdomTransportUnit{{UnitID: 277, Amount: 100}},
 	}
-	raw, err := json.Marshal(NewClientStateSnapshot(state))
+	raw, err := json.Marshal(NewClientStateSnapshot(&state))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -58,7 +58,7 @@ func TestClientStateSnapshotPreservesZeroEquipmentRarity(t *testing.T) {
 	state.Inventory.Equipment[101] = EquipmentInstance{
 		ID: 101, Slot: 1, RarityID: 0, RelicKnown: true,
 	}
-	contents, err := json.Marshal(NewClientStateSnapshot(state))
+	contents, err := json.Marshal(NewClientStateSnapshot(&state))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -80,7 +80,8 @@ func TestClientStateSnapshotPreservesZeroEquipmentRarity(t *testing.T) {
 }
 
 func TestClientEventPayloadReusesImmutableEncoding(t *testing.T) {
-	store := NewStore(NewGameState())
+	accessorState1 := NewGameState()
+	store := NewStore(&accessorState1)
 	event, err := store.ApplyComponents(Components(ComponentSession), func(state *GameState) ([]string, bool, error) {
 		state.Session.Generation++
 		return []string{"session"}, true, nil
@@ -114,7 +115,7 @@ func TestClientProjectionPublishesConnectionScopedMovementSnapshot(t *testing.T)
 	state.MovementSnapshot = MovementSnapshot{
 		Version: 7, ConnectionGeneration: 3, ObservedAt: observedAt,
 	}
-	contents, err := json.Marshal(NewClientStateSnapshot(state))
+	contents, err := json.Marshal(NewClientStateSnapshot(&state))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -126,7 +127,7 @@ func TestClientProjectionPublishesConnectionScopedMovementSnapshot(t *testing.T)
 		t.Fatalf("client movement snapshot = %+v, want %+v", snapshot.MovementSnapshot, state.MovementSnapshot)
 	}
 
-	store := NewStore(state)
+	store := NewStore(&state)
 	event, err := store.ApplyComponents(Components(ComponentMovementSnapshot), func(state *GameState) ([]string, bool, error) {
 		state.MovementSnapshot.Version++
 		state.MovementSnapshot.ObservedAt = observedAt.Add(time.Second)
@@ -163,7 +164,7 @@ func TestClientProjectionPublishesAuthoritativeEventInventory(t *testing.T) {
 		GlobalEffectBoosts:           map[int64]GlobalEffectBoostState{2: boost},
 	}
 
-	contents, err := json.Marshal(NewClientStateSnapshot(state))
+	contents, err := json.Marshal(NewClientStateSnapshot(&state))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -181,7 +182,8 @@ func TestClientProjectionPublishesAuthoritativeEventInventory(t *testing.T) {
 		t.Fatalf("client global-effect inventory = %+v", snapshot.EventScores.Inventory)
 	}
 
-	store := NewStore(NewGameState())
+	accessorState2 := NewGameState()
+	store := NewStore(&accessorState2)
 	event, err := store.ApplyComponents(Components(ComponentEventScores), func(state *GameState) ([]string, bool, error) {
 		changed := state.ReplaceEventInventory(EventInventoryState{
 			ObservedAt: observedAt, ActiveByEvent: map[int64]EventAvailability{3: availability},
@@ -228,7 +230,7 @@ func TestClientProjectionPublishesFeastCostReduction(t *testing.T) {
 		AttemptedAt: observedAt, ActivationConfirmed: true, FoodBeforeKnown: true, FoodAfterKnown: true,
 	}
 
-	contents, err := json.Marshal(NewClientStateSnapshot(state))
+	contents, err := json.Marshal(NewClientStateSnapshot(&state))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -262,7 +264,8 @@ func TestClientProjectionPublishesFeastCostReduction(t *testing.T) {
 		}
 	}
 
-	store := NewStore(NewGameState())
+	accessorState3 := NewGameState()
+	store := NewStore(&accessorState3)
 	event, err := store.ApplyComponents(Components(ComponentMarket), func(state *GameState) ([]string, bool, error) {
 		state.Market.FeastCostReductionPercent = 75
 		state.Market.FeastCostReductionObservedAt = observedAt.Add(time.Minute)
@@ -282,7 +285,8 @@ func TestClientProjectionPublishesFeastCostReduction(t *testing.T) {
 }
 
 func TestClientProjectionOmitsAbsentFeastPurchaseEvidence(t *testing.T) {
-	contents, err := json.Marshal(NewClientStateSnapshot(NewGameState()))
+	accessorState4 := NewGameState()
+	contents, err := json.Marshal(NewClientStateSnapshot(&accessorState4))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -292,7 +296,8 @@ func TestClientProjectionOmitsAbsentFeastPurchaseEvidence(t *testing.T) {
 }
 
 func TestClientProjectionPublishesSanitizedSpecialistEvidenceAndOmitsAbsent(t *testing.T) {
-	empty, err := json.Marshal(NewClientStateSnapshot(NewGameState()))
+	accessorState5 := NewGameState()
+	empty, err := json.Marshal(NewClientStateSnapshot(&accessorState5))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -307,7 +312,7 @@ func TestClientProjectionPublishesSanitizedSpecialistEvidenceAndOmitsAbsent(t *t
 	state.Market.SpecialistPurchaseResponseConfirmedAt = now.Add(time.Second)
 	state.Market.SpecialistPurchaseRubyResourceID = 2
 	state.Market.LatestSpecialistPurchase = SpecialistPurchaseEvidence{Outcome: "confirmed", SpecialistID: 0, Opcode: "ovs", AttemptedAt: now, UpdatedAt: now.Add(time.Second), RubyBefore: 625, RubyBeforeKnown: true, RubyAfter: 0, RubyAfterKnown: true, DebitVerification: "command-local-observed", ActivationConfirmed: true}
-	contents, err := json.Marshal(NewClientStateSnapshot(state))
+	contents, err := json.Marshal(NewClientStateSnapshot(&state))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -324,7 +329,7 @@ func TestClientProjectionPublishesSanitizedSpecialistEvidenceAndOmitsAbsent(t *t
 func TestClientProjectionDistinguishesZeroFeastReductionFromUnknown(t *testing.T) {
 	marketJSON := func(state GameState) map[string]json.RawMessage {
 		t.Helper()
-		contents, err := json.Marshal(NewClientStateSnapshot(state))
+		contents, err := json.Marshal(NewClientStateSnapshot(&state))
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -425,7 +430,7 @@ func TestClientStateSnapshotRedactsTowerAdvisorTimeSkipReceipts(t *testing.T) {
 	state.AttackAnalytics.RecentTowerAdvisorTimeSkips = []TowerAdvisorTimeSkipUsage{{
 		MovementID: 700, TimeSkips: 3, UsedAt: time.Now().UTC(),
 	}}
-	contents, err := json.Marshal(NewClientStateSnapshot(state))
+	contents, err := json.Marshal(NewClientStateSnapshot(&state))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -435,5 +440,104 @@ func TestClientStateSnapshotRedactsTowerAdvisorTimeSkipReceipts(t *testing.T) {
 	}
 	if len(projected.AttackAnalytics.RecentTowerAdvisorTimeSkips) != 0 {
 		t.Fatalf("client projection exposed backend Advisor Time Skip receipts: %+v", projected.AttackAnalytics)
+	}
+}
+
+func testCastleState(id CastleID) CastleState {
+	return CastleState{
+		ID: id, Resources: map[ResourceID]ResourceBalance{}, Buildings: map[BuildingInstanceID]Building{},
+		BuildingProduction: map[BuildingInstanceID]BuildingProduction{},
+	}
+}
+
+func castleObservationFixture(observedAt time.Time) CastleState {
+	castle := testCastleState(11)
+	castle.Name = "Observed"
+	castle.UnitsObservedAt = observedAt
+	castle.FoodStateObservedAt = observedAt.Add(time.Minute)
+	castle.ContextSnapshotObservedAt = observedAt.Add(2 * time.Minute)
+	// Private collections and backend-only observation times stay stripped.
+	castle.ConstructionSlotsObservedAt = observedAt.Add(3 * time.Minute)
+	castle.QueueableObservedAt = observedAt.Add(4 * time.Minute)
+	castle.BuildingProduction = map[BuildingInstanceID]BuildingProduction{1: {}}
+	return castle
+}
+
+func TestClientProjectionPublishesCastleObservationTimesInSnapshot(t *testing.T) {
+	observedAt := time.Date(2026, time.September, 29, 12, 0, 0, 0, time.UTC)
+	state := NewGameState()
+	state.Castles[11] = castleObservationFixture(observedAt)
+	state.Castles[12] = testCastleState(12) // never observed: zero sentinel stays
+
+	raw, err := json.Marshal(NewClientStateSnapshot(&state))
+	if err != nil {
+		t.Fatal(err)
+	}
+	var decoded GameState
+	if err := json.Unmarshal(raw, &decoded); err != nil {
+		t.Fatal(err)
+	}
+	castle := decoded.Castles[11]
+	if !castle.UnitsObservedAt.Equal(observedAt) ||
+		!castle.FoodStateObservedAt.Equal(observedAt.Add(time.Minute)) ||
+		!castle.ContextSnapshotObservedAt.Equal(observedAt.Add(2*time.Minute)) {
+		t.Fatalf("snapshot observation times = %v %v %v", castle.UnitsObservedAt, castle.FoodStateObservedAt, castle.ContextSnapshotObservedAt)
+	}
+	if !castle.ConstructionSlotsObservedAt.IsZero() || !castle.QueueableObservedAt.IsZero() || len(castle.BuildingProduction) != 0 {
+		t.Fatalf("private castle data leaked: %#v", castle)
+	}
+	var fields struct {
+		Castles map[string]map[string]json.RawMessage `json:"castles"`
+	}
+	if err := json.Unmarshal(raw, &fields); err != nil {
+		t.Fatal(err)
+	}
+	for _, name := range []string{"unitsObservedAt", "foodStateObservedAt", "contextSnapshotObservedAt"} {
+		if got := string(fields.Castles["12"][name]); got != `"0001-01-01T00:00:00Z"` {
+			t.Fatalf("unobserved castle %s = %s, want the zero-time sentinel", name, got)
+		}
+	}
+}
+
+func TestClientProjectionPublishesCastleObservationTimesInPatches(t *testing.T) {
+	observedAt := time.Date(2026, time.September, 29, 12, 0, 0, 0, time.UTC)
+	state := NewGameState()
+	state.Castles[11] = testCastleState(11)
+	store := NewStore(&state)
+	event, err := store.ApplyComponents(Components(ComponentCastles), func(state *GameState) ([]string, bool, error) {
+		castle, found := state.MutableCastleParts(11, CastlePartIdentity|CastlePartResources|CastlePartUnits)
+		if !found {
+			t.Fatal("mutable castle 11 missing")
+		}
+		castle.UnitsObservedAt = observedAt
+		castle.FoodStateObservedAt = observedAt.Add(time.Minute)
+		castle.ContextSnapshotObservedAt = observedAt.Add(2 * time.Minute)
+		state.SetCastleParts(11, castle, CastlePartIdentity|CastlePartResources|CastlePartUnits)
+		return []string{"castles", "units"}, true, nil
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	// The durable patch already carried the times: projecting them adds no patch or revision.
+	if event.Patch == nil || event.Patch.CastleChanges == nil || len(*event.Patch.CastleChanges) != 1 {
+		t.Fatalf("durable castle delta = %#v", event.Patch)
+	}
+	projected := ClientEvent(event)
+	if projected.Revision != event.Revision {
+		t.Fatalf("client revision = %d, want %d", projected.Revision, event.Revision)
+	}
+	changes := *projected.Patch.CastleChanges
+	if len(changes) != 1 || changes[0].Patch == nil {
+		t.Fatalf("client castle delta = %#v", changes)
+	}
+	patch := changes[0].Patch
+	if patch.UnitsObservedAt == nil || !patch.UnitsObservedAt.Equal(observedAt) ||
+		patch.FoodStateObservedAt == nil || !patch.FoodStateObservedAt.Equal(observedAt.Add(time.Minute)) ||
+		patch.ContextSnapshotObservedAt == nil || !patch.ContextSnapshotObservedAt.Equal(observedAt.Add(2*time.Minute)) {
+		t.Fatalf("client patch observation times = %#v", patch)
+	}
+	if patch.ConstructionSlotsObservedAt != nil || patch.QueueableObservedAt != nil || patch.BuildingProduction != nil ||
+		patch.Layout != nil || patch.BuildingQueue != nil || patch.ConstructionSlots != nil {
+		t.Fatalf("private castle patch fields leaked: %#v", patch)
 	}
 }

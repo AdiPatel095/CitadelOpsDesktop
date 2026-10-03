@@ -1,7 +1,7 @@
 {
   "name": "citadel-ops",
   "private": true,
-  "version": "2.4.1",
+  "version": "2.4.2",
   "type": "module",
   "engines": {
     "node": "^20.19.0 || >=22.12.0"
@@ -10,9 +10,11 @@
     "client:dev": "npm --prefix Client run dev",
     "client:build": "npm --prefix Client run build",
     "client:test": "npm --prefix Client test",
+    "preview:onboarding": "npm --prefix Client run preview:onboarding",
     "server:dev": "go run .",
     "build": "npm run client:build && go build -tags desktop -o CitadelOpsDesktop .",
     "build:server": "go build -o CitadelOpsDesktop .",
-    "test": "go test ./... && npm run client:test"
+    "test": "go test ./... && npm run client:test",
+    "check:mirror": "node scripts/check-mirror.mjs --portal ../CitadelOpsFrontend --desktop ."
   }
 }

@@ -1,6 +1,11 @@
+import { StopFooter } from '../../components/StopControl';
+import { castleCandidates } from '../copy/candidates';
+import { stationCopyDescriptor } from '../copy/features/station';
+import { copyReapplied, genericSaveError, useCastleCopyReplayRun, useCastleCopyReplayState } from '../copy/useCastleCopyReplay';
+import { CastleCopyButton } from './CastleCopyDialog';
 import { useLocale as useStaticLocale } from "../../i18n/LocaleContext";
 import { LocalizedText } from "../../i18n/LocalizedText";
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { BookOpen, Plus, Shield } from 'lucide-react';
 import { useGuideLocale } from '../../config/useGuideLocale';
 import { FeatureGuideModal } from './FeatureGuideModal';
@@ -16,16 +21,31 @@ import {
   SettingsToggleRow,
 } from '../../components/ui';
 import {
+  DEFAULT_AUTO_STATION_STATE,
   parseAutoStationClientState,
-  persistAutoStationClientState,
   type AutoStationClientStateV1,
 } from '../AutoStationClientState';
 import { useCitadelAPI } from '../../api/ApiContext';
 import { castleOptionsFromState, type CastleOptionV2 } from '../../api/Selectors';
+import { useConfigurationDraftSession } from '../ConfigurationDraftSession';
+import { useMetadata } from '../../context/MetadataContext';
+import { evaluateReserveReadiness } from '../requirements/setupReadiness';
+import { useSetupContext } from '../requirements/useSetupContext';
+import { focusReadinessTarget } from '../readiness/focusReadinessTarget';
+import type { ReadinessCheck } from '../readiness/Readiness';
+import { AUTOMATION_ENABLED_KEYS } from '../disclosure/placement';
+import { countCustomValues, stationFiltersSummary } from '../disclosure/summaries';
+import { useSettingsDisclosure } from '../disclosure/useSettingsDisclosure';
+import { AutomationRunStrip } from './AutomationRunStrip';
+import { ReadinessCheckLine, ReadinessPanel } from './ReadinessPanel';
+import { collapsedSettingNote, SettingsSection } from './SettingsSection';
+import { UnitStockList } from './UnitStockList';
+import { useDraftRecovery } from '../useDraftRecovery';
 
 interface AutoStationSettingsModalProps {
   isOpen: boolean;
   onClose: () => void;
+  onOpenAutomationDuration?: (featureKey: string, featureLabel: string) => void;
 }
 
 function clampMinutes(value: number): number {
@@ -38,12 +58,17 @@ function clampDays(value: number): number {
   return Math.min(30, Math.max(0, Math.round(value)));
 }
 
-export const AutoStationSettingsModal: React.FC<AutoStationSettingsModalProps> = ({ isOpen, onClose }) => {
+export const AutoStationSettingsModal: React.FC<AutoStationSettingsModalProps> = ({ isOpen, onClose, onOpenAutomationDuration }) => {
   const { locale: guideLocale, pack: guidePack } = useGuideLocale();
   const [isGuideOpen, setIsGuideOpen] = useState(false);
   useEffect(() => { if (!isOpen) setIsGuideOpen(false); }, [isOpen]);
   const { t: localizeStatic } = useStaticLocale();
-  const { state: gameState, configuration } = useCitadelAPI();
+  const { state: gameState } = useCitadelAPI();
+  const setup = useSetupContext('automation.autoStation');
+  const copyReplay = useCastleCopyReplayState();
+  const draftSession = useConfigurationDraftSession({ isOpen, section: 'automation.autoStation', sessionKey: setup.sessionKey, copyReplay: copyReplay.sessionOption });
+  const disclosure = useSettingsDisclosure('autoStation');
+  const { troops, tools, unitsLoading, unitsError } = useMetadata();
   const castles = castleOptionsFromState(gameState);
   const [state, setState] = useState<AutoStationClientStateV1>(() => parseAutoStationClientState(null));
   const [isSaving, setIsSaving] = useState(false);
@@ -54,10 +79,30 @@ export const AutoStationSettingsModal: React.FC<AutoStationSettingsModalProps> =
       setSaveError(null);
       return;
     }
+    if (!draftSession.initialSnapshot) return;
     setState(parseAutoStationClientState(
-      configuration?.sections['automation.autoStation'],
+      draftSession.initialSections?.['automation.autoStation'],
     ));
-  }, [configuration?.sections, isOpen]);
+  }, [draftSession.initialSections, draftSession.openKey, draftSession.initialSnapshot, isOpen]);
+
+  const copyContext = useMemo(() => ({
+    state: gameState, troops, tools, metadataReady: !unitsLoading && !unitsError, observation: setup.observation,
+    candidates: castleCandidates(castles, gameState),
+  }), [castles, gameState, setup.observation, tools, troops, unitsError, unitsLoading]);
+  const copyRun = useCastleCopyReplayRun(copyReplay, { descriptor: stationCopyDescriptor, draft: state.settings, context: copyContext, featureLabel: 'Auto Station', applyDraft: (next) => setState((previous) => ({ ...previous, settings: next })), isOpen });
+  const readiness = useMemo(() => evaluateReserveReadiness({
+    featureId: 'autoStation',
+    state: gameState,
+    reserves: state.settings,
+    troops,
+    tools,
+    metadataReady: !unitsLoading && !unitsError,
+    observation: setup.observation,
+  }), [gameState, state.settings, tools, troops, unitsError, unitsLoading, setup.observation]);
+
+  const fixReadiness = (check: ReadinessCheck) => {
+    if (!disclosure.fix(check)) focusReadinessTarget('auto-station-castles');
+  };
 
   const selectReserve = async (castle: CastleOptionV2) => {
     const castleID = String(castle.id);
@@ -99,10 +144,10 @@ export const AutoStationSettingsModal: React.FC<AutoStationSettingsModalProps> =
     setIsSaving(true);
     setSaveError(null);
     try {
-      await persistAutoStationClientState(state);
+      await draftSession.save(parseAutoStationClientState(state));
       onClose();
     } catch (error) {
-      setSaveError(error instanceof Error ? error.message : 'Could not save Auto Station settings.');
+      setSaveError(genericSaveError(error, copyReplay, 'Could not save Auto Station settings.'));
     } finally {
       setIsSaving(false);
     }
@@ -112,9 +157,12 @@ export const AutoStationSettingsModal: React.FC<AutoStationSettingsModalProps> =
     if (!isSaving) onClose();
   };
 
+  const recovery = useDraftRecovery({ section: 'automation.autoStation', isOpen, draftSession, draft: parseAutoStationClientState(state), loaded: parseAutoStationClientState(parseAutoStationClientState(draftSession.sections?.['automation.autoStation'])), copyReapplied: copyReapplied(copyReplay) });
+
   return (
     <>
     <SettingsModal
+      footerLeading={<StopFooter featureId="autoStation" />}
       isOpen={isOpen}
       onClose={handleClose}
       maxWidth="full"
@@ -125,30 +173,66 @@ export const AutoStationSettingsModal: React.FC<AutoStationSettingsModalProps> =
       onSave={save}
       saveLabel="Save changes"
       isSaving={isSaving}
+      saveDisabled={!draftSession.ready}
+      contentDisabled={!draftSession.ready}
+      contentNotice={<>{copyRun.status}{recovery.banner}{draftSession.conflictNotice}{copyRun.dialog}</>}
     >
       {saveError && (
         <div className="mb-4 rounded-global border border-error/30 bg-error/10 px-4 py-3 text-sm font-semibold text-error" role="alert">
           {saveError}
         </div>
       )}
+      <AutomationRunStrip
+        featureId="autoStation"
+        onOpenDuration={onOpenAutomationDuration ? () => onOpenAutomationDuration(AUTOMATION_ENABLED_KEYS.autoStation, 'Auto Station') : undefined}
+      />
       <div className="flex w-full flex-col gap-6">
-        <Card variant="solid" className="bg-bg-app p-4">
-          <div className="grid gap-4 md:grid-cols-4">
-            <label className="flex flex-col gap-1.5">
-              <span className="text-xs font-bold uppercase tracking-wider text-primary"><LocalizedText messageKey="ui.settings.components.autoStationSettingsModal.evacuate.at.621aebd7" /></span>
-              <Input
-                type="number"
-                min={1}
-                max={60}
-                value={Math.round(state.leadTimeSec / 60)}
-                onChange={(event) => setState((previous) => ({
-                  ...previous,
-                  leadTimeSec: clampMinutes(Number(event.target.value)) * 60,
-                }))}
-                className="font-mono"
-                rightIcon={<span className="text-xs font-medium uppercase text-text-muted"><LocalizedText messageKey="ui.settings.components.autoStationSettingsModal.minutes.left.4703188b" /></span>}
+        <SettingsSection disclosure={disclosure} section="evacuation">
+          <Card variant="solid" className="bg-bg-app p-4">
+            <div className="grid gap-4 md:grid-cols-2">
+              <label id="auto-station-lead-time" className="flex flex-col gap-1.5">
+                <span className="text-xs font-bold uppercase tracking-wider text-primary"><LocalizedText messageKey="ui.settings.components.autoStationSettingsModal.evacuate.at.621aebd7" /></span>
+                <Input
+                  type="number"
+                  min={1}
+                  max={60}
+                  value={Math.round(state.leadTimeSec / 60)}
+                  onChange={(event) => setState((previous) => ({
+                    ...previous,
+                    leadTimeSec: clampMinutes(Number(event.target.value)) * 60,
+                  }))}
+                  className="font-mono"
+                  rightIcon={<span className="text-xs font-medium uppercase text-text-muted"><LocalizedText messageKey="ui.settings.components.autoStationSettingsModal.minutes.left.4703188b" /></span>}
+                />
+                <span className="text-[11px] leading-relaxed text-text-muted"><LocalizedText messageKey="ui.settings.components.autoStationSettingsModal.troops.leave.this.many.minutes.before.the.3ef5b581" /></span>
+              </label>
+              <SettingsToggleRow
+                title={localizeStatic("ui.settings.components.autoStationSettingsModal.title.recall.when.clear.553ed7f0")}
+                description={localizeStatic("ui.settings.components.autoStationSettingsModal.bring.evacuated.troops.home.once.no.attack.b3b45068")}
+                checked={state.recallWhenClear}
+                onChange={(checked) => setState((previous) => ({ ...previous, recallWhenClear: checked }))}
               />
-            </label>
+              <SettingsToggleRow
+                title={localizeStatic("ui.settings.components.autoStationSettingsModal.title.open.gate.fallback.739eb349")}
+                description={localizeStatic("ui.settings.components.autoStationSettingsModal.when.troops.cannot.be.evacuated.in.time.3bd33592")}
+                tone={state.openGateFallback ? 'warning' : 'default'}
+                checked={state.openGateFallback}
+                onChange={(checked) => setState((previous) => ({ ...previous, openGateFallback: checked }))}
+              />
+            </div>
+            <p className="mt-4 text-xs leading-relaxed text-text-muted">
+              <span lang={guideLocale} dir={guideLocale === 'ar' ? 'rtl' : 'ltr'}>{guidePack.autoStation.feature.helper}</span>
+            </p>
+          </Card>
+        </SettingsSection>
+
+        <SettingsSection
+          disclosure={disclosure}
+          section="filters"
+          summary={stationFiltersSummary(state)}
+          customCount={countCustomValues(state, DEFAULT_AUTO_STATION_STATE, ['minRPTDays'])}
+        >
+          <div className="grid gap-4 md:grid-cols-2">
             <label className="flex flex-col gap-1.5">
               <span className="text-xs font-bold uppercase tracking-wider text-primary"><LocalizedText messageKey="ui.settings.components.autoStationSettingsModal.minimum.bird.days.on.target.71cbcd1f" /></span>
               <Input
@@ -163,24 +247,15 @@ export const AutoStationSettingsModal: React.FC<AutoStationSettingsModalProps> =
                 className="font-mono"
                 rightIcon={<span className="text-xs font-medium uppercase text-text-muted"><LocalizedText messageKey="ui.settings.components.autoStationSettingsModal.days.e08c0aa8" /></span>}
               />
+              <span className="text-[11px] leading-relaxed text-text-muted"><LocalizedText messageKey="ui.settings.components.autoStationSettingsModal.troops.are.sent.only.to.alliance.members.faff0c89" /></span>
             </label>
-            <SettingsToggleRow
-              title={localizeStatic("ui.settings.components.autoStationSettingsModal.title.recall.when.clear.553ed7f0")}
-              checked={state.recallWhenClear}
-              onChange={(checked) => setState((previous) => ({ ...previous, recallWhenClear: checked }))}
-            />
-            <SettingsToggleRow
-              title={localizeStatic("ui.settings.components.autoStationSettingsModal.title.open.gate.fallback.739eb349")}
-              checked={state.openGateFallback}
-              onChange={(checked) => setState((previous) => ({ ...previous, openGateFallback: checked }))}
-            />
           </div>
-          <p className="mt-4 text-xs leading-relaxed text-text-muted">
-            <span lang={guideLocale} dir={guideLocale === 'ar' ? 'rtl' : 'ltr'}>{guidePack.autoStation.feature.helper}</span>
-          </p>
-        </Card>
+        </SettingsSection>
 
-        <div className="custom-scrollbar min-h-0 flex-1 overflow-y-auto pr-1">
+        <ReadinessPanel report={readiness.report} onFix={fixReadiness} noteFor={collapsedSettingNote(disclosure)} />
+
+        <SettingsSection disclosure={disclosure} section="reserves">
+        <div id="auto-station-castles" tabIndex={-1} className="custom-scrollbar min-h-0 flex-1 overflow-y-auto pr-1 outline-none">
           {castles.length === 0 && (
             <p className="py-8 text-center text-sm text-text-muted"><LocalizedText messageKey="ui.settings.components.autoStationSettingsModal.loading.castles.37f1e3a3" /></p>
           )}
@@ -188,6 +263,7 @@ export const AutoStationSettingsModal: React.FC<AutoStationSettingsModalProps> =
             {castles.map((castle) => {
               const castleID = String(castle.id);
               const reserves = state.settings[castleID] ?? [];
+              const stock = readiness.stockByCastle[castleID];
               return (
                 <Card key={castle.id} variant="solid" className="flex flex-col bg-bg-card-hover/40 p-4 shadow-inner">
                   <div className="mb-3 border-b border-border-base pb-2">
@@ -220,11 +296,27 @@ export const AutoStationSettingsModal: React.FC<AutoStationSettingsModalProps> =
                       />
                     </div>
                   )}
+                  <CastleCopyButton
+                    descriptor={stationCopyDescriptor}
+                    draft={state.settings}
+                    sourceKey={castleID}
+                    context={copyContext}
+                    featureLabel="Auto Station"
+                    onApply={(next, replay) => { setState((previous) => ({ ...previous, settings: next })); copyReplay.setReplay(replay); copyReplay.setStatus(false); }}
+                    className="mt-3 self-start"
+                  />
+                  {stock ? (
+                    <div className="mt-3 space-y-1.5 border-t border-border-base pt-2">
+                      <UnitStockList lines={stock.lines} mode="reserve" freshness={stock.freshness} />
+                      <ul><ReadinessCheckLine check={stock.check} /></ul>
+                    </div>
+                  ) : null}
                 </Card>
               );
             })}
           </div>
         </div>
+        </SettingsSection>
       </div>
     </SettingsModal>
     <FeatureGuideModal feature="autoStation" isOpen={isOpen && isGuideOpen} onClose={() => setIsGuideOpen(false)} />

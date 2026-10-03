@@ -43,6 +43,7 @@ import {
   type CommanderActivity,
   type CommanderStatusRow,
 } from '../types/MovementState';
+import { effectiveProgress, statusForRow } from '../types/CommanderActivity';
 import type { MovementStateV2 } from '../../api/Contracts';
 
 type MovementMode = 'Functions' | 'Live Movements';
@@ -86,34 +87,7 @@ function sortCommanders(rows: CommanderStatusRow[]): CommanderStatusRow[] {
   });
 }
 
-function effectiveProgress(movement: MovementStateV2, nowUnix: number): number {
-  if (movement.arrivesAt && movement.travelSeconds) {
-    const remaining = Math.max(0, Math.floor(Date.parse(movement.arrivesAt) / 1000) - nowUnix);
-    return Math.max(0, movement.travelSeconds - remaining);
-  }
-  return movement.progressSeconds ?? 0;
-}
 
-function statusForRow(
-  row: CommanderStatusRow,
-  gameLoggedIn: boolean,
-  snapshotReady: boolean,
-  snapshotFresh: boolean,
-  nowUnix: number
-): CommanderActivity {
-  if (!gameLoggedIn) return 'unknown';
-  if (!snapshotReady) return 'syncing';
-  if (!snapshotFresh) return 'unknown';
-  if (
-    row.status === 'outbound' &&
-    row.movement != null &&
-    (row.movement.travelSeconds ?? 0) > 0 &&
-    effectiveProgress(row.movement, nowUnix) >= (row.movement.travelSeconds ?? 0)
-  ) {
-    return row.movement.returnsAt ? 'posted' : 'busy';
-  }
-  return row.status;
-}
 
 function formatTiming(
   movement: MovementStateV2 | null,

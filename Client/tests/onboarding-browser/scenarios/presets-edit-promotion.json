@@ -1,0 +1,76 @@
+{
+  "id": "presets-edit-promotion",
+  "title": "Editing and renaming an app-created preset",
+  "purpose": "An app-created preset owned by Auto Nomad.",
+  "step": "3",
+  "platforms": [
+    "desktop",
+    "hosted"
+  ],
+  "modules": [
+    "presets-views",
+    "autoNomad"
+  ],
+  "simulated": [
+    "banner: Simulated preview: sample data only. Nothing here reaches the game or an account.",
+    "dock: Candidate <short SHA>"
+  ],
+  "expect": [
+    "Editing or renaming the app-created preset asks to make it yours (promotion); afterwards it is a normal preset that Auto Nomad still uses. Observation: do players understand that renaming makes it theirs?"
+  ],
+  "patch": {
+    "config": {
+      "attacks.presets": {
+        "version": 1,
+        "presets": [
+          {
+            "id": "preset-app-nomad",
+            "name": "Auto Nomad / Nomad (auto)",
+            "targetType": "pve",
+            "useTroopFamilies": false,
+            "createdAt": "@now-30d",
+            "updatedAt": "@now-2d",
+            "waves": [
+              {
+                "L": {
+                  "troops": [
+                    {
+                      "itemId": 2,
+                      "quantity": 60
+                    }
+                  ],
+                  "tools": []
+                },
+                "M": {
+                  "troops": [],
+                  "tools": []
+                },
+                "R": {
+                  "troops": [],
+                  "tools": []
+                }
+              }
+            ],
+            "courtyardSupport": {
+              "troops": [],
+              "tools": []
+            },
+            "app": {
+              "section": "automation.autoNomad",
+              "slot": "nomad"
+            }
+          }
+        ]
+      },
+      "automation.autoNomad": {
+        "version": 5,
+        "sourceCastleId": 4101,
+        "nomadPresetId": "preset-app-nomad",
+        "nomadDifficultyId": 721
+      }
+    }
+  },
+  "columns": [
+    "inline"
+  ]
+}

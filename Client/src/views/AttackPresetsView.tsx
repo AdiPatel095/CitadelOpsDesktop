@@ -43,6 +43,14 @@ import {
   summarizeAttackPreset,
 } from '../attackPresets/AttackPresetTypes';
 import { buildPresetDocumentUpdate } from '../configuration/PresetDocumentUpdate';
+import { duplicateAttackPreset, editedAttackPreset } from '../attackPresets/AttackPresetEdits';
+import { appCreatedPresetBadge } from '../attackPresets/AttackPresetOptionLabel';
+import {
+  attackPresetReferences,
+  attackPresetReferrers,
+  attackPresetSlotDefinition,
+  type AttackPresetReference,
+} from '../attackPresets/AttackPresetReferences';
 
 const AttackSetupModal = React.lazy(() => import('../components/AttackSetupModal'));
 
@@ -68,7 +76,7 @@ interface HallFlankToolBonus {
 }
 
 const AttackPresetsView: React.FC = () => {
-  const { t: localizeStatic } = useStaticLocale();
+  const { t: localizeStatic, locale } = useStaticLocale();
   const { configuration, getCatalog, state, updateConfiguration } = useCitadelAPI();
   const [query, setQuery] = useState('');
   const [editor, setEditor] = useState<EditorState | null>(null);
@@ -127,6 +135,40 @@ const AttackPresetsView: React.FC = () => {
     () => parseAttackPresetDocument(configuration?.sections[ATTACK_PRESETS_SECTION]),
     [configuration?.sections],
   );
+  const references = useMemo(() => attackPresetReferences(configuration?.sections), [configuration?.sections]);
+  const appCreatedCount = document.presets.filter((preset) => preset.app).length;
+  const listFormat = useMemo(() => new Intl.ListFormat(locale, { type: 'conjunction' }), [locale]);
+  const describeReferrers = (items: readonly AttackPresetReference[]) => listFormat.format(items.map((reference) => (
+    `${localizeStatic(reference.moduleLabelKey)} · ${localizeStatic(reference.slotLabelKey)}`
+  )));
+  const ownerModuleLabel = (preset: AppAttackPreset) => {
+    const definition = preset.app ? attackPresetSlotDefinition(preset.app.section, preset.app.slot) : undefined;
+    return definition
+      ? `${localizeStatic(definition.moduleLabelKey)} · ${localizeStatic(definition.slotLabelKey)}`
+      : preset.app?.section ?? '';
+  };
+  const ownershipLine = (preset: AppAttackPreset): React.ReactNode => {
+    const referrers = attackPresetReferrers(references, preset.id);
+    if (preset.app) {
+      if (referrers.length === 0) return <LocalizedText messageKey="attackPresets.notInUse" />;
+      const definition = attackPresetSlotDefinition(preset.app.section, preset.app.slot);
+      return (
+        <LocalizedText
+          messageKey="attackPresets.managedBy"
+          params={{
+            module: definition ? localizeStatic(definition.moduleLabelKey) : preset.app.section,
+            slot: definition ? localizeStatic(definition.slotLabelKey) : preset.app.slot,
+          }}
+        />
+      );
+    }
+    return referrers.length > 0
+      ? <LocalizedText messageKey="attackPresets.inUseBy" params={{ referrers: describeReferrers(referrers) }} />
+      : null;
+  };
+  // Renaming or editing an app-created preset converts it into a normal preset.
+  const confirmPromotion = (preset: AppAttackPreset) => !preset.app
+    || window.confirm(localizeStatic('attackPresets.promotionNotice', { module: ownerModuleLabel(preset) }));
   const filteredPresets = useMemo(() => {
     const normalized = query.trim().toLowerCase();
     if (!normalized) return document.presets;
@@ -156,16 +198,9 @@ const AttackPresetsView: React.FC = () => {
     }
     setSaving(true);
     const now = new Date().toISOString();
-    const preset: AppAttackPreset = {
-      id: existing?.id ?? createID(),
-      name: draft.name.trim(),
-      targetType: editor?.targetType ?? existing?.targetType ?? 'pve',
-      useTroopFamilies: Boolean(draft.useTroopFamilies),
-      waves: cloneWaves(draft.waves),
-      courtyardSupport: cloneCourtyardSupport(draft.courtyardSupport),
-      createdAt: existing?.createdAt ?? now,
-      updatedAt: now,
-    };
+    // Rebuilt from the draft without `app`: editing or renaming an app-created preset here promotes it
+    // to a normal preset, so the owning module keeps using it as a saved preset (see AttackPresetEdits).
+    const preset = editedAttackPreset(existing, draft, { id: createID(), targetType: editor?.targetType, now });
     const presets = existing
       ? document.presets.map((candidate) => candidate.id === existing.id ? preset : candidate)
       : [...document.presets, preset];
@@ -182,18 +217,10 @@ const AttackPresetsView: React.FC = () => {
   const handleDuplicate = async (preset: AppAttackPreset) => {
     if (pendingID) return;
     setPendingID(preset.id);
-    const now = new Date().toISOString();
-    const duplicate: AppAttackPreset = {
-      ...preset,
-      id: createID(),
-      name: uniqueCopyName(preset.name, document.presets),
-      waves: cloneWaves(preset.waves),
-      courtyardSupport: cloneCourtyardSupport(preset.courtyardSupport),
-      createdAt: now,
-      updatedAt: now,
-    };
+    // Copy only: the duplicate is a normal preset and the original keeps its `app` marker.
+    const { presets } = duplicateAttackPreset(document.presets, preset, { id: createID(), now: new Date().toISOString() });
     try {
-      await saveDocument([...document.presets, duplicate], 'Attack preset duplicated.');
+      await saveDocument(presets, 'Attack preset duplicated.');
     } catch (error) {
       Notifications.error(errorMessage(error, 'Could not duplicate attack preset.'));
     } finally {
@@ -202,7 +229,17 @@ const AttackPresetsView: React.FC = () => {
   };
 
   const handleDelete = async (preset: AppAttackPreset) => {
-    if (pendingID || !window.confirm(`Delete “${preset.name}”? This cannot be undone.`)) return;
+    if (pendingID) return;
+    const referrers = attackPresetReferrers(references, preset.id);
+    const marker = preset.app;
+    if (marker && referrers.some((reference) => reference.section === marker.section && reference.slot === marker.slot)) {
+      Notifications.error(localizeStatic('attackPresets.deleteBlocked', { module: ownerModuleLabel(preset), name: preset.name }));
+      return;
+    }
+    const confirmed = referrers.length > 0
+      ? window.confirm(localizeStatic('attackPresets.deleteReferencedConfirm', { name: preset.name, referrers: describeReferrers(referrers) }))
+      : window.confirm(`Delete “${preset.name}”? This cannot be undone.`);
+    if (!confirmed) return;
     setPendingID(preset.id);
     try {
       await saveDocument(
@@ -268,6 +305,11 @@ const AttackPresetsView: React.FC = () => {
           <Badge variant={document.presets.length > 0 ? 'primary' : 'secondary'}>
             {document.presets.length} preset{document.presets.length === 1 ? '' : 's'}
           </Badge>
+          {appCreatedCount > 0 ? (
+            <Badge variant="secondary" className="normal-case tracking-normal">
+              <LocalizedText messageKey="attackPresets.appCreatedCount" params={{ count: appCreatedCount }} />
+            </Badge>
+          ) : null}
           <Badge variant="outline" className="normal-case tracking-normal"><LocalizedText messageKey="ui.views.attackPresetsView.stored.by.citadelops.9f046c26" /></Badge>
           </>
         )}
@@ -292,7 +334,10 @@ const AttackPresetsView: React.FC = () => {
               preset={preset}
               toolProfile={toolProfile}
               busy={pendingID === preset.id}
-              onEdit={() => setEditor({ presetID: preset.id, targetType: preset.targetType, draft: preset })}
+              ownershipLine={ownershipLine(preset)}
+              onEdit={() => {
+                if (confirmPromotion(preset)) setEditor({ presetID: preset.id, targetType: preset.targetType, draft: preset });
+              }}
               onCopyShare={() => void handleCopyShareString(preset)}
               onDuplicate={() => void handleDuplicate(preset)}
               onDelete={() => void handleDelete(preset)}
@@ -428,11 +473,13 @@ const PresetCard: React.FC<{
   preset: AppAttackPreset;
   toolProfile: AttackPresetToolProfile;
   busy: boolean;
+  /** "Managed by …", "Not in use" or "In use by …". */
+  ownershipLine: React.ReactNode;
   onEdit: () => void;
   onCopyShare: () => void;
   onDuplicate: () => void;
   onDelete: () => void;
-}> = ({ preset, toolProfile, busy, onEdit, onCopyShare, onDuplicate, onDelete }) => {
+}> = ({ preset, toolProfile, busy, ownershipLine, onEdit, onCopyShare, onDuplicate, onDelete }) => {
   const { t: localizeStatic } = useStaticLocale();
   const summary = summarizeAttackPreset(preset);
   const toolLimits = attackPresetToolLimits(preset.targetType, toolProfile);
@@ -454,11 +501,13 @@ const PresetCard: React.FC<{
             {preset.useTroopFamilies ? (
               <Badge variant="primary" className="normal-case tracking-normal"><LocalizedText messageKey="ui.views.attackPresetsView.family.fill.30bc122b" /></Badge>
             ) : null}
+            {preset.app ? appCreatedPresetBadge() : null}
             <span className="text-xs text-text-muted">
               Tool max · L {toolLimits.L} · C {toolLimits.M} · R {toolLimits.R}
             </span>
             <span className="text-xs text-text-muted">Updated {formatUpdatedAt(preset.updatedAt)}</span>
           </div>
+          {ownershipLine ? <p className="mt-1 text-xs text-text-muted">{ownershipLine}</p> : null}
         </div>
         <div className="flex items-center gap-1">
           <Button variant="ghost" size="icon" disabled={busy} onClick={onEdit} title={localizeStatic("ui.views.attackPresetsView.title.edit.preset.d36585b9")}><Edit3 className="h-4 w-4" /></Button>
@@ -549,30 +598,8 @@ function createID(): string {
   return crypto.randomUUID?.() ?? `${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`;
 }
 
-function uniqueCopyName(name: string, presets: AppAttackPreset[]): string {
-  const existing = new Set(presets.map((preset) => preset.name.toLowerCase()));
-  let candidate = `${name} copy`;
-  let suffix = 2;
-  while (existing.has(candidate.toLowerCase())) candidate = `${name} copy ${suffix++}`;
-  return candidate;
-}
 
-function cloneWaves(waves: AttackSetupDraft['waves']): AttackSetupDraft['waves'] {
-  return waves.map((wave) => ({
-    L: { troops: wave.L.troops.map((slot) => ({ ...slot })), tools: wave.L.tools.map((slot) => ({ ...slot })) },
-    M: { troops: wave.M.troops.map((slot) => ({ ...slot })), tools: wave.M.tools.map((slot) => ({ ...slot })) },
-    R: { troops: wave.R.troops.map((slot) => ({ ...slot })), tools: wave.R.tools.map((slot) => ({ ...slot })) },
-  }));
-}
 
-function cloneCourtyardSupport(
-  support: AttackSetupDraft['courtyardSupport'],
-): AttackSetupDraft['courtyardSupport'] {
-  return {
-    troops: support.troops.map((slot) => ({ ...slot })),
-    tools: support.tools.map((slot) => ({ ...slot })),
-  };
-}
 
 function formatUpdatedAt(value: string): string {
   const date = new Date(value);

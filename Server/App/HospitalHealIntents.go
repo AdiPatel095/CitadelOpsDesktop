@@ -38,7 +38,7 @@ func resolveHospitalHealStep(_ context.Context, input Intent.PlanningContext, ar
 	state := input.State
 	castle, ok := state.Castles[request.CastleID]
 	protocol := input.ProtocolContext
-	if !ok || !castle.Focused || State.CastleFocusKnownUnavailable(state, castle) ||
+	if !ok || !castle.Focused || State.CastleFocusKnownUnavailable(&state, castle) ||
 		protocol.FocusedCastleID != request.CastleID || protocol.FocusSubcontext != State.FocusSubcontextCastle ||
 		protocol.FocusEpoch == 0 || protocol.SessionGeneration != state.Session.Generation ||
 		protocol.ConnectionGeneration != state.Session.ConnectionGeneration ||

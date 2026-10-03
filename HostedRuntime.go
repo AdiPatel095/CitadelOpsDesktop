@@ -13,6 +13,7 @@ import (
 	"CitadelDesktop/Server/Accounts"
 	"CitadelDesktop/Server/App"
 	"CitadelDesktop/Server/PrivateMetrics"
+	"CitadelDesktop/Server/Profiling"
 )
 
 type HostedOptions struct {
@@ -28,6 +29,9 @@ type HostedOptions struct {
 	CheckpointURL           string
 	DashboardOrigins        string
 	SecureCookies           bool
+	// PprofAddr is CITADEL_PPROF_ADDR: a loopback host:port for the opt-in
+	// profiling listener (CIT-42). Empty leaves profiling off.
+	PprofAddr string
 }
 
 func hostedModeEnabled(dynamic bool, staticConfigPath string) bool {
@@ -54,6 +58,8 @@ func runHosted(rootContext context.Context, listener net.Listener, options Hoste
 	if originErr != nil {
 		return originErr
 	}
+	// Started before any runtime so their goroutines carry the profiler labels.
+	defer startHostedProfiling(rootContext, options.PprofAddr, log.Printf)()
 	startupContext, cancelStartup := context.WithTimeout(rootContext, 90*time.Second)
 	defer cancelStartup()
 
@@ -167,4 +173,20 @@ func runHosted(rootContext context.Context, listener net.Listener, options Hoste
 	closeErr := supervisor.Close(shutdownContext)
 	closed = true
 	return closeErr
+}
+
+// startHostedProfiling starts the opt-in profiling listener and returns its
+// stop function. With no address nothing starts. A non-loopback address is
+// refused and logged, and the cell keeps running without profiling: the
+// profiler must never be reachable from outside the machine.
+func startHostedProfiling(ctx context.Context, address string, logf func(format string, args ...any)) func() {
+	listener, err := Profiling.Start(ctx, address, logf)
+	if err != nil {
+		logf("Profiling listener not started (%s): %v", Profiling.EnvAddr, err)
+		return func() {}
+	}
+	if listener == nil {
+		return func() {}
+	}
+	return listener.Stop
 }

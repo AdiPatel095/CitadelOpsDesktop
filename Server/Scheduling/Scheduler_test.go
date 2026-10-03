@@ -54,7 +54,8 @@ func (submitter rescheduleSubmitter) Submit(ctx context.Context, request Intent.
 }
 
 func TestSchedulerExecutesPersistedIntentAtDueTime(t *testing.T) {
-	store := State.NewStore(State.NewGameState())
+	accessorState1 := State.NewGameState()
+	store := State.NewStore(&accessorState1)
 	requests := make(chan Intent.Request, 1)
 	scheduler := NewScheduler(store, successfulSubmitter{requests: requests})
 	if err := scheduler.Schedule(Request{
@@ -88,7 +89,7 @@ func TestSchedulerCancelPropagatesToActiveIntent(t *testing.T) {
 	gameState := State.NewGameState()
 	gameState.Session.ServerURL = "https://world.example"
 	gameState.Player.ID = 42
-	store := State.NewStore(gameState)
+	store := State.NewStore(&gameState)
 	requests := make(chan Intent.Request, 1)
 	scheduler := NewScheduler(store, cancellableSubmitter{requests: requests})
 	if err := scheduler.Schedule(Request{
@@ -113,7 +114,7 @@ func TestSchedulerCancelPropagatesToActiveIntent(t *testing.T) {
 func TestSchedulerCancelAfterPossibleSendRequiresReconciliation(t *testing.T) {
 	gameState := State.NewGameState()
 	gameState.Player.ID = 42
-	store := State.NewStore(gameState)
+	store := State.NewStore(&gameState)
 	requests := make(chan Intent.Request, 1)
 	scheduler := NewScheduler(store, cancellableSubmitter{requests: requests, indeterminate: true})
 	if err := scheduler.Schedule(Request{
@@ -134,7 +135,7 @@ func TestSchedulerRescheduleVersionsAndCancelsOldExecution(t *testing.T) {
 	gameState := State.NewGameState()
 	gameState.Session.ServerURL = "https://world.example"
 	gameState.Player.ID = 42
-	store := State.NewStore(gameState)
+	store := State.NewStore(&gameState)
 	requests := make(chan Intent.Request, 2)
 	scheduler := NewScheduler(store, rescheduleSubmitter{requests: requests})
 	if err := scheduler.Schedule(Request{

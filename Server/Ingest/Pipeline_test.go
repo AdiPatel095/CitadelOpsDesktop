@@ -14,7 +14,8 @@ import (
 )
 
 func TestFrameSubscriberObservesCommittedOutboundFrames(t *testing.T) {
-	pipeline := NewPipeline(State.NewStore(State.NewGameState()), nil, NewRegistry())
+	accessorState1 := State.NewGameState()
+	pipeline := NewPipeline(State.NewStore(&accessorState1), nil, NewRegistry())
 	frames, unsubscribe := pipeline.SubscribeFrames(2)
 	defer unsubscribe()
 	committed, err := pipeline.HandleFrame(t.Context(), Protocol.Frame{
@@ -51,7 +52,8 @@ func TestWireObservationPrecedesCommittedStateBarrier(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	store := State.NewStore(State.NewGameState())
+	accessorState2 := State.NewGameState()
+	store := State.NewStore(&accessorState2)
 	pipeline := NewPipeline(store, nil, registry)
 	wire, cancelWire := pipeline.WatchWire("bup")
 	defer cancelWire()
@@ -131,7 +133,8 @@ func TestProtocolObservationIgnoresUnusedOutboundFreshness(t *testing.T) {
 }
 
 func TestUnconsumedProtocolFrameDoesNotReviseGameState(t *testing.T) {
-	store := State.NewStore(State.NewGameState())
+	accessorState3 := State.NewGameState()
+	store := State.NewStore(&accessorState3)
 	pipeline := NewPipeline(store, nil, NewRegistry())
 	observed := pipeline.ObserveFrame(Protocol.Frame{
 		Direction: Protocol.DirectionInbound, Opcode: "unused_opcode", ReceivedAt: time.Now().UTC(),
@@ -149,7 +152,8 @@ func TestUnconsumedProtocolFrameDoesNotReviseGameState(t *testing.T) {
 }
 
 func TestReducerSequencePublishesOnlyChangedStepComponents(t *testing.T) {
-	store := State.NewStore(State.NewGameState())
+	accessorState4 := State.NewGameState()
+	store := State.NewStore(&accessorState4)
 	events, unsubscribe := store.Subscribe(1)
 	defer unsubscribe()
 	registry := NewRegistry()
@@ -190,7 +194,8 @@ func TestReducerSequencePublishesOnlyChangedStepComponents(t *testing.T) {
 }
 
 func TestCommittedWatcherReceivesResponseWithoutStateRevision(t *testing.T) {
-	store := State.NewStore(State.NewGameState())
+	accessorState5 := State.NewGameState()
+	store := State.NewStore(&accessorState5)
 	pipeline := NewPipeline(store, nil, NewRegistry())
 	response, cancel := pipeline.Watch("unused_response", store.Revision())
 	defer cancel()
@@ -263,7 +268,7 @@ func TestProtocolObservationDoesNotReuseStaleBaseline(t *testing.T) {
 func TestCommitFrameRejectsStaleConnectionInsideStateMutation(t *testing.T) {
 	gameState := State.NewGameState()
 	gameState.Session.ConnectionGeneration = 2
-	store := State.NewStore(gameState)
+	store := State.NewStore(&gameState)
 	pipeline := NewPipeline(store, nil, NewRegistry())
 	wire, cancelWire := pipeline.WatchWire("bup")
 	defer cancelWire()
@@ -298,7 +303,8 @@ func TestReducerFailurePropagatesThroughExactCommit(t *testing.T) {
 	}); err != nil {
 		t.Fatal(err)
 	}
-	pipeline := NewPipeline(State.NewStore(State.NewGameState()), nil, registry)
+	accessorState6 := State.NewGameState()
+	pipeline := NewPipeline(State.NewStore(&accessorState6), nil, registry)
 	wire, cancelWire := pipeline.WatchWire("bup")
 	defer cancelWire()
 	observed := pipeline.ObserveFrame(Protocol.Frame{
@@ -315,7 +321,8 @@ func TestReducerFailurePropagatesThroughExactCommit(t *testing.T) {
 }
 
 func TestWireWatcherCancellationCleansDeliveredAndUndeliveredCommits(t *testing.T) {
-	pipeline := NewPipeline(State.NewStore(State.NewGameState()), nil, NewRegistry())
+	accessorState7 := State.NewGameState()
+	pipeline := NewPipeline(State.NewStore(&accessorState7), nil, NewRegistry())
 	_, cancel := pipeline.WatchWire("bup")
 	pipeline.ObserveFrame(Protocol.Frame{Direction: Protocol.DirectionInbound, Opcode: "bup"})
 	pipeline.ObserveFrame(Protocol.Frame{Direction: Protocol.DirectionInbound, Opcode: "bup"})
@@ -329,7 +336,8 @@ func TestWireWatcherCancellationCleansDeliveredAndUndeliveredCommits(t *testing.
 }
 
 func TestCorrelatedWireWatcherIgnoresManualSameOpcodeResponse(t *testing.T) {
-	pipeline := NewPipeline(State.NewStore(State.NewGameState()), nil, NewRegistry())
+	accessorState8 := State.NewGameState()
+	pipeline := NewPipeline(State.NewStore(&accessorState8), nil, NewRegistry())
 	wire, cancel := pipeline.WatchWireResponse("bup", "operation/1")
 	defer cancel()
 	pipeline.ObserveFrame(Protocol.Frame{Direction: Protocol.DirectionInbound, Opcode: "bup"})
@@ -361,7 +369,7 @@ func TestObservationEnvelopeCapturesAccountSessionFocusAndCausation(t *testing.T
 	gameState.Session.ServerURL = "https://world.example"
 	gameState.Player.ID = 42
 	gameState.Castles[11] = State.CastleState{ID: 11, KingdomID: 1, Focused: true}
-	pipeline := NewPipeline(State.NewStore(gameState), nil, NewRegistry())
+	pipeline := NewPipeline(State.NewStore(&gameState), nil, NewRegistry())
 	pipeline.SetProfileID("profile-1")
 	observed, err := pipeline.DecodeTransportFrameAt(
 		`%xt%EmpireEx_21%bup%1%0%{}%`, Protocol.DirectionInbound, time.Now().UTC(),
@@ -387,7 +395,7 @@ func TestFocusedObservationRejectsFocusAwayAndBackBeforeCommit(t *testing.T) {
 	gameState.Session.ConnectionGeneration = 1
 	gameState.Castles[11] = State.CastleState{ID: 11, KingdomID: 1, Focused: true}
 	gameState.Castles[12] = State.CastleState{ID: 12, KingdomID: 1}
-	store := State.NewStore(gameState)
+	store := State.NewStore(&gameState)
 	registry := NewRegistry()
 	if err := registry.Register("bup", func(
 		_ context.Context,
@@ -431,7 +439,7 @@ func TestCommittedGAAAndJAATrackFocusedCastleSubcontext(t *testing.T) {
 	gameState.Session.Generation = 1
 	gameState.Session.ConnectionGeneration = 1
 	gameState.Castles[11] = State.CastleState{ID: 11, KingdomID: 1, Focused: true}
-	store := State.NewStore(gameState)
+	store := State.NewStore(&gameState)
 	pipeline := NewPipeline(store, nil, NewRegistry())
 	zero := 0
 	invalidFocus := 53
@@ -470,7 +478,7 @@ func TestFocusAuthoritativeSnapshotCanEstablishNewFocus(t *testing.T) {
 	gameState.Session.ConnectionGeneration = 1
 	gameState.Castles[11] = State.CastleState{ID: 11, KingdomID: 1, Focused: true}
 	gameState.Castles[12] = State.CastleState{ID: 12, KingdomID: 1}
-	store := State.NewStore(gameState)
+	store := State.NewStore(&gameState)
 	registry := NewRegistry()
 	if err := registry.Register("jaa", func(
 		_ context.Context,
@@ -524,7 +532,7 @@ func TestAccountAuthoritativeBaselineClearsPriorAccountState(t *testing.T) {
 	gameState.AttackPresets = []State.AttackPreset{{Slot: 1, Name: "Old account"}}
 	gameState.Observations["old"] = State.ProtocolObservation{Opcode: "old", Count: 10}
 
-	store := State.NewStore(gameState)
+	store := State.NewStore(&gameState)
 	registry := NewRegistry()
 	if err := RegisterCoreReducers(registry); err != nil {
 		t.Fatal(err)
@@ -579,7 +587,7 @@ func TestAccountAuthoritativeBaselineSeparatesSamePlayerIDOnDifferentWorld(t *te
 	oldCastle := newCastleState(11)
 	oldCastle.Focused = true
 	gameState.Castles[11] = oldCastle
-	store := State.NewStore(gameState)
+	store := State.NewStore(&gameState)
 	if bound := store.Snapshot().Account; bound.WorldID != "https://world-a.example" || bound.PlayerID != 42 {
 		t.Fatalf("recovered account binding = %+v", bound)
 	}
@@ -619,7 +627,7 @@ func TestAccountAuthoritativeBaselineSeparatesSamePlayerIDOnDifferentWorld(t *te
 func TestAccountAuthoritativeBaselineRejectsAccountChangedAfterObservation(t *testing.T) {
 	gameState := State.NewGameState()
 	gameState.Player.ID = 41
-	store := State.NewStore(gameState)
+	store := State.NewStore(&gameState)
 	registry := NewRegistry()
 	if err := RegisterCoreReducers(registry); err != nil {
 		t.Fatal(err)

@@ -1,0 +1,110 @@
+/**
+ * Starter values are product-reviewable configuration, not code constants.
+ * `existing-default` entries cite the current default they repeat;
+ * `account-data` entries hold a derivation rule instead of a number;
+ * `proposed` entries are new structural choices awaiting product review.
+ * Maya decides each entry during product acceptance; the recorded decision
+ * (with evidence) is then applied here as `review.status: 'accepted'`.
+ */
+export type ReviewableValueSource = 'existing-default' | 'official-catalog' | 'account-data' | 'proposed';
+
+export interface ReviewableValue<T> {
+  value: T;
+  unit?: string;
+  source: ReviewableValueSource;
+  /** Reviewer-facing explanation. Not displayed in the product UI. */
+  rationale: string;
+  /** Source reference for `existing-default` and `official-catalog` values. */
+  citation?: string;
+  review: {
+    owner: 'Maya';
+    status: 'pending' | 'accepted';
+    evidence?: string;
+  };
+}
+
+export type EventAttackLaneFillRule = 'most-numerous-stationed-troop-types-center-first';
+export type EventAttackToolsRule = 'none';
+export type EventAttackCourtyardRule = 'none';
+
+export interface EventAttackStarterRecipe {
+  waveCount: ReviewableValue<number>;
+  laneFill: ReviewableValue<EventAttackLaneFillRule>;
+  tools: ReviewableValue<EventAttackToolsRule>;
+  courtyardSupport: ReviewableValue<EventAttackCourtyardRule>;
+  targetType: ReviewableValue<'pve' | 'pvp'>;
+  useTroopFamilies: ReviewableValue<boolean>;
+}
+
+/** Maya's CIT-15 product acceptance record for the accepted entries. */
+const EVIDENCE_CIT15_ACCEPTANCE = 'Maya product acceptance 2026-09-29, Desktop 723d12d / Hosted 2178a0e, Product/Simpler automation setup.md § CIT-15 product acceptance';
+/** Maya's adjusted laneFill rule, accepted after Sophie's preview QA. */
+const EVIDENCE_LANE_FILL_ACCEPTANCE = 'Maya product acceptance 2026-09-29 (adjusted rule) + Sophie preview QA PASS @ 7eb7571/4f29345, QA/Results/CIT-15 inline event attack setup.md § Starter-recipe follow-up';
+const EVIDENCE_CIT16_ACCEPTANCE = 'Maya product acceptance 2026-09-29, Desktop 98fb2fa / Hosted 483ecc0, Product/Simpler automation setup.md § CIT-16 product acceptance';
+
+export const EVENT_ATTACK_STARTER_RECIPE: EventAttackStarterRecipe = {
+  waveCount: {
+    value: 1,
+    unit: 'waves',
+    source: 'proposed',
+    rationale: 'Smallest valid composition (the runtime requires 1 to 30 waves); users add waves in the editor.',
+    review: { owner: 'Maya', status: 'accepted', evidence: EVIDENCE_CIT15_ACCEPTANCE },
+  },
+  laneFill: {
+    value: 'most-numerous-stationed-troop-types-center-first',
+    source: 'account-data',
+    rationale: 'Rank the source castle stationed attack troop types (tools and defensive units excluded by unitCombatRole) by quantity (descending, then unit id ascending). The first type takes the center front first slot, the second the left flank first slot, the third the right flank first slot; the following types fill the remaining slots in the order center front, left flank, right flank. Each slot holds that type\'s full stationed count. The runtime fills each lane first-fit up to its capacity, so a lane\'s first type is sent first. No stationed attack troops means no setup and a requirement instead. Adjusted by Maya (CIT-15 product acceptance) and accepted after Sophie\'s preview QA.',
+    review: { owner: 'Maya', status: 'accepted', evidence: EVIDENCE_LANE_FILL_ACCEPTANCE },
+  },
+  tools: {
+    value: 'none',
+    source: 'proposed',
+    rationale: 'No siege tools are chosen for the user; tool eligibility is decided by the runtime and consumables need explicit permission.',
+    review: { owner: 'Maya', status: 'accepted', evidence: EVIDENCE_CIT15_ACCEPTANCE },
+  },
+  courtyardSupport: {
+    value: 'none',
+    source: 'proposed',
+    rationale: 'Courtyard support spends extra troops and one-use Sceat tools; it stays empty until the user adds it.',
+    review: { owner: 'Maya', status: 'accepted', evidence: EVIDENCE_CIT15_ACCEPTANCE },
+  },
+  targetType: {
+    value: 'pve',
+    source: 'existing-default',
+    rationale: 'Event camps and towers are PvE targets; this repeats the current preset default.',
+    citation: 'attackPresets/AttackPresetTypes.ts parseAttackPreset (targetType falls back to pve); views/AttackPresetsView.tsx handleSave',
+    review: { owner: 'Maya', status: 'accepted', evidence: EVIDENCE_CIT15_ACCEPTANCE },
+  },
+  useTroopFamilies: {
+    value: false,
+    source: 'existing-default',
+    rationale: 'Repeats the current preset default: exact unit ids, no family substitution.',
+    citation: 'attackPresets/AttackPresetTypes.ts parseAttackPreset (useTroopFamilies is true only when stored as true)',
+    review: { owner: 'Maya', status: 'accepted', evidence: EVIDENCE_CIT15_ACCEPTANCE },
+  },
+};
+
+export type KhanDefenseStarterRule = 'current-main-castle-defense';
+
+export interface KhanDefenseStarterRecipe {
+  source: ReviewableValue<KhanDefenseStarterRule>;
+}
+
+/** Khan main-castle defense starting configuration (CIT-16). Account data only; no numbers. */
+export const KHAN_DEFENSE_STARTER_RECIPE: KhanDefenseStarterRecipe = {
+  source: {
+    value: 'current-main-castle-defense',
+    source: 'account-data',
+    rationale: 'Capture the Great Empire main castle\'s currently observed wall splits, wall/gate/moat tools and courtyard rows (defensePresetDraftFromCastle, the same capture as Defense Presets). No value is invented; it is applied only after an explicit preview and only while the main castle\'s defense is observed on this connection.',
+    review: { owner: 'Maya', status: 'accepted', evidence: EVIDENCE_CIT16_ACCEPTANCE },
+  },
+};
+
+/** Recipe entry names whose values still await product review. */
+export function pendingStarterReviews(
+  recipe: EventAttackStarterRecipe | KhanDefenseStarterRecipe = EVENT_ATTACK_STARTER_RECIPE,
+): string[] {
+  return Object.entries(recipe)
+    .filter(([, entry]) => (entry as ReviewableValue<unknown>).review.status !== 'accepted')
+    .map(([name]) => name);
+}

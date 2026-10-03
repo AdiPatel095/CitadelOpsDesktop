@@ -2,14 +2,21 @@ package App
 
 import (
 	"context"
+	"fmt"
+	"io/fs"
+	"os"
+	"path/filepath"
+	"strings"
 	"testing"
+	"testing/synctest"
 	"time"
 
 	"CitadelDesktop/Server/State"
 )
 
 func TestStatePersistenceFenceCarriesEventPublishedBeforeSubscription(t *testing.T) {
-	stateStore := State.NewStore(State.NewGameState())
+	accessorState1 := State.NewGameState()
+	stateStore := State.NewStore(&accessorState1)
 	reservedAt := time.Date(2026, 9, 9, 12, 0, 0, 0, time.UTC)
 	event, err := stateStore.ApplyComponents(
 		State.Components(State.ComponentInvasion),
@@ -70,7 +77,8 @@ func TestStatePersistenceFenceCarriesEventPublishedBeforeSubscription(t *testing
 
 func TestStatePersistenceLaterFenceCannotSkipEarlierSparsePatch(t *testing.T) {
 	dataDir := t.TempDir()
-	stateStore := State.NewStore(State.NewGameState())
+	accessorState2 := State.NewGameState()
+	stateStore := State.NewStore(&accessorState2)
 	bootstrap, err := stateStore.ApplyComponents(
 		State.Components(State.ComponentPlayer),
 		func(gameState *State.GameState) ([]string, bool, error) {
@@ -155,4 +163,281 @@ func TestStatePersistenceLaterFenceCannotSkipEarlierSparsePatch(t *testing.T) {
 
 	cancelWorker()
 	<-application.statePersistenceDone
+}
+
+// startPersistenceTestWorker uses the same readiness and shutdown handshake as production.
+func startPersistenceTestWorker(t *testing.T, directory string, store *State.Store, window time.Duration) *Application {
+	t.Helper()
+	app := &Application{DataDir: directory, State: store, statePersistenceWindow: window,
+		statePersistence: make(chan statePersistenceRequest), statePersistenceDone: make(chan struct{})}
+	if got := app.StatePersistenceStats(); got != (State.PersistenceStats{}) {
+		t.Fatalf("stats before start: %+v", got)
+	}
+	ctx, cancel := context.WithCancel(t.Context())
+	ready := make(chan struct{})
+	go app.persistState(ctx, ready)
+	<-ready
+	app.statePersistenceStarted.Store(true)
+	t.Cleanup(func() { cancel(); <-app.statePersistenceDone })
+	return app
+}
+
+func applyPersistenceTestChange(t *testing.T, store *State.Store, components State.ComponentSet, change func(*State.GameState)) State.Event {
+	t.Helper()
+	event, err := store.ApplyComponents(components, func(state *State.GameState) ([]string, bool, error) {
+		change(state)
+		return []string{"persistence-test"}, true, nil
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	return event
+}
+
+func TestStatePersistenceSyncBudget(t *testing.T) {
+	if testing.Short() {
+		t.Skip("scaled three-minute persistence simulation")
+	}
+	const scale = 60
+	const simulatedSeconds = 180
+	window := defaultStatePersistenceWindow / scale
+	accessorState3 := State.NewGameState()
+	store := State.NewStore(&accessorState3)
+	app := startPersistenceTestWorker(t, t.TempDir(), store, window)
+	initial := applyPersistenceTestChange(t, store, State.Components(State.ComponentAutomations), func(state *State.GameState) {
+		for i := 0; i < 10; i++ {
+			id := fmt.Sprintf("p%d", i)
+			state.Automations[id] = State.AutomationState{ID: id, Status: "waiting"}
+		}
+	})
+	if err := app.saveStateEvent(t.Context(), initial); err != nil {
+		t.Fatal(err)
+	}
+	baseline := app.StatePersistenceStats()
+	previous := baseline
+	forced := 0
+	previousForced := 0
+	started := time.Now()
+	for second := 5; second <= simulatedSeconds; second += 5 {
+		time.Sleep(time.Until(started.Add(time.Duration(second) * time.Second / scale)))
+		components := State.Components(State.ComponentPlayer, State.ComponentCastles)
+		if second%10 == 0 {
+			components = components.Union(State.Components(State.ComponentMovements))
+		}
+		if second%20 == 0 {
+			components = components.Union(State.Components(State.ComponentCommanders))
+		}
+		if second%15 == 0 {
+			components = components.Union(State.Components(State.ComponentAutomations))
+		}
+		if second%60 == 0 {
+			components = components.Union(State.Components(State.ComponentWorldMap))
+		}
+		if second%90 == 0 {
+			components = components.Union(State.Components(State.ComponentInvasion))
+		}
+		event := applyPersistenceTestChange(t, store, components, func(state *State.GameState) {
+			state.Player.Currencies[1] = float64(second)
+			state.SetCastleParts(1, State.CastleState{ID: 1, Resources: map[State.ResourceID]State.ResourceBalance{1: {Amount: float64(second)}}}, State.CastlePartResources)
+			if second%10 == 0 {
+				if second%20 == 0 {
+					state.DeleteMovement(1)
+				} else {
+					state.SetMovement(1, State.MovementState{ID: 1})
+				}
+			}
+			if second%20 == 0 {
+				state.Commanders[1] = State.CommanderState{ID: 1, Available: second%40 == 0}
+			}
+			if second%15 == 0 {
+				id := fmt.Sprintf("p%d", (second/15-1)%10)
+				automation := state.Automations[id]
+				next := started.Add(time.Duration(second+15) * time.Second / scale)
+				automation.NextCheckAt = &next
+				automation.UpdatedAt = next
+				state.Automations[id] = automation
+			}
+			if second%60 == 0 {
+				automation := state.Automations["p0"]
+				automation.Status = fmt.Sprintf("minute-%d", second/60)
+				state.Automations["p0"] = automation
+				for i := 0; i < 50; i++ {
+					state.SetMapObservation(State.MapObservation{KingdomID: 0, X: i, Y: 1, TypeID: State.MapTypeForeignLord, Level: second})
+				}
+			}
+			if second%90 == 0 {
+				state.Invasion.ReserveTarget(State.InvasionTargetReservation{
+					KingdomID: 0, EventID: 71, TargetTypeID: State.MapTypeForeignLord, X: second, Y: 1,
+					SourceCastleID: 1, OperationID: fmt.Sprintf("budget-%d", second), ReservedAt: time.Now().UTC(),
+				})
+			}
+		})
+		if second%90 == 0 {
+			if err := app.saveStateEvent(t.Context(), event); err != nil {
+				t.Fatal(err)
+			}
+			forced++
+		}
+		if second%60 == 0 {
+			// Each minute is observed once. The final event is forced, so no tail is lost.
+			stats := app.StatePersistenceStats()
+			t.Logf("minute=%d flushes=%d forced=%d fileSyncs=%d directorySyncs=%d skippedVolatileWrites=%d", second/60,
+				stats.Flushes-previous.Flushes, forced-previousForced, stats.FileSyncs-previous.FileSyncs,
+				stats.DirectorySyncs-previous.DirectorySyncs, stats.SkippedVolatileWrites-previous.SkippedVolatileWrites)
+			previous, previousForced = stats, forced
+		}
+	}
+	stats := app.StatePersistenceStats()
+	maxFlushes := uint64(forced + int((simulatedSeconds*time.Second+defaultStatePersistenceWindow-1)/defaultStatePersistenceWindow) + 1)
+	if stats.Flushes-baseline.Flushes > maxFlushes {
+		t.Fatalf("flushes=%d budget=%d", stats.Flushes-baseline.Flushes, maxFlushes)
+	}
+	if stats.SkippedVolatileWrites-baseline.SkippedVolatileWrites == 0 {
+		t.Fatal("budget stream skipped no volatile automation writes")
+	}
+	t.Logf("total flushes=%d forced=%d fileSyncs=%d directorySyncs=%d skippedVolatileWrites=%d", stats.Flushes-baseline.Flushes,
+		forced, stats.FileSyncs-baseline.FileSyncs, stats.DirectorySyncs-baseline.DirectorySyncs, stats.SkippedVolatileWrites-baseline.SkippedVolatileWrites)
+}
+
+func TestStatePersistenceWaitsForTheWindow(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		const window = 300 * time.Millisecond
+		accessorState4 := State.NewGameState()
+		store := State.NewStore(&accessorState4)
+		directory := t.TempDir()
+		app := startPersistenceTestWorker(t, directory, store, window)
+		initial := applyPersistenceTestChange(t, store, State.Components(State.ComponentPlayer), func(state *State.GameState) { state.Player.Name = "before" })
+		if err := app.saveStateEvent(t.Context(), initial); err != nil {
+			t.Fatal(err)
+		}
+		event := applyPersistenceTestChange(t, store, State.Components(State.ComponentPlayer), func(state *State.GameState) { state.Player.Name = "after" })
+		// Wait until the event has armed the timer, then advance only fake time.
+		synctest.Wait()
+		time.Sleep(window - time.Nanosecond)
+		synctest.Wait()
+		loaded, err := State.LoadSnapshot(directory)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if loaded.Revision != initial.Revision || loaded.Player.Name != "before" {
+			t.Fatalf("background change persisted before window: %+v", loaded.Player)
+		}
+		time.Sleep(time.Nanosecond)
+		synctest.Wait()
+		loaded, err = State.LoadSnapshot(directory)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if loaded.Revision != event.Revision {
+			t.Fatalf("revision at window boundary=%d want=%d", loaded.Revision, event.Revision)
+		}
+		if loaded.Player.Name != "after" {
+			t.Fatalf("background change did not persist: %+v", loaded.Player)
+		}
+		if app.statePersistenceWindowDuration() != window || (&Application{}).statePersistenceWindowDuration() != 15*time.Second {
+			t.Fatal("wrong persistence window")
+		}
+	})
+}
+
+// Copy only the crash image: cancelling a worker would perform a graceful flush.
+func copyPersistenceTestImage(t *testing.T, source string) string {
+	t.Helper()
+	target := t.TempDir()
+	err := filepath.WalkDir(source, func(path string, entry fs.DirEntry, walkErr error) error {
+		if walkErr != nil {
+			return walkErr
+		}
+		relative, err := filepath.Rel(source, path)
+		if err != nil {
+			return err
+		}
+		destination := filepath.Join(target, relative)
+		if entry.IsDir() {
+			return os.MkdirAll(destination, 0o700)
+		}
+		contents, err := os.ReadFile(path)
+		if err != nil {
+			return err
+		}
+		return os.WriteFile(destination, contents, 0o600)
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	return target
+}
+
+func TestStatePersistenceCrashLosesAtMostTheWindowAndRecovers(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		const window = 300 * time.Millisecond
+		accessorState5 := State.NewGameState()
+		store := State.NewStore(&accessorState5)
+		app := startPersistenceTestWorker(t, t.TempDir(), store, window)
+		a := applyPersistenceTestChange(t, store, State.Components(State.ComponentPlayer), func(state *State.GameState) { state.Player.Name = "A" })
+		if err := app.saveStateEvent(t.Context(), a); err != nil {
+			t.Fatal(err)
+		}
+		b := applyPersistenceTestChange(t, store, State.Components(State.ComponentPlayer), func(state *State.GameState) { state.Player.Name = "B" })
+		// Quiesce the worker without advancing its fake timer. The clock stays
+		// frozen during filesystem I/O, so no flush can replace files mid-copy.
+		synctest.Wait()
+		image2 := copyPersistenceTestImage(t, app.DataDir)
+		loaded, err := State.LoadSnapshot(image2)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if loaded.Revision != a.Revision || loaded.Player.Name != "A" {
+			t.Fatalf("pre-window crash image: revision=%d name=%s", loaded.Revision, loaded.Player.Name)
+		}
+		reservedAt := time.Now().UTC()
+		c := applyPersistenceTestChange(t, store, State.Components(State.ComponentInvasion), func(state *State.GameState) {
+			state.Invasion.ReserveTarget(State.InvasionTargetReservation{KingdomID: 0, EventID: 71,
+				TargetTypeID: State.MapTypeForeignLord, X: 101, Y: 102, SourceCastleID: 1,
+				OperationID: "crash-C", ReservedAt: reservedAt})
+		})
+		if err := app.saveStateEvent(t.Context(), c); err != nil {
+			t.Fatal(err)
+		}
+		image3 := copyPersistenceTestImage(t, app.DataDir)
+		forced, err := State.LoadSnapshot(image3)
+		if err != nil {
+			t.Fatal(err)
+		}
+		reservation, found := forced.Invasion.TargetReservation(0, 101, 102)
+		if forced.Revision != c.Revision || forced.Revision <= b.Revision || forced.Player.Name != "B" || !found || reservation.OperationID != "crash-C" {
+			t.Fatalf("forced crash image lost B or C: revision=%d player=%s reservation=%+v", forced.Revision, forced.Player.Name, reservation)
+		}
+		recovered := State.NewStore(&loaded)
+		startPersistenceTestWorker(t, image2, recovered, window)
+		d := applyPersistenceTestChange(t, recovered, State.Components(State.ComponentPlayer), func(state *State.GameState) { state.Player.Name = "D" })
+		if d.Revision != loaded.Revision+1 {
+			t.Fatalf("recovery revision=%d want=%d", d.Revision, loaded.Revision+1)
+		}
+		synctest.Wait()
+		time.Sleep(window)
+		synctest.Wait()
+		durable, err := State.LoadSnapshot(image2)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if durable.Revision != d.Revision {
+			t.Fatalf("recovered durable revision=%d want=%d", durable.Revision, d.Revision)
+		}
+		if durable.Player.Name != "D" {
+			t.Fatalf("recovery lost D: %s", durable.Player.Name)
+		}
+		if _, found := durable.Invasion.TargetReservation(0, 101, 102); found {
+			t.Fatal("recovery included C absent from crash image")
+		}
+		entries, err := os.ReadDir(image2)
+		if err != nil {
+			t.Fatal(err)
+		}
+		for _, entry := range entries {
+			if strings.HasPrefix(entry.Name(), "Components.superseded-") {
+				t.Fatalf("recovery quarantined image: %s", entry.Name())
+			}
+		}
+	})
 }

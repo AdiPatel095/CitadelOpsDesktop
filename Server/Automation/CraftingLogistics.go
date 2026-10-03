@@ -69,7 +69,7 @@ func craftingLogisticsStale(snapshot Snapshot, interval time.Duration) (bool, ti
 	if err != nil {
 		return false, time.Time{}, err
 	}
-	kingdomRequired := kingdomLogisticsRequired(snapshot.State)
+	kingdomRequired := kingdomLogisticsRequired(&snapshot.State)
 	if !marketRequired && !kingdomRequired {
 		return false, time.Time{}, nil
 	}
@@ -93,7 +93,7 @@ func craftingLogisticsStale(snapshot Snapshot, interval time.Duration) (bool, ti
 		return true, time.Time{}, nil
 	}
 	if marketStale {
-		if releasesAt := State.NextMarketBarrowLeaseRelease(snapshot.State, snapshot.Now); !releasesAt.IsZero() {
+		if releasesAt := State.NextMarketBarrowLeaseRelease(&snapshot.State, snapshot.Now); !releasesAt.IsZero() {
 			return false, releasesAt, nil
 		}
 		return true, time.Time{}, nil
@@ -355,7 +355,7 @@ func craftingLootDrainRoute(
 			return craftingLootDrainCandidate{}, false
 		}
 		market, observed := snapshot.State.Market.Castles[source.ID]
-		availableBarrows := State.AvailableMarketBarrowsAt(snapshot.State, market, snapshot.Now)
+		availableBarrows := State.AvailableMarketBarrowsAt(&snapshot.State, market, snapshot.Now)
 		if !observed || availableBarrows <= 0 {
 			return craftingLootDrainCandidate{}, false
 		}
@@ -369,10 +369,10 @@ func craftingLootDrainRoute(
 		if source.KingdomID == 4 && !settings.UseStormBuffer {
 			return craftingLootDrainCandidate{}, false
 		}
-		if _, pending := pendingKingdomResourceTransport(snapshot.State, target.KingdomID); pending {
+		if _, pending := pendingKingdomResourceTransport(&snapshot.State, target.KingdomID); pending {
 			return craftingLootDrainCandidate{}, false
 		}
-		if _, settling := kingdomResourceTransportWorkflow(snapshot.State, target.KingdomID); settling {
+		if _, settling := kingdomResourceTransportWorkflow(&snapshot.State, target.KingdomID); settling {
 			return craftingLootDrainCandidate{}, false
 		}
 		unlock, observed := snapshot.State.KingdomTransport.Unlocks[target.KingdomID]
@@ -453,7 +453,7 @@ func sameKingdomShipmentDecision(
 			continue
 		}
 		market, observed := snapshot.State.Market.Castles[source.ID]
-		availableBarrows := State.AvailableMarketBarrowsAt(snapshot.State, market, snapshot.Now)
+		availableBarrows := State.AvailableMarketBarrowsAt(&snapshot.State, market, snapshot.Now)
 		if !observed || availableBarrows <= 0 {
 			continue
 		}
@@ -500,7 +500,7 @@ func crossKingdomShipmentDecision(
 	shortfall float64,
 	interval time.Duration,
 ) (Decision, bool) {
-	if pending, found := pendingKingdomResourceTransport(snapshot.State, target.KingdomID); found {
+	if pending, found := pendingKingdomResourceTransport(&snapshot.State, target.KingdomID); found {
 		detail := fmt.Sprintf("Kingdom %d already has a resource shipment in flight", target.KingdomID)
 		var detailLocalizationMessage *Localization.Message = Localization.New("server.automation.kingdom_p_already_has.ff03a00e", "Kingdom {p0} already has a resource shipment in flight", Localization.Params{"p0": fmt.Sprintf("%d", target.KingdomID)})
 		nextCheck := snapshot.Now.Add(coordinatorTick)
@@ -512,7 +512,7 @@ func crossKingdomShipmentDecision(
 		}
 		return Decision{Status: "waiting", Detail: detail, DetailDescriptor: Localization.Clone(detailLocalizationMessage), NextCheckAt: nextCheck}, true
 	}
-	if workflow, found := kingdomResourceTransportWorkflow(snapshot.State, target.KingdomID); found {
+	if workflow, found := kingdomResourceTransportWorkflow(&snapshot.State, target.KingdomID); found {
 		return Decision{
 			Status: "waiting",
 			Detail: fmt.Sprintf("Waiting for %s to refresh the kingdom %d resource destination", workflow.Owner, workflow.KingdomID), DetailDescriptor: Localization.New("server.automation.waiting_for_p_to.3a604b59", "Waiting for {p0} to refresh the kingdom {p1} resource destination", Localization.Params{"p0": fmt.Sprintf("%s", workflow.Owner), "p1": fmt.Sprintf("%d", workflow.KingdomID)}),

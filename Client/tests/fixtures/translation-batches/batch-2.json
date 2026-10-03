@@ -1,0 +1,94 @@
+{
+  "schema": 1,
+  "batch": 2,
+  "cuts": {
+    "desktop": {
+      "since": "90a15fa3f7fcdb2a1864dd74a0debf1bffa5e959",
+      "until": "3b3066d87fb98cb89b01908a508cde13745fc2fe"
+    },
+    "portal": {
+      "since": "a80e5a8bb612f446956f82d1668ecc62d9a82a9e",
+      "until": "89e8011a9aeeac2a822a32bf87c124d7eebab468"
+    }
+  },
+  "command": [
+    "node",
+    "scripts/localization/translation-batch.mjs",
+    "--batch",
+    "2",
+    "--since",
+    "90a15fa3f7fcdb2a1864dd74a0debf1bffa5e959",
+    "--until",
+    "3b3066d87fb98cb89b01908a508cde13745fc2fe",
+    "--peer-repo",
+    "../../cit-92-translation-batch-2-portal",
+    "--peer-since",
+    "a80e5a8bb612f446956f82d1668ecc62d9a82a9e",
+    "--peer-until",
+    "89e8011a9aeeac2a822a32bf87c124d7eebab468",
+    "--families",
+    "shared"
+  ],
+  "families": {
+    "shared": {
+      "repository": "desktop",
+      "sources": [
+        "Client/src/i18n/messages.ts",
+        "Client/src/i18n/sourceMessages.ts"
+      ],
+      "catalogDirectory": "Client/src/i18n/catalogs",
+      "keys": [
+        "automationDurationDialog.amountLabel",
+        "automationDurationDialog.currentPauseEnds",
+        "automationDurationDialog.currentRunEnds",
+        "automationDurationDialog.customDuration",
+        "automationDurationDialog.days",
+        "automationDurationDialog.hours",
+        "automationDurationDialog.invalidDuration",
+        "automationDurationDialog.minutes",
+        "automationDurationDialog.pauseButton",
+        "automationDurationDialog.pauseStarts",
+        "automationDurationDialog.pauseTitle",
+        "automationDurationDialog.presetHours",
+        "automationDurationDialog.presetMinutes",
+        "automationDurationDialog.quickDurations",
+        "automationDurationDialog.runButton",
+        "automationDurationDialog.runStarts",
+        "automationDurationDialog.runTitle",
+        "automationDurationDialog.saveFailed",
+        "automationDurationDialog.scheduleNotice",
+        "automationDurationDialog.unitLabel",
+        "copy.attacksSaved",
+        "copy.attacksToday",
+        "copy.connecting",
+        "copy.connectingGame",
+        "copy.countUnknownTitle",
+        "copy.khanPause",
+        "copy.loadingHistory",
+        "copy.loggingIn",
+        "copy.noProfile",
+        "copy.offlineSaved",
+        "copy.offlineSavedTitle",
+        "copy.queues",
+        "copy.ranked",
+        "copy.rankings",
+        "copy.reconnecting",
+        "copy.riftCapture",
+        "copy.since",
+        "copy.sinceTitle",
+        "copy.today",
+        "copy.todayTitle",
+        "copy.updated",
+        "equipment.canonicalUnavailable",
+        "equipment.effectsGroupedDescription",
+        "setupReadiness.castlesNotInWorld",
+        "ui.components.header.alt.citadel.ops.logo.ab367a3c"
+      ],
+      "allowEnglish": {
+        "automationDurationDialog.minutes": {
+          "fr": "The French plural time-unit label Minutes is spelled identically in English."
+        }
+      }
+    }
+  }
+}

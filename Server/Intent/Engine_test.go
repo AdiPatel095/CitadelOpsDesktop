@@ -236,7 +236,7 @@ func TestReceiptIdentifiersAreHumanizedWithoutLosingDiagnosticError(t *testing.T
 	}
 	gameState := State.NewGameState()
 	gameState.Castles[10] = State.CastleState{ID: 10, Name: "Main Keep"}
-	engine := NewEngine(nil, State.NewStore(gameState), localizedGameDataProvider{store: gameData, language: language}, nil, nil)
+	engine := NewEngine(nil, State.NewStore(&gameState), localizedGameDataProvider{store: gameData, language: language}, nil, nil)
 	engine.planningContext()
 	raw := "castle 10 has no unit 489"
 	receipt := engine.humanizeReceiptIdentifiers(Receipt{
@@ -351,7 +351,7 @@ func TestExecuteStepClassifiesDeclaredResponseCodeAsStale(t *testing.T) {
 		Generation: 1, BaselineGeneration: 1, ConnectionGeneration: 1,
 		Status: "connected", LoggedIn: true, SocketReady: true, Namespace: "EmpireEx_21",
 	}
-	store := State.NewStore(gameState)
+	store := State.NewStore(&gameState)
 	pipeline := Ingest.NewPipeline(store, nil, Ingest.NewRegistry())
 	engine := NewEngine(nil, store, nil, &pipelineResponseSender{pipeline: pipeline, responseCode: 147}, pipeline)
 
@@ -396,7 +396,7 @@ func TestExecuteStepRoutesDefinitiveRetryAndStaleResponseActions(t *testing.T) {
 				Generation: 1, BaselineGeneration: 1, ConnectionGeneration: 1,
 				Status: "connected", LoggedIn: true, SocketReady: true, Namespace: "EmpireEx_21",
 			}
-			store := State.NewStore(gameState)
+			store := State.NewStore(&gameState)
 			pipeline := Ingest.NewPipeline(store, nil, Ingest.NewRegistry())
 			engine := NewEngine(nil, store, nil, &pipelineResponseSender{pipeline: pipeline, responseCode: test.code}, pipeline)
 			events := []string{}
@@ -440,7 +440,7 @@ func TestExecuteStepRoutesDefinitiveRetryAndStaleResponseActions(t *testing.T) {
 func TestEngineRetriesDeclaredResponseAfterPriorProgress(t *testing.T) {
 	gameState := State.NewGameState()
 	gameState.Player.Resources[1] = 100
-	store := State.NewStore(gameState)
+	store := State.NewStore(&gameState)
 	pipeline := Ingest.NewPipeline(store, nil, Ingest.NewRegistry())
 	sender := &responseSequenceSender{
 		pipeline: pipeline, store: store, responseCodes: []int{227, 227, 0},
@@ -513,7 +513,8 @@ func TestEngineRetriesDeclaredResponseAfterPriorProgress(t *testing.T) {
 }
 
 func TestEngineResponseRetryPreservesEarlierSuccessfulWireStep(t *testing.T) {
-	store := State.NewStore(State.NewGameState())
+	accessorState1 := State.NewGameState()
+	store := State.NewStore(&accessorState1)
 	pipeline := Ingest.NewPipeline(store, nil, Ingest.NewRegistry())
 	sender := &responseSequenceSender{pipeline: pipeline, responseCodes: []int{0, 227, 0}}
 	registry := NewRegistry()
@@ -557,7 +558,8 @@ func TestEngineResponseRetryPreservesEarlierSuccessfulWireStep(t *testing.T) {
 }
 
 func TestEngineResponseRetryStopsWhenGuardFails(t *testing.T) {
-	store := State.NewStore(State.NewGameState())
+	accessorState2 := State.NewGameState()
+	store := State.NewStore(&accessorState2)
 	pipeline := Ingest.NewPipeline(store, nil, Ingest.NewRegistry())
 	sender := &responseSequenceSender{pipeline: pipeline, responseCodes: []int{227, 0}}
 	registry := NewRegistry()
@@ -592,7 +594,8 @@ func TestEngineResponseRetryStopsWhenGuardFails(t *testing.T) {
 }
 
 func TestEngineResponseRetryDoesNotRepeatOtherResponseCodes(t *testing.T) {
-	store := State.NewStore(State.NewGameState())
+	accessorState3 := State.NewGameState()
+	store := State.NewStore(&accessorState3)
 	pipeline := Ingest.NewPipeline(store, nil, Ingest.NewRegistry())
 	sender := &responseSequenceSender{pipeline: pipeline, responseCodes: []int{226, 0}}
 	registry := NewRegistry()
@@ -629,7 +632,8 @@ func TestEngineResponseRetryDoesNotRepeatOtherResponseCodes(t *testing.T) {
 }
 
 func TestDeferredCommandDependenciesDoNotMakeRejectedWritePartiallySucceeded(t *testing.T) {
-	store := State.NewStore(State.NewGameState())
+	accessorState4 := State.NewGameState()
+	store := State.NewStore(&accessorState4)
 	pipeline := Ingest.NewPipeline(store, nil, Ingest.NewRegistry())
 	sender := &responseSequenceSender{pipeline: pipeline, responseCodes: []int{0, 55}}
 	registry := NewRegistry()
@@ -682,7 +686,8 @@ func TestDeferredCommandDependenciesDoNotMakeRejectedWritePartiallySucceeded(t *
 }
 
 func TestEngineDoesNotReplayCompletedDeferredCommandDependenciesAfterPause(t *testing.T) {
-	store := State.NewStore(State.NewGameState())
+	accessorState5 := State.NewGameState()
+	store := State.NewStore(&accessorState5)
 	pipeline := Ingest.NewPipeline(store, nil, Ingest.NewRegistry())
 	sender := &responseSequenceSender{pipeline: pipeline, responseCodes: []int{0, 0}}
 	registry := NewRegistry()
@@ -800,7 +805,8 @@ func TestEngineDoesNotReplayCompletedDeferredCommandDependenciesAfterPause(t *te
 }
 
 func TestEngineChecksExecutionGateBetweenResponseRetries(t *testing.T) {
-	store := State.NewStore(State.NewGameState())
+	accessorState6 := State.NewGameState()
+	store := State.NewStore(&accessorState6)
 	pipeline := Ingest.NewPipeline(store, nil, Ingest.NewRegistry())
 	sender := &responseSequenceSender{pipeline: pipeline, responseCodes: []int{227, 0}}
 	registry := NewRegistry()
@@ -1035,7 +1041,8 @@ func TestEnginePlansOnceWhenClaimsAreImmediateAndRevisionIsUnchanged(t *testing.
 	}); err != nil {
 		t.Fatal(err)
 	}
-	stateReader := &countingStateReader{store: State.NewStore(State.NewGameState())}
+	accessorState7 := State.NewGameState()
+	stateReader := &countingStateReader{store: State.NewStore(&accessorState7)}
 	engine := NewEngine(registry, stateReader, nil, nil, nil)
 	if err := engine.RegisterAction("test.fast-plan.run", func(context.Context, json.RawMessage) error {
 		return nil
@@ -1080,7 +1087,8 @@ func TestEngineReplansAfterWaitingForClaims(t *testing.T) {
 	}); err != nil {
 		t.Fatal(err)
 	}
-	engine := NewEngine(registry, State.NewStore(State.NewGameState()), nil, nil, nil)
+	accessorState8 := State.NewGameState()
+	engine := NewEngine(registry, State.NewStore(&accessorState8), nil, nil, nil)
 	holderStarted := make(chan struct{})
 	releaseHolder := make(chan struct{})
 	if err := engine.RegisterAction("test.claim-holder.run", func(context.Context, json.RawMessage) error {
@@ -1142,7 +1150,8 @@ func TestEngineReplansWhenStateChangesAtFirstDispatchPermit(t *testing.T) {
 	}); err != nil {
 		t.Fatal(err)
 	}
-	reader := &dispatchMutationStateReader{store: State.NewStore(State.NewGameState())}
+	accessorState9 := State.NewGameState()
+	reader := &dispatchMutationStateReader{store: State.NewStore(&accessorState9)}
 	sender := &payloadSender{payload: make(chan Protocol.Frame, 1)}
 	engine := NewEngine(registry, reader, nil, sender, nil)
 	receipt := engine.Submit(t.Context(), Request{Name: "test.dispatch-replan"})
@@ -1188,7 +1197,8 @@ func TestEngineReplansWhenCatalogChangesAtFirstDispatchPermit(t *testing.T) {
 		t.Fatal(err)
 	}
 	sender := &payloadSender{payload: make(chan Protocol.Frame, 1)}
-	engine := NewEngine(registry, State.NewStore(State.NewGameState()), provider, sender, nil)
+	accessorState10 := State.NewGameState()
+	engine := NewEngine(registry, State.NewStore(&accessorState10), provider, sender, nil)
 	receipt := engine.Submit(t.Context(), Request{Name: "test.catalog-replan"})
 	if receipt.Status != StatusSucceeded || receipt.Attempt != 1 || receipt.Plan == nil || receipt.Plan.CatalogVersion != "new" {
 		t.Fatalf("catalog-replanned receipt = %#v", receipt)
@@ -1223,7 +1233,8 @@ func TestEngineReplansWhenStateChangesBeforeImmediateClaimAcquisition(t *testing
 	}); err != nil {
 		t.Fatal(err)
 	}
-	store := State.NewStore(State.NewGameState())
+	accessorState11 := State.NewGameState()
+	store := State.NewStore(&accessorState11)
 	stateReader := &countingStateReader{store: store}
 	engine := NewEngine(registry, stateReader, nil, nil, nil)
 	if err := engine.RegisterAction("test.changed-plan.run", func(context.Context, json.RawMessage) error {
@@ -1273,14 +1284,14 @@ func TestEngineScopedDependenciesIgnoreUnrelatedStateChanges(t *testing.T) {
 			initial.Player.ID = 7
 			initial.Castles[11] = State.CastleState{ID: 11, KingdomID: 1}
 			initial.Castles[12] = State.CastleState{ID: 12, KingdomID: 1}
-			store := State.NewStore(initial)
+			store := State.NewStore(&initial)
 			registry := NewRegistry()
 			var plannerCalls atomic.Int32
 			if err := registry.Register(Definition{
 				Name: "test.scoped-plan", Effect: EffectWrite,
 				ReadSet: func(input PlanningContext, _ json.RawMessage, _ Plan) ([]State.PartitionKey, error) {
 					return []State.PartitionKey{
-						State.CastlePartition(input.State, State.CapabilityConstruction, 11),
+						State.CastlePartition(&input.State, State.CapabilityConstruction, 11),
 					}, nil
 				},
 				Planner: func(context.Context, PlanningContext, json.RawMessage) (Plan, error) {
@@ -1305,7 +1316,7 @@ func TestEngineScopedDependenciesIgnoreUnrelatedStateChanges(t *testing.T) {
 					state.Player.Level++
 					return State.ScopedChange{
 						Partitions: []State.PartitionKey{
-							State.CastlePartition(*state, State.CapabilityConstruction, test.changedCastle),
+							State.CastlePartition(state, State.CapabilityConstruction, test.changedCastle),
 						},
 						Changed: true,
 					}, nil
@@ -1340,7 +1351,8 @@ func TestEngineReplansAfterAdmissionTransition(t *testing.T) {
 	}); err != nil {
 		t.Fatal(err)
 	}
-	stateReader := &countingStateReader{store: State.NewStore(State.NewGameState())}
+	accessorState12 := State.NewGameState()
+	stateReader := &countingStateReader{store: State.NewStore(&accessorState12)}
 	engine := NewEngine(registry, stateReader, nil, &admissionTestSender{}, nil)
 	if err := engine.RegisterAction("test.admitted-plan.run", func(context.Context, json.RawMessage) error {
 		return nil
@@ -1369,7 +1381,8 @@ func TestEngineCancelsRunningOperationByID(t *testing.T) {
 	}); err != nil {
 		t.Fatal(err)
 	}
-	engine := NewEngine(registry, State.NewStore(State.NewGameState()), nil, nil, nil)
+	accessorState13 := State.NewGameState()
+	engine := NewEngine(registry, State.NewStore(&accessorState13), nil, nil, nil)
 	started := make(chan struct{})
 	if err := engine.RegisterAction("test.block", func(ctx context.Context, _ json.RawMessage) error {
 		close(started)
@@ -1409,7 +1422,7 @@ func TestEngineStopsAwaitingResponseWhenConnectionGenerationChanges(t *testing.T
 		Generation: 1, BaselineGeneration: 1, ConnectionGeneration: 1,
 		Status: "connected", LoggedIn: true, SocketReady: true,
 	}
-	store := State.NewStore(gameState)
+	store := State.NewStore(&gameState)
 	sender := &connectionGenerationSender{sent: make(chan struct{}, 1)}
 	sender.generation.Store(1)
 	observer := &blockingObserver{
@@ -1468,7 +1481,7 @@ func TestEngineRejectsCommandBeforeReplacementSessionBaselineIsCurrent(t *testin
 			gameState.Session = test.session
 			sender := &connectionGenerationSender{sent: make(chan struct{}, 1)}
 			sender.generation.Store(test.provider)
-			engine := NewEngine(nil, State.NewStore(gameState), nil, sender, nil)
+			engine := NewEngine(nil, State.NewStore(&gameState), nil, sender, nil)
 			ctx, cancel := context.WithTimeout(t.Context(), 50*time.Millisecond)
 			defer cancel()
 			_, err := engine.executeStep(ctx, gameState.Revision, Step{
@@ -1493,7 +1506,7 @@ func TestEngineWaitsForCurrentSessionBaselineBeforeReplanning(t *testing.T) {
 		Generation: 2, BaselineGeneration: 0, ConnectionGeneration: 2,
 		Status: "connected", LoggedIn: true, SocketReady: true,
 	}
-	state := State.NewStore(gameState)
+	state := State.NewStore(&gameState)
 	sender := &connectionGenerationSender{sent: make(chan struct{}, 1)}
 	sender.generation.Store(2)
 	engine := NewEngine(nil, state, nil, sender, nil)
@@ -1531,7 +1544,7 @@ func TestEngineWaitsForCurrentSessionBaselineBeforeReplanning(t *testing.T) {
 func TestEngineWaitsForGameSocketBeforeReplanning(t *testing.T) {
 	gameState := State.NewGameState()
 	sender := &readinessSender{sent: make(chan struct{}, 1)}
-	engine := NewEngine(nil, State.NewStore(gameState), nil, sender, nil)
+	engine := NewEngine(nil, State.NewStore(&gameState), nil, sender, nil)
 	result := make(chan error, 1)
 	go func() {
 		_, err := engine.executeStep(t.Context(), gameState.Revision, Step{
@@ -1634,7 +1647,7 @@ func TestEngineDispatchesStaticResponseChainBeforeSlowStateCommits(t *testing.T)
 		Status: "connected", LoggedIn: true, SocketReady: true,
 		Namespace: "EmpireEx_21", ChangedAt: transport.status.ChangedAt,
 	}
-	store := State.NewStore(gameState)
+	store := State.NewStore(&gameState)
 	ingestRegistry := Ingest.NewRegistry()
 	if err := ingestRegistry.Register("bup", func(
 		context.Context,
@@ -1706,7 +1719,8 @@ func TestEngineAcceptsEquivalentUntaggedRepliesOnlyForReadIntents(t *testing.T) 
 		{name: "write", effect: EffectWrite, wantStatus: StatusIndeterminate, wantToken: true},
 	} {
 		t.Run(test.name, func(t *testing.T) {
-			store := State.NewStore(State.NewGameState())
+			accessorState14 := State.NewGameState()
+			store := State.NewStore(&accessorState14)
 			pipeline := Ingest.NewPipeline(store, nil, Ingest.NewRegistry())
 			sender := &correlatingPipelineResponseSender{
 				pipelineResponseSender: &pipelineResponseSender{pipeline: pipeline},
@@ -1753,7 +1767,8 @@ func TestEngineCommitsAcknowledgedWireStepBeforeCancellationReleasesClaims(t *te
 	}); err != nil {
 		t.Fatal(err)
 	}
-	store := State.NewStore(State.NewGameState())
+	accessorState15 := State.NewGameState()
+	store := State.NewStore(&accessorState15)
 	pipeline := Ingest.NewPipeline(store, nil, ingestRegistry)
 	sender := &pipelineResponseSender{pipeline: pipeline}
 	registry := NewRegistry()
@@ -1820,7 +1835,8 @@ func TestEnginePreservesIndeterminateWriteOutcome(t *testing.T) {
 	}); err != nil {
 		t.Fatal(err)
 	}
-	engine := NewEngine(registry, State.NewStore(State.NewGameState()), nil, &indeterminateSender{}, nil)
+	accessorState16 := State.NewGameState()
+	engine := NewEngine(registry, State.NewStore(&accessorState16), nil, &indeterminateSender{}, nil)
 	receipt := engine.Submit(t.Context(), Request{Name: "test.indeterminate"})
 	if receipt.Status != StatusIndeterminate {
 		t.Fatalf("indeterminate receipt = %#v", receipt)
@@ -1854,8 +1870,9 @@ func TestEngineTreatsCommittedSuccessfulWriteReductionFailureAsIndeterminate(t *
 			}); err != nil {
 				t.Fatal(err)
 			}
+			accessorState17 := State.NewGameState()
 			engine := NewEngine(
-				registry, State.NewStore(State.NewGameState()), nil,
+				registry, State.NewStore(&accessorState17), nil,
 				&reductionErrorResponseSender{frames: frames},
 				&blockingObserver{started: make(chan struct{}), frames: frames},
 			)
@@ -1868,7 +1885,8 @@ func TestEngineTreatsCommittedSuccessfulWriteReductionFailureAsIndeterminate(t *
 }
 
 func TestEngineRunsPreDispatchMarkerBeforeSendWithCorrelationMetadata(t *testing.T) {
-	store := State.NewStore(State.NewGameState())
+	accessorState18 := State.NewGameState()
+	store := State.NewStore(&accessorState18)
 	pipeline := Ingest.NewPipeline(store, nil, Ingest.NewRegistry())
 	events := []string{}
 	sender := &preDispatchTestSender{
@@ -1949,7 +1967,8 @@ func TestEngineCompensatesOnlyDefinitiveSendFailure(t *testing.T) {
 				t.Fatal(err)
 			}
 			sender := &preDispatchTestSender{events: &events, err: testCase.sendErr}
-			engine := NewEngine(registry, State.NewStore(State.NewGameState()), nil, sender, nil)
+			accessorState19 := State.NewGameState()
+			engine := NewEngine(registry, State.NewStore(&accessorState19), nil, sender, nil)
 			if err := engine.RegisterAction("test.arm", func(context.Context, json.RawMessage) error {
 				events = append(events, "arm")
 				return testCase.armErr
@@ -1992,8 +2011,9 @@ func TestEngineTreatsMissingMutationResultCodeAsIndeterminate(t *testing.T) {
 		}}
 		return nil
 	}
+	accessorState20 := State.NewGameState()
 	engine := NewEngine(
-		registry, State.NewStore(State.NewGameState()), nil, sender,
+		registry, State.NewStore(&accessorState20), nil, sender,
 		&blockingObserver{started: make(chan struct{}), frames: frames},
 	)
 	receipt := engine.Submit(t.Context(), Request{Name: "test.missing-result"})
@@ -2039,7 +2059,7 @@ func TestEnginePropagatesResolvedPriorityToOutboundSend(t *testing.T) {
 		Generation: 1, BaselineGeneration: 1, ConnectionGeneration: 7,
 		Status: "connected", LoggedIn: true, SocketReady: true,
 	}
-	store := State.NewStore(gameState)
+	store := State.NewStore(&gameState)
 	sender.pipeline = Ingest.NewPipeline(store, nil, Ingest.NewRegistry())
 	engine := NewEngine(registry, store, nil, sender, sender.pipeline)
 	receipt := engine.Submit(context.Background(), Request{Name: "test.send", Actor: "automation:autoBird", AutomationLane: "autoBird"})
@@ -2084,7 +2104,8 @@ func TestEngineRejectsOutOfRangePriority(t *testing.T) {
 	}); err != nil {
 		t.Fatal(err)
 	}
-	engine := NewEngine(registry, State.NewStore(State.NewGameState()), nil, nil, nil)
+	accessorState21 := State.NewGameState()
+	engine := NewEngine(registry, State.NewStore(&accessorState21), nil, nil, nil)
 	receipt := engine.Submit(context.Background(), Request{Name: "test", Priority: 101})
 	if receipt.Status != StatusFailed || receipt.Error != "priority must be between 1 and 100" {
 		t.Fatalf("receipt = %#v", receipt)
@@ -2113,7 +2134,8 @@ func TestEngineQueuesAttackAdmissionBeforeAcquiringClaims(t *testing.T) {
 		t.Fatal(err)
 	}
 	sender := &admissionTestSender{nextAllowed: time.Now().UTC().Add(70 * time.Millisecond)}
-	engine := NewEngine(registry, State.NewStore(State.NewGameState()), nil, sender, nil)
+	accessorState22 := State.NewGameState()
+	engine := NewEngine(registry, State.NewStore(&accessorState22), nil, sender, nil)
 	attackStarted := make(chan struct{})
 	if err := engine.RegisterAction("test.attack.run", func(context.Context, json.RawMessage) error {
 		close(attackStarted)
@@ -2158,7 +2180,8 @@ func TestEngineStepResolverReadsStateCommittedByEarlierSteps(t *testing.T) {
 	}); err != nil {
 		t.Fatal(err)
 	}
-	store := State.NewStore(State.NewGameState())
+	accessorState23 := State.NewGameState()
+	store := State.NewStore(&accessorState23)
 	sender := &payloadSender{payload: make(chan Protocol.Frame, 1)}
 	engine := NewEngine(registry, store, nil, sender, nil)
 	if err := engine.RegisterAction("test.state.update", func(context.Context, json.RawMessage) error {
@@ -2220,7 +2243,8 @@ func TestEngineRejectsExecutableProductionPlanWithoutEffectResource(t *testing.T
 	}); err != nil {
 		t.Fatal(err)
 	}
-	engine := NewEngine(registry, State.NewStore(State.NewGameState()), nil, nil, nil)
+	accessorState24 := State.NewGameState()
+	engine := NewEngine(registry, State.NewStore(&accessorState24), nil, nil, nil)
 	if err := engine.RegisterAction("test.noop", func(context.Context, json.RawMessage) error { return nil }); err != nil {
 		t.Fatal(err)
 	}
@@ -2241,33 +2265,86 @@ func TestEngineRejectsExecutableProductionPlanWithUnmappedLegacyClaim(t *testing
 	}); err != nil {
 		t.Fatal(err)
 	}
-	engine := NewEngine(registry, State.NewStore(State.NewGameState()), nil, nil, nil)
+	accessorState25 := State.NewGameState()
+	engine := NewEngine(registry, State.NewStore(&accessorState25), nil, nil, nil)
 	receipt := engine.Submit(t.Context(), Request{Name: "test.unmapped-resource"})
 	if receipt.Status != StatusFailed || !strings.Contains(receipt.Error, "unmapped legacy claim") {
 		t.Fatalf("unmapped-resource receipt = %#v", receipt)
 	}
 }
 
-func TestEngineBoundsDurableInMemoryOperationHistory(t *testing.T) {
-	engine := NewEngine(nil, nil, nil, nil, nil)
-	engine.mu.Lock()
-	engine.operationStore = &SQLiteOperationStore{}
-	for index := 0; index < operationHistoryLimit+5; index++ {
-		id := fmt.Sprintf("operation-%d", index)
-		engine.cacheOperationLocked(Receipt{ID: id, Status: StatusSucceeded}, "hash-"+id)
+func TestEngineBoundsInMemoryReceiptsByCountAndBytes(t *testing.T) {
+	for _, test := range []struct {
+		name                string
+		count, payloadBytes int
+		active              bool
+	}{
+		{name: "count", count: 600},
+		{name: "bytes", count: 60, payloadBytes: 256 << 10},
+		{name: "active", count: 600, payloadBytes: 16 << 10, active: true},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			engine := NewEngine(nil, nil, nil, nil, nil)
+			engine.operationStore = &SQLiteOperationStore{}
+			engine.mu.Lock()
+			defer engine.mu.Unlock()
+			for index := 0; index < test.count; index++ {
+				id := fmt.Sprintf("operation-%d", index)
+				if test.active {
+					engine.active[id] = func() {}
+				}
+				engine.durableOperations[id] = struct{}{}
+				engine.cacheOperationLocked(Receipt{ID: id, Status: StatusSucceeded,
+					Plan: &Plan{Steps: []Step{{Payload: json.RawMessage(strings.Repeat("x", test.payloadBytes))}}},
+				}, "hash-"+id)
+			}
+			if test.active {
+				if len(engine.operations) != test.count || engine.cachedOperationBytes <= operationMemoryBytes {
+					t.Fatalf("active history = %d receipts, %d bytes", len(engine.operations), engine.cachedOperationBytes)
+				}
+				for id := range engine.active {
+					if _, ok := engine.operations[id]; !ok {
+						t.Fatalf("evicted active operation %s", id)
+					}
+				}
+			} else {
+				if len(engine.operations) > operationMemoryLimit || engine.cachedOperationBytes > operationMemoryBytes {
+					t.Fatalf("history exceeds cap: %d receipts, %d bytes", len(engine.operations), engine.cachedOperationBytes)
+				}
+				if test.payloadBytes == 0 && len(engine.operations) != operationMemoryLimit {
+					t.Fatalf("count = %d, want %d", len(engine.operations), operationMemoryLimit)
+				}
+				if _, ok := engine.operations["operation-0"]; ok {
+					t.Fatal("oldest receipt was not evicted")
+				}
+			}
+			newest := fmt.Sprintf("operation-%d", test.count-1)
+			if _, ok := engine.operations[newest]; !ok {
+				t.Fatal("newest receipt was evicted")
+			}
+			assertReceiptCacheConsistent(t, engine)
+			// Replacing a cached receipt must adjust, rather than add, its size.
+			engine.cacheOperationLocked(Receipt{ID: newest, Status: StatusSucceeded}, "")
+			assertReceiptCacheConsistent(t, engine)
+			if test.active {
+				clear(engine.active)
+				engine.evictOperationHistoryLocked()
+				if len(engine.operations) > operationMemoryLimit || engine.cachedOperationBytes > operationMemoryBytes {
+					t.Fatal("terminal receipts did not age out after active exemption ended")
+				}
+				assertReceiptCacheConsistent(t, engine)
+			}
+		})
 	}
-	operationCount := len(engine.operations)
-	hashCount := len(engine.requestHashes)
-	orderCount := len(engine.operationOrder)
-	_, oldestPresent := engine.operations["operation-0"]
-	_, newestPresent := engine.operations[fmt.Sprintf("operation-%d", operationHistoryLimit+4)]
-	engine.mu.Unlock()
-	if operationCount != operationHistoryLimit || hashCount != operationHistoryLimit || orderCount != operationHistoryLimit {
-		t.Fatalf("bounded history sizes = operations:%d hashes:%d order:%d", operationCount, hashCount, orderCount)
-	}
-	if oldestPresent || !newestPresent {
-		t.Fatalf("bounded history retained wrong entries: oldest=%t newest=%t", oldestPresent, newestPresent)
-	}
+	t.Run("no store", func(t *testing.T) {
+		engine := NewEngine(nil, nil, nil, nil, nil)
+		for index := 0; index < 600; index++ {
+			engine.cacheOperationLocked(Receipt{ID: fmt.Sprint(index)}, "")
+		}
+		if len(engine.operations) != 600 {
+			t.Fatal("process-local history was evicted without a store")
+		}
+	})
 }
 
 func TestEngineResumesCheckpointAndRebuildsOnlyContextSteps(t *testing.T) {
@@ -2299,7 +2376,8 @@ func TestEngineResumesCheckpointAndRebuildsOnlyContextSteps(t *testing.T) {
 		t.Fatal(err)
 	}
 	sender := &yieldingStepSender{yieldID: "effect-2", attempts: map[string]int{}}
-	store := State.NewStore(State.NewGameState())
+	accessorState26 := State.NewGameState()
+	store := State.NewStore(&accessorState26)
 	sender.pipeline = Ingest.NewPipeline(store, nil, Ingest.NewRegistry())
 	engine := NewEngine(registry, store, nil, sender, sender.pipeline)
 	resume := make(chan struct{})
@@ -2369,7 +2447,8 @@ func TestEngineCanCancelWhilePaused(t *testing.T) {
 		t.Fatal(err)
 	}
 	sender := &yieldingStepSender{yieldID: "yield", attempts: map[string]int{}}
-	engine := NewEngine(registry, State.NewStore(State.NewGameState()), nil, sender, nil)
+	accessorState27 := State.NewGameState()
+	engine := NewEngine(registry, State.NewStore(&accessorState27), nil, sender, nil)
 	engine.SetExecutionGate(func(ctx context.Context, _ Request, _ Plan, point ExecutionPoint) error {
 		if point != ExecutionBeforeClaims || !sender.hasYielded() {
 			return nil
@@ -2432,7 +2511,8 @@ func (sender *dependencyOrderSender) Send(_ context.Context, payload []byte) err
 
 func TestDeferredCommandRunsRegisteredDependenciesBeforeBuildAndSend(t *testing.T) {
 	events := []string{}
-	store := State.NewStore(State.NewGameState())
+	accessorState28 := State.NewGameState()
+	store := State.NewStore(&accessorState28)
 	engine := NewEngine(nil, store, nil, &dependencyOrderSender{events: &events}, nil)
 	if err := engine.RegisterAction("test.cra.guard", func(context.Context, json.RawMessage) error {
 		events = append(events, "guard")
@@ -2493,7 +2573,8 @@ func TestSubmitDetachedAcceptsImmediatelyAndStaysIdempotent(t *testing.T) {
 	}); err != nil {
 		t.Fatal(err)
 	}
-	engine := NewEngine(registry, State.NewStore(State.NewGameState()), nil, nil, nil)
+	accessorState29 := State.NewGameState()
+	engine := NewEngine(registry, State.NewStore(&accessorState29), nil, nil, nil)
 	release := make(chan struct{})
 	var runs atomic.Int32
 	if err := engine.RegisterAction("test.slow", func(ctx context.Context, _ json.RawMessage) error {

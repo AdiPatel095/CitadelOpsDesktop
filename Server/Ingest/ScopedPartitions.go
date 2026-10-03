@@ -1,7 +1,6 @@
 package Ingest
 
 import (
-	"encoding/json"
 	"strings"
 
 	"CitadelDesktop/Server/Protocol"
@@ -17,7 +16,7 @@ var focusedCastleOpcodes = map[string]struct{}{
 
 func scopedPartitionsForFrame(
 	frame Protocol.Frame,
-	gameState State.GameState,
+	gameState *State.GameState,
 	domains []string,
 ) []State.PartitionKey {
 	opcode := strings.ToLower(strings.TrimSpace(frame.Opcode))
@@ -42,7 +41,7 @@ func scopedPartitionsForFrame(
 		}
 	}
 	if _, focused := focusedCastleOpcodes[opcode]; focused {
-		if castleID, _, found := focusedCastle(&gameState); found {
+		if castleID, _, found := focusedCastle(gameState); found {
 			keys = append(keys, scopedCastleDomainPartitions(gameState, castleID, domains)...)
 		}
 	}
@@ -83,7 +82,7 @@ func protocolFocusSubcontextForFrame(frame Protocol.Frame) State.FocusSubcontext
 }
 
 func scopedCastleDomainPartitions(
-	gameState State.GameState,
+	gameState *State.GameState,
 	castleID State.CastleID,
 	domains []string,
 ) []State.PartitionKey {
@@ -122,21 +121,20 @@ func castleCapabilityForDomain(domain string) string {
 	}
 }
 
-func scopedMapKingdoms(frame Protocol.Frame, gameState State.GameState) []State.KingdomID {
-	payload := frame.Payload
+func scopedMapKingdoms(frame Protocol.Frame, gameState *State.GameState) []State.KingdomID {
 	for range 2 {
-		var root map[string]json.RawMessage
-		if json.Unmarshal(payload, &root) != nil {
+		root, err := frame.PayloadRoot()
+		if err != nil {
 			break
 		}
 		if raw, found := root["KID"]; found {
 			return []State.KingdomID{State.KingdomID(rawInteger(raw))}
 		}
-		nested, found := root["gaa"]
+		nested, found := frame.NestedPayload("gaa")
 		if !found {
 			break
 		}
-		payload = nested
+		frame = nested
 	}
 	return gameState.MapKingdomIDs()
 }

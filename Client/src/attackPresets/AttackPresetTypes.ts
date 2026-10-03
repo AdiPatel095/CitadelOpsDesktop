@@ -1,3 +1,4 @@
+import { parseAppCreatedPresetMarker, type AppCreatedPresetMarker } from '../presets/AppCreatedRecords';
 import type {
   AttackSetupDraft,
   AttackSetupCourtyardSupport,
@@ -21,12 +22,17 @@ export interface AttackPresetToolProfile {
   pvpFlankBonus: number;
 }
 
+/** Present only on presets created by a module's inline setup. The marker, not the id, defines ownership. */
+export type { AppCreatedPresetMarker } from '../presets/AppCreatedRecords';
+export { parseAppCreatedPresetMarker } from '../presets/AppCreatedRecords';
+
 export interface AppAttackPreset extends AttackSetupDraft {
   id: string;
   targetType: AttackPresetTargetType;
   useTroopFamilies: boolean;
   createdAt: string;
   updatedAt: string;
+  app?: AppCreatedPresetMarker;
 }
 
 export interface AttackPresetDocument {
@@ -116,7 +122,7 @@ export function summarizeAttackPreset(preset: AttackSetupDraft): AttackPresetSum
   };
 }
 
-function parseAttackPreset(value: unknown): AppAttackPreset | null {
+export function parseAttackPreset(value: unknown): AppAttackPreset | null {
   if (!isRecord(value) || typeof value.id !== 'string' || typeof value.name !== 'string' || !Array.isArray(value.waves)) {
     return null;
   }
@@ -130,6 +136,7 @@ function parseAttackPreset(value: unknown): AppAttackPreset | null {
   const courtyardSupport = parseCourtyardSupport(value.courtyardSupport);
   if (!courtyardSupport) return null;
   const createdAt = validDate(value.createdAt) ?? new Date(0).toISOString();
+  const app = parseAppCreatedPresetMarker(value.app);
   return {
     id: value.id,
     name: value.name,
@@ -139,10 +146,11 @@ function parseAttackPreset(value: unknown): AppAttackPreset | null {
     courtyardSupport,
     createdAt,
     updatedAt: validDate(value.updatedAt) ?? createdAt,
+    ...(app ? { app } : {}),
   };
 }
 
-function parseCourtyardSupport(value: unknown): AttackSetupCourtyardSupport | null {
+export function parseCourtyardSupport(value: unknown): AttackSetupCourtyardSupport | null {
   if (value == null) return emptyCourtyardSupport();
   if (!isRecord(value)) return null;
   const troops = parseFixedSlots(value.troops, 8, false);
@@ -154,7 +162,7 @@ function parseCourtyardSupport(value: unknown): AttackSetupCourtyardSupport | nu
   };
 }
 
-function parseFixedSlots(value: unknown, count: number, fixedQuantity: boolean): AttackSetupSlot[] | null {
+export function parseFixedSlots(value: unknown, count: number, fixedQuantity: boolean): AttackSetupSlot[] | null {
   if (value == null) return Array.from({ length: count }, () => ({ itemId: null, quantity: 0 }));
   if (!Array.isArray(value)) return null;
   const slots: AttackSetupSlot[] = [];
@@ -177,7 +185,7 @@ function emptyCourtyardSupport(): AttackSetupCourtyardSupport {
   };
 }
 
-function parseWave(value: unknown): AttackSetupWave | null {
+export function parseWave(value: unknown): AttackSetupWave | null {
   if (!isRecord(value)) return null;
   const L = parseLane(value.L);
   const M = parseLane(value.M);
@@ -185,7 +193,7 @@ function parseWave(value: unknown): AttackSetupWave | null {
   return L && M && R ? { L, M, R } : null;
 }
 
-function parseLane(value: unknown): AttackSetupLane | null {
+export function parseLane(value: unknown): AttackSetupLane | null {
   if (!isRecord(value) || !Array.isArray(value.troops) || !Array.isArray(value.tools)) return null;
   const troops: AttackSetupSlot[] = [];
   const tools: AttackSetupSlot[] = [];
@@ -205,7 +213,7 @@ function parseLane(value: unknown): AttackSetupLane | null {
   };
 }
 
-function parseSlot(value: unknown): AttackSetupSlot | null {
+export function parseSlot(value: unknown): AttackSetupSlot | null {
   if (!isRecord(value)) return null;
   const itemID = value.itemId == null ? null : Number(value.itemId);
   const quantity = Number(value.quantity);

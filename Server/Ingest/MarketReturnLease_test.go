@@ -30,7 +30,7 @@ func TestMarketReturnWireKeepsCartsReservedAtHome(t *testing.T) {
 		}, &state, nil); err != nil {
 			t.Fatal(err)
 		}
-		if got := State.AvailableMarketBarrowsAt(state, market, step.at); got != 0 {
+		if got := State.AvailableMarketBarrowsAt(&state, market, step.at); got != 0 {
 			t.Fatalf("wire transition exposed %d unavailable home carts", got)
 		}
 	}
@@ -45,10 +45,10 @@ func TestMarketReturnWireKeepsCartsReservedAtHome(t *testing.T) {
 	}
 	state.Movements[50] = restored
 	returnsAt := now.Add(162 * time.Second)
-	if got := State.AvailableMarketBarrowsAt(state, market, returnsAt.Add(-time.Second)); got != 0 {
+	if got := State.AvailableMarketBarrowsAt(&state, market, returnsAt.Add(-time.Second)); got != 0 {
 		t.Fatalf("persisted return lost cart reservation: %d", got)
 	}
-	if got := State.AvailableMarketBarrowsAt(state, market, returnsAt); got != 125 {
+	if got := State.AvailableMarketBarrowsAt(&state, market, returnsAt); got != 125 {
 		t.Fatalf("completed return did not release carts: %d", got)
 	}
 }

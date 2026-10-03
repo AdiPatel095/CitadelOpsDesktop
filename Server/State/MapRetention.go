@@ -26,7 +26,7 @@ func (store *Store) PruneMap(now time.Time) (int, error) {
 	}
 	removed := 0
 	_, err := store.ApplyComponents(Components(ComponentWorldMap), func(state *GameState) ([]string, bool, error) {
-		candidates := privateMapRetentionCandidates(*state)
+		candidates := privateMapRetentionCandidates(state)
 		domains := []string{"retention"}
 		for _, candidate := range mapRetentionRemovals(candidates, now, accountPrivateMapRetentionLimit) {
 			if state.DeleteMapObservation(candidate.kingdomID, candidate.key) {
@@ -41,7 +41,7 @@ func (store *Store) PruneMap(now time.Time) (int, error) {
 	return removed, err
 }
 
-func privateMapRetentionCandidates(state GameState) []mapRetentionCandidate {
+func privateMapRetentionCandidates(state *GameState) []mapRetentionCandidate {
 	candidates := []mapRetentionCandidate{}
 	state.privateMapKingdomIDs(func(kingdomID KingdomID) {
 		state.rangePrivateMapObservations(kingdomID, func(key string, observation MapObservation) bool {

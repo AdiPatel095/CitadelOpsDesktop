@@ -34,6 +34,7 @@ func RegisterCoreReducers(registry *Registry) error {
 		State.ComponentStorm, State.ComponentBeri, State.ComponentKhan, State.ComponentInvasion,
 	)
 	reports := components(State.ComponentReports)
+	attackTargetContext := components(State.ComponentCommandContext, State.ComponentAttackAnalytics)
 	equipment := components(
 		State.ComponentCommanders, State.ComponentCastellans, State.ComponentInventory, State.ComponentPlayer,
 	)
@@ -91,8 +92,6 @@ func RegisterCoreReducers(registry *Registry) error {
 		{"fuc", components(State.ComponentBeri), reduceBeriCapacity},
 		{"gli", leaders, reduceLeaders},
 		{"gie", components(State.ComponentGenerals), reduceGenerals},
-		{"gei", components(State.ComponentInventory), reduceEquipmentStorage},
-		{"ggm", components(State.ComponentInventory), reduceGemStorage},
 		{"gii", components(State.ComponentInventory), reduceConstructionInventory},
 		{"abpi", castles, reduceBuildingProduction},
 		{"gui", castles, reduceFocusedUnits},
@@ -113,7 +112,6 @@ func RegisterCoreReducers(registry *Registry) error {
 		{"rae", components(State.ComponentInvasion), reduceInvasionFortification},
 		{"rce", components(State.ComponentInvasion), reduceInvasionFortificationCounters},
 		{"adi", worldMap.Union(components(State.ComponentAttackDialog)), reduceAttackDialog},
-		{"abi", worldMap.Union(components(State.ComponentAttackDialog)), reduceBossDungeonAttackDialog},
 		{"gas", components(State.ComponentAttackPresets), reduceAttackPresets},
 		{"sin", components(State.ComponentInventory), reduceStorageInventory},
 		{"gbc", components(State.ComponentInventory), reduceConstructionOffers},
@@ -130,8 +128,6 @@ func RegisterCoreReducers(registry *Registry) error {
 		{"eqe", equipment, reduceEquipmentMutation},
 		{"gsue", equipment, reduceEquipmentMutation},
 		{"guse", equipment, reduceEquipmentMutation},
-		{"seq", equipment, reduceEquipmentMutation},
-		{"sge", equipment, reduceEquipmentMutation},
 		{"gnr", equipment, reduceEquipmentMutation},
 	}
 	for _, entry := range reducers {
@@ -213,7 +209,7 @@ func RegisterCoreReducers(registry *Registry) error {
 		}},
 		{[]string{"bls"}, []reducerStep{
 			{writes: reports, reducer: reduceBattleSummaryCapture},
-			{writes: components(State.ComponentTowerCooldowns, State.ComponentNomadCamps, State.ComponentKhan), reducer: reduceSuccessfulTowerBattle},
+			{writes: components(State.ComponentTowerCooldowns, State.ComponentNomadCamps, State.ComponentKhan, State.ComponentAttackAnalytics), reducer: reduceSuccessfulTowerBattle},
 			{writes: components(State.ComponentNomadCamps), reducer: reduceSuccessfulNomadCampBattle},
 		}},
 		{[]string{"csm", "cds"}, []reducerStep{
@@ -259,6 +255,13 @@ func RegisterCoreReducers(registry *Registry) error {
 		reducerStep{writes: components(State.ComponentRift), reducer: reduceRiftLaunchAck},
 		reducerStep{writes: components(State.ComponentAdvisor, State.ComponentEventScores), reducer: reduceAdvisorMovement},
 		reducerStep{writes: components(State.ComponentCombatCooldown), reducer: reduceCombatCooldownOnCommanderBusy},
+		reducerStep{writes: attackTargetContext, reducer: reduceAttackTargetResponse},
+	); err != nil {
+		return err
+	}
+	if err := registry.registerComponentSequence("abi",
+		reducerStep{writes: worldMap.Union(components(State.ComponentAttackDialog)), reducer: reduceBossDungeonAttackDialog},
+		reducerStep{writes: attackTargetContext, reducer: reduceAttackTargetResponse},
 	); err != nil {
 		return err
 	}
@@ -280,7 +283,13 @@ func RegisterCoreReducers(registry *Registry) error {
 	); err != nil {
 		return err
 	}
-	if err := registry.RegisterOutboundComponents("cra", components(State.ComponentRift), reduceRiftLaunchCapture); err != nil {
+	if err := registry.registerOutboundComponentSequence("cra",
+		reducerStep{writes: components(State.ComponentRift), reducer: reduceRiftLaunchCapture},
+		reducerStep{writes: components(State.ComponentCommandContext), reducer: reduceAttackTargetCommand},
+	); err != nil {
+		return err
+	}
+	if err := registry.RegisterOutboundComponents("abi", components(State.ComponentCommandContext), reduceAttackTargetCommand); err != nil {
 		return err
 	}
 	if err := registry.RegisterOutboundComponents(
@@ -288,7 +297,48 @@ func RegisterCoreReducers(registry *Registry) error {
 	); err != nil {
 		return err
 	}
-	if err := registry.RegisterOutboundComponents("sbp", components(State.ComponentStorm), reduceStormShopCommand); err != nil {
+	if err := registry.registerOutboundComponentSequence("sbp",
+		reducerStep{writes: components(State.ComponentStorm), reducer: reduceStormShopCommand},
+		reducerStep{writes: components(State.ComponentInventory), reducer: reducePackagePurchaseDispatch},
+	); err != nil {
+		return err
+	}
+	commandContext := components(State.ComponentCommandContext)
+	saleContext := components(State.ComponentCommandContext, State.ComponentInventory)
+	for _, opcode := range []string{"seq", "sge"} {
+		if err := registry.RegisterOutboundComponents(opcode, saleContext, reduceEquipmentSaleCommand); err != nil {
+			return err
+		}
+	}
+	if err := registry.registerComponentSequence("seq",
+		reducerStep{writes: equipment, reducer: reduceEquipmentMutation},
+		reducerStep{writes: saleContext, reducer: reduceEquipmentSaleResponse},
+	); err != nil {
+		return err
+	}
+	if err := registry.registerComponentSequence("sge",
+		reducerStep{writes: equipment, reducer: reduceEquipmentMutation},
+		reducerStep{writes: commandContext, reducer: reduceGemSaleResponse},
+	); err != nil {
+		return err
+	}
+	for opcode, reducer := range map[string]Reducer{"gei": reduceEquipmentStorage, "ggm": reduceGemStorage} {
+		if err := registry.RegisterOutboundComponents(opcode, commandContext, reduceStorageSnapshotCommand); err != nil {
+			return err
+		}
+		if err := registry.registerComponentSequence(opcode,
+			reducerStep{writes: components(State.ComponentInventory), reducer: reducer},
+			reducerStep{writes: commandContext, reducer: reduceStorageSnapshotSaleResolution},
+		); err != nil {
+			return err
+		}
+	}
+	if err := registry.RegisterOutboundComponents("ahr", commandContext, reduceAllianceHelpRequestCommand); err != nil {
+		return err
+	}
+	if err := registry.RegisterComponents("ahr",
+		components(State.ComponentCommandContext, State.ComponentAllianceHelp), reduceAllianceHelpRequestResponse,
+	); err != nil {
 		return err
 	}
 	for _, opcode := range []string{"blm", "bld"} {

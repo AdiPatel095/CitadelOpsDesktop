@@ -132,8 +132,8 @@ func reduceEmbeddedStorageInventory(
 	if !frameSucceeded(frame) || len(frame.Payload) == 0 {
 		return nil, false, nil
 	}
-	var root map[string]json.RawMessage
-	if json.Unmarshal(frame.Payload, &root) != nil || len(root["sin"]) == 0 {
+	root, err := frame.PayloadRoot()
+	if err != nil || len(root["sin"]) == 0 {
 		return nil, false, nil
 	}
 	changed, err := applyStorageInventory(root["sin"], gameState, frame.ReceivedAt)
@@ -149,8 +149,8 @@ func invalidateStorageObservationAfterMutation(
 	if !frameSucceeded(frame) {
 		return nil, false, nil
 	}
-	var root map[string]json.RawMessage
-	if json.Unmarshal(frame.Payload, &root) == nil && validStorageSegment(root["sin"], 1) {
+	root, err := frame.PayloadRoot()
+	if err == nil && validStorageSegment(root["sin"], 1) {
 		return []string{"inventory", "storage"}, false, nil
 	}
 	before := gameState.Inventory.ItemsObservedAt["storage:1"]

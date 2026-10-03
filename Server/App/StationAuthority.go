@@ -85,7 +85,8 @@ func (a *Application) guardStationDispatch(ctx context.Context, args json.RawMes
 	if a.Configuration == nil || !Automation.FeatureEnabledAt(a.Configuration.Snapshot(), key, now) {
 		return fmt.Errorf("%w: Auto Station is disabled", Intent.ErrPlanStale)
 	}
-	s := a.State.Snapshot()
+	// read-only view: guards must not mutate state
+	s := a.State.ReadOnlyView()
 	if err := validateStationSession(s, g.Request.Purpose, g.Request.ConnectionGeneration, now); err != nil {
 		return err
 	}
@@ -129,7 +130,7 @@ func freshStationThreat(s State.GameState, id State.CastleID, after time.Time, l
 	}
 	found := false
 	s.RangeMovements(func(_ State.MovementID, m State.MovementState) bool {
-		if m.TargetCastleID == id && State.IsIncomingPlayerAttack(s, m, now) && m.ArrivesAt.Sub(now) <= time.Duration(min(max(lead, 60), 3600))*time.Second {
+		if m.TargetCastleID == id && State.IsIncomingPlayerAttack(&s, m, now) && m.ArrivesAt.Sub(now) <= time.Duration(min(max(lead, 60), 3600))*time.Second {
 			found = true
 		}
 		return true

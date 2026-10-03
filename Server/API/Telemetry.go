@@ -6,6 +6,7 @@ import (
 	"strconv"
 	"time"
 
+	"CitadelDesktop/Server/Automation"
 	"CitadelDesktop/Server/State"
 	"CitadelDesktop/Server/Telemetry"
 )
@@ -18,32 +19,67 @@ func (server *Server) handleTelemetryChannels(writer http.ResponseWriter, _ *htt
 	writeJSON(writer, http.StatusOK, map[string]any{"channels": server.config.Telemetry.Channels()})
 }
 
+// attackLaunchSource is the counter behind the attack-launch badges and the
+// Auto Storm preview. It returns a true nil interface when there is none, never
+// a typed-nil store.
+func (server *Server) attackLaunchSource() Automation.AttackLaunchCountsProvider {
+	switch {
+	case server.config.AttackLaunches != nil:
+		return server.config.AttackLaunches
+	case server.config.Telemetry != nil:
+		return server.config.Telemetry
+	default:
+		return nil
+	}
+}
+
 func (server *Server) handleAttackLaunchRates(writer http.ResponseWriter, _ *http.Request) {
-	if server.config.Telemetry == nil {
+	source := server.attackLaunchSource()
+	observedAt := time.Now()
+	if source == nil && !server.config.BackgroundOnly {
 		writeError(writer, http.StatusServiceUnavailable, "telemetry_unavailable", "Telemetry is unavailable", Localization.New("server.api.telemetry_is_unavailable.3daba4e0", "Telemetry is unavailable", nil))
 		return
 	}
-	observedAt := time.Now()
-	hourlyCounts := server.config.Telemetry.AttackLaunchCounts(observedAt)
-	var dailySession *attackLaunchDailySession
+	// Display windows do not change the reset boundary used by automation.
+	var daily State.DailyAttackState
 	if server.config.State != nil {
-		startedAt := server.config.State.ReadOnlyView().DailyAttacks.SessionStartedAt
-		if dailyCounts, available := server.config.Telemetry.AttackLaunchCountsSince(startedAt, observedAt); available {
-			dailySession = &attackLaunchDailySession{
-				StartedAt:         startedAt.UTC(),
-				LaunchesByFeature: attackLaunchCountsByFeature(dailyCounts),
+		daily = server.config.State.ReadOnlyView().DailyAttacks
+	}
+	windowStartedAt := observedAt.Add(-time.Hour)
+	if daily.CountingStartedAt.After(windowStartedAt) {
+		windowStartedAt = daily.CountingStartedAt
+	}
+	// A window the source cannot fully cover is null, never a smaller number.
+	var hourly map[string]int
+	var dailySession *attackLaunchDailySession
+	if source != nil {
+		if counts, available := source.AttackLaunchCountsSince(windowStartedAt, observedAt); available {
+			hourly = attackLaunchCountsByFeature(counts)
+		}
+		startedAt, window := daily.SessionStartedAt, "day"
+		if startedAt.IsZero() {
+			startedAt, window = daily.CountingStartedAt, "since"
+		}
+		if !startedAt.IsZero() {
+			if dailyCounts, available := source.AttackLaunchCountsSince(startedAt, observedAt); available {
+				dailySession = &attackLaunchDailySession{
+					StartedAt: startedAt.UTC(), Window: window,
+					LaunchesByFeature: attackLaunchCountsByFeature(dailyCounts),
+				}
 			}
 		}
 	}
 	writeJSON(writer, http.StatusOK, map[string]any{
 		"observedAt":        observedAt.UTC(),
 		"windowMinutes":     int(time.Hour / time.Minute),
-		"launchesByFeature": attackLaunchCountsByFeature(hourlyCounts),
+		"windowStartedAt":   windowStartedAt.UTC(),
+		"launchesByFeature": hourly,
 		"dailySession":      dailySession,
 	})
 }
 
 type attackLaunchDailySession struct {
+	Window            string         `json:"window"`
 	StartedAt         time.Time      `json:"startedAt"`
 	LaunchesByFeature map[string]int `json:"launchesByFeature"`
 }

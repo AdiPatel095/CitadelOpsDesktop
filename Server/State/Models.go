@@ -566,6 +566,21 @@ type AllianceHelpRequestState struct {
 	OthersObservedGeneration         uint64                           `json:"othersObservedGeneration,omitempty"`
 	LastHelpAllAt                    time.Time                        `json:"lastHelpAllAt,omitempty"`
 	LastHelpAllGeneration            uint64                           `json:"lastHelpAllGeneration,omitempty"`
+	// IneligibleRecruitment retains the game's AHR 269 (PACKAGE_NOT_HELPABLE)
+	// answer per castle until the rejected recruitment list changes or the
+	// bounded record expires. It never unlocks a lane or authorizes a request.
+	IneligibleRecruitment map[CastleID]RecruitmentHelpIneligibility `json:"ineligibleRecruitment,omitempty"`
+}
+
+// RecruitmentHelpIneligibility records the recruitment production jobs that
+// were present when the game rejected a T=6 recruitment-list help request
+// with AHR 269. The official client requests help for the whole list, so the
+// rejection covers every job it contained; jobs added later stay eligible.
+type RecruitmentHelpIneligibility struct {
+	ProductionIDs []int64   `json:"productionIds"`
+	OperationID   string    `json:"operationId,omitempty"`
+	ObservedAt    time.Time `json:"observedAt"`
+	Until         time.Time `json:"until"`
 }
 
 // RecruitmentAllianceHelpRequest retains the server-assigned request identity
@@ -593,7 +608,7 @@ const RecruitmentAllianceHelpCompletionGrace = 3 * time.Minute
 // a different eligible hospital job.
 const MaximumOutstandingHospitalAllianceHelpRequests = 1
 
-func OwnAllianceHelpStateCurrent(state GameState) bool {
+func OwnAllianceHelpStateCurrent(state *GameState) bool {
 	generation := state.Session.Generation
 	observedGeneration := state.AllianceHelpRequests.OwnObservedGeneration
 	if generation == 0 {
@@ -606,7 +621,7 @@ func OwnAllianceHelpStateCurrent(state GameState) bool {
 
 // OwnAllianceHelpListCurrent reports whether a full own-request list was
 // observed in the active game session.
-func OwnAllianceHelpListCurrent(state GameState) bool {
+func OwnAllianceHelpListCurrent(state *GameState) bool {
 	if state.Session.Generation == 0 || !OwnAllianceHelpStateCurrent(state) ||
 		state.AllianceHelpRequests.ObservedAt.IsZero() {
 		return false
@@ -677,7 +692,7 @@ func prepareOwnAllianceHelpGeneration(state *GameState) bool {
 	return true
 }
 
-func PendingOtherAllianceHelpListIDs(state GameState) []int64 {
+func PendingOtherAllianceHelpListIDs(state *GameState) []int64 {
 	requests := state.AllianceHelpRequests
 	if state.Session.Generation == 0 || requests.OthersObservedGeneration != state.Session.Generation {
 		return nil
@@ -691,7 +706,7 @@ func PendingOtherAllianceHelpListIDs(state GameState) []int64 {
 	return result
 }
 
-func OutstandingHospitalAllianceHelpRequests(state GameState) int {
+func OutstandingHospitalAllianceHelpRequests(state *GameState) int {
 	if !OwnAllianceHelpStateCurrent(state) {
 		return 0
 	}
@@ -722,7 +737,7 @@ func OutstandingHospitalAllianceHelpRequests(state GameState) int {
 	return len(productionIDs)
 }
 
-func HasOutstandingHospitalAllianceHelpRequest(state GameState, productionID int64) bool {
+func HasOutstandingHospitalAllianceHelpRequest(state *GameState, productionID int64) bool {
 	if productionID <= 0 || !OwnAllianceHelpStateCurrent(state) {
 		return false
 	}
@@ -751,7 +766,7 @@ func HasOutstandingHospitalAllianceHelpRequest(state GameState, productionID int
 	return false
 }
 
-func HasOutstandingRecruitmentAllianceHelpRequest(state GameState, castleID CastleID) bool {
+func HasOutstandingRecruitmentAllianceHelpRequest(state *GameState, castleID CastleID) bool {
 	if castleID <= 0 || !OwnAllianceHelpStateCurrent(state) {
 		return false
 	}
@@ -800,7 +815,7 @@ func HasOutstandingRecruitmentAllianceHelpRequest(state GameState, castleID Cast
 // requests cover only until the bounded completion grace expires, even after
 // their server AHD removal.
 func RecruitmentAllianceHelpCovers(
-	state GameState,
+	state *GameState,
 	castleID CastleID,
 	now time.Time,
 	executionHorizon time.Duration,
@@ -1046,6 +1061,20 @@ type InventoryState struct {
 	GemStacks                       map[GemID]int64                           `json:"gemStacks"`
 	Items                           map[string]map[int64]int64                `json:"items"`
 	ItemsObservedAt                 map[string]time.Time                      `json:"itemsObservedAt,omitempty"`
+	// EquipmentMutatedAt is the latest outbound equipment/gem sale. Storage
+	// snapshots received before it are stale whatever the sale's outcome.
+	EquipmentMutatedAt time.Time `json:"equipmentMutatedAt,omitempty"`
+	// LastPackagePurchaseDispatch is the latest outbound event-package SBP.
+	// Purchase counters observed before it cannot prove its outcome.
+	LastPackagePurchaseDispatch PackagePurchaseDispatch `json:"lastPackagePurchaseDispatch,omitzero"`
+}
+
+// PackagePurchaseDispatch identifies one dispatched package purchase.
+type PackagePurchaseDispatch struct {
+	PackageID   PackageID `json:"packageId,omitempty"`
+	Amount      int64     `json:"amount,omitempty"`
+	OperationID string    `json:"operationId,omitempty"`
+	SentAt      time.Time `json:"sentAt,omitempty"`
 }
 
 type ResearchState struct {
@@ -1065,7 +1094,7 @@ type SubscriptionState struct {
 // Learned production batch sizes are valid only within one scope: the game
 // sizes batches by entitlement, so a change in the active set (either
 // direction) must invalidate what was learned under the old set.
-func (state GameState) SubscriptionScope() string {
+func (state *GameState) SubscriptionScope() string {
 	if len(state.Subscriptions) == 0 {
 		return ""
 	}
@@ -1526,7 +1555,10 @@ type MapObservation struct {
 	StormIsleID                int64     `json:"stormIsleId,omitempty"`
 	StormVictoryCount          int64     `json:"stormVictoryCount,omitempty"`
 	StormCooldownRemaining     int       `json:"stormCooldownRemaining,omitempty"`
-	ObservedAt                 time.Time `json:"observedAt"`
+	// StormHidden is the official Storm fort visibility flag (row[8] > 0).
+	// A hidden fort is never a target; it is not a cooldown.
+	StormHidden bool      `json:"stormHidden,omitempty"`
+	ObservedAt  time.Time `json:"observedAt"`
 }
 
 func (observation *MapObservation) UnmarshalJSON(raw []byte) error {
@@ -2016,6 +2048,7 @@ type AttackDialogTarget struct {
 	StormIsleID                int64    `json:"stormIsleId,omitempty"`
 	StormVictoryCount          int64    `json:"stormVictoryCount,omitempty"`
 	StormCooldownRemaining     int      `json:"stormCooldownRemaining,omitempty"`
+	StormHidden                bool     `json:"stormHidden,omitempty"`
 }
 
 type AttackDialogEffect struct {
@@ -2107,6 +2140,30 @@ type ReportState struct {
 type CommandContextState struct {
 	ProductionSessionKey int        `json:"productionSessionKey,omitempty"`
 	ProductionObservedAt *time.Time `json:"productionObservedAt,omitempty"`
+	// PendingRequests correlates outbound commands whose response has no
+	// self-identifying payload (seq, sge, ahr) with their later inbound reply.
+	// Bounded per opcode and scoped to one session generation.
+	PendingRequests []PendingCommandRequest `json:"pendingRequests,omitempty"`
+}
+
+// PendingCommandRequest is the request identity captured from one outbound
+// command frame. Only the fields of its own opcode are populated.
+type PendingCommandRequest struct {
+	Opcode            string              `json:"opcode"`
+	OperationID       string              `json:"operationId,omitempty"`
+	SentAt            time.Time           `json:"sentAt"`
+	SessionGeneration uint64              `json:"sessionGeneration,omitempty"`
+	EquipmentID       EquipmentInstanceID `json:"equipmentId,omitempty"`
+	GemID             int64               `json:"gemId,omitempty"`
+	RelicGem          bool                `json:"relicGem,omitempty"`
+	HelpType          int                 `json:"helpType,omitempty"`
+	HelpID            int64               `json:"helpId,omitempty"`
+	CastleID          CastleID            `json:"castleId,omitempty"`
+	KingdomID         KingdomID           `json:"kingdomId,omitempty"`
+	TargetX           int                 `json:"targetX,omitempty"`
+	TargetY           int                 `json:"targetY,omitempty"`
+	PackageID         PackageID           `json:"packageId,omitempty"`
+	Amount            int64               `json:"amount,omitempty"`
 }
 
 type DailyAttackState struct {
@@ -2114,6 +2171,7 @@ type DailyAttackState struct {
 	ServerThreshold      int64     `json:"serverThreshold"`
 	GrowthRate           float64   `json:"growthRate"`
 	SessionStartedAt     time.Time `json:"sessionStartedAt,omitempty"`
+	CountingStartedAt    time.Time `json:"countingStartedAt,omitempty"`
 	ObservedAt           time.Time `json:"observedAt,omitempty"`
 	ConnectionGeneration uint64    `json:"-"`
 }

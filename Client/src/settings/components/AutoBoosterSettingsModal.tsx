@@ -1,16 +1,22 @@
+import { StopFooter } from '../../components/StopControl';
 import { LocalizedRichText } from "../../i18n/LocalizedRichText";
 import { useLocale as useStaticLocale } from "../../i18n/LocaleContext";
 import { LocalizedText } from "../../i18n/LocalizedText";
 import React, { useEffect, useMemo, useState } from 'react';
-import { CalendarDays, Clock3, Coins, ShieldCheck, Sparkles, Zap } from 'lucide-react';
+import { Clock3, Coins, ShieldCheck, Sparkles, Zap } from 'lucide-react';
 import { useCitadelAPI } from '../../api/ApiContext';
-import { Badge, Button, Card, Input, SettingsModal } from '../../components/ui';
+import { Badge, Card, Input, SettingsModal } from '../../components/ui';
+import { useConfigurationDraftSession } from '../ConfigurationDraftSession';
+import { AUTOMATION_ENABLED_KEYS } from '../disclosure/placement';
+import { boosterEvidenceSummary } from '../disclosure/summaries';
+import { useSettingsDisclosure } from '../disclosure/useSettingsDisclosure';
+import { AutomationRunStrip } from './AutomationRunStrip';
+import { SettingsSection } from './SettingsSection';
 import {
   AUTO_BOOSTER_RUBY_COST,
   AUTO_BOOSTER_SECTION,
   defaultAutoBoosterClientState,
   parseAutoBoosterClientState,
-  persistAutoBoosterClientState,
   type AutoBoosterClientStateV1,
 } from '../AutoBoosterClientState';
 import {
@@ -20,11 +26,13 @@ import {
   formatObservedRubyChange,
   hasMeaningfulAutoBoosterTime,
 } from '../AutoBoosterViewState';
+import { useDraftRecovery } from '../useDraftRecovery';
 
 interface AutoBoosterSettingsModalProps {
   isOpen: boolean;
   onClose: () => void;
   onOpenFeatureSchedule: (featureID: string, featureLabel: string) => void;
+  onOpenAutomationDuration?: (featureKey: string, featureLabel: string) => void;
 }
 
 function formatReceiptTime(value: string | undefined): string {
@@ -38,9 +46,12 @@ export const AutoBoosterSettingsModal: React.FC<AutoBoosterSettingsModalProps> =
   isOpen,
   onClose,
   onOpenFeatureSchedule,
+  onOpenAutomationDuration,
 }) => {
   const { t: localizeStatic } = useStaticLocale();
-  const { state, configuration } = useCitadelAPI();
+  const { state } = useCitadelAPI();
+  const draftSession = useConfigurationDraftSession({ isOpen, section: AUTO_BOOSTER_SECTION });
+  const disclosure = useSettingsDisclosure('autoBooster');
   const [settings, setSettings] = useState<AutoBoosterClientStateV1>(defaultAutoBoosterClientState);
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
@@ -51,8 +62,9 @@ export const AutoBoosterSettingsModal: React.FC<AutoBoosterSettingsModalProps> =
       setSaveError(null);
       return;
     }
-    setSettings(parseAutoBoosterClientState(configuration?.sections[AUTO_BOOSTER_SECTION]));
-  }, [configuration?.sections, isOpen]);
+    if (!draftSession.initialSnapshot) return;
+    setSettings(parseAutoBoosterClientState(draftSession.initialSections?.[AUTO_BOOSTER_SECTION]));
+  }, [draftSession.initialSections, draftSession.openKey, draftSession.initialSnapshot, isOpen]);
 
   useEffect(() => {
     if (!isOpen) return undefined;
@@ -80,7 +92,7 @@ export const AutoBoosterSettingsModal: React.FC<AutoBoosterSettingsModalProps> =
     setIsSaving(true);
     setSaveError(null);
     try {
-      await persistAutoBoosterClientState(settings);
+      await draftSession.save(parseAutoBoosterClientState(settings));
       onClose();
     } catch (error) {
       setSaveError(error instanceof Error ? error.message : 'Could not save Auto Booster settings.');
@@ -89,35 +101,38 @@ export const AutoBoosterSettingsModal: React.FC<AutoBoosterSettingsModalProps> =
     }
   };
 
+  const recovery = useDraftRecovery({ section: AUTO_BOOSTER_SECTION, isOpen, draftSession, draft: parseAutoBoosterClientState(settings), loaded: parseAutoBoosterClientState(parseAutoBoosterClientState(draftSession.sections?.[AUTO_BOOSTER_SECTION])) });
+
   return (
     <SettingsModal
+      footerLeading={<StopFooter featureId="autoBooster" />}
       isOpen={isOpen}
       onClose={() => { if (!isSaving) onClose(); }}
       maxWidth="lg"
       title={localizeStatic("ui.settings.components.autoBoosterSettingsModal.title.auto.booster.e2825136")}
       icon={<Zap className="h-5 w-5" />}
       description={localizeStatic("ui.settings.components.autoBoosterSettingsModal.description.a.standalone.daily.purchase.lane.for.the.0a84e4a3")}
-      titleTrailing={(
-        <Button
-          variant="outline"
-          size="sm"
-          className="shrink-0"
-          onClick={() => onOpenFeatureSchedule('autoBooster', 'Auto Booster')}
-          leftIcon={<CalendarDays className="h-4 w-4" />}
-        >
-          <LocalizedText messageKey="common.calendar" /></Button>
-      )}
       onSave={save}
       saveLabel="Save booster guard"
       isSaving={isSaving}
+      saveDisabled={!draftSession.ready}
+      contentDisabled={!draftSession.ready}
+      contentNotice={<>{recovery.banner}{draftSession.conflictNotice}</>}
     >
+      <AutomationRunStrip
+        featureId="autoBooster"
+        scheduleId="autoBooster"
+        onOpenSchedule={() => onOpenFeatureSchedule('autoBooster', 'Auto Booster')}
+        onOpenDuration={onOpenAutomationDuration ? () => onOpenAutomationDuration(AUTOMATION_ENABLED_KEYS.autoBooster, 'Auto Booster') : undefined}
+      />
       {saveError && (
         <div className="mb-4 rounded-global border border-error/30 bg-error/10 px-4 py-3 text-sm font-semibold text-error" role="alert">
           {saveError}
         </div>
       )}
 
-      <div className="mb-4 overflow-hidden rounded-global border border-amber-500/30 bg-gradient-to-br from-amber-500/15 via-bg-card to-primary/8 p-5 shadow-sm">
+      <SettingsSection disclosure={disclosure} section="purchase" className="mb-4 space-y-4">
+      <div className="overflow-hidden rounded-global border border-amber-500/30 bg-gradient-to-br from-amber-500/15 via-bg-card to-primary/8 p-5 shadow-sm">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div className="flex min-w-0 items-center gap-4">
             <div className="grid h-14 w-14 shrink-0 place-items-center rounded-2xl border border-amber-500/30 bg-bg-app/70 text-amber-500 shadow-inner">
@@ -145,8 +160,45 @@ export const AutoBoosterSettingsModal: React.FC<AutoBoosterSettingsModalProps> =
         </div>
       </div>
 
+        <Card id="auto-booster-ruby-reserve" variant="solid" className="p-4">
+          <div className="flex items-start gap-3">
+            <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary">
+              <Coins className="h-5 w-5" />
+            </div>
+            <div>
+              <h3 className="text-sm font-black text-text-main"><LocalizedText messageKey="ui.settings.components.autoBoosterSettingsModal.ruby.reserve.bd9dd746" /></h3>
+              <p className="mt-0.5 text-xs text-text-muted"><LocalizedText messageKey="ui.settings.components.autoBoosterSettingsModal.the.purchase.must.leave.at.least.this.a3c95609" /></p>
+            </div>
+          </div>
+          <label className="mt-4 block">
+            <span className="mb-1.5 block text-[10px] font-black uppercase tracking-wider text-text-muted"><LocalizedText messageKey="ui.settings.components.autoBoosterSettingsModal.minimum.rubies.to.keep.d6f81306" /></span>
+            <Input
+              type="number"
+              min={0}
+              value={settings.minimumRubyReserve}
+              onChange={(event) => setSettings((current) => ({
+                ...current,
+                minimumRubyReserve: Math.max(0, Math.trunc(Number(event.target.value) || 0)),
+              }))}
+              className="font-mono"
+            />
+          </label>
+          <div className="mt-3 rounded-xl border border-border-base bg-bg-app/55 px-3 py-2.5 text-[11px] text-text-muted">
+            Fixed spend ceiling: <strong className="text-text-main">{AUTO_BOOSTER_RUBY_COST.toLocaleString()} rubies</strong>. A different live price is rejected, even when the balance is sufficient.
+          </div>
+        </Card>
+
+      </SettingsSection>
+
+      <SettingsSection
+        disclosure={disclosure}
+        section="evidence"
+        summary={boosterEvidenceSummary(Boolean(live.purchase))}
+        className="mb-4"
+      >
+        <div className="space-y-4">
       {live.purchase && (
-        <Card variant="solid" className="mb-4 p-4" data-testid="auto-booster-purchase-record">
+        <Card variant="solid" className="p-4" data-testid="auto-booster-purchase-record">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
               <h3 className="text-sm font-black text-text-main">{live.purchaseHeading}</h3>
@@ -176,35 +228,6 @@ export const AutoBoosterSettingsModal: React.FC<AutoBoosterSettingsModalProps> =
         </Card>
       )}
 
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-        <Card variant="solid" className="p-4">
-          <div className="flex items-start gap-3">
-            <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary">
-              <Coins className="h-5 w-5" />
-            </div>
-            <div>
-              <h3 className="text-sm font-black text-text-main"><LocalizedText messageKey="ui.settings.components.autoBoosterSettingsModal.ruby.reserve.bd9dd746" /></h3>
-              <p className="mt-0.5 text-xs text-text-muted"><LocalizedText messageKey="ui.settings.components.autoBoosterSettingsModal.the.purchase.must.leave.at.least.this.a3c95609" /></p>
-            </div>
-          </div>
-          <label className="mt-4 block">
-            <span className="mb-1.5 block text-[10px] font-black uppercase tracking-wider text-text-muted"><LocalizedText messageKey="ui.settings.components.autoBoosterSettingsModal.minimum.rubies.to.keep.d6f81306" /></span>
-            <Input
-              type="number"
-              min={0}
-              value={settings.minimumRubyReserve}
-              onChange={(event) => setSettings((current) => ({
-                ...current,
-                minimumRubyReserve: Math.max(0, Math.trunc(Number(event.target.value) || 0)),
-              }))}
-              className="font-mono"
-            />
-          </label>
-          <div className="mt-3 rounded-xl border border-border-base bg-bg-app/55 px-3 py-2.5 text-[11px] text-text-muted">
-            Fixed spend ceiling: <strong className="text-text-main">{AUTO_BOOSTER_RUBY_COST.toLocaleString()} rubies</strong>. A different live price is rejected, even when the balance is sufficient.
-          </div>
-        </Card>
-
         <Card variant="solid" className="p-4">
           <div className="flex items-start gap-3">
             <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-secondary/10 text-secondary">
@@ -230,7 +253,8 @@ export const AutoBoosterSettingsModal: React.FC<AutoBoosterSettingsModalProps> =
             </div>
           </div>
         </Card>
-      </div>
+        </div>
+      </SettingsSection>
 
       <div className="mt-4 flex items-start gap-3 rounded-global border border-primary/25 bg-primary/5 p-4 text-xs text-text-muted">
         <Zap className="mt-0.5 h-4 w-4 shrink-0 text-primary" />

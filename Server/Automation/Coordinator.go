@@ -18,6 +18,7 @@ import (
 	"CitadelDesktop/Server/Configuration"
 	"CitadelDesktop/Server/GameData"
 	"CitadelDesktop/Server/Intent"
+	"CitadelDesktop/Server/Profiling"
 	"CitadelDesktop/Server/State"
 )
 
@@ -45,6 +46,21 @@ type Coordinator struct {
 	configurationWakeBySection     map[string][]string
 	started                        atomic.Bool
 	externalConfigurationAuthority atomic.Bool
+	labelBase                      atomic.Pointer[profilerLabelBase]
+	fingerprints                   policyFingerprintCache
+	batchMu                        sync.Mutex
+	batch                          *automationBatch
+}
+
+// profilerLabelBase is the context Run received; it carries the runtime and
+// stage profiler labels that per-policy labels are added to.
+type profilerLabelBase struct{ ctx context.Context }
+
+func (coordinator *Coordinator) profilerContext() context.Context {
+	if base := coordinator.labelBase.Load(); base != nil {
+		return base.ctx
+	}
+	return context.Background()
 }
 
 // SetTelemetry supplies confirmed feature-attack launches to policy snapshots.
@@ -57,6 +73,11 @@ func (coordinator *Coordinator) SetTelemetry(telemetry AttackLaunchCountsProvide
 }
 
 type policyRuntime struct {
+	// enabledKnown/enabled record the policy's enablement at its last evaluation
+	// for policies switched by automation.enabled. A known-disabled policy is not
+	// woken by state events (CIT-43); every configuration change re-evaluates it.
+	enabledKnown                   bool
+	enabled                        bool
 	nextCheck                      time.Time
 	stateWakeNextCheck             time.Time
 	evaluationPending              bool
@@ -187,6 +208,7 @@ func (coordinator *Coordinator) Run(ctx context.Context) {
 	if !coordinator.started.CompareAndSwap(false, true) {
 		return
 	}
+	coordinator.labelBase.Store(&profilerLabelBase{ctx: ctx})
 	stateEvents, unsubscribeState := coordinator.state.Subscribe(stateEventBuffer)
 	defer unsubscribeState()
 	configurationEvents, unsubscribeConfiguration := coordinator.configuration.Subscribe(configurationEventBuffer)
@@ -205,7 +227,7 @@ func (coordinator *Coordinator) Run(ctx context.Context) {
 		expirationTimer = nil
 		expirationChannel = nil
 		now := time.Now().UTC()
-		configuration := coordinator.configuration.Snapshot()
+		configuration := coordinator.configuration.SharedSnapshot()
 		next := nextAutomationExpiration(configuration, now)
 		if coordinator.externalConfigurationAuthority.Load() {
 			next = nextFutureAutomationExpiration(configuration, now)
@@ -269,10 +291,10 @@ func (coordinator *Coordinator) Run(ctx context.Context) {
 		// other domains route directly through the policy wake index.
 		if stateEventHasDomain(event, "session") || stateEventHasDomain(event, "units") || stateEventHasDomain(event, "resources") {
 			state := coordinator.state.ReadOnlyView()
-			clearTroopAvailabilityGates(runtime, event, state)
-			clearCoinAvailabilityGates(runtime, event, state)
+			clearTroopAvailabilityGates(runtime, event, &state)
+			clearCoinAvailabilityGates(runtime, event, &state)
 			if stateEventHasDomain(event, "session") {
-				coordinator.cancelRunsForUnavailableSession(runtime, state)
+				coordinator.cancelRunsForUnavailableSession(runtime, &state)
 			}
 		}
 		return wakePoliciesForStateEvent(
@@ -345,7 +367,7 @@ func (coordinator *Coordinator) Run(ctx context.Context) {
 			expirationChannel = nil
 			now := time.Now().UTC()
 			coordinator.expireTimedAutomations(now)
-			wakePoliciesForEnabledControlExpirations(runtime, coordinator.policies, coordinator.configuration.Snapshot(), now)
+			wakePoliciesForEnabledControlExpirations(runtime, coordinator.policies, coordinator.configuration.SharedSnapshot(), now)
 			resetExpirationTimer()
 			evaluate()
 		case result := <-results:
@@ -407,11 +429,13 @@ func (coordinator *Coordinator) evaluate(
 	runtime map[string]*policyRuntime,
 	results chan<- operationResult,
 ) {
+	// Every decision of this pass is committed in one transaction when it ends.
+	defer coordinator.beginAutomationBatch()()
 	now := time.Now().UTC()
-	configuration := coordinator.configuration.Snapshot()
+	configuration := coordinator.configuration.SharedSnapshot()
 	state := coordinator.state.ReadOnlyView()
 	coordinator.cancelRunsDisallowedByConfiguration(runtime, configuration, now)
-	coordinator.cancelRunsForUnavailableSession(runtime, state)
+	coordinator.cancelRunsForUnavailableSession(runtime, &state)
 	var gameDataStore = coordinator.currentGameData()
 	var language *GameData.LanguageStore
 	if provider, ok := coordinator.gameData.(interface {
@@ -432,7 +456,7 @@ func (coordinator *Coordinator) evaluate(
 			current.evaluatedSessionKnown = true
 			current.eventOnly = lock.ExpiresAt().IsZero()
 			current.nextCheck = lock.ExpiresAt()
-			coordinator.recordDecision(policy.ID(), policyEnabled(policy, enabled, state), Decision{Status: "gated", Detail: lock.Detail(), DetailDescriptor: lock.DetailDescriptor(), NextCheckAt: lock.ExpiresAt()}, "safety_lock")
+			coordinator.recordDecision(policy.ID(), policyEnabled(policy, enabled, &state), Decision{Status: "gated", Detail: lock.Detail(), DetailDescriptor: lock.DetailDescriptor(), NextCheckAt: lock.ExpiresAt()}, "safety_lock")
 			continue
 		}
 		if !policyEvaluationDue(current, configuration.Revision, sessionReady, state.Session.Generation, now) {
@@ -442,9 +466,10 @@ func (coordinator *Coordinator) evaluate(
 		current.stateWakeNextCheck = time.Time{}
 		current.evaluationPending = false
 		current.eventOnly = false
-		isEnabled := policyEnabled(policy, enabled, state)
-		configurationFingerprint := policyConfigurationFingerprint(policy, configuration)
-		derivedConfigurationFingerprint := policyDerivedConfigurationFingerprint(policy, configuration)
+		isEnabled := policyEnabled(policy, enabled, &state)
+		current.enabled, current.enabledKnown = isEnabled, policyGatedByEnablement(policy)
+		configurationFingerprint := coordinator.policyFingerprint(policy, configuration)
+		derivedConfigurationFingerprint := coordinator.policyDerivedFingerprint(policy, configuration)
 		if consumePolicyEnabledControlExpirations(current, policy, configuration, now) {
 			current.controlExpiryPending = true
 		}
@@ -507,10 +532,10 @@ func (coordinator *Coordinator) evaluate(
 			current.troopAvailabilityGate = nil
 			current.coinAvailabilityGate = nil
 		}
-		if troopAvailabilityGateInventoryChanged(current.troopAvailabilityGate, state) {
+		if troopAvailabilityGateInventoryChanged(current.troopAvailabilityGate, &state) {
 			current.troopAvailabilityGate = nil
 		}
-		if coinAvailabilityGateChanged(current.coinAvailabilityGate, state) {
+		if coinAvailabilityGateChanged(current.coinAvailabilityGate, &state) {
 			current.coinAvailabilityGate = nil
 		}
 		current.evaluatedStateRevision = state.Revision
@@ -573,7 +598,11 @@ func (coordinator *Coordinator) evaluate(
 			ConfigurationExternallyOwned: coordinator.externalConfigurationAuthority.Load(),
 		}
 		current.controlExpiryPending = false
-		decision, err := policy.Evaluate(ctx, snapshot)
+		var decision Decision
+		var err error
+		Profiling.Do(ctx, func(labeled context.Context) {
+			decision, err = policy.Evaluate(labeled, snapshot)
+		}, Profiling.LabelPolicy, policy.ID())
 		if err == nil {
 			// The combat circuit breaker substitutes hostile attack launches
 			// with a standing-down wait; every other decision — rage taunts,
@@ -782,7 +811,7 @@ func (coordinator *Coordinator) cancelDisallowedPolicyRuns(
 		!event.Gap && section != "automation.enabled" && section != "scheduler" {
 		return
 	}
-	configuration := coordinator.configuration.Snapshot()
+	configuration := coordinator.configuration.SharedSnapshot()
 	coordinator.cancelRunsDisallowedByConfiguration(runtime, configuration, now)
 }
 
@@ -804,14 +833,14 @@ func (coordinator *Coordinator) wakePoliciesForConfigurationEvent(
 			candidates[policyID] = struct{}{}
 		}
 	}
-	configuration := coordinator.configuration.Snapshot()
+	configuration := coordinator.configuration.SharedSnapshot()
 	wokeIdle := false
 	for _, policy := range coordinator.policies {
 		if _, candidate := candidates[policy.ID()]; !candidate {
 			continue
 		}
 		current := runtime[policy.ID()]
-		latestFingerprint := policyConfigurationFingerprint(policy, configuration)
+		latestFingerprint := coordinator.policyFingerprint(policy, configuration)
 		if current == nil || event.Revision <= current.evaluatedConfigRevision ||
 			current.evaluatedConfiguration == latestFingerprint {
 			continue
@@ -821,7 +850,7 @@ func (coordinator *Coordinator) wakePoliciesForConfigurationEvent(
 			current.configurationRebuildPending = true
 		}
 		if current.allowedConfigurationChange == latestFingerprint {
-			current.evaluatedDerivedConfiguration = policyDerivedConfigurationFingerprint(policy, configuration)
+			current.evaluatedDerivedConfiguration = coordinator.policyDerivedFingerprint(policy, configuration)
 		}
 		if current.running {
 			current.configurationWakePending = true
@@ -857,10 +886,10 @@ func (coordinator *Coordinator) cancelRunsDisallowedByConfiguration(
 		if current == nil || !current.running || current.cancelRun == nil {
 			continue
 		}
-		latestFingerprint := policyConfigurationFingerprint(policy, configuration)
+		latestFingerprint := coordinator.policyFingerprint(policy, configuration)
 		if current.evaluatedConfiguration != latestFingerprint {
 			current.configurationWakePending = true
-			if current.evaluatedDerivedConfiguration != policyDerivedConfigurationFingerprint(policy, configuration) &&
+			if current.evaluatedDerivedConfiguration != coordinator.policyDerivedFingerprint(policy, configuration) &&
 				current.allowedConfigurationChange != latestFingerprint {
 				current.configurationRebuildPending = true
 			}
@@ -874,14 +903,25 @@ func (coordinator *Coordinator) cancelRunsDisallowedByConfiguration(
 			scheduleKey != "" && scheduleKey != policyScheduleKey(policy) {
 			allowedBySchedule, _ = scheduleAllows(configuration, scheduleKey, now)
 		}
-		if !policyEnabled(policy, enabled, state) || !allowedBySchedule {
+		if !policyEnabled(policy, enabled, &state) || !allowedBySchedule {
 			current.configurationWakePending = true
 			current.cancelRun()
 		}
 	}
 }
 
-func policyEnabled(policy Policy, configured map[string]bool, state State.GameState) bool {
+// policyGatedByEnablement reports whether the automation.enabled switch decides
+// if a policy runs. Core policies always run and on-demand policies are enabled
+// by persisted state, so neither is ever treated as disabled for waking.
+func policyGatedByEnablement(policy Policy) bool {
+	if _, core := policy.(CorePolicy); core {
+		return false
+	}
+	_, onDemand := policy.(OnDemandPolicy)
+	return !onDemand
+}
+
+func policyEnabled(policy Policy, configured map[string]bool, state *State.GameState) bool {
 	if _, ok := policy.(CorePolicy); ok {
 		return true
 	}
@@ -893,7 +933,7 @@ func policyEnabled(policy Policy, configured map[string]bool, state State.GameSt
 
 func (coordinator *Coordinator) cancelRunsForUnavailableSession(
 	runtime map[string]*policyRuntime,
-	state State.GameState,
+	state *State.GameState,
 ) {
 	for _, current := range runtime {
 		if current == nil || !current.running || current.cancelRun == nil {
@@ -908,6 +948,12 @@ func (coordinator *Coordinator) cancelRunsForUnavailableSession(
 }
 
 func (coordinator *Coordinator) recordDecision(id string, enabled bool, decision Decision, traceReason ...string) {
+	Profiling.Do(coordinator.profilerContext(), func(context.Context) {
+		coordinator.recordDecisionLabeled(id, enabled, decision, traceReason...)
+	}, Profiling.LabelPolicy, id)
+}
+
+func (coordinator *Coordinator) recordDecisionLabeled(id string, enabled bool, decision Decision, traceReason ...string) {
 	coordinator.updateAutomation(id, func(current State.AutomationState) State.AutomationState {
 		current.ID = id
 		current.Enabled = enabled
@@ -1229,7 +1275,7 @@ func operationResultCoinAvailabilityGate(result operationResult) (coinAvailabili
 	return gate, true
 }
 
-func troopAvailabilityGateInventoryChanged(gate *troopAvailabilityGate, state State.GameState) bool {
+func troopAvailabilityGateInventoryChanged(gate *troopAvailabilityGate, state *State.GameState) bool {
 	if gate == nil || gate.castleID <= 0 || gate.unitID <= 0 {
 		return false
 	}
@@ -1237,7 +1283,7 @@ func troopAvailabilityGateInventoryChanged(gate *troopAvailabilityGate, state St
 	return !found || castle.Units.Stationed[gate.unitID] != gate.available
 }
 
-func coinAvailabilityGateChanged(gate *coinAvailabilityGate, state State.GameState) bool {
+func coinAvailabilityGateChanged(gate *coinAvailabilityGate, state *State.GameState) bool {
 	if gate == nil {
 		return false
 	}
@@ -1246,7 +1292,7 @@ func coinAvailabilityGateChanged(gate *coinAvailabilityGate, state State.GameSta
 		(!gate.observedAt.IsZero() && observation.ObservedAt.After(gate.observedAt))
 }
 
-func clearCoinAvailabilityGates(runtime map[string]*policyRuntime, event State.Event, state State.GameState) {
+func clearCoinAvailabilityGates(runtime map[string]*policyRuntime, event State.Event, state *State.GameState) {
 	sessionChanged := stateEventHasDomain(event, "session")
 	resourcesChanged := stateEventHasDomain(event, "resources")
 	if !sessionChanged && !resourcesChanged {
@@ -1270,7 +1316,7 @@ func clearCoinAvailabilityGates(runtime map[string]*policyRuntime, event State.E
 func clearTroopAvailabilityGates(
 	runtime map[string]*policyRuntime,
 	event State.Event,
-	state State.GameState,
+	state *State.GameState,
 ) {
 	sessionChanged := stateEventHasDomain(event, "session")
 	unitsChanged := stateEventHasDomain(event, "units")
@@ -1391,7 +1437,142 @@ func resetContinuation(current *policyRuntime) {
 	current.blockedDecisionFingerprint = ""
 }
 
+// automationUpdate is one pending change to a policy's recorded automation state.
+type automationUpdate struct {
+	id     string
+	update func(State.AutomationState) State.AutomationState
+}
+
+// automationBatch collects the updates of one evaluation pass so they are
+// committed in a single state transaction (CIT-44).
+type automationBatch struct {
+	mu      sync.Mutex
+	updates []automationUpdate
+}
+
+// updateAutomation records a change to a policy's automation state. During an
+// evaluation pass it is queued and committed with the rest of the pass; outside
+// one it is committed immediately.
 func (coordinator *Coordinator) updateAutomation(id string, update func(State.AutomationState) State.AutomationState) {
+	coordinator.batchMu.Lock()
+	batch := coordinator.batch
+	coordinator.batchMu.Unlock()
+	if batch != nil {
+		batch.mu.Lock()
+		batch.updates = append(batch.updates, automationUpdate{id: id, update: update})
+		batch.mu.Unlock()
+		return
+	}
+	coordinator.applyAutomationUpdates([]automationUpdate{{id: id, update: update}})
+}
+
+// beginAutomationBatch starts collecting updates; the returned function commits them.
+func (coordinator *Coordinator) beginAutomationBatch() func() {
+	batch := &automationBatch{}
+	coordinator.batchMu.Lock()
+	previous := coordinator.batch
+	coordinator.batch = batch
+	coordinator.batchMu.Unlock()
+	return func() {
+		coordinator.batchMu.Lock()
+		coordinator.batch = previous
+		coordinator.batchMu.Unlock()
+		batch.mu.Lock()
+		updates := batch.updates
+		batch.mu.Unlock()
+		if len(updates) > 0 {
+			coordinator.applyAutomationUpdates(updates)
+		}
+	}
+}
+
+// automationCheckGranularity is the precision of the stored next-check time. The
+// dashboard reads it in minutes, and an exact "now + 30 s" changed on nearly
+// every evaluation, so every evaluation was a new state revision.
+const automationCheckGranularity = time.Minute
+
+func roundNextCheck(value *time.Time) *time.Time {
+	if value == nil || value.IsZero() {
+		return value
+	}
+	rounded := value.UTC().Truncate(automationCheckGranularity)
+	if rounded.Before(value.UTC()) {
+		rounded = rounded.Add(automationCheckGranularity)
+	}
+	return &rounded
+}
+
+// computeAutomation derives the next recorded state of a policy from its current
+// one: the update, the active safety lock, Humanize (outside any store lock),
+// descriptor binding and the rounded next-check time. UpdatedAt is left as it was.
+func (coordinator *Coordinator) computeAutomation(
+	current State.AutomationState,
+	update func(State.AutomationState) State.AutomationState,
+	labels GameData.IdentifierLabels,
+) State.AutomationState {
+	updateInput := current
+	updateInput.Details = copyDetails(current.Details)
+	updateInput.DetailsDescriptors = Localization.CloneMap(current.DetailsDescriptors)
+	next := update(updateInput)
+	if lock := current.SafetyLock; lock.Active(time.Now().UTC()) {
+		next.Status = "gated"
+		next.Detail = lock.Detail()
+		next.DetailDescriptor = lock.DetailDescriptor()
+		next.LastErrorDescriptor = lock.DetailDescriptor()
+		next.LastError = next.Detail
+		next.LastOperationID = lock.OperationID
+		next.NextCheckAt = timePointer(lock.ExpiresAt())
+	}
+	if next.DetailDescriptor == current.DetailDescriptor && next.Detail != current.Detail {
+		next.DetailDescriptor = nil
+	}
+	if next.LastErrorDescriptor == current.LastErrorDescriptor && next.LastError != current.LastError {
+		next.LastErrorDescriptor = nil
+	}
+	beforeDetail := next.Detail
+	next.Detail = labels.Humanize(next.Detail)
+	if beforeDetail != next.Detail {
+		next.DetailDescriptor = nil
+	}
+	beforeLastError := next.LastError
+	next.LastError = labels.Humanize(next.LastError)
+	if beforeLastError != next.LastError {
+		next.LastErrorDescriptor = nil
+	}
+	next.DetailDescriptor = Localization.Bind(next.DetailDescriptor, next.Detail)
+	next.LastErrorDescriptor = Localization.Bind(next.LastErrorDescriptor, next.LastError)
+	boundDetails := map[string]*Localization.Message{}
+	for key, descriptor := range next.DetailsDescriptors {
+		raw, exists := next.Details[key]
+		if !exists || descriptor == nil {
+			continue
+		}
+		if reflect.DeepEqual(descriptor, current.DetailsDescriptors[key]) && raw != current.Details[key] {
+			continue
+		}
+		if labels.Humanize(raw) != raw {
+			continue
+		}
+		boundDetails[key] = Localization.Bind(descriptor, raw)
+	}
+	if len(boundDetails) == 0 {
+		next.DetailsDescriptors = nil
+	} else {
+		next.DetailsDescriptors = boundDetails
+	}
+	next.DetailTranslationStatus = Localization.Status(next.DetailDescriptor)
+	next.NextCheckAt = roundNextCheck(next.NextCheckAt)
+	next.UpdatedAt = current.UpdatedAt
+	return next
+}
+
+// applyAutomationUpdates computes every update outside the store's write lock,
+// against a read-only view, and commits all that changed in one transaction.
+// A pass whose decisions equal the recorded ones does not take the lock at all.
+// If a policy's recorded state moved between the view and the commit (a safety
+// lock, an intent's own write) its updates are replayed inside the transaction.
+func (coordinator *Coordinator) applyAutomationUpdates(updates []automationUpdate) {
+	view := coordinator.state.ReadOnlyView()
 	gameData := coordinator.currentGameData()
 	var language *GameData.LanguageStore
 	if provider, ok := coordinator.gameData.(interface {
@@ -1399,69 +1580,63 @@ func (coordinator *Coordinator) updateAutomation(id string, update func(State.Au
 	}); ok {
 		language, _ = provider.Language()
 	}
+	labels := GameData.NewIdentifierLabels(view, gameData, language)
+
+	type prepared struct {
+		base  State.AutomationState
+		next  State.AutomationState
+		steps []func(State.AutomationState) State.AutomationState
+	}
+	order := make([]string, 0, len(updates))
+	byID := map[string]*prepared{}
+	for _, item := range updates {
+		entry := byID[item.id]
+		if entry == nil {
+			base := view.Automations[item.id]
+			entry = &prepared{base: base, next: base}
+			byID[item.id] = entry
+			order = append(order, item.id)
+		}
+		entry.next = coordinator.computeAutomation(entry.next, item.update, labels)
+		entry.steps = append(entry.steps, item.update)
+	}
+	changed := order[:0:0]
+	for _, id := range order {
+		entry := byID[id]
+		if !reflect.DeepEqual(entry.base, entry.next) {
+			changed = append(changed, id)
+		}
+	}
+	if len(changed) == 0 {
+		return
+	}
 	_, _ = coordinator.state.ApplyComponents(State.Components(State.ComponentAutomations), func(gameState *State.GameState) ([]string, bool, error) {
 		if gameState.Automations == nil {
 			gameState.Automations = map[string]State.AutomationState{}
 		}
-		current := gameState.Automations[id]
-		updateInput := current
-		updateInput.Details = copyDetails(current.Details)
-		updateInput.DetailsDescriptors = Localization.CloneMap(current.DetailsDescriptors)
-		next := update(updateInput)
-		if lock := current.SafetyLock; lock.Active(time.Now().UTC()) {
-			next.Status = "gated"
-			next.Detail = lock.Detail()
-			next.DetailDescriptor = lock.DetailDescriptor()
-			next.LastErrorDescriptor = lock.DetailDescriptor()
-			next.LastError = next.Detail
-			next.LastOperationID = lock.OperationID
-			next.NextCheckAt = timePointer(lock.ExpiresAt())
-		}
-		if next.DetailDescriptor == current.DetailDescriptor && next.Detail != current.Detail {
-			next.DetailDescriptor = nil
-		}
-		if next.LastErrorDescriptor == current.LastErrorDescriptor && next.LastError != current.LastError {
-			next.LastErrorDescriptor = nil
-		}
-		labels := GameData.NewIdentifierLabels(*gameState, gameData, language)
-		beforeDetail := next.Detail
-		next.Detail = labels.Humanize(next.Detail)
-		if beforeDetail != next.Detail {
-			next.DetailDescriptor = nil
-		}
-		beforeLastError := next.LastError
-		next.LastError = labels.Humanize(next.LastError)
-		if beforeLastError != next.LastError {
-			next.LastErrorDescriptor = nil
-		}
-		next.DetailDescriptor = Localization.Bind(next.DetailDescriptor, next.Detail)
-		next.LastErrorDescriptor = Localization.Bind(next.LastErrorDescriptor, next.LastError)
-		boundDetails := map[string]*Localization.Message{}
-		for key, descriptor := range next.DetailsDescriptors {
-			raw, exists := next.Details[key]
-			if !exists || descriptor == nil {
-				continue
+		now := time.Now().UTC()
+		commit := false
+		for _, id := range changed {
+			entry := byID[id]
+			current := gameState.Automations[id]
+			next := entry.next
+			if !reflect.DeepEqual(current, entry.base) {
+				// Moved since the view: replay against what is stored now.
+				next = current
+				for _, step := range entry.steps {
+					next = coordinator.computeAutomation(next, step, labels)
+				}
+				if reflect.DeepEqual(current, next) {
+					continue
+				}
 			}
-			if reflect.DeepEqual(descriptor, current.DetailsDescriptors[key]) && raw != current.Details[key] {
-				continue
-			}
-			if labels.Humanize(raw) != raw {
-				continue
-			}
-			boundDetails[key] = Localization.Bind(descriptor, raw)
+			next.UpdatedAt = now
+			gameState.Automations[id] = next
+			commit = true
 		}
-		if len(boundDetails) == 0 {
-			next.DetailsDescriptors = nil
-		} else {
-			next.DetailsDescriptors = boundDetails
-		}
-		next.DetailTranslationStatus = Localization.Status(next.DetailDescriptor)
-		next.UpdatedAt = current.UpdatedAt
-		if reflect.DeepEqual(current, next) {
+		if !commit {
 			return nil, false, nil
 		}
-		next.UpdatedAt = time.Now().UTC()
-		gameState.Automations[id] = next
 		return []string{"automation"}, true, nil
 	})
 }
@@ -1705,6 +1880,54 @@ func policyDerivedConfigurationFingerprint(policy Policy, configuration Configur
 	return strings.Join(parts, "\x00")
 }
 
+// policyFingerprintCache memoizes the per-policy configuration fingerprints for
+// one configuration snapshot (revision plus the identity of its shared sections
+// map). Building them joins the policy's section JSON into strings; doing that
+// for every due policy on every evaluation was a measurable cost (CIT-43).
+type policyFingerprintCache struct {
+	mu       sync.Mutex
+	revision uint64
+	sections uintptr
+	valid    bool
+	config   map[string]string
+	derived  map[string]string
+}
+
+func (cache *policyFingerprintCache) forSnapshot(configuration Configuration.Snapshot) {
+	identity := reflect.ValueOf(configuration.Sections).Pointer()
+	if cache.valid && cache.revision == configuration.Revision && cache.sections == identity {
+		return
+	}
+	cache.valid, cache.revision, cache.sections = true, configuration.Revision, identity
+	cache.config, cache.derived = map[string]string{}, map[string]string{}
+}
+
+func (coordinator *Coordinator) policyFingerprint(policy Policy, configuration Configuration.Snapshot) string {
+	cache := &coordinator.fingerprints
+	cache.mu.Lock()
+	defer cache.mu.Unlock()
+	cache.forSnapshot(configuration)
+	if value, found := cache.config[policy.ID()]; found {
+		return value
+	}
+	value := policyConfigurationFingerprint(policy, configuration)
+	cache.config[policy.ID()] = value
+	return value
+}
+
+func (coordinator *Coordinator) policyDerivedFingerprint(policy Policy, configuration Configuration.Snapshot) string {
+	cache := &coordinator.fingerprints
+	cache.mu.Lock()
+	defer cache.mu.Unlock()
+	cache.forSnapshot(configuration)
+	if value, found := cache.derived[policy.ID()]; found {
+		return value
+	}
+	value := policyDerivedConfigurationFingerprint(policy, configuration)
+	cache.derived[policy.ID()] = value
+	return value
+}
+
 func policyConfigurationFingerprint(policy Policy, configuration Configuration.Snapshot) string {
 	_, core := policy.(CorePolicy)
 	enabled := core || configuredEnabledFeatures(configuration)[policy.EnabledKey()]
@@ -1806,15 +2029,13 @@ func policyScheduleConfiguration(policyID string, raw json.RawMessage) string {
 	if len(raw) == 0 {
 		return ""
 	}
-	var document struct {
-		FeatureSchedules map[string]json.RawMessage `json:"featureSchedules"`
-	}
-	if err := json.Unmarshal(raw, &document); err != nil {
+	document := parseScheduler(raw)
+	if !document.outerValid {
 		return "invalid\x00" + string(raw)
 	}
 	keys := make([]string, 0)
 	prefix := policyID + ":"
-	for key := range document.FeatureSchedules {
+	for key := range document.raw {
 		if key == policyID || strings.HasPrefix(key, prefix) {
 			keys = append(keys, key)
 		}
@@ -1822,7 +2043,7 @@ func policyScheduleConfiguration(policyID string, raw json.RawMessage) string {
 	sort.Strings(keys)
 	parts := make([]string, 0, len(keys)*2)
 	for _, key := range keys {
-		parts = append(parts, key, string(document.FeatureSchedules[key]))
+		parts = append(parts, key, string(document.raw[key]))
 	}
 	return strings.Join(parts, "\x00")
 }
@@ -1839,6 +2060,13 @@ func wakePoliciesForStateEvent(
 	wokeUrgently := false
 	wake := func(current *policyRuntime, session bool) bool {
 		if current == nil || event.Revision <= current.evaluatedStateRevision {
+			return false
+		}
+		if current.enabledKnown && !current.enabled {
+			// A disabled policy does nothing with a state change. Its urgent domains
+			// are not urgent either: an off Beri lane must not make every movement
+			// commit skip the debounce for the policies that are on. Any configuration
+			// change re-evaluates it, so switching it on is never missed.
 			return false
 		}
 		if current.running {

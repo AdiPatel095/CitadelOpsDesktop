@@ -9,6 +9,7 @@ import {
   type ReactNode,
 } from 'react';
 import { APIError, CitadelAPI, OperationError } from './CitadelClient';
+import { shouldToastConfigurationError } from './configurationErrorToast';
 import { OperationFailureNotificationCoordinator, RubyUpgradeNotificationCoordinator } from './OperationNotifications';
 import type {
   APIConnectionStatus,
@@ -35,9 +36,9 @@ import type {
 } from './Contracts';
 import { Notifications } from '../components/Notifications';
 import { hasExternalConfiguration } from './RuntimeURL';
+import { StateResync, type StateResyncOutcome } from './StateResync';
 
 const runtimeDiagnosticsEnabled = import.meta.env.DEV === true || import.meta.env.VITE_SHOW_HEADER_MEMORY === 'true';
-const stateRefreshIntervalMs = 1_000;
 
 interface APIContextValue {
   connectionStatus: APIConnectionStatus;
@@ -51,6 +52,8 @@ interface APIContextValue {
   refreshState: () => Promise<void>;
   refreshCatalogs: () => Promise<void>;
   refreshConfiguration: () => Promise<void>;
+  /** Loads and accepts the latest configuration snapshot; rejects on failure (draft sessions need the snapshot). */
+  loadLatestConfiguration: () => Promise<ConfigurationSnapshot>;
 	refreshApplicationUpdate: () => Promise<void>;
 	refreshDiagnostics: () => Promise<void>;
   getCatalog: <T extends Record<string, unknown>>(name: string) => Promise<CatalogResponse<T>>;
@@ -68,7 +71,7 @@ interface APIContextValue {
   updateConfiguration: (
     section: string,
     value: unknown,
-    options?: { expectedValue?: unknown },
+    options?: ConfigurationUpdateOptions,
   ) => Promise<ConfigurationSnapshot>;
 	getPlayerHistoryRetention: () => Promise<PlayerHistoryRetentionV1>;
 	applyPlayerHistoryRetention: (
@@ -79,6 +82,10 @@ interface APIContextValue {
 		expectedRecordingIntervalSeconds: number,
 	) => Promise<PlayerHistoryRetentionApplyV1>;
 }
+
+export type ConfigurationUpdateOptions =
+	| { expectedValue: unknown; expectedRevision?: never; conflictShownByEditor?: boolean }
+	| { expectedRevision: number; expectedValue?: never; conflictShownByEditor?: boolean };
 
 const APIContext = createContext<APIContextValue | undefined>(undefined);
 
@@ -102,6 +109,8 @@ export function APIProvider({ children }: { children: ReactNode }) {
 	const catalogsReady = useRef(false);
 	const configurationReady = useRef(false);
 	const operationsReady = useRef(false);
+	const stateInstance = useRef<string | null>(null);
+	const operationSequence = useRef(0);
 	const operationNotificationIDs = useRef(new Map<string, string>());
 	const rubyUpgradeNotifications = useRef(new RubyUpgradeNotificationCoordinator());
 	useEffect(() => {
@@ -109,15 +118,49 @@ export function APIProvider({ children }: { children: ReactNode }) {
 	}, [state?.automations]);
 	const operationFailureNotifications = useRef(new OperationFailureNotificationCoordinator());
   const stateRefreshInFlight = useRef<Promise<void> | null>(null);
-  const stateRefreshPending = useRef(false);
+	// Revision bookkeeping for the state stream: applies in-order and merged (gap) events,
+	// buffers events across holes and resyncs, and asks for at most one snapshot at a time.
+	const stateResync = useRef(new StateResync<GameStateV2, GameStatePatchV2>(applyGameStatePatch)).current;
+	const stateResyncTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+	const stateResyncSequence = useRef(0);
+
+	const handleStateOutcome = useCallback(function handle(outcome: StateResyncOutcome<GameStateV2>) {
+		if (outcome.changed && outcome.state != null) {
+			stateRef.current = outcome.state;
+			stateReady.current = true;
+			setState(outcome.state);
+		}
+		if (stateResyncTimer.current != null) clearTimeout(stateResyncTimer.current);
+		stateResyncTimer.current = null;
+		if (outcome.wakeAt != null) {
+			stateResyncTimer.current = setTimeout(() => {
+				stateResyncTimer.current = null;
+				handle(stateResync.tick(Date.now()));
+			}, Math.max(0, outcome.wakeAt - Date.now()));
+		}
+		if (outcome.resync == null) return;
+		// Prefer the event socket: the snapshot then arrives in order with later events. REST only
+		// when the socket is down, or when the previous socket request went unanswered (the state
+		// machine says so through `transport`), however many resyncs happened within the backoff window.
+		if (outcome.resync.transport === 'socket' && CitadelAPI.requestState(`state-resync-${++stateResyncSequence.current}`)) return;
+		void CitadelAPI.getState().then(
+			(snapshot) => handle(stateResync.acceptSnapshot(snapshot, Date.now())),
+			(requestError) => {
+				setError(errorMessage(requestError));
+				handle(stateResync.resyncFailed(Date.now()));
+			},
+		);
+	}, [stateResync]);
+
+	const resetStateStream = useCallback(() => {
+		stateResync.connectionReset();
+		if (stateResyncTimer.current != null) clearTimeout(stateResyncTimer.current);
+		stateResyncTimer.current = null;
+	}, [stateResync]);
 
 	const acceptStateSnapshot = useCallback((snapshot: GameStateV2) => {
-		const current = stateRef.current;
-		if (current != null && current.revision > snapshot.revision) return;
-		stateRef.current = snapshot;
-		stateReady.current = true;
-		setState(snapshot);
-	}, []);
+		handleStateOutcome(stateResync.acceptSnapshot(snapshot, Date.now()));
+	}, [handleStateOutcome, stateResync]);
 
 	const acceptConfigurationSnapshot = useCallback((snapshot: ConfigurationSnapshot) => {
 		const current = configurationRef.current;
@@ -136,36 +179,22 @@ export function APIProvider({ children }: { children: ReactNode }) {
 	}, []);
 
   const refreshState = useCallback(async function refreshStateRequest() {
-    if (stateRefreshInFlight.current != null) {
-      stateRefreshPending.current = true;
-      await stateRefreshInFlight.current;
-      return;
-    }
+    // Explicit REST refresh (initial fallback, callers that just mutated state). One request at a
+    // time; never re-armed by stream events.
+    while (stateRefreshInFlight.current != null) await stateRefreshInFlight.current;
     const request = (async () => {
-      do {
-        stateRefreshPending.current = false;
-        const startedAt = Date.now();
-        try {
-		  acceptStateSnapshot(await CitadelAPI.getState());
-          setError(null);
-        } catch (requestError) {
-          setError(errorMessage(requestError));
-        }
-        if (stateRefreshPending.current) {
-          const remaining = stateRefreshIntervalMs - (Date.now() - startedAt);
-          if (remaining > 0) await new Promise((resolve) => setTimeout(resolve, remaining));
-        }
-      } while (stateRefreshPending.current);
+      try {
+        acceptStateSnapshot(await CitadelAPI.getState());
+        setError(null);
+      } catch (requestError) {
+        setError(errorMessage(requestError));
+      }
     })();
     stateRefreshInFlight.current = request;
     try {
       await request;
     } finally {
       if (stateRefreshInFlight.current === request) stateRefreshInFlight.current = null;
-    }
-    if (stateRefreshPending.current) {
-      await new Promise((resolve) => setTimeout(resolve, stateRefreshIntervalMs));
-      await refreshStateRequest();
     }
   }, [acceptStateSnapshot]);
 
@@ -187,6 +216,20 @@ export function APIProvider({ children }: { children: ReactNode }) {
       setError(errorMessage(requestError));
     }
   }, [acceptConfigurationSnapshot]);
+
+	const loadLatestConfiguration = useCallback(async () => {
+		try {
+			const snapshot = await CitadelAPI.getConfiguration();
+			acceptConfigurationSnapshot(snapshot);
+			setError(null);
+			return configurationRef.current != null && configurationRef.current.revision > snapshot.revision
+				? configurationRef.current
+				: snapshot;
+		} catch (requestError) {
+			setError(errorMessage(requestError));
+			throw requestError;
+		}
+	}, [acceptConfigurationSnapshot]);
 
 	const refreshApplicationUpdate = useCallback(async () => {
 		try {
@@ -218,33 +261,55 @@ export function APIProvider({ children }: { children: ReactNode }) {
 	}, []);
 
   useEffect(() => {
-    const unsubscribeStatus = CitadelAPI.subscribeStatus(setConnectionStatus);
+	const clearResumeCursor = CitadelAPI.setResumeCursorProvider((scope) => {
+		const current = stateResync.current();
+		if (scope !== runtimeScope || current == null || stateInstance.current == null) return null;
+		return {
+			instance: stateInstance.current, since: current.revision,
+			// If a greeting was interrupted before these arrived, force a full
+			// greeting rather than claiming that an absent part is already held.
+			ops: operationsReady.current ? operationSequence.current : -1,
+			config: configurationRef.current?.revision ?? -1,
+			catalog: CitadelAPI.getCatalogDigest(),
+		};
+	});
+    const unsubscribeStatus = CitadelAPI.subscribeStatus((status) => {
+		setConnectionStatus(status);
+		// A reconnect supplies a snapshot or a merged patch; old socket requests and buffers are void.
+		if (status === 'Disconnected') resetStateStream();
+	});
 	const unsubscribeConfiguration = CitadelAPI.subscribeConfiguration(acceptConfigurationSnapshot);
     const unsubscribeEvents = CitadelAPI.subscribe((message) => {
       if (message.type === 'state.snapshot' && isGameState(message.payload)) {
+		const instance = typeof message.instance === 'string' && message.instance ? message.instance : null;
+		if (instance !== stateInstance.current) {
+			stateResync.forgetState();
+			operationSequence.current = 0;
+			operationsReady.current = false;
+		}
+		stateInstance.current = instance;
 		acceptStateSnapshot(message.payload);
         return;
       }
+	  if (message.type === 'state.resumed') {
+		// State revisions advance only when the merged patch is applied. The
+		// other held parts survive the skipped greeting snapshots.
+		return;
+	  }
 	  if (message.type === 'state.changed' && isStateChangeEvent(message.payload)) {
-		const current = stateRef.current;
-		const patch = message.payload.patch;
-		if (current != null && patch.revision <= current.revision) return;
-		if (message.gap || current == null || patch.schemaVersion !== current.schemaVersion
-			|| patch.revision !== current.revision + 1) {
-			void refreshState();
-			return;
-		}
-		const next = applyGameStatePatch(current, patch);
-		stateRef.current = next;
-		stateReady.current = true;
-		setState(next);
+		handleStateOutcome(stateResync.receiveEvent({
+			patch: message.payload.patch,
+			gap: message.gap,
+			baseRevision: message.baseRevision,
+		}, Date.now()));
         return;
       }
 	  if (message.type === 'state.changed') {
-		void refreshState();
+		handleStateOutcome(stateResync.unusableEvent(Date.now()));
 		return;
 	  }
       if (message.type === 'catalog.changed' && isCatalogManifest(message.payload)) {
+        CitadelAPI.noteCatalogManifest(message.payload);
         setCatalogs(message.payload);
 		catalogsReady.current = true;
         return;
@@ -256,6 +321,7 @@ export function APIProvider({ children }: { children: ReactNode }) {
         return;
       }
 	  if (message.type === 'operations.snapshot' && isIntentReceiptArray(message.payload)) {
+		operationSequence.current = Math.max(operationSequence.current, message.sequence ?? 0);
 		const receipts = message.payload;
 		setOperations((current) => ({
 			...current,
@@ -266,6 +332,7 @@ export function APIProvider({ children }: { children: ReactNode }) {
 	  }
       if ((message.type === 'operation.changed' || message.type === 'intent.receipt') && isIntentReceipt(message.payload)) {
 		const receipt = message.payload;
+		if (message.type === 'operation.changed') operationSequence.current = Math.max(operationSequence.current, message.sequence ?? 0);
 		setOperations((current) => ({ ...current, [receipt.id]: receipt }));
 		if (message.gap) void refreshOperations();
 		publishOperationFailure(receipt);
@@ -286,13 +353,15 @@ export function APIProvider({ children }: { children: ReactNode }) {
 		refreshApplicationUpdate(), runtimeDiagnosticsEnabled ? refreshDiagnostics() : Promise.resolve(),
 	]);
     return () => {
+	  clearResumeCursor();
       unsubscribeEvents();
       unsubscribeStatus();
 	  unsubscribeConfiguration();
 	  if (initialSyncTimer.current != null) clearTimeout(initialSyncTimer.current);
+	  resetStateStream();
       CitadelAPI.disconnect();
     };
-  }, [acceptConfigurationSnapshot, acceptStateSnapshot, publishOperationFailure, refreshApplicationUpdate, refreshCatalogs, refreshConfiguration, refreshDiagnostics, refreshOperations, refreshState]);
+  }, [acceptConfigurationSnapshot, acceptStateSnapshot, handleStateOutcome, publishOperationFailure, refreshApplicationUpdate, refreshCatalogs, refreshConfiguration, refreshDiagnostics, refreshOperations, refreshState, resetStateStream, runtimeScope, stateResync]);
 
 	useEffect(() => {
 		const interval = window.setInterval(() => void refreshApplicationUpdate(), 5_000);
@@ -349,9 +418,11 @@ export function APIProvider({ children }: { children: ReactNode }) {
 	const updateConfiguration = useCallback((
 		section: string,
 		value: unknown,
-		options?: { expectedValue?: unknown },
+		options?: ConfigurationUpdateOptions,
 	) => {
 	const hasExpectedValue = options != null && Object.prototype.hasOwnProperty.call(options, 'expectedValue');
+	// ConfigurationUpdateOptions admits exactly one condition; an explicit revision wins over the live one.
+	const hasExpectedRevision = !hasExpectedValue && options != null && Object.prototype.hasOwnProperty.call(options, 'expectedRevision');
 	if (hasExpectedValue && options?.expectedValue === undefined) {
 		return Promise.reject(new Error('A section-scoped configuration update requires a concrete expected value.'));
 	}
@@ -360,7 +431,7 @@ export function APIProvider({ children }: { children: ReactNode }) {
 	  try {
 		const snapshot = await CitadelAPI.updateConfiguration(section, value, hasExpectedValue
 			? { expectedValue: options?.expectedValue }
-			: { expectedRevision: configurationRef.current?.revision }, configurationScope);
+			: { expectedRevision: hasExpectedRevision ? options?.expectedRevision : configurationRef.current?.revision }, configurationScope);
 		acceptConfigurationSnapshot(snapshot);
 		return snapshot;
 	  } catch (requestError) {
@@ -371,7 +442,9 @@ export function APIProvider({ children }: { children: ReactNode }) {
 				// Preserve the original conflict; the regular snapshot stream can retry the refresh.
 			}
 		}
-		Notifications.error(errorMessage(requestError));
+		if (shouldToastConfigurationError(requestError, options?.conflictShownByEditor)) {
+			Notifications.error(errorMessage(requestError));
+		}
 		throw requestError;
 	  }
 	};
@@ -444,6 +517,7 @@ export function APIProvider({ children }: { children: ReactNode }) {
     refreshState,
     refreshCatalogs,
     refreshConfiguration,
+    loadLatestConfiguration,
 	refreshApplicationUpdate,
 	refreshDiagnostics,
     getCatalog: (name) => CitadelAPI.getCatalog(name),
@@ -469,6 +543,7 @@ export function APIProvider({ children }: { children: ReactNode }) {
 	refreshApplicationUpdate,
 	refreshDiagnostics,
     refreshConfiguration,
+    loadLatestConfiguration,
     refreshState,
     state,
     submitIntent,

@@ -13,6 +13,8 @@ interface AutoBirdHoverPopoverProps {
  canControl?: boolean;
 	now: number;
 	hint: string;
+	/** CIT-20 feedback (phase, next step, failed Start/Stop, first result), rendered under the castle list. */
+	feedback?: React.ReactNode;
 	children: React.ReactNode;
 }
 
@@ -58,6 +60,7 @@ const AutoBirdHoverPopover: React.FC<AutoBirdHoverPopoverProps> = ({
  canControl = false,
 	now,
 	hint,
+	feedback,
 	children,
 }) => {
   const { t: localizeStatic } = useStaticLocale();
@@ -236,6 +239,7 @@ const AutoBirdHoverPopover: React.FC<AutoBirdHoverPopoverProps> = ({
 				)}
 			</div>
 
+			{feedback ? <div className="custom-scrollbar max-h-40 shrink-0 overflow-y-auto border-t border-border-base px-3.5 py-2" data-popover-feedback="autoBird">{feedback}</div> : null}
 			<div className="shrink-0 border-t border-border-base px-3.5 py-2 text-[10px] text-text-muted">
 				Click a castle to pause or resume. Right-click or use the timer for a timed pause. Resend scans fresh troops and a target. Birds already away continue their journey.
     {error && <div role="alert" className="mt-1 text-error">{error}</div>}

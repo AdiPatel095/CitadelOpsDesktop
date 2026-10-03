@@ -30,6 +30,14 @@ import {
 } from '../components/ui';
 import { useMetadata } from '../context/MetadataContext';
 import { buildPresetDocumentUpdate } from '../configuration/PresetDocumentUpdate';
+import { appCreatedPresetBadge } from '../attackPresets/AttackPresetOptionLabel';
+import {
+  defensePresetReferences,
+  presetReferrers,
+  presetSlotDefinition,
+  type PresetReference,
+} from '../attackPresets/AttackPresetReferences';
+import { duplicateDefensePreset, editedDefensePreset } from '../defensePresets/DefensePresetEdits';
 import {
   DEFENSE_PRESETS_SECTION,
   type AppDefensePreset,
@@ -53,7 +61,7 @@ interface Compatibility {
 }
 
 const DefensePresetsView: React.FC = () => {
-  const { t: localizeStatic } = useStaticLocale();
+  const { t: localizeStatic, locale } = useStaticLocale();
   const {
     state,
     configuration,
@@ -74,6 +82,36 @@ const DefensePresetsView: React.FC = () => {
     () => parseDefensePresetDocument(configuration?.sections[DEFENSE_PRESETS_SECTION]),
     [configuration?.sections],
   );
+  const references = useMemo(() => defensePresetReferences(configuration?.sections), [configuration?.sections]);
+  const appCreatedCount = document.presets.filter((preset) => preset.app).length;
+  const listFormat = useMemo(() => new Intl.ListFormat(locale, { type: 'conjunction' }), [locale]);
+  const describeReferrers = (items: readonly PresetReference[]) => listFormat.format(items.map((reference) => (
+    `${localizeStatic(reference.moduleLabelKey)} · ${localizeStatic(reference.slotLabelKey)}`
+  )));
+  const ownerLabels = (preset: AppDefensePreset) => {
+    const definition = preset.app ? presetSlotDefinition('defense.presets', preset.app.section, preset.app.slot) : undefined;
+    return {
+      module: definition ? localizeStatic(definition.moduleLabelKey) : preset.app?.section ?? '',
+      slot: definition ? localizeStatic(definition.slotLabelKey) : preset.app?.slot ?? '',
+    };
+  };
+  // Same ownership contract as Attack Presets (CIT-15/16): managed, not in use, or in use by modules.
+  const ownershipLine = (preset: AppDefensePreset): React.ReactNode => {
+    const referrers = presetReferrers(references, preset.id);
+    if (preset.app) {
+      if (referrers.length === 0) return <LocalizedText messageKey="attackPresets.notInUse" />;
+      return <LocalizedText messageKey="attackPresets.managedBy" params={ownerLabels(preset)} />;
+    }
+    return referrers.length > 0
+      ? <LocalizedText messageKey="attackPresets.inUseBy" params={{ referrers: describeReferrers(referrers) }} />
+      : null;
+  };
+  // Renaming or editing an app-created preset converts it into a normal preset.
+  const confirmPromotion = (preset: AppDefensePreset) => {
+    if (!preset.app) return true;
+    const owner = ownerLabels(preset);
+    return window.confirm(localizeStatic('attackPresets.promotionNotice', { module: `${owner.module} · ${owner.slot}` }));
+  };
   const castles = useMemo(
     () => Object.values(state?.castles ?? {})
       .filter((castle) => castle.kingdomId === 0)
@@ -122,13 +160,8 @@ const DefensePresetsView: React.FC = () => {
       return;
     }
     setSaving(true);
-    const now = new Date().toISOString();
-    const preset: AppDefensePreset = {
-      ...cloneDefensePresetDraft(draft),
-      id: existing?.id ?? createID(),
-      createdAt: existing?.createdAt ?? now,
-      updatedAt: now,
-    };
+    // Rebuilt from the draft without `app`: editing an app-created preset here promotes it (DefensePresetEdits).
+    const preset = editedDefensePreset(existing, draft, { id: createID(), now: new Date().toISOString() });
     const presets = existing
       ? document.presets.map((candidate) => candidate.id === existing.id ? preset : candidate)
       : [...document.presets, preset];
@@ -145,16 +178,10 @@ const DefensePresetsView: React.FC = () => {
   const handleDuplicate = async (preset: AppDefensePreset) => {
     if (pendingID) return;
     setPendingID(preset.id);
-    const now = new Date().toISOString();
-    const duplicate: AppDefensePreset = {
-      ...cloneDefensePresetDraft(preset),
-      id: createID(),
-      name: uniqueCopyName(preset.name, document.presets),
-      createdAt: now,
-      updatedAt: now,
-    };
+    // Copy only: the duplicate is a normal preset and the original keeps its `app` marker.
+    const { presets } = duplicateDefensePreset(document.presets, preset, { id: createID(), now: new Date().toISOString() });
     try {
-      await saveDocument([...document.presets, duplicate], 'Defense preset duplicated.');
+      await saveDocument(presets, 'Defense preset duplicated.');
     } catch (error) {
       Notifications.error(errorMessage(error, 'Could not duplicate defense preset.'));
     } finally {
@@ -163,7 +190,18 @@ const DefensePresetsView: React.FC = () => {
   };
 
   const handleDelete = async (preset: AppDefensePreset) => {
-    if (pendingID || !window.confirm(`Delete “${preset.name}”? This cannot be undone.`)) return;
+    if (pendingID) return;
+    const referrers = presetReferrers(references, preset.id);
+    const marker = preset.app;
+    if (marker && referrers.some((reference) => reference.section === marker.section && reference.slot === marker.slot)) {
+      const owner = ownerLabels(preset);
+      Notifications.error(localizeStatic('attackPresets.deleteBlocked', { module: `${owner.module} · ${owner.slot}`, name: preset.name }));
+      return;
+    }
+    const confirmed = referrers.length > 0
+      ? window.confirm(localizeStatic('attackPresets.deleteReferencedConfirm', { name: preset.name, referrers: describeReferrers(referrers) }))
+      : window.confirm(`Delete “${preset.name}”? This cannot be undone.`);
+    if (!confirmed) return;
     setPendingID(preset.id);
     try {
       await saveDocument(
@@ -248,6 +286,11 @@ const DefensePresetsView: React.FC = () => {
             <Badge variant={document.presets.length > 0 ? 'primary' : 'secondary'}>
               {document.presets.length} preset{document.presets.length === 1 ? '' : 's'}
             </Badge>
+            {appCreatedCount > 0 ? (
+              <Badge variant="secondary" className="normal-case tracking-normal">
+                <LocalizedText messageKey="attackPresets.appCreatedCount" params={{ count: appCreatedCount }} />
+              </Badge>
+            ) : null}
             <Badge variant="outline" className="normal-case tracking-normal"><LocalizedText messageKey="ui.views.defensePresetsView.stored.by.citadelops.9f046c26" /></Badge>
           </>
         )}
@@ -314,8 +357,11 @@ const DefensePresetsView: React.FC = () => {
               compatibility={presetCompatibility(preset, selectedCastle, tools)}
               busy={pendingID === preset.id || applyingID != null}
               applying={applyingID === preset.id}
+              ownershipLine={ownershipLine(preset)}
               onApply={() => void handleApply(preset)}
-              onEdit={() => setEditor({ presetID: preset.id, draft: cloneDefensePresetDraft(preset) })}
+              onEdit={() => {
+                if (confirmPromotion(preset)) setEditor({ presetID: preset.id, draft: cloneDefensePresetDraft(preset) });
+              }}
               onDuplicate={() => void handleDuplicate(preset)}
               onDelete={() => void handleDelete(preset)}
             />
@@ -361,11 +407,12 @@ const PresetCard: React.FC<{
   compatibility: Compatibility;
   busy: boolean;
   applying: boolean;
+  ownershipLine: React.ReactNode;
   onApply: () => void;
   onEdit: () => void;
   onDuplicate: () => void;
   onDelete: () => void;
-}> = ({ preset, target, compatibility, busy, applying, onApply, onEdit, onDuplicate, onDelete }) => {
+}> = ({ preset, target, compatibility, busy, applying, ownershipLine, onApply, onEdit, onDuplicate, onDelete }) => {
   const { t: localizeStatic } = useStaticLocale();
   const summary = summarizeDefensePreset(preset);
   return (
@@ -375,11 +422,13 @@ const PresetCard: React.FC<{
           <div className="flex items-center gap-2">
             <Shield className="h-4 w-4 shrink-0 text-primary" />
             <h2 className="truncate text-base font-black text-text-main">{preset.name}</h2>
+            {preset.app ? appCreatedPresetBadge() : null}
           </div>
           <p className="mt-1 text-xs text-text-muted">
             Updated {formatUpdatedAt(preset.updatedAt)}
             {preset.sourceCastleName ? ` · captured from ${preset.sourceCastleName}` : ''}
           </p>
+          {ownershipLine ? <p className="mt-1 text-xs text-text-muted">{ownershipLine}</p> : null}
         </div>
         <div className="flex items-center gap-1">
           <Button variant="ghost" size="icon" disabled={busy} onClick={onEdit} title={localizeStatic("ui.views.defensePresetsView.title.edit.preset.d36585b9")}><Edit3 className="h-4 w-4" /></Button>
@@ -570,14 +619,6 @@ function castleLabel(castle: CastleStateV2): string {
 
 function createID(): string {
   return crypto.randomUUID?.() ?? `${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`;
-}
-
-function uniqueCopyName(name: string, presets: AppDefensePreset[]): string {
-  const existing = new Set(presets.map((preset) => preset.name.toLowerCase()));
-  let candidate = `${name} copy`;
-  let suffix = 2;
-  while (existing.has(candidate.toLowerCase())) candidate = `${name} copy ${suffix++}`;
-  return candidate;
 }
 
 function formatUpdatedAt(value: string): string {

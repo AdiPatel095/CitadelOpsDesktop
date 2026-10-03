@@ -22,7 +22,7 @@ func decodeSection(snapshot Configuration.Snapshot, section string, destination 
 }
 
 func commanderFeatureCandidates(
-	gameState State.GameState,
+	gameState *State.GameState,
 	configuration Configuration.Snapshot,
 	featureID string,
 ) ([]State.CommanderID, bool) {
@@ -37,11 +37,11 @@ func commanderFeatureCandidates(
 	if err != nil {
 		return nil, true
 	}
-	return CommanderFeatures.Candidates(gameState, settings, featureID)
+	return CommanderFeatures.Candidates(*gameState, settings, featureID)
 }
 
 func hasAvailableFeatureCommander(
-	gameState State.GameState,
+	gameState *State.GameState,
 	candidates []State.CommanderID,
 	restricted bool,
 	now time.Time,
@@ -51,7 +51,7 @@ func hasAvailableFeatureCommander(
 }
 
 func nextAvailableFeatureCommander(
-	gameState State.GameState,
+	gameState *State.GameState,
 	candidates []State.CommanderID,
 	restricted bool,
 	now time.Time,
@@ -118,7 +118,7 @@ func policyInterval(seconds int, fallback int) time.Duration {
 }
 
 func pendingKingdomResourceTransport(
-	gameState State.GameState,
+	gameState *State.GameState,
 	kingdomID State.KingdomID,
 ) (State.KingdomResourceTransport, bool) {
 	for _, pending := range gameState.KingdomTransport.Pending {
@@ -130,7 +130,7 @@ func pendingKingdomResourceTransport(
 }
 
 func kingdomResourceTransportWorkflow(
-	gameState State.GameState,
+	gameState *State.GameState,
 	kingdomID State.KingdomID,
 ) (State.KingdomResourceTransportWorkflow, bool) {
 	workflow, exists := gameState.KingdomTransport.ResourceWorkflows[kingdomID]
@@ -231,7 +231,7 @@ func marketLogisticsRequired(snapshot Snapshot) (bool, error) {
 	return false, nil
 }
 
-func kingdomLogisticsRequired(gameState State.GameState) bool {
+func kingdomLogisticsRequired(gameState *State.GameState) bool {
 	kingdoms := map[State.KingdomID]struct{}{}
 	for _, castle := range gameState.Castles {
 		kingdoms[castle.KingdomID] = struct{}{}
@@ -268,11 +268,23 @@ func recordNumber(store *GameData.Store, collection string, id int64, field stri
 	return catalog.Float64(strconv.FormatInt(id, 10), field)
 }
 
-func eligibleAllianceHelpProductionID(queue State.ProductionQueue) int64 {
+// eligibleAllianceHelpProductionID returns the production job used to request
+// alliance help for the queue. Recruitment uses the shared official-client
+// rule (State.RecruitmentAllianceHelpItemEligible); hospital keeps its
+// per-job rule.
+func eligibleAllianceHelpProductionID(
+	state *State.GameState,
+	castleID State.CastleID,
+	queue State.ProductionQueue,
+	now time.Time,
+) int64 {
 	if queue.LineID != 0 && queue.LineID != 2 {
 		return 0
 	}
 	eligible := func(item State.QueueItem) bool {
+		if queue.LineID == 0 {
+			return State.RecruitmentAllianceHelpItemEligible(state, castleID, item, now)
+		}
 		return item.ProductionID > 0 && !item.AllianceHelpRequested
 	}
 	if queue.Active != nil && eligible(*queue.Active) {

@@ -168,7 +168,8 @@ func TestCheckpointPublisherPublishesTheDashboardReadModel(t *testing.T) {
 }
 
 func TestBuildCheckpointHasNoReadinessGateAndOmitsUnboundIdentity(t *testing.T) {
-	store := State.NewStore(State.NewGameState())
+	accessorState1 := State.NewGameState()
+	store := State.NewStore(&accessorState1)
 	checkpoint, err := BuildCheckpoint(context.Background(), store, nil, nil, CheckpointReasonCadence, time.Now().UTC())
 	if err != nil {
 		t.Fatal(err)
@@ -247,8 +248,9 @@ func TestCheckpointPublisherRequiresCheckpointEndpoint(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	accessorState2 := State.NewGameState()
 	if _, err := NewCheckpointPublisher(CheckpointPublisherConfig{
-		RuntimeID: "runtime-one", State: State.NewStore(State.NewGameState()), Client: client,
+		RuntimeID: "runtime-one", State: State.NewStore(&accessorState2), Client: client,
 	}); err == nil {
 		t.Fatal("checkpoint publisher was created without a checkpoint endpoint")
 	}

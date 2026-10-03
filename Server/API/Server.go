@@ -4,6 +4,7 @@ import (
 	"CitadelDesktop/Server/Localization"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -16,6 +17,7 @@ import (
 
 	"CitadelDesktop/Server/AllianceTargets"
 	"CitadelDesktop/Server/AppUpdate"
+	"CitadelDesktop/Server/Automation"
 	"CitadelDesktop/Server/Configuration"
 	"CitadelDesktop/Server/Diagnostics"
 	"CitadelDesktop/Server/GameData"
@@ -30,15 +32,23 @@ import (
 	"github.com/gorilla/websocket"
 )
 
+const EventsSubprotocol = "citadelops.v2"
+
 type Config struct {
-	Version         string
-	BuildRevision   string
-	BuildID         string
-	State           *State.Store
-	GameData        *GameData.Manager
-	Configuration   *Configuration.Store
-	History         *History.Store
-	Telemetry       *Telemetry.Store
+	Version       string
+	BuildRevision string
+	BuildID       string
+	State         *State.Store
+	GameData      *GameData.Manager
+	Configuration *Configuration.Store
+	History       *History.Store
+	// Telemetry is nil in the hosted worker, which keeps no frame or feature
+	// logs and serves no /api/v2/telemetry routes.
+	Telemetry *Telemetry.Store
+	// AttackLaunches counts confirmed feature attack launches: the telemetry
+	// store on desktop, a receipt-derived ledger when hosted. Nil means neither
+	// source exists.
+	AttackLaunches  Automation.AttackLaunchCountsProvider
 	Intents         *Intent.Engine
 	ReportAnalytics *Reports.SQLiteStore
 	CloudReports    *Reports.CloudClient
@@ -59,6 +69,8 @@ type Server struct {
 	config                         Config
 	externalConfigurationAuthority atomic.Bool
 	playerHistoryRetentionMu       sync.Mutex
+	eventsGreetings                atomic.Uint64
+	eventsResumes                  atomic.Uint64
 	upgrader                       websocket.Upgrader
 }
 
@@ -77,9 +89,13 @@ func NewServer(config Config) *Server {
 	}
 	server := &Server{config: config}
 	server.upgrader = websocket.Upgrader{
+		Subprotocols:    []string{EventsSubprotocol},
 		ReadBufferSize:  4096,
 		WriteBufferSize: 4096,
 		CheckOrigin:     server.originAllowed,
+		// Hosted workers negotiate permessage-deflate; thresholdSocket.WriteJSON then
+		// compresses only messages of 1 KiB or more. Desktop keeps loopback traffic plain.
+		EnableCompression: config.BackgroundOnly,
 	}
 	return server
 }
@@ -142,15 +158,27 @@ func (server *Server) Handler() http.Handler {
 	mux.HandleFunc("GET /api/v2/history/battle-reports", server.handleBattleReportHistory)
 	mux.HandleFunc("GET /api/v2/analytics/battle-reports", server.handleBattleReportAnalytics)
 	mux.HandleFunc("GET /api/v2/analytics/resource-aggregates", server.handleResourceAggregates)
-	mux.HandleFunc("GET /api/v2/telemetry/channels", server.handleTelemetryChannels)
-	mux.HandleFunc("GET /api/v2/telemetry/attack-rates", server.handleAttackLaunchRates)
-	mux.HandleFunc("GET /api/v2/telemetry/{channel}", server.handleTelemetryTail)
+	if server.config.BackgroundOnly {
+		// The hosted worker keeps no logs, so it serves no telemetry routes at
+		// all (they answer 404). The attack-launch badges read a receipt-derived
+		// count from their own route.
+		mux.HandleFunc("GET /api/v2/automations/attack-rates", server.handleAttackLaunchRates)
+	} else {
+		mux.HandleFunc("GET /api/v2/telemetry/channels", server.handleTelemetryChannels)
+		mux.HandleFunc("GET /api/v2/telemetry/attack-rates", server.handleAttackLaunchRates)
+		mux.HandleFunc("GET /api/v2/telemetry/{channel}", server.handleTelemetryTail)
+	}
 	mux.HandleFunc("GET /api/v2/intents", server.handleIntentDefinitions)
 	mux.HandleFunc("POST /api/v2/intents/{name}", server.handleIntentSubmit)
 	mux.HandleFunc("GET /api/v2/operations", server.handleOperations)
 	mux.HandleFunc("GET /api/v2/operations/{id}", server.handleOperation)
 	mux.HandleFunc("POST /api/v2/operations/{id}/cancel", server.handleOperationCancel)
 	mux.HandleFunc("GET /api/v2/events", server.handleEvents)
+	if server.config.BackgroundOnly {
+		// Hosted workers compress JSON responses of 1 KiB or more (CIT-29); the desktop
+		// app talks to its own browser over loopback, where it would only cost CPU.
+		return compressResponses(mux)
+	}
 	return mux
 }
 
@@ -330,7 +358,8 @@ func (server *Server) handleState(writer http.ResponseWriter, _ *http.Request) {
 		writeError(writer, http.StatusServiceUnavailable, "state_unavailable", "State store is unavailable", Localization.New("server.api.state_store_is_unavailable.e4a65fe1", "State store is unavailable", nil))
 		return
 	}
-	writeJSON(writer, http.StatusOK, State.NewClientStateSnapshot(server.config.State.ReadOnlyView()))
+	accessorState1 := server.config.State.ReadOnlyView()
+	writeJSON(writer, http.StatusOK, State.NewClientStateSnapshot(&accessorState1))
 }
 
 func (server *Server) handleGameDataManifest(writer http.ResponseWriter, request *http.Request) {
@@ -388,13 +417,17 @@ func (server *Server) handleGameDataCollection(writer http.ResponseWriter, reque
 		}{store.Metadata(), catalog.Summary(), item, locale})
 		return
 	}
+	metadata := store.Metadata()
+	if collectionCacheHeaders(writer, request, metadata.DigestSHA256, name, locale) {
+		return
+	}
 	raw, _ := store.RawCollection(name)
 	writeJSON(writer, http.StatusOK, struct {
 		Metadata GameData.SourceMetadata    `json:"metadata"`
 		Catalog  GameData.CatalogSummary    `json:"catalog"`
 		Items    json.RawMessage            `json:"items"`
 		Locale   *GameData.LocaleResolution `json:"locale,omitempty"`
-	}{store.Metadata(), catalog.Summary(), raw, locale})
+	}{metadata, catalog.Summary(), raw, locale})
 }
 
 func (server *Server) handleIntentDefinitions(writer http.ResponseWriter, _ *http.Request) {
@@ -507,7 +540,27 @@ func (server *Server) handleOperations(writer http.ResponseWriter, request *http
 		}
 		limit = parsed
 	}
-	receipts, err := server.config.Intents.RecentOperations(request.Context(), limit)
+	history := strings.TrimSpace(request.URL.Query().Get("history"))
+	if history != "" && history != "stored" {
+		writeError(writer, http.StatusBadRequest, "invalid_history", "Operation history must be stored", Localization.New("server.api.operation_history_must_be.e857bc21", "Operation history must be stored", nil))
+		return
+	}
+	before := strings.TrimSpace(request.URL.Query().Get("before"))
+	var receipts []Intent.Receipt
+	var err error
+	if len(before) > 256 {
+		err = Intent.ErrUnknownOperationCursor
+	} else if before != "" || history == "stored" {
+		receipts, err = server.config.Intents.OperationsBefore(request.Context(), before, limit)
+	} else {
+		// The in-process recent-activity list is not a cursor start. Start a
+		// stored rowid walk with history=stored, then continue with before.
+		receipts, err = server.config.Intents.RecentOperations(request.Context(), limit)
+	}
+	if errors.Is(err, Intent.ErrUnknownOperationCursor) {
+		writeError(writer, http.StatusBadRequest, "invalid_cursor", "Operation cursor is not a stored operation", Localization.New("server.api.operation_cursor_is_not.416989c7", "Operation cursor is not a stored operation", nil))
+		return
+	}
 	if err != nil {
 		writeErrorFromError(writer, http.StatusServiceUnavailable, "operations_unavailable", err)
 		return
@@ -529,11 +582,16 @@ func (server *Server) handleOperationCancel(writer http.ResponseWriter, request 
 }
 
 func (server *Server) handleEvents(writer http.ResponseWriter, request *http.Request) {
-	connection, err := server.upgrader.Upgrade(writer, request, nil)
+	socket, err := server.upgrader.Upgrade(writer, request, nil)
 	if err != nil {
 		return
 	}
-	defer connection.Close()
+	defer socket.Close()
+	if server.config.BackgroundOnly {
+		newSocketCompression(socket)
+	}
+	// WriteJSON compresses only messages of 1 KiB or more (when negotiated).
+	connection := &thresholdSocket{Conn: socket}
 	connection.SetReadLimit(1 << 20)
 	_ = connection.SetReadDeadline(time.Now().Add(60 * time.Second))
 	connection.SetPongHandler(func(string) error {
@@ -546,6 +604,9 @@ func (server *Server) handleEvents(writer http.ResponseWriter, request *http.Req
 	defer cancelState()
 	operationEvents, cancelOperations := server.config.Intents.Subscribe(64)
 	defer cancelOperations()
+	// Subscribe, capture the label, then build history: never label an older
+	// operation snapshot with a newer stream sequence (CIT-37).
+	operationSequence := server.config.Intents.EventSequence()
 	var configurationEvents <-chan Configuration.Event
 	cancelConfiguration := func() {}
 	if server.config.Configuration != nil {
@@ -555,27 +616,75 @@ func (server *Server) handleEvents(writer http.ResponseWriter, request *http.Req
 	incoming := make(chan Envelope, 8)
 	readErrors := make(chan error, 1)
 	responses := make(chan Envelope, 8)
-	go readEnvelopes(ctx, connection, incoming, readErrors)
+	go readEnvelopes(ctx, socket, incoming, readErrors)
 
-	initialState := server.config.State.ReadOnlyView()
+	cursor := parseResumeCursor(request.URL.Query())
+	initialState, resumeEvent, resumed := server.config.State.Resume(cursor.instance, cursor.since)
+	resumed = resumed && cursor.valid
 	initialRevision := initialState.Revision
-	if err := connection.WriteJSON(streamEnvelope(
-		"", "state.snapshot", initialRevision, initialRevision, false, State.NewClientStateSnapshot(initialState),
-	)); err != nil {
-		return
+	server.eventsGreetings.Add(1)
+	if resumed {
+		greeting := streamEnvelope("", "state.resumed", initialRevision, initialRevision, false, map[string]any{
+			"instance": server.config.State.Instance(), "from": cursor.since, "revision": initialRevision, "ops": operationSequence,
+		})
+		greeting.Instance = server.config.State.Instance()
+		if err := connection.WriteJSON(greeting); err != nil {
+			return
+		}
+		server.eventsResumes.Add(1)
+		if resumeEvent != nil {
+			payload, err := State.ClientEventPayload(*resumeEvent)
+			if err != nil {
+				return
+			}
+			if err := connection.WriteJSON(streamEnvelopeRaw("", "state.changed", resumeEvent.Revision, resumeEvent.Sequence, true, cursor.since, payload)); err != nil {
+				return
+			}
+		}
+	} else {
+		greeting := streamEnvelope("", "state.snapshot", initialRevision, initialRevision, false, State.NewClientStateSnapshot(&initialState))
+		greeting.Instance = server.config.State.Instance()
+		if err := connection.WriteJSON(greeting); err != nil {
+			return
+		}
 	}
+	var lastSignal ConfigurationRevisionSignal
 	if server.config.Configuration != nil {
-		snapshot := server.config.Configuration.Snapshot()
-		if err := connection.WriteJSON(streamEnvelope("", "config.changed", server.config.State.Revision(), snapshot.Revision, false, snapshot)); err != nil {
+		if server.externalConfiguration() {
+			lastSignal = server.configurationSignal()
+			if !resumed || cursor.config != lastSignal.Revision {
+				if err := connection.WriteJSON(streamEnvelope("", "config.changed", server.config.State.Revision(), lastSignal.Revision, false, lastSignal)); err != nil {
+					return
+				}
+			}
+		} else {
+			snapshot := server.config.Configuration.Snapshot()
+			if !resumed || cursor.config != snapshot.Revision {
+				if err := connection.WriteJSON(streamEnvelope("", "config.changed", server.config.State.Revision(), snapshot.Revision, false, snapshot)); err != nil {
+					return
+				}
+			}
+		}
+	}
+	// Update status is pushed, not polled: the current status now, then every change.
+	var updateEvents <-chan AppUpdate.Snapshot
+	cancelUpdates := func() {}
+	if server.config.Updates != nil {
+		updateEvents, cancelUpdates = server.config.Updates.Subscribe()
+		if err := connection.WriteJSON(newEnvelope("", "update.changed", server.config.State.Revision(), server.config.Updates.Snapshot())); err != nil {
+			cancelUpdates()
 			return
 		}
 	}
-	if receipts, err := server.config.Intents.RecentOperations(ctx, 100); err == nil {
-		if err := connection.WriteJSON(newEnvelope("", "operations.snapshot", server.config.State.Revision(), receipts)); err != nil {
-			return
+	defer cancelUpdates()
+	if !resumed || cursor.ops != operationSequence {
+		if receipts, err := server.config.Intents.RecentOperations(ctx, 100); err == nil {
+			if err := connection.WriteJSON(streamEnvelope("", "operations.snapshot", server.config.State.Revision(), operationSequence, false, receipts)); err != nil {
+				return
+			}
 		}
 	}
-	if store, ready := server.config.GameData.Current(); ready {
+	if store, ready := server.config.GameData.Current(); ready && (!resumed || cursor.catalog != store.Metadata().DigestSHA256) {
 		if err := connection.WriteJSON(newEnvelope("", "catalog.changed", server.config.State.Revision(), map[string]any{
 			"metadata": store.Metadata(), "catalogs": store.Summaries(),
 		})); err != nil {
@@ -600,7 +709,7 @@ func (server *Server) handleEvents(writer http.ResponseWriter, request *http.Req
 			if err != nil {
 				return
 			}
-			if err := connection.WriteJSON(streamEnvelopeRaw("", "state.changed", event.Revision, event.Sequence, event.Gap, payload)); err != nil {
+			if err := connection.WriteJSON(streamEnvelopeRaw("", "state.changed", event.Revision, event.Sequence, event.Gap, event.BaseRevision, payload)); err != nil {
 				return
 			}
 		case receipt := <-operationEvents:
@@ -610,7 +719,26 @@ func (server *Server) handleEvents(writer http.ResponseWriter, request *http.Req
 			)); err != nil {
 				return
 			}
+		case snapshot := <-updateEvents:
+			if err := connection.WriteJSON(newEnvelope("", "update.changed", server.config.State.Revision(), snapshot)); err != nil {
+				return
+			}
 		case event := <-configurationEvents:
+			if server.externalConfiguration() {
+				// Only a new canonical version is news: local section changes (for
+				// example installation-scoped settings) leave it as it was.
+				signal := server.configurationSignal()
+				if signal == lastSignal {
+					continue
+				}
+				lastSignal = signal
+				if err := connection.WriteJSON(streamEnvelope(
+					"", "config.changed", server.config.State.Revision(), signal.Revision, false, signal,
+				)); err != nil {
+					return
+				}
+				continue
+			}
 			if err := connection.WriteJSON(streamEnvelope(
 				"", "config.changed", server.config.State.Revision(), event.Sequence, event.Gap, event.Snapshot,
 			)); err != nil {
@@ -625,9 +753,9 @@ func (server *Server) handleEvents(writer http.ResponseWriter, request *http.Req
 			case "query.state":
 				state := server.config.State.ReadOnlyView()
 				revision := state.Revision
-				if err := connection.WriteJSON(newEnvelope(
-					message.ID, "state.snapshot", revision, State.NewClientStateSnapshot(state),
-				)); err != nil {
+				greeting := newEnvelope(message.ID, "state.snapshot", revision, State.NewClientStateSnapshot(&state))
+				greeting.Instance = server.config.State.Instance()
+				if err := connection.WriteJSON(greeting); err != nil {
 					return
 				}
 			case "query.catalogs":
@@ -643,7 +771,12 @@ func (server *Server) handleEvents(writer http.ResponseWriter, request *http.Req
 					}
 				}
 			case "query.config":
-				if server.config.Configuration != nil {
+				if server.config.Configuration != nil && server.externalConfiguration() {
+					lastSignal = server.configurationSignal()
+					if err := connection.WriteJSON(newEnvelope(message.ID, "config.changed", server.config.State.Revision(), lastSignal)); err != nil {
+						return
+					}
+				} else if server.config.Configuration != nil {
 					if err := connection.WriteJSON(newEnvelope(message.ID, "config.changed", server.config.State.Revision(), server.config.Configuration.Snapshot())); err != nil {
 						return
 					}
@@ -758,4 +891,28 @@ func parsePositiveInt(raw string, fallback int) int {
 		return fallback
 	}
 	return value
+}
+
+// Malformed or incomplete cursors retain the full legacy greeting. All values
+// are non-secret; authentication still travels only in the socket subprotocol.
+type resumeCursor struct {
+	instance, catalog  string
+	since, ops, config uint64
+	valid              bool
+}
+
+func parseResumeCursor(query url.Values) resumeCursor {
+	cursor := resumeCursor{instance: query.Get("instance"), catalog: query.Get("catalog")}
+	if query.Get("resume") != "1" || cursor.instance == "" || !query.Has("catalog") {
+		return cursor
+	}
+	for key, destination := range map[string]*uint64{"since": &cursor.since, "ops": &cursor.ops, "config": &cursor.config} {
+		value, err := strconv.ParseUint(query.Get(key), 10, 64)
+		if err != nil {
+			return cursor
+		}
+		*destination = value
+	}
+	cursor.valid = true
+	return cursor
 }

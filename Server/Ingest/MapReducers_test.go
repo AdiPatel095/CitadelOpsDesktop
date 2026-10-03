@@ -471,6 +471,10 @@ func TestReduceMapSnapshotRetainsOfficialStormTimers(t *testing.T) {
 		KingdomID: 4, X: 104, Y: 105, TypeID: stormFortMapTypeID, StormIsleID: 99,
 		ObservedAt: time.Date(2026, 7, 15, 15, 0, 0, 0, time.UTC),
 	}
+	gameState.Storm.Map.Targets["106:107"] = State.MapObservation{
+		KingdomID: 4, X: 106, Y: 107, TypeID: stormFortMapTypeID, StormIsleID: 10,
+		ObservedAt: time.Date(2026, 7, 15, 15, 0, 0, 0, time.UTC),
+	}
 	code := 0
 	observedAt := time.Date(2026, 7, 15, 16, 20, 0, 0, time.UTC)
 	_, changed, err := reduceMapSnapshot(t.Context(), Protocol.Frame{
@@ -478,7 +482,9 @@ func TestReduceMapSnapshotRetainsOfficialStormTimers(t *testing.T) {
 		Payload: json.RawMessage(`{"KID":4,"AI":[
 			[24,100,101,3319,-403,0,0,0,4,100],
 			[24,102,103,4447,12345,0,0,0,6,120],
-			[25,104,105,4,-1,10,300,5,200]
+			[25,104,105,4,3600,10,300,5,0],
+			[25,106,107,4,-1,10,120,0,1],
+			[25,108,109,4,-1,10,0,0,200]
 		]}`),
 	}, &gameState, gameData)
 	if err != nil || !changed {
@@ -499,6 +505,31 @@ func TestReduceMapSnapshotRetainsOfficialStormTimers(t *testing.T) {
 	}
 	if tracked := gameState.Storm.Map.Targets["104:105"]; tracked != fort {
 		t.Fatalf("tracked Storm fort was not refreshed from the newer map row: %#v", tracked)
+	}
+	// CIT-23: official DungeonIsleMapobjectVO row[3] is the kingdom ID, not an
+	// object ID; forts carry no identity. ResourceIsleMapobjectVO row[3] is one.
+	// CIT-24: fort row[4] is the spy age (never an owner) and row[8] > 0 hides
+	// the fort; the cooldown is row[6] alone.
+	secondFort := gameState.Map[4]["106:107"]
+	thirdFort := gameState.Map[4]["108:109"]
+	if fort.ObjectID != 0 || secondFort.ObjectID != 0 || secondFort.X != 106 || secondFort.Y != 107 {
+		t.Fatalf("fort object ids = %d, %d (%#v)", fort.ObjectID, secondFort.ObjectID, secondFort)
+	}
+	if fort.StormIsleID != 10 || fort.StormVictoryCount != 5 || fort.StormCooldownRemaining != 300 ||
+		fort.OwnerID != 0 || fort.StormHidden {
+		t.Fatalf("visible spied fort = %#v", fort)
+	}
+	if secondFort.StormCooldownRemaining != 120 || !secondFort.StormHidden || secondFort.OwnerID != 0 {
+		t.Fatalf("hidden fort with cooldown = %#v", secondFort)
+	}
+	if thirdFort.StormCooldownRemaining != 0 || !thirdFort.StormHidden || !thirdFort.StormReadyAt().Equal(observedAt) {
+		t.Fatalf("hidden fort with large flag = %#v", thirdFort)
+	}
+	if tracked := gameState.Storm.Map.Targets["106:107"]; !tracked.StormHidden {
+		t.Fatalf("tracked Storm target lost the visibility flag: %#v", tracked)
+	}
+	if unoccupied.ObjectID != 3319 || unoccupied.OwnerID != -403 || occupied.ObjectID != 4447 {
+		t.Fatalf("island identities = %#v %#v", unoccupied, occupied)
 	}
 }
 

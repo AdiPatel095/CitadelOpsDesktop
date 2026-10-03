@@ -222,7 +222,7 @@ func (*AutoStormPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision
 	if err := autoStormApplyActiveBlueprint(snapshot, &settings); err != nil {
 		return autoStormWaiting(snapshot.Now, err.Error(), Localization.FromError(err)), nil
 	}
-	castle, found := autoStormCastle(snapshot.State, settings.Target)
+	castle, found := autoStormCastle(&snapshot.State, settings.Target)
 	if !found {
 		if snapshot.State.KingdomTransport.ObservedAt.IsZero() ||
 			snapshot.Now.Sub(snapshot.State.KingdomTransport.ObservedAt) >= autoStormKingdomRefreshAge {
@@ -386,7 +386,7 @@ func normalizeAutoStormSettings(settings *autoStormSettings) {
 	settings.MapRefreshIntervalSec = autoStormMapRefreshSeconds
 }
 
-func autoStormCastle(state State.GameState, target *Buildings.TargetCaptureResult) (State.CastleState, bool) {
+func autoStormCastle(state *State.GameState, target *Buildings.TargetCaptureResult) (State.CastleState, bool) {
 	if target != nil {
 		if castle, found := state.Castles[target.CastleID]; found && castle.KingdomID == autoStormKingdomID {
 			return castle, true
@@ -405,13 +405,13 @@ func autoStormCastle(state State.GameState, target *Buildings.TargetCaptureResul
 	return state.Castles[ids[0]], true
 }
 
-func autoStormMapStateMatches(state State.GameState, castle State.CastleState) bool {
+func autoStormMapStateMatches(state *State.GameState, castle State.CastleState) bool {
 	mapState := state.Storm.Map
 	return mapState.ServerURL == state.Session.ServerURL && mapState.PlayerID == state.Player.ID &&
 		mapState.SourceCastleID == castle.ID
 }
 
-func autoStormMapScanBounds(_ State.GameState, _ State.CastleState) State.StormMapBounds {
+func autoStormMapScanBounds(_ *State.GameState, _ State.CastleState) State.StormMapBounds {
 	return State.StormMapBounds{
 		X1: autoStormMapCenterCoordinate - autoStormMapInitialHalfSpan,
 		Y1: autoStormMapCenterCoordinate - autoStormMapInitialHalfSpan,
@@ -437,7 +437,7 @@ func autoStormFullMapScanDecisionWithCoverage(
 		metrics["sharedStormFreshWindows"] = float64(coverage.FreshWindowCount)
 		return nil
 	}
-	mapStateCurrent := autoStormMapStateMatches(snapshot.State, castle)
+	mapStateCurrent := autoStormMapStateMatches(&snapshot.State, castle)
 	mapState := snapshot.State.Storm.Map
 	lastAttemptAt := time.Time{}
 	if mapStateCurrent {
@@ -454,7 +454,7 @@ func autoStormFullMapScanDecisionWithCoverage(
 	if !lastAttemptAt.IsZero() && snapshot.Now.Before(lastAttemptAt.Add(autoStormMapRefreshInterval)) {
 		return nil
 	}
-	bounds := autoStormMapScanBounds(snapshot.State, castle)
+	bounds := autoStormMapScanBounds(&snapshot.State, castle)
 	metrics["stormMapPlannedWindows"] = 1
 	decision := autoStormIntentDecision(
 		snapshot.Now,
@@ -747,7 +747,7 @@ func autoStormQueueDecision(
 			}, Localization.New("server.automation.finish_p_building_p.f7a63dda", "Finish {p0} building {p1} through the free path", Localization.Params{"p0": fmt.Sprintf("%s", profile.FeatureLabel), "p1": fmt.Sprintf("%d", buildingID)})), false
 		}
 		if settings.Build.AllowTimeSkips {
-			if minutes, reserve, found := autoStormBuildingTimeSkip(snapshot.State, settings.Build.TimeSkipReserve, remaining); found {
+			if minutes, reserve, found := autoStormBuildingTimeSkip(&snapshot.State, settings.Build.TimeSkipReserve, remaining); found {
 				return autoStormIntentDecision(snapshot.Now, metrics, fmt.Sprintf("Apply a %d-minute skip to %s building %d", minutes, profile.FeatureLabel, buildingID), "building.skip_time", map[string]any{
 					"castleId": castle.ID, "buildingInstanceId": buildingID, "minutes": minutes, "minimumRemaining": reserve,
 				}, Localization.New("server.automation.apply_a_p_minute.67443a3c", "Apply a {p0, number}-minute skip to {p1} building {p2}", Localization.Params{"p0": minutes, "p1": fmt.Sprintf("%s", profile.FeatureLabel), "p2": fmt.Sprintf("%d", buildingID)})), false
@@ -766,7 +766,7 @@ func autoStormBuildingRemaining(
 	return Buildings.OperationRemaining(castle, building, catalog, now)
 }
 
-func autoStormBuildingTimeSkip(state State.GameState, reserves map[string]int64, remainingSec int64) (int, int64, bool) {
+func autoStormBuildingTimeSkip(state *State.GameState, reserves map[string]int64, remainingSec int64) (int, int64, bool) {
 	option, reserve, found := autoStormSelectTimeSkip(state, reserves, remainingSec)
 	if !found {
 		return 0, 0, false
@@ -887,7 +887,7 @@ func autoStormExpansionDecisionWithStorage(
 			action.Arguments["workflowOwner"] = autoStormTransportOwner
 			if settings.Build.AllowTimeSkips {
 				if key, _, reserve, found := autoStormTransportTimeSkip(
-					snapshot.State, settings.Build.TimeSkipReserve, kingdomResourceTransportInitialRemainingSec,
+					&snapshot.State, settings.Build.TimeSkipReserve, kingdomResourceTransportInitialRemainingSec,
 				); found {
 					action.Arguments["timeSkipId"] = key
 					action.Arguments["minimumRemaining"] = reserve
@@ -1178,9 +1178,9 @@ func autoStormTargetTransportDecision(
 	if !observed || !unlock.Unlocked {
 		return nil, "Kingdom resource transport to Storm is not unlocked"
 	}
-	if pending, found := pendingKingdomResourceTransport(snapshot.State, castle.KingdomID); found {
+	if pending, found := pendingKingdomResourceTransport(&snapshot.State, castle.KingdomID); found {
 		if pending.RemainingSec > 0 && settings.Build.AllowTimeSkips {
-			if key, _, reserve, found := autoStormTransportTimeSkip(snapshot.State, settings.Build.TimeSkipReserve, pending.RemainingSec); found {
+			if key, _, reserve, found := autoStormTransportTimeSkip(&snapshot.State, settings.Build.TimeSkipReserve, pending.RemainingSec); found {
 				return autoStormIntentDecision(snapshot.Now, metrics, "Advance the pending Storm resource shipment", "resource.kingdom.skip", map[string]any{
 					"targetKingdomId": castle.KingdomID, "timeSkipId": key, "minimumRemaining": reserve,
 				}, Localization.New("server.automation.advance_the_pending_storm.808a8398", "Advance the pending Storm resource shipment", nil)), ""
@@ -1232,7 +1232,7 @@ func autoStormTargetTransportDecision(
 		}
 		if settings.Build.AllowTimeSkips {
 			if key, _, reserve, found := autoStormTransportTimeSkip(
-				snapshot.State, settings.Build.TimeSkipReserve, kingdomResourceTransportInitialRemainingSec,
+				&snapshot.State, settings.Build.TimeSkipReserve, kingdomResourceTransportInitialRemainingSec,
 			); found {
 				arguments["timeSkipId"] = key
 				arguments["minimumRemaining"] = reserve
@@ -1248,7 +1248,7 @@ func autoStormTargetTransportDecision(
 }
 
 func autoStormTransportTimeSkip(
-	state State.GameState,
+	state *State.GameState,
 	reserves map[string]int64,
 	remainingSec int,
 ) (string, State.CurrencyID, int64, bool) {
@@ -1266,7 +1266,7 @@ type autoStormTimeSkipOption struct {
 }
 
 func autoStormSelectTimeSkip(
-	state State.GameState,
+	state *State.GameState,
 	reserves map[string]int64,
 	remainingSec int64,
 ) (autoStormTimeSkipOption, int64, bool) {
@@ -1642,11 +1642,11 @@ func evaluateAutoStormCombat(
 	if err != nil {
 		return nil, "", err
 	}
-	commanderIDs, restricted := commanderFeatureCandidates(snapshot.State, snapshot.Configuration, "autoStorm")
+	commanderIDs, restricted := commanderFeatureCandidates(&snapshot.State, snapshot.Configuration, "autoStorm")
 	if restricted && len(commanderIDs) == 0 {
 		return nil, "No commanders are assigned to Auto Storm", nil
 	}
-	commanderID, available := nextAvailableFeatureCommander(snapshot.State, commanderIDs, restricted, snapshot.Now)
+	commanderID, available := nextAvailableFeatureCommander(&snapshot.State, commanderIDs, restricted, snapshot.Now)
 	if !available {
 		return nil, "No assigned Auto Storm commander is currently available", nil
 	}
@@ -1799,7 +1799,7 @@ func autoStormCombatOpportunities(
 	settings autoStormSettings,
 	castle State.CastleState,
 ) ([]autoStormCombatCandidate, time.Time) {
-	active := autoStormActiveTargets(snapshot.State, castle.ID, snapshot.Now)
+	active := autoStormActiveTargets(&snapshot.State, castle.ID, snapshot.Now)
 	result := make([]autoStormCombatCandidate, 0)
 	next := time.Time{}
 	snapshot.State.RangeStormTargets(func(_ string, scannedTarget State.MapObservation) bool {
@@ -1816,6 +1816,13 @@ func autoStormCombatOpportunities(
 			return true
 		}
 		readyAt := autoStormTargetReadyAt(target)
+		// A COOLING_DOWN rejection (CRA 95, CIT-13) defers the target even when
+		// the map row reports it ready; other targets stay eligible.
+		if rejection, rejected := State.AttackTargetRejectedAt(
+			&snapshot.State, target.KingdomID, target.TypeID, target.X, target.Y, snapshot.Now,
+		); rejected && rejection.Until.After(readyAt) {
+			readyAt = rejection.Until
+		}
 		if readyAt.After(snapshot.Now) {
 			if next.IsZero() || readyAt.Before(next) {
 				next = readyAt
@@ -1865,7 +1872,9 @@ func autoStormCandidateForTarget(
 ) (autoStormCombatCandidate, bool) {
 	switch target.TypeID {
 	case autoStormFortMapTypeID:
-		if !settings.Forts.Enabled || definition.Kind != GameData.StormIsleKindFort ||
+		// A hidden fort (official row[8] > 0) is never a target and has no
+		// ready time; a later scan showing it visible makes it eligible again.
+		if target.StormHidden || !settings.Forts.Enabled || definition.Kind != GameData.StormIsleKindFort ||
 			!autoStormIntSelected(settings.Forts.Levels, definition.Level) {
 			return autoStormCombatCandidate{}, false
 		}
@@ -2103,7 +2112,7 @@ func autoStormPendingTroopTransportDecision(
 			}, true
 		}
 		if settings.TroopImport.Enabled && settings.Build.AllowTimeSkips {
-			if key, _, reserve, found := autoStormTransportTimeSkip(snapshot.State, settings.Build.TimeSkipReserve, remaining); found {
+			if key, _, reserve, found := autoStormTransportTimeSkip(&snapshot.State, settings.Build.TimeSkipReserve, remaining); found {
 				skipArguments, _ := json.Marshal(map[string]any{
 					"targetKingdomId": castle.KingdomID, "timeSkipId": key, "minimumRemaining": reserve,
 				})
@@ -2437,7 +2446,7 @@ func sortedAutoStormUnitIDs(values map[State.UnitID]int64) []State.UnitID {
 	return result
 }
 
-func autoStormActiveTargets(state State.GameState, castleID State.CastleID, now time.Time) map[string]struct{} {
+func autoStormActiveTargets(state *State.GameState, castleID State.CastleID, now time.Time) map[string]struct{} {
 	result := map[string]struct{}{}
 	state.RangeMovements(func(_ State.MovementID, movement State.MovementState) bool {
 		if movement.Direction != 0 || movement.SourceCastleID != castleID ||

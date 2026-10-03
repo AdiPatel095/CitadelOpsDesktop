@@ -1,0 +1,133 @@
+{
+  "id": "khan-skip-dependency",
+  "title": "Khan: time-skip dependency",
+  "purpose": "Cooldown skips are on with no time-skip reserve chosen.",
+  "step": "4",
+  "platforms": [
+    "desktop",
+    "hosted"
+  ],
+  "modules": [
+    "autoKhan"
+  ],
+  "simulated": [
+    "banner: Simulated preview: sample data only. Nothing here reaches the game or an account.",
+    "dock: Candidate <short SHA>"
+  ],
+  "expect": [
+    "The plan lines state the skip policy and that no reserve is set; skips are never chosen for the player."
+  ],
+  "patch": {
+    "config": {
+      "attacks.presets": {
+        "version": 1,
+        "presets": [
+          {
+            "id": "preset-khan-attack",
+            "name": "Khan camps",
+            "targetType": "pve",
+            "useTroopFamilies": false,
+            "createdAt": "@now-30d",
+            "updatedAt": "@now-2d",
+            "waves": [
+              {
+                "L": {
+                  "troops": [
+                    {
+                      "itemId": 2,
+                      "quantity": 200
+                    }
+                  ],
+                  "tools": []
+                },
+                "M": {
+                  "troops": [],
+                  "tools": []
+                },
+                "R": {
+                  "troops": [],
+                  "tools": []
+                }
+              }
+            ],
+            "courtyardSupport": {
+              "troops": [],
+              "tools": []
+            }
+          }
+        ]
+      },
+      "defense.presets": {
+        "version": 1,
+        "presets": [
+          {
+            "id": "defense-khan-main",
+            "name": "Khan main castle",
+            "createdAt": "@now-20d",
+            "updatedAt": "@now-3d",
+            "sourceCastleId": 4101,
+            "sourceCastleName": "Stonehaven",
+            "wall": {
+              "left": {
+                "toolSlots": [
+                  {
+                    "definitionId": 201,
+                    "amount": 250
+                  }
+                ],
+                "unitPercent": 30,
+                "unitTypePercent": 60
+              },
+              "middle": {
+                "toolSlots": [
+                  {
+                    "definitionId": 201,
+                    "amount": 300
+                  }
+                ],
+                "unitPercent": 40,
+                "unitTypePercent": 60
+              },
+              "right": {
+                "toolSlots": [
+                  {
+                    "definitionId": 201,
+                    "amount": 250
+                  }
+                ],
+                "unitPercent": 30,
+                "unitTypePercent": 60
+              }
+            },
+            "moat": {
+              "leftToolSlots": [
+                {
+                  "definitionId": 204,
+                  "amount": 120
+                }
+              ],
+              "middleToolSlots": [],
+              "rightToolSlots": []
+            },
+            "keep": {
+              "mauct": 2,
+              "unitTypePercent": 50
+            }
+          }
+        ]
+      },
+      "automation.autoKhan": {
+        "version": 1,
+        "sourceCastleId": 4101,
+        "attackPresetId": "preset-khan-attack",
+        "defensePresetId": "defense-khan-main",
+        "skipCooldowns": true,
+        "timeSkipReserve": {}
+      }
+    }
+  },
+  "columns": [
+    "readiness",
+    "inline"
+  ]
+}

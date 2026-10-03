@@ -1600,6 +1600,10 @@ func (transport *ChromiumTransport) processSocketFrame(
 	transport.mu.Unlock()
 
 	frame, frameErr := Protocol.Decode(notice.Payload, notice.Direction, observedAt)
+	var decoded *Protocol.Frame
+	if frameErr == nil {
+		decoded = &frame
+	}
 	if notice.Direction == Protocol.DirectionOutbound && frameErr == nil {
 		switch frame.Opcode {
 		case "vck":
@@ -1618,7 +1622,7 @@ func (transport *ChromiumTransport) processSocketFrame(
 				)
 				if activated {
 					transport.rememberSuccessfulLogin(generation, key, observedAt)
-					transport.deliverSocketFrame(notice, observedAt, connectionGeneration)
+					transport.deliverSocketFrame(notice, observedAt, connectionGeneration, decoded)
 				} else if activationErr != nil {
 					transport.failSocketActivation(
 						generation, key, notice.Sequence, activationErr, observedAt,
@@ -1642,7 +1646,7 @@ func (transport *ChromiumTransport) processSocketFrame(
 		if notice.Direction == Protocol.DirectionInbound {
 			transport.recordInboundTraffic(generation, key, observedAt)
 		}
-		transport.deliverSocketFrame(notice, observedAt, connectionGeneration)
+		transport.deliverSocketFrame(notice, observedAt, connectionGeneration, decoded)
 	}
 }
 
@@ -2148,6 +2152,7 @@ func (transport *ChromiumTransport) deliverSocketFrame(
 	notice chromiumSocketNotice,
 	observedAt time.Time,
 	connectionGeneration uint64,
+	decoded *Protocol.Frame,
 ) {
 	if transport.frames == nil {
 		return
@@ -2155,7 +2160,7 @@ func (transport *ChromiumTransport) deliverSocketFrame(
 	transport.frames <- RawFrame{
 		Payload: notice.Payload, Direction: notice.Direction, ObservedAt: observedAt,
 		ConnectionGeneration: connectionGeneration, ResponseToken: notice.ResponseToken,
-		CausationOperationID: notice.CausationOperationID,
+		CausationOperationID: notice.CausationOperationID, Decoded: decoded,
 	}
 }
 

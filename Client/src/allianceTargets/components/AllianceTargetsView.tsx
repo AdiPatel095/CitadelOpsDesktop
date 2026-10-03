@@ -1,5 +1,6 @@
 import { useLocale as useStaticLocale } from "../../i18n/LocaleContext";
 import { LocalizedText } from "../../i18n/LocalizedText";
+import type { MessageKey } from "../../i18n/messages";
 import { memo, useCallback, useDeferredValue, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import {
 	AlertTriangle,
@@ -24,11 +25,15 @@ import { Badge, Button, Input, Modal, ModalTitle, SectionCard, Select } from '..
 import { SpyReportDetail, type SpyReport } from '../../spyReports/components/SpyReportsView';
 import { useCitadelAPI } from '../../api/ApiContext';
 import { useMetadata } from '../../context/MetadataContext';
+import { useAuth } from '../../context/AuthContext';
+import { unitObservationFreshness } from '../../settings/requirements/observationFreshness';
 import {
 	ATTACK_PRESETS_SECTION,
 	parseAttackPresetDocument,
 	summarizeAttackPreset,
 } from '../../attackPresets/AttackPresetTypes';
+import { attackPresetSelectOptions } from '../../attackPresets/AttackPresetOptionLabel';
+import { attackPresetSlotDefinition } from '../../attackPresets/AttackPresetReferences';
 import { Notifications } from '../../components/Notifications';
 import { runtimeFetch } from '../../api/RuntimeURL';
 import type {
@@ -245,7 +250,7 @@ const AllianceTargetsContent = memo(({
   }, [loadTargets]);
 
   const changeSort = useCallback((key: SortKey) => {
-    const direction = queryRef.current.sort === key
+    const direction: SortDirection = queryRef.current.sort === key
       ? (queryRef.current.direction === 'asc' ? 'desc' : 'asc')
       : (key === 'might' || key === 'rpt' ? 'desc' : 'asc');
     const query = { ...queryRef.current, sort: key, direction, page: 1 };
@@ -557,6 +562,7 @@ interface PresetRequirement {
 const AllianceTargetAttackModal = ({ target, onClose }: AllianceTargetAttackModalProps) => {
   const { t: localizeStatic } = useStaticLocale();
 	const { state, configuration, previewAllianceTargetAttack, submitIntent } = useCitadelAPI();
+	const { gameLoggedIn } = useAuth();
 	const { troops, tools } = useMetadata();
 	const [sourceCastleID, setSourceCastleID] = useState('');
 	const [presetID, setPresetID] = useState('');
@@ -678,7 +684,12 @@ const AllianceTargetAttackModal = ({ target, onClose }: AllianceTargetAttackModa
 	const blockReason = attackBlockReason({
 		target,
 		sourceCastleSelected: sourceCastle != null,
-		inventoryObserved: Boolean(sourceCastle?.unitsObservedAt),
+		// The projection zeroes unitsObservedAt; counts are current only after this connection's baseline (CIT-15 D1).
+		inventoryObserved: sourceCastle != null && unitObservationFreshness({
+			castle: sourceCastle,
+			session: state?.session ?? null,
+			connected: gameLoggedIn,
+		}).state === 'observed',
 		presetSelected: preset != null,
 		preview,
 		previewLoading,
@@ -692,12 +703,9 @@ const AllianceTargetAttackModal = ({ target, onClose }: AllianceTargetAttackModa
 		value: String(castle.id),
 		label: `${castle.name || `Castle ${castle.id}`} · ${castle.x}:${castle.y}`,
 	}));
-	const presetOptions = document.presets.map((candidate) => {
+	const presetOptions = attackPresetSelectOptions(document.presets, (candidate) => {
 		const summary = summarizeAttackPreset(candidate);
-		return {
-			value: candidate.id,
-			label: `${candidate.name} · ${summary.troops.toLocaleString()} troops · ${summary.tools.toLocaleString()} tools`,
-		};
+		return `${summary.troops.toLocaleString()} troops · ${summary.tools.toLocaleString()} tools`;
 	});
 
 	const launch = async () => {
@@ -818,6 +826,15 @@ const AllianceTargetAttackModal = ({ target, onClose }: AllianceTargetAttackModa
 							searchable
 							menuGrowToViewport
 						/>
+						{preset?.app ? (
+							// No stored reference here: the composition is sent with the attack, so nothing is promoted.
+							<p className="mt-1.5 text-[11px] text-text-muted">
+								<LocalizedText
+									messageKey="allianceTargets.appCreatedPresetNote"
+									params={{ module: presetOwnerLabel(preset.app, localizeStatic) }}
+								/>
+							</p>
+						) : null}
 					</label>
 				</div>
 
@@ -976,3 +993,8 @@ function attackBlockReason(input: {
 }
 
 export default AllianceTargetsView;
+
+function presetOwnerLabel(app: { section: string; slot: string }, localize: (key: MessageKey) => string): string {
+	const definition = attackPresetSlotDefinition(app.section, app.slot);
+	return definition ? `${localize(definition.moduleLabelKey)} · ${localize(definition.slotLabelKey)}` : app.section;
+}

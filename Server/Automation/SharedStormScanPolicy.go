@@ -44,17 +44,14 @@ func (*SharedStormScanPolicy) WakeDomains() []string {
 }
 
 func (policy *SharedStormScanPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision, error) {
-	castle, found := autoStormCastle(snapshot.State, nil)
+	castle, found := autoStormCastle(&snapshot.State, nil)
 	if !found {
 		return Decision{
 			Status: "waiting", Detail: "Shared Storm scanning is waiting for this account to unlock the Storm kingdom", DetailDescriptor: Localization.New("server.automation.shared_storm_scanning_is.62cbc313", "Shared Storm scanning is waiting for this account to unlock the Storm kingdom", nil),
 			NextCheckAt: snapshot.Now.Add(time.Minute),
 		}, nil
 	}
-	worldID := strings.TrimSpace(snapshot.State.Account.WorldID)
-	if worldID == "" {
-		worldID = strings.TrimSpace(snapshot.State.Session.ServerURL)
-	}
+	worldID := State.SharedWorldID(&snapshot.State)
 	if worldID == "" {
 		return Decision{
 			Status: "waiting", Detail: "Shared Storm scanning is waiting for a bound game world", DetailDescriptor: Localization.New("server.automation.shared_storm_scanning_is.f871165f", "Shared Storm scanning is waiting for a bound game world", nil),

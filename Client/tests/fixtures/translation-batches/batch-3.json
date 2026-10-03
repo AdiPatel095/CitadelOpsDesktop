@@ -1,0 +1,75 @@
+{
+  "schema": 1,
+  "batch": 3,
+  "cuts": {
+    "desktop": {
+      "since": "3b3066d87fb98cb89b01908a508cde13745fc2fe",
+      "until": "96ad6c968e94d674eaf2fbc82356bdde2ff7a614"
+    },
+    "portal": {
+      "since": "89e8011a9aeeac2a822a32bf87c124d7eebab468",
+      "until": "b8fd1f7245217250ec377800c3b1eaaefbb4a67a"
+    }
+  },
+  "command": [
+    "node",
+    "scripts/localization/translation-batch.mjs",
+    "--batch",
+    "3",
+    "--since",
+    "3b3066d87fb98cb89b01908a508cde13745fc2fe",
+    "--until",
+    "96ad6c968e94d674eaf2fbc82356bdde2ff7a614",
+    "--peer-repo",
+    "../../cit-105-translations-batch-3",
+    "--peer-since",
+    "89e8011a9aeeac2a822a32bf87c124d7eebab468",
+    "--peer-until",
+    "b8fd1f7245217250ec377800c3b1eaaefbb4a67a"
+  ],
+  "families": {
+    "shared": {
+      "repository": "desktop",
+      "sources": [
+        "Client/src/i18n/messages.ts",
+        "Client/src/i18n/sourceMessages.ts"
+      ],
+      "catalogDirectory": "Client/src/i18n/catalogs",
+      "keys": [],
+      "allowEnglish": {}
+    },
+    "runtime": {
+      "repository": "desktop",
+      "sources": [
+        "Server/Localization/en.json"
+      ],
+      "catalogDirectory": "Server/Localization/locales",
+      "keys": [
+        "server.automation.protection_mode_unsupported_gates",
+        "server.automation.stationing_unsafe_unsupported_gates"
+      ],
+      "allowEnglish": {}
+    },
+    "portal": {
+      "repository": "portal",
+      "sources": [
+        "src/i18n/portal/en.json"
+      ],
+      "catalogDirectory": "src/i18n/portal",
+      "keys": [
+        "portal.state.accountsUnavailable",
+        "portal.state.retry"
+      ],
+      "allowEnglish": {}
+    }
+  },
+  "authorship": {
+    "status": "model-authored, pending native review",
+    "batch": 3,
+    "story": "CIT-105"
+  },
+  "scopeNotes": {
+    "sharedGermanBacklogAtCut": 1628,
+    "policy": "Fixed batch-2-to-batch-3 cut key set only; legacy backlog and unused Fortress source entries excluded. CIT-69 and CIT-74 keys deferred to batch 4."
+  }
+}

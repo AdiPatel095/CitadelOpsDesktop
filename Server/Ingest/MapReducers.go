@@ -151,21 +151,18 @@ func reduceMapSnapshot(
 	if !frameSucceeded(frame) || len(frame.Payload) == 0 {
 		return nil, false, nil
 	}
-	var payload struct {
-		KingdomID json.RawMessage `json:"KID"`
-		Nodes     json.RawMessage `json:"AI"`
-	}
-	if err := json.Unmarshal(frame.Payload, &payload); err != nil {
+	kingdomRaw, nodes, nodesValid, err := mapSnapshotPayload(frame)
+	if err != nil {
 		return nil, false, fmt.Errorf("decode map snapshot: %w", err)
 	}
-	kingdomIDValue, kingdomValid := rawJSONInt64(payload.KingdomID)
+	kingdomIDValue, kingdomValid := rawJSONInt64(kingdomRaw)
 	if !kingdomValid || kingdomIDValue < 0 {
 		return nil, false, fmt.Errorf("map snapshot has an invalid kingdom id")
 	}
-	nodes, nodesValid := decodeRows(payload.Nodes)
 	if !nodesValid || nodes == nil {
 		return nil, false, fmt.Errorf("map snapshot does not contain a valid AI array")
 	}
+
 	for index, row := range nodes {
 		typeID, typeValid := rowExactInt(row, 0)
 		x, xValid := rowExactInt(row, 1)
@@ -191,7 +188,7 @@ func reduceMapSnapshot(
 		changed = true
 		if targetMissing {
 			verification := gameState.Session.FortressTargetVerification
-			if gameState.DeleteMapObservation(verification.KingdomID, fmt.Sprintf("%d:%d", verification.TargetX, verification.TargetY)) {
+			if gameState.DeleteMapObservation(verification.KingdomID, State.MapCoordinateKey(verification.TargetX, verification.TargetY)) {
 				changedMapKinds[State.MapProjectionFortress] = struct{}{}
 			}
 		}
@@ -234,7 +231,7 @@ func reduceMapSnapshot(
 				}
 			}
 		}
-		previous, previousExists := gameState.LookupMapObservation(kingdomID, fmt.Sprintf("%d:%d", x, y))
+		previous, previousExists := gameState.LookupMapObservation(kingdomID, State.MapCoordinateKey(x, y))
 		if previousExists && previous.TypeID != typeID {
 			if kind, retained := State.MapProjectionKindForType(previous.TypeID); retained {
 				changedMapKinds[kind] = struct{}{}
@@ -255,7 +252,7 @@ func reduceMapSnapshot(
 			// Lord castle defeated and reverted to a dynamic area). Keeping the
 			// old retained observation would leave a phantom target that every
 			// scan silently re-confirms — drop it so policies stop selecting it.
-			if gameState.DeleteMapObservation(kingdomID, fmt.Sprintf("%d:%d", x, y)) {
+			if gameState.DeleteMapObservation(kingdomID, State.MapCoordinateKey(x, y)) {
 				changed = true
 				if kind, retained := State.MapProjectionKindForType(previous.TypeID); retained {
 					changedMapKinds[kind] = struct{}{}
@@ -419,11 +416,20 @@ func populateStormObservation(observation *State.MapObservation, row []json.RawM
 	if observation == nil || !isStormMapType(observation.TypeID) {
 		return
 	}
-	if len(row) > 3 {
-		observation.ObjectID = rowInt(row, 3)
-	}
+	// Official layouts (Game.bundle / ggs.dll parseAreaInfo):
+	// ResourceIsleMapobjectVO (24): [24, X, Y, objectId, occupierPId, kingdomID,
+	//   areaName, secondsSinceEspionage, isleID, remainingOccupierSec].
+	// DungeonIsleMapobjectVO (25): [25, X, Y, kingdomID, secondsSinceEspionage,
+	//   isleID, attackCooldownSec, victoryCount, isVisibleOnMap (e[8] <= 0)].
+	// Forts carry no object ID (row[3] is the kingdom shared by every fort) and
+	// no occupier (row[4] is the spy age, ignored). row[8] > 0 hides the fort;
+	// it is not a cooldown.
+	observation.ObjectID = 0
 	switch observation.TypeID {
 	case stormIslandMapTypeID:
+		if len(row) > 3 {
+			observation.ObjectID = rowInt(row, 3)
+		}
 		if len(row) < 10 {
 			return
 		}
@@ -433,9 +439,11 @@ func populateStormObservation(observation *State.MapObservation, row []json.RawM
 		if len(row) < 9 {
 			return
 		}
+		observation.OwnerID = 0
 		observation.StormIsleID = rowInt(row, 5)
 		observation.StormVictoryCount = rowInt(row, 7)
-		observation.StormCooldownRemaining = boundedWireSeconds(max(rowInt(row, 6), rowInt(row, 8)))
+		observation.StormCooldownRemaining = boundedWireSeconds(rowInt(row, 6))
+		observation.StormHidden = rowInt(row, 8) > 0
 	}
 	if gameData == nil {
 		return
@@ -516,9 +524,12 @@ func populateFortressObservation(observation *State.MapObservation, row []json.R
 		return
 	}
 	// Captured boss-dungeon rows are
-	// [11, X, Y, lastSpyAge, dungeonLevel, effectiveCooldownSec,
-	//  lastDefeaterPlayerID, kingdomID]. The effective cooldown already reflects
-	// the viewer's personal five-day lockout after a successful defeat.
+	// [11, X, Y, lastSpyAge, dungeonLevel, cooldownSec,
+	//  lastDefeaterPlayerID, kingdomID]. Official BossdungeonMapobjectVO derives
+	// attackability from index 5 alone and uses index 6 only for display, so
+	// index 5 is not proof that the viewer's personal five-day lockout ended:
+	// beta evidence showed GAA 0 followed by ABI 95 (COOLING_DOWN) within 200 ms.
+	// A rejection is kept in AttackAnalytics.RejectedTargets (CIT-13).
 	observation.Level = int(rowInt(row, 4))
 	observation.TowerCooldownRemaining = boundedWireSeconds(rowInt(row, 5))
 	observation.FortressDefeaterPlayerID = State.PlayerID(rowInt(row, 6))
@@ -742,16 +753,15 @@ func reduceNestedMapSnapshot(
 	if !frameSucceeded(frame) || len(frame.Payload) == 0 {
 		return nil, false, nil
 	}
-	var root map[string]json.RawMessage
-	if err := json.Unmarshal(frame.Payload, &root); err != nil {
+	root, err := frame.PayloadRoot()
+	if err != nil {
 		return nil, false, fmt.Errorf("decode nested map snapshot: %w", err)
 	}
-	nested := root["gaa"]
-	if len(nested) == 0 {
+	nested, found := frame.NestedPayload("gaa")
+	if !found || len(nested.Payload) == 0 {
 		return nil, false, nil
 	}
-	frame.Payload = nested
-	domains, changed, err := reduceMapSnapshot(ctx, frame, gameState, gameData)
+	domains, changed, err := reduceMapSnapshot(ctx, nested, gameState, gameData)
 	if err != nil || frame.Opcode != "fnt" {
 		return domains, changed, err
 	}
@@ -759,7 +769,7 @@ func reduceNestedMapSnapshot(
 		KingdomID wireInt64           `json:"KID"`
 		Nodes     [][]json.RawMessage `json:"AI"`
 	}
-	if json.Unmarshal(nested, &mapPayload) != nil || State.KingdomID(mapPayload.KingdomID) != State.KingdomID(GameData.BerimondKingdomID) ||
+	if json.Unmarshal(nested.Payload, &mapPayload) != nil || State.KingdomID(mapPayload.KingdomID) != State.KingdomID(GameData.BerimondKingdomID) ||
 		len(mapPayload.Nodes) == 0 {
 		return domains, changed, nil
 	}
@@ -808,14 +818,33 @@ func reduceNestedMapPlayerProtection(
 	if !frameSucceeded(frame) || len(frame.Payload) == 0 {
 		return nil, false, nil
 	}
-	var root map[string]json.RawMessage
-	if err := json.Unmarshal(frame.Payload, &root); err != nil {
+	_, err := frame.PayloadRoot()
+	if err != nil {
 		return nil, false, fmt.Errorf("decode nested map protection envelope: %w", err)
 	}
-	nested := root["gaa"]
-	if len(nested) == 0 {
+	nested, found := frame.NestedPayload("gaa")
+	if !found || len(nested.Payload) == 0 {
 		return nil, false, nil
 	}
-	frame.Payload = nested
-	return reducePlayerProtectionMode(ctx, frame, gameState, gameData)
+	return reducePlayerProtectionMode(ctx, nested, gameState, gameData)
+}
+
+func mapSnapshotPayloadFromPayload(raw json.RawMessage) (json.RawMessage, [][]json.RawMessage, bool, error) {
+	var payload struct {
+		KingdomID json.RawMessage `json:"KID"`
+		Nodes     json.RawMessage `json:"AI"`
+	}
+	if err := json.Unmarshal(raw, &payload); err != nil {
+		return nil, nil, false, err
+	}
+	nodes, valid := decodeRows(payload.Nodes)
+	return payload.KingdomID, nodes, valid, nil
+}
+func mapSnapshotPayload(frame Protocol.Frame) (json.RawMessage, [][]json.RawMessage, bool, error) {
+	root, err := frame.PayloadRoot()
+	if err != nil || Protocol.HasCaseFoldedAlias(root, "KID", "AI") {
+		return mapSnapshotPayloadFromPayload(frame.Payload)
+	}
+	nodes, valid := frame.PayloadRows("AI")
+	return root["KID"], nodes, valid, nil
 }

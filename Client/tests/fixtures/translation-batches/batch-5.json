@@ -1,0 +1,170 @@
+{
+  "schema": 1,
+  "batch": 5,
+  "cuts": {
+    "desktop": {
+      "since": "5bd6354e5596abeb321015fc1a4ad7727e640f2a",
+      "until": "4191936342597745ee62c3861ebf09c7e7d68057"
+    },
+    "portal": {
+      "since": "647ec8db09fcdd4457406a1e2dee1f00801c2be3",
+      "until": "027e7588613394b0bc3401e852822c8ece2e814f"
+    }
+  },
+  "command": [
+    "node",
+    "scripts/localization/translation-batch.mjs",
+    "--batch",
+    "5",
+    "--since",
+    "5bd6354e5596abeb321015fc1a4ad7727e640f2a",
+    "--until",
+    "4191936342597745ee62c3861ebf09c7e7d68057",
+    "--peer-repo",
+    "../../cit-111-portal",
+    "--peer-since",
+    "647ec8db09fcdd4457406a1e2dee1f00801c2be3",
+    "--peer-until",
+    "027e7588613394b0bc3401e852822c8ece2e814f",
+    "--output",
+    "/Users/nebulabot/Desktop/CIT/task-evidence/cit-111/generated-batch-5.json"
+  ],
+  "families": {
+    "shared": {
+      "repository": "desktop",
+      "sources": [
+        "Client/src/i18n/messages.ts",
+        "Client/src/i18n/sourceMessages.ts"
+      ],
+      "catalogDirectory": "Client/src/i18n/catalogs",
+      "keys": [],
+      "allowEnglish": {}
+    },
+    "runtime": {
+      "repository": "desktop",
+      "sources": [
+        "Server/Localization/en.json"
+      ],
+      "catalogDirectory": "Server/Localization/locales",
+      "keys": [
+        "server.api.operation_cursor_is_not.416989c7",
+        "server.api.operation_history_must_be.e857bc21",
+        "server.app.cra_storm_fort_p.1f3b58c9",
+        "server.app.deferred_target_p_p.0fa69e17",
+        "server.app.equipment_sale_guard_requires.3a0db83d",
+        "server.app.equipment_state_is_unavailable.59c90ca3",
+        "server.app.intent_plan_became_stale.388ea395",
+        "server.app.intent_plan_became_stale.6001ec0b",
+        "server.app.intent_plan_became_stale.833a5d6a",
+        "server.app.intent_plan_became_stale.ae1e717e",
+        "server.app.intent_plan_became_stale.d99b47c6",
+        "server.app.intent_plan_became_stale.fb9e1e91",
+        "server.app.intent_plan_became_stale.fbfef31a",
+        "server.app.storm_fort_p_p.f03e1d2d",
+        "server.automation.watching_for_incoming_attacks.60f06f25",
+        "server.gamedata.the_attack_was_not.8589c6cb",
+        "server.gamedata.the_attack_was_not.d9661ba8",
+        "server.gamedata.the_current_recruitment_order.99c86d86",
+        "server.gamedata.the_equipment_item_was.94fc0647",
+        "server.gamedata.the_game_has_no.2cd515eb",
+        "server.gamedata.the_purchase_was_rejected.3e23965a",
+        "server.gamedata.the_recruitment_order_cannot.1886103f",
+        "server.gamedata.the_spy_report_is.0abc413e",
+        "server.gamedata.this_equipment_is_no.40ff15b6"
+      ],
+      "allowEnglish": {}
+    },
+    "portal": {
+      "repository": "portal",
+      "sources": [
+        "src/i18n/portal/en.json"
+      ],
+      "catalogDirectory": "src/i18n/portal",
+      "keys": [
+        "portal.copy.account_id_value_8193239021",
+        "portal.copy.account_owner_801ba134b1",
+        "portal.copy.admin_access_includes_changing_the_saved_game_login_deleting_c1b1fb84e1",
+        "portal.copy.admin_c1c224b03c",
+        "portal.copy.beta_703390318b",
+        "portal.copy.beta_select_yes_beta_other_regular_pending_select_yes_switch_d0435c5159",
+        "portal.copy.beta_select_yes_hosted_accounts_beta_other_hosted_accounts_f453a7e758",
+        "portal.copy.beta_select_yes_no_accounts_switched_to_beta_other_no_accoun_9592961155",
+        "portal.copy.beta_select_yes_only_accounts_switched_to_beta_appear_here_e_acbc772e78",
+        "portal.copy.busy_select_yes_requesting_other_switch_to_beta_select_yes_b_70d8c1647d",
+        "portal.copy.checking_accounts_0b02ddd818",
+        "portal.copy.checking_version_f40c36dd4a",
+        "portal.copy.copied_8d525e5f15",
+        "portal.copy.copy_e21f935f11",
+        "portal.copy.could_not_copy_select_the_details_and_copy_them_fbff776ebf",
+        "portal.copy.could_not_load_account_access_9ccd7ae9ca",
+        "portal.copy.could_not_share_this_account_eadefb6a0e",
+        "portal.copy.editor_936a161c39",
+        "portal.copy.enable_name_uses_1_ops_credit_from_the_owner_for_30_days_ed94a65732",
+        "portal.copy.last_checkpoint_value_fdc0a30926",
+        "portal.copy.last_login_response_value_7baa7bda5c",
+        "portal.copy.never_6300ef800b",
+        "portal.copy.new_accounts_start_on_the_regular_version_betaaccess_select__e703c891ea",
+        "portal.copy.not_available_67a926f700",
+        "portal.copy.not_licensed_enabling_uses_1_ops_credit_owner_select_yes_oth_7378f0f849",
+        "portal.copy.not_started_ba35f0c47d",
+        "portal.copy.open_beta_select_yes_beta_other_regular_account_center_ae93d7434a",
+        "portal.copy.owner_4b1b8aa360",
+        "portal.copy.people_with_account_access_8b62b78dbb",
+        "portal.copy.regular_b455784ab5",
+        "portal.copy.running_f4ccae29e1",
+        "portal.copy.running_on_cell_615b88c161",
+        "portal.copy.runtime_value_8dc456f660",
+        "portal.copy.server_code_value_d1086c72a4",
+        "portal.copy.share_account_access_abec2af1c1",
+        "portal.copy.shared_with_you_as_an_admin_billing_stays_with_the_owner_c629995f05",
+        "portal.copy.shared_with_you_as_an_editor_the_game_login_and_billing_stay_9d46b6715b",
+        "portal.copy.stopped_1a4f630ac1",
+        "portal.copy.switch_name_to_beta_select_yes_beta_other_the_regular_versio_1089fa6a25",
+        "portal.copy.switching_name_to_beta_select_yes_beta_other_the_regular_ver_6f2fffeef7",
+        "portal.copy.technical_details_890ab358a5",
+        "portal.copy.the_account_owner_cannot_be_removed_307a9dc49f",
+        "portal.copy.the_owner_always_remains_an_admin_admins_can_manage_every_pa_5949949578",
+        "portal.copy.the_owner_manages_renewal_411e43ab97",
+        "portal.copy.version_value_0de62c91d6",
+        "portal.copy.world_id_value_3007efdb5e",
+        "portal.copy.you_own_this_account_544cff8183",
+        "portal.copy.your_accounts_preview_select_yes_preview_other_e6e5061d48"
+      ],
+      "allowEnglish": {
+        "portal.copy.beta_703390318b": {
+          "cs": "Beta is the established localized software-release label with unchanged spelling.",
+          "da": "Beta is the established localized software-release label with unchanged spelling.",
+          "de": "Beta is the established localized software-release label with unchanged spelling.",
+          "es": "Beta is the established localized software-release label with unchanged spelling.",
+          "it": "Beta is the established localized software-release label with unchanged spelling.",
+          "lt": "Beta is the established localized software-release label with unchanged spelling.",
+          "no": "Beta is the established localized software-release label with unchanged spelling.",
+          "pl": "Beta is the established localized software-release label with unchanged spelling.",
+          "pt": "Beta is the established localized software-release label with unchanged spelling.",
+          "ro": "Beta is the established localized software-release label with unchanged spelling.",
+          "sk": "Beta is the established localized software-release label with unchanged spelling.",
+          "sv": "Beta is the established localized software-release label with unchanged spelling.",
+          "tr": "Beta is the established localized software-release label with unchanged spelling."
+        },
+        "portal.copy.version_value_0de62c91d6": {
+          "da": "Version is the standard localized technical term with unchanged spelling; its value parameter remains unchanged.",
+          "de": "Version is the standard localized technical term with unchanged spelling; its value parameter remains unchanged.",
+          "sv": "Version is the standard localized technical term with unchanged spelling; its value parameter remains unchanged."
+        },
+        "portal.copy.regular_b455784ab5": {
+          "pt": "Regular is an established localized label with unchanged spelling, reused from an existing catalog entry."
+        }
+      }
+    }
+  },
+  "authorship": {
+    "status": "model-authored, pending native review",
+    "batch": 5,
+    "story": "CIT-111"
+  },
+  "scopeNotes": {
+    "source": "CIT Doc Vault/Releases/Notes/2026-10-02 develop to main promotion preparation.md#Translation readiness",
+    "policy": "CEO-authorized explicit list: 36 UI, 24 runtime and 48 portal-owned keys. Older backlog and changed existing English values are excluded. Runtime and portal gaps predate the previous cut and are included by this explicit release scope.",
+    "backend": "No backend translation gap; the 3 backend keys in the release audit are covered by batch 4. Backend and official catalogs are unchanged."
+  }
+}

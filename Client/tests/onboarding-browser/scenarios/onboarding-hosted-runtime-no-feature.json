@@ -1,0 +1,32 @@
+{
+  "id": "onboarding-hosted-runtime-no-feature",
+  "title": "Runtime up, no feature configured",
+  "purpose": "Connected and synced with nothing saved.",
+  "step": "11",
+  "platforms": [
+    "desktop",
+    "hosted"
+  ],
+  "modules": [
+    "autoNomad",
+    "account-center-hosted"
+  ],
+  "simulated": [
+    "banner: Simulated preview: sample data only. Nothing here reaches the game or an account.",
+    "dock: Candidate <short SHA>"
+  ],
+  "expect": [
+    "Connected is done; Required choices saved is next; Turned on is not offered yet.",
+    "Hosted: this scenario checks the Account Center card (ready, running) and the checklist. The running-runtime panel text is checked on zero-castles or stale-data-awaiting-baseline, where the repair panel can be opened."
+  ],
+  "hostedOnly": "Hosted Account Center shows the fictional 'Demo Keep' account with the three-way copy (Start the hosted runtime / Turn on <Feature> / First result); the Add-account form is never opened.",
+  "hostedAccount": {
+    "status": "ready",
+    "runtimeCreated": true,
+    "runtimePresent": true,
+    "loggedIn": true
+  },
+  "columns": [
+    "goal"
+  ]
+}

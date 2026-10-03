@@ -1,0 +1,84 @@
+{
+  "id": "khan-defense-fresh",
+  "title": "Khan: main-castle defense observed after this connection started",
+  "purpose": "The main castle's defense and tool inventory were read after the session began, so the starter can be previewed and applied.",
+  "step": "4",
+  "platforms": [
+    "desktop",
+    "hosted"
+  ],
+  "modules": [
+    "autoKhan"
+  ],
+  "simulated": [
+    "banner: Simulated preview: sample data only. Nothing here reaches the game or an account.",
+    "dock: Candidate <short SHA>"
+  ],
+  "expect": [
+    "'Use current main-castle defense' is enabled; the preview lists wall splits and tools; applying it creates 'Auto Khan \u2013 Main castle defense (auto)' (Created by app) and does not save or start anything.",
+    "The 'defense names no tools' line is absent."
+  ],
+  "patch": {
+    "state": {
+      "castles": {
+        "4101": {
+          "defense": {
+            "observedAt": "@now-5m",
+            "inventoryObservedAt": "@now-5m",
+            "wall": {
+              "left": {
+                "toolSlots": [
+                  {
+                    "definitionId": 201,
+                    "amount": 200
+                  }
+                ],
+                "unitPercent": 30,
+                "unitTypePercent": 60
+              },
+              "middle": {
+                "toolSlots": [
+                  {
+                    "definitionId": 203,
+                    "amount": 150
+                  }
+                ],
+                "unitPercent": 40,
+                "unitTypePercent": 60
+              },
+              "right": {
+                "toolSlots": [
+                  {
+                    "definitionId": 201,
+                    "amount": 200
+                  }
+                ],
+                "unitPercent": 30,
+                "unitTypePercent": 60
+              }
+            },
+            "moat": {
+              "leftToolSlots": [
+                {
+                  "definitionId": 204,
+                  "amount": 100
+                }
+              ],
+              "middleToolSlots": [],
+              "rightToolSlots": []
+            }
+          }
+        }
+      }
+    },
+    "config": {
+      "automation.autoKhan": {
+        "version": 1,
+        "sourceCastleId": 4101
+      }
+    }
+  },
+  "columns": [
+    "inline"
+  ]
+}

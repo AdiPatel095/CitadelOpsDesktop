@@ -63,19 +63,19 @@ func ApplicationScope() ScopeKey {
 	return ScopeKey{Kind: ScopeApplication}
 }
 
-func SessionScope(state GameState) ScopeKey {
+func SessionScope(state *GameState) ScopeKey {
 	return ScopeKey{
 		Kind: ScopeSession, World: strings.TrimSpace(state.Session.ServerURL), PlayerID: state.Player.ID,
 		SessionGeneration: state.Session.Generation, ConnectionGeneration: state.Session.ConnectionGeneration,
 	}
 }
 
-func AccountScope(state GameState) ScopeKey {
+func AccountScope(state *GameState) ScopeKey {
 	worldID, playerID := BoundAccount(state)
 	return ScopeKey{Kind: ScopeAccount, World: worldID, PlayerID: playerID}
 }
 
-func KingdomScope(state GameState, kingdomID KingdomID) ScopeKey {
+func KingdomScope(state *GameState, kingdomID KingdomID) ScopeKey {
 	worldID, playerID := BoundAccount(state)
 	return ScopeKey{
 		Kind: ScopeKingdom, World: worldID, PlayerID: playerID,
@@ -83,7 +83,7 @@ func KingdomScope(state GameState, kingdomID KingdomID) ScopeKey {
 	}
 }
 
-func CastleScope(state GameState, castleID CastleID) ScopeKey {
+func CastleScope(state *GameState, castleID CastleID) ScopeKey {
 	worldID, playerID := BoundAccount(state)
 	kingdomID := KingdomID(0)
 	if castle, found := state.Castles[castleID]; found {
@@ -95,7 +95,7 @@ func CastleScope(state GameState, castleID CastleID) ScopeKey {
 	}
 }
 
-func BoundAccount(state GameState) (string, PlayerID) {
+func BoundAccount(state *GameState) (string, PlayerID) {
 	worldID := strings.TrimSpace(state.Account.WorldID)
 	if worldID == "" {
 		worldID = strings.TrimSpace(state.Session.ServerURL)
@@ -132,19 +132,19 @@ func ApplicationPartition(capability string) PartitionKey {
 	return PartitionKey{Capability: normalizeCapability(capability), Scope: ApplicationScope()}
 }
 
-func SessionPartition(state GameState, capability string) PartitionKey {
+func SessionPartition(state *GameState, capability string) PartitionKey {
 	return PartitionKey{Capability: normalizeCapability(capability), Scope: SessionScope(state)}
 }
 
-func AccountPartition(state GameState, capability string) PartitionKey {
+func AccountPartition(state *GameState, capability string) PartitionKey {
 	return PartitionKey{Capability: normalizeCapability(capability), Scope: AccountScope(state)}
 }
 
-func KingdomPartition(state GameState, capability string, kingdomID KingdomID) PartitionKey {
+func KingdomPartition(state *GameState, capability string, kingdomID KingdomID) PartitionKey {
 	return PartitionKey{Capability: normalizeCapability(capability), Scope: KingdomScope(state, kingdomID)}
 }
 
-func CastlePartition(state GameState, capability string, castleID CastleID) PartitionKey {
+func CastlePartition(state *GameState, capability string, castleID CastleID) PartitionKey {
 	return PartitionKey{Capability: normalizeCapability(capability), Scope: CastleScope(state, castleID)}
 }
 
@@ -256,6 +256,24 @@ type ProtocolContextState struct {
 	RecruitmentAHRFocusCovered  bool            `json:"recruitmentAhrFocusCovered,omitempty"`
 	RecruitmentAHRPending       bool            `json:"recruitmentAhrPending,omitempty"`
 	ObservedAt                  time.Time       `json:"observedAt,omitempty"`
+	// FocusedKingdomID is the kingdom of the castle selected by the last
+	// committed JAA/JCA; the game resolves kingdom-scoped commands against it.
+	FocusedKingdomID KingdomID `json:"focusedKingdomId,omitempty"`
+	// FocusChangedAt is when FocusEpoch last advanced.
+	FocusChangedAt time.Time `json:"focusChangedAt,omitempty"`
+	// MapReadSentAt is when the latest outbound GAA was sent.
+	MapReadSentAt time.Time `json:"mapReadSentAt,omitempty"`
+	// MapReadSettledAt is the receive time of the latest committed inbound
+	// GAA/JAA/JCA reply. The connection is processed in order, so such a reply
+	// received after MapReadSentAt proves the game already handled that read.
+	MapReadSettledAt time.Time `json:"mapReadSettledAt,omitempty"`
+}
+
+// MapReadInFlight reports an outbound world-map read that neither advanced
+// the committed focus nor was followed by a committed context reply.
+func (context ProtocolContextState) MapReadInFlight() bool {
+	return !context.MapReadSentAt.IsZero() && context.MapReadSentAt.After(context.FocusChangedAt) &&
+		context.MapReadSentAt.After(context.MapReadSettledAt)
 }
 
 type PlanningView struct {
@@ -327,7 +345,7 @@ func CapabilityForDomain(domain string) string {
 	}
 }
 
-func defaultPartitionKeys(state GameState, domains []string) []PartitionKey {
+func defaultPartitionKeys(state *GameState, domains []string) []PartitionKey {
 	keys := make([]PartitionKey, 0, len(domains)+2)
 	for _, domain := range domains {
 		capability := CapabilityForDomain(domain)
@@ -568,7 +586,7 @@ func advancePartitionVersions(
 	return &next, changed
 }
 
-func initialProtocolContext(state GameState) ProtocolContextState {
+func initialProtocolContext(state *GameState) ProtocolContextState {
 	context := ProtocolContextState{
 		SessionGeneration: state.Session.Generation, ConnectionGeneration: state.Session.ConnectionGeneration,
 	}
@@ -586,7 +604,7 @@ func initialProtocolContext(state GameState) ProtocolContextState {
 
 func nextProtocolContext(
 	current ProtocolContextState,
-	state GameState,
+	state *GameState,
 	domains []string,
 	partitions []PartitionKey,
 	focusSubcontext FocusSubcontext,
@@ -598,8 +616,10 @@ func nextProtocolContext(
 		next.SessionGeneration = state.Session.Generation
 		next.ConnectionGeneration = state.Session.ConnectionGeneration
 		next.FocusedCastleID = 0
+		next.FocusedKingdomID = 0
 		next.FocusSubcontext = FocusSubcontextUnknown
 		next.FocusEpoch++
+		next.FocusChangedAt = observedAt
 		clearRecruitmentBUPBatch(&next)
 		next.ObservedAt = observedAt
 	}
@@ -624,10 +644,17 @@ func nextProtocolContext(
 		// A newly selected castle comes from a castle snapshot such as JAA.
 		nextSubcontext = FocusSubcontextCastle
 	}
+	focusedKingdomID := KingdomID(0)
+	if focusedCastleID != 0 {
+		focusedKingdomID = state.Castles[focusedCastleID].KingdomID
+	}
+	// The kingdom follows the focused castle; it does not start a new epoch.
+	next.FocusedKingdomID = focusedKingdomID
 	if next.FocusedCastleID != focusedCastleID || next.FocusSubcontext != nextSubcontext {
 		next.FocusedCastleID = focusedCastleID
 		next.FocusSubcontext = nextSubcontext
 		next.FocusEpoch++
+		next.FocusChangedAt = observedAt
 		clearRecruitmentBUPBatch(&next)
 	}
 	next.SessionGeneration = state.Session.Generation

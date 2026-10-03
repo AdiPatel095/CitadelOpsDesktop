@@ -26,9 +26,13 @@ export interface APIEnvelope<T = unknown> {
   v: 2;
   id?: string;
   type: string;
+  /** Store identity on state snapshots and resume greetings; absent on older workers. */
+  instance?: string;
   revision?: number;
   sequence?: number;
   gap?: boolean;
+  /** `state.changed` only: the revision the patch builds on (older servers omit it). */
+  baseRevision?: number;
   payload?: T;
 }
 
@@ -686,6 +690,9 @@ export interface CastleStateV2 {
 	resources: Record<string, ResourceBalanceV2>;
 	units: CastleUnitsV2;
 	unitsObservedAt?: string;
+	/** Real per-castle observation times (CIT-20); the zero time from older runtimes means "not reported". */
+	foodStateObservedAt?: string;
+	contextSnapshotObservedAt?: string;
 	defense: CastleDefenseStateV2;
 	buildings: Record<string, CastleBuildingV2>;
 	layout: CastleLayoutV2;
@@ -1672,13 +1679,15 @@ export interface AutoStormTroopCapPreviewV2 {
 
 export interface AttackLaunchDailySessionV2 {
 	startedAt: string;
-	launchesByFeature: Record<string, number>;
+	window?: 'day' | 'since';
+	launchesByFeature: Record<string, number> | null;
 }
 
 export interface AttackLaunchRatesV2 {
 	observedAt: string;
 	windowMinutes: number;
-	launchesByFeature: Record<string, number>;
+	windowStartedAt?: string;
+	launchesByFeature: Record<string, number> | null;
 	dailySession?: AttackLaunchDailySessionV2 | null;
 }
 
@@ -2073,6 +2082,7 @@ export interface KhanStateV2 {
 }
 
 export interface DailyAttackStateV2 {
+	countingStartedAt?: string;
 	count: number;
 	serverThreshold: number;
 	growthRate: number;

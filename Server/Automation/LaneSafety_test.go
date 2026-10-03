@@ -36,7 +36,8 @@ func TestSafetyLocksOnlyOriginatingLaneWithinSharedFeature(t *testing.T) {
 		for _, origin := range family {
 			t.Run(origin.ID(), func(t *testing.T) {
 				feature := policyActorID(origin)
-				store := State.NewStore(coordinatorReadyState())
+				accessorState1 := coordinatorReadyState()
+				store := State.NewStore(&accessorState1)
 				configuration := openCoordinatorTestConfiguration(t, feature)
 				before := configuration.Snapshot().Revision
 				registry := Intent.NewRegistry()
@@ -118,7 +119,8 @@ func TestSafetyLocksOnlyOriginatingLaneWithinSharedFeature(t *testing.T) {
 }
 
 func TestCoordinatorSafetyReceiptSuppressesFailureFallback(t *testing.T) {
-	store := State.NewStore(coordinatorReadyState())
+	accessorState2 := coordinatorReadyState()
+	store := State.NewStore(&accessorState2)
 	submitter := &safetyTestSubmitter{calls: make(chan Intent.Request, 3)}
 	policy := &coordinatorTestPolicy{id: "lane", decision: Decision{Status: "ready",
 		Request: &Intent.Request{Name: "primary"}, FailureFallback: &Intent.Request{Name: "fallback"},
@@ -147,7 +149,7 @@ func TestCoordinatorRestoredLockSurvivesConfigurationAndSessionChanges(t *testin
 	initial := coordinatorReadyState()
 	lock := State.AutomationSafetyLock{Lane: "lane", Opcode: "cra", Code: 256, OperationID: "incident", ObservedAt: time.Now().UTC()}
 	initial.Automations["lane"] = State.AutomationState{ID: "lane", SafetyLock: lock}
-	store := State.NewStore(initial)
+	store := State.NewStore(&initial)
 	policy := &coordinatorTestPolicy{id: "lane", snapshots: make(chan Snapshot, 5), decision: Decision{Status: "idle", EventDriven: true}}
 	coordinator := NewCoordinator(store, openCoordinatorTestConfiguration(t, "lane"), nil, nil, policy)
 	runtime := map[string]*policyRuntime{"lane": {evaluationPending: true, configurationRebuildPending: true}}

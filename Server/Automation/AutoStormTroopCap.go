@@ -49,7 +49,7 @@ type AutoStormTroopCapPreview struct {
 }
 
 func PreviewAutoStormTroopCap(
-	state State.GameState,
+	state *State.GameState,
 	configuration Configuration.Snapshot,
 	gameData *GameData.Store,
 	telemetry AttackLaunchCountsProvider,
@@ -71,7 +71,7 @@ func PreviewAutoStormTroopCap(
 		return AutoStormTroopCapPreview{}, Localization.WithError(fmt.Errorf("unsupported Auto Storm settings version %d", settings.Version), Localization.New("server.automation.unsupported_auto_storm_settings.3136b41a", "unsupported Auto Storm settings version {p0}", Localization.Params{"p0": settings.Version}))
 	}
 	return autoStormTroopCapPreview(Snapshot{
-		State: state, Configuration: configuration, GameData: gameData, Telemetry: telemetry, Now: now,
+		State: *state, Configuration: configuration, GameData: gameData, Telemetry: telemetry, Now: now,
 	}, settings)
 }
 
@@ -80,7 +80,7 @@ func autoStormTroopCapPreview(snapshot Snapshot, settings autoStormSettings) (Au
 		snapshot.Now = time.Now().UTC()
 	}
 	historyCount, measuredAttacks, troopsSent, averageHourlyTroops, bufferedTroops :=
-		autoStormLegacyAttackDemand(snapshot.State, snapshot.Now)
+		autoStormLegacyAttackDemand(&snapshot.State, snapshot.Now)
 	configured, detail, err := autoStormConfiguredTroops(snapshot, settings)
 	if err != nil {
 		return AutoStormTroopCapPreview{}, err
@@ -115,7 +115,7 @@ func autoStormTroopCapPreview(snapshot Snapshot, settings autoStormSettings) (Au
 		result.CapBasis = autoStormTroopCapBasisReserve
 	}
 	if snapshot.Telemetry == nil {
-		result.Detail = "Confirmed attack telemetry is unavailable"
+		result.Detail = "Confirmed attack count is not available yet."
 		return result, nil
 	}
 	counts, resetAvailable := snapshot.Telemetry.AttackLaunchCountsSince(resetStartedAt, snapshot.Now)
@@ -158,7 +158,7 @@ func autoStormTroopCapPreview(snapshot Snapshot, settings autoStormSettings) (Au
 }
 
 func autoStormLegacyAttackDemand(
-	state State.GameState,
+	state *State.GameState,
 	now time.Time,
 ) (int64, int64, int64, float64, int64) {
 	cutoff := now.Add(-autoStormTroopHistoryHours * time.Hour)

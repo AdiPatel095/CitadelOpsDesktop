@@ -45,13 +45,17 @@ func applyDailyAttackCount(raw json.RawMessage, observedAt time.Time, gameState 
 	observedAt = observedAt.UTC()
 	previous := gameState.DailyAttacks
 	sessionStartedAt := previous.SessionStartedAt
+	countingStartedAt := previous.CountingStartedAt
 	if (!previous.ObservedAt.IsZero() && count < previous.Count) ||
 		(previous.ObservedAt.IsZero() && count == 0) {
 		sessionStartedAt = observedAt
+		countingStartedAt = time.Time{}
+	} else if previous.ObservedAt.IsZero() && count > 0 {
+		countingStartedAt = observedAt
 	}
 	next := State.DailyAttackState{
 		Count: count, ServerThreshold: threshold, GrowthRate: float64(payload.GrowthRate),
-		SessionStartedAt: sessionStartedAt, ObservedAt: observedAt,
+		SessionStartedAt: sessionStartedAt, CountingStartedAt: countingStartedAt, ObservedAt: observedAt,
 		ConnectionGeneration: gameState.Session.ConnectionGeneration,
 	}
 	if reflect.DeepEqual(gameState.DailyAttacks, next) {

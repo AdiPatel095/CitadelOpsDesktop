@@ -1,13 +1,15 @@
 import { useLocale as useStaticLocale } from "../i18n/LocaleContext";
 import { LocalizedText } from "../i18n/LocalizedText";
 import { useLocale } from '../i18n/LocaleContext';
-import { LanguageSelector } from '../i18n/LanguageSelector';
 import React, { useEffect, useMemo, useState } from 'react';
 import { Bird, Lock, Menu, Radio, Settings, Shield, Trash2, Unlock } from 'lucide-react';
 import { useCitadelAPI } from '../api/ApiContext';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import AutoBirdHoverPopover from './AutoBirdHoverPopover';
+import AutoStationHoverPopover from './AutoStationHoverPopover';
+import { stationHeaderPill } from './stationHeaderPill';
+import { AutomationFeatureFeedback } from './AutomationFeatureFeedback';
 import CastleFocusSwitcher from './CastleFocusSwitcher';
 import DailyAttackTracker from './DailyAttackTracker';
 import { Notifications } from './Notifications';
@@ -24,15 +26,6 @@ function formatNextBirdIn(msLeft: number): string {
 }
 
 function formatConnectionSeconds(seconds: number): string {
-  if (seconds < 60) return `${seconds}s`;
-  const minutes = Math.floor(seconds / 60);
-  const remainder = seconds % 60;
-  return remainder > 0 ? `${minutes}m ${remainder}s` : `${minutes}m`;
-}
-
-function formatStationImpact(msLeft: number): string {
-  if (msLeft <= 0) return 'now';
-  const seconds = Math.ceil(msLeft / 1000);
   if (seconds < 60) return `${seconds}s`;
   const minutes = Math.floor(seconds / 60);
   const remainder = seconds % 60;
@@ -151,36 +144,22 @@ const Header: React.FC<HeaderProps> = ({
     }
   };
 
-  const autoStationPill = useMemo(() => {
-    if (!autoStationEnabled) return { tone: 'off' as const, text: 'Auto Station off' };
-    const impact = autoStationNextImpact > 0 ? formatStationImpact(autoStationNextImpact - nowTick) : '';
-    switch (autoStationState) {
-      case 'threat':
-        return { tone: 'warning' as const, text: `${autoStationThreatCount} incoming · ${impact || 'checking'}` };
-      case 'evacuating':
-        return { tone: 'warning' as const, text: 'Auto Station evacuating…' };
-      case 'protected':
-        return {
-          tone: 'on' as const,
-          text: autoStationThreatCount > 0 ? `${autoStationThreatCount} incoming protected` : 'Troops protected',
-        };
-      case 'recalling':
-        return { tone: 'on' as const, text: 'Auto Station recalling…' };
-      case 'waiting':
-        return { tone: 'warning' as const, text: 'Auto Station waiting' };
-      case 'error':
-        return { tone: 'error' as const, text: 'Auto Station error' };
-      default:
-        return { tone: 'on' as const, text: 'Auto Station armed' };
-    }
-  }, [autoStationEnabled, autoStationNextImpact, autoStationState, autoStationThreatCount, nowTick]);
+  const autoStationPill = useMemo(() => stationHeaderPill({
+    enabled: autoStationEnabled,
+    status: autoStationState,
+    threatCount: autoStationThreatCount,
+    nextImpact: autoStationNextImpact,
+    now: nowTick,
+    stationName: t('automationPopover.station.title'),
+    blockedLabel: t('runtimeState.phase', { phase: 'blocked' }),
+  }), [autoStationEnabled, autoStationNextImpact, autoStationState, autoStationThreatCount, nowTick, t]);
 
   const connectionPill = useMemo(() => {
     if (dashboardConnectionStatus !== 'Connected') {
       return {
         tone: 'warning' as const,
         pulse: true,
-        label: dashboardConnectionStatus === 'Connecting' ? 'Dashboard connecting…' : 'Dashboard reconnecting…',
+        label: dashboardConnectionStatus === 'Connecting' ? t('copy.connecting') : t('copy.reconnecting'),
         title: 'Game connection status is unavailable while the dashboard reconnects to CitadelOps.',
       };
     }
@@ -225,14 +204,14 @@ const Header: React.FC<HeaderProps> = ({
         return {
           tone: 'warning' as const,
           pulse: true,
-          label: 'Opening game socket…',
+          label: t('copy.connectingGame'),
           title: 'The game WebSocket handshake is in progress.',
         };
       case 'authenticating':
         return {
           tone: 'warning' as const,
           pulse: true,
-          label: 'Authenticating game…',
+          label: t('copy.loggingIn'),
           title: 'Game WebSocket is open; waiting for the game login to complete.',
         };
       case 'cooldown':
@@ -297,6 +276,7 @@ const Header: React.FC<HeaderProps> = ({
         };
     }
   }, [
+    t,
 		backgroundConnection,
     dashboardConnectionStatus,
     gameBrowserRunning,
@@ -350,7 +330,6 @@ const Header: React.FC<HeaderProps> = ({
   return (
     <header className="liquid-header transition-colors duration-300">
       <div className="liquid-header-inner relative z-10">
-        <LanguageSelector />
         <button
           type="button"
           className="liquid-mobile-nav-trigger"
@@ -372,7 +351,7 @@ const Header: React.FC<HeaderProps> = ({
             />
           </div>
           <div className="liquid-brand-copy">
-            <div className="text-lg font-bold leading-tight text-text-main">Citadel Ops</div>
+            <div className="text-lg font-bold leading-tight text-text-main">CitadelOps</div>
             <div className="text-[11px] font-medium leading-tight text-text-muted"><LocalizedText messageKey="navigation.commandCenter" /></div>
           </div>
           <span
@@ -409,6 +388,7 @@ const Header: React.FC<HeaderProps> = ({
                 enabled={autoBirdEnabled}
                 now={nowTick}
                 hint={autoBirdInteractionHint}
+                feedback={<AutomationFeatureFeedback featureId="autoBird" enabled={autoBirdEnabled} onOpenSettings={onOpenAutoBirdSettings} compact />}
               >
                 <Button
                   variant="ghost"
@@ -463,6 +443,7 @@ const Header: React.FC<HeaderProps> = ({
                     ? 'liquid-status-dock-item-danger'
                     : 'liquid-status-dock-item-muted'
             }`}>
+              <AutoStationHoverPopover feedback={<AutomationFeatureFeedback featureId="autoStation" enabled={autoStationEnabled} onOpenSettings={onOpenAutoStationSettings} compact />}>
               <Button
                 variant="ghost"
                 size="icon"
@@ -492,6 +473,7 @@ const Header: React.FC<HeaderProps> = ({
                 <Shield className="liquid-desktop-status-icon h-4 w-4" aria-hidden="true" />
                 <span className="liquid-desktop-status-text">{autoStationPill.text}</span>
               </Button>
+              </AutoStationHoverPopover>
               <span className="liquid-status-dock-utilities">
                 <Button
                   variant="ghost"

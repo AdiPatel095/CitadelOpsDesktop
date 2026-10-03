@@ -1,3 +1,4 @@
+import { StopFooter } from '../../components/StopControl';
 import { useLocale as useStaticLocale } from "../../i18n/LocaleContext";
 import { LocalizedText } from "../../i18n/LocalizedText";
 import React, { useEffect, useMemo, useState } from 'react';
@@ -29,6 +30,16 @@ import {
   type AutoBuyerPackageRuleV1,
   type AutoBuyerSpecialistRuleV1,
 } from '../AutoBuyerClientState';
+import { useConfigurationDraftSession } from '../ConfigurationDraftSession';
+import { checkIntervalLine, countCustomValues } from '../disclosure/summaries';
+import { useSettingsDisclosure } from '../disclosure/useSettingsDisclosure';
+import { SettingsSection } from './SettingsSection';
+import { useDraftRecovery } from '../useDraftRecovery';
+
+/** What the editor holds right after it loads a saved configuration: used by the load effect and by draft recovery. */
+function buyerDraftFrom(parsed: AutoBuyerClientStateV1, defaultCastleID: number): AutoBuyerClientStateV1 {
+  return { ...parsed, sourceCastleId: parsed.sourceCastleId || defaultCastleID, feast: { ...parsed.feast } };
+}
 
 interface AutoBuyerSettingsModalProps {
   isOpen: boolean;
@@ -38,12 +49,15 @@ interface AutoBuyerSettingsModalProps {
 type AutoBuyerSection = 'shops' | 'specialists' | 'feast';
 const ALL_AUTO_BUYER_CURRENCIES = 'all';
 const AUTO_BUYER_PROJECTION_REFRESH_MS = 15_000;
+const buyerDefaults = defaultAutoBuyerClientState();
 
 export const AutoBuyerSettingsModal: React.FC<AutoBuyerSettingsModalProps> = ({ isOpen, onClose }) => {
   const { t: localizeStatic } = useStaticLocale();
-  const { state, configuration, updateConfiguration } = useCitadelAPI();
+  const { state } = useCitadelAPI();
   const { autoBuyerEnabled, setAutomationEnabled } = useAuth();
-  const autoBuyerConfiguration = configuration?.sections[AUTO_BUYER_SECTION];
+  const draftSession = useConfigurationDraftSession({ isOpen, section: AUTO_BUYER_SECTION });
+  const disclosure = useSettingsDisclosure('autoBuyer');
+  const autoBuyerConfiguration = draftSession.initialSections?.[AUTO_BUYER_SECTION];
   const autoBuyerConfigurationKey = JSON.stringify(autoBuyerConfiguration ?? null);
   const savedSettings = useMemo(
     () => parseAutoBuyerClientState(JSON.parse(autoBuyerConfigurationKey)),
@@ -68,19 +82,15 @@ export const AutoBuyerSettingsModal: React.FC<AutoBuyerSettingsModalProps> = ({ 
   const defaultCastleID = castles[0]?.id ?? 0;
 
   useEffect(() => {
-    if (!isOpen) return;
+    if (!isOpen || !draftSession.initialSnapshot) return;
     const parsed = parseAutoBuyerClientState(JSON.parse(autoBuyerConfigurationKey));
-    setDraft({
-      ...parsed,
-      sourceCastleId: parsed.sourceCastleId || defaultCastleID,
-      feast: { ...parsed.feast },
-    });
+    setDraft(buyerDraftFrom(parsed, defaultCastleID));
     setFeastHoursInput(String(parsed.feast.minimumRemainingHours));
     setSection('shops');
     setSelectedShopId(parsed.packages.find((rule) => rule.enabled)?.shopId ?? '');
     setSelectedCurrencyKey(ALL_AUTO_BUYER_CURRENCIES);
     setQuery('');
-  }, [autoBuyerConfigurationKey, defaultCastleID, isOpen]);
+  }, [autoBuyerConfigurationKey, defaultCastleID, draftSession.initialSnapshot, draftSession.openKey, isOpen]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -103,7 +113,7 @@ export const AutoBuyerSettingsModal: React.FC<AutoBuyerSettingsModalProps> = ({ 
         );
         if (!completeCatalog) {
           setProjection(null);
-          setLoadError('This runtime did not return a complete Auto Buyer catalog. Refresh after the runtime is updated.');
+          setLoadError('This version could not load a complete Auto Buyer catalog. Refresh after updating.');
           return;
         }
         setProjection(catalog);
@@ -302,7 +312,7 @@ export const AutoBuyerSettingsModal: React.FC<AutoBuyerSettingsModalProps> = ({ 
           sourceCastleId: automaticFeastSourceSupported ? 0 : savedFeast.sourceCastleId,
         },
       });
-      await updateConfiguration(AUTO_BUYER_SECTION, normalized);
+      await draftSession.save(normalized);
       Notifications.success('Auto Buyer settings saved.');
       onClose();
     } catch (error) {
@@ -312,8 +322,11 @@ export const AutoBuyerSettingsModal: React.FC<AutoBuyerSettingsModalProps> = ({ 
     }
   };
 
+  const recovery = useDraftRecovery({ section: AUTO_BUYER_SECTION, isOpen, draftSession, draft: parseAutoBuyerClientState(draft), loaded: parseAutoBuyerClientState(buyerDraftFrom(parseAutoBuyerClientState(draftSession.sections?.[AUTO_BUYER_SECTION]), defaultCastleID)) });
+
   return (
     <SettingsModal
+      footerLeading={<StopFooter featureId="autoBuyer" />}
       isOpen={isOpen}
       onClose={() => { if (!saving) onClose(); }}
       maxWidth="6xl"
@@ -322,7 +335,9 @@ export const AutoBuyerSettingsModal: React.FC<AutoBuyerSettingsModalProps> = ({ 
       description={localizeStatic("ui.settings.components.autoBuyerSettingsModal.description.stock.resets.specialist.floors.and.feast.upkeep.a1fe045b")}
       onSave={() => void save()}
       isSaving={saving}
-      saveDisabled={!configurationValid || Boolean(loadError)}
+      saveDisabled={!configurationValid || Boolean(loadError) || !draftSession.ready}
+      contentDisabled={!draftSession.ready}
+      contentNotice={<>{recovery.banner}{draftSession.conflictNotice}</>}
     >
       <div className="space-y-3">
         <Card variant="solid" className="p-4">
@@ -345,6 +360,7 @@ export const AutoBuyerSettingsModal: React.FC<AutoBuyerSettingsModalProps> = ({ 
           </div>
         </Card>
 
+        <SettingsSection disclosure={disclosure} section="limits">
         <Card variant="solid" className="p-4">
           <div className="mb-4 flex items-start gap-3">
             <span className="rounded-xl bg-primary/10 p-2 text-primary"><ShieldCheck className="h-5 w-5" /></span>
@@ -366,13 +382,6 @@ export const AutoBuyerSettingsModal: React.FC<AutoBuyerSettingsModalProps> = ({ 
               />
             </label>
             <NumberField
-              label={localizeStatic("ui.settings.components.autoBuyerSettingsModal.label.check.every.minutes.c9fb0897")}
-              value={Math.round(draft.checkIntervalSec / 60)}
-              minimum={30}
-              maximum={60}
-              onChange={(minutes) => setDraft((current) => ({ ...current, checkIntervalSec: minutes * 60 }))}
-            />
-            <NumberField
               label={localizeStatic("ui.settings.components.autoBuyerSettingsModal.label.keep.at.least.rubies.1abbd768")}
               value={draft.minimumRubyReserve}
               minimum={0}
@@ -391,6 +400,9 @@ export const AutoBuyerSettingsModal: React.FC<AutoBuyerSettingsModalProps> = ({ 
             />
           </div>
         </Card>
+        </SettingsSection>
+
+        <SettingsSection disclosure={disclosure} section="goals" className="space-y-3">
 
         <div className="flex flex-wrap gap-2">
           <SectionButton active={section === 'shops'} onClick={() => setSection('shops')} icon={<Store className="h-4 w-4" />}>
@@ -560,7 +572,7 @@ export const AutoBuyerSettingsModal: React.FC<AutoBuyerSettingsModalProps> = ({ 
               <div>
                 <h3 className="text-sm font-black text-text-main"><LocalizedText messageKey="ui.settings.components.autoBuyerSettingsModal.specialist.renewal.floors.c3cb9aea" /></h3>
 				<p className="mt-1 text-xs text-text-muted"><LocalizedText messageKey="ui.settings.components.autoBuyerSettingsModal.enabled.floors.stay.between.14.and.365.55fa81de" /></p>
-				{!specialistUpkeepSupported ? <p className="mt-2 text-xs text-amber-300">{projection.specialistUpkeep?.reason || 'This runtime cannot safely automate specialist purchases yet. Saved goals can be disabled.'}</p> : null}
+				{!specialistUpkeepSupported ? <p className="mt-2 text-xs text-amber-300">{projection.specialistUpkeep?.reason || 'This version cannot safely automate specialist purchases yet. Saved goals can be disabled.'}</p> : null}
               </div>
               <div className="flex gap-2">
                 <Button variant="ghost" onClick={() => setAllSpecialists(false)}><LocalizedText messageKey="ui.settings.components.autoBuyerSettingsModal.disable.all.6cb2279d" /></Button>
@@ -646,7 +658,7 @@ export const AutoBuyerSettingsModal: React.FC<AutoBuyerSettingsModalProps> = ({ 
                   <p className="mt-1 text-xs text-text-muted">
                     {automaticFeastSourceSupported
                       ? 'The selected feast is started or extended one purchase at a time. Auto Buyer chooses the owned positive-net castle with the most food stored.'
-                      : 'This runtime does not expose the automatic feast-source and purchase-evidence contract required by these controls.'}
+                      : 'This version does not provide the automatic feast-source and purchase-evidence data these controls need.'}
                   </p>
                 </div>
                 <Switch
@@ -716,7 +728,7 @@ export const AutoBuyerSettingsModal: React.FC<AutoBuyerSettingsModalProps> = ({ 
                             : 'Selection waits for fresh stored-food and economy data from every usable owned castle; only positive-net castles qualify.'}
                         </p>
                       </>
-                    ) : <p className="mt-1 text-xs text-warning"><LocalizedText messageKey="ui.settings.components.autoBuyerSettingsModal.update.the.account.runtime.before.changing.or.f6cf7d7a" /></p>}
+                    ) : <p className="mt-1 text-xs text-warning"><LocalizedText messageKey="ui.settings.components.autoBuyerSettingsModal.update.this.version.before.changing.or.enabling.4be32c9b" /></p>}
                   </div>
                   {!selectedFeastSupported ? (
                     <div className="rounded-xl border border-warning/30 bg-warning/5 p-3 md:col-span-2">
@@ -792,6 +804,24 @@ export const AutoBuyerSettingsModal: React.FC<AutoBuyerSettingsModalProps> = ({ 
             </Card>
           </div>
         ) : null}
+        </SettingsSection>
+
+        <SettingsSection
+          disclosure={disclosure}
+          section="timing"
+          summary={[checkIntervalLine(draft.checkIntervalSec)]}
+          customCount={countCustomValues(draft, buyerDefaults, ['checkIntervalSec'])}
+        >
+          <div className="max-w-xs">
+              <NumberField
+              label={localizeStatic("ui.settings.components.autoBuyerSettingsModal.label.check.every.minutes.c9fb0897")}
+              value={Math.round(draft.checkIntervalSec / 60)}
+              minimum={30}
+              maximum={60}
+              onChange={(minutes) => setDraft((current) => ({ ...current, checkIntervalSec: minutes * 60 }))}
+              />
+          </div>
+        </SettingsSection>
       </div>
     </SettingsModal>
   );

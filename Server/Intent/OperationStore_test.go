@@ -133,7 +133,8 @@ func TestEngineUsesDurableOperationIDAsIdempotencyKey(t *testing.T) {
 		t.Fatal(err)
 	}
 	sender := &operationStoreSender{}
-	engine := NewEngine(registry, State.NewStore(State.NewGameState()), nil, sender, nil)
+	accessorState1 := State.NewGameState()
+	engine := NewEngine(registry, State.NewStore(&accessorState1), nil, sender, nil)
 	if err := engine.SetOperationStore(t.Context(), store); err != nil {
 		t.Fatal(err)
 	}
@@ -190,7 +191,8 @@ func TestEngineKeepsReadsInMemoryAndCheckpointsWrites(t *testing.T) {
 			t.Fatal(err)
 		}
 	}
-	engine := NewEngine(registry, State.NewStore(State.NewGameState()), nil, &operationStoreSender{}, nil)
+	accessorState2 := State.NewGameState()
+	engine := NewEngine(registry, State.NewStore(&accessorState2), nil, &operationStoreSender{}, nil)
 	if err := engine.RegisterAction("test.action", func(context.Context, json.RawMessage) error { return nil }); err != nil {
 		t.Fatal(err)
 	}

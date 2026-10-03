@@ -1,3 +1,4 @@
+import { useServerLabel } from '../useServerLabel';
 import { useLocale as useStaticLocale } from "../../i18n/LocaleContext";
 import { LocalizedText } from "../../i18n/LocalizedText";
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -34,6 +35,7 @@ import { WorldEventHistory, WorldPlayerEventHistory } from './WorldEventHistory'
 type SelectedEntity = { type: 'player' | 'alliance'; id: number; worldId: string };
 
 const WorldIntelligenceView = () => {
+	const displayWorld = useServerLabel();
   const { t: localizeStatic } = useStaticLocale();
 	const { state } = useCitadelAPI();
 	const [status, setStatus] = useState<WorldIntelligenceStatusV1 | null>(null);
@@ -108,7 +110,7 @@ const WorldIntelligenceView = () => {
 	}, [worldId]);
 
 	useEffect(() => {
-		if (!worldUpdate || worldUpdate.worldId !== displayWorld(worldId)) return;
+		if (!worldUpdate || worldUpdate.worldId !== normalizeWorldID(worldId)) return;
 		const previous = previousWorldUpdate.current;
 		previousWorldUpdate.current = worldUpdate;
 		if (!previous || worldUpdate.coverageRevision > previous.coverageRevision) {
@@ -187,7 +189,7 @@ const WorldIntelligenceView = () => {
 						<PageHeader
 							eyebrow={localizeStatic("ui.worldIntelligence.components.worldIntelligenceView.eyebrow.world.intelligence.dossier.9fad4808")}
 							title={selected.type === 'player' ? 'Loading player…' : 'Loading alliance…'}
-							description={`Loading public history from ${displayWorld(selected.worldId)}`}
+							description={localizeStatic('copy.loadingHistory', { server: displayWorld(selected.worldId) })}
 							icon={selected.type === 'player' ? <UserRound className="h-6 w-6" /> : <Users className="h-6 w-6" />}
 						/>
 						<Card><CardContent className="flex min-h-72 items-center justify-center text-sm text-text-muted"><LocalizedText messageKey="ui.worldIntelligence.components.worldIntelligenceView.loading.public.history.a3292dbc" /></CardContent></Card>
@@ -211,7 +213,7 @@ const WorldIntelligenceView = () => {
 						<PageHeader
 							eyebrow={localizeStatic("ui.worldIntelligence.components.worldIntelligenceView.eyebrow.world.intelligence.dossier.9fad4808")}
 							title={localizeStatic("ui.worldIntelligence.components.worldIntelligenceView.title.profile.unavailable.158e5a22")}
-							description={`No public profile was returned for ${displayWorld(selected.worldId)}`}
+							description={localizeStatic('copy.noProfile', { server: displayWorld(selected.worldId) })}
 							icon={selected.type === 'player' ? <UserRound className="h-6 w-6" /> : <Users className="h-6 w-6" />}
 						/>
 						<EmptyState size="lg" title={localizeStatic("ui.worldIntelligence.components.worldIntelligenceView.title.profile.unavailable.158e5a22")} description={localizeStatic("ui.worldIntelligence.components.worldIntelligenceView.description.no.usable.public.observations.were.returned.for.eb4c35e6")} />
@@ -259,7 +261,7 @@ const WorldIntelligenceView = () => {
 			) : (
 				<SectionCard
 					title={localizeStatic("ui.worldIntelligence.components.worldIntelligenceView.title.world.rankings.6bfc08e5")}
-					description={`One event-aware player table for ${displayWorld(worldId)} with permanent identity, Might, Honor, and Alliance columns.`}
+					description={localizeStatic('copy.rankings', { server: displayWorld(worldId) })}
 					icon={<Database className="h-5 w-5" />}
 				>
 					<WorldEventHistory
@@ -279,7 +281,7 @@ const WorldIntelligenceView = () => {
 	);
 };
 
-function displayWorld(value: string): string {
+function normalizeWorldID(value: string): string {
 	const trimmed = value.trim();
 	if (!trimmed) return '';
 	try {

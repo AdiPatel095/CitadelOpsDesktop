@@ -135,6 +135,9 @@ func (application *Application) registerGameIntents() error {
 	if err := application.Intents.RegisterAction("equipment.reconfigure.verify", application.verifyEquipmentReconfigure); err != nil {
 		return err
 	}
+	if err := application.Intents.RegisterAction(equipmentSaleGuardAction, application.guardEquipmentSale); err != nil {
+		return err
+	}
 	for name, action := range map[string]Intent.Action{
 		"equipment.reconfigure.extraction.arm":           application.armEquipmentExtraction,
 		"equipment.reconfigure.extraction.dispatch":      application.finalizeEquipmentExtractionDispatch,
@@ -947,7 +950,7 @@ func planCastleFocus(_ context.Context, input Intent.PlanningContext, arguments 
 	if !ok || request.CastleID <= 0 {
 		return Intent.Plan{}, Localization.WithError(fmt.Errorf("castle %d is not in the current player state", request.CastleID), Localization.New("server.app.castle_p_is_not.47524bcb", "castle {p0} is not in the current player state", Localization.Params{"p0": fmt.Sprintf("%d", request.CastleID)}))
 	}
-	if State.CastleFocusKnownUnavailable(input.State, castle) {
+	if State.CastleFocusKnownUnavailable(&input.State, castle) {
 		return Intent.Plan{}, Localization.WithError(fmt.Errorf(
 			"%w: castle %d cannot be focused in the current kingdom session", Intent.ErrPlanStale, request.CastleID,
 		), Localization.New("server.app.intent_plan_became_stale.f50ee7dc", "intent plan became stale before dispatch: castle {p1} cannot be focused in the current kingdom session", Localization.Params{"p1": fmt.Sprintf("%d", request.CastleID)}))

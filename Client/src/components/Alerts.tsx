@@ -2,57 +2,39 @@ import { parseMessageDescriptor } from '../i18n/messageDescriptor';
 import { useLocalizedMessages } from '../i18n/useLocalizedMessages';
 import { messageLanguageAttributes } from '../i18n/messageLanguage';
 import { useLocale as useStaticLocale } from "../i18n/LocaleContext";
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useSyncExternalStore } from 'react';
 import { Icons } from './Icons';
-import { Notifications, notificationDurationMs, type AppNotification } from './Notifications';
+import { NOTIFICATION_EXIT_MS, Notifications, type AppNotification, type VisibleNotification } from './Notifications';
 
 export const Alerts = () => {
-  const [alerts, setAlerts] = useState<AppNotification[]>([]);
+  const alerts = useSyncExternalStore(Notifications.subscribeVisible, Notifications.visible, Notifications.visible);
 
-  useEffect(() => Notifications.subscribe((notification) => {
-    setAlerts((current) => [
-      ...current.filter((item) => item.id !== notification.id),
-      notification,
-    ]);
-  }), []);
+  useEffect(() => {
+    Notifications.attach();
+    return () => Notifications.detach();
+  }, []);
 
   return (
     <div className="fixed top-24 right-6 z-50 flex w-96 max-w-[calc(100vw-3rem)] flex-col gap-3 pointer-events-none">
       {alerts.map((alert) => (
-        <AlertItem
-          key={`${alert.id}-${alert.revision}`}
-          alert={alert}
-          onDismiss={() => setAlerts((current) => current.filter((item) => (
-            item.id !== alert.id || item.revision !== alert.revision
-          )))}
-        />
+        <AlertItem key={alert.id} alert={alert} />
       ))}
     </div>
   );
 };
 
-const AlertItem = ({ alert, onDismiss }: { alert: AppNotification; onDismiss: () => void }) => {
+const AlertItem = ({ alert }: { alert: VisibleNotification }) => {
   const { t: localizeStatic } = useStaticLocale();
-  const [isExiting, setIsExiting] = useState(false);
-  const exitTimer = useRef<number | null>(null);
+  const { id, exiting } = alert;
 
-  const handleDismiss = () => {
-    if (exitTimer.current != null) return;
-    setIsExiting(true);
-    exitTimer.current = window.setTimeout(onDismiss, 300);
-  };
-
-  useEffect(() => () => {
-    if (exitTimer.current != null) window.clearTimeout(exitTimer.current);
-  }, []);
-
+  // The countdown lives in `Notifications`; the item only removes itself once the exit animation is over.
   useEffect(() => {
-    if (alert.persistent) return;
-    const timer = window.setTimeout(handleDismiss, notificationDurationMs(alert.category));
+    if (!exiting) return;
+    const timer = window.setTimeout(() => Notifications.remove(id), NOTIFICATION_EXIT_MS);
     return () => window.clearTimeout(timer);
-    // The timer intentionally starts only when this notification is mounted.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [alert.category, alert.id, alert.persistent, alert.revision]);
+  }, [id, exiting]);
+
+  const handleDismiss = () => Notifications.dismiss(id);
 
   const localized = useLocalizedMessages([{descriptor:parseMessageDescriptor(alert.messageDescriptor),legacyText:alert.message},...(alert.lines ?? []).map((line,index)=>({descriptor:parseMessageDescriptor(alert.lineDescriptors?.[index]),legacyText:line})),{descriptor:parseMessageDescriptor(alert.action?.labelDescriptor),legacyText:alert.action?.label ?? ''}]);
   const style = alertStyles(alert.category);
@@ -60,8 +42,15 @@ const AlertItem = ({ alert, onDismiss }: { alert: AppNotification; onDismiss: ()
 
   return (
     <div
-      className={`pointer-events-auto relative flex items-start gap-3 overflow-hidden rounded-xl border p-4 ${style.bg} ${style.border} ${style.shadow} transition-all duration-300 ease-out ${isExiting ? 'animate-fade-out-right' : 'animate-fade-in-right opacity-0'}`}
+      className={`pointer-events-auto relative flex items-start gap-3 overflow-hidden rounded-xl border p-4 ${style.bg} ${style.border} ${style.shadow} transition-all duration-300 ease-out ${exiting ? 'animate-fade-out-right' : 'animate-fade-in-right opacity-0'}`}
       role="alert"
+      onMouseEnter={() => Notifications.pause(id, 'hover')}
+      onMouseLeave={() => Notifications.resume(id, 'hover')}
+      onFocus={() => Notifications.pause(id, 'focus')}
+      onBlur={(event) => {
+        if (event.relatedTarget instanceof Node && event.currentTarget.contains(event.relatedTarget)) return;
+        Notifications.resume(id, 'focus');
+      }}
     >
       <div className="mt-0.5 shrink-0">{style.icon}</div>
       <div className={`flex min-w-0 flex-1 flex-col gap-2 text-sm ${style.text} ${hasLines ? 'max-h-[min(70vh,28rem)] overflow-y-auto pr-1' : ''}`}>

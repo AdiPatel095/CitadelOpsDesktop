@@ -62,7 +62,7 @@ func TestTowerQueueTargetRefreshQueriesAndRotatesOnlyWhenStillStale(t *testing.T
 		t.Fatalf("target refresh plan = %#v", plan.Steps)
 	}
 
-	application := &Application{State: State.NewStore(gameState)}
+	application := &Application{State: State.NewStore(&gameState)}
 	if err := application.rotateStaleTowerQueueEntry(context.Background(), arguments); err != nil {
 		t.Fatal(err)
 	}
@@ -76,7 +76,7 @@ func TestTowerQueueTargetRefreshQueriesAndRotatesOnlyWhenStillStale(t *testing.T
 	freshState.Map[0]["101:100"] = State.MapObservation{
 		KingdomID: 0, X: 101, Y: 100, TypeID: kingdomTowerMapTypeID, ObservedAt: now.Add(time.Second),
 	}
-	freshApplication := &Application{State: State.NewStore(freshState)}
+	freshApplication := &Application{State: State.NewStore(&freshState)}
 	if err := freshApplication.rotateStaleTowerQueueEntry(context.Background(), arguments); err != nil {
 		t.Fatal(err)
 	}
@@ -120,7 +120,7 @@ func TestTowerQueueCaptureStoresEveryFreshTowerAndConsumeRemovesOne(t *testing.T
 		"101:100": {KingdomID: 0, X: 101, Y: 100, TypeID: kingdomTowerMapTypeID, TowerVictoryCount: 845, Level: 81, ObservedAt: now},
 		"101:101": {KingdomID: 0, X: 101, Y: 101, TypeID: kingdomTowerMapTypeID, TowerVictoryCount: 845, Level: 81, TowerCooldownRemaining: 300, ObservedAt: now},
 	}
-	application := &Application{State: State.NewStore(gameState)}
+	application := &Application{State: State.NewStore(&gameState)}
 	arguments, err := json.Marshal(towerQueueScanRequest{SourceCastleID: 1, Radius: 2, ScanStartedAt: now.Add(-time.Second)})
 	if err != nil {
 		t.Fatal(err)
@@ -147,7 +147,7 @@ func TestTowerQueueDeferAdvancesCastleRoundRobin(t *testing.T) {
 	gameState.TowerQueue.EntriesByCastle[1] = []State.TowerQueueEntry{{
 		KingdomID: 0, TargetX: 101, TargetY: 100, QueuedAt: time.Now().UTC().Add(-time.Hour),
 	}}
-	application := &Application{State: State.NewStore(gameState)}
+	application := &Application{State: State.NewStore(&gameState)}
 	arguments, _ := json.Marshal(towerQueueEntryRequest{SourceCastleID: 1, KingdomID: 0, TargetX: 101, TargetY: 100})
 	before := time.Now().UTC()
 	if err := application.deferTowerQueueEntry(t.Context(), arguments); err != nil {

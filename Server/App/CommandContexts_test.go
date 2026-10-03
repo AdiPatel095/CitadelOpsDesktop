@@ -323,7 +323,7 @@ func TestCRASendGuardRejectsPendingOrPositiveCooldown(t *testing.T) {
 	state.TowerCooldowns["0:56:78"] = State.TowerCooldownState{
 		KingdomID: 0, X: 56, Y: 78, LastSuccessfulBattleAt: now, PendingCooldownRefresh: true,
 	}
-	application := &Application{State: State.NewStore(state)}
+	application := &Application{State: State.NewStore(&state)}
 	arguments, _ := json.Marshal(craSendGuardRequest{
 		SourceX: 12, SourceY: 34, TargetX: 56, TargetY: 78, KingdomID: 0, CommanderID: &commanderID,
 		DialogObservedAt: now, MovementsObservedAfter: now,
@@ -361,7 +361,7 @@ func TestCRASendGuardClassifiesNomadCooldownTransitionsAsStale(t *testing.T) {
 		SourceCastleID: 1, KingdomID: 0, ObservedAt: now.Add(time.Second),
 		Target: State.AttackDialogTarget{TypeID: samuraiIntentCampTypeID, X: 56, Y: 78, EventCampCooldownRemaining: 10},
 	}
-	application := &Application{State: State.NewStore(state)}
+	application := &Application{State: State.NewStore(&state)}
 	arguments, _ := json.Marshal(craSendGuardRequest{
 		SourceX: 12, SourceY: 34, TargetX: 56, TargetY: 78, KingdomID: 0, DialogObservedAt: now,
 	})
@@ -410,7 +410,7 @@ func TestCRASendGuardTreatsKhanCooldownAsRetryableStaleState(t *testing.T) {
 			EventCampID: 1146, EventCampCooldownRemaining: 194, ObservedAt: now.Add(time.Second),
 		},
 	}
-	application := &Application{State: State.NewStore(state)}
+	application := &Application{State: State.NewStore(&state)}
 	arguments, _ := json.Marshal(craSendGuardRequest{
 		SourceX: 12, SourceY: 34, TargetX: 56, TargetY: 78, KingdomID: 0, CommanderID: &commanderID,
 		DialogObservedAt: now, MovementsObservedAfter: now,
@@ -442,7 +442,7 @@ func TestCRASendGuardTreatsPendingKhanLandingAsRetryableStaleState(t *testing.T)
 	state.NomadCamps.Cooldowns["0:56:78"] = State.NomadCampCooldownState{
 		KingdomID: 0, X: 56, Y: 78, LastSuccessfulBattleAt: now, PendingCooldownRefresh: true,
 	}
-	application := &Application{State: State.NewStore(state)}
+	application := &Application{State: State.NewStore(&state)}
 	arguments, _ := json.Marshal(craSendGuardRequest{
 		SourceX: 12, SourceY: 34, TargetX: 56, TargetY: 78, KingdomID: 0, CommanderID: &commanderID,
 		DialogObservedAt: now, MovementsObservedAfter: now,
@@ -466,7 +466,7 @@ func TestCRASendGuardRejectsTowerCommanderLostAfterFreshMovementSnapshot(t *test
 	state.Map[0] = map[string]State.MapObservation{
 		"56:78": {KingdomID: 0, TypeID: kingdomTowerMapTypeID, X: 56, Y: 78, ObservedAt: now},
 	}
-	application := &Application{State: State.NewStore(state)}
+	application := &Application{State: State.NewStore(&state)}
 	arguments, _ := json.Marshal(craSendGuardRequest{
 		SourceX: 12, SourceY: 34, TargetX: 56, TargetY: 78, KingdomID: 0, CommanderID: &commanderID,
 		DialogObservedAt: now, MovementsObservedAfter: now,
@@ -493,7 +493,7 @@ func TestCRASendGuardRejectsActiveMovementWhenRosterSaysAvailable(t *testing.T) 
 		SourceCastleID: 1, KingdomID: 0, ObservedAt: now.Add(time.Second),
 		Target: State.AttackDialogTarget{TypeID: 34, X: 56, Y: 78},
 	}
-	application := &Application{State: State.NewStore(state)}
+	application := &Application{State: State.NewStore(&state)}
 	arguments, _ := json.Marshal(craSendGuardRequest{
 		SourceX: 12, SourceY: 34, TargetX: 56, TargetY: 78, KingdomID: 0, CommanderID: &commanderID,
 		DialogObservedAt: now, MovementsObservedAfter: now,
@@ -520,7 +520,7 @@ func TestCRASendGuardRejectsUnresolvedInvasionCommander(t *testing.T) {
 		SourceCastleID: 1, CommanderID: commanderID, CommanderKnown: true,
 		OperationID: "indeterminate-cra", ReservedAt: now,
 	})
-	application := &Application{State: State.NewStore(state)}
+	application := &Application{State: State.NewStore(&state)}
 	arguments, _ := json.Marshal(craSendGuardRequest{
 		SourceX: 12, SourceY: 34, TargetX: 56, TargetY: 78, KingdomID: 0, CommanderID: &commanderID,
 		DialogObservedAt: now, MovementsObservedAfter: now,
@@ -556,7 +556,7 @@ func TestCRASendGuardRejectsNewInvasionTargetMovementAfterFreshGAM(t *testing.T)
 			Level: 70, InvasionAvailabilityKnown: true, ObservedAt: now,
 		},
 	}
-	application := &Application{State: State.NewStore(state)}
+	application := &Application{State: State.NewStore(&state)}
 	arguments, _ := json.Marshal(craSendGuardRequest{
 		SourceX: 12, SourceY: 34, TargetX: 56, TargetY: 78, KingdomID: 0, CommanderID: &commanderID,
 		DialogObservedAt: now, MovementsObservedAfter: now,

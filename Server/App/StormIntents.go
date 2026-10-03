@@ -850,6 +850,13 @@ func stormAttackContext(
 	if request.TargetTypeID == stormIntentIslandMapTypeID && stormIslandUnavailable(target, now) {
 		return stormAttackRequest{}, State.CastleState{}, State.MapObservation{}, GameData.StormIsleDefinition{}, Localization.WithError(fmt.Errorf("Storm resource island %d:%d is already occupied", request.TargetX, request.TargetY), Localization.New("server.app.storm_resource_island_p.2177c4ca", "Storm resource island {p0}:{p1} is already occupied", Localization.Params{"p0": request.TargetX, "p1": request.TargetY}))
 	}
+	if request.TargetTypeID == stormIntentFortMapTypeID && target.StormHidden {
+		// Not ErrPlanStale: a hidden fort cannot be attacked, so the policy retargets.
+		return stormAttackRequest{}, State.CastleState{}, State.MapObservation{}, GameData.StormIsleDefinition{}, Localization.WithError(fmt.Errorf("Storm fort %d:%d is hidden on the map", request.TargetX, request.TargetY), Localization.New("server.app.storm_fort_p_p.f03e1d2d", "Storm fort {p0}:{p1} is hidden on the map", Localization.Params{"p0": request.TargetX, "p1": request.TargetY}))
+	}
+	if err := refuseRejectedAttackTarget(input.State, request.KingdomID, request.TargetTypeID, request.TargetX, request.TargetY, now); err != nil {
+		return stormAttackRequest{}, State.CastleState{}, State.MapObservation{}, GameData.StormIsleDefinition{}, err
+	}
 	if stormTargetCooldownRemaining(target, now) > 0 {
 		return stormAttackRequest{}, State.CastleState{}, State.MapObservation{}, GameData.StormIsleDefinition{}, Localization.WithError(fmt.Errorf("Storm target %d:%d is still on cooldown", request.TargetX, request.TargetY), Localization.New("server.app.storm_target_p_p.a567def1", "Storm target {p0}:{p1} is still on cooldown", Localization.Params{"p0": request.TargetX, "p1": request.TargetY}))
 	}
@@ -1117,7 +1124,7 @@ func (application *Application) burstStormMapScan(ctx context.Context, arguments
 	if request.Cooperative {
 		windows := stormCooperativeScanWindows(request.Windows)
 		if err := runStormMapGAABurst(
-			ctx, application.Session, application.Ingest, language, source.KingdomID, windows, stormMapBurstResponseTimeout,
+			ctx, application.countMapSender("storm"), application.Ingest, language, source.KingdomID, windows, stormMapBurstResponseTimeout,
 		); err != nil {
 			if application.WorldMaps != nil {
 				application.WorldMaps.ReleaseStormScan(application.AccountKey, request.LeaseID)
@@ -1135,7 +1142,7 @@ func (application *Application) burstStormMapScan(ctx context.Context, arguments
 			), Localization.New("server.app.storm_map_targets_still.56ef946f", "Storm map targets still touch the {p0}-coordinate safety margin at the maximum concentric scan bounds", Localization.Params{"p0": stormMapEdgeBuffer}))
 		}
 		if err := runStormMapGAABurst(
-			ctx, application.Session, application.Ingest, language, source.KingdomID, windows, stormMapBurstResponseTimeout,
+			ctx, application.countMapSender("storm"), application.Ingest, language, source.KingdomID, windows, stormMapBurstResponseTimeout,
 		); err != nil {
 			return Localization.WithError(fmt.Errorf("scan Storm map ring %d: %w", ring, err), Localization.ErrorContext(Localization.New("server.app.scan_storm_map_ring.28204107", "scan Storm map ring {p0}", Localization.Params{"p0": ring}), err))
 		}
@@ -1314,10 +1321,7 @@ func (application *Application) captureStormScanRequest(request stormMapScanRequ
 		startedAt := stormScanStartedAt(request)
 		completedAt := time.Now().UTC()
 		state := application.State.ReadOnlyView()
-		worldID := strings.TrimSpace(state.Account.WorldID)
-		if worldID == "" {
-			worldID = strings.TrimSpace(state.Session.ServerURL)
-		}
+		worldID := State.SharedWorldID(&state)
 		worldEvent, err := application.WorldMaps.CompleteStormScan(
 			application.AccountKey, worldID, stormIntentKingdomID, request.LeaseID,
 			request.Windows, startedAt, completedAt,
@@ -1728,7 +1732,8 @@ func stormTargetExpired(target State.MapObservation, definition GameData.StormIs
 func stormAttackDialogUnavailable(target State.AttackDialogTarget) bool {
 	switch target.TypeID {
 	case stormIntentFortMapTypeID:
-		return target.StormCooldownRemaining > 0
+		// Official DungeonIsleMapobjectVO row[8] > 0 hides the fort.
+		return target.StormCooldownRemaining > 0 || target.StormHidden
 	case stormIntentIslandMapTypeID:
 		return target.OwnerID > 0
 	default:

@@ -78,7 +78,8 @@ func (application *Application) guardSupportBatch(_ context.Context, arguments j
 	if len(payload.A) == 0 || len(payload.A) > supportUnitTypeLimit {
 		return Localization.WithError(fmt.Errorf("support requires 1 to %d troop types per command", supportUnitTypeLimit), Localization.New("server.app.support_requires_to_p.63ead59c", "support requires 1 to {p0} troop types per command", Localization.Params{"p0": supportUnitTypeLimit}))
 	}
-	state := application.State.Snapshot()
+	// read-only view: guards must not mutate state
+	state := application.State.ReadOnlyView()
 	source, ok := state.Castles[payload.SID]
 	if !ok || !source.Focused {
 		return Localization.WithError(fmt.Errorf("support source %d is no longer focused", payload.SID), Localization.New("server.app.support_source_p_is.b2153b5b", "support source {p0} is no longer focused", Localization.Params{"p0": fmt.Sprintf("%d", payload.SID)}))

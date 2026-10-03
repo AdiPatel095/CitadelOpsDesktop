@@ -1,18 +1,21 @@
 {
   "name": "citadel-ops-client",
   "private": true,
-  "version": "2.4.1",
+  "version": "2.4.2",
   "type": "module",
   "scripts": {
     "dev": "tsc && vite --host 127.0.0.1 --port 41731 --strictPort",
     "build": "tsc && vite build",
     "test": "node --test tests/*.test.mjs",
+    "preview:onboarding": "vite --config tests/onboarding-browser/vite.config.ts",
     "test:world-intel": "node --test tests/storm-ranking.test.mjs",
     "guide:locales": "node scripts/localization/guide-packs.mjs",
     "preview": "tsc && vite preview",
     "check:localization": "node scripts/inventory-localization.mjs && node scripts/check-localization-coverage.mjs",
     "typecheck:app": "tsc -p tsconfig.app.json --noEmit",
-    "typecheck:node": "tsc -p tsconfig.node.json --noEmit"
+    "typecheck:node": "tsc -p tsconfig.node.json --noEmit",
+    "test:visual": "node scripts/visual/run.mjs compare",
+    "test:visual:update": "node scripts/visual/run.mjs update"
   },
   "dependencies": {
     "@formatjs/icu-messageformat-parser": "^3.5.20",
@@ -25,6 +28,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.39.1",
+    "@playwright/test": "1.63.0",
     "@tailwindcss/vite": "^4.1.17",
     "@types/node": "^24.10.1",
     "@types/react": "^19.2.5",

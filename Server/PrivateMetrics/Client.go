@@ -12,6 +12,7 @@ import (
 	"net/url"
 	"strconv"
 	"strings"
+	"sync/atomic"
 	"time"
 )
 
@@ -23,6 +24,10 @@ const (
 	// Real profiles compress to well under 1 MB; anything larger is refused
 	// locally instead of being retried against the backend.
 	maximumCheckpointBytes = 8 << 20
+	// plainFallbackWindow is how long a client that was refused a gzip body
+	// keeps sending plain JSON before it tries gzip again. It only matters
+	// while a backend older than gzip support is still serving.
+	plainFallbackWindow = 30 * time.Minute
 )
 
 type ClientConfig struct {
@@ -41,6 +46,9 @@ type Client struct {
 	endpoint           string
 	checkpointEndpoint string
 	clientVersion      string
+	// plainUntil (unix nanoseconds) is the end of a plain-JSON fallback after
+	// a backend refused a gzip sample body.
+	plainUntil atomic.Int64
 }
 
 // UploadOutcome classifies why a publication did not succeed so the publisher
@@ -180,16 +188,9 @@ func (client *Client) UploadCheckpoint(ctx context.Context, placement Placement,
 		PlacementEpoch: placement.PlacementEpoch, DesiredRevision: placement.DesiredRevision,
 		LeaseExpiresAt: placement.LeaseExpiresAt.UTC(), Checkpoint: checkpoint,
 	}
-	var compressed bytes.Buffer
-	gzipWriter, err := gzip.NewWriterLevel(&compressed, gzip.BestSpeed)
+	compressed, err := encodeCheckpointRequest(requestBody)
 	if err != nil {
-		return fmt.Errorf("compress dashboard checkpoint: %w", err)
-	}
-	if err := json.NewEncoder(gzipWriter).Encode(requestBody); err != nil {
-		return fmt.Errorf("encode dashboard checkpoint: %w", err)
-	}
-	if err := gzipWriter.Close(); err != nil {
-		return fmt.Errorf("compress dashboard checkpoint: %w", err)
+		return err
 	}
 	if compressed.Len() > maximumCheckpointBytes {
 		return &PublishError{Outcome: OutcomeRejected, Code: "checkpoint_too_large"}
@@ -209,6 +210,55 @@ func (client *Client) UploadCheckpoint(ctx context.Context, placement Placement,
 		request.Header.Set("User-Agent", "CitadelOpsDesktop/"+client.clientVersion)
 	}
 	return client.do(request)
+}
+
+// checkpointRequestHead is CheckpointRequest without its document, so the
+// document can be compressed as its own gzip member.
+type checkpointRequestHead struct {
+	SchemaVersion   int             `json:"schemaVersion"`
+	CellID          string          `json:"cellId"`
+	TenantID        string          `json:"tenantId"`
+	RuntimeID       string          `json:"runtimeId"`
+	PlacementEpoch  uint64          `json:"placementEpoch"`
+	DesiredRevision uint64          `json:"desiredRevision"`
+	LeaseExpiresAt  time.Time       `json:"leaseExpiresAt"`
+	Checkpoint      json.RawMessage `json:"checkpoint"`
+}
+
+// encodeCheckpointRequest writes the request as three concatenated gzip
+// members: the envelope up to `"checkpoint":`, the checkpoint document, and
+// the closing brace. Decompressed end to end it is exactly the JSON of
+// CheckpointRequest, so any gzip-aware backend reads it unchanged; a backend
+// that recognizes the layout can store the document member without
+// recompressing it.
+func encodeCheckpointRequest(request CheckpointRequest) (*bytes.Buffer, error) {
+	document, err := json.Marshal(request.Checkpoint)
+	if err != nil {
+		return nil, fmt.Errorf("encode dashboard checkpoint: %w", err)
+	}
+	head, err := json.Marshal(checkpointRequestHead{
+		SchemaVersion: request.SchemaVersion, CellID: request.CellID, TenantID: request.TenantID,
+		RuntimeID: request.RuntimeID, PlacementEpoch: request.PlacementEpoch, DesiredRevision: request.DesiredRevision,
+		LeaseExpiresAt: request.LeaseExpiresAt, Checkpoint: json.RawMessage("null"),
+	})
+	if err != nil || !bytes.HasSuffix(head, []byte(`"checkpoint":null}`)) {
+		return nil, fmt.Errorf("encode dashboard checkpoint envelope")
+	}
+	head = head[:len(head)-len("null}")]
+	var compressed bytes.Buffer
+	for _, part := range [][]byte{head, document, []byte("}\n")} {
+		writer, err := gzip.NewWriterLevel(&compressed, gzip.BestSpeed)
+		if err != nil {
+			return nil, fmt.Errorf("compress dashboard checkpoint: %w", err)
+		}
+		if _, err := writer.Write(part); err != nil {
+			return nil, fmt.Errorf("compress dashboard checkpoint: %w", err)
+		}
+		if err := writer.Close(); err != nil {
+			return nil, fmt.Errorf("compress dashboard checkpoint: %w", err)
+		}
+	}
+	return &compressed, nil
 }
 
 func (client *Client) Endpoint() string {
@@ -235,14 +285,35 @@ func (client *Client) Upload(ctx context.Context, placement Placement, sample Sa
 	if err != nil {
 		return fmt.Errorf("encode private metrics sample: %w", err)
 	}
+	if time.Now().UnixNano() >= client.plainUntil.Load() {
+		compressed, err := gzipBytes(payload)
+		if err != nil {
+			return fmt.Errorf("compress private metrics sample: %w", err)
+		}
+		err = client.sendSample(ctx, placement, sample, compressed, true)
+		if !gzipRefused(err) {
+			return err
+		}
+		// A backend that predates gzip support cannot parse the body. Send the
+		// identical sample plain (same idempotency key) and stay plain for a
+		// while, so backend and runtime can roll out in either order.
+		client.plainUntil.Store(time.Now().Add(plainFallbackWindow).UnixNano())
+	}
+	return client.sendSample(ctx, placement, sample, payload, false)
+}
+
+func (client *Client) sendSample(ctx context.Context, placement Placement, sample Sample, body []byte, compressed bool) error {
 	requestContext, cancel := context.WithTimeout(ctx, requestTimeout)
 	defer cancel()
-	request, err := http.NewRequestWithContext(requestContext, http.MethodPost, client.endpoint, bytes.NewReader(payload))
+	request, err := http.NewRequestWithContext(requestContext, http.MethodPost, client.endpoint, bytes.NewReader(body))
 	if err != nil {
 		return fmt.Errorf("create private metrics request: %w", err)
 	}
 	request.Header.Set("Authorization", "Bearer "+placement.Grant.Token)
 	request.Header.Set("Content-Type", "application/json")
+	if compressed {
+		request.Header.Set("Content-Encoding", "gzip")
+	}
 	request.Header.Set("Accept", "application/json")
 	request.Header.Set("Cache-Control", "no-store")
 	request.Header.Set("Idempotency-Key", sample.SampleID)
@@ -251,6 +322,38 @@ func (client *Client) Upload(ctx context.Context, placement Placement, sample Sa
 		request.Header.Set("User-Agent", "CitadelOpsDesktop/"+client.clientVersion)
 	}
 	return client.do(request)
+}
+
+func gzipBytes(payload []byte) ([]byte, error) {
+	var compressed bytes.Buffer
+	writer, err := gzip.NewWriterLevel(&compressed, gzip.BestSpeed)
+	if err != nil {
+		return nil, err
+	}
+	if _, err := writer.Write(payload); err != nil {
+		return nil, err
+	}
+	if err := writer.Close(); err != nil {
+		return nil, err
+	}
+	return compressed.Bytes(), nil
+}
+
+// gzipRefused recognizes the answers an older backend gives to a gzip body it
+// cannot parse: the JSON decode fails, so it reports an unsupported schema or
+// an invalid request, or refuses the encoding outright.
+func gzipRefused(err error) bool {
+	var publishErr *PublishError
+	if !errors.As(err, &publishErr) || publishErr == nil {
+		return false
+	}
+	switch publishErr.StatusCode {
+	case http.StatusUnsupportedMediaType:
+		return true
+	case http.StatusBadRequest, http.StatusUnprocessableEntity:
+		return publishErr.Code == "unsupported_schema" || publishErr.Code == "invalid_request" || publishErr.Code == "unsupported_encoding"
+	}
+	return false
 }
 
 // do sends a publication request and classifies the answer without ever

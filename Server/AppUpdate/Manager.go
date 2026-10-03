@@ -55,9 +55,11 @@ type Snapshot struct {
 type Manager struct {
 	config Config
 
-	mu        sync.RWMutex
-	snapshot  Snapshot
-	operation sync.Mutex
+	mu          sync.RWMutex
+	snapshot    Snapshot
+	subscribers map[uint64]chan Snapshot
+	nextID      uint64
+	operation   sync.Mutex
 }
 
 type versionResponse struct {
@@ -275,8 +277,53 @@ func (manager *Manager) Install(ctx context.Context) error {
 
 func (manager *Manager) update(change func(*Snapshot)) {
 	manager.mu.Lock()
+	before := manager.snapshot
 	change(&manager.snapshot)
+	if manager.snapshot != before {
+		manager.publishLocked(manager.snapshot)
+	}
 	manager.mu.Unlock()
+}
+
+// Subscribe delivers the snapshot after every change. A slow subscriber never
+// blocks the manager: only the newest snapshot is kept for it, which is all a
+// status display needs. Call the returned function to unsubscribe.
+func (manager *Manager) Subscribe() (<-chan Snapshot, func()) {
+	channel := make(chan Snapshot, 1)
+	if manager == nil {
+		return channel, func() {}
+	}
+	manager.mu.Lock()
+	if manager.subscribers == nil {
+		manager.subscribers = map[uint64]chan Snapshot{}
+	}
+	manager.nextID++
+	id := manager.nextID
+	manager.subscribers[id] = channel
+	manager.mu.Unlock()
+	return channel, func() {
+		manager.mu.Lock()
+		delete(manager.subscribers, id)
+		manager.mu.Unlock()
+	}
+}
+
+func (manager *Manager) publishLocked(snapshot Snapshot) {
+	for _, subscriber := range manager.subscribers {
+		select {
+		case subscriber <- snapshot:
+			continue
+		default:
+		}
+		select {
+		case <-subscriber:
+		default:
+		}
+		select {
+		case subscriber <- snapshot:
+		default:
+		}
+	}
 }
 
 func (manager *Manager) fail(stage string, err error) error {

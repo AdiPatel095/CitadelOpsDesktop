@@ -40,6 +40,10 @@ interface DefensePresetEditorProps {
   };
   onClose: () => void;
   onSave: (draft: DefensePresetDraft) => void;
+  /** `hidden` for inline module setups (CIT-16): no name is asked; the module generates the title. */
+  nameField?: 'visible' | 'hidden';
+  /** Footer save label; defaults to "Save preset". */
+  saveLabel?: React.ReactNode;
 }
 
 type WallKey = 'left' | 'middle' | 'right';
@@ -59,8 +63,11 @@ const DefensePresetEditor: React.FC<DefensePresetEditorProps> = ({
   preservedKeepToolSlots,
   onClose,
   onSave,
+  nameField = 'visible',
+  saveLabel,
 }) => {
   const { t: localizeStatic } = useStaticLocale();
+  const nameVisible = nameField !== 'hidden';
   const [draft, setDraft] = useState<DefensePresetDraft>(() => normalizeDefensePresetSlots(initialDraft));
   const [validationError, setValidationError] = useState('');
   const { tools, unitsLoading: isMetadataLoading, unitsError } = useMetadata();
@@ -99,7 +106,7 @@ const DefensePresetEditor: React.FC<DefensePresetEditorProps> = ({
 			setValidationError(unitsError ?? 'Official troop and tool metadata is still loading.');
 			return;
 		}
-    const error = validateDraft(draft, tools);
+    const error = validateDraft(draft, tools, { requireName: nameVisible });
     if (error) {
       setValidationError(error);
       return;
@@ -118,13 +125,15 @@ const DefensePresetEditor: React.FC<DefensePresetEditorProps> = ({
           icon={<Shield className="h-5 w-5" />}
           description={localizeStatic("ui.components.defensePresetEditor.description.fixed.wall.and.gate.positions.match.the.d6b5e13d")}
         >
-          {initialDraft.name.trim() ? `Edit ${initialDraft.name}` : 'Create defense preset'}
+          {!nameVisible
+            ? <LocalizedText messageKey="ui.components.defensePresetEditor.main.castle.defense.bb84ecf1" />
+            : initialDraft.name.trim() ? `Edit ${initialDraft.name}` : 'Create defense preset'}
         </ModalTitle>
       )}
       footer={
         <>
           <Button variant="ghost" disabled={saving} onClick={onClose}><LocalizedText messageKey="game.cancel" /></Button>
-          <Button isLoading={saving} disabled={isMetadataLoading || unitsError != null} onClick={submit}><LocalizedText messageKey="common.savePreset" /></Button>
+          <Button isLoading={saving} disabled={isMetadataLoading || unitsError != null} onClick={submit}>{saveLabel ?? <LocalizedText messageKey="common.savePreset" />}</Button>
         </>
       }
     >
@@ -134,21 +143,25 @@ const DefensePresetEditor: React.FC<DefensePresetEditorProps> = ({
 					{unitsError}
 				</div>
 			) : null}
-        <section className="rounded-global border border-border-base bg-bg-card/65 p-3 shadow-[var(--shadow-raised)]">
-          <label className="mb-2 block text-xs font-black uppercase tracking-wider text-text-muted"><LocalizedText messageKey="common.presetName" /></label>
-          <Input
-            autoFocus
-            value={draft.name}
-            maxLength={120}
-            placeholder={localizeStatic("ui.components.defensePresetEditor.placeholder.full.ranged.41.18.41.93ec7311")}
-            onChange={(event) => setDraft((current) => ({ ...current, name: event.target.value }))}
-          />
+        {nameVisible || draft.sourceCastleId != null ? <section className="rounded-global border border-border-base bg-bg-card/65 p-3 shadow-[var(--shadow-raised)]">
+          {nameVisible ? (
+            <>
+              <label className="mb-2 block text-xs font-black uppercase tracking-wider text-text-muted"><LocalizedText messageKey="common.presetName" /></label>
+              <Input
+                autoFocus
+                value={draft.name}
+                maxLength={120}
+                placeholder={localizeStatic("ui.components.defensePresetEditor.placeholder.full.ranged.41.18.41.93ec7311")}
+                onChange={(event) => setDraft((current) => ({ ...current, name: event.target.value }))}
+              />
+            </>
+          ) : null}
           {draft.sourceCastleId != null ? (
             <p className="mt-2 text-xs text-text-muted">
               Captured from {draft.sourceCastleName || `Castle ${draft.sourceCastleId}`} and now editable as an independent preset.
             </p>
           ) : null}
-        </section>
+        </section> : null}
 
         {validationError ? (
           <div className="rounded-global border border-error/30 bg-error/10 px-4 py-3 text-sm font-semibold text-error">
@@ -616,7 +629,6 @@ const ToolSlotGroup: React.FC<{
           <div className="rounded-global border border-dashed border-border-base px-3 py-4 text-center text-xs text-text-muted"><LocalizedText messageKey="ui.components.defensePresetEditor.no.slots.in.this.preset.6b67dec4" /></div>
         ) : renderedSlots.map((slot, index) => {
           const tool = slot.definitionId > 0 ? tools[slot.definitionId] : undefined;
-          const slotSpec = fixedSlotSpecs?.[index];
           return (
             <div key={index} className="grid grid-cols-[2.25rem_minmax(0,1fr)_5.5rem_auto] items-end gap-2 rounded-global border border-border-base bg-bg-input/35 p-2">
               <button
@@ -629,7 +641,7 @@ const ToolSlotGroup: React.FC<{
               </button>
               <div className="min-w-0">
                 <label className="mb-1 block truncate text-[9px] font-black uppercase tracking-wider text-text-muted">
-                  {slotSpec ? `${slotSpec.label}${tool?.name ? ` · ${tool.name}` : ''}` : tool?.name || 'Tool ID'}
+                  {tool?.name || 'Tool ID'}
                 </label>
                 <Input
                   type="number"
@@ -832,8 +844,8 @@ const NumberField: React.FC<{
   </div>
 );
 
-function validateDraft(draft: DefensePresetDraft, tools: Record<number, MetadataItem>): string {
-  if (!draft.name.trim()) return 'Enter a preset name.';
+function validateDraft(draft: DefensePresetDraft, tools: Record<number, MetadataItem>, options: { requireName: boolean } = { requireName: true }): string {
+  if (options.requireName && !draft.name.trim()) return 'Enter a preset name.';
   if (wallSplitTotal(draft) !== 100) return 'The left, front, and right wall split must total 100%.';
   if (draft.wall.left.toolSlots.length !== DEFENSE_WALL_FLANK_TOOL_SLOT_COUNT ||
       draft.wall.middle.toolSlots.length !== DEFENSE_WALL_MIDDLE_TOOL_SLOT_COUNT ||

@@ -1,0 +1,35 @@
+{
+  "id": "storm-no-offer",
+  "title": "Storm: no starter castle on offer",
+  "purpose": "The unlock is on but the catalog offers nothing.",
+  "step": "5",
+  "platforms": [
+    "desktop",
+    "hosted"
+  ],
+  "modules": [
+    "autoStorm"
+  ],
+  "simulated": [
+    "banner: Simulated preview: sample data only. Nothing here reaches the game or an account.",
+    "dock: Candidate <short SHA>"
+  ],
+  "expect": [
+    "Readiness shows the accepted unlock copy ('...none is offered right now. Wait for the next offer or turn the unlock off.'); the unlock toggle stays operable; Save is blocked with its own reason."
+  ],
+  "patch": {
+    "config": {
+      "automation.autoStorm": {
+        "version": 1,
+        "unlock": {
+          "enabled": true,
+          "prebuiltCastleId": 0
+        }
+      }
+    }
+  },
+  "columns": [
+    "readiness",
+    "inline"
+  ]
+}

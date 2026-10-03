@@ -107,7 +107,7 @@ func TestKhanAutoStationYieldUsesOnlyAuthoritativeTrackedMovements(t *testing.T)
 			for _, movement := range test.movements {
 				state.Movements[movement.ID] = movement
 			}
-			if got := KhanAutoStationYieldActiveAt(state, now); got != test.want {
+			if got := KhanAutoStationYieldActiveAt(&state, now); got != test.want {
 				t.Fatalf("KhanAutoStationYieldActiveAt() = %t, want %t", got, test.want)
 			}
 		})
@@ -122,10 +122,10 @@ func TestKhanAutoStationYieldPreservesSafeAfterGrace(t *testing.T) {
 		Purpose: "autoStation", MovementID: 10, SafeAfter: &safeAfter,
 	}
 
-	if !KhanAutoStationYieldActiveAt(state, now.Add(5*time.Second-time.Nanosecond)) {
+	if !KhanAutoStationYieldActiveAt(&state, now.Add(5*time.Second-time.Nanosecond)) {
 		t.Fatal("Auto Khan did not yield inside the SafeAfter grace window")
 	}
-	if KhanAutoStationYieldActiveAt(state, now.Add(5*time.Second)) {
+	if KhanAutoStationYieldActiveAt(&state, now.Add(5*time.Second)) {
 		t.Fatal("Auto Khan yielded at the expired SafeAfter grace boundary")
 	}
 }

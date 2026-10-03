@@ -14,6 +14,28 @@ export type CommanderFeatureID =
   | 'riftMaiden'
   | 'riftReplay';
 
+/** Every commander feature id, in the Commanders view column order. */
+export const COMMANDER_FEATURE_IDS: readonly CommanderFeatureID[] = [
+  'autoTowers',
+  'autoFortress',
+  'autoInvasion',
+  'autoNomad',
+  'autoAdvisor',
+  'autoKhan',
+  'autoBeriWorld',
+  'autoStorm',
+  'riftMaiden',
+  'riftReplay',
+];
+
+/** True when every requirement kind for the feature is understood by this client. */
+export function featureRequirementsSupported(
+  document: CommanderFeatureConfigurationV2,
+  featureID: CommanderFeatureID,
+): boolean {
+  return (document.requirements[featureID] ?? []).every(isEquipmentEffectRequirement);
+}
+
 export interface CommanderFeatureRequirement {
   kind: string;
   effectDefinitionId?: number;

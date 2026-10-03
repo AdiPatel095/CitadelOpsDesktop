@@ -119,7 +119,7 @@ func (*AutoTowerPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision
 		}, nil
 	}
 	commanderIDs, commandersRestricted := commanderFeatureCandidates(
-		snapshot.State,
+		&snapshot.State,
 		snapshot.Configuration,
 		"autoTowers",
 	)
@@ -129,7 +129,7 @@ func (*AutoTowerPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision
 			EventDriven: true,
 		}, nil
 	}
-	if cooldownTarget, found := pendingTowerCooldownRefresh(snapshot.State); found {
+	if cooldownTarget, found := pendingTowerCooldownRefresh(&snapshot.State); found {
 		arguments, _ := json.Marshal(map[string]any{
 			"kingdomId": cooldownTarget.KingdomID,
 			"x1":        cooldownTarget.X, "y1": cooldownTarget.Y,
@@ -180,7 +180,7 @@ func (*AutoTowerPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision
 		if blocked != nil {
 			return *blocked, nil
 		}
-		inventoryTimeSkips := oneCommandDungeonSkipCount(snapshot.State, nil, autoTowerAdvisorCooldownSeconds)
+		inventoryTimeSkips := oneCommandDungeonSkipCount(&snapshot.State, nil, autoTowerAdvisorCooldownSeconds)
 		plannedTimeSkips := min(
 			int64(autoTowerAdvisorMaximumAttackCount-1), dailyTimeSkipAllowance, inventoryTimeSkips,
 		)
@@ -189,7 +189,9 @@ func (*AutoTowerPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision
 		if plannedTimeSkips < 1 {
 			return Decision{
 				Status: "waiting", Detail: "Baron Advisor chaining needs at least one Time Skip that covers the three-hour tower cooldown", DetailDescriptor: Localization.New("server.automation.baron_advisor_chaining_needs.d6347f08", "Baron Advisor chaining needs at least one Time Skip that covers the three-hour tower cooldown", nil),
-				EventDriven: true, Metrics: metrics,
+				// Time Skips arrive through the inventory, which this policy does not wake on, so
+				// the wait carries its own deadline instead of relying on unrelated state churn.
+				NextCheckAt: snapshot.Now.Add(policyInterval(settings.CheckIntervalSec, 30)), Metrics: metrics,
 			}, nil
 		}
 		maximumAdvisorAttacks = 1 + int(plannedTimeSkips)
@@ -204,7 +206,7 @@ func (*AutoTowerPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision
 	firstTroopShortage := ""
 	for _, candidate := range candidates {
 		commanderID, commanderAvailable := nextAutoTowerCommander(
-			snapshot.State, commanderIDs, commandersRestricted, candidate.Plan.MaidenOnly, snapshot.Now,
+			&snapshot.State, commanderIDs, commandersRestricted, candidate.Plan.MaidenOnly, snapshot.Now,
 		)
 		if !commanderAvailable {
 			detail := "No commander is currently available"
@@ -234,7 +236,7 @@ func (*AutoTowerPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision
 				}
 				continue
 			}
-			required += autoTowerCapacityCorrection(snapshot.State, candidate.Castle.ID, snapshot.Now)
+			required += autoTowerCapacityCorrection(&snapshot.State, candidate.Castle.ID, snapshot.Now)
 			available := max(int64(0), candidate.Castle.Units.Stationed[candidate.Plan.UnitID])
 			attackCount := 1
 			if settings.UseAdvisor {
@@ -294,7 +296,7 @@ func (*AutoTowerPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision
 		); blocked != nil {
 			return *blocked, nil
 		}
-		if settings.UseAdvisor && !autoTowerBaronAdvisorActive(snapshot.State) {
+		if settings.UseAdvisor && !autoTowerBaronAdvisorActive(&snapshot.State) {
 			if snapshot.GameData == nil {
 				return Decision{
 					Status: "waiting", Detail: "Official game data is unavailable; the Baron Advisor token will not be activated yet", DetailDescriptor: Localization.New("server.automation.official_game_data_is.8eb23e76", "Official game data is unavailable; the Baron Advisor token will not be activated yet", nil),
@@ -408,7 +410,7 @@ func autoTowerAdvisorDailyTimeSkipAllowance(
 	if maximum <= 0 {
 		return 0, &Decision{
 			Status: "waiting", Detail: "Set a positive maximum daily Time Skip limit before using the Baron Advisor", DetailDescriptor: Localization.New("server.automation.set_a_positive_maximum.202e2322", "Set a positive maximum daily Time Skip limit before using the Baron Advisor", nil),
-			EventDriven: true, Metrics: metrics,
+			NextCheckAt: snapshot.Now.Add(interval), Metrics: metrics,
 		}
 	}
 	attacks := snapshot.State.DailyAttacks
@@ -418,7 +420,7 @@ func autoTowerAdvisorDailyTimeSkipAllowance(
 			NextCheckAt: snapshot.Now.Add(interval), Metrics: metrics,
 		}
 	}
-	used, exact := State.TowerAdvisorTimeSkipsUsedSince(snapshot.State, attacks.SessionStartedAt, snapshot.Now)
+	used, exact := State.TowerAdvisorTimeSkipsUsedSince(&snapshot.State, attacks.SessionStartedAt, snapshot.Now)
 	if !exact {
 		return 0, &Decision{
 			Status: "waiting", Detail: "Cannot establish exact Auto Towers Advisor Time Skip usage for the current server day", DetailDescriptor: Localization.New("server.automation.cannot_establish_exact_auto.f1bde5b1", "Cannot establish exact Auto Towers Advisor Time Skip usage for the current server day", nil),
@@ -545,7 +547,7 @@ func nextAutoTowerScheduleOpening(snapshot Snapshot, settings autoTowerSettings)
 
 func queuedTowerCandidates(snapshot Snapshot, settings autoTowerSettings) ([]towerQueueCandidate, int, int) {
 	candidates := make([]towerQueueCandidate, 0)
-	reserved := activeTowerTargetKeys(snapshot.State, snapshot.Now)
+	reserved := activeTowerTargetKeys(&snapshot.State, snapshot.Now)
 	activeCount := 0
 	configured := 0
 	for _, castleKey := range sortedNumericKeys(settings.Castles) {
@@ -562,7 +564,7 @@ func queuedTowerCandidates(snapshot Snapshot, settings autoTowerSettings) ([]tow
 		if allowed, _ := scheduleAllows(snapshot.Configuration, "autoTowers:"+castleKey, snapshot.Now); !allowed {
 			continue
 		}
-		active := activeTowerMovements(snapshot.State, castle.ID, snapshot.Now)
+		active := activeTowerMovements(&snapshot.State, castle.ID, snapshot.Now)
 		activeCount += active
 		radius := clampTowerRadius(plan.Radius)
 		maximumDistanceSquared := radius * radius
@@ -574,11 +576,11 @@ func queuedTowerCandidates(snapshot Snapshot, settings autoTowerSettings) ([]tow
 				continue
 			}
 			key := towerTargetKey(entry.KingdomID, entry.TargetX, entry.TargetY)
-			if _, locked := reserved[key]; locked || towerCooldownRefreshPending(snapshot.State, key) {
+			if _, locked := reserved[key]; locked || towerCooldownRefreshPending(&snapshot.State, key) {
 				continue
 			}
 			if State.AttackFeatureTargetPendingAt(
-				snapshot.State, State.AttackFeatureAutoTowers, entry.KingdomID, kingdomTowerMapTypeID,
+				&snapshot.State, State.AttackFeatureAutoTowers, entry.KingdomID, kingdomTowerMapTypeID,
 				entry.TargetX, entry.TargetY, snapshot.Now,
 			) {
 				continue
@@ -636,7 +638,7 @@ func nextTowerQueueCandidate(candidates []towerQueueCandidate) (towerQueueCandid
 }
 
 func nextAutoTowerCommander(
-	gameState State.GameState,
+	gameState *State.GameState,
 	candidates []State.CommanderID,
 	restricted bool,
 	maidenOnly bool,
@@ -662,7 +664,7 @@ func nextAutoTowerCommander(
 	return 0, false
 }
 
-func autoTowerCommanderSupportsMaiden(gameState State.GameState, commanderID State.CommanderID) bool {
+func autoTowerCommanderSupportsMaiden(gameState *State.GameState, commanderID State.CommanderID) bool {
 	if commanderID <= 0 {
 		return false
 	}
@@ -710,7 +712,7 @@ func autoTowerCapacityRequirement(
 	return capacity.Capacity.Left + capacity.Capacity.Right, nil
 }
 
-func autoTowerCapacityCorrection(gameState State.GameState, castleID State.CastleID, now time.Time) int64 {
+func autoTowerCapacityCorrection(gameState *State.GameState, castleID State.CastleID, now time.Time) int64 {
 	observation, exists := gameState.TowerQueue.CapacityByCastle[castleID]
 	if !exists || observation.AdditionalUnits <= 0 || observation.ObservedAt.IsZero() ||
 		now.Before(observation.ObservedAt) || now.Sub(observation.ObservedAt) > autoTowerCapacityObservationFreshness {
@@ -787,7 +789,7 @@ func towerQueueEntryDistanceSquared(castle State.CastleState, entry State.TowerQ
 	return x*x + y*y
 }
 
-func activeTowerMovements(gameState State.GameState, castleID State.CastleID, now time.Time) int {
+func activeTowerMovements(gameState *State.GameState, castleID State.CastleID, now time.Time) int {
 	count := 0
 	gameState.RangeMovements(func(_ State.MovementID, movement State.MovementState) bool {
 		if !towerMovementActiveAt(movement, now) {
@@ -804,7 +806,7 @@ func activeTowerMovements(gameState State.GameState, castleID State.CastleID, no
 	return count
 }
 
-func activeTowerTargetKeys(gameState State.GameState, now time.Time) map[string]struct{} {
+func activeTowerTargetKeys(gameState *State.GameState, now time.Time) map[string]struct{} {
 	locked := map[string]struct{}{}
 	gameState.RangeMovements(func(_ State.MovementID, movement State.MovementState) bool {
 		if !towerMovementActiveAt(movement, now) {
@@ -831,7 +833,7 @@ func towerMovementActiveAt(movement State.MovementState, now time.Time) bool {
 	return completion == nil || completion.IsZero() || completion.After(now)
 }
 
-func pendingTowerCooldownRefresh(gameState State.GameState) (State.TowerCooldownState, bool) {
+func pendingTowerCooldownRefresh(gameState *State.GameState) (State.TowerCooldownState, bool) {
 	pending := make([]State.TowerCooldownState, 0)
 	gameState.RangeTowerCooldowns(func(_ string, cooldown State.TowerCooldownState) bool {
 		if cooldown.PendingCooldownRefresh && (cooldown.TargetTypeID == 0 || cooldown.TargetTypeID == kingdomTowerMapTypeID) {
@@ -857,7 +859,7 @@ func pendingTowerCooldownRefresh(gameState State.GameState) (State.TowerCooldown
 	return pending[0], true
 }
 
-func towerCooldownRefreshPending(gameState State.GameState, key string) bool {
+func towerCooldownRefreshPending(gameState *State.GameState, key string) bool {
 	cooldown, found := gameState.LookupTowerCooldown(key)
 	return found && cooldown.PendingCooldownRefresh
 }
@@ -874,7 +876,7 @@ func towerTargetKey(kingdomID State.KingdomID, x, y int) string {
 	return fmt.Sprintf("%d:%d:%d", kingdomID, x, y)
 }
 
-func autoTowerBaronAdvisorActive(gameState State.GameState) bool {
+func autoTowerBaronAdvisorActive(gameState *State.GameState) bool {
 	subscription, exists := gameState.Subscriptions[autoTowerBaronSubscriptionTypeID]
 	return exists && subscription.TypeID == autoTowerBaronSubscriptionTypeID && subscription.RemainingSec > 0
 }

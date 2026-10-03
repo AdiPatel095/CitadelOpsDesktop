@@ -1,0 +1,160 @@
+{
+  "id": "copy-queue-production",
+  "title": "Copy: Recruit Troops and Auto Tool per-castle plans",
+  "purpose": "Per-castle recruit and tool plans on Stonehaven; Marrow Court cannot recruit one of the units.",
+  "step": "10",
+  "platforms": [
+    "desktop",
+    "hosted"
+  ],
+  "modules": [
+    "autoRecruit",
+    "autoTool"
+  ],
+  "simulated": [
+    "banner: Simulated preview: sample data only. Nothing here reaches the game or an account.",
+    "dock: Candidate <short SHA>"
+  ],
+  "expect": [
+    "Copy to other castles is offered only in per-castle mode; Ashford Keep is compatible; Marrow Court drops the macebearer and names it ('not offered at this castle'); the rotation-restarts note appears beside a changed list; 'Also include the selected castles in the per-castle plan' is off by default."
+  ],
+  "patch": {
+    "state": {
+      "castles": {
+        "4101": {
+          "queueableObservedAt": "@now-5m",
+          "queueableProduction": {
+            "0": [
+              {
+                "collection": "units",
+                "id": 1
+              },
+              {
+                "collection": "units",
+                "id": 2
+              },
+              {
+                "collection": "units",
+                "id": 6
+              }
+            ],
+            "1": [
+              {
+                "collection": "tools",
+                "id": 101
+              },
+              {
+                "collection": "tools",
+                "id": 102
+              }
+            ]
+          }
+        },
+        "4103": {
+          "queueableObservedAt": "@now-5m",
+          "queueableProduction": {
+            "0": [
+              {
+                "collection": "units",
+                "id": 1
+              },
+              {
+                "collection": "units",
+                "id": 2
+              },
+              {
+                "collection": "units",
+                "id": 6
+              }
+            ],
+            "1": [
+              {
+                "collection": "tools",
+                "id": 101
+              },
+              {
+                "collection": "tools",
+                "id": 102
+              }
+            ]
+          }
+        },
+        "4106": {
+          "queueableObservedAt": "@now-5m",
+          "queueableProduction": {
+            "0": [
+              {
+                "collection": "units",
+                "id": 1
+              },
+              {
+                "collection": "units",
+                "id": 2
+              }
+            ],
+            "1": [
+              {
+                "collection": "tools",
+                "id": 101
+              },
+              {
+                "collection": "tools",
+                "id": 102
+              }
+            ]
+          }
+        }
+      }
+    },
+    "config": {
+      "automation.recruitTroops": {
+        "version": 1,
+        "mode": "perCastle",
+        "checkIntervalSec": 300,
+        "recruitLevel10OnTitleLoss": false,
+        "globalItems": [],
+        "castles": {
+          "4101": {
+            "enabled": true,
+            "items": [
+              {
+                "id": 1,
+                "amount": 500
+              },
+              {
+                "id": 6,
+                "amount": 300
+              }
+            ],
+            "cursor": 0
+          }
+        }
+      },
+      "automation.autoTool": {
+        "version": 1,
+        "mode": "perCastle",
+        "checkIntervalSec": 300,
+        "globalItems": [],
+        "castles": {
+          "4101": {
+            "enabled": true,
+            "items": [
+              {
+                "id": 101,
+                "amount": 200
+              },
+              {
+                "id": 102,
+                "amount": 100
+              }
+            ],
+            "cursor": 0
+          }
+        }
+      }
+    }
+  },
+  "columns": [
+    "copy"
+  ]
+}

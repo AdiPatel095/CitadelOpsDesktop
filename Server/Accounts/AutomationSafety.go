@@ -33,7 +33,7 @@ func mergeAutomationSafetyLocks(staging, player string) error {
 	} else if err != nil {
 		return fmt.Errorf("load player safety state: %w", err)
 	}
-	store := State.NewStore(destination)
+	store := State.NewStore(&destination)
 	event, err := store.ApplyComponents(State.Components(State.ComponentAutomations), func(state *State.GameState) ([]string, bool, error) {
 		changed := false
 		for lane, incoming := range source.Automations {

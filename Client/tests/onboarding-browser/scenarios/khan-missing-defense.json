@@ -1,0 +1,72 @@
+{
+  "id": "khan-missing-defense",
+  "title": "Khan: saved defense preset is missing",
+  "purpose": "The module points at a defense preset that no longer exists.",
+  "step": "4",
+  "platforms": [
+    "desktop",
+    "hosted"
+  ],
+  "modules": [
+    "autoKhan"
+  ],
+  "simulated": [
+    "banner: Simulated preview: sample data only. Nothing here reaches the game or an account.",
+    "dock: Candidate <short SHA>"
+  ],
+  "expect": [
+    "Readiness is blocked on the defense setup ('preset is missing') with an in-context Fix; Save is not silently repaired."
+  ],
+  "patch": {
+    "config": {
+      "attacks.presets": {
+        "version": 1,
+        "presets": [
+          {
+            "id": "preset-khan-attack",
+            "name": "Khan camps",
+            "targetType": "pve",
+            "useTroopFamilies": false,
+            "createdAt": "@now-30d",
+            "updatedAt": "@now-2d",
+            "waves": [
+              {
+                "L": {
+                  "troops": [
+                    {
+                      "itemId": 2,
+                      "quantity": 200
+                    }
+                  ],
+                  "tools": []
+                },
+                "M": {
+                  "troops": [],
+                  "tools": []
+                },
+                "R": {
+                  "troops": [],
+                  "tools": []
+                }
+              }
+            ],
+            "courtyardSupport": {
+              "troops": [],
+              "tools": []
+            }
+          }
+        ]
+      },
+      "automation.autoKhan": {
+        "version": 1,
+        "sourceCastleId": 4101,
+        "attackPresetId": "preset-khan-attack",
+        "defensePresetId": "defense-gone"
+      }
+    }
+  },
+  "columns": [
+    "readiness",
+    "inline"
+  ]
+}

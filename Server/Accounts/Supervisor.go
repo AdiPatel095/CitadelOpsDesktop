@@ -22,6 +22,7 @@ import (
 	"CitadelDesktop/Server/GameData"
 	"CitadelDesktop/Server/Ingest"
 	"CitadelDesktop/Server/PrivateMetrics"
+	"CitadelDesktop/Server/Profiling"
 	"CitadelDesktop/Server/Reports"
 	"CitadelDesktop/Server/Session"
 	"CitadelDesktop/Server/State"
@@ -90,7 +91,8 @@ type accountRuntime struct {
 	cancel      context.CancelFunc
 	// config is retained so the supervisor can restart the runtime unchanged,
 	// e.g. after rebinding its profile onto the player-keyed directory.
-	config AccountConfig
+	config      AccountConfig
+	stopWatcher bool
 }
 
 type Supervisor struct {
@@ -128,7 +130,10 @@ type Supervisor struct {
 	rebindMu           sync.Mutex
 
 	refreshMu sync.Mutex
-	startOnce sync.Once
+	// gameDataSyncPending is guarded by refreshMu: a runtime failed to adopt the
+	// current store, so the next refresh rehydrates even when versions are unchanged.
+	gameDataSyncPending bool
+	startOnce           sync.Once
 }
 
 type Capacity struct {
@@ -337,15 +342,17 @@ func (supervisor *Supervisor) runWorldMapPropagation(ready chan<- struct{}) {
 			return
 		case event := <-events:
 			supervisor.mu.RLock()
-			stores := make([]*State.Store, 0, len(supervisor.accounts))
-			for _, runtime := range supervisor.accounts {
-				if runtime.application != nil && runtime.application.State != nil && runtime.application.State != event.Source {
-					stores = append(stores, runtime.application.State)
+			stores := make(map[AccountID]*State.Store, len(supervisor.accounts))
+			for id, runtime := range supervisor.accounts {
+				if runtime.application != nil && runtime.application.State != nil && runtime.application.State != event.Source && runtime.application.State.SharedWorldID() == event.WorldID {
+					stores[id] = runtime.application.State
 				}
 			}
 			supervisor.mu.RUnlock()
-			for _, store := range stores {
-				store.AdoptWorldMap(event)
+			for id, store := range stores {
+				Profiling.Do(Profiling.WithRuntime(supervisor.ctx, string(id)), func(context.Context) {
+					store.AdoptWorldMap(event)
+				}, Profiling.LabelStage, Profiling.StageWorldMapAdopt)
 			}
 		}
 	}
@@ -437,7 +444,9 @@ func (supervisor *Supervisor) AddAccount(ctx context.Context, config AccountConf
 	}()
 
 	accountContext, cancel := context.WithCancel(supervisor.ctx)
-	application, err := App.New(ctx, App.Config{
+	// Profiler label (CIT-42): goroutines the runtime starts inherit runtime=<id>.
+	accountContext = Profiling.WithRuntime(accountContext, string(id))
+	appConfig := App.Config{
 		DataDir: dataDir, AccountKey: string(id),
 		Offline: supervisor.config.Offline, GameData: supervisor.gameData,
 		WorldMaps:               supervisor.worldMaps,
@@ -452,7 +461,9 @@ func (supervisor *Supervisor) AddAccount(ctx context.Context, config AccountConf
 		BackgroundOnly: config.BackgroundOnly, RuntimeContext: accountContext,
 		UpdateEndpoint:         supervisor.config.UpdateEndpoint,
 		UpdateInstallSupported: supervisor.config.UpdateInstallSupported,
-	})
+	}
+	var application *App.Application
+	Profiling.Do(accountContext, func(context.Context) { application, err = App.New(ctx, appConfig) })
 	if err != nil {
 		cancel()
 		return nil, err
@@ -476,10 +487,12 @@ func (supervisor *Supervisor) AddAccount(ctx context.Context, config AccountConf
 	supervisor.accounts[id] = accountRuntime{application: application, cancel: cancel, config: config}
 	supervisor.mu.Unlock()
 	registered = true
-	application.Start(accountContext)
-	if config.StartSession {
-		go func() { _ = application.Session.Start(accountContext) }()
-	}
+	Profiling.Do(accountContext, func(context.Context) {
+		application.Start(accountContext)
+		if config.StartSession {
+			go func() { _ = application.Session.Start(accountContext) }()
+		}
+	})
 	return application, nil
 }
 
@@ -560,8 +573,13 @@ func (supervisor *Supervisor) RefreshGameData(ctx context.Context) error {
 	}
 	supervisor.refreshMu.Lock()
 	defer supervisor.refreshMu.Unlock()
-	if err := supervisor.gameData.Refresh(ctx); err != nil {
+	changed, err := supervisor.gameData.RefreshChanged(ctx)
+	if err != nil {
 		return err
+	}
+	if !changed && !supervisor.gameDataSyncPending {
+		// Same item and language versions: every runtime already runs this store.
+		return nil
 	}
 	supervisor.mu.RLock()
 	applications := make([]*App.Application, 0, len(supervisor.accounts))
@@ -575,6 +593,7 @@ func (supervisor *Supervisor) RefreshGameData(ctx context.Context) error {
 			synchronizationErr = errors.Join(synchronizationErr, err)
 		}
 	}
+	supervisor.gameDataSyncPending = synchronizationErr != nil
 	return synchronizationErr
 }
 
@@ -609,9 +628,12 @@ func (supervisor *Supervisor) RemoveAccount(ctx context.Context, id AccountID) e
 		}
 		// Withdraw sensor membership before potentially slow account teardown so
 		// its uncompleted public-map lease can be reassigned immediately.
-		if supervisor.worldMaps != nil {
+		supervisor.mu.Lock()
+		current, stillStopping := supervisor.stopping[id]
+		if stillStopping && current.application == runtime.application && supervisor.worldMaps != nil {
 			supervisor.worldMaps.UnregisterStormScanner(string(id))
 		}
+		supervisor.mu.Unlock()
 		// Cancellation ensures every account-owned worker begins draining before
 		// we wait for durable stores to close.
 		stopErr = runtime.application.Session.Stop(ctx)
@@ -623,23 +645,40 @@ func (supervisor *Supervisor) RemoveAccount(ctx context.Context, id AccountID) e
 	} else {
 		// Keep the profile directory reserved if the caller's shutdown deadline
 		// expires. Release it only when the application really finishes.
-		go func() {
-			_ = runtime.application.Wait(context.Background())
-			supervisor.releaseStoppedAccount(id, runtime)
-		}()
+		watch := supervisor.claimStopWatcher(id, runtime)
+		if watch {
+			go func() {
+				_ = runtime.application.Wait(context.Background())
+				supervisor.releaseStoppedAccount(id, runtime)
+			}()
+		}
+
 	}
 	return errors.Join(stopErr, waitErr)
 }
 
-func (supervisor *Supervisor) releaseStoppedAccount(id AccountID, runtime accountRuntime) {
-	if supervisor.worldMaps != nil {
-		supervisor.worldMaps.UnregisterStormScanner(string(id))
+// claimStopWatcher coalesces cleanup for one application generation.
+func (supervisor *Supervisor) claimStopWatcher(id AccountID, runtime accountRuntime) bool {
+	supervisor.mu.Lock()
+	defer supervisor.mu.Unlock()
+	current, exists := supervisor.stopping[id]
+	watch := exists && current.application == runtime.application && !current.stopWatcher
+	if watch {
+		current.stopWatcher = true
+		supervisor.stopping[id] = current
 	}
+	return watch
+}
+
+func (supervisor *Supervisor) releaseStoppedAccount(id AccountID, runtime accountRuntime) {
 	supervisor.mu.Lock()
 	defer supervisor.mu.Unlock()
 	current, exists := supervisor.stopping[id]
 	if !exists || current.application != runtime.application {
 		return
+	}
+	if supervisor.worldMaps != nil {
+		supervisor.worldMaps.UnregisterStormScanner(string(id))
 	}
 	delete(supervisor.stopping, id)
 	if owner, reserved := supervisor.dataDirs[runtime.application.DataDir]; reserved && owner == id {

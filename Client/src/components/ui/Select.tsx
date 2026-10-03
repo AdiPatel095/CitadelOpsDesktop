@@ -11,7 +11,7 @@ export interface SelectOption {
 
 export interface SelectProps {
   value: string;
-  options: SelectOption[];
+  options: readonly SelectOption[];
   onChange: (value: string) => void;
   placeholder?: React.ReactNode;
   icon?: React.ReactNode;
@@ -198,6 +198,7 @@ export const Select: React.FC<SelectProps> = ({
                       event.stopPropagation();
                       setIsOpen(false);
                       setSearchQuery('');
+                      containerRef.current?.querySelector<HTMLButtonElement>('button')?.focus();
                     }}
                     placeholder={searchPlaceholder}
                     aria-label={searchPlaceholder}

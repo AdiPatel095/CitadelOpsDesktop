@@ -24,7 +24,7 @@ func TestDailyAttackCountTracksStandaloneUpdatesAndServerReset(t *testing.T) {
 		t.Fatalf("daily attack update: domains=%v changed=%t err=%v", domains, changed, err)
 	}
 	if got := gameState.DailyAttacks; got.Count != 1000 || got.ServerThreshold != 3500 || got.GrowthRate != 0.007 ||
-		!got.SessionStartedAt.IsZero() || !got.ObservedAt.Equal(observedAt) || got.ConnectionGeneration != 7 {
+		!got.SessionStartedAt.IsZero() || !got.CountingStartedAt.Equal(observedAt) || !got.ObservedAt.Equal(observedAt) || got.ConnectionGeneration != 7 {
 		t.Fatalf("daily attack state = %#v", got)
 	}
 
@@ -33,7 +33,7 @@ func TestDailyAttackCountTracksStandaloneUpdatesAndServerReset(t *testing.T) {
 		Opcode: "gai", Direction: Protocol.DirectionInbound, ResponseCode: &code, ReceivedAt: updatedAt,
 		Payload: json.RawMessage(`{"AC":1200,"ACTH":3500,"ACGR":0.007}`),
 	}, &gameState, nil)
-	if err != nil || !changed || !gameState.DailyAttacks.SessionStartedAt.IsZero() {
+	if err != nil || !changed || !gameState.DailyAttacks.SessionStartedAt.IsZero() || !gameState.DailyAttacks.CountingStartedAt.Equal(observedAt) {
 		t.Fatalf("daily attack increase invented a session boundary: state=%#v changed=%t err=%v", gameState.DailyAttacks, changed, err)
 	}
 
@@ -43,7 +43,7 @@ func TestDailyAttackCountTracksStandaloneUpdatesAndServerReset(t *testing.T) {
 		Payload: json.RawMessage(`{"AC":0,"ACTH":3500,"ACGR":0.007}`),
 	}, &gameState, nil)
 	if err != nil || !changed || gameState.DailyAttacks.Count != 0 ||
-		!gameState.DailyAttacks.SessionStartedAt.Equal(resetAt) || !gameState.DailyAttacks.ObservedAt.Equal(resetAt) {
+		!gameState.DailyAttacks.SessionStartedAt.Equal(resetAt) || !gameState.DailyAttacks.CountingStartedAt.IsZero() || !gameState.DailyAttacks.ObservedAt.Equal(resetAt) {
 		t.Fatalf("daily attack reset: state=%#v changed=%t err=%v", gameState.DailyAttacks, changed, err)
 	}
 
@@ -66,7 +66,7 @@ func TestInitialZeroDailyAttackCountEstablishesCleanSessionBoundary(t *testing.T
 		Opcode: "gai", Direction: Protocol.DirectionInbound, ResponseCode: &code, ReceivedAt: observedAt,
 		Payload: json.RawMessage(`{"AC":0,"ACTH":3500,"ACGR":0.007}`),
 	}, &gameState, nil)
-	if err != nil || !changed || !gameState.DailyAttacks.SessionStartedAt.Equal(observedAt) {
+	if err != nil || !changed || !gameState.DailyAttacks.SessionStartedAt.Equal(observedAt) || !gameState.DailyAttacks.CountingStartedAt.IsZero() {
 		t.Fatalf("initial zero daily attack session: state=%#v changed=%t err=%v", gameState.DailyAttacks, changed, err)
 	}
 }
@@ -84,5 +84,28 @@ func TestInitialStateAppliesEmbeddedDailyAttackCount(t *testing.T) {
 	}
 	if gameState.DailyAttacks.Count != 42 || gameState.DailyAttacks.ServerThreshold != 3500 {
 		t.Fatalf("embedded daily attack state = %#v", gameState.DailyAttacks)
+	}
+}
+
+func TestDailyAttackCountingWindowsSurviveStateRoundTrip(t *testing.T) {
+	observedAt := time.Date(2026, 10, 1, 12, 0, 0, 0, time.UTC)
+	for _, count := range []string{"42", "0"} {
+		t.Run(count, func(t *testing.T) {
+			state := State.NewGameState()
+			if _, err := applyDailyAttackCount(json.RawMessage(`{"AC":`+count+`}`), observedAt, &state); err != nil {
+				t.Fatal(err)
+			}
+			data, err := json.Marshal(state)
+			if err != nil {
+				t.Fatal(err)
+			}
+			var restored State.GameState
+			if err := json.Unmarshal(data, &restored); err != nil {
+				t.Fatal(err)
+			}
+			if restored.DailyAttacks != state.DailyAttacks {
+				t.Fatalf("round trip changed windows: got %#v, want %#v", restored.DailyAttacks, state.DailyAttacks)
+			}
+		})
 	}
 }

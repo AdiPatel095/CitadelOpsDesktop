@@ -20,10 +20,14 @@ func CleanupStorageFresh(gameState State.GameState, now time.Time) bool {
 		StorageSnapshotFresh(gameState, "ggm", now)
 }
 
+// StorageSnapshotFresh also rejects a snapshot that predates the latest
+// dispatched sale: success, 214, timeout, or interruption all require a new
+// storage snapshot before another sale is planned.
 func StorageSnapshotFresh(gameState State.GameState, opcode string, now time.Time) bool {
 	observation, ok := gameState.Observations[opcode]
 	observedAt := observation.SuccessfulInboundAt()
-	return ok && !observedAt.IsZero() && now.Sub(observedAt) <= CleanupSnapshotFreshness
+	return ok && !observedAt.IsZero() && now.Sub(observedAt) <= CleanupSnapshotFreshness &&
+		!observedAt.Before(gameState.Inventory.EquipmentMutatedAt)
 }
 
 // AutomaticCleanupCounts applies the same protected-item boundary as the sell

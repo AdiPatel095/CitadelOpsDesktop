@@ -80,6 +80,7 @@ type stormScanLease struct {
 }
 
 type persistedStormScanWindow struct {
+	Deleted     bool
 	WorldID     string
 	KingdomID   KingdomID
 	Key         string
@@ -284,6 +285,23 @@ func (store *WorldMapStore) CompleteStormScan(
 		}
 		nextPlans[kingdomID] = rebuilt
 	}
+	plan := currentPlan
+	if rebuilt, ok := nextPlans[kingdomID]; ok {
+		plan = rebuilt
+	}
+	planKeys := make(map[string]struct{}, len(plan.Windows))
+	for i, bounds := range plan.Windows {
+		planKeys[stormScanPlanWindowKey(plan, i, bounds)] = struct{}{}
+	}
+	cutoff := completedAt.Add(-2 * sharedStormScanRefreshInterval)
+	deletedKeys := make([]string, 0)
+	for key, window := range kingdomWindows {
+		if _, active := planKeys[key]; !active && window.CompletedAt.Before(cutoff) {
+			delete(kingdomWindows, key)
+			deletedKeys = append(deletedKeys, key)
+		}
+	}
+
 	next := &worldMapGeneration{
 		version: current.version + 1, updatedAt: completedAt.UTC(), values: nextValues,
 		stormWindows: nextScanWindows, stormPlans: nextPlans,
@@ -301,6 +319,7 @@ func (store *WorldMapStore) CompleteStormScan(
 	store.mu.Unlock()
 
 	store.queuePersistence(event)
+	store.queueStormScanDeletes(worldID, kingdomID, deletedKeys)
 	store.queueStormScanPersistence(worldID, kingdomID, windows, completedAt.UTC())
 	for _, channel := range subscribers {
 		channel <- event
@@ -336,10 +355,21 @@ func (store *WorldMapStore) UnregisterStormScanner(accountKey string) {
 			delete(store.stormLeases, leaseID)
 		}
 	}
+	for scope, group := range store.mapScanGroups {
+		delete(group.participants, accountKey)
+		for id, lease := range group.leases {
+			if lease.account == accountKey {
+				delete(group.leases, id)
+			}
+		}
+		if len(group.participants) == 0 {
+			delete(store.mapScanGroups, scope)
+		}
+	}
 	store.mu.Unlock()
 }
 
-func (state GameState) SharedStormScanCoverage(kingdomID KingdomID, now time.Time) StormScanCoverage {
+func (state *GameState) SharedStormScanCoverage(kingdomID KingdomID, now time.Time) StormScanCoverage {
 	if state.sharedMap == nil || !accountCanAccessSharedKingdom(state, kingdomID) {
 		return StormScanCoverage{}
 	}
@@ -643,6 +673,22 @@ func (store *WorldMapStore) queueStormScanPersistence(
 		store.dirtyStormScans[persistenceKey] = persistedStormScanWindow{
 			WorldID: worldID, KingdomID: kingdomID, Key: key, Bounds: bounds, CompletedAt: completedAt,
 		}
+	}
+	store.persistMu.Unlock()
+	select {
+	case store.persistWake <- struct{}{}:
+	default:
+	}
+}
+
+func (store *WorldMapStore) queueStormScanDeletes(worldID string, kingdomID KingdomID, keys []string) {
+	if store == nil || store.db == nil || len(keys) == 0 {
+		return
+	}
+	store.persistMu.Lock()
+	for _, key := range keys {
+		persistenceKey := persistedWorldMapKey(worldID, kingdomID, "scan:"+key)
+		store.dirtyStormScans[persistenceKey] = persistedStormScanWindow{WorldID: worldID, KingdomID: kingdomID, Key: key, Deleted: true}
 	}
 	store.persistMu.Unlock()
 	select {

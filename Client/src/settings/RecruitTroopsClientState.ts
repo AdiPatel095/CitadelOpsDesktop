@@ -30,4 +30,3 @@ export const recruitCheckIntervalSecToMinutes = recruitTroopsState.checkInterval
 export const recruitCheckIntervalMinutesToSec = recruitTroopsState.checkIntervalMinutesToSec;
 export const defaultRecruitTroopsSettings = recruitTroopsState.defaultSettings;
 export const normalizeRecruitTroopsSettings = recruitTroopsState.normalizeSettings;
-export const persistRecruitTroopsSettings = recruitTroopsState.persistSettings;

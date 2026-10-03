@@ -5,6 +5,7 @@ import { metadataName, translationValues } from '../i18n/officialMetadata';
 import { loadOfficialMessages, invalidateOfficialMessages } from '../i18n/officialMessages';
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, useReducer } from 'react';
 import { useCitadelAPI } from '../api/ApiContext';
+import { CATALOG_MANIFEST_WAIT_MS, catalogLoadKey } from '../api/CatalogURL';
 import { useLocale } from '../i18n/LocaleContext';
 import { CitadelAPI } from '../api/CitadelClient';
 import { officialEquipmentEffectScope } from '../equipment/EquipmentEffectApplicability';
@@ -73,11 +74,14 @@ export function MetadataProvider({ children }: { children: React.ReactNode }) {
 	const [optionalRetryNonce, setOptionalRetryNonce] = useState(0);
 	const unitsCatalogKey = useRef('');
 	const optionalCatalogKey = useRef('');
-	const catalogKey = [
-		locale,
-		catalogs?.metadata.digestSha256 ?? '',
-		catalogs?.metadata.languageVersion ?? '',
-	].join(':');
+	const [manifestWaitExpired, setManifestWaitExpired] = useState(false);
+	const awaitingManifest = catalogs == null && !manifestWaitExpired;
+	useEffect(() => {
+		if (!awaitingManifest) return undefined;
+		const timer = setTimeout(() => setManifestWaitExpired(true), CATALOG_MANIFEST_WAIT_MS);
+		return () => clearTimeout(timer);
+	}, [awaitingManifest]);
+	const catalogKey = catalogLoadKey(locale, catalogs, awaitingManifest);
 	const isLoading = unitsLoading || optionalLoading;
 	const localizeOptional = useCallback((keys: string[]) => bestEffortLocalization(keys, locale), [locale]);
 
@@ -92,6 +96,7 @@ export function MetadataProvider({ children }: { children: React.ReactNode }) {
   }, [locale]);
 
   useEffect(() => {
+    if (catalogKey === null) return undefined;
     let cancelled = false;
 		let retryTimer: ReturnType<typeof setTimeout> | null = null;
     const load = async () => {
@@ -144,6 +149,7 @@ export function MetadataProvider({ children }: { children: React.ReactNode }) {
 	  }, [catalogKey, locale, unitsRetryNonce]);
 
 	useEffect(() => {
+		if (catalogKey === null) return undefined;
 		let cancelled = false;
 		let retryTimer: ReturnType<typeof setTimeout> | null = null;
 		const load = async () => {
@@ -276,7 +282,7 @@ export function MetadataProvider({ children }: { children: React.ReactNode }) {
 						? recipe.output.name.trim() : `Recipe ${id}`;
 					next[id] = {
 						...recipe, id,
-						name: recipe.level > 0 ? `${outputName} · L${recipe.level}` : outputName,
+						name: recipe.level != null && recipe.level > 0 ? `${outputName} · L${recipe.level}` : outputName,
 						image: recipe.output?.iconUrl,
 						outputAmount: recipe.output?.amount,
 					};
@@ -650,7 +656,7 @@ function effectDefinitionMetadata(
 
 function metadataIntegerList(value: unknown): number[] {
 	const values = Array.isArray(value) ? value : typeof value === 'string' ? value.split(',') : [value];
-	return Array.from(new Set(values.map(metadataInteger).filter((entry) => entry > 0)));
+	return Array.from(new Set(values.map(metadataInteger).filter((entry): entry is number => entry != null && entry > 0)));
 }
 
 function humanizeEffectTemplate(value: string): string {

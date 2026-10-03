@@ -178,7 +178,7 @@ func craftingMarketProjection(store *GameData.Store, snapshot State.GameState, c
 	}
 	marketCastle, loaded := snapshot.Market.Castles[castle.ID]
 	totalBarrows := marketCastle.TotalBarrows
-	availableBarrows := State.AvailableMarketBarrowsAt(snapshot, marketCastle, time.Now().UTC())
+	availableBarrows := State.AvailableMarketBarrowsAt(&snapshot, marketCastle, time.Now().UTC())
 	if totalBarrows <= 0 {
 		totalBarrows = baseBarrows + buildItemBarrows
 	}

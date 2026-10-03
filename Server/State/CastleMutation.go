@@ -19,7 +19,7 @@ const (
 		CastlePartBuildings | CastlePartConstruction | CastlePartProduction | CastlePartCrafting
 )
 
-func (state *GameState) prepareCastleMutation(source GameState) {
+func (state *GameState) prepareCastleMutation(source *GameState) {
 	state.Castles = cloneMap(source.Castles)
 	state.castleMutationCOW = true
 	state.mutableCastles = map[CastleID]CastleMutationPart{}

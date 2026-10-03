@@ -32,7 +32,7 @@ func TestProductionQueueNeedsRefreshOnlyForUntrustworthySlotState(t *testing.T) 
 			state := NewGameState()
 			state.Session.Generation = 7
 			state.Session.ChangedAt = changedAt
-			if got := ProductionQueueNeedsRefresh(state, test.queue, now); got != test.want {
+			if got := ProductionQueueNeedsRefresh(&state, test.queue, now); got != test.want {
 				t.Fatalf("ProductionQueueNeedsRefresh() = %t, want %t", got, test.want)
 			}
 		})

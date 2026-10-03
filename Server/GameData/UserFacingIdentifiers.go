@@ -30,6 +30,28 @@ type identifierPattern struct {
 	resolve    func(IdentifierLabels, int64) (string, bool)
 }
 
+// userFacingIdentifierKeywords[i] is the literal userFacingIdentifierPatterns[i]
+// starts with (lower case, may be empty). Text without it cannot match, so the
+// expression is skipped.
+var userFacingIdentifierKeywords []string
+
+// patternKeyword extracts the leading literal of an expression of the form
+// (?i)\bLITERAL...: up to the first regexp metacharacter, dropping the letter an
+// optional-plural "s?" makes optional. Expressions that do not start with a
+// plain literal (an alternation) get no keyword and always run.
+func patternKeyword(expression *regexp.Regexp) string {
+	source := strings.TrimPrefix(expression.String(), `(?i)\b`)
+	end := strings.IndexAny(source, `(?[\|+*.{`)
+	if end < 0 {
+		return ""
+	}
+	literal := source[:end]
+	if strings.HasPrefix(source[end:], "?") && len(literal) > 0 {
+		literal = literal[:len(literal)-1]
+	}
+	return strings.ToLower(strings.TrimSpace(literal))
+}
+
 var userFacingIdentifierPatterns = []identifierPattern{
 	{regexp.MustCompile(`(?i)\bconstruction[- ]item (?:id )?([0-9]+)\b`), resolveConstructionItem},
 	{regexp.MustCompile(`(?i)\bcrafting recipe (?:id )?([0-9]+)\b`), resolveCraftingRecipe},
@@ -75,6 +97,13 @@ var userFacingIdentifierPatterns = []identifierPattern{
 	{regexp.MustCompile(`(?i)\bitem (?:id )?([0-9]+)\b`), resolveGenericItem},
 }
 
+func init() {
+	userFacingIdentifierKeywords = make([]string, len(userFacingIdentifierPatterns))
+	for index, pattern := range userFacingIdentifierPatterns {
+		userFacingIdentifierKeywords[index] = patternKeyword(pattern.expression)
+	}
+}
+
 var legacyUserFacingIdentifierAnnotation = regexp.MustCompile(`(?i)\s*\([^()]{0,64}\bID\s+[0-9]+\)`)
 var trailingUserFacingIdentifier = regexp.MustCompile(`(?i)\s+(?:id\s+)?[0-9]+$`)
 
@@ -82,9 +111,23 @@ var trailingUserFacingIdentifier = regexp.MustCompile(`(?i)\s+(?:id\s+)?[0-9]+$`
 // Raw IDs remain available through Intent.Receipt.RawError for diagnostics and
 // are deliberately absent from text serialized or displayed to users.
 func (labels IdentifierLabels) Humanize(text string) string {
+	// Every expression needs at least one ASCII digit to match, so text without
+	// one is returned as is (CIT-44). This is most detail, error and details text.
+	if !containsASCIIDigit(text) {
+		return text
+	}
 	text = legacyUserFacingIdentifierAnnotation.ReplaceAllString(text, "")
-	for _, pattern := range userFacingIdentifierPatterns {
-		text = pattern.expression.ReplaceAllStringFunc(text, func(match string) string {
+	// A pattern whose leading literal is absent cannot match. Non-ASCII text
+	// keeps every pattern: case folding (?i) can match characters ToLower would not.
+	lowered, prefilter := "", isASCII(text)
+	if prefilter {
+		lowered = strings.ToLower(text)
+	}
+	for index, pattern := range userFacingIdentifierPatterns {
+		if keyword := userFacingIdentifierKeywords[index]; prefilter && keyword != "" && !strings.Contains(lowered, keyword) {
+			continue
+		}
+		replaced := pattern.expression.ReplaceAllStringFunc(text, func(match string) string {
 			if strings.Contains(match, ":") {
 				return match
 			}
@@ -101,8 +144,35 @@ func (labels IdentifierLabels) Humanize(text string) string {
 			}
 			return unresolvedIdentifierLabel(match)
 		})
+		if replaced != text {
+			// A replacement can introduce the keyword of a later pattern.
+			text = replaced
+			// A resolved name can be non-ASCII, which turns the prefilter off.
+			prefilter = isASCII(text)
+			if prefilter {
+				lowered = strings.ToLower(text)
+			}
+		}
 	}
 	return legacyUserFacingIdentifierAnnotation.ReplaceAllString(text, "")
+}
+
+func containsASCIIDigit(text string) bool {
+	for index := 0; index < len(text); index++ {
+		if text[index] >= '0' && text[index] <= '9' {
+			return true
+		}
+	}
+	return false
+}
+
+func isASCII(text string) bool {
+	for index := 0; index < len(text); index++ {
+		if text[index] >= 0x80 {
+			return false
+		}
+	}
+	return true
 }
 
 func unresolvedIdentifierLabel(match string) string {

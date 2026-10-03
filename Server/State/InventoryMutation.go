@@ -27,7 +27,7 @@ func cloneConstructionOfferSnapshots(
 	return cloned
 }
 
-func (state *GameState) prepareInventoryMutation(source GameState) {
+func (state *GameState) prepareInventoryMutation(source *GameState) {
 	state.Inventory = source.Inventory
 	state.inventoryMutationCOW = true
 	state.mutableInventoryParts = 0
@@ -78,7 +78,7 @@ func (state *GameState) MutableInventoryConstructionOffers() map[PackageID]int64
 // ConstructionOffersFor returns the most recent official purchase counters
 // for exactly one castle/kingdom context. The legacy current response remains
 // a compatibility fallback for profiles written before the scoped index.
-func (state GameState) ConstructionOffersFor(
+func (state *GameState) ConstructionOffersFor(
 	castleID CastleID,
 	kingdomID KingdomID,
 ) (map[PackageID]int64, time.Time, bool) {

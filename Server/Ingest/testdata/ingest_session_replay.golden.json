@@ -1,0 +1,1218 @@
+{
+  "frames": [
+    {
+      "i": 0,
+      "op": "gbd",
+      "dir": "inbound",
+      "rev": 1,
+      "err": "",
+      "events": [
+        {
+          "rev": 1,
+          "base": 0,
+          "gap": false,
+          "domains": [
+            "achievements",
+            "alliance",
+            "attacks",
+            "castellans",
+            "castles",
+            "commanders",
+            "currencies",
+            "equipment",
+            "event-scores",
+            "events",
+            "general-skills",
+            "generals",
+            "global-effects",
+            "kingdom-transport",
+            "legend-skills",
+            "market",
+            "player",
+            "production",
+            "protocol",
+            "reports",
+            "resources",
+            "ruby-confirmation",
+            "session",
+            "subscriptions"
+          ],
+          "components": [
+            "catalog",
+            "session",
+            "account",
+            "player",
+            "castles",
+            "generals",
+            "castellans",
+            "movements",
+            "movementSnapshot",
+            "stationing",
+            "scheduled",
+            "rift",
+            "inventory",
+            "subscriptions",
+            "market",
+            "kingdomTransport",
+            "alliance",
+            "alliances",
+            "allianceHelpRequests",
+            "map",
+            "towerCooldowns",
+            "towerQueue",
+            "invasion",
+            "storm",
+            "dailyAttacks",
+            "attackDialog",
+            "attackPresets",
+            "attackAnalytics",
+            "eventScores",
+            "commandContext",
+            "automations",
+            "reports",
+            "observations",
+            "combatCooldown",
+            "research"
+          ],
+          "patch": "7963a76967739bc9c34887d0bfb37429f44016d5fee14493aa6d679829131fdd"
+        }
+      ]
+    },
+    {
+      "i": 1,
+      "op": "jaa",
+      "dir": "inbound",
+      "rev": 2,
+      "err": "",
+      "events": [
+        {
+          "rev": 2,
+          "base": 1,
+          "gap": false,
+          "domains": [
+            "alliance",
+            "castles",
+            "inventory",
+            "player",
+            "player-protection",
+            "storage"
+          ],
+          "components": [
+            "player",
+            "castles",
+            "inventory"
+          ],
+          "patch": "ea286c2c21ced266198b1fc46990d5fbbbced55008c6b59b1f0c445f9cd32a8c"
+        }
+      ]
+    },
+    {
+      "i": 2,
+      "op": "gam",
+      "dir": "inbound",
+      "rev": 3,
+      "err": "",
+      "events": [
+        {
+          "rev": 3,
+          "base": 2,
+          "gap": false,
+          "domains": [
+            "commanders",
+            "gallantry-title",
+            "glory-title",
+            "movement-snapshot",
+            "movements",
+            "player"
+          ],
+          "components": [
+            "player",
+            "movements",
+            "movementSnapshot"
+          ],
+          "patch": "94d13f286dc73b10e760967a1035b5c1a7de3b0481f8fe5b098e34466d560167"
+        }
+      ]
+    },
+    {
+      "i": 3,
+      "op": "gam",
+      "dir": "inbound",
+      "rev": 4,
+      "err": "",
+      "events": [
+        {
+          "rev": 4,
+          "base": 3,
+          "gap": false,
+          "domains": [
+            "commanders",
+            "movement-snapshot",
+            "movements"
+          ],
+          "components": [
+            "movements",
+            "movementSnapshot"
+          ],
+          "patch": "4f6d6fe7ed32bd5f07d6a3442c77f267b9da8a7d590ee372002290aa43b72f00"
+        }
+      ]
+    },
+    {
+      "i": 4,
+      "op": "gam",
+      "dir": "inbound",
+      "rev": 5,
+      "err": "",
+      "events": [
+        {
+          "rev": 5,
+          "base": 4,
+          "gap": false,
+          "domains": [
+            "commanders",
+            "movement-snapshot",
+            "movements"
+          ],
+          "components": [
+            "movements",
+            "movementSnapshot"
+          ],
+          "patch": "eca066cd1b4e2067f6e5c8eec0ee59a9c98ceda8888e845044319bc20c937c54"
+        }
+      ]
+    },
+    {
+      "i": 5,
+      "op": "gam",
+      "dir": "inbound",
+      "rev": 6,
+      "err": "",
+      "events": [
+        {
+          "rev": 6,
+          "base": 5,
+          "gap": false,
+          "domains": [
+            "commanders",
+            "movement-snapshot",
+            "movements"
+          ],
+          "components": [
+            "movements",
+            "movementSnapshot"
+          ],
+          "patch": "41e3cba10cd12816268d38ca24cc989f81eb206f497fef69614b8d4505d78dc9"
+        }
+      ]
+    },
+    {
+      "i": 6,
+      "op": "gam",
+      "dir": "inbound",
+      "rev": 7,
+      "err": "",
+      "events": [
+        {
+          "rev": 7,
+          "base": 6,
+          "gap": false,
+          "domains": [
+            "commanders",
+            "movement-snapshot",
+            "movements"
+          ],
+          "components": [
+            "movements",
+            "movementSnapshot"
+          ],
+          "patch": "8cc4183a5a57124560ecac378d88445e56924f549c1811a34ad0f8721643b9d7"
+        }
+      ]
+    },
+    {
+      "i": 7,
+      "op": "gam",
+      "dir": "inbound",
+      "rev": 8,
+      "err": "",
+      "events": [
+        {
+          "rev": 8,
+          "base": 7,
+          "gap": false,
+          "domains": [
+            "commanders",
+            "movement-snapshot",
+            "movements"
+          ],
+          "components": [
+            "movements",
+            "movementSnapshot"
+          ],
+          "patch": "1d50706d57d917fc17f3324c86841ea82ac3bd779328e761c6f3e75ab05dee50"
+        }
+      ]
+    },
+    {
+      "i": 8,
+      "op": "gam",
+      "dir": "inbound",
+      "rev": 9,
+      "err": "",
+      "events": [
+        {
+          "rev": 9,
+          "base": 8,
+          "gap": false,
+          "domains": [
+            "commanders",
+            "movement-snapshot",
+            "movements"
+          ],
+          "components": [
+            "movements",
+            "movementSnapshot"
+          ],
+          "patch": "939e9946ede3f785fd364c083875c9349d7f61173588c27c47116da9bfe2e79d"
+        }
+      ]
+    },
+    {
+      "i": 9,
+      "op": "gam",
+      "dir": "inbound",
+      "rev": 10,
+      "err": "",
+      "events": [
+        {
+          "rev": 10,
+          "base": 9,
+          "gap": false,
+          "domains": [
+            "commanders",
+            "movement-snapshot",
+            "movements"
+          ],
+          "components": [
+            "movements",
+            "movementSnapshot"
+          ],
+          "patch": "d73af37c5fb0250d68fd39f00f2de454b074d4388e9990ddaba0c9a3605fc196"
+        }
+      ]
+    },
+    {
+      "i": 10,
+      "op": "gaa",
+      "dir": "outbound",
+      "rev": 10,
+      "err": "",
+      "events": []
+    },
+    {
+      "i": 11,
+      "op": "gaa",
+      "dir": "inbound",
+      "rev": 11,
+      "err": "",
+      "events": [
+        {
+          "rev": 11,
+          "base": 10,
+          "gap": false,
+          "domains": [
+            "invasion",
+            "map-event-camp",
+            "map-fortress",
+            "map-invasion",
+            "map-player-castle",
+            "map-storm",
+            "map-tower",
+            "player"
+          ],
+          "components": [
+            "player",
+            "map",
+            "invasion",
+            "storm"
+          ],
+          "patch": "e6dc2f61dc684286f87f321b7972c590941c95668149515499ef50d8671eed6b"
+        }
+      ]
+    },
+    {
+      "i": 12,
+      "op": "gaa",
+      "dir": "outbound",
+      "rev": 11,
+      "err": "",
+      "events": []
+    },
+    {
+      "i": 13,
+      "op": "gaa",
+      "dir": "inbound",
+      "rev": 12,
+      "err": "",
+      "events": [
+        {
+          "rev": 12,
+          "base": 11,
+          "gap": false,
+          "domains": [
+            "invasion",
+            "map-event-camp",
+            "map-fortress",
+            "map-invasion",
+            "map-player-castle",
+            "map-storm",
+            "map-tower",
+            "player"
+          ],
+          "components": [
+            "player",
+            "map",
+            "invasion"
+          ],
+          "patch": "a39df082fad85d55e40d6087961e529cc250e7ce7c547e1445d86f3b22463e4f"
+        }
+      ]
+    },
+    {
+      "i": 14,
+      "op": "gaa",
+      "dir": "outbound",
+      "rev": 12,
+      "err": "",
+      "events": []
+    },
+    {
+      "i": 15,
+      "op": "gaa",
+      "dir": "inbound",
+      "rev": 13,
+      "err": "",
+      "events": [
+        {
+          "rev": 13,
+          "base": 12,
+          "gap": false,
+          "domains": [
+            "invasion",
+            "map-event-camp",
+            "map-fortress",
+            "map-invasion",
+            "map-player-castle",
+            "map-storm",
+            "map-tower",
+            "player"
+          ],
+          "components": [
+            "player",
+            "map",
+            "invasion"
+          ],
+          "patch": "58babc2e1e35a1e961038613349d450dd5aad70852a87b01fad001e2750cd4fe"
+        }
+      ]
+    },
+    {
+      "i": 16,
+      "op": "gaa",
+      "dir": "outbound",
+      "rev": 13,
+      "err": "",
+      "events": []
+    },
+    {
+      "i": 17,
+      "op": "gaa",
+      "dir": "inbound",
+      "rev": 14,
+      "err": "",
+      "events": [
+        {
+          "rev": 14,
+          "base": 13,
+          "gap": false,
+          "domains": [
+            "invasion",
+            "map-event-camp",
+            "map-fortress",
+            "map-invasion",
+            "map-player-castle",
+            "map-storm",
+            "map-tower",
+            "player"
+          ],
+          "components": [
+            "player",
+            "map",
+            "invasion"
+          ],
+          "patch": "d055fe261c6cca11ee5dc33deb8b22d8020f1506da0408b1ae406b2e97eaf597"
+        }
+      ]
+    },
+    {
+      "i": 18,
+      "op": "gaa",
+      "dir": "outbound",
+      "rev": 14,
+      "err": "",
+      "events": []
+    },
+    {
+      "i": 19,
+      "op": "gaa",
+      "dir": "inbound",
+      "rev": 15,
+      "err": "",
+      "events": [
+        {
+          "rev": 15,
+          "base": 14,
+          "gap": false,
+          "domains": [
+            "player"
+          ],
+          "components": [
+            "player"
+          ],
+          "patch": "f58e13acb9c4229efa050a54f56a3e118095df7d9025f34623fbfbe834097f73"
+        }
+      ]
+    },
+    {
+      "i": 20,
+      "op": "gaa",
+      "dir": "outbound",
+      "rev": 15,
+      "err": "",
+      "events": []
+    },
+    {
+      "i": 21,
+      "op": "gaa",
+      "dir": "inbound",
+      "rev": 16,
+      "err": "",
+      "events": [
+        {
+          "rev": 16,
+          "base": 15,
+          "gap": false,
+          "domains": [
+            "invasion",
+            "map-event-camp",
+            "map-fortress",
+            "map-invasion",
+            "map-player-castle",
+            "map-storm",
+            "map-tower",
+            "player"
+          ],
+          "components": [
+            "player",
+            "map",
+            "invasion"
+          ],
+          "patch": "9e48ae04249ea4691a45b689562524935c1b94abfb5f8d5904198bcb16754ebb"
+        }
+      ]
+    },
+    {
+      "i": 22,
+      "op": "fnm",
+      "dir": "inbound",
+      "rev": 17,
+      "err": "",
+      "events": [
+        {
+          "rev": 17,
+          "base": 16,
+          "gap": false,
+          "domains": [
+            "map-tower"
+          ],
+          "components": [
+            "map"
+          ],
+          "patch": "92ee0fb02431cf69f21d1af16d005dd3cbfd61284805eda69970483bd0766ad4"
+        }
+      ]
+    },
+    {
+      "i": 23,
+      "op": "fnt",
+      "dir": "inbound",
+      "rev": 18,
+      "err": "",
+      "events": [
+        {
+          "rev": 18,
+          "base": 17,
+          "gap": false,
+          "domains": [
+            "map-tower"
+          ],
+          "components": [
+            "map"
+          ],
+          "patch": "582df25a743a2cdfe000841690caa8f61f3380c65d79aeb0d8124552e0ccd985"
+        }
+      ]
+    },
+    {
+      "i": 24,
+      "op": "ssi",
+      "dir": "inbound",
+      "rev": 19,
+      "err": "",
+      "events": [
+        {
+          "rev": 19,
+          "base": 18,
+          "gap": false,
+          "domains": [
+            "map-tower"
+          ],
+          "components": [
+            "map"
+          ],
+          "patch": "33a17d30f228ca5b880e453c4332a9d8bc5455ed0fbf1d5e72e95f9d9297ce48"
+        }
+      ]
+    },
+    {
+      "i": 25,
+      "op": "ain",
+      "dir": "inbound",
+      "rev": 20,
+      "err": "",
+      "events": [
+        {
+          "rev": 20,
+          "base": 19,
+          "gap": false,
+          "domains": [
+            "alliance",
+            "alliances",
+            "player",
+            "protocol"
+          ],
+          "components": [
+            "player",
+            "alliance",
+            "alliances",
+            "observations"
+          ],
+          "patch": "18ac4ef3d3256af706e9b7868bd41a0abf6aaa9f88b7eabdc80d8c32b2195dd9"
+        }
+      ]
+    },
+    {
+      "i": 26,
+      "op": "jca",
+      "dir": "inbound",
+      "rev": 21,
+      "err": "",
+      "events": [
+        {
+          "rev": 21,
+          "base": 20,
+          "gap": false,
+          "domains": [
+            "alliance",
+            "castles",
+            "player"
+          ],
+          "components": [
+            "player",
+            "castles"
+          ],
+          "patch": "545278abf4d324abc9069ce28bce24cc75cfccdc7397e71c60964465724637ac"
+        }
+      ]
+    },
+    {
+      "i": 27,
+      "op": "gaa",
+      "dir": "inbound",
+      "rev": 21,
+      "err": "reduce gaa: map snapshot does not contain a valid AI array",
+      "events": []
+    },
+    {
+      "i": 28,
+      "op": "gam",
+      "dir": "inbound",
+      "rev": 21,
+      "err": "reduce gam: gam response does not contain a movement array",
+      "events": []
+    },
+    {
+      "i": 29,
+      "op": "gam",
+      "dir": "inbound",
+      "rev": 21,
+      "err": "reduce gam: decode movement owners for player titles: json: cannot unmarshal string into Go struct field .O of type []Ingest.playerTitleOwnerWire",
+      "events": []
+    },
+    {
+      "i": 30,
+      "op": "jaa",
+      "dir": "inbound",
+      "rev": 21,
+      "err": "reduce jaa: castle snapshot is missing gca",
+      "events": []
+    },
+    {
+      "i": 31,
+      "op": "gaa",
+      "dir": "inbound",
+      "rev": 22,
+      "err": "",
+      "events": [
+        {
+          "rev": 22,
+          "base": 21,
+          "gap": false,
+          "domains": [
+            "map-tower"
+          ],
+          "components": [
+            "map"
+          ],
+          "patch": "e37e77fc9773c4e2e6958cc103e3c7a8f1e9a3e11d032b56478404b86f055fca"
+        }
+      ]
+    },
+    {
+      "i": 32,
+      "op": "gaa",
+      "dir": "inbound",
+      "rev": 22,
+      "err": "",
+      "events": []
+    }
+  ],
+  "final": {
+    "account": {
+      "boundAt": "T+0ms",
+      "playerId": 424242,
+      "uid": 777001
+    },
+    "advisor": {
+      "summary": {
+        "costs": {},
+        "gains": {},
+        "observedAt": "0001-01-01T00:00:00Z"
+      }
+    },
+    "alliance": {
+      "holdings": [],
+      "id": 9001,
+      "members": [
+        {
+          "name": "Fixture Player",
+          "playerId": 424242,
+          "returnProtectionSec": 600
+        }
+      ],
+      "name": "Fixture Alliance",
+      "observedAt": "T+44100ms"
+    },
+    "allianceHelpRequests": {
+      "hospitalProductionIds": [],
+      "lastHelpAllAt": "0001-01-01T00:00:00Z",
+      "observedAt": "0001-01-01T00:00:00Z",
+      "othersObservedAt": "0001-01-01T00:00:00Z",
+      "ownRecruitmentRequests": [],
+      "pendingOtherListIds": [],
+      "recruitmentCastleIds": []
+    },
+    "alliances": {},
+    "attackAnalytics": {},
+    "attackDialog": {
+      "activeEffects": [],
+      "observedAt": "0001-01-01T00:00:00Z",
+      "target": {}
+    },
+    "attackPresets": [],
+    "automations": {},
+    "beri": {
+      "availableTroops": 0,
+      "campOpenRequestedAt": "0001-01-01T00:00:00Z",
+      "consumedAt": "0001-01-01T00:00:00Z",
+      "observedAt": "0001-01-01T00:00:00Z",
+      "targetConsumedAt": "0001-01-01T00:00:00Z",
+      "targetInvalidatedAt": "0001-01-01T00:00:00Z",
+      "targetObservedAt": "0001-01-01T00:00:00Z",
+      "troopsByUnit": {}
+    },
+    "castellans": {},
+    "castles": {
+      "100001": {
+        "buildingProduction": {},
+        "buildingQueue": {
+          "observedAt": "0001-01-01T00:00:00Z",
+          "slotCount": 0,
+          "slots": null
+        },
+        "buildings": {},
+        "constructionSlots": {},
+        "constructionSlotsObservedAt": "0001-01-01T00:00:00Z",
+        "contextSnapshotObservedAt": "T+1000ms",
+        "crafting": {
+          "buildings": {},
+          "enabledRecipeGroupIds": [],
+          "enabledRecipeIds": [],
+          "outputBoostByQueueType": {}
+        },
+        "defense": {
+          "inventory": {},
+          "inventoryObservedAt": "0001-01-01T00:00:00Z",
+          "keep": {
+            "observedAt": "0001-01-01T00:00:00Z",
+            "primaryToolSlots": [],
+            "secondaryToolSlots": [],
+            "unitTypePercent": 0
+          },
+          "meleeUnitIds": [],
+          "moat": {
+            "leftToolSlots": [],
+            "middleToolSlots": [],
+            "observedAt": "0001-01-01T00:00:00Z",
+            "rightToolSlots": []
+          },
+          "observedAt": "0001-01-01T00:00:00Z",
+          "rangedUnitIds": [],
+          "wall": {
+            "left": {
+              "toolSlots": [],
+              "unitPercent": 0,
+              "unitTypePercent": 0
+            },
+            "middle": {
+              "toolSlots": [],
+              "unitPercent": 0,
+              "unitTypePercent": 0
+            },
+            "observedAt": "0001-01-01T00:00:00Z",
+            "right": {
+              "toolSlots": [],
+              "unitPercent": 0,
+              "unitTypePercent": 0
+            }
+          }
+        },
+        "focused": false,
+        "foodStateObservedAt": "T+1000ms",
+        "id": 100001,
+        "kingdomId": 0,
+        "layout": {
+          "fixed": null,
+          "ground": null,
+          "objects": null,
+          "observedAt": "0001-01-01T00:00:00Z"
+        },
+        "name": "Fixture Castle 1",
+        "production": {},
+        "queueableObservedAt": "0001-01-01T00:00:00Z",
+        "queueableProduction": {},
+        "resources": {},
+        "slotType": 1,
+        "units": {
+          "hospital": {},
+          "specialHospital": {},
+          "stationed": {},
+          "total": {},
+          "traveling": {}
+        },
+        "unitsObservedAt": "0001-01-01T00:00:00Z",
+        "x": 100,
+        "y": 100
+      },
+      "100002": {
+        "buildingProduction": {},
+        "buildingQueue": {
+          "observedAt": "0001-01-01T00:00:00Z",
+          "slotCount": 0,
+          "slots": null
+        },
+        "buildings": {},
+        "constructionSlots": {},
+        "constructionSlotsObservedAt": "0001-01-01T00:00:00Z",
+        "contextSnapshotObservedAt": "0001-01-01T00:00:00Z",
+        "crafting": {
+          "buildings": {},
+          "enabledRecipeGroupIds": [],
+          "enabledRecipeIds": [],
+          "outputBoostByQueueType": {}
+        },
+        "defense": {
+          "inventory": {},
+          "inventoryObservedAt": "0001-01-01T00:00:00Z",
+          "keep": {
+            "observedAt": "0001-01-01T00:00:00Z",
+            "primaryToolSlots": [],
+            "secondaryToolSlots": [],
+            "unitTypePercent": 0
+          },
+          "meleeUnitIds": [],
+          "moat": {
+            "leftToolSlots": [],
+            "middleToolSlots": [],
+            "observedAt": "0001-01-01T00:00:00Z",
+            "rightToolSlots": []
+          },
+          "observedAt": "0001-01-01T00:00:00Z",
+          "rangedUnitIds": [],
+          "wall": {
+            "left": {
+              "toolSlots": [],
+              "unitPercent": 0,
+              "unitTypePercent": 0
+            },
+            "middle": {
+              "toolSlots": [],
+              "unitPercent": 0,
+              "unitTypePercent": 0
+            },
+            "observedAt": "0001-01-01T00:00:00Z",
+            "right": {
+              "toolSlots": [],
+              "unitPercent": 0,
+              "unitTypePercent": 0
+            }
+          }
+        },
+        "focused": true,
+        "foodStateObservedAt": "T+44110ms",
+        "id": 100002,
+        "kingdomId": 0,
+        "layout": {
+          "fixed": null,
+          "ground": null,
+          "objects": null,
+          "observedAt": "0001-01-01T00:00:00Z"
+        },
+        "name": "Fixture Castle 2",
+        "production": {},
+        "queueableObservedAt": "0001-01-01T00:00:00Z",
+        "queueableProduction": {},
+        "resources": {},
+        "slotType": 1,
+        "units": {
+          "hospital": {},
+          "specialHospital": {},
+          "stationed": {},
+          "total": {},
+          "traveling": {}
+        },
+        "unitsObservedAt": "0001-01-01T00:00:00Z",
+        "x": 110,
+        "y": 110
+      }
+    },
+    "combatCooldown": {
+      "until": "0001-01-01T00:00:00Z"
+    },
+    "commandContext": {},
+    "commanders": {},
+    "dailyAttacks": {
+      "count": 0,
+      "countingStartedAt": "0001-01-01T00:00:00Z",
+      "growthRate": 0,
+      "observedAt": "0001-01-01T00:00:00Z",
+      "serverThreshold": 0,
+      "sessionStartedAt": "0001-01-01T00:00:00Z"
+    },
+    "eventScores": {
+      "activityByEvent": {},
+      "byEvent": {},
+      "inventory": {
+        "activeByEvent": {},
+        "globalEffectBaselineObservedAt": "0001-01-01T00:00:00Z",
+        "globalEffectBoosterOffers": {},
+        "globalEffectBoosts": {},
+        "globalEffectBoostsObservedAt": "0001-01-01T00:00:00Z",
+        "globalEffectPurchases": {},
+        "globalEffectReadObservedAt": "0001-01-01T00:00:00Z",
+        "globalEffects": {},
+        "globalEffectsObservedAt": "0001-01-01T00:00:00Z",
+        "observedAt": "0001-01-01T00:00:00Z"
+      },
+      "rankingByEvent": {},
+      "shopByPackage": {}
+    },
+    "generals": {},
+    "invasion": {
+      "fortifiedTargets": {},
+      "fortifyCurrencies": null,
+      "fortifyResourceCount": 0,
+      "fortifyRubyCount": 0,
+      "lastScannedAt": {}
+    },
+    "inventory": {
+      "constructionItems": {},
+      "constructionItemsObservedAt": "0001-01-01T00:00:00Z",
+      "constructionOffers": {},
+      "constructionOffersKingdomId": 0,
+      "constructionOffersObservedAt": "0001-01-01T00:00:00Z",
+      "constructionSpaceLeftObservedAt": "0001-01-01T00:00:00Z",
+      "equipment": {},
+      "equipmentMutatedAt": "0001-01-01T00:00:00Z",
+      "gemStacks": {},
+      "gems": {},
+      "items": {}
+    },
+    "khan": {
+      "attacksLaunched": 0,
+      "cooldownReportVersion": 0,
+      "cooldownReports": {},
+      "cooldownsSkipped": 0,
+      "eventEndsAt": "0001-01-01T00:00:00Z",
+      "lastAttackLaunchedAt": "0001-01-01T00:00:00Z",
+      "lastCooldownSkippedAt": "0001-01-01T00:00:00Z",
+      "lastDefenseToolPurchaseAt": "0001-01-01T00:00:00Z",
+      "lastTauntResolvedAt": "0001-01-01T00:00:00Z",
+      "lastTauntTriggeredAt": "0001-01-01T00:00:00Z",
+      "lastTauntTriggeredEventEndsAt": "0001-01-01T00:00:00Z",
+      "launches": [],
+      "protection": {
+        "active": false,
+        "gateOpenUntil": "0001-01-01T00:00:00Z",
+        "triggeredAt": "0001-01-01T00:00:00Z"
+      },
+      "rageCampObservedAt": "0001-01-01T00:00:00Z",
+      "rageObservedAt": "0001-01-01T00:00:00Z",
+      "tauntCounterVersion": 0,
+      "taunts": {},
+      "tauntsObserved": 0,
+      "tauntsResolved": 0,
+      "tauntsTriggered": 0,
+      "victoriesConfirmed": 0
+    },
+    "kingdomTransport": {
+      "observedAt": "0001-01-01T00:00:00Z",
+      "pending": [],
+      "pendingUnits": [],
+      "unlocks": {}
+    },
+    "map": {},
+    "market": {
+      "boosters": {},
+      "caravanLevelLoaded": false,
+      "castles": {},
+      "feast": {
+        "expiresAt": "0001-01-01T00:00:00Z",
+        "observedAt": "0001-01-01T00:00:00Z"
+      }
+    },
+    "movementSnapshot": {
+      "connectionGeneration": 1,
+      "observedAt": "T+37000ms",
+      "version": 8
+    },
+    "movements": {
+      "700001": {
+        "arrivesAt": "T+96000ms",
+        "commanderId": 1,
+        "direction": 0,
+        "id": 700001,
+        "kingdomId": 0,
+        "leaderId": 1,
+        "observedAt": "T+37000ms",
+        "ownerPlayerId": 424242,
+        "progressSeconds": 1,
+        "sourceCastleId": 100001,
+        "sourceTypeId": 1,
+        "sourceX": 100,
+        "sourceY": 100,
+        "startedAt": "T+36000ms",
+        "targetCastleId": 100010,
+        "targetPlayerId": 500001,
+        "targetTypeId": 1,
+        "targetX": 120,
+        "targetY": 120,
+        "travelSeconds": 60,
+        "units": {}
+      },
+      "700002": {
+        "arrivesAt": "T+95000ms",
+        "commanderId": 2,
+        "direction": 0,
+        "id": 700002,
+        "kingdomId": 0,
+        "leaderId": 2,
+        "observedAt": "T+37000ms",
+        "ownerPlayerId": 424242,
+        "progressSeconds": 2,
+        "sourceCastleId": 100001,
+        "sourceTypeId": 1,
+        "sourceX": 100,
+        "sourceY": 100,
+        "startedAt": "T+35000ms",
+        "targetCastleId": 100011,
+        "targetPlayerId": 500001,
+        "targetTypeId": 1,
+        "targetX": 121,
+        "targetY": 120,
+        "travelSeconds": 60,
+        "units": {}
+      },
+      "700003": {
+        "arrivesAt": "T+96000ms",
+        "commanderId": 3,
+        "direction": 0,
+        "id": 700003,
+        "kingdomId": 0,
+        "leaderId": 3,
+        "observedAt": "T+37000ms",
+        "ownerPlayerId": 500002,
+        "progressSeconds": 1,
+        "sourceCastleId": 100001,
+        "sourceTypeId": 1,
+        "sourceX": 100,
+        "sourceY": 100,
+        "startedAt": "T+36000ms",
+        "targetCastleId": 100012,
+        "targetPlayerId": 424242,
+        "targetTypeId": 1,
+        "targetX": 122,
+        "targetY": 120,
+        "travelSeconds": 60,
+        "units": {}
+      },
+      "700004": {
+        "advisorAttackCount": 12,
+        "advisorAttackNumber": 8,
+        "advisorType": 1,
+        "arrivesAt": "T+96000ms",
+        "commanderId": 4,
+        "direction": 0,
+        "id": 700004,
+        "kingdomId": 0,
+        "leaderId": 4,
+        "observedAt": "T+37000ms",
+        "ownerPlayerId": 424242,
+        "progressSeconds": 1,
+        "sourceCastleId": 100001,
+        "sourceTypeId": 1,
+        "sourceX": 100,
+        "sourceY": 100,
+        "startedAt": "T+36000ms",
+        "targetCastleId": 100013,
+        "targetPlayerId": 500001,
+        "targetTypeId": 1,
+        "targetX": 123,
+        "targetY": 120,
+        "travelSeconds": 60,
+        "units": {}
+      }
+    },
+    "nomadCamps": {
+      "cooldowns": {},
+      "lastScannedAt": {}
+    },
+    "observations": {},
+    "player": {
+      "achievements": {
+        "completed": {},
+        "observedAt": "0001-01-01T00:00:00Z",
+        "points": 0,
+        "progress": {}
+      },
+      "allianceId": 9001,
+      "currencies": {},
+      "gallantryTitleGeneration": 1,
+      "gallantryTitleId": 116,
+      "gallantryTitleObservedAt": "T+37000ms",
+      "gloryTitleGeneration": 1,
+      "gloryTitleId": 31,
+      "gloryTitleObservedAt": "T+37000ms",
+      "gloryTitleTopX": 50,
+      "id": 424242,
+      "legendSkills": {
+        "activeIds": null,
+        "observedAt": "0001-01-01T00:00:00Z",
+        "resetCount": 0,
+        "resetRemainingSec": 0,
+        "sceatActivations": null,
+        "sceatSkillIds": null,
+        "skillPoints": 0
+      },
+      "protectionMode": {
+        "modeObservedAt": "T+0ms",
+        "modeState": 1,
+        "modeTimerSec": 300,
+        "observedAt": "T+44110ms",
+        "remainingSec": 600
+      },
+      "resources": {},
+      "vip": {}
+    },
+    "reports": {
+      "battleCaptures": {},
+      "notices": {},
+      "spyCaptures": {}
+    },
+    "research": {
+      "completedIds": {},
+      "observedAt": "0001-01-01T00:00:00Z"
+    },
+    "revision": 22,
+    "rift": {
+      "launches": {}
+    },
+    "scheduled": {},
+    "schemaVersion": 2,
+    "session": {
+      "baselineGeneration": 1,
+      "changedAt": "T+-1000ms",
+      "connectionGeneration": 1,
+      "generation": 1,
+      "loggedIn": true,
+      "mode": "",
+      "socketReady": true,
+      "status": ""
+    },
+    "stationing": {},
+    "storm": {
+      "map": {
+        "coveredBounds": {
+          "x1": 0,
+          "x2": 0,
+          "y1": 0,
+          "y2": 0
+        },
+        "lastAttemptAt": "0001-01-01T00:00:00Z",
+        "lastCompletedAt": "0001-01-01T00:00:00Z",
+        "nextBounds": {
+          "x1": 0,
+          "x2": 0,
+          "y1": 0,
+          "y2": 0
+        },
+        "readyTargetCount": 30,
+        "targetCount": 30,
+        "targets": {}
+      }
+    },
+    "subscriptions": {},
+    "subscriptionsGeneration": 1,
+    "subscriptionsObservedAt": "T+0ms",
+    "towerCooldowns": {},
+    "towerQueue": {
+      "capacityByCastle": {},
+      "confirmedLaunchesByCastle": {},
+      "cursorVersion": 0,
+      "entriesByCastle": {},
+      "lastAttemptedAt": {},
+      "lastScannedAt": {}
+    }
+  }
+}

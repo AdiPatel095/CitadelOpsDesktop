@@ -72,8 +72,8 @@ func reduceCastleList(
 		return nil, false, nil
 	}
 	raw := frame.Payload
-	var root map[string]json.RawMessage
-	if err := json.Unmarshal(frame.Payload, &root); err != nil {
+	root, err := frame.PayloadRoot()
+	if err != nil {
 		return nil, false, fmt.Errorf("decode castle-list response: %w", err)
 	}
 	if nested := root["gcl"]; len(nested) > 0 {
@@ -189,8 +189,8 @@ func reduceCastleSnapshot(
 	if !frameSucceeded(frame) || len(frame.Payload) == 0 {
 		return nil, false, nil
 	}
-	var root map[string]json.RawMessage
-	if err := json.Unmarshal(frame.Payload, &root); err != nil {
+	root, err := frame.PayloadRoot()
+	if err != nil {
 		return nil, false, fmt.Errorf("decode castle snapshot: %w", err)
 	}
 	var gca map[string]json.RawMessage
@@ -330,8 +330,8 @@ func reduceFocusedUnits(
 	if !ok {
 		return nil, false, nil
 	}
-	var root map[string]json.RawMessage
-	if err := json.Unmarshal(frame.Payload, &root); err != nil {
+	root, err := frame.PayloadRoot()
+	if err != nil {
 		return nil, false, fmt.Errorf("decode unit snapshot: %w", err)
 	}
 	raw := frame.Payload
@@ -373,8 +373,8 @@ func reduceFocusedConstructionItems(
 	if !ok {
 		return nil, false, nil
 	}
-	var root map[string]json.RawMessage
-	if err := json.Unmarshal(frame.Payload, &root); err != nil {
+	root, err := frame.PayloadRoot()
+	if err != nil {
 		return nil, false, fmt.Errorf("decode construction-item snapshot: %w", err)
 	}
 	raw, exists := root["CI"]

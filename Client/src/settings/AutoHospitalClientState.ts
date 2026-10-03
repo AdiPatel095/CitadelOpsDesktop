@@ -1,5 +1,3 @@
-import { queueConfigurationUpdate } from './Configuration';
-
 export const DEFAULT_AUTO_HOSPITAL_CHECK_INTERVAL_SEC = 300;
 export const MIN_AUTO_HOSPITAL_CHECK_INTERVAL_SEC = 30;
 export const MAX_AUTO_HOSPITAL_CHECK_INTERVAL_SEC = 86400;
@@ -58,9 +56,4 @@ export function normalizeAutoHospitalSettings(raw: unknown): AutoHospitalClientS
     version: 1,
     checkIntervalSec: clampAutoHospitalCheckIntervalSec(Number(payload.checkIntervalSec)),
   };
-}
-
-export function persistAutoHospitalSettings(settings: AutoHospitalClientSettingsV1) {
-  const normalized = normalizeAutoHospitalSettings(settings);
-  return queueConfigurationUpdate('automation.autoHospital', normalized);
 }

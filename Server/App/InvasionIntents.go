@@ -227,7 +227,7 @@ func planInvasionTargetReconcile(
 		}, nil
 	}
 	if request.MatchedMovementID > 0 {
-		movement, matched := State.InvasionReservationMovement(input.State, reservation)
+		movement, matched := State.InvasionReservationMovement(&input.State, reservation)
 		if !matched || movement.ID != request.MatchedMovementID {
 			return Intent.Plan{}, Localization.WithError(fmt.Errorf("%w: confirmed invasion movement changed before reconciliation", Intent.ErrPlanStale), Localization.New("server.app.intent_plan_became_stale.c3618596", "intent plan became stale before dispatch: confirmed invasion movement changed before reconciliation", nil))
 		}
@@ -591,7 +591,7 @@ func invasionAttackContext(input Intent.PlanningContext, arguments json.RawMessa
 		), Localization.New("server.app.intent_plan_became_stale.0613b9da", "intent plan became stale before dispatch: invasion target {p1}:{p2} is hidden or protected", Localization.Params{"p1": fmt.Sprintf("%d", request.TargetX), "p2": fmt.Sprintf("%d", request.TargetY)}))
 	}
 	if State.AttackFeatureTargetPendingAt(
-		input.State, State.AttackFeatureAutoInvasion, request.KingdomID, request.TargetTypeID,
+		&input.State, State.AttackFeatureAutoInvasion, request.KingdomID, request.TargetTypeID,
 		request.TargetX, request.TargetY, now,
 	) {
 		return invasionAttackRequest{}, State.CastleState{}, State.MapObservation{}, Localization.WithError(fmt.Errorf(
@@ -605,7 +605,7 @@ func invasionAttackContext(input Intent.PlanningContext, arguments json.RawMessa
 			Intent.ErrPlanStale, request.TargetX, request.TargetY,
 		), Localization.New("server.app.intent_plan_became_stale.a42c1b12", "intent plan became stale before dispatch: invasion target {p1}:{p2} has an unresolved launch", Localization.Params{"p1": fmt.Sprintf("%d", request.TargetX), "p2": fmt.Sprintf("%d", request.TargetY)}))
 	}
-	if State.AnyActiveMovementAtMapTarget(input.State, State.MapTargetKey{
+	if State.AnyActiveMovementAtMapTarget(&input.State, State.MapTargetKey{
 		KingdomID: request.KingdomID, TypeID: request.TargetTypeID, X: request.TargetX, Y: request.TargetY,
 	}, now) {
 		return invasionAttackRequest{}, State.CastleState{}, State.MapObservation{}, Localization.WithError(fmt.Errorf(
@@ -716,8 +716,8 @@ func resolveInvasionAttackCapacity(
 		return AttackCapacity.Result{}, State.CastleState{}, State.MapObservation{}, err
 	}
 	commander, exists := input.State.Commanders[commanderID]
-	if !exists || !commander.Available || State.CommanderHasActiveMovementAt(input.State, commanderID, time.Now().UTC()) ||
-		State.InvasionCommanderReserved(input.State, commanderID) {
+	if !exists || !commander.Available || State.CommanderHasActiveMovementAt(&input.State, commanderID, time.Now().UTC()) ||
+		State.InvasionCommanderReserved(&input.State, commanderID) {
 		return AttackCapacity.Result{}, State.CastleState{}, State.MapObservation{}, Localization.WithError(fmt.Errorf(
 			"%w: commander %d is no longer available", Intent.ErrPlanStale, commanderID,
 		), Localization.New("server.app.intent_plan_became_stale.f815ae9b", "intent plan became stale before dispatch: commander {p1} is no longer available", Localization.Params{"p1": fmt.Sprintf("%d", commanderID)}))
@@ -872,7 +872,7 @@ func (application *Application) captureInvasionLaunch(ctx context.Context, argum
 				return false
 			}
 			if reserved {
-				selected, matched := State.InvasionReservationMovement(*gameState, reservation)
+				selected, matched := State.InvasionReservationMovement(gameState, reservation)
 				if !matched {
 					return nil, false, Localization.WithError(fmt.Errorf(
 						"CRA response did not return commander %d's exact invasion movement", request.CommanderID,
@@ -985,7 +985,7 @@ func (application *Application) reserveInvasionTarget(ctx context.Context, argum
 				Intent.ErrPlanStale, request.TargetX, request.TargetY,
 			), Localization.New("server.app.intent_plan_became_stale.eded45bc", "intent plan became stale before dispatch: invasion target {p1}:{p2} is reserved by another launch", Localization.Params{"p1": fmt.Sprintf("%d", request.TargetX), "p2": fmt.Sprintf("%d", request.TargetY)}))
 		}
-		if request.CommanderKnown && State.InvasionCommanderReserved(*gameState, request.CommanderID) {
+		if request.CommanderKnown && State.InvasionCommanderReserved(gameState, request.CommanderID) {
 			return nil, false, Localization.WithError(fmt.Errorf(
 				"%w: invasion commander %d is reserved by another launch",
 				Intent.ErrPlanStale, request.CommanderID,
@@ -1100,7 +1100,7 @@ func (application *Application) reconcileInvasionTargetReservation(ctx context.C
 				return []string{"invasion"}, changed, nil
 			}
 			if request.MatchedMovementID > 0 {
-				movement, matched := State.InvasionReservationMovement(*gameState, reservation)
+				movement, matched := State.InvasionReservationMovement(gameState, reservation)
 				if !matched || movement.ID != request.MatchedMovementID {
 					return nil, false, Localization.WithError(fmt.Errorf("%w: confirmed invasion movement changed during reconciliation", Intent.ErrPlanStale), Localization.New("server.app.intent_plan_became_stale.3cae4570", "intent plan became stale before dispatch: confirmed invasion movement changed during reconciliation", nil))
 				}
@@ -1115,7 +1115,7 @@ func (application *Application) reconcileInvasionTargetReservation(ctx context.C
 					!gameState.MovementSnapshot.ObservedAt.After(request.ReconcileStartedAt) {
 					return nil, false, Localization.WithError(fmt.Errorf("%w: invasion reconciliation does not have a fresh movement snapshot", Intent.ErrPlanStale), Localization.New("server.app.intent_plan_became_stale.f2045a27", "intent plan became stale before dispatch: invasion reconciliation does not have a fresh movement snapshot", nil))
 				}
-				if movement, matched := State.InvasionReservationMovement(*gameState, reservation); matched {
+				if movement, matched := State.InvasionReservationMovement(gameState, reservation); matched {
 					return recordReconciledInvasionLaunch(gameState, reservation, movement, false)
 				}
 				// GAM responses are scoped and can omit a movement that was accepted
@@ -1146,7 +1146,7 @@ func (application *Application) reconcileInvasionTargetReservation(ctx context.C
 				)
 				return []string{"invasion"}, changed, nil
 			}
-			if State.AnyActiveMovementAtMapTarget(*gameState, State.MapTargetKey{
+			if State.AnyActiveMovementAtMapTarget(gameState, State.MapTargetKey{
 				KingdomID: request.KingdomID, TypeID: request.TargetTypeID,
 				X: request.TargetX, Y: request.TargetY,
 			}, time.Now().UTC()) {
@@ -1214,7 +1214,7 @@ func (application *Application) guardInvasionAttack(ctx context.Context, argumen
 	if remaining := invasionRemainingSeconds(score, time.Now().UTC()); remaining >= 0 && remaining <= max(0, request.MinimumRemainingSec) {
 		return Localization.WithError(fmt.Errorf("invasion event has only %d seconds remaining", remaining), Localization.New("server.app.invasion_event_has_only.31278644", "invasion event has only {p0} seconds remaining", Localization.Params{"p0": remaining}))
 	}
-	commanderReserved := State.InvasionCommanderReserved(state, request.CommanderID)
+	commanderReserved := State.InvasionCommanderReserved(&state, request.CommanderID)
 	if commanderReserved {
 		reservation, ownReservation := state.Invasion.TargetReservation(request.KingdomID, request.TargetX, request.TargetY)
 		operationID := strings.TrimSpace(Outbound.MetadataFromContext(ctx).OperationID)
@@ -1222,7 +1222,7 @@ func (application *Application) guardInvasionAttack(ctx context.Context, argumen
 			!reservation.CommanderKnown || reservation.CommanderID != request.CommanderID
 	}
 	commander, exists := state.Commanders[request.CommanderID]
-	if !exists || !commander.Available || State.CommanderHasActiveMovementAt(state, request.CommanderID, time.Now().UTC()) ||
+	if !exists || !commander.Available || State.CommanderHasActiveMovementAt(&state, request.CommanderID, time.Now().UTC()) ||
 		commanderReserved {
 		return Localization.WithError(fmt.Errorf("%w: commander %d is no longer available", Intent.ErrPlanStale, request.CommanderID), Localization.New("server.app.intent_plan_became_stale.f815ae9b", "intent plan became stale before dispatch: commander {p1} is no longer available", Localization.Params{"p1": fmt.Sprintf("%d", request.CommanderID)}))
 	}
@@ -1270,8 +1270,8 @@ func (application *Application) guardInvasionTarget(_ context.Context, arguments
 		return Localization.WithError(fmt.Errorf("invasion event has only %d seconds remaining", remaining), Localization.New("server.app.invasion_event_has_only.31278644", "invasion event has only {p0} seconds remaining", Localization.Params{"p0": remaining}))
 	}
 	commander, exists := state.Commanders[request.CommanderID]
-	if !exists || !commander.Available || State.CommanderHasActiveMovementAt(state, request.CommanderID, time.Now().UTC()) ||
-		State.InvasionCommanderReserved(state, request.CommanderID) {
+	if !exists || !commander.Available || State.CommanderHasActiveMovementAt(&state, request.CommanderID, time.Now().UTC()) ||
+		State.InvasionCommanderReserved(&state, request.CommanderID) {
 		return Localization.WithError(fmt.Errorf("%w: commander %d is no longer available", Intent.ErrPlanStale, request.CommanderID), Localization.New("server.app.intent_plan_became_stale.f815ae9b", "intent plan became stale before dispatch: commander {p1} is no longer available", Localization.Params{"p1": fmt.Sprintf("%d", request.CommanderID)}))
 	}
 	return nil
