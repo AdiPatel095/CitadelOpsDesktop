@@ -1949,7 +1949,7 @@
     "reason": "CSS tones, typed label keys, list mode token and #id fallbacks for unknown units.",
     "evidence": "Label keys are MessageKey values rendered with localizeStatic/LocalizedText; names are official metadata."
   },
-  "6c07dca14e82cfeb971b92448a0abafac678cf9603b2a1399cfe0009ec115f3c": {
+  "ff6836d31699ee34dede1ca3369c85991493fdabcffbf9d8d2e574ec0eeed765": {
     "classification": "technical",
     "reason": "CSS tones, typed label keys, list mode token and #id fallbacks for unknown units.",
     "evidence": "Label keys are MessageKey values rendered with localizeStatic/LocalizedText; names are official metadata."
@@ -1969,7 +1969,7 @@
     "reason": "CSS tones, typed label keys, list mode token and #id fallbacks for unknown units.",
     "evidence": "Label keys are MessageKey values rendered with localizeStatic/LocalizedText; names are official metadata."
   },
-  "b56cf7b50708cb353906844ef393a129a33016a5ccc31ccd61cf386ef1cadd37": {
+  "84acf92c0c7e5a4e67e9eaae7085448a242ced0a282dedcc69b0ad272d7ded8a": {
     "classification": "technical",
     "reason": "CSS tones, typed label keys, list mode token and #id fallbacks for unknown units.",
     "evidence": "Label keys are MessageKey values rendered with localizeStatic/LocalizedText; names are official metadata."
@@ -1994,12 +1994,12 @@
     "reason": "CSS tones, typed label keys, list mode token and #id fallbacks for unknown units.",
     "evidence": "Label keys are MessageKey values rendered with localizeStatic/LocalizedText; names are official metadata."
   },
-  "ee355f7983907d8b78e3aeb649a83e432432b798c709fee8a6d0deb9a0544128": {
+  "4adfb3707bcbac4159bec8fd5979a90441c1fb58a07f627f32163e96361c3fd7": {
     "classification": "technical",
     "reason": "CSS tones, typed label keys, list mode token and #id fallbacks for unknown units.",
     "evidence": "Label keys are MessageKey values rendered with localizeStatic/LocalizedText; names are official metadata."
   },
-  "0bef03ab83d489bc0ac5c867d964953294edaa023b9da9e8c38aa2518379f36f": {
+  "28df9ccb13c263a66ed7ef5d9ed8bc841eb0b281d80d27c554595ca02a39afbc": {
     "classification": "technical",
     "reason": "CSS tones, typed label keys, list mode token and #id fallbacks for unknown units.",
     "evidence": "Label keys are MessageKey values rendered with localizeStatic/LocalizedText; names are official metadata."

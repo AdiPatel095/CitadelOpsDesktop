@@ -1159,6 +1159,22 @@
     {
       "portal": "src/commandCenter/worldIntelligence/useServerLabel.ts",
       "desktop": "Client/src/worldIntelligence/useServerLabel.ts"
+    },
+    {
+      "portal": "src/commandCenter/mock/onboarding/scenarios/stock-wording-short.json",
+      "desktop": "Client/tests/onboarding-browser/scenarios/stock-wording-short.json"
+    },
+    {
+      "portal": "src/commandCenter/mock/onboarding/scenarios/stock-wording-covered.json",
+      "desktop": "Client/tests/onboarding-browser/scenarios/stock-wording-covered.json"
+    },
+    {
+      "portal": "src/commandCenter/mock/onboarding/scenarios/stock-wording-unknown.json",
+      "desktop": "Client/tests/onboarding-browser/scenarios/stock-wording-unknown.json"
+    },
+    {
+      "portal": "src/commandCenter/mock/onboarding/scenarios/stock-wording-unsynced.json",
+      "desktop": "Client/tests/onboarding-browser/scenarios/stock-wording-unsynced.json"
     }
   ],
   "unmirrored": []
