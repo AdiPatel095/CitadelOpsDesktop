@@ -132,7 +132,7 @@ type troopAvailabilityGate struct {
 
 type coinAvailabilityGate struct {
 	detailDescriptor *Localization.Message
-	currencyID       State.CurrencyID
+	key              Intent.BalanceKey
 	detail           string
 	observed         int64
 	observedAt       time.Time
@@ -294,9 +294,9 @@ func (coordinator *Coordinator) Run(ctx context.Context) {
 		if !meaningfulStateEvent(event) {
 			return false, false
 		}
-		// Only session and unit changes need an account-state read here. All
-		// other domains route directly through the policy wake index.
-		if stateEventHasDomain(event, "session") || stateEventHasDomain(event, "units") || stateEventHasDomain(event, "resources") {
+		// Availability waits also read balance and castle observations before
+		// routing the event through the policy wake index.
+		if stateEventHasDomain(event, "session") || stateEventHasDomain(event, "units") || stateEventHasDomain(event, "resources") || stateEventHasDomain(event, "currencies") || stateEventHasDomain(event, "castles") {
 			state := coordinator.state.ReadOnlyView()
 			clearTroopAvailabilityGates(runtime, event, &state)
 			clearCoinAvailabilityGates(runtime, event, &state)
@@ -1266,8 +1266,28 @@ func operationResultCoinAvailabilityGate(result operationResult) (coinAvailabili
 		return coinAvailabilityGate{}, false
 	}
 	raw := strings.TrimSpace(receipt.DiagnosticError())
+	if marker := strings.Index(strings.ToLower(raw), Intent.ErrBalanceUnavailable.Error()+":"); marker >= 0 {
+		var keyText string
+		var required, available, observed, pending int64
+		if _, err := fmt.Sscanf(raw[marker:], "not enough balance for dispatch: %s %d needed; %d available from %d observed after %d pending", &keyText, &required, &available, &observed, &pending); err != nil {
+			return coinAvailabilityGate{}, false
+		}
+		key, err := Intent.ParseBalanceKey(keyText)
+		if err != nil {
+			return coinAvailabilityGate{}, false
+		}
+		gate := coinAvailabilityGate{key: key, observed: observed}
+		if receipt.Failure != nil {
+			gate.detail = receipt.Failure.Explanation
+			gate.detailDescriptor = Localization.Clone(receipt.Failure.ExplanationDescriptor)
+		} else {
+			gate.detail = "Waiting for enough balance to dispatch"
+			gate.detailDescriptor = Localization.New("server.balance.waiting", "Waiting for enough balance to dispatch", nil)
+		}
+		return gate, true
+	}
 	if marker := strings.Index(strings.ToLower(raw), "not enough travel tickets for dispatch:"); marker >= 0 {
-		gate := coinAvailabilityGate{detail: receipt.Error, currencyID: Intent.TravelTicketCurrencyID}
+		gate := coinAvailabilityGate{detail: receipt.Error, key: Intent.CurrencyBalanceKey(Intent.TravelTicketCurrencyID)}
 		var required, available, pending int64
 		if _, err := fmt.Sscanf(raw[marker:], "not enough travel tickets for dispatch: %d needed; %d available from %d observed after %d pending", &required, &available, &gate.observed, &pending); err != nil {
 			return coinAvailabilityGate{}, false
@@ -1315,24 +1335,47 @@ func coinAvailabilityGateChanged(gate *coinAvailabilityGate, state *State.GameSt
 	if gate == nil {
 		return false
 	}
-	if gate.currencyID != 0 {
-		observation := state.Player.CurrencyObservations[gate.currencyID]
-		return state.Player.Currencies[gate.currencyID] != float64(gate.observed) || (!gate.observedAt.IsZero() && observation.ObservedAt.After(gate.observedAt))
+	key := gate.key
+	if key == (Intent.BalanceKey{}) {
+		key = Intent.PlayerResourceBalanceKey(1)
 	}
-	observation := state.Player.ResourceObservations[State.ResourceID(1)]
-	return state.Player.Resources[State.ResourceID(1)] != float64(gate.observed) ||
-		(!gate.observedAt.IsZero() && observation.ObservedAt.After(gate.observedAt))
+	switch key.Kind {
+	case Intent.BalanceCurrency:
+		id := State.CurrencyID(key.ID)
+		observation := state.Player.CurrencyObservations[id]
+		return state.Player.Currencies[id] != float64(gate.observed) || (!gate.observedAt.IsZero() && observation.ObservedAt.After(gate.observedAt))
+	case Intent.BalancePlayerResource:
+		id := State.ResourceID(key.ID)
+		observation := state.Player.ResourceObservations[id]
+		return state.Player.Resources[id] != float64(gate.observed) || (!gate.observedAt.IsZero() && observation.ObservedAt.After(gate.observedAt))
+	case Intent.BalanceCastleResource:
+		castle, exists := state.Castles[key.CastleID]
+		return !exists || (!gate.observedAt.IsZero() && castle.ContextSnapshotObservedAt.After(gate.observedAt))
+	}
+	return false
 }
 
 func clearCoinAvailabilityGates(runtime map[string]*policyRuntime, event State.Event, state *State.GameState) {
 	sessionChanged := stateEventHasDomain(event, "session")
-	resourcesChanged := stateEventHasDomain(event, "resources") || stateEventHasDomain(event, "currencies")
+	resourcesChanged := stateEventHasDomain(event, "resources") || stateEventHasDomain(event, "currencies") || stateEventHasDomain(event, "castles")
 	if !sessionChanged && !resourcesChanged {
 		return
 	}
 	for _, current := range runtime {
 		if current == nil || current.coinAvailabilityGate == nil || event.Revision <= current.evaluatedStateRevision {
 			continue
+		}
+		if !sessionChanged {
+			domain := "resources"
+			switch current.coinAvailabilityGate.key.Kind {
+			case Intent.BalanceCurrency:
+				domain = "currencies"
+			case Intent.BalanceCastleResource:
+				domain = "castles"
+			}
+			if !stateEventHasDomain(event, domain) {
+				continue
+			}
 		}
 		if !sessionChanged && !coinAvailabilityGateChanged(current.coinAvailabilityGate, state) {
 			continue

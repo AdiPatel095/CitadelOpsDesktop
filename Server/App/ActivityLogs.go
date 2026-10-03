@@ -34,6 +34,9 @@ var userFacingTechnicalFailurePattern = regexp.MustCompile(
 )
 
 func featureActivities(receipt Intent.Receipt) []featureActivity {
+	if receipt.Failure != nil && receipt.Failure.ExplanationDescriptor != nil && receipt.Failure.ExplanationDescriptor.Key == "server.rift.premium_capture" {
+		return nil
+	}
 	if supportingFeatureIntent(receipt.Intent) && !recordSupportingFeatureFailure(receipt) {
 		return nil
 	}

@@ -1,0 +1,14 @@
+{
+  "story": "CIT-133",
+  "source": "Engineering/Plans/CIT-133 Support sends must not use the paid premium commander.md; Revisions 1–5",
+  "translationStatus": "English only; pending batched translation",
+  "englishFallbackKeys": [
+    "server.support.commander_wait",
+    "server.support.manual_quota",
+    "server.support.manual_vip_unknown",
+    "server.support.storm_quota",
+    "server.support.storm_vip_unknown",
+    "server.support.premium_blocked",
+    "server.rift.premium_capture"
+  ]
+}

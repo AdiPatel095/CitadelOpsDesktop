@@ -5,10 +5,12 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"math"
 	"strconv"
 	"strings"
 	"time"
 
+	"CitadelDesktop/Server/Automation"
 	"CitadelDesktop/Server/GameData"
 	"CitadelDesktop/Server/Intent"
 	"CitadelDesktop/Server/State"
@@ -127,11 +129,26 @@ func planProductionEnqueue(_ context.Context, input Intent.PlanningContext, argu
 	if request.Amount <= 0 {
 		return Intent.Plan{}, Localization.WithError(fmt.Errorf("production stack size is unknown; create one %s stack in-game so CitadelOps can learn the live amount", collection), Localization.New("server.app.production_stack_size_is.983fb867", "production stack size is unknown; create one {p0} stack in-game so CitadelOps can learn the live amount", Localization.Params{"p0": fmt.Sprintf("%s", collection)}))
 	}
+	costs, costErr := resolveProductionCosts(input.GameData, input.Language, request.LineID, request.DefinitionID, request.CastleID)
+	if costErr != nil {
+		return Intent.Plan{}, productionCostError(input, request.DefinitionID, costErr)
+	}
+	stackCount := 1
+	if request.FillAvailable {
+		stackCount = freeSlots
+	}
+	amounts, block := Automation.ProductionStackAmounts(input.State, costs, request.Amount, stackCount)
+	if block != nil {
+		return Intent.Plan{}, productionCostError(input, request.DefinitionID, block)
+	}
+	stackCount = len(amounts)
+	request.Amount = amounts[0]
+
 	sessionKey := input.State.CommandContext.ProductionSessionKey
 	if sessionKey <= 0 {
 		sessionKey = defaultProductionSessionKey
 	}
-	payload, _ := json.Marshal(struct {
+	body := struct {
 		LineID       int             `json:"LID"`
 		DefinitionID int64           `json:"WID"`
 		Amount       int64           `json:"AMT"`
@@ -140,11 +157,7 @@ func planProductionEnqueue(_ context.Context, input Intent.PlanningContext, argu
 		SessionKey   int             `json:"SK"`
 		KingdomID    State.KingdomID `json:"SID"`
 		CastleID     State.CastleID  `json:"AID"`
-	}{request.LineID, request.DefinitionID, request.Amount, -1, 0, sessionKey, castle.KingdomID, request.CastleID})
-	stackCount := 1
-	if request.FillAvailable {
-		stackCount = freeSlots
-	}
+	}{request.LineID, request.DefinitionID, request.Amount, -1, 0, sessionKey, castle.KingdomID, request.CastleID}
 	steps := castleContextSteps(input, castle)
 	recruitment := request.LineID == recruitmentProductionLineID
 	requireNewerQueue := len(steps) > 0
@@ -153,9 +166,13 @@ func planProductionEnqueue(_ context.Context, input Intent.PlanningContext, argu
 	}
 	helpArguments, _ := json.Marshal(recruitmentBUPAllianceHelpRequest{CastleID: request.CastleID})
 	for stack := 0; stack < stackCount; stack++ {
+		expectedFreeSlots := 1
+		if request.FillAvailable {
+			expectedFreeSlots = freeSlots - stack
+		}
 		guardArguments, _ := json.Marshal(productionQueueCapacityGuard{
 			CastleID: request.CastleID, LineID: request.LineID, DefinitionID: request.DefinitionID,
-			ExpectedFreeSlots: stackCount - stack, FillAvailable: request.FillAvailable,
+			ExpectedFreeSlots: expectedFreeSlots, FillAvailable: request.FillAvailable,
 			ScheduledDefinitionID: request.ScheduledDefinitionID, ScheduleValidUntil: request.ScheduleValidUntil,
 			TitleGatedDefinitionID: request.TitleGatedDefinitionID,
 			RequiredGloryTitleID:   request.RequiredGloryTitleID,
@@ -166,6 +183,9 @@ func planProductionEnqueue(_ context.Context, input Intent.PlanningContext, argu
 		steps = append(steps, Intent.RebuildOnResume(Intent.Step{
 			Name: "Revalidate production queue and player title", NameDescriptor: Localization.New("server.app.revalidate_production_queue_and.d06aa141", "Revalidate production queue and player title", nil), Action: "production.enqueue.verify_capacity", ActionArguments: guardArguments,
 		}))
+		body.Amount = amounts[stack]
+		payload, _ := json.Marshal(body)
+
 		enqueueStep := commandStep("Enqueue production stack", "bup", payload, "bup", Localization.New("server.app.enqueue_production_stack.f40f70ec", "Enqueue production stack", nil))
 		enqueueStep.StaleCodes = []int{175}
 		enqueueStep.ResponseBarrier = Intent.ResponseBarrierCommitted
@@ -177,9 +197,25 @@ func planProductionEnqueue(_ context.Context, input Intent.PlanningContext, argu
 		// older request or a previous focus epoch appears to cover the castle.
 		steps = appendRecruitmentBUPAllianceHelpSteps(steps, helpArguments)
 	}
-	summary := fmt.Sprintf("Queue %d %s at %s", request.Amount, definitionLabel, castleLabel(castle))
-	var summaryLocalizationMessage *Localization.Message = gameNameDescriptor(Localization.New("server.app.queue_p_p_at.8430a9e8", "Queue {p0, number} {p1} at {p2}", Localization.Params{"p0": request.Amount, "p1": fmt.Sprintf("%s", definitionLabel), "p2": fmt.Sprintf("%s", castleLabel(castle))}), input, "p1", collection, request.DefinitionID, definitionLabel)
-	if stackCount > 1 {
+	summaryAmount := request.Amount
+	uniform := true
+	total := int64(0)
+	totalKnown := true
+	for _, amount := range amounts {
+		uniform = uniform && amount == request.Amount
+		if amount > math.MaxInt64-total {
+			totalKnown = false
+		} else if totalKnown {
+			total += amount
+		}
+	}
+	if !uniform && totalKnown {
+		summaryAmount = total
+	}
+
+	summary := fmt.Sprintf("Queue %d %s at %s", summaryAmount, definitionLabel, castleLabel(castle))
+	var summaryLocalizationMessage *Localization.Message = gameNameDescriptor(Localization.New("server.app.queue_p_p_at.8430a9e8", "Queue {p0, number} {p1} at {p2}", Localization.Params{"p0": summaryAmount, "p1": fmt.Sprintf("%s", definitionLabel), "p2": fmt.Sprintf("%s", castleLabel(castle))}), input, "p1", collection, request.DefinitionID, definitionLabel)
+	if stackCount > 1 && uniform {
 		summary = fmt.Sprintf("Queue %d stacks of %d %s at %s", stackCount, request.Amount, definitionLabel, castleLabel(castle))
 		summaryLocalizationMessage = gameNameDescriptor(Localization.New("server.app.queue_p_stacks_of.3e5fa3c2", "Queue {p0, number} stacks of {p1, number} {p2} at {p3}", Localization.Params{"p0": stackCount, "p1": request.Amount, "p2": fmt.Sprintf("%s", definitionLabel), "p3": fmt.Sprintf("%s", castleLabel(castle))}), input, "p2", collection, request.DefinitionID, definitionLabel)
 	}

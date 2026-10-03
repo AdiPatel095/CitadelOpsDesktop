@@ -17,6 +17,7 @@ import (
 	"CitadelDesktop/Server/API"
 	"CitadelDesktop/Server/AppUpdate"
 	"CitadelDesktop/Server/Automation"
+	"CitadelDesktop/Server/CommanderFeatures"
 	"CitadelDesktop/Server/Configuration"
 	"CitadelDesktop/Server/Diagnostics"
 	EquipmentDomain "CitadelDesktop/Server/Equipment"
@@ -133,6 +134,7 @@ type Application struct {
 	gameDataSyncPending       atomic.Bool
 	startOnce                 sync.Once
 	shutdownDone              chan struct{}
+	riftPremiumCaptureNotices sync.Map
 }
 
 // SetControlConfigurationReady gates hosted runtime mutations while the
@@ -430,7 +432,14 @@ func New(ctx context.Context, config Config) (*Application, error) {
 	session.SetAutomationLocked(application.automationLocked())
 	intents.SetExecutionGate(application.executionGate)
 	intents.SetAdmissionWeightProvider(application.attackAdmissionWeight)
-	dispatchGates := newFinalDispatchGates(application.coinGate, newTravelTicketDispatchGate())
+	dispatchGates := newFinalDispatchGates(application.coinGate, newTravelTicketDispatchGate(), newSpecialCostDispatchGate())
+	dispatchGates.commanders.assignments = func() (CommanderFeatures.Configuration, error) {
+		raw, exists := application.Configuration.Section(CommanderFeatures.Section)
+		if !exists {
+			return CommanderFeatures.Configuration{}, nil
+		}
+		return CommanderFeatures.Decode(raw)
+	}
 	intents.SetFinalDispatchProvider(dispatchGates)
 	intents.SetDispatchEvidenceCollector(captureDispatchBoundaryEvidence)
 	application.Scheduler = Scheduling.NewScheduler(state, intents)
@@ -457,8 +466,8 @@ func New(ctx context.Context, config Config) (*Application, error) {
 		state, configuration, gameData, intents,
 		Automation.NewSharedStormScanPolicy(application.AccountKey, config.WorldMaps),
 		Automation.NewSharedFortressScanPolicy(application.AccountKey, config.WorldMaps),
-		Automation.NewRecruitPolicy(),
-		Automation.NewToolPolicy(),
+		Automation.NewRecruitPolicy(resolveProductionCosts),
+		Automation.NewToolPolicy(resolveProductionCosts),
 		Automation.NewHospitalPolicy(),
 		Automation.NewAllianceHelpPolicy(),
 		Automation.NewAutoEquipmentCleanupPolicy(),

@@ -75,7 +75,7 @@ func (*AutoBirdPolicy) ID() string { return "autoBird" }
 func (*AutoBirdPolicy) EnabledKey() string { return "auto_bird" }
 
 func (*AutoBirdPolicy) WakeDomains() []string {
-	return []string{"alliance", "movement-snapshot", "movements", "player-protection", "stationing", "units"}
+	return []string{"vip", "commanders", "equipment", "alliance", "movement-snapshot", "movements", "player-protection", "stationing", "units"}
 }
 
 func (*AutoBirdPolicy) WakeSections() []string {
@@ -474,7 +474,7 @@ func (*AutoStationPolicy) ID() string { return "autoStation" }
 func (*AutoStationPolicy) EnabledKey() string { return "auto_station" }
 
 func (*AutoStationPolicy) WakeDomains() []string {
-	return []string{"alliance", "movement-snapshot", "movements", "player-protection", "stationing", "units"}
+	return []string{"vip", "commanders", "equipment", "alliance", "movement-snapshot", "movements", "player-protection", "stationing", "units"}
 }
 
 func (*AutoStationPolicy) WakeSections() []string { return []string{"automation.autoStation"} }

@@ -104,6 +104,7 @@ func boundaryTestEngine(t *testing.T, state State.GameState, step Intent.Step, s
 		t.Fatal(err)
 	}
 	engine := Intent.NewEngine(registry, store, nil, sender, pipeline)
+	engine.SetFinalDispatchProvider(newPremiumCommanderDispatchGate())
 	engine.SetDispatchEvidenceCollector(captureDispatchBoundaryEvidence)
 	if source != "" {
 		if err := engine.RegisterStepResolver(source, func(context.Context, Intent.PlanningContext, json.RawMessage) (Intent.Step, error) { return step, nil }); err != nil {

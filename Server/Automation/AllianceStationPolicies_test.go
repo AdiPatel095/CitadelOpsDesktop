@@ -78,6 +78,7 @@ func TestAutoBirdStillRunsCastlePreparationWhenCachedAllianceRosterIsEmpty(t *te
 
 func TestAutoBirdWakesForEachCastleReturnAndUnitRefresh(t *testing.T) {
 	want := map[string]bool{
+		"vip": true, "commanders": true, "equipment": true,
 		"alliance": true, "movement-snapshot": true, "movements": true,
 		"player-protection": true, "stationing": true, "units": true,
 	}

@@ -192,7 +192,7 @@ func (*AutoStormPolicy) EnabledKey() string { return "auto_storm" }
 func (*AutoStormPolicy) WakeDomains() []string {
 	return []string{
 		"attacks", "buildings", "castles", "construction-items", "construction-offers", "inventory", "map-storm", "movements",
-		"reports", "resources", "storm", "storm-scan", "units", "kingdom-transport",
+		"vip", "reports", "resources", "storm", "storm-scan", "units", "kingdom-transport",
 	}
 }
 
@@ -1675,6 +1675,10 @@ func evaluateAutoStormCombat(
 	}
 	waitingDetail := ""
 	for _, candidate := range candidates {
+		if block := StormAttackArrivalBlock(&snapshot.State, snapshot.GameData, castle, candidate.Observation, settings.HorseTravelBoostID, snapshot.Now); block != nil {
+			waitingDetail = block.Fallback
+			continue
+		}
 		preset, found := AttackPresets.Find(document, candidate.PresetID)
 		if !found {
 			continue

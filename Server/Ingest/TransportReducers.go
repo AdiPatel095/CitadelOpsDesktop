@@ -648,10 +648,22 @@ func reduceKingdomTransport(
 			if kingdomID < 0 {
 				continue
 			}
-			next.Unlocks[kingdomID] = State.KingdomTransportUnlock{
+			unlock := State.KingdomTransportUnlock{
 				KingdomID: kingdomID, Unlocked: rawInteger(row["U"]) != 0,
 				Created: rawInteger(row["C"]) != 0, Stage: int(rawInteger(row["SL"])),
 			}
+			if kingdomID == GameData.StormKingdomID {
+				if remaining, known := rawJSONInt64(row["KRS"]); known && remaining > 0 && remaining <= math.MaxInt64/int64(time.Second) {
+					unlock.EventEndsAt = frame.ReceivedAt.Add(time.Duration(remaining) * time.Second)
+				}
+				unlock.EventEndObservedAt = frame.ReceivedAt
+				unlock.EventEndConnectionGeneration = gameState.Session.ConnectionGeneration
+				unlock.EventObservedFrom = frame.ReceivedAt
+				if previous, exists := gameState.KingdomTransport.Unlocks[kingdomID]; exists && State.SameEventOccurrence(previous.EventEndsAt, unlock.EventEndsAt) && !previous.EventObservedFrom.IsZero() {
+					unlock.EventObservedFrom = previous.EventObservedFrom
+				}
+			}
+			next.Unlocks[kingdomID] = unlock
 		}
 	}
 	if hasResources {
