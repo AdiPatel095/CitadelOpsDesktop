@@ -1,3 +1,4 @@
+import { useNow } from '../../useNow';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useCitadelAPI } from '../../api/useCitadelAPI';
 import { useHostedRuntimePresence } from '../../config/Deployment';
@@ -69,10 +70,11 @@ export function useFeatureReadiness(featureId: SettingsFeatureId, options: { pub
   }, [featureId, getCatalog, playerLevel]);
 
   const sections = configuration?.sections;
+  const now = useNow(REFRESH_MS);
   const report = useMemo(() => evaluateFeatureReadiness(featureId, {
     sections, state, observation, troops, tools, resources,
     metadataReady: !unitsLoading && !unitsError,
-    movement, gameLoggedIn, now: Date.now(),
+    movement, gameLoggedIn, now,
     schedule: normalizeFeatureSchedules((sections?.scheduler as { featureSchedules?: unknown } | undefined)?.featureSchedules)[featureId],
     ...catalogInputsFor(featureId, {
       // A catalog that failed to load contributes nothing: the check reads "decided at launch" here and at Start.
@@ -81,7 +83,7 @@ export function useFeatureReadiness(featureId: SettingsFeatureId, options: { pub
         : undefined,
       stormOffer: stormOffer.loaded ? stormOffer : undefined,
     }),
-  }), [achievementsObserved, difficultyEvents, difficulties.error, difficulties.loading, difficulties.optionsByEvent, featureId, gameLoggedIn, movement, observation, resources, sections, state, stormOffer, tools, troops, unitsError, unitsLoading]);
+  }), [achievementsObserved, difficultyEvents, difficulties.error, difficulties.loading, difficulties.optionsByEvent, featureId, gameLoggedIn, movement, now, observation, resources, sections, state, stormOffer, tools, troops, unitsError, unitsLoading]);
 
   const digest = useMemo(() => savedSectionsDigest(sections), [sections]);
   const publish = options.publish === true;

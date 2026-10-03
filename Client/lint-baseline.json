@@ -16,9 +16,6 @@
     "src/components/CastleFocusSwitcher.tsx": {
       "react-hooks/set-state-in-effect": 1
     },
-    "src/components/ConnectionRepairDialog.tsx": {
-      "react-hooks/purity": 1
-    },
     "src/components/DecorationPresetsPanel.tsx": {
       "react-hooks/purity": 2
     },
@@ -79,17 +76,11 @@
     "src/settings/components/FeatureGuideModal.tsx": {
       "react-hooks/set-state-in-effect": 1
     },
-    "src/settings/copy/useCastleCopyReplay.tsx": {
-      "react-hooks/refs": 1
-    },
     "src/settings/disclosure/useSettingsDisclosure.ts": {
       "react-hooks/refs": 1
     },
     "src/settings/onboarding/goalStore.ts": {
       "react-hooks/set-state-in-effect": 1
-    },
-    "src/settings/readiness/useFeatureReadiness.ts": {
-      "react-hooks/purity": 1
     },
     "src/worldIntelligence/components/WorldAllianceDetailView.tsx": {
       "react-hooks/set-state-in-effect": 1

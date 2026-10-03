@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { APIError } from '../../api/CitadelClient';
 import { LocalizedText } from '../../i18n/LocalizedText';
 import { CastleCopyDialog } from '../components/CastleCopyDialog';
@@ -65,7 +65,10 @@ export function useCastleCopyReplayRun<Draft, T>(state: CastleCopyReplayState, o
   const { replay, setReplay, phase, setPhase, status, setStatus, review, setReview } = state;
   const appliedFromReview = useRef(false);
   const latest = useRef({ descriptor, draft, context, applyDraft, replay });
-  latest.current = { descriptor, draft, context, applyDraft, replay };
+  // Publish only committed inputs, before the passive replay effects consume them.
+  useLayoutEffect(() => {
+    latest.current = { descriptor, draft, context, applyDraft, replay };
+  }, [descriptor, draft, context, applyDraft, replay]);
 
   // The copy lives only while its editor is open.
   useEffect(() => {

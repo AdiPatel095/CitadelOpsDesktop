@@ -1,3 +1,4 @@
+import { useNow } from '../useNow';
 import React, { useEffect, useMemo, useState } from 'react';
 import { useCitadelAPI } from '../api/useCitadelAPI';
 import { CitadelAPI } from '../api/CitadelClient';
@@ -19,6 +20,7 @@ import { Modal } from './ui/Modal';
  * collects a password and never guesses: an untyped rejection lists both things to check.
  */
 export const ConnectionRepairDialog: React.FC<{ onClose: () => void; onOpenSettings: () => void }> = ({ onClose, onOpenSettings }) => {
+  const now = useNow(1000);
   const { state, configuration, submitIntent } = useCitadelAPI();
   const auth = useAuth();
   const [saved, setSaved] = useState<BackgroundLoginStatus | null>(null);
@@ -48,7 +50,7 @@ export const ConnectionRepairDialog: React.FC<{ onClose: () => void; onOpenSetti
     retryAt: session?.retryAt, cooldownUntil: session?.cooldownUntil,
     loginFailure: session?.loginFailure,
     savedWorld: mode === 'background' && world.kind !== 'none' ? world.short : undefined,
-    now: Date.now(),
+    now,
   });
   const detail = useLocalizedMessage(undefined, session?.detail ?? '');
   const controls = connectionControlAvailability(auth.gameConnectionState, auth.hasGameConnectionStatus);
