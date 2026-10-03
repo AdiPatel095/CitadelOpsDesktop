@@ -474,5 +474,20 @@
   "autoBird.cycles.travel": "{duration} di viaggio",
   "autoBird.cycles.troopsReady": "Truppe pronte",
   "autoBird.cycles.waiting": "In attesa",
-  "header.castleSwitcher.label": "Seleziona castello"
+  "header.castleSwitcher.label": "Seleziona castello",
+  "ui.rich.views.automationView.right.click.a.toggle.for.temporary.activation.c34579ee": "<strong0>Fai clic con il tasto destro</strong0> su un interruttore per attivarlo temporaneamente",
+  "patchNotes.release.2.4.2.subtitle.b610e6ea056f": "Configurazione guidata, stati più chiari e pannelli più veloci",
+  "patchNotes.release.2.4.2.text.967317bd8af5": "“Set up with a goal” ti guida attraverso una lista di cinque passaggi, dalla connessione al gioco al primo risultato confermato dal gioco, per obiettivi come partecipare all’evento Khan o mantenere tutti i castelli riforniti di cibo.",
+  "patchNotes.release.2.4.2.text.913f68e622ad": "Ogni automazione ha un controllo “Before you start” che mostra cosa è pronto e cosa va modificato, e Avvia chiede prima conferma se qualcosa impedirebbe all’automazione di agire.",
+  "patchNotes.release.2.4.2.text.26a86db1c10b": "Nomadi, Samurai, Invasione, Khan, Isole della tempesta e Beri World possono configurare gli attacchi direttamente nelle impostazioni, senza creare prima una preimpostazione, e mostrano le truppe e i comandanti necessari per ogni configurazione.",
+  "patchNotes.release.2.4.2.text.6cf29358ebf3": "“Copy to other castles” copia la configurazione di un castello nei castelli scelti, segnala ciò che non può essere copiato e non salva nulla finché non premi “Salva”.",
+  "patchNotes.release.2.4.2.text.6cea9639c58b": "Il selettore della lingua nelle impostazioni mostra ogni lingua con il proprio nome e aggiunge l’opzione “Automatico (lingua del dispositivo)”, che segue la lingua del dispositivo senza cambiare quella del gioco.",
+  "patchNotes.release.2.4.2.text.c6dbecdc2dfd": "I contatori degli attacchi partono da zero, indicano se coprono la giornata odierna o il periodo da un momento specifico, etichettano i conteggi salvati e segnalano quando un conteggio non è disponibile.",
+  "patchNotes.release.2.4.2.text.b39c4f9899d3": "Auto Station mostra un avviso color ambra invece di apparire pronto quando non può proteggere un castello e spiega se la causa è la modalità Protezione o l’assenza dell’apertura delle porte a Berimond.",
+  "patchNotes.release.2.4.2.text.e400072927c7": "Auto Fortress e Auto Storm accantonano un bersaglio che il gioco segnala ancora in attesa e passano agli altri. Auto Storm ora legge correttamente i tempi di recupero dei forti e i forti nascosti.",
+  "patchNotes.release.2.4.2.text.2b9c8c5fa1bb": "La finestra di esecuzione e pausa temporizzate mostra quando termina l’esecuzione o la pausa, nel formato di data e ora della tua lingua e con i plurali corretti.",
+  "patchNotes.release.2.4.2.text.a9bf747fee6a": "Le notifiche rimangono sullo schermo per almeno 10 secondi e attendono mentre le punti con il mouse o hanno il focus.",
+  "patchNotes.release.2.4.2.text.1e14fe9e997a": "Il testo è più semplice ovunque: le automazioni mostrano “Disattivato” anziché Disabilitato, le attese degli eventi indicano quando riprendono e i comandanti disattivati per un’automazione mostrano “Disattivato per questa automazione”.",
+  "patchNotes.release.2.4.2.text.51cfb02c317b": "I pannelli si caricano più velocemente, usano meno dati e riprendono da dove si erano fermati dopo una breve disconnessione invece di ricaricare tutto.",
+  "patchNotes.release.2.4.2.text.5859b00e3cb1": "Le nuove schermate di configurazione sono tradotte in tedesco e arabo e ogni lingua supportata riceve più testo tradotto; ciò che non è ancora tradotto appare in inglese."
 }

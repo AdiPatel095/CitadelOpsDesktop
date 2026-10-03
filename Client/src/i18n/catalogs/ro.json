@@ -474,5 +474,20 @@
   "autoBird.cycles.travel": "{duration} de călătorie",
   "autoBird.cycles.troopsReady": "Trupe pregătite",
   "autoBird.cycles.waiting": "În așteptare",
-  "header.castleSwitcher.label": "Selectează castelul"
+  "header.castleSwitcher.label": "Selectează castelul",
+  "ui.rich.views.automationView.right.click.a.toggle.for.temporary.activation.c34579ee": "<strong0>Faceți clic dreapta</strong0> pe un comutator pentru a-l activa temporar",
+  "patchNotes.release.2.4.2.subtitle.b610e6ea056f": "Configurare ghidată, stări mai clare și panouri mai rapide",
+  "patchNotes.release.2.4.2.text.967317bd8af5": "“Set up with a goal” vă ghidează printr-o listă de cinci pași, de la conectarea la joc până la primul rezultat confirmat de joc, pentru obiective precum participarea la evenimentul Khan sau aprovizionarea tuturor castelelor cu hrană.",
+  "patchNotes.release.2.4.2.text.913f68e622ad": "Fiecare automatizare are o verificare “Before you start” care arată ce este pregătit și ce trebuie schimbat, iar Pornire cere mai întâi confirmare dacă ceva ar împiedica automatizarea să acționeze.",
+  "patchNotes.release.2.4.2.text.26a86db1c10b": "Nomazi, Samurai, Invazie, Khan, Furtună și Beri World își pot configura atacurile direct în setări, fără să creeze mai întâi o presetare, și arată trupele și comandanții necesari fiecărei configurații.",
+  "patchNotes.release.2.4.2.text.6cf29358ebf3": "“Copy to other castles” copiază configurația unui castel în castelele alese, semnalează ce nu poate fi copiat și nu salvează nimic până nu apăsați “Salvare”.",
+  "patchNotes.release.2.4.2.text.6cea9639c58b": "Selectorul de limbă din Setări afișează fiecare limbă cu numele ei propriu și adaugă opțiunea “Automat (limba dispozitivului)”, care urmează limba dispozitivului fără să schimbe limba jocului.",
+  "patchNotes.release.2.4.2.text.c6dbecdc2dfd": "Contoarele de atacuri pornesc de la zero, arată dacă acoperă ziua de azi sau perioada de la o anumită oră, etichetează valorile salvate și anunță când o valoare nu este disponibilă.",
+  "patchNotes.release.2.4.2.text.b39c4f9899d3": "Auto Station afișează un avertisment de culoarea chihlimbarului în loc să pară pregătit când nu poate proteja un castel și explică dacă motivul este Modul de protecție sau lipsa Porților deschise în Berimond.",
+  "patchNotes.release.2.4.2.text.e400072927c7": "Auto Fortress și Auto Storm lasă deoparte o țintă despre care jocul spune că este încă în perioada de așteptare și trec la altele. Auto Storm citește acum corect timpii de așteptare ai forturilor și forturile ascunse.",
+  "patchNotes.release.2.4.2.text.2b9c8c5fa1bb": "Dialogul de rulare și pauză temporizate arată când se termină rularea sau pauza, în formatul de dată și oră al limbii dvs., cu forme corecte de plural.",
+  "patchNotes.release.2.4.2.text.a9bf747fee6a": "Notificările rămân pe ecran cel puțin 10 secunde și așteaptă cât timp le indicați cu mouse-ul sau au focalizarea.",
+  "patchNotes.release.2.4.2.text.1e14fe9e997a": "Formulările sunt mai simple peste tot: automatizările afișează “Oprit” în loc de Dezactivat, așteptările evenimentelor indică momentul reluării, iar comandanții opriți pentru o automatizare afișează “Oprit pentru această automatizare”.",
+  "patchNotes.release.2.4.2.text.51cfb02c317b": "Panourile se încarcă mai repede, folosesc mai puține date și reiau de unde au rămas după o scurtă deconectare, în loc să încarce totul din nou.",
+  "patchNotes.release.2.4.2.text.5859b00e3cb1": "Noile ecrane de configurare sunt traduse în germană și arabă, iar fiecare limbă acceptată primește mai mult text tradus; ce nu este încă tradus apare în engleză."
 }

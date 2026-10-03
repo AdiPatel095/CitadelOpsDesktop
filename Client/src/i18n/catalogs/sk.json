@@ -474,5 +474,20 @@
   "autoBird.cycles.travel": "{duration} cesty",
   "autoBird.cycles.troopsReady": "Jednotky pripravené",
   "autoBird.cycles.waiting": "Čaká",
-  "header.castleSwitcher.label": "Vybrať hrad"
+  "header.castleSwitcher.label": "Vybrať hrad",
+  "ui.rich.views.automationView.right.click.a.toggle.for.temporary.activation.c34579ee": "<strong0>Kliknite pravým tlačidlom myši</strong0> na prepínač pre dočasnú aktiváciu",
+  "patchNotes.release.2.4.2.subtitle.b610e6ea056f": "Sprievodca nastavením, jasnejšie stavy a rýchlejšie prehľady",
+  "patchNotes.release.2.4.2.text.967317bd8af5": "“Set up with a goal” vás prevedie päťkrokovým kontrolným zoznamom od pripojenia k hre po prvý výsledok potvrdený hrou, pre ciele ako účasť na udalosti Chána alebo zásobovanie všetkých hradov jedlom.",
+  "patchNotes.release.2.4.2.text.913f68e622ad": "Každá automatizácia má kontrolu “Before you start”, ktorá ukazuje, čo je pripravené a čo treba zmeniť. Spustenie najprv požiada o potvrdenie, ak by niečo bránilo automatizácii konať.",
+  "patchNotes.release.2.4.2.text.26a86db1c10b": "Nomádi, Samuraji, Invázia, Chán, Búrka a Beri World môžu nastaviť útoky priamo v nastaveniach bez predchádzajúceho vytvorenia predvoľby a zobrazujú vojakov a veliteľov potrebných pre každé nastavenie.",
+  "patchNotes.release.2.4.2.text.6cf29358ebf3": "“Copy to other castles” skopíruje nastavenie jedného hradu do vybraných hradov, označí všetko, čo nemožno skopírovať, a nič neuloží, kým nestlačíte “Uložiť”.",
+  "patchNotes.release.2.4.2.text.6cea9639c58b": "Výber jazyka v Nastaveniach uvádza každý jazyk jeho vlastným názvom a pridáva možnosť “Automaticky (jazyk zariadenia)”, ktorá sleduje jazyk zariadenia bez zmeny jazyka hry.",
+  "patchNotes.release.2.4.2.text.c6dbecdc2dfd": "Počítadlá útokov začínajú na nule, ukazujú, či zahŕňajú dnešok alebo obdobie od určitého času, označujú uložené počty a informujú, keď počet nie je dostupný.",
+  "patchNotes.release.2.4.2.text.b39c4f9899d3": "Auto Station zobrazí jantárové varovanie namiesto zdanlivej pripravenosti, keď nemôže chrániť hrad, a vysvetlí, kedy je dôvodom režim ochrany alebo neprítomnosť otvorených brán v Berimonde.",
+  "patchNotes.release.2.4.2.text.e400072927c7": "Auto Fortress a Auto Storm odložia cieľ, ktorý je podľa hry stále v čase obnovy, a prejdú k ďalším. Auto Storm teraz správne číta časy obnovy pevností a skryté pevnosti.",
+  "patchNotes.release.2.4.2.text.2b9c8c5fa1bb": "Dialóg časovaného spustenia a pozastavenia ukazuje, kedy sa beh alebo pauza skončí, vo formáte dátumu a času vášho jazyka, so správnymi tvarmi množného čísla.",
+  "patchNotes.release.2.4.2.text.a9bf747fee6a": "Oznámenia zostávajú na obrazovke aspoň 10 sekúnd a čakajú, kým nad nimi máte kurzor alebo sú zamerané.",
+  "patchNotes.release.2.4.2.text.1e14fe9e997a": "Text je všade jednoduchší: automatizácie zobrazujú “Vypnuté” namiesto Zakázané, čakanie na udalosti uvádza čas pokračovania a velitelia vypnutí pre automatizáciu zobrazujú “Vypnuté pre túto automatizáciu”.",
+  "patchNotes.release.2.4.2.text.51cfb02c317b": "Prehľady sa načítavajú rýchlejšie, používajú menej dát a po krátkom odpojení pokračujú tam, kde skončili, namiesto opätovného načítania všetkého.",
+  "patchNotes.release.2.4.2.text.5859b00e3cb1": "Nové obrazovky nastavenia sú preložené do nemčiny a arabčiny a každý podporovaný jazyk dostáva viac preloženého textu; zatiaľ nepreložený text sa zobrazuje v angličtine."
 }

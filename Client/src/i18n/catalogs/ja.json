@@ -474,5 +474,20 @@
   "autoBird.cycles.travel": "移動時間 {duration}",
   "autoBird.cycles.troopsReady": "部隊の準備完了",
   "autoBird.cycles.waiting": "待機中",
-  "header.castleSwitcher.label": "城を選択"
+  "header.castleSwitcher.label": "城を選択",
+  "ui.rich.views.automationView.right.click.a.toggle.for.temporary.activation.c34579ee": "一時的に有効にするには、切り替えスイッチを<strong0>右クリック</strong0>してください",
+  "patchNotes.release.2.4.2.subtitle.b610e6ea056f": "ガイド付き設定、分かりやすい状態表示、高速なダッシュボード",
+  "patchNotes.release.2.4.2.text.967317bd8af5": "“Set up with a goal”は、ゲームへの接続からゲームが確認する最初の結果まで、5段階のチェックリストで案内します。Khanイベントへの参加やすべての城への食料供給といった目標に対応します。",
+  "patchNotes.release.2.4.2.text.913f68e622ad": "各自動化には“Before you start”の確認があり、準備済みの項目と変更が必要な項目を示します。自動化の動作を妨げるものがある場合、開始前に確認を求めます。",
+  "patchNotes.release.2.4.2.text.26a86db1c10b": "遊牧民、侍、侵略、Khan、Storm、Beri Worldは、プリセットを先に作らずに設定内で直接攻撃を構成でき、各構成に必要な部隊と司令官を表示します。",
+  "patchNotes.release.2.4.2.text.6cf29358ebf3": "“Copy to other castles”は1つの城の設定を選択した城へコピーし、コピーできない項目を示します。“保存”を押すまで何も保存しません。",
+  "patchNotes.release.2.4.2.text.6cea9639c58b": "設定の言語選択では各言語をその言語自身の名称で表示し、ゲームの言語を変えずに端末の言語に従う“自動（端末の言語）”を追加しました。",
+  "patchNotes.release.2.4.2.text.c6dbecdc2dfd": "攻撃カウンターはゼロから始まり、今日の集計か特定の時刻以降の集計かを表示し、保存済みの回数を明示します。回数を取得できない場合も知らせます。",
+  "patchNotes.release.2.4.2.text.b39c4f9899d3": "Auto Stationは城を保護できないとき、作動準備ができているように見せる代わりに琥珀色の警告を表示します。保護モードやBerimondに開門がないことが原因の場合は説明します。",
+  "patchNotes.release.2.4.2.text.e400072927c7": "Auto FortressとAuto Stormは、ゲームがまだクールダウン中と報告した標的をいったん除外して他の標的へ進みます。Auto Stormは砦のクールダウンと非表示の砦も正しく読み取るようになりました。",
+  "patchNotes.release.2.4.2.text.2b9c8c5fa1bb": "時間指定の実行と一時停止ダイアログでは、実行や一時停止の終了時刻を使用言語の日付・時刻形式で表示し、複数形も正しく扱います。",
+  "patchNotes.release.2.4.2.text.a9bf747fee6a": "通知は少なくとも10秒間画面に残り、マウスを重ねたりフォーカスしたりしている間は消えずに待機します。",
+  "patchNotes.release.2.4.2.text.1e14fe9e997a": "全体の表現を分かりやすくしました。自動化には「無効」ではなく“オフ”を表示し、イベント待機には再開時刻を示し、自動化で使用しない司令官には“この自動化ではオフ”を表示します。",
+  "patchNotes.release.2.4.2.text.51cfb02c317b": "ダッシュボードの読み込みが速くなり、データ使用量が減りました。短い切断後はすべてを再読み込みせず、中断したところから再開します。",
+  "patchNotes.release.2.4.2.text.5859b00e3cb1": "新しい設定画面はドイツ語とアラビア語に翻訳され、すべての対応言語で翻訳済みのテキストが増えました。未翻訳のテキストは英語で表示されます。"
 }

@@ -206,3 +206,24 @@ unchanged; older backlog keys remain out of scope and ship in English.
 This is bounded translation coverage, not whole-application completeness or
 native-speaker review. Sophie reviews Arabic per the batch template; Claire
 confirms both PRs have merged before release.
+
+## CIT-113 translation batch 6
+
+Batch 6: **model-authored, pending native review**. The byte-identical fixture
+`tests/fixtures/translation-batches/batch-6.json` records only the restored key
+`ui.rich.views.automationView.right.click.a.toggle.for.temporary.activation.c34579ee`
+in all 25 non-English locales (25 locale/key pairs). Its English source is
+`<strong0>Right-click</strong0> a toggle for temporary activation`; every locale
+preserves the `strong0` tag around the right-click instruction, with no parameters
+or direction marks. Shared catalogs and the fixture match byte for byte.
+
+Desktop cut: `3aaa1c40d4ddca5b9192914ed4ac464c1ec6505b`; portal cut:
+`af1948271b4356f24d16f929ca485fe8c40d1a5d`. Previous cuts are the batch-5
+fixture cuts. The extractor does not read `richMessages.ts`; the fixture
+records the explicit CIT-113 scope and exact English source after generation.
+This establishes coverage for this key only. Native-speaker review remains
+pending; Claire confirms both PRs have merged before release.
+
+## Batch 7 — CIT-115 (2026-10-02)
+
+The 2.4.2 subtitle and 13 desktop patch-note lines (14 shared keys) are translated into all 25 non-English locales: **model-authored, pending native review**. Shared catalogs are byte-identical in desktop and portal. Existing translated UI labels are reused; untranslated UI labels retain the app’s English fallback. The eight portal-only additions remain English, per Daniel’s CIT-115 plan. The portal currently renders the shared notes in English as well.

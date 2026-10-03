@@ -474,5 +474,20 @@
   "autoBird.cycles.travel": "{duration} podróży",
   "autoBird.cycles.troopsReady": "Wojska gotowe",
   "autoBird.cycles.waiting": "Oczekuje",
-  "header.castleSwitcher.label": "Wybierz zamek"
+  "header.castleSwitcher.label": "Wybierz zamek",
+  "ui.rich.views.automationView.right.click.a.toggle.for.temporary.activation.c34579ee": "<strong0>Kliknij prawym przyciskiem myszy</strong0> przełącznik, aby tymczasowo go aktywować",
+  "patchNotes.release.2.4.2.subtitle.b610e6ea056f": "Konfiguracja z przewodnikiem, czytelniejsze statusy i szybsze pulpity",
+  "patchNotes.release.2.4.2.text.967317bd8af5": "“Set up with a goal” prowadzi przez listę pięciu kroków, od połączenia z grą do pierwszego wyniku potwierdzonego przez grę, dla celów takich jak udział w wydarzeniu Chana lub zapewnienie żywności wszystkim zamkom.",
+  "patchNotes.release.2.4.2.text.913f68e622ad": "Każda automatyzacja ma kontrolę “Before you start”, która pokazuje, co jest gotowe i co wymaga zmiany, a Start najpierw pyta o zgodę, jeśli coś uniemożliwiłoby jej działanie.",
+  "patchNotes.release.2.4.2.text.26a86db1c10b": "Nomadzi, Samuraje, Inwazja, Chan, Wyspy Burz i Beri World pozwalają skonfigurować ataki bezpośrednio w ustawieniach, bez wcześniejszego tworzenia presetu, i pokazują oddziały oraz dowódców potrzebnych do każdej konfiguracji.",
+  "patchNotes.release.2.4.2.text.6cf29358ebf3": "“Copy to other castles” kopiuje konfigurację jednego zamku do wybranych zamków, oznacza elementy, których nie można skopiować, i niczego nie zapisuje, dopóki nie naciśniesz “Zapisz”.",
+  "patchNotes.release.2.4.2.text.6cea9639c58b": "Wybór języka w ustawieniach pokazuje każdą nazwę języka w tym języku i dodaje opcję “Automatycznie (język urządzenia)”, która korzysta z języka urządzenia bez zmiany języka gry.",
+  "patchNotes.release.2.4.2.text.c6dbecdc2dfd": "Liczniki ataków zaczynają od zera, pokazują, czy obejmują dziś, czy okres od wskazanego czasu, oznaczają zapisane wyniki i informują, gdy wynik jest niedostępny.",
+  "patchNotes.release.2.4.2.text.b39c4f9899d3": "Auto Station pokazuje bursztynowe ostrzeżenie zamiast wyglądać na uzbrojone, gdy nie może chronić zamku, i wyjaśnia, czy powodem jest tryb ochrony lub brak otwierania bram w Berimondzie.",
+  "patchNotes.release.2.4.2.text.e400072927c7": "Auto Fortress i Auto Storm odkładają cel, który według gry nadal jest w okresie odnowienia, i przechodzą do innych. Auto Storm poprawnie odczytuje teraz czasy odnowienia fortów i ukryte forty.",
+  "patchNotes.release.2.4.2.text.2b9c8c5fa1bb": "Okno czasowego uruchamiania i wstrzymywania pokazuje, kiedy działanie lub przerwa się kończy, w formacie daty i godziny Twojego języka, z poprawnymi formami liczby mnogiej.",
+  "patchNotes.release.2.4.2.text.a9bf747fee6a": "Powiadomienia pozostają widoczne co najmniej 10 sekund i czekają, gdy najeżdżasz na nie kursorem lub ustawiasz na nich fokus.",
+  "patchNotes.release.2.4.2.text.1e14fe9e997a": "Teksty są wszędzie prostsze: automatyzacje pokazują “Wyłączone” zamiast „Disabled”, oczekiwanie na wydarzenia wskazuje czas wznowienia, a dowódcy wyłączeni dla danej automatyzacji pokazują “Wyłączone dla tej automatyzacji”.",
+  "patchNotes.release.2.4.2.text.51cfb02c317b": "Pulpity ładują się szybciej, zużywają mniej danych i po krótkim rozłączeniu kontynuują od miejsca, w którym przerwały, zamiast ładować wszystko ponownie.",
+  "patchNotes.release.2.4.2.text.5859b00e3cb1": "Nowe ekrany konfiguracji są przetłumaczone na niemiecki i arabski, a każdy obsługiwany język otrzymuje więcej przetłumaczonych tekstów; teksty jeszcze nieprzetłumaczone są wyświetlane po angielsku."
 }

@@ -474,5 +474,20 @@
   "autoBird.cycles.travel": "이동 시간 {duration}",
   "autoBird.cycles.troopsReady": "병력 준비됨",
   "autoBird.cycles.waiting": "대기 중",
-  "header.castleSwitcher.label": "성 선택"
+  "header.castleSwitcher.label": "성 선택",
+  "ui.rich.views.automationView.right.click.a.toggle.for.temporary.activation.c34579ee": "일시적으로 활성화하려면 토글을 <strong0>마우스 오른쪽 버튼으로 클릭</strong0>하세요",
+  "patchNotes.release.2.4.2.subtitle.b610e6ea056f": "안내에 따른 설정, 명확한 상태, 더 빠른 대시보드",
+  "patchNotes.release.2.4.2.text.967317bd8af5": "“Set up with a goal”은 게임 연결부터 게임에서 확인한 첫 결과까지 다섯 단계의 체크리스트를 안내합니다. Khan 이벤트 참여나 모든 성에 식량 공급 같은 목표에 사용할 수 있습니다.",
+  "patchNotes.release.2.4.2.text.913f68e622ad": "각 자동화에는 준비된 항목과 변경이 필요한 항목을 보여 주는 “Before you start” 확인이 있으며, 자동화의 동작을 막는 문제가 있으면 시작 전에 확인을 요청합니다.",
+  "patchNotes.release.2.4.2.text.26a86db1c10b": "유목민, 사무라이, 침략, Khan, Storm, Beri World는 미리 프리셋을 만들지 않고 설정에서 바로 공격을 구성할 수 있으며, 각 구성에 필요한 병력과 지휘관을 보여 줍니다.",
+  "patchNotes.release.2.4.2.text.6cf29358ebf3": "“Copy to other castles”는 한 성의 설정을 선택한 성으로 복사하고, 복사할 수 없는 항목을 표시하며, “저장”를 누르기 전에는 아무것도 저장하지 않습니다.",
+  "patchNotes.release.2.4.2.text.6cea9639c58b": "설정의 언어 선택기는 각 언어를 그 언어의 이름으로 표시하며, 게임 언어를 바꾸지 않고 기기 언어를 따르는 “자동 (기기 언어)” 옵션을 추가합니다.",
+  "patchNotes.release.2.4.2.text.c6dbecdc2dfd": "공격 카운터는 0부터 시작하고 오늘 또는 특정 시점 이후를 집계하는지 표시합니다. 저장된 횟수를 구분하고 횟수를 확인할 수 없을 때도 알려 줍니다.",
+  "patchNotes.release.2.4.2.text.b39c4f9899d3": "Auto Station은 성을 보호할 수 없을 때 준비된 것처럼 표시하는 대신 황색 경고를 보여 주고, 보호 모드 또는 Berimond의 성문 개방 불가가 원인인 경우 설명합니다.",
+  "patchNotes.release.2.4.2.text.e400072927c7": "Auto Fortress와 Auto Storm은 게임에서 아직 재사용 대기 중이라고 알려 준 대상을 미루고 다른 대상으로 이동합니다. Auto Storm은 이제 요새의 재사용 대기 시간과 숨겨진 요새를 올바르게 읽습니다.",
+  "patchNotes.release.2.4.2.text.2b9c8c5fa1bb": "시간을 지정하는 실행 및 일시 정지 대화상자는 실행이나 정지가 끝나는 시점을 사용 언어의 날짜 및 시간 형식과 올바른 복수형으로 표시합니다.",
+  "patchNotes.release.2.4.2.text.a9bf747fee6a": "알림은 최소 10초 동안 화면에 남아 있으며, 마우스를 올리거나 초점을 맞추고 있는 동안 기다립니다.",
+  "patchNotes.release.2.4.2.text.1e14fe9e997a": "문구가 전반적으로 쉬워졌습니다. 자동화는 비활성화 대신 “꺼짐”을 표시하고, 이벤트 대기는 재개 시점을 알려 주며, 해당 자동화에서 사용하지 않는 지휘관은 “이 자동화에서는 꺼짐”을 표시합니다.",
+  "patchNotes.release.2.4.2.text.51cfb02c317b": "대시보드가 더 빠르게 로드되고 데이터를 덜 사용하며, 잠시 연결이 끊긴 뒤에는 전체를 다시 로드하지 않고 중단한 지점부터 이어갑니다.",
+  "patchNotes.release.2.4.2.text.5859b00e3cb1": "새 설정 화면은 독일어와 아랍어로 번역되었으며, 지원하는 모든 언어에 번역된 문구가 늘어납니다. 아직 번역되지 않은 문구는 영어로 표시됩니다."
 }

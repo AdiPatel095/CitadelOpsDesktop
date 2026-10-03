@@ -474,5 +474,20 @@
   "autoBird.cycles.travel": "{duration} kelionės",
   "autoBird.cycles.troopsReady": "Kariai pasiruošę",
   "autoBird.cycles.waiting": "Laukiama",
-  "header.castleSwitcher.label": "Pasirinkti pilį"
+  "header.castleSwitcher.label": "Pasirinkti pilį",
+  "ui.rich.views.automationView.right.click.a.toggle.for.temporary.activation.c34579ee": "<strong0>Spustelėkite dešiniuoju pelės mygtuku</strong0> jungiklį, kad jį laikinai įjungtumėte",
+  "patchNotes.release.2.4.2.subtitle.b610e6ea056f": "Vedamas nustatymas, aiškesnės būsenos ir greitesni skydeliai",
+  "patchNotes.release.2.4.2.text.967317bd8af5": "“Set up with a goal” veda per penkių žingsnių kontrolinį sąrašą nuo prisijungimo prie žaidimo iki pirmo žaidimo patvirtinto rezultato, siekiant tokių tikslų kaip dalyvauti Khan renginyje arba aprūpinti visas pilis maistu.",
+  "patchNotes.release.2.4.2.text.913f68e622ad": "Kiekviena automatizacija turi “Before you start” patikrą, kuri parodo, kas paruošta ir ką reikia pakeisti, o Paleisti pirmiausia prašo patvirtinimo, jei kas nors trukdytų automatizacijai veikti.",
+  "patchNotes.release.2.4.2.text.26a86db1c10b": "Klajokliai, Samurajai, Invazija, Khan, Audra ir Beri World gali nustatyti atakas tiesiai savo nustatymuose, iš pradžių nekuriant ruošinio, ir rodo kiekvienai konfigūracijai reikalingus karius bei vadus.",
+  "patchNotes.release.2.4.2.text.6cf29358ebf3": "“Copy to other castles” nukopijuoja vienos pilies konfigūraciją į pasirinktas pilis, pažymi tai, ko negalima kopijuoti, ir nieko neišsaugo, kol nepaspaudžiate “Išsaugoti”.",
+  "patchNotes.release.2.4.2.text.6cea9639c58b": "Kalbos pasirinkimas Nustatymuose rodo kiekvieną kalbą jos pačios pavadinimu ir prideda parinktį “Automatiškai (įrenginio kalba)”, kuri seka įrenginio kalbą nekeisdama žaidimo kalbos.",
+  "patchNotes.release.2.4.2.text.c6dbecdc2dfd": "Atakų skaitikliai pradeda nuo nulio, rodo, ar apima šiandieną, ar laiką nuo nurodyto momento, pažymi išsaugotus skaičius ir praneša, kai skaičius nepasiekiamas.",
+  "patchNotes.release.2.4.2.text.b39c4f9899d3": "Auto Station rodo gintarinį įspėjimą, o ne pasirengimo būseną, kai negali apsaugoti pilies, ir paaiškina, kada priežastis yra Apsaugos režimas arba tai, kad Berimonde nėra Atvirų vartų.",
+  "patchNotes.release.2.4.2.text.e400072927c7": "Auto Fortress ir Auto Storm atideda taikinį, kurį žaidimas nurodo vis dar esant laukimo laikotarpyje, ir pereina prie kitų. Auto Storm dabar teisingai nuskaito fortų laukimo laikus ir paslėptus fortus.",
+  "patchNotes.release.2.4.2.text.2b9c8c5fa1bb": "Laikui nustatyto paleidimo ir pauzės dialogas rodo, kada paleidimas ar pauzė baigsis, jūsų kalbos datos ir laiko formatu bei su teisingomis daugiskaitos formomis.",
+  "patchNotes.release.2.4.2.text.a9bf747fee6a": "Pranešimai ekrane lieka bent 10 sekundžių ir laukia, kol laikote virš jų pelės žymeklį arba jie yra sufokusuoti.",
+  "patchNotes.release.2.4.2.text.1e14fe9e997a": "Formuluotės visur paprastesnės: automatizacijos rodo “Išjungta” vietoje „Disabled“, renginių laukimas nurodo tęsimo laiką, o automatizacijai išjungti vadai rodo “Šiai automatizacijai išjungta”.",
+  "patchNotes.release.2.4.2.text.51cfb02c317b": "Skydeliai įkeliami greičiau, naudoja mažiau duomenų ir po trumpo atsijungimo tęsia nuo tos vietos, kur sustojo, užuot iš naujo įkėlę viską.",
+  "patchNotes.release.2.4.2.text.5859b00e3cb1": "Naujieji nustatymų ekranai išversti į vokiečių ir arabų kalbas, o kiekviena palaikoma kalba gauna daugiau išversto teksto; dar neišverstas tekstas rodomas angliškai."
 }

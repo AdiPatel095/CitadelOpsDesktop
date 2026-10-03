@@ -474,5 +474,20 @@
   "autoBird.cycles.travel": "{duration} rejsetid",
   "autoBird.cycles.troopsReady": "Tropper klar",
   "autoBird.cycles.waiting": "Venter",
-  "header.castleSwitcher.label": "Vælg slot"
+  "header.castleSwitcher.label": "Vælg slot",
+  "ui.rich.views.automationView.right.click.a.toggle.for.temporary.activation.c34579ee": "<strong0>Højreklik</strong0> på en kontakt for at aktivere den midlertidigt",
+  "patchNotes.release.2.4.2.subtitle.b610e6ea056f": "Guidet opsætning, tydeligere statusser og hurtigere dashboards",
+  "patchNotes.release.2.4.2.text.967317bd8af5": "“Set up with a goal” fører dig gennem en tjekliste med fem trin, fra forbindelsen til spillet til det første resultat, spillet bekræfter, for mål som at deltage i Khan-eventen eller holde alle borge forsynet med mad.",
+  "patchNotes.release.2.4.2.text.913f68e622ad": "Hver automatisering har en kontrol “Before you start”, der viser, hvad der er klar, og hvad der skal ændres. Start spørger først, hvis noget ville forhindre automatiseringen i at handle.",
+  "patchNotes.release.2.4.2.text.26a86db1c10b": "Nomader, Samurai, Invasion, Khan, Storm og Beri World kan konfigurere deres angreb direkte i indstillingerne uden først at oprette en forudindstilling og viser de tropper og hærførere, hver opsætning kræver.",
+  "patchNotes.release.2.4.2.text.6cf29358ebf3": "“Copy to other castles” kopierer én borgs opsætning til de borge, du vælger, markerer det, der ikke kan kopieres, og gemmer intet, før du trykker på “Gem”.",
+  "patchNotes.release.2.4.2.text.6cea9639c58b": "Sprogvalget i Indstillinger viser hvert sprog på dets eget sprog og tilføjer “Automatisk (enhedens sprog)”, som følger enhedens sprog uden at ændre spillets sprog.",
+  "patchNotes.release.2.4.2.text.c6dbecdc2dfd": "Angrebstællere starter ved nul, viser, om de dækker i dag eller tiden siden et bestemt tidspunkt, mærker gemte tal og fortæller, når et tal ikke er tilgængeligt.",
+  "patchNotes.release.2.4.2.text.b39c4f9899d3": "Auto Station viser en ravgul advarsel i stedet for at se aktiveret ud, når det ikke kan beskytte en borg, og forklarer, når årsagen er Beskyttelsestilstand eller manglen på Åbne porte i Berimond.",
+  "patchNotes.release.2.4.2.text.e400072927c7": "Auto Fortress og Auto Storm lægger et mål til side, når spillet angiver, at det stadig er på nedkøling, og går videre til andre. Auto Storm læser nu forternes nedkøling og skjulte forter korrekt.",
+  "patchNotes.release.2.4.2.text.2b9c8c5fa1bb": "Dialogen til tidsbestemt kørsel og pause viser, hvornår kørslen eller pausen slutter, i din sprogs dato- og tidsformat og med korrekte flertalsformer.",
+  "patchNotes.release.2.4.2.text.a9bf747fee6a": "Notifikationer bliver på skærmen i mindst 10 sekunder og venter, mens du holder markøren over dem eller giver dem fokus.",
+  "patchNotes.release.2.4.2.text.1e14fe9e997a": "Teksten er enklere overalt: automatiseringer viser “Fra” i stedet for Deaktiveret, ventetider for events angiver, hvornår de genoptages, og hærførere slået fra for en automatisering viser “Fra for denne automatisering”.",
+  "patchNotes.release.2.4.2.text.51cfb02c317b": "Dashboards indlæses hurtigere, bruger færre data og fortsætter, hvor de slap efter en kort afbrydelse, i stedet for at indlæse alt igen.",
+  "patchNotes.release.2.4.2.text.5859b00e3cb1": "De nye opsætningsskærme er oversat til tysk og arabisk, og alle understøttede sprog får mere oversat tekst; tekst, der endnu ikke er oversat, vises på engelsk."
 }

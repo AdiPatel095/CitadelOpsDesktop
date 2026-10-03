@@ -474,5 +474,20 @@
   "autoBird.cycles.travel": "{duration} yolculuk",
   "autoBird.cycles.troopsReady": "Birlikler hazır",
   "autoBird.cycles.waiting": "Bekliyor",
-  "header.castleSwitcher.label": "Kale seç"
+  "header.castleSwitcher.label": "Kale seç",
+  "ui.rich.views.automationView.right.click.a.toggle.for.temporary.activation.c34579ee": "Geçici olarak etkinleştirmek için bir anahtara <strong0>sağ tıklayın</strong0>",
+  "patchNotes.release.2.4.2.subtitle.b610e6ea056f": "Rehberli kurulum, daha anlaşılır durumlar ve daha hızlı panolar",
+  "patchNotes.release.2.4.2.text.967317bd8af5": "“Set up with a goal”, Khan etkinliğine katılmak veya tüm kaleleri beslemek gibi hedefler için oyuna bağlanmaktan oyunun doğruladığı ilk sonuca kadar beş adımlı bir kontrol listesinde size rehberlik eder.",
+  "patchNotes.release.2.4.2.text.913f68e622ad": "Her otomasyonda neyin hazır olduğunu ve neyin değişmesi gerektiğini gösteren bir “Before you start” kontrolü vardır; otomasyonun çalışmasını engelleyecek bir şey varsa Başlat önce onay ister.",
+  "patchNotes.release.2.4.2.text.26a86db1c10b": "Göçebeler, Samuraylar, İstila, Khan, Fırtına ve Beri World, önce bir ön ayar oluşturmadan saldırılarını doğrudan ayarlarında yapılandırabilir ve her kurulumun ihtiyaç duyduğu birlikleri ve komutanları gösterir.",
+  "patchNotes.release.2.4.2.text.6cf29358ebf3": "“Copy to other castles”, bir kalenin kurulumunu seçtiğiniz kalelere kopyalar, kopyalanamayan öğeleri belirtir ve “Kaydet” düğmesine basana kadar hiçbir şey kaydetmez.",
+  "patchNotes.release.2.4.2.text.6cea9639c58b": "Ayarlar dil seçicisi her dili kendi adıyla listeler ve oyun dilini değiştirmeden cihaz dilini izleyen “Otomatik (cihaz dili)” seçeneğini ekler.",
+  "patchNotes.release.2.4.2.text.c6dbecdc2dfd": "Saldırı sayaçları sıfırdan başlar, bugünü mü yoksa belirli bir zamandan sonraki dönemi mi kapsadığını gösterir, kaydedilmiş sayıları etiketler ve bir sayı kullanılamadığında bunu belirtir.",
+  "patchNotes.release.2.4.2.text.b39c4f9899d3": "Auto Station, bir kaleyi koruyamadığında hazırmış gibi görünmek yerine kehribar renkli bir uyarı gösterir ve nedenin Koruma Modu veya Berimond’da Açık Kapılar özelliğinin bulunmaması olduğunu açıklar.",
+  "patchNotes.release.2.4.2.text.e400072927c7": "Auto Fortress ve Auto Storm, oyunun hâlâ bekleme süresinde olduğunu bildirdiği hedefi bir kenara bırakıp diğerlerine geçer. Auto Storm artık kalelerin bekleme sürelerini ve gizli kaleleri doğru okur.",
+  "patchNotes.release.2.4.2.text.2b9c8c5fa1bb": "Süreli Çalıştır ve Duraklat iletişim kutusu, çalışmanın veya duraklatmanın ne zaman biteceğini dilinizin tarih ve saat biçiminde, doğru çoğul biçimleriyle gösterir.",
+  "patchNotes.release.2.4.2.text.a9bf747fee6a": "Bildirimler en az 10 saniye ekranda kalır ve üzerlerine geldiğinizde veya odaklandığınızda bekler.",
+  "patchNotes.release.2.4.2.text.1e14fe9e997a": "İfadeler her yerde daha sade: otomasyonlar Devre dışı yerine “Kapalı” gösterir, etkinlik beklemeleri ne zaman devam edeceğini belirtir ve bir otomasyon için kapatılan komutanlar “Bu otomasyon için kapalı” gösterir.",
+  "patchNotes.release.2.4.2.text.51cfb02c317b": "Panolar daha hızlı yüklenir, daha az veri kullanır ve kısa bir bağlantı kesintisinden sonra her şeyi yeniden yüklemek yerine kaldıkları yerden devam eder.",
+  "patchNotes.release.2.4.2.text.5859b00e3cb1": "Yeni kurulum ekranları Almanca ve Arapçaya çevrildi ve desteklenen her dil daha fazla çevrilmiş metin alıyor; henüz çevrilmeyenler İngilizce gösteriliyor."
 }

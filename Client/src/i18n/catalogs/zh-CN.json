@@ -474,5 +474,20 @@
   "autoBird.cycles.travel": "行程 {duration}",
   "autoBird.cycles.troopsReady": "部队已就绪",
   "autoBird.cycles.waiting": "等待中",
-  "header.castleSwitcher.label": "选择城堡"
+  "header.castleSwitcher.label": "选择城堡",
+  "ui.rich.views.automationView.right.click.a.toggle.for.temporary.activation.c34579ee": "<strong0>右键单击</strong0>开关以临时启用",
+  "patchNotes.release.2.4.2.subtitle.b610e6ea056f": "引导式设置、更清晰的状态和更快的仪表板",
+  "patchNotes.release.2.4.2.text.967317bd8af5": "“Set up with a goal”通过五步检查清单提供引导，从连接游戏到获得游戏确认的第一个结果，可用于参加Khan活动或为所有城堡供粮等目标。",
+  "patchNotes.release.2.4.2.text.913f68e622ad": "每项自动化都有“Before you start”检查，显示哪些已准备就绪、哪些需要更改；如果有问题会阻止自动化执行，开始前会先请求确认。",
+  "patchNotes.release.2.4.2.text.26a86db1c10b": "游牧民、武士、入侵、Khan、Storm和Beri World可直接在各自的设置中配置攻击，无需先创建预设，并显示每种配置需要的部队和指挥官。",
+  "patchNotes.release.2.4.2.text.6cf29358ebf3": "“Copy to other castles”将一座城堡的配置复制到您选择的城堡，标出无法复制的内容，并且在您按下“保存”之前不会保存任何内容。",
+  "patchNotes.release.2.4.2.text.6cea9639c58b": "设置中的语言选择器以各语言自己的名称列出语言，并新增“自动（设备语言）”选项，跟随设备语言而不更改游戏语言。",
+  "patchNotes.release.2.4.2.text.c6dbecdc2dfd": "攻击计数器从零开始，显示统计范围是今天还是从指定时间开始，标记已保存的计数，并在计数不可用时说明。",
+  "patchNotes.release.2.4.2.text.b39c4f9899d3": "Auto Station无法保护城堡时会显示琥珀色警告，而不是显示为已就绪；如果原因是保护模式或Berimond没有开放城门功能，也会解释。",
+  "patchNotes.release.2.4.2.text.e400072927c7": "Auto Fortress和Auto Storm会暂时跳过游戏报告仍在冷却的目标，转向其他目标。Auto Storm现在可以正确读取要塞冷却时间和隐藏要塞。",
+  "patchNotes.release.2.4.2.text.2b9c8c5fa1bb": "定时运行和暂停对话框使用您语言的日期和时间格式显示运行或暂停的结束时间，并采用正确的复数形式。",
+  "patchNotes.release.2.4.2.text.a9bf747fee6a": "通知至少在屏幕上停留10秒，鼠标悬停在通知上或通知获得焦点时会等待。",
+  "patchNotes.release.2.4.2.text.1e14fe9e997a": "各处的用语更直白：自动化显示“已关闭”而不是已禁用，活动等待会说明恢复时间，为某项自动化关闭的指挥官显示“此自动化已关闭”。",
+  "patchNotes.release.2.4.2.text.51cfb02c317b": "仪表板加载更快、使用的数据更少，并在短暂断开连接后从中断处继续，而不是重新加载全部内容。",
+  "patchNotes.release.2.4.2.text.5859b00e3cb1": "新的设置界面已翻译为德语和阿拉伯语，所有支持的语言都会获得更多翻译文本；尚未翻译的内容显示为英语。"
 }
