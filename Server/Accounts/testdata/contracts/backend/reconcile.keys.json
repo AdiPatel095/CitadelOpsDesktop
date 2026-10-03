@@ -1,0 +1,17 @@
+{
+  "preserveRuntimes": true,
+  "revision": false,
+  "runtimes": false,
+  "runtimes[].desiredConfigurationDigest": true,
+  "runtimes[].desiredConfigurationRevision": true,
+  "runtimes[].leaseExpiresAt": false,
+  "runtimes[].onDisconnect": true,
+  "runtimes[].placementEpoch": false,
+  "runtimes[].privateMetrics": true,
+  "runtimes[].privateMetrics.expiresAt": false,
+  "runtimes[].privateMetrics.token": false,
+  "runtimes[].runtimeId": false,
+  "runtimes[].startSession": false,
+  "runtimes[].tenantId": false,
+  "schemaVersion": false
+}
