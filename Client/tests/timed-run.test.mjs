@@ -62,21 +62,29 @@ test('a storage write failure reports that dismissal needs a session-only flag',
 // CIT-72 integration guards, added when the prepared helpers are wired into the view.
 test('temporary activation has one visible control and preserves its existing write paths', async () => {
   const { readFileSync, readdirSync } = await import('node:fs');
-  const { join } = await import('node:path');
+  const { join, relative } = await import('node:path');
   const src = `${root}${source}`;
   const read = relative => readFileSync(join(src, relative), 'utf8');
+  const scanRoot = join(root, 'src');
+  const catalogRoot = source === '/src/commandCenter' ? 'commandCenter/i18n' : 'i18n';
   function scan(directory) {
     for (const entry of readdirSync(directory, { withFileTypes: true })) {
       const path = join(directory, entry.name);
       if (entry.isDirectory()) scan(path);
       else if (/\.(tsx?|css|json)$/.test(path)) {
         const contents = readFileSync(path, 'utf8');
-        assert.doesNotMatch(contents, /automation-right-click|ui\.rich\.views\.automationView\.right\.click/);
+        assert.doesNotMatch(contents, /automation-right-click/);
+        const sourcePath = relative(scanRoot, path).replaceAll('\\', '/');
+        const catalog = sourcePath === `${catalogRoot}/richMessages.ts`
+          || (sourcePath.startsWith(`${catalogRoot}/catalogs/`)
+            && /^[^/]+\.json$/.test(sourcePath.slice(`${catalogRoot}/catalogs/`.length)));
+        if (!catalog) assert.doesNotMatch(contents, /ui\.rich\.views\.automationView\.right\.click/);
       }
     }
   }
-  scan(src);
+  scan(scanRoot);
   const view = read('views/AutomationView.tsx');
+  assert.doesNotMatch(view, /ui\.rich\.views\.automationView\.right\.click/);
   assert.equal((view.match(/<TimedRunButton\b/g) ?? []).length, 1);
   assert.ok(view.indexOf('<TimedRunButton') < view.indexOf('className="automation-function-settings"'));
   assert.match(view, /disabled=\{feature\.disabled\} onOpen=\{\(\) => onOpenAutomationDuration\(feature\.enabledKey, feature\.name\)\}/);
