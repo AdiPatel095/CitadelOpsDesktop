@@ -11,17 +11,29 @@ export function readExternalCatalogSource(directory,family) {
  if(family==='backend') {
   if(provenance.source?.keyCount!==Object.keys(source).length || provenance.source?.sha256!==hash(JSON.stringify(source)) || !provenance.source?.revision || !provenance.packs || !Object.keys(provenance.packs).length)throw new Error(`${family}: missing or stale source provenance`);
  } else if(family==='server') {
-  const coverage=JSON.parse(read('coverage.json'));
-  if(coverage.sourceHashes?.['en.json']!==hash(bytes) || coverage.sourceHashes?.['provenance.json']!==hash(provenanceBytes) || !provenance.sourceRevision || !provenance.entries || !Object.keys(provenance.entries).length)throw new Error(`${family}: missing or stale synchronization provenance`);
+  if(!provenance.sourceRevision || !provenance.entries || !Object.keys(provenance.entries).length)throw new Error(`${family}: missing or stale synchronization provenance`);
  } else throw new Error(`Unknown catalog family: ${family}`);
  return source;
 }
 /** Integration coverage must use the server source included in this checkout. */
-export function assertRuntimeCatalogMatch(clientDirectory,runtimeSourcePath) {
+export function assertServerCatalogSynchronized(clientDirectory,serverRoot) {
+ const runtimeSourcePath=path.join(serverRoot,'en.json');
  if(!fs.existsSync(runtimeSourcePath))throw new Error('server: integrated runtime source catalog is missing');
  const runtimeBytes=fs.readFileSync(runtimeSourcePath);
  const runtime=JSON.parse(runtimeBytes);
  if(!runtime||typeof runtime!=='object'||Array.isArray(runtime)||!Object.keys(runtime).length||Object.values(runtime).some(value=>typeof value!=='string'||!value.trim()))throw new Error('server: integrated runtime source catalog is invalid');
- const clientPath=path.join(clientDirectory,'en.json');
- if(!fs.existsSync(clientPath)||hash(fs.readFileSync(clientPath))!==hash(runtimeBytes))throw new Error('server: client catalog does not match integrated runtime source');
+ const sources=new Map([['en.json',runtimeSourcePath]]);
+ const glossaryPath=path.join(serverRoot,'feature-names.json');
+ if(fs.existsSync(glossaryPath)) sources.set('feature-names.json',glossaryPath);
+ const localesDirectory=path.join(serverRoot,'locales');
+ for(const name of fs.readdirSync(localesDirectory).filter(name=>name.endsWith('.json')).sort()) sources.set(name,path.join(localesDirectory,name));
+ if(!sources.has('provenance.json')) throw new Error('server: integrated runtime provenance is missing');
+ if(!fs.existsSync(clientDirectory)) throw new Error('server: client catalog directory is missing');
+ const clientFiles=fs.readdirSync(clientDirectory,{recursive:true}).filter(name=>name.endsWith('.json'));
+ for(const name of clientFiles) if(!sources.has(name)) throw new Error(`server: extra client catalog file ${name}`);
+ for(const [name,sourcePath] of sources) {
+  const clientPath=path.join(clientDirectory,name);
+  if(!fs.existsSync(clientPath)) throw new Error(`server: missing client catalog file ${name}`);
+  if(!fs.readFileSync(clientPath).equals(fs.readFileSync(sourcePath))) throw new Error(`server: client catalog ${name} does not match integrated runtime source`);
+ }
 }

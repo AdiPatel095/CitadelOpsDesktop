@@ -36,6 +36,10 @@ func TestAllianceHelpPolicyBootstrapsCurrentSessionOnce(t *testing.T) {
 	now := time.Date(2026, 8, 5, 12, 0, 0, 0, time.UTC)
 	state := State.NewGameState()
 	state.Session.Generation = 7
+	state.Player.AllianceID = 9
+	state.Player.AllianceMembershipID = state.Player.AllianceID
+	state.Player.AllianceMembershipObservedAt = now
+	state.Player.AllianceMembershipGeneration = 7
 	decision, err := NewAllianceHelpPolicy().Evaluate(context.Background(), Snapshot{
 		State: state, GameData: allianceHelpPolicyTestGameData(t), Now: now,
 	})
@@ -64,6 +68,10 @@ func TestAllianceHelpPolicyImmediatelyAnswersPendingRequests(t *testing.T) {
 	now := time.Date(2026, 8, 5, 12, 0, 0, 0, time.UTC)
 	state := State.NewGameState()
 	state.Session.Generation = 7
+	state.Player.AllianceID = 9
+	state.Player.AllianceMembershipID = state.Player.AllianceID
+	state.Player.AllianceMembershipObservedAt = now
+	state.Player.AllianceMembershipGeneration = 7
 	state.AllianceHelpRequests.OthersObservedGeneration = 7
 	state.AllianceHelpRequests.OthersObservedAt = now
 	state.AllianceHelpRequests.PendingOtherListIDs = []int64{11, 22}
@@ -102,4 +110,49 @@ func allianceHelpPolicyTestGameData(t *testing.T) *GameData.Store {
 		t.Fatal(err)
 	}
 	return store
+}
+
+func TestAllianceHelpMembershipPausedStatusDeduplicatesAndResumes(t *testing.T) {
+	now := time.Now().UTC()
+	state := State.NewGameState()
+	state.Session.Generation = 7
+	store := State.NewStore(&state)
+	policy := NewAllianceHelpPolicy()
+	coordinator := NewCoordinator(store, nil, nil, nil, policy)
+	snapshot := Snapshot{State: state, Now: now, GameData: allianceHelpPolicyTestGameData(t)}
+	decision, err := policy.Evaluate(t.Context(), snapshot)
+	if err != nil || decision.Request != nil || decision.Status != "waiting" ||
+		decision.Detail != "Alliance help is paused: you aren't in an alliance" ||
+		decision.DetailDescriptor == nil || decision.DetailDescriptor.Key != "server.automation.alliance_help_membership.paused" {
+		t.Fatalf("paused status = %+v err=%v", decision, err)
+	}
+	coordinator.recordDecision(policy.ID(), true, decision)
+	revision := store.Revision()
+	coordinator.recordDecision(policy.ID(), true, decision)
+	if store.Revision() != revision {
+		t.Fatal("identical paused status was published twice")
+	}
+	_, err = store.ApplyComponents(State.Components(State.ComponentPlayer), func(s *State.GameState) ([]string, bool, error) {
+		s.Player.AllianceID = 9
+		s.Player.AllianceMembershipID = s.Player.AllianceID
+		s.Player.AllianceMembershipObservedAt = now
+		s.Player.AllianceMembershipGeneration = 7
+		return []string{"player", "alliance-help"}, true, nil
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	snapshot.State = store.ReadOnlyView()
+	resumed, err := policy.Evaluate(t.Context(), snapshot)
+	if err != nil || resumed.Request == nil {
+		t.Fatalf("fresh membership did not resume: %+v %v", resumed, err)
+	}
+	coordinator.recordDecision(policy.ID(), true, resumed)
+	if store.ReadOnlyView().Automations[policy.ID()].Detail == decision.Detail {
+		t.Fatal("paused message remained after resume")
+	}
+	coordinator.recordDecision(policy.ID(), true, decision)
+	if store.ReadOnlyView().Automations[policy.ID()].Detail != decision.Detail {
+		t.Fatal("pause after resume was incorrectly deduplicated")
+	}
 }

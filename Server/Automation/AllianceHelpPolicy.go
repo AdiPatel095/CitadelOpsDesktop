@@ -32,6 +32,10 @@ func (*AllianceHelpPolicy) UrgentWakeDomains() []string { return []string{"allia
 
 func (*AllianceHelpPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision, error) {
 	nextCheck := snapshot.Now.Add(allianceHelpResponseCheckInterval)
+	if !State.AllianceMembershipCurrent(&snapshot.State) {
+		message := Localization.New("server.automation.alliance_help_membership.paused", "Alliance help is paused: you aren't in an alliance", nil)
+		return Decision{Status: "waiting", Detail: message.Fallback, DetailDescriptor: message, NextCheckAt: nextCheck}, nil
+	}
 	observed := snapshot.State.AllianceHelpRequests
 	if snapshot.GameData == nil {
 		return Decision{

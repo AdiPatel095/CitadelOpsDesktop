@@ -19,5 +19,10 @@ export default defineConfig([
       ecmaVersion: 2020,
       globals: globals.browser,
     },
+    rules: {
+      // React Compiler is not enabled; this rule only checks compiler preservation of manual memoization.
+      // Re-enable this rule if React Compiler is adopted.
+      'react-hooks/preserve-manual-memoization': 'off',
+    },
   },
 ])
