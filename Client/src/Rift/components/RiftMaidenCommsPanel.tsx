@@ -1,9 +1,9 @@
-import { useLocale as useStaticLocale } from "../../i18n/LocaleContext";
+import { useLocale as useStaticLocale } from '../../i18n/useLocale';
 import { LocalizedText } from "../../i18n/LocalizedText";
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Shield, Users } from 'lucide-react';
-import { useAuth } from '../../context/AuthContext';
-import { showTroopPicker } from '../../components/TroopPickerModal';
+import { useAuth } from '../../context/useAuth';
+import { showTroopPicker } from '../../components/TroopPicker';
 import UnitImage from '../../components/UnitImage';
 import { Button, SectionCard } from '../../components/ui';
 import {
@@ -15,9 +15,9 @@ import {
   DEFAULT_MAIDEN_PROBE_UNIT_ID,
   parseRiftMaidenCommsSettings,
 } from '../types/RiftMaidenCommsSettings';
-import { useCitadelAPI } from '../../api/ApiContext';
-import { useMetadata } from '../../context/MetadataContext';
-import { useRiftMap } from '../context/RiftMapContext';
+import { useCitadelAPI } from '../../api/useCitadelAPI';
+import { useMetadata } from '../../context/useMetadata';
+import { useRiftMap } from '../context/useRiftMap';
 import {
   COMMANDER_FEATURE_SECTION,
   commanderIDsEligibleForFeature,

@@ -44,7 +44,8 @@ test('the caption keys exist and read as player language', () => {
 
 test('the picker shows the caption without changing selection, and Towers and Storm pass the observation', async () => {
   const picker = await readFile(new URL('../src/components/TroopPickerModal.tsx', import.meta.url), 'utf8');
-  assert.match(picker, /stockObservation\?: \{ castle: /);
+  const options = await readFile(new URL('../src/components/TroopPicker.ts', import.meta.url), 'utf8');
+  assert.match(options, /stockObservation\?: \{ castle: /);
   assert.match(picker, /data-stock-observation/);
   assert.match(picker, /stockObservationNote\(unitObservationFreshness/);
   const towers = await readFile(new URL('../src/settings/components/AutoTowerSettingsModal.tsx', import.meta.url), 'utf8');

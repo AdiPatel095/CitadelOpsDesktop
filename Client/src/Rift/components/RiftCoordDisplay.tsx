@@ -1,11 +1,11 @@
-import { useLocale as useStaticLocale } from "../../i18n/LocaleContext";
+import { useLocale as useStaticLocale } from '../../i18n/useLocale';
 import { LocalizedText } from "../../i18n/LocalizedText";
 import React from 'react';
 import { MapPin, RefreshCw } from 'lucide-react';
-import { useCastleFocus } from '../../context/CastleFocusContext';
-import { useAuth } from '../../context/AuthContext';
+import { useCastleFocus } from '../../context/useCastleFocus';
+import { useAuth } from '../../context/useAuth';
 import { Button, SectionCard } from '../../components/ui';
-import { useRiftMap } from '../context/RiftMapContext';
+import { useRiftMap } from '../context/useRiftMap';
 import { formatRiftDelta } from '../types/RiftMapCoords';
 
 const RiftCoordDisplay: React.FC = () => {

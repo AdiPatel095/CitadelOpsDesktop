@@ -2,7 +2,7 @@ import { LocalizedText } from "../../i18n/LocalizedText";
 import React, { useEffect, useMemo, useState } from 'react';
 import type { ResourceBalanceV2 } from '../../api/Contracts';
 import { SectionCard } from '../../components/ui';
-import { useMetadata } from '../../context/MetadataContext';
+import { useMetadata } from '../../context/useMetadata';
 
 interface CastleResourceCardProps {
   title: string;

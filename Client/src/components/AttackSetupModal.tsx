@@ -1,4 +1,4 @@
-import { useLocale as useStaticLocale } from "../i18n/LocaleContext";
+import { useLocale as useStaticLocale } from '../i18n/useLocale';
 import { LocalizedText } from "../i18n/LocalizedText";
 import React, { useEffect, useId, useMemo, useState } from 'react';
 import {
@@ -11,13 +11,14 @@ import {
   Shield,
   Swords,
 } from 'lucide-react';
-import { useMetadata, type MetadataItem } from '../context/MetadataContext';
-import { useCitadelAPI } from '../api/ApiContext';
+import { type MetadataItem } from '../context/MetadataContext';
+import { useMetadata } from '../context/useMetadata';
+import { useCitadelAPI } from '../api/useCitadelAPI';
 import type { CastleStateV2 } from '../api/Contracts';
 import ToolImage from './ToolImage';
-import { showToolPicker } from './ToolPickerModal';
+import { showToolPicker } from './ToolPicker';
 import UnitImage from './UnitImage';
-import { showTroopPicker } from './TroopPickerModal';
+import { showTroopPicker } from './TroopPicker';
 import { AddSlot, Badge, Button, Card, CardContent, CardHeader, Input, MetricTile, Modal, ModalTitle, PillSelector, QuantityAssetTile, Switch } from './ui';
 import { unitUpgradeFamily } from '../settings/UnitUpgradeFamily';
 

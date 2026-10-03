@@ -1,11 +1,11 @@
 import { useCallback, useEffect, useState } from 'react';
-import { useCitadelAPI } from '../api/ApiContext';
+import { useCitadelAPI } from '../api/useCitadelAPI';
 import { configurationSection } from './Configuration';
 import {
   normalizeFeatureSchedules,
   type WeeklySchedule,
 } from './SchedulerTypes';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../context/useAuth';
 
 export const AUTO_EQUIPMENT_CLEANUP_FEATURE_ID = 'autoEquipmentCleanup';
 export const AUTO_EQUIPMENT_CLEANUP_ENABLED_KEY = 'auto_equipment_cleanup';

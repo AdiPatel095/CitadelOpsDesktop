@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { useCitadelAPI } from '../../api/ApiContext';
+import { useCitadelAPI } from '../../api/useCitadelAPI';
 import { useHostedRuntimePresence } from '../../config/Deployment';
-import { useAuth } from '../../context/AuthContext';
-import { useMetadata } from '../../context/MetadataContext';
+import { useAuth } from '../../context/useAuth';
+import { useMetadata } from '../../context/useMetadata';
 import { movementViewFromState } from '../../Movement/types/MovementState';
 import type { SettingsFeatureId } from '../disclosure/placement';
 import { useEventDifficultyOptions } from '../EventDifficultyOptions';

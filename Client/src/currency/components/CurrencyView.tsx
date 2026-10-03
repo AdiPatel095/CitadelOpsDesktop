@@ -1,10 +1,11 @@
 import { LocalizedText } from "../../i18n/LocalizedText";
 import { useMemo } from 'react';
-import { useCitadelAPI } from '../../api/ApiContext';
+import { useCitadelAPI } from '../../api/useCitadelAPI';
 import StaleSessionBanner from '../../components/StaleSessionBanner';
 import { Icons } from '../../components/Icons';
 import { SectionCard } from '../../components/ui';
-import { useMetadata, type MetadataItem } from '../../context/MetadataContext';
+import { type MetadataItem } from '../../context/MetadataContext';
+import { useMetadata } from '../../context/useMetadata';
 
 interface DefinitionAmount {
 	id: number;

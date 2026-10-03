@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { CitadelAPI } from '../api/CitadelClient';
-import { useCitadelAPI } from '../api/ApiContext';
+import { useCitadelAPI } from '../api/useCitadelAPI';
 import type { GameServerEntry } from '../api/Contracts';
 import { configurationSection } from '../settings/Configuration';
 import { serverLabel } from './serverLabel';

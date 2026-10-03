@@ -21,7 +21,7 @@ import { Input } from '../../components/ui/Input';
 import { Modal } from '../../components/ui/Modal';
 import { ModalTitle } from '../../components/ui/ModalTitle';
 import { Select } from '../../components/ui/Select';
-import { useLocale } from '../../i18n/LocaleContext';
+import { useLocale } from '../../i18n/useLocale';
 import { LocalizedText } from '../../i18n/LocalizedText';
 import { isRecordOwnedBy, recordOwner } from '../../presets/AppCreatedRecords';
 import type { ReadinessCheck } from '../readiness/Readiness';

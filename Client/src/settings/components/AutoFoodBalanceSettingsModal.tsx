@@ -1,13 +1,13 @@
 import { StopFooter } from '../../components/StopControl';
-import { useLocale as useStaticLocale } from "../../i18n/LocaleContext";
+import { useLocale as useStaticLocale } from '../../i18n/useLocale';
 import { LocalizedText } from "../../i18n/LocalizedText";
 import React, { useEffect, useMemo, useState } from 'react';
 import { FastForward, Truck, Wheat } from 'lucide-react';
 import { ChoiceChipGroup, Input, SettingsModal, SettingsToggleRow } from '../../components/ui';
-import { useCitadelAPI } from '../../api/ApiContext';
+import { useCitadelAPI } from '../../api/useCitadelAPI';
 import { asRecord } from '../Configuration';
 import { useConfigurationDraftSession } from '../ConfigurationDraftSession';
-import { useMetadata } from '../../context/MetadataContext';
+import { useMetadata } from '../../context/useMetadata';
 import { evaluateFoodBalanceReadiness } from '../requirements/setupReadiness';
 import { useSetupContext } from '../requirements/useSetupContext';
 import { focusReadinessTarget } from '../readiness/focusReadinessTarget';
@@ -18,7 +18,8 @@ import { useSettingsDisclosure } from '../disclosure/useSettingsDisclosure';
 import { AutomationRunStrip } from './AutomationRunStrip';
 import { FoodCastleTableRow } from './FoodCastleTableRow';
 import { ReadinessPanel } from './ReadinessPanel';
-import { collapsedSettingNote, SettingsSection } from './SettingsSection';
+import { SettingsSection } from './SettingsSection';
+import { collapsedSettingNote } from './collapsedSettingNote';
 import {
   AUTO_FOOD_BALANCE_TIME_SKIPS,
   DEFAULT_AUTO_FOOD_BALANCE_SETTINGS,

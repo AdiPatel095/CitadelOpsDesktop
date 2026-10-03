@@ -1,5 +1,5 @@
 import {useEffect,useMemo,useState,useSyncExternalStore} from 'react';
-import {useLocale} from './LocaleContext';
+import { useLocale } from './useLocale';
 import {loadOfficialMessages,officialCatalogGeneration,subscribeOfficialCatalog} from './officialMessages';
 import {formatMessage,type OfficialCatalog} from './formatMessage';
 import {eventDisplayMessage} from './eventDisplayMessage';

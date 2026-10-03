@@ -36,7 +36,8 @@ test('non-API errors and undefined retain their toast', () => {
 test('updateConfiguration guards its toast after refreshing and still rethrows the conflict', () => {
   const source = readFileSync(new URL(`${SRC}api/ApiContext.tsx`, import.meta.url), 'utf8');
   assert.match(source, /import \{ shouldToastConfigurationError \} from '\.\/configurationErrorToast';/);
-  const options = source.slice(source.indexOf('export type ConfigurationUpdateOptions ='), source.indexOf('const APIContext ='));
+  const valueSource = readFileSync(new URL(`${SRC}api/useCitadelAPI.ts`, import.meta.url), 'utf8');
+  const options = valueSource.slice(valueSource.indexOf('export type ConfigurationUpdateOptions ='), valueSource.indexOf('export const APIContext ='));
   assert.equal((options.match(/conflictShownByEditor\?: boolean/g) ?? []).length, 2);
   const update = source.slice(source.indexOf('const updateConfiguration = useCallback('), source.indexOf('const applyPlayerHistoryRetention = useCallback('));
   assert.match(update, /if \(shouldToastConfigurationError\(requestError, options\?\.conflictShownByEditor\)\) \{\s*Notifications\.error\(errorMessage\(requestError\)\);\s*\}\s*throw requestError;/);

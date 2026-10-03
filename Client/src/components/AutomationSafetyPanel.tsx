@@ -1,8 +1,8 @@
-import { useLocale as useStaticLocale } from "../i18n/LocaleContext";
+import { useLocale as useStaticLocale } from '../i18n/useLocale';
 import { LocalizedText } from "../i18n/LocalizedText";
 import { useState } from 'react';
 import type { AutomationStateV2 } from '../api/Contracts';
-import { useCitadelAPI } from '../api/ApiContext';
+import { useCitadelAPI } from '../api/useCitadelAPI';
 import { Button } from './ui';
 
 // Go's zero time is serialized for value timestamps; it is not an expiry/clear.

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
-import { useCitadelAPI } from '../../api/ApiContext';
-import { useAuth } from '../../context/AuthContext';
+import { useCitadelAPI } from '../../api/useCitadelAPI';
+import { useAuth } from '../../context/useAuth';
 import { useHostedRuntimePresence } from '../../config/Deployment';
 import { normalizeFeatureSchedules, scheduleAllowsAt } from '../SchedulerTypes';
 import { AUTOMATION_ENABLED_KEYS, type SettingsFeatureId } from '../disclosure/placement';
