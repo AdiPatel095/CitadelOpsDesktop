@@ -43,6 +43,9 @@ func StormAttackArrivalBlock(state *State.GameState, gameData *GameData.Store, s
 	}
 	seconds, observed := stormObservedTravelSeconds(state, source, target, option, end)
 	if !observed {
+		if stormUnknownEtaAllowed(now, end) {
+			return nil
+		}
 		return stormTravelUnavailable()
 	}
 	// Reject invalid/overflowing rates instead of allowing duration conversion to
