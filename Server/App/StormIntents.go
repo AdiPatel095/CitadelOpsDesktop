@@ -705,6 +705,7 @@ func planStormShopPurchase(_ context.Context, input Intent.PlanningContext, argu
 	if err != nil {
 		return Intent.Plan{}, err
 	}
+	arguments, _ = json.Marshal(request)
 	historyPayload, _ := json.Marshal(struct {
 		CastleID  State.CastleID  `json:"CID"`
 		KingdomID State.KingdomID `json:"KID"`
@@ -740,7 +741,11 @@ func planStormShopPurchase(_ context.Context, input Intent.PlanningContext, argu
 		purchaseLabels = append(purchaseLabels, fmt.Sprintf("%d x %s", purchase.request.Amount, itemName))
 		purchaseMessages = append(purchaseMessages, Localization.New("server.storm.purchase_list_item", "{amount, number} x Luna package {packageID}", Localization.Params{"amount": purchase.request.Amount, "packageID": strconv.FormatInt(int64(purchase.request.ProductID), 10)}))
 		totalCost += purchase.request.Amount * purchase.item.AquamarinePrice
-		steps = append(steps, shopCommandStep("Purchase "+itemName+" from Luna", "sbp", payload, 0).WithNameDescriptor(Localization.New("server.storm.purchase_step", "Purchase package {packageID} from Luna", Localization.Params{"packageID": strconv.FormatInt(int64(purchase.request.ProductID), 10)})))
+		step := shopCommandStep("Purchase "+itemName+" from Luna", "sbp", payload, 0).WithNameDescriptor(Localization.New("server.storm.purchase_step", "Purchase package {packageID} from Luna", Localization.Params{"packageID": strconv.FormatInt(int64(purchase.request.ProductID), 10)}))
+		guardArguments, _ := json.Marshal(stormShopPurchaseRequest{CastleID: castle.ID, Purchases: []stormShopPurchaseLineRequest{purchase.request}, AquamarineReserve: request.AquamarineReserve})
+		step.FinalDispatchAction = "storm.shop.guard"
+		step.FinalDispatchArguments = guardArguments
+		steps = append(steps, step)
 	}
 	summary := fmt.Sprintf("Buy %s from Luna for %d Aquamarine at %s", stormShopFriendlyList(purchaseLabels), totalCost, castleLabel(castle))
 	return Intent.Plan{
@@ -1036,10 +1041,16 @@ func stormShopPurchaseContext(
 	}
 	purchases := make([]stormShopPurchaseLine, 0, len(normalized))
 	totalCost := int64(0)
+	var capMessage *Localization.Message
+	var capDetail string
 	for _, line := range normalized {
 		item, found := input.GameData.StormShopPackage(int64(line.ProductID))
 		if !found {
 			return stormShopPurchaseRequest{}, State.CastleState{}, nil, Localization.WithError(fmt.Errorf("package %d is not sold by Luna's trade boat", line.ProductID), Localization.New("server.app.package_p_is_not.7e02298e", "package {p0} is not sold by Luna's trade boat", Localization.Params{"p0": fmt.Sprintf("%d", line.ProductID)}))
+		}
+		if input.State.StormPackageBlocked(castle.ID, GameData.StormLunaShopTableID, line.ProductID, time.Now().UTC()) {
+			capDetail, capMessage = Intent.StormPackageCapStatus(userFacingGameName(item.Name))
+			continue
 		}
 		if line.Amount > (math.MaxInt64-totalCost)/item.AquamarinePrice {
 			return stormShopPurchaseRequest{}, State.CastleState{}, nil, Localization.WithError(fmt.Errorf("Storm shop amount is too large"), Localization.New("server.app.storm_shop_amount_is.16ee5f1d", "Storm shop amount is too large", nil))
@@ -1053,6 +1064,9 @@ func stormShopPurchaseContext(
 		}
 		purchases = append(purchases, stormShopPurchaseLine{request: line, item: item})
 	}
+	if len(purchases) == 0 && capMessage != nil {
+		return stormShopPurchaseRequest{}, State.CastleState{}, nil, Localization.WithError(errors.New(capDetail), capMessage)
+	}
 	if totalCost > math.MaxInt64-request.AquamarineReserve {
 		return stormShopPurchaseRequest{}, State.CastleState{}, nil, Localization.WithError(fmt.Errorf("Storm shop amount is too large"), Localization.New("server.app.storm_shop_amount_is.16ee5f1d", "Storm shop amount is too large", nil))
 	}
@@ -1061,7 +1075,10 @@ func stormShopPurchaseContext(
 	if available < required {
 		return stormShopPurchaseRequest{}, State.CastleState{}, nil, Localization.WithError(fmt.Errorf("Storm castle has %d Aquamarine; purchases and reserve require %d", available, required), Localization.New("server.app.storm_castle_has_p.63b05463", "Storm castle has {p0} Aquamarine; purchases and reserve require {p1}", Localization.Params{"p0": available, "p1": required}))
 	}
-	request.Purchases = normalized
+	request.Purchases = make([]stormShopPurchaseLineRequest, 0, len(purchases))
+	for _, purchase := range purchases {
+		request.Purchases = append(request.Purchases, purchase.request)
+	}
 	return request, castle, purchases, nil
 }
 

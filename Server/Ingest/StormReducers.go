@@ -63,6 +63,7 @@ func reduceStormShopCommand(
 	gameState.Storm.LunaShopObservedAt = observedAt
 	gameState.Storm.LunaShopPending = true
 	gameState.Storm.LunaShopPendingCastleID = castleID
+	gameState.Storm.LunaShopPendingCap = item.Stock
 	gameState.Storm.LunaShopPendingAmount = amount
 	gameState.Storm.LunaShopPendingAquamarineCost = cost
 	return []string{"storm"}, true, nil
@@ -82,11 +83,12 @@ func reduceStormShopResponse(
 	castleID := gameState.Storm.LunaShopPendingCastleID
 	cost := gameState.Storm.LunaShopPendingAquamarineCost
 	resourceChanged := false
+	capRejected := frame.ResponseCode != nil && *frame.ResponseCode == 237
 	var payload struct {
 		Available *float64        `json:"AS"`
 		Resources json.RawMessage `json:"grc"`
 	}
-	if len(frame.Payload) > 0 {
+	if len(frame.Payload) > 0 && !capRejected {
 		if err := json.Unmarshal(frame.Payload, &payload); err != nil {
 			return nil, false, fmt.Errorf("decode Storm shop response: %w", err)
 		}
@@ -113,6 +115,14 @@ func reduceStormShopResponse(
 			gameState.SetCastleParts(castleID, castle, State.CastlePartResources)
 		}
 	}
+	if capRejected {
+		observedAt := frame.ReceivedAt.UTC()
+		if observedAt.IsZero() {
+			observedAt = time.Now().UTC()
+		}
+		gameState.BlockStormPackage(castleID, gameState.Storm.LunaShopTableID, gameState.Storm.LunaShopProductID, gameState.Storm.LunaShopPendingCap, observedAt)
+	}
+	gameState.Storm.LunaShopPendingCap = 0
 	gameState.Storm.LunaShopPending = false
 	gameState.Storm.LunaShopPendingCastleID = 0
 	gameState.Storm.LunaShopPendingAmount = 0
