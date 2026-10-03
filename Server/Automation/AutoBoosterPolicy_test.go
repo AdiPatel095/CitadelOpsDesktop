@@ -15,6 +15,8 @@ func TestAutoBoosterPurchasesOnlyFreshUnboostedExactQuote(t *testing.T) {
 	now := time.Date(2026, time.September, 2, 17, 0, 0, 0, time.UTC)
 	endsAt := now.Add(24 * time.Hour).Truncate(time.Minute)
 	gameState := State.NewGameState()
+	gameState.Session = State.SessionState{Generation: 1, BaselineGeneration: 1, LoggedIn: true, SocketReady: true}
+	gameState.Player.RubyConfirmation = State.RubyConfirmationState{Known: true, Amount: -1, Generation: 1}
 	gameState.Session.ChangedAt = now.Add(-time.Minute)
 	gameState.Player.Resources[2] = 10_000
 	gameState.Player.ResourceObservations[2] = State.PlayerResourceObservation{ObservedAt: now}
@@ -212,6 +214,8 @@ func TestAutoBoosterRejectsPurchaseAtThirtySecondExpiryBoundary(t *testing.T) {
 
 func autoBoosterPolicyState(observedAt, endsAt time.Time, generation uint64) State.GameState {
 	gameState := State.NewGameState()
+	gameState.Session = State.SessionState{Generation: 1, BaselineGeneration: 1, LoggedIn: true, SocketReady: true}
+	gameState.Player.RubyConfirmation = State.RubyConfirmationState{Known: true, Amount: -1, Generation: 1}
 	gameState.Session.ConnectionGeneration = generation
 	gameState.Session.ChangedAt = observedAt.Add(-time.Minute)
 	gameState.Player.Resources[2] = 10000
@@ -235,6 +239,8 @@ func TestAutoBoosterDoesNotRepurchaseCurrentWindowOrChangedPrice(t *testing.T) {
 	now := time.Date(2026, time.September, 2, 17, 0, 0, 0, time.UTC)
 	endsAt := now.Add(24 * time.Hour).Truncate(time.Minute)
 	gameState := State.NewGameState()
+	gameState.Session = State.SessionState{Generation: 1, BaselineGeneration: 1, LoggedIn: true, SocketReady: true}
+	gameState.Player.RubyConfirmation = State.RubyConfirmationState{Known: true, Amount: -1, Generation: 1}
 	gameState.Session.ChangedAt = now.Add(-time.Minute)
 	gameState.Player.Resources[2] = 10_000
 	gameState.Player.ResourceObservations[2] = State.PlayerResourceObservation{ObservedAt: now}
@@ -269,5 +275,90 @@ func TestAutoBoosterDoesNotRepurchaseCurrentWindowOrChangedPrice(t *testing.T) {
 	})
 	if err != nil || decision.Request != nil || decision.Status != "waiting" {
 		t.Fatalf("changed server price was accepted: %#v err=%v", decision, err)
+	}
+}
+
+func TestAutoBoosterRubyConfirmationPolicyMatrix(t *testing.T) {
+	now := time.Date(2026, 9, 23, 12, 0, 0, 0, time.UTC)
+	configuration := Configuration.Snapshot{Sections: map[string]json.RawMessage{autoBoosterSection: json.RawMessage(`{"version":1,"checkIntervalSec":60,"rubyCostCeiling":2500,"minimumRubyReserve":0}`)}}
+	for _, tc := range []struct {
+		name       string
+		amount     int64
+		known      bool
+		generation uint64
+		want       bool
+	}{
+		{"250", 250, true, 1, false}, {"2500", 2500, true, 1, false}, {"2501", 2501, true, 1, true}, {"disabled", -1, true, 1, true},
+		{"missing", 0, false, 1, false}, {"wrong session", -1, true, 2, false}, {"invalid", 1000001, true, 1, false},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			state := autoBoosterPolicyState(now, now.Add(time.Hour), 3)
+			state.Player.RubyConfirmation = State.RubyConfirmationState{Amount: tc.amount, Known: tc.known, Generation: tc.generation, ObservedAt: now}
+			snapshot := Snapshot{State: state, Configuration: configuration, GameData: autoFortressTestGameData(t), Now: now}
+			first, err := NewAutoBoosterPolicy().Evaluate(t.Context(), snapshot)
+			if err != nil || (first.Request != nil) != tc.want {
+				t.Fatalf("decision=%+v err=%v", first, err)
+			}
+			if !tc.want && (first.DetailDescriptor == nil || !strings.Contains(first.Detail, "You can buy it in the game")) {
+				t.Fatalf("notice=%+v", first)
+			}
+			second, _ := NewAutoBoosterPolicy().Evaluate(t.Context(), snapshot)
+			if first.Detail != second.Detail {
+				t.Fatal("unchanged notice is not stable")
+			}
+		})
+	}
+}
+
+func TestAutoBoosterConfirmationNoticeDeduplicatesAndRechecksChangedThreshold(t *testing.T) {
+	now := time.Date(2026, 9, 23, 12, 0, 0, 0, time.UTC)
+	gameState := autoBoosterPolicyState(now, now.Add(time.Hour), 3)
+	configuration := Configuration.Snapshot{Sections: map[string]json.RawMessage{autoBoosterSection: json.RawMessage(`{"version":1,"checkIntervalSec":60,"rubyCostCeiling":2500,"minimumRubyReserve":0}`)}}
+	gameState.Player.RubyConfirmation.Amount = 250
+	snapshot := Snapshot{State: gameState, Configuration: configuration, GameData: autoFortressTestGameData(t), Now: now}
+	policy := NewAutoBoosterPolicy()
+	first, err := policy.Evaluate(t.Context(), snapshot)
+	if err != nil {
+		t.Fatal(err)
+	}
+	store := State.NewStore(&gameState)
+	coordinator := NewCoordinator(store, nil, nil, nil)
+	coordinator.recordDecision("autoBooster", true, first)
+	revision := store.Revision()
+	coordinator.recordDecision("autoBooster", true, first)
+	if store.Revision() != revision {
+		t.Fatal("unchanged notice caused another state update")
+	}
+	snapshot.State.Player.RubyConfirmation.Amount = 2500
+	second, _ := policy.Evaluate(t.Context(), snapshot)
+	coordinator.recordDecision("autoBooster", true, second)
+	if store.Revision() == revision || first.Detail == second.Detail || second.DetailDescriptor.Params["threshold"] != int64(2500) {
+		t.Fatal("changed threshold was deduplicated away")
+	}
+	snapshot.State.Player.RubyConfirmation.Amount = 2501
+	allowed, _ := policy.Evaluate(t.Context(), snapshot)
+	if allowed.Request == nil {
+		t.Fatal("notice permanently suppressed purchase after setting changed")
+	}
+}
+
+func TestAutoBoosterConfirmationHoldIsScopedToOccurrence(t *testing.T) {
+	now := time.Date(2026, 9, 23, 12, 0, 0, 0, time.UTC)
+	state := autoBoosterPolicyState(now, now.Add(time.Hour), 3)
+	state.Player.RubyConfirmation.ObservedAt = now.Add(-time.Second)
+	state.EventScores.Inventory.GlobalEffectPurchases[2] = State.GlobalEffectPurchaseRecord{GlobalEffectID: 2, OccurrenceEndsAt: now.Add(time.Hour), Outcome: State.GlobalEffectPurchaseConfirmationRequired, ResultObservedAt: now, QuotedC2: 2500}
+	configuration := Configuration.Snapshot{Sections: map[string]json.RawMessage{autoBoosterSection: json.RawMessage(`{"version":1,"checkIntervalSec":60,"rubyCostCeiling":2500,"minimumRubyReserve":0}`)}}
+	snapshot := Snapshot{State: state, Configuration: configuration, GameData: autoFortressTestGameData(t), Now: now}
+	policy := NewAutoBoosterPolicy()
+	blocked, _ := policy.Evaluate(t.Context(), snapshot)
+	if blocked.Request != nil {
+		t.Fatal("old observation lifted current occurrence hold")
+	}
+	// Move to a genuinely different daily occurrence with a current, permissive setting.
+	snapshot.State = autoBoosterPolicyState(now, now.Add(25*time.Hour), 3)
+	snapshot.State.EventScores.Inventory.GlobalEffectPurchases[2] = state.EventScores.Inventory.GlobalEffectPurchases[2]
+	next, _ := policy.Evaluate(t.Context(), snapshot)
+	if next.Request == nil || next.Request.Name != "autoBooster.purchase" {
+		t.Fatalf("old occurrence blocked new one: %+v", next)
 	}
 }

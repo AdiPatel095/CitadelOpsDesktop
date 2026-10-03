@@ -1722,6 +1722,7 @@ func (engine *Engine) executeStep(ctx context.Context, afterRevision uint64, ste
 				response.Raw = ""
 				exchange.Response = &response
 			}
+			var definitiveErr error
 			if frame.Frame.ResponseCode != nil && *frame.Frame.ResponseCode != 0 {
 				if finalDispatchProvider != nil {
 					if step.ResponseRetry != nil && containsInt(step.ResponseRetry.Codes, *frame.Frame.ResponseCode) {
@@ -1731,11 +1732,18 @@ func (engine *Engine) executeStep(ctx context.Context, afterRevision uint64, ste
 					}
 					postSendOutcomeHandled = true
 				}
-				responseErr := engine.unsuccessfulResponseCode(frame.Frame.Opcode, *frame.Frame.ResponseCode)
+				responseErr := engine.unsuccessfulResponseFrame(frame.Frame)
 				guarded := engine.guardRejection(ctx, responseErr)
 				var locked *LaneLockedError
 				if errors.As(guarded, &locked) {
 					return exchange, guarded
+				}
+				var confirmation *ConfirmationRequiredError
+				if errors.As(guarded, &confirmation) {
+					definitiveErr = guarded
+					if len(step.SuccessCodes) == 0 {
+						return exchange, definitiveErr
+					}
 				}
 			}
 			if (expectedConnection > 0 || sessionAtSend.Generation > 0) && sessionChanged() {
@@ -1751,7 +1759,10 @@ func (engine *Engine) executeStep(ctx context.Context, afterRevision uint64, ste
 					return exchange, responseErr
 				}
 				if !containsInt(step.SuccessCodes, *frame.Frame.ResponseCode) {
-					responseErr := engine.unsuccessfulResponseCode(frame.Frame.Opcode, *frame.Frame.ResponseCode)
+					responseErr := definitiveErr
+					if responseErr == nil {
+						responseErr = engine.unsuccessfulResponseFrame(frame.Frame)
+					}
 					if step.ResponseRetry != nil && containsInt(step.ResponseRetry.Codes, *frame.Frame.ResponseCode) {
 						if err := advanceEffectPhase(ctx, EffectPhaseObserved); err != nil {
 							return exchange, Outbound.MarkIndeterminate(fmt.Errorf("persist observed retry response: %w", err))
@@ -2028,6 +2039,13 @@ func (engine *Engine) fail(receipt Receipt, err error) Receipt {
 }
 
 func (engine *Engine) failAfterProgress(receipt Receipt, err error, completedSteps map[string]int) Receipt {
+	// The booster baseline read is not a successful purchase. Its scoped quote
+	// failure must remain Failed so expected-state presentation stays on the lane.
+	var confirmation *ConfirmationRequiredError
+	if errors.As(err, &confirmation) {
+		return engine.fail(receipt, err)
+	}
+
 	if Outbound.IsIndeterminate(err) || receipt.Plan == nil || receipt.Plan.Effect == EffectRead {
 		return engine.fail(receipt, err)
 	}

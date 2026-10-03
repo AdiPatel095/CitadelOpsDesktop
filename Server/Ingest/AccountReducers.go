@@ -74,7 +74,8 @@ func reduceInitialState(
 			changed = true
 		}
 	}
-	nextConfirmation := decodeRubyConfirmation(root["opt"], gameState.Session.Generation)
+	nextConfirmation := decodeRubyConfirmation(root["opt"], gameState.Session.Generation, frame.ReceivedAt)
+	rubyConfirmationWakeDomain := rubyConfirmationWake(gameState, nextConfirmation)
 	rubyConfirmationChanged := nextConfirmation != gameState.Player.RubyConfirmation
 	gameState.Player.RubyConfirmation = nextConfirmation
 	changed = changed || rubyConfirmationChanged
@@ -246,7 +247,7 @@ func reduceInitialState(
 			"khan", "rift", "attacks", "attack-dialog", "achievements", "legend-skills", "command-context",
 		}
 	}
-	if rubyConfirmationChanged {
+	if rubyConfirmationWakeDomain {
 		domains = append(domains, "ruby-confirmation")
 	}
 	if protectionLifecycleChanged {
