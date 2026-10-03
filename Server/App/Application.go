@@ -17,6 +17,7 @@ import (
 	"CitadelDesktop/Server/API"
 	"CitadelDesktop/Server/AppUpdate"
 	"CitadelDesktop/Server/Automation"
+	"CitadelDesktop/Server/CommanderFeatures"
 	"CitadelDesktop/Server/Configuration"
 	"CitadelDesktop/Server/Diagnostics"
 	EquipmentDomain "CitadelDesktop/Server/Equipment"
@@ -133,6 +134,7 @@ type Application struct {
 	gameDataSyncPending       atomic.Bool
 	startOnce                 sync.Once
 	shutdownDone              chan struct{}
+	riftPremiumCaptureNotices sync.Map
 }
 
 // SetControlConfigurationReady gates hosted runtime mutations while the
@@ -431,6 +433,13 @@ func New(ctx context.Context, config Config) (*Application, error) {
 	intents.SetExecutionGate(application.executionGate)
 	intents.SetAdmissionWeightProvider(application.attackAdmissionWeight)
 	dispatchGates := newFinalDispatchGates(application.coinGate, newTravelTicketDispatchGate())
+	dispatchGates.commanders.assignments = func() (CommanderFeatures.Configuration, error) {
+		raw, exists := application.Configuration.Section(CommanderFeatures.Section)
+		if !exists {
+			return CommanderFeatures.Configuration{}, nil
+		}
+		return CommanderFeatures.Decode(raw)
+	}
 	intents.SetFinalDispatchProvider(dispatchGates)
 	intents.SetDispatchEvidenceCollector(captureDispatchBoundaryEvidence)
 	application.Scheduler = Scheduling.NewScheduler(state, intents)

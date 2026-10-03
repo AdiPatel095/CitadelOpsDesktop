@@ -154,6 +154,8 @@ func TestAutoBirdFinalDispatchRebuildsLateDirewolfBatchAndAllowsOrdinaryBatch(t 
 				UnitsObservedAt: now, UpdatedAt: now,
 			}
 			configuration := autoBirdFortressConfiguration(t, json.RawMessage(`{"auto_fortress":false,"auto_bird":true}`), 1)
+			funded := supportCommanderTestInput(t, Intent.PlanningContext{State: gameState, GameData: gameData})
+			gameState, gameData = funded.State, funded.GameData
 			state := travelTicketTestStore(&gameState)
 			application := &Application{State: state, Configuration: configuration}
 			request, _ := json.Marshal(autoBirdCycleRequest{
@@ -174,6 +176,7 @@ func TestAutoBirdFinalDispatchRebuildsLateDirewolfBatchAndAllowsOrdinaryBatch(t 
 				t.Fatal(err)
 			}
 			engine := Intent.NewEngine(registry, state, autoBirdStaticGameData{store: gameData}, sender, autoBirdNoResponseObserver{})
+			engine.SetFinalDispatchProvider(newPremiumCommanderDispatchGate())
 			if err := engine.RegisterStepResolver("auto_bird.dispatch.build", application.resolveAutoBirdDispatchStep); err != nil {
 				t.Fatal(err)
 			}

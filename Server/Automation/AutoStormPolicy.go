@@ -192,7 +192,7 @@ func (*AutoStormPolicy) EnabledKey() string { return "auto_storm" }
 func (*AutoStormPolicy) WakeDomains() []string {
 	return []string{
 		"attacks", "buildings", "castles", "construction-items", "construction-offers", "inventory", "map-storm", "movements",
-		"reports", "resources", "storm", "storm-scan", "units", "kingdom-transport",
+		"vip", "reports", "resources", "storm", "storm-scan", "units", "kingdom-transport",
 	}
 }
 

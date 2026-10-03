@@ -511,6 +511,12 @@ func (engine *Engine) execute(prepared *preparedSubmission) Receipt {
 	executionContext := prepared.executionContext
 	cancel := prepared.cancel
 	defer func() {
+		engine.mu.RLock()
+		lifecycle, _ := engine.finalDispatchProvider.(interface{ OperationFinished(context.Context) })
+		engine.mu.RUnlock()
+		if lifecycle != nil {
+			lifecycle.OperationFinished(executionContext)
+		}
 		cancel()
 		engine.unregisterActive(request.ID)
 		engine.mu.Lock()
@@ -2351,6 +2357,8 @@ func (engine *Engine) planningContextForRequest(ctx context.Context) PlanningCon
 	if request, ok := ctx.Value(laneSafetyContextKey{}).(Request); ok {
 		input.AutomationLane = request.AutomationLane
 		input.IntentName = request.Name
+		input.OperationID = request.ID
+		input.DryRun = request.DryRun
 	}
 	return input
 }
@@ -2359,6 +2367,7 @@ func (engine *Engine) planningContext() PlanningContext {
 	input := PlanningContext{CommanderHolds: engine.commanderHolds}
 	engine.mu.RLock()
 	input.CurrencyAvailability, _ = engine.finalDispatchProvider.(CurrencyAvailabilityProvider)
+	input.SupportCommanders, _ = engine.finalDispatchProvider.(SupportCommanderProvider)
 	engine.mu.RUnlock()
 	if provider, ok := engine.state.(interface{ PlanningView() State.PlanningView }); ok {
 		view := provider.PlanningView()
