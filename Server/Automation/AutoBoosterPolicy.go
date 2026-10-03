@@ -8,6 +8,7 @@ import (
 	"math"
 	"time"
 
+	"CitadelDesktop/Server/Buildings"
 	"CitadelDesktop/Server/GameData"
 	"CitadelDesktop/Server/Intent"
 	"CitadelDesktop/Server/State"
@@ -36,7 +37,7 @@ func (*AutoBoosterPolicy) ID() string         { return "autoBooster" }
 func (*AutoBoosterPolicy) EnabledKey() string { return "auto_booster" }
 
 func (*AutoBoosterPolicy) WakeDomains() []string {
-	return []string{"events", "event-scores", "global-effects", "resources"}
+	return []string{"events", "event-scores", "global-effects", "resources", "ruby-confirmation"}
 }
 
 func (*AutoBoosterPolicy) WakeSections() []string { return []string{autoBoosterSection} }
@@ -142,6 +143,14 @@ func (*AutoBoosterPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decisi
 		return autoBoosterWaiting(snapshot.Now, settings.CheckIntervalSec,
 			fmt.Sprintf("Server quote is not the approved 2,500-ruby fortress-speed offer (quoted %d); no purchase was sent", offer.RubyCost), metrics, Localization.New("server.automation.server_quote_is_not.8efefa0a", "Server quote is not the approved 2,500-ruby fortress-speed offer (quoted {p0, number}); no purchase was sent", Localization.Params{"p0": offer.RubyCost})), nil
 	}
+	setting := snapshot.State.Player.RubyConfirmation
+	blocked, code := State.RubyConfirmationBlocks(setting, snapshot.State.Session, GameData.FortressDailyBoosterRubyCost)
+	record := inventory.GlobalEffectPurchases[contract.DailyGlobalEffectID]
+	held := State.SameEventOccurrence(record.OccurrenceEndsAt, effect.EndsAt) && State.RubyConfirmationPurchaseHeld(setting, snapshot.State.Session, record, GameData.FortressDailyBoosterRubyCost)
+	if blocked || held {
+		detail, descriptor := AutoBoosterConfirmationNotice(setting, code)
+		return autoBoosterWaiting(snapshot.Now, settings.CheckIntervalSec, detail, metrics, descriptor), nil
+	}
 	rubies, balanceAvailable := autoBoosterRubyBalance(&snapshot.State, snapshot.GameData)
 	resourceID, resourceFound := snapshot.GameData.ResourceIDForJSONKey("C2")
 	resourceObservation := snapshot.State.Player.ResourceObservations[State.ResourceID(resourceID)]
@@ -207,4 +216,18 @@ func autoBoosterWaiting(now time.Time, intervalSec int, detail string, metrics m
 		intervalSec = autoBoosterDefaultCheckIntervalSec
 	}
 	return Decision{Status: "waiting", Detail: detail, DetailDescriptor: Localization.First(descriptors), NextCheckAt: now.Add(time.Duration(intervalSec) * time.Second), Metrics: metrics}
+}
+
+// AutoBoosterConfirmationNotice is shared by planning and dispatch gates.
+func AutoBoosterConfirmationNotice(setting State.RubyConfirmationState, code string) (string, *Localization.Message) {
+	if code == "ruby_confirmation_unknown" {
+		text := "Daily boost not bought: the game's confirmation setting is unavailable. You can buy it in the game."
+		return text, Localization.New("server.automation.auto_booster_ruby_setting_unknown", "Daily boost not bought: the game's confirmation setting is unavailable. You can buy it in the game.", nil)
+	}
+	if code == "ruby_confirmation_required" {
+		text := fmt.Sprintf("Daily boost not bought: the game asks for confirmation on purchases of %s or more, and the boost costs 2,500. You can buy it in the game.", Buildings.RubyAmount(setting.Amount))
+		return text, Localization.New("server.automation.auto_booster_ruby_confirmation_required", "Daily boost not bought: the game asks for confirmation on purchases of {threshold, number} rubies or more, and the boost costs 2,500. You can buy it in the game.", Localization.Params{"threshold": setting.Amount})
+	}
+	text := "Daily boost not bought: it needs confirmation in the game. Waiting for a fresh game confirmation setting. You can buy it in the game."
+	return text, Localization.New("server.automation.auto_booster_ruby_confirmation_hold", "Daily boost not bought: it needs confirmation in the game. Waiting for a fresh game confirmation setting. You can buy it in the game.", nil)
 }

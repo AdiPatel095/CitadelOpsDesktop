@@ -1,8 +1,11 @@
 package Intent
 
 import (
+	"CitadelDesktop/Server/Protocol"
+	"encoding/json"
 	"fmt"
 	"strings"
+	"time"
 
 	"CitadelDesktop/Server/GameData"
 )
@@ -12,8 +15,10 @@ type responseCodeLanguageProvider interface {
 }
 
 type ResponseCodeError struct {
-	Opcode  string
-	Meaning GameData.ResponseCodeMeaning
+	Opcode     string
+	Meaning    GameData.ResponseCodeMeaning
+	Payload    json.RawMessage
+	ReceivedAt time.Time
 }
 
 func (response *ResponseCodeError) Error() string {
@@ -46,4 +51,11 @@ func (engine *Engine) unsuccessfulResponseCode(opcode string, code int) error {
 		language, _ = provider.Language()
 	}
 	return NewResponseCodeError(language, opcode, code)
+}
+
+func (engine *Engine) unsuccessfulResponseFrame(frame Protocol.Frame) *ResponseCodeError {
+	response := engine.unsuccessfulResponseCode(frame.Opcode, *frame.ResponseCode).(*ResponseCodeError)
+	response.Payload = append(json.RawMessage(nil), frame.Payload...)
+	response.ReceivedAt = frame.ReceivedAt
+	return response
 }
