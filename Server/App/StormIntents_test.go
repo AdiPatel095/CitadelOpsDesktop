@@ -835,7 +835,7 @@ func TestPlanStormIslandReturnUsesIslandAsSourceAndStormCastleAsDestination(t *t
 		"sourceCastleId":40,"kingdomId":4,"islandX":101,"islandY":102,
 		"islandObjectId":777,"reportId":202,"units":[{"unitId":10,"amount":4},{"unitId":12,"amount":4}]
 	}`)
-	plan, err := planStormIslandReturn(context.Background(), Intent.PlanningContext{State: state, GameData: gameData}, request)
+	plan, err := planStormIslandReturn(context.Background(), supportCommanderTestInput(t, Intent.PlanningContext{State: state, GameData: gameData}), request)
 	if err != nil {
 		t.Fatal(err)
 	}

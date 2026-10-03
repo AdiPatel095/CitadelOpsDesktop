@@ -31,11 +31,36 @@ func supportDispatchStep(input Intent.PlanningContext, name string, source State
 		return Intent.Step{}, err
 	}
 	steps := []Intent.Step{}
+	reservations := []string{}
+	releaseReservations := func() {
+		if input.SupportCommanders != nil {
+			for _, token := range reservations {
+				input.SupportCommanders.ReleaseSupportCommander(token)
+			}
+		}
+	}
 	for start := 0; start < len(ids); start += supportUnitTypeLimit {
 		end := min(start+supportUnitTypeLimit, len(ids))
 		army := make([][2]int64, 0, end-start)
 		for _, id := range ids[start:end] {
 			army = append(army, [2]int64{id, amounts[State.UnitID(id)]})
+		}
+		input.SupportSendKey = supportSendKey(source.ID, target, start)
+		lid := State.CommanderID(premiumSupportCommander)
+		var token string
+		if feature := supportCommanderFeature(input); feature != "" {
+			lid, token, err = selectSupportCommander(input, feature, source)
+		} else {
+			token, err = reservePremiumCommander(input, false)
+		}
+		if err != nil {
+			releaseReservations()
+			return Intent.Step{}, err
+		}
+		reservations = append(reservations, token)
+		bpc := 0
+		if lid == premiumSupportCommander {
+			bpc = 1
 		}
 		payload, _ := json.Marshal(struct {
 			SID State.CastleID `json:"SID"`
@@ -48,8 +73,9 @@ func supportDispatchStep(input Intent.PlanningContext, name string, source State
 			PTT int            `json:"PTT"`
 			SD  int            `json:"SD"`
 			A   [][2]int64     `json:"A"`
-		}{source.ID, target.X, target.Y, stationLeaderID, wait, horse, 1, travel, 0, army})
+		}{source.ID, target.X, target.Y, int(lid), wait, horse, bpc, travel, 0, army})
 		step := commandStep(fmt.Sprintf("%s (types %d–%d)", name, start+1, end), "cds", payload, "cds", Localization.New("server.app.p_types_p_p.39a761e5", "{p0} (types {p1}\u2013{p2})", Localization.Params{"p0": fmt.Sprintf("%s", name), "p1": start + 1, "p2": end}))
+		step.SupportCommanderReservation = token
 		if notice != nil {
 			step.CoinCost = &Intent.CoinCostRequirement{Reserve: autoSupportCoinReserve, Source: Intent.SupportCoinHorseSource}
 			step.NameDescriptor = Localization.Clone(notice)

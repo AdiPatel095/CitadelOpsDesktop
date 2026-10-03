@@ -322,7 +322,11 @@ type VIPState struct {
 	Points       int64 `json:"points,omitempty"`
 	Level        int   `json:"level,omitempty"`
 	RemainingSec int   `json:"remainingSec,omitempty"`
-	Upgrade      int   `json:"upgrade,omitempty"`
+	// UPG is the official client's _usedPremiumCommanders, not a VIP upgrade.
+	UsedPremiumCommanders int       `json:"usedPremiumCommanders,omitempty"`
+	ObservedAt            time.Time `json:"-"`
+	Generation            uint64    `json:"-"`
+	ConnectionGeneration  uint64    `json:"-"`
 }
 
 type CastleState struct {

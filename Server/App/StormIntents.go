@@ -650,6 +650,11 @@ func planStormIslandReturn(_ context.Context, input Intent.PlanningContext, argu
 	if err := Intent.RequireTravelTickets(input, 1); err != nil {
 		return Intent.Plan{}, err
 	}
+	input.SupportSendKey = "storm-return:" + State.StormIslandReturnKey(request.KingdomID, request.IslandX, request.IslandY)
+	reservation, err := reservePremiumCommander(input, true)
+	if err != nil {
+		return Intent.Plan{}, err
+	}
 	route, _ := json.Marshal(struct {
 		TargetX int `json:"TX"`
 		TargetY int `json:"TY"`
@@ -667,7 +672,7 @@ func planStormIslandReturn(_ context.Context, input Intent.PlanningContext, argu
 		Travel   int        `json:"PTT"`
 		Delay    int        `json:"SD"`
 		Units    [][2]int64 `json:"A"`
-	}{request.IslandObjectID, castle.X, castle.Y, stationLeaderID, 0, -1, 1, 1, 0, wireUnits})
+	}{request.IslandObjectID, castle.X, castle.Y, premiumSupportCommander, 0, -1, 1, 1, 0, wireUnits})
 	steps := castleContextSteps(input, castle)
 	steps = append(steps,
 		contextCommandStep("Preview island return route", "sdi", route, "sdi").WithNameDescriptor(Localization.New("server.app.preview_island_return_route.280f06d9", "Preview island return route", nil)),
@@ -675,6 +680,11 @@ func planStormIslandReturn(_ context.Context, input Intent.PlanningContext, argu
 		commandStep("Return surviving island troops to Storm castle", "cds", dispatch, "cds", Localization.New("server.app.return_surviving_island_troops.44a6c20a", "Return surviving island troops to Storm castle", nil)),
 		Intent.Step{Name: "Complete island troop return", NameDescriptor: Localization.New("server.app.complete_island_troop_return.ab63dd3f", "Complete island troop return", nil), Action: "storm.island.return.complete", ActionArguments: arguments},
 	)
+	for i := range steps {
+		if steps[i].Opcode == "cds" {
+			steps[i].SupportCommanderReservation = reservation
+		}
+	}
 	key := State.StormIslandReturnKey(request.KingdomID, request.IslandX, request.IslandY)
 	return Intent.Plan{
 		Claims: []string{
