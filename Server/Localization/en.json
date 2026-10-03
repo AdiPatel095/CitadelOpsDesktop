@@ -2097,6 +2097,7 @@
   "server.automation.all_configured_purchase_floors.569e98ad": "All configured purchase floors and reset goals are currently satisfied",
   "server.automation.all_observed_castles_have.d18ff580": "All observed castles have their configured food reserve",
   "server.automation.all_observed_production_queues.ffa007f7": "All observed production queues are full",
+  "server.automation.alliance_help_membership.paused": "Alliance help is paused: you aren't in an alliance",
   "server.automation.allocating_amount_number_direwolves.82b58fd8": "Allocating {amount, number} Direwolves from the Great Empire",
   "server.automation.an_in_flight_market.b9eff71c": "An in-flight market shipment covers resource {p0} at {p1}",
   "server.automation.an_in_flight_p.d633ca09": "An in-flight {p0} shipment protects {p1}",
