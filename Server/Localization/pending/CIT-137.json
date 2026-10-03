@@ -1,0 +1,12 @@
+{
+  "story": "CIT-137",
+  "planRevision": 2,
+  "sourceBase": "b828d683fc7c4f9a16611a6d9c234202fc5c895d",
+  "englishFallbackKeys": [
+    "stormRole.birdUnconfigured",
+    "stormRole.waiting"
+  ],
+  "translations": "Deferred to the next 26-locale batch",
+  "translatorNote": "Use the official glossary term for the Storm Islands castle.",
+  "addendum": "Revision 2 Maya deltas: exact no-troops-to-keep status and non-blocking setup check"
+}

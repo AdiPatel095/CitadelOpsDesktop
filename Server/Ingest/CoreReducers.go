@@ -336,8 +336,12 @@ func RegisterCoreReducers(registry *Registry) error {
 	if err := registry.RegisterOutboundComponents("ahr", commandContext, reduceAllianceHelpRequestCommand); err != nil {
 		return err
 	}
-	if err := registry.RegisterComponents("ahr",
-		components(State.ComponentCommandContext, State.ComponentAllianceHelp), reduceAllianceHelpRequestResponse,
+	if err := registry.RegisterComponents("aha", player, reduceAllianceHelpMembershipRejection); err != nil {
+		return err
+	}
+	if err := registry.registerComponentSequence("ahr",
+		reducerStep{writes: components(State.ComponentCommandContext, State.ComponentAllianceHelp), reducer: reduceAllianceHelpRequestResponse},
+		reducerStep{writes: player, reducer: reduceAllianceHelpMembershipRejection},
 	); err != nil {
 		return err
 	}
