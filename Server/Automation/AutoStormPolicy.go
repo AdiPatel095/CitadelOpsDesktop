@@ -1675,6 +1675,10 @@ func evaluateAutoStormCombat(
 	}
 	waitingDetail := ""
 	for _, candidate := range candidates {
+		if block := StormAttackArrivalBlock(&snapshot.State, snapshot.GameData, castle, candidate.Observation, settings.HorseTravelBoostID, snapshot.Now); block != nil {
+			waitingDetail = block.Fallback
+			continue
+		}
 		preset, found := AttackPresets.Find(document, candidate.PresetID)
 		if !found {
 			continue

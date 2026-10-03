@@ -80,6 +80,7 @@ func newMovementReducer(authoritative bool) Reducer {
 				}
 			}
 		}
+		stormTravelChanged := false
 		for _, movement := range parsed {
 			discardSupersededCommanderMovements(gameState, next, movement)
 			if prior, known := before[movement.ID]; known && movementsEquivalent(prior, movement) {
@@ -87,6 +88,9 @@ func newMovementReducer(authoritative bool) Reducer {
 				// fields only differ by when this reply happened to arrive.
 				movement = prior
 			}
+			observation := movement
+			observation.ObservedAt = frame.ReceivedAt
+			stormTravelChanged = gameState.ObserveStormTravel(observation) || stormTravelChanged
 			next[movement.ID] = movement
 		}
 		khanChanged := reconcileKhanTaunts(gameState, next, frame.ReceivedAt, authoritative && completeSnapshot)
@@ -110,10 +114,13 @@ func newMovementReducer(authoritative bool) Reducer {
 		if movementChanged || khanChanged || authoritative && completeSnapshot {
 			commandersChanged = syncCommanderAvailability(gameState)
 		}
-		if !movementChanged && !khanChanged && !commandersChanged && !snapshotIdentityChanged {
+		if !movementChanged && !khanChanged && !commandersChanged && !snapshotIdentityChanged && !stormTravelChanged {
 			return nil, false, nil
 		}
 		domains := []string{"movements", "commanders"}
+		if stormTravelChanged {
+			domains = append(domains, "storm")
+		}
 		if authoritative && completeSnapshot {
 			domains = append(domains, "movement-snapshot")
 		}
@@ -362,16 +369,17 @@ func parseMovement(raw json.RawMessage, observedAt time.Time, gameData *GameData
 		return State.MovementState{}, false
 	}
 	var details struct {
-		ID        json.RawMessage   `json:"MID"`
-		Progress  json.RawMessage   `json:"PT"`
-		Travel    json.RawMessage   `json:"TT"`
-		Direction json.RawMessage   `json:"D"`
-		TypeID    int               `json:"T"`
-		KingdomID json.RawMessage   `json:"KID"`
-		OwnerID   json.RawMessage   `json:"OID"`
-		TargetID  json.RawMessage   `json:"TID"`
-		Source    []json.RawMessage `json:"SA"`
-		Target    []json.RawMessage `json:"TA"`
+		HorseBooster json.RawMessage   `json:"HBW"`
+		ID           json.RawMessage   `json:"MID"`
+		Progress     json.RawMessage   `json:"PT"`
+		Travel       json.RawMessage   `json:"TT"`
+		Direction    json.RawMessage   `json:"D"`
+		TypeID       int               `json:"T"`
+		KingdomID    json.RawMessage   `json:"KID"`
+		OwnerID      json.RawMessage   `json:"OID"`
+		TargetID     json.RawMessage   `json:"TID"`
+		Source       []json.RawMessage `json:"SA"`
+		Target       []json.RawMessage `json:"TA"`
 	}
 	if json.Unmarshal(item["M"], &details) != nil {
 		return State.MovementState{}, false
@@ -418,6 +426,11 @@ func parseMovement(raw json.RawMessage, observedAt time.Time, gameData *GameData
 		OwnerPlayerID: State.PlayerID(ownerID), TargetPlayerID: State.PlayerID(targetID),
 		KingdomID: State.KingdomID(kingdomID), TravelSeconds: int(travel),
 		ProgressSeconds: int(progress), ObservedAt: observedAt.UTC(), Units: map[State.UnitID]int64{},
+	}
+	if len(details.HorseBooster) > 0 {
+		if option, known := rawJSONInt64(details.HorseBooster); known {
+			movement.HorseBoosterWID = &option
+		}
 	}
 	movement.StartedAt = observedAt.UTC().Add(-time.Duration(progress) * time.Second)
 	var spyDetails struct {
