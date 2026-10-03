@@ -200,6 +200,10 @@ func cloneMovementState(movement MovementState) MovementState {
 	movement.ArrivesAt = cloneTimePointer(movement.ArrivesAt)
 	movement.ReturnsAt = cloneTimePointer(movement.ReturnsAt)
 	movement.CommanderID = cloneCommanderIDPointer(movement.CommanderID)
+	if movement.HorseBoosterWID != nil {
+		id := *movement.HorseBoosterWID
+		movement.HorseBoosterWID = &id
+	}
 	if movement.LeaderID != nil {
 		id := *movement.LeaderID
 		movement.LeaderID = &id

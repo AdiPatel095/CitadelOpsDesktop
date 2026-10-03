@@ -913,6 +913,7 @@ type CastellanState struct {
 }
 
 type MovementState struct {
+	HorseBoosterWID *int64                 `json:"horseBoosterWid,omitempty"`
 	ID              MovementID             `json:"id"`
 	TypeID          int                    `json:"typeId,omitempty"`
 	Direction       int                    `json:"direction"`
@@ -1290,10 +1291,14 @@ type MarketState struct {
 }
 
 type KingdomTransportUnlock struct {
-	KingdomID KingdomID `json:"kingdomId"`
-	Unlocked  bool      `json:"unlocked"`
-	Created   bool      `json:"created"`
-	Stage     int       `json:"stage,omitempty"`
+	EventEndsAt                  time.Time `json:"eventEndsAt,omitzero"`
+	EventObservedFrom            time.Time `json:"eventObservedFrom,omitzero"`
+	EventEndObservedAt           time.Time `json:"eventEndObservedAt,omitzero"`
+	EventEndConnectionGeneration uint64    `json:"eventEndConnectionGeneration,omitempty"`
+	KingdomID                    KingdomID `json:"kingdomId"`
+	Unlocked                     bool      `json:"unlocked"`
+	Created                      bool      `json:"created"`
+	Stage                        int       `json:"stage,omitempty"`
 }
 
 type KingdomTransportGood struct {
@@ -1805,6 +1810,7 @@ func (state StormIslandReturnState) UnitsToReturn() map[UnitID]int64 {
 }
 
 type StormState struct {
+	TravelObservations            map[string]StormTravelObservation `json:"travelObservations,omitempty"`
 	LastScannedAt                 map[CastleID]time.Time            `json:"lastScannedAt"`
 	Map                           StormMapState                     `json:"map"`
 	IslandReturns                 map[string]StormIslandReturnState `json:"islandReturns"`

@@ -23,7 +23,7 @@ func RegisterCoreReducers(registry *Registry) error {
 	)
 	movements := components(
 		State.ComponentMovements, State.ComponentMovementSnapshot, State.ComponentCommanders,
-		State.ComponentKhan, State.ComponentEventScores,
+		State.ComponentKhan, State.ComponentEventScores, State.ComponentStorm,
 	)
 	invasionRecovery := components(
 		State.ComponentInvasion, State.ComponentEventScores,

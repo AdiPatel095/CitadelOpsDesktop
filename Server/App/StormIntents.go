@@ -14,6 +14,7 @@ import (
 
 	"CitadelDesktop/Server/AttackCapacity"
 	"CitadelDesktop/Server/AttackPresets"
+	"CitadelDesktop/Server/Automation"
 	"CitadelDesktop/Server/GameData"
 	"CitadelDesktop/Server/Intent"
 	"CitadelDesktop/Server/Outbound"
@@ -905,6 +906,9 @@ func stormAttackContext(
 	if err := validateStormDefenseUnits(request.DefenseUnits); err != nil {
 		return stormAttackRequest{}, State.CastleState{}, State.MapObservation{}, GameData.StormIsleDefinition{}, err
 	}
+	if block := Automation.StormAttackArrivalBlock(&input.State, input.GameData, source, target, request.HorseTravelBoostID, now); block != nil {
+		return stormAttackRequest{}, State.CastleState{}, State.MapObservation{}, GameData.StormIsleDefinition{}, Localization.WithError(errors.New(block.Fallback), block)
+	}
 	return request, source, target, definition, nil
 }
 
@@ -1562,7 +1566,10 @@ func (application *Application) resolveStormAttackStep(
 	if err := validateStormAttackTroopReserve(body, source, input.GameData, attackRequest.MinimumTroops); err != nil {
 		return Intent.Step{}, err
 	}
-	return commandStep(fmt.Sprintf("Attack Storm %s at %d:%d", definition.Kind, target.X, target.Y), "cra", payload, "cra", Localization.New("server.app.attack_storm_p_at.118ef7c4", "Attack Storm {p0} at {p1}:{p2}", Localization.Params{"p0": fmt.Sprintf("%s", definition.Kind), "p1": target.X, "p2": target.Y})), nil
+	step := commandStep(fmt.Sprintf("Attack Storm %s at %d:%d", definition.Kind, target.X, target.Y), "cra", payload, "cra", Localization.New("server.app.attack_storm_p_at.118ef7c4", "Attack Storm {p0} at {p1}:{p2}", Localization.Params{"p0": fmt.Sprintf("%s", definition.Kind), "p1": target.X, "p2": target.Y}))
+	step.PreDispatchAction = "storm.attack.guard"
+	step.PreDispatchArguments = arguments
+	return step, nil
 }
 
 func validateStormAttackTroopReserve(

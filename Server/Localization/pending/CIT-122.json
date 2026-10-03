@@ -1,0 +1,10 @@
+{
+  "story": "CIT-122",
+  "source": "Engineering/Plans/CIT-122 Storm moves arrive before the event ends.md; Maya Q1 decision 2026-10-03; CIT-140 localization correction",
+  "englishFallbackKeys": [
+    "server.storm.arrival.end_unavailable",
+    "server.storm.arrival.too_late",
+    "server.storm.arrival.travel_unavailable"
+  ],
+  "translationStatus": "English only; pending the epic CIT-116 batched locale translation story"
+}

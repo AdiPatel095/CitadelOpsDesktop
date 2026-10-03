@@ -128,9 +128,10 @@
           "components": [
             "player",
             "movements",
-            "movementSnapshot"
+            "movementSnapshot",
+            "storm"
           ],
-          "patch": "94d13f286dc73b10e760967a1035b5c1a7de3b0481f8fe5b098e34466d560167"
+          "patch": "ac012488f5ccc395bdc77687f5333d30dd40d896e697090f0435f8875ff6d4b5"
         }
       ]
     },
@@ -334,10 +335,9 @@
           "components": [
             "player",
             "map",
-            "invasion",
-            "storm"
+            "invasion"
           ],
-          "patch": "e6dc2f61dc684286f87f321b7972c590941c95668149515499ef50d8671eed6b"
+          "patch": "9e77f0fa3650625effa4d5752e74ccec354a914249e0934a497169f4ed0c07c7"
         }
       ]
     },

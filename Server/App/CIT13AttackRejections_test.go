@@ -243,6 +243,7 @@ func TestStormPlanAccountsLaunchOnlyAfterCRA(t *testing.T) {
 	state.Map[stormIntentKingdomID] = map[string]State.MapObservation{
 		"101:102": {KingdomID: stormIntentKingdomID, X: 101, Y: 102, TypeID: stormIntentFortMapTypeID, StormIsleID: 7, StormVictoryCount: 5, ObservedAt: now},
 	}
+	fundStormArrivalForTest(&state, now)
 	plan, err := planStormAttack(t.Context(), Intent.PlanningContext{State: state, GameData: stormAttackTestGameData(t)}, json.RawMessage(`{
 		"sourceCastleId":40,"kingdomId":4,"targetTypeId":25,"targetX":101,"targetY":102,
 		"stormIsleId":7,"minimumVictoryCount":4,"commanderIds":[43],
