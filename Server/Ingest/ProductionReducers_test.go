@@ -23,7 +23,7 @@ func TestProductionSnapshotUsesFocusedCastleAndPreservesCapacity(t *testing.T) {
 		ReceivedAt: time.Date(2026, 7, 11, 12, 0, 0, 0, time.UTC),
 		Payload: json.RawMessage(`{
 			"PS":{"WID":489,"TUA":6,"RCT":75,"PID":11,"SPID":12,"RAH":true},
-			"QS":[{"P":{"WID":489,"TUA":324,"PID":12,"RAH":true}},{"P":{"WID":489,"TUA":444,"PID":13}},{"SI":{"RUT":-1}}],
+			"QS":[{"P":{"WID":489,"TUA":324,"PID":12,"RAH":true},"SI":{"RUT":-1}},{"P":{"WID":489,"TUA":444,"PID":13},"SI":{"RUT":-1}},{"SI":{"RUT":-1}}],
 			"LID":0
 		}`),
 	}
@@ -56,9 +56,8 @@ func TestProductionSnapshotUsesFocusedCastleAndPreservesCapacity(t *testing.T) {
 }
 
 func TestProductionSnapshotCountsEmptyEffectSlotsAsCapacity(t *testing.T) {
-	// Capacity effects (event boosters, premium slot purchases, castellan
-	// bonuses) grant slots that arrive in QS as entries with no product and
-	// no rental or VIP flag. Every owned slot is capacity, occupied or not.
+	// An active effect slot has a positive RUT even without a VIP flag.
+	// Empty entries with no remaining entitlement are locked.
 	gameState := State.NewGameState()
 	castle := newCastleState(88)
 	castle.Focused = true
@@ -69,7 +68,7 @@ func TestProductionSnapshotCountsEmptyEffectSlotsAsCapacity(t *testing.T) {
 		ReceivedAt: time.Date(2026, 8, 17, 12, 0, 0, 0, time.UTC),
 		Payload: json.RawMessage(`{
 			"PS":{"WID":489,"TUA":6,"RCT":75,"PID":11},
-			"QS":[{"P":{"WID":489,"TUA":100,"PID":12}},{},{"SI":{"VIP":1}},{"SI":{"RUT":900}},{}],
+			"QS":[{"P":{"WID":489,"TUA":100,"PID":12},"SI":{"RUT":-1}},{},{"SI":{"VIP":1}},{"SI":{"RUT":900,"VIP":0}},{}],
 			"LID":0
 		}`),
 	}
@@ -77,11 +76,36 @@ func TestProductionSnapshotCountsEmptyEffectSlotsAsCapacity(t *testing.T) {
 		t.Fatalf("reduce production snapshot changed=%t err=%v", changed, err)
 	}
 	queue := gameState.Castles[88].Production[0]
-	if queue.Capacity != 5 {
-		t.Fatalf("capacity = %d, want 5 (one occupied + two plain empty + one empty VIP + one empty rented)", queue.Capacity)
+	if queue.Capacity != 2 {
+		t.Fatalf("capacity = %d, want 2 (one permanent and one active effect slot)", queue.Capacity)
 	}
 	if len(queue.Queued) != 1 {
 		t.Fatalf("queued = %d, want 1", len(queue.Queued))
+	}
+	if State.ProductionQueueFreeSlots(queue, frame.ReceivedAt) != 1 ||
+		!queue.Slots[3].ExpiresAt.Equal(frame.ReceivedAt.Add(900*time.Second)) ||
+		State.ProductionQueueFreeSlots(queue, frame.ReceivedAt.Add(900*time.Second)) != 0 {
+		t.Fatal("effect slot must be free only until its own expiry")
+	}
+}
+
+func TestProductionSnapshotPreservesOccupiedSlotWithZeroRUT(t *testing.T) {
+	gameState := State.NewGameState()
+	castle := newCastleState(1)
+	castle.Focused = true
+	gameState.Castles[1] = castle
+	at := time.Date(2026, 9, 21, 20, 15, 27, 0, time.UTC)
+	frame, err := Protocol.Decode(`%xt%bup%1%0%{"LID":0,"QS":[{"P":{"WID":607,"TUA":110,"PID":0,"SPID":0},"SI":{"RUT":0,"VIP":0}}]}%`, Protocol.DirectionInbound, at)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, changed, err := reduceProductionSnapshot(t.Context(), frame, &gameState, nil); err != nil || !changed {
+		t.Fatalf("reduce occupied locked slot: changed=%t err=%v", changed, err)
+	}
+	queue := gameState.Castles[1].Production[0]
+	if len(queue.Queued) != 1 || len(queue.Slots) != 1 || !queue.Slots[0].Occupied ||
+		queue.Capacity != 0 || State.ProductionQueueFreeSlots(queue, at) != 0 {
+		t.Fatal("occupied zero-RUT slot was dropped or treated as free")
 	}
 }
 

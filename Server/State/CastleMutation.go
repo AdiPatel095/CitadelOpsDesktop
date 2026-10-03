@@ -190,6 +190,7 @@ func cloneCastleStateParts(castle CastleState, parts CastleMutationPart) CastleS
 		for lineID, queue := range source.Production {
 			queue.Active = cloneQueueItemPointer(queue.Active)
 			queue.Queued = cloneQueueItems(queue.Queued)
+			queue.Slots = append([]QueueSlot(nil), queue.Slots...)
 			castle.Production[lineID] = queue
 		}
 		castle.QueueableProduction = make(map[int][]DefinitionRef, len(source.QueueableProduction))

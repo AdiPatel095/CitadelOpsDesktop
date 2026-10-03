@@ -538,11 +538,19 @@ type QueueItem struct {
 	AllianceHelpRequested bool          `json:"allianceHelpRequested,omitempty"`
 }
 
+// QueueSlot records entitlement and occupancy from one observed QS entry.
+type QueueSlot struct {
+	Permanent bool      `json:"permanent"`
+	ExpiresAt time.Time `json:"expiresAt"`
+	Occupied  bool      `json:"occupied"`
+}
+
 type ProductionQueue struct {
 	LineID     int         `json:"lineId"`
 	Active     *QueueItem  `json:"active,omitempty"`
 	Queued     []QueueItem `json:"queued"`
 	Capacity   int         `json:"capacity"`
+	Slots      []QueueSlot `json:"slots,omitempty"`
 	ObservedAt time.Time   `json:"observedAt"`
 	// LearnedStacks maps unit definition ID → the largest per-stack amount
 	// ever observed for that unit on this line while the account's

@@ -161,6 +161,7 @@ func TestRecruitPolicyDoesNotReuseStaleOversizedStack(t *testing.T) {
 	queue.Queued = []State.QueueItem{
 		{Definition: State.DefinitionRef{Collection: "units", ID: 489}, Amount: 180},
 	}
+	queue.Slots = permanentProductionSlots(queue.Capacity, len(queue.Queued))
 	castle.Production[0] = queue
 	snapshot.State.Castles[77] = castle
 	snapshot.State.Subscriptions[1] = State.SubscriptionState{TypeID: 1, RemainingSec: 60}
@@ -182,6 +183,7 @@ func TestRecruitPolicyWaitsWithoutCalculatedStackCapacity(t *testing.T) {
 	queue.Queued = []State.QueueItem{
 		{Definition: State.DefinitionRef{Collection: "units", ID: 489}, Amount: 180},
 	}
+	queue.Slots = permanentProductionSlots(queue.Capacity, len(queue.Queued))
 	castle.Production[0] = queue
 	snapshot.State.Castles[77] = castle
 	snapshot.GameData = nil
@@ -205,7 +207,7 @@ func TestRecruitPolicyRotatesGlobalCastlesInDisplayOrder(t *testing.T) {
 		{ID: 901, Name: "Ganymede", KingdomID: 0},
 	} {
 		castle.Production = map[int]State.ProductionQueue{
-			0: {LineID: 0, Capacity: 5, ObservedAt: now},
+			0: {Slots: permanentProductionSlots(5, 0), LineID: 0, Capacity: 5, ObservedAt: now},
 		}
 		gameState.Castles[castle.ID] = castle
 	}
@@ -238,6 +240,7 @@ func TestRecruitPolicyDoesNotCountActiveStackAgainstQueueSlots(t *testing.T) {
 	queue := castle.Production[0]
 	queue.Active = &State.QueueItem{Definition: State.DefinitionRef{Collection: "units", ID: 489}, Amount: 110}
 	queue.Queued = make([]State.QueueItem, 4)
+	queue.Slots = permanentProductionSlots(queue.Capacity, len(queue.Queued))
 	castle.Production[0] = queue
 	snapshot.State.Castles[77] = castle
 
@@ -265,7 +268,7 @@ func TestToolPolicyInfersStackCapacityWithoutCountingActiveStackAgainstQueueSlot
 			1: {InstanceID: 1, DefinitionID: 256},
 		},
 		Production: map[int]State.ProductionQueue{
-			1: {
+			1: {Slots: permanentProductionSlots(5, 4),
 				LineID: 1, Capacity: 5, ObservedAt: now,
 				Active: &State.QueueItem{Definition: State.DefinitionRef{Collection: "tools", ID: 614}, Amount: 80},
 				Queued: make([]State.QueueItem, 4),
@@ -311,7 +314,7 @@ func TestToolPolicyRefreshesPreviousSessionQueueBeforeEnqueue(t *testing.T) {
 			1: {InstanceID: 1, DefinitionID: 256},
 		},
 		Production: map[int]State.ProductionQueue{
-			1: {LineID: 1, Capacity: 5, ObservedAt: now.Add(-2 * time.Minute)},
+			1: {Slots: permanentProductionSlots(5, 0), LineID: 1, Capacity: 5, ObservedAt: now.Add(-2 * time.Minute)},
 		},
 	}
 	decision, err := NewToolPolicy().Evaluate(t.Context(), Snapshot{
@@ -327,11 +330,11 @@ func TestToolPolicyRefreshesPreviousSessionQueueBeforeEnqueue(t *testing.T) {
 	}
 }
 
-func TestProductionPoliciesUseVIPQueueCapacityWhenTheQueueOmitsIt(t *testing.T) {
+func TestProductionPoliciesUseExplicitPermanentSlotsWithoutCapacityProjection(t *testing.T) {
 	now := time.Date(2026, 7, 11, 12, 0, 0, 0, time.UTC)
 	snapshot := recruitPolicySnapshot(t, now)
 	castle := snapshot.State.Castles[77]
-	castle.Production[0] = State.ProductionQueue{LineID: 0, ObservedAt: now}
+	castle.Production[0] = State.ProductionQueue{Slots: permanentProductionSlots(2, 0), LineID: 0, ObservedAt: now}
 	snapshot.State.Castles[77] = castle
 	snapshot.State.Player.VIP = State.VIPState{Level: 10}
 	decision, err := NewRecruitPolicy().Evaluate(context.Background(), snapshot)
@@ -356,7 +359,7 @@ func TestProductionPoliciesUseVIPQueueCapacityWhenTheQueueOmitsIt(t *testing.T) 
 		Buildings: map[State.BuildingInstanceID]State.Building{
 			1: {InstanceID: 1, DefinitionID: 256},
 		},
-		Production: map[int]State.ProductionQueue{1: {LineID: 1, ObservedAt: now}},
+		Production: map[int]State.ProductionQueue{1: {Slots: permanentProductionSlots(2, 0), LineID: 1, ObservedAt: now}},
 	}
 	decision, err = NewToolPolicy().Evaluate(context.Background(), Snapshot{
 		State: toolState,
@@ -381,6 +384,7 @@ func TestRecruitPolicyRequestsAllianceHelpAfterFillingTheQueue(t *testing.T) {
 	queue := castle.Production[0]
 	queue.Active = &State.QueueItem{ProductionID: 201, Amount: 5}
 	queue.Queued = []State.QueueItem{{ProductionID: 202, Amount: 5}, {ProductionID: 203, Amount: 5}, {ProductionID: 204, Amount: 5}, {ProductionID: 205, Amount: 5}, {ProductionID: 206, Amount: 5}}
+	queue.Slots = permanentProductionSlots(queue.Capacity, len(queue.Queued))
 	castle.Production[0] = queue
 	snapshot.State.Castles[77] = castle
 	observeOwnAllianceHelpList(&snapshot.State, now)
@@ -409,6 +413,7 @@ func TestRecruitPolicyUsesQueueRAHInsteadOfOwnRequestList(t *testing.T) {
 		{ProductionID: 204, Amount: 5}, {ProductionID: 205, Amount: 5},
 		{ProductionID: 206, Amount: 5},
 	}
+	queue.Slots = permanentProductionSlots(queue.Capacity, len(queue.Queued))
 	castle.Production[0] = queue
 	snapshot.State.Castles[77] = castle
 
@@ -436,6 +441,7 @@ func TestRecruitPolicyUsesQueueRAHInsteadOfOwnRequestList(t *testing.T) {
 	queue = castle.Production[0]
 	queue.Active.AllianceHelpRequested = true
 	queue.Queued[0].Amount = 1
+	queue.Slots = permanentProductionSlots(queue.Capacity, len(queue.Queued))
 	castle.Production[0] = queue
 	snapshot.State.Castles[77] = castle
 	decision, err = policy.Evaluate(t.Context(), snapshot)
@@ -449,6 +455,7 @@ func TestRecruitPolicyUsesQueueRAHInsteadOfOwnRequestList(t *testing.T) {
 	for index := range queue.Queued {
 		queue.Queued[index].AllianceHelpRequested = true
 	}
+	queue.Slots = permanentProductionSlots(queue.Capacity, len(queue.Queued))
 	castle.Production[0] = queue
 	snapshot.State.Castles[77] = castle
 	decision, err = policy.Evaluate(t.Context(), snapshot)
@@ -472,6 +479,7 @@ func TestRecruitPolicyRefreshesStaleSlotsBeforeAHRThenUsesOpenSlot(t *testing.T)
 		{ProductionID: 204, Amount: 5}, {ProductionID: 205, Amount: 5},
 		{ProductionID: 206, Amount: 5},
 	}
+	queue.Slots = permanentProductionSlots(queue.Capacity, len(queue.Queued))
 	castle.Production[0] = queue
 	snapshot.State.Castles[77] = castle
 	observeOwnAllianceHelpList(&snapshot.State, now)
@@ -495,6 +503,7 @@ func TestRecruitPolicyRefreshesStaleSlotsBeforeAHRThenUsesOpenSlot(t *testing.T)
 	queue.ObservedAt = refreshedAt
 	queue.Active.CompletesAt = &futureCompletion
 	castle.ContextSnapshotObservedAt = refreshedAt
+	queue.Slots = permanentProductionSlots(queue.Capacity, len(queue.Queued))
 	castle.Production[0] = queue
 	snapshot.State.Castles[77] = castle
 	snapshot.Now = refreshedAt.Add(time.Second)
@@ -507,6 +516,7 @@ func TestRecruitPolicyRefreshesStaleSlotsBeforeAHRThenUsesOpenSlot(t *testing.T)
 		RecruitmentCastleIDs: []State.CastleID{77}, OwnObservedGeneration: 4, ObservedAt: refreshedAt,
 	}
 	queue.Active.AllianceHelpRequested = true
+	queue.Slots = permanentProductionSlots(queue.Capacity, len(queue.Queued))
 	castle.Production[0] = queue
 	snapshot.State.Castles[77] = castle
 	decision, err = policy.Evaluate(t.Context(), snapshot)
@@ -518,6 +528,7 @@ func TestRecruitPolicyRefreshesStaleSlotsBeforeAHRThenUsesOpenSlot(t *testing.T)
 	for index := range queue.Queued {
 		queue.Queued[index].AllianceHelpRequested = true
 	}
+	queue.Slots = permanentProductionSlots(queue.Capacity, len(queue.Queued))
 	castle.Production[0] = queue
 	snapshot.State.Castles[77] = castle
 	decision, err = policy.Evaluate(t.Context(), snapshot)
@@ -527,6 +538,7 @@ func TestRecruitPolicyRefreshesStaleSlotsBeforeAHRThenUsesOpenSlot(t *testing.T)
 
 	queue.Queued = queue.Queued[:4]
 	queue.ObservedAt = refreshedAt.Add(time.Minute)
+	queue.Slots = permanentProductionSlots(queue.Capacity, len(queue.Queued))
 	castle.Production[0] = queue
 	snapshot.State.Castles[77] = castle
 	snapshot.Now = queue.ObservedAt.Add(time.Second)
@@ -542,7 +554,7 @@ func TestRecruitPolicyRotatesAcrossStaleCastles(t *testing.T) {
 	snapshot.State.Session.Generation = 4
 	snapshot.State.Session.ChangedAt = now.Add(-time.Minute)
 	first := snapshot.State.Castles[77]
-	first.Production[0] = State.ProductionQueue{LineID: 0, Capacity: 5, ObservedAt: now.Add(-2 * time.Minute)}
+	first.Production[0] = State.ProductionQueue{Slots: permanentProductionSlots(5, 0), LineID: 0, Capacity: 5, ObservedAt: now.Add(-2 * time.Minute)}
 	snapshot.State.Castles[77] = first
 	second := first
 	second.ID = 88
@@ -581,6 +593,7 @@ func TestRecruitPolicyDoesNotRefocusWhenCurrentCastleSnapshotOmittedQueue(t *tes
 	castle.ContextSnapshotObservedAt = now
 	queue := castle.Production[0]
 	queue.ObservedAt = now.Add(-time.Minute)
+	queue.Slots = permanentProductionSlots(queue.Capacity, len(queue.Queued))
 	castle.Production[0] = queue
 	snapshot.State.Castles[77] = castle
 
@@ -609,6 +622,7 @@ func TestRecruitPolicyRequestsFirstFalseRAHSlotDespiteOtherRAH(t *testing.T) {
 		{ProductionID: 204, Amount: 5}, {ProductionID: 205, Amount: 5},
 		{ProductionID: 206, Amount: 5},
 	}
+	queue.Slots = permanentProductionSlots(queue.Capacity, len(queue.Queued))
 	castle.Production[0] = queue
 	snapshot.State.Castles[77] = castle
 	decision, err := NewRecruitPolicy().Evaluate(t.Context(), snapshot)
@@ -633,6 +647,7 @@ func TestRecruitPolicyDoesNotRequestAllianceHelpBelowMinimumStack(t *testing.T) 
 		{ProductionID: 202, Amount: 4}, {ProductionID: 203, Amount: 4}, {ProductionID: 204, Amount: 4},
 		{ProductionID: 205, Amount: 4}, {ProductionID: 206, Amount: 4},
 	}
+	queue.Slots = permanentProductionSlots(queue.Capacity, len(queue.Queued))
 	castle.Production[0] = queue
 	snapshot.State.Castles[77] = castle
 	decision, err := NewRecruitPolicy().Evaluate(context.Background(), snapshot)
@@ -644,6 +659,7 @@ func TestRecruitPolicyDoesNotRequestAllianceHelpBelowMinimumStack(t *testing.T) 
 	}
 
 	queue.Queued[3].Amount = State.RecruitmentAllianceHelpMinimumUnits
+	queue.Slots = permanentProductionSlots(queue.Capacity, len(queue.Queued))
 	castle.Production[0] = queue
 	snapshot.State.Castles[77] = castle
 	decision, err = NewRecruitPolicy().Evaluate(context.Background(), snapshot)
@@ -673,6 +689,7 @@ func TestRecruitPolicyPropagatesPerCastleScheduleKey(t *testing.T) {
 	queue := castle.Production[0]
 	queue.Active = &State.QueueItem{ProductionID: 201, Amount: 5, AllianceHelpAvailable: true}
 	queue.Queued = make([]State.QueueItem, queue.Capacity)
+	queue.Slots = permanentProductionSlots(queue.Capacity, len(queue.Queued))
 	castle.Production[0] = queue
 	snapshot.State.Castles[77] = castle
 	observeOwnAllianceHelpList(&snapshot.State, now)
@@ -925,6 +942,7 @@ func TestRecruitPolicyReevaluatesScheduledUnitForEveryOpenedSlot(t *testing.T) {
 	queue.Queued = append(queue.Queued, State.QueueItem{
 		Definition: State.DefinitionRef{Collection: "units", ID: 2069}, Amount: first.Amount,
 	})
+	queue.Slots = permanentProductionSlots(queue.Capacity, len(queue.Queued))
 	castle.Production[0] = queue
 	snapshot.State.Castles[77] = castle
 	snapshot.Now = now.Add(5 * time.Minute)
@@ -1249,7 +1267,7 @@ func recruitPolicySnapshot(t *testing.T, now time.Time) Snapshot {
 			1: {{DefinitionID: 14, Slot: 0, Level: 4}},
 		},
 		Production: map[int]State.ProductionQueue{
-			0: {LineID: 0, Capacity: 5, ObservedAt: now},
+			0: {Slots: permanentProductionSlots(5, 0), LineID: 0, Capacity: 5, ObservedAt: now},
 		},
 	}
 	return Snapshot{
@@ -1311,11 +1329,12 @@ func TestRecruitPolicyDoesNotRerequestHelpRejectedWith269(t *testing.T) {
 		"castles":{"77":{"enabled":true,"items":[]},"88":{"enabled":true,"items":[]}}
 	}`)
 	full := func(firstID int64) State.ProductionQueue {
-		queue := State.ProductionQueue{LineID: 0, Capacity: 5, ObservedAt: now,
+		queue := State.ProductionQueue{Slots: permanentProductionSlots(5, 0), LineID: 0, Capacity: 5, ObservedAt: now,
 			Active: &State.QueueItem{ProductionID: firstID, Amount: 8}}
 		for offset := int64(1); offset <= 5; offset++ {
 			queue.Queued = append(queue.Queued, State.QueueItem{ProductionID: firstID + offset, Amount: 8})
 		}
+		queue.Slots = permanentProductionSlots(queue.Capacity, len(queue.Queued))
 		return queue
 	}
 	castle := snapshot.State.Castles[77]
@@ -1355,5 +1374,51 @@ func TestRecruitPolicyDoesNotRerequestHelpRejectedWith269(t *testing.T) {
 	decision, err = policy.Evaluate(t.Context(), snapshot)
 	if err != nil || decision.Request == nil || allianceHelpProductionID(t, decision) != 201 {
 		t.Fatalf("269 disabled valid help beyond its bounded window: %#v err=%v", decision, err)
+	}
+}
+
+// Synthetic QS fixture: permanent slots with the specified occupied prefix.
+func permanentProductionSlots(capacity, occupied int) []State.QueueSlot {
+	slots := make([]State.QueueSlot, capacity)
+	for index := range slots {
+		slots[index] = State.QueueSlot{Permanent: true, Occupied: index < occupied}
+	}
+	return slots
+}
+
+func TestProductionPolicyObservedSlotsOverrideVIPAndLegacyNeedsRefresh(t *testing.T) {
+	now := time.Date(2026, 10, 3, 12, 0, 0, 0, time.UTC)
+	snapshot := recruitPolicySnapshot(t, now)
+	snapshot.State.Player.VIP.Level = 10
+	snapshot.GameData = productionPolicyGameData(t, `{"versionInfo":[],"buildings":[],"units":[{"wodID":489}],"constructionItems":[],"viplevels":[{"vipLevelID":"10","recruitmentBonusSlots":"0"}]}`)
+	snapshot.Configuration.Sections["automation.recruitTroops"] = json.RawMessage(`{"mode":"global","globalItems":[{"id":489,"amount":110}],"castles":{"77":{"enabled":true}}}`)
+	policy := NewRecruitPolicy()
+	if policy.queueCapacity(&snapshot.State, State.ProductionQueue{}, snapshot.GameData) != 2 {
+		t.Fatal("missing observation lost VIP fallback")
+	}
+	castle := snapshot.State.Castles[77]
+	queue := State.ProductionQueue{LineID: 0, Capacity: 3, ObservedAt: now, Slots: permanentProductionSlots(3, 2), Queued: make([]State.QueueItem, 2)}
+	castle.Production[0] = queue
+	snapshot.State.Castles[77] = castle
+	decision, err := policy.Evaluate(t.Context(), snapshot)
+	if err != nil || decision.Request == nil || decision.Request.Name != "production.enqueue" {
+		t.Fatal("observed effect capacity was clamped to VIP")
+	}
+	queue.Slots = []State.QueueSlot{{}}
+	queue.Capacity = 0
+	queue.Queued = nil
+	castle.Production[0] = queue
+	snapshot.State.Castles[77] = castle
+	decision, err = policy.Evaluate(t.Context(), snapshot)
+	if err != nil || decision.Request != nil || decision.Status != "waiting" || policy.queueCapacity(&snapshot.State, queue, snapshot.GameData) != 0 {
+		t.Fatal("observed locked slot used VIP fallback")
+	}
+	queue.Slots = nil
+	queue.Capacity = 3
+	castle.Production[0] = queue
+	snapshot.State.Castles[77] = castle
+	decision, err = policy.Evaluate(t.Context(), snapshot)
+	if err != nil || decision.Request == nil || decision.Request.Name != "game.focus_castle" {
+		t.Fatal("legacy queue did not request a refresh")
 	}
 }
