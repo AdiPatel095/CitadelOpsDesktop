@@ -739,17 +739,17 @@
     "reason": "Mode ids, ref discriminators, component variant/size tokens, lane keys, DOM ids and numeric/id fallbacks.",
     "evidence": "saved/inline chip values, AttackSetupRef sources, Button/Badge/Modal props and #<id> fallbacks for unnamed castles or units; labels render typed messages and user/official names."
   },
-  "74251cd579a2d88914558303ce4c4e7ea6557587d20b89e516ba8d4012edeec8": {
+  "88069303b0a1493aca43e5890a44f926898a375cba3696674009c00bd0acdde7": {
     "classification": "technical",
     "reason": "Mode ids, ref discriminators, component variant/size tokens, lane keys, DOM ids and numeric/id fallbacks.",
     "evidence": "saved/inline chip values, AttackSetupRef sources, Button/Badge/Modal props and #<id> fallbacks for unnamed castles or units; labels render typed messages and user/official names."
   },
-  "97af6db07914186d0670713db0a84665494c7eeee156d91c2b7690d6b11a0388": {
+  "2608b95bdf2cd999a3220105727b3f65840c019ff6f9c281e706c180df0e4df2": {
     "classification": "technical",
     "reason": "Mode ids, ref discriminators, component variant/size tokens, lane keys, DOM ids and numeric/id fallbacks.",
     "evidence": "saved/inline chip values, AttackSetupRef sources, Button/Badge/Modal props and #<id> fallbacks for unnamed castles or units; labels render typed messages and user/official names."
   },
-  "98b7673157147cdcc8d843af930f25d73eddb706b66d18342ebdf06faa9ed8f8": {
+  "12eb075d7e95bde5b119120a467272cdc09067740c82dc923c83e014661f6153": {
     "classification": "technical",
     "reason": "Mode ids, ref discriminators, component variant/size tokens, lane keys, DOM ids and numeric/id fallbacks.",
     "evidence": "saved/inline chip values, AttackSetupRef sources, Button/Badge/Modal props and #<id> fallbacks for unnamed castles or units; labels render typed messages and user/official names."
@@ -759,7 +759,7 @@
     "reason": "Mode ids, ref discriminators, component variant/size tokens, lane keys, DOM ids and numeric/id fallbacks.",
     "evidence": "saved/inline chip values, AttackSetupRef sources, Button/Badge/Modal props and #<id> fallbacks for unnamed castles or units; labels render typed messages and user/official names."
   },
-  "8b81a796daf6ccad3e9e0cfd9abb0105f8148bb2f3b5cbb58407cd35b42bb443": {
+  "fed1e2de3906cda78a1fd233376ad8cefc23692bf325c70776685b5c50681670": {
     "classification": "technical",
     "reason": "Mode ids, ref discriminators, component variant/size tokens, lane keys, DOM ids and numeric/id fallbacks.",
     "evidence": "saved/inline chip values, AttackSetupRef sources, Button/Badge/Modal props and #<id> fallbacks for unnamed castles or units; labels render typed messages and user/official names."
@@ -1849,12 +1849,12 @@
     "reason": "Badge/button variant and size tokens, DOM ids and #id fallbacks for unnamed commanders.",
     "evidence": "Structural component props; names are game data; text renders through LocalizedText keys."
   },
-  "cbe0ef0cc9bd6a176fd71c7a9fc01d066b9b922093a415937a3da09286969527": {
+  "5372f21687d698c62a5bd8e1b41784253e4327c8cca611945182757bc2524359": {
     "classification": "technical",
     "reason": "Badge/button variant and size tokens, DOM ids and #id fallbacks for unnamed commanders.",
     "evidence": "Structural component props; names are game data; text renders through LocalizedText keys."
   },
-  "41a91f4a670212db63fa59eaf82c5ff2a7781360fdb6ddf4bcf19980a6b3011e": {
+  "a1ff0bcecf3a2cc9f6081359c2cd652fbf22708822a184256a0cbc4048bb3315": {
     "classification": "technical",
     "reason": "Badge/button variant and size tokens, DOM ids and #id fallbacks for unnamed commanders.",
     "evidence": "Structural component props; names are game data; text renders through LocalizedText keys."
@@ -1879,12 +1879,12 @@
     "reason": "Badge/button variant and size tokens, DOM ids and #id fallbacks for unnamed commanders.",
     "evidence": "Structural component props; names are game data; text renders through LocalizedText keys."
   },
-  "1b5862fe069aaffa407c74067e7f7d3cc027daafb60a886ab8af01b33e4a69e8": {
+  "59467f698fdcee1eac504ed1692c972db4d95347120749a546f014f1203ee67e": {
     "classification": "technical",
     "reason": "Badge/button variant and size tokens, DOM ids and #id fallbacks for unnamed commanders.",
     "evidence": "Structural component props; names are game data; text renders through LocalizedText keys."
   },
-  "cb333358f94eae2b15338909ea31c6c937a2432421ad6ec560ef8eae36463929": {
+  "23b01f5d94d61367d53974005a51896a2c83b189dc79c6036e00f3bd4a12d4e9": {
     "classification": "technical",
     "reason": "Badge/button variant and size tokens, DOM ids and #id fallbacks for unnamed commanders.",
     "evidence": "Structural component props; names are game data; text renders through LocalizedText keys."
@@ -3499,17 +3499,17 @@
     "reason": "Mode ids, ref discriminators, component variant/size tokens, wall side keys, DOM ids, document keys and composition of typed labels.",
     "evidence": "saved/inline chip values, DefenseSetupRef sources, Button/Badge/Modal props, left/middle/right keys, defense.presets document key and #<id> fallbacks; labels render typed messages."
   },
-  "cf076b80cd35610077786636d018e0f0a9085ef87caa8fdde0bee96d7ececb86": {
+  "74a0a3c4e0e7d6a1c8473364bb6bb74c4f5a782a1dca04524912d06cdf42a0ca": {
     "classification": "technical",
     "reason": "Mode ids, ref discriminators, component variant/size tokens, wall side keys, DOM ids, document keys and composition of typed labels.",
     "evidence": "saved/inline chip values, DefenseSetupRef sources, Button/Badge/Modal props, left/middle/right keys, defense.presets document key and #<id> fallbacks; labels render typed messages."
   },
-  "a1482908c08018926e18fa37d40ec82a83a506e8750a8c2b3d810d49d901e7ed": {
+  "f889744614bb8289821ac79cb0115eacf01bd21b73c5b5b4f7f92ff9815b64e9": {
     "classification": "technical",
     "reason": "Mode ids, ref discriminators, component variant/size tokens, wall side keys, DOM ids, document keys and composition of typed labels.",
     "evidence": "saved/inline chip values, DefenseSetupRef sources, Button/Badge/Modal props, left/middle/right keys, defense.presets document key and #<id> fallbacks; labels render typed messages."
   },
-  "99701e09a72343fbba1a427daff2ade95e96cd3945abc3124a4ee5b7755a52e5": {
+  "2b03e978dc9d77c7680c1fb2584a457b1eeb1b3a1b19d384c4d62dc9e3588e63": {
     "classification": "technical",
     "reason": "Mode ids, ref discriminators, component variant/size tokens, wall side keys, DOM ids, document keys and composition of typed labels.",
     "evidence": "saved/inline chip values, DefenseSetupRef sources, Button/Badge/Modal props, left/middle/right keys, defense.presets document key and #<id> fallbacks; labels render typed messages."
@@ -3519,7 +3519,7 @@
     "reason": "Mode ids, ref discriminators, component variant/size tokens, wall side keys, DOM ids, document keys and composition of typed labels.",
     "evidence": "saved/inline chip values, DefenseSetupRef sources, Button/Badge/Modal props, left/middle/right keys, defense.presets document key and #<id> fallbacks; labels render typed messages."
   },
-  "eff0f41bf9492179c660b9629493b23c2d788d5b5249d3c3b1fde66a4d27d37a": {
+  "11261d4df6906e64510435fa1992d831245e42cbecb44c4fec69d38cc3979513": {
     "classification": "technical",
     "reason": "Mode ids, ref discriminators, component variant/size tokens, wall side keys, DOM ids, document keys and composition of typed labels.",
     "evidence": "saved/inline chip values, DefenseSetupRef sources, Button/Badge/Modal props, left/middle/right keys, defense.presets document key and #<id> fallbacks; labels render typed messages."
@@ -4184,7 +4184,7 @@
     "reason": "Badge variant token, document key and composition of typed module/slot labels.",
     "evidence": "Owner and referrer labels join localized attackPresets.module.* / attackPresets.slot.* messages passed to ownership messages."
   },
-  "4ba876f616c0525bc36742941d8b1f15742088d0f575d18e04924ca45748f7bf": {
+  "4a9e1f8cea24fdea1c7fd933fa17057126268525b9c7448fe537f8d24ed32a07": {
     "classification": "technical",
     "reason": "Badge variant token, document key and composition of typed module/slot labels.",
     "evidence": "Owner and referrer labels join localized attackPresets.module.* / attackPresets.slot.* messages passed to ownership messages."
@@ -8514,12 +8514,12 @@
     "reason": "Component variant, size, CSS class or DOM option value, not human display text.",
     "evidence": "Button/Badge/Modal variants and sizes, scrollIntoView options, ARIA/DOM attribute values and tone classes in the new CIT-20 components."
   },
-  "510fcfdbf48cfa4b876db30e4d65354ca9784e7f52df4598638a0a68bbfc36ba": {
+  "e717ae0ac798bdd536ebe00861703bc3e9145e8e2299243b5597c7bd29dcb284": {
     "classification": "technical",
     "reason": "Component variant, size, CSS class or DOM option value, not human display text.",
     "evidence": "Button/Badge/Modal variants and sizes, scrollIntoView options, ARIA/DOM attribute values and tone classes in the new CIT-20 components."
   },
-  "613b43c800df82f7ea2dda8641914be901a8cfe6d0ebf4dc91bdf6312026e37a": {
+  "f34eea7cdbc7faef3a0f665a033db7c7347180635d459591db0c4c9543e59d22": {
     "classification": "technical",
     "reason": "Component variant, size, CSS class or DOM option value, not human display text.",
     "evidence": "Button/Badge/Modal variants and sizes, scrollIntoView options, ARIA/DOM attribute values and tone classes in the new CIT-20 components."
