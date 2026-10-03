@@ -259,6 +259,11 @@ func planKhanAttack(_ context.Context, input Intent.PlanningContext, arguments j
 	if err != nil {
 		return Intent.Plan{}, err
 	}
+	if _, travel := horseTravelBoostFields(request.HorseTravelBoostID); travel == 1 {
+		if err := Intent.RequireTravelTickets(input, 1); err != nil {
+			return Intent.Plan{}, err
+		}
+	}
 	if blockedPlan, blocked, err := dailyAttackLimitPlan(input.State, request.DailyAttackLimit); err != nil {
 		return Intent.Plan{}, err
 	} else if blocked {
@@ -347,7 +352,7 @@ func (application *Application) resolveKhanAttackStep(
 		return Intent.Step{}, Localization.WithError(fmt.Errorf("build Khan attack preset %q: %w", request.Preset.Name, err), Localization.ErrorContext(Localization.New("server.app.build_khan_attack_preset.38a91cb9", "build Khan attack preset {p0}", Localization.Params{"p0": fmt.Sprintf("%q", request.Preset.Name)}), err))
 	}
 	attack := invasionAttackBody(source, target, request.CommanderID, built)
-	if err := applyCastleHorseTravelBoost(&attack, input.GameData, source, request.HorseTravelBoostID); err != nil {
+	if err := applyCastleHorseTravelBoost(&attack, input, source, request.HorseTravelBoostID); err != nil {
 		return Intent.Step{}, Localization.WithError(fmt.Errorf("resolve Khan horse travel boost: %w", err), Localization.ErrorContext(Localization.New("server.app.resolve_khan_horse_travel.6f0b1539", "resolve Khan horse travel boost", nil), err))
 	}
 	body, err := json.Marshal(attack)

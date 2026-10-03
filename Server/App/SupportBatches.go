@@ -18,7 +18,7 @@ const supportUnitTypeLimit = Protocol.MaximumSupportUnitTypes
 
 // Freeze the freshly resolved manifest once. Each disjoint batch becomes an
 // ordinary acknowledged step, so a resume cannot repartition or replay troops.
-func supportDispatchStep(name string, source State.CastleState, target State.AllianceHolding, wait int, amounts map[State.UnitID]int64, after Intent.Step) Intent.Step {
+func supportDispatchStep(input Intent.PlanningContext, name string, source State.CastleState, target State.AllianceHolding, wait int, amounts map[State.UnitID]int64, after Intent.Step, fallback bool) (Intent.Step, error) {
 	ids := make([]int64, 0, len(amounts))
 	for id, amount := range amounts {
 		if amount > 0 {
@@ -26,6 +26,10 @@ func supportDispatchStep(name string, source State.CastleState, target State.All
 		}
 	}
 	sort.Slice(ids, func(i, j int) bool { return ids[i] < ids[j] })
+	horse, travel, notice, err := supportTravelChoice(input, source, int64((len(ids)+supportUnitTypeLimit-1)/supportUnitTypeLimit), fallback)
+	if err != nil {
+		return Intent.Step{}, err
+	}
 	steps := []Intent.Step{}
 	for start := 0; start < len(ids); start += supportUnitTypeLimit {
 		end := min(start+supportUnitTypeLimit, len(ids))
@@ -44,8 +48,12 @@ func supportDispatchStep(name string, source State.CastleState, target State.All
 			PTT int            `json:"PTT"`
 			SD  int            `json:"SD"`
 			A   [][2]int64     `json:"A"`
-		}{source.ID, target.X, target.Y, stationLeaderID, wait, -1, 1, 1, 0, army})
+		}{source.ID, target.X, target.Y, stationLeaderID, wait, horse, 1, travel, 0, army})
 		step := commandStep(fmt.Sprintf("%s (types %d–%d)", name, start+1, end), "cds", payload, "cds", Localization.New("server.app.p_types_p_p.39a761e5", "{p0} (types {p1}\u2013{p2})", Localization.Params{"p0": fmt.Sprintf("%s", name), "p1": start + 1, "p2": end}))
+		if notice != nil {
+			step.CoinCost = &Intent.CoinCostRequirement{Reserve: autoSupportCoinReserve, Source: Intent.SupportCoinHorseSource}
+			step.NameDescriptor = Localization.Clone(notice)
+		}
 		step.ResponseBarrier = Intent.ResponseBarrierCommitted
 		step.ResponseProjectionFailureIndeterminate = true
 		step.CaptureResponse = true
@@ -60,9 +68,9 @@ func supportDispatchStep(name string, source State.CastleState, target State.All
 	}
 	// Preserve the single-command resolver contract when only one batch is needed.
 	if len(ids) <= supportUnitTypeLimit && len(steps) > 0 {
-		return steps[0]
+		return steps[0], nil
 	}
-	return Intent.Step{Batch: steps}
+	return Intent.Step{Batch: steps}, nil
 }
 
 // A paused operation keeps its frozen batches. Fail instead of sending a stale

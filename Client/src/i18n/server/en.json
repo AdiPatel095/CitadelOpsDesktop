@@ -3142,6 +3142,9 @@
   "server.storm.transport_resources": "Transport resources from {castle} toward the Storm target",
   "server.storm.transport_resources_id": "Transport resources from castle {id} toward the Storm target",
   "server.storm.unconfirmed": "We could not confirm whether purchase of {purchases} from Luna for {cost, number} Aquamarine at {castle} completed.",
+  "server.support.coin_horse": "Sent with a coin horse: not enough travel feathers ({needed} needed, {available} available)",
+  "server.support.coin_horse_short": "Waiting: not enough coins for a coin horse ({needed} needed, {available} available)",
+  "server.support.coin_horse_unavailable": "Waiting for a coin horse: coin balance is unavailable; waiting for fresh game data",
   "server.telemetry.channel.activity.description": "Completed Citadel actions and issues that may need your attention.",
   "server.telemetry.channel.activity.label": "All Activity",
   "server.telemetry.channel.app_send.description": "Commands sent by Citadel and the matching replies received from the game.",
@@ -3187,5 +3190,8 @@
   "server.telemetry.channel.rift.description": "Launched Rift attacks and other completed Rift actions.",
   "server.telemetry.channel.rift.label": "Rift",
   "server.telemetry.channel.websocket_game.description": "Every game WebSocket frame, including actions performed directly in the game.",
-  "server.telemetry.channel.websocket_game.label": "All Game Traffic"
+  "server.telemetry.channel.websocket_game.label": "All Game Traffic",
+  "server.travel_tickets.recovery": "The feature lane will reevaluate after the authoritative travel ticket balance changes.",
+  "server.travel_tickets.short": "Not enough travel tickets: {needed} needed, {available} available",
+  "server.travel_tickets.unavailable": "Travel ticket balance is unavailable; waiting for fresh game data"
 }

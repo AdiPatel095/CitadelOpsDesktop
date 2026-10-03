@@ -682,7 +682,7 @@ func (application *Application) resolveBeriTowerAttackStep(
 		return Intent.Step{}, Localization.WithError(fmt.Errorf("build Berimond preset %q: %w", request.Preset.Name, err), Localization.ErrorContext(Localization.New("server.app.build_berimond_preset_p.4e959192", "build Berimond preset {p0}", Localization.Params{"p0": fmt.Sprintf("%q", request.Preset.Name)}), err))
 	}
 	attack := invasionAttackBody(source, target, request.CommanderID, built)
-	if err := applyCastleHorseTravelBoost(&attack, input.GameData, source, request.HorseTravelBoostID); err != nil {
+	if err := applyCastleHorseTravelBoost(&attack, input, source, request.HorseTravelBoostID); err != nil {
 		return Intent.Step{}, Localization.WithError(fmt.Errorf("resolve Berimond horse travel boost: %w", err), Localization.ErrorContext(Localization.New("server.app.resolve_berimond_horse_travel.eb551fba", "resolve Berimond horse travel boost", nil), err))
 	}
 	body, err := json.Marshal(attack)

@@ -24,6 +24,7 @@ func TestTowerAttackWaitsForAdmissionThenResolvesFullFlanksFromFreshContext(t *t
 	}
 	now := time.Now().UTC()
 	gameState := State.NewGameState()
+	fundTravelTicketsForTest(&gameState)
 	gameState.Castles[1] = State.CastleState{
 		ID: 1, KingdomID: 0, X: 100, Y: 100,
 		Units: State.CastleUnits{Stationed: map[State.UnitID]int64{77: 2_000}},
@@ -103,6 +104,7 @@ func TestTowerResolvedAttackCoinGateAcceptsNonnegativeCommander(t *testing.T) {
 	for _, commanderID := range []State.CommanderID{0, 5} {
 		t.Run(fmt.Sprint(commanderID), func(t *testing.T) {
 			input := coinGateInput(coinGateGameData(t), 1_000_000)
+			fundTravelTicketsForTest(&input.State)
 			input.State.Castles[1] = State.CastleState{ID: 1, KingdomID: 0, X: 100, Y: 100,
 				Units: State.CastleUnits{Stationed: map[State.UnitID]int64{77: 2_000}}}
 			input.State.Commanders[commanderID] = State.CommanderState{ID: commanderID, Available: true}
@@ -156,6 +158,7 @@ func TestTowerLaunchUsesFreshAtomicAttackContext(t *testing.T) {
 		t.Fatal(err)
 	}
 	gameState := State.NewGameState()
+	fundTravelTicketsForTest(&gameState)
 	gameState.Castles[1] = State.CastleState{
 		ID: 1, KingdomID: 0, X: 100, Y: 100,
 		Units: State.CastleUnits{Stationed: map[State.UnitID]int64{77: 2_000}},
@@ -216,6 +219,7 @@ func TestTowerAttackCommanderLossMakesPlanStale(t *testing.T) {
 		t.Fatal(err)
 	}
 	state := State.NewGameState()
+	fundTravelTicketsForTest(&state)
 	state.Castles[1] = State.CastleState{ID: 1, KingdomID: 0, X: 100, Y: 100}
 	state.Commanders[22] = State.CommanderState{ID: 22, Available: false}
 	state.Map[0] = map[string]State.MapObservation{
@@ -237,6 +241,7 @@ func TestTowerAttackCommanderLossPausesWithoutRotatingQueue(t *testing.T) {
 		t.Fatal(err)
 	}
 	gameState := State.NewGameState()
+	fundTravelTicketsForTest(&gameState)
 	gameState.Castles[1] = State.CastleState{ID: 1, KingdomID: 0, X: 100, Y: 100}
 	gameState.Commanders[5] = State.CommanderState{ID: 5, Available: false}
 	gameState.Map[0] = map[string]State.MapObservation{
@@ -265,6 +270,7 @@ func TestTowerAttackBecomesNoOpWhenTroopsChangeBeforeAdmission(t *testing.T) {
 		t.Fatal(err)
 	}
 	gameState := State.NewGameState()
+	fundTravelTicketsForTest(&gameState)
 	gameState.Castles[1] = State.CastleState{
 		ID: 1, KingdomID: 0, X: 100, Y: 100,
 		Units: State.CastleUnits{Stationed: map[State.UnitID]int64{77: 1}},
@@ -295,6 +301,7 @@ func TestTowerAttackReplanUsesFreshDialogCapacityInsteadOfRepeatingSetup(t *test
 	}
 	now := time.Now().UTC()
 	gameState := State.NewGameState()
+	fundTravelTicketsForTest(&gameState)
 	gameState.Castles[1] = State.CastleState{
 		ID: 1, KingdomID: 0, X: 100, Y: 100,
 		Units: State.CastleUnits{Stationed: map[State.UnitID]int64{77: 200}},
@@ -357,6 +364,7 @@ func TestTowerAttackReplanUsesFreshDialogCapacityInsteadOfRepeatingSetup(t *test
 func TestTowerAttackSkipsPendingSettlementAndKnownCooldownBeforeADI(t *testing.T) {
 	now := time.Now().UTC()
 	gameState := State.NewGameState()
+	fundTravelTicketsForTest(&gameState)
 	gameState.Castles[1] = State.CastleState{ID: 1, KingdomID: 0, X: 100, Y: 100}
 	gameState.Map[0] = map[string]State.MapObservation{
 		"101:100": {
@@ -387,6 +395,7 @@ func TestTowerAttackSkipsPendingSettlementAndKnownCooldownBeforeADI(t *testing.T
 
 func TestTowerAdvisorActivationUsesDedicatedTypeAndRefreshesSubscription(t *testing.T) {
 	gameState := State.NewGameState()
+	fundTravelTicketsForTest(&gameState)
 	gameState.Player.Currencies[79] = 1
 
 	plan, err := planTowerAdvisorActivation(t.Context(), Intent.PlanningContext{State: gameState}, json.RawMessage(`{"confirmedTokenSpend":true}`))
@@ -411,6 +420,7 @@ func TestTowerAdvisorAttackBuildsTimeSkipChainWithDailyGuard(t *testing.T) {
 	}
 	now := time.Now().UTC()
 	gameState := State.NewGameState()
+	fundTravelTicketsForTest(&gameState)
 	gameState.Castles[1] = State.CastleState{
 		ID: 1, KingdomID: 0, X: 100, Y: 100,
 		Units: State.CastleUnits{Stationed: map[State.UnitID]int64{77: 100_000}},
@@ -481,6 +491,7 @@ func TestTowerAdvisorAttackBuildsTimeSkipChainWithDailyGuard(t *testing.T) {
 func TestTowerAdvisorTimeSkipLimitUsesAuthoritativeDailyReset(t *testing.T) {
 	now := time.Now().UTC()
 	gameState := State.NewGameState()
+	fundTravelTicketsForTest(&gameState)
 	gameState.DailyAttacks = State.DailyAttackState{
 		Count: 4, SessionStartedAt: now.Add(-2 * time.Hour), ObservedAt: now,
 	}

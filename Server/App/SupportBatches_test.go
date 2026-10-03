@@ -40,7 +40,7 @@ func TestSupportResolversBatchEveryTroopExactlyOnce(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			birdArgs, _ := json.Marshal(autoBirdCycleRequest{SourceCastleID: 10, TrackingID: "autoBird:10", DispatchStartedAt: now.Add(-time.Second), ExpectedTargetCastle: 20})
+			birdArgs, _ := json.Marshal(autoBirdCycleRequest{ConnectionGeneration: state.Session.ConnectionGeneration, SourceCastleID: 10, TrackingID: "autoBird:10", DispatchStartedAt: now.Add(-time.Second), ExpectedTargetCastle: 20})
 			bird, err := app.resolveAutoBirdDispatchStep(t.Context(), input, birdArgs)
 			if err != nil {
 				t.Fatal(err)
@@ -154,7 +154,7 @@ func TestSupportBatchesTrackAllMovementsAndLatestReturn(t *testing.T) {
 		state.Movements[id] = State.MovementState{ID: id, SourceCastleID: 10, TargetCastleID: 20, TargetX: 40, TargetY: 50, ObservedAt: now, StartedAt: now, ReturnsAt: &end, Units: map[State.UnitID]int64{State.UnitID(i + 1): 100}}
 	}
 	app := &Application{State: State.NewStore(&state)}
-	args, _ := json.Marshal(autoBirdCycleRequest{SourceCastleID: 10, TrackingID: "autoBird:10", DispatchStartedAt: now})
+	args, _ := json.Marshal(autoBirdCycleRequest{ConnectionGeneration: state.Session.ConnectionGeneration, SourceCastleID: 10, TrackingID: "autoBird:10", DispatchStartedAt: now})
 	if err := app.captureAutoBirdMovement(t.Context(), args); err != nil {
 		t.Fatal(err)
 	}

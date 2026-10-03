@@ -108,6 +108,15 @@ func planTowerAttack(_ context.Context, input Intent.PlanningContext, arguments 
 	if err != nil {
 		return Intent.Plan{}, err
 	}
+	if _, travel := horseTravelBoostFields(request.HorseTravelBoostID); travel == 1 {
+		needed := 1
+		if request.AdvisorMode {
+			needed = max(1, request.AdvisorAttackCount)
+		}
+		if err := Intent.RequireTravelTickets(input, int64(needed)); err != nil {
+			return Intent.Plan{}, err
+		}
+	}
 	now := time.Now().UTC()
 	queueEntry, _ := json.Marshal(towerQueueEntryRequest{
 		SourceCastleID: source.ID, KingdomID: target.KingdomID, TargetX: target.X, TargetY: target.Y,
@@ -362,7 +371,7 @@ func buildTowerAttackStep(input Intent.PlanningContext, request towerLaunchReque
 	attack := towerAttackBody(
 		source, target, commander, request.UnitID, capacity.Capacity.Left, capacity.Capacity.Right,
 	)
-	if err := applyCastleHorseTravelBoost(&attack, input.GameData, source, request.HorseTravelBoostID); err != nil {
+	if err := applyCastleHorseTravelBoost(&attack, input, source, request.HorseTravelBoostID); err != nil {
 		return Intent.Step{}, Localization.WithError(fmt.Errorf("resolve tower horse travel boost: %w", err), Localization.ErrorContext(Localization.New("server.app.resolve_tower_horse_travel.61847d73", "resolve tower horse travel boost", nil), err))
 	}
 	var wireBody any = attack

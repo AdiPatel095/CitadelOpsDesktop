@@ -85,7 +85,7 @@ func TestInvasionEventOccurrenceFlowsFromPolicyThroughPersistedReservation(t *te
 		t.Fatalf("final invasion guard lost resolved request: guarded=%#v planned=%#v", guarded, planned)
 	}
 
-	application := &Application{DataDir: t.TempDir(), State: State.NewStore(&gameState)}
+	application := &Application{DataDir: t.TempDir(), State: travelTicketTestStore(&gameState)}
 	resolved, err := application.resolveInvasionAttackStep(
 		t.Context(), Intent.PlanningContext{State: gameState, GameData: gameData}, launch.ResolverArguments,
 	)
@@ -114,6 +114,7 @@ func TestInvasionEventOccurrenceFlowsFromPolicyThroughPersistedReservation(t *te
 func TestInvasionCapturePersistsReducerAccountingFence(t *testing.T) {
 	now := time.Now().UTC().Truncate(time.Second)
 	gameState := State.NewGameState()
+	fundTravelTicketsForTest(&gameState)
 	gameState.EventScores.ByEvent[71] = State.ScalableEventScore{
 		EventID: 71, RemainingSec: 7_200, ObservedAt: now,
 	}
@@ -144,7 +145,7 @@ func TestInvasionCapturePersistsReducerAccountingFence(t *testing.T) {
 		EventID: 71, RemainingSec: 14_400, ObservedAt: now,
 	})
 	dataDir := t.TempDir()
-	application := &Application{DataDir: dataDir, State: State.NewStore(&gameState)}
+	application := &Application{DataDir: dataDir, State: travelTicketTestStore(&gameState)}
 	arguments, _ := json.Marshal(resolvedInvasionAttackRequest{
 		invasionAttackRequest: invasionAttackRequest{
 			SourceCastleID: 1, EventID: 71, EventEndsAt: occurrenceEndsAt,
@@ -227,7 +228,7 @@ func TestInvasionReconciliationReleasesPriorOccurrenceWithoutAttributingMovement
 		t.Fatalf("planned reconciliation boundary = %#v", verification)
 	}
 
-	store := State.NewStore(&gameState)
+	store := travelTicketTestStore(&gameState)
 	application := &Application{State: store}
 	if err := application.reconcileInvasionTargetReservation(t.Context(), verificationArguments); err != nil {
 		t.Fatal(err)
@@ -306,7 +307,7 @@ func TestInvasionReconciliationRecordsLostSourceReturnWithoutRefocus(t *testing.
 	if err := json.Unmarshal(verificationArguments, &verification); err != nil {
 		t.Fatal(err)
 	}
-	store := State.NewStore(&gameState)
+	store := travelTicketTestStore(&gameState)
 	application := &Application{State: store}
 	if err := application.reconcileInvasionTargetReservation(t.Context(), verificationArguments); err != nil {
 		t.Fatal(err)
@@ -354,7 +355,7 @@ func TestInvasionReconciliationPersistsFullMarkerBackoffAfterScopedGAMOmission(t
 	gameState.Map[0]["101:100"] = target
 
 	dataDir := t.TempDir()
-	application := &Application{DataDir: dataDir, State: State.NewStore(&gameState)}
+	application := &Application{DataDir: dataDir, State: travelTicketTestStore(&gameState)}
 	if err := application.reconcileInvasionTargetReservation(t.Context(), verificationArguments); err != nil {
 		t.Fatal(err)
 	}
@@ -408,7 +409,7 @@ func TestTargetOnlyInvasionReservationReconcilesWithoutMovementProbe(t *testing.
 	target := gameState.Map[0]["101:100"]
 	target.ObservedAt = verification.ReconcileStartedAt.Add(time.Second)
 	gameState.Map[0]["101:100"] = target
-	application := &Application{State: State.NewStore(&gameState)}
+	application := &Application{State: travelTicketTestStore(&gameState)}
 	if err := application.reconcileInvasionTargetReservation(t.Context(), verificationArguments); err != nil {
 		t.Fatal(err)
 	}
@@ -455,7 +456,7 @@ func TestInvasionReconciliationAccountsJustEndedOccurrence(t *testing.T) {
 		t.Fatal(err)
 	}
 	gameState.MovementSnapshot.ObservedAt = verification.ReconcileStartedAt.Add(time.Second)
-	application := &Application{State: State.NewStore(&gameState)}
+	application := &Application{State: travelTicketTestStore(&gameState)}
 	if err := application.reconcileInvasionTargetReservation(t.Context(), verificationArguments); err != nil {
 		t.Fatal(err)
 	}
@@ -530,6 +531,7 @@ func invasionOccurrenceFixture(
 		t.Fatal(err)
 	}
 	gameState := State.NewGameState()
+	fundTravelTicketsForTest(&gameState)
 	gameState.Castles[1] = State.CastleState{
 		ID: 1, Name: "Main", KingdomID: 0, X: 100, Y: 100, Focused: true,
 		Units: State.CastleUnits{Stationed: map[State.UnitID]int64{216: 5_000}},

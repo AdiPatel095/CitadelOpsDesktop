@@ -14,6 +14,7 @@ import (
 
 func TestAdvisorActivationRequiresExplicitPaidTokenConfirmation(t *testing.T) {
 	gameState := State.NewGameState()
+	fundTravelTicketsForTest(&gameState)
 	gameState.EventScores.ActiveEventID = 72
 	gameState.EventScores.ByEvent[72] = State.ScalableEventScore{
 		EventID: 72, DifficultyID: 308, RemainingSec: 7_200, AdvisorCurrencyID: 77, ObservedAt: time.Now().UTC(),
@@ -172,6 +173,7 @@ func advisorIntentFixture(t *testing.T) (State.GameState, *GameData.Store, advis
 	}
 	now := time.Now().UTC()
 	gameState := State.NewGameState()
+	fundTravelTicketsForTest(&gameState)
 	gameState.Castles[1] = State.CastleState{
 		ID: 1, Name: "Main", KingdomID: 0, X: 100, Y: 100,
 		Units: State.CastleUnits{Stationed: map[State.UnitID]int64{77: 300, 88: 30}, Traveling: map[State.UnitID]int64{}},

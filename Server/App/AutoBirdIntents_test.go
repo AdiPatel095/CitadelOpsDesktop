@@ -14,6 +14,7 @@ import (
 func TestPlanAutoBirdRunsAINBeforeJAAForOneCastle(t *testing.T) {
 	now := time.Now().UTC()
 	gameState := State.NewGameState()
+	fundTravelTicketsForTest(&gameState)
 	gameState.Session.LoggedIn = true
 	gameState.Session.SocketReady = true
 	gameState.Player.ID = 99
@@ -77,6 +78,7 @@ func TestPlanAutoBirdRunsAINBeforeJAAForOneCastle(t *testing.T) {
 
 func TestClearAutoBirdTrackingKeepsAutoStationAndGameMovements(t *testing.T) {
 	gameState := State.NewGameState()
+	fundTravelTicketsForTest(&gameState)
 	gameState.Stationing["autoBird:10"] = State.StationingOperation{
 		ID: "autoBird:10", Purpose: "autoBird", SourceCastleID: 10,
 	}
@@ -89,7 +91,7 @@ func TestClearAutoBirdTrackingKeepsAutoStationAndGameMovements(t *testing.T) {
 	gameState.Movements[50] = State.MovementState{
 		ID: 50, SourceCastleID: 10, TargetCastleID: 20,
 	}
-	state := State.NewStore(&gameState)
+	state := travelTicketTestStore(&gameState)
 	application := &Application{State: state}
 	registry := Intent.NewRegistry()
 	registry.EnforceResourceDeclarations()
@@ -317,7 +319,7 @@ func TestAutoBirdDispatchGuardReturnsOnlyThatCastleToJAAPhaseWhenFocusChanges(t 
 		SourceCastleID: 10, TargetCastleID: 20, Units: map[State.UnitID]int64{489: 100},
 		DelayHours: 8, UnitsObservedAt: now, UpdatedAt: now,
 	}
-	application := &Application{State: State.NewStore(&gameState)}
+	application := &Application{State: travelTicketTestStore(&gameState)}
 	arguments, _ := json.Marshal(autoBirdCycleRequest{
 		SourceCastleID: 10, TrackingID: "autoBird:10",
 		MinimumDelayHours: 6, MaximumDelayHours: 12,
@@ -354,7 +356,7 @@ func TestResolveAutoBirdDispatchRebuildsEveryEligibleTroopFromLatestJAA(t *testi
 		Reserves:          []stationUnitRequest{{UnitID: 215, Amount: 10}},
 		DispatchStartedAt: now.Add(-time.Second), ExpectedTargetCastle: 20,
 	})
-	application := &Application{State: State.NewStore(&gameState)}
+	application := &Application{State: travelTicketTestStore(&gameState)}
 	step, err := application.resolveAutoBirdDispatchStep(t.Context(), Intent.PlanningContext{
 		State: gameState, GameData: gameData,
 	}, request)
@@ -394,7 +396,7 @@ func TestResolveAutoBirdDispatchDefersOnlyThatCastleWhenFreshJAAIsEmpty(t *testi
 		SourceCastleID: 10, TargetCastleID: 20, Units: map[State.UnitID]int64{489: 100},
 		DelayHours: 8, UnitsObservedAt: now, UpdatedAt: now,
 	}
-	application := &Application{State: State.NewStore(&gameState)}
+	application := &Application{State: travelTicketTestStore(&gameState)}
 	request, _ := json.Marshal(autoBirdCycleRequest{
 		SourceCastleID: 10, TrackingID: "autoBird:10",
 		MinimumDelayHours: 6, MaximumDelayHours: 12,
@@ -418,6 +420,7 @@ func TestCaptureAutoBirdMovementRecordsTravelWaitAndExpectedReturn(t *testing.T)
 	arrivesAt := now.Add(10 * time.Minute)
 	expectedReturn := arrivesAt.Add(8*time.Hour + 10*time.Minute)
 	gameState := State.NewGameState()
+	fundTravelTicketsForTest(&gameState)
 	gameState.Alliance.Holdings = []State.AllianceHolding{{
 		CastleID: 20, KingdomID: 0, X: 40, Y: 50, SlotType: 1,
 	}}
@@ -431,7 +434,7 @@ func TestCaptureAutoBirdMovementRecordsTravelWaitAndExpectedReturn(t *testing.T)
 		TravelSeconds: 600, WaitSeconds: 8 * 3600, ArrivesAt: &arrivesAt,
 		ObservedAt: now, Units: map[State.UnitID]int64{489: 125},
 	}
-	application := &Application{State: State.NewStore(&gameState)}
+	application := &Application{State: travelTicketTestStore(&gameState)}
 	arguments, _ := json.Marshal(autoBirdCycleRequest{
 		SourceCastleID: 10, TrackingID: "autoBird:10",
 		MinimumDelayHours: 6, MaximumDelayHours: 12,
@@ -467,6 +470,7 @@ func autoBirdIntentTestState(t *testing.T, now time.Time) (State.GameState, *Gam
 		t.Fatal(err)
 	}
 	gameState := State.NewGameState()
+	fundTravelTicketsForTest(&gameState)
 	gameState.Session.LoggedIn = true
 	gameState.Session.SocketReady = true
 	gameState.Player.ID = 99
@@ -486,8 +490,9 @@ func autoBirdIntentTestState(t *testing.T, now time.Time) (State.GameState, *Gam
 func TestDeferredBirdDispatchBindsOrClearsStatusDescriptor(t *testing.T) {
 	for _, descriptor := range []*Localization.Message{nil, Localization.New("test.bird_hold", "Hold castle {castle}", Localization.Params{"castle": "17"})} {
 		state := State.NewGameState()
+		fundTravelTicketsForTest(&state)
 		state.Stationing["bird"] = State.StationingOperation{ID: "bird", Purpose: "autoBird", SourceCastleID: 17, Phase: State.StationingPhaseDispatchReady, StatusDetail: "old", StatusDetailDescriptor: Localization.New("old", "Old reason", nil)}
-		application := &Application{State: State.NewStore(&state)}
+		application := &Application{State: travelTicketTestStore(&state)}
 		retry := time.Now().UTC().Add(time.Minute)
 		application.deferAutoBirdDispatch(autoBirdCycleRequest{TrackingID: "bird", SourceCastleID: 17}, "Hold castle 17", retry, descriptor)
 		current := application.State.ReadOnlyView().Stationing["bird"]

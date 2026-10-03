@@ -46,6 +46,9 @@ func featureActivities(receipt Intent.Receipt) []featureActivity {
 			return nil
 		}
 		activities := completedAttackActivities(receipt)
+		if notice, ok := coinHorseSupportTravelActivity(receipt); ok {
+			activities = append(activities, notice)
+		}
 		summary := receiptSummary(receipt)
 		detail := "Could not " + attemptedActivityDetail(summary)
 		reason := userFacingFailureReason(receipt.Error)
@@ -161,6 +164,14 @@ func userFacingFailureReason(value string) string {
 }
 
 func completedFeatureActivities(receipt Intent.Receipt) []featureActivity {
+	activities := baseCompletedFeatureActivities(receipt)
+	if notice, ok := coinHorseSupportTravelActivity(receipt); ok {
+		activities = append(activities, notice)
+	}
+	return activities
+}
+
+func baseCompletedFeatureActivities(receipt Intent.Receipt) []featureActivity {
 	if receipt.Plan == nil || receipt.Plan.Effect == Intent.EffectRead || !planHasGameCommand(receipt.Plan) {
 		return nil
 	}
