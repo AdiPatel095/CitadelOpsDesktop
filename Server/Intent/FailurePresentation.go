@@ -133,6 +133,17 @@ func (engine *Engine) failurePresentation(receipt Receipt, err error) *FailurePr
 		presentation.Recovery = "The feature lane will reevaluate after troop availability changes."
 		presentation.RecoveryDescriptor = Localization.New("server.intent.the_feature_lane_will.482d1118", "The feature lane will reevaluate after troop availability changes.", nil)
 		presentation.Toast = !automationActor(receipt.Actor) || receipt.Status != StatusFailed
+	case errors.Is(err, ErrBalanceUnavailable):
+		presentation.Kind = FailureAvailability
+		presentation.Severity = FailureSeverityWarning
+		var shortage *BalanceUnavailableError
+		if errors.As(err, &shortage) {
+			presentation.Explanation = shortage.Detail()
+			presentation.ExplanationDescriptor = shortage.LocalizationMessage()
+		}
+		presentation.Recovery = "The feature lane will reevaluate after this balance changes."
+		presentation.RecoveryDescriptor = Localization.New("server.balance.recovery", "The feature lane will reevaluate after this balance changes.", nil)
+		presentation.Toast = !automationActor(receipt.Actor)
 	case errors.Is(err, ErrCurrencyUnavailable):
 		presentation.Kind = FailureAvailability
 		presentation.Severity = FailureSeverityWarning

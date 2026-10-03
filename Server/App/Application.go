@@ -432,7 +432,7 @@ func New(ctx context.Context, config Config) (*Application, error) {
 	session.SetAutomationLocked(application.automationLocked())
 	intents.SetExecutionGate(application.executionGate)
 	intents.SetAdmissionWeightProvider(application.attackAdmissionWeight)
-	dispatchGates := newFinalDispatchGates(application.coinGate, newTravelTicketDispatchGate())
+	dispatchGates := newFinalDispatchGates(application.coinGate, newTravelTicketDispatchGate(), newSpecialCostDispatchGate())
 	dispatchGates.commanders.assignments = func() (CommanderFeatures.Configuration, error) {
 		raw, exists := application.Configuration.Section(CommanderFeatures.Section)
 		if !exists {
@@ -466,8 +466,8 @@ func New(ctx context.Context, config Config) (*Application, error) {
 		state, configuration, gameData, intents,
 		Automation.NewSharedStormScanPolicy(application.AccountKey, config.WorldMaps),
 		Automation.NewSharedFortressScanPolicy(application.AccountKey, config.WorldMaps),
-		Automation.NewRecruitPolicy(),
-		Automation.NewToolPolicy(),
+		Automation.NewRecruitPolicy(resolveProductionCosts),
+		Automation.NewToolPolicy(resolveProductionCosts),
 		Automation.NewHospitalPolicy(),
 		Automation.NewAllianceHelpPolicy(),
 		Automation.NewAutoEquipmentCleanupPolicy(),

@@ -23,6 +23,7 @@ type ProductionPolicy struct {
 	lineID        int
 	definitionKey string
 	lastCastleID  State.CastleID
+	costResolver  ProductionCostResolver
 }
 
 type productionSettings struct {
@@ -70,18 +71,114 @@ type productionGloryTitleGuard struct {
 	TitleLossFallback      bool
 }
 
-func NewRecruitPolicy() *ProductionPolicy {
+func NewRecruitPolicy(resolver ...ProductionCostResolver) *ProductionPolicy {
 	return &ProductionPolicy{
 		id: "autoRecruit", enabledKey: "recruit_troops", section: "automation.recruitTroops",
-		lineID: 0, definitionKey: "unit",
+		lineID: 0, definitionKey: "unit", costResolver: firstProductionCostResolver(resolver),
 	}
 }
 
-func NewToolPolicy() *ProductionPolicy {
+func NewToolPolicy(resolver ...ProductionCostResolver) *ProductionPolicy {
 	return &ProductionPolicy{
 		id: "autoTool", enabledKey: "auto_tool", section: "automation.autoTool",
-		lineID: 1, definitionKey: "tool",
+		lineID: 1, definitionKey: "tool", costResolver: firstProductionCostResolver(resolver),
 	}
+}
+
+// ProductionCostResolver is supplied by App so catalog decoding is shared with
+// final dispatch without importing the application into its policy package.
+type ProductionCostResolver func(*GameData.Store, *GameData.LanguageStore, int, int64, State.CastleID) ([]ProductionCost, error)
+type ProductionCost struct {
+	Key           Intent.BalanceKey
+	PerUnit       float64
+	Name, NameKey string
+}
+type ProductionCostBlock struct {
+	Field             string
+	Rubies            bool
+	Cost              ProductionCost
+	Needed, Available int64
+	Unavailable       bool
+}
+
+func (block *ProductionCostBlock) Error() string { return "production cost blocked: " + block.Field }
+func firstProductionCostResolver(resolvers []ProductionCostResolver) ProductionCostResolver {
+	if len(resolvers) > 0 {
+		return resolvers[0]
+	}
+	return nil
+}
+
+// ProductionStackAmounts allocates one stack at a time from a single observed
+// budget. Local dispatch reservations are intentionally not planner authority.
+func ProductionStackAmounts(state State.GameState, costs []ProductionCost, stackAmount int64, count int) ([]int64, *ProductionCostBlock) {
+	available := make(map[Intent.BalanceKey]int64)
+	for _, cost := range costs {
+		amount, _, known := Intent.ObservedBalance(state, cost.Key)
+		if !known {
+			return nil, &ProductionCostBlock{Cost: cost, Unavailable: true}
+		}
+		available[cost.Key] = amount
+	}
+	amounts := make([]int64, 0, count)
+	for stack := 0; stack < count; stack++ {
+		amount := stackAmount
+		var limiting ProductionCost
+		for _, cost := range costs {
+			limit := math.Floor(float64(available[cost.Key]) / cost.PerUnit)
+			if limit < float64(amount) {
+				amount = int64(limit)
+				limiting = cost
+			}
+			// Float rounding must never turn an affordable floor into an over-send.
+			for amount > 0 && math.Ceil(float64(amount)*cost.PerUnit) > float64(available[cost.Key]) {
+				amount--
+				limiting = cost
+			}
+		}
+		if amount <= 0 {
+			needed := int64(math.Ceil(limiting.PerUnit))
+			if len(amounts) > 0 {
+				return amounts, nil
+			}
+			return nil, &ProductionCostBlock{Cost: limiting, Needed: needed, Available: available[limiting.Key]}
+		}
+		amounts = append(amounts, amount)
+		for _, cost := range costs {
+			available[cost.Key] -= int64(math.Ceil(float64(amount) * cost.PerUnit))
+		}
+	}
+	return amounts, nil
+}
+func ProductionCostStatus(snapshot Snapshot, unitID int64, block *ProductionCostBlock) (string, *Localization.Message) {
+	unit := fmt.Sprintf("unit %d", unitID)
+	if key := snapshot.GameData.DefinitionNameKey(snapshot.Language, "units", unitID); snapshot.Language != nil {
+		if name, ok := snapshot.Language.Text(key); ok {
+			unit = name
+		}
+	}
+	params := Localization.Params{"unit": unit, "balance": block.Cost.Name, "needed": block.Needed, "available": block.Available, "field": block.Field}
+	var detail string
+	var message *Localization.Message
+	switch {
+	case block.Rubies:
+		detail = fmt.Sprintf("Skipped %s: it costs rubies, and recruitment never spends rubies", unit)
+		message = Localization.New("server.production.needs_rubies", "Skipped {unit}: it costs rubies, and recruitment never spends rubies", params)
+	case block.Field != "":
+		detail = fmt.Sprintf("Skipped %s: unknown cost type %s", unit, block.Field)
+		message = Localization.New("server.production.cost_unknown", "Skipped {unit}: unknown cost type {field}", params)
+	case block.Unavailable:
+		detail = fmt.Sprintf("Skipped %s: the %s balance is unavailable", unit, block.Cost.Name)
+		message = Localization.New("server.production.cost_unavailable", "Skipped {unit}: the {balance} balance is unavailable", params)
+	default:
+		detail = fmt.Sprintf("Skipped %s: not enough %s (%d needed, %d available)", unit, block.Cost.Name, block.Needed, block.Available)
+		message = Localization.New("server.production.cost_short", "Skipped {unit}: not enough {balance} ({needed} needed, {available} available)", params)
+	}
+	message = message.WithGameParam("unit", snapshot.GameData.DefinitionNameKey(snapshot.Language, "units", unitID), unit)
+	if block.Field == "" && !block.Rubies {
+		message = message.WithGameParam("balance", block.Cost.NameKey, block.Cost.Name)
+	}
+	return detail, Localization.Bind(message, detail)
 }
 
 func (policy *ProductionPolicy) ID() string { return policy.id }
@@ -98,6 +195,8 @@ func (policy *ProductionPolicy) WakeDomains() []string {
 func (policy *ProductionPolicy) WakeSections() []string { return []string{policy.section} }
 
 func (policy *ProductionPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision, error) {
+	var firstCostBlock *ProductionCostBlock
+	var firstCostUnit int64
 	settings := productionSettings{Mode: "global", CheckIntervalSec: 300, Castles: map[string]productionCastle{}}
 	if !decodeSection(snapshot.Configuration, policy.section, &settings) {
 		return Decision{
@@ -255,6 +354,29 @@ func (policy *ProductionPolicy) Evaluate(_ context.Context, snapshot Snapshot) (
 				settings.RecruitLevel10OnTitleLoss,
 			)
 			if attemptAvailability == productionTargetAvailable {
+				if policy.costResolver != nil {
+					costs, err := policy.costResolver(snapshot.GameData, snapshot.Language, policy.lineID, attemptTarget.ID, castleID)
+					var block *ProductionCostBlock
+					if err != nil {
+						if typed, ok := err.(*ProductionCostBlock); ok {
+							block = typed
+						} else {
+							return Decision{}, err
+						}
+					} else {
+						requested := policy.targetAmount(&snapshot.State, castle, attemptTarget, snapshot.GameData)
+						if requested > 0 {
+							_, block = ProductionStackAmounts(snapshot.State, costs, requested, 1)
+						}
+					}
+					if block != nil {
+						if firstCostBlock == nil {
+							firstCostBlock = block
+							firstCostUnit = attemptTarget.ID
+						}
+						continue
+					}
+				}
 				resolvedTarget = attemptTarget
 				availability = attemptAvailability
 				titleGuard = attemptGuard
@@ -273,7 +395,9 @@ func (policy *ProductionPolicy) Evaluate(_ context.Context, snapshot Snapshot) (
 			case productionTargetGloryTitlePaused:
 				gloryTitlePaused++
 			default:
-				unavailableDefinition++
+				if firstCostBlock == nil {
+					unavailableDefinition++
+				}
 			}
 			if scheduled {
 				unavailableScheduledDefinition++
@@ -285,6 +409,21 @@ func (policy *ProductionPolicy) Evaluate(_ context.Context, snapshot Snapshot) (
 		if amount <= 0 {
 			unknownStackCapacity++
 			continue
+		}
+		if policy.costResolver != nil {
+			costs, err := policy.costResolver(snapshot.GameData, snapshot.Language, policy.lineID, target.ID, castleID)
+			if err != nil {
+				return Decision{}, err
+			}
+			amounts, block := ProductionStackAmounts(snapshot.State, costs, amount, 1)
+			if block != nil {
+				if firstCostBlock == nil {
+					firstCostBlock = block
+					firstCostUnit = target.ID
+				}
+				continue
+			}
+			amount = amounts[0]
 		}
 		fillAvailable := !rotating && !scheduled
 		intentArguments := map[string]any{
@@ -385,6 +524,9 @@ func (policy *ProductionPolicy) Evaluate(_ context.Context, snapshot Snapshot) (
 	} else if unknownStackCapacity > 0 {
 		detail = "Waiting for the official building stack capacity"
 		detailLocalizationMessage = Localization.New("server.automation.waiting_for_the_official.e86d33dc", "Waiting for the official building stack capacity", nil)
+	} else if firstCostBlock != nil {
+		status = "waiting"
+		detail, detailLocalizationMessage = ProductionCostStatus(snapshot, firstCostUnit, firstCostBlock)
 	}
 	nextCheck := snapshot.Now.Add(interval)
 	if !nextCastleSchedule.IsZero() && nextCastleSchedule.Before(nextCheck) {

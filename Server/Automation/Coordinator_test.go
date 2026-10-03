@@ -2217,7 +2217,7 @@ func TestCoordinatorTravelTicketShortageWaitsAndWakesOnlyOnTicketObservation(t *
 	shortage := (&Intent.CurrencyUnavailableError{CurrencyID: Intent.TravelTicketCurrencyID, Required: 1, Observed: 0, Known: true}).Error()
 	current := &policyRuntime{running: true, evaluatedStateRevision: 10}
 	_, immediate := completePolicyRun(current, operationResult{policyID: "autoBird", receipt: Intent.Receipt{Status: Intent.StatusFailed, RawError: shortage}}, now)
-	if immediate || current.coinAvailabilityGate == nil || current.coinAvailabilityGate.currencyID != 22 || !current.failureBlockedUntil.IsZero() {
+	if immediate || current.coinAvailabilityGate == nil || current.coinAvailabilityGate.key != Intent.CurrencyBalanceKey(22) || !current.failureBlockedUntil.IsZero() {
 		t.Fatal("ticket shortage entered failure pause")
 	}
 	state := coordinatorReadyState()
