@@ -1,5 +1,5 @@
 import { useServerLabel } from '../useServerLabel';
-import { useLocale as useStaticLocale } from "../../i18n/LocaleContext";
+import { useLocale as useStaticLocale } from '../../i18n/useLocale';
 import { LocalizedText } from "../../i18n/LocalizedText";
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
@@ -26,7 +26,7 @@ import {
 	PageHeader,
 	SectionCard,
 } from '../../components/ui';
-import { useCitadelAPI } from '../../api/ApiContext';
+import { useCitadelAPI } from '../../api/useCitadelAPI';
 import DetailBackButton from '../../components/DetailBackButton';
 import WorldPlayerDetailView from './WorldPlayerDetailView';
 import WorldAllianceDetailView from './WorldAllianceDetailView';

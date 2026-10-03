@@ -977,6 +977,7 @@ export interface BuildingDefinitionV2 {
 	earlyUnlockRequiredLevel?: number;
 	maximumCount?: number;
 	kingdomIds?: number[];
+	kingdomIdsDefaulted?: boolean;
 	eventIds?: number[];
 	areaTypeIds?: number[];
 	mapIds?: number[];

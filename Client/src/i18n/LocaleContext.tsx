@@ -1,32 +1,17 @@
+import { createValue, LocaleContext } from './useLocale';
 import {loadBundledOfficial,mergeOfficialCatalogs} from './bundledOfficial';
 import { loadServerCatalog } from './serverCatalog';
 import { invalidateOfficialMessages } from './officialMessages';
 import { loadBackendCatalog } from './backendCatalog';
 import { officialMessageKeys, officialMessageNouns } from './officialKeys';
-import { createContext, useContext, useEffect, useMemo, useState, useSyncExternalStore } from 'react';
+import { useEffect, useMemo, useState, useSyncExternalStore } from 'react';
 import { readViewerLocale, readViewerLocalePreference, setViewerLocale, subscribeViewerLocale } from './viewerLocaleStore';
 import type { Locale } from './locales';
-import type { ViewerLocalePreference } from './viewerLocaleStore';
-import { describeMessage } from './messages';
 import { CitadelAPI } from '../api/CitadelClient';
-import { formatMessage } from './formatMessage';
 import type { Catalog, OfficialCatalog } from './formatMessage';
 import { loadMessageCatalog } from './catalogs';
-import type { MessageKey, MessageParameters } from './messages';
+import type { MessageKey } from './messages';
 const officialKeys: Partial<Record<MessageKey,string>> = officialMessageKeys;
-function createValue(locale: Locale, setLocale: (locale: ViewerLocalePreference) => void, catalog: Catalog = {}, game?: OfficialCatalog, runtimeStatus = 'Disconnected', preference: ViewerLocalePreference = 'auto') {
-  const message = (key: MessageKey, parameters?: MessageParameters) => formatMessage(describeMessage(key,parameters),locale,catalog,game);
-  return {
-    message, catalog, runtimeStatus,
-    locale, preference, setLocale, direction: locale === 'ar' ? 'rtl' as const : 'ltr' as const,
-    messageLocale: Object.keys(catalog).length ? locale : 'en',
-    t: (key: MessageKey, parameters?: MessageParameters) => message(key,parameters).text,
-    number: (value: number, options?: Intl.NumberFormatOptions) => new Intl.NumberFormat(locale,options).format(value),
-    date: (value: Date | number, options?: Intl.DateTimeFormatOptions) => new Intl.DateTimeFormat(locale,options).format(value),
-    plural: (value: number, options?: Intl.PluralRulesOptions) => new Intl.PluralRules(locale,options).select(value),
-  };
-}
-const LocaleContext = createContext(createValue('en', () => {}));
 export function LocaleProvider({children}: {children: React.ReactNode}) {
   const locale = useSyncExternalStore(subscribeViewerLocale,readViewerLocale,()=> 'en' as Locale);
   const preference = useSyncExternalStore(subscribeViewerLocale,readViewerLocalePreference,()=> 'auto' as const);
@@ -61,4 +46,3 @@ export function LocaleProvider({children}: {children: React.ReactNode}) {
   const value = useMemo(() => createValue(locale,setLocale,loaded.locale === locale ? loaded.catalog : {},mergeOfficialCatalogs(locale,bundled?.locale===locale?bundled.catalog:undefined,game?.locale === locale ? game.catalog : undefined),connection,preference),[locale,preference,loaded,game,bundled,connection]);
   return <LocaleContext.Provider value={value}>{children}</LocaleContext.Provider>;
 }
-export function useLocale() { return useContext(LocaleContext); }

@@ -1,0 +1,15 @@
+{
+  "schemaVersion": 3,
+  "placementEpoch": 9223372036854775811,
+  "digest": "digest",
+  "configuration": {
+    "schemaVersion": 7,
+    "revision": 9223372036854775815,
+    "updatedAt": "2026-10-03T12:34:56.123456789Z",
+    "sections": {
+      "sections": {
+        "synthetic": true
+      }
+    }
+  }
+}

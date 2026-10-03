@@ -1,4 +1,4 @@
-import { useLocale as useStaticLocale } from "../../i18n/LocaleContext";
+import { useLocale as useStaticLocale } from '../../i18n/useLocale';
 import { LocalizedText } from "../../i18n/LocalizedText";
 import { useEffect, useMemo, useState } from 'react';
 import { Binoculars, RefreshCw, Shield, Swords } from 'lucide-react';
@@ -6,7 +6,8 @@ import UnitImage from '../../components/UnitImage';
 import DetailBackButton from '../../components/DetailBackButton';
 import { Notifications } from '../../components/Notifications';
 import { Badge, Button, Card, CardContent, CardHeader, CardTitle, PageHeader } from '../../components/ui';
-import { useMetadata, type MetadataItem } from '../../context/MetadataContext';
+import { type MetadataItem } from '../../context/MetadataContext';
+import { useMetadata } from '../../context/useMetadata';
 import { runtimeFetch } from '../../api/RuntimeURL';
 
 interface SpyPlayer { id?: number; name?: string; alliance?: string }

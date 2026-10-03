@@ -1,4 +1,4 @@
-import { useLocale as useStaticLocale } from "../../i18n/LocaleContext";
+import { useLocale as useStaticLocale } from '../../i18n/useLocale';
 import { LocalizedText } from "../../i18n/LocalizedText";
 import React, { useMemo } from 'react';
 import { RefreshCw, Trophy } from 'lucide-react';

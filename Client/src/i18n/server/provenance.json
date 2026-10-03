@@ -34107,7 +34107,7 @@
     "sha256": "3e5e8c970e3cfbb704719636d99733d3ef830e036fca4866bcc2bdeb04b003e2"
   },
   "schemaVersion": 1,
-  "sourceCatalogSha256": "acca1fa9eff94220794603b5fa8e5c21bda2e85dc0121adb1907867996302b46",
+  "sourceCatalogSha256": "921cb831362969704d04ef8624246860b900743d716263c04e0b2b9557313de8",
   "sourceRevision": "56c2acba0f847e2675c7842588213c66710eeadc",
   "playerLanguageBatch": {
     "story": "CIT-68",
@@ -34128,6 +34128,15 @@
       "server.automation.watching_for_incoming_attacks.60f06f25"
     ],
     "translationStatus": "pending all-locale translation batch; old translations invalidated"
+  },
+  "opcodeRejectionFixes": {
+    "story": "CIT-120",
+    "source": "Engineering/Plans/CIT-120 Official default kingdom list for buildings.md; Product/Opcode rejection fixes 2026-10-03 decision.md R5",
+    "baseRevision": "dc79aca3389c947b6ae663250ad838f4272275a0",
+    "englishFallbackKeys": [
+      "server.buildings.kingdom_unavailable"
+    ],
+    "translationStatus": "English only; pending the epic CIT-116 batched locale translation story"
   },
   "opcodeRejectionQueueBatch": {
     "story": "CIT-117",

@@ -1,5 +1,5 @@
 import { StopFooter } from '../../components/StopControl';
-import { useLocale as useStaticLocale } from "../../i18n/LocaleContext";
+import { useLocale as useStaticLocale } from '../../i18n/useLocale';
 import { LocalizedText } from "../../i18n/LocalizedText";
 import React, { useEffect, useMemo, useState } from 'react';
 import {
@@ -39,7 +39,7 @@ import {
   type AutoSceatResClientSettings,
   type AutoSceatStorageNode,
 } from '../AutoSceatResClientState';
-import { useCitadelAPI } from '../../api/ApiContext';
+import { useCitadelAPI } from '../../api/useCitadelAPI';
 import { CitadelAPI } from '../../api/CitadelClient';
 import { useConfigurationDraftSession } from '../ConfigurationDraftSession';
 import { AUTOMATION_ENABLED_KEYS } from '../disclosure/placement';
@@ -48,7 +48,7 @@ import { useSettingsDisclosure } from '../disclosure/useSettingsDisclosure';
 import { AutomationRunStrip } from './AutomationRunStrip';
 import { SettingsSection } from './SettingsSection';
 import { AutoSceatRecipePickerModal } from './AutoSceatRecipePickerModal';
-import { useMetadata } from '../../context/MetadataContext';
+import { useMetadata } from '../../context/useMetadata';
 import { useDraftRecovery } from '../useDraftRecovery';
 
 interface AutoSceatResSettingsModalProps {

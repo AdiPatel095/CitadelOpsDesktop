@@ -1,8 +1,8 @@
-import { useLocale as useStaticLocale } from "../i18n/LocaleContext";
+import { useLocale as useStaticLocale } from '../i18n/useLocale';
 import { LocalizedText } from "../i18n/LocalizedText";
 import React, { useCallback, useId, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { RotateCw, Timer } from 'lucide-react';
-import { useCitadelAPI } from '../api/ApiContext';
+import { useCitadelAPI } from '../api/useCitadelAPI';
 import { AutomationDurationModal } from '../settings/components/AutomationDurationModal';
 import { createPortal } from 'react-dom';
 import type { AutoBirdCastleCycle } from '../context/AuthContext';

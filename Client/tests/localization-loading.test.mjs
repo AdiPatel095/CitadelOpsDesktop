@@ -38,7 +38,8 @@ test('actual provider retains healthy packs, merge precedence, and fences stale 
  };
  for(const name of ['loadMessageCatalog','loadBackendCatalog','loadServerCatalog'])harness[name]=language=>{const item={name,language,...deferred()};requests.push(item);return item.promise;};
  globalThis.__localeHarness=harness;const previousDocument=globalThis.document;globalThis.document={documentElement:{dataset:{}}};
- const source=strip(fs.readFileSync(new URL('../src/i18n/LocaleContext.tsx',import.meta.url),'utf8'));
+ const valueSource=strip(fs.readFileSync(new URL('../src/i18n/useLocale.ts',import.meta.url),'utf8'));
+ const source=valueSource+'\n'+strip(fs.readFileSync(new URL('../src/i18n/LocaleContext.tsx',import.meta.url),'utf8'));
  const {LocaleProvider}=await import(url(compile(`const {${Object.keys(harness).join(',')}}=globalThis.__localeHarness;\n${source}`)));
  const render=()=>{cursor=0;const result=LocaleProvider({children:null});pendingEffects.splice(0).forEach(run=>run());return result.props.value;};
  try {

@@ -3,11 +3,11 @@ import { castleCandidates } from '../copy/candidates';
 import { birdCandidateFlags, birdCopyDescriptor } from '../copy/features/bird';
 import { copyReapplied, genericSaveError, useCastleCopyReplayRun, useCastleCopyReplayState } from '../copy/useCastleCopyReplay';
 import { CastleCopyButton } from './CastleCopyDialog';
-import { useLocale as useStaticLocale } from "../../i18n/LocaleContext";
+import { useLocale as useStaticLocale } from '../../i18n/useLocale';
 import { LocalizedText } from "../../i18n/LocalizedText";
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { Bird, BookOpen, LockKeyhole, Plus } from 'lucide-react';
-import { showTroopPicker } from '../../components/TroopPickerModal';
+import { showTroopPicker } from '../../components/TroopPicker';
 import type { UnitWithQuantity } from '../../components/TroopPickerModal';
 import UnitImage from '../../components/UnitImage';
 import {
@@ -31,14 +31,14 @@ import {
   QuantityAssetTile,
   SettingsModal,
 } from '../../components/ui';
-import { useCitadelAPI } from '../../api/ApiContext';
+import { useCitadelAPI } from '../../api/useCitadelAPI';
 import { castleOptionsFromState } from '../../api/Selectors';
-import { useAuth } from '../../context/AuthContext';
+import { useAuth } from '../../context/useAuth';
 import { AUTO_FORTRESS_DIREWOLF_ID } from '../AutoFortressClientState';
 import { AutoBirdGuideModal } from './AutoBirdGuideModal';
 import { useGuideLocale } from '../../config/useGuideLocale';
 import { useConfigurationDraftSession } from '../ConfigurationDraftSession';
-import { useMetadata } from '../../context/MetadataContext';
+import { useMetadata } from '../../context/useMetadata';
 import { evaluateReserveReadiness } from '../requirements/setupReadiness';
 import { useSetupContext } from '../requirements/useSetupContext';
 import { focusReadinessTarget } from '../readiness/focusReadinessTarget';
@@ -47,7 +47,8 @@ import { AUTOMATION_ENABLED_KEYS } from '../disclosure/placement';
 import { birdTimingSummary, countCustomValues } from '../disclosure/summaries';
 import { useSettingsDisclosure } from '../disclosure/useSettingsDisclosure';
 import { AutomationRunStrip } from './AutomationRunStrip';
-import { collapsedSettingNote, SettingsSection } from './SettingsSection';
+import { SettingsSection } from './SettingsSection';
+import { collapsedSettingNote } from './collapsedSettingNote';
 import { UnitStockList } from './UnitStockList';
 import {
   autoFortressReservesDirewolves,

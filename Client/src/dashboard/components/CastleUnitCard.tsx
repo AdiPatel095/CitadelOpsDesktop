@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import UnitImage from '../../components/UnitImage';
 import { SectionCard } from '../../components/ui';
-import { useMetadata } from '../../context/MetadataContext';
+import { useMetadata } from '../../context/useMetadata';
 
 interface CastleUnitCardProps {
   title: string;

@@ -1,8 +1,8 @@
-import { useLocale as useStaticLocale } from "../../i18n/LocaleContext";
+import { useLocale as useStaticLocale } from '../../i18n/useLocale';
 import React from 'react';
 import StaleSessionBanner from '../../components/StaleSessionBanner';
 import DecorationPresetsPanel from '../../components/DecorationPresetsPanel';
-import { useCastleFocus } from '../../context/CastleFocusContext';
+import { useCastleFocus } from '../../context/useCastleFocus';
 import CastleUnitCard from './CastleUnitCard.tsx';
 import CastleQueuesCard from './CastleQueuesCard.tsx';
 import { EmptyState, SectionCard } from '../../components/ui';

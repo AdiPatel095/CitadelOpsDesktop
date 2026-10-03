@@ -1,4 +1,4 @@
-import { useLocale as useStaticLocale } from "../i18n/LocaleContext";
+import { useLocale as useStaticLocale } from '../i18n/useLocale';
 import { LocalizedText } from "../i18n/LocalizedText";
 import React, { useEffect, useMemo, useState } from 'react';
 import {
@@ -13,7 +13,7 @@ import {
   Trash2,
 } from 'lucide-react';
 import type { CastleStateV2, DefenseToolSlotV2 } from '../api/Contracts';
-import { useCitadelAPI } from '../api/ApiContext';
+import { useCitadelAPI } from '../api/useCitadelAPI';
 import { OperationError } from '../api/CitadelClient';
 import DefensePresetEditor from '../components/DefensePresetEditor';
 import { Notifications } from '../components/Notifications';
@@ -28,7 +28,7 @@ import {
   MetricTile,
   Select,
 } from '../components/ui';
-import { useMetadata } from '../context/MetadataContext';
+import { useMetadata } from '../context/useMetadata';
 import { buildPresetDocumentUpdate } from '../configuration/PresetDocumentUpdate';
 import { appCreatedPresetBadge } from '../attackPresets/AttackPresetOptionLabel';
 import {

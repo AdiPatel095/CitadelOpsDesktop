@@ -1,4 +1,4 @@
-import { useLocale as useStaticLocale } from "../../i18n/LocaleContext";
+import { useLocale as useStaticLocale } from '../../i18n/useLocale';
 import { LocalizedText } from "../../i18n/LocalizedText";
 import type { MessageKey } from "../../i18n/messages";
 import { memo, useCallback, useDeferredValue, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
@@ -23,9 +23,9 @@ import {
 } from 'lucide-react';
 import { Badge, Button, Input, Modal, ModalTitle, SectionCard, Select } from '../../components/ui';
 import { SpyReportDetail, type SpyReport } from '../../spyReports/components/SpyReportsView';
-import { useCitadelAPI } from '../../api/ApiContext';
-import { useMetadata } from '../../context/MetadataContext';
-import { useAuth } from '../../context/AuthContext';
+import { useCitadelAPI } from '../../api/useCitadelAPI';
+import { useMetadata } from '../../context/useMetadata';
+import { useAuth } from '../../context/useAuth';
 import { unitObservationFreshness } from '../../settings/requirements/observationFreshness';
 import {
 	ATTACK_PRESETS_SECTION,
