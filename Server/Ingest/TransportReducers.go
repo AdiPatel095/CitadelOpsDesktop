@@ -725,7 +725,11 @@ func reduceKingdomTransport(
 		return nil, false, nil
 	}
 	gameState.KingdomTransport = next
-	return []string{"kingdom-transport"}, true, nil
+	domains := []string{"kingdom-transport"}
+	if fullSnapshot && gameState.ReconcileStormPackageCapEventEnd(frame.ReceivedAt) {
+		domains = append(domains, "storm")
+	}
+	return domains, true, nil
 }
 
 func cloneKingdomTransportState(source State.KingdomTransportState) State.KingdomTransportState {

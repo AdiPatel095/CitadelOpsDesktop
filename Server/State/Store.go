@@ -1539,6 +1539,7 @@ func cloneGameStateComponents(source GameState, components ComponentSet) GameSta
 		clone.Invasion.FortifyCurrencies = append([]string(nil), source.Invasion.FortifyCurrencies...)
 	}
 	if components.Has(ComponentStorm) {
+		clone.Storm.PackageCapBlocks = cloneMap(source.Storm.PackageCapBlocks)
 		clone.Storm.TravelObservations = cloneMap(source.Storm.TravelObservations)
 		for key, observation := range clone.Storm.TravelObservations {
 			if observation.HorseBoosterWID != nil {

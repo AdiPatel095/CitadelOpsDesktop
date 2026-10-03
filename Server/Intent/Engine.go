@@ -1652,6 +1652,11 @@ func (engine *Engine) executeStep(ctx context.Context, afterRevision uint64, ste
 	if err := advanceEffectPhase(ctx, EffectPhaseDispatching); err != nil {
 		return nil, compensateDefinitiveSendFailure(fmt.Errorf("persist dispatching effect: %w", err))
 	}
+	var stormCapState State.GameState
+	stormCapSentAt := time.Now().UTC()
+	if command.Opcode == "sbp" && step.CaptureResponse {
+		stormCapState = engine.state.ReadOnlyView()
+	}
 	if err := engine.sender.Send(sendContext, payload); err != nil {
 		if Outbound.IsIndeterminate(err) {
 			if finalDispatchProvider != nil {
@@ -1755,6 +1760,9 @@ func (engine *Engine) executeStep(ctx context.Context, afterRevision uint64, ste
 				response := frame.Frame
 				response.Raw = ""
 				exchange.Response = &response
+			}
+			if err := recordStormPackageCapEvidence(ctx, command, frame.Frame, stormCapState, stormCapSentAt); err != nil {
+				return exchange, err
 			}
 			var definitiveErr error
 			if frame.Frame.ResponseCode != nil && *frame.Frame.ResponseCode != 0 {
