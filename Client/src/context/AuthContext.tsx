@@ -253,7 +253,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 	}
 	previous.enabled = { ...automationEnabledByKey };
 	if (next) setEnabledSince(next);
-  // eslint-disable-next-line react-hooks/exhaustive-deps -- only switch changes and account changes matter
   }, [accountId, automationEnabledByKey]);
 
   const value = useMemo<AuthContextType>(() => ({

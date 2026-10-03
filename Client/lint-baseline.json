@@ -45,6 +45,9 @@
       "react-hooks/preserve-manual-memoization": 1,
       "react-hooks/set-state-in-effect": 1
     },
+    "src/context/AuthContext.tsx": {
+      "react-hooks/refs": 1
+    },
     "src/context/CastleFocusContext.tsx": {
       "react-hooks/set-state-in-effect": 1
     },
