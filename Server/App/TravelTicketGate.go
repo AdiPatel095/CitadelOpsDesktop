@@ -3,6 +3,8 @@ package App
 import (
 	"context"
 	"encoding/json"
+	"math"
+	"strings"
 	"sync"
 	"time"
 
@@ -26,6 +28,31 @@ func ticketTravel(payload json.RawMessage) bool {
 	var fields struct{ PTT int }
 	return json.Unmarshal(payload, &fields) == nil && fields.PTT == 1
 }
+
+// Ordinary commands represent one movement. Advisor and Baron Advisor CRA
+// commands represent AAC movements; an explicit but invalid count is unknown.
+func travelTicketMovementCount(step Intent.Step) (int64, bool) {
+	if !strings.EqualFold(step.Opcode, "cra") {
+		return 1, true
+	}
+	var fields struct {
+		AAC  json.RawMessage
+		AAT  json.RawMessage
+		AAM  json.RawMessage
+		AASM json.RawMessage
+	}
+	if json.Unmarshal(step.Payload, &fields) != nil {
+		return 0, false
+	}
+	if len(fields.AAC) == 0 {
+		return 1, len(fields.AAT) == 0 && len(fields.AAM) == 0 && len(fields.AASM) == 0
+	}
+	var count int64
+	if json.Unmarshal(fields.AAC, &count) != nil || count <= 0 {
+		return 0, false
+	}
+	return count, true
+}
 func (gate *travelTicketDispatchGate) budget(state State.GameState) (int64, int64, bool) {
 	observed, known := Intent.ObservedCurrency(state, Intent.TravelTicketCurrencyID)
 	if !known {
@@ -40,7 +67,14 @@ func (gate *travelTicketDispatchGate) budget(state State.GameState) (int64, int6
 	gate.watermark = observation
 	gate.watermarkBalance = observed
 	gate.reconcile(observation, observed)
-	pending := int64(len(gate.pending))
+	pending := int64(0)
+	for _, debit := range gate.pending {
+		if debit.amount > math.MaxInt64-pending {
+			pending = math.MaxInt64
+			break
+		}
+		pending += debit.amount
+	}
 	return observed, pending, true
 }
 func (gate *travelTicketDispatchGate) AvailableCurrency(state State.GameState, id State.CurrencyID) (int64, int64, bool) {
@@ -56,21 +90,22 @@ func (gate *travelTicketDispatchGate) Validate(ctx context.Context, input Intent
 	if !ticketTravel(step.Payload) {
 		return nil
 	}
+	needed, countKnown := travelTicketMovementCount(step)
 	gate.mu.Lock()
 	defer gate.mu.Unlock()
 	observed, pending, known := gate.budget(input.State)
 	key := coinDispatchKey(ctx, step)
-	_, exists := gate.pending[key]
+	debit, exists := gate.pending[key]
 	if exists {
-		pending--
+		pending -= debit.amount
 	}
-	if !known || observed-pending < 1 {
-		err := &Intent.CurrencyUnavailableError{CurrencyID: Intent.TravelTicketCurrencyID, Required: 1, Observed: observed, Pending: pending, Known: known}
+	if !known || !countKnown || observed-pending < needed {
+		err := &Intent.CurrencyUnavailableError{CurrencyID: Intent.TravelTicketCurrencyID, Required: needed, Observed: observed, Pending: pending, Known: known && countKnown}
 		return Localization.WithError(err, err.LocalizationMessage())
 	}
 	if !exists {
 		observation := input.State.Player.CurrencyObservations[Intent.TravelTicketCurrencyID]
-		gate.pending[key] = pendingCoinDebit{amount: 1, observedBalance: observed, observedAt: observation.ObservedAt, connectionGeneration: observation.ConnectionGeneration, reservedAt: time.Now().UTC()}
+		gate.pending[key] = pendingCoinDebit{amount: needed, observedBalance: observed, observedAt: observation.ObservedAt, connectionGeneration: observation.ConnectionGeneration, reservedAt: time.Now().UTC()}
 	}
 	return nil
 }
