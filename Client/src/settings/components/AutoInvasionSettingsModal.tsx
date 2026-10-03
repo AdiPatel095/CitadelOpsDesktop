@@ -1,9 +1,9 @@
 import { StopFooter } from '../../components/StopControl';
-import { useLocale as useStaticLocale } from "../../i18n/LocaleContext";
+import { useLocale as useStaticLocale } from '../../i18n/useLocale';
 import { LocalizedText } from "../../i18n/LocalizedText";
 import React, { useEffect, useMemo, useState } from 'react';
 import { BookOpen, Clock3, Crosshair, ShieldCheck, ShieldPlus, Target } from 'lucide-react';
-import { useCitadelAPI } from '../../api/ApiContext';
+import { useCitadelAPI } from '../../api/useCitadelAPI';
 import { castleOptionsFromState } from '../../api/Selectors';
 import {
   ATTACK_PRESETS_SECTION,
@@ -17,7 +17,7 @@ import {
 import { attackPresetReferences } from '../../attackPresets/AttackPresetReferences';
 import { Badge, Button, Card, Input, Select, SettingsModal, Switch } from '../../components/ui';
 import { Notifications } from '../../components/Notifications';
-import { useMetadata } from '../../context/MetadataContext';
+import { useMetadata } from '../../context/useMetadata';
 import { useConfigurationDraftSession } from '../ConfigurationDraftSession';
 import {
   saveInlineSetupAsUserPreset,
@@ -53,7 +53,8 @@ import { AUTOMATION_ENABLED_KEYS } from '../disclosure/placement';
 import { countCustomValues, travelLine } from '../disclosure/summaries';
 import { useSettingsDisclosure } from '../disclosure/useSettingsDisclosure';
 import { AutomationRunStrip } from './AutomationRunStrip';
-import { collapsedSettingNote, SettingsSection } from './SettingsSection';
+import { SettingsSection } from './SettingsSection';
+import { collapsedSettingNote } from './collapsedSettingNote';
 import { useDraftRecovery } from '../useDraftRecovery';
 
 /** What the editor holds right after it loads a saved configuration: used by the load effect and by draft recovery. */

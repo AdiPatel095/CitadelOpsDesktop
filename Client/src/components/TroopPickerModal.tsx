@@ -1,13 +1,15 @@
-import { useLocale as useStaticLocale } from "../i18n/LocaleContext";
+export type { FoodFilter, QuickAccessTab, RoleFilter, SelectionMode, TroopPickerOptions, TroopPickerResult, TroopPickerResultSimple, TroopPickerResultWithQuantity, TypeFilter, UnitWithQuantity } from './TroopPicker';
+import { troopPickerBridge, type FoodFilter, type QuickAccessTab, type RoleFilter, type TroopPickerOptions, type TroopPickerResult, type TypeFilter } from './TroopPicker';
+import { useLocale as useStaticLocale } from '../i18n/useLocale';
 import { LocalizedText } from "../i18n/LocalizedText";
 import React, { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import { Check, Heart, List, Flame } from 'lucide-react';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import UnitImage from './UnitImage';
-import { useMetadata, type MetadataItem } from '../context/MetadataContext';
+import { type MetadataItem } from '../context/MetadataContext';
+import { useMetadata } from '../context/useMetadata';
 import { unitCombatRole } from '../settings/UnitRole';
-import type { CastleStateV2 } from '../api/Contracts';
-import { stockObservationNote, unitObservationFreshness, type ObservationContext } from '../settings/requirements/observationFreshness';
+import { stockObservationNote, unitObservationFreshness } from '../settings/requirements/observationFreshness';
 import {
   getFavorites,
   toggleFavorite,
@@ -20,44 +22,6 @@ import { CatalogPickerModal, EmptyState, Input, PillSelector } from './ui';
 // Types
 // ============================================
 
-export type SelectionMode = 'single' | 'multi';
-export type QuickAccessTab = 'all' | 'favorites' | 'frequent';
-export type TypeFilter = 'all' | 'melee' | 'range';
-export type RoleFilter = 'all' | 'attack' | 'defense';
-export type FoodFilter = 'all' | 'mead' | 'beef' | 'food';
-
-export interface UnitWithQuantity {
-  unitId: number;
-  quantity: number;
-}
-
-export interface TroopPickerOptions {
-  mode: SelectionMode;
-  title?: string;
-  preselected?: number[];
-  /** When true, allows setting a quantity for each selected unit */
-  allowQuantity?: boolean;
-  /** Pre-filled quantities when allowQuantity is true */
-  preselectedQuantities?: Record<number, number>;
-  /** Restrict the list to these unit ids (e.g. main castle troopsI). */
-  allowedUnitIds?: number[];
-  /** Hide units that the calling workflow owns or reserves. */
-  excludedUnitIds?: number[];
-  /** Optional in-castle stock counts shown on each unit card. */
-  stockQuantities?: Record<number, number>;
-  /**
-   * Where `stockQuantities` come from and how current they are (CIT-20): counts are captioned "last known"
-   * with the reason when the game connection is not current, and "as of <time>" when the game reports a
-   * castle time. Selection never changes.
-   */
-  stockObservation?: { castle: Pick<CastleStateV2, 'unitsObservedAt'> | null; observation: ObservationContext };
-}
-
-// Result type varies based on options
-export type TroopPickerResultSimple = number | number[] | null;
-export type TroopPickerResultWithQuantity = UnitWithQuantity | UnitWithQuantity[] | null;
-export type TroopPickerResult = TroopPickerResultSimple | TroopPickerResultWithQuantity;
-
 interface TroopPickerModalProps {
   isOpen: boolean;
   options: TroopPickerOptions;
@@ -67,21 +31,6 @@ interface TroopPickerModalProps {
 // ============================================
 // Promise-based API
 // ============================================
-
-let resolvePickerPromise: ((value: TroopPickerResult) => void) | null = null;
-let setPickerState: React.Dispatch<React.SetStateAction<{ isOpen: boolean; options: TroopPickerOptions | null }>> | null = null;
-
-/**
- * Show the troop picker modal and return the selected troop(s).
- */
-export function showTroopPicker(options: TroopPickerOptions): Promise<TroopPickerResult> {
-  return new Promise((resolve) => {
-    resolvePickerPromise = resolve;
-    if (setPickerState) {
-      setPickerState({ isOpen: true, options });
-    }
-  });
-}
 
 // ============================================
 // Provider Component (mount once in App)
@@ -95,15 +44,15 @@ export const TroopPickerProvider: React.FC<{ children: React.ReactNode }> = ({ c
 
   // Register the setState function for the promise API
   useEffect(() => {
-    setPickerState = setState;
-    return () => { setPickerState = null; };
+    troopPickerBridge.setState = setState;
+    return () => { troopPickerBridge.setState = null; };
   }, []);
 
   const handleClose = useCallback((result: TroopPickerResult) => {
     setState({ isOpen: false, options: null });
-    if (resolvePickerPromise) {
-      resolvePickerPromise(result);
-      resolvePickerPromise = null;
+    if (troopPickerBridge.resolve) {
+      troopPickerBridge.resolve(result);
+      troopPickerBridge.resolve = null;
     }
   }, []);
 

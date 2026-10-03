@@ -1,7 +1,7 @@
 import { LocalizedText } from "../i18n/LocalizedText";
 import React from 'react';
-import { useAuth } from '../context/AuthContext';
-import { useCastleFocus } from '../context/CastleFocusContext';
+import { useAuth } from '../context/useAuth';
+import { useCastleFocus } from '../context/useCastleFocus';
 import { castleDisplayName } from '../api/Selectors';
 
 /** Header chip: focused castle name only. */

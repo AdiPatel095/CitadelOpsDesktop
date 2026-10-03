@@ -1,4 +1,6 @@
-import { useLocale as useStaticLocale } from "../../i18n/LocaleContext";
+import { attackEconomyFeatureDefinitions, type AttackEconomyFeatureID } from './AttackEconomyFeatures';
+export type { AttackEconomyFeatureID } from './AttackEconomyFeatures';
+import { useLocale as useStaticLocale } from '../../i18n/useLocale';
 import { LocalizedText } from "../../i18n/LocalizedText";
 import { useCallback, useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import type { PointerEvent as ReactPointerEvent } from 'react';
@@ -12,7 +14,8 @@ import {
 import StaleSessionBanner from '../../components/StaleSessionBanner';
 import { Badge, Button, Card, CardContent, CardHeader, CardTitle, PageHeader, PillSelector } from '../../components/ui';
 import { Notifications } from '../../components/Notifications';
-import { useMetadata, type MetadataItem } from '../../context/MetadataContext';
+import { type MetadataItem } from '../../context/MetadataContext';
+import { useMetadata } from '../../context/useMetadata';
 import { runtimeFetch } from '../../api/RuntimeURL';
 import {
   aggregateEndTimestamp,
@@ -24,20 +27,6 @@ import {
   type AttackEconomyAggregate,
 } from './AttackEconomyHistory';
 
-export const attackEconomyFeatureDefinitions = [
-  { id: 'autoInvasion', label: 'Auto Invasion', description: 'Foreign Lord and Bloodcrow castles', color: '#f97316' },
-  { id: 'autoFortress', label: 'Auto Fortress', description: 'Outer-kingdom fortresses', color: '#0ea5e9' },
-  { id: 'autoTowers', label: 'Auto Towers', description: 'Robber-baron and kingdom towers', color: '#f59e0b' },
-  { id: 'autoStorm', label: 'Auto Storm', description: 'Storm forts and resource islands', color: '#38bdf8' },
-  { id: 'autoNomad', label: 'Auto Nomad', description: 'Nomad and Samurai camps', color: '#ef4444' },
-  { id: 'autoAdvisor', label: 'Auto Advisor', description: 'Advisor-selected event targets', color: '#14b8a6' },
-  { id: 'autoKhan', label: 'Auto Khan', description: 'Khan camp attacks', color: '#eab308' },
-  { id: 'autoBeriWorld', label: 'Auto Beri', description: 'Berimond towers', color: '#a855f7' },
-  { id: 'riftMaiden', label: 'Rift Maiden', description: 'Rift Maiden waves', color: '#ec4899' },
-  { id: 'riftReplay', label: 'Rift Replay', description: 'Replayed Rift attacks', color: '#8b5cf6' },
-] as const;
-
-export type AttackEconomyFeatureID = typeof attackEconomyFeatureDefinitions[number]['id'];
 type RangeKey = '24h' | '7d' | '30d' | 'all';
 const gallantryMetricKey = '__gallantry__';
 const featureViewKeys: Record<AttackEconomyFeatureID, string> = {

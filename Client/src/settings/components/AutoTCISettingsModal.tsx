@@ -1,15 +1,11 @@
 import { StopFooter } from '../../components/StopControl';
 import { LocalizedText } from "../../i18n/LocalizedText";
-import { useLocale } from '../../i18n/LocaleContext';
+import { useLocale } from '../../i18n/useLocale';
 import { officialCatalogGeneration, subscribeOfficialCatalog } from '../../i18n/officialMessages';
 import React, { useState, useEffect, useMemo, useCallback, useSyncExternalStore } from 'react';
 import { Hammer, Trash2, Plus, Minus } from 'lucide-react';
-import {
-  showTCIPicker,
-  type TCIWithLevelCeiling,
-  normalizeLevelRange,
-  TCI_LEVEL_MIN,
-} from '../../components/TCIPickerModal';
+import { type TCIWithLevelCeiling } from '../../components/TCIPickerModal';
+import { showTCIPicker, normalizeLevelRange, TCI_LEVEL_MIN } from '../../components/TCIPicker';
 import {
   fetchConstructionItemsCatalog,
   type ConstructionItemCatalogEntry,
@@ -43,7 +39,7 @@ import {
   NamedPresetControls,
   SettingsModal,
 } from '../../components/ui';
-import { useCitadelAPI } from '../../api/ApiContext';
+import { useCitadelAPI } from '../../api/useCitadelAPI';
 import { castleOptionsFromState } from '../../api/Selectors';
 import { useDraftRecovery } from '../useDraftRecovery';
 

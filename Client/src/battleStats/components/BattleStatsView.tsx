@@ -1,7 +1,7 @@
 import {formatLegacyBattleEffectPercent} from '../utils/BattleEffectNumber';
 import {battleLaneMessageKey} from '../utils/BattleLaneIdentity';
 import type {MessageKey,MessageParameters} from '../../i18n/messages';
-import { useLocale as useStaticLocale } from "../../i18n/LocaleContext";
+import { useLocale as useStaticLocale } from '../../i18n/useLocale';
 import { LocalizedText } from "../../i18n/LocalizedText";
 import React, { useEffect, useId, useMemo, useState } from 'react';
 import {
@@ -22,8 +22,9 @@ import { Badge, Button, Card, CardContent, CardHeader, CardTitle, Input, MetricT
 import UnitImage from '../../components/UnitImage';
 import ToolImage from '../../components/ToolImage';
 import DetailBackButton from '../../components/DetailBackButton';
-import { useMetadata, type MetadataItem } from '../../context/MetadataContext';
-import { useCitadelAPI } from '../../api/ApiContext';
+import { type MetadataItem } from '../../context/MetadataContext';
+import { useMetadata } from '../../context/useMetadata';
+import { useCitadelAPI } from '../../api/useCitadelAPI';
 import type { EquipmentEffectV2, GameStateV2 } from '../../api/Contracts';
 import { runtimeFetch } from '../../api/RuntimeURL';
 import {

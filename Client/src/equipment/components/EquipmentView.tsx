@@ -1,16 +1,16 @@
 import { equipmentEventOptions } from '../EquipmentEventLoadouts';
 import { describeMessage } from '../../i18n/messages';
 import {formatMessage,type LocalizedMessage} from '../../i18n/formatMessage';
-import { useLocale as useStaticLocale } from "../../i18n/LocaleContext";
+import { useLocale as useStaticLocale } from '../../i18n/useLocale';
 import { LocalizedText } from "../../i18n/LocalizedText";
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Activity, RefreshCw, SlidersHorizontal, Sparkles } from 'lucide-react';
-import { useCitadelAPI } from '../../api/ApiContext';
+import { useCitadelAPI } from '../../api/useCitadelAPI';
 import type { GemInstanceV2 } from '../../api/Contracts';
 import StaleSessionBanner from '../../components/StaleSessionBanner';
 import { Notifications } from '../../components/Notifications';
 import { Badge, Button, Card, CardContent, CardHeader, CardTitle, PillSelector, Select } from '../../components/ui';
-import { useMetadata } from '../../context/MetadataContext';
+import { useMetadata } from '../../context/useMetadata';
 import { coinsUnderUpgradeReserve } from '../../utils/UpgradeCoinReserve';
 import {
 	resolveEquipmentEventAvailability,

@@ -1,5 +1,5 @@
 import { LocalizedRichText } from "../../i18n/LocalizedRichText";
-import { useLocale as useStaticLocale } from "../../i18n/LocaleContext";
+import { useLocale as useStaticLocale } from '../../i18n/useLocale';
 import { LocalizedText } from "../../i18n/LocalizedText";
 import { useEffect, useMemo, useRef, useState, type DragEvent, type ReactNode } from 'react';
 import {
@@ -20,10 +20,10 @@ import {
 	X,
 } from 'lucide-react';
 import type { EquipmentEffectTotalV2, EquipmentLoadoutV2, EquipmentOptimizeResponse, EquipmentPriorityV2 } from '../../api/Contracts';
-import { useCitadelAPI } from '../../api/ApiContext';
+import { useCitadelAPI } from '../../api/useCitadelAPI';
 import { Notifications } from '../../components/Notifications';
 import { Badge, Button, Input, MetricTile, Modal, ModalTitle } from '../../components/ui';
-import { useMetadata } from '../../context/MetadataContext';
+import { useMetadata } from '../../context/useMetadata';
 import type { EquipmentLeader } from './EquipmentTypes';
 import {
 	cacheEquipmentPriorityProfile,

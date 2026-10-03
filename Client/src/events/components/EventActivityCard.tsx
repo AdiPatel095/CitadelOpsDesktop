@@ -1,8 +1,8 @@
-import { useLocale as useStaticLocale } from "../../i18n/LocaleContext";
+import { useLocale as useStaticLocale } from '../../i18n/useLocale';
 import React from 'react';
 import { Crosshair, Shield, Sparkles, Swords } from 'lucide-react';
 import type { EventActivityStateV2, EventCombatTotalsV2, ScalableEventScoreV2 } from '../../api/Contracts';
-import { useCitadelAPI } from '../../api/ApiContext';
+import { useCitadelAPI } from '../../api/useCitadelAPI';
 import { MetricTile, SectionCard } from '../../components/ui';
 
 interface EventActivityCardProps {

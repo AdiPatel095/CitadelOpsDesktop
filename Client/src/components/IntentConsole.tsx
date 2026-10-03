@@ -1,4 +1,4 @@
-import { useLocale } from '../i18n/LocaleContext';
+import { useLocale } from '../i18n/useLocale';
 import { useLocalizedErrorState } from '../i18n/useLocalizedErrorState';
 import { useLocalizedMessage } from '../i18n/useLocalizedMessage';
 import { parseMessageDescriptor } from '../i18n/messageDescriptor';

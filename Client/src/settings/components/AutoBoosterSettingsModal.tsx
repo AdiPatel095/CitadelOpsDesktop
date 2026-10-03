@@ -1,10 +1,10 @@
 import { StopFooter } from '../../components/StopControl';
 import { LocalizedRichText } from "../../i18n/LocalizedRichText";
-import { useLocale as useStaticLocale } from "../../i18n/LocaleContext";
+import { useLocale as useStaticLocale } from '../../i18n/useLocale';
 import { LocalizedText } from "../../i18n/LocalizedText";
 import React, { useEffect, useMemo, useState } from 'react';
 import { Clock3, Coins, ShieldCheck, Sparkles, Zap } from 'lucide-react';
-import { useCitadelAPI } from '../../api/ApiContext';
+import { useCitadelAPI } from '../../api/useCitadelAPI';
 import { Badge, Card, Input, SettingsModal } from '../../components/ui';
 import { useConfigurationDraftSession } from '../ConfigurationDraftSession';
 import { AUTOMATION_ENABLED_KEYS } from '../disclosure/placement';

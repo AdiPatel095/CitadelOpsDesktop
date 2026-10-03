@@ -10,8 +10,8 @@ export default defineConfig({
 	plugins: [react(), tailwindcss()],
 	resolve: {
 		alias: [
-			{ find: '../../api/ApiContext', replacement: fileURLToPath(new URL('./api-context.mock.tsx', import.meta.url)) },
-			{ find: '../../context/MetadataContext', replacement: fileURLToPath(new URL('./metadata-context.mock.tsx', import.meta.url)) },
+			{ find: '../../api/useCitadelAPI', replacement: fileURLToPath(new URL('./useCitadelAPI.mock.ts', import.meta.url)) },
+			{ find: '../../context/useMetadata', replacement: fileURLToPath(new URL('./useMetadata.mock.ts', import.meta.url)) },
 		],
 	},
 	server: {

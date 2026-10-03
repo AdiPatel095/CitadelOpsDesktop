@@ -1,7 +1,7 @@
 import React from 'react';
 import { Gauge } from 'lucide-react';
-import { useLocale } from '../i18n/LocaleContext';
-import { useCitadelAPI } from '../api/ApiContext';
+import { useLocale } from '../i18n/useLocale';
+import { useCitadelAPI } from '../api/useCitadelAPI';
 import { useHostedRuntimePresence } from '../config/Deployment';
 
 const DailyAttackTracker: React.FC = () => {

@@ -1,14 +1,14 @@
-import { useLocale as useStaticLocale } from "../../i18n/LocaleContext";
+import { useLocale as useStaticLocale } from '../../i18n/useLocale';
 import { LocalizedText } from "../../i18n/LocalizedText";
 import React, { Suspense, useCallback, useEffect, useMemo, useState } from 'react';
 import { Pencil, Play, SlidersHorizontal, Trash2, Users } from 'lucide-react';
-import { useAuth } from '../../context/AuthContext';
-import { useCastleFocus } from '../../context/CastleFocusContext';
+import { useAuth } from '../../context/useAuth';
+import { useCastleFocus } from '../../context/useCastleFocus';
 import { Badge, Button, EmptyState, Input, SectionCard, Select } from '../../components/ui';
-import { useMovement } from '../../Movement/context/MovementContext';
+import { useMovement } from '../../Movement/context/useMovement';
 import type { CommanderActivity } from '../../Movement/types/MovementState';
 import { commanderStatusForLaunch } from '../../Movement/types/CommanderActivity';
-import { useRiftMap } from '../context/RiftMapContext';
+import { useRiftMap } from '../context/useRiftMap';
 import { formatSavedAt, riftLaunchLabel, type RiftCRALaunchEntry } from '../types/RiftCRALaunch';
 import {
   arriveAtUnixFromOffset,
@@ -18,8 +18,8 @@ import {
 } from '../types/RiftArrivalTime';
 import RiftArrivalClock from './RiftArrivalClock';
 import type { AttackSetupDraft, AttackSetupInventory } from '../../components/AttackSetupModal';
-import { useMetadata } from '../../context/MetadataContext';
-import { useCitadelAPI } from '../../api/ApiContext';
+import { useMetadata } from '../../context/useMetadata';
+import { useCitadelAPI } from '../../api/useCitadelAPI';
 import {
   COMMANDER_FEATURE_SECTION,
   commanderIDsEligibleForFeature,

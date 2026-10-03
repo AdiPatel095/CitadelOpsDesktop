@@ -1,8 +1,8 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { useCitadelAPI } from '../api/ApiContext';
+import { useCitadelAPI } from '../api/useCitadelAPI';
 import { CitadelAPI } from '../api/CitadelClient';
 import type { BackgroundLoginStatus, GameServerEntry } from '../api/Contracts';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../context/useAuth';
 import { LocalizedText } from '../i18n/LocalizedText';
 import { messageLanguageAttributes } from '../i18n/messageLanguage';
 import { useLocalizedMessage } from '../i18n/useLocalizedMessage';

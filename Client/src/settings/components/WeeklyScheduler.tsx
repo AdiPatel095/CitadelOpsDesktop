@@ -1,13 +1,13 @@
-import { useLocale as useStaticLocale } from "../../i18n/LocaleContext";
+import { useLocale as useStaticLocale } from '../../i18n/useLocale';
 import { LocalizedText } from "../../i18n/LocalizedText";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { CalendarDays, Clock, Plus, Search, Trash2, Wand2 } from 'lucide-react';
 import { Badge, Button, Input, Select, SettingsModal, Switch } from '../../components/ui';
-import { showTroopPicker } from '../../components/TroopPickerModal';
-import { showToolPicker } from '../../components/ToolPickerModal';
+import { showTroopPicker } from '../../components/TroopPicker';
+import { showToolPicker } from '../../components/ToolPicker';
 import UnitImage from '../../components/UnitImage';
 import ToolImage from '../../components/ToolImage';
-import { useMetadata } from '../../context/MetadataContext';
+import { useMetadata } from '../../context/useMetadata';
 import { highestAvailableUnitIDInFamily, unitUpgradeFamily } from '../UnitUpgradeFamily';
 import {
   DAY_MINUTES,

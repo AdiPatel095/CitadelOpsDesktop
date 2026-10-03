@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { useCitadelAPI } from '../api/ApiContext';
+import { useCitadelAPI } from '../api/useCitadelAPI';
 import type { CatalogResponse } from '../api/Contracts';
 
 type EventDifficultyRow = Record<string, unknown> & {

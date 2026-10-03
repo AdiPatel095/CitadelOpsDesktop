@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { useAuth } from '../context/AuthContext';
-import { useCastleFocus } from '../context/CastleFocusContext';
+import { useAuth } from '../context/useAuth';
+import { useCastleFocus } from '../context/useCastleFocus';
 import { Select, type SelectOption } from './ui';
 
 const CastleFocusSwitcher: React.FC = () => {
