@@ -121,3 +121,22 @@ func applyFocusedCastleProduction(
 	gameState.SetCastleParts(castleID, castle, State.CastlePartResources)
 	return true, nil
 }
+
+// These help rejections are authoritative no-alliance observations. They do not
+// change roster authority, the rejection whitelist, or lane-lock backstops.
+func reduceAllianceHelpMembershipRejection(
+	_ context.Context, frame Protocol.Frame, gameState *State.GameState, _ *GameData.Store,
+) ([]string, bool, error) {
+	if frame.Direction != Protocol.DirectionInbound ||
+		(frame.Opcode != "aha" && frame.Opcode != "ahr") || frame.ResponseCode == nil ||
+		(*frame.ResponseCode != 270 && *frame.ResponseCode != 114) {
+		return nil, false, nil
+	}
+	changed := gameState.Player.AllianceID != 0 ||
+		gameState.Player.AllianceMembershipObservedAt != frame.ReceivedAt ||
+		gameState.Player.AllianceMembershipGeneration != gameState.Session.Generation
+	gameState.Player.AllianceID = 0
+	gameState.Player.AllianceMembershipObservedAt = frame.ReceivedAt
+	gameState.Player.AllianceMembershipGeneration = gameState.Session.Generation
+	return []string{"player", "alliance-help"}, changed, nil
+}

@@ -2057,6 +2057,9 @@ func coordinatorReadyState() State.GameState {
 func TestCoordinatorRunsCoreAllianceHelpWithEveryFeatureDisabled(t *testing.T) {
 	gameState := coordinatorReadyState()
 	gameState.Session.Generation = 7
+	gameState.Player.AllianceID = 9
+	gameState.Player.AllianceMembershipObservedAt = time.Now().UTC()
+	gameState.Player.AllianceMembershipGeneration = 7
 	gameState.Session.BaselineGeneration = 7
 	gameState.AllianceHelpRequests.OthersObservedGeneration = 7
 	gameState.AllianceHelpRequests.OthersObservedAt = time.Now().UTC()
