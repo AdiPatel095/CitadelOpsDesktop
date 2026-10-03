@@ -51,6 +51,10 @@ func TestStormRoleFinalDispatchCurrentPositiveReserve(t *testing.T) {
 				t.Run(name, func(t *testing.T) {
 					now := time.Now().UTC()
 					state, data := autoBirdIntentTestState(t, now)
+					// CIT-133 requires a current free-commander observation before
+					// the send can reach the Storm reserve guard under test.
+					input := supportCommanderTestInput(t, Intent.PlanningContext{State: state, GameData: data})
+					state, data = input.State, input.GameData
 					state.Castles[10] = State.CastleState{ID: 10, KingdomID: 4, SlotType: 12, Name: "Synthetic Storm", Focused: true, UnitsObservedAt: now, Units: State.CastleUnits{Stationed: map[State.UnitID]int64{489: 100}}}
 					state.Alliance.Holdings[0].KingdomID = 4
 					if mainCastle {
@@ -82,6 +86,7 @@ func TestStormRoleFinalDispatchCurrentPositiveReserve(t *testing.T) {
 						t.Fatal(err)
 					}
 					engine := Intent.NewEngine(registry, app.State, autoBirdStaticGameData{store: data}, sender, autoBirdNoResponseObserver{})
+					engine.SetFinalDispatchProvider(newPremiumCommanderDispatchGate())
 					if err := engine.RegisterStepResolver("auto_bird.dispatch.build", app.resolveAutoBirdDispatchStep); err != nil {
 						t.Fatal(err)
 					}
