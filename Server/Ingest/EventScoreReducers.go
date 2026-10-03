@@ -622,6 +622,10 @@ func reduceGlobalEffectPurchaseAcknowledgement(
 			record.Outcome = State.GlobalEffectPurchaseAccepted
 			record.Detail = "The game accepted the boost purchase; awaiting current boosted-state confirmation"
 		}
+	} else if quote, valid := State.RubyConfirmationQuote(frame.Payload); code == 440 && valid {
+		record.Outcome = State.GlobalEffectPurchaseConfirmationRequired
+		record.QuotedC2 = quote
+		record.Detail = "Daily boost needs confirmation in the game"
 	} else {
 		record.Outcome = State.GlobalEffectPurchaseRejected
 		record.Detail = fmt.Sprintf("The game rejected the boost purchase with result code %d", code)

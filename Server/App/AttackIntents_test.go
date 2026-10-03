@@ -27,6 +27,7 @@ func TestAllianceTargetAttackPlansAndRevalidatesSelectedPreset(t *testing.T) {
 	unitID, toolID := int64(1), int64(2)
 	now := time.Now().UTC()
 	gameState := State.NewGameState()
+	fundTravelTicketsForTest(&gameState)
 	gameState.Player.ID = 9
 	gameState.Player.LegendSkills.ObservedAt = now
 	gameState.Castles[100] = State.CastleState{
@@ -132,10 +133,11 @@ func TestBuildAttackSetupFillsPartialHigherTierWithLowerTroopFamilyTier(t *testi
 func TestRiftTemplateMutationsPersistImmediately(t *testing.T) {
 	dataDir := t.TempDir()
 	gameState := State.NewGameState()
+	fundTravelTicketsForTest(&gameState)
 	gameState.Rift.Launches["launch"] = State.RiftLaunch{
 		ID: "launch", Body: json.RawMessage(`{"LID":5,"A":[{}]}`),
 	}
-	application := &Application{DataDir: dataDir, State: State.NewStore(&gameState)}
+	application := &Application{DataDir: dataDir, State: travelTicketTestStore(&gameState)}
 
 	if err := application.renameRiftTemplate(
 		context.Background(), json.RawMessage(`{"launchId":"launch","displayName":"Saved name"}`),
@@ -169,6 +171,7 @@ func TestRiftTemplateMutationsPersistImmediately(t *testing.T) {
 
 func TestRiftReplayUsesOwnedSchedulerForFutureArrival(t *testing.T) {
 	gameState := State.NewGameState()
+	fundTravelTicketsForTest(&gameState)
 	gameState.Commanders[5] = State.CommanderState{ID: 5, Available: true}
 	gameState.Rift.Launches["launch"] = State.RiftLaunch{
 		ID: "launch", CommanderID: 5, OneWayTTSeconds: 120,
@@ -191,6 +194,7 @@ func TestRiftReplayUsesOwnedSchedulerForFutureArrival(t *testing.T) {
 
 func TestRiftReplaySendsImmediateCommand(t *testing.T) {
 	gameState := State.NewGameState()
+	fundTravelTicketsForTest(&gameState)
 	gameState.Commanders[5] = State.CommanderState{ID: 5, Available: true}
 	gameState.Castles[1] = State.CastleState{ID: 1, X: 1, Y: 2, Focused: true}
 	gameState.Rift.Launches["launch"] = State.RiftLaunch{
@@ -344,6 +348,7 @@ func TestRiftReplayConfiguredTemplatePrecedesRuntimeCapture(t *testing.T) {
 
 func configuredRiftReplayFixture() (State.GameState, State.RiftLaunch) {
 	gameState := State.NewGameState()
+	fundTravelTicketsForTest(&gameState)
 	gameState.Commanders[5] = State.CommanderState{ID: 5, Available: true}
 	gameState.Castles[1] = State.CastleState{
 		ID: 1, KingdomID: 0, X: 1, Y: 2, Focused: true,
@@ -405,6 +410,7 @@ func TestRiftReplayAppliesValidatedAttackSetup(t *testing.T) {
 		t.Fatal(err)
 	}
 	gameState := State.NewGameState()
+	fundTravelTicketsForTest(&gameState)
 	gameState.Commanders[5] = State.CommanderState{ID: 5, Available: true}
 	gameState.Castles[1] = State.CastleState{
 		ID: 1, X: 7, Y: 8, Focused: true,
@@ -485,6 +491,7 @@ func TestAttackSetupAllowsThirtyWaves(t *testing.T) {
 
 func TestRiftReplayBuildsOneCommandPerSelectedCommander(t *testing.T) {
 	gameState := State.NewGameState()
+	fundTravelTicketsForTest(&gameState)
 	gameState.Commanders[7] = State.CommanderState{ID: 7, Available: false}
 	gameState.Commanders[5] = State.CommanderState{ID: 5, Available: true}
 	gameState.Commanders[9] = State.CommanderState{ID: 9, Available: true}
@@ -535,6 +542,7 @@ func TestRiftReplayBuildsOneCommandPerSelectedCommander(t *testing.T) {
 
 func TestRiftReplayRejectsConflictingCommanderInputs(t *testing.T) {
 	gameState := State.NewGameState()
+	fundTravelTicketsForTest(&gameState)
 	gameState.Commanders[5] = State.CommanderState{ID: 5, Available: true}
 	gameState.Rift.Launches["launch"] = State.RiftLaunch{
 		ID: "launch", Body: json.RawMessage(`{"LID":5,"A":[{}]}`),
@@ -556,6 +564,7 @@ func TestRiftReplayValidatesAttackSetupStockAcrossSelectedCommanders(t *testing.
 		t.Fatal(err)
 	}
 	gameState := State.NewGameState()
+	fundTravelTicketsForTest(&gameState)
 	gameState.Commanders[5] = State.CommanderState{ID: 5, Available: true}
 	gameState.Commanders[9] = State.CommanderState{ID: 9, Available: true}
 	gameState.Castles[1] = State.CastleState{
@@ -583,6 +592,7 @@ func TestRiftReplayValidatesAttackSetupStockAcrossSelectedCommanders(t *testing.
 
 func TestRiftReplayCanScheduleBusyCommanderCandidates(t *testing.T) {
 	gameState := State.NewGameState()
+	fundTravelTicketsForTest(&gameState)
 	gameState.Commanders[5] = State.CommanderState{ID: 5, Available: false}
 	gameState.Rift.Launches["launch"] = State.RiftLaunch{
 		ID: "launch", CommanderID: 5, OneWayTTSeconds: 120,
@@ -612,6 +622,7 @@ func TestMaidenWaveUsesSelectedEligibleCommanders(t *testing.T) {
 		t.Fatal(err)
 	}
 	gameState := State.NewGameState()
+	fundTravelTicketsForTest(&gameState)
 	gameState.Castles[1] = State.CastleState{
 		ID: 1, SlotType: 1, KingdomID: 0, X: 7, Y: 8, Focused: true,
 		Units: State.CastleUnits{Stationed: map[State.UnitID]int64{1: 99}},
@@ -677,6 +688,7 @@ func TestMaidenWaveUsesSelectedEligibleCommanders(t *testing.T) {
 
 func TestRiftTargetForKingdomDoesNotUseAnotherKingdom(t *testing.T) {
 	gameState := State.NewGameState()
+	fundTravelTicketsForTest(&gameState)
 	gameState.Map[4] = map[string]State.MapObservation{
 		"rift": {KingdomID: 4, X: 615, Y: 552, TypeID: riftMapTypeID},
 	}
@@ -700,6 +712,7 @@ func TestMaidenWavePassesTypedResourceAdmission(t *testing.T) {
 		t.Fatal(err)
 	}
 	gameState := State.NewGameState()
+	fundTravelTicketsForTest(&gameState)
 	gameState.Castles[1] = State.CastleState{
 		ID: 1, SlotType: 1, KingdomID: 0, X: 7, Y: 8, Focused: true,
 		Units: State.CastleUnits{Stationed: map[State.UnitID]int64{1: 33}},
@@ -722,7 +735,7 @@ func TestMaidenWavePassesTypedResourceAdmission(t *testing.T) {
 		t.Fatal(err)
 	}
 	engine := Intent.NewEngine(
-		registry, State.NewStore(&gameState), beriIntentGameDataProvider{store: gameData}, nil, nil,
+		registry, travelTicketTestStore(&gameState), beriIntentGameDataProvider{store: gameData}, nil, nil,
 	)
 	receipt := engine.Submit(t.Context(), Intent.Request{
 		Name: "rift.maiden_wave.launch", DryRun: true,

@@ -146,6 +146,11 @@ func planMaidenCommsWave(_ context.Context, input Intent.PlanningContext, argume
 	if err != nil {
 		return Intent.Plan{}, Localization.WithError(fmt.Errorf("resolve Rift probe horse travel boost: %w", err), Localization.ErrorContext(Localization.New("server.app.resolve_rift_probe_horse.e8670ea8", "resolve Rift probe horse travel boost", nil), err))
 	}
+	if premiumTravel == 1 {
+		if err := Intent.RequireTravelTickets(input, 1); err != nil {
+			return Intent.Plan{}, err
+		}
+	}
 	availableUnits := source.Units.Stationed[request.UnitID]
 	if availableUnits < maidenProbeCountPerFlank*3 {
 		return Intent.Plan{}, Localization.WithError(fmt.Errorf("main castle has %d of unit %d; at least %d are required", availableUnits, request.UnitID, maidenProbeCountPerFlank*3), Localization.New("server.app.main_castle_has_p.2a5228f9", "main castle has {p0} of unit {p1}; at least {p2} are required", Localization.Params{"p0": availableUnits, "p1": fmt.Sprintf("%d", request.UnitID), "p2": fmt.Sprintf("%d", maidenProbeCountPerFlank*3)}))
@@ -204,6 +209,11 @@ func planMaidenCommsWave(_ context.Context, input Intent.PlanningContext, argume
 	})
 	if err != nil {
 		return Intent.Plan{}, err
+	}
+	if premiumTravel == 1 {
+		if err := Intent.RequireTravelTickets(input, int64(len(resolution.Selected))); err != nil {
+			return Intent.Plan{}, err
+		}
 	}
 	steps, err := buildCRACommandSteps(
 		source, resolution.Selected, "Launch Rift probe",
@@ -650,6 +660,11 @@ func (application *Application) planRiftReplay(_ context.Context, input Intent.P
 		}
 		fields["HBW"], _ = json.Marshal(booster)
 		fields["PTT"], _ = json.Marshal(premiumTravel)
+	}
+	if rawMapInt(fields, "PTT") == 1 {
+		if err := Intent.RequireTravelTickets(input, int64(len(resolution.Selected))); err != nil {
+			return Intent.Plan{}, err
+		}
 	}
 	castleID := strconv.FormatInt(int64(source.ID), 10)
 	claims = append(claims, "castle-focus", "castle:"+castleID, "attack-inventory:"+castleID)

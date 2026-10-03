@@ -75,10 +75,16 @@ func (gate *coinDispatchGate) Validate(
 	observation, observed := input.State.Player.ResourceObservations[State.ResourceID(resourceID)]
 	if input.State.Session.ConnectionGeneration == 0 || !observed || observation.ObservedAt.IsZero() ||
 		observation.ConnectionGeneration != input.State.Session.ConnectionGeneration {
+		if message := supportCoinBalanceUnavailable(step, cost.amount); message != nil {
+			return message
+		}
 		return Localization.WithError(fmt.Errorf("coin affordability unavailable: current-session authoritative C1 balance is missing"), Localization.New("server.app.coin_affordability_unavailable_current.3afa2f9b", "coin affordability unavailable: current-session authoritative C1 balance is missing", nil))
 	}
 	coinBalance := input.State.Player.Resources[State.ResourceID(resourceID)]
 	if coinBalance < 0 || math.IsNaN(coinBalance) || math.IsInf(coinBalance, 0) || coinBalance >= math.Exp2(63) {
+		if message := supportCoinBalanceUnavailable(step, cost.amount); message != nil {
+			return message
+		}
 		return Localization.WithError(fmt.Errorf("coin affordability unavailable: authoritative C1 balance is malformed"), Localization.New("server.app.coin_affordability_unavailable_authoritative.a853c8f4", "coin affordability unavailable: authoritative C1 balance is malformed", nil))
 	}
 	coins := int64(math.Floor(coinBalance))
@@ -90,6 +96,9 @@ func (gate *coinDispatchGate) Validate(
 		(gate.watermark.ConnectionGeneration == observation.ConnectionGeneration && observation.ObservedAt.Before(gate.watermark.ObservedAt)) ||
 		(gate.watermark.ConnectionGeneration == observation.ConnectionGeneration && observation.ObservedAt.Equal(gate.watermark.ObservedAt) &&
 			!gate.watermark.ObservedAt.IsZero() && coins != gate.watermarkBalance) {
+		if message := supportCoinBalanceUnavailable(step, cost.amount); message != nil {
+			return message
+		}
 		return Localization.WithError(fmt.Errorf("%w: coin balance snapshot predates the shared affordability gate", Intent.ErrPlanStale), Localization.New("server.app.intent_plan_became_stale.e2fabc80", "intent plan became stale before dispatch: coin balance snapshot predates the shared affordability gate", nil))
 	}
 	if observation.ConnectionGeneration > gate.watermark.ConnectionGeneration || observation.ObservedAt.After(gate.watermark.ObservedAt) {
@@ -117,9 +126,13 @@ func (gate *coinDispatchGate) Validate(
 	}
 	if cost.amount > math.MaxInt64-cost.reserve || pending > math.MaxInt64-cost.amount-cost.reserve ||
 		coins < pending+cost.amount+cost.reserve {
-		return &Intent.CoinUnavailableError{
+		shortage := &Intent.CoinUnavailableError{
 			Required: cost.amount, Reserve: cost.reserve, Observed: coins, Pending: pending, Source: cost.source,
 		}
+		if message := shortage.LocalizationMessage(); message != nil {
+			return Localization.WithError(shortage, message)
+		}
+		return shortage
 	}
 	if exists {
 		return nil
@@ -787,4 +800,12 @@ func checkedCeilProduct(unitCost float64, amount int64) (int64, error) {
 		return 0, Localization.WithError(fmt.Errorf("coin cost overflowed"), Localization.New("server.app.coin_cost_overflowed.76559520", "coin cost overflowed", nil))
 	}
 	return int64(math.Ceil(value)), nil
+}
+
+func supportCoinBalanceUnavailable(step Intent.Step, needed int64) error {
+	if step.CoinCost == nil || step.CoinCost.Source != Intent.SupportCoinHorseSource {
+		return nil
+	}
+	shortage := &Intent.CoinUnavailableError{Required: needed, Source: step.CoinCost.Source, BalanceUnavailable: true}
+	return Localization.WithError(shortage, shortage.LocalizationMessage())
 }

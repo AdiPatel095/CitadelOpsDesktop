@@ -1,0 +1,11 @@
+{
+  "story": "CIT-123",
+  "source": "Engineering/Plans/CIT-123 Auto Booster respects ruby confirmation.md; Addenda 1 and 2",
+  "englishFallbackKeys": [
+    "server.automation.auto_booster_ruby_confirmation_hold",
+    "server.automation.auto_booster_ruby_confirmation_required",
+    "server.automation.auto_booster_ruby_setting_unknown",
+    "server.intent.ruby_confirmation_required"
+  ],
+  "translationStatus": "English only; pending the epic CIT-116 batched locale translation story"
+}

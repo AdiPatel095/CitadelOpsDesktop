@@ -14,6 +14,7 @@ import (
 
 func TestPlanTroopsStationRejectsAutomationDuringPurchasedProtectionMode(t *testing.T) {
 	gameState := State.NewGameState()
+	fundTravelTicketsForTest(&gameState)
 	gameState.Player.ProtectionMode = State.PlayerProtectionModeState{
 		ModeState: 1, RemainingSec: 3600, ObservedAt: time.Now().UTC(),
 	}
@@ -28,6 +29,7 @@ func TestPlanTroopsStationRejectsAutomationDuringPurchasedProtectionMode(t *test
 
 func TestPlanTroopsStationRejectsTools(t *testing.T) {
 	gameState := State.NewGameState()
+	fundTravelTicketsForTest(&gameState)
 	gameState.Castles[1928] = State.CastleState{
 		ID: 1928, KingdomID: 4, X: 576, Y: 669,
 		Units: State.CastleUnits{Stationed: map[State.UnitID]int64{735: 472_910}},
@@ -55,6 +57,7 @@ func TestPlanTroopsStationRejectsTools(t *testing.T) {
 func TestPlanTroopsStationSkipsAnActiveTrackedAutomationMovement(t *testing.T) {
 	now := time.Now().UTC()
 	gameState := State.NewGameState()
+	fundTravelTicketsForTest(&gameState)
 	gameState.Stationing["autoBird:10"] = State.StationingOperation{
 		ID: "autoBird:10", Purpose: "autoBird", SourceCastleID: 10,
 		TargetCastleID: 20, UpdatedAt: now,
@@ -70,7 +73,8 @@ func TestPlanTroopsStationSkipsAnActiveTrackedAutomationMovement(t *testing.T) {
 
 func TestTrackStationMovementSetsSuccessCooldownThroughConfiguredDelay(t *testing.T) {
 	gameState := State.NewGameState()
-	application := &Application{State: State.NewStore(&gameState)}
+	fundTravelTicketsForTest(&gameState)
+	application := &Application{State: travelTicketTestStore(&gameState)}
 	startedAt := time.Now().UTC()
 	err := application.trackStationMovement(t.Context(), json.RawMessage(`{
 		"sourceCastleId":10,"targetCastleId":20,"delayHours":6,
@@ -92,6 +96,7 @@ func TestTrackStationMovementSetsSuccessCooldownThroughConfiguredDelay(t *testin
 
 func TestPlanTroopsStationRefreshesFocusedSourceAndDefersManifest(t *testing.T) {
 	gameState := State.NewGameState()
+	fundTravelTicketsForTest(&gameState)
 	gameState.Castles[10] = State.CastleState{
 		ID: 10, KingdomID: 0, X: 20, Y: 30, Focused: true,
 		Units: State.CastleUnits{Stationed: map[State.UnitID]int64{489: 100}},
@@ -123,6 +128,7 @@ func TestPlanTroopsStationRefreshesFocusedSourceAndDefersManifest(t *testing.T) 
 
 func TestPlanAutoBirdRequiresManifestObservedAfterItsCastleRefreshStarts(t *testing.T) {
 	gameState := State.NewGameState()
+	fundTravelTicketsForTest(&gameState)
 	gameState.Castles[10] = State.CastleState{
 		ID: 10, KingdomID: 0, X: 20, Y: 30, Focused: true,
 		Units: State.CastleUnits{Stationed: map[State.UnitID]int64{489: 10}},
@@ -162,6 +168,7 @@ func TestPlanAutoBirdRequiresManifestObservedAfterItsCastleRefreshStarts(t *test
 
 func TestResolveTroopsStationClampsAutomationToRefreshedUnits(t *testing.T) {
 	gameState := State.NewGameState()
+	fundTravelTicketsForTest(&gameState)
 	gameState.Castles[10] = State.CastleState{
 		ID: 10, KingdomID: 0,
 		Units: State.CastleUnits{Stationed: map[State.UnitID]int64{215: 67_644, 216: 39_237, 489: 92}},
@@ -197,6 +204,7 @@ func TestResolveTroopsStationClampsAutomationToRefreshedUnits(t *testing.T) {
 func TestResolveAutoBirdRebuildsManifestFromFreshJAA(t *testing.T) {
 	observedAt := time.Now().UTC()
 	gameState := State.NewGameState()
+	fundTravelTicketsForTest(&gameState)
 	gameState.Castles[10] = State.CastleState{
 		ID: 10, KingdomID: 0, UnitsObservedAt: observedAt,
 		Units: State.CastleUnits{Stationed: map[State.UnitID]int64{
@@ -254,6 +262,7 @@ func TestResolveAutoBirdRebuildsManifestFromFreshJAA(t *testing.T) {
 
 func TestResolveAutoBirdRejectsInventoryNotRefreshedAfterPlan(t *testing.T) {
 	gameState := State.NewGameState()
+	fundTravelTicketsForTest(&gameState)
 	gameState.Castles[10] = State.CastleState{
 		ID: 10, KingdomID: 0, UnitsObservedAt: time.Date(2026, 7, 29, 13, 59, 59, 0, time.UTC),
 		Units: State.CastleUnits{Stationed: map[State.UnitID]int64{489: 100}},
@@ -275,6 +284,7 @@ func TestResolveAutoBirdRejectsInventoryNotRefreshedAfterPlan(t *testing.T) {
 
 func TestResolveTroopsStationRejectsStaleManualAmount(t *testing.T) {
 	gameState := State.NewGameState()
+	fundTravelTicketsForTest(&gameState)
 	gameState.Castles[10] = State.CastleState{
 		ID: 10, KingdomID: 0, Units: State.CastleUnits{Stationed: map[State.UnitID]int64{489: 90}},
 	}
@@ -292,6 +302,7 @@ func TestResolveTroopsStationRejectsStaleManualAmount(t *testing.T) {
 func TestTrackStationMovementUsesResolvedManifest(t *testing.T) {
 	now := time.Now().UTC()
 	gameState := State.NewGameState()
+	fundTravelTicketsForTest(&gameState)
 	gameState.Alliance.Holdings = []State.AllianceHolding{{
 		CastleID: 20, KingdomID: 0, X: 40, Y: 50, SlotType: 1,
 	}}
@@ -300,7 +311,7 @@ func TestTrackStationMovementUsesResolvedManifest(t *testing.T) {
 		Units:      map[State.UnitID]int64{215: 67_644, 216: 39_237, 489: 92},
 		ObservedAt: now,
 	}
-	application := &Application{State: State.NewStore(&gameState)}
+	application := &Application{State: travelTicketTestStore(&gameState)}
 	err := application.trackStationMovement(t.Context(), json.RawMessage(`{
 		"sourceCastleId":10,"targetCastleId":20,"delayHours":1,
 		"purpose":"autoStation","trackingId":"autoStation:10",
@@ -318,6 +329,7 @@ func TestTrackStationMovementUsesResolvedManifest(t *testing.T) {
 func TestTrackAutoBirdMovementUsesFreshResolvedManifest(t *testing.T) {
 	now := time.Now().UTC()
 	gameState := State.NewGameState()
+	fundTravelTicketsForTest(&gameState)
 	gameState.Castles[10] = State.CastleState{
 		ID: 10, KingdomID: 0, UnitsObservedAt: now,
 		Units: State.CastleUnits{Stationed: map[State.UnitID]int64{215: 100, 216: 50}},
@@ -330,7 +342,7 @@ func TestTrackAutoBirdMovementUsesFreshResolvedManifest(t *testing.T) {
 		Units:      map[State.UnitID]int64{215: 90, 216: 45},
 		ObservedAt: now,
 	}
-	application := &Application{State: State.NewStore(&gameState)}
+	application := &Application{State: travelTicketTestStore(&gameState)}
 	err := application.trackStationMovement(t.Context(), json.RawMessage(`{
 		"sourceCastleId":10,"targetCastleId":20,"delayHours":1,
 		"purpose":"autoBird","trackingId":"autoBird:10","freshManifest":true,

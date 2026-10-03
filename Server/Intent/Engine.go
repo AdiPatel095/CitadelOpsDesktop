@@ -40,19 +40,24 @@ var ErrCoinUnavailable = errors.New("not enough coins for dispatch")
 var errOperationReconciled = errors.New("operation completed in authoritative rejection refresh")
 
 type CoinUnavailableError struct {
-	Required int64
-	Reserve  int64
-	Observed int64
-	Pending  int64
-	Source   string
+	BalanceUnavailable bool
+	Required           int64
+	Reserve            int64
+	Observed           int64
+	Pending            int64
+	Source             string
 }
 
 func (err *CoinUnavailableError) Error() string {
 	available := max(int64(0), err.Observed-err.Pending)
-	return fmt.Sprintf(
+	detail := fmt.Sprintf(
 		"%v: %d needed plus %d reserved; %d available from %d observed after %d pending (%s)",
 		ErrCoinUnavailable, err.Required, err.Reserve, available, err.Observed, err.Pending, err.Source,
 	)
+	if err.BalanceUnavailable {
+		detail += ": current-session balance unavailable"
+	}
+	return detail
 }
 
 func (err *CoinUnavailableError) Unwrap() error { return ErrCoinUnavailable }
@@ -546,7 +551,7 @@ func (engine *Engine) execute(prepared *preparedSubmission) Receipt {
 		if err := executionContext.Err(); err != nil {
 			return engine.fail(receipt, err)
 		}
-		planningInput := engine.planningContext()
+		planningInput := engine.planningContextForRequest(executionContext)
 		plannedFrom := planningInput.State
 		if operationConnectionGeneration == 0 && sessionHasAuthoritativeBaseline(plannedFrom.Session) {
 			operationConnectionGeneration = plannedFrom.Session.ConnectionGeneration
@@ -639,7 +644,7 @@ func (engine *Engine) execute(prepared *preparedSubmission) Receipt {
 		current := plannedFrom
 		currentInput := planningInput
 		if revalidate {
-			currentInput = engine.planningContext()
+			currentInput = engine.planningContextForRequest(executionContext)
 			current = currentInput.State
 		}
 		if !expectedRevisionAccepted && request.ExpectedRevision != nil && current.Revision != *request.ExpectedRevision {
@@ -1362,7 +1367,7 @@ func (engine *Engine) executeStep(ctx context.Context, afterRevision uint64, ste
 				opcode: strings.ToLower(strings.TrimSpace(dependency.Opcode)), key: key,
 			})
 		}
-		planningInput := engine.planningContext()
+		planningInput := engine.planningContextForRequest(ctx)
 		current := planningInput.State
 		resolved, err := resolver(ctx, planningInput, step.ResolverArguments)
 		if err != nil {
@@ -1745,6 +1750,7 @@ func (engine *Engine) executeStep(ctx context.Context, afterRevision uint64, ste
 				response.Raw = ""
 				exchange.Response = &response
 			}
+			var definitiveErr error
 			if frame.Frame.ResponseCode != nil && *frame.Frame.ResponseCode != 0 {
 				if finalDispatchProvider != nil {
 					if step.ResponseRetry != nil && containsInt(step.ResponseRetry.Codes, *frame.Frame.ResponseCode) {
@@ -1754,7 +1760,7 @@ func (engine *Engine) executeStep(ctx context.Context, afterRevision uint64, ste
 					}
 					postSendOutcomeHandled = true
 				}
-				responseErr := engine.unsuccessfulResponseCode(frame.Frame.Opcode, *frame.Frame.ResponseCode)
+				responseErr := engine.unsuccessfulResponseFrame(frame.Frame)
 				guarded := engine.guardRejection(ctx, responseErr)
 				if recovery := step.RejectionReconciliation; recovery != nil && recovery.Code == *frame.Frame.ResponseCode {
 					// Read-only refresh is allowed while the originating lane is
@@ -1788,6 +1794,13 @@ func (engine *Engine) executeStep(ctx context.Context, afterRevision uint64, ste
 				if errors.As(guarded, &locked) {
 					return exchange, guarded
 				}
+				var confirmation *ConfirmationRequiredError
+				if errors.As(guarded, &confirmation) {
+					definitiveErr = guarded
+					if len(step.SuccessCodes) == 0 {
+						return exchange, definitiveErr
+					}
+				}
 			}
 			if (expectedConnection > 0 || sessionAtSend.Generation > 0) && sessionChanged() {
 				return exchange, Outbound.MarkIndeterminate(fmt.Errorf("game session changed while waiting for %s", strings.Join(awaitOpcodes, " or ")))
@@ -1802,7 +1815,10 @@ func (engine *Engine) executeStep(ctx context.Context, afterRevision uint64, ste
 					return exchange, responseErr
 				}
 				if !containsInt(step.SuccessCodes, *frame.Frame.ResponseCode) {
-					responseErr := engine.unsuccessfulResponseCode(frame.Frame.Opcode, *frame.Frame.ResponseCode)
+					responseErr := definitiveErr
+					if responseErr == nil {
+						responseErr = engine.unsuccessfulResponseFrame(frame.Frame)
+					}
 					if step.ResponseRetry != nil && containsInt(step.ResponseRetry.Codes, *frame.Frame.ResponseCode) {
 						if err := advanceEffectPhase(ctx, EffectPhaseObserved); err != nil {
 							return exchange, Outbound.MarkIndeterminate(fmt.Errorf("persist observed retry response: %w", err))
@@ -2018,7 +2034,7 @@ func (engine *Engine) executeCommandDependencies(
 	if resolver == nil {
 		return afterRevision, "", nil
 	}
-	planningInput := engine.planningContext()
+	planningInput := engine.planningContextForRequest(ctx)
 	dependencies, err := resolver(ctx, planningInput, step)
 	if err != nil {
 		return afterRevision, "", err
@@ -2083,6 +2099,13 @@ func (engine *Engine) fail(receipt Receipt, err error) Receipt {
 }
 
 func (engine *Engine) failAfterProgress(receipt Receipt, err error, completedSteps map[string]int) Receipt {
+	// The booster baseline read is not a successful purchase. Its scoped quote
+	// failure must remain Failed so expected-state presentation stays on the lane.
+	var confirmation *ConfirmationRequiredError
+	if errors.As(err, &confirmation) {
+		return engine.fail(receipt, err)
+	}
+
 	if Outbound.IsIndeterminate(err) || receipt.Plan == nil || receipt.Plan.Effect == EffectRead {
 		return engine.fail(receipt, err)
 	}
@@ -2323,8 +2346,20 @@ func (engine *Engine) SetCommanderHolds(registry CommanderHoldRegistry) {
 	engine.commanderHolds = registry
 }
 
+func (engine *Engine) planningContextForRequest(ctx context.Context) PlanningContext {
+	input := engine.planningContext()
+	if request, ok := ctx.Value(laneSafetyContextKey{}).(Request); ok {
+		input.AutomationLane = request.AutomationLane
+		input.IntentName = request.Name
+	}
+	return input
+}
+
 func (engine *Engine) planningContext() PlanningContext {
 	input := PlanningContext{CommanderHolds: engine.commanderHolds}
+	engine.mu.RLock()
+	input.CurrencyAvailability, _ = engine.finalDispatchProvider.(CurrencyAvailabilityProvider)
+	engine.mu.RUnlock()
 	if provider, ok := engine.state.(interface{ PlanningView() State.PlanningView }); ok {
 		view := provider.PlanningView()
 		input.State = view.State

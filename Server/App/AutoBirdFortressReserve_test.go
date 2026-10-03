@@ -110,11 +110,11 @@ func TestAutoBirdFreshJAAPreparationAppliesDerivedDirewolfReserve(t *testing.T) 
 	}
 	configuration := autoBirdFortressConfiguration(t, json.RawMessage(`{"auto_fortress":true}`), 1)
 	application := &Application{
-		State: State.NewStore(&gameState), Configuration: configuration,
+		State: travelTicketTestStore(&gameState), Configuration: configuration,
 		GameData: autoBirdFortressGameDataManager(t),
 	}
 	arguments, _ := json.Marshal(autoBirdCycleRequest{
-		SourceCastleID: 10, TrackingID: "autoBird:10", UnitsRefreshAt: now.Add(-time.Second),
+		ConnectionGeneration: gameState.Session.ConnectionGeneration, SourceCastleID: 10, TrackingID: "autoBird:10", UnitsRefreshAt: now.Add(-time.Second),
 		ExpectedTargetCastle: 20, MinimumDelayHours: 6, MaximumDelayHours: 12,
 		Reserves: []stationUnitRequest{{UnitID: GameData.DirewolfUnitID, Amount: 10}},
 	})
@@ -154,10 +154,10 @@ func TestAutoBirdFinalDispatchRebuildsLateDirewolfBatchAndAllowsOrdinaryBatch(t 
 				UnitsObservedAt: now, UpdatedAt: now,
 			}
 			configuration := autoBirdFortressConfiguration(t, json.RawMessage(`{"auto_fortress":false,"auto_bird":true}`), 1)
-			state := State.NewStore(&gameState)
+			state := travelTicketTestStore(&gameState)
 			application := &Application{State: state, Configuration: configuration}
 			request, _ := json.Marshal(autoBirdCycleRequest{
-				SourceCastleID: 10, TrackingID: "autoBird:10", DispatchStartedAt: now.Add(-time.Second),
+				ConnectionGeneration: gameState.Session.ConnectionGeneration, SourceCastleID: 10, TrackingID: "autoBird:10", DispatchStartedAt: now.Add(-time.Second),
 				ExpectedTargetCastle: 20, MinimumDelayHours: 6, MaximumDelayHours: 12,
 			})
 			sender := &autoBirdFinalGuardSender{configuration: configuration}

@@ -111,7 +111,7 @@ func TestFortressAttackEngineFinalizesOnlyWithAuthoritativeMovement(t *testing.T
 			gameState := fortressIntentState(now)
 			gameState.Player.ID = 42
 			gameState.Session.ConnectionGeneration = 1
-			stateStore := State.NewStore(&gameState)
+			stateStore := travelTicketTestStore(&gameState)
 			ingestRegistry := Ingest.NewRegistry()
 			if err := Ingest.RegisterCoreReducers(ingestRegistry); err != nil {
 				t.Fatal(err)
@@ -341,7 +341,7 @@ func runFortressEngineScenario(
 	gameState := fortressIntentState(now)
 	gameState.Player.ID = 42
 	gameState.Session.ConnectionGeneration = 1
-	stateStore := State.NewStore(&gameState)
+	stateStore := travelTicketTestStore(&gameState)
 	ingestRegistry := Ingest.NewRegistry()
 	if err := Ingest.RegisterCoreReducers(ingestRegistry); err != nil {
 		t.Fatal(err)
@@ -518,7 +518,7 @@ func TestFortressTargetVerificationUsesTransportResponseCorrelation(t *testing.T
 	source.Focused = true
 	state.Castles[10] = source
 	state.Session.ConnectionGeneration = 1
-	store := State.NewStore(&state)
+	store := travelTicketTestStore(&state)
 	registry := Ingest.NewRegistry()
 	if err := Ingest.RegisterCoreReducers(registry); err != nil {
 		t.Fatal(err)
@@ -690,13 +690,14 @@ func TestFortressMapWindowWaitsForCommittedCorrelatedResponse(t *testing.T) {
 func TestCaptureFullFortressMapRemovesOnlyStaleTargetsInsideScannedWindows(t *testing.T) {
 	startedAt := time.Now().UTC()
 	state := State.NewGameState()
+	fundTravelTicketsForTest(&state)
 	state.Castles[10] = State.CastleState{ID: 10, KingdomID: 1, SlotType: 12}
 	state.Map[1] = map[string]State.MapObservation{
 		"10:10":   {KingdomID: 1, X: 10, Y: 10, TypeID: State.MapTypeKingdomFortress, ObservedAt: startedAt.Add(-time.Hour)},
 		"20:20":   {KingdomID: 1, X: 20, Y: 20, TypeID: State.MapTypeKingdomFortress, ObservedAt: startedAt.Add(time.Second)},
 		"200:200": {KingdomID: 1, X: 200, Y: 200, TypeID: State.MapTypeKingdomFortress, ObservedAt: startedAt.Add(-time.Hour)},
 	}
-	application := &Application{State: State.NewStore(&state)}
+	application := &Application{State: travelTicketTestStore(&state)}
 	if err := application.captureFullFortressMap(
 		fortressMapRequest{SourceCastleID: 10, KingdomID: 1, ScanStartedAt: startedAt},
 		[]towerMapWindow{{X1: 0, Y1: 0, X2: 89, Y2: 89}},
@@ -736,6 +737,7 @@ func fortressIntentGameData(t *testing.T) *GameData.Store {
 
 func fortressIntentState(now time.Time) State.GameState {
 	gameState := State.NewGameState()
+	fundTravelTicketsForTest(&gameState)
 	gameState.Castles[10] = State.CastleState{
 		ID: 10, KingdomID: 1, SlotType: 12, X: 100, Y: 100,
 		Units: State.CastleUnits{Stationed: map[State.UnitID]int64{GameData.DirewolfUnitID: 10_000}},
