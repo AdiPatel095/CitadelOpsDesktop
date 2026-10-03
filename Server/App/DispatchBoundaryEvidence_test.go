@@ -8,6 +8,7 @@ import (
 	"testing"
 	"time"
 
+	"CitadelDesktop/Server/GameData"
 	"CitadelDesktop/Server/Ingest"
 	"CitadelDesktop/Server/Intent"
 	"CitadelDesktop/Server/Outbound"
@@ -25,6 +26,7 @@ type boundaryTestSender struct {
 	code           int
 	sends          []string
 	beforeResponse func(string) error
+	reduceRefresh  func(Protocol.Frame, *State.GameState) ([]string, bool, error)
 }
 
 func (*boundaryTestSender) Ready() bool       { return true }
@@ -79,8 +81,18 @@ func boundaryTestEngine(t *testing.T, state State.GameState, step Intent.Step, s
 	t.Helper()
 	store := State.NewStore(&state)
 	store.ObserveProtocolFocus(State.FocusSubcontextCastle, time.Now().UTC())
-	pipeline := Ingest.NewPipeline(store, nil, Ingest.NewRegistry())
-	sender := &boundaryTestSender{pipeline: pipeline, code: code}
+	reducers := Ingest.NewRegistry()
+	sender := &boundaryTestSender{code: code}
+	if err := reducers.Register("jaa", func(_ context.Context, frame Protocol.Frame, state *State.GameState, _ *GameData.Store) ([]string, bool, error) {
+		if sender.reduceRefresh != nil {
+			return sender.reduceRefresh(frame, state)
+		}
+		return nil, false, nil
+	}); err != nil {
+		t.Fatal(err)
+	}
+	pipeline := Ingest.NewPipeline(store, nil, reducers)
+	sender.pipeline = pipeline
 	registry := Intent.NewRegistry()
 	planned := step
 	if source != "" {
@@ -214,7 +226,7 @@ func TestDispatchBoundaryOnlyTargetedRejections(t *testing.T) {
 }
 
 func TestFCORejectionRefreshesWithoutBlindResend(t *testing.T) {
-	for _, outcome := range []string{"upgrading", "completed", "unknown", "stale", "refresh_rejected", "missing_object", "session_changed"} {
+	for _, outcome := range []string{"upgrading", "completed", "unknown", "stale", "refresh_rejected", "missing_object", "session_changed", "connection_changed", "missing_layout", "missing_queue", "other_snapshot"} {
 		t.Run(outcome, func(t *testing.T) {
 			state := boundaryTestState()
 			step := boundaryTestStep("fco")
@@ -229,48 +241,56 @@ func TestFCORejectionRefreshesWithoutBlindResend(t *testing.T) {
 				t.Fatal(err)
 			}
 			sender.beforeResponse = func(opcode string) error {
-				if opcode != "jaa" {
-					return nil
-				}
-				if outcome == "refresh_rejected" {
+				if opcode == "jaa" && outcome == "refresh_rejected" {
 					return fmt.Errorf("synthetic refresh transport failure")
 				}
-				_, err := store.Apply(func(state *State.GameState) ([]string, bool, error) {
-					castle := state.Castles[dispatchTestCastle]
-					if outcome != "stale" {
-						now := time.Now().UTC()
-						castle.ContextSnapshotObservedAt = now
+				return nil
+			}
+			sender.reduceRefresh = func(frame Protocol.Frame, state *State.GameState) ([]string, bool, error) {
+				castle := state.Castles[dispatchTestCastle]
+				if outcome != "stale" {
+					now := frame.ReceivedAt
+					if outcome == "other_snapshot" {
+						now = now.Add(time.Nanosecond)
+					}
+					castle.ContextSnapshotObservedAt = now
+					if outcome != "missing_layout" {
 						castle.Layout.ObservedAt = now
+					}
+					if outcome != "missing_queue" {
 						castle.BuildingQueue.ObservedAt = now
 					}
-					if outcome == "completed" || outcome == "unknown" {
-						building := castle.Buildings[dispatchTestObject]
-						building.ConstructionState = State.BuildingStateUpgradeCompleted
-						if outcome == "unknown" {
-							building.ConstructionState = State.BuildingStateWaitingForServer
-						}
-						castle.Buildings[dispatchTestObject] = building
-						castle.BuildingQueue.Slots = nil
+				}
+				if outcome == "completed" || outcome == "unknown" || outcome == "missing_layout" || outcome == "missing_queue" || outcome == "other_snapshot" || outcome == "connection_changed" {
+					building := castle.Buildings[dispatchTestObject]
+					building.ConstructionState = State.BuildingStateUpgradeCompleted
+					if outcome == "unknown" {
+						building.ConstructionState = State.BuildingStateWaitingForServer
 					}
-					if outcome == "missing_object" {
-						delete(castle.Buildings, dispatchTestObject)
-						castle.BuildingQueue.Slots = nil
-					}
-					if outcome == "session_changed" {
-						state.Session.Generation++
-					}
-					state.SetCastle(dispatchTestCastle, castle)
-					return []string{"castles"}, true, nil
-				})
-				return err
+					castle.Buildings[dispatchTestObject] = building
+					castle.BuildingQueue.Slots = nil
+				}
+				if outcome == "missing_object" {
+					delete(castle.Buildings, dispatchTestObject)
+					castle.BuildingQueue.Slots = nil
+				}
+				if outcome == "session_changed" {
+					state.Session.Generation++
+				}
+				if outcome == "connection_changed" {
+					state.Session.ConnectionGeneration++
+				}
+				state.SetCastle(dispatchTestCastle, castle)
+				return []string{"castles"}, true, nil
 			}
+
 			receipt := engine.Submit(t.Context(), Intent.Request{Name: "test.dispatch", Actor: "automation:build", AutomationLane: "build"})
 			want := Intent.StatusFailed
 			if outcome == "completed" {
 				want = Intent.StatusSucceeded
 			}
 			if receipt.Status != want {
-				t.Fatalf("status %s, want %s: %+v", receipt.Status, want, receipt)
+				t.Fatalf("status %s, want %s: %s", receipt.Status, want, receipt.Error)
 			}
 			if strings.Join(sender.sends, ",") != "fco,jaa" {
 				t.Fatalf("blind resend or missing refresh: %v", sender.sends)
@@ -301,8 +321,8 @@ func TestFCOResolverSchedulesCommittedReconciliation(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(plan.Steps) == 0 || plan.Steps[0].Opcode != "jaa" || plan.Steps[0].ResponseBarrier != Intent.ResponseBarrierCommitted {
-		t.Fatalf("FCO plan does not refresh first: %+v", plan)
+	if len(plan.Steps) == 0 || plan.Steps[0].Resolver != "building.finish_free.build" {
+		t.Fatalf("ordinary FCO plan gained a refresh: %+v", plan)
 	}
 	step, err := resolveBuildingFinishFreeStep(t.Context(), input, args)
 	if err != nil {
@@ -328,5 +348,177 @@ func TestDispatchBoundaryBlockedFinalGuardCapturesNothing(t *testing.T) {
 	receipt := engine.Submit(t.Context(), Intent.Request{Name: "test.dispatch", Actor: "test"})
 	if receipt.Status != Intent.StatusFailed || len(receipt.Evidence) != 0 || len(sender.sends) != 0 {
 		t.Fatalf("blocked send captured rejection evidence: %+v sends %v", receipt, sender.sends)
+	}
+}
+
+func TestQA128NoExtraHappyPathRefresh(t *testing.T) {
+	state := buildingIntentState()
+	castle := state.Castles[10]
+	castle.Focused = true
+	building := castle.Buildings[42]
+	building.ConstructionState = State.BuildingStateUpgradeInProgress
+	castle.Buildings[42] = building
+	castle.Layout.Objects[42] = building
+	castle.BuildingQueue.Slots = []State.BuildingConstructionQueueSlot{{Status: State.BuildingQueueSlotOccupied, BuildingID: 42}}
+	state.Castles[10] = castle
+	input := Intent.PlanningContext{State: state, GameData: buildingIntentGameData(t), ProtocolContext: State.ProtocolContextState{FocusedCastleID: 10, FocusSubcontext: State.FocusSubcontextCastle}}
+	plan, err := planBuildingFinishFree(t.Context(), input, json.RawMessage(`{"castleId":10,"buildingInstanceId":42}`))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if plan.Steps[0].Resolver != "building.finish_free.build" {
+		t.Fatalf("already focused, no prior rejection: first step opcode=%q resolver=%q; expected original resolver first, no added JAA", plan.Steps[0].Opcode, plan.Steps[0].Resolver)
+	}
+}
+func TestQA128RefreshMustCommitAfterRejection(t *testing.T) {
+	state := boundaryTestState()
+	step := boundaryTestStep("fco")
+	args, _ := json.Marshal(buildingFinishFreeReconciliation{CastleID: dispatchTestCastle, BuildingInstanceID: dispatchTestObject, SnapshotAfter: time.Now().UTC(), InitialConstructionState: State.BuildingStateUpgradeInProgress})
+	step.RejectionReconciliation = &Intent.RejectionReconciliation{Code: 5, Refresh: castleFocusStep(state.Castles[dispatchTestCastle]), Action: "test.reconcile", Arguments: args}
+	engine, store, sender := boundaryTestEngine(t, state, step, "", 5)
+	app := &Application{State: store}
+	if err := engine.RegisterAction("test.reconcile", app.reconcileBuildingFinishFree); err != nil {
+		t.Fatal(err)
+	}
+	// Commit a completion before the FCO rejection. The subsequent JAA is an empty
+	// response and does not commit a new castle snapshot (registry has no reducers).
+	sender.beforeResponse = func(opcode string) error {
+		if opcode != "fco" {
+			return nil
+		}
+		_, err := store.Apply(func(state *State.GameState) ([]string, bool, error) {
+			castle := state.Castles[dispatchTestCastle]
+			now := time.Now().UTC()
+			castle.ContextSnapshotObservedAt = now
+			castle.Layout.ObservedAt = now
+			castle.BuildingQueue.ObservedAt = now
+			building := castle.Buildings[dispatchTestObject]
+			building.ConstructionState = State.BuildingStateUpgradeCompleted
+			castle.Buildings[dispatchTestObject] = building
+			castle.BuildingQueue.Slots = nil
+			state.SetCastle(dispatchTestCastle, castle)
+			return []string{"castles"}, true, nil
+		})
+		return err
+	}
+	receipt := engine.Submit(t.Context(), Intent.Request{Name: "test.dispatch", Actor: "test"})
+	t.Logf("sends=%v status=%s evidence=%d", sender.sends, receipt.Status, len(receipt.Evidence))
+	if receipt.Status != Intent.StatusFailed {
+		t.Fatalf("retired from pre-rejection snapshot despite empty JAA: actual=%s expected=failed without fresh committed rejection refresh", receipt.Status)
+	}
+}
+func TestQA128EvidenceBoundedSize(t *testing.T) {
+	for _, count := range []int{1000, 10000} {
+		state := boundaryTestState()
+		castle := state.Castles[dispatchTestCastle]
+		queue := castle.Production[2]
+		queue.Queued = make([]State.QueueItem, count)
+		for i := range queue.Queued {
+			queue.Queued[i] = State.QueueItem{ProductionID: int64(i + 100000), Amount: 1}
+		}
+		castle.Production[2] = queue
+		state.Castles[dispatchTestCastle] = castle
+		engine, _, _ := boundaryTestEngine(t, state, boundaryTestStep("hru"), "", 63)
+		receipt := engine.Submit(t.Context(), Intent.Request{Name: "test.dispatch", Actor: "test"})
+		if len(receipt.Evidence) != 1 {
+			t.Fatal("missing evidence")
+		}
+		raw := receipt.Evidence[0].Data
+		if len(raw) > dispatchEvidenceMaxBytes {
+			t.Fatalf("evidence exceeds byte budget: %d", len(raw))
+		}
+		var fields map[string]json.RawMessage
+		_ = json.Unmarshal(raw, &fields)
+		var q struct {
+			Queued []json.RawMessage `json:"queued"`
+		}
+		_ = json.Unmarshal(fields["hospitalQueue"], &q)
+		t.Logf("input queued=%d retained queued=%d evidence bytes=%d", count, len(q.Queued), len(raw))
+		if count == 10000 && len(q.Queued) == count {
+			t.Fatalf("all 10000 state entries retained (%d bytes); no diagnostic item/byte bound", len(raw))
+		}
+	}
+}
+
+func TestDispatchBoundaryEvidenceItemBudget(t *testing.T) {
+	for _, count := range []int{dispatchEvidenceMaxItems - 1, dispatchEvidenceMaxItems, dispatchEvidenceMaxItems + 1, 10000} {
+		for _, opcode := range []string{"hru", "ahr", "fco"} {
+			t.Run(fmt.Sprintf("%s/%d", opcode, count), func(t *testing.T) {
+				state := boundaryTestState()
+				castle := state.Castles[dispatchTestCastle]
+				queue := castle.Production[2]
+				queue.Queued = make([]State.QueueItem, count)
+				state.AllianceHelpRequests.HospitalProductionIDs = make([]int64, count)
+				building := castle.Buildings[dispatchTestObject]
+				building.CompletionEvents = make([]State.BuildingCompletionEvent, count)
+				for i := range count {
+					queue.Queued[i] = State.QueueItem{ProductionID: dispatchTestJob, Amount: 1}
+					state.AllianceHelpRequests.HospitalProductionIDs[i] = dispatchTestJob
+					building.CompletionEvents[i] = State.BuildingCompletionEvent{Opcode: "synthetic-private-player", ObservedAt: time.Now().UTC()}
+				}
+				castle.Production[2] = queue
+				castle.Buildings[dispatchTestObject] = building
+				state.Castles[dispatchTestCastle] = castle
+				step := boundaryTestStep(opcode)
+				var payload map[string]any
+				_ = json.Unmarshal(step.Command.Payload, &payload)
+				for i := range 1000 {
+					payload[fmt.Sprintf("synthetic-private-player-%d", i)] = "synthetic-private-castle"
+				}
+				step.Command.Payload, _ = json.Marshal(payload)
+				step.Payload = step.Command.Payload
+				code := map[string]int{"hru": 63, "ahr": 2, "fco": 5}[opcode]
+				engine, _, _ := boundaryTestEngine(t, state, step, "", code)
+				receipt := engine.Submit(t.Context(), Intent.Request{Name: "test.dispatch", Actor: "test"})
+				if len(receipt.Evidence) != 1 {
+					t.Fatal("missing bounded evidence")
+				}
+				raw := receipt.Evidence[0].Data
+				if len(raw) > dispatchEvidenceMaxBytes || strings.Contains(string(raw), "synthetic-private") || strings.Contains(string(raw), fmt.Sprint(dispatchTestJob)) {
+					t.Fatal("evidence exceeds size or privacy budget")
+				}
+				var fields map[string]json.RawMessage
+				if err := json.Unmarshal(raw, &fields); err != nil {
+					t.Fatal(err)
+				}
+				listField, countField, truncatedField := "helpRequests", "helpRequestCount", "helpRequestsTruncated"
+				if opcode == "hru" {
+					if err := json.Unmarshal(fields["hospitalQueue"], &fields); err != nil {
+						t.Fatal(err)
+					}
+					listField, countField, truncatedField = "queued", "queuedCount", "queuedTruncated"
+				} else if opcode == "fco" {
+					listField, countField, truncatedField = "completionEvents", "completionEventCount", "completionEventsTruncated"
+				}
+				var list []json.RawMessage
+				if err := json.Unmarshal(fields[listField], &list); err != nil {
+					t.Fatal(err)
+				}
+				if len(list) != min(count, dispatchEvidenceMaxItems) || string(fields[countField]) != fmt.Sprint(count) || string(fields[truncatedField]) != fmt.Sprint(count > dispatchEvidenceMaxItems) {
+					t.Fatal("incorrect retained count or truncation metadata")
+				}
+			})
+		}
+	}
+}
+
+func TestDispatchBoundaryEvidenceByteBudget(t *testing.T) {
+	for _, delta := range []int{-1, 0, 1} {
+		t.Run(fmt.Sprint(delta), func(t *testing.T) {
+			queue := map[string]any{"queued": []string{""}, "queuedCount": 1, "queuedTruncated": false}
+			snapshot := map[string]any{"command": "<redacted>", "hospitalQueue": queue, "maxBytes": dispatchEvidenceMaxBytes}
+			base, _ := json.Marshal(snapshot)
+			queue["queued"] = []string{strings.Repeat("x", dispatchEvidenceMaxBytes-len(base)+delta)}
+			raw, ok := boundedDispatchSnapshot(snapshot).(json.RawMessage)
+			if !ok || len(raw) > dispatchEvidenceMaxBytes || !json.Valid(raw) {
+				t.Fatal("invalid or oversized bounded evidence")
+			}
+			if delta <= 0 && len(raw) != dispatchEvidenceMaxBytes+delta {
+				t.Fatalf("unexpected truncation at byte boundary: %d", len(raw))
+			}
+			if delta > 0 && (snapshot["truncated"] != true || queue["queuedTruncated"] != true) {
+				t.Fatal("missing byte truncation metadata")
+			}
+		})
 	}
 }

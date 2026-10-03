@@ -3,6 +3,7 @@ package App
 import (
 	"context"
 	"crypto/sha256"
+	"encoding/binary"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
@@ -16,6 +17,28 @@ import (
 	"CitadelDesktop/Server/State"
 )
 
+// Diagnostic budgets do not affect the command or any dispatch decision.
+const dispatchEvidenceMaxItems = 32
+const dispatchEvidenceMaxBytes = 16 << 10
+const dispatchEvidenceMaxCommandBytes = 1024
+
+func dispatchText(value string) string {
+	if len(value) > 128 {
+		return "<redacted>"
+	}
+	return value
+}
+
+func dispatchListIdentity(ids []int64) string {
+	digest := sha256.New()
+	var data [8]byte
+	for _, id := range ids {
+		binary.LittleEndian.PutUint64(data[:], uint64(id))
+		_, _ = digest.Write(data[:])
+	}
+	return hex.EncodeToString(digest.Sum(nil)[:8])
+}
+
 func dispatchIdentity(value any) string {
 	digest := sha256.Sum256([]byte(fmt.Sprint(value)))
 	return hex.EncodeToString(digest[:8])
@@ -27,12 +50,13 @@ func sanitizedDispatchCommand(step Intent.Step) string {
 	var fields map[string]json.RawMessage
 	_ = json.Unmarshal(step.Command.Payload, &fields)
 	payload := map[string]any{}
+	redactedFields := 0
 	for key, raw := range fields {
 		switch {
 		case step.Opcode == "hru" && (key == "U" || key == "A"),
 			step.Opcode == "ahr" && key == "T", step.Opcode == "fco" && key == "FS":
 			var number json.Number
-			if json.Unmarshal(raw, &number) == nil {
+			if len(raw) <= 32 && json.Unmarshal(raw, &number) == nil {
 				payload[key] = number
 			} else {
 				payload[key] = "<redacted>"
@@ -40,14 +64,21 @@ func sanitizedDispatchCommand(step Intent.Step) string {
 		case key == "OID" || (step.Opcode == "ahr" && key == "ID"):
 			payload[key] = dispatchIdentity(string(raw))
 		default:
-			payload[key] = "<redacted>"
+			redactedFields++
 		}
+	}
+	if redactedFields > 0 {
+		payload["redactedFields"] = redactedFields
 	}
 	encoded, _ := json.Marshal(payload)
 	command := step.Command
 	command.Namespace = "EmpireEx_<namespace>"
 	command.Payload = encoded
 	wire, _ := Protocol.Encode(command)
+	if len(wire) > dispatchEvidenceMaxCommandBytes {
+		command.Payload = json.RawMessage(`{"truncated":true}`)
+		wire, _ = Protocol.Encode(command)
+	}
 	return string(wire)
 }
 
@@ -58,8 +89,8 @@ func sanitizedHospitalJob(item State.QueueItem) map[string]any {
 		"helpRequested": item.AllianceHelpRequested}
 }
 func sanitizedHospitalQueue(queue State.ProductionQueue) map[string]any {
-	queued := make([]map[string]any, 0, len(queue.Queued))
-	for _, item := range queue.Queued {
+	queued := make([]map[string]any, 0, min(len(queue.Queued), dispatchEvidenceMaxItems))
+	for _, item := range queue.Queued[:min(len(queue.Queued), dispatchEvidenceMaxItems)] {
 		queued = append(queued, sanitizedHospitalJob(item))
 	}
 	var active any
@@ -67,6 +98,7 @@ func sanitizedHospitalQueue(queue State.ProductionQueue) map[string]any {
 		active = sanitizedHospitalJob(*queue.Active)
 	}
 	return map[string]any{"lineId": queue.LineID, "active": active, "queued": queued,
+		"queuedCount": len(queue.Queued), "queuedTruncated": len(queue.Queued) > len(queued),
 		"slots": queue.Slots, "capacity": queue.Capacity, "occupancy": hospitalOccupiedSlots(queue), "observedAt": queue.ObservedAt}
 }
 
@@ -93,9 +125,9 @@ func captureDispatchBoundaryEvidence(ctx context.Context, input Intent.PlanningC
 	protocol := input.ProtocolContext
 	focus := map[string]any{"identity": "<castle>", "focused": castle.Focused,
 		"matchesCommittedFocus": castleID == protocol.FocusedCastleID,
-		"epoch":                 protocol.FocusEpoch, "subcontext": protocol.FocusSubcontext, "observedAt": protocol.ObservedAt}
+		"epoch":                 protocol.FocusEpoch, "subcontext": dispatchText(string(protocol.FocusSubcontext)), "observedAt": protocol.ObservedAt}
 	snapshot := map[string]any{"opcode": opcode, "command": sanitizedDispatchCommand(step),
-		"emitter":    map[string]string{"revision": BuildRevision, "version": Version},
+		"emitter":    map[string]string{"revision": dispatchText(BuildRevision), "version": dispatchText(Version)},
 		"dispatchAt": time.Now().UTC(), "correlationIdentity": dispatchIdentity(metadata.ResponseToken), "stateRevision": input.State.Revision,
 		"castleObservedAt": castle.ContextSnapshotObservedAt, "focus": focus,
 		"session": map[string]any{"generation": input.State.Session.Generation, "connectionGeneration": input.State.Session.ConnectionGeneration}}
@@ -108,7 +140,7 @@ func captureDispatchBoundaryEvidence(ctx context.Context, input Intent.PlanningC
 		if step.FinalDispatchAction != "" {
 			result = "passed"
 		}
-		snapshot["finalGuard"] = map[string]string{"action": step.FinalDispatchAction, "result": result}
+		snapshot["finalGuard"] = map[string]string{"action": dispatchText(step.FinalDispatchAction), "result": result}
 		source := "static_plan"
 		if resolver == "hospital.heal.build" {
 			source = resolver
@@ -118,10 +150,7 @@ func captureDispatchBoundaryEvidence(ctx context.Context, input Intent.PlanningC
 		var jobID int64
 		_ = json.Unmarshal(payload["ID"], &jobID)
 		queue := castle.Production[2]
-		items := append([]State.QueueItem(nil), queue.Queued...)
-		if queue.Active != nil {
-			items = append(items, *queue.Active)
-		}
+		items := queue.Queued
 		var job any
 		for _, item := range items {
 			if item.ProductionID == jobID {
@@ -129,16 +158,22 @@ func captureDispatchBoundaryEvidence(ctx context.Context, input Intent.PlanningC
 				break
 			}
 		}
+		if queue.Active != nil && queue.Active.ProductionID == jobID {
+			job = sanitizedHospitalJob(*queue.Active)
+		}
 		snapshot["hospitalJob"] = job
 		snapshot["jobIdentity"] = dispatchIdentity(jobID)
-		ids := append([]int64(nil), input.State.AllianceHelpRequests.HospitalProductionIDs...)
+		allIDs := input.State.AllianceHelpRequests.HospitalProductionIDs
+		ids := append([]int64(nil), allIDs[:min(len(allIDs), dispatchEvidenceMaxItems)]...)
 		sort.Slice(ids, func(i, j int) bool { return ids[i] < ids[j] })
 		requests := make([]string, 0, len(ids))
 		for _, id := range ids {
 			requests = append(requests, dispatchIdentity(id))
 		}
-		snapshot["listIdentity"] = dispatchIdentity(ids)
+		snapshot["listIdentity"] = dispatchListIdentity(allIDs)
 		snapshot["helpRequests"] = requests
+		snapshot["helpRequestCount"] = len(allIDs)
+		snapshot["helpRequestsTruncated"] = len(allIDs) > len(requests)
 		snapshot["helpObservedAt"] = input.State.AllianceHelpRequests.ObservedAt
 		snapshot["helpGeneration"] = input.State.AllianceHelpRequests.OwnObservedGeneration
 		snapshot["castle"] = map[string]any{"identity": "<castle>", "focused": castle.Focused, "observedAt": castle.ContextSnapshotObservedAt}
@@ -150,8 +185,47 @@ func captureDispatchBoundaryEvidence(ctx context.Context, input Intent.PlanningC
 			"definition": building.DefinitionID, "constructionState": building.ConstructionState,
 			"progressSec": building.ProgressSec, "level": building.Level, "observedAt": castle.Layout.ObservedAt}
 		snapshot["targetVersion"] = input.Partitions.Version(State.CastlePartition(&input.State, "building-layout", castleID))
-		snapshot["completionEvents"] = append([]State.BuildingCompletionEvent{}, building.CompletionEvents...)
+		events := append([]State.BuildingCompletionEvent{}, building.CompletionEvents[:min(len(building.CompletionEvents), dispatchEvidenceMaxItems)]...)
+		for i := range events {
+			switch events[i].Opcode {
+			case "fco", "eup", "bup", "jaa":
+			default:
+				events[i].Opcode = "<redacted>"
+			}
+		}
+		snapshot["completionEvents"] = events
+		snapshot["completionEventCount"] = len(building.CompletionEvents)
+		snapshot["completionEventsTruncated"] = len(building.CompletionEvents) > len(events)
 		snapshot["constructionIdentity"] = dispatchIdentity(metadata.OperationID)
 	}
-	return snapshot
+	return boundedDispatchSnapshot(snapshot)
+}
+
+func boundedDispatchSnapshot(snapshot map[string]any) any {
+	snapshot["maxBytes"] = dispatchEvidenceMaxBytes
+	encoded, err := json.Marshal(snapshot)
+	if err != nil {
+		return nil
+	}
+	if len(encoded) > dispatchEvidenceMaxBytes {
+		// Preserve required scalar state and identities, summarize variable lists.
+		snapshot["truncated"] = true
+		if queue, ok := snapshot["hospitalQueue"].(map[string]any); ok {
+			queue["queued"] = []any{}
+			queue["queuedTruncated"] = true
+		}
+		if _, ok := snapshot["helpRequests"]; ok {
+			snapshot["helpRequests"] = []any{}
+			snapshot["helpRequestsTruncated"] = true
+		}
+		if _, ok := snapshot["completionEvents"]; ok {
+			snapshot["completionEvents"] = []any{}
+			snapshot["completionEventsTruncated"] = true
+		}
+		encoded, err = json.Marshal(snapshot)
+	}
+	if err != nil || len(encoded) > dispatchEvidenceMaxBytes {
+		return nil
+	}
+	return json.RawMessage(encoded)
 }

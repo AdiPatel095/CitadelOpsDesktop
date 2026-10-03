@@ -1759,7 +1759,12 @@ func (engine *Engine) executeStep(ctx context.Context, afterRevision uint64, ste
 					// Read-only refresh is allowed while the originating lane is
 					// locked. No second FCO is sent here, even if still upgrading.
 					refreshContext := context.WithValue(ctx, dispatchPermitContextKey{}, dispatchPermit(nil))
-					if _, refreshErr := engine.executeStep(refreshContext, engine.state.Revision(), recovery.Refresh); refreshErr != nil {
+					refresh := RejectionRefresh{StartedAt: time.Now().UTC(), SessionGeneration: sessionAtSend.Generation, ConnectionGeneration: sessionAtSend.ConnectionGeneration}
+					refreshStep := recovery.Refresh
+					// Use the response timestamp locally; never retain the refresh exchange.
+					refreshStep.CaptureResponse = true
+					refreshed, refreshErr := engine.executeStep(refreshContext, engine.state.Revision(), refreshStep)
+					if refreshErr != nil {
 						return exchange, errors.Join(guarded, refreshErr)
 					}
 					engine.mu.RLock()
@@ -1768,7 +1773,11 @@ func (engine *Engine) executeStep(ctx context.Context, afterRevision uint64, ste
 					if reconcile == nil {
 						return exchange, errors.Join(guarded, fmt.Errorf("reconciliation action is unavailable"))
 					}
-					if reconcileErr := reconcile(ctx, recovery.Arguments); reconcileErr == nil {
+					if refreshed != nil && refreshed.Response != nil && recovery.Refresh.ResponseBarrier == ResponseBarrierCommitted {
+						refresh.ObservedAt = refreshed.Response.ReceivedAt
+					}
+					reconcileContext := context.WithValue(ctx, rejectionRefreshContextKey{}, refresh)
+					if reconcileErr := reconcile(reconcileContext, recovery.Arguments); reconcileErr == nil {
 						return exchange, errOperationReconciled
 					} else {
 						return exchange, errors.Join(guarded, reconcileErr)

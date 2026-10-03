@@ -581,7 +581,7 @@ func planBuildingFinishFree(_ context.Context, input Intent.PlanningContext, arg
 		Kind: buildingMutationFinishFree, CastleID: castle.ID, BuildingInstanceID: request.BuildingInstanceID,
 		InitialConstructionState: building.ConstructionState,
 	})
-	steps := []Intent.Step{castleFocusStep(castle)}
+	steps := castleContextSteps(input, castle)
 	steps = append(steps, buildingResolverStep("Finish building operation for free", "building.finish_free.build", resolverArguments, "fco", Localization.New("server.app.finish_building_operation_for.00d9c467", "Finish building operation for free", nil)))
 	steps = append(steps, castleFocusStep(castle))
 	steps = append(steps, Intent.Step{Name: "Verify free building completion", NameDescriptor: Localization.New("server.app.verify_free_building_completion.23d987dd", "Verify free building completion", nil), Action: "building.verify", ActionArguments: verificationArguments})
@@ -611,7 +611,7 @@ func resolveBuildingFinishFreeStep(_ context.Context, input Intent.PlanningConte
 	step.FinalDispatchArguments = arguments
 	reconciliationArguments, _ := json.Marshal(buildingFinishFreeReconciliation{
 		CastleID: request.CastleID, BuildingInstanceID: request.BuildingInstanceID,
-		SnapshotAfter: time.Now().UTC(), SessionGeneration: input.State.Session.Generation,
+		SessionGeneration:        input.State.Session.Generation,
 		InitialConstructionState: building.ConstructionState,
 	})
 	step.RejectionReconciliation = &Intent.RejectionReconciliation{
@@ -1729,7 +1729,7 @@ func validateFinalBuildingPlacementKingdom(input Intent.PlanningContext, argumen
 type buildingFinishFreeReconciliation struct {
 	CastleID                 State.CastleID           `json:"castleId"`
 	BuildingInstanceID       State.BuildingInstanceID `json:"buildingInstanceId"`
-	SnapshotAfter            time.Time                `json:"snapshotAfter"`
+	SnapshotAfter            time.Time                `json:"snapshotAfter,omitempty"` // Legacy resolver timestamp; never establishes refresh freshness.
 	SessionGeneration        uint64                   `json:"sessionGeneration"`
 	InitialConstructionState int                      `json:"initialConstructionState"`
 }
@@ -1744,17 +1744,23 @@ func buildingOperationCompleted(state int) bool {
 
 // reconcileBuildingFinishFree runs only after a committed post-FCO/5 snapshot.
 // Unknown and active states remain failed. The lane safety lock stays in force.
-func (application *Application) reconcileBuildingFinishFree(_ context.Context, arguments json.RawMessage) error {
+func (application *Application) reconcileBuildingFinishFree(ctx context.Context, arguments json.RawMessage) error {
 	var request buildingFinishFreeReconciliation
 	if err := decodeIntentArguments(arguments, &request); err != nil {
 		return err
 	}
+	refresh, ok := Intent.RejectionRefreshFromContext(ctx)
+	if !ok || !refresh.ObservedAt.After(refresh.StartedAt) {
+		return Intent.ErrPlanStale
+	}
 	state := application.State.ReadOnlyView()
 	castle, found := state.Castles[request.CastleID]
 	if !found || state.Session.Generation != request.SessionGeneration ||
-		!castle.ContextSnapshotObservedAt.After(request.SnapshotAfter) ||
-		!castle.Layout.ObservedAt.After(request.SnapshotAfter) ||
-		!castle.BuildingQueue.ObservedAt.After(request.SnapshotAfter) {
+		state.Session.Generation != refresh.SessionGeneration ||
+		state.Session.ConnectionGeneration != refresh.ConnectionGeneration ||
+		!castle.ContextSnapshotObservedAt.Equal(refresh.ObservedAt) ||
+		!castle.Layout.ObservedAt.Equal(refresh.ObservedAt) ||
+		!castle.BuildingQueue.ObservedAt.Equal(refresh.ObservedAt) {
 		return Intent.ErrPlanStale
 	}
 	if buildingQueued(castle.BuildingQueue, request.BuildingInstanceID) {
