@@ -1,5 +1,5 @@
 import { messageLanguageAttributes } from './messageLanguage';
-import { useLocale } from './LocaleContext';
+import { useLocale } from './useLocale';
 import { richMessages } from './richMessages';
 import { renderRichMessage } from './RichMessage';
 import type { RichMessageTags } from './RichMessage';

@@ -20,7 +20,7 @@ const vite = await createServer({
       { find: /^react$/, replacement: support('miniReact.mjs') },
       { find: /^react\/jsx-(dev-)?runtime$/, replacement: support('miniReact.mjs') },
       { find: /^lucide-react$/, replacement: support('stubs.mjs') },
-      { find: /^.*\/api\/ApiContext$/, replacement: support('stubs.mjs') },
+      { find: /^.*\/api\/useCitadelAPI$/, replacement: support('stubs.mjs') },
       { find: /^.*\/components\/ui\/(Button|Modal)$/, replacement: support('stubs.mjs') },
       { find: /^.*\/i18n\/LocalizedText$/, replacement: support('stubs.mjs') },
     ],

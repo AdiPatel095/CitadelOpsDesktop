@@ -1,26 +1,16 @@
+import { CastleFocusContext, type CastleFocusContextValue } from './useCastleFocus';
+export type { CastleFocusContextValue } from './useCastleFocus';
 import {
-	createContext,
 	useCallback,
-	useContext,
 	useEffect,
 	useMemo,
 	useState,
 	type ReactNode,
 } from 'react';
-import { useCitadelAPI } from '../api/ApiContext';
-import type { CastleStateV2 } from '../api/Contracts';
+import { useCitadelAPI } from '../api/useCitadelAPI';
 import { focusedCastleFromState } from '../api/Selectors';
-import { useAuth } from './AuthContext';
+import { useAuth } from './useAuth';
 
-export interface CastleFocusContextValue {
-	castle: CastleStateV2 | null;
-	castles: CastleStateV2[];
-	refreshCastle: () => void;
-	selectCastle: (castleId: number) => void;
-	offlineCastleId: number | null;
-}
-
-const CastleFocusContext = createContext<CastleFocusContextValue | undefined>(undefined);
 
 export function CastleFocusProvider({ children }: { children: ReactNode }) {
 	const { gameLoggedIn } = useAuth();
@@ -73,10 +63,4 @@ export function CastleFocusProvider({ children }: { children: ReactNode }) {
 	}), [castle, castles, offlineCastleId, refreshCastle, selectCastle]);
 
 	return <CastleFocusContext.Provider value={value}>{children}</CastleFocusContext.Provider>;
-}
-
-export function useCastleFocus(): CastleFocusContextValue {
-	const context = useContext(CastleFocusContext);
-	if (!context) throw new Error('useCastleFocus must be used within a CastleFocusProvider');
-	return context;
 }

@@ -238,6 +238,129 @@ func TestEngineKeepsReadsInMemoryAndCheckpointsWrites(t *testing.T) {
 	}
 }
 
+// Insert the newer timestamp first so insertion order cannot hide a text-sort bug.
+var operationStoreTimestampOrderCases = []struct {
+	name       string
+	timestamps []string
+	wantIDs    []string
+}{
+	{
+		name:       "different fraction lengths",
+		timestamps: []string{"2026-01-01T00:00:00.51Z", "2026-01-01T00:00:00.5Z"},
+		wantIDs:    []string{"crafted-0", "crafted-1"},
+	},
+	{
+		name:       "whole and fractional seconds",
+		timestamps: []string{"2026-01-01T00:00:00.4Z", "2026-01-01T00:00:00Z"},
+		wantIDs:    []string{"crafted-0", "crafted-1"},
+	},
+	{
+		name:       "identical timestamps",
+		timestamps: []string{"2026-01-01T00:00:00.5Z", "2026-01-01T00:00:00.5Z", "2026-01-01T00:00:00.5Z"},
+		wantIDs:    []string{"crafted-2", "crafted-1", "crafted-0"},
+	},
+}
+
+func insertOperationStoreTimestampFixtures(t *testing.T, store *SQLiteOperationStore, timestamps []string) {
+	t.Helper()
+	for index, timestamp := range timestamps {
+		submittedAt, err := time.Parse(time.RFC3339Nano, timestamp)
+		if err != nil {
+			t.Fatal(err)
+		}
+		id := fmt.Sprintf("crafted-%d", index)
+		receipt := Receipt{
+			ID: id, Status: StatusSucceeded, Phase: EffectPhaseCompleted, SubmittedAt: submittedAt,
+		}
+		payload, err := json.Marshal(receipt)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if _, err := store.db.ExecContext(t.Context(), `
+			INSERT INTO intent_operations (
+				operation_id, request_hash, receipt_json, status, phase, submitted_at, updated_at
+			) VALUES (?, ?, ?, ?, ?, ?, ?)
+		`, id, id, payload, receipt.Status, receipt.Phase, timestamp, timestamp); err != nil {
+			t.Fatal(err)
+		}
+	}
+}
+
+func TestOperationStoreRecentOrdersChronologically(t *testing.T) {
+	for _, test := range operationStoreTimestampOrderCases {
+		t.Run(test.name, func(t *testing.T) {
+			store, err := OpenOperationStore(t.TempDir())
+			if err != nil {
+				t.Fatal(err)
+			}
+			t.Cleanup(func() { _ = store.Close() })
+			insertOperationStoreTimestampFixtures(t, store, test.timestamps)
+			for _, limit := range []int{len(test.wantIDs), 1} {
+				recent, err := store.Recent(t.Context(), limit)
+				if err != nil {
+					t.Fatal(err)
+				}
+				if len(recent) != limit {
+					t.Fatalf("Recent(%d) returned %d operations", limit, len(recent))
+				}
+				for index, operation := range recent {
+					if operation.Receipt.ID != test.wantIDs[index] {
+						t.Fatalf("Recent(%d)[%d] = %s, want %s", limit, index, operation.Receipt.ID, test.wantIDs[index])
+					}
+				}
+			}
+		})
+	}
+}
+
+func TestOperationStorePrunesOldestTerminalRowsChronologically(t *testing.T) {
+	for _, test := range operationStoreTimestampOrderCases {
+		t.Run(test.name, func(t *testing.T) {
+			store, err := OpenOperationStore(t.TempDir())
+			if err != nil {
+				t.Fatal(err)
+			}
+			t.Cleanup(func() { _ = store.Close() })
+			// Leave one slot at the history boundary for the newest crafted row.
+			if _, err := store.db.ExecContext(t.Context(), `
+				WITH RECURSIVE sequence(value) AS (
+					SELECT 1
+					UNION ALL
+					SELECT value + 1 FROM sequence WHERE value < ?
+				)
+				INSERT INTO intent_operations (
+					operation_id, request_hash, receipt_json, status, phase, submitted_at, updated_at
+				)
+				SELECT printf('terminal-%d', value), printf('hash-%d', value), '{}', ?, ?,
+					'2026-01-01T00:00:01Z', '2026-01-01T00:00:01Z'
+				FROM sequence
+			`, operationHistoryLimit-1, StatusSucceeded, EffectPhaseCompleted); err != nil {
+				t.Fatal(err)
+			}
+			insertOperationStoreTimestampFixtures(t, store, test.timestamps)
+			if err := store.pruneTerminalHistory(t.Context()); err != nil {
+				t.Fatal(err)
+			}
+			var count int
+			if err := store.db.QueryRowContext(t.Context(), `SELECT COUNT(*) FROM intent_operations`).Scan(&count); err != nil {
+				t.Fatal(err)
+			}
+			if count != operationHistoryLimit {
+				t.Fatalf("pruned count = %d, want %d", count, operationHistoryLimit)
+			}
+			for index, id := range test.wantIDs {
+				_, found, err := store.Get(t.Context(), id)
+				if err != nil {
+					t.Fatal(err)
+				}
+				if found != (index == 0) {
+					t.Fatalf("after pruning %s: found=%t, want %t", id, found, index == 0)
+				}
+			}
+		})
+	}
+}
+
 func TestOperationStorePrunesTerminalRowsButKeepsActiveRows(t *testing.T) {
 	store, err := OpenOperationStore(t.TempDir())
 	if err != nil {

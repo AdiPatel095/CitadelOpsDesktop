@@ -7,7 +7,7 @@ import {messageLanguageAttributes} from '../i18n/messageLanguage';
 import {describeMessage, type MessageKey, type MessageParameters} from '../i18n/messages';
 import type {LocalizedMessage} from '../i18n/formatMessage';
 import { LocalizedRichText } from "../i18n/LocalizedRichText";
-import { useLocale as useStaticLocale } from "../i18n/LocaleContext";
+import { useLocale as useStaticLocale } from '../i18n/useLocale';
 import { LocalizedText } from "../i18n/LocalizedText";
 import React, { useEffect, useMemo, useState } from 'react';
 import {
@@ -28,7 +28,7 @@ import {
   Wrench,
   Zap,
 } from 'lucide-react';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../context/useAuth';
 import {
   Badge,
   Button,
@@ -47,7 +47,7 @@ import {
 } from '../settings/AutoEquipmentCleanup';
 import { scheduleSummary } from '../settings/SchedulerTypes';
 import { CitadelAPI } from '../api/CitadelClient';
-import { useCitadelAPI } from '../api/ApiContext';
+import { useCitadelAPI } from '../api/useCitadelAPI';
 import { parseAutoBeriWorldSettings } from '../settings/AutoBeriWorldClientState';
 import { configurationSection } from '../settings/Configuration';
 import { AutomationSafetyPanel } from '../components/AutomationSafetyPanel';

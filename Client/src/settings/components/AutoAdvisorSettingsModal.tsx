@@ -1,9 +1,9 @@
 import { StopFooter } from '../../components/StopControl';
-import { useLocale as useStaticLocale } from "../../i18n/LocaleContext";
+import { useLocale as useStaticLocale } from '../../i18n/useLocale';
 import { LocalizedText } from "../../i18n/LocalizedText";
 import React, { useEffect, useMemo, useState } from 'react';
 import { AlertTriangle, BookOpen, Bot, Castle, Clock3, Coins, RefreshCw, ShieldCheck, Swords } from 'lucide-react';
-import { useCitadelAPI } from '../../api/ApiContext';
+import { useCitadelAPI } from '../../api/useCitadelAPI';
 import type { GameStateV2, ScalableEventScoreV2 } from '../../api/Contracts';
 import { castleOptionsFromState } from '../../api/Selectors';
 import {

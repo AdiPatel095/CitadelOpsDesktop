@@ -2,10 +2,10 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { AlertTriangle, LoaderCircle, RotateCcw } from 'lucide-react';
 import { APIError } from '../api/CitadelClient';
 import type { ConfigurationSnapshot } from '../api/Contracts';
-import { useCitadelAPI } from '../api/ApiContext';
+import { useCitadelAPI } from '../api/useCitadelAPI';
 import { Button } from '../components/ui/Button';
 import { LocalizedText } from '../i18n/LocalizedText';
-import { useLocale } from '../i18n/LocaleContext';
+import { useLocale } from '../i18n/useLocale';
 
 export type ConfigurationSaveCondition =
   | { expectedValue: unknown }

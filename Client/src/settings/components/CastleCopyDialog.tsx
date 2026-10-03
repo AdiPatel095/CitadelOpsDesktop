@@ -1,11 +1,11 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { ArrowRight, Copy } from 'lucide-react';
-import { useAuth } from '../../context/AuthContext';
+import { useAuth } from '../../context/useAuth';
 import { Badge } from '../../components/ui/Badge';
 import { Button } from '../../components/ui/Button';
 import { Modal } from '../../components/ui/Modal';
 import { ModalTitle } from '../../components/ui/ModalTitle';
-import { useLocale } from '../../i18n/LocaleContext';
+import { useLocale } from '../../i18n/useLocale';
 import { LocalizedText } from '../../i18n/LocalizedText';
 import { automationDuration } from '../../i18n/automationDuration';
 import {

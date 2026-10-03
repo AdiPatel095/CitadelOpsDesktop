@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState, useSyncExternalStore } from 'react';
 import { loadOfficialMessages, officialMessageKeysFor, officialCatalogGeneration, subscribeOfficialCatalog } from './officialMessages';
-import { useLocale } from './LocaleContext';
+import { useLocale } from './useLocale';
 import { formatMessage } from './formatMessage';
 import type { LocalizedMessage, OfficialCatalog } from './formatMessage';
 /** Keep the descriptor in component state so changing viewer locale rerenders existing messages. */

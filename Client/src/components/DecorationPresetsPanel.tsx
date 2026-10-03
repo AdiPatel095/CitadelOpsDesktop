@@ -1,13 +1,13 @@
-import { useLocale as useStaticLocale } from "../i18n/LocaleContext";
+import { useLocale as useStaticLocale } from '../i18n/useLocale';
 import { LocalizedText } from "../i18n/LocalizedText";
 import React, { useEffect, useMemo, useState } from 'react';
 import { Castle, Layers, Play, Save, Sparkles, Trash2 } from 'lucide-react';
-import { useCastleFocus } from '../context/CastleFocusContext';
+import { useCastleFocus } from '../context/useCastleFocus';
 import CastleFocusHoverPopover from './CastleFocusHoverPopover';
 import { castleDisplayName } from '../api/Selectors';
 import { Input, Button, Select } from './ui';
-import { useCitadelAPI } from '../api/ApiContext';
-import { useMetadata } from '../context/MetadataContext';
+import { useCitadelAPI } from '../api/useCitadelAPI';
+import { useMetadata } from '../context/useMetadata';
 import { Notifications } from './Notifications';
 import { OperationError } from '../api/CitadelClient';
 

@@ -125,9 +125,10 @@ type buildingVerification struct {
 
 func (application *Application) registerBuildingIntents() error {
 	for name, action := range map[string]Intent.Action{
-		"building.skip_time.guard":        application.guardBuildingTimeSkip,
-		"building.finish_free.guard":      application.guardBuildingFinishFree,
-		"building.expand.footprint.guard": application.guardBuildingExpansionFootprint,
+		"building.placement.kingdom.guard": application.guardBuildingPlacementKingdom,
+		"building.skip_time.guard":         application.guardBuildingTimeSkip,
+		"building.finish_free.guard":       application.guardBuildingFinishFree,
+		"building.expand.footprint.guard":  application.guardBuildingExpansionFootprint,
 	} {
 		if err := application.Intents.RegisterAction(name, action); err != nil {
 			return err
@@ -442,6 +443,8 @@ func resolveBuildingPlacementStep(_ context.Context, input Intent.PlanningContex
 		name = "Place stored building"
 	}
 	step := buildingMutationStep(name, "ebu", payload)
+	step.FinalDispatchAction = "building.placement.kingdom.guard"
+	step.FinalDispatchArguments = append(json.RawMessage(nil), arguments...)
 	if resolver.Kind == buildingMutationConstruct {
 		step.CoinCost, err = buildingCoinCostRequirement(input.GameData, definition)
 		if err != nil {
@@ -870,6 +873,9 @@ func validatedBuildingPlacement(
 	definition, found := catalog.Definition(int64(request.DefinitionID))
 	if !found || request.DefinitionID <= 0 {
 		return State.CastleState{}, GameData.BuildingDefinition{}, Localization.WithError(fmt.Errorf("building definition %d is not in the current official catalog", request.DefinitionID), Localization.New("server.app.building_definition_p_is.d79e02ae", "building definition {p0} is not in the current official catalog", Localization.Params{"p0": fmt.Sprintf("%d", request.DefinitionID)}))
+	}
+	if blocker := Buildings.BuildingKingdomBlocker(definition, castle.KingdomID, input.Language); blocker != nil {
+		return State.CastleState{}, GameData.BuildingDefinition{}, Localization.WithError(fmt.Errorf("%s", blocker.Message), blocker.MessageDescriptor)
 	}
 	if request.X < 0 || request.Y < 0 || request.Rotation < 0 || request.Rotation > 3 {
 		return State.CastleState{}, GameData.BuildingDefinition{}, Localization.WithError(fmt.Errorf("building placement must use non-negative coordinates and rotation 0 through 3"), Localization.New("server.app.building_placement_must_use.28f6e207", "building placement must use non-negative coordinates and rotation 0 through 3", nil))
@@ -1675,4 +1681,38 @@ func (application *Application) guardBuildingFinishFree(_ context.Context, argum
 	}
 	_, _, _, err = validatedBuildingFinishFree(input, request, true)
 	return err
+}
+
+func (application *Application) guardBuildingPlacementKingdom(_ context.Context, arguments json.RawMessage) error {
+	if application == nil || application.State == nil || application.GameData == nil {
+		return fmt.Errorf("%w: current building authority is unavailable", Intent.ErrPlanStale)
+	}
+	data, ready := application.GameData.Current()
+	if !ready {
+		return fmt.Errorf("%w: official building data is unavailable", Intent.ErrPlanStale)
+	}
+	return validateFinalBuildingPlacementKingdom(Intent.PlanningContext{State: application.State.ReadOnlyView(), GameData: data}, arguments)
+}
+
+func validateFinalBuildingPlacementKingdom(input Intent.PlanningContext, arguments json.RawMessage) error {
+	var resolver buildingPlacementResolverArguments
+	if err := decodeIntentArguments(arguments, &resolver); err != nil {
+		return fmt.Errorf("%w: %v", Intent.ErrPlanStale, err)
+	}
+	castle, err := buildingCastle(input.State, resolver.Request.CastleID)
+	if err != nil {
+		return fmt.Errorf("%w: %v", Intent.ErrPlanStale, err)
+	}
+	catalog, err := buildingCatalog(input.GameData)
+	if err != nil {
+		return fmt.Errorf("%w: %v", Intent.ErrPlanStale, err)
+	}
+	definition, found := catalog.DefinitionView(int64(resolver.Request.DefinitionID))
+	if !found {
+		return fmt.Errorf("%w: building definition is unavailable", Intent.ErrPlanStale)
+	}
+	if blocker := Buildings.BuildingKingdomBlocker(definition, castle.KingdomID, input.Language); blocker != nil {
+		return Localization.WithError(fmt.Errorf("%w: %s", Intent.ErrPlanStale, blocker.Message), blocker.MessageDescriptor)
+	}
+	return nil
 }

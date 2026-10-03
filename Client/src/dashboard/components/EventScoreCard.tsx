@@ -1,12 +1,12 @@
-import { useLocale as useStaticLocale } from "../../i18n/LocaleContext";
+import { useLocale as useStaticLocale } from '../../i18n/useLocale';
 import { LocalizedText } from "../../i18n/LocalizedText";
 import React, { useEffect, useMemo, useState } from 'react';
 import { Coins, Trophy } from 'lucide-react';
 import { CitadelAPI } from '../../api/CitadelClient';
 import type { ScalableEventScoreV2 } from '../../api/Contracts';
-import { useCitadelAPI } from '../../api/ApiContext';
+import { useCitadelAPI } from '../../api/useCitadelAPI';
 import { Button, MetricTile, SectionCard } from '../../components/ui';
-import { useMetadata } from '../../context/MetadataContext';
+import { useMetadata } from '../../context/useMetadata';
 
 interface EventScoreCardProps {
   live: boolean;

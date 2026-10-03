@@ -1,7 +1,7 @@
 import React from 'react';
 import UnitImage from '../../components/UnitImage';
 import ToolImage from '../../components/ToolImage';
-import { useMetadata } from '../../context/MetadataContext';
+import { useMetadata } from '../../context/useMetadata';
 
 export interface ProductionQueueRow {
   definitionId: number;

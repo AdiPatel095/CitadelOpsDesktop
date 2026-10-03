@@ -1,9 +1,9 @@
-import { useLocale as useStaticLocale } from "../../i18n/LocaleContext";
+import { useLocale as useStaticLocale } from '../../i18n/useLocale';
 import { LocalizedText } from "../../i18n/LocalizedText";
 import React, { useMemo } from 'react';
 import { SectionCard } from '../../components/ui';
-import { useCastleFocus } from '../../context/CastleFocusContext';
-import { useMetadata } from '../../context/MetadataContext';
+import { useCastleFocus } from '../../context/useCastleFocus';
+import { useMetadata } from '../../context/useMetadata';
 import {
   craftingBuildingForStrip,
   visibleCastleQueueIds,

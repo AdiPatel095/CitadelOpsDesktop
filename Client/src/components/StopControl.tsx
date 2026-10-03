@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { CircleStop, Info } from 'lucide-react';
-import { useCitadelAPI } from '../api/ApiContext';
-import { useAuth } from '../context/AuthContext';
+import { useCitadelAPI } from '../api/useCitadelAPI';
+import { useAuth } from '../context/useAuth';
 import { LocalizedText } from '../i18n/LocalizedText';
 import { describeStopSemantics } from '../settings/readiness/stopSemantics';
 import { AUTOMATION_ENABLED_KEYS, type SettingsFeatureId } from '../settings/disclosure/placement';

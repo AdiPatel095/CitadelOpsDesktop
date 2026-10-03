@@ -1,11 +1,12 @@
-import { useLocale as useStaticLocale } from "../../i18n/LocaleContext";
+import { useLocale as useStaticLocale } from '../../i18n/useLocale';
 import { LocalizedText } from "../../i18n/LocalizedText";
 import React, { useEffect, useMemo, useState } from 'react';
 import { CheckCircle2, Filter, Search, Trash2, UsersRound } from 'lucide-react';
 import UnitImage from '../../components/UnitImage';
 import { Badge, Button, Input, Modal } from '../../components/ui';
-import { useCitadelAPI } from '../../api/ApiContext';
-import { useMetadata, type MetadataItem } from '../../context/MetadataContext';
+import { useCitadelAPI } from '../../api/useCitadelAPI';
+import { type MetadataItem } from '../../context/MetadataContext';
+import { useMetadata } from '../../context/useMetadata';
 import type { GameStateV2 } from '../../api/Contracts';
 import type {
   CommanderEquipmentEffectRequirement,

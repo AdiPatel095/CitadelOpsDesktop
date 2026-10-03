@@ -24,12 +24,88 @@ type backpressureReply struct {
 }
 
 type backpressureGame struct {
-	server          *httptest.Server
-	pins            atomic.Int64
-	pausedPins      atomic.Int64
-	pausedMovements atomic.Int64
-	transport       atomic.Pointer[DirectWebSocketTransport]
-	floodStarted    chan struct{}
+	server       *httptest.Server
+	pins         atomic.Int64
+	pausedPins   atomic.Int64
+	movements    *backpressureMovementTrace
+	transport    atomic.Pointer[DirectWebSocketTransport]
+	floodStarted chan struct{}
+}
+
+type backpressureMovementReceive struct {
+	seq   uint64
+	epoch uint64 // zero for a receive outside a pause
+}
+
+type backpressureMovementTrace struct {
+	mu           sync.Mutex
+	sends        []time.Time
+	observations map[uint64]time.Time
+	receives     []backpressureMovementReceive
+}
+
+func (trace *backpressureMovementTrace) sent(seq uint64, at time.Time) {
+	trace.mu.Lock()
+	defer trace.mu.Unlock()
+	// Store by the poller's sequence so receive n matches send n.
+	for uint64(len(trace.sends)) < seq {
+		trace.sends = append(trace.sends, time.Time{})
+	}
+	trace.sends[seq-1] = at
+}
+
+func (trace *backpressureMovementTrace) observed(epoch uint64, at time.Time) {
+	trace.mu.Lock()
+	defer trace.mu.Unlock()
+	if _, exists := trace.observations[epoch]; !exists {
+		trace.observations[epoch] = at
+	}
+}
+
+func (trace *backpressureMovementTrace) assertPauses(t *testing.T, epochs []directPauseEpoch) {
+	t.Helper()
+	trace.mu.Lock()
+	defer trace.mu.Unlock()
+	if len(trace.observations) == 0 {
+		t.Fatal("poller never observed the blocked ingest pause")
+	}
+	byEpoch := make(map[uint64]directPauseEpoch, len(epochs))
+	for _, pause := range epochs {
+		byEpoch[pause.epoch] = pause
+		observedAt := trace.observations[pause.epoch]
+		sendsAfterPause := 0
+		for i, sentAt := range trace.sends {
+			if sentAt.IsZero() {
+				t.Fatalf("missing send time for movement %d", i+1)
+			}
+			if sentAt.Before(pause.pausedAt) || !pause.resumedAt.IsZero() && !sentAt.Before(pause.resumedAt) {
+				continue
+			}
+			sendsAfterPause++
+			if !observedAt.IsZero() && !sentAt.Before(observedAt) {
+				t.Fatalf("epoch %d: movement %d began at %v, at or after pause observation %v", pause.epoch, i+1, sentAt, observedAt)
+			}
+		}
+		if sendsAfterPause > 1 {
+			t.Fatalf("epoch %d: %d sends began after pause at %v, want at most one", pause.epoch, sendsAfterPause, pause.pausedAt)
+		}
+	}
+	for _, receive := range trace.receives {
+		if receive.seq > uint64(len(trace.sends)) || trace.sends[receive.seq-1].IsZero() {
+			t.Fatalf("movement receive %d has no matching send", receive.seq)
+		}
+		if receive.epoch == 0 {
+			continue
+		}
+		if _, exists := byEpoch[receive.epoch]; !exists {
+			t.Fatalf("movement receive %d references unknown pause epoch %d", receive.seq, receive.epoch)
+		}
+		// A short pause may resume before any movement tick observes it.
+		// Such an epoch has no observation cutoff; its send bound still applies.
+		if observedAt := trace.observations[receive.epoch]; !observedAt.IsZero() && !trace.sends[receive.seq-1].Before(observedAt) {
+			t.Fatalf("epoch %d: paused receive %d matched a send at %v, at or after observation %v", receive.epoch, receive.seq, trace.sends[receive.seq-1], observedAt)
+		}
+	}
 }
 
 func backpressureWireFrame(seq, size int) string {
@@ -82,8 +158,9 @@ func newBackpressureGame(t *testing.T, count int) *backpressureGame {
 			}
 			message := string(payload)
 			paused := false
+			var epoch uint64
 			if transport := game.transport.Load(); transport != nil {
-				paused = transport.frameOutbox().isPaused()
+				paused, epoch, _ = transport.frameOutbox().pauseState()
 			}
 			if strings.Contains(message, "%pin%") {
 				game.pins.Add(1)
@@ -91,8 +168,14 @@ func newBackpressureGame(t *testing.T, count int) *backpressureGame {
 					game.pausedPins.Add(1)
 				}
 			}
-			if strings.Contains(message, "%gam%") && paused {
-				game.pausedMovements.Add(1)
+			if strings.Contains(message, "%gam%") && game.movements != nil {
+				trace := game.movements
+				if !paused {
+					epoch = 0
+				}
+				trace.mu.Lock()
+				trace.receives = append(trace.receives, backpressureMovementReceive{seq: uint64(len(trace.receives)) + 1, epoch: epoch})
+				trace.mu.Unlock()
 			}
 			reply := backpressureReply{}
 			switch {
@@ -205,7 +288,16 @@ func collectFlood(t *testing.T, ctx context.Context, transport *DirectWebSocketT
 
 func TestDirectTransportKeepsPingingWhileIngestIsBlocked(t *testing.T) {
 	game := newBackpressureGame(t, 400)
-	transport := backpressureTransport(t, game, DirectWebSocketConfig{pingInterval: 25 * time.Millisecond, movementInterval: 15 * time.Millisecond, outboxPauseBytes: 1 << 20, outboxResumeBytes: 512 << 10})
+	trace := &backpressureMovementTrace{observations: make(map[uint64]time.Time)}
+	game.movements = trace
+	transport := backpressureTransport(t, game, DirectWebSocketConfig{
+		pingInterval: 25 * time.Millisecond, movementInterval: 15 * time.Millisecond,
+		outboxPauseBytes: 1 << 20, outboxResumeBytes: 512 << 10,
+		movementSent: trace.sent, movementPauseObserved: trace.observed,
+	})
+	outbox := transport.frameOutbox()
+	// Enable epoch history before any goroutine starts; production retains none.
+	outbox.pauseEpochs = make([]directPauseEpoch, 0)
 	ctx, cancel := context.WithTimeout(t.Context(), 15*time.Second)
 	defer cancel()
 	if err := transport.Start(ctx); err != nil {
@@ -213,7 +305,6 @@ func TestDirectTransportKeepsPingingWhileIngestIsBlocked(t *testing.T) {
 	}
 	waitBackpressureStatus(t, ctx, transport, "connected")
 	waitTestSignal(t, game.floodStarted)
-	outbox := transport.frameOutbox()
 	waitBackpressureCondition(t, outbox.isPaused)
 	pauseEnd := time.NewTimer(time.Second)
 	defer pauseEnd.Stop()
@@ -252,9 +343,12 @@ func TestDirectTransportKeepsPingingWhileIngestIsBlocked(t *testing.T) {
 	if game.pausedPins.Load() < 5 {
 		t.Fatalf("pings stopped during pause: %d", game.pausedPins.Load())
 	}
-	if game.pausedMovements.Load() != 0 {
-		t.Fatalf("gam polling continued while paused: %d", game.pausedMovements.Load())
-	}
+	// Check every epoch recorded through the blocked interval. Frames() is
+	// still unread, so the current pause cannot resume while we snapshot it.
+	outbox.mu.Lock()
+	epochs := append([]directPauseEpoch(nil), outbox.pauseEpochs...)
+	outbox.mu.Unlock()
+	trace.assertPauses(t, epochs)
 	collectFlood(t, ctx, transport, 400)
 }
 

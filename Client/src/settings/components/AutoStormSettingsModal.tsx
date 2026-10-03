@@ -1,5 +1,5 @@
 import { StopFooter } from '../../components/StopControl';
-import { useLocale as useStaticLocale } from "../../i18n/LocaleContext";
+import { useLocale as useStaticLocale } from '../../i18n/useLocale';
 import { LocalizedText } from "../../i18n/LocalizedText";
 import React, { useEffect, useMemo, useState } from 'react';
 import {
@@ -28,7 +28,7 @@ import type {
   BuildingBlueprintDiffResponse,
   BuildingTargetCaptureMode,
 } from '../../api/Contracts';
-import { useCitadelAPI } from '../../api/ApiContext';
+import { useCitadelAPI } from '../../api/useCitadelAPI';
 import { CitadelAPI } from '../../api/CitadelClient';
 import {
   ATTACK_PRESETS_SECTION,
@@ -58,10 +58,11 @@ import { EventAttackSetupField } from './EventAttackSetupField';
 import { ReadinessCheckLine, ReadinessPanel } from './ReadinessPanel';
 import { UnitStockList } from './UnitStockList';
 import { Notifications } from '../../components/Notifications';
-import { showTroopPicker, type UnitWithQuantity } from '../../components/TroopPickerModal';
+import { type UnitWithQuantity } from '../../components/TroopPickerModal';
+import { showTroopPicker } from '../../components/TroopPicker';
 import UnitImage from '../../components/UnitImage';
 import { Badge, Button, Card, ChoiceChipGroup, Input, Select, SettingsModal, SettingsToggleRow, Switch } from '../../components/ui';
-import { useMetadata } from '../../context/MetadataContext';
+import { useMetadata } from '../../context/useMetadata';
 import {
   AUTO_STORM_LUNA_PACKAGE_IDS,
   AUTO_STORM_BLUEPRINTS_SECTION,
@@ -88,7 +89,8 @@ import { parseStormCastleOptions, preferredStormCastleOption, type StormCastleOp
 import { checkIntervalLine, countCustomValues, mapRefreshLine, stormConstructionSummary, stormPriorityLine, travelLine } from '../disclosure/summaries';
 import { useSettingsDisclosure } from '../disclosure/useSettingsDisclosure';
 import { AutomationRunStrip } from './AutomationRunStrip';
-import { collapsedSettingNote, SettingsSection } from './SettingsSection';
+import { SettingsSection } from './SettingsSection';
+import { collapsedSettingNote } from './collapsedSettingNote';
 import { englishGuidePack, useGuideLocale } from '../../config/useGuideLocale';
 import { useDraftRecovery } from '../useDraftRecovery';
 
@@ -474,7 +476,8 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
 		activateAutoStormBlueprint(configurationSections?.[AUTO_STORM_BLUEPRINTS_SECTION], ''),
 	  );
       setDraft((current) => {
-        const { target: _target, ...rest } = current;
+        const rest = { ...current };
+        delete rest.target;
         return rest;
       });
       setBlueprintPreview(null);
@@ -644,7 +647,8 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
             islands: { ...draft.islands, presetId: ids.islands },
           });
           if (!blueprintDocument.activeId) return parsed;
-          const { target: _legacyTarget, ...withoutLegacyTarget } = parsed;
+          const withoutLegacyTarget = { ...parsed };
+          delete withoutLegacyTarget.target;
           return withoutLegacyTarget;
         },
         formatPresetName: (module, slot) => localizeStatic('attackPresets.appCreatedName', { module, slot }),

@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
-import { useCitadelAPI } from '../api/ApiContext';
-import { useAuth } from '../context/AuthContext';
+import { useCitadelAPI } from '../api/useCitadelAPI';
+import { useAuth } from '../context/useAuth';
 import { LocalizedText } from '../i18n/LocalizedText';
 import { messageLanguageAttributes } from '../i18n/messageLanguage';
 import { useLocalizedMessage } from '../i18n/useLocalizedMessage';

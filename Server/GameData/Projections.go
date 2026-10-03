@@ -36,6 +36,7 @@ type BuildingDefinition struct {
 	EarlyUnlockRequiredLevel *int64                   `json:"earlyUnlockRequiredLevel,omitempty"`
 	MaximumCount             *int64                   `json:"maximumCount,omitempty"`
 	KingdomIDs               []int64                  `json:"kingdomIds,omitempty"`
+	KingdomIDsDefaulted      bool                     `json:"kingdomIdsDefaulted"`
 	EventIDs                 []int64                  `json:"eventIds,omitempty"`
 	AreaTypeIDs              []int64                  `json:"areaTypeIds,omitempty"`
 	MapIDs                   []int64                  `json:"mapIds,omitempty"`

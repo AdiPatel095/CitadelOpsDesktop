@@ -1,6 +1,6 @@
 import React from 'react';
-import { useLocale } from '../i18n/LocaleContext';
-import { useAuth } from '../context/AuthContext';
+import { useLocale } from '../i18n/useLocale';
+import { useAuth } from '../context/useAuth';
 import { Button, type ButtonProps } from './ui';
 
 type GameButtonProps = ButtonProps & { loggedOutAction?: 'enable' | 'use' };

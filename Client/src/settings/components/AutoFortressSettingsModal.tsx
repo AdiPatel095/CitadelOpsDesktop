@@ -3,7 +3,7 @@ import {useLocalizedMessages} from '../../i18n/useLocalizedMessages';
 import {parseMessageDescriptor} from '../../i18n/messageDescriptor';
 import {messageLanguageAttributes} from '../../i18n/messageLanguage';
 import { LocalizedRichText } from "../../i18n/LocalizedRichText";
-import { useLocale as useStaticLocale } from "../../i18n/LocaleContext";
+import { useLocale as useStaticLocale } from '../../i18n/useLocale';
 import { LocalizedText } from "../../i18n/LocalizedText";
 import React, { useEffect, useMemo, useState } from 'react';
 import {
@@ -21,7 +21,7 @@ import {
 } from 'lucide-react';
 import UnitImage from '../../components/UnitImage';
 import { Badge, Button, Card, Input, SettingsModal, Switch } from '../../components/ui';
-import { useCitadelAPI } from '../../api/ApiContext';
+import { useCitadelAPI } from '../../api/useCitadelAPI';
 import { DailyAttackLimitField } from './DailyAttackLimitField';
 import HorseTravelBoostSelect from './HorseTravelBoostSelect';
 import { FeatureGuideModal } from './FeatureGuideModal';
@@ -35,7 +35,7 @@ import {
   type AutoFortressClientStateV1,
 } from '../AutoFortressClientState';
 import { useConfigurationDraftSession } from '../ConfigurationDraftSession';
-import { useMetadata } from '../../context/MetadataContext';
+import { useMetadata } from '../../context/useMetadata';
 import { COMMANDER_FEATURE_SECTION } from '../../Movement/types/CommanderFeatureAssignments';
 import { savedCommanderAssignments } from '../requirements/commanderAssignmentDraft';
 import { evaluateCommanderEligibility } from '../requirements/commanderEligibility';
@@ -50,7 +50,8 @@ import { AUTOMATION_ENABLED_KEYS } from '../disclosure/placement';
 import { countCustomValues, toggleLine, travelLine } from '../disclosure/summaries';
 import { useSettingsDisclosure } from '../disclosure/useSettingsDisclosure';
 import { AutomationRunStrip } from './AutomationRunStrip';
-import { collapsedSettingNote, SettingsSection } from './SettingsSection';
+import { SettingsSection } from './SettingsSection';
+import { collapsedSettingNote } from './collapsedSettingNote';
 import { useDraftRecovery } from '../useDraftRecovery';
 
 interface AutoFortressSettingsModalProps {

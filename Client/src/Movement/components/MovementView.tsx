@@ -1,4 +1,4 @@
-import { useLocale as useStaticLocale } from "../../i18n/LocaleContext";
+import { useLocale as useStaticLocale } from '../../i18n/useLocale';
 import { LocalizedText } from "../../i18n/LocalizedText";
 import React, { useEffect, useMemo, useState } from 'react';
 import {
@@ -15,10 +15,10 @@ import {
 } from 'lucide-react';
 import StaleSessionBanner from '../../components/StaleSessionBanner';
 import { Notifications } from '../../components/Notifications';
-import { useAuth } from '../../context/AuthContext';
-import { useCitadelAPI } from '../../api/ApiContext';
+import { useAuth } from '../../context/useAuth';
+import { useCitadelAPI } from '../../api/useCitadelAPI';
 import { Badge, Button, Card, CardContent, CardHeader, CardTitle, PillSelector } from '../../components/ui';
-import { useMovement } from '../context/MovementContext';
+import { useMovement } from '../context/useMovement';
 import CommanderRequirementModal from './CommanderRequirementModal';
 import {
   COMMANDER_FEATURE_SECTION,
