@@ -1,20 +1,21 @@
+import { attackEconomyFeatureDefinitions } from '../attackAnalytics/components/AttackEconomyFeatures';
 import {LocalizedError} from '../i18n/LocalizedError';
 import {useLocalizedErrorState} from '../i18n/useLocalizedErrorState';
 import {parseMessageDescriptor} from '../i18n/messageDescriptor';
 import {useEventDisplayNames} from '../i18n/useEventDisplayNames';
-import { useLocale as useStaticLocale } from "../i18n/LocaleContext";
+import { useLocale as useStaticLocale } from '../i18n/useLocale';
 import React, { useCallback, useEffect, useState } from 'react';
 import StaleSessionBanner from '../components/StaleSessionBanner';
 import EventScoreCard from '../dashboard/components/EventScoreCard';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../context/useAuth';
 import { PillSelector } from '../components/ui';
-import { useCitadelAPI } from '../api/ApiContext';
+import { useCitadelAPI } from '../api/useCitadelAPI';
 import EventActivityCard from '../events/components/EventActivityCard';
 import EventRankingModal from '../events/components/EventRankingModal';
-import { FeatureEventHistory, useFeatureEventHistory } from '../events/components/FeatureEventHistory';
+import { FeatureEventHistory } from '../events/components/FeatureEventHistory';
+import { useFeatureEventHistory } from '../events/components/useFeatureEventHistory';
 import { featureEventIds, isFeatureEventRunning } from '../events/components/FeatureEventScores';
 import AttackEconomyView, {
-  attackEconomyFeatureDefinitions,
   type AttackEconomyFeatureID,
 } from '../attackAnalytics/components/AttackEconomyView';
 

@@ -1,4 +1,4 @@
-import { useLocale } from '../i18n/LocaleContext';
+import { useLocale } from '../i18n/useLocale';
 import React from 'react';
 import { ChevronDown, X } from 'lucide-react';
 import { NAVIGATION_ITEMS, type ViewId } from '../config/Navigation';

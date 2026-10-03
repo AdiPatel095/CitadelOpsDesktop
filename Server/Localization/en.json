@@ -2784,6 +2784,7 @@
   "server.buildings.decode_p_blueprint_document.14fff938": "decode {p0} blueprint document",
   "server.buildings.default_berimond_target_requires.45f20038": "default Berimond target requires an owned camp",
   "server.buildings.expansion_coordinates_must_be.581fed95": "expansion coordinates must be non-negative and direction must be 0 through 3",
+  "server.buildings.kingdom_unavailable": "{building} (building {definitionID}) is not available in kingdom {kingdomID}",
   "server.buildings.mode_must_be_p.e3a43e6a": "mode must be {p0}, {p1}, or {p2}",
   "server.buildings.no_focused_castle_is.52a6af14": "no focused castle is available",
   "server.buildings.official_berimond_building_definition.3dc20518": "official Berimond building definition {p0} is unavailable",

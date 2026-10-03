@@ -5,13 +5,14 @@ import { castleCandidates } from '../copy/candidates';
 import { stationCopyDescriptor } from '../copy/features/station';
 import { copyReapplied, genericSaveError, useCastleCopyReplayRun, useCastleCopyReplayState } from '../copy/useCastleCopyReplay';
 import { CastleCopyButton } from './CastleCopyDialog';
-import { useLocale as useStaticLocale } from "../../i18n/LocaleContext";
+import { useLocale as useStaticLocale } from '../../i18n/useLocale';
 import { LocalizedText } from "../../i18n/LocalizedText";
 import React, { useEffect, useMemo, useState } from 'react';
 import { BookOpen, Plus, Shield } from 'lucide-react';
 import { useGuideLocale } from '../../config/useGuideLocale';
 import { FeatureGuideModal } from './FeatureGuideModal';
-import { showTroopPicker, type UnitWithQuantity } from '../../components/TroopPickerModal';
+import { type UnitWithQuantity } from '../../components/TroopPickerModal';
+import { showTroopPicker } from '../../components/TroopPicker';
 import UnitImage from '../../components/UnitImage';
 import {
   AddSlot,
@@ -27,10 +28,10 @@ import {
   parseAutoStationClientState,
   type AutoStationClientStateV1,
 } from '../AutoStationClientState';
-import { useCitadelAPI } from '../../api/ApiContext';
+import { useCitadelAPI } from '../../api/useCitadelAPI';
 import { castleOptionsFromState, type CastleOptionV2 } from '../../api/Selectors';
 import { useConfigurationDraftSession } from '../ConfigurationDraftSession';
-import { useMetadata } from '../../context/MetadataContext';
+import { useMetadata } from '../../context/useMetadata';
 import { evaluateReserveReadiness } from '../requirements/setupReadiness';
 import { useSetupContext } from '../requirements/useSetupContext';
 import { focusReadinessTarget } from '../readiness/focusReadinessTarget';
@@ -40,7 +41,8 @@ import { countCustomValues, stationFiltersSummary } from '../disclosure/summarie
 import { useSettingsDisclosure } from '../disclosure/useSettingsDisclosure';
 import { AutomationRunStrip } from './AutomationRunStrip';
 import { ReadinessCheckLine, ReadinessPanel } from './ReadinessPanel';
-import { collapsedSettingNote, SettingsSection } from './SettingsSection';
+import { SettingsSection } from './SettingsSection';
+import { collapsedSettingNote } from './collapsedSettingNote';
 import { UnitStockList } from './UnitStockList';
 import { useDraftRecovery } from '../useDraftRecovery';
 

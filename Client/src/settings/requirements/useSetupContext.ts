@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
-import { useCitadelAPI } from '../../api/ApiContext';
-import { useAuth } from '../../context/AuthContext';
+import { useCitadelAPI } from '../../api/useCitadelAPI';
+import { useAuth } from '../../context/useAuth';
 import { movementViewFromState } from '../../Movement/types/MovementState';
 import { accountKey, advanceAccountSession, type AccountSessionTracking } from './castleRequirements';
 import type { ObservationContext, ObservationPresence } from './observationFreshness';

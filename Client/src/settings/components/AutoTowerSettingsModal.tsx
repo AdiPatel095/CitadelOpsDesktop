@@ -5,14 +5,14 @@ import { castleCandidates } from '../copy/candidates';
 import { towersCopyDescriptor } from '../copy/features/towers';
 import { copyReapplied, genericSaveError, useCastleCopyReplayRun, useCastleCopyReplayState } from '../copy/useCastleCopyReplay';
 import { CastleCopyButton } from './CastleCopyDialog';
-import { useLocale as useStaticLocale } from "../../i18n/LocaleContext";
+import { useLocale as useStaticLocale } from '../../i18n/useLocale';
 import { LocalizedText } from "../../i18n/LocalizedText";
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { BookOpen, Bot, Crosshair, FastForward, TicketCheck } from 'lucide-react';
 import UnitImage from '../../components/UnitImage';
-import { showTroopPicker } from '../../components/TroopPickerModal';
+import { showTroopPicker } from '../../components/TroopPicker';
 import { Button, Card, Input, SettingsModal, SettingsToggleRow, Switch } from '../../components/ui';
-import { useCitadelAPI } from '../../api/ApiContext';
+import { useCitadelAPI } from '../../api/useCitadelAPI';
 import { castleOptionsFromState } from '../../api/Selectors';
 import {
 	AUTO_TOWER_MAXIMUM_DAILY_TIME_SKIPS,
@@ -30,7 +30,7 @@ import HorseTravelBoostSelect from './HorseTravelBoostSelect';
 import { DailyAttackLimitField } from './DailyAttackLimitField';
 import type { HorseTravelBoostID } from '../HorseTravelBoost';
 import { useConfigurationDraftSession } from '../ConfigurationDraftSession';
-import { useMetadata } from '../../context/MetadataContext';
+import { useMetadata } from '../../context/useMetadata';
 import { COMMANDER_FEATURE_SECTION } from '../../Movement/types/CommanderFeatureAssignments';
 import { savedCommanderAssignments } from '../requirements/commanderAssignmentDraft';
 import { evaluateCommanderEligibility } from '../requirements/commanderEligibility';
@@ -45,7 +45,8 @@ import { AUTOMATION_ENABLED_KEYS } from '../disclosure/placement';
 import { countCustomValues, towerAdvisorSummary, towerScanSummary, travelLine } from '../disclosure/summaries';
 import { useSettingsDisclosure } from '../disclosure/useSettingsDisclosure';
 import { AutomationRunStrip } from './AutomationRunStrip';
-import { collapsedSettingNote, SettingsSection } from './SettingsSection';
+import { SettingsSection } from './SettingsSection';
+import { collapsedSettingNote } from './collapsedSettingNote';
 import { useDraftRecovery } from '../useDraftRecovery';
 
 interface AutoTowerSettingsModalProps {

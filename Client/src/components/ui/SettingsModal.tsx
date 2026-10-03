@@ -1,4 +1,4 @@
-import { useLocale } from '../../i18n/LocaleContext';
+import { useLocale } from '../../i18n/useLocale';
 import React, { type ReactNode } from 'react';
 import { Save } from 'lucide-react';
 import { Button } from './Button';

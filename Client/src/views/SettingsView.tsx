@@ -1,9 +1,9 @@
 import { LanguageSelector } from '../i18n/LanguageSelector';
 import { LocalizedRichText } from "../i18n/LocalizedRichText";
-import { useLocale as useStaticLocale } from "../i18n/LocaleContext";
+import { useLocale as useStaticLocale } from '../i18n/useLocale';
 import { LocalizedText } from "../i18n/LocalizedText";
 import { useLocalizedErrorState } from '../i18n/useLocalizedErrorState';
-import { useLocale } from '../i18n/LocaleContext';
+import { useLocale } from '../i18n/useLocale';
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import {
 	ArrowDown,
@@ -19,7 +19,7 @@ import {
 } from 'lucide-react';
 import { Icons } from '../components/Icons';
 import { APIError, CitadelAPI } from '../api/CitadelClient';
-import { useCitadelAPI } from '../api/ApiContext';
+import { useCitadelAPI } from '../api/useCitadelAPI';
 import type {
 	BackgroundLoginStatus,
 	BrowserInventory,
@@ -541,17 +541,17 @@ const SettingsView: React.FC = () => {
 	};
 
   const handleMinChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    let val = e.target.value;
+    const val = e.target.value;
     setMinTimer(val);
   };
 
   const handleMaxChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    let val = e.target.value;
+    const val = e.target.value;
     setMaxTimer(val);
   };
 
   const handleMinBlur = () => {
-    let num = parseFloat(minTimer);
+    const num = parseFloat(minTimer);
     let newVal = '4.0';
     if (isNaN(num) || num < 4.0) {
       newVal = '4.0';
@@ -563,7 +563,7 @@ const SettingsView: React.FC = () => {
   };
 
   const handleMaxBlur = () => {
-    let num = parseFloat(maxTimer);
+    const num = parseFloat(maxTimer);
     let currentMin = parseFloat(minTimer);
     if (isNaN(currentMin)) currentMin = 4.0;
 
@@ -578,7 +578,7 @@ const SettingsView: React.FC = () => {
   };
 
   const handleUpgradeDelayBlur = () => {
-    let num = parseInt(upgradeEreDelayMs, 10);
+    const num = parseInt(upgradeEreDelayMs, 10);
     let newVal = '50';
     if (isNaN(num) || num < 10) {
       newVal = '10';
@@ -592,7 +592,7 @@ const SettingsView: React.FC = () => {
   };
 
   const handleUpgradeCoinThresholdBlur = () => {
-    let num = parseFloat(upgradeCoinThreshold);
+    const num = parseFloat(upgradeCoinThreshold);
     let newVal = '0';
     if (isNaN(num) || num < 0) {
       newVal = '0';

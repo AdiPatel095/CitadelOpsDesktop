@@ -1,7 +1,8 @@
-import { useLocale as useStaticLocale } from "../i18n/LocaleContext";
+export type { TCIPickerOptions, TCIPickerResult, TCISelectionMode, TCIWithLevelCeiling } from './TCIPicker';
+import { tciPickerBridge, type TCIPickerOptions, type TCIPickerResult, TCI_LEVEL_MIN, normalizeLevelRange } from './TCIPicker';
+import { useLocale as useStaticLocale } from '../i18n/useLocale';
 import { LocalizedText } from "../i18n/LocalizedText";
-import { useLocale } from '../i18n/LocaleContext';
-import { readViewerLocale } from '../i18n/viewerLocaleStore';
+import { useLocale } from '../i18n/useLocale';
 import { officialCatalogGeneration, subscribeOfficialCatalog } from '../i18n/officialMessages';
 import React, { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
 import { Check, ChevronDown, Clock3, Layers3, Minus, Plus, Sparkles } from 'lucide-react';
@@ -18,75 +19,11 @@ import {
   type ConstructionItemCatalogEntry,
 } from './TCICatalogCache';
 
-export const TCI_LEVEL_MIN = 1;
-
-export function clampLevelCeiling(
-  n: number,
-  minLevel = TCI_LEVEL_MIN,
-  maxLevel = Number.MAX_SAFE_INTEGER,
-): number {
-  if (Number.isNaN(n)) {
-    return minLevel;
-  }
-  return Math.min(maxLevel, Math.max(minLevel, Math.floor(n)));
-}
-
-export function clampLevelFloor(n: number, minLevel = TCI_LEVEL_MIN, maxLevel = Number.MAX_SAFE_INTEGER): number {
-  return clampLevelCeiling(n, minLevel, maxLevel);
-}
-
-export function normalizeLevelRange(
-  floor: number,
-  ceiling: number,
-  minLevel = TCI_LEVEL_MIN,
-  maxLevel = Number.MAX_SAFE_INTEGER,
-): { floor: number; ceiling: number } {
-  const normalizedFloor = clampLevelFloor(floor, minLevel, maxLevel);
-  const normalizedCeiling = clampLevelCeiling(ceiling, minLevel, maxLevel);
-  return normalizedFloor <= normalizedCeiling
-    ? { floor: normalizedFloor, ceiling: normalizedCeiling }
-    : { floor: normalizedCeiling, ceiling: normalizedCeiling };
-}
-
-export type TCISelectionMode = 'single' | 'multi';
-
-export interface TCIWithLevelCeiling {
-  constructionItemId: number;
-  levelCeiling: number;
-  levelFloor: number;
-}
-
-export interface TCIPickerOptions {
-  mode: TCISelectionMode;
-  title?: string;
-  preselected?: number[];
-  preselectedLevelCeilings?: Record<number, number>;
-  preselectedLevelFloors?: Record<number, number>;
-}
-
-export type TCIPickerResult = TCIWithLevelCeiling | TCIWithLevelCeiling[] | null;
-
 function catalogLevelBounds(catalog: ConstructionItemCatalogEntry[], id: number): [number, number] {
   const entry = catalog.find((candidate) => candidate.id === id || candidate.groupIds.includes(id));
   return entry ? [entry.minLevel, entry.maxLevel] : [TCI_LEVEL_MIN, Number.MAX_SAFE_INTEGER];
 }
 
-let resolvePickerPromise: ((value: TCIPickerResult) => void) | null = null;
-let setPickerState: React.Dispatch<
-  React.SetStateAction<{ isOpen: boolean; options: TCIPickerOptions | null }>
-> | null = null;
-
-export async function showTCIPicker(options: TCIPickerOptions): Promise<TCIPickerResult> {
-  try {
-    await fetchConstructionItemsCatalog(readViewerLocale());
-  } catch {
-    // Open the picker with its empty-state guidance when the catalog is unavailable.
-  }
-  return new Promise((resolve) => {
-    resolvePickerPromise = resolve;
-    setPickerState?.({ isOpen: true, options });
-  });
-}
 
 interface TCIPickerModalProps {
   isOpen: boolean;
@@ -105,9 +42,9 @@ export const TCIPickerProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   const [catalog, setCatalog] = useState<ConstructionItemCatalogEntry[]>([]);
 
   useEffect(() => {
-    setPickerState = setState;
+    tciPickerBridge.setState = setState;
     return () => {
-      setPickerState = null;
+      tciPickerBridge.setState = null;
     };
   }, []);
 
@@ -123,8 +60,8 @@ export const TCIPickerProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
   const handleClose = useCallback((result: TCIPickerResult) => {
     setState({ isOpen: false, options: null });
-    resolvePickerPromise?.(result);
-    resolvePickerPromise = null;
+    tciPickerBridge.resolve?.(result);
+    tciPickerBridge.resolve = null;
   }, []);
 
   return (

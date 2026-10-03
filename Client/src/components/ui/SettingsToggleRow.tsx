@@ -1,4 +1,4 @@
-import { useLocale } from '../../i18n/LocaleContext';
+import { useLocale } from '../../i18n/useLocale';
 import React, { type HTMLAttributes, type ReactNode } from 'react';
 import { Switch } from './Switch';
 

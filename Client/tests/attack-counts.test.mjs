@@ -12,8 +12,8 @@ const vite = await createServer({
   plugins: [{ name: 'attack-count-header-contexts', enforce: 'pre',
     resolveId(source, importer) {
       if (!importer?.endsWith('/DailyAttackTracker.tsx')) return;
-      if (source.endsWith('/ApiContext')) return 'virtual:cit88-api';
-      if (source.endsWith('/LocaleContext')) return 'virtual:cit88-locale';
+      if (source.endsWith('/useCitadelAPI')) return 'virtual:cit88-api';
+      if (source.endsWith('/useLocale')) return 'virtual:cit88-locale';
       if (source.endsWith('/Deployment')) return 'virtual:cit88-presence';
     },
     load(id) {

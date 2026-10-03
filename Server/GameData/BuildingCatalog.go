@@ -17,6 +17,11 @@ const (
 	BuildingCostUnknown        = "unknown"
 )
 
+// DefaultBuildingKingdomIDs mirrors AShopVO.parseXmlNode in the official client.
+// Sea Queen, Thorn King and Underworld use external treasure-map IDs; the
+// worker does not build on treasure maps, so those IDs are omitted fail-closed.
+var DefaultBuildingKingdomIDs = []int64{0, 1, 2, 3, 4}
+
 type BuildingCatalog struct {
 	definitions      []BuildingDefinition
 	byID             map[int64]BuildingDefinition
@@ -239,6 +244,11 @@ func decodeBuildingDefinition(record Record, id int64, references map[string]bui
 	if displayName == "" {
 		displayName = fmt.Sprintf("Building %d", id)
 	}
+	kingdomIDs := intList(record, "kIDs")
+	defaulted := len(kingdomIDs) == 0
+	if defaulted {
+		kingdomIDs = append([]int64(nil), DefaultBuildingKingdomIDs...)
+	}
 	return BuildingDefinition{
 		ID:                       id,
 		InternalName:             internalName,
@@ -256,7 +266,8 @@ func decodeBuildingDefinition(record Record, id int64, references map[string]bui
 		RequiredLegendLevel:      optionalBuildingInt(record, "requiredLegendLevel"),
 		EarlyUnlockRequiredLevel: optionalBuildingInt(record, "earlyUnlockRequiredLevel"),
 		MaximumCount:             optionalBuildingInt(record, "maximumCount"),
-		KingdomIDs:               intList(record, "kIDs"),
+		KingdomIDs:               kingdomIDs,
+		KingdomIDsDefaulted:      defaulted,
 		EventIDs:                 intList(record, "eventIDs"),
 		AreaTypeIDs:              intList(record, "onlyInAreaTypes"),
 		MapIDs:                   intList(record, "mapIDs"),

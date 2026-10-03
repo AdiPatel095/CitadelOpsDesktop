@@ -1,4 +1,4 @@
-import { useLocale } from './i18n/LocaleContext';
+import { useLocale } from './i18n/useLocale';
 import { ConnectionRepairHost } from './components/ConnectionRepairHost';
 import React, { lazy, Suspense, useEffect, useRef, useState, type ComponentType } from 'react';
 import { Providers } from './Providers';

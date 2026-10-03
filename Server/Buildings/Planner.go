@@ -393,8 +393,8 @@ func definitionBlockers(
 	if definition.RequiredLegendLevel != nil && int64(player.LegendLevel) < *definition.RequiredLegendLevel {
 		result = append(result, Blocker{Code: "legend_level", Message: fmt.Sprintf("Legend level %d is below required level %d", player.LegendLevel, *definition.RequiredLegendLevel)})
 	}
-	if len(definition.KingdomIDs) > 0 && !containsInt64(definition.KingdomIDs, int64(castle.KingdomID)) {
-		result = append(result, Blocker{Code: "kingdom", Message: fmt.Sprintf("The definition is not available in kingdom %d", castle.KingdomID)})
+	if blocker := BuildingKingdomBlocker(definition, castle.KingdomID); blocker != nil {
+		result = append(result, *blocker)
 	}
 	if len(definition.AreaTypeIDs) > 0 && !containsInt64(definition.AreaTypeIDs, int64(castle.SlotType)) {
 		result = append(result, Blocker{Code: "area_type", Message: fmt.Sprintf("The definition is not available for castle area type %d", castle.SlotType)})
@@ -830,4 +830,22 @@ func countRejected(candidates []Candidate) int {
 		}
 	}
 	return count
+}
+
+// BuildingKingdomBlocker consumes the normalized catalog list at planning and
+// final dispatch. The descriptor preserves official building-name provenance.
+func BuildingKingdomBlocker(definition GameData.BuildingDefinition, kingdomID State.KingdomID, languages ...*GameData.LanguageStore) *Blocker {
+	if containsInt64(definition.KingdomIDs, int64(kingdomID)) {
+		return nil
+	}
+	message := fmt.Sprintf("%s (building %d) is not available in kingdom %d", definition.DisplayName, definition.ID, kingdomID)
+	descriptor := Localization.New("server.buildings.kingdom_unavailable", "{building} (building {definitionID}) is not available in kingdom {kingdomID}", Localization.Params{
+		"building": definition.DisplayName, "definitionID": definition.ID, "kingdomID": kingdomID,
+	})
+	if len(languages) > 0 {
+		if key := GameData.FirstOfficialNameKey(languages[0], definition.LocalizationKeys...); key != "" {
+			descriptor = descriptor.WithGameParam("building", key, definition.DisplayName)
+		}
+	}
+	return &Blocker{Code: "kingdom", Message: message, MessageDescriptor: descriptor}
 }

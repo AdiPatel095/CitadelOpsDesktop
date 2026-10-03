@@ -1,5 +1,5 @@
 import { StopFooter } from '../../components/StopControl';
-import { useLocale as useStaticLocale } from "../../i18n/LocaleContext";
+import { useLocale as useStaticLocale } from '../../i18n/useLocale';
 import { LocalizedText } from "../../i18n/LocalizedText";
 import React, { useEffect, useState } from 'react';
 import { CalendarDays, Clock3, Settings } from 'lucide-react';
@@ -20,7 +20,7 @@ import {
   WEEK_DAYS,
   type WeeklySchedule,
 } from '../SchedulerTypes';
-import { useCitadelAPI } from '../../api/ApiContext';
+import { useCitadelAPI } from '../../api/useCitadelAPI';
 import { configurationSection } from '../Configuration';
 import { useConfigurationDraftSession } from '../ConfigurationDraftSession';
 import { AUTOMATION_ENABLED_KEYS } from '../disclosure/placement';

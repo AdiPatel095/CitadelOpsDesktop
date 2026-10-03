@@ -1,8 +1,8 @@
 import { useMemo } from 'react';
-import { useCitadelAPI } from '../../api/ApiContext';
+import { useCitadelAPI } from '../../api/useCitadelAPI';
 import { useHostedAccountConnection } from '../../config/HostedAccountConnection';
 import { useHostedRuntimePresence } from '../../config/Deployment';
-import { useAuth } from '../../context/AuthContext';
+import { useAuth } from '../../context/useAuth';
 import type { ConnectionEvidence } from './checklist';
 
 /**

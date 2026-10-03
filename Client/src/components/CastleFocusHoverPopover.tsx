@@ -1,6 +1,6 @@
 import React, { useCallback, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { useMetadata } from '../context/MetadataContext';
+import { useMetadata } from '../context/useMetadata';
 import type { CastleStateV2 } from '../api/Contracts';
 import { decorationTooltipRows } from '../api/Selectors';
 

@@ -1,4 +1,4 @@
-import {useLocale} from '../../i18n/LocaleContext';
+import { useLocale } from '../../i18n/useLocale';
 import React, { useCallback, useLayoutEffect, useMemo, useRef } from 'react';
 
 export interface ToggleGroupOption {

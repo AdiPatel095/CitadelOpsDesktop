@@ -1,4 +1,4 @@
-import { useLocale as useStaticLocale } from "../i18n/LocaleContext";
+import { useLocale as useStaticLocale } from '../i18n/useLocale';
 import { LocalizedText } from "../i18n/LocalizedText";
 import React, { useMemo, useState } from 'react';
 import { Castle, Eraser, LockKeyhole, Minus, PackageSearch, Plus, Shield, Sparkles, Waves } from 'lucide-react';
@@ -12,8 +12,9 @@ import {
   normalizeDefensePresetSlots,
   type DefensePresetDraft,
 } from '../defensePresets/DefensePresetTypes';
-import { useMetadata, type MetadataItem } from '../context/MetadataContext';
-import { showToolPicker } from './ToolPickerModal';
+import { type MetadataItem } from '../context/MetadataContext';
+import { useMetadata } from '../context/useMetadata';
+import { showToolPicker } from './ToolPicker';
 import ToolImage from './ToolImage';
 import {
   AddSlot,

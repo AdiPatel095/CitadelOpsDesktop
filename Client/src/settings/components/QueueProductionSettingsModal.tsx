@@ -5,15 +5,15 @@ import { castleCandidates } from '../copy/candidates';
 import { recruitCopyDescriptor, toolCopyDescriptor } from '../copy/features/queueProduction';
 import { copyReapplied, genericSaveError, useCastleCopyReplayRun, useCastleCopyReplayState } from '../copy/useCastleCopyReplay';
 import { CastleCopyButton } from './CastleCopyDialog';
-import { useLocale as useStaticLocale } from "../../i18n/LocaleContext";
+import { useLocale as useStaticLocale } from '../../i18n/useLocale';
 import { LocalizedText } from "../../i18n/LocalizedText";
 import React, { useState, useEffect } from 'react';
 import { CalendarDays, Castle, Clock3, Copy, Trash2, Plus, Settings } from 'lucide-react';
-import { showTroopPicker } from '../../components/TroopPickerModal';
-import { showToolPicker } from '../../components/ToolPickerModal';
+import { showTroopPicker } from '../../components/TroopPicker';
+import { showToolPicker } from '../../components/ToolPicker';
 import UnitImage from '../../components/UnitImage';
 import ToolImage from '../../components/ToolImage';
-import { useMetadata } from '../../context/MetadataContext';
+import { useMetadata } from '../../context/useMetadata';
 import { Modal, Button, Input, Card, CardHeader, CardTitle, CardContent, Badge, Switch, PillSelector, SectionCard, SettingsModal } from '../../components/ui';
 import {
   DEFAULT_RECRUIT_CHECK_INTERVAL_MIN,
@@ -46,7 +46,7 @@ import {
   WEEK_DAYS,
   type WeeklySchedule,
 } from '../SchedulerTypes';
-import { useCitadelAPI } from '../../api/ApiContext';
+import { useCitadelAPI } from '../../api/useCitadelAPI';
 import { configurationSection } from '../Configuration';
 import { castleOptionsFromState, type CastleOptionV2 } from '../../api/Selectors';
 import {

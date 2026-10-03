@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { RotateCcw } from 'lucide-react';
-import { useCitadelAPI } from '../api/ApiContext';
+import { useCitadelAPI } from '../api/useCitadelAPI';
 import { Button } from '../components/ui/Button';
 import { Modal } from '../components/ui/Modal';
 import { LocalizedText } from '../i18n/LocalizedText';

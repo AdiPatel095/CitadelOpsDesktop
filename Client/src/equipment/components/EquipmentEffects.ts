@@ -308,7 +308,7 @@ export function formatEquipmentEffectLabel(effect: MappedEquipmentEffect, locale
 	const argument = effect.argumentLabel || (effect.argumentId ? `Unit ${effect.argumentId}` : '');
 	if (!effect.template) return effect.label;
 	// Value {0} is displayed in its adjacent numeric column; other unknown arguments remain visible.
-	const template = cleanTemplate(effect.template.replace(/[+\-]?\s*\{0\}\s*%?/g, '').replace(/^[+\-%\s:]+/, ''));
+	const template = cleanTemplate(effect.template.replace(/[+-]?\s*\{0\}\s*%?/g, '').replace(/^[+\-%\s:]+/, ''));
 	return formatGameMessage(template, ['', argument || undefined], locale).trim() || effect.label;
 }
 

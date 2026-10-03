@@ -1,5 +1,5 @@
 import {messageLanguageAttributes} from '../i18n/messageLanguage';
-import { useLocale as useStaticLocale } from "../i18n/LocaleContext";
+import { useLocale as useStaticLocale } from '../i18n/useLocale';
 import { LocalizedText } from "../i18n/LocalizedText";
 import React from 'react';
 import { Icons } from '../components/Icons';

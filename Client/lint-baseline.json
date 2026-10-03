@@ -1,0 +1,112 @@
+{
+  "version": 1,
+  "files": {
+    "src/Movement/components/CommanderRequirementModal.tsx": {
+      "react-hooks/set-state-in-effect": 1
+    },
+    "src/Rift/components/RiftAttackTemplate.tsx": {
+      "react-hooks/use-memo": 1
+    },
+    "src/attackAnalytics/components/AttackEconomyView.tsx": {
+      "react-hooks/set-state-in-effect": 1
+    },
+    "src/battleStats/components/BattleStatsView.tsx": {
+      "react-hooks/preserve-manual-memoization": 2
+    },
+    "src/components/AttackSetupModal.tsx": {
+      "react-hooks/set-state-in-effect": 1
+    },
+    "src/components/CastleFocusSwitcher.tsx": {
+      "react-hooks/set-state-in-effect": 1
+    },
+    "src/components/ConnectionRepairDialog.tsx": {
+      "react-hooks/purity": 1
+    },
+    "src/components/DecorationPresetsPanel.tsx": {
+      "react-hooks/purity": 2
+    },
+    "src/components/TCIImage.tsx": {
+      "react-hooks/set-state-in-effect": 1
+    },
+    "src/components/TCIPickerModal.tsx": {
+      "react-hooks/set-state-in-effect": 2
+    },
+    "src/components/ToolImage.tsx": {
+      "react-hooks/preserve-manual-memoization": 1,
+      "react-hooks/set-state-in-effect": 1
+    },
+    "src/components/ToolPickerModal.tsx": {
+      "react-hooks/set-state-in-effect": 1
+    },
+    "src/components/TroopPickerModal.tsx": {
+      "react-hooks/set-state-in-effect": 1
+    },
+    "src/components/UnitImage.tsx": {
+      "react-hooks/preserve-manual-memoization": 1,
+      "react-hooks/set-state-in-effect": 1
+    },
+    "src/context/AuthContext.tsx": {
+      "react-hooks/refs": 1
+    },
+    "src/context/CastleFocusContext.tsx": {
+      "react-hooks/set-state-in-effect": 1
+    },
+    "src/context/MetadataContext.tsx": {
+      "react-hooks/set-state-in-effect": 1
+    },
+    "src/dashboard/components/CastleResourceCard.tsx": {
+      "react-hooks/set-state-in-effect": 1
+    },
+    "src/dashboard/components/CraftingQueueSlot.tsx": {
+      "react-hooks/set-state-in-effect": 1
+    },
+    "src/dashboard/components/EventScoreCard.tsx": {
+      "react-hooks/preserve-manual-memoization": 2
+    },
+    "src/equipment/components/EquipmentModals.tsx": {
+      "react-hooks/set-state-in-effect": 6
+    },
+    "src/playerTracker/components/PlayerTrackerView.tsx": {
+      "react-hooks/set-state-in-effect": 2
+    },
+    "src/settings/EventDifficultyOptions.ts": {
+      "react-hooks/refs": 1
+    },
+    "src/settings/components/AutoFoodBalanceSettingsModal.tsx": {
+      "react-hooks/set-state-in-effect": 1
+    },
+    "src/settings/components/AutoSceatRecipePickerModal.tsx": {
+      "react-hooks/set-state-in-effect": 1
+    },
+    "src/settings/components/AutomationDurationModal.tsx": {
+      "react-hooks/purity": 1
+    },
+    "src/settings/components/CastleCopyDialog.tsx": {
+      "react-hooks/purity": 2
+    },
+    "src/settings/components/FeatureGuideModal.tsx": {
+      "react-hooks/set-state-in-effect": 1
+    },
+    "src/settings/components/WeeklyScheduler.tsx": {
+      "react-hooks/immutability": 1
+    },
+    "src/settings/copy/useCastleCopyReplay.tsx": {
+      "react-hooks/refs": 1
+    },
+    "src/settings/disclosure/useSettingsDisclosure.ts": {
+      "react-hooks/refs": 1
+    },
+    "src/settings/onboarding/goalStore.ts": {
+      "react-hooks/set-state-in-effect": 1
+    },
+    "src/settings/readiness/useFeatureReadiness.ts": {
+      "react-hooks/purity": 1
+    },
+    "src/worldIntelligence/components/WorldAllianceDetailView.tsx": {
+      "react-hooks/set-state-in-effect": 1
+    },
+    "src/worldIntelligence/components/WorldPlayerDetailView.tsx": {
+      "react-hooks/set-state-in-effect": 2
+    }
+  }
+}
