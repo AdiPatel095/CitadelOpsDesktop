@@ -146,3 +146,37 @@ func TestOpenGateCallbackUsesAbsentSettingsDefaults(t *testing.T) {
 		}
 	}
 }
+
+func TestStormRoleAutoStationGateUsesRoleReserves(t *testing.T) {
+	now := time.Now().UTC()
+	planned := now.Add(-time.Second)
+	s := State.NewGameState()
+	s.Player.ID = 7
+	s.Player.ProtectionMode.ObservedAt = now
+	s.Session.LoggedIn = true
+	s.Session.SocketReady = true
+	s.Session.ConnectionGeneration = 1
+	s.MovementSnapshot.ObservedAt = now
+	s.MovementSnapshot.ConnectionGeneration = 1
+	s.Castles[20] = State.CastleState{ID: 20, KingdomID: 4, SlotType: 1, UnitsObservedAt: now, Units: State.CastleUnits{Stationed: map[State.UnitID]int64{489: 37}}}
+	until := now.Add(time.Hour)
+	s.Stationing["autoStation:20"] = State.StationingOperation{SourceCastleID: 20, UpdatedAt: planned, SuccessCooldownUntil: &until}
+	arrives := now.Add(30 * time.Second)
+	s.Movements[1] = State.MovementState{ID: 1, TypeID: 0, Direction: 0, OwnerPlayerID: 8, TargetPlayerID: 7, SourceTypeID: 1, SourceCastleID: 30, TargetTypeID: 1, TargetCastleID: 20, ArrivesAt: &arrives}
+	data := autoBirdFortressGameDataManager(t)
+	for _, reserve := range []int{0, 37} {
+		config, err := Configuration.Open(t.TempDir(), map[string]json.RawMessage{
+			"automation.enabled":     json.RawMessage(`{"auto_station":true}`),
+			"automation.autoStation": json.RawMessage(fmt.Sprintf(`{"openGateFallback":true,"settings":{"storm":[{"id":489,"amount":%d}]}}`, reserve)),
+		})
+		if err != nil {
+			t.Fatal(err)
+		}
+		a := Application{State: State.NewStore(&s), Configuration: config, GameData: data}
+		args, _ := json.Marshal(defenseOpenGateRequest{CastleID: 20, AutoStation: true, PlannedAt: planned, ConnectionGeneration: 1})
+		err = a.guardOpenGate(t.Context(), args)
+		if (err == nil) != (reserve == 0) {
+			t.Fatalf("reserve=%d gate error=%v", reserve, err)
+		}
+	}
+}

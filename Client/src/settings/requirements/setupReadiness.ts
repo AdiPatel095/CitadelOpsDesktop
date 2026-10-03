@@ -1,3 +1,4 @@
+import { castleForSettingsKey, castleSettingsEntry, normalizeStormKeys, stormReserveConfigured } from '../stormRole';
 import type { CastleStateV2, GameStateV2 } from '../../api/Contracts';
 import type { MetadataItem } from '../../context/MetadataContext';
 import type { MessageKey } from '../../i18n/messages';
@@ -73,10 +74,10 @@ export interface TowerReadiness {
 
 export function evaluateTowerReadiness(input: TowerReadinessInput): TowerReadiness {
   const checks: ReadinessCheck[] = [];
-  const enabled = Object.entries(input.castles).filter(([, castle]) => castle.enabled);
+  const enabled = Object.entries(normalizeStormKeys(input.castles, input.state)).filter(([, castle]) => castle.enabled);
   const stockByCastle: Record<string, UnitStockResult> = {};
-  const missingCastles = enabled.filter(([castleId]) => input.state != null && input.state.castles[castleId] == null);
-  const withoutUnit = enabled.filter(([castleId, castle]) => castle.unitId <= 0 && input.state?.castles[castleId] != null);
+  const missingCastles = enabled.filter(([castleId]) => input.state != null && castleId !== 'storm' && castleForSettingsKey(castleId, input.state) == null);
+  const withoutUnit = enabled.filter(([castleId, castle]) => castle.unitId <= 0 && castleForSettingsKey(castleId, input.state) != null);
   if (enabled.length === 0) {
     checks.push({ id: 'enabled-castles', state: 'blocked', messageKey: message('ui.settings.requirements.setupReadiness.enable.at.least.one.castle.and.choose.f11e9525'), fix: 'settings' });
   } else if (castlesUnobserved(input.state)) {
@@ -84,16 +85,19 @@ export function evaluateTowerReadiness(input: TowerReadinessInput): TowerReadine
     checks.push({ id: 'enabled-castles', state: 'unavailable', messageKey: CASTLES_NOT_OBSERVED, fix: 'connection' });
   } else if (missingCastles.length > 0) {
     checks.push({ id: 'enabled-castles', state: 'blocked', messageKey: message('setupReadiness.castlesNotInWorld'), params: { count: missingCastles.length, castle: '#' + missingCastles[0][0], others: missingCastles.length - 1 }, fix: 'settings' });
+  } else if (enabled.every(([key]) => key === 'storm') && !castleForSettingsKey('storm', input.state)) {
+    checks.push({ id: 'enabled-castles', state: 'pending', messageKey: message('stormRole.waiting') });
   } else if (withoutUnit.length > 0) {
     checks.push({ id: 'enabled-castles', state: 'blocked', messageKey: message('setupReadiness.castlesWithoutTroop'), params: { count: withoutUnit.length }, fix: 'settings' });
   } else {
     checks.push({ id: 'enabled-castles', state: 'valid', messageKey: message('setupReadiness.enabledCastles'), params: { count: enabled.length } });
   }
   for (const [castleId, castle] of enabled) {
-    if (castle.unitId <= 0 || input.state?.castles[castleId] == null) continue;
+    if (castleId === 'storm' && !castleForSettingsKey(castleId, input.state)) continue;
+    if (castle.unitId <= 0 || castleForSettingsKey(castleId, input.state) == null) continue;
     stockByCastle[castleId] = evaluateUnitStock({
       observation: input.observation,
-      castle: input.state?.castles[castleId] ?? null,
+      castle: castleForSettingsKey(castleId, input.state) ?? null,
       requests: [{ itemId: castle.unitId, amount: 1, kind: 'troop' }],
       troops: input.troops,
       tools: input.tools,
@@ -211,6 +215,7 @@ export function evaluateFortressReadiness(input: FortressReadinessInput): Fortre
 
 export interface ReserveReadinessInput extends MetadataInput {
   featureId: 'autoStation' | 'autoBird';
+  stormLegacyKey?: string;
   state: GameStateV2 | null;
   reserves: Readonly<Record<string, ReadonlyArray<{ id: number; amount: number }>>>;
 }
@@ -229,11 +234,18 @@ export function evaluateReserveReadiness(input: ReserveReadinessInput): ReserveR
     checks.push({ id: 'castles', state: 'unavailable', messageKey: message('ui.settings.requirements.setupReadiness.castle.data.has.not.been.observed.yet.76ce81b7'), fix: 'connection' });
     return { report: { featureId: input.featureId, checks, overall: aggregateReadiness(checks) }, stockByCastle, castlesNotInWorld };
   }
+  if (input.featureId === 'autoBird') {
+    const stormCastle = castleForSettingsKey('storm', input.state);
+    if (stormCastle && !stormReserveConfigured(castleSettingsEntry(input.reserves, stormCastle))) {
+      checks.push({ id: 'storm-reserve', state: 'pending', messageKey: message('stormRole.birdUnconfigured'), params: { castle: stormCastle.name || `castle ${stormCastle.id}` }, fix: 'settings', slot: 'storm' });
+    }
+  }
   const castleDataObserved = !castlesUnobserved(input.state);
-  for (const [castleId, reserves] of Object.entries(input.reserves)) {
+  for (const [castleId, reserves] of Object.entries(normalizeStormKeys(input.reserves, input.state, { stormLegacyKey: input.stormLegacyKey }))) {
     if (reserves.length === 0) continue;
-    const castle = input.state.castles[castleId];
+    const castle = castleForSettingsKey(castleId, input.state);
     if (!castle) {
+      if (castleId === 'storm') continue;
       // With no castle data yet, a saved reserve cannot be judged "not in this world".
       if (!castleDataObserved) continue;
       castlesNotInWorld.push(castleId);

@@ -1,3 +1,5 @@
+import type { GameStateV2 } from '../api/Contracts';
+import { normalizeStormKeys, parseStormLegacyKey, stormLegacyKeyFor } from './stormRole';
 import { queueConfigurationUpdate } from './Configuration';
 import {
   emptyPresetsFile,
@@ -15,6 +17,7 @@ export interface AutoBirdStoredSettings {
 
 export interface AutoBirdClientStateV2 {
   version: 2;
+  stormLegacyKey?: string;
   activePresetId: string | null;
   ignoreSettings: AutoBirdStoredSettings;
   presets: PresetsFileV1;
@@ -52,7 +55,7 @@ export function parseAutoBirdClientState(raw: unknown): AutoBirdClientStateV2 {
   const activePresetId = typeof o.activePresetId === 'string' && o.activePresetId.trim()
     ? o.activePresetId.trim()
     : null;
-  return { version: 2, activePresetId, ignoreSettings, presets };
+  return { version: 2, activePresetId, ignoreSettings, presets, ...(parseStormLegacyKey(o.stormLegacyKey) ? { stormLegacyKey: parseStormLegacyKey(o.stormLegacyKey) } : {}) };
 }
 
 export function buildAutoBirdClientState(
@@ -85,4 +88,16 @@ export function activateAutoBirdPreset(raw: unknown, presetId: string | null): A
 
 export function persistAutoBirdClientState(state: AutoBirdClientStateV2) {
   return queueConfigurationUpdate('automation.autoBird', state);
+}
+
+
+/** Save compatibility mirrors every reserve map for the current owned Storm castle. */
+export function normalizeAutoBirdStormSettings(saved: AutoBirdClientStateV2, state: GameStateV2 | null): AutoBirdClientStateV2 {
+  const { stormLegacyKey: previous, ...section } = saved;
+  const options = { stormLegacyKey: previous, dualWrite: true };
+  const ignoreSettings = { ...saved.ignoreSettings, settings: normalizeStormKeys(saved.ignoreSettings.settings, state, options) };
+  const presets = { ...saved.presets, presets: saved.presets.presets.map((preset) => ({ ...preset, settings: normalizeStormKeys(preset.settings, state, options) })) };
+  const hasStormEntry = [ignoreSettings.settings, ...presets.presets.map((preset) => preset.settings)].some((settings) => Object.hasOwn(settings, 'storm'));
+  const stormLegacyKey = hasStormEntry ? stormLegacyKeyFor(state) : undefined;
+  return { ...section, ...(stormLegacyKey ? { stormLegacyKey } : {}), ignoreSettings, presets };
 }

@@ -146,6 +146,7 @@ export const SETTINGS_FIX_TARGETS: Readonly<Record<SettingsFeatureId, FixTable>>
     reserves: target('reserves', 'auto-station-castles'),
   },
   autoBird: {
+    'storm-reserve': target('castles', 'auto-bird-castle-storm'),
     castles: target('castles', 'auto-bird-castles'),
     'saved-castles': target('castles', 'auto-bird-castles'),
     reserves: target('castles', 'auto-bird-castles'),

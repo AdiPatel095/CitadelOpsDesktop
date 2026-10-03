@@ -3220,5 +3220,7 @@
   "server.telemetry.channel.websocket_game.label": "All Game Traffic",
   "server.travel_tickets.recovery": "The feature lane will reevaluate after the authoritative travel ticket balance changes.",
   "server.travel_tickets.short": "Not enough travel tickets: {needed} needed, {available} available",
-  "server.travel_tickets.unavailable": "Travel ticket balance is unavailable; waiting for fresh game data"
+  "server.travel_tickets.unavailable": "Travel ticket balance is unavailable; waiting for fresh game data",
+  "stormRole.birdUnconfigured": "Auto Bird skips {castle}: no troops to keep are set for the Storm castle.",
+  "stormRole.waiting": "Waiting for a Storm castle"
 }
