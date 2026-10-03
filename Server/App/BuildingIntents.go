@@ -128,6 +128,7 @@ func (application *Application) registerBuildingIntents() error {
 		"building.placement.kingdom.guard": application.guardBuildingPlacementKingdom,
 		"building.skip_time.guard":         application.guardBuildingTimeSkip,
 		"building.finish_free.guard":       application.guardBuildingFinishFree,
+		"building.finish_free.reconcile":   application.reconcileBuildingFinishFree,
 		"building.expand.footprint.guard":  application.guardBuildingExpansionFootprint,
 	} {
 		if err := application.Intents.RegisterAction(name, action); err != nil {
@@ -580,7 +581,7 @@ func planBuildingFinishFree(_ context.Context, input Intent.PlanningContext, arg
 		Kind: buildingMutationFinishFree, CastleID: castle.ID, BuildingInstanceID: request.BuildingInstanceID,
 		InitialConstructionState: building.ConstructionState,
 	})
-	steps := castleContextSteps(input, castle)
+	steps := []Intent.Step{castleFocusStep(castle)}
 	steps = append(steps, buildingResolverStep("Finish building operation for free", "building.finish_free.build", resolverArguments, "fco", Localization.New("server.app.finish_building_operation_for.00d9c467", "Finish building operation for free", nil)))
 	steps = append(steps, castleFocusStep(castle))
 	steps = append(steps, Intent.Step{Name: "Verify free building completion", NameDescriptor: Localization.New("server.app.verify_free_building_completion.23d987dd", "Verify free building completion", nil), Action: "building.verify", ActionArguments: verificationArguments})
@@ -596,7 +597,7 @@ func resolveBuildingFinishFreeStep(_ context.Context, input Intent.PlanningConte
 	if err := decodeIntentArguments(arguments, &request); err != nil {
 		return Intent.Step{}, err
 	}
-	_, _, _, err := validatedBuildingFinishFree(input, request, true)
+	castle, building, _, err := validatedBuildingFinishFree(input, request, true)
 	if err != nil {
 		return Intent.Step{}, err
 	}
@@ -608,6 +609,14 @@ func resolveBuildingFinishFreeStep(_ context.Context, input Intent.PlanningConte
 	step.NameDescriptor = Localization.New("server.app.finish_building_operation_for.00d9c467", "Finish building operation for free", nil)
 	step.FinalDispatchAction = "building.finish_free.guard"
 	step.FinalDispatchArguments = arguments
+	reconciliationArguments, _ := json.Marshal(buildingFinishFreeReconciliation{
+		CastleID: request.CastleID, BuildingInstanceID: request.BuildingInstanceID,
+		SnapshotAfter: time.Now().UTC(), SessionGeneration: input.State.Session.Generation,
+		InitialConstructionState: building.ConstructionState,
+	})
+	step.RejectionReconciliation = &Intent.RejectionReconciliation{
+		Code: 5, Refresh: castleFocusStep(castle), Action: "building.finish_free.reconcile", Arguments: reconciliationArguments,
+	}
 	return step, nil
 }
 
@@ -1713,6 +1722,50 @@ func validateFinalBuildingPlacementKingdom(input Intent.PlanningContext, argumen
 	}
 	if blocker := Buildings.BuildingKingdomBlocker(definition, castle.KingdomID, input.Language); blocker != nil {
 		return Localization.WithError(fmt.Errorf("%w: %s", Intent.ErrPlanStale, blocker.Message), blocker.MessageDescriptor)
+	}
+	return nil
+}
+
+type buildingFinishFreeReconciliation struct {
+	CastleID                 State.CastleID           `json:"castleId"`
+	BuildingInstanceID       State.BuildingInstanceID `json:"buildingInstanceId"`
+	SnapshotAfter            time.Time                `json:"snapshotAfter"`
+	SessionGeneration        uint64                   `json:"sessionGeneration"`
+	InitialConstructionState int                      `json:"initialConstructionState"`
+}
+
+func buildingOperationCompleted(state int) bool {
+	switch state {
+	case State.BuildingStateInitial, State.BuildingStateBuildCompleted, State.BuildingStateUpgradeCompleted, State.BuildingStateDisassembledCompleted:
+		return true
+	}
+	return false
+}
+
+// reconcileBuildingFinishFree runs only after a committed post-FCO/5 snapshot.
+// Unknown and active states remain failed. The lane safety lock stays in force.
+func (application *Application) reconcileBuildingFinishFree(_ context.Context, arguments json.RawMessage) error {
+	var request buildingFinishFreeReconciliation
+	if err := decodeIntentArguments(arguments, &request); err != nil {
+		return err
+	}
+	state := application.State.ReadOnlyView()
+	castle, found := state.Castles[request.CastleID]
+	if !found || state.Session.Generation != request.SessionGeneration ||
+		!castle.ContextSnapshotObservedAt.After(request.SnapshotAfter) ||
+		!castle.Layout.ObservedAt.After(request.SnapshotAfter) ||
+		!castle.BuildingQueue.ObservedAt.After(request.SnapshotAfter) {
+		return Intent.ErrPlanStale
+	}
+	if buildingQueued(castle.BuildingQueue, request.BuildingInstanceID) {
+		return Intent.ErrPlanStale
+	}
+	if building, exists := castle.Buildings[request.BuildingInstanceID]; exists {
+		if !buildingOperationCompleted(building.ConstructionState) {
+			return Intent.ErrPlanStale
+		}
+	} else if request.InitialConstructionState != State.BuildingStateDisassembleInProgress && request.InitialConstructionState != State.BuildingStateDisassembleStopped {
+		return Intent.ErrPlanStale
 	}
 	return nil
 }

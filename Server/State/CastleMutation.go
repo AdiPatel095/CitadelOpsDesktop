@@ -164,15 +164,15 @@ func cloneCastleStateParts(castle CastleState, parts CastleMutationPart) CastleS
 		castle.Defense.Moat.RightToolSlots = append([]DefenseToolSlot{}, source.Defense.Moat.RightToolSlots...)
 	}
 	if parts&CastlePartBuildings != 0 {
-		castle.Buildings = cloneMap(source.Buildings)
+		castle.Buildings = cloneBuildingMap(source.Buildings)
 		castle.BuildingProduction = make(map[BuildingInstanceID]BuildingProduction, len(source.BuildingProduction))
 		for buildingID, production := range source.BuildingProduction {
 			production.PercentByResource = cloneMap(production.PercentByResource)
 			castle.BuildingProduction[buildingID] = production
 		}
-		castle.Layout.Ground = cloneMap(source.Layout.Ground)
-		castle.Layout.Objects = cloneMap(source.Layout.Objects)
-		castle.Layout.Fixed = cloneMap(source.Layout.Fixed)
+		castle.Layout.Ground = cloneBuildingMap(source.Layout.Ground)
+		castle.Layout.Objects = cloneBuildingMap(source.Layout.Objects)
+		castle.Layout.Fixed = cloneBuildingMap(source.Layout.Fixed)
 	}
 	if parts&CastlePartConstruction != 0 {
 		castle.BuildingQueue.Slots = append([]BuildingConstructionQueueSlot(nil), source.BuildingQueue.Slots...)
@@ -212,4 +212,15 @@ func cloneCastleStateParts(castle CastleState, parts CastleMutationPart) CastleS
 		castle.Crafting.OutputBoostByQueueType = cloneMap(source.Crafting.OutputBoostByQueueType)
 	}
 	return castle
+}
+
+func cloneBuildingMap(source map[BuildingInstanceID]Building) map[BuildingInstanceID]Building {
+	result := cloneMap(source)
+	for id, building := range result {
+		if len(building.CompletionEvents) > 0 {
+			building.CompletionEvents = append([]BuildingCompletionEvent(nil), building.CompletionEvents...)
+			result[id] = building
+		}
+	}
+	return result
 }

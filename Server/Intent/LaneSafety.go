@@ -146,6 +146,7 @@ func (engine *Engine) checkLaneSafety(request Request) error {
 // guardRejection runs before retry, stale-plan handling, or compensating actions.
 // Cancellation must not erase the evidence or prevent persisting the lock.
 func (engine *Engine) guardRejection(ctx context.Context, err error) error {
+	recordDispatchRejection(ctx, err)
 	request, _ := ctx.Value(laneSafetyContextKey{}).(Request)
 	lane := requestLane(request)
 	var response *ResponseCodeError

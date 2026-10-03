@@ -106,8 +106,19 @@ type ResponseRetryPolicy struct {
 	DelayMillis    int             `json:"delayMillis"`
 }
 
+// RejectionReconciliation refreshes authoritative state after one definitive
+// rejection. It never retries the mutating command. The action succeeds only
+// when the refreshed state proves the operation is already complete.
+type RejectionReconciliation struct {
+	Code      int             `json:"code"`
+	Refresh   Step            `json:"refresh"`
+	Action    string          `json:"action"`
+	Arguments json.RawMessage `json:"arguments"`
+}
+
 type Step struct {
-	NameDescriptor *Localization.Message `json:"nameDescriptor,omitempty"`
+	NameDescriptor          *Localization.Message    `json:"nameDescriptor,omitempty"`
+	RejectionReconciliation *RejectionReconciliation `json:"rejectionReconciliation,omitempty"`
 	// Batch is a resolver-only expansion, checkpointed as ordinary sequential steps
 	// before any command is sent. Children cannot contain deferred resolvers.
 	Batch []Step `json:"-"`
