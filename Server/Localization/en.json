@@ -2529,6 +2529,7 @@
   "server.automation.preset_needs_p_of.e2c90e67": "Preset needs {p0} of item {p1}; source castle has {p2}",
   "server.automation.production_configuration_has_no.1324228e": "production configuration has no castles object",
   "server.automation.production_configuration_has_no.db57eec1": "production configuration has no castle {p0}",
+  "server.automation.production_queues_full_at": "All observed production queues are full at {used} of {usable}",
   "server.automation.protection_expired_refresh_defense.96e84028": "Protection expired; refresh defense before checking recovery",
   "server.automation.protection_mode_is_preparing.89ac07e7": "Protection Mode is preparing or active; Auto Bird stationing is disabled",
   "server.automation.protection_mode_is_preparing.9107f9a8": "Protection Mode is preparing or active; Auto Station will use Open Gates instead of stationing",
@@ -2783,6 +2784,7 @@
   "server.buildings.decode_p_blueprint_document.14fff938": "decode {p0} blueprint document",
   "server.buildings.default_berimond_target_requires.45f20038": "default Berimond target requires an owned camp",
   "server.buildings.expansion_coordinates_must_be.581fed95": "expansion coordinates must be non-negative and direction must be 0 through 3",
+  "server.buildings.kingdom_unavailable": "{building} (building {definitionID}) is not available in kingdom {kingdomID}",
   "server.buildings.mode_must_be_p.e3a43e6a": "mode must be {p0}, {p1}, or {p2}",
   "server.buildings.no_focused_castle_is.52a6af14": "no focused castle is available",
   "server.buildings.official_berimond_building_definition.3dc20518": "official Berimond building definition {p0} is unavailable",
@@ -3184,6 +3186,5 @@
   "server.telemetry.channel.rift.description": "Launched Rift attacks and other completed Rift actions.",
   "server.telemetry.channel.rift.label": "Rift",
   "server.telemetry.channel.websocket_game.description": "Every game WebSocket frame, including actions performed directly in the game.",
-  "server.telemetry.channel.websocket_game.label": "All Game Traffic",
-  "server.automation.production_queues_full_at": "All observed production queues are full at {used} of {usable}"
+  "server.telemetry.channel.websocket_game.label": "All Game Traffic"
 }
