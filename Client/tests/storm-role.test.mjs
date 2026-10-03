@@ -116,8 +116,8 @@ test('Bird and Station Save mirror every map, move only the marked mirror and cl
   ] } });
   const station = parseAutoStationClientState({ settings: maps });
   const original = structuredClone({ bird, station });
-  assert.deepEqual(normalizeAutoStationStormSettings(parseAutoStationClientState({}), { castles: { 10: main } }).settings, { storm: [] });
-  assert.deepEqual(normalizeAutoBirdStormSettings(parseAutoBirdClientState({}), { castles: { 10: main } }).ignoreSettings.settings, { storm: [] });
+  assert.deepEqual(normalizeAutoStationStormSettings(parseAutoStationClientState({}), { castles: { 10: main } }).settings, {});
+  assert.deepEqual(normalizeAutoBirdStormSettings(parseAutoBirdClientState({}), { castles: { 10: main } }).ignoreSettings.settings, {});
   const birdMaps = (saved) => [saved.ignoreSettings.settings, ...saved.presets.presets.map((preset) => preset.settings)];
   for (const [saved, normalize, getMaps] of [[bird, normalizeAutoBirdStormSettings, birdMaps], [station, normalizeAutoStationStormSettings, (saved) => [saved.settings]]]) {
     const first = normalize(saved, state);
@@ -180,3 +180,33 @@ test('new-client Save matches the shared old-reader golden fixture', () => {
   }
   assert.deepEqual(role.normalizeStormKeys({ 20: { enabled: true }, storm: { enabled: true } }, state), { storm: { enabled: true } }, 'Towers remains role-only');
 });
+
+
+for (const feature of ['autoBird', 'autoStation']) {
+  test(`${feature} Save preserves explicit Storm removal, clears only marked mirrors and retains other preset rows`, () => {
+    const draft = { 10: [], 20: reserve, 98: [{ id: 1, amount: 8 }], 99: [{ id: 1, amount: 9 }] };
+    const parse = feature === 'autoBird' ? parseAutoBirdClientState : parseAutoStationClientState;
+    const normalize = feature === 'autoBird' ? normalizeAutoBirdStormSettings : normalizeAutoStationStormSettings;
+    const raw = feature === 'autoBird'
+      ? { stormLegacyKey: '20', ignoreSettings: { settings: draft }, presets: { version: 1, presets: [{ id: 'synthetic-removed', name: 'Synthetic removed', settings: draft }] } }
+      : { stormLegacyKey: '20', settings: draft };
+    const original = structuredClone(raw);
+    for (const live of [state, { castles: { 10: main } }]) {
+      const saved = normalize(parse(raw), live);
+      assert.equal(saved.stormLegacyKey, undefined, 'removal leaves no marker');
+      const maps = feature === 'autoBird' ? [saved.ignoreSettings.settings, ...saved.presets.presets.map((preset) => preset.settings)] : [saved.settings];
+      for (const map of maps) assert.deepEqual(map, { 10: [], 98: draft[98], 99: draft[99] });
+      assert.deepEqual(normalize(parse(saved), live), saved, 'Save/reopen/Save does not recreate the role');
+    }
+    assert.deepEqual(raw, original, 'normalization never mutates the removed draft');
+    if (feature === 'autoBird') {
+      const mixed = parse(raw);
+      mixed.presets.presets.push({ id: 'synthetic-kept', name: 'Synthetic kept', settings: { storm: [{ id: 1, amount: 0 }], 20: reserve, 99: reserve } });
+      const saved = normalize(mixed, state);
+      assert.equal(saved.stormLegacyKey, '20', 'retained preset keeps its compatibility mirror marker');
+      assert.equal(Object.hasOwn(saved.ignoreSettings.settings, 'storm'), false);
+      assert.equal(Object.hasOwn(saved.presets.presets[0].settings, 'storm'), false);
+      assert.deepEqual(saved.presets.presets[1].settings, { storm: [{ id: 1, amount: 0 }], 20: [{ id: 1, amount: 0 }], 99: reserve });
+    }
+  });
+}

@@ -26,20 +26,19 @@ export function stormLegacyKeyFor(state: GameStateV2 | null): string | undefined
 export function stormReserveConfigured(rows: ReadonlyArray<{ id: number; amount: number }> | undefined): boolean {
   return rows?.some((row) => row.id > 0 && row.amount > 0) === true;
 }
-interface StormKeyNormalization<T> {
+interface StormKeyNormalization {
   stormLegacyKey?: string;
   dualWrite?: boolean;
-  defaultEntry?: T;
 }
 // Pure draft transformation. Dual-write Save preserves every unmarked key;
 // read/Towers normalization hides numeric duplicates without persisting it.
-export function normalizeStormKeys<T>(entries: Readonly<Record<string, T>>, state: GameStateV2 | null, options: StormKeyNormalization<T> = {}): Record<string, T> {
+export function normalizeStormKeys<T>(entries: Readonly<Record<string, T>>, state: GameStateV2 | null, options: StormKeyNormalization = {}): Record<string, T> {
   const draft = { ...entries };
   const current = stormLegacyKeyFor(state);
-  if (current && Object.hasOwn(draft, current) && !Object.hasOwn(draft, STORM_SETTINGS_KEY)) draft.storm = draft[current];
   if (options.stormLegacyKey) delete draft[options.stormLegacyKey];
+  if (current && Object.hasOwn(draft, current) && !Object.hasOwn(draft, STORM_SETTINGS_KEY)) draft.storm = draft[current];
   if (options.dualWrite) {
-    const entry = draft.storm ?? options.defaultEntry;
+    const entry = draft.storm;
     if (entry !== undefined) {
       draft.storm = entry;
       if (current) draft[current] = entry;

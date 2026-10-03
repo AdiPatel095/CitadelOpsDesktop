@@ -232,3 +232,58 @@ for (const feature of ['autoBird', 'autoStation', 'autoTowers'] as const) {
     verifyNetwork();
   });
 }
+
+
+// Sophie's D3: Remove the idle role, Save, then reopen must keep it removed.
+for (const feature of ['autoBird', 'autoStation'] as const) {
+  test(`idle Storm role Remove Save reopen ${feature}`, async ({ page }, testInfo) => {
+    const verifyNetwork = await prepare(page, 'dark');
+    await openView(page, 'Automation', 'automation');
+    const before = await page.evaluate(async (feature) => {
+      const fixturePath = '/main.tsx';
+      const { server } = await import(/* @vite-ignore */ fixturePath);
+      const missing = Object.fromEntries((Object.values(server.built.state.castles) as CastleStateV2[]).filter((castle) => castle.kingdomId === 4).map((castle) => [castle.id, null]));
+      server.file.runtime = [{ label: 'Synthetic no owned Storm', state: { castles: missing } }];
+      if (!server.advance()) throw new Error('Synthetic absent frame was not applied');
+      const row = [{ id: 1, amount: 37 }];
+      const settings = { storm: row, 999: row, 998: row };
+      const value = feature === 'autoBird' ? { stormLegacyKey: '999', ignoreSettings: { settings }, presets: { version: 1, presets: [] }, activePresetId: null } : { stormLegacyKey: '999', settings };
+      await server.handle(`/api/v2/config/automation.${feature}`, 'PUT', { value });
+      server.log = [];
+      return server.configuration();
+    }, feature);
+    const snapshot = () => page.evaluate(async () => {
+      const fixturePath = '/main.tsx';
+      const { server } = await import(/* @vite-ignore */ fixturePath);
+      return server.configuration();
+    });
+    const label = feature === 'autoBird' ? 'Auto Bird' : 'Auto Station';
+    const open = () => page.locator('[data-view="automation"]').getByRole('button', { name: `Open ${label} settings`, exact: true }).click();
+    await open();
+    const dialog = page.getByRole('dialog');
+    const idle = dialog.getByText('Storm castle · used when you have one', { exact: true });
+    await expect(idle).toBeVisible();
+    const card = idle.locator('xpath=ancestor::div[.//button[normalize-space()="Remove"]][1]');
+    await card.getByRole('button', { name: 'Remove', exact: true }).click();
+    await expect(idle).toHaveCount(0);
+    expect(await snapshot()).toEqual(before, 'Remove changes only the draft');
+    await dialog.getByRole('button', { name: 'Save changes', exact: true }).click();
+    await expect(dialog).toHaveCount(0);
+    const after = await snapshot();
+    expect(after.revision).toBe(before.revision + 1);
+    const saved = after.sections[`automation.${feature}`];
+    const entries = feature === 'autoBird' ? saved.ignoreSettings.settings : saved.settings;
+    expect(Object.hasOwn(entries, 'storm')).toBe(false);
+    expect(Object.hasOwn(entries, '999')).toBe(false);
+    expect(saved.stormLegacyKey).toBeUndefined();
+    expect(entries['998']).toEqual([{ id: 1, amount: 37 }]);
+    await open();
+    await expect(idle).toHaveCount(0);
+    await expect(dialog.getByText('Storm castle', { exact: true })).toHaveCount(0);
+    await dialog.getByText(/Saved castle.*998/).last().scrollIntoViewIfNeeded();
+    await page.screenshot({ path: testInfo.outputPath(`${feature}-idle-storm-removed.png`) });
+    await dialog.getByRole('button', { name: 'Cancel', exact: true }).click();
+    expect(await snapshot()).toEqual(after);
+    verifyNetwork();
+  });
+}

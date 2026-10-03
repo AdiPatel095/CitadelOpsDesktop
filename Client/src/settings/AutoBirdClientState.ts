@@ -94,12 +94,10 @@ export function persistAutoBirdClientState(state: AutoBirdClientStateV2) {
 /** Save compatibility mirrors every reserve map for the current owned Storm castle. */
 export function normalizeAutoBirdStormSettings(saved: AutoBirdClientStateV2, state: GameStateV2 | null): AutoBirdClientStateV2 {
   const { stormLegacyKey: previous, ...section } = saved;
-  const stormLegacyKey = stormLegacyKeyFor(state);
-  const options = { stormLegacyKey: previous, dualWrite: true, defaultEntry: [] as AutoBirdStoredSettings['settings'][string] };
-  return {
-    ...section,
-    ...(stormLegacyKey ? { stormLegacyKey } : {}),
-    ignoreSettings: { ...saved.ignoreSettings, settings: normalizeStormKeys(saved.ignoreSettings.settings, state, options) },
-    presets: { ...saved.presets, presets: saved.presets.presets.map((preset) => ({ ...preset, settings: normalizeStormKeys(preset.settings, state, options) })) },
-  };
+  const options = { stormLegacyKey: previous, dualWrite: true };
+  const ignoreSettings = { ...saved.ignoreSettings, settings: normalizeStormKeys(saved.ignoreSettings.settings, state, options) };
+  const presets = { ...saved.presets, presets: saved.presets.presets.map((preset) => ({ ...preset, settings: normalizeStormKeys(preset.settings, state, options) })) };
+  const hasStormEntry = [ignoreSettings.settings, ...presets.presets.map((preset) => preset.settings)].some((settings) => Object.hasOwn(settings, 'storm'));
+  const stormLegacyKey = hasStormEntry ? stormLegacyKeyFor(state) : undefined;
+  return { ...section, ...(stormLegacyKey ? { stormLegacyKey } : {}), ignoreSettings, presets };
 }

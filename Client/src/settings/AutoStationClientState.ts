@@ -71,6 +71,7 @@ export function persistAutoStationClientState(state: AutoStationClientStateV1) {
 
 export function normalizeAutoStationStormSettings(saved: AutoStationClientStateV1, state: GameStateV2 | null): AutoStationClientStateV1 {
   const { stormLegacyKey: previous, ...section } = saved;
-  const stormLegacyKey = stormLegacyKeyFor(state);
-  return { ...section, ...(stormLegacyKey ? { stormLegacyKey } : {}), settings: normalizeStormKeys(saved.settings, state, { stormLegacyKey: previous, dualWrite: true, defaultEntry: [] as AutoStationTroopReserve[] }) };
+  const settings = normalizeStormKeys(saved.settings, state, { stormLegacyKey: previous, dualWrite: true });
+  const stormLegacyKey = Object.hasOwn(settings, 'storm') ? stormLegacyKeyFor(state) : undefined;
+  return { ...section, ...(stormLegacyKey ? { stormLegacyKey } : {}), settings };
 }
