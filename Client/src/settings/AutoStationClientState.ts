@@ -37,7 +37,7 @@ export function parseAutoStationClientState(raw: unknown): AutoStationClientStat
   const settings: Record<string, AutoStationTroopReserve[]> = {};
   if (source.settings && typeof source.settings === 'object' && !Array.isArray(source.settings)) {
     Object.entries(source.settings as Record<string, unknown>).forEach(([castleID, value]) => {
-      if (!Array.isArray(value) || !/^\d+$/.test(castleID)) return;
+      if (!Array.isArray(value) || !(castleID === 'storm' || /^\d+$/.test(castleID))) return;
       const byUnit = new Map<number, number>();
       value.forEach((entry) => {
         if (!entry || typeof entry !== 'object' || Array.isArray(entry)) return;

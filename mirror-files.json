@@ -1159,6 +1159,18 @@
     {
       "portal": "src/commandCenter/worldIntelligence/useServerLabel.ts",
       "desktop": "Client/src/worldIntelligence/useServerLabel.ts"
+    },
+    {
+      "desktop": "Client/src/settings/stormRole.ts",
+      "portal": "src/commandCenter/settings/stormRole.ts"
+    },
+    {
+      "desktop": "Client/src/settings/components/StormSettingsRepair.tsx",
+      "portal": "src/commandCenter/settings/components/StormSettingsRepair.tsx"
+    },
+    {
+      "desktop": "Client/tests/storm-role.test.mjs",
+      "portal": "tests/storm-role.test.mjs"
     }
   ],
   "unmirrored": []

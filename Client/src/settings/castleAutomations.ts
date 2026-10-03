@@ -1,3 +1,4 @@
+import { castleSettingsKey, castleSettingsEntry } from './stormRole';
 import { parseAutoAdvisorClientState } from './AutoAdvisorClientState';
 import { parseAutoBeriWorldSettings } from './AutoBeriWorldClientState';
 import { parseAutoBirdClientState } from './AutoBirdClientState';
@@ -6,8 +7,8 @@ import { parseAutoInvasionClientState } from './AutoInvasionClientState';
 import { parseAutoKhanClientState } from './AutoKhanClientState';
 import { parseAutoNomadClientState } from './AutoNomadClientState';
 import { normalizeAutoSceatResSettings } from './AutoSceatResClientState';
-import { parseAutoStationClientState } from './AutoStationClientState';
 import { parseAutoStormClientState } from './AutoStormClientState';
+import { parseAutoStationClientState } from './AutoStationClientState';
 import { normalizeAutoToolSettings } from './AutoToolClientState';
 import { parseAutoTowerClientState } from './AutoTowerClientState';
 import { normalizeRecruitTroopsSettings } from './RecruitTroopsClientState';
@@ -25,28 +26,30 @@ const FEATURE_ORDER: readonly SettingsFeatureId[] = [
 export function automationsActingOnCastle(
   sections: Readonly<Record<string, unknown>>,
   castleId: string | number,
+  kingdomId = 0,
 ): SettingsFeatureId[] {
   const id = Number(castleId);
   if (!Number.isSafeInteger(id) || id <= 0) return [];
   const key = String(id);
+  const castle = { id, kingdomId };
   return FEATURE_ORDER.filter((feature) => {
     const section = sections[GOAL_SAVED_SECTION[feature]];
     if (section === null || typeof section !== 'object' || Array.isArray(section)) return false;
     switch (feature) {
-      case 'autoTowers': return parseAutoTowerClientState(section).castles[key]?.enabled === true;
+      case 'autoTowers': return castleSettingsEntry(parseAutoTowerClientState(section).castles, castle)?.enabled === true;
       case 'autoRecruit': return (normalizeRecruitTroopsSettings(section).castles[key]?.items.length ?? 0) > 0;
       case 'autoTool': return (normalizeAutoToolSettings(section).castles[key]?.items.length ?? 0) > 0;
       case 'autoSceatRes':
         return Object.values(normalizeAutoSceatResSettings(section).castles[key]?.buildings ?? {})
           .some((building) => building.steps.length > 0);
       case 'autoStation': {
-        const row = stationCopyDescriptor.recordFor(parseAutoStationClientState(section).settings, key);
+        const row = castleSettingsEntry(parseAutoStationClientState(section).settings, castle);
         return row !== undefined && stationCopyDescriptor.isConfigured(row);
       }
       case 'autoBird': {
         const saved = parseAutoBirdClientState(section);
         const active = saved.presets.presets.find((preset) => preset.id === saved.activePresetId);
-        const row = birdCopyDescriptor.recordFor(active?.settings ?? saved.ignoreSettings.settings, key);
+        const row = castleSettingsEntry(active?.settings ?? saved.ignoreSettings.settings, castle);
         return Array.isArray(row) && birdCopyDescriptor.isConfigured(row);
       }
       case 'autoKhan': return parseAutoKhanClientState(section).sourceCastleId === id;
@@ -60,8 +63,7 @@ export function automationsActingOnCastle(
       }
       case 'autoStorm': {
         const saved = parseAutoStormClientState(section);
-        return (saved.unlock.enabled && saved.unlock.prebuiltCastleId === id)
-          || (saved.decorationPresetId !== '' && saved.decorationPresetCastleId === id);
+        return castleSettingsKey(castle) === 'storm' && (saved.unlock.enabled || saved.decorationPresetId !== '');
       }
       default: return false;
     }

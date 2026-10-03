@@ -34107,7 +34107,7 @@
     "sha256": "3e5e8c970e3cfbb704719636d99733d3ef830e036fca4866bcc2bdeb04b003e2"
   },
   "schemaVersion": 1,
-  "sourceCatalogSha256": "fa86c0b6c76950bfb5195671fa5a951288aceda4b7259aae956443d37b66cd21",
+  "sourceCatalogSha256": "bb857e395c11a7d5bfbc662e122180c6d1b5192948e2c0a262f6e18d18be901e",
   "sourceRevision": "56c2acba0f847e2675c7842588213c66710eeadc",
   "playerLanguageBatch": {
     "story": "CIT-68",
@@ -34136,5 +34136,16 @@
       "server.automation.production_queues_full_at"
     ],
     "translationStatus": "pending opcode rejection epic all-locale translation batch"
+  },
+  "stormRoleEnglishSourceUpdate": {
+    "story": "CIT-137",
+    "planRevision": 2,
+    "sourceBase": "1279f828",
+    "englishFallbackKeys": [
+      "stormRole.birdUnconfigured",
+      "stormRole.waiting"
+    ],
+    "translations": "Deferred to the next 26-locale batch",
+    "translatorNote": "Use the official glossary term for the Storm Islands castle."
   }
 }

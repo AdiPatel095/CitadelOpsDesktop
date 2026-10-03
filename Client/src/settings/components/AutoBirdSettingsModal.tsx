@@ -1,3 +1,5 @@
+import { castleSettingsKey, castleSettingsEntry, castleForSettingsKey, normalizeStormKeys, stormEditorCastles } from '../stormRole';
+import { StormSettingsRepair } from './StormSettingsRepair';
 import { StopFooter } from '../../components/StopControl';
 import { castleCandidates } from '../copy/candidates';
 import { birdCandidateFlags, birdCopyDescriptor } from '../copy/features/bird';
@@ -112,8 +114,13 @@ export const AutoBirdSettingsModal: React.FC<AutoBirdSettingsModalProps> = ({ is
   });
   const { troops, tools, unitsLoading, unitsError } = useMetadata();
   const { autoFortressEnabled } = useAuth();
-  const castles = castleOptionsFromState(state);
   const [settings, setSettings] = useState<Record<string, { id: number; amount: number }[]>>({});
+  const castles = stormEditorCastles(castleOptionsFromState(state), Object.hasOwn(settings, 'storm'));
+  const roleSettings = normalizeStormKeys(settings, state);
+  const buildBirdRoleState = (...args: Parameters<typeof buildAutoBirdClientState>) => {
+    const saved = buildAutoBirdClientState(...args);
+    return { ...saved, ignoreSettings: { ...saved.ignoreSettings, settings: normalizeStormKeys(saved.ignoreSettings.settings, state) }, presets: { ...saved.presets, presets: saved.presets.presets.map((preset) => ({ ...preset, settings: normalizeStormKeys(preset.settings, state) })) } };
+  };
   const [minDelay, setMinDelay] = useState(6);
   const [maxDelay, setMaxDelay] = useState(12);
   const [minSend, setMinSend] = useState(0);
@@ -131,8 +138,8 @@ export const AutoBirdSettingsModal: React.FC<AutoBirdSettingsModalProps> = ({ is
   const loadedConfigurationSignature = useRef<string | null>(null);
 
   const currentIgnoreSettings = useCallback((): AutoBirdStoredSettings => {
-    return birdStoredSettings(settings, minDelay, maxDelay, minSend, minRPTDays);
-  }, [settings, minDelay, maxDelay, minSend, minRPTDays]);
+    return birdStoredSettings(normalizeStormKeys(settings, state), minDelay, maxDelay, minSend, minRPTDays);
+  }, [settings, state, minDelay, maxDelay, minSend, minRPTDays]);
 
   const fortressSection = draftSession.sections?.['automation.autoFortress'];
   const copyContext = useMemo(() => {
@@ -140,9 +147,9 @@ export const AutoBirdSettingsModal: React.FC<AutoBirdSettingsModalProps> = ({ is
       state, troops, tools, metadataReady: !unitsLoading && !unitsError, observation: setup.observation,
       fortress: { enabled: autoFortressEnabled, section: fortressSection },
     };
-    return { ...base, candidates: castleCandidates(castles, state, { flagsFor: (castle) => birdCandidateFlags(castle, base) }) };
+    return { ...base, candidates: castleCandidates(castles.filter((castle) => castle.id > 0), state, { keyFor: castleSettingsKey, flagsFor: (castle) => birdCandidateFlags(castle, base) }) };
   }, [autoFortressEnabled, castles, fortressSection, setup.observation, state, tools, troops, unitsError, unitsLoading]);
-  const copyRun = useCastleCopyReplayRun(copyReplay, { descriptor: birdCopyDescriptor, draft: settings, context: copyContext, featureLabel: 'Auto Bird', applyDraft: setSettings, isOpen });
+  const copyRun = useCastleCopyReplayRun(copyReplay, { descriptor: birdCopyDescriptor, draft: roleSettings, context: copyContext, featureLabel: 'Auto Bird', applyDraft: setSettings, isOpen });
   const birdReadiness = useMemo(() => evaluateReserveReadiness({
     featureId: 'autoBird',
     state,
@@ -194,8 +201,8 @@ export const AutoBirdSettingsModal: React.FC<AutoBirdSettingsModalProps> = ({ is
   }, [draftSession.initialSections, draftSession.openKey, draftSession.initialSnapshot, isOpen, applyFullClientState]);
 
   const handleAddItem = async (castleId: string) => {
-    const currentItems = settings[castleId] || [];
-    const castleState = state?.castles[castleId];
+    const currentItems = roleSettings[castleId] || [];
+    const castleState = castleForSettingsKey(castleId, state);
     const fortressProtected = autoFortressReservesDirewolves(
       autoFortressEnabled,
       castleState,
@@ -222,16 +229,16 @@ export const AutoBirdSettingsModal: React.FC<AutoBirdSettingsModalProps> = ({ is
         amount: u.quantity,
       }));
       setSettings((prev) => ({
-        ...prev,
-        [castleId]: mergeAutoBirdPickerItems(prev[castleId] || [], newItems, fortressProtected),
+        ...normalizeStormKeys(prev, state),
+        [castleId]: mergeAutoBirdPickerItems(normalizeStormKeys(prev, state)[castleId] || [], newItems, fortressProtected),
       }));
     }
   };
 
   const handleRemoveItem = (castleId: string, unitId: number) => {
     setSettings((prev) => ({
-      ...prev,
-      [castleId]: (prev[castleId] || []).filter((i) => i.id !== unitId),
+      ...normalizeStormKeys(prev, state),
+      [castleId]: (normalizeStormKeys(prev, state)[castleId] || []).filter((i) => i.id !== unitId),
     }));
   };
 
@@ -277,7 +284,7 @@ export const AutoBirdSettingsModal: React.FC<AutoBirdSettingsModalProps> = ({ is
     };
     setIsSaving(true);
     try {
-      const snapshot = await draftSession.save(buildAutoBirdClientState(currentIgnoreSettings(), presetsFile, id));
+      const snapshot = await draftSession.save(buildBirdRoleState(currentIgnoreSettings(), presetsFile, id));
       loadedConfigurationSignature.current = JSON.stringify(snapshot.sections['automation.autoBird']);
       setPresetsState(presetsFile);
       setPresetDropdownId(id);
@@ -305,7 +312,7 @@ export const AutoBirdSettingsModal: React.FC<AutoBirdSettingsModalProps> = ({ is
     setIsSaving(true);
     setSaveError(null);
     try {
-      const snapshot = await draftSession.save(buildAutoBirdClientState(
+      const snapshot = await draftSession.save(buildBirdRoleState(
         currentIgnoreSettings(),
         presetsFile,
         nextActivePresetId,
@@ -347,7 +354,7 @@ export const AutoBirdSettingsModal: React.FC<AutoBirdSettingsModalProps> = ({ is
     };
     setIsSaving(true);
     try {
-      const snapshot = await draftSession.save(buildAutoBirdClientState(payload, presetsFile, appliedPresetId));
+      const snapshot = await draftSession.save(buildBirdRoleState(payload, presetsFile, appliedPresetId));
       loadedConfigurationSignature.current = JSON.stringify(snapshot.sections['automation.autoBird']);
       setPresetsState(presetsFile);
       setActivePresetId(appliedPresetId);
@@ -375,7 +382,7 @@ export const AutoBirdSettingsModal: React.FC<AutoBirdSettingsModalProps> = ({ is
 
   const loadedBird = parseAutoBirdClientState(birdRawState(draftSession.sections?.['automation.autoBird']));
   const loadedBirdActive = birdActive(loadedBird);
-  const recovery = useDraftRecovery({ section: 'automation.autoBird', isOpen, draftSession, draft: buildAutoBirdClientState(currentIgnoreSettings(), presetsState, appliedPresetId), loaded: buildAutoBirdClientState(birdStoredSettings(loadedBirdActive.ig.settings, loadedBirdActive.ig.minDelay, loadedBirdActive.ig.maxDelay, loadedBirdActive.ig.minSend, loadedBirdActive.ig.minRPTDays), loadedBird.presets, loadedBirdActive.activePreset?.id ?? null), copyReapplied: copyReapplied(copyReplay) });
+  const recovery = useDraftRecovery({ section: 'automation.autoBird', isOpen, draftSession, draft: buildBirdRoleState(currentIgnoreSettings(), presetsState, appliedPresetId), loaded: buildBirdRoleState(birdStoredSettings(loadedBirdActive.ig.settings, loadedBirdActive.ig.minDelay, loadedBirdActive.ig.maxDelay, loadedBirdActive.ig.minSend, loadedBirdActive.ig.minRPTDays), loadedBird.presets, loadedBirdActive.activePreset?.id ?? null), copyReapplied: copyReapplied(copyReplay) });
 
   return (
     <>
@@ -517,13 +524,14 @@ export const AutoBirdSettingsModal: React.FC<AutoBirdSettingsModalProps> = ({ is
           {castles.length === 0 && (
             <p className="py-8 text-center text-sm text-text-muted"><LocalizedText messageKey="ui.settings.components.autoBirdSettingsModal.loading.castles.reopen.if.this.stays.empty.fea1a1d6" /></p>
           )}
+          <StormSettingsRepair entries={settings} state={state} onChange={setSettings} />
           <div className="grid grid-cols-1 gap-4 pb-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {castles.map((castle) => {
-              const cid = String(castle.id);
-              const items = settings[cid] || [];
+              const cid = castleSettingsKey(castle);
+              const items = castleSettingsEntry(settings, castle) || [];
               const fortressProtected = autoFortressReservesDirewolves(
                 autoFortressEnabled,
-                state?.castles[cid],
+                state?.castles[String(castle.id)],
                 draftSession.sections?.['automation.autoFortress'],
               );
               const visibleItems = visibleAutoBirdReserveItems(items, fortressProtected);
@@ -531,8 +539,9 @@ export const AutoBirdSettingsModal: React.FC<AutoBirdSettingsModalProps> = ({ is
               return (
                 <Card key={castle.id} variant="solid" className="flex flex-col bg-bg-card-hover/40 p-4 shadow-inner">
                   <div className="mb-3 flex flex-wrap items-center gap-2 border-b border-border-base pb-2">
-                    <h3 className="text-sm font-bold text-primary">{castle.name}</h3>
+                    <h3 className="text-sm font-bold text-primary">{castle.kingdomId === 4 ? <LocalizedText messageKey={castle.id === 0 ? "stormRole.idleLabel" : "stormRole.label"} /> : castle.name}</h3>
                   </div>
+                  {cid === 'storm' && <Button variant="ghost" size="sm" onClick={() => setSettings((previous) => { const draft = normalizeStormKeys(previous, state); delete draft.storm; return draft; })}><LocalizedText messageKey="stormRole.remove" /></Button>}
                   {visibleItems.length === 0 && !fortressProtected ? (
                     <div className="flex flex-1 flex-col items-center justify-center gap-3 py-6">
                       <p className="text-center text-xs font-medium uppercase tracking-wider text-text-muted"><LocalizedText messageKey="ui.settings.components.autoBirdSettingsModal.no.ignored.units.ab6d717f" /></p>

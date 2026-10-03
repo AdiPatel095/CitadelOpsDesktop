@@ -35,7 +35,7 @@ if (params.get('reset') === '1') {
 }
 
 const session = params.get('session');
-const server = new FixtureServer({
+export const server = new FixtureServer({
   file,
   session: session === 'disconnected' || session === 'awaiting-baseline' || session === 'checkpoint' || session === 'live' ? session as SessionMode : undefined,
   fail: params.get('fail') === 'stop' || params.get('fail') === 'start' ? params.get('fail') as 'stop' | 'start' : undefined,

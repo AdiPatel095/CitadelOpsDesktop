@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { prepare, settle } from './harness';
+import { prepare, settle, openView } from './harness';
 
 const views = [
   { label: 'Castle', view: 'castle' },
@@ -58,3 +58,61 @@ test('every command-center view renders in dark theme', async ({ page }) => {
     });
   }
 });
+
+// CIT-137: use only the fictional browser-side fixture, with no game/network writes.
+for (const feature of ['autoTowers', 'autoBird', 'autoStation'] as const) {
+  test(`Storm role repair Save and Cancel ${feature}`, async ({ page }, testInfo) => {
+    const verifyNetwork = await prepare(page, 'dark');
+    await openView(page, 'Automation', 'automation');
+    const seed = await page.evaluate(async (feature) => {
+      const fixturePath = '/main.tsx';
+      const { server } = await import(/* @vite-ignore */ fixturePath);
+      const reserve = [{ id: 1, amount: 37 }];
+      const value = feature === 'autoTowers' ? { castles: { 999: { enabled: true, unitId: 1, radius: 10 } } }
+        : feature === 'autoBird' ? { ignoreSettings: { settings: { 999: reserve } }, presets: { presets: [] }, activePresetId: null }
+        : { settings: { 999: reserve } };
+      await server.handle(`/api/v2/config/automation.${feature}`, 'PUT', { value });
+      server.log = [];
+      return server.configuration().revision;
+    }, feature);
+    const label = { autoTowers: 'Auto Towers', autoBird: 'Auto Bird', autoStation: 'Auto Station' }[feature];
+    await page.locator('[data-view="automation"]').getByRole('button', { name: `Open ${label} settings`, exact: true }).click();
+    const dialog = page.getByRole('dialog');
+    await dialog.getByRole('button', { name: 'Use as Storm castle settings', exact: true }).click();
+    await expect(dialog.getByRole('button', { name: 'Use as Storm castle settings', exact: true })).toHaveCount(0);
+    const snapshot = async () => page.evaluate(async (feature) => {
+      const fixturePath = '/main.tsx';
+      const { server } = await import(/* @vite-ignore */ fixturePath);
+      return { revision: server.configuration().revision, saved: server.configuration().sections[`automation.${feature}`], writes: server.log.filter((entry: { kind: string }) => entry.kind === 'config').length };
+    }, feature);
+    expect((await snapshot()).revision).toBe(seed);
+    expect((await snapshot()).writes).toBe(0);
+    await dialog.getByRole('button', { name: 'Cancel', exact: true }).click();
+    await page.locator('[data-view="automation"]').getByRole('button', { name: `Open ${label} settings`, exact: true }).click();
+    await dialog.getByRole('button', { name: 'Use as Storm castle settings', exact: true }).click();
+    await dialog.getByRole('button', { name: 'Save changes', exact: true }).click();
+    await expect(dialog).toHaveCount(0);
+    const after = await snapshot();
+    const entries = feature === 'autoTowers' ? after.saved.castles : feature === 'autoBird' ? after.saved.ignoreSettings.settings : after.saved.settings;
+    expect(entries.storm).toBeDefined();
+    expect(entries['999']).toBeUndefined();
+    expect(after.revision).toBe(seed + 1);
+    expect(after.writes).toBe(1);
+    // The fixture's next runtime frame replaces the owned Storm ID; the saved
+    // section and configuration revision remain unchanged.
+    await page.evaluate(async () => {
+      const fixturePath = '/main.tsx';
+      const { server } = await import(/* @vite-ignore */ fixturePath);
+      const old = Object.values(server.built.state.castles).find((castle: any) => castle.kingdomId === 4) as any;
+      server.file.runtime = [{ label: 'Synthetic next Storm event', state: { castles: { [old.id]: null, 998: { ...old, id: 998, name: 'Synthetic next Storm' } } } }];
+      server.advance();
+    });
+    await page.locator('[data-view="automation"]').getByRole('button', { name: `Open ${label} settings`, exact: true }).click();
+    await expect(dialog.getByText('Storm castle', { exact: true }).first()).toBeVisible();
+    await expect(dialog.getByText(/Saved castle.*not in this world/)).toHaveCount(0);
+    expect((await snapshot()).revision).toBe(seed + 1);
+    expect((await snapshot()).writes).toBe(1);
+    verifyNetwork();
+    await page.screenshot({ path: testInfo.outputPath(`${feature}-storm-repair.png`) });
+  });
+}
