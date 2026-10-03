@@ -28,6 +28,8 @@ type directFrameOutbox struct {
 	pauseBytes  int
 	resumeBytes int
 	paused      bool
+	pausedAt    time.Time
+	pauseEpoch  uint64
 	lastForward time.Time
 	wake        chan struct{}
 	resume      chan struct{}
@@ -62,6 +64,8 @@ func (outbox *directFrameOutbox) push(frame RawFrame) {
 	if !outbox.paused && outbox.bytes >= outbox.pauseBytes {
 		outbox.paused = true
 		outbox.lastForward = time.Now()
+		outbox.pausedAt = outbox.lastForward
+		outbox.pauseEpoch++
 	}
 	outbox.mu.Unlock()
 	select {
@@ -74,6 +78,12 @@ func (outbox *directFrameOutbox) isPaused() bool {
 	outbox.mu.Lock()
 	defer outbox.mu.Unlock()
 	return outbox.paused
+}
+
+func (outbox *directFrameOutbox) pauseState() (bool, uint64, time.Time) {
+	outbox.mu.Lock()
+	defer outbox.mu.Unlock()
+	return outbox.paused, outbox.pauseEpoch, outbox.pausedAt
 }
 
 func (outbox *directFrameOutbox) resumed() <-chan struct{} { return outbox.resume }
